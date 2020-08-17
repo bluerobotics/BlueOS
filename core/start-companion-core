@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+COMPANION_PATH=/home/pi
+SERVICES_PATH=$COMPANION_PATH/services
+
+SERVICES=(
+    'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
+    'wifi',"$SERVICES_PATH/wifi/main.py"
+    'video',"gst-rtsp-launch '( v4l2src device=/dev/video2 ! video/x-h264, width=1920, height=1080, framerate=30/1 ! rtph264pay name=pay0 pt=96 )'"
+)
+
+tmux start-server
+function create_service {
+    tmux new -d -s "$1" || true
+    tmux send-keys -t "$1:0" "$2" C-m
+}
+
+echo "Starting services.."
+for TUPLE in "${SERVICES[@]}"; do
+    IFS=',' read NAME EXECUTABLE <<< ${TUPLE}
+    echo "Service: $NAME: $EXECUTABLE"
+    create_service $NAME "$EXECUTABLE"
+done
+
+echo "Companion running!"
