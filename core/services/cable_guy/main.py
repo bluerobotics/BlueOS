@@ -2,6 +2,8 @@
 import logging
 import os
 
+from pathlib import Path
+
 import connexion
 import flask
 from connexion.resolver import RestyResolver
@@ -10,11 +12,15 @@ from waitress import serve
 
 logging.basicConfig(level=logging.INFO)
 
+HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), 'html')
+
 def index():
-    return open('html/index.html', 'r').read()
+    index = Path.joinpath(HTML_FOLDER, 'index.html')
+    return open(index, 'r').read()
 
 def resource(path, filename):
-    return flask.send_from_directory(f'html/static/{path}', filename)
+    path = Path.joinpath(HTML_FOLDER, f'static/{path}')
+    return flask.send_from_directory(path, filename)
 
 # Flask CORS appears to be not working anymore with connexion
 # Check: https://github.com/zalando/connexion/issues/357
