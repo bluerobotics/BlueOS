@@ -3,6 +3,7 @@ import logging
 import os
 
 import connexion
+import flask
 from connexion.resolver import RestyResolver
 
 from waitress import serve
@@ -11,6 +12,9 @@ logging.basicConfig(level=logging.INFO)
 
 def index():
     return open('html/index.html', 'r').read()
+
+def resource(path, filename):
+    return flask.send_from_directory(f'html/static/{path}', filename)
 
 # Flask CORS appears to be not working anymore with connexion
 # Check: https://github.com/zalando/connexion/issues/357
@@ -28,6 +32,7 @@ if __name__ == '__main__':
     connexion_app = connexion.FlaskApp(__name__)
     connexion_app.app.after_request(set_cors_headers_on_response)
     connexion_app.add_url_rule('/', 'index', index)
+    connexion_app.add_url_rule('/static/<path:path>/<path:filename>', 'resource', resource)
     connexion_app.add_api('swagger/cable-guy.yaml',
                 arguments={'title': 'Cable Guy API'},
                 resolver=RestyResolver('api'))
