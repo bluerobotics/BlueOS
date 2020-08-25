@@ -1,4 +1,4 @@
-name: Docker BuildX
+name: companion-core
 
 on: [push, pull_request]
 
