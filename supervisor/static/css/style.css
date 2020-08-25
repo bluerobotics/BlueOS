@@ -1,0 +1,96 @@
+body {
+    min-height: 75rem;
+    padding-top: 4.5rem;
+}
+
+i.success {
+    color: limegreen;
+}
+
+i.warning {
+    color: chocolate;
+}
+
+
+/* Switch */
+.toggle-check-input {
+    width: 1px;
+    height: 1px;
+    position: absolute;
+}
+
+.toggle-check-text {
+    display: inline-block;
+    position: relative;
+    background: #CCC;
+    padding: 0.25em 0.5em 0.25em 2em;
+    border-radius: 1em;
+    min-width: 2em;
+    color: #FFF;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.toggle-check-text:after {
+    content: ' ';
+    display: block;
+    background: #FFF;
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 1em;
+    position: absolute;
+    left: 0.3em;
+    top: 0.4em;
+    transition: left 0.15s, margin-left 0.15s;
+}
+
+.toggle-check-text:before {
+    content: 'Disabled';
+}
+
+.toggle-check-input:checked~.toggle-check-text {
+    background: dodgerblue;
+    padding-left: 0.5em;
+    padding-right: 2em;
+}
+
+.toggle-check-input:disabled~.toggle-check-text {
+    background: lightgrey;
+    padding-left: 0.5em;
+    padding-right: 2em;
+    cursor: not-allowed;
+}
+
+.toggle-check-input:checked~.toggle-check-text:before {
+    content: 'Enabled';
+}
+
+.toggle-check-input:checked~.toggle-check-text:after {
+    left: 100%;
+    margin-left: -1.4em;
+}
+
+.version {
+    margin-left: 4px;
+}
+
+.modal-dialog {
+    width: fit-content;
+    max-width: none;
+}
+
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    margin: auto;
+    margin-top: 10%;
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }

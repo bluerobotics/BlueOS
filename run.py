@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
 import json
-import docker
 import pathlib
 import os
+import time
+import docker
+
+client = docker.from_env()
 
 
 def ensure_dir(file_path: str) -> None:
@@ -17,36 +20,50 @@ def ensure_dir(file_path: str) -> None:
         os.makedirs(directory)
 
 
-ensure_dir("/tmp/wpa_playground")
+def stop_old_container() -> None:
+    try:
+        old_container = client.containers.get("companion_supervisor")
+        old_container.stop()
+        old_container.remove()
+    except Exception:
+        pass
 
-supervisor_version = "latest"
-binds = {}
-ports = {}
-current_folder = pathlib.Path(__file__).parent.absolute()
 
-try:
-    with open("config/dockers.json") as f:
-        data = f.read().replace("{PWD}", str(current_folder))
-        dockers_config = json.loads(data)
-        supervisor_version = dockers_config["dockers"]["supervisor"]["tag"]
-        binds = dockers_config["dockers"]["supervisor"]["binds"]
-        ports = dockers_config["dockers"]["supervisor"]["ports"]
-except Exception as error:
-    print(f"unable to get version from file, using latest ({error})")
+def start_supervisor() -> None:
+    supervisor_version = "stable"
+    binds = {}
+    ports = {}
+    current_folder = pathlib.Path(__file__).parent.absolute()
 
-client = docker.from_env()
+    try:
+        with open("config/dockers.json") as config_file:
+            data = config_file.read().replace("{PWD}", str(current_folder))
+            dockers_config = json.loads(data)
+            supervisor_version = dockers_config["dockers"]["supervisor"]["tag"]
+            binds = dockers_config["dockers"]["supervisor"]["binds"]
+            ports = dockers_config["dockers"]["supervisor"]["ports"]
+    except Exception:
+        binds = {
+            os.path.join(current_folder, "/config"): {
+                "bind": "/supervisor/.config",
+                "mode": "rw"
+            }
+        }
+        ensure_dir("config")
+    print("Started, open http://localhost:8080")
 
-try:
-    old_container = client.containers.get("companion_supervisor")
-    old_container.stop()
-    old_container.remove()
-except Exception as e:
-    pass
+    client.containers.run(f'williangalvani/supervisor:{supervisor_version}',
+                          name="companion_supervisor",
+                          volumes=binds,
+                          ports=ports,
+                          detach=False)
 
-client.containers.run(f'bluerobotics/supervisor:{supervisor_version}',
-                      name="companion_supervisor",
-                      volumes=binds,
-                      ports=ports,
-                      detach=True)
-print("All done, open http://localhost:8080")
-# /var/run/docker.sock:/var/run/docker.sock -v /home/pi/git/companion-docker/config:/home/companion/.config
+
+while True:
+    stop_old_container()
+    try:
+        start_supervisor()
+    except Exception as error:
+        print(f"error: {error}, restarting...")
+
+    time.sleep(1)

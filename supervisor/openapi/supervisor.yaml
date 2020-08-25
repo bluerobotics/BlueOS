@@ -1,0 +1,175 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Supervisor
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080/v1.0
+
+paths:
+  /supervisor/status:
+    get:
+      operationId: supervisor.status
+      summary: List of enabled docker services and their status
+      responses:
+        '200':
+          description: A list containing docker services and their status
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /supervisor/versions:
+    get:
+      operationId: supervisor.versions
+      summary: List of all available versions for Companion
+      responses:
+        '200':
+          description: A dict containing the contents of versions.json, enhanced with an isAvailableLocally field for each version
+          content:
+            application/json:
+              schema:
+                type: object
+  
+  /supervisor/currentversion:
+    get:
+      operationId: supervisor.currentversion
+      summary: name of current version running
+      responses:
+        '200':
+          description: The name of the current version, "custom" if not a specific version
+          content:
+            application/json:
+              schema:
+                type: str
+
+  /supervisor/services/{name}/top:
+    get:
+      operationId: supervisor.top
+      summary: Returns json of current running processes
+      responses:
+        '200':
+          description: Returns a json output similar to ps aux
+          content:
+            application/json:
+              schema:
+                type: object
+      parameters:
+        - name: name
+          in: path
+          description: Name of the service to load top for.
+          required: true
+          schema:
+            type: string
+            example: "companion-core"
+
+  /supervisor/services/{name}/logs:
+    get:
+      operationId: supervisor.log
+      summary: Returns logs of the chosen service
+      responses:
+        '200':
+          description: Returns the logs in text format
+          content:
+            application/json:
+              schema:
+                type: object
+      parameters:
+        - name: name
+          in: path
+          description: Name of the service to load the logs for.
+          required: true
+          schema:
+            type: string
+            example: "companion-core"
+
+  /supervisor/services/{name}/disable:
+    post:
+      operationId: supervisor.disable
+      summary: Disables service {name}
+      responses:
+        '200':
+          description: Disabled successfully
+      parameters:
+        - name: name
+          in: path
+          description: Name of the service to disable
+          required: true
+          schema:
+            type: string
+            example: "companion-core"
+
+  /supervisor/services/{name}/enable:
+    post:
+      operationId: supervisor.enable
+      summary: Enables service {name}
+      responses:
+        '200':
+          description: Enabled successfully
+      parameters:
+        - name: name
+          in: path
+          description: Name of the service to load top for.
+          required: true
+          schema:
+            type: string
+            example: "companion-core"
+
+  /supervisor/services/{name}/attach:
+    post:
+      operationId: supervisor.attach
+      summary: Attach ttyd to service {name}
+      responses:
+        '200':
+          description: Attached successfully
+      parameters:
+        - name: name
+          in: path
+          description: Name of the service to attach to
+          required: true
+          schema:
+            type: string
+            example: "companion-core"
+
+  /supervisor/services/{name}/restart:
+    post:
+      operationId: supervisor.restart
+      summary: Restarts service {name}
+      responses:
+        '200':
+          description: Restart signal sent
+      parameters:
+        - name: name
+          in: path
+          description: Name of the service to load top for.
+          required: true
+          schema:
+            type: string
+            example: "companion-core"
+
+
+  /supervisor/services/{name}/set_version:
+    post:
+      operationId: supervisor.set_version
+      summary: Changes version of service {name}
+      responses:
+        '200':
+          description: Changed successfully
+      parameters:
+        - name: name
+          in: path
+          description: Name of the service to load top for.
+          required: true
+          schema:
+            type: string
+            example: "companion-core"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+#              properties:
+#                version: 
+#                  type: string
+#                  example: latest

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+    <title>Companion Supervisor</title>
+
+    <!-- Required Stylesheets -->
+    <link href="/static/css/bootstrap.min.css" type="text/css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-vue.css" type="text/css" rel="stylesheet" />
+    <link href="/static/css/fa-all.css" type="text/css" rel="stylesheet">
+    <link href="/static/css/bootstrap-switch-button-1.1.0.min.css" type="text/css" rel="stylesheet" />
+    <link href="/static/css/style.css" type="text/css" rel="stylesheet" />
+
+    <!-- Load polyfills to support older browsers -->
+    <script src="/static/js/polyfill.min.js"></script>
+
+    <!-- Required scripts -->
+    <script src="/static/js/vue.js"></script>
+    <script src="/static/js/bootstrap-vue.js"></script>
+    <script src="/static/js/axios-0.19.2.min.js"></script>
+    <script src="/static/js/bootstrap-switch-button-1.1.0.min.js"></script>
+    <script src="https://use.fontawesome.com/0c0a227e42.js"></script>
+    <style>
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <a class="navbar-brand" href="#">ArduSub Companion Supervisor</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+            aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav mr-auto">
+
+            </ul>
+        </div>
+    </nav>
+
+    <div id="app" class="container">
+        <h1>Companion Supervisor</h1>
+
+
+        <p class="lead">Change Companion version</p>
+        <div class="form-row align-items-end col-md-5">
+            <div class="form-group col">
+                <select class="form-control" id="version-select" v-model="selectedVersion">
+                    <option v-for="(config, version) in versions">
+                        {{ version }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group col-auto" v-if="selectedVersion != currentVersion">
+                <button type="button" class="btn btn-primary btn-sm"
+                    v-if="versions && selectedVersion && !versions[selectedVersion].available"
+                    v-on:click="downloadAndApplyVersion()">
+                    Download and Apply
+                </button>
+                <button type="button" class="btn btn-primary btn-sm"
+                    v-if="versions && selectedVersion && versions[selectedVersion].available"
+                    v-on:click="applyVersion()">
+                    Apply
+                </button>
+            </div>
+            <!--panel-body end-->
+        </div>
+
+        <div class="row mb-7">
+            <div class="col-md-3">
+                <div class="form-group">
+
+                    <div class="input-group-addon input-group-button">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <h2 class="mt-4">Status</h2>
+        <p class="lead">This section shows all the available dockers and their respective details</p>
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">Service</th>
+                            <th scope="col">Version</th>
+                            <th scope="col">Enabled</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">CPU</th>
+                            <th scope="col">Memory</th>
+                            <th colspan="2" scope="col">Networking</th>
+                            <th scope="col">Extra</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(data, name) in dockers" :key="name">
+                            <th scope="row">{{name}}<span class="version badge badge-info"
+                                    :title="formatImage(data.image)">{{data.tag}}</span></th>
+                            <td>
+                                <div class="form-group">
+                                    <select class="form-control" id="exampleFormControlSelect1"
+                                        v-on:change="changeDockerVersion(name, $event)" v-bind:value="data.version">
+                                        <option v-for="option in data.available_tags">
+                                            {{ option }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>
+                                <label class="toggle-check">
+                                    <input type="checkbox" class="toggle-check-input" v-model="data.config.enabled"
+                                        :disabled="name=='supervisor'" v-on:change="setEnabled(name)" />
+                                    <span class="toggle-check-text"></span>
+                                </label>
+
+                            </td>
+                            <td style="text-align: center;">
+                                <i class="success fas fa-check-circle fa-2x" v-if="data.running"></i>
+                                <i class="warning fas fa-skull fa-2x" v-if="!data.running"></i>
+                            </td>
+                            <template v-if="data.running">
+                                <td>{{ data.stats.cpu_usage ? data.stats.cpu_usage.toFixed(2) : "--.-"}} %</td>
+                                <td>{{ data.stats.memory_usage ? data.stats.memory_usage.toFixed(2) : "--.-"}} MB</td>
+                                <td><i class="fa fa-arrow-up"></i>
+                                    {{ data.stats.network_tx ? data.stats.network_tx.toFixed(2) : "--.-"}} kB/s
+                                </td>
+                                <td><i class="fa fa-arrow-down"></i>
+                                    {{ data.stats.network_rx ? data.stats.network_rx.toFixed(2) : "--.-"}}
+                                    kB/s</i></td>
+                            </template>
+                            <template v-else>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </template>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" v-if="data.running"
+                                    :disabled="!data.webui" title="Open Web Interface">
+                                    <i class="fas fa-globe-americas fa-lg"></i>
+                                </button>
+                                <button type="button" v-if="data.running" v-b-modal.topmodal
+                                    class="btn btn-outline-secondary btn-sm" title="View processes"
+                                    v-on:click="startTop(name)">
+                                    <i class="fas fa-heartbeat fa-lg"></i>
+                                </button>
+                                <button type="button" v-if="data.running" class="btn btn-outline-secondary btn-sm"
+                                    title="View Console" v-on:click="attach(name)">
+                                    <i class="fas fa-terminal fa-lg"></i>
+                                </button>
+                                <button type="button" v-if="data.running" class="btn btn-outline-secondary btn-sm"
+                                    title="Restart" :disabled="name=='supervisor'" v-on:click="restart(name)">
+                                    <i class="fa fa-refresh fa-lg"></i>
+                                </button>
+                                <a type="button" class="btn btn-outline-secondary btn-sm" title="View Logs"
+                                    :disabled="name=='supervisor'" :href="`/v1.0/supervisor/services/${name}/logs`"
+                                    target="_blank">
+                                    <i class="fa fa-file-text-o fa-lg"></i>
+                                </a>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <b-modal id="topmodal" ok-only title="Top" @hidden="stopTop()">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th v-for="title in top.Titles" scope="col">{{title}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="process in top.Processes" :key="process[7]">
+                            <td v-for="data in process">
+                                {{data}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </b-modal>
+        </div>
+    </div>
+
+    <!-- Start running your app -->
+    <script>
+        window.app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    currentTerminal: null,
+                    currentTerminalWs: null,
+                    terminalInstance: null,
+                    dockers: {},
+                    top: {},
+                    versions: {},
+                    currentVersion: null,
+                    selectedVersion: null
+                }
+            },
+            methods: {
+                restart: function (name) {
+                    axios.post(`/v1.0/supervisor/services/${name}/restart/`)
+                },
+                startTop: function (name) {
+                    clearInterval(this.timerTop)
+                    this.timerTop = setInterval(() => {
+                        axios
+                            .get(`/v1.0/supervisor/services/${name}/top/`)
+                            .then(response => (this.top = response.data))
+                    }, 1000)
+                },
+                stopTop: function (a) {
+                    clearInterval(this.timerTop)
+                },
+                setEnabled: function (name) {
+                    const action = this.dockers[name].config.enabled ? "enable" : "disable"
+                    axios.post(`/v1.0/supervisor/services/${name}/${action}/`)
+                },
+                attach: function (name) {
+                    const action = this.dockers[name].config.enabled ? "enable" : "disable"
+                    axios.post(`/v1.0/supervisor/services/${name}/attach/`)
+                    window.open('/ttyd/', 'terminalTab')
+
+                },
+                changeDockerVersion: function (name, versionOrEvent) {
+                    if (typeof versionOrEvent !== 'string') {
+                        versionOrEvent = event.target.value
+                    }
+                    axios.post(`/v1.0/supervisor/services/${name}/set_version/`, { version: versionOrEvent }).catch(function (error) {
+                        console.log(error);
+                    })
+                },
+                downloadAndApplyVersion() {
+
+                },
+                applyVersion() {
+                    // Supervisor version has to be applied last so we don't try to apply any other while it is restarting
+                    let supervisorVersion = null
+                    for (let docker in this.versions[this.selectedVersion].dockers) {
+                        newVersion = this.versions[this.selectedVersion].dockers[docker]["tag"]
+                        console.log(docker, newVersion)
+                        if (docker == "supervisor") {
+                            supervisorVersion = newVersion
+                            continue
+                        }
+                        this.changeDockerVersion(docker, newVersion)
+                    }
+                    this.changeDockerVersion("supervisor", supervisorVersion)
+                    this.readCurrentVersion()
+                },
+                readCurrentVersion() {
+                    axios.get('/v1.0/supervisor/currentversion').then(response => {
+                        this.currentVersion = response.data
+                        this.selectedVersion = response.data
+                    })
+                },
+                formatImage(image) {
+                    // TODO: Use this instead? https://jsfiddle.net/RienNeVaPlus/pzw1L47j/1/
+                    const age = new Date(image.age * 1000).toISOString().substr(11, 8)
+                    return 'image: ' + image.Id + '\n' + age + ' old'
+                }
+            },
+            mounted() {
+                this.timerID = setInterval(() => {
+                    axios
+                        .get('/v1.0/supervisor/status')
+                        .then(response => (this.dockers = response.data))
+                }, 1000)
+                this.readCurrentVersion()
+                axios.get('/v1.0/supervisor/versions').then(response => {
+                    this.versions = response.data
+                    this.versions["custom"] = {}
+                })
+            }
+        })
+    </script>
+</body>
+
+</html>
