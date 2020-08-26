@@ -6,7 +6,7 @@ from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 import psutil
 
-from . import settings
+from api import settings
 
 
 class EthernetManager:
