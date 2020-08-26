@@ -143,7 +143,7 @@ class EthernetManager:
         Returns:
             bool: True if valid, False if not
         """
-        return re.match(r'\d+.\d+.\d+.\d+', ip)
+        return re.match(r'\d+.\d+.\d+.\d+', ip) is not None
 
     def is_static_ip(self, ip: str) -> bool:
         """Check if ip address is static or dynamic
