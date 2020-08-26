@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+from typing import Any, Dict, List
 from socket import AddressFamily
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
@@ -18,7 +19,7 @@ class EthernetManager:
     ipr = IPRoute()
 
     settings = settings.Settings()
-    result = {}
+    result: List[Dict[str, Any]] = []
 
     def __init__(self):
         """Load settings and do the initial configuration
@@ -250,7 +251,7 @@ class EthernetManager:
         # Set new ip address
         self.set_ip(interface_name, ip)
 
-    def get_interfaces(self) -> dict:
+    def get_interfaces(self) -> List[Dict[str, Any]]:
         """Get interfaces information
 
         Returns:
