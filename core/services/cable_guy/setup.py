@@ -1,5 +1,4 @@
 import setuptools
-from distutils.command.build import build
 
 def populate_static_files():
     import pathlib
