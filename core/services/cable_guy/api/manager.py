@@ -1,12 +1,13 @@
 import asyncio
 import os
 import re
+from typing import Any, Dict, List
 from socket import AddressFamily
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 import psutil
 
-from . import settings
+from api import settings
 
 
 class EthernetManager:
@@ -18,7 +19,7 @@ class EthernetManager:
     ipr = IPRoute()
 
     settings = settings.Settings()
-    result = {}
+    result: List[Dict[str, Any]] = []
 
     def __init__(self):
         """Load settings and do the initial configuration
@@ -142,7 +143,7 @@ class EthernetManager:
         Returns:
             bool: True if valid, False if not
         """
-        return re.match(r'\d+.\d+.\d+.\d+', ip)
+        return re.match(r'\d+.\d+.\d+.\d+', ip) is not None
 
     def is_static_ip(self, ip: str) -> bool:
         """Check if ip address is static or dynamic
@@ -250,7 +251,7 @@ class EthernetManager:
         # Set new ip address
         self.set_ip(interface_name, ip)
 
-    def get_interfaces(self) -> dict:
+    def get_interfaces(self) -> List[Dict[str, Any]]:
         """Get interfaces information
 
         Returns:

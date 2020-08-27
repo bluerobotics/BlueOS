@@ -3,7 +3,7 @@ name: companion-core
 on: [push, pull_request]
 
 jobs:
-  buildx:
+  deploy-core:
     runs-on: ubuntu-latest
     steps:
       -

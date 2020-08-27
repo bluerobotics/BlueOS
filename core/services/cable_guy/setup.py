@@ -1,5 +1,4 @@
 import setuptools
-from distutils.command.build import build
 
 def populate_static_files():
     import pathlib
@@ -16,7 +15,7 @@ def populate_static_files():
 
     static_files = {
         "js": [
-            "https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js",
+            "https://unpkg.com/axios@0.19.2/dist/axios.min.js",
             "https://cdn.metroui.org.ua/v4/js/metro.min.js",
             "https://unpkg.com/vue@2.6.11/dist/vue.js",
         ],
