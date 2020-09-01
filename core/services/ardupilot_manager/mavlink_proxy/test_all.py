@@ -2,9 +2,9 @@ import pathlib
 import re
 import warnings
 
-from lib.Endpoint import Endpoint, EndpointType
-from lib.MAVLinkRouter import MAVLinkRouter
-from lib.MAVProxy import MAVProxy
+from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
+from mavlink_proxy.MAVProxy import MAVProxy
 
 
 def test_endpoint() -> None:
