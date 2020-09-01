@@ -3,9 +3,10 @@ import glob
 import socket
 import time
 
+
 class WPASupplicant:
     BUFFER_SIZE = 4096
-    target = ('localhost', 6664)
+    target = ("localhost", 6664)
     sock = None
     verbose = True
 
@@ -26,35 +27,34 @@ class WPASupplicant:
         else:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             # clear path
-            files = glob.glob('/tmp/wpa_playground/*')
+            files = glob.glob("/tmp/wpa_playground/*")
             for f in files:
                 os.remove(f)
-            socket_client = f'/tmp/wpa_playground/wpa_supplicant_service_{os.getpid()}'
+            socket_client = f"/tmp/wpa_playground/wpa_supplicant_service_{os.getpid()}"
             self.sock.bind(socket_client)
 
         self.sock.settimeout(10)
         self.sock.connect(self.target)
 
     def send_command(self, command):
-        """Send a specific command
-        """
-        print('>', command)
+        """Send a specific command"""
+        print(">", command)
 
         try:
-            self.sock.send(command.encode('utf-8'))
+            self.sock.send(command.encode("utf-8"))
         except Exception as e:
             if self.verbose:
-                print('Exception:', e)
+                print("Exception:", e)
             return e, False
 
         try:
             data, _ = self.sock.recvfrom(self.BUFFER_SIZE)
             if self.verbose:
-                print('<', data.decode('utf-8').strip())
+                print("<", data.decode("utf-8").strip())
             return data, True
         except Exception as e:
             if self.verbose:
-                print('Exception:', e)
+                print("Exception:", e)
             return e, False
 
     def send_command_ping(self):
@@ -65,7 +65,7 @@ class WPASupplicant:
             if the connection is open and wpa_supplicant is processing commands.
 
         """
-        return self.send_command('PING')
+        return self.send_command("PING")
 
     def send_command_mib(self):
         """Send message: MIB
@@ -74,7 +74,7 @@ class WPASupplicant:
             with each line in  <code>variable=value</code>  format. For example:
 
         """
-        return self.send_command('MIB')
+        return self.send_command("MIB")
 
     def send_command_status(self):
         """Send message: STATUS
@@ -83,7 +83,7 @@ class WPASupplicant:
             block with each line in  <code>variable=value</code>  format. For
             example:
         """
-        return self.send_command('STATUS')
+        return self.send_command("STATUS")
 
     def send_command_status_verbose(self):
         """Send message: STATUS-VERBOSE
@@ -91,42 +91,42 @@ class WPASupplicant:
         Same as STATUS, but with more verbosity (i.e., more  <code>variable=value</code>
             pairs).
         """
-        return self.send_command('STATUS-VERBOSE')
+        return self.send_command("STATUS-VERBOSE")
 
     def send_command_pmksa(self):
         """Send message: PMKSA
 
         Show PMKSA cache
         """
-        return self.send_command('PMKSA')
+        return self.send_command("PMKSA")
 
     def send_command_set(self, variable, value):
         """Send message: SET
 
         Example command:
         """
-        return self.send_command('SET' + ' ' + ' '.join([variable, value]))
+        return self.send_command("SET" + " " + " ".join([variable, value]))
 
     def send_command_logon(self):
         """Send message: LOGON
 
         IEEE 802.1X EAPOL state machine logon.
         """
-        return self.send_command('LOGON')
+        return self.send_command("LOGON")
 
     def send_command_logoff(self):
         """Send message: LOGOFF
 
         IEEE 802.1X EAPOL state machine logoff.
         """
-        return self.send_command('LOGOFF')
+        return self.send_command("LOGOFF")
 
     def send_command_reassociate(self):
         """Send message: REASSOCIATE
 
         Force reassociation.
         """
-        return self.send_command('REASSOCIATE')
+        return self.send_command("REASSOCIATE")
 
     def send_command_reconnect(self):
         """Send message: RECONNECT
@@ -134,14 +134,14 @@ class WPASupplicant:
         Connect if disconnected (i.e., like  <code>REASSOCIATE</code> , but only
             connect if in disconnected state).
         """
-        return self.send_command('RECONNECT')
+        return self.send_command("RECONNECT")
 
     def send_command_preauth(self, BSSID):
         """Send message: PREAUTH
 
         Start pre-authentication with the given BSSID.
         """
-        return self.send_command('PREAUTH' + ' ' + ' '.join([BSSID]))
+        return self.send_command("PREAUTH" + " " + " ".join([BSSID]))
 
     def send_command_attach(self):
         """Send message: ATTACH
@@ -150,7 +150,7 @@ class WPASupplicant:
             done with  <a class="el" href="wpa__ctrl_8c.html#a3257febde163010311f3306ac0468257">wpa_ctrl_attach()</a>
             .
         """
-        return self.send_command('ATTACH')
+        return self.send_command("ATTACH")
 
     def send_command_detach(self):
         """Send message: DETACH
@@ -159,28 +159,28 @@ class WPASupplicant:
             done with  <a class="el" href="wpa__ctrl_8c.html#ae326ca921d06153e4efce717ae5dd4da">wpa_ctrl_detach()</a>
             .
         """
-        return self.send_command('DETACH')
+        return self.send_command("DETACH")
 
     def send_command_level(self, debug_level):
         """Send message: LEVEL
 
         Change debug level.
         """
-        return self.send_command('LEVEL' + ' ' + ' '.join([debug_level]))
+        return self.send_command("LEVEL" + " " + " ".join([debug_level]))
 
     def send_command_reconfigure(self):
         """Send message: RECONFIGURE
 
         Force wpa_supplicant to re-read its configuration data.
         """
-        return self.send_command('RECONFIGURE')
+        return self.send_command("RECONFIGURE")
 
     def send_command_terminate(self):
         """Send message: TERMINATE
 
         Terminate wpa_supplicant process.
         """
-        return self.send_command('TERMINATE')
+        return self.send_command("TERMINATE")
 
     def send_command_bssid(self, network_id, BSSID):
         """Send message: BSSID
@@ -188,14 +188,14 @@ class WPASupplicant:
         Set preferred BSSID for a network. Network id can be received from the
             <code>LIST_NETWORKS</code>  command output.
         """
-        return self.send_command('BSSID' + ' ' + ' '.join([network_id, BSSID]))
+        return self.send_command("BSSID" + " " + " ".join([network_id, BSSID]))
 
     def send_command_list_networks(self):
         """Send message: LIST_NETWORKS
 
         (note: fields are separated with tabs)
         """
-        return self.send_command('LIST_NETWORKS')
+        return self.send_command("LIST_NETWORKS")
 
     def send_command_disconnect(self):
         """Send message: DISCONNECT
@@ -203,21 +203,21 @@ class WPASupplicant:
         Disconnect and wait for  <code>REASSOCIATE</code>  or  <code>RECONNECT</code>
             command before connecting.
         """
-        return self.send_command('DISCONNECT')
+        return self.send_command("DISCONNECT")
 
     def send_command_scan(self):
         """Send message: SCAN
 
         Request a new BSS scan.
         """
-        return self.send_command('SCAN')
+        return self.send_command("SCAN")
 
     def send_command_scan_results(self):
         """Send message: SCAN_RESULTS
 
         (note: fields are separated with tabs)
         """
-        return self.send_command('SCAN_RESULTS')
+        return self.send_command("SCAN_RESULTS")
 
     def send_command_bss(self):
         """Send message: BSS
@@ -227,7 +227,7 @@ class WPASupplicant:
             user should be prepared to ignore values it does not understand.
 
         """
-        return self.send_command('BSS')
+        return self.send_command("BSS")
 
     def send_command_select_network(self, network_id):
         """Send message: SELECT_NETWORK
@@ -235,7 +235,7 @@ class WPASupplicant:
         Select a network (disable others). Network id can be received from the
             <code>LIST_NETWORKS</code>  command output.
         """
-        return self.send_command('SELECT_NETWORK' + ' ' + ' '.join([network_id]))
+        return self.send_command("SELECT_NETWORK" + " " + " ".join([network_id]))
 
     def send_command_enable_network(self, network_id):
         """Send message: ENABLE_NETWORK
@@ -244,7 +244,7 @@ class WPASupplicant:
             command output. Special network id  <code>all</code>  can be used
             to enable all network.
         """
-        return self.send_command('ENABLE_NETWORK' + ' ' + ' '.join([network_id]))
+        return self.send_command("ENABLE_NETWORK" + " " + " ".join([network_id]))
 
     def send_command_disable_network(self, network_id):
         """Send message: DISABLE_NETWORK
@@ -253,7 +253,7 @@ class WPASupplicant:
             command output. Special network id  <code>all</code>  can be used
             to disable all network.
         """
-        return self.send_command('DISABLE_NETWORK' + ' ' + ' '.join([network_id]))
+        return self.send_command("DISABLE_NETWORK" + " " + " ".join([network_id]))
 
     def send_command_add_network(self):
         """Send message: ADD_NETWORK
@@ -264,7 +264,7 @@ class WPASupplicant:
             returns the network id of the new network or FAIL on failure.
 
         """
-        return self.send_command('ADD_NETWORK')
+        return self.send_command("ADD_NETWORK")
 
     def send_command_remove_network(self, network_id):
         """Send message: REMOVE_NETWORK
@@ -273,7 +273,7 @@ class WPASupplicant:
             command output. Special network id  <code>all</code>  can be used
             to remove all network.
         """
-        return self.send_command('REMOVE_NETWORK' + ' ' + ' '.join([network_id]))
+        return self.send_command("REMOVE_NETWORK" + " " + " ".join([network_id]))
 
     def send_command_set_network(self, network_id, variable, value):
         """Send message: SET_NETWORK
@@ -281,7 +281,7 @@ class WPASupplicant:
         This command uses the same variables and data formats as the configuration
             file. See example wpa_supplicant.conf for more details.
         """
-        return self.send_command('SET_NETWORK' + ' ' + ' '.join([network_id, variable, value]))
+        return self.send_command("SET_NETWORK" + " " + " ".join([network_id, variable, value]))
 
     def send_command_get_network(self, network_id, variable):
         """Send message: GET_NETWORK
@@ -289,14 +289,14 @@ class WPASupplicant:
         Get network variables. Network id can be received from the  <code>LIST_NETWORKS</code>
             command output.
         """
-        return self.send_command('GET_NETWORK' + ' ' + ' '.join([network_id, variable]))
+        return self.send_command("GET_NETWORK" + " " + " ".join([network_id, variable]))
 
     def send_command_save_config(self):
         """Send message: SAVE_CONFIG
 
         Save the current configuration.
         """
-        return self.send_command('SAVE_CONFIG')
+        return self.send_command("SAVE_CONFIG")
 
     def send_command_p2p_find(self):
         """Send message: P2P_FIND
@@ -313,7 +313,7 @@ class WPASupplicant:
             the GO being asleep) over time without adding considerable extra
             delay for every Search state round.
         """
-        return self.send_command('P2P_FIND')
+        return self.send_command("P2P_FIND")
 
     def send_command_p2p_stop_find(self):
         """Send message: P2P_STOP_FIND
@@ -321,7 +321,7 @@ class WPASupplicant:
         Stop ongoing P2P device discovery or other operation (connect, listen mode).
 
         """
-        return self.send_command('P2P_STOP_FIND')
+        return self.send_command("P2P_STOP_FIND")
 
     def send_command_p2p_connect(self):
         """Send message: P2P_CONNECT
@@ -329,7 +329,7 @@ class WPASupplicant:
         The optional "go_intent" parameter can be used to override the default
             GO Intent value.
         """
-        return self.send_command('P2P_CONNECT')
+        return self.send_command("P2P_CONNECT")
 
     def send_command_p2p_listen(self):
         """Send message: P2P_LISTEN
@@ -340,7 +340,7 @@ class WPASupplicant:
             designed for testing. It can also be used to keep the device discoverable
             without having to maintain a group.
         """
-        return self.send_command('P2P_LISTEN')
+        return self.send_command("P2P_LISTEN")
 
     def send_command_p2p_group_remove(self):
         """Send message: P2P_GROUP_REMOVE
@@ -350,7 +350,7 @@ class WPASupplicant:
             of the group interface is used as a parameter for this command.
 
         """
-        return self.send_command('P2P_GROUP_REMOVE')
+        return self.send_command("P2P_GROUP_REMOVE")
 
     def send_command_p2p_group_add(self):
         """Send message: P2P_GROUP_ADD
@@ -360,7 +360,7 @@ class WPASupplicant:
             persistent=<network id>=""> can be used to specify restart of a
             persistent group.
         """
-        return self.send_command('P2P_GROUP_ADD')
+        return self.send_command("P2P_GROUP_ADD")
 
     def send_command_p2p_prov_disc(self):
         """Send message: P2P_PROV_DISC
@@ -372,21 +372,18 @@ class WPASupplicant:
             02:01:02:03:04:05 keypad" would request the peer to enter a PIN
             that we display.
         """
-        return self.send_command('P2P_PROV_DISC')
+        return self.send_command("P2P_PROV_DISC")
 
     def send_command_p2p_get_passphrase(self):
         """Send message: P2P_GET_PASSPHRASE
 
         Get the passphrase for a group (only available when acting as a GO).
         """
-        return self.send_command('P2P_GET_PASSPHRASE')
+        return self.send_command("P2P_GET_PASSPHRASE")
 
     def send_command_p2p_serv_disc_req(self):
-        """Send message: P2P-SERV-DISC-REQ
-
-
-        """
-        return self.send_command('P2P-SERV-DISC-REQ')
+        """Send message: P2P-SERV-DISC-REQ"""
+        return self.send_command("P2P-SERV-DISC-REQ")
 
     def send_command_p2p_serv_disc_cancel_req(self):
         """Send message: P2P_SERV_DISC_CANCEL_REQ
@@ -396,14 +393,11 @@ class WPASupplicant:
             by  <a class="el" href="ctrl_iface_page.html#ctrl_iface_P2P_SERV_DISC_REQ">P2P_SERV_DISC_REQ</a>
             ), e.g., "P2P_SERV_DISC_CANCEL_REQ 1f77628".
         """
-        return self.send_command('P2P_SERV_DISC_CANCEL_REQ')
+        return self.send_command("P2P_SERV_DISC_CANCEL_REQ")
 
     def send_command_p2p_serv_disc_resp(self):
-        """Send message: P2P-SERV-DISC-RESP
-
-
-        """
-        return self.send_command('P2P-SERV-DISC-RESP')
+        """Send message: P2P-SERV-DISC-RESP"""
+        return self.send_command("P2P-SERV-DISC-RESP")
 
     def send_command_p2p_service_update(self):
         """Send message: P2P_SERVICE_UPDATE
@@ -412,7 +406,7 @@ class WPASupplicant:
             P2P service indicator value so that peers know when previously
             cached information may have changed.
         """
-        return self.send_command('P2P_SERVICE_UPDATE')
+        return self.send_command("P2P_SERVICE_UPDATE")
 
     def send_command_p2p_serv_disc_external(self):
         """Send message: P2P_SERV_DISC_EXTERNAL
@@ -424,7 +418,7 @@ class WPASupplicant:
             <a class="el" href="ctrl_iface_page.html#ctrl_iface_P2P_SERV_DISC_RESP">P2P_SERV_DISC_RESP</a>
             ).
         """
-        return self.send_command('P2P_SERV_DISC_EXTERNAL')
+        return self.send_command("P2P_SERV_DISC_EXTERNAL")
 
     def send_command_p2p_reject(self):
         """Send message: P2P_REJECT
@@ -434,14 +428,14 @@ class WPASupplicant:
             and request to automatically block any further connection or discovery
             of the peer.
         """
-        return self.send_command('P2P_REJECT')
+        return self.send_command("P2P_REJECT")
 
     def send_command_p2p_invite(self):
         """Send message: P2P_INVITE
 
         Invite a peer to join a group or to (re)start a persistent group.
         """
-        return self.send_command('P2P_INVITE')
+        return self.send_command("P2P_INVITE")
 
     def send_command_p2p_peer(self):
         """Send message: P2P_PEER
@@ -452,21 +446,21 @@ class WPASupplicant:
             Address>" to indicate the entry following the specified peer (to
             allow for iterating through the list).
         """
-        return self.send_command('P2P_PEER')
+        return self.send_command("P2P_PEER")
 
     def send_command_p2p_ext_listen(self):
         """Send message: P2P_EXT_LISTEN
 
         And a matching reply from the GUI:
         """
-        return self.send_command('P2P_EXT_LISTEN')
+        return self.send_command("P2P_EXT_LISTEN")
 
-    def send_command_get_capability(self, option, strict=''):
+    def send_command_get_capability(self, option, strict=""):
         """Send message: GET_CAPABILITY
 
         Example request/reply pairs:
         """
-        return self.send_command('GET_CAPABILITY' + ' ' + ' '.join([option, strict]))
+        return self.send_command("GET_CAPABILITY" + " " + " ".join([option, strict]))
 
     def send_command_ap_scan(self, ap_scan_value):
         """Send message: AP_SCAN
@@ -476,7 +470,7 @@ class WPASupplicant:
             not use scanning and just requests driver to associate and take
             care of AP selection
         """
-        return self.send_command('AP_SCAN' + ' ' + ' '.join([ap_scan_value]))
+        return self.send_command("AP_SCAN" + " " + " ".join([ap_scan_value]))
 
     def send_command_interfaces(self):
         """Send message: INTERFACES
@@ -484,7 +478,7 @@ class WPASupplicant:
         Following subsections describe the most common event notifications generated
             by wpa_supplicant.
         """
-        return self.send_command('INTERFACES')
+        return self.send_command("INTERFACES")
 
     def send_command_ctrl_req_(self):
         """Send message: CTRL-REQ-
@@ -492,7 +486,7 @@ class WPASupplicant:
         WPA_CTRL_REQ: Request information from a user. See  <a class="el" href="ctrl_iface_page.html#ctrl_iface_interactive">Interactive
             requests</a>  sections for more details.
         """
-        return self.send_command('CTRL-REQ-')
+        return self.send_command("CTRL-REQ-")
 
     def send_command_ctrl_event_connected(self):
         """Send message: CTRL-EVENT-CONNECTED
@@ -500,7 +494,7 @@ class WPASupplicant:
         WPA_EVENT_CONNECTED: Indicate successfully completed authentication and
             that the data connection is now enabled.
         """
-        return self.send_command('CTRL-EVENT-CONNECTED')
+        return self.send_command("CTRL-EVENT-CONNECTED")
 
     def send_command_ctrl_event_disconnected(self):
         """Send message: CTRL-EVENT-DISCONNECTED
@@ -508,14 +502,14 @@ class WPASupplicant:
         WPA_EVENT_DISCONNECTED: Disconnected, data connection is not available
 
         """
-        return self.send_command('CTRL-EVENT-DISCONNECTED')
+        return self.send_command("CTRL-EVENT-DISCONNECTED")
 
     def send_command_ctrl_event_terminating(self):
         """Send message: CTRL-EVENT-TERMINATING
 
         WPA_EVENT_TERMINATING: wpa_supplicant is exiting
         """
-        return self.send_command('CTRL-EVENT-TERMINATING')
+        return self.send_command("CTRL-EVENT-TERMINATING")
 
     def send_command_ctrl_event_password_changed(self):
         """Send message: CTRL-EVENT-PASSWORD-CHANGED
@@ -523,14 +517,14 @@ class WPASupplicant:
         WPA_EVENT_PASSWORD_CHANGED: Password change was completed successfully
 
         """
-        return self.send_command('CTRL-EVENT-PASSWORD-CHANGED')
+        return self.send_command("CTRL-EVENT-PASSWORD-CHANGED")
 
     def send_command_ctrl_event_eap_notification(self):
         """Send message: CTRL-EVENT-EAP-NOTIFICATION
 
         WPA_EVENT_EAP_NOTIFICATION: EAP-Request/Notification received
         """
-        return self.send_command('CTRL-EVENT-EAP-NOTIFICATION')
+        return self.send_command("CTRL-EVENT-EAP-NOTIFICATION")
 
     def send_command_ctrl_event_eap_started(self):
         """Send message: CTRL-EVENT-EAP-STARTED
@@ -538,21 +532,21 @@ class WPASupplicant:
         WPA_EVENT_EAP_STARTED: EAP authentication started (EAP-Request/Identity
             received)
         """
-        return self.send_command('CTRL-EVENT-EAP-STARTED')
+        return self.send_command("CTRL-EVENT-EAP-STARTED")
 
     def send_command_ctrl_event_eap_method(self):
         """Send message: CTRL-EVENT-EAP-METHOD
 
         WPA_EVENT_EAP_METHOD: EAP method selected
         """
-        return self.send_command('CTRL-EVENT-EAP-METHOD')
+        return self.send_command("CTRL-EVENT-EAP-METHOD")
 
     def send_command_ctrl_event_eap_success(self):
         """Send message: CTRL-EVENT-EAP-SUCCESS
 
         WPA_EVENT_EAP_SUCCESS: EAP authentication completed successfully
         """
-        return self.send_command('CTRL-EVENT-EAP-SUCCESS')
+        return self.send_command("CTRL-EVENT-EAP-SUCCESS")
 
     def send_command_ctrl_event_eap_failure(self):
         """Send message: CTRL-EVENT-EAP-FAILURE
@@ -560,14 +554,14 @@ class WPASupplicant:
         WPA_EVENT_EAP_FAILURE: EAP authentication failed (EAP-Failure received)
 
         """
-        return self.send_command('CTRL-EVENT-EAP-FAILURE')
+        return self.send_command("CTRL-EVENT-EAP-FAILURE")
 
     def send_command_ctrl_event_scan_results(self):
         """Send message: CTRL-EVENT-SCAN-RESULTS
 
         WPA_EVENT_SCAN_RESULTS: New scan results available
         """
-        return self.send_command('CTRL-EVENT-SCAN-RESULTS')
+        return self.send_command("CTRL-EVENT-SCAN-RESULTS")
 
     def send_command_ctrl_event_bss_added(self):
         """Send message: CTRL-EVENT-BSS-ADDED
@@ -575,7 +569,7 @@ class WPASupplicant:
         WPA_EVENT_BSS_ADDED: A new BSS entry was added. The event prefix is followed
             by the BSS entry id and BSSID.
         """
-        return self.send_command('CTRL-EVENT-BSS-ADDED')
+        return self.send_command("CTRL-EVENT-BSS-ADDED")
 
     def send_command_ctrl_event_bss_removed(self):
         """Send message: CTRL-EVENT-BSS-REMOVED
@@ -583,14 +577,14 @@ class WPASupplicant:
         WPA_EVENT_BSS_REMOVED: A BSS entry was removed. The event prefix is followed
             by BSS entry id and BSSID.
         """
-        return self.send_command('CTRL-EVENT-BSS-REMOVED')
+        return self.send_command("CTRL-EVENT-BSS-REMOVED")
 
     def send_command_wps_overlap_detected(self):
         """Send message: WPS-OVERLAP-DETECTED
 
         WPS_EVENT_OVERLAP: WPS overlap detected in PBC mode
         """
-        return self.send_command('WPS-OVERLAP-DETECTED')
+        return self.send_command("WPS-OVERLAP-DETECTED")
 
     def send_command_wps_ap_available_pbc(self):
         """Send message: WPS-AP-AVAILABLE-PBC
@@ -598,7 +592,7 @@ class WPASupplicant:
         WPS_EVENT_AP_AVAILABLE_PBC: Available WPS AP with active PBC found in scan
             results.
         """
-        return self.send_command('WPS-AP-AVAILABLE-PBC')
+        return self.send_command("WPS-AP-AVAILABLE-PBC")
 
     def send_command_wps_ap_available_pin(self):
         """Send message: WPS-AP-AVAILABLE-PIN
@@ -606,42 +600,42 @@ class WPASupplicant:
         WPS_EVENT_AP_AVAILABLE_PIN: Available WPS AP with recently selected PIN
             registrar found in scan results.
         """
-        return self.send_command('WPS-AP-AVAILABLE-PIN')
+        return self.send_command("WPS-AP-AVAILABLE-PIN")
 
     def send_command_wps_ap_available(self):
         """Send message: WPS-AP-AVAILABLE
 
         WPS_EVENT_AP_AVAILABLE: Available WPS AP found in scan results
         """
-        return self.send_command('WPS-AP-AVAILABLE')
+        return self.send_command("WPS-AP-AVAILABLE")
 
     def send_command_wps_cred_received(self):
         """Send message: WPS-CRED-RECEIVED
 
         WPS_EVENT_CRED_RECEIVED: A new credential received
         """
-        return self.send_command('WPS-CRED-RECEIVED')
+        return self.send_command("WPS-CRED-RECEIVED")
 
     def send_command_wps_m2d(self):
         """Send message: WPS-M2D
 
         WPS_EVENT_M2D: M2D received
         """
-        return self.send_command('WPS-M2D')
+        return self.send_command("WPS-M2D")
 
     def send_command_ctrl_iface_event_wps_fail(self):
         """Send message: ctrl_iface_event_WPS_FAIL
 
         WPS_EVENT_FAIL: WPS registration failed after M2/M2D
         """
-        return self.send_command('ctrl_iface_event_WPS_FAIL')
+        return self.send_command("ctrl_iface_event_WPS_FAIL")
 
     def send_command_wps_success(self):
         """Send message: WPS-SUCCESS
 
         WPS_EVENT_SUCCESS: WPS registration completed successfully
         """
-        return self.send_command('WPS-SUCCESS')
+        return self.send_command("WPS-SUCCESS")
 
     def send_command_wps_timeout(self):
         """Send message: WPS-TIMEOUT
@@ -649,7 +643,7 @@ class WPASupplicant:
         WPS_EVENT_TIMEOUT: WPS enrollment attempt timed out and was terminated
 
         """
-        return self.send_command('WPS-TIMEOUT')
+        return self.send_command("WPS-TIMEOUT")
 
     def send_command_wps_enrollee_seen(self):
         """Send message: WPS-ENROLLEE-SEEN
@@ -658,35 +652,35 @@ class WPASupplicant:
             event prefix is followed by MAC addr, UUID-E, pri dev type, config
             methods, dev passwd id, request type, [dev name].
         """
-        return self.send_command('WPS-ENROLLEE-SEEN')
+        return self.send_command("WPS-ENROLLEE-SEEN")
 
     def send_command_wps_er_ap_add(self):
         """Send message: WPS-ER-AP-ADD
 
         WPS_EVENT_ER_AP_ADD: WPS ER discovered an AP
         """
-        return self.send_command('WPS-ER-AP-ADD')
+        return self.send_command("WPS-ER-AP-ADD")
 
     def send_command_wps_er_ap_remove(self):
         """Send message: WPS-ER-AP-REMOVE
 
         WPS_EVENT_ER_AP_REMOVE: WPS ER removed an AP entry
         """
-        return self.send_command('WPS-ER-AP-REMOVE')
+        return self.send_command("WPS-ER-AP-REMOVE")
 
     def send_command_wps_er_enrollee_add(self):
         """Send message: WPS-ER-ENROLLEE-ADD
 
         WPS_EVENT_ER_ENROLLEE_ADD: WPS ER discovered a new Enrollee
         """
-        return self.send_command('WPS-ER-ENROLLEE-ADD')
+        return self.send_command("WPS-ER-ENROLLEE-ADD")
 
     def send_command_wps_er_enrollee_remove(self):
         """Send message: WPS-ER-ENROLLEE-REMOVE
 
         WPS_EVENT_ER_ENROLLEE_REMOVE: WPS ER removed an Enrollee entry
         """
-        return self.send_command('WPS-ER-ENROLLEE-REMOVE')
+        return self.send_command("WPS-ER-ENROLLEE-REMOVE")
 
     def send_command_wps_pin_needed(self):
         """Send message: WPS-PIN-NEEDED
@@ -696,14 +690,14 @@ class WPASupplicant:
             device name, manufacturer, model name, model number, serial number,
             primary device type).
         """
-        return self.send_command('WPS-PIN-NEEDED')
+        return self.send_command("WPS-PIN-NEEDED")
 
     def send_command_wps_new_ap_settings(self):
         """Send message: WPS-NEW-AP-SETTINGS
 
         WPS_EVENT_NEW_AP_SETTINGS: New AP settings were received
         """
-        return self.send_command('WPS-NEW-AP-SETTINGS')
+        return self.send_command("WPS-NEW-AP-SETTINGS")
 
     def send_command_wps_reg_success(self):
         """Send message: WPS-REG-SUCCESS
@@ -711,7 +705,7 @@ class WPASupplicant:
         WPS_EVENT_REG_SUCCESS: WPS provisioning was completed successfully (AP/Registrar)
 
         """
-        return self.send_command('WPS-REG-SUCCESS')
+        return self.send_command("WPS-REG-SUCCESS")
 
     def send_command_wps_ap_setup_locked(self):
         """Send message: WPS-AP-SETUP-LOCKED
@@ -719,7 +713,7 @@ class WPASupplicant:
         WPS_EVENT_AP_SETUP_LOCKED: AP changed into setup locked state due to multiple
             failed configuration attempts using the AP PIN.
         """
-        return self.send_command('WPS-AP-SETUP-LOCKED')
+        return self.send_command("WPS-AP-SETUP-LOCKED")
 
     def send_command_ap_sta_connected(self):
         """Send message: AP-STA-CONNECTED
@@ -727,14 +721,14 @@ class WPASupplicant:
         AP_STA_CONNECTED: A station associated with us (AP mode event). The event
             prefix is followed by the MAC address of the station.
         """
-        return self.send_command('AP-STA-CONNECTED')
+        return self.send_command("AP-STA-CONNECTED")
 
     def send_command_ap_sta_disconnected(self):
         """Send message: AP-STA-DISCONNECTED
 
         AP_STA_DISCONNECTED: A station disassociated (AP mode event)
         """
-        return self.send_command('AP-STA-DISCONNECTED')
+        return self.send_command("AP-STA-DISCONNECTED")
 
     def send_command_p2p_device_found(self):
         """Send message: P2P-DEVICE-FOUND
@@ -742,7 +736,7 @@ class WPASupplicant:
         P2P_EVENT_DEVICE_FOUND: Indication of a discovered P2P device with information
             about that device.
         """
-        return self.send_command('P2P-DEVICE-FOUND')
+        return self.send_command("P2P-DEVICE-FOUND")
 
     def send_command_p2p_go_neg_request(self):
         """Send message: P2P-GO-NEG-REQUEST
@@ -750,7 +744,7 @@ class WPASupplicant:
         P2P_EVENT_GO_NEG_REQUEST: A P2P device requested GO negotiation, but we
             were not ready to start the negotiation.
         """
-        return self.send_command('P2P-GO-NEG-REQUEST')
+        return self.send_command("P2P-GO-NEG-REQUEST")
 
     def send_command_p2p_go_neg_success(self):
         """Send message: P2P-GO-NEG-SUCCESS
@@ -758,7 +752,7 @@ class WPASupplicant:
         P2P_EVENT_GO_NEG_SUCCESS: Indication of successfully complete group owner
             negotiation.
         """
-        return self.send_command('P2P-GO-NEG-SUCCESS')
+        return self.send_command("P2P-GO-NEG-SUCCESS")
 
     def send_command_p2p_go_neg_failure(self):
         """Send message: P2P-GO-NEG-FAILURE
@@ -766,7 +760,7 @@ class WPASupplicant:
         P2P_EVENT_GO_NEG_FAILURE: Indication of failed group owner negotiation.
 
         """
-        return self.send_command('P2P-GO-NEG-FAILURE')
+        return self.send_command("P2P-GO-NEG-FAILURE")
 
     def send_command_p2p_group_formation_success(self):
         """Send message: P2P-GROUP-FORMATION-SUCCESS
@@ -774,7 +768,7 @@ class WPASupplicant:
         P2P_EVENT_GROUP_FORMATION_SUCCESS: Indication that P2P group formation
             has been completed successfully.
         """
-        return self.send_command('P2P-GROUP-FORMATION-SUCCESS')
+        return self.send_command("P2P-GROUP-FORMATION-SUCCESS")
 
     def send_command_p2p_group_formation_failure(self):
         """Send message: P2P-GROUP-FORMATION-FAILURE
@@ -782,7 +776,7 @@ class WPASupplicant:
         P2P_EVENT_GROUP_FORMATION_FAILURE: Indication that P2P group formation
             failed (e.g., due to provisioning failure or timeout).
         """
-        return self.send_command('P2P-GROUP-FORMATION-FAILURE')
+        return self.send_command("P2P-GROUP-FORMATION-FAILURE")
 
     def send_command_p2p_group_started(self):
         """Send message: P2P-GROUP-STARTED
@@ -793,7 +787,7 @@ class WPASupplicant:
             here if known (on GO) or PSK (on client). If the group is a persistent
             one, a flag indicating that is included.
         """
-        return self.send_command('P2P-GROUP-STARTED')
+        return self.send_command("P2P-GROUP-STARTED")
 
     def send_command_p2p_group_removed(self):
         """Send message: P2P-GROUP-REMOVED
@@ -802,7 +796,7 @@ class WPASupplicant:
             Additional parameters: network interface name for the group, role
             (GO/client).
         """
-        return self.send_command('P2P-GROUP-REMOVED')
+        return self.send_command("P2P-GROUP-REMOVED")
 
     def send_command_p2p_prov_disc_show_pin(self):
         """Send message: P2P-PROV-DISC-SHOW-PIN
@@ -814,7 +808,7 @@ class WPASupplicant:
             can be used to accept the request with the same PIN configured
             for the connection.
         """
-        return self.send_command('P2P-PROV-DISC-SHOW-PIN')
+        return self.send_command("P2P-PROV-DISC-SHOW-PIN")
 
     def send_command_p2p_prov_disc_enter_pin(self):
         """Send message: P2P-PROV-DISC-ENTER-PIN
@@ -823,7 +817,7 @@ class WPASupplicant:
             PIN displayed on the peer. The following parameter is included
             after the event prefix: peer address.
         """
-        return self.send_command('P2P-PROV-DISC-ENTER-PIN')
+        return self.send_command("P2P-PROV-DISC-ENTER-PIN")
 
     def send_command_p2p_prov_disc_pbc_req(self):
         """Send message: P2P-PROV-DISC-PBC-REQ
@@ -833,7 +827,7 @@ class WPASupplicant:
             peer_address. P2P_CONNECT command can be used to accept the request.
 
         """
-        return self.send_command('P2P-PROV-DISC-PBC-REQ')
+        return self.send_command("P2P-PROV-DISC-PBC-REQ")
 
     def send_command_p2p_prov_disc_pbc_resp(self):
         """Send message: P2P-PROV-DISC-PBC-RESP
@@ -843,7 +837,7 @@ class WPASupplicant:
             address, Service Update Indicator, Service Response TLV(s) as hexdump.
 
         """
-        return self.send_command('P2P-PROV-DISC-PBC-RESP')
+        return self.send_command("P2P-PROV-DISC-PBC-RESP")
 
     def send_command_p2p_invitation_received(self):
         """Send message: P2P-INVITATION-RECEIVED
@@ -852,7 +846,7 @@ class WPASupplicant:
             For persistent groups, the parameter after the event prefix indicates
             which network block includes the persistent group data.
         """
-        return self.send_command('P2P-INVITATION-RECEIVED')
+        return self.send_command("P2P-INVITATION-RECEIVED")
 
     def send_command_p2p_invitation_result(self):
         """Send message: P2P-INVITATION-RESULT
@@ -860,21 +854,21 @@ class WPASupplicant:
         shows the status code returned by the peer (or -1 on local failure or timeout).
 
         """
-        return self.send_command('P2P-INVITATION-RESULT')
+        return self.send_command("P2P-INVITATION-RESULT")
 
 
 if __name__ == "__main__":
     wpa = WPASupplicant()
-    wpa.run(('localhost', 6664))
+    wpa.run(("localhost", 6664))
     time.sleep(1)
     wpa.send_command_list_networks()
     for i in range(5):
         wpa.send_command_remove_network(str(i))
 
     wpa.send_command_add_network()
-    wpa.send_command_set_network('0', 'ssid', '\"wifi_ssid\"')
-    wpa.send_command_set_network('0', 'psk', '\"wifi_password\"')
-    wpa.send_command_enable_network('0')
+    wpa.send_command_set_network("0", "ssid", '"wifi_ssid"')
+    wpa.send_command_set_network("0", "psk", '"wifi_password"')
+    wpa.send_command_enable_network("0")
     wpa.send_command_save_config()
     wpa.send_command_reconfigure()
     while True:
