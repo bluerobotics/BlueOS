@@ -1,5 +1,6 @@
 import setuptools
 
+
 def populate_static_files():
     import pathlib
     import ssl
@@ -20,8 +21,8 @@ def populate_static_files():
             "https://unpkg.com/vue@2.6.11/dist/vue.js",
         ],
         "css": [
-            'https://cdn.metroui.org.ua/v4/css/metro-all.min.css',
-        ]
+            "https://cdn.metroui.org.ua/v4/css/metro-all.min.css",
+        ],
     }
 
     # Delete static folder and redownload everything
@@ -32,18 +33,19 @@ def populate_static_files():
     for path, urls in static_files.items():
         print(f"Downloading in {path}..")
         for url in urls:
-            print(f'File: {url}')
+            print(f"File: {url}")
             try:
                 # Create path of file
                 download_path = pathlib.Path.joinpath(static_folder, path)
                 download_path.mkdir(exist_ok=True)
-                name = url.split('/')[-1]
+                name = url.split("/")[-1]
                 # Create path with file name to download
                 download_file_path = pathlib.Path.joinpath(download_path, name)
                 urllib.request.urlretrieve(url, str(download_file_path))
             except Exception as error:
                 print(f"Unable to download, error: {error}")
                 exit(1)
+
 
 populate_static_files()
 
@@ -59,12 +61,12 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
-    python_requires='>=3.6',
+    python_requires=">=3.6",
     install_requires=[
-        'appdirs == 1.4.4',
-        'connexion[swagger-ui] == 2.7.0',
-        'psutil == 5.7.2',
-        'pyroute2 == 0.5.13',
-        'waitress == 1.4.4',
-    ]
+        "appdirs == 1.4.4",
+        "connexion[swagger-ui] == 2.7.0",
+        "psutil == 5.7.2",
+        "pyroute2 == 0.5.13",
+        "waitress == 1.4.4",
+    ],
 )

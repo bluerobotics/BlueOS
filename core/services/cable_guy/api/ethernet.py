@@ -16,6 +16,7 @@ def post(body):
 
     return body, 400
 
+
 def search():
     """REST API Get method
 
