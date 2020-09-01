@@ -10,7 +10,7 @@ from typing import List, Optional
 
 
 class MAVProxy(AbstractRouter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def _get_version(self) -> Optional[str]:

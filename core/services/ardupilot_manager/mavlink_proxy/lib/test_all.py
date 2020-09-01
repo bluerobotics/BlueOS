@@ -8,7 +8,7 @@ from lib.MAVLinkRouter import MAVLinkRouter
 from lib.MAVProxy import MAVProxy
 
 
-def test_endpoint():
+def test_endpoint() -> None:
     endpoint = Endpoint("udp:0.0.0.0:14550")
     assert endpoint.connType == EndpointType.UDPClient, "Connection type does not match."
     assert endpoint.place == "0.0.0.0", f"Connection place does not match."
@@ -16,7 +16,7 @@ def test_endpoint():
     assert endpoint.__str__() == "udp:0.0.0.0:14550", "Connection string does not match."
 
 
-def test_mavproxy():
+def test_mavproxy() -> None:
     if not MAVProxy.is_ok():
         warnings.warn(f"Failed to test mavproxy service", UserWarning)
         return
@@ -25,7 +25,7 @@ def test_mavproxy():
     assert mavproxy.name() == "MAVProxy", "Name does not match."
     assert mavproxy.logdir().exists(), "Default MAVProxy log directory does not exist."
     assert mavproxy.set_logdir(pathlib.Path(".")), "Local path as MAVProxy log directory failed."
-    assert re.search(r"\d+.\d+.\d+", mavproxy.version()) != None, "Version does not follow pattern."
+    assert re.search(r"\d+.\d+.\d+", str(mavproxy.version())) != None, "Version does not follow pattern."
 
     endpoint_1 = Endpoint("udpout:0.0.0.0:14551")
     endpoint_2 = Endpoint("udpout:0.0.0.0:14552")
@@ -40,7 +40,7 @@ def test_mavproxy():
     assert mavproxy.is_running(), "MAVProxy is not running after start."
 
 
-def test_mavlink_router():
+def test_mavlink_router() -> None:
     if not MAVLinkRouter.is_ok():
         warnings.warn(f"Failed to test MAVLinkRouter service", UserWarning)
         return
@@ -49,7 +49,8 @@ def test_mavlink_router():
     assert mavlink_router.name() == "MAVLinkRouter", "Name does not match."
     assert mavlink_router.logdir().exists(), "Default MAVLinkRouter log directory does not exist."
     assert mavlink_router.set_logdir(pathlib.Path(".")), "Local path as MAVLinkRouter log directory failed."
-    assert re.search(r"\d+", mavlink_router.version()) != None, "Version does not follow pattern."
+    version = mavlink_router.version() if mavlink_router.version() else ""
+    assert re.search(r"\d+", str(mavlink_router.version())) != None, "Version does not follow pattern."
 
     endpoint_1 = Endpoint("udpout:0.0.0.0:14551")
     endpoint_2 = Endpoint("udpout:0.0.0.0:14552")

@@ -26,11 +26,11 @@ class Endpoint:
         (["file"], EndpointType.File),
     ]
 
-    def __init__(self, string: str = None):
+    def __init__(self, string: str = "") -> None:
         if string:
             self.from_str(string)
 
-    def from_str(self, pattern: str):
+    def from_str(self, pattern: str) -> "Endpoint":
         args = pattern.split(":")
         if len(args) != 2 and len(args) != 3:
             raise RuntimeError("Wrong format for endpoint creation.")
@@ -47,11 +47,11 @@ class Endpoint:
 
         return self
 
-    def __str__(self):
+    def __str__(self) -> str:
         connTypeString = "Undefined"
         for stringType, endpointType in self._connTypeMap:
             if endpointType == self.connType:
                 connTypeString = stringType[0]
                 break
 
-        return ":".join([connTypeString, self.place, self.argument])
+        return ":".join([connTypeString, self.place, self.argument if self.argument else ""])

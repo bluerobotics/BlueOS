@@ -10,9 +10,9 @@ from lib.Endpoint import Endpoint, EndpointType
 
 
 class AbstractRouter(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self._endpoints: List[Endpoint] = []
-        self._subprocess: Optional[subprocess.Popen] = None
+        self._subprocess: Optional[Any] = None
 
         # Since this methods can fail we need to have the other variables defined
         # to avoid any problem in __del__
@@ -66,7 +66,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def version(self) -> Optional[str]:
         return self._version
 
-    def start(self, vehicle_endpoint: Optional[Endpoint] = None, verbose=False) -> bool:
+    def start(self, vehicle_endpoint: Optional[Endpoint] = None, verbose: bool = False) -> bool:
         if vehicle_endpoint is not None:
             self._master_endpoint = vehicle_endpoint
         command = self.assemble_command(self._master_endpoint)
@@ -117,5 +117,5 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def endpoints(self) -> List[Endpoint]:
         return self._endpoints
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.exit()
