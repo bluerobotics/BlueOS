@@ -8,7 +8,7 @@ MAVLINK_ROUTER_PATH = os.path.join(CLONE_PATH, "mavlink-router")
 MAVLINK_INSTALL_PATH = os.path.join(SERVICE_PATH, "install")
 
 
-def set_directory(path: str):
+def set_directory(path: str) -> None:
     print(f"Changing directory to: {path}")
     os.chdir(path)
 
@@ -17,7 +17,7 @@ def get_project_name() -> str:
     return os.path.basename(os.path.dirname(os.path.realpath(__file__)))
 
 
-def run_command(command: str):
+def run_command(command: str) -> None:
     print(f"Running command: {command}")
     return_code = os.system(command)
     if return_code:
@@ -26,7 +26,7 @@ def run_command(command: str):
     print("Done")
 
 
-def run_apt_install(package: str):
+def run_apt_install(package: str) -> None:
     # No interaction is necessary since there is packages that'll be installed
     # like tzdata, that'll ask for user input
     run_command(f"DEBIAN_FRONTEND=noninteractive apt --yes install {package}")
