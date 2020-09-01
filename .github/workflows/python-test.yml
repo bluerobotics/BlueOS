@@ -31,7 +31,7 @@ jobs:
     -
       name: Run mypy
       run: |
-        find . -type f -name "*.py" | xargs --max-lines=1 mypy --ignore-missing-imports
+        find . -type f -name "*.py" | xargs --max-lines=1 mypy --ignore-missing-imports --warn-unreachable --allow-untyped-decorators --strict
     -
       name: Run pytest
       run: |
