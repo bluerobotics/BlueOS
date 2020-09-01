@@ -31,7 +31,10 @@ def test_mavproxy():
     endpoint_2 = Endpoint("udpout:0.0.0.0:14552")
     assert mavproxy.add_endpoint(endpoint_1), "Failed to add first endpoint"
     assert mavproxy.add_endpoint(endpoint_2), "Failed to add second endpoint"
-    assert mavproxy.endpoints() == [endpoint_1, endpoint_2], "Endpoint list does not match."
+    assert mavproxy.endpoints() == [
+        endpoint_1,
+        endpoint_2,
+    ], "Endpoint list does not match."
 
     assert mavproxy.start(Endpoint("udp:0.0.0.0:14550")), "Failed to start mavproxy"
     assert mavproxy.is_running(), "MAVProxy is not running after start."
@@ -52,7 +55,10 @@ def test_mavlink_router():
     endpoint_2 = Endpoint("udpout:0.0.0.0:14552")
     assert mavlink_router.add_endpoint(endpoint_1), "Failed to add first endpoint"
     assert mavlink_router.add_endpoint(endpoint_2), "Failed to add second endpoint"
-    assert mavlink_router.endpoints() == [endpoint_1, endpoint_2], "Endpoint list does not match."
+    assert mavlink_router.endpoints() == [
+        endpoint_1,
+        endpoint_2,
+    ], "Endpoint list does not match."
 
     assert mavlink_router.start(Endpoint("udp:0.0.0.0:14550")), "Failed to start MAVLinkRouter"
     assert mavlink_router.is_running(), "MAVLinkRouter is not running after start."
