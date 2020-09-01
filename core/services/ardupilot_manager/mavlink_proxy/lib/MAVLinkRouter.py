@@ -9,7 +9,7 @@ from typing import List, Optional
 
 
 class MAVLinkRouter(AbstractRouter):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def _get_version(self) -> Optional[str]:
@@ -25,7 +25,7 @@ class MAVLinkRouter(AbstractRouter):
 
     def assemble_command(self, master: Endpoint) -> str:
         # Convert endpoint format to mavlink-router format
-        def convert_endpoint(endpoint):
+        def convert_endpoint(endpoint: Endpoint) -> str:
             return str(endpoint)[str(endpoint).find(":") + 1 :]
 
         endpoints = " ".join(["--endpoint " + convert_endpoint(endpoint) for endpoint in self.endpoints()])
