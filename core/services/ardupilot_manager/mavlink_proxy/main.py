@@ -1,6 +1,5 @@
 #!/bin/env python
 import argparse
-import sys
 import time
 
 # To list all available interfaces
@@ -8,7 +7,6 @@ from lib import *
 from lib.AbstractRouter import AbstractRouter
 from lib.Endpoint import Endpoint
 
-from typing import List
 
 # Process arguments
 AVAILABLE_INTERFACES = AbstractRouter.available_interfaces()
@@ -24,7 +22,7 @@ if __name__ == "__main__":
         dest="master",
         type=Endpoint,
         required=True,
-        help=f"Master endpoint that follow the format: udp/udpout/tcp/serial:ip/device:port/baudrate",
+        help="Master endpoint that follow the format: udp/udpout/tcp/serial:ip/device:port/baudrate",
     )
 
     parser.add_argument(
@@ -43,7 +41,7 @@ if __name__ == "__main__":
         type=str,
         default=INTERFACES_NAME[0],
         choices=INTERFACES_NAME,
-        help=f"Selected the desired tool to use, the default will be the first one available.",
+        help="Selected the desired tool to use, the default will be the first one available.",
     )
 
     args = parser.parse_args()

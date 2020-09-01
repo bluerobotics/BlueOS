@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from typing import Any, List, Optional, Type
 
-from lib.Endpoint import Endpoint, EndpointType
+from lib.Endpoint import Endpoint
 
 
 class AbstractRouter(metaclass=abc.ABCMeta):

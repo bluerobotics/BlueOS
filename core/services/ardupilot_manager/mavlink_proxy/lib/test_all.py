@@ -2,7 +2,6 @@ import pathlib
 import re
 import warnings
 
-from lib.AbstractRouter import AbstractRouter
 from lib.Endpoint import Endpoint, EndpointType
 from lib.MAVLinkRouter import MAVLinkRouter
 from lib.MAVProxy import MAVProxy
@@ -11,14 +10,14 @@ from lib.MAVProxy import MAVProxy
 def test_endpoint() -> None:
     endpoint = Endpoint("udp:0.0.0.0:14550")
     assert endpoint.connType == EndpointType.UDPClient, "Connection type does not match."
-    assert endpoint.place == "0.0.0.0", f"Connection place does not match."
+    assert endpoint.place == "0.0.0.0", "Connection place does not match."
     assert endpoint.argument == "14550", "Connection argument does not match."
     assert endpoint.__str__() == "udp:0.0.0.0:14550", "Connection string does not match."
 
 
 def test_mavproxy() -> None:
     if not MAVProxy.is_ok():
-        warnings.warn(f"Failed to test mavproxy service", UserWarning)
+        warnings.warn("Failed to test mavproxy service", UserWarning)
         return
 
     mavproxy = MAVProxy()
@@ -42,7 +41,7 @@ def test_mavproxy() -> None:
 
 def test_mavlink_router() -> None:
     if not MAVLinkRouter.is_ok():
-        warnings.warn(f"Failed to test MAVLinkRouter service", UserWarning)
+        warnings.warn("Failed to test MAVLinkRouter service", UserWarning)
         return
 
     mavlink_router = MAVLinkRouter()

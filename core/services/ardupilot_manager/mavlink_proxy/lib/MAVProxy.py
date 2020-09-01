@@ -1,12 +1,9 @@
-import pathlib
 import re
-import shlex
 import subprocess
-import tempfile
 
 from lib.AbstractRouter import AbstractRouter
 from lib.Endpoint import Endpoint, EndpointType
-from typing import List, Optional
+from typing import Optional
 
 
 class MAVProxy(AbstractRouter):

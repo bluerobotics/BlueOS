@@ -1,11 +1,9 @@
-import pathlib
 import re
-import shlex
 import subprocess
 
 from lib.AbstractRouter import AbstractRouter
 from lib.Endpoint import Endpoint, EndpointType
-from typing import List, Optional
+from typing import Optional
 
 
 class MAVLinkRouter(AbstractRouter):
