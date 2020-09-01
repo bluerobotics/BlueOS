@@ -30,7 +30,11 @@ class MAVLinkRouter(AbstractRouter):
 
         endpoints = " ".join(["--endpoint " + convert_endpoint(endpoint) for endpoint in self.endpoints()])
 
-        if master.connType not in [EndpointType.UDPServer, EndpointType.UDPClient, EndpointType.Serial]:
+        if master.connType not in [
+            EndpointType.UDPServer,
+            EndpointType.UDPClient,
+            EndpointType.Serial,
+        ]:
             raise NotImplementedError
 
         log = f"--log {self.logdir().resolve()}"
@@ -46,7 +50,11 @@ class MAVLinkRouter(AbstractRouter):
 
     @staticmethod
     def _validate_endpoint(endpoint: Endpoint) -> bool:
-        return endpoint.connType in [EndpointType.UDPServer, EndpointType.UDPClient, EndpointType.Serial]
+        return endpoint.connType in [
+            EndpointType.UDPServer,
+            EndpointType.UDPClient,
+            EndpointType.Serial,
+        ]
 
     @staticmethod
     def is_ok() -> bool:
