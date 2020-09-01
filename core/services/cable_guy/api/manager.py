@@ -1,5 +1,4 @@
 import asyncio
-import os
 import re
 from typing import Any, Dict, List
 from socket import AddressFamily
@@ -20,11 +19,12 @@ class EthernetManager:
     # IP abstraction interface
     ipr = IPRoute()
 
-    settings = settings.Settings()
     result: List[Dict[str, Any]] = []
 
     def __init__(self) -> None:
-        """Load settings and do the initial configuration"""
+        self.settings = settings.Settings()
+
+        # Load settings and do the initial configuration
         if not self.settings.load():
             print("Failed to load previous settings.")
             return
