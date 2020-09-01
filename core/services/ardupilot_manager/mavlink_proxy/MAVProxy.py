@@ -1,8 +1,8 @@
 import re
 import subprocess
 
-from lib.AbstractRouter import AbstractRouter
-from lib.Endpoint import Endpoint, EndpointType
+from mavlink_proxy.AbstractRouter import AbstractRouter
+from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from typing import Optional
 
 

@@ -4,8 +4,8 @@ import time
 
 # To list all available interfaces
 from lib import *
-from lib.AbstractRouter import AbstractRouter
-from lib.Endpoint import Endpoint
+from mavlink_proxy.AbstractRouter import AbstractRouter
+from mavlink_proxy.Endpoint import Endpoint
 
 
 # Process arguments
