@@ -2,13 +2,16 @@ import appdirs
 import os
 import json
 
+from typing import Any, Dict, List
+
 
 class Settings:
-    root = {"version": 0, "content": {}}
-
     app_name = "cable-guy"
     settings_path = appdirs.user_config_dir(app_name)
     settings_file = os.path.join(settings_path, "settings.json")
+
+    def __init__(self) -> None:
+        self.root: Dict[str, Any] = {"version": 0, "content": {}}
 
     def settings_exist(self) -> bool:
         """Check if settings file exist
@@ -45,7 +48,7 @@ class Settings:
 
         return True
 
-    def save(self, content: list):
+    def save(self, content: List[Any]) -> None:
         """Save content to file
 
         Args:

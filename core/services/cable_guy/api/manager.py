@@ -9,6 +9,8 @@ import psutil
 
 from api import settings
 
+from typing import Any, List, Tuple
+
 
 class EthernetManager:
     # RTNL interface
@@ -21,7 +23,7 @@ class EthernetManager:
     settings = settings.Settings()
     result: List[Dict[str, Any]] = []
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Load settings and do the initial configuration"""
         if not self.settings.load():
             print("Failed to load previous settings.")
@@ -33,7 +35,7 @@ class EthernetManager:
             if not self.set_configuration(item):
                 print("Failed.")
 
-    def save(self):
+    def save(self) -> None:
         """Save actual configuration"""
         try:
             self.get_interfaces()
@@ -48,7 +50,7 @@ class EthernetManager:
             item.pop("info")
         self.settings.save(self.result)
 
-    def set_configuration(self, configuration: dict) -> bool:
+    def set_configuration(self, configuration: Dict[str, Any]) -> bool:
         """Modify hardware based in the configuration
 
         Args:
@@ -83,7 +85,7 @@ class EthernetManager:
 
         return False
 
-    def _get_wifi_interfaces(self) -> list:
+    def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
 
         Returns:
@@ -119,7 +121,7 @@ class EthernetManager:
 
         return True
 
-    def validate_interface_data(self, data: dict) -> bool:
+    def validate_interface_data(self, data: Dict[str, Any]) -> bool:
         """Check if interface configuration is valid
 
         Args:
@@ -156,7 +158,7 @@ class EthernetManager:
         """
         for address in list(self.ipr.get_addr()):
 
-            def get_item(items, name):
+            def get_item(items: List[Tuple[str, Any]], name: str) -> Any:
                 return [value for key, value in items if key == name][0]
 
             if get_item(address["attrs"], "IFA_ADDRESS") != ip:
@@ -176,10 +178,10 @@ class EthernetManager:
         Returns:
             int: Interface index
         """
-        interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
+        interface_index = int(self.ipr.link_lookup(ifname=interface_name)[0])
         return interface_index
 
-    def flush_interface(self, interface_name: str):
+    def flush_interface(self, interface_name: str) -> None:
         """Flush all ip addresses in a specific interface
 
         Args:
@@ -188,7 +190,7 @@ class EthernetManager:
         interface_index = self._get_interface_index(interface_name)
         self.ipr.flush_addr(index=interface_index)
 
-    def enable_interface(self, interface_name: str, enable=True):
+    def enable_interface(self, interface_name: str, enable: bool = True) -> None:
         """Enable interface
 
         Args:
@@ -199,7 +201,7 @@ class EthernetManager:
         interface_state = "up" if enable else "down"
         self.ipr.link("set", index=interface_index, state=interface_state)
 
-    async def _trigger_dhcp_service(self, interface_name: str):
+    async def _trigger_dhcp_service(self, interface_name: str) -> None:
         """Internal async trigger for dhcp service
 
         Args:
@@ -209,7 +211,7 @@ class EthernetManager:
         await asyncio.sleep(1)
         self.enable_interface(interface_name, True)
 
-    def trigger_dhcp_service(self, interface_name: str):
+    def trigger_dhcp_service(self, interface_name: str) -> None:
         """Trigger DHCP service via async
 
         Args:
@@ -217,7 +219,7 @@ class EthernetManager:
         """
         asyncio.run(self._trigger_dhcp_service(interface_name))
 
-    def set_ip(self, interface_name: str, ip: str):
+    def set_ip(self, interface_name: str, ip: str) -> None:
         """Set ip address for a specific interface
 
         Args:
@@ -227,7 +229,7 @@ class EthernetManager:
         interface_index = self._get_interface_index(interface_name)
         self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
 
-    def set_dynamic_ip(self, interface_name: str):
+    def set_dynamic_ip(self, interface_name: str) -> None:
         """Set interface to use dynamic ip address
 
         Args:
@@ -238,7 +240,7 @@ class EthernetManager:
         # Trigger DHCP service to add a new dynamic ip address
         self.trigger_dhcp_service(interface_name)
 
-    def set_static_ip(self, interface_name: str, ip: str):
+    def set_static_ip(self, interface_name: str, ip: str) -> None:
         """Set interface to use static ip address
 
         Args:
@@ -300,7 +302,7 @@ class EthernetManager:
         self.result = result
         return result
 
-    def get_interface_ndb(self, interface_name: str):
+    def get_interface_ndb(self, interface_name: str) -> Any:
         """Get interface NDB information for interface
 
         Args:
@@ -311,7 +313,7 @@ class EthernetManager:
         """
         return self.ndb.interfaces.dump().filter(ifname=interface_name)[0]
 
-    def get_interface_info(self, interface_name: str) -> dict:
+    def get_interface_info(self, interface_name: str) -> Dict[str, Any]:
         """Get interface info field
 
         Args:

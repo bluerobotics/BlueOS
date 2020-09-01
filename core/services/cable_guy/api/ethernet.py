@@ -1,7 +1,9 @@
 from . import manager
 
+from typing import Any, Dict, Tuple
 
-def post(body):
+
+def post(body: Dict[str, Any]) -> Tuple[Any, int]:
     """REST API Post method
 
     Args:
@@ -17,7 +19,7 @@ def post(body):
     return body, 400
 
 
-def search():
+def search() -> Tuple[Any, int]:
     """REST API Get method
 
     Returns:
