@@ -12,7 +12,7 @@ from api import settings
 
 class EthernetManager:
     # RTNL interface
-    ndb = NDB(log='on')
+    ndb = NDB(log="on")
     # WIFI interface
     iw = IW()
     # IP abstraction interface
@@ -22,32 +22,30 @@ class EthernetManager:
     result: List[Dict[str, Any]] = []
 
     def __init__(self):
-        """Load settings and do the initial configuration
-        """
+        """Load settings and do the initial configuration"""
         if not self.settings.load():
-            print('Failed to load previous settings.')
+            print("Failed to load previous settings.")
             return
 
-        print('Previous settings loaded:')
-        for item in self.settings.root['content']:
-            print(f'Configuration with: {item}')
+        print("Previous settings loaded:")
+        for item in self.settings.root["content"]:
+            print(f"Configuration with: {item}")
             if not self.set_configuration(item):
-                print('Failed.')
+                print("Failed.")
 
     def save(self):
-        """Save actual configuration
-        """
+        """Save actual configuration"""
         try:
             self.get_interfaces()
         except Exception as exception:
-            print(f'Failed to fetch actual configuration, going to use the previous info: {exception}')
+            print(f"Failed to fetch actual configuration, going to use the previous info: {exception}")
 
         if not self.result:
-            print('Configuration is empty, aborting.')
+            print("Configuration is empty, aborting.")
             return
 
         for item in self.result:
-            item.pop('info')
+            item.pop("info")
         self.settings.save(self.result)
 
     def set_configuration(self, configuration: dict) -> bool:
@@ -67,19 +65,19 @@ class EthernetManager:
             bool: Configuration was accepted
         """
         interfaces = self.get_interfaces()
-        valid_names = [interface['name'] for interface in interfaces]
+        valid_names = [interface["name"] for interface in interfaces]
 
-        name = configuration['name']
-        ip = configuration['configuration']['ip']
-        mode = configuration['configuration']['mode']
+        name = configuration["name"]
+        ip = configuration["configuration"]["ip"]
+        mode = configuration["configuration"]["mode"]
 
         if name not in valid_names:
             return False
 
-        if mode == 'client':
+        if mode == "client":
             self.set_dynamic_ip(name)
             return True
-        if mode == 'unmanaged':
+        if mode == "unmanaged":
             self.set_static_ip(name, ip)
             return True
 
@@ -94,9 +92,9 @@ class EthernetManager:
         interfaces = self.iw.list_dev()
         result = []
         for interface in interfaces:
-            for flag, value in interface['attrs']:
+            for flag, value in interface["attrs"]:
                 # Extract interface name from IFNAME flag
-                if flag == 'NL80211_ATTR_IFNAME':
+                if flag == "NL80211_ATTR_IFNAME":
                     result += [value]
         return result
 
@@ -109,7 +107,7 @@ class EthernetManager:
         Returns:
             bool: True if valid, False if not
         """
-        blacklist = ['lo', 'ham.*', 'docker.*']
+        blacklist = ["lo", "ham.*", "docker.*"]
         blacklist += self._get_wifi_interfaces()
 
         if not interface:
@@ -130,7 +128,7 @@ class EthernetManager:
         Returns:
             bool: True if valid, False if not
         """
-        name = data['name']
+        name = data["name"]
         return self.is_valid_interface(name)
 
     @staticmethod
@@ -143,7 +141,7 @@ class EthernetManager:
         Returns:
             bool: True if valid, False if not
         """
-        return re.match(r'\d+.\d+.\d+.\d+', ip) is not None
+        return re.match(r"\d+.\d+.\d+.\d+", ip) is not None
 
     def is_static_ip(self, ip: str) -> bool:
         """Check if ip address is static or dynamic
@@ -157,14 +155,15 @@ class EthernetManager:
             bool: true if static false if not
         """
         for address in list(self.ipr.get_addr()):
+
             def get_item(items, name):
                 return [value for key, value in items if key == name][0]
 
-            if get_item(address['attrs'], 'IFA_ADDRESS') != ip:
+            if get_item(address["attrs"], "IFA_ADDRESS") != ip:
                 continue
 
-            flags = get_item(address['attrs'], 'IFA_FLAGS')
-            result = 'IFA_F_PERMANENT' in ifaddrmsg.flags2names(flags)
+            flags = get_item(address["attrs"], "IFA_FLAGS")
+            result = "IFA_F_PERMANENT" in ifaddrmsg.flags2names(flags)
             return result
         return False
 
@@ -197,8 +196,8 @@ class EthernetManager:
             enable (bool, optional): Set interface status. Defaults to True
         """
         interface_index = self._get_interface_index(interface_name)
-        interface_state = 'up' if enable else 'down'
-        self.ipr.link('set', index=interface_index, state=interface_state)
+        interface_state = "up" if enable else "down"
+        self.ipr.link("set", index=interface_index, state=interface_state)
 
     async def _trigger_dhcp_service(self, interface_name: str):
         """Internal async trigger for dhcp service
@@ -226,7 +225,7 @@ class EthernetManager:
             ip (str): Desired ip address
         """
         interface_index = self._get_interface_index(interface_name)
-        self.ipr.addr('add', index=interface_index, address=ip, prefixlen=24)
+        self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
 
     def set_dynamic_ip(self, interface_name: str):
         """Set interface to use dynamic ip address
@@ -280,20 +279,17 @@ class EthernetManager:
 
                 # If there is no ip address the mac address will be provided (⊙＿⊙')
                 valid_ip = EthernetManager.weak_is_ip_address(address.address)
-                ip = address.address if valid_ip else 'undefined'
+                ip = address.address if valid_ip else "undefined"
 
                 is_static_ip = self.is_static_ip(ip)
 
                 # Populate our output item
-                mode = 'unmanaged' if is_static_ip and valid_ip else 'client'
+                mode = "unmanaged" if is_static_ip and valid_ip else "client"
                 info = self.get_interface_info(interface)
                 data = {
-                    'name': interface,
-                    'configuration': {
-                        'ip': ip,
-                        'mode': mode
-                    },
-                    'info': info
+                    "name": interface,
+                    "configuration": {"ip": ip, "mode": mode},
+                    "info": info,
                 }
 
                 # Check if it's valid and add to the result
@@ -326,8 +322,8 @@ class EthernetManager:
         """
         interface = self.get_interface_ndb(interface_name)
         return {
-            'connected': interface.carrier != 0,
-            'number_of_disconnections': interface.carrier_down_count,
+            "connected": interface.carrier != 0,
+            "number_of_disconnections": interface.carrier_down_count,
         }
 
 
@@ -335,4 +331,5 @@ ethernetManager = EthernetManager()
 
 if __name__ == "__main__":
     from pprint import pprint
+
     pprint(ethernetManager.get_interfaces())
