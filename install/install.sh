@@ -14,6 +14,9 @@ set -e
 # Check if the script is running as root
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
 
+echo "Checking for blocked wifi and bluetooth."
+rfkill unblock all
+
 # Check for docker and install it if not found
 echo "Checking for docker."
 docker --version || curl -fsSL https://get.docker.com | sh && systemctl enable docker
