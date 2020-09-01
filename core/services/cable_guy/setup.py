@@ -1,7 +1,7 @@
 import setuptools
 
 
-def populate_static_files():
+def populate_static_files() -> None:
     import pathlib
     import ssl
     import shutil
