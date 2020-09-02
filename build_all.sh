@@ -12,3 +12,6 @@ docker build . --tag williangalvani/core:$1
 cd -
 cd supervisor
 docker build . --tag williangalvani/supervisor:$1
+cd -
+cd bootstrap
+docker build . --tag williangalvani/bootstrap:$1

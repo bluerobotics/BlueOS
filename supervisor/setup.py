@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+import os
 import pathlib
 import urllib.request
-import os
+
 from setuptools import setup
 
 
@@ -18,24 +19,15 @@ def ensure_dir(file_path: pathlib.Path) -> None:
 
 
 static_files = {
-    "css/bootstrap-switch-button-1.1.0.min.css":
-        "https://cdn.jsdelivr.net/gh/gitbrent/bootstrap-switch-button@1.1.0/css/bootstrap-switch-button.min.css",
-    "css/bootstrap-vue.css":
-        "https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css",
-    "css/bootstrap.min.css":
-        "https://unpkg.com/bootstrap/dist/css/bootstrap.min.css",
-    "css/fa-all.css":
-        "https://use.fontawesome.com/releases/v5.7.0/css/all.css",
-    "js/axios-0.19.2.min.js":
-        "https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js",
-    "js/bootstrap-switch-button-1.1.0.min.js":
-        "https://cdn.jsdelivr.net/gh/gitbrent/bootstrap-switch-button@1.1.0/dist/bootstrap-switch-button.min.js",
-    "js/bootstrap-vue.js":
-        "https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js",
-    "js/polyfill.min.js":
-        "https://polyfill.io/v3/polyfill.min.js?features=es2015,IntersectionObserver",
-    "js/vue.js":
-        "https://unpkg.com/vue@latest/dist/vue.js",
+    "css/bootstrap-switch-button-1.1.0.min.css": "https://cdn.jsdelivr.net/gh/gitbrent/bootstrap-switch-button@1.1.0/css/bootstrap-switch-button.min.css",
+    "css/bootstrap-vue.css": "https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css",
+    "css/bootstrap.min.css": "https://unpkg.com/bootstrap/dist/css/bootstrap.min.css",
+    "css/fa-all.css": "https://use.fontawesome.com/releases/v5.7.0/css/all.css",
+    "js/axios-0.19.2.min.js": "https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js",
+    "js/bootstrap-switch-button-1.1.0.min.js": "https://cdn.jsdelivr.net/gh/gitbrent/bootstrap-switch-button@1.1.0/dist/bootstrap-switch-button.min.js",
+    "js/bootstrap-vue.js": "https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js",
+    "js/polyfill.min.js": "https://polyfill.io/v3/polyfill.min.js?features=es2015,IntersectionObserver",
+    "js/vue.js": "https://unpkg.com/vue@latest/dist/vue.js",
 }
 
 current_folder = pathlib.Path(__file__).parent.absolute()
@@ -51,8 +43,10 @@ for filename, url in static_files.items():
         exit(1)
     print(url)
 
-setup(name='supervisor_service',
-      version='0.1.0',
-      description='Blue Robotics Ardusub Companion Supervisor',
-      license='MIT',
-      install_requires=['connexion[swagger-ui, aiohttp]', 'docker', 'aiohttp==3.6.2', 'semver'])
+setup(
+    name="supervisor_service",
+    version="0.1.0",
+    description="Blue Robotics Ardusub Companion Supervisor",
+    license="MIT",
+    install_requires=["connexion[swagger-ui, aiohttp]", "docker", "aiohttp==3.6.2", "semver"],
+)

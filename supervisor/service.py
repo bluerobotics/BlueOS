@@ -1,6 +1,7 @@
 import threading
 import time
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 import docker
 from docker.models.containers import Container
 
@@ -10,7 +11,6 @@ class StatusFetcher(threading.Thread):
     Class responsible for creating threads for tracking stats of each docker
     container in use
     """
-
     client = docker.from_env()
     container: Container
     status: Dict[str, Any] = {}  # holds the status for each container
@@ -62,14 +62,9 @@ class Service:
     """Abstraction around docker containers, used to create, manage, and mantain stats for the services"""
 
     image: str  # Docker image (for example bluerobotics/core)
-    registry: str = "http://hub.docker.com"
-    version: str  # (1.0.0-alpha.1, latest, master, stable)
     statusfetcher: Optional[StatusFetcher] = None
     container: Optional[Container] = None
     config: Dict[str, Any]
-    enabled: bool
-    client = docker.from_env()
-    starts: int = 0
     stored_logs: str = ""
     available_tags: List[str]
 
@@ -77,17 +72,15 @@ class Service:
         self.available_tags: List[str] = []
         self.last_tag_update: float = 0
         self.image = config["image"]
-        self.version = config["tag"]
-        self.enabled = config["enabled"]
         self.config = config
-        print(f"initialized service for {self.image}:{self.version}")
+        print(f"initialized service for {self.image}:{self.config['tag']}")
         self.check_for_running_containers()
 
     def check_for_running_containers(self) -> None:
         """Checks for a running container for this service and uses it instead
         of launching a new one
         """
-        containers = self.client.containers.list(all=True)
+        containers = docker.from_env().containers.list(all=True)
         container_name = f"companion_{self.image}".replace("/", "")
         for container in containers:
             if self.image in str(container.image) or container.name == container_name:
@@ -101,7 +94,7 @@ class Service:
             list: list of tags
         """
         tags = []
-        for image in self.client.images.list(self.image):
+        for image in docker.from_env().images.list(self.image):
             tags.extend(image.tags)
         try:
             formatted_tags = [name.split(":")[-1] for name in tags if self.image in name]
@@ -115,7 +108,7 @@ class Service:
         if time.time() - self.last_tag_update > 10:
             self.last_tag_update = time.time()
             self.available_tags = self.get_local_tags()
-        if self.enabled:
+        if self.config["enabled"]:
             # should be running but isn't
             if not self.is_running():
                 self.start()
@@ -124,7 +117,7 @@ class Service:
             # This could be an elif if not for the assert...
             else:
                 assert self.container is not None, "container is running AND None!"
-                if self.version not in [tag.split(":")[-1] for tag in self.container.image.tags]:
+                if self.config["tag"] not in [tag.split(":")[-1] for tag in self.container.image.tags]:
                     self.restart()
         else:
             # is running but shouldn't
@@ -176,13 +169,13 @@ class Service:
                 image["age"] = time.time() - image["Created"]
             return {
                 "stats": self.statusfetcher.status,
-                "version": self.version,
+                "version": self.config["tag"],
                 "available_tags": self.available_tags,
                 "config": self.config,
                 "id": self.container.id if self.container is not None else None,
                 "image": image,
                 "running": self.container.status == "running" if self.container is not None else False,
-                "tag": self.version,
+                "tag": self.config["tag"],
             }
         return None
 
@@ -194,8 +187,7 @@ class Service:
         """
         if self.container is not None:
             return str(self.container.logs())
-        else:
-            return self.stored_logs
+        return self.stored_logs
 
     def get_top(self) -> Dict[Any, Any]:
         """Reads the running processes in this docker
@@ -209,13 +201,10 @@ class Service:
 
     def disable(self) -> None:
         """Disables the service"""
-        self.enabled = False
         self.config["enabled"] = False
 
     def enable(self) -> None:
         """Enables the service"""
-        self.starts = 0
-        self.enabled = True
         self.config["enabled"] = True
 
     def set_version(self, version: str) -> bool:
@@ -231,31 +220,28 @@ class Service:
             print("version not available locally!")
             print(self.available_tags)
             return False
-        else:
-            self.version = version
-            print(f"setting version to {version}")
-            self.restart()
-            return True
+        self.config["tag"] = version
+        print(f"setting version to {version}")
+        self.restart()
+        return True
 
     def launch(self) -> None:
         """Launches a container for the service"""
         print("launching", self.image)
-        self.starts += 1
         # Re-launch existing container
         if self.container:
-            if self.version in [tag.split(":")[-1] for tag in self.container.image.tags]:
+            if self.config["tag"] in [tag.split(":")[-1] for tag in self.container.image.tags]:
                 self.container.start()
                 return
-            else:
-                self.container.remove()
+            self.container.remove()
 
         # Launch new container
         try:
-            image_name = f"{self.config['image']}:{self.version}"
+            image_name = f"{self.config['image']}:{self.config['tag']}"
             print(f"trying to start {image_name}")
             container_name = f"companion_{self.image}".replace("/", "")
             # Otherwise, start a new one
-            self.container = self.client.containers.run(
+            self.container = docker.from_env().containers.run(
                 image_name,
                 name=container_name,
                 auto_remove=False,

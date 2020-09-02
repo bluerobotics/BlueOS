@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-import os
-import json
-import time
-import pathlib
 import asyncio
-from subprocess import Popen
+import json
+import os
+import pathlib
 import shutil
-from typing import Optional, Dict, Any
+import time
+from subprocess import Popen
+from typing import Any, Dict, Optional, cast
 
 import connexion
 from aiohttp import web
+
 from service import Service
 from utils.updater import Updater
-
 
 # this snippet takes care of running non-dockerized
 IS_DOCKER = True
@@ -56,9 +56,7 @@ class Supervisor:
     def load_settings(self) -> None:
         """Loads the settings file to self.settings, create it from defaults if not available"""
         config_path = os.path.join(config_folder, "dockers.json")
-        default_config_path = os.path.join(
-            current_path, "static", "dockers.json.default"
-        )
+        default_config_path = os.path.join(current_path, "static", "dockers.json.default")
         if not os.path.exists(config_path):
             shutil.copy(default_config_path, config_path)
 
@@ -183,12 +181,6 @@ class Supervisor:
             try:
                 for service_name, service in self.services.items():
                     service.update()
-                    # Disables service if it fails too much
-                    if service.starts > 10 and service.enabled:
-                        print(
-                            "service {service_name} failed to start 10 times, disabling it for sanity reasons..."
-                        )
-                        await self.disable(service_name)
 
             except Exception as error:
                 print(f"error in do_maintenance: {error}")
@@ -250,61 +242,62 @@ async def index(_request: web.Request) -> web.FileResponse:
 
 async def status(request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    print(supervisor)
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.get_status()
 
 
 async def enable(name: str, request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.enable(name)
 
 
 async def disable(name: str, request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.disable(name)
 
 
 async def attach(name: str, request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.attach(name)
 
 
 async def top(name: str, request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.top(name)
 
 
 async def restart(name: str, request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.restart(name)
 
 
 async def log(name: str, request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.get_logs(name)
 
 
 async def versions(request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.get_versions()
 
 
 async def currentversion(request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
     return await supervisor.get_version()
 
 
 async def set_version(name: str, request: web.Request) -> web.Response:
     supervisor = request.config_dict["supervisor"]
-    assert isinstance(supervisor, Supervisor), "Invalid Supervisor instance in aiohttp"
+    supervisor = cast(Supervisor, supervisor)
 
     await request.post()
     version = (await request.json())["version"]
