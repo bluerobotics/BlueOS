@@ -37,7 +37,7 @@ test $NO_CLEAN || (
 echo "Going to install companion-docker version ${VERSION}."
 
 echo "Downloading and installing udev rules."
-curl -fsSL $REMOTE/$VERSION/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
+curl -fsSL $REMOTE/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
 
 echo "Downloading companion-core"
 COMPANION_CORE="bluerobotics/companion-core:master" # We don't have others tags for now
