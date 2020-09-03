@@ -1,14 +1,12 @@
 import asyncio
 import re
-from typing import Any, Dict, List
 from socket import AddressFamily
+from typing import Any, Dict, List, Tuple
+
+import psutil
+from api import settings
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
-import psutil
-
-from api import settings
-
-from typing import Any, List, Tuple
 
 
 class EthernetManager:

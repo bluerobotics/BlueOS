@@ -1,6 +1,6 @@
-from . import manager
-
 from typing import Any, Dict, Tuple
+
+from . import manager
 
 
 def post(body: Dict[str, Any]) -> Tuple[Any, int]:

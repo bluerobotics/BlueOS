@@ -1,12 +1,13 @@
+import pathlib
+import shutil
+import ssl
+import sys
+import urllib.request
+
 import setuptools
 
 
 def populate_static_files() -> None:
-    import pathlib
-    import ssl
-    import shutil
-    import urllib.request
-
     # Ignore ssl when downloading new files
     # This can happen since python can fail to verify certificate
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -44,7 +45,7 @@ def populate_static_files() -> None:
                 urllib.request.urlretrieve(url, str(download_file_path))
             except Exception as error:
                 print(f"Unable to download, error: {error}")
-                exit(1)
+                sys.exit(1)
 
 
 populate_static_files()
