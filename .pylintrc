@@ -5,32 +5,18 @@ max-line-length=120
 enable=all
 
 disable=attribute-defined-outside-init,
-    bad-classmethod-argument,
-    bad-continuation,
+    bad-continuation, # Black takes care of that for us
     broad-except,
-    consider-using-sys-exit,
     duplicate-code,
     import-error,
-    import-outside-toplevel,
     inconsistent-return-statements,
     invalid-name,
-    line-too-long,
     missing-class-docstring,
     missing-function-docstring,
     missing-module-docstring,
     no-member, # Some members are created in runtime, pylint fails to detect such cases
-    no-name-in-module,
-    protected-access,
-    redefined-builtin,
-    redefined-outer-name,
-    reimported,
-    singleton-comparison,
-    too-many-public-methods,
-    ungrouped-imports,
-    unidiomatic-typecheck,
-    unused-argument,
-    unused-variable,
-    useless-else-on-loop,
-    useless-super-delegation,
-    wildcard-import,
-    wrong-import-order,
+    no-name-in-module, # Names can be generated in runtime
+    protected-access, # Necessary for internal tests
+    too-many-public-methods, # Wrappers will have multiple public methods
+    useless-super-delegation, # Fails to check it properly
+    wildcard-import, # Necessary to locate installed plugins
