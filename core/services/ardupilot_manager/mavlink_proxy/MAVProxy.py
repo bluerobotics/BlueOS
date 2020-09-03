@@ -1,9 +1,9 @@
 import re
 import subprocess
+from typing import Optional
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
-from typing import Optional
 
 
 class MAVProxy(AbstractRouter):

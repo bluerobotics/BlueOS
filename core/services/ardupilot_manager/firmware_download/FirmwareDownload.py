@@ -1,15 +1,15 @@
 import enum
+import gzip
 import json
 import pathlib
 import random
 import string
 import tempfile
+from typing import Any, Dict, List, Optional
 from urllib.request import urlopen, urlretrieve
-
 from warnings import warn
 
 from packaging.version import Version
-from typing import Any, Dict, List, Optional
 
 
 class Vehicle(enum.Enum):
@@ -90,8 +90,6 @@ class FirmwareDownload:
         Returns:
             bool: True if file was downloaded and validated, False if not.
         """
-        import gzip
-
         with urlopen(FirmwareDownload._manifest_remote) as http_response:
             manifest_gzip = http_response.read()
             manifest = gzip.decompress(manifest_gzip)
