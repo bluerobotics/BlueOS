@@ -31,7 +31,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractclassmethod
-    def _get_version(self) -> Optional[str]:
+    def _get_version(cls) -> Optional[str]:
         pass
 
     @staticmethod
@@ -45,7 +45,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractclassmethod
-    def assemble_command(self, master: Endpoint) -> str:
+    def assemble_command(cls, master: Endpoint) -> str:
         pass
 
     @staticmethod
@@ -57,8 +57,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         for interface in AbstractRouter.__subclasses__():
             if interface.is_ok() and interface.name() == name:
                 return interface
-        else:
-            raise RuntimeError("Interface is not ok or does not exist.")
+        raise RuntimeError("Interface is not ok or does not exist.")
 
     def binary(self) -> Optional[str]:
         return self._binary
@@ -66,7 +65,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def version(self) -> Optional[str]:
         return self._version
 
-    def start(self, vehicle_endpoint: Optional[Endpoint] = None, verbose: bool = False) -> bool:
+    def start(self, vehicle_endpoint: Optional[Endpoint] = None, _verbose: bool = False) -> bool:
         if vehicle_endpoint is not None:
             self._master_endpoint = vehicle_endpoint
         command = self.assemble_command(self._master_endpoint)
@@ -92,9 +91,9 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def logdir(self) -> pathlib.Path:
         return self._logdir
 
-    def set_logdir(self, dir: pathlib.Path) -> bool:
-        if dir.exists():
-            self._logdir = dir
+    def set_logdir(self, directory: pathlib.Path) -> bool:
+        if directory.exists():
+            self._logdir = directory
             return True
         return False
 

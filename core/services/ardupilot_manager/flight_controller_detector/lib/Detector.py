@@ -1,8 +1,8 @@
 import os
-
 from enum import Enum
-from smbus2 import SMBus
 from typing import List
+
+from smbus2 import SMBus
 
 
 class FlightControllerType(Enum):

@@ -7,7 +7,6 @@ from lib import *
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 
-
 # Process arguments
 AVAILABLE_INTERFACES = AbstractRouter.available_interfaces()
 assert AVAILABLE_INTERFACES, "No available interface found."
