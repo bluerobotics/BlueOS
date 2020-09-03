@@ -2,6 +2,7 @@
 
 import os
 import ssl
+
 from setuptools import setup
 
 # Ignore ssl if it fails

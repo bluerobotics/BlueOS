@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import bottle
 import json
 import os
-from wpa_supplicant import WPASupplicant
 from typing import Any, Dict, List, Union
+
+import bottle
+from wpa_supplicant import WPASupplicant
 
 
 class WifiManager:
