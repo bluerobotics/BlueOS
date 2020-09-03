@@ -22,8 +22,12 @@ jobs:
       name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest pylint mypy black
+        pip install pytest pylint mypy isort black
         find . -type f -name "setup.py" | xargs --max-lines=1 --replace=% python % install --user
+    -
+      name: Run isort
+      run: |
+        isort --check-only .
     -
       name: Run black
       run: |
