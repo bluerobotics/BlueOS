@@ -1,14 +1,13 @@
-import os
 import glob
+import os
 import socket
 import time
-
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 
 class WPASupplicant:
     BUFFER_SIZE = 4096
-    target = ("localhost", 6664)
+    target: Union[Tuple[str, int], str] = ("localhost", 6664)
     verbose = True
 
     def __init__(self) -> None:
@@ -18,7 +17,7 @@ class WPASupplicant:
         if self.sock:
             self.sock.close()
 
-    def run(self, target: Tuple[str, int] = target) -> None:
+    def run(self, target: Union[Tuple[str, int], str] = target) -> None:
         """Does the connection and setup variables
 
         Arguments:
@@ -26,7 +25,7 @@ class WPASupplicant:
         """
         self.target = target
 
-        if type(self.target) == tuple:
+        if isinstance(self.target, tuple):
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -488,8 +487,7 @@ class WPASupplicant:
     def send_command_ctrl_req_(self) -> Tuple[bytes, bool]:
         """Send message: CTRL-REQ-
 
-        WPA_CTRL_REQ: Request information from a user. See  <a class="el" href="ctrl_iface_page.html#ctrl_iface_interactive">Interactive
-            requests</a>  sections for more details.
+        WPA_CTRL_REQ: Request information from a user.
         """
         return self.send_command("CTRL-REQ-")
 
