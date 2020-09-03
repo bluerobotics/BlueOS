@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 
 CLONE_PATH = os.path.realpath("/tmp")
 SERVICE_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -22,7 +23,7 @@ def run_command(command: str) -> None:
     return_code = os.system(command)
     if return_code:
         print("FAILED")
-        exit(1)
+        sys.exit(1)
     print("Done")
 
 
@@ -43,7 +44,17 @@ set_directory(MAVLINK_ROUTER_PATH)
 run_command("git submodule update --init --recursive --quiet")
 run_command("./autogen.sh")
 run_command(
-    "./configure --disable-systemd CFLAGS='-g -O2' --sysconfdir=/etc --localstatedir=/var --libdir=/usr/lib64 --prefix=/usr"
+    " ".join(
+        [
+            "./configure",
+            "--disable-systemd",
+            "CFLAGS='-g -O2'",
+            "--sysconfdir=/etc",
+            "--localstatedir=/var",
+            "--libdir=/usr/lib64",
+            "--prefix=/usr",
+        ]
+    )
 )
 run_command(f"make DESTDIR={MAVLINK_INSTALL_PATH} install -j{os.cpu_count()}")
 
