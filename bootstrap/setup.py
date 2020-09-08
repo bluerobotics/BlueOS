@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+from setuptools import setup
+
+setup(
+    name="companion_bootstrap",
+    version="0.1.0",
+    description="Blue Robotics Ardusub Companion Docker System Bootstraper",
+    license="MIT",
+    install_requires=[
+        "docker",
+    ],
+)
