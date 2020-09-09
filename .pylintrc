@@ -21,3 +21,4 @@ disable=attribute-defined-outside-init,
     too-many-public-methods, # Wrappers will have multiple public methods
     useless-super-delegation, # Fails to check it properly
     wildcard-import, # Necessary to locate installed plugins
+    wrong-import-position, # isort will take care of that for us
