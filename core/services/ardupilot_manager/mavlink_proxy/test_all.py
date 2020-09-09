@@ -1,6 +1,9 @@
 import pathlib
 import re
+import sys
 import warnings
+
+sys.path.append(str(pathlib.Path(__file__).absolute().parent.parent))
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
