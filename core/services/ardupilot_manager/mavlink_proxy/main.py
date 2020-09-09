@@ -1,19 +1,19 @@
 #!/bin/env python
 import argparse
+import sys
 import time
+from pathlib import Path
 
-# To list all available interfaces
-from lib import *
+# Import local library
+sys.path.append(str(Path(__file__).absolute().parent.parent))
+
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
-
-# Process arguments
-AVAILABLE_INTERFACES = AbstractRouter.available_interfaces()
-assert AVAILABLE_INTERFACES, "No available interface found."
-
-INTERFACES_NAME = [interface.name() for interface in AVAILABLE_INTERFACES]
+from mavlink_proxy.Manager import Manager
 
 if __name__ == "__main__":
+    manager = Manager()
+    interfaces = manager.available_interfaces()
     parser = argparse.ArgumentParser(description="Abstraction CLI for multiple mavlink routers")
 
     parser.add_argument(
@@ -38,8 +38,8 @@ if __name__ == "__main__":
         "--tool",
         dest="tool",
         type=str,
-        default=INTERFACES_NAME[0],
-        choices=INTERFACES_NAME,
+        default=interfaces[0].name(),
+        choices=[interface.name() for interface in interfaces],
         help="Selected the desired tool to use, the default will be the first one available.",
     )
 
@@ -48,12 +48,12 @@ if __name__ == "__main__":
     tool = AbstractRouter.get_interface(args.tool)()
     print(f"Starting {tool.name()} version {tool.version()}.")
 
-    for endpoint in args.output:
-        assert tool.add_endpoint(endpoint)
+    manager.use(tool)
+    manager.add_endpoints(args.output)
+    manager.set_master_endpoint(args.master)
 
-    print(f"Command: {tool.assemble_command(args.master)}")
-    tool.start(args.master)
-
-    while tool.is_running():
+    print(f"Command: {manager.command_line()}")
+    manager.start()
+    while manager.is_running():
         time.sleep(1)
-    print("Tool finished.")
+    print("Done.")
