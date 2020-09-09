@@ -11,6 +11,7 @@ disable=attribute-defined-outside-init,
     import-error,
     inconsistent-return-statements,
     invalid-name,
+    locally-disabled, # We know what we are doing, necessary to load plugins in runtime
     missing-class-docstring,
     missing-function-docstring,
     missing-module-docstring,
