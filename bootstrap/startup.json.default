@@ -1,0 +1,24 @@
+{
+    "core": {
+        "tag": "master",
+        "image": "bluerobotics/companion-core",
+        "enabled": true,
+        "webui": false,
+        "network": "host",
+        "binds": {
+            "/dev/": {
+                "bind": "/dev/",
+                "mode": "rw"
+            },
+            "/var/run/wpa_supplicant/wlan0": {
+                "bind": "/var/run/wpa_supplicant/wlan0",
+                "mode": "rw"
+            },
+            "/tmp/wpa_playground": {
+                "bind": "/tmp/wpa_playground",
+                "mode": "rw"
+            }
+        },
+        "privileged": true
+    }
+}
