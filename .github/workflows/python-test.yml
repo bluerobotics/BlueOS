@@ -25,22 +25,6 @@ jobs:
         pip install pytest pylint mypy isort black
         find . -type f -name "setup.py" | xargs --max-lines=1 --replace=% python % install --user
     -
-      name: Run isort
+      name: Run tests
       run: |
-        isort --check-only .
-    -
-      name: Run black
-      run: |
-        black --check --line-length=120 .
-    -
-      name: Run pylint
-      run: |
-        pylint $(git ls-files '*.py')
-    -
-      name: Run mypy
-      run: |
-        find . -type f -name "*.py" | xargs --max-lines=1 mypy --ignore-missing-imports --warn-unreachable --allow-untyped-decorators --strict
-    -
-      name: Run pytest
-      run: |
-        pytest
+        ./.hooks/pre-push
