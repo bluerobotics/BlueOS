@@ -6,6 +6,7 @@ SERVICES_PATH=$COMPANION_PATH/services
 SERVICES=(
     'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
     'wifi',"$SERVICES_PATH/wifi/main.py"
+    'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'video',"gst-rtsp-launch '( v4l2src device=/dev/video2 ! video/x-h264, width=1920, height=1080, framerate=30/1 ! rtph264pay name=pay0 pt=96 )'"
 )
 
