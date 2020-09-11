@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 from smbus2 import SMBus
 
@@ -21,11 +21,12 @@ class Detector:
         return os.geteuid() == 0
 
     @staticmethod
-    def detect_navigator() -> bool:
+    def detect_navigator() -> Tuple[bool, str]:
         """Check if navigator is connected using the sensors on the I²C BUS
 
         Returns:
-            bool: True if a serial navigator is connected
+            (bool, str): True if a navigator is connected, false otherwise.
+                String is always empty
         """
         try:
             bus = SMBus(1)
@@ -34,32 +35,38 @@ class Detector:
 
             bus.read_byte_data(PCA9685_address, 0)
             bus.read_byte_data(ADS115_address, 0)
-            return True
+            return (True, "")
         except Exception as error:
             print(f"Navigator not detected on I2C bus: {error}")
-            return False
+            return (False, "")
 
     @staticmethod
-    def detect_serial_flight_controller() -> bool:
+    def detect_serial_flight_controller() -> Tuple[bool, str]:
         """Check if a pixhawk or any serial valid flight controller is connected
 
         Returns:
-            bool: True if a serial flight controller is connected
+            (bool, str): True if a serial flight controller is connected, false otherwise.
+                String will point to the serial device.
         """
-        return os.path.exists("/dev/autopilot")
+        serial_path = "/dev/autopilot"
+        result = (True, serial_path) if os.path.exists(serial_path) else (False, "")
+        return result
 
     @staticmethod
-    def detect() -> List[FlightControllerType]:
+    def detect() -> List[Tuple[FlightControllerType, str]]:
         """Return a list of available flight controllers
 
         Returns:
-            List[FlightControllerType]: List of available flight controllers
+            (FlightControllerType, str): List of available flight controllers
         """
         available = []
-        if Detector._is_root() and Detector.detect_navigator():
-            available.append(FlightControllerType.Navigator)
+        if Detector._is_root():
+            result, path = Detector.detect_navigator()
+            if result:
+                available.append((FlightControllerType.Navigator, path))
 
-        if Detector.detect_serial_flight_controller():
-            available.append(FlightControllerType.Serial)
+        result, path = Detector.detect_serial_flight_controller()
+        if result:
+            available.append((FlightControllerType.Serial, path))
 
         return available
