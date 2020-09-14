@@ -17,7 +17,8 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # Install services
 COPY services /home/pi/services
 COPY start-companion-core /usr/bin/start-companion-core
-RUN ls /home/pi/services && /home/pi/services/install-services.sh
+RUN /home/pi/services/install-services.sh
+RUN /home/pi/services/mavlink_router/bootstrap.py
 
 # Start
 ENTRYPOINT /usr/bin/start-companion-core && sleep infinity
