@@ -21,6 +21,9 @@ cd /home/pi/services/wifi/ && python3 setup.py install
 # Ethernet service:
 cd /home/pi/services/cable_guy/ && python3 setup.py install
 
+# Ardupilot manager service:
+cd /home/pi/services/ardupilot_manager/ && python3 setup.py install
+
 apt -y remove ${BUILD_PACKAGES[*]}
 apt -y autoremove
 apt -y clean
