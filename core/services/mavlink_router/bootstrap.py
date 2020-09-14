@@ -57,6 +57,7 @@ run_command(
     )
 )
 run_command(f"make DESTDIR={MAVLINK_INSTALL_PATH} install -j{os.cpu_count()}")
+run_command(f"rm -rf {MAVLINK_ROUTER_PATH}")
 
 set_directory(SERVICE_PATH)
 run_command("./run --version")
