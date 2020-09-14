@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-DIR=$(dirname "$(readlink -f "$0")")
-$DIR/install/usr/bin/mavlink-routerd "$@"
