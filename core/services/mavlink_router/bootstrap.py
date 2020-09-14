@@ -6,7 +6,6 @@ import sys
 CLONE_PATH = os.path.realpath("/tmp")
 SERVICE_PATH = os.path.dirname(os.path.realpath(__file__))
 MAVLINK_ROUTER_PATH = os.path.join(CLONE_PATH, "mavlink-router")
-MAVLINK_INSTALL_PATH = os.path.join(SERVICE_PATH, "install")
 
 
 def set_directory(path: str) -> None:
@@ -56,7 +55,7 @@ run_command(
         ]
     )
 )
-run_command(f"make DESTDIR={MAVLINK_INSTALL_PATH} install -j{os.cpu_count()}")
+run_command(f"make install -j{os.cpu_count()}")
 run_command(f"rm -rf {MAVLINK_ROUTER_PATH}")
 
 set_directory(SERVICE_PATH)
