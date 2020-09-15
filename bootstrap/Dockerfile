@@ -1,4 +1,5 @@
 FROM python:buster
-COPY setup.py startup.json.default main.py /bootstrap/
+COPY startup.json.default bootstrap/ /bootstrap/
+COPY main.py /
 RUN python3 bootstrap/setup.py install
-ENTRYPOINT /bootstrap/main.py
+ENTRYPOINT /main.py
