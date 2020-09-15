@@ -22,25 +22,6 @@ class Bootstrapper:
         self.client: docker.DockerClient = client
 
     @staticmethod
-    def ensure_dir(file_path: str) -> None:
-        """Makes sure that the file path exists
-
-        Args:
-            file_path (str): path to check/make
-        """
-        directory = pathlib.Path(file_path)
-        os.makedirs(directory, exist_ok=True)
-
-    def stop_old_container(self) -> None:
-        """ Looks for an old core container and stops it if found"""
-        try:
-            old_container = self.client.containers.get(Bootstrapper.CORE_CONTAINER_NAME)
-            old_container.stop()
-            old_container.remove()
-        except docker.errors.NotFound:
-            pass
-
-    @staticmethod
     def overwrite_config_file_with_defaults() -> None:
         """Overwrites the config file with the default configuration"""
         shutil.copy(Bootstrapper.DEFAULT_FILE_PATH, Bootstrapper.DOCKER_CONFIG_PATH)
