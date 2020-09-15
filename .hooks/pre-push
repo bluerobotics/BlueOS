@@ -3,7 +3,7 @@
 set -e
 
 echo "Running pre push hook!"
-repository_path=$(git rev-parse --git-dir)/..
+repository_path=$PWD/$(git rev-parse --git-dir)/..
 
 echo "Running isort.."
 isort --check-only "$repository_path"
