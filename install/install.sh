@@ -48,20 +48,18 @@ echo "Going to install companion-docker version ${VERSION}."
 echo "Downloading and installing udev rules."
 curl -fsSL $REMOTE/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
 
-echo "Downloading companion-core"
-COMPANION_CORE="bluerobotics/companion-core:master" # We don't have others tags for now
-docker pull $COMPANION_CORE
-docker create \
+echo "Downloading bootstrap"
+COMPANION_BOOTSTRAP="bluerobotics/companion-bootstrap:master" # We don't have others tags for now
+docker pull $COMPANION_BOOTSTRAP
+# Start bootstrap for the first time to fetch the other images and allow docker to restart it after reboot
+docker run \
+    -it \
     --restart unless-stopped \
-    --name companion-core \
-    --privileged \
-    --network host \
-    -v /dev:/dev \
-    -v /tmp/wpa_playground:/tmp/wpa_playground \
-    -v /var/run/wpa_supplicant/wlan0:/var/run/wpa_supplicant/wlan0 \
-    $COMPANION_CORE
-# Start companion-core for the first time to allow docker to restart it after reboot
-docker start companion-core
+    --name companion-bootstrap \
+    -v $HOME/.config/companion:/root/.config/companion \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -e COMPANION_CONFIG_PATH=$HOME/.config/companion \
+    $COMPANION_BOOTSTRAP
 
 echo "Installation finished successfully."
 echo "System will reboot in 10 seconds."
