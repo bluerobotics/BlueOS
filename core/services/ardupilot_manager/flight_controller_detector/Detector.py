@@ -31,10 +31,10 @@ class Detector:
         try:
             bus = SMBus(1)
             PCA9685_address = 0x40
-            ADS115_address = 0x48
+            ADS1115_address = 0x48
 
             bus.read_byte_data(PCA9685_address, 0)
-            bus.read_byte_data(ADS115_address, 0)
+            bus.read_byte_data(ADS1115_address, 0)
             return (True, "")
         except Exception as error:
             print(f"Navigator not detected on I2C bus: {error}")
