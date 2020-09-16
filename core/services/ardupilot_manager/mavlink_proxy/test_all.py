@@ -2,6 +2,7 @@ import pathlib
 import re
 import warnings
 
+from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
 from mavlink_proxy.MAVProxy import MAVProxy
@@ -19,6 +20,8 @@ def test_mavproxy() -> None:
     if not MAVProxy.is_ok():
         warnings.warn("Failed to test mavproxy service", UserWarning)
         return
+
+    assert AbstractRouter.get_interface("MAVProxy"), "Failed to find interface MAVProxy"
 
     mavproxy = MAVProxy()
     assert mavproxy.name() == "MAVProxy", "Name does not match."
@@ -43,6 +46,8 @@ def test_mavlink_router() -> None:
     if not MAVLinkRouter.is_ok():
         warnings.warn("Failed to test MAVLinkRouter service", UserWarning)
         return
+
+    assert AbstractRouter.get_interface("MAVLinkRouter"), "Failed to find interface MAVLinkRouter"
 
     mavlink_router = MAVLinkRouter()
     assert mavlink_router.name() == "MAVLinkRouter", "Name does not match."
