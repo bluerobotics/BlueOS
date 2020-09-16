@@ -1,10 +1,13 @@
-name: companion-core
+name: deploy images
 
 on: [push, pull_request]
 
 jobs:
-  deploy-core:
+  deploy-images:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        docker: [bootstrap, core]
     steps:
       -
         name: Checkout
@@ -16,7 +19,7 @@ jobs:
           # Default tag is master, if the build is a git tag, replace tag with the tag name.
           # If git tag matches semver, append latest tag to the push.
 
-          DOCKER_IMAGE=bluerobotics/companion-core
+          DOCKER_IMAGE=bluerobotics/companion-${{ matrix.docker }}
           DOCKER_PLATFORMS=linux/amd64,linux/arm/v6
           VERSION=master
 
@@ -38,7 +41,7 @@ jobs:
             --cache-from "type=local,src=/tmp/.buildx-cache" \
             --cache-to "type=local,dest=/tmp/.buildx-cache" \
             ${TAGS} \
-            --file ./core/Dockerfile ./core
+            --file ${{ matrix.docker }}/Dockerfile ./${{ matrix.docker }}
       -
         name: Set up Docker Buildx
         uses: crazy-max/ghaction-docker-buildx@v3
@@ -51,9 +54,9 @@ jobs:
         id: cache
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-${{ matrix.docker }}
       -
         name: Docker Buildx (build)
         run: |
