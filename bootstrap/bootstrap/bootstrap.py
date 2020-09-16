@@ -2,7 +2,6 @@ import json
 import os
 import pathlib
 import shutil
-import sys
 import time
 from typing import Any, Dict
 from warnings import warn
@@ -39,7 +38,12 @@ class Bootstrapper:
         try:
             with open(Bootstrapper.DOCKER_CONFIG_PATH) as config_file:
                 config = json.load(config_file)
-        except FileNotFoundError as error:
+                assert "core" in config, "missing core entry in startup.json"
+                necessary_keys = ["image", "tag", "binds", "privileged", "network"]
+                for key in necessary_keys:
+                    assert key in config["core"], f"missing key in json file: {key}"
+
+        except (FileNotFoundError, AssertionError) as error:
             print(f"unable to read startup.json file ({error}), reverting to defaults...")
             # Copy defaults over and read again
             Bootstrapper.overwrite_config_file_with_defaults()
@@ -58,17 +62,12 @@ class Bootstrapper:
 
         config = Bootstrapper.read_config_file()
 
-        try:
-            core = config["core"]
-            image = core["image"]
-            core_version = core["tag"]
-            binds = core["binds"]
-            privileged = core["privileged"]
-            network = core["network"]
-
-        except Exception as error:
-            warn(f"Error reading startup json data! {error}")
-            sys.exit(1)
+        core = config["core"]
+        image = core["image"]
+        core_version = core["tag"]
+        binds = core["binds"]
+        privileged = core["privileged"]
+        network = core["network"]
 
         print("Attempting to pull an updated image... This might take a while...")
         try:
