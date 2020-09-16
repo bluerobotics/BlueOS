@@ -1,6 +1,11 @@
 name: deploy images
 
-on: [push, pull_request]
+on:
+    pull_request:
+    push:
+    schedule:
+    # Run every 6 days to keep our caches alive
+    - cron: '0 0 */6 * *'
 
 jobs:
   deploy-images:
