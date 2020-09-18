@@ -11,14 +11,17 @@ import docker
 
 class Bootstrapper:
 
-    LOW_LEVEL_API = docker.APIClient(base_url="unix://var/run/docker.sock")
     DEFAULT_FILE_PATH = pathlib.Path("/bootstrap/startup.json.default")
     DOCKER_CONFIG_PATH = pathlib.Path("/root/.config/companion/startup.json")
     HOST_CONFIG_PATH = os.environ.get("COMPANION_CONFIG_PATH", None)
     CORE_CONTAINER_NAME = "companion_core"
 
-    def __init__(self, client: docker.DockerClient) -> None:
+    def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
         self.client: docker.DockerClient = client
+        if low_level_api is None:
+            self.low_level_api = docker.APIClient(base_url="unix://var/run/docker.sock")
+        else:
+            self.low_level_api = low_level_api
 
     @staticmethod
     def overwrite_config_file_with_defaults() -> None:
@@ -71,7 +74,7 @@ class Bootstrapper:
 
         print("Attempting to pull an updated image... This might take a while...")
         try:
-            for line in Bootstrapper.LOW_LEVEL_API.pull(f"{image}:{core_version}", stream=True, decode=True):
+            for line in self.low_level_api.pull(f"{image}:{core_version}", stream=True, decode=True):
                 print(line["status"])
         except docker.errors.APIError as error:
             warn(f"Error trying to pull an update image: {error}")
