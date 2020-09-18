@@ -9,7 +9,10 @@ REMOTE="$REMOTE/$VERSION"
 set -e
 
 # Check if the script is running in ARM architecture
-[[ "$(uname -m)" != "arm"* ]] && echo "Companion only supports ARM computers."
+[[ "$(uname -m)" != "arm"* ]] && (
+    echo "Companion only supports ARM computers."
+    exit 1
+)
 
 # Check if the script is running as root
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
