@@ -44,7 +44,7 @@ class FirmwareDownload:
         return pathlib.Path.joinpath(folder, filename)
 
     @staticmethod
-    def _download(url: str) -> pathlib.Path:
+    def _download(url: str) -> Optional[pathlib.Path]:
         """Download a specific file for a temporary location.
 
         Args:
@@ -55,7 +55,11 @@ class FirmwareDownload:
         """
 
         filename = FirmwareDownload._generate_random_filename()
-        urlretrieve(url, filename)
+        try:
+            urlretrieve(url, filename)
+        except Exception as error:
+            warn(f"Failed to download {url}: {error}", RuntimeWarning)
+            return None
         return filename
 
     @staticmethod
@@ -197,7 +201,7 @@ class FirmwareDownload:
 
         item = items[0]
         path = FirmwareDownload._download(item["url"])
-        if not FirmwareDownload._validate_firmware(path):
+        if not path or not FirmwareDownload._validate_firmware(path):
             warn("Unable to validate firmware file.", RuntimeWarning)
             return None
 
