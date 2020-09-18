@@ -3,6 +3,7 @@ from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
 
 def test_static() -> None:
     downloaded_file = FirmwareDownload._download(FirmwareDownload._manifest_remote)
+    assert downloaded_file, "Failed to download file."
     assert downloaded_file.exists(), "Download file does not exist."
 
     smaller_valid_size_bytes = 180 * 1024
