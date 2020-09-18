@@ -37,3 +37,5 @@ def test_firmware_download() -> None:
     ), "Failed to download a valid firmware file."
 
     assert firmware_download.download(Vehicle.Sub, "Pixhawk1"), "Failed to download latest valid firmware file."
+
+    assert firmware_download.download(Vehicle.Sub, "Navigator"), "Failed to download navigator binary."

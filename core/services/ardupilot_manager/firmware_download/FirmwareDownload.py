@@ -66,6 +66,18 @@ class FirmwareDownload:
         return filename
 
     @staticmethod
+    def _download_navigator() -> Optional[pathlib.Path]:
+        """This is a temporary method should be removed after navigator builds are provided
+            by ArduPilot community.
+            TODO: This function should not exist and be removed asap
+
+        Returns:
+            Optional[pathlib.Path]: Path of the binary
+        """
+        url = "https://s3.amazonaws.com/downloads.bluerobotics.com/ardusub/navigator/ardusub"
+        return FirmwareDownload._download(url)
+
+    @staticmethod
     def _validate_firmware(firmware_path: pathlib.Path) -> bool:
         """A simple validation function for firmware files (apj)
 
@@ -175,6 +187,9 @@ class FirmwareDownload:
         Returns:
             Optional[pathlib.Path]: Temporary path for the firmware file, None if unable to download or validate file.
         """
+        if platform.lower() == "navigator" and vehicle == Vehicle.Sub:
+            return FirmwareDownload._download_navigator()
+
         versions = self.get_available_versions(vehicle, platform)
         if version and versions and version not in versions:
             return None
