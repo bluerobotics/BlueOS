@@ -6,6 +6,7 @@ import random
 import string
 import tempfile
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
 from warnings import warn
 
@@ -54,7 +55,9 @@ class FirmwareDownload:
             pathlib.Path: File of the temporary file.
         """
 
-        filename = FirmwareDownload._generate_random_filename()
+        # We append the url filename to the generated random name to avoid collisions and preserve extension
+        name = pathlib.Path(urlparse(url).path).name
+        filename = pathlib.Path(f"{FirmwareDownload._generate_random_filename()}-{name}")
         try:
             urlretrieve(url, filename)
         except Exception as error:
