@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, Generator, List
 
 from docker.errors import NotFound
 from pyfakefs.fake_filesystem_unittest import TestCase
@@ -84,6 +84,22 @@ class FakeClient:
         self.containers = FakeContainers(containers)
 
 
+# pylint: disable=too-few-public-methods
+class FakeLowLevelAPI:
+
+    progress_text: List[str] = [
+        "Pretending we are pulling image {0}",
+        "Almost there..",
+        "Done!",
+    ]
+
+    def pull(self, image: str, stream: bool = True, decode: bool = True) -> Generator[Dict[str, Any], None, None]:
+        if not stream or not decode:
+            raise NotImplementedError
+        for line in self.progress_text:
+            yield {"status": line.format(image), "progressDetail": {}, "id": "e72ac664f4f0"}
+
+
 # The "type: ignore" comment in the next line addresses the fact that TestCase is Any,
 # which mypy disallows subclassing
 class BootstrapperTests(TestCase):  # type: ignore
@@ -93,20 +109,20 @@ class BootstrapperTests(TestCase):  # type: ignore
     def test_start_core(self) -> None:
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_PATH, contents=SAMPLE_JSON)
         fake_client = FakeClient()
-        bootstrapper = Bootstrapper(fake_client)
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start_core()
 
     def test_start_core_no_config(self) -> None:
         self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
         self.fs.create_dir(Path(Bootstrapper.DOCKER_CONFIG_PATH).parent)
         fake_client = FakeClient()
-        bootstrapper = Bootstrapper(fake_client)
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start_core()
 
     @staticmethod
     def test_is_running() -> None:
         fake_client = FakeClient()
-        bootstrapper = Bootstrapper(fake_client)
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         assert bootstrapper.core_is_running() is False
         fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
         fake_client.set_active_dockers([fake_core])
@@ -115,7 +131,7 @@ class BootstrapperTests(TestCase):  # type: ignore
     @staticmethod
     def test_remove_core() -> None:
         fake_client = FakeClient()
-        bootstrapper = Bootstrapper(fake_client)
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
         fake_client.set_active_dockers([fake_core])
         assert bootstrapper.core_is_running() is True
@@ -124,7 +140,7 @@ class BootstrapperTests(TestCase):  # type: ignore
 
     def test_bootstrap_start(self) -> None:
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_PATH, contents=SAMPLE_JSON)
-        bootstrapper = Bootstrapper(FakeClient())
+        bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
         assert bootstrapper.core_is_running() is False
         bootstrapper.run()
         assert bootstrapper.core_is_running()
@@ -132,6 +148,6 @@ class BootstrapperTests(TestCase):  # type: ignore
     def test_bootstrap_start_bad_json(self) -> None:
         self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_PATH, contents=json.dumps({"potato": "bread"}))
-        bootstrapper = Bootstrapper(FakeClient())
+        bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
         bootstrapper.run()
         assert bootstrapper.core_is_running()
