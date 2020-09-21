@@ -72,11 +72,19 @@ class FakeContainers:
 
 
 # pylint: disable=too-few-public-methods
+class FakeImages:
+    @staticmethod
+    def pull(_image: str) -> None:
+        return
+
+
+# pylint: disable=too-few-public-methods
 class FakeClient:
     """Mocks a docker-py client for testing purposes"""
 
     def __init__(self) -> None:
         self.containers = FakeContainers([])
+        self.images = FakeImages()
 
     def set_active_dockers(self, containers: List[FakeContainer]) -> None:
         for container in containers:

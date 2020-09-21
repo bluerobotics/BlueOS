@@ -1,3 +1,4 @@
+import curses
 import json
 import os
 import pathlib
@@ -59,13 +60,68 @@ class Bootstrapper:
         }
         return config
 
+    def pull_core(self) -> None:
+
+        core = self.config["core"]
+        image = core["image"]
+        tag = core["tag"]
+
+        curses_ui = True
+        try:
+            # TODO: make it not clear the whole screen # pylint: disable=fixme
+            screen = curses.initscr()
+            curses.noecho()
+            curses.cbreak()
+            curses.curs_set(0)
+        except Exception:
+            curses_ui = False
+
+        # if there is no curses support, like in the testing environment, just dump everything
+        if not curses_ui:
+            self.client.images.pull(f"{image}:{tag}")
+            return
+
+        # if there is ncurses support, proceed with it
+        lines: int = 0
+        # map each id to a line
+        id_line: Dict[str, int] = {}
+        for line in self.low_level_api.pull(f"{image}:{tag}", stream=True, decode=True):
+            if len(line.keys()) == 1:
+                # in some cases there is only "status", print that on the last line
+                screen.addstr(lines, 0, line["status"])
+                continue
+            try:
+                layer_id = line["id"]
+                if layer_id not in id_line:
+                    id_line[layer_id] = lines
+                    lines += 1
+                status = line["status"]
+                current_line = id_line[layer_id]
+                if "progress" in line:
+                    progress = line["progress"]
+                    screen.addstr(current_line, 0, f"[{layer_id}]\t({status})\t{progress}")
+                else:
+                    screen.addstr(current_line, 0, f"[{layer_id}]\t({status})")
+
+            except Exception as error:
+                # If we get an exception, print that on a new line under all others
+                screen.addstr(lines + 1, 0, str(error))
+            finally:
+                screen.clrtoeol()
+                screen.refresh()
+
+        curses.echo()
+        curses.nocbreak()
+        curses.endwin()
+        print("Done")
+
     def start_core(self) -> None:
         """Loads core settings and launches the core docker. Loads default settings if no settings are found"""
         core_version = "stable"
 
-        config = Bootstrapper.read_config_file()
+        self.config = Bootstrapper.read_config_file()
 
-        core = config["core"]
+        core = self.config["core"]
         image = core["image"]
         core_version = core["tag"]
         binds = core["binds"]
@@ -74,8 +130,7 @@ class Bootstrapper:
 
         print("Attempting to pull an updated image... This might take a while...")
         try:
-            for line in self.low_level_api.pull(f"{image}:{core_version}", stream=True, decode=True):
-                print(line["status"])
+            self.pull_core()
         except docker.errors.APIError as error:
             warn(f"Error trying to pull an update image: {error}")
 
