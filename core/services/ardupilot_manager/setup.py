@@ -13,5 +13,5 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
-    install_requires=["smbus2==0.3.0"],
+    install_requires=["appdirs==1.4.4", "packaging==20.4", "smbus2==0.3.0"],
 )
