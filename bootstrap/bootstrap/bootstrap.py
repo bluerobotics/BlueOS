@@ -122,5 +122,5 @@ class Bootstrapper:
                     print("Done")
                     return
                 except Exception as error:
-                    warn(f"error: {error}, retrying...")
+                    warn(f"error: {type(error)}: {error}, retrying...")
             time.sleep(1)
