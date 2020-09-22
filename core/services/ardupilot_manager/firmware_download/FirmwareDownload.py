@@ -1,8 +1,10 @@
 import enum
 import gzip
 import json
+import os
 import pathlib
 import random
+import ssl
 import string
 import tempfile
 from typing import Any, Dict, List, Optional
@@ -11,6 +13,11 @@ from urllib.request import urlopen, urlretrieve
 from warnings import warn
 
 from packaging.version import Version
+
+# TODO: This should be not necessary # pylint: disable=fixme
+# Disable SSL verification
+if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverified_context", None):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class Vehicle(enum.Enum):
