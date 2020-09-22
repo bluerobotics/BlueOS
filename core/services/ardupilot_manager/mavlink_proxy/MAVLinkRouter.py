@@ -24,7 +24,11 @@ class MAVLinkRouter(AbstractRouter):
     def assemble_command(self, master: Endpoint) -> str:
         # Convert endpoint format to mavlink-router format
         def convert_endpoint(endpoint: Endpoint) -> str:
-            return str(endpoint)[str(endpoint).find(":") + 1 :]
+            if endpoint.connType != EndpointType.TCP:
+                return str(endpoint)[str(endpoint).find(":") + 1 :]
+            # TCP uses a special argument and only works with localhost
+            port = str(endpoint).split(":")[2]
+            return f"-t {port}"
 
         endpoints = " ".join(["--endpoint " + convert_endpoint(endpoint) for endpoint in self.endpoints()])
 
@@ -32,6 +36,7 @@ class MAVLinkRouter(AbstractRouter):
             EndpointType.UDPServer,
             EndpointType.UDPClient,
             EndpointType.Serial,
+            EndpointType.TCP,
         ]:
             raise NotImplementedError
 
