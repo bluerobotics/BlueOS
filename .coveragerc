@@ -3,4 +3,4 @@ omit =
     */__init__.py
 
 [report]
-fail_under=81
+fail_under=80
