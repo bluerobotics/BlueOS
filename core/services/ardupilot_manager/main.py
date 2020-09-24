@@ -70,6 +70,7 @@ class ArduPilotManager:
             errors="ignore",
         )
 
+        # TODO: Fix ArduPilot UDP communication to use mavlink_manager # pylint: disable=fixme
         # ArduPilot master is not working with UDP endpoints and mavlink-router
         # does not accept TCP master endpoints
         # self.start_mavlink_manager(Endpoint(local_endpoint))
