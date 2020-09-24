@@ -21,6 +21,10 @@
             "/tmp/wpa_playground": {
                 "bind": "/tmp/wpa_playground",
                 "mode": "rw"
+            },
+            "/var/run/docker.sock": {
+                "bind": "/var/run/docker.sock",
+                "mode": "rw"
             }
         },
         "privileged": true
