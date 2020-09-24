@@ -74,6 +74,11 @@ class ArduPilotManager:
         # does not accept TCP master endpoints
         # self.start_mavlink_manager(Endpoint(local_endpoint))
 
+        # Check if subprocess is running and wait until it finishes
+        # Necessary since we don't have mavlink_manager running for navigator yet
+        while self.subprocess.poll() is None:
+            time.sleep(1)
+
     def start_serial(self, device: str) -> None:
         self.start_mavlink_manager(Endpoint(f"serial:{device}:115200"))
 
