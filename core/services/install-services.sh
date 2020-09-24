@@ -27,6 +27,9 @@ cd /home/pi/services/ardupilot_manager/ && python3 setup.py install
 # Helper service
 cd /home/pi/services/helper/ && python3 setup.py install
 
+# Version Chooser service:
+cd /home/pi/services/versionchooser/ && python3 setup.py install
+
 apt -y remove ${BUILD_PACKAGES[*]}
 apt -y autoremove
 apt -y clean
