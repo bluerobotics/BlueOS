@@ -1,0 +1,106 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Companion Version Chooser
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8081/v1.0
+
+paths:
+  /version/current:
+    get:
+      operationId: main.get_version
+      summary: Return the current running version of Companion
+      responses:
+        '200':
+          description: The current running version of Companion
+    post:
+      operationId: main.set_version
+      summary: Sets the current version of Companion to a new tag
+      responses:
+        '200':
+          description: Sucessfully set a new version
+        '400':
+          description: Attempted to set an unavailable version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repository:
+                  type: string
+                  example: bluerobotics/companion-core
+                tag:
+                  type: string
+                  example: master
+
+  /version/available/{repository}/{image}:
+    get:
+      operationId: main.get_available_versions
+      summary: Returns available versions, both locally and in dockerhub
+      parameters:
+        - in: path
+          name: repository
+          schema:
+            type: string
+          x-nullable: true
+          required: true
+        - name: image
+          in: path
+          schema:
+            type: string
+          required: true
+          example: companion-core
+      responses:
+        '200':
+          description: A list of versions available locally and on the remote(s)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remote:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+                  local:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+
+  /version/pull/:
+    post:
+      operationId: main.pull_version
+      summary: Pulls a version from dockerhub
+
+      responses:
+        '200':
+          description: Sucessfully set a new version
+        '400':
+          description: Attempted to set an unavailable version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repository:
+                  type: string
+                  example: bluerobotics/companion-core
+                tag:
+                  type: string
+                  example: master
+
+components:
+  schemas:
+    Version:
+      type: object
+      properties:
+        image:
+          type: string
+          example: bluerobotics/companion-core
+        tag:
+          type: string
+          example: master
