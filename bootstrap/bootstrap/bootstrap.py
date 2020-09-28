@@ -13,7 +13,8 @@ import docker
 class Bootstrapper:
 
     DEFAULT_FILE_PATH = pathlib.Path("/bootstrap/startup.json.default")
-    DOCKER_CONFIG_PATH = pathlib.Path("/root/.config/companion/startup.json")
+    DOCKER_CONFIG_PATH = pathlib.Path("/root/.config/companion/")
+    DOCKER_CONFIG_FILE_PATH = pathlib.Path(DOCKER_CONFIG_PATH, "startup.json")
     HOST_CONFIG_PATH = os.environ.get("COMPANION_CONFIG_PATH", None)
     CORE_CONTAINER_NAME = "companion-core"
 
@@ -27,7 +28,7 @@ class Bootstrapper:
     @staticmethod
     def overwrite_config_file_with_defaults() -> None:
         """Overwrites the config file with the default configuration"""
-        shutil.copy(Bootstrapper.DEFAULT_FILE_PATH, Bootstrapper.DOCKER_CONFIG_PATH)
+        shutil.copy(Bootstrapper.DEFAULT_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH)
 
     @staticmethod
     def read_config_file() -> Dict[str, Any]:
@@ -40,7 +41,7 @@ class Bootstrapper:
         # Tries to open the current file
         config = {}
         try:
-            with open(Bootstrapper.DOCKER_CONFIG_PATH) as config_file:
+            with open(Bootstrapper.DOCKER_CONFIG_FILE_PATH) as config_file:
                 config = json.load(config_file)
                 assert "core" in config, "missing core entry in startup.json"
                 necessary_keys = ["image", "tag", "binds", "privileged", "network"]
