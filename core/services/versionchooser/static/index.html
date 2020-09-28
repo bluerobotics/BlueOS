@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+
+
+  <head>
+    <title>Version Chooser</title>
+    <link rel="stylesheet" href="/static/css/metro-all.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/js/vue.js"></script>
+    <script src="/static/js/axios.min.js"></script>
+    <script src="/static/js/timeago.js"></script>
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/metro.js"></script>
+  </head>
+
+  <body>
+    <div id="app">
+      <div class="container pt-4">
+        <h1>Version Chooser</h1>
+        <h3>Available Versions:</h3>
+        <div class="p-4 m-3">
+          <div class="grid">
+            <div class="p-4 m-3">
+              <h4 class="mt-0">Local Versions</h4>
+              <div class="row bg-white m-4" v-for="image in availableVersions['local']">
+                <div class="cell-5">
+                  <div class="ml-3 mt-1" style="display: inline-block; vertical-align: middle">
+                    <span class="caption">
+                      <b>{{image.tag}}</b>
+                      <code :title="image.sha">{{image.sha | shortsha}}</code>
+                      <span class="badge inline bg-green fg-white" v-if="image.sha === currentVersion.sha">Current</span>
+                      <span class="badge inline bg-blue fg-white" v-if="image.sha === currentVersion.sha">Local changes</span><br>
+                      <span class="image-small">{{image.repository}}</span>
+                    </span>
+                  </div>
+                </div>
+                <div class="cell-3">
+                  <span v-bind:title="Date(image.last_modified)">Created {{image.last_modified | asTimeAgo}}</span>
+                </div>
+                <div class="cell-4" style="text-align: right;">
+                  <div>
+                    <!-- TODO implement these
+                    <span v-if="image.sha === currentVersion.sha" class="button info disabled">
+                      <span class="mif-undo m-1"></span>
+                      Discard changes
+
+                    </span>
+                    <span v-if="image.sha === currentVersion.sha" class="button primary">
+                      <span class="mif-shift m-1"></span>
+                      Upgrade
+
+                    </span>
+                    <span v-if="image.sha !== currentVersion.sha" class="button alert disabled">
+                      <span class="mif-bin m-1"></span>
+                      Delete
+
+                    </span>
+                    -->
+                    <span
+                      v-if="image.sha !== currentVersion.sha"
+                      class="button success"
+                      @click="this.Metro.infobox.open('#infobox'); setVersion(`${image.repository}:${image.tag}`)"
+                    >
+                      <span class="mif-checkmark m-1"></span>
+                      Apply
+
+                    </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="p-4 m-3">
+              <h4 class="mt-0">Remote Versions</h4>
+              <span class="ml-4">
+                <label>Repository</label>
+                <input type="text" required="" placeholder="bluerobotics/companion-core" id="repo" @change="loadAvailableversions" v-model="selectedImage" placeholder="edit me">
+              </span>
+              <div class="row bg-white m-4" v-for="image in availableVersions['remote']">
+                <div class="cell-5">
+                  <div class="ml-3 mt-1" style="display: inline-block; vertical-align: middle">
+                    <span class="caption">
+                      <b>{{image.tag}}</b>
+                      <code :title="image.sha">{{image.sha | shortsha}}</code>
+                    </span>
+                  </div>
+                </div>
+                <div class="cell-3">
+                  <span v-bind:title="Date(image.date)">Last updated {{image.last_modified | asTimeAgo}}</span>
+                </div>
+                <div class="cell-4" style="text-align: right;">
+                  <div>
+                    <span
+                    class="button primary"
+                    @click="this.Metro.infobox.open('#infobox'); pullVersion(`${image.repository}:${image.tag}`)"
+                    v-if="!imageIsAvailableLocally(image.sha)"
+                    >
+                      <span class="mif-download m-1"></span>
+                      Pull
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="infobox" class="info-box" data-role="infobox" data-width="700p">
+        <span class="button square closer"></span>
+        <div class="info-box-content">
+          <h3>Applying...</h3>
+          <p class="docker-pull-output">{{this.pullOutput}}</p>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    /*global Metro axios, Vue, timeago*/
+    new Vue({
+      el: '#app',
+      data: function () {
+        return {
+          pullOutput: '',
+          availableVersions: {},
+          currentVersion: '',
+          waiting: false,
+          selectedImage: 'bluerobotics/companion-core',
+          Metro: null,
+        }
+      },
+      mounted () {
+        Metro.init()
+        this.Metro = Metro
+        this.loadCurrentVersion()
+        setInterval(this.checkIfBackendIsOnline, 1000)
+      },
+      methods: {
+        checkIfBackendIsOnline () {
+          axios({
+            method: 'get',
+            url: '/v1.0/version/current',
+            timeout: 500
+          })
+            .then(() => {
+              if (this.waiting) {
+                // Allow 3 seconds so the user can read the "complete" message
+                // reload(true) forces the browser to fetch the page again
+                setTimeout(() => {window.location.reload(true)} , 3000)
+              }
+            })
+            .catch((error) => {
+              console.log(error)
+              this.waiting = true
+              // show infobox while we wait for backend to come back online
+              Metro.infobox.open('#infobox')
+            })
+        },
+        loadAvailableversions () {
+          // TODO: validate repository, treat error fetching
+          axios.get('/v1.0/version/available/' + this.selectedImage).then(response => {
+            this.availableVersions = response.data
+          }).catch(() => { this.availableVersions = {} })
+        },
+        loadCurrentVersion () {
+          return axios.get('/v1.0/version/current/').then(response => {
+            const image = response.data
+            this.currentVersion = image
+            let fullname = `${image.repository}:${image.tag}`
+            this.selectedImage = fullname.split(':')[0]
+            this.loadAvailableversions()
+          })
+        },
+        pullVersion (fullname) {
+          // This streams the output of docker pull
+          console.log(fullname)
+          const [repository, tag] = fullname.split(':')
+          console.log(repository)
+          console.log(tag)
+          const layerStatus = {}
+          const layers = []
+          const layerProgress = {}
+          let overallStatus = ''
+
+          axios({
+            url: '/v1.0/version/pull',
+            method: 'POST',
+            data: {
+              repository: repository,
+              tag: tag,
+            },
+            onDownloadProgress: progressEvent => {
+            // dataChunk contains the data that have been obtained so far (the whole data so far)..
+            // The data is sent with two newlines after each message, so we split there
+            // Due to the trailing /n/n, we need the index "last -2"
+            // The received data is descbribed at
+            // https://docker-py.readthedocs.io/en/stable/api.html#docker.api.image.ImageApiMixin.pull
+              const dataChunk = progressEvent.currentTarget.response
+              const dataList = dataChunk.split('\n\n')
+
+              let data = JSON.parse(dataList[dataList.length - 2])
+              if ('id' in data) {
+                const id = data['id']
+                if (!layers.includes(id)) {
+                  layers.push(id)
+                }
+                if ('progress' in data) {
+                  layerProgress[id] = data['progress']
+                }
+                if ('status' in data) {
+                  layerStatus[id] = data['status']
+                }
+              } else {
+                overallStatus = data['status']
+              }
+              this.pullOutput = ''
+              for (let image of layers) {
+                this.pullOutput = this.pullOutput + `[${image}] ${layerStatus[image]}  ${layerProgress[image] || ''}\n`
+              }
+              this.pullOutput = this.pullOutput + `${overallStatus}\n`
+            }
+          })
+
+        },
+        setVersion (fullname) {
+          const [repository, tag] = fullname.split(':')
+          axios({
+            method: 'post',
+            url: '/v1.0/version/current',
+            data: {
+              repository: repository,
+              tag: tag,
+            }
+          })
+        },
+        imageIsAvailableLocally (sha) {
+          if (!('local' in this.availableVersions)) {
+            return false
+          }
+          return this.availableVersions['local'].some((image) => image.sha === sha)
+        }
+
+      },
+      filters: {
+        asTimeAgo: function (value) {
+          return timeago().format(new Date(Date.parse(value)), 'twitter')
+        },
+        shortsha: function (value) {
+          return value.replace('sha256:','').substring(0, 8)
+        }
+      }
+    })
+  </script>
+</html>
