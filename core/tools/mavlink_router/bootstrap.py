@@ -32,6 +32,12 @@ def run_apt_install(package: str) -> None:
     run_command(f"DEBIAN_FRONTEND=noninteractive apt --yes install {package}")
 
 
+def run_apt_uninstall(package: str) -> None:
+    run_command(f"DEBIAN_FRONTEND=noninteractive apt --yes purge {package} ")
+    # "autoremove" is actually responsible for cleaning up 193 MB
+    run_command("DEBIAN_FRONTEND=noninteractive apt --yes autoremove ")
+
+
 print("Starting..")
 run_apt_install("autoconf g++ git libtool make pkg-config python3-future")
 
@@ -60,4 +66,6 @@ run_command(f"rm -rf {MAVLINK_ROUTER_PATH}")
 
 set_directory(SERVICE_PATH)
 run_command("mavlink-routerd --version")
+print("Cleaning up...")
+run_apt_uninstall("autoconf g++ git libtool make pkg-config python3-future")
 print(f"Finished to build {get_project_name()}!")
