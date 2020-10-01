@@ -115,14 +115,14 @@ class BootstrapperTests(TestCase):  # type: ignore
         self.setUpPyfakefs()
 
     def test_start_core(self) -> None:
-        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_PATH, contents=SAMPLE_JSON)
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start_core()
 
     def test_start_core_no_config(self) -> None:
         self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
-        self.fs.create_dir(Path(Bootstrapper.DOCKER_CONFIG_PATH).parent)
+        self.fs.create_dir(Path(Bootstrapper.DOCKER_CONFIG_PATH))
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start_core()
@@ -147,7 +147,7 @@ class BootstrapperTests(TestCase):  # type: ignore
         assert bootstrapper.core_is_running() is False
 
     def test_bootstrap_start(self) -> None:
-        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_PATH, contents=SAMPLE_JSON)
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
         bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
         assert bootstrapper.core_is_running() is False
         bootstrapper.run()
@@ -155,7 +155,7 @@ class BootstrapperTests(TestCase):  # type: ignore
 
     def test_bootstrap_start_bad_json(self) -> None:
         self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
-        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_PATH, contents=json.dumps({"potato": "bread"}))
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=json.dumps({"potato": "bread"}))
         bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
         bootstrapper.run()
         assert bootstrapper.core_is_running()
