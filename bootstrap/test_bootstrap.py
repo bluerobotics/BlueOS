@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Generator, List
 
+import pytest
 from docker.errors import NotFound
 from pyfakefs.fake_filesystem_unittest import TestCase
 
@@ -114,12 +115,14 @@ class BootstrapperTests(TestCase):  # type: ignore
     def setUp(self) -> None:
         self.setUpPyfakefs()
 
+    @pytest.mark.timeout(10)
     def test_start_core(self) -> None:
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start_core()
 
+    @pytest.mark.timeout(10)
     def test_start_core_no_config(self) -> None:
         self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
         self.fs.create_dir(Path(Bootstrapper.DOCKER_CONFIG_PATH))
@@ -128,6 +131,7 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper.start_core()
 
     @staticmethod
+    @pytest.mark.timeout(10)
     def test_is_running() -> None:
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
@@ -137,6 +141,7 @@ class BootstrapperTests(TestCase):  # type: ignore
         assert bootstrapper.core_is_running()
 
     @staticmethod
+    @pytest.mark.timeout(10)
     def test_remove_core() -> None:
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
@@ -146,6 +151,7 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper.remove_core()
         assert bootstrapper.core_is_running() is False
 
+    @pytest.mark.timeout(10)
     def test_bootstrap_start(self) -> None:
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
         bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
@@ -153,6 +159,7 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper.run()
         assert bootstrapper.core_is_running()
 
+    @pytest.mark.timeout(10)
     def test_bootstrap_start_bad_json(self) -> None:
         self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=json.dumps({"potato": "bread"}))
