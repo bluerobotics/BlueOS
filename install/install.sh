@@ -18,10 +18,8 @@ set -e
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
 
 # Detect CPU and do necessary hardware configuration for each supported hardware
-CPU_INFO="$(cat /proc/cpuinfo)"
-echo $CPU_INFO | grep -Eq "BCM(27|28)" && (
-    curl -fsSL $REMOTE/install/boards/bcm_28_27.sh | bash
-)
+echo "Starting hardware configuration."
+curl -fsSL $REMOTE/install/boards/configure_board.sh | bash
 
 echo "Checking for blocked wifi and bluetooth."
 rfkill unblock all
