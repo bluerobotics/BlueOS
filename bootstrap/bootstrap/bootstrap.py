@@ -15,7 +15,7 @@ class Bootstrapper:
     DEFAULT_FILE_PATH = pathlib.Path("/bootstrap/startup.json.default")
     DOCKER_CONFIG_PATH = pathlib.Path("/root/.config/companion/startup.json")
     HOST_CONFIG_PATH = os.environ.get("COMPANION_CONFIG_PATH", None)
-    CORE_CONTAINER_NAME = "companion_core"
+    CORE_CONTAINER_NAME = "companion-core"
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
         self.client: docker.DockerClient = client
