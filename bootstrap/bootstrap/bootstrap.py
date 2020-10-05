@@ -93,12 +93,14 @@ class Bootstrapper:
         lines: int = 0
         # map each id to a line
         id_line: Dict[str, int] = {}
-        for line in self.low_level_api.pull(f"{image}:{tag}", stream=True, decode=True):
-            if len(line.keys()) == 1:
-                # in some cases there is only "status", print that on the last line
-                screen.addstr(lines, 0, line["status"])
-                continue
-            try:
+        try:
+            for line in self.low_level_api.pull(f"{image}:{tag}", stream=True, decode=True):
+                if len(line.keys()) == 1 and "status" in line:
+                    # in some cases there is only "status", print that on the last line
+                    screen.addstr(lines, 0, line["status"])
+                    continue
+                if "id" not in line:
+                    continue
                 layer_id = line["id"]
                 if layer_id not in id_line:
                     id_line[layer_id] = lines
@@ -111,19 +113,15 @@ class Bootstrapper:
                 else:
                     screen.addstr(current_line, 0, f"[{layer_id}]\t({status})")
 
-            except Exception as error:
-                # If we get an exception, print that on a new line under all others
-                screen.addstr(lines + 1, 0, str(error))
-            finally:
                 screen.clrtoeol()
                 screen.refresh()
-
-        curses.echo()
-        curses.nocbreak()
-        curses.endwin()
+        finally:
+            curses.echo()
+            curses.nocbreak()
+            curses.endwin()
         print("Done")
 
-    def start_core(self) -> None:
+    def start_core(self) -> bool:
         """Loads core settings and launches the core docker. Loads default settings if no settings are found"""
         core_version = "stable"
 
@@ -139,6 +137,10 @@ class Bootstrapper:
         print("Attempting to pull an updated image... This might take a while...")
         try:
             self.pull_core()
+        except docker.errors.ImageNotFound:
+            warn("Image not found, reverting to default...")
+            self.overwrite_config_file_with_defaults()
+            return False
         except docker.errors.APIError as error:
             warn(f"Error trying to pull an update image: {error}")
 
@@ -152,6 +154,7 @@ class Bootstrapper:
             detach=True,
         )
         print("Core started")
+        return True
 
     def core_is_running(self) -> bool:
         """
@@ -181,9 +184,9 @@ class Bootstrapper:
             else:
                 try:
                     self.remove_core()
-                    self.start_core()
-                    print("Done")
-                    return
+                    if self.start_core():
+                        print("Done")
+                        return
                 except Exception as error:
                     warn(f"error: {type(error)}: {error}, retrying...")
             time.sleep(1)
