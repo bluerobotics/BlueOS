@@ -28,6 +28,13 @@ class Bootstrapper:
     @staticmethod
     def overwrite_config_file_with_defaults() -> None:
         """Overwrites the config file with the default configuration"""
+        try:
+            shutil.copy(
+                Bootstrapper.DOCKER_CONFIG_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH.with_suffix(".json.bak")
+            )
+        except FileNotFoundError:
+            # we don't mind if the file is already there
+            pass
         shutil.copy(Bootstrapper.DEFAULT_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH)
 
     @staticmethod
