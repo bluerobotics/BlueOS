@@ -145,14 +145,20 @@ class Bootstrapper:
             warn(f"Error trying to pull an update image: {error}")
 
         print("Starting core")
-        self.client.containers.run(
-            f"{image}:{core_version}",
-            name=Bootstrapper.CORE_CONTAINER_NAME,
-            volumes=binds,
-            privileged=privileged,
-            network=network,
-            detach=True,
-        )
+        try:
+            self.client.containers.run(
+                f"{image}:{core_version}",
+                name=Bootstrapper.CORE_CONTAINER_NAME,
+                volumes=binds,
+                privileged=privileged,
+                network=network,
+                detach=True,
+            )
+        except docker.errors.APIError as error:
+            warn(f"Error trying to start image: {error}, reverting to default...")
+            self.overwrite_config_file_with_defaults()
+            return False
+
         print("Core started")
         return True
 
