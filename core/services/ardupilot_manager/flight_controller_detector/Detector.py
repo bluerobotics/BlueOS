@@ -1,11 +1,11 @@
 import os
-from enum import Enum
+from enum import IntEnum
 from typing import List, Tuple
 
 from smbus2 import SMBus
 
 
-class FlightControllerType(Enum):
+class FlightControllerType(IntEnum):
     Serial = 1
     Navigator = 2
 
