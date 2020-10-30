@@ -18,6 +18,6 @@ echo "Running mypy.."
 git ls-files '*.py' | xargs --max-lines=1 mypy --ignore-missing-imports --warn-unreachable --allow-untyped-decorators --strict
 
 echo "Running pytest.."
-pytest --cov="$repository_path" --cov-config="$repository_path/.coveragerc"
+pytest --cov="$repository_path" --cov-config="$repository_path/.coveragerc" --cov-report html --cov-report term
 
 exit 0
