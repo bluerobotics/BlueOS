@@ -5,5 +5,5 @@ This folder contains all necessary files for configuration of the host computer 
 To use it, just run the following line in your terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bluerobotics/companion-docker/master/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/bluerobotics/companion-docker/master/install/install.sh | sudo bash
 ```
