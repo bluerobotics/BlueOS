@@ -51,7 +51,7 @@ COMPANION_BOOTSTRAP="bluerobotics/companion-bootstrap:master" # We don't have ot
 docker pull $COMPANION_BOOTSTRAP
 # Start bootstrap for the first time to fetch the other images and allow docker to restart it after reboot
 docker run \
-    -it \
+    -t \
     --restart unless-stopped \
     --name companion-bootstrap \
     -v $HOME/.config/companion:/root/.config/companion \
