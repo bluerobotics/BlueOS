@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# exit when any command fails
+set -e
+
 GST_VERSION=${GST_VERSION:master}
 
 echo "Going to install GST version: $GST_VERSION in 5 seconds.."
