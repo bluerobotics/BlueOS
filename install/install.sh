@@ -37,6 +37,7 @@ test $NO_CLEAN || (
 
         echo "Removing dockers."
         docker rm $(docker ps -a -q)
+        docker image prune -af
     ) || true
 )
 
