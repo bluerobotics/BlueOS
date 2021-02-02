@@ -72,14 +72,12 @@ class FakeContainers:
         return list(self.containers.values())
 
 
-# pylint: disable=too-few-public-methods
 class FakeImages:
     @staticmethod
     def pull(_image: str) -> None:
         return
 
 
-# pylint: disable=too-few-public-methods
 class FakeClient:
     """Mocks a docker-py client for testing purposes"""
 
@@ -93,7 +91,6 @@ class FakeClient:
         self.containers = FakeContainers(containers)
 
 
-# pylint: disable=too-few-public-methods
 class FakeLowLevelAPI:
 
     progress_text: List[str] = [
