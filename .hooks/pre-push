@@ -5,6 +5,13 @@ set -e
 echo "Running pre push hook!"
 repository_path=$(git rev-parse --show-toplevel)
 
+echo "Running shellcheck..."
+#SC2005: Allow us to break line while running command
+#SC2015: Allow us to use short circuit
+#SC2046: Allow word splitting
+#SC2086: Allow word splitting
+git ls-files '*.sh' | xargs --max-lines=1 shellcheck --exclude=SC2005,SC2015,SC2046,SC2086
+
 echo "Running isort.."
 isort --check-only "$repository_path"
 
