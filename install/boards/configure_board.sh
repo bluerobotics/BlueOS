@@ -44,5 +44,5 @@ elif [ -f "/proc/cpuinfo" ]; then
 
 else
     echo "Impossible to detect hardware, aborting."
-    exit -1
+    exit 255
 fi
