@@ -76,7 +76,7 @@ class Bootstrapper:
 
         curses_ui = True
         try:
-            # TODO: make it not clear the whole screen # pylint: disable=fixme
+            # TODO: make it not clear the whole screen
             screen = curses.initscr()
             curses.noecho()
             curses.cbreak()
