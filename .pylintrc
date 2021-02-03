@@ -18,6 +18,7 @@ disable=attribute-defined-outside-init,
     no-member, # Some members are created in runtime, pylint fails to detect such cases
     no-name-in-module, # Names can be generated in runtime
     protected-access, # Necessary for internal tests
+    suppressed-message,
     too-few-public-methods, # We know what kind of architecture we want
     too-many-public-methods, # Wrappers will have multiple public methods
     useless-super-delegation, # Fails to check it properly
