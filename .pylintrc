@@ -23,3 +23,9 @@ disable=attribute-defined-outside-init,
     useless-super-delegation, # Fails to check it properly
     wildcard-import, # Necessary to locate installed plugins
     wrong-import-position, # isort will take care of that for us
+
+[MISCELLANEOUS]
+
+# List of note tags to take in consideration, separated by a comma.
+# TODO is removed for internal development
+notes=FIXME
