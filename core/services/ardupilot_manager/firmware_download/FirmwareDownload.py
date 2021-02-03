@@ -14,7 +14,7 @@ from warnings import warn
 
 from packaging.version import Version
 
-# TODO: This should be not necessary # pylint: disable=fixme
+# TODO: This should be not necessary
 # Disable SSL verification
 if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverified_context", None):
     ssl._create_default_https_context = ssl._create_unverified_context
