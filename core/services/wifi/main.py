@@ -144,6 +144,10 @@ if __name__ == "__main__":
         bottle.response.content_type = "application/json; charset=UTF-8"
         return json.dumps(data, sort_keys=True, indent=4, ensure_ascii=False).encode("utf-8")
 
+    @bottle.route("/")
+    def home() -> str:
+        return r"<br>".join([f'<a href="{route.rule}">{route.rule}</a>' for route in bottle.app().routes])
+
     @bottle.route(REST_API_PREFIX + "/status")
     def status() -> bytes:
         return to_pretty_json(wifi_manager.status())
