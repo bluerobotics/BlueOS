@@ -1,4 +1,3 @@
-import enum
 import gzip
 import json
 import os
@@ -7,6 +6,7 @@ import random
 import ssl
 import string
 import tempfile
+from enum import IntEnum
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
@@ -20,7 +20,7 @@ if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverif
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
-class Vehicle(enum.Enum):
+class Vehicle(IntEnum):
     """Valid vehicle types to download"""
 
     Sub = 1

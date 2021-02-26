@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum
 from typing import Optional
 
 
-class EndpointType(Enum):
+class EndpointType(IntEnum):
     Undefined = 0
     UDPServer = 1
     UDPClient = 2
