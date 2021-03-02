@@ -49,6 +49,10 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         pass
 
     @staticmethod
+    def possible_interfaces() -> List[str]:
+        return [subclass.name() for subclass in AbstractRouter.__subclasses__()]
+
+    @staticmethod
     def available_interfaces() -> List[Type["AbstractRouter"]]:
         return [subclass for subclass in AbstractRouter.__subclasses__() if subclass.is_ok()]
 
