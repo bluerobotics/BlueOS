@@ -18,6 +18,10 @@ class Manager:
         self.tool = Manager.available_interfaces()[0]()
 
     @staticmethod
+    def possible_interfaces() -> List[str]:
+        return AbstractRouter.possible_interfaces()
+
+    @staticmethod
     def available_interfaces() -> List[Type[AbstractRouter]]:
         return AbstractRouter.available_interfaces()
 
