@@ -13,7 +13,11 @@ class Manager:
     def __init__(self) -> None:
         self.master: Endpoint
         if not Manager.available_interfaces():
-            raise RuntimeError("No available interface found.")
+            raise RuntimeError(
+                "No MAVLink routers found,"
+                " make sure that at least one is installed."
+                f" Supported: {Manager.possible_interfaces()}"
+            )
 
         self.tool = Manager.available_interfaces()[0]()
 
