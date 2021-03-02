@@ -16,9 +16,6 @@ from mavlink_proxy.Manager import Manager as MavlinkManager
 class ArduPilotManager:
     def __init__(self) -> None:
         self.mavlink_manager = MavlinkManager()
-        available_mavlink_interfaces = self.mavlink_manager.available_interfaces()
-        if not available_mavlink_interfaces:
-            raise RuntimeError("No MAVLink interface available.")
 
         # Create a folder for ArduPilotManager service
         self.settings_path = appdirs.user_config_dir(self.__class__.__name__)
