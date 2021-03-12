@@ -69,6 +69,11 @@ docker run \
     -e COMPANION_CONFIG_PATH=$HOME/.config/companion \
     $COMPANION_BOOTSTRAP
 
+# Configure network settings
+## This should be after everything, otherwise network problems can happen
+echo "Starting network configuration."
+curl -fsSL $REMOTE/install/network/avahi.sh | bash
+
 echo "Installation finished successfully."
 echo "System will reboot in 10 seconds."
 sleep 10 && reboot
