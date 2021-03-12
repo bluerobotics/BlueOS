@@ -41,7 +41,12 @@ NECESSARY_SPACE_GB=4
 
 # Check for docker and install it if not found
 echo "Checking for docker."
-docker --version || curl -fsSL https://get.docker.com | sh && systemctl enable docker
+docker --version || curl -fsSL https://get.docker.com | sh || (
+    echo "Failed to start docker, something is wrong."
+    echo "Please report this problem."
+    exit 1
+)
+systemctl enable docker
 
 # Stop and remove all docker if NO_CLEAN is not defined
 test $NO_CLEAN || (
