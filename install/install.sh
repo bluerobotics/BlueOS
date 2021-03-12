@@ -17,6 +17,12 @@ set -e
 # Check if the script is running as root
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
 
+echo "Checking if network and remote are available."
+curl -fsSL --silent $REMOTE/install/install.sh 1> /dev/null || (
+    echo "Remote is not available: ${REMOTE}"
+    exit 1
+)
+
 # Detect CPU and do necessary hardware configuration for each supported hardware
 echo "Starting hardware configuration."
 curl -fsSL $REMOTE/install/boards/configure_board.sh | bash
