@@ -3,6 +3,9 @@
 # exit when any command fails
 set -e
 
+# Check if the script is running as root
+[[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
+
 GST_VERSION=${GST_VERSION:master}
 
 echo "Going to install GST version: $GST_VERSION in 5 seconds.."
