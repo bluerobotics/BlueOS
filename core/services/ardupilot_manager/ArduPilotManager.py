@@ -4,27 +4,21 @@ import subprocess
 import time
 from typing import Any, List, Optional, Tuple
 
-import appdirs
 from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
 from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.Manager import Manager as MavlinkManager
+from settings import Settings
 
 
 class ArduPilotManager:
     def __init__(self) -> None:
+        self.settings = Settings()
         self.mavlink_manager = MavlinkManager()
 
-        # Create a folder for ArduPilotManager service
-        app_name = "ardupilot-manager"
-        self.settings_path = appdirs.user_config_dir(app_name)
-        self.firmware_path = os.path.join(self.settings_path, "firmware")
         self.subprocess: Optional[Any] = None
         self.firmware_download = FirmwareDownload()
-
-        # Create settings folder, ignore if already exists
-        os.makedirs(self.firmware_path, exist_ok=True)
 
     def run(self) -> None:
         ArduPilotManager.check_running_as_root()
@@ -39,7 +33,7 @@ class ArduPilotManager:
             raise RuntimeError("ArduPilot manager needs to run with root privilege.")
 
     def start_navigator(self) -> None:
-        firmware = os.path.join(self.firmware_path, "ardusub")
+        firmware = os.path.join(self.settings.firmware_path, "ardusub")
         if not os.path.isfile(firmware):
             temporary_file = self.firmware_download.download(Vehicle.Sub, "Navigator")
             assert temporary_file, "Failed to download navigator binary."
@@ -58,9 +52,9 @@ class ArduPilotManager:
                 "-A",
                 local_endpoint,
                 "--log-directory",
-                f"{self.firmware_path}/logs/",
+                f"{self.settings.firmware_path}/logs/",
                 "--storage-directory",
-                f"{self.firmware_path}/storage/",
+                f"{self.settings.firmware_path}/storage/",
             ],
             shell=False,
             encoding="utf-8",
