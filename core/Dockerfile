@@ -11,7 +11,7 @@ RUN GST_VERSION=1.17.2 ./install_gst.sh && rm /install_gst.sh
 RUN apt install -y --no-install-recommends python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# Install Mavlink Router
+# Install necessary tools
 COPY tools /home/pi/tools
 RUN /home/pi/tools/mavlink_router/bootstrap.py
 RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
