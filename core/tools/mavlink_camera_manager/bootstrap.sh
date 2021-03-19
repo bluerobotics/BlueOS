@@ -7,5 +7,6 @@ REMOTE_BINARY_URL="https://s3.amazonaws.com/downloads.bluerobotics.com/companion
 DEBIAN_FRONTEND=noninteractive apt --yes install wget
 wget "$REMOTE_BINARY_URL" -O "$LOCAL_BINARY_PATH"
 chmod +x "$LOCAL_BINARY_PATH"
+# Remove necessary stuff to install binary, creating a small docker layer
 DEBIAN_FRONTEND=noninteractive apt --yes purge wget
 DEBIAN_FRONTEND=noninteractive apt --yes autoremove
