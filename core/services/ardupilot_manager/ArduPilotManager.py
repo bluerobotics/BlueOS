@@ -17,7 +17,8 @@ class ArduPilotManager:
         self.mavlink_manager = MavlinkManager()
 
         # Create a folder for ArduPilotManager service
-        self.settings_path = appdirs.user_config_dir(self.__class__.__name__)
+        app_name = "ardupilot-manager"
+        self.settings_path = appdirs.user_config_dir(app_name)
         self.firmware_path = os.path.join(self.settings_path, "firmware")
         self.subprocess: Optional[Any] = None
         self.firmware_download = FirmwareDownload()
