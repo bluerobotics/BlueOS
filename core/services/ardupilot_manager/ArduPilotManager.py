@@ -13,9 +13,10 @@ from flight_controller_detector.Detector import FlightControllerType
 from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
+from Singleton import Singleton
 
 
-class ArduPilotManager:
+class ArduPilotManager(metaclass=Singleton):
     def __init__(self) -> None:
         self.settings = Settings()
         self.mavlink_manager = MavlinkManager()
