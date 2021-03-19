@@ -43,6 +43,9 @@ class Manager:
     def start(self) -> None:
         self.tool.start(self.master)
 
+    def restart(self) -> bool:
+        return self.tool.restart()
+
     def command_line(self) -> str:
         if not self.master:
             raise RuntimeError("Master endpoint was not defined.")
