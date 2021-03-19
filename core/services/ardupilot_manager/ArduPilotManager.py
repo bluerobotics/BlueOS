@@ -107,3 +107,6 @@ class ArduPilotManager:
             raise RuntimeError("Invalid board type: {boards}")
 
         return False
+
+    def restart(self) -> bool:
+        return self.mavlink_manager.restart()
