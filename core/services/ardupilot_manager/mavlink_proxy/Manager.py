@@ -32,10 +32,24 @@ class Manager:
     def use(self, interface: AbstractRouter) -> None:
         self.tool = interface
 
+    def add_endpoint(self, endpoint: Endpoint) -> bool:
+        return self.tool.add_endpoint(endpoint)
+
+    def remove_endpoint(self, endpoint: Endpoint) -> bool:
+        return self.tool.remove_endpoint(endpoint)
+
     def add_endpoints(self, endpoints: List[Endpoint]) -> None:
         for endpoint in endpoints:
-            if not self.tool.add_endpoint(endpoint):
+            if not self.add_endpoint(endpoint):
                 warn(f"Endpoint {endpoint} is not valid.", RuntimeWarning)
+
+    def remove_endpoints(self, endpoints: List[Endpoint]) -> None:
+        for endpoint in endpoints:
+            if not self.remove_endpoint(endpoint):
+                warn(f"Endpoint {endpoint} is not valid.", RuntimeWarning)
+
+    def endpoints(self) -> List[Endpoint]:
+        return self.tool.endpoints()
 
     def set_master_endpoint(self, master: Endpoint) -> None:
         self.master = master
