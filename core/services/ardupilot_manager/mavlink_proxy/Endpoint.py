@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Optional
+from typing import Dict, Optional, Union
 
 
 class EndpointType(IntEnum):
@@ -26,9 +26,11 @@ class Endpoint:
         (["file"], EndpointType.File),
     ]
 
-    def __init__(self, string: str = "") -> None:
-        if string:
-            self.from_str(string)
+    def __init__(self, constructor: Union[str, Dict[str, str]] = "") -> None:
+        if isinstance(constructor, dict):
+            self.from_dict(constructor)
+        else:
+            self.from_str(constructor)
 
     def from_str(self, pattern: str) -> "Endpoint":
         args = pattern.split(":")
@@ -44,6 +46,23 @@ class Endpoint:
 
         self.place = args[1]
         self.argument = args[2] if len(args) == 3 else None
+
+        return self
+
+    def from_dict(self, pattern: Dict[str, str]) -> "Endpoint":
+        if not {"connType", "place"}.issubset(pattern.keys()):
+            diff = {"connType", "place"}.difference(pattern.keys())
+            raise RuntimeError(f"Wrong format for endpoint creation, missing the following: {diff}.")
+
+        for stringType, endpointType in self._connTypeMap:
+            if pattern["connType"] in stringType:
+                self.connType = endpointType
+                break
+        else:
+            self.connType = EndpointType.Undefined
+
+        self.place = pattern["place"]
+        self.argument = pattern["argument"] if pattern["argument"] else None
 
         return self
 

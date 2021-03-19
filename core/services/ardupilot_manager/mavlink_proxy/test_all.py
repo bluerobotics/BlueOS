@@ -19,6 +19,12 @@ def test_endpoint() -> None:
     assert endpoint.argument == "14550", "Connection argument does not match."
     assert endpoint.__str__() == "udp:0.0.0.0:14550", "Connection string does not match."
 
+    endpoint = Endpoint({"connType": "udp", "place": "0.0.0.0", "argument": "14550"})
+    assert endpoint.connType == EndpointType.UDPClient, "Connection type does not match."
+    assert endpoint.place == "0.0.0.0", "Connection place does not match."
+    assert endpoint.argument == "14550", "Connection argument does not match."
+    assert endpoint.__str__() == "udp:0.0.0.0:14550", "Connection string does not match."
+
 
 def test_mavproxy() -> None:
     if not MAVProxy.is_ok():
