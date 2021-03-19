@@ -2,7 +2,10 @@ import os
 import stat
 import subprocess
 import time
+from copy import deepcopy
+from pprint import pprint
 from typing import Any, List, Optional, Tuple
+from warnings import warn
 
 from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
@@ -17,6 +20,15 @@ class ArduPilotManager:
         self.settings = Settings()
         self.mavlink_manager = MavlinkManager()
 
+        # Load settings and do the initial configuration
+        if self.settings.load():
+            print(f"Loaded settings from {self.settings.settings_file}:")
+            pprint(self.settings.content)
+        else:
+            self.settings.create_settings()
+
+        self.configuration = deepcopy(self.settings.content)
+        self._load_endpoints()
         self.subprocess: Optional[Any] = None
         self.firmware_download = FirmwareDownload()
 
@@ -75,7 +87,7 @@ class ArduPilotManager:
         self.start_mavlink_manager(Endpoint(f"serial:{device}:115200"))
 
     def start_mavlink_manager(self, device: Endpoint) -> None:
-        self.mavlink_manager.add_endpoints([Endpoint("udpin:0.0.0.0:14550")])
+        self.add_endpoint(Endpoint("udpin:0.0.0.0:14550"))
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
         while self.mavlink_manager.is_running():
@@ -104,3 +116,31 @@ class ArduPilotManager:
 
     def restart(self) -> bool:
         return self.mavlink_manager.restart()
+
+    def _load_endpoints(self) -> None:
+        if "endpoints" not in self.configuration:
+            self.configuration["endpoints"] = []
+        else:
+            endpoints = self.configuration["endpoints"]
+            self.mavlink_manager.add_endpoints([Endpoint(e) for e in endpoints])
+
+    def get_endpoints(self) -> List[Endpoint]:
+        return self.mavlink_manager.endpoints()
+
+    def add_endpoint(self, endpoint: Endpoint) -> bool:
+        if not self.mavlink_manager.add_endpoint(endpoint):
+            return False
+        self.configuration.get("endpoints", []).append(endpoint.__dict__)
+        self.settings.save(self.configuration)
+        return True
+
+    def remove_endpoint(self, endpoint: Endpoint) -> bool:
+        if not self.mavlink_manager.remove_endpoint(endpoint):
+            return False
+        try:
+            self.configuration.get("endpoints", []).remove(endpoint.__dict__)
+            self.settings.save(self.configuration)
+            return True
+        except Exception as error:
+            warn(f"Error: {error}")
+            return False
