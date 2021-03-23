@@ -29,6 +29,13 @@ class Bootstrapper:
     def overwrite_config_file_with_defaults() -> None:
         """Overwrites the config file with the default configuration"""
         try:
+            os.makedirs(pathlib.Path(Bootstrapper.DOCKER_CONFIG_FILE_PATH).parent, exist_ok=True)
+        except Exception as exception:
+            raise RuntimeError(
+                f"Failed to create folder for configuration file: {Bootstrapper.DOCKER_CONFIG_FILE_PATH}"
+            ) from exception
+
+        try:
             shutil.copy(
                 Bootstrapper.DOCKER_CONFIG_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH.with_suffix(".json.bak")
             )
