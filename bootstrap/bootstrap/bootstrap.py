@@ -14,7 +14,7 @@ class Bootstrapper:
 
     DEFAULT_FILE_PATH = pathlib.Path("/bootstrap/startup.json.default")
     DOCKER_CONFIG_PATH = pathlib.Path("/root/.config")
-    DOCKER_CONFIG_FILE_PATH = pathlib.Path(DOCKER_CONFIG_PATH, "startup.json")
+    DOCKER_CONFIG_FILE_PATH = DOCKER_CONFIG_PATH.joinpath("bootstrap/startup.json")
     HOST_CONFIG_PATH = os.environ.get("COMPANION_CONFIG_PATH", "/tmp/companion/.config")
     CORE_CONTAINER_NAME = "companion-core"
 
