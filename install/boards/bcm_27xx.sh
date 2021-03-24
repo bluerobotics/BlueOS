@@ -4,10 +4,29 @@ echo "Configuring BCM27XX board (Raspberry Pi 4).."
 
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
-for STRING in "dtparam=i2c_arm=" "dtparam=spi=" "dtoverlay=spi1" "dtoverlay=i2c4" "dtoverlay=uart1"; do
+for STRING in \
+    "enable_uart=" \
+    "dtoverlay=uart" \
+    "dtparam=i2c_arm=" \
+    "dtoverlay=i2c" \
+    "dtparam=spi=" \
+    "dtoverlay=spi"; do \
     sudo sed -i "/$STRING/d" /boot/config.txt
 done
-for STRING in "dtparam=i2c_arm=on" "dtparam=spi=on" "dtoverlay=spi1-3cs" "dtoverlay=i2c4,pins_6_7" "dtoverlay=uart1"; do
+for STRING in \
+    "enable_uart=1" \
+    "dtoverlay=uart1" \
+    "dtoverlay=uart2" \
+    "dtoverlay=uart3" \
+    "dtoverlay=uart4" \
+    "dtparam=i2c_arm=on" \
+    "dtoverlay=i2c0" \
+    "dtoverlay=i2c1" \
+    "dtoverlay=i2c4,pins_6_7" \
+    "dtoverlay=i2c6,pins_22_23" \
+    "dtparam=spi=on" \
+    "dtoverlay=spi0-led" \
+    "dtoverlay=spi1-3cs"; do \
     echo "$STRING" | sudo tee -a /boot/config.txt
 done
 
