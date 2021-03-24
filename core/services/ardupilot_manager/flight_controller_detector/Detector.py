@@ -29,12 +29,18 @@ class Detector:
                 String is always empty
         """
         try:
-            bus = SMBus(1)
-            PCA9685_address = 0x40
-            ADS1115_address = 0x48
+            bus = SMBus(0)
+            EEPROM_address = 0x50
+            bus.read_byte_data(EEPROM_address, 0)
 
-            bus.read_byte_data(PCA9685_address, 0)
+            bus = SMBus(1)
+            ADS1115_address = 0x48
             bus.read_byte_data(ADS1115_address, 0)
+
+            bus = SMBus(4)
+            PCA9685_address = 0x40
+            bus.read_byte_data(PCA9685_address, 0)
+
             return (True, "")
         except Exception as error:
             print(f"Navigator not detected on I2C bus: {error}")
