@@ -8,7 +8,7 @@ REMOTE="$REMOTE/$VERSION"
 CONFIGURE_BOARD_PATH="$REMOTE/install/boards"
 
 function board_not_detected {
-    echo "Hardware not identified in $1, please repport back the following line:"
+    echo "Hardware not identified in $1, please report back the following line:"
     echo "---"
     echo "$(echo $2 | gzip | base64 -w0)" # Decode with `echo $CONTENT | base64 -d | gunzip`
     echo "---"
