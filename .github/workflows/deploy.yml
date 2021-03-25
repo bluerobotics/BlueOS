@@ -21,12 +21,12 @@ jobs:
         name: Prepare
         id: prepare
         run: |
-          # Default tag is master, if the build is a git tag, replace tag with the tag name.
+          # Deploy image with the name of the branch, if the build is a git tag, replace tag with the tag name.
           # If git tag matches semver, append latest tag to the push.
 
           DOCKER_IMAGE=bluerobotics/companion-${{ matrix.docker }}
           DOCKER_PLATFORMS=linux/amd64,linux/arm/v7
-          VERSION=master
+          VERSION=${GITHUB_REF##*/}
 
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
