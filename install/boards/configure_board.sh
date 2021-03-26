@@ -14,6 +14,7 @@ function board_not_detected {
     echo "---"
 }
 
+echo "Detecting board type"
 # device-tree/model is not standard but is the only way to detect raspberry pi hardware reliable
 #  From Raspberry Pi official website about Raspberry Pi 4 cpuinfo:
 #  Why does cpuinfo report I have a BCM2835?
@@ -24,8 +25,10 @@ function board_not_detected {
 if [ -f "/proc/device-tree/model" ]; then
     CPU_MODEL=$(tr -d '\0' < /proc/device-tree/model)
     if [[ $CPU_MODEL =~ Raspberry\ Pi\ [0-3] ]]; then
+        echo "Detected BCM28XX via device tree"
         curl -fsSL $CONFIGURE_BOARD_PATH/bcm_28xx.sh | bash
     elif [[ $CPU_MODEL =~ Raspberry\ Pi\ [4] ]];then
+        echo "Detected BCM27XX via device tree"
         curl -fsSL $CONFIGURE_BOARD_PATH/bcm_27xx.sh | bash
     else
         board_not_detected "/proc/device-tree/model" "$CPU_MODEL"
@@ -35,8 +38,10 @@ if [ -f "/proc/device-tree/model" ]; then
 elif [ -f "/proc/cpuinfo" ]; then
     CPU_INFO="$(cat /proc/cpuinfo)"
     if [[ $CPU_INFO =~ BCM27[0-9]{2} ]]; then
+        echo "Detected BCM27XX via cpuinfo"
         curl -fsSL $CONFIGURE_BOARD_PATH/bcm_27xx.sh | bash
     elif [[ $CPU_INFO =~ BCM28[0-9]{2} ]]; then
+        echo "Detected BCM28XX via cpuinfo"
         curl -fsSL $CONFIGURE_BOARD_PATH/bcm_28xx.sh | bash
     else
         board_not_detected "/proc/cpuinfo" "$CPU_INFO"
