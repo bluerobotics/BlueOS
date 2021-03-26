@@ -58,7 +58,7 @@ class ArduPilotManager(metaclass=Singleton):
         except Exception as error:
             raise RuntimeError(f"Failed to start navigator: {error}") from error
 
-        local_endpoint = "tcp:0.0.0.0:5766"
+        local_endpoint = "tcp:0.0.0.0:5760"
         self.subprocess = subprocess.Popen(
             [
                 firmware,
