@@ -29,10 +29,6 @@ class Detector:
                 String is always empty
         """
         try:
-            bus = SMBus(0)
-            EEPROM_address = 0x50
-            bus.read_byte_data(EEPROM_address, 0)
-
             bus = SMBus(1)
             ADS1115_address = 0x48
             bus.read_byte_data(ADS1115_address, 0)
