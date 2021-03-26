@@ -10,9 +10,9 @@ ROOT="$REMOTE/$VERSION"
 # neopixel LED on navigator board
 echo "- compile spi0 device tree overlay."
 DTS_PATH="$ROOT/install/overlays"
-DTS_NAME="spi0-led.dts"
-curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME
-dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/spi0-led.dtbo /tmp/$DTS_NAME
+DTS_NAME="spi0-led"
+curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME.dts
+dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/$DTS_NAME.dtbo /tmp/$DTS_NAME
 
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
