@@ -3,7 +3,7 @@
 # Set desired version to be installed
 VERSION="${VERSION:-master}"
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/bluerobotics/companion-docker}"
-REMOTE="$REMOTE/$VERSION"
+ROOT="$REMOTE/$VERSION"
 
 # Exit immediately if a command exits with a non-zero status
 set -e
@@ -18,14 +18,15 @@ set -e
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
 
 echo "Checking if network and remote are available."
-curl -fsSL --silent $REMOTE/install/install.sh 1> /dev/null || (
-    echo "Remote is not available: ${REMOTE}"
+curl -fsSL --silent $ROOT/install/install.sh 1> /dev/null || (
+    echo "Remote is not available: ${ROOT}"
     exit 1
 )
 
 # Detect CPU and do necessary hardware configuration for each supported hardware
 echo "Starting hardware configuration."
-curl -fsSL $REMOTE/install/boards/configure_board.sh | bash
+echo "$ROOT/install/boards/configure_board.sh"
+curl -fsSL "$ROOT/install/boards/configure_board.sh" | bash
 
 echo "Checking for blocked wifi and bluetooth."
 rfkill unblock all
@@ -65,7 +66,7 @@ test $NO_CLEAN || (
 echo "Going to install companion-docker version ${VERSION}."
 
 echo "Downloading and installing udev rules."
-curl -fsSL $REMOTE/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
+curl -fsSL $ROOT/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
 
 echo "Downloading bootstrap"
 COMPANION_BOOTSTRAP="bluerobotics/companion-bootstrap:master" # We don't have others tags for now
@@ -83,7 +84,7 @@ docker run \
 # Configure network settings
 ## This should be after everything, otherwise network problems can happen
 echo "Starting network configuration."
-curl -fsSL $REMOTE/install/network/avahi.sh | bash
+curl -fsSL $ROOT/install/network/avahi.sh | bash
 
 echo "Installation finished successfully."
 echo "System will reboot in 10 seconds."
