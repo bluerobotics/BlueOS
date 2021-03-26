@@ -2,10 +2,14 @@
 
 echo "Configuring BCM27XX board (Raspberry Pi 4).."
 
+VERSION="${VERSION:-master}"
+REMOTE="${REMOTE:-https://raw.githubusercontent.com/bluerobotics/companion-docker}"
+ROOT="$REMOTE/$VERSION"
+
 # Download, compile, and install spi0 mosi-only device tree overlay for
 # neopixel LED on navigator board
 echo "- compile spi0 device tree overlay."
-DTS_PATH="$REMOTE/$VERSION/install/overlays"
+DTS_PATH="$ROOT/install/overlays"
 DTS_NAME="spi0-led.dts"
 curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME
 dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/spi0-led.dtbo /tmp/$DTS_NAME
