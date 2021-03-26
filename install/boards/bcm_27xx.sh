@@ -5,9 +5,10 @@ echo "Configuring BCM27XX board (Raspberry Pi 4).."
 # Download, compile, and install spi0 mosi-only device tree overlay for
 # neopixel LED on navigator board
 echo "- compile spi0 device tree overlay."
-DTS_PATH="$REMOTE/install/overlays"
-curl -fsSL $DTS_PATH/spi0-led.dts /tmp/
-dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/spi0-led.dtbo /tmp/spi0-led.dts
+DTS_PATH="$REMOTE/$VERSION/install/overlays"
+DTS_NAME="spi0-led.dts"
+curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME
+dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/spi0-led.dtbo /tmp/$DTS_NAME
 
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
