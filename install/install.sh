@@ -42,7 +42,9 @@ NECESSARY_SPACE_GB=4
 
 # Check for docker and install it if not found
 echo "Checking for docker."
-docker --version || curl -fsSL https://get.docker.com | sh || (
+## Docker uses VERSION environment variable to set the docker version,
+## We unset this variable for this command to avoid conflicts with companion version
+docker --version || curl -fsSL https://get.docker.com | env -u VERSION sh || (
     echo "Failed to start docker, something is wrong."
     echo "Please report this problem."
     exit 1
