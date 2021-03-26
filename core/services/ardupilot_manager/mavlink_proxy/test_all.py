@@ -13,17 +13,17 @@ from mavlink_proxy.MAVProxy import MAVProxy
 
 
 def test_endpoint() -> None:
-    endpoint = Endpoint("udp:0.0.0.0:14550")
+    endpoint = Endpoint("udpout:0.0.0.0:14550")
     assert endpoint.connType == EndpointType.UDPClient, "Connection type does not match."
     assert endpoint.place == "0.0.0.0", "Connection place does not match."
     assert endpoint.argument == "14550", "Connection argument does not match."
-    assert endpoint.__str__() == "udp:0.0.0.0:14550", "Connection string does not match."
+    assert endpoint.__str__() == "udpout:0.0.0.0:14550", "Connection string does not match."
 
-    endpoint = Endpoint({"connType": "udp", "place": "0.0.0.0", "argument": "14550"})
+    endpoint = Endpoint({"connType": "udpout", "place": "0.0.0.0", "argument": "14550"})
     assert endpoint.connType == EndpointType.UDPClient, "Connection type does not match."
     assert endpoint.place == "0.0.0.0", "Connection place does not match."
     assert endpoint.argument == "14550", "Connection argument does not match."
-    assert endpoint.__str__() == "udp:0.0.0.0:14550", "Connection string does not match."
+    assert endpoint.__str__() == "udpout:0.0.0.0:14550", "Connection string does not match."
 
 
 def test_mavproxy() -> None:
@@ -48,7 +48,7 @@ def test_mavproxy() -> None:
         endpoint_2,
     ], "Endpoint list does not match."
 
-    assert mavproxy.start(Endpoint("udp:0.0.0.0:14550")), "Failed to start mavproxy"
+    assert mavproxy.start(Endpoint("udpout:0.0.0.0:14550")), "Failed to start mavproxy"
     assert mavproxy.is_running(), "MAVProxy is not running after start."
 
 
@@ -74,5 +74,5 @@ def test_mavlink_router() -> None:
         endpoint_2,
     ], "Endpoint list does not match."
 
-    assert mavlink_router.start(Endpoint("udp:0.0.0.0:14550")), "Failed to start MAVLinkRouter"
+    assert mavlink_router.start(Endpoint("udpout:0.0.0.0:14550")), "Failed to start MAVLinkRouter"
     assert mavlink_router.is_running(), "MAVLinkRouter is not running after start."
