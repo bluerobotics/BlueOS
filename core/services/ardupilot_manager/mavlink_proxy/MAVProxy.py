@@ -24,7 +24,7 @@ class MAVProxy(AbstractRouter):
         endpoints = " ".join(["--out=" + endpoint.__str__() for endpoint in self.endpoints()])
 
         master_string = str(master)
-        if master.connType == EndpointType.Serial:
+        if master.connection_type == EndpointType.Serial:
             master_args = str(master).split(":")
             if len(master_args) == 2:
                 master_string = f"{master_args[1]}"

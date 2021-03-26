@@ -10,7 +10,7 @@ from warnings import warn
 from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
-from mavlink_proxy.Endpoint import Endpoint
+from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
 from Singleton import Singleton
@@ -80,10 +80,10 @@ class ArduPilotManager(metaclass=Singleton):
         # self.start_mavlink_manager(Endpoint(local_endpoint))
 
     def start_serial(self, device: str) -> None:
-        self.start_mavlink_manager(Endpoint(f"serial:{device}:115200"))
+        self.start_mavlink_manager(Endpoint("serial", device, 115200))
 
     def start_mavlink_manager(self, device: Endpoint) -> None:
-        self.add_endpoint(Endpoint("udpin:0.0.0.0:14550"))
+        self.add_endpoint(Endpoint("udpin", "0.0.0.0", 14550))
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
 
@@ -111,27 +111,42 @@ class ArduPilotManager(metaclass=Singleton):
         return self.mavlink_manager.restart()
 
     def _load_endpoints(self) -> None:
+        """Load endpoints from the configuration file to the mavlink manager."""
         if "endpoints" not in self.configuration:
             self.configuration["endpoints"] = []
         else:
             endpoints = self.configuration["endpoints"]
-            self.mavlink_manager.add_endpoints([Endpoint(e) for e in endpoints])
+        for endpoint in endpoints:
+            if not self.add_endpoint(Endpoint(**endpoint)):
+                warn(f"Could not load endpoint {endpoint}")
 
     def get_endpoints(self) -> List[Endpoint]:
+        """Get all endpoints from the mavlink manager."""
         return self.mavlink_manager.endpoints()
 
     def add_endpoint(self, endpoint: Endpoint) -> bool:
+        """Add endpoint to the mavlink manager."""
+        if endpoint.connection_type == EndpointType.File.value:
+            endpoint.place = os.path.join(self.settings.file_endpoints_path, endpoint.place)
         if not self.mavlink_manager.add_endpoint(endpoint):
             return False
-        self.configuration.get("endpoints", []).append(endpoint.__dict__)
+        return True
+
+    def add_new_endpoint(self, endpoint: Endpoint) -> bool:
+        """Add endpoint to the mavlink manager and save it on the configuration file."""
+        self.configuration.get("endpoints", []).append(endpoint.asdict())
+        if not self.add_endpoint(endpoint):
+            self.configuration.get("endpoints", []).remove(endpoint.asdict())
+            return False
         self.settings.save(self.configuration)
         return True
 
     def remove_endpoint(self, endpoint: Endpoint) -> bool:
+        """Remove endpoint from the mavlink manager and save it on the configuration file."""
         if not self.mavlink_manager.remove_endpoint(endpoint):
             return False
         try:
-            self.configuration.get("endpoints", []).remove(endpoint.__dict__)
+            self.configuration.get("endpoints", []).remove(endpoint.asdict())
             self.settings.save(self.configuration)
             return True
         except Exception as error:

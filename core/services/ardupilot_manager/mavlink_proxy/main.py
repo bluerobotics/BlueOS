@@ -8,7 +8,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).absolute().parent.parent))
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
-from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.Manager import Manager
 
 if __name__ == "__main__":
@@ -19,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--master",
         dest="master",
-        type=Endpoint,
+        type=str,
         required=True,
         help="Master endpoint that follow the format: udp/udpout/tcp/serial:ip/device:port/baudrate",
     )
@@ -28,7 +27,7 @@ if __name__ == "__main__":
         "--out",
         dest="output",
         nargs="*",
-        type=Endpoint,
+        type=str,
         required=True,
         metavar="endpoint",
         help="List of endpoints that will be used to connect or allow connection.",
@@ -49,8 +48,8 @@ if __name__ == "__main__":
     print(f"Starting {tool.name()} version {tool.version()}.")
 
     manager.use(tool)
-    manager.add_endpoints(args.output)
-    manager.set_master_endpoint(args.master)
+    manager.add_endpoints(args.output.split(":"))
+    manager.set_master_endpoint(args.master.split(":"))
 
     print(f"Command: {manager.command_line()}")
     manager.start()
