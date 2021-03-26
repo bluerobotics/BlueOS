@@ -24,7 +24,7 @@ class MAVLinkRouter(AbstractRouter):
     def assemble_command(self, master: Endpoint) -> str:
         # Convert endpoint format to mavlink-router format
         def convert_endpoint(endpoint: Endpoint) -> str:
-            if endpoint.connType != EndpointType.TCP:
+            if endpoint.connection_type != EndpointType.TCP:
                 return str(endpoint)[str(endpoint).find(":") + 1 :]
             # TCP uses a special argument and only works with localhost
             port = str(endpoint).split(":")[2]
@@ -32,7 +32,7 @@ class MAVLinkRouter(AbstractRouter):
 
         endpoints = " ".join(["--endpoint " + convert_endpoint(endpoint) for endpoint in self.endpoints()])
 
-        if master.connType not in [
+        if master.connection_type not in [
             EndpointType.UDPServer,
             EndpointType.UDPClient,
             EndpointType.Serial,
@@ -53,7 +53,7 @@ class MAVLinkRouter(AbstractRouter):
 
     @staticmethod
     def _validate_endpoint(endpoint: Endpoint) -> bool:
-        return endpoint.connType in [
+        return endpoint.connection_type in [
             EndpointType.UDPServer,
             EndpointType.UDPClient,
             EndpointType.Serial,

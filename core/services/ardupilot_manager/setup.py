@@ -19,5 +19,7 @@ setuptools.setup(
         "smbus2==0.3.0",
         "fastapi==0.63.0",
         "uvicorn==0.13.4",
+        "python-multipart==0.0.5",
+        "validators==0.18.2",
     ],
 )

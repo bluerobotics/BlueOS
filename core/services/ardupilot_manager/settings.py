@@ -13,6 +13,7 @@ class Settings:
     settings_path = Path(appdirs.user_config_dir(app_name))
     settings_file = Path.joinpath(settings_path, "settings.json")
     firmware_path = Path.joinpath(settings_path, "firmware")
+    file_endpoints_path = Path.joinpath(settings_path, "file_endpoints")
 
     def __init__(self) -> None:
         self.root: Dict[str, Union[int, Dict[str, Any]]] = {"version": 0, "content": {}}
