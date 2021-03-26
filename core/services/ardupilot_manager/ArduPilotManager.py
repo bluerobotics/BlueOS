@@ -79,11 +79,6 @@ class ArduPilotManager(metaclass=Singleton):
         # does not accept TCP master endpoints
         # self.start_mavlink_manager(Endpoint(local_endpoint))
 
-        # Check if subprocess is running and wait until it finishes
-        # Necessary since we don't have mavlink_manager running for navigator yet
-        while self.subprocess.poll() is None:
-            time.sleep(1)
-
     def start_serial(self, device: str) -> None:
         self.start_mavlink_manager(Endpoint(f"serial:{device}:115200"))
 
@@ -91,8 +86,6 @@ class ArduPilotManager(metaclass=Singleton):
         self.add_endpoint(Endpoint("udpin:0.0.0.0:14550"))
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
-        while self.mavlink_manager.is_running():
-            time.sleep(1)
 
     def start_board(self, boards: List[Tuple[FlightControllerType, str]]) -> bool:
         if not boards:
@@ -108,12 +101,11 @@ class ArduPilotManager(metaclass=Singleton):
 
         if FlightControllerType.Navigator == flight_controller_type:
             self.start_navigator()
-        elif FlightControllerType.Serial == flight_controller_type:
+            return True
+        if FlightControllerType.Serial == flight_controller_type:
             self.start_serial(place)
-        else:
-            raise RuntimeError("Invalid board type: {boards}")
-
-        return False
+            return True
+        raise RuntimeError("Invalid board type: {boards}")
 
     def restart(self) -> bool:
         return self.mavlink_manager.restart()
