@@ -8,7 +8,7 @@ SERVICES=(
     'wifi',"$SERVICES_PATH/wifi/main.py"
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
-    'video',"mavlink-camera-manager --verbose"
+    'video',"mavlink-camera-manager --default-settings BlueROVUDP --verbose"
 )
 
 tmux start-server
