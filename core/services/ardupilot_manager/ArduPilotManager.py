@@ -1,4 +1,5 @@
 import os
+import shutil
 import stat
 import subprocess
 import time
@@ -50,9 +51,9 @@ class ArduPilotManager(metaclass=Singleton):
         if not os.path.isfile(firmware):
             temporary_file = self.firmware_download.download(Vehicle.Sub, "Navigator")
             assert temporary_file, "Failed to download navigator binary."
+            shutil.move(str(temporary_file), firmware)
             # Make the binary executable
-            os.chmod(temporary_file, stat.S_IXOTH)
-            os.rename(temporary_file, firmware)
+            os.chmod(firmware, stat.S_IXOTH)
         try:
             subprocess.check_output([firmware, "--help"])
         except Exception as error:
