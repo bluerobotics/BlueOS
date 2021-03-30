@@ -13,6 +13,8 @@ jobs:
     strategy:
       matrix:
         docker: [bootstrap, core]
+        project: [bluerobotics/companion]
+        platforms: ["linux/amd64,linux/arm/v7"]
     steps:
       -
         name: Checkout
@@ -24,8 +26,7 @@ jobs:
           # Deploy image with the name of the branch, if the build is a git tag, replace tag with the tag name.
           # If git tag matches semver, append latest tag to the push.
 
-          DOCKER_IMAGE=bluerobotics/companion-${{ matrix.docker }}
-          DOCKER_PLATFORMS=linux/amd64,linux/arm/v7
+          DOCKER_IMAGE=${{ matrix.project }}-${{ matrix.docker }}
           VERSION=${GITHUB_REF##*/}
 
           if [[ $GITHUB_REF == refs/tags/* ]]; then
@@ -39,7 +40,7 @@ jobs:
 
           echo ::set-output name=docker_image::${DOCKER_IMAGE}
           echo ::set-output name=version::${VERSION}
-          echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} \
+          echo ::set-output name=buildx_args::--platform ${{ matrix.platforms }} \
             --build-arg VERSION=${VERSION} \
             --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
             --build-arg VCS_REF=${GITHUB_SHA::8} \
@@ -72,6 +73,10 @@ jobs:
       -
         name: Docker Buildx (build)
         run: |
+          # Pull latest version of image to help with build speed
+          for platform in $(echo ${{ matrix.platforms }} | tr ',' '\n'); do
+            docker pull --platform ${platform} ${{ matrix.project }}-${{ matrix.docker }}:master || true
+          done
           docker buildx build \
             --output "type=image,push=false" \
             ${{ steps.prepare.outputs.buildx_args }}
