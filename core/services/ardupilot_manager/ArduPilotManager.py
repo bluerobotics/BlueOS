@@ -114,8 +114,7 @@ class ArduPilotManager(metaclass=Singleton):
         """Load endpoints from the configuration file to the mavlink manager."""
         if "endpoints" not in self.configuration:
             self.configuration["endpoints"] = []
-        else:
-            endpoints = self.configuration["endpoints"]
+        endpoints = self.configuration["endpoints"]
         for endpoint in endpoints:
             if not self.add_endpoint(Endpoint(**endpoint)):
                 warn(f"Could not load endpoint {endpoint}")
