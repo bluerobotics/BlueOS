@@ -22,7 +22,9 @@ for STRING in \
     "dtparam=i2c_arm=" \
     "dtoverlay=i2c" \
     "dtparam=spi=" \
-    "dtoverlay=spi"; do \
+    "dtoverlay=spi" \
+    "gpio=" \
+    ; do \
     sudo sed -i "/$STRING/d" /boot/config.txt
 done
 for STRING in \
@@ -38,7 +40,9 @@ for STRING in \
     "dtoverlay=i2c6,pins_22_23" \
     "dtparam=spi=on" \
     "dtoverlay=spi0-led" \
-    "dtoverlay=spi1-3cs"; do \
+    "dtoverlay=spi1-3cs" \
+    "gpio=11,24,25=pu" \
+    ; do \
     echo "$STRING" | sudo tee -a /boot/config.txt
 done
 
