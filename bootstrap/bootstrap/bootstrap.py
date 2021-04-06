@@ -128,6 +128,11 @@ class Bootstrapper:
             curses.endwin()
         print("Done")
 
+    def image_is_available_locally(self, image_name: str, tag: str) -> bool:
+        """Checks if the image is already available locally"""
+        images = self.client.images.list(image_name)
+        return any(f"{image_name}:{tag}" in image.tags for image in images)
+
     def start_core(self) -> bool:
         """Loads core settings and launches the core docker. Loads default settings if no settings are found"""
         core_version = "stable"
@@ -141,15 +146,16 @@ class Bootstrapper:
         privileged = core["privileged"]
         network = core["network"]
 
-        print("Attempting to pull an updated image... This might take a while...")
-        try:
-            self.pull_core()
-        except docker.errors.ImageNotFound:
-            warn("Image not found, reverting to default...")
-            self.overwrite_config_file_with_defaults()
-            return False
-        except docker.errors.APIError as error:
-            warn(f"Error trying to pull an update image: {error}")
+        if not self.image_is_available_locally(image, core_version):
+            try:
+                self.pull_core()
+            except docker.errors.ImageNotFound:
+                warn("Image not found, reverting to default...")
+                self.overwrite_config_file_with_defaults()
+                return False
+            except docker.errors.APIError as error:
+                warn(f"Error trying to pull an update image: {error}")
+                return False
 
         print("Starting core")
         try:
