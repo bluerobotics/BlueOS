@@ -120,5 +120,9 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def endpoints(self) -> List[Endpoint]:
         return self._endpoints
 
+    def clear_endpoints(self) -> None:
+        """Remove all output endpoints."""
+        self._endpoints = []
+
     def __del__(self) -> None:
         self.exit()
