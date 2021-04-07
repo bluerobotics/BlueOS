@@ -83,7 +83,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.start_mavlink_manager(Endpoint("serial", device, 115200))
 
     def start_mavlink_manager(self, device: Endpoint) -> None:
-        self.add_endpoint(Endpoint("udpin", "0.0.0.0", 14550))
+        self.add_new_endpoints([Endpoint("udpin", "0.0.0.0", 14550)])
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
 
@@ -116,7 +116,7 @@ class ArduPilotManager(metaclass=Singleton):
             self.configuration["endpoints"] = []
         endpoints = self.configuration["endpoints"]
         for endpoint in endpoints:
-            if not self.add_endpoint(Endpoint(**endpoint)):
+            if not self.mavlink_manager.add_endpoint(Endpoint(**endpoint)):
                 warn(f"Could not load endpoint {endpoint}")
 
     def _reset_endpoints(self, endpoints: List[Endpoint]) -> None:
@@ -140,31 +140,43 @@ class ArduPilotManager(metaclass=Singleton):
         """Get all endpoints from the mavlink manager."""
         return self.mavlink_manager.endpoints()
 
-    def add_endpoint(self, endpoint: Endpoint) -> bool:
-        """Add endpoint to the mavlink manager."""
-        if endpoint.connection_type == EndpointType.File.value:
-            endpoint.place = os.path.join(self.settings.file_endpoints_path, endpoint.place)
-        if not self.mavlink_manager.add_endpoint(endpoint):
-            return False
-        return True
+    def add_new_endpoints(self, new_endpoints: List[Endpoint]) -> bool:
+        """Add multiple endpoints to the mavlink manager and save them on the configuration file."""
+        for endpoint in new_endpoints:
+            if endpoint.connection_type == EndpointType.File.value:
+                endpoint.place = os.path.join(self.settings.file_endpoints_path, endpoint.place)
 
-    def add_new_endpoint(self, endpoint: Endpoint) -> bool:
-        """Add endpoint to the mavlink manager and save it on the configuration file."""
-        self.configuration.get("endpoints", []).append(endpoint.asdict())
-        if not self.add_endpoint(endpoint):
-            self.configuration.get("endpoints", []).remove(endpoint.asdict())
-            return False
-        self.settings.save(self.configuration)
-        return True
+        saved_endpoints = deepcopy(self.configuration["endpoints"])
+        loaded_endpoints = deepcopy(self.get_endpoints())
 
-    def remove_endpoint(self, endpoint: Endpoint) -> bool:
-        """Remove endpoint from the mavlink manager and save it on the configuration file."""
-        if not self.mavlink_manager.remove_endpoint(endpoint):
-            return False
-        try:
-            self.configuration.get("endpoints", []).remove(endpoint.asdict())
-            self.settings.save(self.configuration)
-            return True
-        except Exception as error:
-            warn(f"Error: {error}")
-            return False
+        for endpoint in new_endpoints:
+            if endpoint.asdict() in saved_endpoints:
+                warn(f"Endpoint {endpoint} already stored.")
+                self._reset_endpoints(loaded_endpoints)
+                return False
+            if not self.mavlink_manager.add_endpoint(endpoint):
+                warn(f"Mavlink manager failed to add endpoint {endpoint}.")
+                self._reset_endpoints(loaded_endpoints)
+                return False
+            saved_endpoints.append(endpoint.asdict())
+
+        return self._update_endpoints(saved_endpoints)
+
+    def remove_endpoints(self, endpoints_to_remove: List[Endpoint]) -> bool:
+        """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
+
+        saved_endpoints = deepcopy(self.configuration["endpoints"])
+        loaded_endpoints = deepcopy(self.get_endpoints())
+
+        for endpoint in endpoints_to_remove:
+            if not endpoint.asdict() in saved_endpoints:
+                warn(f"Endpoint {endpoint} not found.")
+                self._reset_endpoints(loaded_endpoints)
+                return False
+            if not self.mavlink_manager.remove_endpoint(endpoint):
+                warn(f"Mavlink manager failed to remove endpoint {endpoint}.")
+                self._reset_endpoints(loaded_endpoints)
+                return False
+            saved_endpoints.remove(endpoint.asdict())
+
+        return self._update_endpoints(saved_endpoints)
