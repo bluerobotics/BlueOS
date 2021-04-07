@@ -119,6 +119,23 @@ class ArduPilotManager(metaclass=Singleton):
             if not self.add_endpoint(Endpoint(**endpoint)):
                 warn(f"Could not load endpoint {endpoint}")
 
+    def _reset_endpoints(self, endpoints: List[Endpoint]) -> None:
+        try:
+            self.mavlink_manager.clear_endpoints()
+            self.mavlink_manager.add_endpoints(endpoints)
+            print("Reseting endpoints to previous state.")
+        except Exception as error:
+            warn(f"Error reseting endpoints: {error}")
+
+    def _update_endpoints(self, updated_endpoints: List[Endpoint]) -> bool:
+        try:
+            self.configuration["endpoints"] = deepcopy(updated_endpoints)
+            self.settings.save(self.configuration)
+            return self.restart()
+        except Exception as error:
+            warn(f"Error updating endpoints: {error}")
+            return False
+
     def get_endpoints(self) -> List[Endpoint]:
         """Get all endpoints from the mavlink manager."""
         return self.mavlink_manager.endpoints()
