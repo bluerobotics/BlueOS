@@ -59,6 +59,9 @@ class Endpoint:
             "argument": self.argument,
         }
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
 
 VALID_SERIAL_BAUDRATES = [
     3000000,
