@@ -31,16 +31,18 @@ def get_available_endpoints() -> Any:
     return [endpoint.asdict() for endpoint in autopilot.get_endpoints()]
 
 
-@app.post("/endpoint", status_code=status.HTTP_201_CREATED)
-def create_new_endpoint(response: Response, endpoint: Endpoint = Body(...)) -> Any:
-    if not autopilot.add_new_endpoint(endpoint):
+@app.post("/endpoints", status_code=status.HTTP_201_CREATED)
+def create_endpoints(response: Response, endpoints: List[Endpoint] = Body(...)) -> Any:
+    if not autopilot.add_new_endpoints(endpoints):
         response.status_code = status.HTTP_409_CONFLICT
+        return {"message": "One or more endpoints already exist. No changes were made."}
 
 
-@app.delete("/endpoint", status_code=status.HTTP_204_NO_CONTENT)
-def remove_endpoint(response: Response, endpoint: Endpoint = Body(...)) -> Any:
-    if not autopilot.remove_endpoint(endpoint):
+@app.delete("/endpoints", status_code=status.HTTP_204_NO_CONTENT)
+def remove_endpoints(response: Response, endpoints: List[Endpoint] = Body(...)) -> Any:
+    if not autopilot.remove_endpoints(endpoints):
         response.status_code = status.HTTP_404_NOT_FOUND
+        return {"message": "One or more endpoints do not exist. No changes were made."}
 
 
 if __name__ == "__main__":
