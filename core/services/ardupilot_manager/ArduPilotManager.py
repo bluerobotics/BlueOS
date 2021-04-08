@@ -159,6 +159,7 @@ class ArduPilotManager(metaclass=Singleton):
                 self._reset_endpoints(loaded_endpoints)
                 return False
             saved_endpoints.append(endpoint.asdict())
+            print(f"Adding endpoint {endpoint} and saving it to the settings file.")
 
         return self._update_endpoints(saved_endpoints)
 
@@ -178,5 +179,6 @@ class ArduPilotManager(metaclass=Singleton):
                 self._reset_endpoints(loaded_endpoints)
                 return False
             saved_endpoints.remove(endpoint.asdict())
+            print(f"Deleting endpoint {endpoint} and removing it from the settings file.")
 
         return self._update_endpoints(saved_endpoints)
