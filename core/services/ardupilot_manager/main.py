@@ -19,7 +19,7 @@ class PrettyJSONResponse(StarletteResponse):
             allow_nan=False,
             indent=2,
             separators=(", ", ": "),
-        ).encode("utf-8")
+        ).encode(self.charset)
 
 
 app = FastAPI(default_response_class=PrettyJSONResponse)
