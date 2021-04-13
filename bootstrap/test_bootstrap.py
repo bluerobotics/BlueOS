@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Generator, List
 
@@ -72,10 +73,20 @@ class FakeContainers:
         return list(self.containers.values())
 
 
+@dataclass
+class FakeImage:
+    image: str
+    tags: List[str]
+
+
 class FakeImages:
     @staticmethod
     def pull(_image: str) -> None:
         return
+
+    @staticmethod
+    def list(image_name: str) -> List[FakeImage]:
+        return [FakeImage(image=image_name, tags=["master"])]
 
 
 class FakeClient:
