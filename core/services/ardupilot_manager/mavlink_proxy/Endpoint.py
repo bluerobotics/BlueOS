@@ -2,7 +2,8 @@ from enum import Enum
 from typing import Any, Dict, Optional, Type
 
 import validators
-from pydantic import dataclasses, root_validator
+from pydantic import root_validator
+from pydantic.dataclasses import dataclass
 
 
 class EndpointType(str, Enum):
@@ -13,7 +14,7 @@ class EndpointType(str, Enum):
     File = "file"
 
 
-@dataclasses.dataclass
+@dataclass
 class Endpoint:
     connection_type: str
     place: str
