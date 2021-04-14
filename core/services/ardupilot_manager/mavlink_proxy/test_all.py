@@ -63,17 +63,39 @@ def test_mavproxy() -> None:
     assert mavproxy.set_logdir(pathlib.Path(".")), "Local path as MAVProxy log directory failed."
     assert re.search(r"\d+.\d+.\d+", str(mavproxy.version())) is not None, "Version does not follow pattern."
 
-    endpoint_1 = Endpoint("udpout", "0.0.0.0", 14551)
+    endpoint_1 = Endpoint("udpin", "0.0.0.0", 14551)
     endpoint_2 = Endpoint("udpout", "0.0.0.0", 14552)
+    endpoint_3 = Endpoint("tcpin", "0.0.0.0", 14553)
+    endpoint_4 = Endpoint("tcpout", "0.0.0.0", 14554)
+    endpoint_5 = Endpoint("serial", "/dev/radiolink", 57600)
     assert mavproxy.add_endpoint(endpoint_1), "Failed to add first endpoint"
     assert mavproxy.add_endpoint(endpoint_2), "Failed to add second endpoint"
+    assert mavproxy.add_endpoint(endpoint_3), "Failed to add third endpoint"
+    assert mavproxy.add_endpoint(endpoint_4), "Failed to add fourth endpoint"
+    assert mavproxy.add_endpoint(endpoint_5), "Failed to add fifth endpoint"
     assert mavproxy.endpoints() == [
         endpoint_1,
         endpoint_2,
+        endpoint_3,
+        endpoint_4,
+        endpoint_5,
     ], "Endpoint list does not match."
 
+    assert mavproxy.start(Endpoint("udpin", "0.0.0.0", 14550)), "Failed to start mavproxy"
+    assert mavproxy.is_running(), "MAVProxy is not running after start."
+    assert mavproxy.exit(), "MAVProxy could not stop."
     assert mavproxy.start(Endpoint("udpout", "0.0.0.0", 14550)), "Failed to start mavproxy"
     assert mavproxy.is_running(), "MAVProxy is not running after start."
+    assert mavproxy.exit(), "MAVProxy could not stop."
+    assert mavproxy.start(Endpoint("tcpin", "0.0.0.0", 14550)), "Failed to start mavproxy"
+    assert mavproxy.is_running(), "MAVProxy is not running after start."
+    assert mavproxy.exit(), "MAVProxy could not stop."
+    assert mavproxy.start(Endpoint("tcpout", "0.0.0.0", 14550)), "Failed to start mavproxy"
+    assert mavproxy.is_running(), "MAVProxy is not running after start."
+    assert mavproxy.exit(), "MAVProxy could not stop."
+    assert mavproxy.start(Endpoint("serial", "/dev/autopilot", 115200)), "Failed to start mavproxy"
+    assert mavproxy.is_running(), "MAVProxy is not running after start."
+    assert mavproxy.exit(), "MAVProxy could not stop."
 
 
 def test_mavlink_router() -> None:
