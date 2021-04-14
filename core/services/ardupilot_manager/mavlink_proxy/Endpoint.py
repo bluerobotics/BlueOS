@@ -9,7 +9,7 @@ from pydantic.dataclasses import dataclass
 class EndpointType(str, Enum):
     UDPServer = "udpin"
     UDPClient = "udpout"
-    TCPServer = "tcp"
+    TCPServer = "tcpin"
     TCPClient = "tcpout"
     Serial = "serial"
     File = "file"
