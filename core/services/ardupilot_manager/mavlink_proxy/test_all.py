@@ -90,13 +90,28 @@ def test_mavlink_router() -> None:
     assert re.search(r"\d+", str(mavlink_router.version())) is not None, "Version does not follow pattern."
 
     endpoint_1 = Endpoint("udpout", "0.0.0.0", 14551)
-    endpoint_2 = Endpoint("udpout", "0.0.0.0", 14552)
+    endpoint_2 = Endpoint("tcpin", "0.0.0.0", 14552)
+    endpoint_3 = Endpoint("tcpout", "0.0.0.0", 14553)
     assert mavlink_router.add_endpoint(endpoint_1), "Failed to add first endpoint"
     assert mavlink_router.add_endpoint(endpoint_2), "Failed to add second endpoint"
+    assert mavlink_router.add_endpoint(endpoint_3), "Failed to add third endpoint"
     assert mavlink_router.endpoints() == [
         endpoint_1,
         endpoint_2,
+        endpoint_3,
     ], "Endpoint list does not match."
+    with pytest.raises(NotImplementedError):
+        mavlink_router.add_endpoint(Endpoint("udpin", "0.0.0.0", 14551))
+    with pytest.raises(NotImplementedError):
+        mavlink_router.add_endpoint(Endpoint("serial", "/dev/autopilot", 115200))
 
     assert mavlink_router.start(Endpoint("udpin", "0.0.0.0", 14550)), "Failed to start MAVLinkRouter"
     assert mavlink_router.is_running(), "MAVLinkRouter is not running after start."
+    assert mavlink_router.exit(), "MAVLinkRouter could not stop."
+    assert mavlink_router.start(Endpoint("serial", "/dev/autopilot", 115200)), "Failed to start MAVLinkRouter"
+    assert mavlink_router.is_running(), "MAVLinkRouter is not running after start."
+    assert mavlink_router.exit(), "MAVLinkRouter could not stop."
+    with pytest.raises(NotImplementedError):
+        mavlink_router.start(Endpoint("udpout", "0.0.0.0", 14550))
+    with pytest.raises(NotImplementedError):
+        mavlink_router.start(Endpoint("tcpout", "0.0.0.0", 14550))
