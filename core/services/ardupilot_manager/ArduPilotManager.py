@@ -10,7 +10,7 @@ from warnings import warn
 from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
-from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
 from Singleton import Singleton
@@ -142,10 +142,6 @@ class ArduPilotManager(metaclass=Singleton):
 
     def add_new_endpoints(self, new_endpoints: List[Endpoint]) -> bool:
         """Add multiple endpoints to the mavlink manager and save them on the configuration file."""
-        for endpoint in new_endpoints:
-            if endpoint.connection_type == EndpointType.File.value:
-                endpoint.place = os.path.join(self.settings.file_endpoints_path, endpoint.place)
-
         saved_endpoints = deepcopy(self.configuration["endpoints"])
         loaded_endpoints = deepcopy(self.get_endpoints())
 

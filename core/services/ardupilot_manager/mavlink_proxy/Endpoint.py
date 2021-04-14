@@ -12,7 +12,6 @@ class EndpointType(str, Enum):
     TCPServer = "tcpin"
     TCPClient = "tcpout"
     Serial = "serial"
-    File = "file"
 
 
 @dataclass
@@ -43,13 +42,6 @@ class Endpoint:
                 raise ValueError(f"Bad serial address: {place}. Make sure to use an absolute path.")
             if not argument in VALID_SERIAL_BAUDRATES:
                 raise ValueError(f"Invalid serial baudrate: {argument}. Valid option are {VALID_SERIAL_BAUDRATES}.")
-            return values
-
-        if connection_type == EndpointType.File.value:
-            if "/" in place:
-                raise ValueError(f"Bad filename: {place}. Valid filenames do not contain '/' characters.")
-            if argument is not None:
-                raise ValueError(f"File endpoint should have no argument. Received {argument}.")
             return values
 
         raise ValueError(
