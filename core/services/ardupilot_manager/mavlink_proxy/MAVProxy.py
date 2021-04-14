@@ -48,7 +48,13 @@ class MAVProxy(AbstractRouter):
 
     @staticmethod
     def _validate_endpoint(endpoint: Endpoint) -> bool:
-        return True
+        return endpoint.connection_type in [
+            EndpointType.Serial,
+            EndpointType.UDPServer,
+            EndpointType.UDPClient,
+            EndpointType.TCPServer,
+            EndpointType.TCPClient,
+        ]
 
     @staticmethod
     def is_ok() -> bool:
