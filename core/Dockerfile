@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM python:3.9-slim-buster
 
 # Create default user folder
 RUN mkdir -p /home/pi
@@ -7,9 +7,9 @@ RUN mkdir -p /home/pi
 COPY install_gst.sh /install_gst.sh
 RUN GST_VERSION=1.17.2 ./install_gst.sh && rm /install_gst.sh
 
-# Install python3 and pip as default
-RUN apt install -y --no-install-recommends python3
+# Install python3 our default python
 RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
 # Install necessary tools
 COPY tools /home/pi/tools
