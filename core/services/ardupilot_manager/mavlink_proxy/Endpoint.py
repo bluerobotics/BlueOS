@@ -9,7 +9,8 @@ from pydantic.dataclasses import dataclass
 class EndpointType(str, Enum):
     UDPServer = "udpin"
     UDPClient = "udpout"
-    TCP = "tcp"
+    TCPServer = "tcp"
+    TCPClient = "tcpout"
     Serial = "serial"
     File = "file"
 
@@ -25,7 +26,12 @@ class Endpoint:
     def is_mavlink_endpoint(cls: Type["Endpoint"], values: Any) -> Any:
         connection_type, place, argument = (values.get("connection_type"), values.get("place"), values.get("argument"))
 
-        if connection_type in [EndpointType.UDPServer, EndpointType.UDPClient, EndpointType.TCP]:
+        if connection_type in [
+            EndpointType.UDPServer,
+            EndpointType.UDPClient,
+            EndpointType.TCPServer,
+            EndpointType.TCPClient,
+        ]:
             if not (validators.domain(place) or validators.ipv4(place) or validators.ipv6(place)):
                 raise ValueError(f"Invalid network address: {place}")
             if not argument in range(1, 65536):
