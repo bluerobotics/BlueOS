@@ -98,5 +98,5 @@ def test_mavlink_router() -> None:
         endpoint_2,
     ], "Endpoint list does not match."
 
-    assert mavlink_router.start(Endpoint("udpout", "0.0.0.0", 14550)), "Failed to start MAVLinkRouter"
+    assert mavlink_router.start(Endpoint("udpin", "0.0.0.0", 14550)), "Failed to start MAVLinkRouter"
     assert mavlink_router.is_running(), "MAVLinkRouter is not running after start."

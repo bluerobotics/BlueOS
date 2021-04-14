@@ -29,20 +29,25 @@ class MAVLinkRouter(AbstractRouter):
                 return f"--tcp-port {endpoint.argument}"
             if endpoint.connection_type == EndpointType.TCPClient:
                 return f"--tcp-endpoint {endpoint.place}:{endpoint.argument}"
-            return f"{endpoint.place}:{endpoint.argument}"
+            if endpoint.connection_type == EndpointType.UDPClient:
+                return f"--endpoint {endpoint.place}:{endpoint.argument}"
+            raise NotImplementedError(f"Endpoint of type {endpoint.connection_type} not supported on MavlinkRouter.")
 
-        endpoints = " ".join(["--endpoint " + convert_endpoint(endpoint) for endpoint in self.endpoints()])
+        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in self.endpoints()])
 
         if master.connection_type not in [
             EndpointType.UDPServer,
-            EndpointType.UDPClient,
             EndpointType.Serial,
             EndpointType.TCPServer,
         ]:
             raise NotImplementedError
 
         log = f"--log {self.logdir().resolve()}"
-        return f"{self.binary()} {convert_endpoint(master)} {log} {endpoints}"
+
+        if master.connection_type == EndpointType.TCPServer:
+            return f"{self.binary()} --tcp-port {master.argument} {log} {endpoints}"
+
+        return f"{self.binary()} {master.place}:{master.argument} --tcp-port 0 {log} {endpoints}"
 
     @staticmethod
     def name() -> str:
@@ -55,9 +60,9 @@ class MAVLinkRouter(AbstractRouter):
     @staticmethod
     def _validate_endpoint(endpoint: Endpoint) -> bool:
         return endpoint.connection_type in [
-            EndpointType.UDPServer,
             EndpointType.UDPClient,
-            EndpointType.Serial,
+            EndpointType.TCPServer,
+            EndpointType.TCPClient,
         ]
 
     @staticmethod
