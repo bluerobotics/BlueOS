@@ -26,11 +26,10 @@ class MAVLinkRouter(AbstractRouter):
         def convert_endpoint(endpoint: Endpoint) -> str:
             # TCP uses a special argument and only works with localhost
             if endpoint.connection_type == EndpointType.TCPServer:
-                port = str(endpoint).split(":")[2]
-                return f"-t {port}"
+                return f"--tcp-port {endpoint.argument}"
             if endpoint.connection_type == EndpointType.TCPClient:
                 return f"--tcp-endpoint {endpoint.place}:{endpoint.argument}"
-            return str(endpoint)[str(endpoint).find(":") + 1 :]
+            return f"{endpoint.place}:{endpoint.argument}"
 
         endpoints = " ".join(["--endpoint " + convert_endpoint(endpoint) for endpoint in self.endpoints()])
 
