@@ -29,6 +29,9 @@ def test_endpoint() -> None:
 
 def test_endpoint_validators() -> None:
     Endpoint.is_mavlink_endpoint({"connection_type": "tcpin", "place": "0.0.0.0", "argument": 14550})
+    Endpoint.is_mavlink_endpoint({"connection_type": "tcpout", "place": "0.0.0.0", "argument": 14550})
+    Endpoint.is_mavlink_endpoint({"connection_type": "udpin", "place": "0.0.0.0", "argument": 14550})
+    Endpoint.is_mavlink_endpoint({"connection_type": "udpout", "place": "0.0.0.0", "argument": 14550})
     Endpoint.is_mavlink_endpoint({"connection_type": "serial", "place": "/dev/autopilot", "argument": 115200})
     Endpoint.is_mavlink_endpoint({"connection_type": "file", "place": "mavlink_dump"})
     with pytest.raises(ValueError):
