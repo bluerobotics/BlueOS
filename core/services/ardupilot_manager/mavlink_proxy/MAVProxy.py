@@ -21,17 +21,22 @@ class MAVProxy(AbstractRouter):
         return None
 
     def assemble_command(self, master: Endpoint) -> str:
-        endpoints = " ".join([f"--out={str(endpoint)}" for endpoint in self.endpoints()])
+        endpoints_string = ""
+        for endpoint in self.endpoints():
+            if endpoint.connection_type != EndpointType.Serial:
+                endpoints_string += f" --out={str(endpoint)}"
+            else:
+                endpoints_string += f" --out={endpoint.place},{endpoint.argument}"
 
         master_string = str(master)
         if master.connection_type == EndpointType.Serial:
             if not master.argument:
                 master_string = f"{master.place}"
             else:
-                master_string = f"{master.place} --baudrate={master.argument}"
+                master_string = f"{master.place},{master.argument}"
 
         log = f"--state-basedir={self.logdir().resolve()}"
-        return f"{self.binary()} --master={master_string} {endpoints} {log} --non-interactive"
+        return f"{self.binary()} --master={master_string} {endpoints_string} {log} --non-interactive"
 
     @staticmethod
     def name() -> str:
