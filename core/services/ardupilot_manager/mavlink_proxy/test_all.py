@@ -1,7 +1,9 @@
+# pylint: disable=redefined-outer-name
 import pathlib
 import re
 import sys
 import warnings
+from typing import List
 
 import pytest
 
@@ -12,6 +14,28 @@ from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
 from mavlink_proxy.MAVProxy import MAVProxy
+
+
+@pytest.fixture
+def valid_output_endpoints() -> List[Endpoint]:
+    return [
+        Endpoint("udpin", "0.0.0.0", 14551),
+        Endpoint("udpout", "0.0.0.0", 14552),
+        Endpoint("tcpin", "0.0.0.0", 14553),
+        Endpoint("tcpout", "0.0.0.0", 14554),
+        Endpoint("serial", "/dev/radiolink", 57600),
+    ]
+
+
+@pytest.fixture
+def valid_master_endpoints() -> List[Endpoint]:
+    return [
+        Endpoint("udpin", "0.0.0.0", 14550),
+        Endpoint("udpout", "0.0.0.0", 14550),
+        Endpoint("tcpin", "0.0.0.0", 14550),
+        Endpoint("tcpout", "0.0.0.0", 14550),
+        Endpoint("serial", "/dev/autopilot", 115200),
+    ]
 
 
 def test_endpoint() -> None:
@@ -28,11 +52,6 @@ def test_endpoint() -> None:
 
 
 def test_endpoint_validators() -> None:
-    Endpoint.is_mavlink_endpoint({"connection_type": "tcpin", "place": "0.0.0.0", "argument": 14550})
-    Endpoint.is_mavlink_endpoint({"connection_type": "tcpout", "place": "0.0.0.0", "argument": 14550})
-    Endpoint.is_mavlink_endpoint({"connection_type": "udpin", "place": "0.0.0.0", "argument": 14550})
-    Endpoint.is_mavlink_endpoint({"connection_type": "udpout", "place": "0.0.0.0", "argument": 14550})
-    Endpoint.is_mavlink_endpoint({"connection_type": "serial", "place": "/dev/autopilot", "argument": 115200})
     with pytest.raises(ValueError):
         Endpoint.is_mavlink_endpoint({"connection_type": "udpin", "place": "0.0.0.0", "argument": -30})
     with pytest.raises(ValueError):
@@ -45,7 +64,7 @@ def test_endpoint_validators() -> None:
         Endpoint.is_mavlink_endpoint({"connection_type": "potato", "place": "path/to/file", "argument": 100})
 
 
-def test_mavproxy() -> None:
+def test_mavproxy(valid_output_endpoints: List[Endpoint], valid_master_endpoints: List[Endpoint]) -> None:
     if not MAVProxy.is_ok():
         warnings.warn("Failed to test mavproxy service", UserWarning)
         return
@@ -58,42 +77,26 @@ def test_mavproxy() -> None:
     assert mavproxy.set_logdir(pathlib.Path(".")), "Local path as MAVProxy log directory failed."
     assert re.search(r"\d+.\d+.\d+", str(mavproxy.version())) is not None, "Version does not follow pattern."
 
-    endpoint_1 = Endpoint("udpin", "0.0.0.0", 14551)
-    endpoint_2 = Endpoint("udpout", "0.0.0.0", 14552)
-    endpoint_3 = Endpoint("tcpin", "0.0.0.0", 14553)
-    endpoint_4 = Endpoint("tcpout", "0.0.0.0", 14554)
-    endpoint_5 = Endpoint("serial", "/dev/radiolink", 57600)
-    assert mavproxy.add_endpoint(endpoint_1), "Failed to add first endpoint"
-    assert mavproxy.add_endpoint(endpoint_2), "Failed to add second endpoint"
-    assert mavproxy.add_endpoint(endpoint_3), "Failed to add third endpoint"
-    assert mavproxy.add_endpoint(endpoint_4), "Failed to add fourth endpoint"
-    assert mavproxy.add_endpoint(endpoint_5), "Failed to add fifth endpoint"
-    assert mavproxy.endpoints() == [
-        endpoint_1,
-        endpoint_2,
-        endpoint_3,
-        endpoint_4,
-        endpoint_5,
-    ], "Endpoint list does not match."
-
-    assert mavproxy.start(Endpoint("udpin", "0.0.0.0", 14550)), "Failed to start mavproxy"
-    assert mavproxy.is_running(), "MAVProxy is not running after start."
-    assert mavproxy.exit(), "MAVProxy could not stop."
-    assert mavproxy.start(Endpoint("udpout", "0.0.0.0", 14550)), "Failed to start mavproxy"
-    assert mavproxy.is_running(), "MAVProxy is not running after start."
-    assert mavproxy.exit(), "MAVProxy could not stop."
-    assert mavproxy.start(Endpoint("tcpin", "0.0.0.0", 14550)), "Failed to start mavproxy"
-    assert mavproxy.is_running(), "MAVProxy is not running after start."
-    assert mavproxy.exit(), "MAVProxy could not stop."
-    assert mavproxy.start(Endpoint("tcpout", "0.0.0.0", 14550)), "Failed to start mavproxy"
-    assert mavproxy.is_running(), "MAVProxy is not running after start."
-    assert mavproxy.exit(), "MAVProxy could not stop."
-    assert mavproxy.start(Endpoint("serial", "/dev/autopilot", 115200)), "Failed to start mavproxy"
-    assert mavproxy.is_running(), "MAVProxy is not running after start."
-    assert mavproxy.exit(), "MAVProxy could not stop."
+    allowed_output_types = [
+        EndpointType.Serial,
+        EndpointType.UDPServer,
+        EndpointType.UDPClient,
+        EndpointType.TCPServer,
+        EndpointType.TCPClient,
+    ]
+    allowed_master_types = [
+        EndpointType.Serial,
+        EndpointType.UDPServer,
+        EndpointType.UDPClient,
+        EndpointType.TCPServer,
+        EndpointType.TCPClient,
+    ]
+    run_common_routing_tests(
+        mavproxy, allowed_output_types, allowed_master_types, valid_output_endpoints, valid_master_endpoints
+    )
 
 
-def test_mavlink_router() -> None:
+def test_mavlink_router(valid_output_endpoints: List[Endpoint], valid_master_endpoints: List[Endpoint]) -> None:
     if not MAVLinkRouter.is_ok():
         warnings.warn("Failed to test MAVLinkRouter service", UserWarning)
         return
@@ -106,29 +109,45 @@ def test_mavlink_router() -> None:
     assert mavlink_router.set_logdir(pathlib.Path(".")), "Local path as MAVLinkRouter log directory failed."
     assert re.search(r"\d+", str(mavlink_router.version())) is not None, "Version does not follow pattern."
 
-    endpoint_1 = Endpoint("udpout", "0.0.0.0", 14551)
-    endpoint_2 = Endpoint("tcpin", "0.0.0.0", 14552)
-    endpoint_3 = Endpoint("tcpout", "0.0.0.0", 14553)
-    assert mavlink_router.add_endpoint(endpoint_1), "Failed to add first endpoint"
-    assert mavlink_router.add_endpoint(endpoint_2), "Failed to add second endpoint"
-    assert mavlink_router.add_endpoint(endpoint_3), "Failed to add third endpoint"
-    assert mavlink_router.endpoints() == [
-        endpoint_1,
-        endpoint_2,
-        endpoint_3,
-    ], "Endpoint list does not match."
-    with pytest.raises(NotImplementedError):
-        mavlink_router.add_endpoint(Endpoint("udpin", "0.0.0.0", 14551))
-    with pytest.raises(NotImplementedError):
-        mavlink_router.add_endpoint(Endpoint("serial", "/dev/autopilot", 115200))
+    allowed_output_types = [EndpointType.UDPClient, EndpointType.TCPServer, EndpointType.TCPClient]
+    allowed_master_types = [EndpointType.UDPServer, EndpointType.Serial, EndpointType.TCPServer]
+    run_common_routing_tests(
+        mavlink_router, allowed_output_types, allowed_master_types, valid_output_endpoints, valid_master_endpoints
+    )
 
-    assert mavlink_router.start(Endpoint("udpin", "0.0.0.0", 14550)), "Failed to start MAVLinkRouter"
-    assert mavlink_router.is_running(), "MAVLinkRouter is not running after start."
-    assert mavlink_router.exit(), "MAVLinkRouter could not stop."
-    assert mavlink_router.start(Endpoint("serial", "/dev/autopilot", 115200)), "Failed to start MAVLinkRouter"
-    assert mavlink_router.is_running(), "MAVLinkRouter is not running after start."
-    assert mavlink_router.exit(), "MAVLinkRouter could not stop."
-    with pytest.raises(NotImplementedError):
-        mavlink_router.start(Endpoint("udpout", "0.0.0.0", 14550))
-    with pytest.raises(NotImplementedError):
-        mavlink_router.start(Endpoint("tcpout", "0.0.0.0", 14550))
+
+def run_common_routing_tests(
+    router: AbstractRouter,
+    allowed_output_types: List[EndpointType],
+    allowed_master_types: List[EndpointType],
+    output_endpoints: List[Endpoint],
+    master_endpoints: List[Endpoint],
+) -> None:
+    allowed_output_endpoints = list(
+        filter(lambda endpoint: endpoint.connection_type in allowed_output_types, output_endpoints)
+    )
+    for endpoint in allowed_output_endpoints:
+        assert router.add_endpoint(endpoint), f"Failed to add endpoint {endpoint}."
+    assert router.endpoints() == allowed_output_endpoints, "Endpoint list does not match."
+
+    unallowed_output_endpoints = list(
+        filter(lambda endpoint: endpoint not in allowed_output_endpoints, output_endpoints)
+    )
+    for endpoint in unallowed_output_endpoints:
+        with pytest.raises(NotImplementedError):
+            router.add_endpoint(endpoint)
+
+    allowed_master_endpoints = list(
+        filter(lambda endpoint: endpoint.connection_type in allowed_master_types, master_endpoints)
+    )
+    for endpoint in allowed_master_endpoints:
+        assert router.start(endpoint), f"Failed to start {router.name()} with endpoint {endpoint}."
+        assert router.is_running(), f"{router.name()} is not running after start."
+        assert router.exit(), f"{router.name()} could not stop."
+
+    unallowed_master_endpoints = list(
+        filter(lambda endpoint: endpoint not in allowed_master_endpoints, master_endpoints)
+    )
+    for endpoint in unallowed_master_endpoints:
+        with pytest.raises(NotImplementedError):
+            router.start(endpoint)
