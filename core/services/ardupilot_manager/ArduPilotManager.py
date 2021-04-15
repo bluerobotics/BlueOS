@@ -116,8 +116,11 @@ class ArduPilotManager(metaclass=Singleton):
             self.configuration["endpoints"] = []
         endpoints = self.configuration["endpoints"]
         for endpoint in endpoints:
-            if not self.mavlink_manager.add_endpoint(Endpoint(**endpoint)):
-                warn(f"Could not load endpoint {endpoint}")
+            try:
+                if not self.mavlink_manager.add_endpoint(Endpoint(**endpoint)):
+                    raise ValueError("Cannot add endpoint.")
+            except Exception as error:
+                warn(f"Could not load endpoint {endpoint}. {error}")
 
     def _reset_endpoints(self, endpoints: List[Endpoint]) -> None:
         try:
