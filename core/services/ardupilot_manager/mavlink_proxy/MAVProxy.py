@@ -1,6 +1,6 @@
 import re
 import subprocess
-from typing import Optional
+from typing import Callable, Optional
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
@@ -21,22 +21,25 @@ class MAVProxy(AbstractRouter):
         return None
 
     def assemble_command(self, master: Endpoint) -> str:
-        endpoints_string = ""
-        for endpoint in self.endpoints():
+        serial_endpoint_as_input: Callable[[Endpoint], str] = lambda endpoint: f"{endpoint.place},{endpoint.argument}"
+
+        # Convert endpoint format to mavproxy format
+        def convert_endpoint(endpoint: Endpoint) -> str:
             if endpoint.connection_type != EndpointType.Serial:
-                endpoints_string += f" --out={str(endpoint)}"
-            else:
-                endpoints_string += f" --out={endpoint.place},{endpoint.argument}"
+                return f"--out={str(endpoint)}"
+            return f"--out={serial_endpoint_as_input(endpoint)}"
+
+        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in self.endpoints()])
 
         master_string = str(master)
         if master.connection_type == EndpointType.Serial:
             if not master.argument:
                 master_string = f"{master.place}"
             else:
-                master_string = f"{master.place},{master.argument}"
+                master_string = f"{serial_endpoint_as_input(master)}"
 
         log = f"--state-basedir={self.logdir().resolve()}"
-        return f"{self.binary()} --master={master_string} {endpoints_string} {log} --non-interactive"
+        return f"{self.binary()} --master={master_string} {endpoints} {log} --non-interactive"
 
     @staticmethod
     def name() -> str:
