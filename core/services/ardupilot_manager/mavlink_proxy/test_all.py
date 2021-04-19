@@ -116,6 +116,7 @@ def test_mavlink_router(valid_output_endpoints: List[Endpoint], valid_master_end
     )
 
 
+@pytest.mark.timeout(10)
 def run_common_routing_tests(
     router: AbstractRouter,
     allowed_output_types: List[EndpointType],
@@ -144,6 +145,9 @@ def run_common_routing_tests(
         assert router.start(endpoint), f"Failed to start {router.name()} with endpoint {endpoint}."
         assert router.is_running(), f"{router.name()} is not running after start."
         assert router.exit(), f"{router.name()} could not stop."
+        while router.is_running():
+            pass
+        assert not router.is_running(), f"{router.name()} is not stopping after exit."
 
     unallowed_master_endpoints = list(
         filter(lambda endpoint: endpoint not in allowed_master_endpoints, master_endpoints)
