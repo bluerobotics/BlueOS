@@ -15,7 +15,7 @@ setup(
     description="Helper information for development",
     license="MIT",
     install_requires=[
-        "bottle == 0.12.8",
+        "bottle == 0.12.19",
         "psutil == 5.7.2",
     ],
 )
