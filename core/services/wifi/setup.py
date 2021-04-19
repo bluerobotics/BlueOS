@@ -14,5 +14,5 @@ setup(
     version="0.1.0",
     description="Wifi manager for wpa_supplicant",
     license="MIT",
-    install_requires=["bottle == 0.12.8"],
+    install_requires=["bottle == 0.12.19"],
 )
