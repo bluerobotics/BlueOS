@@ -39,7 +39,8 @@ def run_apt_uninstall(package: str) -> None:
 
 
 print("Starting..")
-run_apt_install("autoconf g++ git libtool make pkg-config python3-future")
+run_apt_install("autoconf g++ git libtool make pkg-config")
+run_command("pip install future==0.18.2")
 
 set_directory(SERVICE_PATH)
 if not os.path.exists(MAVLINK_ROUTER_PATH):
