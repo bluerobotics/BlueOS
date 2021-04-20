@@ -1,4 +1,4 @@
-name: deploy images
+name: Build and Deploy Images
 
 on:
     pull_request:
