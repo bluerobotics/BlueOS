@@ -6,6 +6,8 @@ import sys
 CLONE_PATH = os.path.realpath("/tmp")
 SERVICE_PATH = os.path.dirname(os.path.realpath(__file__))
 MAVLINK_ROUTER_PATH = os.path.join(CLONE_PATH, "mavlink-router")
+# This commit is mavlink-router's master as of 05-22-2021
+MAVLINK_ROUTER_COMMIT = "94c4e3c6a9ff7c517b20b417e232caf52f12a6c6"
 
 
 def set_directory(path: str) -> None:
@@ -44,9 +46,11 @@ run_command("pip install future==0.18.2")
 
 set_directory(SERVICE_PATH)
 if not os.path.exists(MAVLINK_ROUTER_PATH):
-    run_command(f"git clone --depth 1 --branch v2 https://github.com/intel/mavlink-router {MAVLINK_ROUTER_PATH}")
+    run_command(f"git clone --depth 1 https://github.com/intel/mavlink-router {MAVLINK_ROUTER_PATH}")
 
 set_directory(MAVLINK_ROUTER_PATH)
+run_command(f"git fetch origin {MAVLINK_ROUTER_COMMIT}")
+run_command(f"git checkout {MAVLINK_ROUTER_COMMIT}")
 run_command("git submodule update --init --recursive --quiet")
 run_command("./autogen.sh")
 run_command(
