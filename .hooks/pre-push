@@ -12,6 +12,9 @@ echo "Running shellcheck..."
 #SC2086: Allow word splitting
 git ls-files '*.sh' | xargs --max-lines=1 shellcheck --exclude=SC2005,SC2015,SC2046,SC2086
 
+echo "Running eslint.."
+git ls-files '*.js' '*.html' | xargs --max-lines=1 ./node_modules/.bin/eslint
+
 echo "Running isort.."
 isort --check-only "$repository_path"
 
