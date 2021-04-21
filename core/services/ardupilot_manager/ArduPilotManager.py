@@ -161,7 +161,10 @@ class ArduPilotManager(metaclass=Singleton):
                 self.mavlink_manager.add_endpoint(endpoint)
                 print(f"Adding endpoint {endpoint} and saving it to the settings file.")
             except NotImplementedError:
-                print(f"Failed to add endpoint {endpoint}. Connection_type not compatible with current router.")
+                print(
+                    f"Failed to add endpoint {endpoint}.\n"
+                    f"Connection_type not supported by {self.mavlink_manager.router_name()}."
+                )
                 self._reset_endpoints(loaded_endpoints)
                 return False
 
