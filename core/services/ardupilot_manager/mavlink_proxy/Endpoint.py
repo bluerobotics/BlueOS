@@ -61,6 +61,11 @@ class Endpoint:
     def __hash__(self) -> int:
         return hash(str(self))
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise NotImplementedError
+        return str(self) == str(other)
+
 
 VALID_SERIAL_BAUDRATES = [
     3000000,
