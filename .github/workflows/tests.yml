@@ -22,6 +22,7 @@ jobs:
       name: Install dependencies
       run: |
         sudo apt install shellcheck
+        npm install eslint eslint-plugin-vue eslint-plugin-html --save-dev
         python -m pip install --upgrade pip
         pip install wheel # wheel need to be installed before mavproxy
         pip install mavproxy
