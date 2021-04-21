@@ -130,9 +130,9 @@ class ArduPilotManager(metaclass=Singleton):
         try:
             self.mavlink_manager.clear_endpoints()
             self.mavlink_manager.add_endpoints(endpoints)
-            print("Reseting endpoints to previous state.")
+            print("Resetting endpoints to previous state.")
         except Exception as error:
-            warn(f"Error reseting endpoints: {error}")
+            warn(f"Error resetting endpoints: {error}")
 
     def _update_endpoints(self) -> bool:
         try:
