@@ -1,4 +1,4 @@
-from typing import List, Type
+from typing import List, Set, Type
 from warnings import warn
 
 # Plugins
@@ -38,17 +38,17 @@ class Manager:
     def remove_endpoint(self, endpoint: Endpoint) -> bool:
         return self.tool.remove_endpoint(endpoint)
 
-    def add_endpoints(self, endpoints: List[Endpoint]) -> None:
+    def add_endpoints(self, endpoints: Set[Endpoint]) -> None:
         for endpoint in endpoints:
             if not self.add_endpoint(endpoint):
                 warn(f"Endpoint {endpoint} is not valid.", RuntimeWarning)
 
-    def remove_endpoints(self, endpoints: List[Endpoint]) -> None:
+    def remove_endpoints(self, endpoints: Set[Endpoint]) -> None:
         for endpoint in endpoints:
             if not self.remove_endpoint(endpoint):
                 warn(f"Endpoint {endpoint} is not valid.", RuntimeWarning)
 
-    def endpoints(self) -> List[Endpoint]:
+    def endpoints(self) -> Set[Endpoint]:
         return self.tool.endpoints()
 
     def clear_endpoints(self) -> None:

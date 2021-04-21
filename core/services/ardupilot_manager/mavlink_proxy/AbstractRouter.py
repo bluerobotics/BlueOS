@@ -4,14 +4,14 @@ import shlex
 import shutil
 import subprocess
 import tempfile
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Set, Type
 
 from mavlink_proxy.Endpoint import Endpoint
 
 
 class AbstractRouter(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self._endpoints: List[Endpoint] = []
+        self._endpoints: Set[Endpoint] = set()
         self._subprocess: Optional[Any] = None
 
         # Since this methods can fail we need to have the other variables defined
@@ -108,7 +108,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         if endpoint in self._endpoints:
             return False
 
-        self._endpoints.append(endpoint)
+        self._endpoints.add(endpoint)
         return True
 
     def remove_endpoint(self, endpoint: Endpoint) -> bool:
@@ -117,12 +117,12 @@ class AbstractRouter(metaclass=abc.ABCMeta):
             return True
         return False
 
-    def endpoints(self) -> List[Endpoint]:
+    def endpoints(self) -> Set[Endpoint]:
         return self._endpoints
 
     def clear_endpoints(self) -> None:
         """Remove all output endpoints."""
-        self._endpoints = []
+        self._endpoints = set()
 
     def __del__(self) -> None:
         self.exit()

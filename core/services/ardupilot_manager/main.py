@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 import uvicorn
 from ArduPilotManager import ArduPilotManager
@@ -32,14 +32,14 @@ def get_available_endpoints() -> Any:
 
 
 @app.post("/endpoints", status_code=status.HTTP_201_CREATED)
-def create_endpoints(response: Response, endpoints: List[Endpoint] = Body(...)) -> Any:
+def create_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
     if not autopilot.add_new_endpoints(endpoints):
         response.status_code = status.HTTP_409_CONFLICT
         return {"message": "One or more endpoints already exist. No changes were made."}
 
 
 @app.delete("/endpoints", status_code=status.HTTP_204_NO_CONTENT)
-def remove_endpoints(response: Response, endpoints: List[Endpoint] = Body(...)) -> Any:
+def remove_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
     if not autopilot.remove_endpoints(endpoints):
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"message": "One or more endpoints do not exist. No changes were made."}

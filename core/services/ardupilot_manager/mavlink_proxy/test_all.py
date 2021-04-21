@@ -3,7 +3,7 @@ import pathlib
 import re
 import sys
 import warnings
-from typing import List
+from typing import List, Set
 
 import pytest
 
@@ -17,25 +17,25 @@ from mavlink_proxy.MAVProxy import MAVProxy
 
 
 @pytest.fixture
-def valid_output_endpoints() -> List[Endpoint]:
-    return [
+def valid_output_endpoints() -> Set[Endpoint]:
+    return {
         Endpoint("udpin", "0.0.0.0", 14551),
         Endpoint("udpout", "0.0.0.0", 14552),
         Endpoint("tcpin", "0.0.0.0", 14553),
         Endpoint("tcpout", "0.0.0.0", 14554),
         Endpoint("serial", "/dev/radiolink", 57600),
-    ]
+    }
 
 
 @pytest.fixture
-def valid_master_endpoints() -> List[Endpoint]:
-    return [
+def valid_master_endpoints() -> Set[Endpoint]:
+    return {
         Endpoint("udpin", "0.0.0.0", 14550),
         Endpoint("udpout", "0.0.0.0", 14550),
         Endpoint("tcpin", "0.0.0.0", 14550),
         Endpoint("tcpout", "0.0.0.0", 14550),
         Endpoint("serial", "/dev/autopilot", 115200),
-    ]
+    }
 
 
 def test_endpoint() -> None:
@@ -64,7 +64,7 @@ def test_endpoint_validators() -> None:
         Endpoint.is_mavlink_endpoint({"connection_type": "potato", "place": "path/to/file", "argument": 100})
 
 
-def test_mavproxy(valid_output_endpoints: List[Endpoint], valid_master_endpoints: List[Endpoint]) -> None:
+def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     if not MAVProxy.is_ok():
         warnings.warn("Failed to test mavproxy service", UserWarning)
         return
@@ -96,7 +96,7 @@ def test_mavproxy(valid_output_endpoints: List[Endpoint], valid_master_endpoints
     )
 
 
-def test_mavlink_router(valid_output_endpoints: List[Endpoint], valid_master_endpoints: List[Endpoint]) -> None:
+def test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     if not MAVLinkRouter.is_ok():
         warnings.warn("Failed to test MAVLinkRouter service", UserWarning)
         return
@@ -121,24 +121,22 @@ def run_common_routing_tests(
     router: AbstractRouter,
     allowed_output_types: List[EndpointType],
     allowed_master_types: List[EndpointType],
-    output_endpoints: List[Endpoint],
-    master_endpoints: List[Endpoint],
+    output_endpoints: Set[Endpoint],
+    master_endpoints: Set[Endpoint],
 ) -> None:
-    allowed_output_endpoints = list(
+    allowed_output_endpoints = set(
         filter(lambda endpoint: endpoint.connection_type in allowed_output_types, output_endpoints)
     )
     for endpoint in allowed_output_endpoints:
         assert router.add_endpoint(endpoint), f"Failed to add endpoint {endpoint}."
     assert router.endpoints() == allowed_output_endpoints, "Endpoint list does not match."
 
-    unallowed_output_endpoints = list(
-        filter(lambda endpoint: endpoint not in allowed_output_endpoints, output_endpoints)
-    )
+    unallowed_output_endpoints = output_endpoints.difference(allowed_output_endpoints)
     for endpoint in unallowed_output_endpoints:
         with pytest.raises(NotImplementedError):
             router.add_endpoint(endpoint)
 
-    allowed_master_endpoints = list(
+    allowed_master_endpoints = set(
         filter(lambda endpoint: endpoint.connection_type in allowed_master_types, master_endpoints)
     )
     for endpoint in allowed_master_endpoints:
@@ -149,9 +147,7 @@ def run_common_routing_tests(
             pass
         assert not router.is_running(), f"{router.name()} is not stopping after exit."
 
-    unallowed_master_endpoints = list(
-        filter(lambda endpoint: endpoint not in allowed_master_endpoints, master_endpoints)
-    )
+    unallowed_master_endpoints = master_endpoints.difference(allowed_master_endpoints)
     for endpoint in unallowed_master_endpoints:
         with pytest.raises(NotImplementedError):
             router.start(endpoint)
