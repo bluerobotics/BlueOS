@@ -10,6 +10,10 @@
                 "bind": "/dev/",
                 "mode": "rw"
             },
+            "/sys/": {
+                "bind": "/sys/",
+                "mode": "r"
+            },
             "/var/run/wpa_supplicant/wlan0": {
                 "bind": "/var/run/wpa_supplicant/wlan0",
                 "mode": "rw"
