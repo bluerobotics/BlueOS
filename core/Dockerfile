@@ -15,6 +15,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY tools /home/pi/tools
 RUN /home/pi/tools/mavlink_router/bootstrap.py
 RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
+RUN /home/pi/tools/linux2rest/bootstrap.sh
 
 # Install necessary tools for basic usage
 RUN apt install -y file locate tmux unzip nano htop iputils-ping watch wget iproute2
