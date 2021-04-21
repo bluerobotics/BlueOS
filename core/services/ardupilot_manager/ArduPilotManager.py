@@ -113,12 +113,10 @@ class ArduPilotManager(metaclass=Singleton):
 
     def _load_endpoints(self) -> None:
         """Load endpoints from the configuration file to the mavlink manager."""
-        if "endpoints" not in self.configuration:
-            self.configuration["endpoints"] = []
-        endpoints = self.configuration["endpoints"]
+        endpoints = [Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []]
         for endpoint in endpoints:
             try:
-                if not self.mavlink_manager.add_endpoint(Endpoint(**endpoint)):
+                if not self.mavlink_manager.add_endpoint(endpoint):
                     raise ValueError("Cannot add endpoint.")
             except Exception as error:
                 warn(f"Could not load endpoint {endpoint}. {error}")
@@ -131,9 +129,9 @@ class ArduPilotManager(metaclass=Singleton):
         except Exception as error:
             warn(f"Error reseting endpoints: {error}")
 
-    def _update_endpoints(self, updated_endpoints: List[Endpoint]) -> bool:
+    def _update_endpoints(self) -> bool:
         try:
-            self.configuration["endpoints"] = deepcopy(updated_endpoints)
+            self.configuration["endpoints"] = [endpoint.asdict() for endpoint in self.get_endpoints()]
             self.settings.save(self.configuration)
             return self.restart()
         except Exception as error:
@@ -146,33 +144,29 @@ class ArduPilotManager(metaclass=Singleton):
 
     def add_new_endpoints(self, new_endpoints: List[Endpoint]) -> bool:
         """Add multiple endpoints to the mavlink manager and save them on the configuration file."""
-        saved_endpoints = deepcopy(self.configuration["endpoints"])
         loaded_endpoints = deepcopy(self.get_endpoints())
 
         for endpoint in new_endpoints:
-            if endpoint.asdict() in saved_endpoints:
+            if endpoint in loaded_endpoints:
                 warn(f"Endpoint {endpoint} already stored.")
                 self._reset_endpoints(loaded_endpoints)
                 return False
             try:
                 self.mavlink_manager.add_endpoint(endpoint)
-                saved_endpoints.append(endpoint.asdict())
                 print(f"Adding endpoint {endpoint} and saving it to the settings file.")
             except NotImplementedError:
                 print(f"Failed to add endpoint {endpoint}. Connection_type not compatible with current router.")
                 self._reset_endpoints(loaded_endpoints)
                 return False
 
-        return self._update_endpoints(saved_endpoints)
+        return self._update_endpoints()
 
     def remove_endpoints(self, endpoints_to_remove: List[Endpoint]) -> bool:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
-
-        saved_endpoints = deepcopy(self.configuration["endpoints"])
         loaded_endpoints = deepcopy(self.get_endpoints())
 
         for endpoint in endpoints_to_remove:
-            if not endpoint.asdict() in saved_endpoints:
+            if not endpoint in loaded_endpoints:
                 warn(f"Endpoint {endpoint} not found.")
                 self._reset_endpoints(loaded_endpoints)
                 return False
@@ -180,7 +174,6 @@ class ArduPilotManager(metaclass=Singleton):
                 warn(f"Mavlink manager failed to remove endpoint {endpoint}.")
                 self._reset_endpoints(loaded_endpoints)
                 return False
-            saved_endpoints.remove(endpoint.asdict())
             print(f"Deleting endpoint {endpoint} and removing it from the settings file.")
 
-        return self._update_endpoints(saved_endpoints)
+        return self._update_endpoints()
