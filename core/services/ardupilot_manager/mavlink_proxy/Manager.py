@@ -72,3 +72,6 @@ class Manager:
 
     def is_running(self) -> bool:
         return self.tool.is_running()
+
+    def router_name(self) -> str:
+        return self.tool.name()
