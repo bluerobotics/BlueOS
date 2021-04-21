@@ -9,6 +9,7 @@ SERVICES=(
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
     'video',"mavlink-camera-manager --default-settings BlueROVUDP --verbose"
+    'linux2rest',"linux2rest"
 )
 
 tmux start-server
