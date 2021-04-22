@@ -41,8 +41,8 @@ def create_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -
 @app.delete("/endpoints", status_code=status.HTTP_204_NO_CONTENT)
 def remove_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
     if not autopilot.remove_endpoints(endpoints):
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return {"message": "One or more endpoints do not exist. No changes were made."}
+        response.status_code = status.HTTP_409_CONFLICT
+        return {"message": "One or more endpoints does not exist or is protected. No changes were made."}
 
 
 if __name__ == "__main__":

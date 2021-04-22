@@ -180,6 +180,11 @@ class ArduPilotManager(metaclass=Singleton):
             warn(f"Endpoints {missing_endpoints} not found. Aborting operation.")
             return False
 
+        protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_remove))
+        if protected_endpoints:
+            warn(f"Endpoints {protected_endpoints} are protected. Aborting operation.")
+            return False
+
         for endpoint in endpoints_to_remove:
             if not self.mavlink_manager.remove_endpoint(endpoint):
                 warn(f"Mavlink manager failed to remove endpoint {endpoint}.")
