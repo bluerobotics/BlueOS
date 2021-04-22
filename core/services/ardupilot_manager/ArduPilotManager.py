@@ -136,7 +136,8 @@ class ArduPilotManager(metaclass=Singleton):
 
     def _update_endpoints(self) -> bool:
         try:
-            self._save_endpoints_to_configuration(self.get_endpoints())
+            persistent_endpoints = set(filter(lambda endpoint: endpoint.persistent, self.get_endpoints()))
+            self._save_endpoints_to_configuration(persistent_endpoints)
             self.settings.save(self.configuration)
             return self.restart()
         except Exception as error:
