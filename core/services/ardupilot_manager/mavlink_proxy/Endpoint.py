@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Dict, Optional, Type
 
 import validators
-from pydantic import root_validator
+from pydantic import constr, root_validator
 from pydantic.dataclasses import dataclass
 
 
@@ -16,9 +16,15 @@ class EndpointType(str, Enum):
 
 @dataclass
 class Endpoint:
+    name: constr(strip_whitespace=True, min_length=3, max_length=50)  # type: ignore
+    owner: constr(strip_whitespace=True, min_length=3, max_length=50)  # type: ignore
+
     connection_type: str
     place: str
     argument: Optional[int] = None
+
+    persistent: Optional[bool] = False
+    protected: Optional[bool] = False
 
     @root_validator
     @classmethod

@@ -60,7 +60,7 @@ class ArduPilotManager(metaclass=Singleton):
             raise RuntimeError(f"Failed to start navigator: {error}") from error
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
-        master_endpoint = Endpoint("udpin", "127.0.0.1", 8852)
+        master_endpoint = Endpoint("Master", self.settings.app_name, "udpin", "127.0.0.1", 8852, protected=True)
         self.subprocess = subprocess.Popen(
             [
                 firmware,
@@ -79,10 +79,12 @@ class ArduPilotManager(metaclass=Singleton):
         self.start_mavlink_manager(master_endpoint)
 
     def start_serial(self, device: str) -> None:
-        self.start_mavlink_manager(Endpoint("serial", device, 115200))
+        self.start_mavlink_manager(Endpoint("Master", self.settings.app_name, "serial", device, 115200, protected=True))
 
     def start_mavlink_manager(self, device: Endpoint) -> None:
-        self.add_new_endpoints({Endpoint("udpin", "0.0.0.0", 14550)})
+        self.add_new_endpoints(
+            {Endpoint("GCS Link", self.settings.app_name, "udpin", "0.0.0.0", 14550, protected=True)}
+        )
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
 
