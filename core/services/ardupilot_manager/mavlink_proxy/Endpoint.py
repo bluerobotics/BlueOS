@@ -52,11 +52,7 @@ class Endpoint:
         return ":".join([self.connection_type, self.place, str(self.argument)])
 
     def asdict(self) -> Dict[str, Any]:
-        return {
-            "connection_type": self.connection_type,
-            "place": self.place,
-            "argument": self.argument,
-        }
+        return dict(filter(lambda field: field[0] != "__initialised__", self.__dict__.items()))
 
     def __hash__(self) -> int:
         return hash(str(self))
