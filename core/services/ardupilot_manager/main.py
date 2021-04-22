@@ -35,7 +35,7 @@ def get_available_endpoints() -> Any:
 def create_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
     if not autopilot.add_new_endpoints(endpoints):
         response.status_code = status.HTTP_409_CONFLICT
-        return {"message": "One or more endpoints already exist. No changes were made."}
+        return {"message": "One or more endpoints already exists or is not supported. No changes were made."}
 
 
 @app.delete("/endpoints", status_code=status.HTTP_204_NO_CONTENT)
