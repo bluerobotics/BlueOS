@@ -19,35 +19,43 @@ from mavlink_proxy.MAVProxy import MAVProxy
 @pytest.fixture
 def valid_output_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("udpin", "0.0.0.0", 14551),
-        Endpoint("udpout", "0.0.0.0", 14552),
-        Endpoint("tcpin", "0.0.0.0", 14553),
-        Endpoint("tcpout", "0.0.0.0", 14554),
-        Endpoint("serial", "/dev/radiolink", 57600),
+        Endpoint("Test endpoint", "pytest", "udpin", "0.0.0.0", 14551),
+        Endpoint("Test endpoint", "pytest", "udpout", "0.0.0.0", 14552),
+        Endpoint("Test endpoint", "pytest", "tcpin", "0.0.0.0", 14553),
+        Endpoint("Test endpoint", "pytest", "tcpout", "0.0.0.0", 14554),
+        Endpoint("Test endpoint", "pytest", "serial", "/dev/radiolink", 57600),
     }
 
 
 @pytest.fixture
 def valid_master_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("udpin", "0.0.0.0", 14550),
-        Endpoint("udpout", "0.0.0.0", 14550),
-        Endpoint("tcpin", "0.0.0.0", 14550),
-        Endpoint("tcpout", "0.0.0.0", 14550),
-        Endpoint("serial", "/dev/autopilot", 115200),
+        Endpoint("Master endpoint", "pytest", "udpin", "0.0.0.0", 14550),
+        Endpoint("Master endpoint", "pytest", "udpout", "0.0.0.0", 14550),
+        Endpoint("Master endpoint", "pytest", "tcpin", "0.0.0.0", 14550),
+        Endpoint("Master endpoint", "pytest", "tcpout", "0.0.0.0", 14550),
+        Endpoint("Master endpoint", "pytest", "serial", "/dev/autopilot", 115200),
     }
 
 
 def test_endpoint() -> None:
-    endpoint = Endpoint("udpout", "0.0.0.0", 14550)
+    endpoint = Endpoint("Test endpoint", "pytest", "udpout", "0.0.0.0", 14550)
+    assert endpoint.name == "Test endpoint", "Name does not match."
+    assert endpoint.owner == "pytest", "Owner does not match."
+    assert endpoint.persistent is False, "Persistent does not match."
+    assert endpoint.protected is False, "Protected does not match."
     assert endpoint.connection_type == EndpointType.UDPClient, "Connection type does not match."
     assert endpoint.place == "0.0.0.0", "Connection place does not match."
     assert endpoint.argument == 14550, "Connection argument does not match."
     assert endpoint.__str__() == "udpout:0.0.0.0:14550", "Connection string does not match."
     assert endpoint.asdict() == {
+        "name": "Test endpoint",
+        "owner": "pytest",
         "connection_type": "udpout",
         "place": "0.0.0.0",
         "argument": 14550,
+        "persistent": False,
+        "protected": False,
     }, "Endpoint dict does not match."
 
 
