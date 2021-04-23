@@ -8,7 +8,7 @@ from urllib.request import urlopen
 import bottle
 import psutil
 
-PORT = 8080
+PORT = 80
 
 
 class Helper:
