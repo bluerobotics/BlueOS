@@ -17,5 +17,6 @@ setup(
     install_requires=[
         "bottle == 0.12.19",
         "psutil == 5.7.2",
+        "beautifulsoup4 == 4.9.3",
     ],
 )
