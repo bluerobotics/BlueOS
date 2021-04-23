@@ -7,6 +7,17 @@ from typing import Any, Dict, List, Union
 import bottle
 from wpa_supplicant import WPASupplicant
 
+BARE_HTML_TEMPLATE = """
+<html lang="en">
+<head>
+  <title>{title}</title>
+</head>
+<body>
+  {body}
+</body>
+</html>
+"""
+
 
 class WifiManager:
     wpa = WPASupplicant()
@@ -146,7 +157,9 @@ if __name__ == "__main__":
 
     @bottle.route("/")
     def home() -> str:
-        return r"<br>".join([f'<a href="{route.rule}">{route.rule}</a>' for route in bottle.app().routes])
+        body = r"<br>".join([f'<a href="{route.rule}">{route.rule}</a>' for route in bottle.app().routes])
+        page = BARE_HTML_TEMPLATE.format(title="Wifi Manager", body=body)
+        return page
 
     @bottle.route(REST_API_PREFIX + "/status")
     def status() -> bytes:
