@@ -39,11 +39,11 @@ class Helper:
         info = ServiceInfo(valid=False, title="Unknown", ui="", port=port)
 
         try:
-            response = urlopen(f"http://127.0.0.1:{port}/", timeout=0.2)
-            info.valid = True
-            soup = BeautifulSoup(response.read(), features="html.parser")
-            title_element = soup.find("title")
-            info.title = title_element.text if title_element else "Unknown"
+            with urlopen(f"http://127.0.0.1:{port}/", timeout=0.2) as response:
+                info.valid = True
+                soup = BeautifulSoup(response.read(), features="html.parser")
+                title_element = soup.find("title")
+                info.title = title_element.text if title_element else "Unknown"
         except urllib.error.HTTPError as error:
             if error.code == http.HTTPStatus.NOT_FOUND:
                 info.valid = True
