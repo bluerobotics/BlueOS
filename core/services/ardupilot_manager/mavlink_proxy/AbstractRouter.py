@@ -73,6 +73,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         if vehicle_endpoint is not None:
             self._master_endpoint = vehicle_endpoint
         command = self.assemble_command(self._master_endpoint)
+        # pylint: disable=consider-using-with
         self._subprocess = subprocess.Popen(shlex.split(command), shell=False, encoding="utf-8", errors="ignore")
         return True
 

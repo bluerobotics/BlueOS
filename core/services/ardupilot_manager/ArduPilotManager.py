@@ -61,6 +61,7 @@ class ArduPilotManager(metaclass=Singleton):
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint("Master", self.settings.app_name, "udpin", "127.0.0.1", 8852, protected=True)
+        # pylint: disable=consider-using-with
         self.subprocess = subprocess.Popen(
             [
                 firmware,
