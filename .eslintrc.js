@@ -16,5 +16,6 @@ module.exports = {
     semi: ['error', 'never'],
     camelcase: [2, { properties: 'always' }],
     'space-before-function-paren': ['error', 'always'],
+    'no-extra-parens': ['error', 'all'],
   },
 }
