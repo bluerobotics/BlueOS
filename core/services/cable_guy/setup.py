@@ -65,9 +65,12 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[
         "appdirs == 1.4.4",
-        "connexion[swagger-ui] == 2.7.0",
         "psutil == 5.7.2",
         "pyroute2 == 0.5.13",
-        "waitress == 1.4.4",
+        "starlette == 0.13.6",
+        "fastapi == 0.63.0",
+        "uvicorn == 0.13.4",
+        "aiofiles == 0.6.0",
+        "fastapi-versioning == 0.8.0",
     ],
 )

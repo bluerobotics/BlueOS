@@ -1,44 +1,82 @@
-#!/usr/bin/env python3
-import logging
+#! /usr/bin/env python3
+import json
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
-import connexion
-import flask
-from connexion.resolver import RestyResolver
-from waitress import serve
+import uvicorn
+from api import manager
+from api.manager import EthernetInterface
+from fastapi import Body, FastAPI, HTTPException, status
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi_versioning import VersionedFastAPI, version
+from starlette.responses import Response as StarletteResponse
 
-logging.basicConfig(level=logging.INFO)
+
+class PrettyJSONResponse(StarletteResponse):
+    media_type = "application/json"
+
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=2,
+            separators=(", ", ": "),
+        ).encode(self.charset)
+
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
+STATIC_FOLDER = Path.joinpath(HTML_FOLDER, "static")
+
+app = FastAPI(
+    title="Cable Guy API",
+    description="Cable Guy is responsible for managing internet interfaces on Companion.",
+    default_response_class=PrettyJSONResponse,
+)
 
 
-def index() -> str:
+@app.get("/ethernet", response_model=List[EthernetInterface], summary="Retrieve ethernet interfaces.")
+@version(1, 0)
+def retrieve_interfaces() -> Any:
+    """REST API endpoint to retrieve the configured ethernet interfaces."""
+    return manager.ethernetManager.get_interfaces()
+
+
+@app.post("/ethernet", response_model=EthernetInterface, summary="Configure a ethernet interface.")
+@version(1, 0)
+def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
+    """REST API endpoint to configure a new ethernet interface or modify an existing one."""
+    if not manager.ethernetManager.set_configuration(interface):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not configure ethernet interface with provided configuration.",
+        )
+
+    manager.ethernetManager.save()
+    return interface
+
+
+app = VersionedFastAPI(
+    app,
+    version="1.0.0",
+    prefix_format="/v{major}.{minor}",
+)
+app.mount("/static", StaticFiles(directory=str(STATIC_FOLDER)), name="static")
+
+
+@app.get("/", response_class=HTMLResponse, summary="Cable Guy web interface")
+def index() -> Any:
+    """REST API endpoint to retrieve web application for Cable Guy."""
     index_file_path = Path.joinpath(HTML_FOLDER, "index.html")
     return open(index_file_path, "r").read()
 
 
-def resource(path: str, filename: str) -> Any:
-    real_path = Path.joinpath(HTML_FOLDER, f"static/{path}")
-    return flask.send_from_directory(real_path, filename)
-
-
 if __name__ == "__main__":
     if os.geteuid() != 0:
-        print(
-            "You need to have root privileges to run this script.\nPlease try again, this time using **sudo**. Exiting."
-        )
+        print("You need root privileges to run this script.\nPlease try again, this time using **sudo**. Exiting.")
         sys.exit(1)
 
-    connexion_app = connexion.FlaskApp(__name__)
-    connexion_app.add_url_rule("/", "index", index)
-    connexion_app.add_url_rule("/static/<path:path>/<path:filename>", "resource", resource)
-    connexion_app.add_api(
-        "swagger/cable-guy.yaml",
-        arguments={"title": "Cable Guy API"},
-        resolver=RestyResolver("api"),
-    )
-    # http://localhost:9090/v1.0/ethernet
-    serve(connexion_app, host="0.0.0.0", port=9090)
+    uvicorn.run(app, host="0.0.0.0", port=9090)
