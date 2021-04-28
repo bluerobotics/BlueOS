@@ -1,12 +1,36 @@
 import asyncio
 import re
+from enum import Enum
 from socket import AddressFamily
-from typing import Any, Dict, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import psutil
 from api import settings
+from pydantic import BaseModel
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
+
+
+class InterfaceMode(str, Enum):
+    Client = "client"
+    Server = "server"
+    Unmanaged = "unmanaged"
+
+
+class InterfaceConfiguration(BaseModel):
+    ip: str
+    mode: InterfaceMode
+
+
+class InterfaceInfo(BaseModel):
+    connected: bool
+    number_of_disconnections: int
+
+
+class EthernetInterface(BaseModel):
+    name: str
+    configuration: InterfaceConfiguration
+    info: Optional[InterfaceInfo]
 
 
 class EthernetManager:
@@ -17,7 +41,7 @@ class EthernetManager:
     # IP abstraction interface
     ipr = IPRoute()
 
-    result: List[Dict[str, Any]] = []
+    result: List[EthernetInterface] = []
 
     def __init__(self) -> None:
         self.settings = settings.Settings()
@@ -30,7 +54,7 @@ class EthernetManager:
         print("Previous settings loaded:")
         for item in self.settings.root["content"]:
             print(f"Configuration with: {item}")
-            if not self.set_configuration(item):
+            if not self.set_configuration(EthernetInterface(**item)):
                 print("Failed.")
 
     def save(self) -> None:
@@ -44,40 +68,32 @@ class EthernetManager:
             print("Configuration is empty, aborting.")
             return
 
-        for item in self.result:
-            item.pop("info")
-        self.settings.save(self.result)
+        result = [interface.dict(exclude={"info"}) for interface in self.result]
+        self.settings.save(result)
 
-    def set_configuration(self, configuration: Dict[str, Any]) -> bool:
+    def set_configuration(self, interface: EthernetInterface) -> bool:
         """Modify hardware based in the configuration
 
         Args:
-            configuration (dict): Configuration struct
-                {
-                    'name': 'interface_name',
-                    'configuration': {
-                        'ip': 'ip_address',
-                        'mode': 'mode' // [unmanaged, client, server],
-                    }
-                }
+            interface: EthernetInterface
 
         Returns:
             bool: Configuration was accepted
         """
         interfaces = self.get_interfaces()
-        valid_names = [interface["name"] for interface in interfaces]
+        valid_names = [interface.name for interface in interfaces]
 
-        name = configuration["name"]
-        ip = configuration["configuration"]["ip"]
-        mode = configuration["configuration"]["mode"]
+        name = interface.name
+        ip = interface.configuration.ip
+        mode = interface.configuration.mode
 
         if name not in valid_names:
             return False
 
-        if mode == "client":
+        if mode == InterfaceMode.Client:
             self.set_dynamic_ip(name)
             return True
-        if mode == "unmanaged":
+        if mode == InterfaceMode.Unmanaged:
             self.set_static_ip(name, ip)
             return True
 
@@ -98,11 +114,11 @@ class EthernetManager:
                     result += [value]
         return result
 
-    def is_valid_interface(self, interface: str) -> bool:
-        """Check if an interface is valid
+    def is_valid_interface_name(self, interface_name: str) -> bool:
+        """Check if an interface name is valid
 
         Args:
-            interface (str): Network interface
+            interface_name (str): Network interface name
 
         Returns:
             bool: True if valid, False if not
@@ -110,26 +126,25 @@ class EthernetManager:
         blacklist = ["lo", "ham.*", "docker.*"]
         blacklist += self._get_wifi_interfaces()
 
-        if not interface:
+        if not interface_name:
             return False
 
         for pattern in blacklist:
-            if re.match(pattern, interface):
+            if re.match(pattern, interface_name):
                 return False
 
         return True
 
-    def validate_interface_data(self, data: Dict[str, Any]) -> bool:
+    def validate_interface_data(self, interface: EthernetInterface) -> bool:
         """Check if interface configuration is valid
 
         Args:
-            data (dict): Interface dict structure
+            interface: EthernetInterface instance
 
         Returns:
             bool: True if valid, False if not
         """
-        name = data["name"]
-        return self.is_valid_interface(name)
+        return self.is_valid_interface_name(interface.name)
 
     @staticmethod
     def weak_is_ip_address(ip: str) -> bool:
@@ -250,25 +265,11 @@ class EthernetManager:
         # Set new ip address
         self.set_ip(interface_name, ip)
 
-    def get_interfaces(self) -> List[Dict[str, Any]]:
+    def get_interfaces(self) -> List[EthernetInterface]:
         """Get interfaces information
 
         Returns:
-            dict: Interface information that uses the following struct:
-            [
-                {
-                    'name': 'interface_name',
-                    'configuration': {
-                        'ip': 'ip_address',
-                        'mode': 'mode' // [unmanaged, client, server],
-                    },
-                    'info': {
-                        'connected': True,
-                        'number_of_disconnections': 4,
-                    }
-                },
-                ...
-            ]
+            List of EthernetInterface instances available
         """
         result = []
         for interface, addresses in psutil.net_if_addrs().items():
@@ -284,13 +285,11 @@ class EthernetManager:
                 is_static_ip = self.is_static_ip(ip)
 
                 # Populate our output item
-                mode = "unmanaged" if is_static_ip and valid_ip else "client"
+                mode = InterfaceMode.Unmanaged if is_static_ip and valid_ip else InterfaceMode.Client
                 info = self.get_interface_info(interface)
-                data = {
-                    "name": interface,
-                    "configuration": {"ip": ip, "mode": mode},
-                    "info": info,
-                }
+                data = EthernetInterface(
+                    name=interface, configuration=InterfaceConfiguration(ip=ip, mode=mode), info=info
+                )
 
                 # Check if it's valid and add to the result
                 if self.validate_interface_data(data):
@@ -311,20 +310,17 @@ class EthernetManager:
         """
         return self.ndb.interfaces.dump().filter(ifname=interface_name)[0]
 
-    def get_interface_info(self, interface_name: str) -> Dict[str, Any]:
+    def get_interface_info(self, interface_name: str) -> InterfaceInfo:
         """Get interface info field
 
         Args:
             interface_name (str): Interface name
 
         Returns:
-            dict: Info field of `get_interfaces`
+            InterfaceInfo object
         """
         interface = self.get_interface_ndb(interface_name)
-        return {
-            "connected": interface.carrier != 0,
-            "number_of_disconnections": interface.carrier_down_count,
-        }
+        return InterfaceInfo(connected=interface.carrier != 0, number_of_disconnections=interface.carrier_down_count)
 
 
 ethernetManager = EthernetManager()
