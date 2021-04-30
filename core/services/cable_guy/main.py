@@ -9,7 +9,6 @@ import uvicorn
 from api import manager
 from api.manager import EthernetInterface
 from fastapi import Body, FastAPI, HTTPException, status
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from starlette.responses import Response as StarletteResponse
@@ -29,7 +28,6 @@ class PrettyJSONResponse(StarletteResponse):
 
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
-STATIC_FOLDER = Path.joinpath(HTML_FOLDER, "static")
 
 app = FastAPI(
     title="Cable Guy API",
@@ -64,15 +62,7 @@ app = VersionedFastAPI(
     version="1.0.0",
     prefix_format="/v{major}.{minor}",
 )
-app.mount("/static", StaticFiles(directory=str(STATIC_FOLDER)), name="static")
-
-
-@app.get("/", response_class=HTMLResponse, summary="Cable Guy web interface")
-def index() -> Any:
-    """REST API endpoint to retrieve web application for Cable Guy."""
-    index_file_path = Path.joinpath(HTML_FOLDER, "index.html")
-    return open(index_file_path, "r").read()
-
+app.mount("/", StaticFiles(directory=str(HTML_FOLDER), html=True))
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
