@@ -7,6 +7,7 @@ from typing import Dict, List
 import appdirs
 import docker
 from aiohttp import web
+
 from utils.dockerhub import TagFetcher
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
