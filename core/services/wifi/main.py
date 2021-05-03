@@ -5,6 +5,7 @@ import os
 from typing import Any, Dict, List, Union
 
 import bottle
+
 from wpa_supplicant import WPASupplicant
 
 BARE_HTML_TEMPLATE = """
