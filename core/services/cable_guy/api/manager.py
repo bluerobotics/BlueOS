@@ -5,10 +5,11 @@ from socket import AddressFamily
 from typing import Any, List, Optional, Tuple
 
 import psutil
-from api import settings
 from pydantic import BaseModel
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
+
+from api import settings
 
 
 class InterfaceMode(str, Enum):

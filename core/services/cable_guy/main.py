@@ -6,12 +6,13 @@ from pathlib import Path
 from typing import Any, List
 
 import uvicorn
-from api import manager
-from api.manager import EthernetInterface
 from fastapi import Body, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from starlette.responses import Response as StarletteResponse
+
+from api import manager
+from api.manager import EthernetInterface
 
 
 class PrettyJSONResponse(StarletteResponse):
