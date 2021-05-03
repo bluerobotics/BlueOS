@@ -4,6 +4,7 @@ from typing import Any
 import connexion
 import docker
 from aiohttp import web
+
 from utils.chooser import STATIC_FOLDER, VersionChooser
 
 versionChooser = VersionChooser(docker.client.from_env())

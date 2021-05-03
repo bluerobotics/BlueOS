@@ -3,6 +3,7 @@ from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
+
 from utils.chooser import VersionChooser
 
 # All test coroutines will be treated as marked.
