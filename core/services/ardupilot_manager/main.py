@@ -3,10 +3,11 @@ import json
 from typing import Any, Dict, List, Set
 
 import uvicorn
-from ArduPilotManager import ArduPilotManager
 from fastapi import Body, FastAPI, Response, status
-from mavlink_proxy.Endpoint import Endpoint
 from starlette.responses import Response as StarletteResponse
+
+from ArduPilotManager import ArduPilotManager
+from mavlink_proxy.Endpoint import Endpoint
 
 
 class PrettyJSONResponse(StarletteResponse):
