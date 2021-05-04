@@ -17,7 +17,7 @@ git ls-files '*.js' '*.html' | xargs --max-lines=1 ./node_modules/.bin/eslint
 
 echo "Running isort.."
 # Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only "{}" --profile black
+dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only --diff "{}" --profile black
 
 echo "Running black.."
 black --check --diff --line-length=120 "$repository_path"
