@@ -20,7 +20,7 @@ echo "Running isort.."
 dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only "{}" --profile black
 
 echo "Running black.."
-black --check --line-length=120 "$repository_path"
+black --check --diff --line-length=120 "$repository_path"
 
 echo "Running pylint.."
 pylint $(git ls-files '*.py')
