@@ -62,6 +62,7 @@ app = VersionedFastAPI(
     app,
     version="1.0.0",
     prefix_format="/v{major}.{minor}",
+    enable_latest=True,
 )
 app.mount("/", StaticFiles(directory=str(HTML_FOLDER), html=True))
 
