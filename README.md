@@ -1,2 +1,2 @@
 # companion-docker
-![companion-core](https://github.com/bluerobotics/companion-docker/workflows/companion-core/badge.svg)
+[![Build and Deploy Images](https://github.com/bluerobotics/companion-docker/actions/workflows/deploy.yml/badge.svg)](https://github.com/bluerobotics/companion-docker/actions/workflows/deploy.yml)
