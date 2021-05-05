@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
+
+from pydantic import BaseModel
 
 from wpa_supplicant import WPASupplicant
 
@@ -70,20 +72,20 @@ class WifiManager:
 
         return output
 
-    def get_wifi_available(self) -> Union[List[Dict[str, Any]], str]:
+    def get_wifi_available(self) -> List[Dict[str, Any]]:
         """Get a dict from the wifi signals available"""
         self.wpa.send_command_scan()
         data, result = self.wpa.send_command_scan_results()
         if not result:
-            return "Failed to fetch wifi list"
+            raise ValueError("Failed to fetch wifi list.")
 
         return WifiManager.__dict_from_table(data)
 
-    def get_saved_wifi_network(self) -> Union[List[Dict[str, Any]], str]:
+    def get_saved_wifi_network(self) -> List[Dict[str, Any]]:
         """Get a list of saved wifi networks"""
         data, result = self.wpa.send_command_list_networks()
         if not result:
-            return "Failed to fetch saved wifi list"
+            raise ValueError("Failed to fetch saved wifi list.")
 
         return WifiManager.__dict_from_table(data)
 
