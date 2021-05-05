@@ -82,6 +82,17 @@ jobs:
             --output "type=image,push=false" \
             ${{ steps.prepare.outputs.buildx_args }}
       -
+        name: Check core size
+        if: ${{ matrix.docker == 'core' }}
+        run: |
+          # Check if the image size is lower than our limit
+          docker image list
+          IMAGE_ID=$(docker images -q bluerobotics/companion-core | head -n 1)
+          LIMIT_SIZE_MB=750
+          IMAGE_SIZE_MB=$(( $(docker inspect $IMAGE_ID --format {{.Size}})/(2**20) ))
+          echo "Core size is: $IMAGE_SIZE_MB MB"
+          ((IMAGE_SIZE_MB < LIMIT_SIZE_MB))
+      -
         name: Login to DockerHub
         if: success() && github.event_name != 'pull_request'
         uses: crazy-max/ghaction-docker-login@v1
