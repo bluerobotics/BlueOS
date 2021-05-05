@@ -71,6 +71,6 @@ setuptools.setup(
         "fastapi == 0.63.0",
         "uvicorn == 0.13.4",
         "aiofiles == 0.6.0",
-        "fastapi-versioning == 0.8.0",
+        "fastapi-versioning == 0.9.0",
     ],
 )
