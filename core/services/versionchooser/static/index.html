@@ -121,7 +121,7 @@
     /*global Metro axios, Vue, timeago*/
     new Vue({
       el: '#app',
-      data: function () {
+      data () {
         return {
           pullOutput: '',
           availableVersions: {},
@@ -142,7 +142,7 @@
           axios({
             method: 'get',
             url: '/v1.0/version/current',
-            timeout: 500
+            timeout: 500,
           })
             .then(() => {
               if (this.waiting) {
@@ -160,15 +160,15 @@
         },
         loadAvailableversions () {
           // TODO: validate repository, treat error fetching
-          axios.get('/v1.0/version/available/' + this.selectedImage).then(response => {
+          axios.get('/v1.0/version/available/' + this.selectedImage).then((response) => {
             this.availableVersions = response.data
           }).catch(() => { this.availableVersions = {} })
         },
         loadCurrentVersion () {
-          return axios.get('/v1.0/version/current/').then(response => {
+          return axios.get('/v1.0/version/current/').then((response) => {
             const image = response.data
             this.currentVersion = image
-            let fullname = `${image.repository}:${image.tag}`
+            const fullname = `${image.repository}:${image.tag}`
             this.selectedImage = fullname.split(':')[0]
             this.loadAvailableversions()
           })
@@ -188,10 +188,10 @@
             url: '/v1.0/version/pull',
             method: 'POST',
             data: {
-              repository: repository,
-              tag: tag,
+              repository,
+              tag,
             },
-            onDownloadProgress: progressEvent => {
+            onDownloadProgress: (progressEvent) => {
             // dataChunk contains the data that have been obtained so far (the whole data so far)..
             // The data is sent with two newlines after each message, so we split there
             // Due to the trailing /n/n, we need the index "last -2"
@@ -200,7 +200,7 @@
               const dataChunk = progressEvent.currentTarget.response
               const dataList = dataChunk.split('\n\n')
 
-              let data = JSON.parse(dataList[dataList.length - 2])
+              const data = JSON.parse(dataList[dataList.length - 2])
               if ('id' in data) {
                 const id = data['id']
                 if (!layers.includes(id)) {
@@ -216,11 +216,11 @@
                 overallStatus = data['status']
               }
               this.pullOutput = ''
-              for (let image of layers) {
+              for (const image of layers) {
                 this.pullOutput = this.pullOutput + `[${image}] ${layerStatus[image]}  ${layerProgress[image] || ''}\n`
               }
               this.pullOutput = this.pullOutput + `${overallStatus}\n`
-            }
+            },
           })
 
         },
@@ -230,9 +230,9 @@
             method: 'post',
             url: '/v1.0/version/current',
             data: {
-              repository: repository,
-              tag: tag,
-            }
+              repository,
+              tag,
+            },
           })
         },
         imageIsAvailableLocally (sha) {
@@ -240,17 +240,17 @@
             return false
           }
           return this.availableVersions['local'].some((image) => image.sha === sha)
-        }
+        },
 
       },
       filters: {
-        asTimeAgo: function (value) {
+        asTimeAgo (value) {
           return timeago().format(new Date(Date.parse(value)), 'twitter')
         },
-        shortsha: function (value) {
+        shortsha (value) {
           return value.replace('sha256:','').substring(0, 8)
-        }
-      }
+        },
+      },
     })
   </script>
 </html>
