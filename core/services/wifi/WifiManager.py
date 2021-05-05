@@ -1,8 +1,28 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
 from wpa_supplicant import WPASupplicant
+
+
+class ScannedWifiNetwork(BaseModel):
+    ssid: str
+    bssid: str
+    flags: str
+    frequency: int
+    signallevel: int
+
+
+class SavedWifiNetwork(BaseModel):
+    networkid: int
+    ssid: str
+    bssid: str
+    flags: Optional[str]
+
+
+class WifiCredentials(BaseModel):
+    ssid: str
+    password: str
 
 
 class WifiManager:
@@ -72,29 +92,30 @@ class WifiManager:
 
         return output
 
-    def get_wifi_available(self) -> List[Dict[str, Any]]:
+    def get_wifi_available(self) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
         self.wpa.send_command_scan()
         data, result = self.wpa.send_command_scan_results()
         if not result:
             raise ValueError("Failed to fetch wifi list.")
 
-        return WifiManager.__dict_from_table(data)
+        networks_list = WifiManager.__dict_from_table(data)
+        return [ScannedWifiNetwork(**network) for network in networks_list]
 
-    def get_saved_wifi_network(self) -> List[Dict[str, Any]]:
+    def get_saved_wifi_network(self) -> List[SavedWifiNetwork]:
         """Get a list of saved wifi networks"""
         data, result = self.wpa.send_command_list_networks()
         if not result:
             raise ValueError("Failed to fetch saved wifi list.")
 
-        return WifiManager.__dict_from_table(data)
+        networks_list = WifiManager.__dict_from_table(data)
+        return [SavedWifiNetwork(**network) for network in networks_list]
 
-    def set_wifi_password(self, ssid: str, password: str) -> Any:
+    def set_wifi_password(self, credentials: WifiCredentials) -> Any:
         """Set network ssid and password
 
         Arguments:
-            ssid {[str]} -- ssid network name
-            password {[str]} -- network password
+            credentials {[WifiCredentials]} -- object containing ssid and password of the network
         """
         data, result = self.wpa.send_command_add_network()
         data = data.strip()
@@ -103,8 +124,8 @@ class WifiManager:
             return "Failed to add new network"
 
         network_number = data.decode("utf-8")
-        self.wpa.send_command_set_network(network_number, "ssid", '"{}"'.format(ssid))
-        self.wpa.send_command_set_network(network_number, "psk", '"{}"'.format(password))
+        self.wpa.send_command_set_network(network_number, "ssid", '"{}"'.format(credentials.ssid))
+        self.wpa.send_command_set_network(network_number, "psk", '"{}"'.format(credentials.password))
         self.wpa.send_command_enable_network(network_number)
         answer, result = self.wpa.send_command_save_config()
         answer = answer.strip()
