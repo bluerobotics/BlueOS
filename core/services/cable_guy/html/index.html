@@ -72,14 +72,14 @@
     $.each(inputs, function () {
       Metro.validator.validate(this, {
         val: 0,
-        log: []
+        log: [],
       })
     })
   }
 
   window.app = new Vue({
     el: '#app',
-    mounted: function () {
+    mounted () {
       // Start metro
       Metro.init()
 
@@ -89,14 +89,14 @@
       // Fetch periodic API request
       this.startPeriodicRequest()
     },
-    updated: function () {
+    updated () {
       // Run validator for each tick
       this.$nextTick(function () {
         console.debug('Next tick.')
         runValidator()
       })
     },
-    data: function () {
+    data () {
       return {
         devices: [],
         userInputChanged: false,
@@ -104,23 +104,23 @@
     },
     filters: {
       // This is javascript, there is no capitalize function
-      capitalize: function (value) {
+      capitalize (value) {
         if (!value) return ''
         value = value.toString()
         return value.charAt(0).toUpperCase() + value.slice(1)
       },
     },
     methods: {
-      controlInput: function () {
+      controlInput () {
         console.debug('User input detected.')
         this.userInputChanged = true
       },
-      startPeriodicRequest: function () {
+      startPeriodicRequest () {
         setInterval(function () {
           this.requestData()
         }.bind(this), 5000)
       },
-      requestData: function () {
+      requestData () {
         console.debug('Requesting status..')
         axios
           .get('/v1.0/ethernet')
@@ -129,9 +129,9 @@
             // Prevent vue to rewrite user configuration
             // Ignore API input and replace it with user configuration
             if (this.userInputChanged) {
-              for (let item of response.data) {
+              for (const item of response.data) {
                 delete item.configuration
-                for (let device of this.devices) {
+                for (const device of this.devices) {
                   if (device.name == item.name) {
                     item.configuration = device.configuration
                   }
@@ -142,11 +142,11 @@
           }.bind(this))
       },
       // Define possible modes
-      modes: function () {
+      modes () {
         return ['client', /*'server',*/ 'unmanaged']
       },
       // Send struct to api
-      apply: function (data) {
+      apply (data) {
         delete data.info
         this.userInputChanged = false
         console.debug(`Sending: ${JSON.stringify(data)}`)
@@ -156,7 +156,7 @@
             console.debug(`Done ${JSON.stringify(response, null, ' ')}`)
             setTimeout(
               this.requestData,
-              2000
+              2000,
             )
           }.bind(this))
       },
