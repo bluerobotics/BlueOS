@@ -1,11 +1,4 @@
-FROM python:3.9-slim-buster
-
-# Create default user folder
-RUN mkdir -p /home/pi
-
-# Install gstreamer
-COPY install_gst.sh /install_gst.sh
-RUN GST_VERSION=1.17.2 ./install_gst.sh && rm /install_gst.sh
+FROM bluerobotics/companion-base:master
 
 # Install necessary tools
 COPY tools /home/pi/tools
@@ -13,8 +6,6 @@ RUN /home/pi/tools/mavlink_router/bootstrap.py
 RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
 RUN /home/pi/tools/linux2rest/bootstrap.sh
 
-# Install necessary tools for basic usage
-RUN apt install -y file locate tmux unzip nano htop iputils-ping watch wget iproute2
 
 # Install services
 COPY services /home/pi/services
