@@ -67,7 +67,7 @@ jobs:
         id: cache
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
           restore-keys: |
             ${{ runner.os }}-buildx-${{ matrix.docker }}
       -
