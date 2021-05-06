@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        docker: [bootstrap, core]
+        docker: [base, bootstrap, core]
         project: [bluerobotics/companion]
         platforms: ["linux/amd64,linux/arm/v7"]
     steps:
