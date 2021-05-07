@@ -19,7 +19,7 @@ module.exports = {
     'object-shorthand': 'error',
     'prefer-const': 'error',
     'space-before-function-paren': ['error', 'always'],
-    camelcase: [2, { properties: 'always' }],
+    camelcase: [2, { properties: 'never' }],
     indent: ['error', 2],
     quotes: ['error', 'single'],
     semi: ['error', 'never'],
