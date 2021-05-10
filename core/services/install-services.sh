@@ -30,6 +30,9 @@ cd /home/pi/services/helper/ && python3 setup.py install
 # Version Chooser service:
 cd /home/pi/services/versionchooser/ && python3 setup.py install
 
+# Ping service:
+cd /home/pi/services/ping/ && python3 setup.py install
+
 apt -y remove ${BUILD_PACKAGES[*]}
 apt -y autoremove
 apt -y clean
