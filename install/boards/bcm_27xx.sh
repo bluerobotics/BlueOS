@@ -19,7 +19,7 @@ echo "- Enable I2C, SPI and UART."
 for STRING in \
     "enable_uart=" \
     "dtoverlay=uart" \
-    "dtparam=i2c_arm=" \
+    "dtparam=i2c" \
     "dtoverlay=i2c" \
     "dtparam=spi=" \
     "dtoverlay=spi" \
@@ -30,18 +30,18 @@ done
 for STRING in \
     "enable_uart=1" \
     "dtoverlay=uart1" \
-    "dtoverlay=uart2" \
     "dtoverlay=uart3" \
     "dtoverlay=uart4" \
-    "dtparam=i2c_arm=on" \
-    "dtoverlay=i2c0" \
+    "dtoverlay=uart5" \
+    "dtparam=i2c_vc=on" \
     "dtoverlay=i2c1" \
     "dtoverlay=i2c4,pins_6_7" \
     "dtoverlay=i2c6,pins_22_23" \
     "dtparam=spi=on" \
     "dtoverlay=spi0-led" \
     "dtoverlay=spi1-3cs" \
-    "gpio=11,24,25=pu" \
+    "gpio=11,24,25=op,pu,dh" \
+    "gpio=37=op,pd,dl" \
     ; do \
     echo "$STRING" | sudo tee -a /boot/config.txt
 done
