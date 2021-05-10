@@ -11,6 +11,7 @@ SERVICES=(
     'video',"mavlink-camera-manager --default-settings BlueROVUDP --verbose"
     'linux2rest',"linux2rest"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
+    'ping',"$SERVICES_PATH/ping/main.py"
 )
 
 tmux start-server
