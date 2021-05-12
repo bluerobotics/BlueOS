@@ -1,5 +1,4 @@
 from typing import List, Set, Type
-from warnings import warn
 
 # Plugins
 # pylint: disable=unused-import
@@ -12,14 +11,15 @@ from mavlink_proxy.Endpoint import Endpoint
 class Manager:
     def __init__(self) -> None:
         self.master: Endpoint
-        if not Manager.available_interfaces():
+        available_interfaces = Manager.available_interfaces()
+        if not available_interfaces:
             raise RuntimeError(
                 "No MAVLink routers found,"
                 " make sure that at least one is installed."
                 f" Supported: {Manager.possible_interfaces()}"
             )
 
-        self.tool = Manager.available_interfaces()[0]()
+        self.tool = available_interfaces[0]()
 
     @staticmethod
     def possible_interfaces() -> List[str]:
@@ -32,21 +32,19 @@ class Manager:
     def use(self, interface: AbstractRouter) -> None:
         self.tool = interface
 
-    def add_endpoint(self, endpoint: Endpoint) -> bool:
-        return self.tool.add_endpoint(endpoint)
+    def add_endpoint(self, endpoint: Endpoint) -> None:
+        self.tool.add_endpoint(endpoint)
 
-    def remove_endpoint(self, endpoint: Endpoint) -> bool:
-        return self.tool.remove_endpoint(endpoint)
+    def remove_endpoint(self, endpoint: Endpoint) -> None:
+        self.tool.remove_endpoint(endpoint)
 
     def add_endpoints(self, endpoints: Set[Endpoint]) -> None:
         for endpoint in endpoints:
-            if not self.add_endpoint(endpoint):
-                warn(f"Endpoint {endpoint} is not valid.", RuntimeWarning)
+            self.add_endpoint(endpoint)
 
     def remove_endpoints(self, endpoints: Set[Endpoint]) -> None:
         for endpoint in endpoints:
-            if not self.remove_endpoint(endpoint):
-                warn(f"Endpoint {endpoint} is not valid.", RuntimeWarning)
+            self.remove_endpoint(endpoint)
 
     def endpoints(self) -> Set[Endpoint]:
         return self.tool.endpoints()
@@ -61,8 +59,8 @@ class Manager:
     def start(self) -> None:
         self.tool.start(self.master)
 
-    def restart(self) -> bool:
-        return self.tool.restart()
+    def restart(self) -> None:
+        self.tool.restart()
 
     def command_line(self) -> str:
         if not self.master:

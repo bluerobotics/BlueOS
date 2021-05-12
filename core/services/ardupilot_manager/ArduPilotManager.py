@@ -83,9 +83,12 @@ class ArduPilotManager(metaclass=Singleton):
         self.start_mavlink_manager(Endpoint("Master", self.settings.app_name, "serial", device, 115200, protected=True))
 
     def start_mavlink_manager(self, device: Endpoint) -> None:
-        self.add_new_endpoints(
-            {Endpoint("GCS Link", self.settings.app_name, "udpin", "0.0.0.0", 14550, protected=True)}
-        )
+        try:
+            self.add_new_endpoints(
+                {Endpoint("GCS Link", self.settings.app_name, "udpin", "0.0.0.0", 14550, protected=True)}
+            )
+        except Exception as error:
+            warn(f"Could not create default GCS endpoint: {error}")
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
 
@@ -109,8 +112,8 @@ class ArduPilotManager(metaclass=Singleton):
             return True
         raise RuntimeError("Invalid board type: {boards}")
 
-    def restart(self) -> bool:
-        return self.mavlink_manager.restart()
+    def restart(self) -> None:
+        self.mavlink_manager.restart()
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
@@ -122,10 +125,9 @@ class ArduPilotManager(metaclass=Singleton):
         """Load endpoints from the configuration file to the mavlink manager."""
         for endpoint in self._get_configuration_endpoints():
             try:
-                if not self.mavlink_manager.add_endpoint(endpoint):
-                    raise ValueError("Cannot add endpoint.")
+                self.mavlink_manager.add_endpoint(endpoint)
             except Exception as error:
-                warn(f"Could not load endpoint {endpoint}. {error}")
+                warn(f"Could not load endpoint {endpoint}: {error}")
 
     def _reset_endpoints(self, endpoints: Set[Endpoint]) -> None:
         try:
@@ -135,62 +137,49 @@ class ArduPilotManager(metaclass=Singleton):
         except Exception as error:
             warn(f"Error resetting endpoints: {error}")
 
-    def _update_endpoints(self) -> bool:
+    def _update_endpoints(self) -> None:
         try:
             persistent_endpoints = set(filter(lambda endpoint: endpoint.persistent, self.get_endpoints()))
             self._save_endpoints_to_configuration(persistent_endpoints)
             self.settings.save(self.configuration)
-            return self.restart()
+            self.restart()
         except Exception as error:
             warn(f"Error updating endpoints: {error}")
-            return False
 
     def get_endpoints(self) -> Set[Endpoint]:
         """Get all endpoints from the mavlink manager."""
         return self.mavlink_manager.endpoints()
 
-    def add_new_endpoints(self, new_endpoints: Set[Endpoint]) -> bool:
+    def add_new_endpoints(self, new_endpoints: Set[Endpoint]) -> None:
         """Add multiple endpoints to the mavlink manager and save them on the configuration file."""
         loaded_endpoints = self.get_endpoints()
-
-        duplicated_endpoints = loaded_endpoints.intersection(new_endpoints)
-        if duplicated_endpoints:
-            warn(f"Endpoints {duplicated_endpoints} already loaded. Aborting operation.")
-            return False
 
         for endpoint in new_endpoints:
             try:
                 self.mavlink_manager.add_endpoint(endpoint)
-                print(f"Adding endpoint {endpoint} and saving it to the settings file.")
-            except NotImplementedError:
-                print(
-                    f"Failed to add endpoint {endpoint}.\n"
-                    f"Connection_type not supported by {self.mavlink_manager.router_name()}."
-                )
+                print(f"Adding endpoint '{endpoint.name}' and saving it to the settings file.")
+            except Exception as error:
+                warn(f"Failed to add endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
-                return False
+                raise
 
-        return self._update_endpoints()
+        self._update_endpoints()
 
-    def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> bool:
+    def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
         loaded_endpoints = self.get_endpoints()
 
-        missing_endpoints = endpoints_to_remove.difference(loaded_endpoints)
-        if missing_endpoints:
-            warn(f"Endpoints {missing_endpoints} not found. Aborting operation.")
-            return False
-
         protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_remove))
         if protected_endpoints:
-            warn(f"Endpoints {protected_endpoints} are protected. Aborting operation.")
-            return False
+            raise ValueError(f"Endpoints {protected_endpoints} are protected. Aborting operation.")
 
         for endpoint in endpoints_to_remove:
-            if not self.mavlink_manager.remove_endpoint(endpoint):
-                warn(f"Mavlink manager failed to remove endpoint {endpoint}.")
+            try:
+                self.mavlink_manager.remove_endpoint(endpoint)
+                print(f"Deleting endpoint '{endpoint.name}' and removing it from the settings file.")
+            except Exception as error:
+                warn(f"Failed to remove endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
-                return False
-            print(f"Deleting endpoint {endpoint} and removing it from the settings file.")
+                raise
 
-        return self._update_endpoints()
+        self._update_endpoints()

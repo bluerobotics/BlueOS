@@ -41,17 +41,21 @@ def get_available_endpoints() -> Any:
 @app.post("/endpoints", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
 def create_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
-    if not autopilot.add_new_endpoints(endpoints):
-        response.status_code = status.HTTP_409_CONFLICT
-        return {"message": "One or more endpoints already exists or is not supported. No changes were made."}
+    try:
+        autopilot.add_new_endpoints(endpoints)
+    except ValueError as error:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message": f"{error}"}
 
 
-@app.delete("/endpoints", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/endpoints", status_code=status.HTTP_200_OK)
 @version(1, 0)
 def remove_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
-    if not autopilot.remove_endpoints(endpoints):
-        response.status_code = status.HTTP_409_CONFLICT
-        return {"message": "One or more endpoints does not exist or is protected. No changes were made."}
+    try:
+        autopilot.remove_endpoints(endpoints)
+    except ValueError as error:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message": f"{error}"}
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
