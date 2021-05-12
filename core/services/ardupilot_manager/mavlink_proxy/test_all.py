@@ -81,8 +81,6 @@ def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints:
 
     mavproxy = MAVProxy()
     assert mavproxy.name() == "MAVProxy", "Name does not match."
-    assert mavproxy.logdir().exists(), "Default MAVProxy log directory does not exist."
-    mavproxy.set_logdir(pathlib.Path("."))
     assert re.search(r"\d+.\d+.\d+", str(mavproxy.version())) is not None, "Version does not follow pattern."
 
     allowed_output_types = [
@@ -113,8 +111,6 @@ def test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_master_endp
 
     mavlink_router = MAVLinkRouter()
     assert mavlink_router.name() == "MAVLinkRouter", "Name does not match."
-    assert mavlink_router.logdir().exists(), "Default MAVLinkRouter log directory does not exist."
-    assert mavlink_router.set_logdir(pathlib.Path(".")), "Local path as MAVLinkRouter log directory failed."
     assert re.search(r"\d+", str(mavlink_router.version())) is not None, "Version does not follow pattern."
 
     allowed_output_types = [EndpointType.UDPClient, EndpointType.TCPServer, EndpointType.TCPClient]
@@ -132,6 +128,9 @@ def run_common_routing_tests(
     output_endpoints: Set[Endpoint],
     master_endpoints: Set[Endpoint],
 ) -> None:
+    assert router.logdir().exists(), "Default router log directory does not exist."
+    router.set_logdir(pathlib.Path("."))
+
     allowed_output_endpoints = set(
         filter(lambda endpoint: endpoint.connection_type in allowed_output_types, output_endpoints)
     )
