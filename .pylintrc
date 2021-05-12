@@ -12,6 +12,7 @@ disable=attribute-defined-outside-init,
     inconsistent-return-statements,
     invalid-name,
     locally-disabled, # We know what we are doing, necessary to load plugins in runtime
+    logging-fstring-interpolation, # We want a good-to-read logging interface
     missing-class-docstring,
     missing-function-docstring,
     missing-module-docstring,
