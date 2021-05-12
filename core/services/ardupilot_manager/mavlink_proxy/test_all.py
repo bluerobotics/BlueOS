@@ -19,22 +19,22 @@ from mavlink_proxy.MAVProxy import MAVProxy
 @pytest.fixture
 def valid_output_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("Test endpoint", "pytest", "udpin", "0.0.0.0", 14551),
-        Endpoint("Test endpoint", "pytest", "udpout", "0.0.0.0", 14552),
-        Endpoint("Test endpoint", "pytest", "tcpin", "0.0.0.0", 14553),
-        Endpoint("Test endpoint", "pytest", "tcpout", "0.0.0.0", 14554),
-        Endpoint("Test endpoint", "pytest", "serial", "/dev/radiolink", 57600),
+        Endpoint("Test endpoint 1", "pytest", "udpin", "0.0.0.0", 14551),
+        Endpoint("Test endpoint 2", "pytest", "udpout", "0.0.0.0", 14552),
+        Endpoint("Test endpoint 3", "pytest", "tcpin", "0.0.0.0", 14553),
+        Endpoint("Test endpoint 4", "pytest", "tcpout", "0.0.0.0", 14554),
+        Endpoint("Test endpoint 5", "pytest", "serial", "/dev/radiolink", 57600),
     }
 
 
 @pytest.fixture
 def valid_master_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("Master endpoint", "pytest", "udpin", "0.0.0.0", 14550),
-        Endpoint("Master endpoint", "pytest", "udpout", "0.0.0.0", 14550),
-        Endpoint("Master endpoint", "pytest", "tcpin", "0.0.0.0", 14550),
-        Endpoint("Master endpoint", "pytest", "tcpout", "0.0.0.0", 14550),
-        Endpoint("Master endpoint", "pytest", "serial", "/dev/autopilot", 115200),
+        Endpoint("Master endpoint 1", "pytest", "udpin", "0.0.0.0", 14550),
+        Endpoint("Master endpoint 2", "pytest", "udpout", "0.0.0.0", 14550),
+        Endpoint("Master endpoint 3", "pytest", "tcpin", "0.0.0.0", 14550),
+        Endpoint("Master endpoint 4", "pytest", "tcpout", "0.0.0.0", 14550),
+        Endpoint("Master endpoint 5", "pytest", "serial", "/dev/autopilot", 115200),
     }
 
 

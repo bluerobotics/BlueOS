@@ -109,6 +109,9 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         if endpoint in self._endpoints:
             raise ValueError("Endpoint already exists.")
 
+        if endpoint.name in [endpoint.name for endpoint in self._endpoints]:
+            raise ValueError("Name already being used by an existing endpoint.")
+
         self._endpoints.add(endpoint)
 
     def remove_endpoint(self, endpoint: Endpoint) -> None:
