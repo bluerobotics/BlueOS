@@ -46,7 +46,7 @@ setup(
         "appdirs == 1.4.4",
         "pytest-asyncio == 0.14.0",
         "asyncmock == 0.4.2",
-        "werkzeug == 2.0.0rc4",
+        "werkzeug == 2.0.0",
         "attrs == 20.3.0",
     ],
 )
