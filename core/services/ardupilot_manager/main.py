@@ -24,7 +24,11 @@ class PrettyJSONResponse(StarletteResponse):
         ).encode(self.charset)
 
 
-app = FastAPI(default_response_class=PrettyJSONResponse)
+app = FastAPI(
+    title="ArduPilot Manager API",
+    description="ArduPilot Manager is responsible for managing ArduPilot devices connected to Companion.",
+    default_response_class=PrettyJSONResponse,
+)
 autopilot = ArduPilotManager()
 
 
