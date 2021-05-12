@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 from typing import Any, List, Optional, Set, Type
+from warnings import warn
 
 from mavlink_proxy.Endpoint import Endpoint
 
@@ -41,7 +42,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractclassmethod
-    def _validate_endpoint(endpoint: Endpoint) -> bool:
+    def _validate_endpoint(endpoint: Endpoint) -> None:
         pass
 
     @abc.abstractclassmethod
@@ -69,22 +70,23 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def version(self) -> Optional[str]:
         return self._version
 
-    def start(self, vehicle_endpoint: Optional[Endpoint] = None, _verbose: bool = False) -> bool:
+    def start(self, vehicle_endpoint: Optional[Endpoint] = None, _verbose: bool = False) -> None:
         if vehicle_endpoint is not None:
             self._master_endpoint = vehicle_endpoint
         command = self.assemble_command(self._master_endpoint)
         # pylint: disable=consider-using-with
         self._subprocess = subprocess.Popen(shlex.split(command), shell=False, encoding="utf-8", errors="ignore")
-        return True
 
-    def exit(self) -> bool:
+    def exit(self) -> None:
         if self.is_running():
             assert self._subprocess is not None
             self._subprocess.kill()
-        return True
+        else:
+            warn("Tried to stop router, but it was already not running.")
 
-    def restart(self) -> bool:
-        return self.exit() and self.start()
+    def restart(self) -> None:
+        self.exit()
+        self.start()
 
     def is_running(self) -> bool:
         return self._subprocess is not None and self._subprocess.poll() is None
@@ -96,27 +98,24 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def logdir(self) -> pathlib.Path:
         return self._logdir
 
-    def set_logdir(self, directory: pathlib.Path) -> bool:
-        if directory.exists():
-            self._logdir = directory
-            return True
-        return False
+    def set_logdir(self, directory: pathlib.Path) -> None:
+        if not directory.exists():
+            raise ValueError(f"Logging directory {directory} does not exist.")
+        self._logdir = directory
 
-    def add_endpoint(self, endpoint: Endpoint) -> bool:
-        if not self._validate_endpoint(endpoint):
-            raise NotImplementedError
+    def add_endpoint(self, endpoint: Endpoint) -> None:
+        self._validate_endpoint(endpoint)
 
         if endpoint in self._endpoints:
-            return False
+            raise ValueError("Endpoint already exists.")
 
         self._endpoints.add(endpoint)
-        return True
 
-    def remove_endpoint(self, endpoint: Endpoint) -> bool:
-        if endpoint in self._endpoints:
-            self._endpoints.remove(endpoint)
-            return True
-        return False
+    def remove_endpoint(self, endpoint: Endpoint) -> None:
+        if endpoint not in self._endpoints:
+            raise ValueError("Endpoint not found.")
+
+        self._endpoints.remove(endpoint)
 
     def endpoints(self) -> Set[Endpoint]:
         return self._endpoints

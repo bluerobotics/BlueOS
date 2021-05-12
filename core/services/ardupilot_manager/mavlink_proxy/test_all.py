@@ -82,7 +82,7 @@ def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints:
     mavproxy = MAVProxy()
     assert mavproxy.name() == "MAVProxy", "Name does not match."
     assert mavproxy.logdir().exists(), "Default MAVProxy log directory does not exist."
-    assert mavproxy.set_logdir(pathlib.Path(".")), "Local path as MAVProxy log directory failed."
+    mavproxy.set_logdir(pathlib.Path("."))
     assert re.search(r"\d+.\d+.\d+", str(mavproxy.version())) is not None, "Version does not follow pattern."
 
     allowed_output_types = [
@@ -136,26 +136,26 @@ def run_common_routing_tests(
         filter(lambda endpoint: endpoint.connection_type in allowed_output_types, output_endpoints)
     )
     for endpoint in allowed_output_endpoints:
-        assert router.add_endpoint(endpoint), f"Failed to add endpoint {endpoint}."
+        router.add_endpoint(endpoint)
     assert router.endpoints() == allowed_output_endpoints, "Endpoint list does not match."
 
     unallowed_output_endpoints = output_endpoints.difference(allowed_output_endpoints)
     for endpoint in unallowed_output_endpoints:
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError):
             router.add_endpoint(endpoint)
 
     allowed_master_endpoints = set(
         filter(lambda endpoint: endpoint.connection_type in allowed_master_types, master_endpoints)
     )
     for endpoint in allowed_master_endpoints:
-        assert router.start(endpoint), f"Failed to start {router.name()} with endpoint {endpoint}."
+        router.start(endpoint)
         assert router.is_running(), f"{router.name()} is not running after start."
-        assert router.exit(), f"{router.name()} could not stop."
+        router.exit()
         while router.is_running():
             pass
         assert not router.is_running(), f"{router.name()} is not stopping after exit."
 
     unallowed_master_endpoints = master_endpoints.difference(allowed_master_endpoints)
     for endpoint in unallowed_master_endpoints:
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError):
             router.start(endpoint)

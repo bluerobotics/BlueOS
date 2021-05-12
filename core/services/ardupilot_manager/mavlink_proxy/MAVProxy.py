@@ -50,14 +50,16 @@ class MAVProxy(AbstractRouter):
         return "mavproxy.py"
 
     @staticmethod
-    def _validate_endpoint(endpoint: Endpoint) -> bool:
-        return endpoint.connection_type in [
+    def _validate_endpoint(endpoint: Endpoint) -> None:
+        valid_connection_types = [
             EndpointType.Serial,
             EndpointType.UDPServer,
             EndpointType.UDPClient,
             EndpointType.TCPServer,
             EndpointType.TCPClient,
         ]
+        if not endpoint.connection_type in valid_connection_types:
+            raise ValueError(f"Connection_type '{endpoint.connection_type}' not supported by router {MAVProxy.name()}.")
 
     @staticmethod
     def is_ok() -> bool:
