@@ -7,7 +7,5 @@ setup(
     version="0.0.1",
     description="Blue Robotics Ardusub Companion Docker System Bootstrap",
     license="MIT",
-    install_requires=[
-        "docker",
-    ],
+    install_requires=["docker == 5.0.0", "six == 1.15.0"],
 )
