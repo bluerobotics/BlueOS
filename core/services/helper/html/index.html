@@ -40,8 +40,8 @@
             <td>{{service.title}}</td>
             <td v-html="createWebpageHyperlink(service.port)"></td>
             <td
-              v-if="service.documentation"
-              v-html="createWebpageHyperlink(service.port, service.documentation)"
+              v-if="service.documentation_url"
+              v-html="createWebpageHyperlink(service.port, service.documentation_url)"
             ></td>
             <td v-else>No API documentation</td>
           </tr>
