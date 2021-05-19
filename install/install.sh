@@ -25,7 +25,6 @@ curl -fsSL --silent $ROOT/install/install.sh 1> /dev/null || (
 
 # Detect CPU and do necessary hardware configuration for each supported hardware
 echo "Starting hardware configuration."
-echo "$ROOT/install/boards/configure_board.sh"
 curl -fsSL "$ROOT/install/boards/configure_board.sh" | bash
 
 echo "Checking for blocked wifi and bluetooth."
