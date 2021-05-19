@@ -16,6 +16,7 @@ module.exports = {
     'linebreak-style': ['error', 'unix'],
     'max-len': ['error', { 'code': 120 }],
     'no-extra-parens': ['error', 'all'],
+    'no-multi-spaces': 'error',
     'object-shorthand': 'error',
     'prefer-const': 'error',
     'space-before-function-paren': ['error', 'always'],
