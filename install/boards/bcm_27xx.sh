@@ -70,5 +70,5 @@ sudo sed -e 's/console=serial[0-9],[0-9]*\ //' -i /boot/cmdline.txt
 # on older firmware versions
 if grep -q ID=raspbian < /etc/os-release; then
     echo "- Run rpi update."
-    sudo rpi-update 1340be4
+    sudo SKIP_WARNING=1 rpi-update 1340be4
 fi
