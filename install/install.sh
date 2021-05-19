@@ -88,5 +88,8 @@ echo "Starting network configuration."
 curl -fsSL $ROOT/install/network/avahi.sh | bash
 
 echo "Installation finished successfully."
+echo "You can access after the reboot:"
+echo "- The computer webpage: http://companion.local"
+echo "- The ssh client: pi@companion.local"
 echo "System will reboot in 10 seconds."
 sleep 10 && reboot
