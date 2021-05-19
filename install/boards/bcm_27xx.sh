@@ -69,6 +69,11 @@ sudo sed -e 's/console=serial[0-9],[0-9]*\ //' -i /boot/cmdline.txt
 # this is required to avoid 'i2c transfer timed out' kernel errors
 # on older firmware versions
 if grep -q ID=raspbian < /etc/os-release; then
-    echo "- Run rpi update."
-    sudo SKIP_WARNING=1 rpi-update 1340be4
+    RPI_FIRMWARE_VERSION=1340be4
+    if sudo JUST_CHECK=1 rpi-update $RPI_FIRMWARE_VERSION | grep "Firmware update required"; then
+        echo "- Run rpi update."
+        sudo SKIP_WARNING=1 rpi-update $RPI_FIRMWARE_VERSION
+    else
+        echo "- Firmware is up to date."
+    fi
 fi
