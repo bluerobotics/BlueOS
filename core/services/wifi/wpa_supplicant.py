@@ -2,6 +2,7 @@ import glob
 import os
 import socket
 import time
+from pathlib import Path
 from typing import Optional, Tuple, Union
 
 
@@ -25,15 +26,18 @@ class WPASupplicant:
         """
         self.target = target
 
+        wpa_playground_path = "/tmp/wpa_playground"
+        Path(wpa_playground_path).mkdir(parents=True, exist_ok=True)
+
         if isinstance(self.target, tuple):
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             # clear path
-            files = glob.glob("/tmp/wpa_playground/*")
+            files = glob.glob(f"{wpa_playground_path}/*")
             for f in files:
                 os.remove(f)
-            socket_client = f"/tmp/wpa_playground/wpa_supplicant_service_{os.getpid()}"
+            socket_client = f"{wpa_playground_path}/wpa_supplicant_service_{os.getpid()}"
             self.sock.bind(socket_client)
 
         self.sock.settimeout(10)
