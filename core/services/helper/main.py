@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from starlette.responses import Response as StarletteResponse
 
 PORT = 80
-DOCS_CANDIDATE_URLS = ["/v1.0/ui/", "/docs"]
+DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
