@@ -113,7 +113,7 @@ if __name__ == "__main__":
         print(error)
         print("Could not connect with provided socket. Connecting via internet socket.")
         try:
-            wifi_manager.connect(("0.0.0.0", 6664))
+            wifi_manager.connect(("127.0.0.1", 6664))
         except Exception as error:
             print(f"Could not connect with internet socket: {error}. Exiting.")
             sys.exit(1)
