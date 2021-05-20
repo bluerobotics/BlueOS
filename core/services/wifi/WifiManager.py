@@ -152,6 +152,7 @@ class WifiManager:
             self.wpa.send_command_set_network(network_number, "ssid", '"{}"'.format(credentials.ssid))
             self.wpa.send_command_set_network(network_number, "psk", '"{}"'.format(credentials.password))
             self.wpa.send_command_enable_network(network_number)
+            self.wpa.send_command_reconnect()
 
             answer = self.wpa.send_command_save_config()
             answer = answer.strip()
