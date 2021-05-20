@@ -178,3 +178,12 @@ class WifiManager:
             self.wpa.send_command_reconfigure()
         except Exception as error:
             raise RuntimeError("Failed to reconfigure wifi manager.") from error
+
+    def disconnect(self) -> None:
+        """Reconfigure wpa_supplicant
+        This will force the reevaluation of the conf file
+        """
+        try:
+            self.wpa.send_command_disconnect()
+        except Exception as error:
+            raise ConnectionError("Failed to disconnect from wifi network.") from error

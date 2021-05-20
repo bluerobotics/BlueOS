@@ -93,6 +93,15 @@ def connect(credentials: WifiCredentials) -> Any:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
+@app.get("/disconnect", summary="Disconnect from wifi network.")
+@version(1, 0)
+def disconnect() -> Any:
+    try:
+        wifi_manager.disconnect()
+    except ConnectionError as error:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 
 
