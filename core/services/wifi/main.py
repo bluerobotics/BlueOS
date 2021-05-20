@@ -4,10 +4,12 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any, List
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, status
+from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from starlette.responses import Response as StarletteResponse
 
@@ -20,19 +22,10 @@ from WifiManager import (
     WifiManager,
 )
 
+FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
+
+
 wifi_manager = WifiManager()
-
-BARE_HTML_TEMPLATE = """
-<html lang="en">
-<head>
-  <title>{title}</title>
-</head>
-<body>
-  {body}
-</body>
-</html>
-"""
-
 
 
 class PrettyJSONResponse(StarletteResponse):
@@ -103,6 +96,7 @@ def disconnect() -> Any:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 
 if __name__ == "__main__":

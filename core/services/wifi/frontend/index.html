@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta name="metro4:init" content="false" />
+    <title>Wifi Manager</title>
+    <link rel="stylesheet" href="/static/css/metro-all.css" />
+    <script src="/static/js/vue.js"></script>
+    <script src="/static/js/axios.min.js"></script>
+    <script src="/static/js/metro.js"></script>
+  </head>
+
+  <body>
+    <div id="app">
+      <div class="container pt-4">
+        <h1>Wifi Manager</h1>
+
+        <div class="grid">
+
+          <div
+            v-if="wpa_state === 'completed'"
+            class="row p-1 m-1 flex-align-center connected-network"
+            @click="openDisconnectionDialog()"
+            >
+            <div class="cell-1">
+              <span class="d-flex flex-justify-center mif-checkmark"></span>
+            </div>
+            <div class="cell-7">
+              <div> 
+                {{ connected_network.ssid }} 
+              </div>
+            </div>
+            <div class="cell-2">
+              <div class="d-flex flex-justify-center">
+                <i :class="networkProtectionClass(connected_network)"></i>
+              </div>
+            </div>
+            <div class="cell-2">
+              <div class="d-flex flex-justify-center">
+                <i :class="signalStrengthClass(connected_network)"></i>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="row p-1 m-1 flex-align-center unconnected">
+            <div class="cell-12">
+              <span class="d-flex flex-justify-center">{{ wpa_state.toUpperCase() }}</span>
+            </div>
+          </div>
+
+          <div
+            @click="openConnectionDialog(network)"
+            class="row available-network p-1 m-1 flex-align-center"
+            v-for="(network, key) in networksToShow"
+            :key="key"
+          >
+            <div class="cell-1"></div>
+            <div class="cell-7">
+              <div>{{ network.ssid }}</div>
+            </div>
+            <div class="cell-2">
+              <div class="d-flex flex-justify-center">
+                <i :class="networkProtectionClass(network)"></i>
+              </div>
+            </div>
+            <div class="cell-2">
+              <div class="d-flex flex-justify-center">
+                <i :class="signalStrengthClass(network)"></i>
+              </div>
+            </div>
+          </div>
+
+          <div  
+              v-if="connected_network"
+              class="dialog" 
+              data-role="dialog" 
+              id="disconnection_dialog">
+            <div class="dialog-title">{{ connected_network.ssid }}</div>
+            <div class="dialog-content">
+              <div
+                v-for="(value, name) in connected_network"
+                :key="name">
+                <span>{{name}}: {{ value }}</span><br />
+              </div>
+            </div>
+            <div class="dialog-actions">
+              <button class="button js-dialog-close" @click="disconnectFromNetwork">
+                Disconnect
+              </button>
+            </div>
+            <span class="button square closer js-dialog-close"></span>
+          </div>
+
+          <div class="dialog" data-role="dialog" id="connection_dialog">
+            <div class="dialog-title">{{ selected_network.ssid }}</div>
+            <div class="dialog-content">
+              <div
+                v-for="(value, name) in selected_network"
+                :key="name">
+                <span>{{name}}: {{ value }}</span><br />
+              </div>
+            </div>
+            <div class="dialog-actions">
+              <input
+                id="passwordInput"
+                type="password"
+                placeholder="Password"
+                data-role-checkbox="true"
+              />
+              <button class="button js-dialog-close" @click="connectToNetwork">
+                Connect
+              </button>
+            </div>
+            <span class="button square closer js-dialog-close"></span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    /*global Metro, axios, Vue*/
+
+    new Vue({
+      el: '#app',
+      data () {
+        return {
+          available_networks: [],
+          Metro: null,
+          connected_network: null,
+          selected_network: {},
+          alert_box: null,
+          wpa_state: 'starting',
+        }
+      },
+      mounted () {
+        this.API_URL = '/v1.0'
+        this.Metro = Metro
+        this.Metro.init()
+        setInterval(this.updateData, 5000)
+      },
+      computed: {
+        networksToShow () {
+          let showable_networks = this.available_networks.map((network) => {
+            if (network.ssid) return network
+            return {...network, ssid: '[HIDDEN_SSID]'}
+          })
+          if (showable_networks && showable_networks.length) {
+            if (this.connected_network) {
+              showable_networks = showable_networks.filter((network) => network.ssid != this.connected_network.ssid)
+            }
+            return showable_networks.sort((a,b) => b.signallevel - a.signallevel)
+          }
+          // Non-empty return is necessary to force Metro rendering of the networks list
+          return [{}]
+        },
+      },
+      methods: {
+        async updateData () {
+          this.checkNetworkStatus()
+          await this.sleep(500)
+          this.scanAvailableNetworks()
+        },
+        scanAvailableNetworks () {
+          axios({
+            method: 'get',
+            url: `${this.API_URL}/scan`,
+            timeout: 500,
+          })
+            .then((response) => {
+              this.available_networks = response.data
+              this.closeErrorAlert()
+            })
+            .catch((error) => {
+              if (error.response.status === 425) {
+                console.log(`Warn while scanning: ${error.response.data.detail}`)
+              } else {
+                this.openErrorAlert('Could not scan wireless networks.')
+              }
+            })
+        },
+        checkNetworkStatus () {
+          axios({
+            method: 'get',
+            url: `${this.API_URL}/status`,
+            timeout: 500,
+          })
+            .then((response) => {
+              if (response.data.wpa_state === 'COMPLETED'){
+                // Merge status and scan data on connected_network
+                const available_connected_network = this.available_networks.filter((network) => {
+                  return network.ssid === response.data.ssid
+                })[0]
+                this.connected_network = {...response.data, ...available_connected_network}
+              } else {
+                this.connected_network = null
+              }
+              this.wpa_state = response.data.wpa_state.toLowerCase()  
+              this.closeErrorAlert()
+            })
+            .catch(() => this.openErrorAlert('Could not fetch network status.'))
+        },
+        connectToNetwork () {
+          axios({
+            method: 'post',
+            url: `${this.API_URL}/connect`,
+            timeout: 500,
+            data: {
+              ssid: this.selected_network.ssid,
+              password: document.getElementById('passwordInput').value,
+            },
+          })
+            .then(() => this.wpa_state = 'connecting')
+            .catch(() => this.openErrorAlert(`Could not connect to ${this.selected_network.ssid}.`))
+            .finally(() => document.getElementById('passwordInput').value = '')
+        },
+        disconnectFromNetwork () {
+          axios({
+            method: 'get',
+            url: `${this.API_URL}/disconnect`,
+            timeout: 500,
+          })
+            .then(() => this.wpa_state = 'disconnecting')
+            .catch(() => this.openErrorAlert('Could not disconnect from network.'))
+        },
+        closeErrorAlert () {
+          if (this.alert_box) {
+            if (Metro.infobox.isOpen(this.alert_box)) {
+              Metro.infobox.close(this.alert_box)
+              this.alert_box = null
+            }
+          }
+        },
+        openErrorAlert (message) {
+          this.closeErrorAlert()
+          this.alert_box = Metro.infobox.create(`
+            <div id='alert_box'>
+              <h3>Error</h3>
+              <p>${message}</p>
+            </div>
+            `, 'alert')
+        },
+        openConnectionDialog (network) {
+          this.selected_network = network
+          Metro.dialog.open('#connection_dialog')
+        },
+        openDisconnectionDialog () {
+          Metro.dialog.open('#disconnection_dialog')
+        },
+        signalStrengthClass (network) {
+
+          /*eslint-disable */
+          // | Signal Strength | TL;DR     |  Description                                                                                                                               |
+          // |-----------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|
+          // | -30 dBm         | Amazing   | Max achievable signal strength. The client can only be a few feet from the AP to achieve this. Not typical or desirable in the real world. |
+          // | -67 dBm         | Very Good | Minimum signal strength for applications that require very reliable, timely delivery of data packets.                                      |
+          // | -70 dBm         | Okay      | Minimum signal strength for reliable packet delivery.                                                                                      |
+          // | -80 dBm         | Not Good  | Minimum signal strength for basic connectivity. Packet delivery may be unreliable.                                                         |
+          // | -90 dBm         | Unusable  | Approaching or drowning in the noise floor. Any functionality is highly unlikely.                                                           |
+          // Reference: metageek.com/training/resources/wifi-signal-strength-basics.html
+          /*eslint-enable */
+
+          if (network.signallevel >= -67) return 'mif-wifi-full'
+          if (network.signallevel >= -70) return 'mif-wifi-mid'
+          if (network.signallevel >= -80) return 'mif-wifi-low'
+          return ''
+        },
+        networkProtectionClass (network) {
+          if (!network.flags) return 'mif-question'
+          return network.flags.includes('WPA') ? 'mif-lock' : ''
+        },
+        sleep (ms) {
+          return new Promise((resolve) => setTimeout(resolve, ms))
+        },
+      },
+    })
+  </script>
+
+  <style>
+    .connected-network {
+      background-color: #00aff0
+    }
+
+    .unconnected {
+      background-color: #64a0b6
+    }
+
+    .connected-network:hover {
+      cursor: pointer;
+    }
+    
+    .available-network {
+      background-color: #f8f8f8;
+    }
+    
+    .available-network:hover {
+      cursor: pointer;
+      background-color: #c5c5c5;
+    }
+
+    body {
+      background-color: #ECF0F5;
+    }
+
+    .disabled {
+      cursor: not-allowed;
+    }
+
+  </style>
+
+</html>
