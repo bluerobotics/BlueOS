@@ -12,6 +12,8 @@ from fastapi_versioning import VersionedFastAPI, version
 from starlette.responses import Response as StarletteResponse
 
 from WifiManager import (
+    BusyError,
+    FetchError,
     SavedWifiNetwork,
     ScannedWifiNetwork,
     WifiCredentials,
@@ -30,6 +32,7 @@ BARE_HTML_TEMPLATE = """
 </body>
 </html>
 """
+
 
 
 class PrettyJSONResponse(StarletteResponse):
@@ -55,7 +58,10 @@ app = FastAPI(
 @app.get("/status", summary="Retrieve status of wifi manager.")
 @version(1, 0)
 def network_status() -> Any:
-    return wifi_manager.status()
+    try:
+        return wifi_manager.status()
+    except FetchError as error:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
@@ -63,7 +69,9 @@ def network_status() -> Any:
 def scan() -> Any:
     try:
         return wifi_manager.get_wifi_available()
-    except ValueError as error:
+    except BusyError as error:
+        raise HTTPException(status_code=status.HTTP_425_TOO_EARLY, detail=str(error)) from error
+    except FetchError as error:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
@@ -72,15 +80,17 @@ def scan() -> Any:
 def saved() -> Any:
     try:
         return wifi_manager.get_saved_wifi_network()
-    except ValueError as error:
+    except FetchError as error:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
-@app.post("/connect", summary="Retrieve ethernet interfaces.")
+@app.post("/connect", summary="Connect to wifi network.")
 @version(1, 0)
 def connect(credentials: WifiCredentials) -> Any:
-    wifi_manager.set_wifi_password(credentials)
-    return wifi_manager.status()
+    try:
+        wifi_manager.set_wifi_password(credentials)
+    except ConnectionError as error:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
