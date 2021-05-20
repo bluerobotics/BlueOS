@@ -18,7 +18,7 @@ class BusyError(ValueError):
 
 
 class ScannedWifiNetwork(BaseModel):
-    ssid: str
+    ssid: Optional[str]
     bssid: str
     flags: str
     frequency: int
