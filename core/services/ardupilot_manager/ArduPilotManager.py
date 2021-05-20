@@ -87,6 +87,9 @@ class ArduPilotManager(metaclass=Singleton):
             self.add_new_endpoints(
                 {Endpoint("GCS Link", self.settings.app_name, "udpout", "192.168.2.1", 14550, protected=True)}
             )
+            self.add_new_endpoints(
+                {Endpoint("MAVLink2Rest", self.settings.app_name, "udpout", "127.0.0.1", 14000, protected=True)}
+            )
         except Exception as error:
             warn(f"Could not create default GCS endpoint: {error}")
         self.mavlink_manager.set_master_endpoint(device)
