@@ -9,6 +9,7 @@ SERVICES=(
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
     'video',"mavlink-camera-manager --default-settings BlueROVUDP --verbose"
+    'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040"
     'linux2rest',"linux2rest"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
