@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import os
 import sys
@@ -86,15 +87,35 @@ app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", 
 
 
 if __name__ == "__main__":
+
     if os.geteuid() != 0:
         print("You need root privileges to run this script.\nPlease try again, this time using **sudo**. Exiting.")
         sys.exit(1)
 
-    WLAN0_SOCKET = "/var/run/wpa_supplicant/wlan0"
-    if not os.path.exists(WLAN0_SOCKET):
-        print("Connecting via internet socket.")
-        wifi_manager.connect(("0.0.0.0", 6664))
-    else:
-        wifi_manager.connect(WLAN0_SOCKET)
+    parser = argparse.ArgumentParser(description="Abstraction CLI for WifiManager configuration.")
+    parser.add_argument(
+        "--socket",
+        dest="socket_name",
+        type=str,
+        help="Name of the WPA Supplicant socket. Usually 'wlan0' or 'wlp4s0'.",
+    )
+    args = parser.parse_args()
+
+    wpa_socket_folder = "/var/run/wpa_supplicant/"
+    try:
+        if args.socket_name:
+            socket_name = args.socket_name
+        else:
+            socket_name = os.listdir(wpa_socket_folder)[0]
+        WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
+        wifi_manager.connect(WLAN_SOCKET)
+    except Exception as error:
+        print(error)
+        print("Could not connect with provided socket. Connecting via internet socket.")
+        try:
+            wifi_manager.connect(("0.0.0.0", 6664))
+        except Exception as error:
+            print(f"Could not connect with internet socket: {error}. Exiting.")
+            sys.exit(1)
 
     uvicorn.run(app, host="0.0.0.0", port=9000)

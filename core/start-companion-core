@@ -5,7 +5,7 @@ SERVICES_PATH=$COMPANION_PATH/services
 
 SERVICES=(
     'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
-    'wifi',"$SERVICES_PATH/wifi/main.py"
+    'wifi',"$SERVICES_PATH/wifi/main.py --socket wlan0"
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
     'video',"mavlink-camera-manager --default-settings BlueROVUDP --verbose"
