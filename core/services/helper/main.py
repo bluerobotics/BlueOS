@@ -2,12 +2,11 @@
 
 import http
 import json
-import urllib
 from pathlib import Path
 from typing import Any, List
-from urllib.request import urlopen
 
 import psutil
+import requests
 import uvicorn
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
@@ -48,27 +47,27 @@ class Helper:
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", port=port)
 
         try:
-            with urlopen(f"http://127.0.0.1:{port}/", timeout=0.2) as response:
+            with requests.get(f"http://127.0.0.1:{port}/", timeout=0.2) as response:
                 info.valid = True
-                soup = BeautifulSoup(response.read(), features="html.parser")
+                soup = BeautifulSoup(response.text, features="html.parser")
                 title_element = soup.find("title")
                 info.title = title_element.text if title_element else "Unknown"
-        except urllib.error.HTTPError as error:
-            if error.code == http.HTTPStatus.NOT_FOUND:
-                info.valid = True
-        except Exception as error:
-            info.valid = False
+        except Exception:
+            # The server is not available, any error code will be handle by the 'with' block
+            pass
 
         if not info.valid:
             return info
 
         for documentation_path in DOCS_CANDIDATE_URLS:
             try:
-                urlopen(f"http://127.0.0.1:{port}{documentation_path}", timeout=0.2)
-                info.documentation_url = documentation_path
+                with requests.get(f"http://127.0.0.1:{port}{documentation_path}", timeout=0.2) as response:
+                    if response.status_code == http.HTTPStatus.OK:
+                        info.documentation_url = documentation_path
+                        break
+            except Exception:
+                # This should be avoided by the first try block, but better safe than sorry
                 break
-            except Exception as error:
-                pass  # any error here only means there's no documentation ui available
         return info
 
     @staticmethod
