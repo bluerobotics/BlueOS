@@ -68,6 +68,7 @@ setup(
         "fastapi == 0.63.0",
         "fastapi-versioning == 0.9.0",
         "psutil == 5.7.2",
+        "requests == 2.25.1",
         "starlette == 0.13.6",
         "uvicorn == 0.13.4",
     ],
