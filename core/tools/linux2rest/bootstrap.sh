@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Exit immediately if a command exits with a non-zero status
+set -e
+
 LOCAL_BINARY_PATH="/usr/bin/linux2rest"
 VERSION=v0.1.3
 
