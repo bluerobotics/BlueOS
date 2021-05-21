@@ -94,11 +94,11 @@
                   <div>
                     <span
                     class="button primary"
-                    @click="this.Metro.infobox.open('#infobox'); pullVersion(`${image.repository}:${image.tag}`)"
+                    @click="this.Metro.infobox.open('#infobox'); pullAndSetVersion(`${image.repository}:${image.tag}`)"
                     v-if="!imageIsAvailableLocally(image.sha)"
                     >
                       <span class="mif-download m-1"></span>
-                      Pull
+                      Pull and Apply
                     </span>
                   </div>
                 </div>
@@ -173,7 +173,7 @@
             this.loadAvailableversions()
           })
         },
-        pullVersion (fullname) {
+        pullAndSetVersion (fullname) {
           // This streams the output of docker pull
           console.log(fullname)
           const [repository, tag] = fullname.split(':')
@@ -214,6 +214,11 @@
                 }
               } else {
                 overallStatus = data['status']
+                // Axios returns the promise too early (before the pull is done)
+                // so we check the overall docker status instead
+                if (overallStatus.indexOf('Downloaded newer image for') >= 0) {
+                  setTimeout(() => {this.setVersion(fullname)}, 1000)
+                }
               }
               this.pullOutput = ''
               for (const image of layers) {
