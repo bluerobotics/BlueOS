@@ -11,9 +11,5 @@ if [[ "$(uname -m)" == "x86_64"* ]]; then
 fi
 
 # Download and install the camera manager under user binary folder with the correct permissions
-DEBIAN_FRONTEND=noninteractive apt --yes install wget
 wget "$REMOTE_BINARY_URL" -O "$LOCAL_BINARY_PATH"
 chmod +x "$LOCAL_BINARY_PATH"
-# Remove necessary stuff to install binary, creating a small docker layer
-DEBIAN_FRONTEND=noninteractive apt --yes purge wget
-DEBIAN_FRONTEND=noninteractive apt --yes autoremove
