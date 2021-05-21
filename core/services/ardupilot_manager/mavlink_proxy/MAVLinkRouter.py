@@ -29,11 +29,26 @@ class MAVLinkRouter(AbstractRouter):
                 return f"--tcp-port {endpoint.argument}"
             if endpoint.connection_type == EndpointType.TCPClient:
                 return f"--tcp-endpoint {endpoint.place}:{endpoint.argument}"
+            if endpoint.connection_type == EndpointType.UDPServer:
+                return f"{endpoint.place}:{endpoint.argument}"
             if endpoint.connection_type == EndpointType.UDPClient:
                 return f"--endpoint {endpoint.place}:{endpoint.argument}"
             raise ValueError(f"Endpoint of type {endpoint.connection_type} not supported on MavlinkRouter.")
 
-        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in self.endpoints()])
+        # Since MAVLinkRouter does not have an argument specifier for UDP Server connections
+        # (e.g. "--endpoint" for UDP Clients), we rely on the UDP Server endpoints being
+        # on the beginning of the endpoints list, and so as the first endpoints on the
+        # process call, for them to work
+        types_order = {
+            EndpointType.UDPServer: 0,
+            EndpointType.UDPClient: 1,
+            EndpointType.TCPServer: 2,
+            EndpointType.TCPClient: 3,
+        }
+        sorted_endpoints = sorted(
+            self.endpoints(), key=lambda endpoint: types_order[endpoint.connection_type]  # type: ignore
+        )
+        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in sorted_endpoints])
 
         if master.connection_type not in [
             EndpointType.UDPServer,
@@ -61,6 +76,7 @@ class MAVLinkRouter(AbstractRouter):
     def _validate_endpoint(endpoint: Endpoint) -> None:
         valid_connection_types = [
             EndpointType.UDPClient,
+            EndpointType.UDPServer,
             EndpointType.TCPServer,
             EndpointType.TCPClient,
         ]

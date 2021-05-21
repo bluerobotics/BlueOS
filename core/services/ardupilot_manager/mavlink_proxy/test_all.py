@@ -113,7 +113,12 @@ def test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_master_endp
     assert mavlink_router.name() == "MAVLinkRouter", "Name does not match."
     assert re.search(r"\d+", str(mavlink_router.version())) is not None, "Version does not follow pattern."
 
-    allowed_output_types = [EndpointType.UDPClient, EndpointType.TCPServer, EndpointType.TCPClient]
+    allowed_output_types = [
+        EndpointType.UDPServer,
+        EndpointType.UDPClient,
+        EndpointType.TCPServer,
+        EndpointType.TCPClient,
+    ]
     allowed_master_types = [EndpointType.UDPServer, EndpointType.Serial, EndpointType.TCPServer]
     run_common_routing_tests(
         mavlink_router, allowed_output_types, allowed_master_types, valid_output_endpoints, valid_master_endpoints
@@ -134,27 +139,46 @@ def run_common_routing_tests(
     allowed_output_endpoints = set(
         filter(lambda endpoint: endpoint.connection_type in allowed_output_types, output_endpoints)
     )
-    for endpoint in allowed_output_endpoints:
-        router.add_endpoint(endpoint)
-    assert router.endpoints() == allowed_output_endpoints, "Endpoint list does not match."
-
-    unallowed_output_endpoints = output_endpoints.difference(allowed_output_endpoints)
-    for endpoint in unallowed_output_endpoints:
-        with pytest.raises(ValueError):
-            router.add_endpoint(endpoint)
 
     allowed_master_endpoints = set(
         filter(lambda endpoint: endpoint.connection_type in allowed_master_types, master_endpoints)
     )
-    for endpoint in allowed_master_endpoints:
-        router.start(endpoint)
-        assert router.is_running(), f"{router.name()} is not running after start."
-        router.exit()
-        while router.is_running():
-            pass
-        assert not router.is_running(), f"{router.name()} is not stopping after exit."
 
+    unallowed_output_endpoints = output_endpoints.difference(allowed_output_endpoints)
     unallowed_master_endpoints = master_endpoints.difference(allowed_master_endpoints)
+
+    for endpoint in unallowed_output_endpoints:
+        with pytest.raises(ValueError):
+            router.add_endpoint(endpoint)
+
     for endpoint in unallowed_master_endpoints:
         with pytest.raises(ValueError):
             router.start(endpoint)
+
+    def test_endpoint_combinations(master_endpoints: Set[Endpoint], output_endpoints: List[Endpoint]) -> None:
+        for master_endpoint in master_endpoints:
+            router.clear_endpoints()
+
+            for output_endpoint in output_endpoints:
+                router.add_endpoint(output_endpoint)
+            assert set(router.endpoints()) == set(output_endpoints), "Endpoint list does not match."
+
+            router.start(master_endpoint)
+            assert router.is_running(), f"{router.name()} is not running after start."
+            router.exit()
+            while router.is_running():
+                pass
+            assert not router.is_running(), f"{router.name()} is not stopping after exit."
+
+    types_order = {
+        EndpointType.UDPServer: 0,
+        EndpointType.UDPClient: 1,
+        EndpointType.TCPServer: 2,
+        EndpointType.TCPClient: 3,
+        EndpointType.Serial: 4,
+    }
+    sorted_endpoints = sorted(allowed_output_endpoints, key=lambda e: types_order[e.connection_type])  # type: ignore
+
+    # Test endpoint combinationsin two orders: regular and reversed
+    test_endpoint_combinations(allowed_master_endpoints, sorted_endpoints)
+    test_endpoint_combinations(allowed_master_endpoints, sorted_endpoints[::-1])
