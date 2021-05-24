@@ -4,6 +4,8 @@ import sys
 import time
 from pathlib import Path
 
+from loguru import logger
+
 # Import local library
 sys.path.append(str(Path(__file__).absolute().parent.parent))
 
@@ -45,14 +47,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tool = AbstractRouter.get_interface(args.tool)()
-    print(f"Starting {tool.name()} version {tool.version()}.")
+    logger.info(f"Starting {tool.name()} version {tool.version()}.")
 
     manager.use(tool)
     manager.add_endpoints(args.output.split(":"))
     manager.set_master_endpoint(args.master.split(":"))
 
-    print(f"Command: {manager.command_line()}")
+    logger.info(f"Command: {manager.command_line()}")
     manager.start()
     while manager.is_running():
         time.sleep(1)
-    print("Done.")
+    logger.info("Done.")

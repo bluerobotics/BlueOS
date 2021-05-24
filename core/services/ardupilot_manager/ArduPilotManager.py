@@ -4,9 +4,9 @@ import stat
 import subprocess
 import time
 from copy import deepcopy
-from pprint import pprint
 from typing import Any, List, Optional, Set, Tuple
-from warnings import warn
+
+from loguru import logger
 
 from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
@@ -24,8 +24,8 @@ class ArduPilotManager(metaclass=Singleton):
 
         # Load settings and do the initial configuration
         if self.settings.load():
-            print(f"Loaded settings from {self.settings.settings_file}:")
-            pprint(self.settings.content)
+            logger.info(f"Loaded settings from {self.settings.settings_file}.")
+            logger.debug(self.settings.content)
         else:
             self.settings.create_settings()
 
@@ -38,7 +38,7 @@ class ArduPilotManager(metaclass=Singleton):
         ArduPilotManager.check_running_as_root()
 
         while not self.start_board(BoardDetector.detect()):
-            print("Flight controller board not detected, will try again.")
+            logger.warning("Flight controller board not detected, will try again.")
             time.sleep(2)
 
     @staticmethod
@@ -91,7 +91,7 @@ class ArduPilotManager(metaclass=Singleton):
                 {Endpoint("MAVLink2Rest", self.settings.app_name, "udpout", "127.0.0.1", 14000, protected=True)}
             )
         except Exception as error:
-            warn(f"Could not create default GCS endpoint: {error}")
+            logger.error(f"Could not create default GCS endpoint: {error}")
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
 
@@ -100,7 +100,7 @@ class ArduPilotManager(metaclass=Singleton):
             return False
 
         if len(boards) > 1:
-            print(f"More than a single board detected: {boards}")
+            logger.warning(f"More than a single board detected: {boards}")
 
         # Sort by priority
         boards.sort(key=lambda tup: tup[0].value)
@@ -130,15 +130,15 @@ class ArduPilotManager(metaclass=Singleton):
             try:
                 self.mavlink_manager.add_endpoint(endpoint)
             except Exception as error:
-                warn(f"Could not load endpoint {endpoint}: {error}")
+                logger.error(f"Could not load endpoint {endpoint}: {error}")
 
     def _reset_endpoints(self, endpoints: Set[Endpoint]) -> None:
         try:
             self.mavlink_manager.clear_endpoints()
             self.mavlink_manager.add_endpoints(endpoints)
-            print("Resetting endpoints to previous state.")
+            logger.info("Resetting endpoints to previous state.")
         except Exception as error:
-            warn(f"Error resetting endpoints: {error}")
+            logger.error(f"Error resetting endpoints: {error}")
 
     def _update_endpoints(self) -> None:
         try:
@@ -147,7 +147,7 @@ class ArduPilotManager(metaclass=Singleton):
             self.settings.save(self.configuration)
             self.restart()
         except Exception as error:
-            warn(f"Error updating endpoints: {error}")
+            logger.error(f"Error updating endpoints: {error}")
 
     def get_endpoints(self) -> Set[Endpoint]:
         """Get all endpoints from the mavlink manager."""
@@ -160,9 +160,9 @@ class ArduPilotManager(metaclass=Singleton):
         for endpoint in new_endpoints:
             try:
                 self.mavlink_manager.add_endpoint(endpoint)
-                print(f"Adding endpoint '{endpoint.name}' and saving it to the settings file.")
+                logger.info(f"Adding endpoint '{endpoint.name}' and saving it to the settings file.")
             except Exception as error:
-                warn(f"Failed to add endpoint '{endpoint.name}': {error}")
+                logger.error(f"Failed to add endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
                 raise
 
@@ -179,9 +179,9 @@ class ArduPilotManager(metaclass=Singleton):
         for endpoint in endpoints_to_remove:
             try:
                 self.mavlink_manager.remove_endpoint(endpoint)
-                print(f"Deleting endpoint '{endpoint.name}' and removing it from the settings file.")
+                logger.info(f"Deleting endpoint '{endpoint.name}' and removing it from the settings file.")
             except Exception as error:
-                warn(f"Failed to remove endpoint '{endpoint.name}': {error}")
+                logger.error(f"Failed to remove endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
                 raise
 

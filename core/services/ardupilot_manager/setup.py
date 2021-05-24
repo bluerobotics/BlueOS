@@ -58,5 +58,6 @@ setuptools.setup(
         "validators == 0.18.2",
         "fastapi-versioning == 0.9.0",
         "aiofiles == 0.6.0",
+        "loguru == 0.5.3",
     ],
 )

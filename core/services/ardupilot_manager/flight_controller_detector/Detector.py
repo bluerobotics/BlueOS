@@ -2,6 +2,7 @@ import os
 from enum import IntEnum
 from typing import List, Tuple
 
+from loguru import logger
 from smbus2 import SMBus
 
 
@@ -39,7 +40,8 @@ class Detector:
 
             return (True, "")
         except Exception as error:
-            print(f"Navigator not detected on I2C bus: {error}")
+            logger.info("Navigator not detected on I2C bus.")
+            logger.debug(error)
             return (False, "")
 
     @staticmethod

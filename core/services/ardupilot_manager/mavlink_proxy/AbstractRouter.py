@@ -5,7 +5,8 @@ import shutil
 import subprocess
 import tempfile
 from typing import Any, List, Optional, Set, Type
-from warnings import warn
+
+from loguru import logger
 
 from mavlink_proxy.Endpoint import Endpoint
 
@@ -82,7 +83,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
             assert self._subprocess is not None
             self._subprocess.kill()
         else:
-            warn("Tried to stop router, but it was already not running.")
+            logger.info("Tried to stop router, but it was already not running.")
 
     def restart(self) -> None:
         self.exit()
