@@ -1,11 +1,10 @@
 import json
-import pprint
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Union, cast
-from warnings import warn
 
 import appdirs
+from loguru import logger
 
 
 class Settings:
@@ -24,11 +23,13 @@ class Settings:
             Path.mkdir(self.firmware_path, exist_ok=True)
             if not Path.is_file(self.settings_file):
                 with open(self.settings_file, "w+") as file:
-                    print(f"Creating settings file: {self.settings_file}")
+                    logger.info(f"Creating settings file: {self.settings_file}")
                     json.dump(self.root, file, sort_keys=True, indent=4)
 
         except OSError as error:
-            warn(f"Could not create settings files: {error}\n No settings will be loaded or saved during this session.")
+            logger.error(
+                f"Could not create settings files: {error}\n No settings will be loaded or saved during this session."
+            )
 
     @property
     def content(self) -> Dict[str, Any]:
@@ -53,7 +54,7 @@ class Settings:
             bool: False if failed
         """
         if not self.settings_exist():
-            warn(f"User settings does not exist on {self.settings_file}.")
+            logger.error(f"User settings does not exist on {self.settings_file}.")
             return False
 
         data = None
@@ -61,13 +62,13 @@ class Settings:
             with open(self.settings_file) as file:
                 data = json.load(file)
                 if data["version"] != self.root["version"]:
-                    warn("User settings does not match with our supported version.")
+                    logger.error("User settings does not match with our supported version.")
                     return False
 
                 self.root = data
         except Exception as error:
-            warn(f"Failed to fetch data from file ({self.settings_file}): {error}")
-            pprint.pprint(data)
+            logger.error(f"Failed to fetch data from file ({self.settings_file}): {error}")
+            logger.debug(data)
 
         return True
 
@@ -79,7 +80,7 @@ class Settings:
         """
         # We don't want to write in disk if there is nothing different to write
         if self.root["content"] == content:
-            print("No new data. Not updating settings file.")
+            logger.info("No new data. Not updating settings file.")
             return
 
         self.root["content"] = deepcopy(content)
@@ -88,7 +89,7 @@ class Settings:
             Path.mkdir(self.settings_path, exist_ok=True)
 
             with open(self.settings_file, "w+") as file:
-                print(f"Updating settings file: {self.settings_file}")
+                logger.info(f"Updating settings file: {self.settings_file}")
                 json.dump(self.root, file, sort_keys=True, indent=4)
         except Exception as error:
-            warn(f"Could not save settings to disk: {error}")
+            logger.warning(f"Could not save settings to disk: {error}")

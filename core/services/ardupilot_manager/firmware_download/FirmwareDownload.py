@@ -10,8 +10,8 @@ from enum import IntEnum
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
-from warnings import warn
 
+from loguru import logger
 from packaging.version import Version
 
 # TODO: This should be not necessary
@@ -68,7 +68,7 @@ class FirmwareDownload:
         try:
             urlretrieve(url, filename)
         except Exception as error:
-            warn(f"Failed to download {url}: {error}", RuntimeWarning)
+            logger.error(f"Failed to download {url}: {error}")
             return None
         return filename
 
@@ -122,11 +122,11 @@ class FirmwareDownload:
             self._manifest = json.loads(manifest)
 
         if "format-version" not in self._manifest:
-            warn("Failed to fetch content of manifest file.", RuntimeWarning)
+            logger.error("Failed to fetch content of manifest file.")
             return False
 
         if self._manifest["format-version"] != "1.0.0":
-            warn("Firmware description file format changed, compatibility may be broken.", RuntimeWarning)
+            logger.warning("Firmware description file format changed, compatibility may be broken.")
 
         return True
 
@@ -221,13 +221,13 @@ class FirmwareDownload:
         )
 
         if len(items) != 1:
-            warn(f"Invalid number of candidates to download: {len(items)}", RuntimeWarning)
+            logger.error(f"Invalid number of candidates to download: {len(items)}")
             return None
 
         item = items[0]
         path = FirmwareDownload._download(item["url"])
         if not path or not FirmwareDownload._validate_firmware(path):
-            warn("Unable to validate firmware file.", RuntimeWarning)
+            logger.error("Unable to validate firmware file.")
             return None
 
         return path
