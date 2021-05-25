@@ -29,8 +29,15 @@
                     <span class="caption">
                       <b>{{image.tag}}</b>
                       <code :title="image.sha">{{image.sha | shortsha}}</code>
-                      <span class="badge inline bg-green fg-white" v-if="image.sha === currentVersion.sha">Current</span>
-                      <span class="badge inline bg-blue fg-white" v-if="image.sha === currentVersion.sha">Local changes</span><br>
+                      <span class="badge inline bg-green fg-white" v-if="image.tag === currentVersion.tag">Current</span>
+                      <span
+                        v-if="updateIsAvailable(image)"
+                        class="badge inline bg-blue fg-white"
+                        title="Your image is either newer or older than the one in the remote. Consider updating"
+                      >
+                      out-of-sync
+                      </span>
+                      <br>
                       <span class="image-small">{{image.repository}}</span>
                     </span>
                   </div>
@@ -176,6 +183,13 @@
             this.selectedImage = fullname.split(':')[0]
             this.loadAvailableversions()
           })
+        },
+        updateIsAvailable (image) {
+          const remote_counterpart = this.availableVersions.remote.find((remoteImage) => remoteImage.tag === image.tag)
+          if (!remote_counterpart){
+            return false
+          }
+          return remote_counterpart.sha !== image.sha
         },
         pullAndSetVersion (fullname) {
           // This streams the output of docker pull
