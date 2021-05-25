@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Immediately exist on errors
+set -e
+
 BUILD_PACKAGES=(
     g++
 )
