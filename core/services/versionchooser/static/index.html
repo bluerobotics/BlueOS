@@ -22,6 +22,7 @@
           <div class="grid">
             <div class="p-4 m-3">
               <h4 class="mt-0">Local Versions</h4>
+              <i class="lds-dual-ring" v-if="loadingImages"></i>
               <div class="row bg-white m-4" v-for="image in availableVersions['local']">
                 <div class="cell-5">
                   <div class="ml-3 mt-1" style="display: inline-block; vertical-align: middle">
@@ -78,6 +79,7 @@
                 <label>Repository</label>
                 <input type="text" required="" placeholder="bluerobotics/companion-core" id="repo" @change="loadAvailableversions" v-model="selectedImage" placeholder="edit me">
               </span>
+              <i class="lds-dual-ring" v-if="loadingImages"></i>
               <div class="row bg-white m-4" v-for="image in availableVersions['remote']">
                 <div class="cell-5">
                   <div class="ml-3 mt-1" style="display: inline-block; vertical-align: middle">
@@ -127,6 +129,7 @@
           availableVersions: {},
           currentVersion: '',
           waiting: false,
+          loadingImages: false,
           selectedImage: 'bluerobotics/companion-core',
           Metro: null,
         }
@@ -160,9 +163,11 @@
         },
         loadAvailableversions () {
           // TODO: validate repository, treat error fetching
+          this.loadingImages = true
           axios.get('/v1.0/version/available/' + this.selectedImage).then((response) => {
             this.availableVersions = response.data
           }).catch(() => { this.availableVersions = {} })
+            .finally(() => this.loadingImages = false)
         },
         loadCurrentVersion () {
           return axios.get('/v1.0/version/current/').then((response) => {
