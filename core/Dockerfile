@@ -7,6 +7,7 @@ RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
 RUN /home/pi/tools/mavlink2rest/bootstrap.sh
 RUN /home/pi/tools/linux2rest/bootstrap.sh
 RUN /home/pi/tools/bridges/bootstrap.sh
+RUN /home/pi/tools/ttyd/bootstrap.sh
 
 # Install services
 COPY services /home/pi/services
