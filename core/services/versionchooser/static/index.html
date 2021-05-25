@@ -138,7 +138,6 @@
         Metro.init()
         this.Metro = Metro
         this.loadCurrentVersion()
-        setInterval(this.checkIfBackendIsOnline, 1000)
       },
       methods: {
         checkIfBackendIsOnline () {
@@ -243,7 +242,7 @@
               repository,
               tag,
             },
-          })
+          }).finally(() => setInterval(this.checkIfBackendIsOnline, 1000))
         },
         imageIsAvailableLocally (sha) {
           if (!('local' in this.availableVersions)) {
