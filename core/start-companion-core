@@ -13,6 +13,7 @@ SERVICES=(
     'linux2rest',"linux2rest"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
+    'ttyd',"ttyd -p 8088 /usr/bin/tmux"
 )
 
 tmux start-server
