@@ -106,6 +106,7 @@ class ArduPilotManager(metaclass=Singleton):
         boards.sort(key=lambda tup: tup[0].value)
 
         flight_controller_type, place = boards[0]
+        logger.info(f"Board in use: {flight_controller_type.name}.")
 
         if FlightControllerType.Navigator == flight_controller_type:
             self.start_navigator()
