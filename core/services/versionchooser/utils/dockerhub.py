@@ -66,39 +66,15 @@ class TagFetcher:
                     raise Exception("Could not get auth token")
                 return str((await resp.json())["token"])
 
-    async def get_digest(self, metadata: TagMetadata) -> str:
-        """Fetches the digest for this architecture for a given tag"""
-        header = {
-            "Authorization": f"Bearer {self.last_token}",
-            "Accept": "application/vnd.docker.distribution.manifest.list.v2+json",
-        }
-
-        arch = get_current_arch()
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.tag}", headers=header
-            ) as resp:
-                if resp.status != 200:
-                    raise Exception(f"Failed getting sha from DockerHub! bad response: {resp.status}")
-                data = await resp.json()
-                manifests = data["manifests"]
-                matching_manifest = list(filter(lambda x: x["platform"]["architecture"] == arch, manifests))
-                if not matching_manifest:
-                    raise Exception(f"Failed getting sha from DockerHub: {metadata.tag} is missing architecture {arch}")
-                digest: str = matching_manifest[0]["digest"]
-                return digest
-
     async def fetch_sha(self, metadata: TagMetadata) -> str:
-        """Fetches the digest sha from a tag"""
+        """Fetches the digest sha from a tag. This returns the image id displayed by 'docker image ls'"""
         header = {
             "Authorization": f"Bearer {self.last_token}",
             "Accept": "application/vnd.docker.distribution.manifest.v2+json",
         }
-
-        digest = await self.get_digest(metadata)
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{self.index_url}/v2/{metadata.repository}/manifests/{digest}", headers=header
+                f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}", headers=header
             ) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
