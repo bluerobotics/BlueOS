@@ -65,6 +65,14 @@
                     </span>
                     -->
                     <span
+                      class="button primary"
+                      @click="this.Metro.infobox.open('#infobox'); pullAndSetVersion(`${image.repository}:${image.tag}`)"
+                      v-if="image.tag === currentVersion.tag && updateIsAvailable(image)"
+                      >
+                        <span class="mif-download m-1"></span>
+                        Update
+                    </span>
+                    <span
                       v-if="image.sha !== currentVersion.sha"
                       class="button success"
                       @click="this.Metro.infobox.open('#infobox'); setVersion(`${image.repository}:${image.tag}`)"
