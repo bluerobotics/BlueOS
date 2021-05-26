@@ -16,7 +16,7 @@ SERVICES=(
     'ttyd',"ttyd -p 8088 /usr/bin/tmux"
 )
 
-tmux start-server
+tmux start-server -f /etc/tmux.conf
 function create_service {
     tmux new -d -s "$1" || true
     tmux send-keys -t "$1:0" "$2" C-m
