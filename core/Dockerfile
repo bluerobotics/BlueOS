@@ -9,6 +9,9 @@ RUN /home/pi/tools/linux2rest/bootstrap.sh
 RUN /home/pi/tools/bridges/bootstrap.sh
 RUN /home/pi/tools/ttyd/bootstrap.sh
 
+# Set tmux configuration file
+COPY configuration/tmux.conf /etc/tmux.conf
+
 # Install services
 COPY services /home/pi/services
 COPY start-companion-core /usr/bin/start-companion-core
