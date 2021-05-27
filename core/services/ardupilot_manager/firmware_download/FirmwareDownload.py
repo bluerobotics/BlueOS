@@ -6,7 +6,7 @@ import random
 import ssl
 import string
 import tempfile
-from enum import IntEnum
+from enum import Enum
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
@@ -20,13 +20,13 @@ if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverif
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
-class Vehicle(IntEnum):
+class Vehicle(str, Enum):
     """Valid vehicle types to download"""
 
-    Sub = 1
-    Rover = 2
-    Plane = 3
-    Copter = 4
+    Sub = "Sub"
+    Rover = "Rover"
+    Plane = "Plane"
+    Copter = "Copter"
 
 
 class FirmwareDownload:
@@ -174,7 +174,7 @@ class FirmwareDownload:
             return available_versions
 
         items = self._find_version_item(
-            vehicletype=vehicle.name, platform=platform, format=FirmwareDownload._supported_firmware_format
+            vehicletype=vehicle.value, platform=platform, format=FirmwareDownload._supported_firmware_format
         )
 
         for item in items:
@@ -214,7 +214,7 @@ class FirmwareDownload:
             version = f"STABLE-{newest_version}"
 
         items = self._find_version_item(
-            vehicletype=vehicle.name,
+            vehicletype=vehicle.value,
             platform=platform,
             mav_firmware_version_type=version,
             format=FirmwareDownload._supported_firmware_format,
