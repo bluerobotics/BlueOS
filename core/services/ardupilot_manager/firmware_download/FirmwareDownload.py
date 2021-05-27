@@ -29,6 +29,15 @@ class Vehicle(str, Enum):
     Copter = "Copter"
 
 
+class Platform(str, Enum):
+    """Valid platform types to download
+    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest,
+    with the exception being Navigator, which is not on the manifest yet."""
+
+    Pixhawk1 = "Pixhawk1"
+    Navigator = "Navigator"
+
+
 class FirmwareDownload:
     _manifest_remote = "https://firmware.ardupilot.org/manifest.json.gz"
     _supported_firmware_format = "apj"
@@ -158,12 +167,12 @@ class FirmwareDownload:
 
         return found_version_item
 
-    def get_available_versions(self, vehicle: Vehicle, platform: str) -> List[str]:
+    def get_available_versions(self, vehicle: Vehicle, platform: Platform) -> List[str]:
         """Get available firmware versions for the specific plataform and vehicle
 
         Args:
             vehicle (Vehicle): Desired vehicle.
-            platform (str): Desired platform.
+            platform (Platform): Desired platform.
 
         Returns:
             List[str]: List of available versions that match the specific desired configuration.
@@ -174,7 +183,7 @@ class FirmwareDownload:
             return available_versions
 
         items = self._find_version_item(
-            vehicletype=vehicle.value, platform=platform, format=FirmwareDownload._supported_firmware_format
+            vehicletype=vehicle.value, platform=platform.value, format=FirmwareDownload._supported_firmware_format
         )
 
         for item in items:
@@ -182,19 +191,19 @@ class FirmwareDownload:
 
         return available_versions
 
-    def download(self, vehicle: Vehicle, platform: str, version: str = "") -> Optional[pathlib.Path]:
+    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> Optional[pathlib.Path]:
         """Download a specific firmware that matches the arguments.
 
         Args:
             vehicle (Vehicle): Desired vehicle.
-            platform (str): Desired platform.
+            platform (Platform): Desired platform.
             version (str, optional): Desired version, if None provided the latest stable will be used.
                 Defaults to None.
 
         Returns:
             Optional[pathlib.Path]: Temporary path for the firmware file, None if unable to download or validate file.
         """
-        if platform.lower() == "navigator" and vehicle == Vehicle.Sub:
+        if platform == Platform.Navigator and vehicle == Vehicle.Sub:
             return FirmwareDownload._download_navigator()
 
         versions = self.get_available_versions(vehicle, platform)
@@ -215,7 +224,7 @@ class FirmwareDownload:
 
         items = self._find_version_item(
             vehicletype=vehicle.value,
-            platform=platform,
+            platform=platform.value,
             mav_firmware_version_type=version,
             format=FirmwareDownload._supported_firmware_format,
         )

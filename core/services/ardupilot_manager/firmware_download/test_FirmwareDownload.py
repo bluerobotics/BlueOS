@@ -1,4 +1,4 @@
-from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
+from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 
 
 def test_static() -> None:
@@ -15,16 +15,16 @@ def test_firmware_download() -> None:
     assert firmware_download.download_manifest(), "Failed to download/validate manifest file."
 
     versions = firmware_download._find_version_item(
-        vehicletype="Sub", format="apj", mav_firmware_version_type="STABLE-4.0.1", platform="Pixhawk1"
+        vehicletype="Sub", format="apj", mav_firmware_version_type="STABLE-4.0.1", platform=Platform.Pixhawk1
     )
     assert len(versions) == 1, "Failed to find a single firmware."
 
     versions = firmware_download._find_version_item(
-        vehicletype="Sub", mav_firmware_version_type="STABLE-4.0.1", platform="Pixhawk1"
+        vehicletype="Sub", mav_firmware_version_type="STABLE-4.0.1", platform=Platform.Pixhawk1
     )
     assert len(versions) == 3, "Failed to find multiple versions."
 
-    available_versions = firmware_download.get_available_versions(Vehicle.Sub, "Pixhawk1")
+    available_versions = firmware_download.get_available_versions(Vehicle.Sub, Platform.Pixhawk1)
     assert len(available_versions) == len(set(available_versions)), "Available versions are not unique."
 
     test_available_versions = ["STABLE-4.0.1", "STABLE-4.0.0", "OFFICIAL", "DEV", "BETA"]
@@ -33,9 +33,9 @@ def test_firmware_download() -> None:
     ), "Available versions are missing know versions."
 
     assert firmware_download.download(
-        Vehicle.Sub, "Pixhawk1", "STABLE-4.0.1"
+        Vehicle.Sub, Platform.Pixhawk1, "STABLE-4.0.1"
     ), "Failed to download a valid firmware file."
 
-    assert firmware_download.download(Vehicle.Sub, "Pixhawk1"), "Failed to download latest valid firmware file."
+    assert firmware_download.download(Vehicle.Sub, Platform.Pixhawk1), "Failed to download latest valid firmware file."
 
-    assert firmware_download.download(Vehicle.Sub, "Navigator"), "Failed to download navigator binary."
+    assert firmware_download.download(Vehicle.Sub, Platform.Navigator), "Failed to download navigator binary."
