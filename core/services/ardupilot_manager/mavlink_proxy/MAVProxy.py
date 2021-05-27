@@ -37,6 +37,8 @@ class MAVProxy(AbstractRouter):
                 master_string = f"{master.place}"
             else:
                 master_string = f"{serial_endpoint_as_input(master)}"
+        if master.connection_type == EndpointType.TCPServer:
+            master_string = f"tcp:{master.place}:{master.argument}"
 
         log = f"--state-basedir={self.logdir().resolve()}"
         return f"{self.binary()} --master={master_string} {endpoints} {log} --non-interactive"
