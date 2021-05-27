@@ -21,6 +21,8 @@ jobs:
     -
       name: Install dependencies
       run: |
+        # This should be the same hash as in core/tools/mavlink_router/bootstrap.py#L10
+        MAVLINK_ROUTER_COMMIT="94c4e3c6a9ff7c517b20b417e232caf52f12a6c6"
         sudo apt install shellcheck
         npm install eslint eslint-plugin-vue eslint-plugin-html --save-dev
         python -m pip install --upgrade pip
@@ -32,8 +34,10 @@ jobs:
         MAVLINK_ROUTER_PATH="/tmp/mavlink-router"
         sudo apt install autoconf g++ git libtool make pkg-config python3-future
         mkdir ${MAVLINK_ROUTER_PATH}
-        git clone --depth 1 --branch master https://github.com/mavlink-router/mavlink-router ${MAVLINK_ROUTER_PATH}
+        git clone https://github.com/mavlink-router/mavlink-router ${MAVLINK_ROUTER_PATH}
         cd ${MAVLINK_ROUTER_PATH}
+        git fetch origin ${MAVLINK_ROUTER_COMMIT}
+        git checkout ${MAVLINK_ROUTER_COMMIT}
         git submodule update --init --recursive --quiet
         ./autogen.sh
         ./configure --disable-systemd CFLAGS='-g -O2' --sysconfdir=/etc --localstatedir=/var --libdir=/usr/lib64 --prefix=/usr
