@@ -8,7 +8,7 @@ from typing import Any, List, Optional, Set, Tuple
 
 from loguru import logger
 
-from firmware_download.FirmwareDownload import FirmwareDownload, Vehicle
+from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
 from mavlink_proxy.Endpoint import Endpoint
@@ -49,7 +49,7 @@ class ArduPilotManager(metaclass=Singleton):
     def start_navigator(self) -> None:
         firmware = os.path.join(self.settings.firmware_path, "ardusub")
         if not os.path.isfile(firmware):
-            temporary_file = self.firmware_download.download(Vehicle.Sub, "Navigator")
+            temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.Navigator)
             assert temporary_file, "Failed to download navigator binary."
             shutil.move(str(temporary_file), firmware)
             # Make the binary executable
