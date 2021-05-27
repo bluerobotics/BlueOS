@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+import argparse
 import json
 import logging
 from pathlib import Path
@@ -15,6 +16,11 @@ from ArduPilotManager import ArduPilotManager
 from mavlink_proxy.Endpoint import Endpoint
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
+
+parser = argparse.ArgumentParser(description="ArduPilot Manager service for Blue Robotics Companion")
+parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any board", action="store_true")
+
+args = parser.parse_args()
 
 
 class InterceptHandler(logging.Handler):
@@ -91,6 +97,9 @@ app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 
 if __name__ == "__main__":
-    autopilot.run()
+    if args.sitl:
+        autopilot.run_with_sitl()
+    else:
+        autopilot.run_with_board()
     # Running uvicorn with log disabled so loguru can handle it
     uvicorn.run(app, host="0.0.0.0", port=8000, log_config=None)
