@@ -61,18 +61,18 @@ class ArduPilotManager(metaclass=Singleton):
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint("Master", self.settings.app_name, "udpin", "127.0.0.1", 8852, protected=True)
+
+        # Run ardupilot inside while loop to avoid exiting after reboot command
+        ## Can be changed back to a simple command after https://github.com/ArduPilot/ardupilot/issues/17572
+        ## gets fixed.
         # pylint: disable=consider-using-with
         self.subprocess = subprocess.Popen(
-            [
-                firmware,
-                "-A",
-                f"udp:{master_endpoint.place}:{master_endpoint.argument}",
-                "--log-directory",
-                f"{self.settings.firmware_path}/logs/",
-                "--storage-directory",
-                f"{self.settings.firmware_path}/storage/",
-            ],
-            shell=False,
+            "while true; do "
+            f"{firmware} -A udp:{master_endpoint.place}:{master_endpoint.argument}"
+            f"--log-directory {self.settings.firmware_path}/logs/"
+            f"--storage-directory {self.settings.firmware_path}/storage/"
+            "; sleep 1; done",
+            shell=True,
             encoding="utf-8",
             errors="ignore",
         )
