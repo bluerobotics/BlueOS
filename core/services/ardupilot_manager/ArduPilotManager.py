@@ -1,6 +1,5 @@
 import os
 import shutil
-import stat
 import subprocess
 import time
 from copy import deepcopy
@@ -34,7 +33,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.subprocess: Optional[Any] = None
         self.firmware_download = FirmwareDownload()
 
-    def run(self) -> None:
+    def run_with_board(self) -> None:
         ArduPilotManager.check_running_as_root()
 
         while not self.start_board(BoardDetector.detect()):
@@ -52,12 +51,6 @@ class ArduPilotManager(metaclass=Singleton):
             temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.Navigator)
             assert temporary_file, "Failed to download navigator binary."
             shutil.move(str(temporary_file), firmware)
-            # Make the binary executable
-            os.chmod(firmware, stat.S_IXOTH)
-        try:
-            subprocess.check_output([firmware, "--help"])
-        except Exception as error:
-            raise RuntimeError(f"Failed to start navigator: {error}") from error
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint("Master", self.settings.app_name, "udpin", "127.0.0.1", 8852, protected=True)
@@ -81,6 +74,33 @@ class ArduPilotManager(metaclass=Singleton):
 
     def start_serial(self, device: str) -> None:
         self.start_mavlink_manager(Endpoint("Master", self.settings.app_name, "serial", device, 115200, protected=True))
+
+    def run_with_sitl(self, vehicle: str = "vectored") -> None:
+        firmware = os.path.join(self.settings.firmware_path, "sitl")
+        if not os.path.exists(firmware):
+            temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.SITL)
+            assert temporary_file, "Failed to download SITL binary."
+            shutil.move(str(temporary_file), firmware)
+
+        # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
+        master_endpoint = Endpoint("Master", self.settings.app_name, "tcpin", "127.0.0.1", 5760, protected=True)
+        # pylint: disable=consider-using-with
+        self.subprocess = subprocess.Popen(
+            [
+                firmware,
+                "--model",
+                vehicle,
+                "--base-port",
+                str(master_endpoint.argument),
+                "--home",
+                "-27.563,-48.459,0.0,270.0",
+            ],
+            shell=False,
+            encoding="utf-8",
+            errors="ignore",
+        )
+
+        self.start_mavlink_manager(master_endpoint)
 
     def start_mavlink_manager(self, device: Endpoint) -> None:
         try:

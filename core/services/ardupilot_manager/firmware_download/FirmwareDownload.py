@@ -4,9 +4,12 @@ import os
 import pathlib
 import random
 import ssl
+import stat
 import string
+import subprocess
 import tempfile
 from enum import Enum
+from platform import machine
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
@@ -18,6 +21,12 @@ from packaging.version import Version
 # Disable SSL verification
 if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverified_context", None):
     ssl._create_default_https_context = ssl._create_unverified_context
+
+
+def get_sitl_platform_name() -> str:
+    if machine() == "x86_64":
+        return "SITL_x86_64_linux_gnu"
+    return "SITL_arm_linux_gnueabihf"
 
 
 class Vehicle(str, Enum):
@@ -36,11 +45,24 @@ class Platform(str, Enum):
 
     Pixhawk1 = "Pixhawk1"
     Navigator = "Navigator"
+    SITL = get_sitl_platform_name()
+
+
+class FirmwareFormat(str, Enum):
+    """Valid firmware formats to download.
+    The Enum values are 1:1 representations of the formats available on the ArduPilot manifest."""
+
+    APJ = "apj"
+    ELF = "ELF"
 
 
 class FirmwareDownload:
     _manifest_remote = "https://firmware.ardupilot.org/manifest.json.gz"
-    _supported_firmware_format = "apj"
+    _supported_firmware_formats = {
+        Platform.SITL: FirmwareFormat.ELF,
+        Platform.Pixhawk1: FirmwareFormat.APJ,
+        Platform.Navigator: FirmwareFormat.ELF,
+    }
 
     def __init__(self) -> None:
         self._manifest: Dict[str, Any] = {}
@@ -103,11 +125,18 @@ class FirmwareDownload:
         Returns:
             bool: True if valid, False if otherwise.
         """
-        with open(firmware_path, "r") as firmware_file:
-            data = json.load(firmware_file)
-            keys = data.keys()
-            if "image_size" in keys and "image" in keys:
+        if FirmwareFormat.APJ.value in firmware_path.suffix:
+            with open(firmware_path, "r") as firmware_file:
+                data = json.load(firmware_file)
+                keys = data.keys()
+                if "image_size" in keys and "image" in keys:
+                    return True
+        else:
+            try:
+                subprocess.check_output([firmware_path, "--help"])
                 return True
+            except Exception as error:
+                logger.error(f"Firmware help menu not available. Binary not validated. {error}")
 
         return False
 
@@ -182,12 +211,11 @@ class FirmwareDownload:
         if not self._manifest_is_valid():
             return available_versions
 
-        items = self._find_version_item(
-            vehicletype=vehicle.value, platform=platform.value, format=FirmwareDownload._supported_firmware_format
-        )
+        items = self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
 
         for item in items:
-            available_versions.append(item["mav-firmware-version-type"])
+            if item["format"] == FirmwareDownload._supported_firmware_formats[platform]:
+                available_versions.append(item["mav-firmware-version-type"])
 
         return available_versions
 
@@ -207,7 +235,10 @@ class FirmwareDownload:
             return FirmwareDownload._download_navigator()
 
         versions = self.get_available_versions(vehicle, platform)
+        logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
+
         if version and versions and version not in versions:
+            logger.error(f"Specified version not found for this configuration ({vehicle} and {platform}).")
             return None
 
         # Autodetect the latest stable version
@@ -219,22 +250,30 @@ class FirmwareDownload:
                 if not newest_version or Version(newest_version) < Version(semver_version):
                     newest_version = semver_version
             if not newest_version:
+                logger.error(f"No firmware versions found for this configuration ({vehicle} and {platform}).")
                 return None
             version = f"STABLE-{newest_version}"
+
+        firmware_format = FirmwareDownload._supported_firmware_formats[platform]
 
         items = self._find_version_item(
             vehicletype=vehicle.value,
             platform=platform.value,
             mav_firmware_version_type=version,
-            format=FirmwareDownload._supported_firmware_format,
+            format=firmware_format,
         )
 
         if len(items) != 1:
-            logger.error(f"Invalid number of candidates to download: {len(items)}")
+            logger.error(f"Invalid number of candidates to download ({len(items)}): {items}")
             return None
 
         item = items[0]
+        logger.debug(f"Downloading following firmware: {item}")
         path = FirmwareDownload._download(item["url"])
+        if firmware_format == FirmwareFormat.ELF:
+            # Make the binary executable
+            os.chmod(str(path), stat.S_IXOTH)
+
         if not path or not FirmwareDownload._validate_firmware(path):
             logger.error("Unable to validate firmware file.")
             return None
