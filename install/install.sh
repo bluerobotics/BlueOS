@@ -50,10 +50,9 @@ docker --version || curl -fsSL https://get.docker.com | env -u VERSION sh || (
 )
 systemctl enable docker
 
-#creating a Unix group called docker and adding users to it.
-echo "Created the docker group"
+# creating a Unix group called docker and adding users to it
+echo "Adding default user to 'docker' group."
 usermod -aG docker $USER
-
 
 # Stop and remove all docker if NO_CLEAN is not defined
 test $NO_CLEAN || (
