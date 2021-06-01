@@ -19,27 +19,27 @@ from mavlink_proxy.MAVProxy import MAVProxy
 @pytest.fixture
 def valid_output_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("Test endpoint 1", "pytest", "udpin", "0.0.0.0", 14551),
-        Endpoint("Test endpoint 2", "pytest", "udpout", "0.0.0.0", 14552),
-        Endpoint("Test endpoint 3", "pytest", "tcpin", "0.0.0.0", 14553),
-        Endpoint("Test endpoint 4", "pytest", "tcpout", "0.0.0.0", 14554),
-        Endpoint("Test endpoint 5", "pytest", "serial", "/dev/radiolink", 57600),
+        Endpoint("Test endpoint 1", "pytest", EndpointType.UDPServer, "0.0.0.0", 14551),
+        Endpoint("Test endpoint 2", "pytest", EndpointType.UDPClient, "0.0.0.0", 14552),
+        Endpoint("Test endpoint 3", "pytest", EndpointType.TCPServer, "0.0.0.0", 14553),
+        Endpoint("Test endpoint 4", "pytest", EndpointType.TCPClient, "0.0.0.0", 14554),
+        Endpoint("Test endpoint 5", "pytest", EndpointType.Serial, "/dev/radiolink", 57600),
     }
 
 
 @pytest.fixture
 def valid_master_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("Master endpoint 1", "pytest", "udpin", "0.0.0.0", 14550),
-        Endpoint("Master endpoint 2", "pytest", "udpout", "0.0.0.0", 14550),
-        Endpoint("Master endpoint 3", "pytest", "tcpin", "0.0.0.0", 14550),
-        Endpoint("Master endpoint 4", "pytest", "tcpout", "0.0.0.0", 14550),
-        Endpoint("Master endpoint 5", "pytest", "serial", "/dev/autopilot", 115200),
+        Endpoint("Master endpoint 1", "pytest", EndpointType.UDPServer, "0.0.0.0", 14550),
+        Endpoint("Master endpoint 2", "pytest", EndpointType.UDPClient, "0.0.0.0", 14550),
+        Endpoint("Master endpoint 3", "pytest", EndpointType.TCPServer, "0.0.0.0", 14550),
+        Endpoint("Master endpoint 4", "pytest", EndpointType.TCPClient, "0.0.0.0", 14550),
+        Endpoint("Master endpoint 5", "pytest", EndpointType.Serial, "/dev/autopilot", 115200),
     }
 
 
 def test_endpoint() -> None:
-    endpoint = Endpoint("Test endpoint", "pytest", "udpout", "0.0.0.0", 14550)
+    endpoint = Endpoint("Test endpoint", "pytest", EndpointType.UDPClient, "0.0.0.0", 14550)
     assert endpoint.name == "Test endpoint", "Name does not match."
     assert endpoint.owner == "pytest", "Owner does not match."
     assert endpoint.persistent is False, "Persistent does not match."
@@ -51,7 +51,7 @@ def test_endpoint() -> None:
     assert endpoint.asdict() == {
         "name": "Test endpoint",
         "owner": "pytest",
-        "connection_type": "udpout",
+        "connection_type": EndpointType.UDPClient,
         "place": "0.0.0.0",
         "argument": 14550,
         "persistent": False,
@@ -61,13 +61,17 @@ def test_endpoint() -> None:
 
 def test_endpoint_validators() -> None:
     with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": "udpin", "place": "0.0.0.0", "argument": -30})
+        Endpoint.is_mavlink_endpoint({"connection_type": EndpointType.UDPServer, "place": "0.0.0.0", "argument": -30})
     with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": "udpin", "place": "42", "argument": 14555})
+        Endpoint.is_mavlink_endpoint({"connection_type": EndpointType.UDPServer, "place": "42", "argument": 14555})
     with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": "serial", "place": "dev/autopilot", "argument": 115200})
+        Endpoint.is_mavlink_endpoint(
+            {"connection_type": EndpointType.Serial, "place": "dev/autopilot", "argument": 115200}
+        )
     with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": "serial", "place": "/dev/autopilot", "argument": 100000})
+        Endpoint.is_mavlink_endpoint(
+            {"connection_type": EndpointType.Serial, "place": "/dev/autopilot", "argument": 100000}
+        )
     with pytest.raises(ValueError):
         Endpoint.is_mavlink_endpoint({"connection_type": "potato", "place": "path/to/file", "argument": 100})
 

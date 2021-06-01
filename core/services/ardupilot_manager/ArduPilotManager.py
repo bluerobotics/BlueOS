@@ -10,7 +10,7 @@ from loguru import logger
 from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
-from mavlink_proxy.Endpoint import Endpoint
+from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
 from Singleton import Singleton
@@ -53,7 +53,9 @@ class ArduPilotManager(metaclass=Singleton):
             shutil.move(str(temporary_file), firmware)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
-        master_endpoint = Endpoint("Master", self.settings.app_name, "udpin", "127.0.0.1", 8852, protected=True)
+        master_endpoint = Endpoint(
+            "Master", self.settings.app_name, EndpointType.UDPServer, "127.0.0.1", 8852, protected=True
+        )
 
         # Run ardupilot inside while loop to avoid exiting after reboot command
         ## Can be changed back to a simple command after https://github.com/ArduPilot/ardupilot/issues/17572
@@ -73,7 +75,9 @@ class ArduPilotManager(metaclass=Singleton):
         self.start_mavlink_manager(master_endpoint)
 
     def start_serial(self, device: str) -> None:
-        self.start_mavlink_manager(Endpoint("Master", self.settings.app_name, "serial", device, 115200, protected=True))
+        self.start_mavlink_manager(
+            Endpoint("Master", self.settings.app_name, EndpointType.Serial, device, 115200, protected=True)
+        )
 
     def run_with_sitl(self, vehicle: str = "vectored") -> None:
         firmware = os.path.join(self.settings.firmware_path, "sitl")
@@ -83,7 +87,9 @@ class ArduPilotManager(metaclass=Singleton):
             shutil.move(str(temporary_file), firmware)
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
-        master_endpoint = Endpoint("Master", self.settings.app_name, "tcpin", "127.0.0.1", 5760, protected=True)
+        master_endpoint = Endpoint(
+            "Master", self.settings.app_name, EndpointType.TCPServer, "127.0.0.1", 5760, protected=True
+        )
         # pylint: disable=consider-using-with
         self.subprocess = subprocess.Popen(
             [
@@ -105,10 +111,23 @@ class ArduPilotManager(metaclass=Singleton):
     def start_mavlink_manager(self, device: Endpoint) -> None:
         try:
             self.add_new_endpoints(
-                {Endpoint("GCS Link", self.settings.app_name, "udpout", "192.168.2.1", 14550, protected=True)}
+                {
+                    Endpoint(
+                        "GCS Link", self.settings.app_name, EndpointType.UDPClient, "192.168.2.1", 14550, protected=True
+                    )
+                }
             )
             self.add_new_endpoints(
-                {Endpoint("MAVLink2Rest", self.settings.app_name, "udpout", "127.0.0.1", 14000, protected=True)}
+                {
+                    Endpoint(
+                        "MAVLink2Rest",
+                        self.settings.app_name,
+                        EndpointType.UDPClient,
+                        "127.0.0.1",
+                        14000,
+                        protected=True,
+                    )
+                }
             )
         except Exception as error:
             logger.error(f"Could not create default GCS endpoint: {error}")
