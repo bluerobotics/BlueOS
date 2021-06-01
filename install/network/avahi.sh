@@ -9,7 +9,7 @@ CONFIGURE_NETWORK_PATH="$REMOTE/install/network"
 set -e
 
 systemctl is-active --quiet avahi-daemon || (
-    echo "Avahi daemon is installed and running."
+    echo "Avahi daemon is not installed or running."
     exit 1
 )
 
