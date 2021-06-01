@@ -50,7 +50,7 @@ docker --version || curl -fsSL https://get.docker.com | env -u VERSION sh || (
 )
 systemctl enable docker
 
-# creating a Unix group called docker and adding users to it
+# Add user to 'docker' group allowing docker commands without root privilegies
 echo "Adding default user to 'docker' group."
 usermod -aG docker $USER
 
