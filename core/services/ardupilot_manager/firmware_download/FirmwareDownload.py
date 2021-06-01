@@ -241,20 +241,26 @@ class FirmwareDownload:
             logger.error(f"Specified version not found for this configuration ({vehicle} and {platform}).")
             return None
 
-        # Autodetect the latest stable version
-        if not version:
-            stable_versions = [version for version in versions if "STABLE" in version]
-            newest_version: Optional[str] = None
-            for stable_version in stable_versions:
-                semver_version = stable_version.split("-")[1]
-                if not newest_version or Version(newest_version) < Version(semver_version):
-                    newest_version = semver_version
-            if not newest_version:
-                logger.error(f"No firmware versions found for this configuration ({vehicle} and {platform}).")
-                return None
-            version = f"STABLE-{newest_version}"
-
         firmware_format = FirmwareDownload._supported_firmware_formats[platform]
+
+        # Autodetect the latest supported version.
+        # For .apj firmwares (e.g. Pixhawk), we use the latest STABLE version while for the others (e.g. SITL and
+        # Navigator) we use latest DEV. Specially on this development phase of the companion-docker/navigator, using
+        # the DEV release allow us to track and fix introduced bugs faster.
+        if not version:
+            if firmware_format == FirmwareFormat.APJ:
+                supported_versions = [version for version in versions if "STABLE" in version]
+                newest_version: Optional[str] = None
+                for supported_version in supported_versions:
+                    semver_version = supported_version.split("-")[1]
+                    if not newest_version or Version(newest_version) < Version(semver_version):
+                        newest_version = semver_version
+                if not newest_version:
+                    logger.error(f"No firmware versions found for this configuration ({vehicle} and {platform}).")
+                    return None
+                version = f"STABLE-{newest_version}"
+            else:
+                version = "DEV"
 
         items = self._find_version_item(
             vehicletype=vehicle.value,
