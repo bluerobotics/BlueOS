@@ -69,7 +69,7 @@ autopilot = ArduPilotManager()
 @app.get("/endpoints", response_model=List[Dict[str, Any]])
 @version(1, 0)
 def get_available_endpoints() -> Any:
-    return [endpoint.asdict() for endpoint in autopilot.get_endpoints()]
+    return list(map(Endpoint.asdict, autopilot.get_endpoints()))
 
 
 @app.post("/endpoints", status_code=status.HTTP_201_CREATED)
