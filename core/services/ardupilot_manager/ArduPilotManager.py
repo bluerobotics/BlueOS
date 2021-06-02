@@ -162,7 +162,7 @@ class ArduPilotManager(metaclass=Singleton):
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
 
     def _save_endpoints_to_configuration(self, endpoints: Set[Endpoint]) -> None:
-        self.configuration["endpoints"] = list(map(Endpoint.asdict, endpoints))
+        self.configuration["endpoints"] = list(map(Endpoint.as_dict, endpoints))
 
     def _load_endpoints(self) -> None:
         """Load endpoints from the configuration file to the mavlink manager."""

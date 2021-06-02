@@ -57,7 +57,7 @@ class Endpoint:
     def __str__(self) -> str:
         return ":".join([self.connection_type, self.place, str(self.argument)])
 
-    def asdict(self) -> Dict[str, Any]:
+    def as_dict(self) -> Dict[str, Any]:
         return dict(filter(lambda field: field[0] != "__initialised__", self.__dict__.items()))
 
     def __hash__(self) -> int:
