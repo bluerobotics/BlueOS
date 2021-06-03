@@ -64,8 +64,8 @@ class ArduPilotManager(metaclass=Singleton):
         self.subprocess = subprocess.Popen(
             "while true; do "
             f"{firmware} -A udp:{master_endpoint.place}:{master_endpoint.argument}"
-            f"--log-directory {self.settings.firmware_path}/logs/"
-            f"--storage-directory {self.settings.firmware_path}/storage/"
+            f" --log-directory {self.settings.firmware_path}/logs/"
+            f" --storage-directory {self.settings.firmware_path}/storage/"
             "; sleep 1; done",
             shell=True,
             encoding="utf-8",
