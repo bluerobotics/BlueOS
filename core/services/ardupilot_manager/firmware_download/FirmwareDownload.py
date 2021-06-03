@@ -232,7 +232,9 @@ class FirmwareDownload:
             Optional[pathlib.Path]: Temporary path for the firmware file, None if unable to download or validate file.
         """
         if platform == Platform.Navigator and vehicle == Vehicle.Sub:
-            return FirmwareDownload._download_navigator()
+            path = FirmwareDownload._download_navigator()
+            os.chmod(str(path), stat.S_IXOTH)
+            return path
 
         versions = self.get_available_versions(vehicle, platform)
         logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
