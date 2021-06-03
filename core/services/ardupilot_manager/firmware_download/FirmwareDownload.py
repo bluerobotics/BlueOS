@@ -237,7 +237,11 @@ class FirmwareDownload:
         versions = self.get_available_versions(vehicle, platform)
         logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
 
-        if version and versions and version not in versions:
+        if not versions:
+            logger.error("No versions available")
+            return None
+
+        if version and version not in versions:
             logger.error(f"Specified version not found for this configuration ({vehicle} and {platform}).")
             return None
 
