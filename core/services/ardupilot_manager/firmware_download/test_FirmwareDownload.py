@@ -1,3 +1,5 @@
+import os
+
 from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 
 
@@ -38,4 +40,12 @@ def test_firmware_download() -> None:
 
     assert firmware_download.download(Vehicle.Sub, Platform.Pixhawk1), "Failed to download latest valid firmware file."
 
-    assert firmware_download.download(Vehicle.Sub, Platform.Navigator), "Failed to download navigator binary."
+    # It'll fail if running in an arch different of ARM
+    if "x86" in os.uname().machine:
+        assert (
+            firmware_download.download(Vehicle.Sub, Platform.Navigator) is None
+        ), "Failed to download navigator binary."
+    else:
+        assert (
+            firmware_download.download(Vehicle.Sub, Platform.Navigator) is not None
+        ), "Failed to download navigator binary."
