@@ -104,16 +104,15 @@ class FirmwareDownload:
         return filename
 
     @staticmethod
-    def _download_navigator() -> Optional[pathlib.Path]:
+    def _navigator_firmware_url() -> str:
         """This is a temporary method should be removed after navigator builds are provided
             by ArduPilot community.
             TODO: This function should not exist and be removed asap
 
         Returns:
-            Optional[pathlib.Path]: Path of the binary
+            str: Navigator url
         """
-        url = "https://s3.amazonaws.com/downloads.bluerobotics.com/ardusub/navigator/ardusub"
-        return FirmwareDownload._download(url)
+        return "https://s3.amazonaws.com/downloads.bluerobotics.com/ardusub/navigator/ardusub"
 
     @staticmethod
     def _validate_firmware(firmware_path: pathlib.Path) -> bool:
@@ -219,8 +218,8 @@ class FirmwareDownload:
 
         return available_versions
 
-    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> Optional[pathlib.Path]:
-        """Download a specific firmware that matches the arguments.
+    def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> Optional[str]:
+        """Find a specific firmware URL from manifest that matches the arguments.
 
         Args:
             vehicle (Vehicle): Desired vehicle.
@@ -229,10 +228,10 @@ class FirmwareDownload:
                 Defaults to None.
 
         Returns:
-            Optional[pathlib.Path]: Temporary path for the firmware file, None if unable to download or validate file.
+            Optional[str]: URL of valid firmware or None if there is no such thing.
         """
         if platform == Platform.Navigator and vehicle == Vehicle.Sub:
-            return FirmwareDownload._download_navigator()
+            return FirmwareDownload._navigator_firmware_url()
 
         versions = self.get_available_versions(vehicle, platform)
         logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
@@ -279,13 +278,34 @@ class FirmwareDownload:
 
         item = items[0]
         logger.debug(f"Downloading following firmware: {item}")
-        path = FirmwareDownload._download(item["url"])
-        if firmware_format == FirmwareFormat.ELF:
-            # Make the binary executable
-            os.chmod(str(path), stat.S_IXOTH)
+        return str(item["url"])
+
+    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> Optional[pathlib.Path]:
+        """Download a specific firmware that matches the arguments.
+
+        Args:
+            vehicle (Vehicle): Desired vehicle.
+            platform (Platform): Desired platform.
+            version (str, optional): Desired version, if None provided the latest stable will be used.
+                Defaults to None.
+
+        Returns:
+            Optional[pathlib.Path]: Temporary path for the firmware file, None if unable to download or validate file.
+        """
+        url = self.get_download_url(vehicle, platform, version)
+        if not url:
+            logger.error("No valid url to download.")
+            return None
+
+        path = FirmwareDownload._download(url)
 
         if not path or not FirmwareDownload._validate_firmware(path):
             logger.error("Unable to validate firmware file.")
             return None
+
+        firmware_format = FirmwareDownload._supported_firmware_formats[platform]
+        if firmware_format == FirmwareFormat.ELF:
+            # Make the binary executable
+            os.chmod(str(path), stat.S_IXOTH)
 
         return path
