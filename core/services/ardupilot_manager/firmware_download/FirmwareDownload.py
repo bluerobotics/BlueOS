@@ -299,13 +299,13 @@ class FirmwareDownload:
 
         path = FirmwareDownload._download(url)
 
-        if not path or not FirmwareDownload._validate_firmware(path):
-            logger.error("Unable to validate firmware file.")
-            return None
-
         firmware_format = FirmwareDownload._supported_firmware_formats[platform]
         if firmware_format == FirmwareFormat.ELF:
             # Make the binary executable
             os.chmod(str(path), stat.S_IXOTH)
+
+        if not path or not FirmwareDownload._validate_firmware(path):
+            logger.error("Unable to validate firmware file.")
+            return None
 
         return path
