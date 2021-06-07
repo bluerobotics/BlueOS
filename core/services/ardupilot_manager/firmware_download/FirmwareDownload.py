@@ -300,6 +300,10 @@ class FirmwareDownload:
 
         path = FirmwareDownload._download(url)
 
+        if not path:
+            logger.error("Failed to download firmware.")
+            return None
+
         firmware_format = FirmwareDownload._supported_firmware_formats[platform]
         if firmware_format == FirmwareFormat.ELF:
             # Make the binary executable
@@ -310,7 +314,7 @@ class FirmwareDownload:
             ## For more information: https://www.gnu.org/software/libc/manual/html_node/Permission-Bits.html
             path.chmod(path.stat().st_mode | stat.S_IXOTH | stat.S_IXUSR | stat.S_IXGRP)
 
-        if not path or not FirmwareDownload._validate_firmware(path):
+        if not FirmwareDownload._validate_firmware(path):
             logger.error("Unable to validate firmware file.")
             return None
 
