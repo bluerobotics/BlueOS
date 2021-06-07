@@ -31,6 +31,9 @@ jobs:
         pip install pyfakefs pytest-cov pytest-timeout pylint mypy isort black asyncmock
         find . -type f -name "setup.py" | xargs --max-lines=1 --replace=% python % install --user
 
+        # Install necessary typesheds for mypy tests  
+        pip install types-requests
+
         MAVLINK_ROUTER_PATH="/tmp/mavlink-router"
         sudo apt install autoconf g++ git libtool make pkg-config python3-future
         mkdir ${MAVLINK_ROUTER_PATH}
