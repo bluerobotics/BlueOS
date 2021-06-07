@@ -97,6 +97,7 @@ class FirmwareDownload:
         name = pathlib.Path(urlparse(url).path).name
         filename = pathlib.Path(f"{FirmwareDownload._generate_random_filename()}-{name}")
         try:
+            logger.debug(f"Downloading: {url}")
             urlretrieve(url, filename)
         except Exception as error:
             logger.error(f"Failed to download {url}: {error}")
