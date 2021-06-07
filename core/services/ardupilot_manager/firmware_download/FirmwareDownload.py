@@ -303,7 +303,12 @@ class FirmwareDownload:
         firmware_format = FirmwareDownload._supported_firmware_formats[platform]
         if firmware_format == FirmwareFormat.ELF:
             # Make the binary executable
-            os.chmod(str(path), stat.S_IXOTH)
+            ## S_IX: Execution permission for
+            ##    OTH: Others
+            ##    USR: User
+            ##    GRP: Group
+            ## For more information: https://www.gnu.org/software/libc/manual/html_node/Permission-Bits.html
+            path.chmod(path.stat().st_mode | stat.S_IXOTH | stat.S_IXUSR | stat.S_IXGRP)
 
         if not path or not FirmwareDownload._validate_firmware(path):
             logger.error("Unable to validate firmware file.")
