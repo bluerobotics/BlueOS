@@ -61,11 +61,26 @@ class ArduPilotManager(metaclass=Singleton):
         ## Can be changed back to a simple command after https://github.com/ArduPilot/ardupilot/issues/17572
         ## gets fixed.
         # pylint: disable=consider-using-with
+        #
+        # The mapping of serial ports works as in the following table:
+        #
+        # |    ArduSub   |       Navigator         |
+        # | -C = Serial1 | Serial1 => /dev/ttyS0   |
+        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 |
+        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 |
+        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
+        #
+        # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
+
         self.subprocess = subprocess.Popen(
             "while true; do "
             f"{firmware} -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_path}/logs/"
             f" --storage-directory {self.settings.firmware_path}/storage/"
+            f" -C /dev/ttyS0"
+            f" -B /dev/ttyAMA1"
+            f" -E /dev/ttyAMA2"
+            f" -F /dev/ttyAMA3"
             "; sleep 1; done",
             shell=True,
             encoding="utf-8",
