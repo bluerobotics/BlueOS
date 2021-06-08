@@ -105,6 +105,14 @@ class ArduPilotManager(metaclass=Singleton):
         master_endpoint = Endpoint(
             "Master", self.settings.app_name, EndpointType.TCPServer, "127.0.0.1", 5760, protected=True
         )
+        # The mapping of serial ports works as in the following table:
+        #
+        # |    ArduSub   |       Navigator         |
+        # | -C = Serial1 | Serial1 => /dev/ttyS0   |
+        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 |
+        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 |
+        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
+        #
         # pylint: disable=consider-using-with
         self.subprocess = subprocess.Popen(
             [
@@ -115,6 +123,14 @@ class ArduPilotManager(metaclass=Singleton):
                 str(master_endpoint.argument),
                 "--home",
                 "-27.563,-48.459,0.0,270.0",
+                "-C",
+                "/dev/ttyS0",
+                "-B",
+                "/dev/ttyAMA1",
+                "-E",
+                "/dev/ttyAMA2",
+                "-F",
+                "/dev/ttyAMA3",
             ],
             shell=False,
             encoding="utf-8",
