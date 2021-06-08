@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION
@@ -15,6 +15,13 @@ class PingDriver:
         self.port = port
         self.bridge: Optional[Bridges] = None
 
+    @staticmethod
+    def baudrate_candidates() -> List[Baudrates]:
+        """
+        returns a list of baudrates to probe this sensor for
+        """
+        return list(Baudrates)
+
     def detect_highest_baud(self) -> Baudrates:
         """Tries to communicate in increasingly high baudrates up to 4M
         returns the highest one with at least 90% success rate.
@@ -24,7 +31,7 @@ class PingDriver:
         max_failures = attempts * failure_threshold
 
         last_valid_baud = Baudrates.b115200
-        for baud in Baudrates:
+        for baud in self.baudrate_candidates():
             logging.debug(f"Trying baud {baud}...")
             failures = 0
             for _ in range(attempts):
