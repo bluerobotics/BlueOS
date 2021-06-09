@@ -17,16 +17,16 @@ git ls-files '*.js' '*.html' | xargs --max-lines=1 ./node_modules/.bin/eslint
 
 echo "Running isort.."
 # Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only --diff "{}" --profile black
+dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only --diff "{}"
 
 echo "Running black.."
-black --check --diff --line-length=120 "$repository_path"
+black --check --diff "$repository_path"
 
 echo "Running pylint.."
 pylint $(git ls-files '*.py')
 
 echo "Running mypy.."
-git ls-files '*.py' | xargs --max-lines=1 mypy --ignore-missing-imports --warn-unreachable --allow-untyped-decorators --strict
+git ls-files '*.py' | xargs --max-lines=1 mypy
 
 echo "Running pytest.."
 pytest --cov="$repository_path" --cov-config="$repository_path/.coveragerc" --cov-report html --cov-report term
