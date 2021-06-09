@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "companion-docker"
+version = "0.0.1"
+description = "Blue Robotics Companion computer project"
+authors = ["software@bluerobotics.com"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+black = "^20.8b1"
+isort = "^5.8"
+pylint = "^2.8"
+mypy = "^0.900"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+allow_untyped_decorators = true
+ignore_missing_imports = true
+strict = true
+warn_unreachable = true
+plugins = "pydantic.mypy"
+
+[tool.pylint]
+    [tool.pylint.master]
+    max-line-length = 120
+    enable = "all"
+    disable = [
+        "attribute-defined-outside-init",
+        "bad-continuation", # Black takes care of that for us
+        "broad-except",
+        "duplicate-code",
+        "import-error",
+        "inconsistent-return-statements",
+        "invalid-name",
+        "locally-disabled", # We know what we are doing, necessary to load plugins in runtime
+        "logging-fstring-interpolation", # We want a good-to-read logging interface
+        "missing-class-docstring",
+        "missing-function-docstring",
+        "missing-module-docstring",
+        "no-member", # Some members are created in runtime, pylint fails to detect such cases
+        "no-name-in-module", # Names can be generated in runtime
+        "protected-access", # Necessary for internal tests
+        "suppressed-message",
+        "too-few-public-methods", # We know what kind of architecture we want
+        "too-many-public-methods", # Wrappers will have multiple public methods
+        "useless-super-delegation", # Fails to check it properly
+        "wildcard-import", # Necessary to locate installed plugins
+        "wrong-import-position",
+        ]
+
+    [tool.pylint.miscellaneous]
+    notes = [ "FIXME" ] # TODO is removed for internal development
