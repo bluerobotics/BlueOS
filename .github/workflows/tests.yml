@@ -28,7 +28,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install wheel # wheel need to be installed before mavproxy
         pip install mavproxy
-        pip install pyfakefs pytest-cov pytest-timeout pylint mypy isort black asyncmock
+        pip install pyfakefs pytest-cov pytest-timeout pylint mypy isort black asyncmock types-requests
         find . -type f -name "setup.py" | xargs --max-lines=1 --replace=% python % install --user
 
         MAVLINK_ROUTER_PATH="/tmp/mavlink-router"
