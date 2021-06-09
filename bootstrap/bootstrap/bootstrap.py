@@ -143,6 +143,7 @@ class Bootstrapper:
         image = core["image"]
         core_version = core["tag"]
         binds = core["binds"]
+        ports = core["ports"]
         privileged = core["privileged"]
         network = core["network"]
 
@@ -163,6 +164,7 @@ class Bootstrapper:
                 f"{image}:{core_version}",
                 name=Bootstrapper.CORE_CONTAINER_NAME,
                 volumes=binds,
+                ports=ports,
                 privileged=privileged,
                 network=network,
                 detach=True,

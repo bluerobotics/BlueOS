@@ -30,6 +30,7 @@ SAMPLE_JSON = """{
                 "mode": "rw"
             }
         },
+        "ports": {},
         "privileged": true
     }
 }"""

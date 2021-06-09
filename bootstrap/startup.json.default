@@ -27,6 +27,7 @@
                 "mode": "rw"
             }
         },
+        "ports": {},
         "privileged": true
     }
 }
