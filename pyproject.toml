@@ -24,6 +24,7 @@ addopts = "--cov-report html --cov-report term"
 [tool.coverage.run]
 branch = true
 omit = [
+    "*/setup.py",
     "*/__init__.py",
     ]
 
