@@ -12,5 +12,7 @@ setuptools.setup(
     license="MIT",
     packages=setuptools.find_packages(),
     python_requires=">=3.9",
-    install_requires=[],
+    install_requires=[
+        "loguru == 0.5.3",
+    ],
 )

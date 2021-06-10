@@ -2,12 +2,11 @@
 import argparse
 import json
 import logging
-from logging import LogRecord
 from pathlib import Path
-from types import FrameType
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Set
 
 import uvicorn
+from commonwealth.utils.logs import InterceptHandler
 from fastapi import Body, FastAPI, Response, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -23,26 +22,6 @@ parser = argparse.ArgumentParser(description="ArduPilot Manager service for Blue
 parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any board", action="store_true")
 
 args = parser.parse_args()
-
-
-class InterceptHandler(logging.Handler):
-    def emit(self, record: LogRecord) -> None:
-        # Get corresponding Loguru level if it exists
-        level: Union[int, str]
-        try:
-            level = logger.level(record.levelname).name
-        except ValueError:
-            level = record.levelno
-
-        # Find caller from where originated the logged message
-        frame: Optional[FrameType]
-        frame, depth = logging.currentframe(), 2
-        while frame and frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
-
-        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
-
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
