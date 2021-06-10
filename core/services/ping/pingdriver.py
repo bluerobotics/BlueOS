@@ -30,7 +30,7 @@ class PingDriver:
             ping = PingDevice()
             ping.connect_serial(self.ping.port.device, baud)
             for _ in range(attempts):
-                device_info = ping.request(COMMON_DEVICE_INFORMATION)
+                device_info = ping.request(COMMON_DEVICE_INFORMATION, timeout=0.1)
                 if device_info is None:
                     failures += 1
                     if failures > max_failures:
