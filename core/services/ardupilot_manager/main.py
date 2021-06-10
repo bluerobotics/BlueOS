@@ -1,17 +1,16 @@
 #! /usr/bin/env python3
 import argparse
-import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
 import uvicorn
+from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler
 from fastapi import Body, FastAPI, Response, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from starlette.responses import Response as StarletteResponse
 
 from ArduPilotManager import ArduPilotManager
 from mavlink_proxy.Endpoint import Endpoint
@@ -24,19 +23,6 @@ parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any boa
 args = parser.parse_args()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
-
-
-class PrettyJSONResponse(StarletteResponse):
-    media_type = "application/json"
-
-    def render(self, content: Any) -> bytes:
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=2,
-            separators=(", ", ": "),
-        ).encode(self.charset)
 
 
 app = FastAPI(

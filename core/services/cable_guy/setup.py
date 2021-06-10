@@ -72,5 +72,6 @@ setuptools.setup(
         "uvicorn == 0.13.4",
         "aiofiles == 0.6.0",
         "fastapi-versioning == 0.9.0",
+        "commonwealth == 0.1.0",
     ],
 )
