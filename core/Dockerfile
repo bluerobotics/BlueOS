@@ -9,6 +9,10 @@ RUN /home/pi/tools/linux2rest/bootstrap.sh
 RUN /home/pi/tools/bridges/bootstrap.sh
 RUN /home/pi/tools/ttyd/bootstrap.sh
 
+# Install custom libraries
+COPY libs /home/pi/libs
+RUN /home/pi/libs/install-libs.sh
+
 # Set tmux configuration file
 COPY configuration/tmux.conf /etc/tmux.conf
 
