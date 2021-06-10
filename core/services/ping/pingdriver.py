@@ -27,9 +27,9 @@ class PingDriver:
         for baud in Baudrates:
             logging.debug(f"Trying baud {baud}...")
             failures = 0
+            ping = PingDevice()
+            ping.connect_serial(self.ping.port.device, baud)
             for _ in range(attempts):
-                ping = PingDevice()
-                ping.connect_serial(self.ping.port.device, baud)
                 device_info = ping.request(COMMON_DEVICE_INFORMATION)
                 if device_info is None:
                     failures += 1
