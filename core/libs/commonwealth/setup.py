@@ -14,5 +14,6 @@ setuptools.setup(
     python_requires=">=3.9",
     install_requires=[
         "loguru == 0.5.3",
+        "starlette == 0.13.6",
     ],
 )

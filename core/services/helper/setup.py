@@ -65,6 +65,7 @@ setup(
     install_requires=[
         "aiofiles == 0.6.0",
         "beautifulsoup4 == 4.9.3",
+        "commonwealth == 0.1.0",
         "fastapi == 0.63.0",
         "fastapi-versioning == 0.9.0",
         "psutil == 5.7.2",

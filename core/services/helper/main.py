@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import http
-import json
 from pathlib import Path
 from typing import Any, List
 
@@ -9,29 +8,16 @@ import psutil
 import requests
 import uvicorn
 from bs4 import BeautifulSoup
+from commonwealth.utils.apis import PrettyJSONResponse
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from pydantic import BaseModel
-from starlette.responses import Response as StarletteResponse
 
 PORT = 80
 DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
-
-
-class PrettyJSONResponse(StarletteResponse):
-    media_type = "application/json"
-
-    def render(self, content: Any) -> bytes:
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=2,
-            separators=(", ", ": "),
-        ).encode(self.charset)
 
 
 class ServiceInfo(BaseModel):

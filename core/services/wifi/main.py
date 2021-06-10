@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
 from typing import Any, List
 
 import uvicorn
+from commonwealth.utils.apis import PrettyJSONResponse
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
-from starlette.responses import Response as StarletteResponse
 
 from WifiManager import (
     BusyError,
@@ -26,19 +25,6 @@ FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
 
 wifi_manager = WifiManager()
-
-
-class PrettyJSONResponse(StarletteResponse):
-    media_type = "application/json"
-
-    def render(self, content: Any) -> bytes:
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=2,
-            separators=(", ", ": "),
-        ).encode(self.charset)
 
 
 app = FastAPI(

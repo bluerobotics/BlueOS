@@ -1,32 +1,17 @@
 #! /usr/bin/env python3
-import json
 import os
 import sys
 from pathlib import Path
 from typing import Any, List
 
 import uvicorn
+from commonwealth.utils.apis import PrettyJSONResponse
 from fastapi import Body, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
-from starlette.responses import Response as StarletteResponse
 
 from api import manager
 from api.manager import EthernetInterface
-
-
-class PrettyJSONResponse(StarletteResponse):
-    media_type = "application/json"
-
-    def render(self, content: Any) -> bytes:
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=2,
-            separators=(", ", ": "),
-        ).encode(self.charset)
-
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
