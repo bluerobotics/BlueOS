@@ -36,6 +36,32 @@ paths:
                   type: string
                   example: master
 
+  /version/delete:
+    delete:
+      operationId: main.delete_version
+      summary: Delete the selected version of companion
+      responses:
+        '200':
+          description: Version as deleted successfully
+        '404':
+          description: Version does not exist
+        '403':
+          description: Version can not be deleted
+        '500':
+          description: Internal error while trying to delete the file
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repository:
+                  type: string
+                  example: bluerobotics/companion-core
+                tag:
+                  type: string
+                  example: master
+
   /version/available/{repository}/{image}:
     get:
       operationId: main.get_available_versions
