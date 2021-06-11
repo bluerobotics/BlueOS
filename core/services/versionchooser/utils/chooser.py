@@ -130,6 +130,50 @@ class VersionChooser:
                 logging.critical("Error: %s: %s", type(error), error)
                 return web.Response(status=500, text=f"Error: {type(error)}: {error}")
 
+    async def delete_version(self, image: str, tag: str) -> web.StreamResponse:
+        """Deletes the selected version.
+
+        Args:
+            image (str): the repository of the image
+            tag (str): the desired tag
+
+        Returns:
+            web.Response:
+                200 - OK
+                400 - Invalid image/tag
+                403 - image cannot be deleted
+                500 - Internal error (unable to read config file/docker refused to delete image)
+        """
+        full_name = f"{image}:{tag}"
+        # refuse if it is the current image
+        with open(DOCKER_CONFIG_PATH, "r+") as startup_file:
+            try:
+                core = json.load(startup_file)["core"]
+                current_tag = core["tag"]
+                current_image = core["image"]
+                if image == current_image and tag == current_tag:
+                    return web.Response(status=403, text=f"Image {full_name} is in use and cannot be deleted.")
+            except Exception as e:
+                logging.warning(f"Unable to read config file: {e}")
+                return web.Response(status=500, text=f"Unable read config file: {e}")
+
+        # check if image exists
+        try:
+            image = self.client.images.get(full_name)
+        except Exception as error:
+            logging.warning(f"Image not found: {full_name} ({error})")
+            return web.Response(status=404, text=f"image '{full_name}' not found ({error})")
+
+        # actually attempt to delete it
+        logging.info(f"Deleting image {image}:{tag}...")
+        try:
+            self.client.images.remove(full_name, force=False, noprune=False)
+            logging.info("Image deleted successfully")
+            return web.Response(status=200)
+        except Exception as e:
+            logging.warning(f"Error deleting image: {e}")
+            return web.Response(status=500, text=f"Unable do delete image: {e}")
+
     async def get_available_versions(self, repository: str) -> web.Response:
         """Returns versions available locally and in the remote
 

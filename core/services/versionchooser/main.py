@@ -32,6 +32,13 @@ async def set_version(request: web.Request) -> Any:
     return await versionChooser.set_version(repository, tag)
 
 
+async def delete_version(request: web.Request) -> Any:
+    data = await request.json()
+    tag = data["tag"]
+    repository = data["repository"]
+    return await versionChooser.delete_version(repository, tag)
+
+
 async def get_available_versions(repository: str, image: str) -> Any:
     return await versionChooser.get_available_versions(f"{repository}/{image}")
 

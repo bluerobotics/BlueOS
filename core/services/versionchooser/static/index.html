@@ -58,12 +58,13 @@
                       Upgrade
 
                     </span>
-                    <span v-if="image.sha !== currentVersion.sha" class="button alert disabled">
+                    -->
+                    <span v-if="image.sha !== currentVersion.sha" class="button alert"
+                      @click="deleteVersion(`${image.repository}:${image.tag}`)">
                       <span class="mif-bin m-1"></span>
                       Delete
 
                     </span>
-                    -->
                     <span
                       class="button primary"
                       @click="this.Metro.infobox.open('#infobox'); pullAndSetVersion(`${image.repository}:${image.tag}`)"
@@ -167,6 +168,7 @@
           loadingImages: false,
           selectedImage: 'bluerobotics/companion-core',
           Metro: null,
+          deleting: null, // image currently being deleted, if any
         }
       },
       mounted () {
@@ -285,6 +287,29 @@
               tag,
             },
           }).finally(() => setInterval(this.checkIfBackendIsOnline, 1000))
+        },
+        deleteVersion (fullname) {
+          if (this.deleting === fullname) {
+            return
+          }
+          const [repository, tag] = fullname.split(':')
+          this.deleting = fullname
+          axios({
+            method: 'delete',
+            url: '/v1.0/version/delete',
+            data: {
+              repository,
+              tag,
+            },
+          }).then(() => {
+            // Remove this image in the frontend, as calling loadAvailableversions()
+            // takes a longer time to fetch all images
+            this.availableVersions['local'] = this.availableVersions['local'].filter(
+              (element) => { return element.repository !== repository || element.tag !== tag},
+            )
+          })
+            .catch((error) => {alert(error.response.data)})
+            .finally(() => this.deleting = null)
         },
         imageIsAvailableLocally (sha) {
           if (!('local' in this.availableVersions)) {
