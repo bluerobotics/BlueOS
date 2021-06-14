@@ -2,7 +2,7 @@ import json
 import logging
 import pathlib
 from dataclasses import asdict
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import appdirs
 import docker
@@ -28,6 +28,20 @@ class VersionChooser:
         """Serve index.html"""
         return web.FileResponse(str(STATIC_FOLDER) + "/index.html", headers={"cache-control": "no-cache"})
 
+    @staticmethod
+    def get_current_image_and_tag() -> Optional[Tuple[str, str]]:
+        with open(DOCKER_CONFIG_PATH) as startup_file:
+            try:
+                core = json.load(startup_file)["core"]
+                tag = core["tag"]
+                image = core["image"]
+                return image, tag
+            except KeyError as error:
+                logging.warning(f"Invalid version file: {error}")
+            except Exception as e:
+                logging.warning(f"Unable to load settings file: {e}")
+        return None
+
     def get_version(self) -> web.Response:
         """Fetches current version from config file
 
@@ -35,25 +49,20 @@ class VersionChooser:
             web.Response: json with image name, tag, last modification date,
             sha and architecture of the image
         """
-        with open(DOCKER_CONFIG_PATH) as startup_file:
-            try:
-                core = json.load(startup_file)["core"]
-                tag = core["tag"]
-                image_name = core["image"]
-                full_name = f"{image_name}:{tag}"
-                image = self.client.images.get(full_name)
-                output = {
-                    "repository": image_name,
-                    "tag": tag,
-                    "last_modified": image.attrs["Created"],
-                    "sha": image.id,
-                    "architecture": image.attrs["Architecture"],
-                }
-                return web.json_response(output)
-            except KeyError as error:
-                return web.Response(status=500, text=f"Invalid version file: {error}")
-            except Exception as error:
-                return web.Response(status=500, text=f"Error: {type(error)}: {error}")
+        version = self.get_current_image_and_tag()
+        if version is None:
+            return web.Response(status=500, text="Unable to load current version from settings. Check the log")
+        image_name, tag = version
+        full_name = f"{image_name}:{tag}"
+        image = self.client.images.get(full_name)
+        output = {
+            "repository": image_name,
+            "tag": tag,
+            "last_modified": image.attrs["Created"],
+            "sha": image.id,
+            "architecture": image.attrs["Architecture"],
+        }
+        return web.json_response(output)
 
     @staticmethod
     def is_valid_version(_repository: str, _tag: str) -> bool:
@@ -146,17 +155,8 @@ class VersionChooser:
         """
         full_name = f"{image}:{tag}"
         # refuse if it is the current image
-        with open(DOCKER_CONFIG_PATH, "r+") as startup_file:
-            try:
-                core = json.load(startup_file)["core"]
-                current_tag = core["tag"]
-                current_image = core["image"]
-                if image == current_image and tag == current_tag:
-                    return web.Response(status=403, text=f"Image {full_name} is in use and cannot be deleted.")
-            except Exception as e:
-                logging.warning(f"Unable to read config file: {e}")
-                return web.Response(status=500, text=f"Unable read config file: {e}")
-
+        if (image, tag) == self.get_current_image_and_tag():
+            return web.Response(status=500, text=f"Image {full_name} is in use and cannot be deleted.")
         # check if image exists
         try:
             image = self.client.images.get(full_name)
