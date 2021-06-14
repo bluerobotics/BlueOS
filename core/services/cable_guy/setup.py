@@ -73,5 +73,6 @@ setuptools.setup(
         "aiofiles == 0.6.0",
         "fastapi-versioning == 0.9.0",
         "commonwealth == 0.1.0",
+        "loguru == 0.5.3",
     ],
 )
