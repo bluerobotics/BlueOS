@@ -44,12 +44,13 @@ class EthernetManager:
 
     result: List[EthernetInterface] = []
 
-    def __init__(self) -> None:
+    def __init__(self, default_config: EthernetInterface) -> None:
         self.settings = settings.Settings()
 
         # Load settings and do the initial configuration
         if not self.settings.load():
-            print("Failed to load previous settings.")
+            print(f"Failed to load previous settings. Using default configuration: {default_config}")
+            self.set_configuration(default_config)
             return
 
         print("Previous settings loaded:")
@@ -322,11 +323,3 @@ class EthernetManager:
         """
         interface = self.get_interface_ndb(interface_name)
         return InterfaceInfo(connected=interface.carrier != 0, number_of_disconnections=interface.carrier_down_count)
-
-
-ethernetManager = EthernetManager()
-
-if __name__ == "__main__":
-    from pprint import pprint
-
-    pprint(ethernetManager.get_interfaces())
