@@ -16,9 +16,6 @@ RUNTIME_PACKAGES=(
 apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
 apt install -y --no-install-recommends ${RUNTIME_PACKAGES[*]}
 
-# Commonwealth library:
-cd /home/pi/services/commonwealth/ && python3 setup.py install
-
 # Wifi service:
 ## Bind path for wpa
 mkdir -p /var/run/wpa_supplicant/
