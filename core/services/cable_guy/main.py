@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -10,8 +11,31 @@ from fastapi import Body, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 
-from api import manager
-from api.manager import EthernetInterface
+from api.manager import (
+    EthernetInterface,
+    EthernetManager,
+    InterfaceConfiguration,
+    InterfaceMode,
+)
+
+parser = argparse.ArgumentParser(description="CableGuy service for Blue Robotics Companion")
+parser.add_argument(
+    "--default_config",
+    dest="default_config",
+    type=str,
+    default="bluerov2",
+    choices=["bluerov2"],
+    help="Specify configuration to use if settings file cannot be loaded or is not found. Defaults to 'bluerov2'.",
+)
+
+args = parser.parse_args()
+
+if args.default_config == "bluerov2":
+    default_config = EthernetInterface(
+        name="eth0", configuration=InterfaceConfiguration(ip="192.168.2.2", mode=InterfaceMode.Unmanaged)
+    )
+
+manager = EthernetManager(default_config)
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
@@ -26,20 +50,20 @@ app = FastAPI(
 @version(1, 0)
 def retrieve_interfaces() -> Any:
     """REST API endpoint to retrieve the configured ethernet interfaces."""
-    return manager.ethernetManager.get_interfaces()
+    return manager.get_interfaces()
 
 
 @app.post("/ethernet", response_model=EthernetInterface, summary="Configure a ethernet interface.")
 @version(1, 0)
 def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
     """REST API endpoint to configure a new ethernet interface or modify an existing one."""
-    if not manager.ethernetManager.set_configuration(interface):
+    if not manager.set_configuration(interface):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not configure ethernet interface with provided configuration.",
         )
 
-    manager.ethernetManager.save()
+    manager.save()
     return interface
 
 
