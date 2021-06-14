@@ -5,6 +5,7 @@ from socket import AddressFamily
 from typing import Any, List, Optional, Tuple
 
 import psutil
+from loguru import logger
 from pydantic import BaseModel
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
@@ -49,25 +50,25 @@ class EthernetManager:
 
         # Load settings and do the initial configuration
         if not self.settings.load():
-            print(f"Failed to load previous settings. Using default configuration: {default_config}")
+            logger.error(f"Failed to load previous settings. Using default configuration: {default_config}")
             self.set_configuration(default_config)
             return
 
-        print("Previous settings loaded:")
+        logger.info("Previous settings loaded:")
         for item in self.settings.root["content"]:
-            print(f"Configuration with: {item}")
+            logger.info(f"Configuration with: {item}")
             if not self.set_configuration(EthernetInterface(**item)):
-                print("Failed.")
+                logger.error("Failed.")
 
     def save(self) -> None:
         """Save actual configuration"""
         try:
             self.get_interfaces()
         except Exception as exception:
-            print(f"Failed to fetch actual configuration, going to use the previous info: {exception}")
+            logger.error(f"Failed to fetch actual configuration, going to use the previous info: {exception}")
 
         if not self.result:
-            print("Configuration is empty, aborting.")
+            logger.error("Configuration is empty, aborting.")
             return
 
         result = [interface.dict(exclude={"info"}) for interface in self.result]
@@ -83,6 +84,7 @@ class EthernetManager:
             bool: Configuration was accepted
         """
         interfaces = self.get_interfaces()
+        logger.debug(f"Found following ethernet interfaces: {interfaces}.")
         valid_names = [interface.name for interface in interfaces]
 
         name = interface.name
@@ -90,15 +92,19 @@ class EthernetManager:
         mode = interface.configuration.mode
 
         if name not in valid_names:
+            logger.error(f"Invalid interface name ('{name}'). Valid names are: {valid_names}")
             return False
 
         if mode == InterfaceMode.Client:
             self.set_dynamic_ip(name)
+            logger.info(f"Interface '{name}' configured with dynamic IP.")
             return True
         if mode == InterfaceMode.Unmanaged:
             self.set_static_ip(name, ip)
+            logger.info(f"Interface '{name}' configured with static IP.")
             return True
 
+        logger.error(f"Could not configure interface '{name}'.")
         return False
 
     def _get_wifi_interfaces(self) -> List[str]:
@@ -126,9 +132,11 @@ class EthernetManager:
             bool: True if valid, False if not
         """
         blacklist = ["lo", "ham.*", "docker.*"]
-        blacklist += self._get_wifi_interfaces()
+        wifi_interfaces = self._get_wifi_interfaces()
+        blacklist += wifi_interfaces
 
         if not interface_name:
+            logger.error("Interface name cannot be blank or null.")
             return False
 
         for pattern in blacklist:
@@ -204,6 +212,7 @@ class EthernetManager:
         """
         interface_index = self._get_interface_index(interface_name)
         self.ipr.flush_addr(index=interface_index)
+        logger.info(f"Flushing IP addresses from interface {interface_name}.")
 
     def enable_interface(self, interface_name: str, enable: bool = True) -> None:
         """Enable interface
@@ -215,6 +224,7 @@ class EthernetManager:
         interface_index = self._get_interface_index(interface_name)
         interface_state = "up" if enable else "down"
         self.ipr.link("set", index=interface_index, state=interface_state)
+        logger.info(f"Setting interface {interface_name} to '{interface_state}' state.")
 
     async def _trigger_dhcp_service(self, interface_name: str) -> None:
         """Internal async trigger for dhcp service
@@ -243,6 +253,7 @@ class EthernetManager:
         """
         interface_index = self._get_interface_index(interface_name)
         self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
+        logger.info(f"Setting interface {interface_name} to IP '{ip}'.")
 
     def set_dynamic_ip(self, interface_name: str) -> None:
         """Set interface to use dynamic ip address
@@ -254,6 +265,7 @@ class EthernetManager:
         self.flush_interface(interface_name)
         # Trigger DHCP service to add a new dynamic ip address
         self.trigger_dhcp_service(interface_name)
+        logger.info(f"Getting dynamic IP to interface {interface_name}.")
 
     def set_static_ip(self, interface_name: str, ip: str) -> None:
         """Set interface to use static ip address

@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 import argparse
+import logging
 import os
 import sys
 from pathlib import Path
@@ -7,9 +8,11 @@ from typing import Any, List
 
 import uvicorn
 from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.logs import InterceptHandler
 from fastapi import Body, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
+from loguru import logger
 
 from api.manager import (
     EthernetInterface,
@@ -37,12 +40,15 @@ if args.default_config == "bluerov2":
 
 manager = EthernetManager(default_config)
 
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
+
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
 app = FastAPI(
     title="Cable Guy API",
     description="Cable Guy is responsible for managing internet interfaces on Companion.",
     default_response_class=PrettyJSONResponse,
+    debug=True,
 )
 
 
@@ -77,7 +83,10 @@ app.mount("/", StaticFiles(directory=str(HTML_FOLDER), html=True))
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
-        print("You need root privileges to run this script.\nPlease try again, this time using **sudo**. Exiting.")
+        logger.error(
+            "You need root privileges to run this script.\nPlease try again, this time using **sudo**. Exiting."
+        )
         sys.exit(1)
 
-    uvicorn.run(app, host="0.0.0.0", port=9090)
+    # Running uvicorn with log disabled so loguru can handle it
+    uvicorn.run(app, host="0.0.0.0", port=9090, log_config=None)
