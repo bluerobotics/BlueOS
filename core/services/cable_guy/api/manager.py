@@ -1,10 +1,12 @@
 import asyncio
+import pathlib
 import re
 from enum import Enum
 from socket import AddressFamily
 from typing import Any, List, Optional, Tuple
 
 import psutil
+from commonwealth.utils.DHCPServerManager import Dnsmasq
 from loguru import logger
 from pydantic import BaseModel
 from pyroute2 import IW, NDB, IPRoute
@@ -45,8 +47,12 @@ class EthernetManager:
 
     result: List[EthernetInterface] = []
 
-    def __init__(self, default_config: EthernetInterface) -> None:
+    def __init__(self, default_config: EthernetInterface, dhcp_gateway: str) -> None:
         self.settings = settings.Settings()
+
+        self._config_path = pathlib.Path(__file__).parent.absolute().joinpath("settings", "dnsmasq.conf")
+        self._server = Dnsmasq(self._config_path)
+        self._dhcp_server_gateway = dhcp_gateway
 
         # Load settings and do the initial configuration
         if not self.settings.load():
@@ -95,9 +101,18 @@ class EthernetManager:
             logger.error(f"Invalid interface name ('{name}'). Valid names are: {valid_names}")
             return False
 
+        if mode != InterfaceMode.Server and self._server.is_running():
+            self._server.stop()
+
         if mode == InterfaceMode.Client:
             self.set_dynamic_ip(name)
             logger.info(f"Interface '{name}' configured with dynamic IP.")
+            return True
+        if mode == InterfaceMode.Server:
+            self.set_static_ip(name, self._dhcp_server_gateway)
+            if not self._server.is_running():
+                self._server.start()
+            logger.info(f"Interface '{name}' configured as DHCP server with static IP.")
             return True
         if mode == InterfaceMode.Unmanaged:
             self.set_static_ip(name, ip)
@@ -297,9 +312,13 @@ class EthernetManager:
                 ip = address.address if valid_ip else "undefined"
 
                 is_static_ip = self.is_static_ip(ip)
+                is_gateway_ip = ip == self._dhcp_server_gateway
 
                 # Populate our output item
-                mode = InterfaceMode.Unmanaged if is_static_ip and valid_ip else InterfaceMode.Client
+                if self._server.is_running() and is_gateway_ip:
+                    mode = InterfaceMode.Server
+                else:
+                    mode = InterfaceMode.Unmanaged if is_static_ip and valid_ip else InterfaceMode.Client
                 info = self.get_interface_info(interface)
                 data = EthernetInterface(
                     name=interface, configuration=InterfaceConfiguration(ip=ip, mode=mode), info=info

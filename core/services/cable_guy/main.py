@@ -37,8 +37,9 @@ if args.default_config == "bluerov2":
     default_config = EthernetInterface(
         name="eth0", configuration=InterfaceConfiguration(ip="192.168.2.2", mode=InterfaceMode.Unmanaged)
     )
+    dhcp_gateway = "192.168.2.2"
 
-manager = EthernetManager(default_config)
+manager = EthernetManager(default_config, dhcp_gateway)
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
