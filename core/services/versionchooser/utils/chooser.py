@@ -92,6 +92,9 @@ class VersionChooser:
         for line in low_level_api.pull(f"{repository}:{tag}", stream=True, decode=True):
             await response.write(f"{line}\n\n".replace("'", '"').encode("utf-8"))
         await response.write_eof()
+        # Remove any untagged and unused images after pulling
+        # If updating a tag, the previous image will be cleaned up in this step
+        self.client.images.prune(filters={"dangling": True})
         return response
 
     async def set_version(self, image: str, tag: str) -> web.StreamResponse:
