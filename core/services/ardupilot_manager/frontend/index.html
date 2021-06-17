@@ -3,10 +3,10 @@
 
 <head>
     <title>ArduPilot Manager</title>
-    <link rel="stylesheet" href="/static/css/metro-all.css" />
-    <script src="/static/js/vue.js"></script>
-    <script src="/static/js/axios.min.js"></script>
-    <script src="/static/js/metro.js"></script>
+    <link rel="stylesheet" href="static/css/metro-all.css" />
+    <script src="static/js/vue.js"></script>
+    <script src="static/js/axios.min.js"></script>
+    <script src="static/js/metro.js"></script>
 </head>
 
 <body>
@@ -148,7 +148,7 @@
         },
       },
       created () {
-        this.API_URL = '/v1.0/endpoints'
+        this.API_URL = 'v1.0/endpoints'
         this.connection_type_options = {
           serial: 'Serial',
           udpin: 'UDP Server',
