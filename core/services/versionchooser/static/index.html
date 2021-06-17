@@ -4,13 +4,13 @@
 
   <head>
     <title>Version Chooser</title>
-    <link rel="stylesheet" href="/static/css/metro-all.css">
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="/static/js/vue.js"></script>
-    <script src="/static/js/axios.min.js"></script>
-    <script src="/static/js/timeago.js"></script>
-    <script src="/static/js/jquery.js"></script>
-    <script src="/static/js/metro.js"></script>
+    <link rel="stylesheet" href="static/css/metro-all.css">
+    <link rel="stylesheet" href="static/style.css">
+    <script src="static/js/vue.js"></script>
+    <script src="static/js/axios.min.js"></script>
+    <script src="static/js/timeago.js"></script>
+    <script src="static/js/jquery.js"></script>
+    <script src="static/js/metro.js"></script>
   </head>
 
   <body>
@@ -180,7 +180,7 @@
         checkIfBackendIsOnline () {
           axios({
             method: 'get',
-            url: '/v1.0/version/current',
+            url: 'v1.0/version/current',
             timeout: 500,
           })
             .then(() => {
@@ -200,13 +200,13 @@
         loadAvailableversions () {
           // TODO: validate repository, treat error fetching
           this.loadingImages = true
-          axios.get('/v1.0/version/available/' + this.selectedImage).then((response) => {
+          axios.get('v1.0/version/available/' + this.selectedImage).then((response) => {
             this.availableVersions = response.data
           }).catch(() => { this.availableVersions = {} })
             .finally(() => this.loadingImages = false)
         },
         loadCurrentVersion () {
-          return axios.get('/v1.0/version/current/').then((response) => {
+          return axios.get('v1.0/version/current/').then((response) => {
             const image = response.data
             this.currentVersion = image
             const fullname = `${image.repository}:${image.tag}`
@@ -233,7 +233,7 @@
           let overallStatus = ''
 
           axios({
-            url: '/v1.0/version/pull',
+            url: 'v1.0/version/pull',
             method: 'POST',
             data: {
               repository,
@@ -281,7 +281,7 @@
           const [repository, tag] = fullname.split(':')
           axios({
             method: 'post',
-            url: '/v1.0/version/current',
+            url: 'v1.0/version/current',
             data: {
               repository,
               tag,
@@ -296,7 +296,7 @@
           this.deleting = fullname
           axios({
             method: 'delete',
-            url: '/v1.0/version/delete',
+            url: 'v1.0/version/delete',
             data: {
               repository,
               tag,
