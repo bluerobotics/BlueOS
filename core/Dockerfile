@@ -9,6 +9,7 @@ RUN /home/pi/tools/linux2rest/bootstrap.sh
 RUN /home/pi/tools/bridges/bootstrap.sh
 RUN /home/pi/tools/ttyd/bootstrap.sh
 RUN /home/pi/tools/dnsmasq/bootstrap.sh
+RUN /home/pi/tools/nginx/bootstrap.sh
 
 # Install custom libraries
 COPY libs /home/pi/libs
