@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from pydantic import BaseModel
 
-PORT = 80
+PORT = 81
 DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
