@@ -14,6 +14,7 @@ SERVICES=(
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
     'ttyd',"ttyd -p 8088 /usr/bin/tmux"
+    'nginx',"nginx -g \"daemon off;\" -c /home/pi/tools/nginx/nginx.conf"
 )
 
 tmux start-server -f /etc/tmux.conf
