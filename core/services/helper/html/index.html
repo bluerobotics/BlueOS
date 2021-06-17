@@ -87,7 +87,7 @@
           },
           requestData () {
             console.debug('Requesting status..')
-            axios.get('/latest/web_services').then((response) => {
+            axios.get('latest/web_services').then((response) => {
               // Sort services by port number
               this.services = response.data.sort(
                 (first, second) => first.port - second.port,

@@ -123,7 +123,7 @@
       requestData () {
         console.debug('Requesting status..')
         axios
-          .get('/v1.0/ethernet')
+          .get('v1.0/ethernet')
           .then(function (response) {
             console.debug(`userInputChanged ${this.userInputChanged}`)
             // Prevent vue to rewrite user configuration
@@ -151,7 +151,7 @@
         this.userInputChanged = false
         console.debug(`Sending: ${JSON.stringify(data)}`)
         axios
-          .post('/v1.0/ethernet', data)
+          .post('v1.0/ethernet', data)
           .then(function (response) {
             console.debug(`Done ${JSON.stringify(response, null, ' ')}`)
             setTimeout(
