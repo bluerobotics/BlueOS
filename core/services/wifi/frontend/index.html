@@ -4,10 +4,10 @@
   <head>
     <meta name="metro4:init" content="false" />
     <title>Wifi Manager</title>
-    <link rel="stylesheet" href="/static/css/metro-all.css" />
-    <script src="/static/js/vue.js"></script>
-    <script src="/static/js/axios.min.js"></script>
-    <script src="/static/js/metro.js"></script>
+    <link rel="stylesheet" href="static/css/metro-all.css" />
+    <script src="static/js/vue.js"></script>
+    <script src="static/js/axios.min.js"></script>
+    <script src="static/js/metro.js"></script>
   </head>
 
   <body>
@@ -135,7 +135,7 @@
         }
       },
       mounted () {
-        this.API_URL = '/v1.0'
+        this.API_URL = 'v1.0'
         this.Metro = Metro
         this.Metro.init()
         setInterval(this.updateData, 5000)
