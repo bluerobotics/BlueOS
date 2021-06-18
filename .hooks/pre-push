@@ -13,7 +13,7 @@ echo "Running shellcheck..."
 git ls-files '*.sh' | xargs --max-lines=1 shellcheck --exclude=SC2005,SC2015,SC2046,SC2086
 
 echo "Running eslint.."
-git ls-files '*.js' '*.html' | xargs --max-lines=1 ./node_modules/.bin/eslint
+git ls-files '*.js' '*.html' '*.vue' '*.ts' | xargs --max-lines=1 ./node_modules/.bin/eslint
 
 echo "Running isort.."
 # Run isort for each python project
