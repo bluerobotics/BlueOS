@@ -1,0 +1,71 @@
+{
+  "name": "companion-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "vue": {
+    "transpileDependencies": [
+      "vuetify"
+    ],
+    "pwa": {
+      "name": "Companion",
+      "themeColor": "#08c",
+      "appleMobileWebAppCapable": "yes",
+      "appleMobileWebAppStatusBarStyle": "white",
+      "manifestOptions": {
+        "background_color": "#FFFFFF"
+      },
+      "iconPaths": {
+        "favicon32": "img/icons/favicon-32x32.png",
+        "favicon16": "img/icons/favicon-16x16.png",
+        "appleTouchIcon": "img/icons/apple-touch-icon.png"
+      }
+    }
+  },
+  "babel": {
+    "presets": [
+      "@vue/cli-plugin-babel/preset"
+    ]
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@mdi/font": "^5.9.55",
+    "core-js": "^3.6.5",
+    "register-service-worker": "^1.7.1",
+    "roboto-fontface": "*",
+    "vue": "^2.6.11",
+    "vue-router": "^3.2.0",
+    "vuetify": "^2.4.0",
+    "vuex": "^3.4.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-plugin-pwa": "~4.5.0",
+    "@vue/cli-plugin-router": "~4.5.0",
+    "@vue/cli-plugin-typescript": "~4.5.0",
+    "@vue/cli-plugin-vuex": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/eslint-config-typescript": "^7.0.0",
+    "eslint": "^7.29.0",
+    "eslint-plugin-html": "^6.1.2",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-vue": "^7.11.1",
+    "sass": "~1.32.0",
+    "sass-loader": "^10.0.0",
+    "typescript": "~4.1.5",
+    "vue-cli-plugin-vuetify": "~2.4.1",
+    "vue-template-compiler": "^2.6.11",
+    "vuetify-loader": "^1.7.0"
+  }
+}
