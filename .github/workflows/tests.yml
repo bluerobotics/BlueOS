@@ -24,7 +24,10 @@ jobs:
         # This should be the same hash as in core/tools/mavlink_router/bootstrap.py#L10
         MAVLINK_ROUTER_COMMIT="94c4e3c6a9ff7c517b20b417e232caf52f12a6c6"
         sudo apt install shellcheck
-        npm install eslint eslint-plugin-vue eslint-plugin-html --save-dev
+        npm install \
+          eslint eslint-plugin-vue eslint-plugin-html \
+          @vue/eslint-config-typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin typescript \
+          --save-dev
         python -m pip install --upgrade pip
         pip install wheel # wheel need to be installed before mavproxy
         pip install mavproxy
