@@ -35,6 +35,10 @@ def run_apt_install(package: str) -> None:
 
 
 def run_apt_uninstall(package: str) -> None:
+    if "NOUNINSTALL" in os.environ:
+        print("Skipping uninstall step.")
+        return
+
     run_command(f"DEBIAN_FRONTEND=noninteractive apt --yes purge {package} ")
     # "autoremove" is actually responsible for cleaning up 193 MB
     run_command("DEBIAN_FRONTEND=noninteractive apt --yes autoremove ")
