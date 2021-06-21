@@ -55,3 +55,16 @@ jobs:
       with:
         name: coverage
         path: htmlcov
+  frontend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: --cwd ./core/frontend install
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: --cwd ./core/frontend lint
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: --cwd ./core/frontend build
