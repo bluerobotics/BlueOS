@@ -50,7 +50,7 @@ if not os.path.exists(MAVLINK_ROUTER_PATH):
 
 set_directory(MAVLINK_ROUTER_PATH)
 run_command(f"git fetch origin {MAVLINK_ROUTER_COMMIT}")
-run_command(f"git checkout {MAVLINK_ROUTER_COMMIT}")
+run_command("git checkout FETCH_HEAD")
 run_command("git submodule update --init --recursive --quiet")
 run_command("./autogen.sh")
 run_command(
