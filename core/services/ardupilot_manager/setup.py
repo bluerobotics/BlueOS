@@ -56,7 +56,7 @@ setuptools.setup(
         "uvicorn == 0.13.4",
         "python-multipart == 0.0.5",
         "validators == 0.18.2",
-        "fastapi-versioning == 0.9.0",
+        "fastapi-versioning == 0.9.1",
         "aiofiles == 0.6.0",
         "loguru == 0.5.3",
         "commonwealth == 0.1.0",
