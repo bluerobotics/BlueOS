@@ -13,6 +13,7 @@ RUNTIME_PACKAGES=(
     python3-setuptools
 )
 
+apt update
 apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
 apt install -y --no-install-recommends ${RUNTIME_PACKAGES[*]}
 
