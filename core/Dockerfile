@@ -4,17 +4,21 @@ FROM node:current-buster-slim AS frontendBuilder
 COPY frontend /home/pi/frontend
 RUN cd /home/pi/frontend && yarn install && yarn build --skip-plugins @vue/cli-plugin-eslint
 
+# Download binaries
+FROM bluerobotics/companion-base:v0.0.1 as downloadBinaries
+COPY tools /home/pi/tools
+RUN /home/pi/tools/bridges/bootstrap.sh
+RUN /home/pi/tools/mavlink2rest/bootstrap.sh
+RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
+RUN /home/pi/tools/mavlink_router/bootstrap.py
+RUN /home/pi/tools/ttyd/bootstrap.sh
+
 FROM bluerobotics/companion-base:v0.0.1
 
 # Install necessary tools
 COPY tools /home/pi/tools
-RUN /home/pi/tools/mavlink_router/bootstrap.py
-RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
-RUN /home/pi/tools/mavlink2rest/bootstrap.sh
-RUN /home/pi/tools/linux2rest/bootstrap.sh
-RUN /home/pi/tools/bridges/bootstrap.sh
-RUN /home/pi/tools/ttyd/bootstrap.sh
 RUN /home/pi/tools/dnsmasq/bootstrap.sh
+RUN /home/pi/tools/linux2rest/bootstrap.sh
 RUN /home/pi/tools/nginx/bootstrap.sh
 
 # Install custom libraries
@@ -28,6 +32,15 @@ COPY configuration/tmux.conf /etc/tmux.conf
 COPY services /home/pi/services
 COPY start-companion-core /usr/bin/start-companion-core
 RUN /home/pi/services/install-services.sh
+
+# Copy binaries from downloadBinaries to this stage
+COPY --from=downloadBinaries \
+    /usr/bin/bridges \
+    /usr/bin/mavlink2rest \
+    /usr/bin/mavlink-camera-manager \
+    /usr/bin/mavlink-routerd \
+    /usr/bin/ttyd \
+    /usr/bin/
 
 # Copy frontend built on frontendBuild to this stage
 COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
