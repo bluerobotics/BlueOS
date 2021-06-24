@@ -45,6 +45,9 @@ def run_apt_uninstall(package: str) -> None:
 
 
 print("Starting..")
+# Run apt update before starting installing stuff
+run_command("apt update")
+
 run_apt_install("autoconf g++ git libtool make pkg-config")
 run_command("pip install future==0.18.2")
 
