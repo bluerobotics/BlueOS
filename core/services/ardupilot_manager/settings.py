@@ -12,15 +12,26 @@ class Settings:
     settings_path = Path(appdirs.user_config_dir(app_name))
     settings_file = Path.joinpath(settings_path, "settings.json")
     firmware_path = Path.joinpath(settings_path, "firmware")
+    app_folders = [settings_path, firmware_path]
 
     def __init__(self) -> None:
         self.root: Dict[str, Union[int, Dict[str, Any]]] = {"version": 0, "content": {}}
+        self.create_app_folders()
 
-    def create_settings(self) -> None:
-        """Create settings files and folders."""
+    @staticmethod
+    def create_app_folders() -> None:
+        """Create the necessary folders for proper app function."""
+        for folder in Settings.app_folders:
+            try:
+                Path.mkdir(folder, exist_ok=True)
+            except FileExistsError:
+                logger.warning(f"Found file {folder} where a folder should be. Removing file and creating folder.")
+                Path.unlink(folder)
+                Path.mkdir(folder)
+
+    def create_settings_file(self) -> None:
+        """Create settings file."""
         try:
-            Path.mkdir(self.settings_path, exist_ok=True)
-            Path.mkdir(self.firmware_path, exist_ok=True)
             if not Path.is_file(self.settings_file):
                 with open(self.settings_file, "w+") as file:
                     logger.info(f"Creating settings file: {self.settings_file}")
