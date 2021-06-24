@@ -26,7 +26,7 @@ class ArduPilotManager(metaclass=Singleton):
             logger.info(f"Loaded settings from {self.settings.settings_file}.")
             logger.debug(self.settings.content)
         else:
-            self.settings.create_settings()
+            self.settings.create_settings_file()
 
         self.configuration = deepcopy(self.settings.content)
         self._load_endpoints()
