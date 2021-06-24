@@ -28,6 +28,8 @@ class ServiceInfo(BaseModel):
 
 
 class Helper:
+    LOCALSERVER_CANDIDATES = ["0.0.0.0", "::"]
+
     @staticmethod
     def detect_service(port: int) -> ServiceInfo:
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", port=port)
@@ -61,7 +63,7 @@ class Helper:
         # Filter for TCP ports that are listen and can be accessed by external users (server in 0.0.0.0)
         connections = iter(psutil.net_connections("tcp"))
         connections = filter(lambda connection: connection.status == psutil.CONN_LISTEN, connections)
-        connections = filter(lambda connection: connection.laddr.ip == "0.0.0.0", connections)
+        connections = filter(lambda connection: connection.laddr.ip in Helper.LOCALSERVER_CANDIDATES, connections)
 
         # And check if there is a webpage available that is not us
         ports = iter([connection.laddr.port for connection in connections])
