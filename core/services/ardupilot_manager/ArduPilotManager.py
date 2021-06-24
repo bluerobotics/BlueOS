@@ -20,6 +20,7 @@ class ArduPilotManager(metaclass=Singleton):
     def __init__(self) -> None:
         self.settings = Settings()
         self.mavlink_manager = MavlinkManager()
+        self.mavlink_manager.set_logdir(self.settings.log_path)
 
         # Load settings and do the initial configuration
         if self.settings.load():

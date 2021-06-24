@@ -12,7 +12,8 @@ class Settings:
     settings_path = Path(appdirs.user_config_dir(app_name))
     settings_file = Path.joinpath(settings_path, "settings.json")
     firmware_path = Path.joinpath(settings_path, "firmware")
-    app_folders = [settings_path, firmware_path]
+    log_path = Path.joinpath(settings_path, "logs")
+    app_folders = [settings_path, firmware_path, log_path]
 
     def __init__(self) -> None:
         self.root: Dict[str, Union[int, Dict[str, Any]]] = {"version": 0, "content": {}}
