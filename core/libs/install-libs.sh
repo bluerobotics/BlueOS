@@ -3,5 +3,7 @@
 # Immediately exist on errors
 set -e
 
-# Commonwealth library:
-cd /home/pi/libs/commonwealth/ && python3 setup.py install
+CURRENT_PATH=$(dirname "$0")
+
+# Install libraries
+python3 $CURRENT_PATH/commonwealth/setup.py install
