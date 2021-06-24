@@ -1,3 +1,4 @@
+import pathlib
 from typing import List, Set, Type
 
 # Plugins
@@ -73,3 +74,6 @@ class Manager:
 
     def router_name(self) -> str:
         return self.tool.name()
+
+    def set_logdir(self, log_dir: pathlib.Path) -> None:
+        self.tool.set_logdir(log_dir)
