@@ -18,6 +18,7 @@ FROM bluerobotics/companion-base:v0.0.1
 # Install necessary tools
 COPY tools /home/pi/tools
 RUN /home/pi/tools/dnsmasq/bootstrap.sh
+RUN /home/pi/tools/filebrowser/bootstrap.sh
 RUN /home/pi/tools/linux2rest/bootstrap.sh
 RUN /home/pi/tools/nginx/bootstrap.sh
 
