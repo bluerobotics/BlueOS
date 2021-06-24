@@ -7,15 +7,8 @@ BUILD_PACKAGES=(
     g++
 )
 
-RUNTIME_PACKAGES=(
-    python3-dev
-    python3-pip
-    python3-setuptools
-)
-
 apt update
 apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
-apt install -y --no-install-recommends ${RUNTIME_PACKAGES[*]}
 
 # Wifi service:
 ## Bind path for wpa
