@@ -15,7 +15,7 @@ class MAVLinkRouter(AbstractRouter):
         assert binary is not None
         for line in subprocess.check_output([binary, "--version"]).decode("utf-8").split("\n"):
             if "version" in line:
-                regex = re.search(r"version\ (?P<version>\d+)\b", line)
+                regex = re.search(r"version\ (?P<version>\S+)\b", line)
                 if regex:
                     return regex.group("version")
 
