@@ -21,7 +21,6 @@ jobs:
     -
       name: Install dependencies
       run: |
-        # Install mavlink-router
         sudo ./core/tools/mavlink_router/bootstrap.sh
         sudo apt install shellcheck
         npm install \
