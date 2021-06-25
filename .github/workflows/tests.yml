@@ -22,7 +22,7 @@ jobs:
       name: Install dependencies
       run: |
         # Install mavlink-router
-        sudo NOUNINSTALL=true ./core/tools/mavlink_router/bootstrap.py
+        sudo ./core/tools/mavlink_router/bootstrap.sh
         sudo apt install shellcheck
         npm install \
           eslint eslint-plugin-vue eslint-plugin-html \
