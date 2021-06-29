@@ -2,6 +2,7 @@
 
 COMPANION_PATH=/home/pi
 SERVICES_PATH=$COMPANION_PATH/services
+TOOLS_PATH=$COMPANION_PATH/tools
 
 SERVICES=(
     'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
@@ -15,7 +16,7 @@ SERVICES=(
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
     'ttyd',"ttyd -p 8088 /usr/bin/tmux"
-    'nginx',"nginx -g \"daemon off;\" -c /home/pi/tools/nginx/nginx.conf"
+    'nginx',"nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
 )
 
 tmux start-server -f /etc/tmux.conf
