@@ -31,8 +31,8 @@ COPY configuration/tmux.conf /etc/tmux.conf
 
 # Install services
 COPY services /home/pi/services
-COPY start-companion-core /usr/bin/start-companion-core
 RUN /home/pi/services/install-services.sh
+COPY start-companion-core /usr/bin/start-companion-core
 
 # Copy binaries from downloadBinaries to this stage
 COPY --from=downloadBinaries \
