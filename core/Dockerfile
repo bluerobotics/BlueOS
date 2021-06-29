@@ -46,5 +46,11 @@ COPY --from=downloadBinaries \
 # Copy frontend built on frontendBuild to this stage
 COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 
+# Asserts
+## When running, the .config folder in the docker is not accessible,
+## since it gets shadowed by the host's `.config` folder.
+## If the folder exists during the build step, it means we put it here by mistake.
+RUN [ ! -d "/root/.config" ]
+
 # Start
 ENTRYPOINT /usr/bin/start-companion-core && sleep infinity
