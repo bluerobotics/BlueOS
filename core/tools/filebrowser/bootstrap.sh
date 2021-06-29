@@ -13,7 +13,7 @@ wget "$REMOTE_BINARY_URL" -O - | tar xz -C /usr/bin/
 chmod +x "$LOCAL_BINARY_PATH"
 
 # Create configuration file
-DATABASE_PATH="$HOME/.config/filebrowser/filebrowser.db"
+DATABASE_PATH="/etc/filebrowser/filebrowser.db"
 mkdir -p $(dirname "$DATABASE_PATH")
 filebrowser config init --address=0.0.0.0 --port=7777 --auth.method=noauth --log=stdout --root=/ --database="$DATABASE_PATH"
 filebrowser users add pi raspberry --database="$DATABASE_PATH"
