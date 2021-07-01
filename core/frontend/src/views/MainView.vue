@@ -1,11 +1,17 @@
 <template>
-  <v-container>Main</v-container>
+  <v-container>
+    <available-services-table />
+  </v-container>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
+import AvailableServicesTable from '../components/scanner/availableServicesTable.vue'
 
 export default Vue.extend({
   name: 'Main',
+  components: {
+    'availableServicesTable': AvailableServicesTable,
+  },
 })
 </script>
