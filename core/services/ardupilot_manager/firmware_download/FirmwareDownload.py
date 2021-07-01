@@ -187,9 +187,9 @@ class FirmwareDownload:
 
         # Make sure that the item matches all args value
         for item in self._manifest["firmware"]:
-            for key in args:
+            for key, value in args.items():
                 real_key = key.replace("_", "-")
-                if real_key not in item or item[real_key] != args[key]:
+                if real_key not in item or item[real_key] != value:
                     break
             else:
                 found_version_item.append(item)
