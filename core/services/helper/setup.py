@@ -46,7 +46,7 @@ def populate_static_files() -> None:
                 # Create path of file
                 download_path = pathlib.Path.joinpath(static_folder, path)
                 download_path.mkdir(exist_ok=True)
-                name = url.split("/")[-1]
+                name = url.rsplit("/", maxsplit=1)[-1]
                 # Create path with file name to download
                 download_file_path = pathlib.Path.joinpath(download_path, name)
                 urllib.request.urlretrieve(url, str(download_file_path))
