@@ -23,31 +23,31 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         self._version = self._get_version()
 
     @staticmethod
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def name() -> str:
         pass
 
     @staticmethod
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def binary_name() -> str:
         pass
 
-    @abc.abstractclassmethod
-    def _get_version(cls) -> Optional[str]:
+    @abc.abstractmethod
+    def _get_version(self) -> Optional[str]:
         pass
 
     @staticmethod
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def is_ok() -> bool:
         pass
 
     @staticmethod
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def _validate_endpoint(endpoint: Endpoint) -> None:
         pass
 
-    @abc.abstractclassmethod
-    def assemble_command(cls, master: Endpoint) -> str:
+    @abc.abstractmethod
+    def assemble_command(self, master: Endpoint) -> str:
         pass
 
     @staticmethod
@@ -56,7 +56,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
 
     @staticmethod
     def available_interfaces() -> List[Type["AbstractRouter"]]:
-        return [subclass for subclass in AbstractRouter.__subclasses__() if subclass.is_ok()]
+        return list(filter(lambda subclass: subclass.is_ok, AbstractRouter.__subclasses__()))
 
     @staticmethod
     def get_interface(name: str) -> Type["AbstractRouter"]:
