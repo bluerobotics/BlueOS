@@ -108,13 +108,13 @@ if __name__ == "__main__":
             socket_name = os.listdir(wpa_socket_folder)[0]
         WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
         wifi_manager.connect(WLAN_SOCKET)
-    except Exception as error:
-        print(error)
+    except Exception as socket_connection_error:
+        print(socket_connection_error)
         print("Could not connect with provided socket. Connecting via internet socket.")
         try:
             wifi_manager.connect(("127.0.0.1", 6664))
-        except Exception as error:
-            print(f"Could not connect with internet socket: {error}. Exiting.")
+        except Exception as udp_connection_error:
+            print(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
             sys.exit(1)
 
     uvicorn.run(app, host="0.0.0.0", port=9000)
