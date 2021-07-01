@@ -62,14 +62,20 @@
     <v-main>
       <router-view />
     </v-main>
+    <services-scanner />
   </v-app>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
+import ServicesScanner from './components/scanner/servicesScanner.vue'
 
 export default Vue.extend({
   name: 'App',
+
+  components: {
+    'services-scanner': ServicesScanner,
+  },
 
   data: () => ({
     drawer: false,
