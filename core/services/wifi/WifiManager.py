@@ -145,6 +145,19 @@ class WifiManager:
         except Exception as error:
             raise ConnectionError("Failed to set new network.") from error
 
+    async def remove_network(self, network_id: int) -> None:
+        """Remove saved wifi network
+
+        Arguments:
+            network_id {int} -- Network ID as it comes from WPA Supplicant list of saved networks
+        """
+        try:
+            await self.wpa.send_command_remove_network(network_id)
+            await self.wpa.send_command_save_config()
+            await self.wpa.send_command_reconfigure()
+        except Exception as error:
+            raise ConnectionError("Failed to remove existing network.") from error
+
     async def connect_to_network(self, network_id: int) -> None:
         """Connect to wifi network
 
