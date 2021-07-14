@@ -1,5 +1,5 @@
 import os
-import shutil
+import pathlib
 import subprocess
 import time
 from copy import deepcopy
@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import psutil
 from loguru import logger
 
-from exceptions import NoVersionAvailable
+from exceptions import FirmwareInstallFail, NoVersionAvailable
 from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 from firmware_install.FirmwareInstall import FirmwareInstaller
 from flight_controller_detector.Detector import Detector as BoardDetector
@@ -74,11 +74,8 @@ class ArduPilotManager(metaclass=Singleton):
 
     def start_navigator(self) -> None:
         self.current_platform = Platform.Navigator
-        firmware = os.path.join(self.settings.firmware_path, "ardusub")
-        if not os.path.isfile(firmware):
-            temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.Navigator)
-            assert temporary_file, "Failed to download navigator binary."
-            shutil.move(str(temporary_file), firmware)
+        if not self.firmware_installer.is_firmware_installed(self.current_platform):
+            self.install_firmware_from_params(vehicle=Vehicle.Sub)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -102,7 +99,8 @@ class ArduPilotManager(metaclass=Singleton):
 
         self.subprocess = subprocess.Popen(
             "while true; do "
-            f"{firmware} -A udp:{master_endpoint.place}:{master_endpoint.argument}"
+            f"{self.firmware_installer.firmware_path(self.current_platform)}"
+            f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_path}/logs/"
             f" --storage-directory {self.settings.firmware_path}/storage/"
             f" -C /dev/ttyS0"
@@ -125,11 +123,8 @@ class ArduPilotManager(metaclass=Singleton):
 
     def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
         self.current_platform = Platform.SITL
-        firmware = os.path.join(self.settings.firmware_path, "sitl")
-        if not os.path.exists(firmware):
-            temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.SITL)
-            assert temporary_file, "Failed to download SITL binary."
-            shutil.move(str(temporary_file), firmware)
+        if not self.firmware_installer.is_firmware_installed(self.current_platform):
+            self.install_firmware_from_params(vehicle=Vehicle.Sub)
         if frame == SITLFrame.UNDEFINED:
             frame = SITLFrame.VECTORED
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
@@ -150,7 +145,7 @@ class ArduPilotManager(metaclass=Singleton):
         # pylint: disable=consider-using-with
         self.subprocess = subprocess.Popen(
             [
-                firmware,
+                self.firmware_installer.firmware_path(self.current_platform),
                 "--model",
                 self.current_sitl_frame.value,
                 "--base-port",
@@ -334,3 +329,27 @@ class ArduPilotManager(metaclass=Singleton):
         if not firmwares:
             raise NoVersionAvailable(f"Failed do get any valid URL for vehicle {vehicle}.")
         return firmwares
+
+    def install_firmware_from_file(self, firmware_path: pathlib.Path) -> None:
+        try:
+            self.mavlink_manager.stop()
+            # With current "while do" approach used to initiate the Ardupilot firmware, killing the main subprocess
+            # does not kill Ardupilot's firmware instances running.
+            # The 'prune' method is used here to kill them and allow updating the firmware file.
+            self.prune_ardupilot_processes()
+            self.firmware_installer.install_firmware(firmware_path, self.current_platform)
+            logger.info(f"Succefully installed firmware for {self.current_platform}.")
+        except Exception as error:
+            error_message = f"Could not install firmware: {error}"
+            logger.exception(error_message)
+            raise FirmwareInstallFail(error_message) from error
+        finally:
+            self.restart()
+
+    def install_firmware_from_url(self, url: str) -> None:
+        temporary_file = self.firmware_download._download(url.strip())
+        self.install_firmware_from_file(temporary_file)
+
+    def install_firmware_from_params(self, vehicle: Vehicle, version: str = "") -> None:
+        url = self.firmware_download.get_download_url(vehicle, self.current_platform, version)
+        self.install_firmware_from_url(url)
