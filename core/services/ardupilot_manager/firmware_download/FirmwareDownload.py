@@ -4,9 +4,7 @@ import os
 import pathlib
 import random
 import ssl
-import stat
 import string
-import subprocess
 import tempfile
 from enum import Enum
 from platform import machine
@@ -114,31 +112,6 @@ class FirmwareDownload:
             str: Navigator url
         """
         return "https://s3.amazonaws.com/downloads.bluerobotics.com/ardusub/navigator/ardusub"
-
-    @staticmethod
-    def _validate_firmware(firmware_path: pathlib.Path) -> bool:
-        """A simple validation function for firmware files (apj)
-
-        Args:
-            firmware_path (pathlib.Path): Path of the firmware file;
-
-        Returns:
-            bool: True if valid, False if otherwise.
-        """
-        if FirmwareFormat.APJ.value in firmware_path.suffix:
-            with open(firmware_path, "r") as firmware_file:
-                data = json.load(firmware_file)
-                keys = data.keys()
-                if "image_size" in keys and "image" in keys:
-                    return True
-        else:
-            try:
-                subprocess.check_output([firmware_path, "--help"])
-                return True
-            except Exception as error:
-                logger.error(f"Firmware help menu not available. Binary not validated. {error}")
-
-        return False
 
     def _manifest_is_valid(self) -> bool:
         """Check if internal content is valid and update it if not.
@@ -302,20 +275,6 @@ class FirmwareDownload:
 
         if not path:
             logger.error("Failed to download firmware.")
-            return None
-
-        firmware_format = FirmwareDownload._supported_firmware_formats[platform]
-        if firmware_format == FirmwareFormat.ELF:
-            # Make the binary executable
-            ## S_IX: Execution permission for
-            ##    OTH: Others
-            ##    USR: User
-            ##    GRP: Group
-            ## For more information: https://www.gnu.org/software/libc/manual/html_node/Permission-Bits.html
-            path.chmod(path.stat().st_mode | stat.S_IXOTH | stat.S_IXUSR | stat.S_IXGRP)
-
-        if not FirmwareDownload._validate_firmware(path):
-            logger.error("Unable to validate firmware file.")
             return None
 
         return path
