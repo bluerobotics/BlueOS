@@ -15,8 +15,6 @@ class WifiManager:
             path {[tuple/str]} -- Can be a tuple to connect (ip/port) or unix socket file
         """
         self.wpa.run(path)
-        # Request scan to update state
-        self.wpa.send_command_scan()
 
     @staticmethod
     def __decode_escaped(data: bytes) -> str:
