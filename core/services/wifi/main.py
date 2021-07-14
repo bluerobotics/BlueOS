@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 import os
 import sys
 from pathlib import Path
@@ -8,9 +9,11 @@ from typing import Any, List
 
 import uvicorn
 from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.logs import InterceptHandler
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
+from loguru import logger
 
 from exceptions import BusyError, FetchError
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
@@ -18,7 +21,9 @@ from WifiManager import WifiManager
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
+logger.info("Starting Wifi Manager.")
 wifi_manager = WifiManager()
 
 
@@ -35,6 +40,7 @@ async def network_status() -> Any:
     try:
         return await wifi_manager.status()
     except FetchError as error:
+        logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
@@ -44,8 +50,10 @@ async def scan() -> Any:
     try:
         return await wifi_manager.get_wifi_available()
     except BusyError as error:
+        logger.exception(error)
         raise HTTPException(status_code=status.HTTP_425_TOO_EARLY, detail=str(error)) from error
     except FetchError as error:
+        logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
@@ -55,6 +63,7 @@ async def saved() -> Any:
     try:
         return await wifi_manager.get_saved_wifi_network()
     except FetchError as error:
+        logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
@@ -71,6 +80,7 @@ async def connect(credentials: WifiCredentials) -> Any:
     try:
         await wifi_manager.connect_to_network(network_id)
     except ConnectionError as error:
+        logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
@@ -80,6 +90,7 @@ async def disconnect() -> Any:
     try:
         await wifi_manager.disconnect()
     except ConnectionError as error:
+        logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
@@ -119,4 +130,4 @@ if __name__ == "__main__":
             print(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
             sys.exit(1)
 
-    uvicorn.run(app, host="0.0.0.0", port=9000)
+    uvicorn.run(app, host="0.0.0.0", port=9000, log_config=None)
