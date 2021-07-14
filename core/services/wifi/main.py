@@ -12,9 +12,8 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 
+from exceptions import BusyError, FetchError
 from WifiManager import (
-    BusyError,
-    FetchError,
     SavedWifiNetwork,
     ScannedWifiNetwork,
     WifiCredentials,

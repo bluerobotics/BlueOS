@@ -2,19 +2,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
+from exceptions import BusyError, FetchError, ParseError
 from wpa_supplicant import WPASupplicant
-
-
-class ParseError(ValueError):
-    """Raise for errors regarding fail parsing string data to proper structs."""
-
-
-class FetchError(ValueError):
-    """Raise for errors regarding fail on fetching data."""
-
-
-class BusyError(ValueError):
-    """Raise for errors regarding excessive number of requests on a given time."""
 
 
 class ScannedWifiNetwork(BaseModel):
