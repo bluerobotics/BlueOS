@@ -128,7 +128,7 @@ class WifiManager:
         except Exception as error:
             raise FetchError("Failed to fetch saved networks list.") from error
 
-    async def set_wifi_password(self, credentials: WifiCredentials) -> Any:
+    async def add_network(self, credentials: WifiCredentials) -> int:
         """Set network ssid and password
 
         Arguments:
@@ -140,13 +140,26 @@ class WifiManager:
             network_number = data.decode("utf-8")
             await self.wpa.send_command_set_network(network_number, "ssid", '"{}"'.format(credentials.ssid))
             await self.wpa.send_command_set_network(network_number, "psk", '"{}"'.format(credentials.password))
-            await self.wpa.send_command_enable_network(network_number)
-            await self.wpa.send_command_reconnect()
 
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
+            return int(network_number)
         except Exception as error:
             raise ConnectionError("Failed to set new network.") from error
+
+    async def connect_to_network(self, network_id: int) -> None:
+        """Connect to wifi network
+
+        Arguments:
+            network_id {int} -- Network ID provided by WPA Supplicant
+        """
+        try:
+            await self.wpa.send_command_enable_network(str(network_id))
+            await self.wpa.send_command_save_config()
+            await self.wpa.send_command_reconfigure()
+            await self.wpa.send_command_reconnect()
+        except Exception as error:
+            raise ConnectionError("Failed to connect to network.") from error
 
     async def status(self) -> Dict[str, Any]:
         """Check wpa_supplicant status"""
