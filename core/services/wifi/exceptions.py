@@ -13,3 +13,7 @@ class FetchError(ValueError):
 
 class BusyError(ValueError):
     """Raise for errors regarding excessive number of requests on a given time."""
+
+
+class SockCommError(ConnectionError):
+    """Raise for errors regarding WPA socket communication."""

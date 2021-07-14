@@ -6,11 +6,7 @@ import time
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
-from exceptions import BusyError
-
-
-class SockCommError(ConnectionError):
-    """Raise for errors regarding WPA socket communication."""
+from exceptions import BusyError, SockCommError
 
 
 class WPASupplicant:
@@ -59,24 +55,28 @@ class WPASupplicant:
             timeout {float} -- Maximum time (in seconds) allowed for receiving an answer before raising a BusyError
         """
         print(">", command)
+
         assert self.sock, "No socket assigned to WPA Supplicant"
 
-        try:
-            timeout_start = time.time()
-            while time.time() - timeout_start < timeout:
+        timeout_start = time.time()
+        while time.time() - timeout_start < timeout:
+            try:
                 self.sock.send(command.encode("utf-8"))
                 data, _ = self.sock.recvfrom(self.BUFFER_SIZE)
-                if b"FAIL-BUSY" in data:
-                    print(f"Busy during {command} operation. Trying again...")
-                    await asyncio.sleep(0.1)
-                    continue
-                break
-            else:
-                raise BusyError(f"{command} operation took more than specified timeout ({timeout}). Cancelling.")
-            if self.verbose:
-                print("<", data.decode("utf-8").strip())
-        except Exception as error:
-            raise SockCommError("Could not communicate with WPA Supplicant socket.") from error
+            except Exception as error:
+                raise SockCommError("Could not communicate with WPA Supplicant socket.") from error
+
+            if b"FAIL-BUSY" in data:
+                print(f"Busy during {command} operation. Trying again...")
+                await asyncio.sleep(0.1)
+                continue
+            break
+        else:
+            raise BusyError(f"{command} operation took more than specified timeout ({timeout}). Cancelling.")
+
+        if self.verbose and data:
+            print("<", data.decode("utf-8").strip())
+
         return data
 
     async def send_command_ping(self, timeout: float = 1) -> bytes:
