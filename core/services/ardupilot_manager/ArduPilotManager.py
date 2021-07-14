@@ -5,6 +5,7 @@ import time
 from copy import deepcopy
 from typing import Any, List, Optional, Set, Tuple
 
+import psutil
 from loguru import logger
 
 from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
@@ -226,6 +227,28 @@ class ArduPilotManager(metaclass=Singleton):
                 self.run_with_sitl(self.current_sitl_frame)
                 return
         self.run_with_board()
+
+    def prune_ardupilot_processes(self) -> None:
+        """Kill main Ardupilot subprocess and all process using Ardupilot's firmware file for current platform."""
+        if self.subprocess:
+            logger.debug("Terminating main Ardupilot process.")
+            self.subprocess.terminate()
+            while self.subprocess.poll() is None:
+                logger.debug("Waiting for process to die.")
+                time.sleep(0.5)
+
+        def is_ardupilot_process(process: psutil.Process) -> bool:
+            """Checks if given process is using Ardupilot's firmware file for current platform."""
+            return str(self.firmware_installer.firmware_path(self.current_platform)) in " ".join(process.cmdline())
+
+        ardupilot_processes = filter(is_ardupilot_process, psutil.process_iter())
+        for process in ardupilot_processes:
+            try:
+                logger.debug(f"Killing Ardupilot process {process.name()}::{process.pid}.")
+                process.kill()
+                time.sleep(0.5)
+            except Exception as error:
+                logger.exception(f"Could not kill process: {error}")
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
