@@ -31,18 +31,18 @@ app = FastAPI(
 
 @app.get("/status", summary="Retrieve status of wifi manager.")
 @version(1, 0)
-def network_status() -> Any:
+async def network_status() -> Any:
     try:
-        return wifi_manager.status()
+        return await wifi_manager.status()
     except FetchError as error:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
 @version(1, 0)
-def scan() -> Any:
+async def scan() -> Any:
     try:
-        return wifi_manager.get_wifi_available()
+        return await wifi_manager.get_wifi_available()
     except BusyError as error:
         raise HTTPException(status_code=status.HTTP_425_TOO_EARLY, detail=str(error)) from error
     except FetchError as error:
@@ -51,27 +51,27 @@ def scan() -> Any:
 
 @app.get("/saved", response_model=List[SavedWifiNetwork], summary="Retrieve saved wifi networks.")
 @version(1, 0)
-def saved() -> Any:
+async def saved() -> Any:
     try:
-        return wifi_manager.get_saved_wifi_network()
+        return await wifi_manager.get_saved_wifi_network()
     except FetchError as error:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
 @app.post("/connect", summary="Connect to wifi network.")
 @version(1, 0)
-def connect(credentials: WifiCredentials) -> Any:
+async def connect(credentials: WifiCredentials) -> Any:
     try:
-        wifi_manager.set_wifi_password(credentials)
+        await wifi_manager.set_wifi_password(credentials)
     except ConnectionError as error:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
 
 @app.get("/disconnect", summary="Disconnect from wifi network.")
 @version(1, 0)
-def disconnect() -> Any:
+async def disconnect() -> Any:
     try:
-        wifi_manager.disconnect()
+        await wifi_manager.disconnect()
     except ConnectionError as error:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
