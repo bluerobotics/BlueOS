@@ -15,6 +15,14 @@ from urllib.request import urlopen, urlretrieve
 from loguru import logger
 from packaging.version import Version
 
+from exceptions import (
+    FirmwareDownloadFail,
+    InvalidManifest,
+    ManifestUnavailable,
+    MoreThanOneCandidate,
+    NoVersionAvailable,
+)
+
 # TODO: This should be not necessary
 # Disable SSL verification
 if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverified_context", None):
@@ -81,7 +89,7 @@ class FirmwareDownload:
         return pathlib.Path.joinpath(folder, filename)
 
     @staticmethod
-    def _download(url: str) -> Optional[pathlib.Path]:
+    def _download(url: str) -> pathlib.Path:
         """Download a specific file for a temporary location.
 
         Args:
@@ -98,8 +106,7 @@ class FirmwareDownload:
             logger.debug(f"Downloading: {url}")
             urlretrieve(url, filename)
         except Exception as error:
-            logger.error(f"Failed to download {url}: {error}")
-            return None
+            raise FirmwareDownloadFail("Could not download firmware file.") from error
         return filename
 
     @staticmethod
@@ -133,8 +140,7 @@ class FirmwareDownload:
             self._manifest = json.loads(manifest)
 
         if "format-version" not in self._manifest:
-            logger.error("Failed to fetch content of manifest file.")
-            return False
+            raise InvalidManifest("Invalid Manifest file. Does not contain 'format-version' key.")
 
         if self._manifest["format-version"] != "1.0.0":
             logger.warning("Firmware description file format changed, compatibility may be broken.")
@@ -154,7 +160,7 @@ class FirmwareDownload:
             List[Dict[str, Any]]: A list of firmware items that match the arguments.
         """
         if not self._manifest and not self.download_manifest():
-            return []
+            raise ManifestUnavailable("Manifest file is not available. Cannot use it to find firmware candidates.")
 
         found_version_item = []
 
@@ -182,7 +188,7 @@ class FirmwareDownload:
         available_versions: List[str] = []
 
         if not self._manifest_is_valid():
-            return available_versions
+            raise InvalidManifest("Manifest file is invalid. Cannot use it to find available versions.")
 
         items = self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
 
@@ -192,7 +198,7 @@ class FirmwareDownload:
 
         return available_versions
 
-    def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> Optional[str]:
+    def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> str:
         """Find a specific firmware URL from manifest that matches the arguments.
 
         Args:
@@ -202,7 +208,7 @@ class FirmwareDownload:
                 Defaults to None.
 
         Returns:
-            Optional[str]: URL of valid firmware or None if there is no such thing.
+            str: URL of valid firmware.
         """
         if platform == Platform.Navigator and vehicle == Vehicle.Sub:
             return FirmwareDownload._navigator_firmware_url()
@@ -211,12 +217,10 @@ class FirmwareDownload:
         logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
 
         if not versions:
-            logger.error("No versions available")
-            return None
+            raise NoVersionAvailable(f"Could not find available firmware versions for {platform}/{vehicle}.")
 
         if version and version not in versions:
-            logger.error(f"Specified version not found for this configuration ({vehicle} and {platform}).")
-            return None
+            raise NoVersionAvailable(f"Version {version} was not found for {platform}/{vehicle}.")
 
         firmware_format = FirmwareDownload._supported_firmware_formats[platform]
 
@@ -233,8 +237,7 @@ class FirmwareDownload:
                     if not newest_version or Version(newest_version) < Version(semver_version):
                         newest_version = semver_version
                 if not newest_version:
-                    logger.error(f"No firmware versions found for this configuration ({vehicle} and {platform}).")
-                    return None
+                    raise NoVersionAvailable(f"No firmware versions found for {platform}/{vehicle}.")
                 version = f"STABLE-{newest_version}"
             else:
                 version = "DEV"
@@ -247,14 +250,13 @@ class FirmwareDownload:
         )
 
         if len(items) != 1:
-            logger.error(f"Invalid number of candidates to download ({len(items)}): {items}")
-            return None
+            raise MoreThanOneCandidate(f"Found a number of candidates different of one ({len(items)}): {items}.")
 
         item = items[0]
         logger.debug(f"Downloading following firmware: {item}")
         return str(item["url"])
 
-    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> Optional[pathlib.Path]:
+    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> pathlib.Path:
         """Download a specific firmware that matches the arguments.
 
         Args:
@@ -264,17 +266,7 @@ class FirmwareDownload:
                 Defaults to None.
 
         Returns:
-            Optional[pathlib.Path]: Temporary path for the firmware file, None if unable to download or validate file.
+            pathlib.Path: Temporary path for the firmware file.
         """
         url = self.get_download_url(vehicle, platform, version)
-        if not url:
-            logger.error("No valid url to download.")
-            return None
-
-        path = FirmwareDownload._download(url)
-
-        if not path:
-            logger.error("Failed to download firmware.")
-            return None
-
-        return path
+        return FirmwareDownload._download(url)
