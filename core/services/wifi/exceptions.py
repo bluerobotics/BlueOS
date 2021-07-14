@@ -17,3 +17,7 @@ class BusyError(ValueError):
 
 class SockCommError(ConnectionError):
     """Raise for errors regarding WPA socket communication."""
+
+
+class WPAOperationFail(ConnectionError):
+    """Raised when a WPA operation fails."""
