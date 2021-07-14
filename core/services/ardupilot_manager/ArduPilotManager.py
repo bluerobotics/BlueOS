@@ -3,11 +3,12 @@ import shutil
 import subprocess
 import time
 from copy import deepcopy
-from typing import Any, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import psutil
 from loguru import logger
 
+from exceptions import NoVersionAvailable
 from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 from firmware_install.FirmwareInstall import FirmwareInstaller
 from flight_controller_detector.Detector import Detector as BoardDetector
@@ -318,3 +319,18 @@ class ArduPilotManager(metaclass=Singleton):
                 raise
 
         self._update_endpoints()
+
+    def get_available_firmwares(self, vehicle: Vehicle) -> Dict[str, str]:
+        firmwares = {}
+        versions = self.firmware_download.get_available_versions(vehicle, self.current_platform)
+        if not versions:
+            raise NoVersionAvailable(f"Failed to find any version for vehicle {vehicle}.")
+        for version in versions:
+            try:
+                url = self.firmware_download.get_download_url(vehicle, self.current_platform, version)
+                firmwares[version] = url
+            except Exception as error:
+                logger.debug(f"Error fetching URL for version {version} on vehicle {vehicle}: {error}")
+        if not firmwares:
+            raise NoVersionAvailable(f"Failed do get any valid URL for vehicle {vehicle}.")
+        return firmwares
