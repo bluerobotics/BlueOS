@@ -217,7 +217,13 @@ class ArduPilotManager(metaclass=Singleton):
         raise RuntimeError("Invalid board type: {boards}")
 
     def restart(self) -> None:
-        self.mavlink_manager.restart()
+        # Ensures all supported run methods restart properly by stopping Mavlink Manager and restarting main loops
+        self.mavlink_manager.stop()
+        if self.current_platform != Platform.Undefined:
+            if self.current_platform == Platform.SITL:
+                self.run_with_sitl(self.current_sitl_frame)
+                return
+        self.run_with_board()
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
