@@ -13,12 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 
 from exceptions import BusyError, FetchError
-from WifiManager import (
-    SavedWifiNetwork,
-    ScannedWifiNetwork,
-    WifiCredentials,
-    WifiManager,
-)
+from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
+from WifiManager import WifiManager
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 

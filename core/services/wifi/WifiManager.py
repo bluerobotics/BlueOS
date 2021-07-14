@@ -1,29 +1,8 @@
-from typing import Any, Dict, List, Optional
-
-from pydantic import BaseModel
+from typing import Any, Dict, List
 
 from exceptions import BusyError, FetchError, ParseError
+from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
 from wpa_supplicant import WPASupplicant
-
-
-class ScannedWifiNetwork(BaseModel):
-    ssid: Optional[str]
-    bssid: str
-    flags: str
-    frequency: int
-    signallevel: int
-
-
-class SavedWifiNetwork(BaseModel):
-    networkid: int
-    ssid: str
-    bssid: str
-    flags: Optional[str]
-
-
-class WifiCredentials(BaseModel):
-    ssid: str
-    password: str
 
 
 class WifiManager:
