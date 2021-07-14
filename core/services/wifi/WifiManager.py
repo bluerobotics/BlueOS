@@ -165,7 +165,12 @@ class WifiManager:
             network_id {int} -- Network ID provided by WPA Supplicant
         """
         try:
-            await self.wpa.send_command_enable_network(network_id)
+            # Using select_network forces connection on the desired network by disabling all the others. To ensure we
+            # can still automatically connect to the other saved networks when far from this one, we re-enable them.
+            await self.wpa.send_command_select_network(network_id)
+            saved_networks = await self.get_saved_wifi_network()
+            for network in saved_networks:
+                await self.wpa.send_command_enable_network(network.networkid)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             await self.wpa.send_command_reconnect()
