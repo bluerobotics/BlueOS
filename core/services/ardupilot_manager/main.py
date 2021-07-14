@@ -15,8 +15,9 @@ from loguru import logger
 
 from ArduPilotManager import ArduPilotManager
 from exceptions import InvalidFirmwareFile
-from firmware_download.FirmwareDownload import Vehicle
+from firmware_download.FirmwareDownload import Platform, Vehicle
 from mavlink_proxy.Endpoint import Endpoint
+from typedefs import SITLFrame
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
@@ -104,6 +105,39 @@ def install_firmware_from_file(response: Response, binary: UploadFile = File(...
         return {"message": f"{error}"}
     finally:
         binary.file.close()
+
+
+@app.get("/platform", response_model=Platform, summary="Check what is the current running platform.")
+@version(1, 0)
+def platform(response: Response) -> Any:
+    try:
+        return autopilot.current_platform
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+
+
+@app.post("/use_sitl", summary="Restart the system and use SITL.")
+@version(1, 0)
+def use_sitl(response: Response, sitl_frame: SITLFrame) -> Any:
+    try:
+        autopilot.current_platform = Platform.SITL
+        autopilot.current_sitl_frame = sitl_frame
+        autopilot.restart()
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+
+
+@app.post("/use_board", summary="Restart the system and use connected board.")
+@version(1, 0)
+def use_board(response: Response) -> Any:
+    try:
+        autopilot.current_platform = Platform.Undefined
+        autopilot.restart()
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
