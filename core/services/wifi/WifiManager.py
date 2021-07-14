@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from exceptions import BusyError, FetchError, ParseError
+from exceptions import FetchError, ParseError
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
 from wpa_supplicant import WPASupplicant
 
@@ -84,14 +84,10 @@ class WifiManager:
     def get_wifi_available(self) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
         try:
-            scan_data = self.wpa.send_command_scan()
-            if b"BUSY" in scan_data:
-                raise BusyError
+            self.wpa.send_command_scan()
             data = self.wpa.send_command_scan_results()
             networks_list = WifiManager.__dict_from_table(data)
             return [ScannedWifiNetwork(**network) for network in networks_list]
-        except BusyError as error:
-            raise BusyError("WPA service is busy. Try to space network scans by at least 4 seconds.") from error
         except Exception as error:
             raise FetchError("Failed to fetch wifi list.") from error
 
