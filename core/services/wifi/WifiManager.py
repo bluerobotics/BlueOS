@@ -135,14 +135,13 @@ class WifiManager:
             credentials {[WifiCredentials]} -- object containing ssid and password of the network
         """
         try:
-            data = await self.wpa.send_command_add_network()
+            network_number = await self.wpa.send_command_add_network()
 
-            network_number = data.decode("utf-8")
             await self.wpa.send_command_set_network(network_number, "ssid", f'"{credentials.ssid}"')
             await self.wpa.send_command_set_network(network_number, "psk", f'"{credentials.password}"')
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
-            return int(network_number)
+            return network_number
         except Exception as error:
             raise ConnectionError("Failed to set new network.") from error
 
@@ -153,7 +152,7 @@ class WifiManager:
             network_id {int} -- Network ID provided by WPA Supplicant
         """
         try:
-            await self.wpa.send_command_enable_network(str(network_id))
+            await self.wpa.send_command_enable_network(network_id)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             await self.wpa.send_command_reconnect()
