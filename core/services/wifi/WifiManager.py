@@ -138,9 +138,8 @@ class WifiManager:
             data = await self.wpa.send_command_add_network()
 
             network_number = data.decode("utf-8")
-            await self.wpa.send_command_set_network(network_number, "ssid", '"{}"'.format(credentials.ssid))
-            await self.wpa.send_command_set_network(network_number, "psk", '"{}"'.format(credentials.password))
-
+            await self.wpa.send_command_set_network(network_number, "ssid", f'"{credentials.ssid}"')
+            await self.wpa.send_command_set_network(network_number, "psk", f'"{credentials.password}"')
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             return int(network_number)

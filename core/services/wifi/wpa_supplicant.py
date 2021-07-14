@@ -130,7 +130,7 @@ class WPASupplicant:
 
         Example command:
         """
-        return await self.send_command("SET" + " " + " ".join([variable, value]), timeout)
+        return await self.send_command(f"SET {variable} {value}", timeout)
 
     async def send_command_logon(self, timeout: float = 1) -> bytes:
         """Send message: LOGON
@@ -166,7 +166,7 @@ class WPASupplicant:
 
         Start pre-authentication with the given BSSID.
         """
-        return await self.send_command("PREAUTH" + " " + " ".join([BSSID]), timeout)
+        return await self.send_command(f"PREAUTH {BSSID}", timeout)
 
     async def send_command_attach(self, timeout: float = 1) -> bytes:
         """Send message: ATTACH
@@ -191,7 +191,7 @@ class WPASupplicant:
 
         Change debug level.
         """
-        return await self.send_command("LEVEL" + " " + " ".join([debug_level]), timeout)
+        return await self.send_command(f"LEVEL {debug_level}", timeout)
 
     async def send_command_reconfigure(self, timeout: float = 1) -> bytes:
         """Send message: RECONFIGURE
@@ -213,7 +213,7 @@ class WPASupplicant:
         Set preferred BSSID for a network. Network id can be received from the
             <code>LIST_NETWORKS</code>  command output.
         """
-        return await self.send_command("BSSID" + " " + " ".join([network_id, BSSID]), timeout)
+        return await self.send_command(f"BSSID {network_id} {BSSID}", timeout)
 
     async def send_command_list_networks(self, timeout: float = 1) -> bytes:
         """Send message: LIST_NETWORKS
@@ -260,7 +260,7 @@ class WPASupplicant:
         Select a network (disable others). Network id can be received from the
             <code>LIST_NETWORKS</code>  command output.
         """
-        return await self.send_command("SELECT_NETWORK" + " " + " ".join([network_id]), timeout)
+        return await self.send_command(f"SELECT_NETWORK {network_id}", timeout)
 
     async def send_command_enable_network(self, network_id: str, timeout: float = 1) -> bytes:
         """Send message: ENABLE_NETWORK
@@ -269,7 +269,7 @@ class WPASupplicant:
             command output. Special network id  <code>all</code>  can be used
             to enable all network.
         """
-        return await self.send_command("ENABLE_NETWORK" + " " + " ".join([network_id]), timeout)
+        return await self.send_command(f"ENABLE_NETWORK {network_id}", timeout)
 
     async def send_command_disable_network(self, network_id: str, timeout: float = 1) -> bytes:
         """Send message: DISABLE_NETWORK
@@ -278,7 +278,7 @@ class WPASupplicant:
             command output. Special network id  <code>all</code>  can be used
             to disable all network.
         """
-        return await self.send_command("DISABLE_NETWORK" + " " + " ".join([network_id]), timeout)
+        return await self.send_command(f"DISABLE_NETWORK {network_id}", timeout)
 
     async def send_command_add_network(self, timeout: float = 1) -> bytes:
         """Send message: ADD_NETWORK
@@ -298,7 +298,7 @@ class WPASupplicant:
             command output. Special network id  <code>all</code>  can be used
             to remove all network.
         """
-        return await self.send_command("REMOVE_NETWORK" + " " + " ".join([network_id]), timeout)
+        return await self.send_command(f"REMOVE_NETWORK {network_id}", timeout)
 
     async def send_command_set_network(self, network_id: str, variable: str, value: str, timeout: float = 1) -> bytes:
         """Send message: SET_NETWORK
@@ -306,7 +306,7 @@ class WPASupplicant:
         This command uses the same variables and data formats as the configuration
             file. See example wpa_supplicant.conf for more details.
         """
-        return await self.send_command("SET_NETWORK" + " " + " ".join([network_id, variable, value]), timeout)
+        return await self.send_command(f"SET_NETWORK {network_id} {variable} {value}", timeout)
 
     async def send_command_get_network(self, network_id: str, variable: str, timeout: float = 1) -> bytes:
         """Send message: GET_NETWORK
@@ -314,7 +314,7 @@ class WPASupplicant:
         Get network variables. Network id can be received from the  <code>LIST_NETWORKS</code>
             command output.
         """
-        return await self.send_command("GET_NETWORK" + " " + " ".join([network_id, variable]), timeout)
+        return await self.send_command(f"GET_NETWORK {network_id} {variable}", timeout)
 
     async def send_command_save_config(self, timeout: float = 1) -> bytes:
         """Send message: SAVE_CONFIG
@@ -485,7 +485,7 @@ class WPASupplicant:
 
         Example request/reply pairs:
         """
-        return await self.send_command("GET_CAPABILITY" + " " + " ".join([option, strict]), timeout)
+        return await self.send_command(f"GET_CAPABILITY {option} {strict}", timeout)
 
     async def send_command_ap_scan(self, ap_scan_value: str, timeout: float = 1) -> bytes:
         """Send message: AP_SCAN
@@ -495,7 +495,7 @@ class WPASupplicant:
             not use scanning and just requests driver to associate and take
             care of AP selection
         """
-        return await self.send_command("AP_SCAN" + " " + " ".join([ap_scan_value]), timeout)
+        return await self.send_command(f"AP_SCAN {ap_scan_value}", timeout)
 
     async def send_command_interfaces(self, timeout: float = 1) -> bytes:
         """Send message: INTERFACES
