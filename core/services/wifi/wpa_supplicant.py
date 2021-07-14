@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
-from exceptions import BusyError, SockCommError
+from exceptions import BusyError, SockCommError, WPAOperationFail
 
 
 class WPASupplicant:
@@ -76,6 +76,9 @@ class WPASupplicant:
 
         if self.verbose and data:
             print("<", data.decode("utf-8").strip())
+
+        if data == b"FAIL":
+            raise WPAOperationFail(f"WPA operation {command} failed.")
 
         return data
 
