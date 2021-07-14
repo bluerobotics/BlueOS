@@ -5,6 +5,8 @@ import time
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
+from exceptions import BusyError
+
 
 class SockCommError(ConnectionError):
     """Raise for errors regarding WPA socket communication."""
@@ -47,25 +49,36 @@ class WPASupplicant:
         self.sock.settimeout(10)
         self.sock.connect(self.target)
 
-    def send_command(self, command: str) -> bytes:
-        """Send a specific command"""
+    def send_command(self, command: str, timeout: float) -> bytes:
+        """Send a specific WPA Supplicant command.
+        Raises if the command fails to answer before the specified timeout.
+
+        Arguments:
+            command {str} -- WPA Supplicant command to be sent
+            timeout {float} -- Maximum time (in seconds) allowed for receiving an answer before raising a BusyError
+        """
         print(">", command)
         assert self.sock, "No socket assigned to WPA Supplicant"
 
         try:
-            self.sock.send(command.encode("utf-8"))
-        except Exception as error:
-            raise SockCommError("Could not send data to WPA Supplicant socket.") from error
-
-        try:
-            data, _ = self.sock.recvfrom(self.BUFFER_SIZE)
+            timeout_start = time.time()
+            while time.time() - timeout_start < timeout:
+                self.sock.send(command.encode("utf-8"))
+                data, _ = self.sock.recvfrom(self.BUFFER_SIZE)
+                if b"FAIL-BUSY" in data:
+                    print(f"Busy during {command} operation. Trying again...")
+                    time.sleep(0.1)
+                    continue
+                break
+            else:
+                raise BusyError(f"{command} operation took more than specified timeout ({timeout}). Cancelling.")
             if self.verbose:
                 print("<", data.decode("utf-8").strip())
         except Exception as error:
-            raise SockCommError("Could not receive data from WPA Supplicant socket.") from error
+            raise SockCommError("Could not communicate with WPA Supplicant socket.") from error
         return data
 
-    def send_command_ping(self) -> bytes:
+    def send_command_ping(self, timeout: float = 1) -> bytes:
         """Send message: PING
 
         This command can be used to test whether wpa_supplicant is replying to
@@ -73,161 +86,161 @@ class WPASupplicant:
             if the connection is open and wpa_supplicant is processing commands.
 
         """
-        return self.send_command("PING")
+        return self.send_command("PING", timeout)
 
-    def send_command_mib(self) -> bytes:
+    def send_command_mib(self, timeout: float = 1) -> bytes:
         """Send message: MIB
 
         Request a list of MIB variables (dot1x, dot11). The output is a text block
             with each line in  <code>variable=value</code>  format. For example:
 
         """
-        return self.send_command("MIB")
+        return self.send_command("MIB", timeout)
 
-    def send_command_status(self) -> bytes:
+    def send_command_status(self, timeout: float = 1) -> bytes:
         """Send message: STATUS
 
         Request current WPA/EAPOL/EAP status information. The output is a text
             block with each line in  <code>variable=value</code>  format. For
             example:
         """
-        return self.send_command("STATUS")
+        return self.send_command("STATUS", timeout)
 
-    def send_command_status_verbose(self) -> bytes:
+    def send_command_status_verbose(self, timeout: float = 1) -> bytes:
         """Send message: STATUS-VERBOSE
 
         Same as STATUS, but with more verbosity (i.e., more  <code>variable=value</code>
             pairs).
         """
-        return self.send_command("STATUS-VERBOSE")
+        return self.send_command("STATUS-VERBOSE", timeout)
 
-    def send_command_pmksa(self) -> bytes:
+    def send_command_pmksa(self, timeout: float = 1) -> bytes:
         """Send message: PMKSA
 
         Show PMKSA cache
         """
-        return self.send_command("PMKSA")
+        return self.send_command("PMKSA", timeout)
 
-    def send_command_set(self, variable: str, value: str) -> bytes:
+    def send_command_set(self, variable: str, value: str, timeout: float = 1) -> bytes:
         """Send message: SET
 
         Example command:
         """
-        return self.send_command("SET" + " " + " ".join([variable, value]))
+        return self.send_command("SET" + " " + " ".join([variable, value]), timeout)
 
-    def send_command_logon(self) -> bytes:
+    def send_command_logon(self, timeout: float = 1) -> bytes:
         """Send message: LOGON
 
         IEEE 802.1X EAPOL state machine logon.
         """
-        return self.send_command("LOGON")
+        return self.send_command("LOGON", timeout)
 
-    def send_command_logoff(self) -> bytes:
+    def send_command_logoff(self, timeout: float = 1) -> bytes:
         """Send message: LOGOFF
 
         IEEE 802.1X EAPOL state machine logoff.
         """
-        return self.send_command("LOGOFF")
+        return self.send_command("LOGOFF", timeout)
 
-    def send_command_reassociate(self) -> bytes:
+    def send_command_reassociate(self, timeout: float = 1) -> bytes:
         """Send message: REASSOCIATE
 
         Force reassociation.
         """
-        return self.send_command("REASSOCIATE")
+        return self.send_command("REASSOCIATE", timeout)
 
-    def send_command_reconnect(self) -> bytes:
+    def send_command_reconnect(self, timeout: float = 1) -> bytes:
         """Send message: RECONNECT
 
         Connect if disconnected (i.e., like  <code>REASSOCIATE</code> , but only
             connect if in disconnected state).
         """
-        return self.send_command("RECONNECT")
+        return self.send_command("RECONNECT", timeout)
 
-    def send_command_preauth(self, BSSID: str) -> bytes:
+    def send_command_preauth(self, BSSID: str, timeout: float = 1) -> bytes:
         """Send message: PREAUTH
 
         Start pre-authentication with the given BSSID.
         """
-        return self.send_command("PREAUTH" + " " + " ".join([BSSID]))
+        return self.send_command("PREAUTH" + " " + " ".join([BSSID]), timeout)
 
-    def send_command_attach(self) -> bytes:
+    def send_command_attach(self, timeout: float = 1) -> bytes:
         """Send message: ATTACH
 
         Attach the connection as a monitor for unsolicited events. This can be
             done with  <a class="el" href="wpa__ctrl_8c.html#a3257febde163010311f3306ac0468257">wpa_ctrl_attach()</a>
             .
         """
-        return self.send_command("ATTACH")
+        return self.send_command("ATTACH", timeout)
 
-    def send_command_detach(self) -> bytes:
+    def send_command_detach(self, timeout: float = 1) -> bytes:
         """Send message: DETACH
 
         Detach the connection as a monitor for unsolicited events. This can be
             done with  <a class="el" href="wpa__ctrl_8c.html#ae326ca921d06153e4efce717ae5dd4da">wpa_ctrl_detach()</a>
             .
         """
-        return self.send_command("DETACH")
+        return self.send_command("DETACH", timeout)
 
-    def send_command_level(self, debug_level: str) -> bytes:
+    def send_command_level(self, debug_level: str, timeout: float = 1) -> bytes:
         """Send message: LEVEL
 
         Change debug level.
         """
-        return self.send_command("LEVEL" + " " + " ".join([debug_level]))
+        return self.send_command("LEVEL" + " " + " ".join([debug_level]), timeout)
 
-    def send_command_reconfigure(self) -> bytes:
+    def send_command_reconfigure(self, timeout: float = 1) -> bytes:
         """Send message: RECONFIGURE
 
         Force wpa_supplicant to re-read its configuration data.
         """
-        return self.send_command("RECONFIGURE")
+        return self.send_command("RECONFIGURE", timeout)
 
-    def send_command_terminate(self) -> bytes:
+    def send_command_terminate(self, timeout: float = 1) -> bytes:
         """Send message: TERMINATE
 
         Terminate wpa_supplicant process.
         """
-        return self.send_command("TERMINATE")
+        return self.send_command("TERMINATE", timeout)
 
-    def send_command_bssid(self, network_id: str, BSSID: str) -> bytes:
+    def send_command_bssid(self, network_id: str, BSSID: str, timeout: float = 1) -> bytes:
         """Send message: BSSID
 
         Set preferred BSSID for a network. Network id can be received from the
             <code>LIST_NETWORKS</code>  command output.
         """
-        return self.send_command("BSSID" + " " + " ".join([network_id, BSSID]))
+        return self.send_command("BSSID" + " " + " ".join([network_id, BSSID]), timeout)
 
-    def send_command_list_networks(self) -> bytes:
+    def send_command_list_networks(self, timeout: float = 1) -> bytes:
         """Send message: LIST_NETWORKS
 
         (note: fields are separated with tabs)
         """
-        return self.send_command("LIST_NETWORKS")
+        return self.send_command("LIST_NETWORKS", timeout)
 
-    def send_command_disconnect(self) -> bytes:
+    def send_command_disconnect(self, timeout: float = 1) -> bytes:
         """Send message: DISCONNECT
 
         Disconnect and wait for  <code>REASSOCIATE</code>  or  <code>RECONNECT</code>
             command before connecting.
         """
-        return self.send_command("DISCONNECT")
+        return self.send_command("DISCONNECT", timeout)
 
-    def send_command_scan(self) -> bytes:
+    def send_command_scan(self, timeout: float = 1) -> bytes:
         """Send message: SCAN
 
         Request a new BSS scan.
         """
-        return self.send_command("SCAN")
+        return self.send_command("SCAN", timeout)
 
-    def send_command_scan_results(self) -> bytes:
+    def send_command_scan_results(self, timeout: float = 1) -> bytes:
         """Send message: SCAN_RESULTS
 
         (note: fields are separated with tabs)
         """
-        return self.send_command("SCAN_RESULTS")
+        return self.send_command("SCAN_RESULTS", timeout)
 
-    def send_command_bss(self) -> bytes:
+    def send_command_bss(self, timeout: float = 1) -> bytes:
         """Send message: BSS
 
         BSS information is presented in following format. Please note that new
@@ -235,35 +248,35 @@ class WPASupplicant:
             user should be prepared to ignore values it does not understand.
 
         """
-        return self.send_command("BSS")
+        return self.send_command("BSS", timeout)
 
-    def send_command_select_network(self, network_id: str) -> bytes:
+    def send_command_select_network(self, network_id: str, timeout: float = 1) -> bytes:
         """Send message: SELECT_NETWORK
 
         Select a network (disable others). Network id can be received from the
             <code>LIST_NETWORKS</code>  command output.
         """
-        return self.send_command("SELECT_NETWORK" + " " + " ".join([network_id]))
+        return self.send_command("SELECT_NETWORK" + " " + " ".join([network_id]), timeout)
 
-    def send_command_enable_network(self, network_id: str) -> bytes:
+    def send_command_enable_network(self, network_id: str, timeout: float = 1) -> bytes:
         """Send message: ENABLE_NETWORK
 
         Enable a network. Network id can be received from the  <code>LIST_NETWORKS</code>
             command output. Special network id  <code>all</code>  can be used
             to enable all network.
         """
-        return self.send_command("ENABLE_NETWORK" + " " + " ".join([network_id]))
+        return self.send_command("ENABLE_NETWORK" + " " + " ".join([network_id]), timeout)
 
-    def send_command_disable_network(self, network_id: str) -> bytes:
+    def send_command_disable_network(self, network_id: str, timeout: float = 1) -> bytes:
         """Send message: DISABLE_NETWORK
 
         Disable a network. Network id can be received from the  <code>LIST_NETWORKS</code>
             command output. Special network id  <code>all</code>  can be used
             to disable all network.
         """
-        return self.send_command("DISABLE_NETWORK" + " " + " ".join([network_id]))
+        return self.send_command("DISABLE_NETWORK" + " " + " ".join([network_id]), timeout)
 
-    def send_command_add_network(self) -> bytes:
+    def send_command_add_network(self, timeout: float = 1) -> bytes:
         """Send message: ADD_NETWORK
 
         Add a new network. This command creates a new network with empty configuration.
@@ -272,41 +285,41 @@ class WPASupplicant:
             returns the network id of the new network or FAIL on failure.
 
         """
-        return self.send_command("ADD_NETWORK")
+        return self.send_command("ADD_NETWORK", timeout)
 
-    def send_command_remove_network(self, network_id: str) -> bytes:
+    def send_command_remove_network(self, network_id: str, timeout: float = 1) -> bytes:
         """Send message: REMOVE_NETWORK
 
         Remove a network. Network id can be received from the  <code>LIST_NETWORKS</code>
             command output. Special network id  <code>all</code>  can be used
             to remove all network.
         """
-        return self.send_command("REMOVE_NETWORK" + " " + " ".join([network_id]))
+        return self.send_command("REMOVE_NETWORK" + " " + " ".join([network_id]), timeout)
 
-    def send_command_set_network(self, network_id: str, variable: str, value: str) -> bytes:
+    def send_command_set_network(self, network_id: str, variable: str, value: str, timeout: float = 1) -> bytes:
         """Send message: SET_NETWORK
 
         This command uses the same variables and data formats as the configuration
             file. See example wpa_supplicant.conf for more details.
         """
-        return self.send_command("SET_NETWORK" + " " + " ".join([network_id, variable, value]))
+        return self.send_command("SET_NETWORK" + " " + " ".join([network_id, variable, value]), timeout)
 
-    def send_command_get_network(self, network_id: str, variable: str) -> bytes:
+    def send_command_get_network(self, network_id: str, variable: str, timeout: float = 1) -> bytes:
         """Send message: GET_NETWORK
 
         Get network variables. Network id can be received from the  <code>LIST_NETWORKS</code>
             command output.
         """
-        return self.send_command("GET_NETWORK" + " " + " ".join([network_id, variable]))
+        return self.send_command("GET_NETWORK" + " " + " ".join([network_id, variable]), timeout)
 
-    def send_command_save_config(self) -> bytes:
+    def send_command_save_config(self, timeout: float = 1) -> bytes:
         """Send message: SAVE_CONFIG
 
         Save the current configuration.
         """
-        return self.send_command("SAVE_CONFIG")
+        return self.send_command("SAVE_CONFIG", timeout)
 
-    def send_command_p2p_find(self) -> bytes:
+    def send_command_p2p_find(self, timeout: float = 1) -> bytes:
         """Send message: P2P_FIND
 
         The default search type is to first run a full scan of all channels and
@@ -321,25 +334,25 @@ class WPASupplicant:
             the GO being asleep) over time without adding considerable extra
             delay for every Search state round.
         """
-        return self.send_command("P2P_FIND")
+        return self.send_command("P2P_FIND", timeout)
 
-    def send_command_p2p_stop_find(self) -> bytes:
+    def send_command_p2p_stop_find(self, timeout: float = 1) -> bytes:
         """Send message: P2P_STOP_FIND
 
         Stop ongoing P2P device discovery or other operation (connect, listen mode).
 
         """
-        return self.send_command("P2P_STOP_FIND")
+        return self.send_command("P2P_STOP_FIND", timeout)
 
-    def send_command_p2p_connect(self) -> bytes:
+    def send_command_p2p_connect(self, timeout: float = 1) -> bytes:
         """Send message: P2P_CONNECT
 
         The optional "go_intent" parameter can be used to override the default
             GO Intent value.
         """
-        return self.send_command("P2P_CONNECT")
+        return self.send_command("P2P_CONNECT", timeout)
 
-    def send_command_p2p_listen(self) -> bytes:
+    def send_command_p2p_listen(self, timeout: float = 1) -> bytes:
         """Send message: P2P_LISTEN
 
         Start Listen-only state. Optional parameter can be used to specify the
@@ -348,9 +361,9 @@ class WPASupplicant:
             designed for testing. It can also be used to keep the device discoverable
             without having to maintain a group.
         """
-        return self.send_command("P2P_LISTEN")
+        return self.send_command("P2P_LISTEN", timeout)
 
-    def send_command_p2p_group_remove(self) -> bytes:
+    def send_command_p2p_group_remove(self, timeout: float = 1) -> bytes:
         """Send message: P2P_GROUP_REMOVE
 
         Terminate a P2P group. If a new virtual network interface was used for
@@ -358,9 +371,9 @@ class WPASupplicant:
             of the group interface is used as a parameter for this command.
 
         """
-        return self.send_command("P2P_GROUP_REMOVE")
+        return self.send_command("P2P_GROUP_REMOVE", timeout)
 
-    def send_command_p2p_group_add(self) -> bytes:
+    def send_command_p2p_group_add(self, timeout: float = 1) -> bytes:
         """Send message: P2P_GROUP_ADD
 
         Set up a P2P group owner manually (i.e., without group owner negotiation
@@ -368,9 +381,9 @@ class WPASupplicant:
             persistent=<network id>=""> can be used to specify restart of a
             persistent group.
         """
-        return self.send_command("P2P_GROUP_ADD")
+        return self.send_command("P2P_GROUP_ADD", timeout)
 
-    def send_command_p2p_prov_disc(self) -> bytes:
+    def send_command_p2p_prov_disc(self, timeout: float = 1) -> bytes:
         """Send message: P2P_PROV_DISC
 
         Send P2P provision discovery request to the specified peer. The parameters
@@ -380,20 +393,20 @@ class WPASupplicant:
             02:01:02:03:04:05 keypad" would request the peer to enter a PIN
             that we display.
         """
-        return self.send_command("P2P_PROV_DISC")
+        return self.send_command("P2P_PROV_DISC", timeout)
 
-    def send_command_p2p_get_passphrase(self) -> bytes:
+    def send_command_p2p_get_passphrase(self, timeout: float = 1) -> bytes:
         """Send message: P2P_GET_PASSPHRASE
 
         Get the passphrase for a group (only available when acting as a GO).
         """
-        return self.send_command("P2P_GET_PASSPHRASE")
+        return self.send_command("P2P_GET_PASSPHRASE", timeout)
 
-    def send_command_p2p_serv_disc_req(self) -> bytes:
+    def send_command_p2p_serv_disc_req(self, timeout: float = 1) -> bytes:
         """Send message: P2P-SERV-DISC-REQ"""
-        return self.send_command("P2P-SERV-DISC-REQ")
+        return self.send_command("P2P-SERV-DISC-REQ", timeout)
 
-    def send_command_p2p_serv_disc_cancel_req(self) -> bytes:
+    def send_command_p2p_serv_disc_cancel_req(self, timeout: float = 1) -> bytes:
         """Send message: P2P_SERV_DISC_CANCEL_REQ
 
         Cancel a pending P2P service discovery request. This command takes a single
@@ -401,22 +414,22 @@ class WPASupplicant:
             by  <a class="el" href="ctrl_iface_page.html#ctrl_iface_P2P_SERV_DISC_REQ">P2P_SERV_DISC_REQ</a>
             ), e.g., "P2P_SERV_DISC_CANCEL_REQ 1f77628".
         """
-        return self.send_command("P2P_SERV_DISC_CANCEL_REQ")
+        return self.send_command("P2P_SERV_DISC_CANCEL_REQ", timeout)
 
-    def send_command_p2p_serv_disc_resp(self) -> bytes:
+    def send_command_p2p_serv_disc_resp(self, timeout: float = 1) -> bytes:
         """Send message: P2P-SERV-DISC-RESP"""
-        return self.send_command("P2P-SERV-DISC-RESP")
+        return self.send_command("P2P-SERV-DISC-RESP", timeout)
 
-    def send_command_p2p_service_update(self) -> bytes:
+    def send_command_p2p_service_update(self, timeout: float = 1) -> bytes:
         """Send message: P2P_SERVICE_UPDATE
 
         Indicate that local services have changed. This is used to increment the
             P2P service indicator value so that peers know when previously
             cached information may have changed.
         """
-        return self.send_command("P2P_SERVICE_UPDATE")
+        return self.send_command("P2P_SERVICE_UPDATE", timeout)
 
-    def send_command_p2p_serv_disc_external(self) -> bytes:
+    def send_command_p2p_serv_disc_external(self, timeout: float = 1) -> bytes:
         """Send message: P2P_SERV_DISC_EXTERNAL
 
         Configure external processing of P2P service requests: 0 (default) = no
@@ -426,9 +439,9 @@ class WPASupplicant:
             <a class="el" href="ctrl_iface_page.html#ctrl_iface_P2P_SERV_DISC_RESP">P2P_SERV_DISC_RESP</a>
             ).
         """
-        return self.send_command("P2P_SERV_DISC_EXTERNAL")
+        return self.send_command("P2P_SERV_DISC_EXTERNAL", timeout)
 
-    def send_command_p2p_reject(self) -> bytes:
+    def send_command_p2p_reject(self, timeout: float = 1) -> bytes:
         """Send message: P2P_REJECT
 
         Reject connection attempt from a peer (specified with a device address).
@@ -436,16 +449,16 @@ class WPASupplicant:
             and request to automatically block any further connection or discovery
             of the peer.
         """
-        return self.send_command("P2P_REJECT")
+        return self.send_command("P2P_REJECT", timeout)
 
-    def send_command_p2p_invite(self) -> bytes:
+    def send_command_p2p_invite(self, timeout: float = 1) -> bytes:
         """Send message: P2P_INVITE
 
         Invite a peer to join a group or to (re)start a persistent group.
         """
-        return self.send_command("P2P_INVITE")
+        return self.send_command("P2P_INVITE", timeout)
 
-    def send_command_p2p_peer(self) -> bytes:
+    def send_command_p2p_peer(self, timeout: float = 1) -> bytes:
         """Send message: P2P_PEER
 
         Fetch information about a discovered peer. This command takes in an argument
@@ -454,23 +467,23 @@ class WPASupplicant:
             Address>" to indicate the entry following the specified peer (to
             allow for iterating through the list).
         """
-        return self.send_command("P2P_PEER")
+        return self.send_command("P2P_PEER", timeout)
 
-    def send_command_p2p_ext_listen(self) -> bytes:
+    def send_command_p2p_ext_listen(self, timeout: float = 1) -> bytes:
         """Send message: P2P_EXT_LISTEN
 
         And a matching reply from the GUI:
         """
-        return self.send_command("P2P_EXT_LISTEN")
+        return self.send_command("P2P_EXT_LISTEN", timeout)
 
-    def send_command_get_capability(self, option: str, strict: str = "") -> bytes:
+    def send_command_get_capability(self, option: str, strict: str = "", timeout: float = 1) -> bytes:
         """Send message: GET_CAPABILITY
 
         Example request/reply pairs:
         """
-        return self.send_command("GET_CAPABILITY" + " " + " ".join([option, strict]))
+        return self.send_command("GET_CAPABILITY" + " " + " ".join([option, strict]), timeout)
 
-    def send_command_ap_scan(self, ap_scan_value: str) -> bytes:
+    def send_command_ap_scan(self, ap_scan_value: str, timeout: float = 1) -> bytes:
         """Send message: AP_SCAN
 
         Change ap_scan value: 0 = no scanning, 1 = wpa_supplicant requests scans
@@ -478,218 +491,218 @@ class WPASupplicant:
             not use scanning and just requests driver to associate and take
             care of AP selection
         """
-        return self.send_command("AP_SCAN" + " " + " ".join([ap_scan_value]))
+        return self.send_command("AP_SCAN" + " " + " ".join([ap_scan_value]), timeout)
 
-    def send_command_interfaces(self) -> bytes:
+    def send_command_interfaces(self, timeout: float = 1) -> bytes:
         """Send message: INTERFACES
 
         Following subsections describe the most common event notifications generated
             by wpa_supplicant.
         """
-        return self.send_command("INTERFACES")
+        return self.send_command("INTERFACES", timeout)
 
-    def send_command_ctrl_req_(self) -> bytes:
+    def send_command_ctrl_req_(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-REQ-
 
         WPA_CTRL_REQ: Request information from a user.
         """
-        return self.send_command("CTRL-REQ-")
+        return self.send_command("CTRL-REQ-", timeout)
 
-    def send_command_ctrl_event_connected(self) -> bytes:
+    def send_command_ctrl_event_connected(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-CONNECTED
 
         WPA_EVENT_CONNECTED: Indicate successfully completed authentication and
             that the data connection is now enabled.
         """
-        return self.send_command("CTRL-EVENT-CONNECTED")
+        return self.send_command("CTRL-EVENT-CONNECTED", timeout)
 
-    def send_command_ctrl_event_disconnected(self) -> bytes:
+    def send_command_ctrl_event_disconnected(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-DISCONNECTED
 
         WPA_EVENT_DISCONNECTED: Disconnected, data connection is not available
 
         """
-        return self.send_command("CTRL-EVENT-DISCONNECTED")
+        return self.send_command("CTRL-EVENT-DISCONNECTED", timeout)
 
-    def send_command_ctrl_event_terminating(self) -> bytes:
+    def send_command_ctrl_event_terminating(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-TERMINATING
 
         WPA_EVENT_TERMINATING: wpa_supplicant is exiting
         """
-        return self.send_command("CTRL-EVENT-TERMINATING")
+        return self.send_command("CTRL-EVENT-TERMINATING", timeout)
 
-    def send_command_ctrl_event_password_changed(self) -> bytes:
+    def send_command_ctrl_event_password_changed(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-PASSWORD-CHANGED
 
         WPA_EVENT_PASSWORD_CHANGED: Password change was completed successfully
 
         """
-        return self.send_command("CTRL-EVENT-PASSWORD-CHANGED")
+        return self.send_command("CTRL-EVENT-PASSWORD-CHANGED", timeout)
 
-    def send_command_ctrl_event_eap_notification(self) -> bytes:
+    def send_command_ctrl_event_eap_notification(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-EAP-NOTIFICATION
 
         WPA_EVENT_EAP_NOTIFICATION: EAP-Request/Notification received
         """
-        return self.send_command("CTRL-EVENT-EAP-NOTIFICATION")
+        return self.send_command("CTRL-EVENT-EAP-NOTIFICATION", timeout)
 
-    def send_command_ctrl_event_eap_started(self) -> bytes:
+    def send_command_ctrl_event_eap_started(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-EAP-STARTED
 
         WPA_EVENT_EAP_STARTED: EAP authentication started (EAP-Request/Identity
             received)
         """
-        return self.send_command("CTRL-EVENT-EAP-STARTED")
+        return self.send_command("CTRL-EVENT-EAP-STARTED", timeout)
 
-    def send_command_ctrl_event_eap_method(self) -> bytes:
+    def send_command_ctrl_event_eap_method(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-EAP-METHOD
 
         WPA_EVENT_EAP_METHOD: EAP method selected
         """
-        return self.send_command("CTRL-EVENT-EAP-METHOD")
+        return self.send_command("CTRL-EVENT-EAP-METHOD", timeout)
 
-    def send_command_ctrl_event_eap_success(self) -> bytes:
+    def send_command_ctrl_event_eap_success(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-EAP-SUCCESS
 
         WPA_EVENT_EAP_SUCCESS: EAP authentication completed successfully
         """
-        return self.send_command("CTRL-EVENT-EAP-SUCCESS")
+        return self.send_command("CTRL-EVENT-EAP-SUCCESS", timeout)
 
-    def send_command_ctrl_event_eap_failure(self) -> bytes:
+    def send_command_ctrl_event_eap_failure(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-EAP-FAILURE
 
         WPA_EVENT_EAP_FAILURE: EAP authentication failed (EAP-Failure received)
 
         """
-        return self.send_command("CTRL-EVENT-EAP-FAILURE")
+        return self.send_command("CTRL-EVENT-EAP-FAILURE", timeout)
 
-    def send_command_ctrl_event_scan_results(self) -> bytes:
+    def send_command_ctrl_event_scan_results(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-SCAN-RESULTS
 
         WPA_EVENT_SCAN_RESULTS: New scan results available
         """
-        return self.send_command("CTRL-EVENT-SCAN-RESULTS")
+        return self.send_command("CTRL-EVENT-SCAN-RESULTS", timeout)
 
-    def send_command_ctrl_event_bss_added(self) -> bytes:
+    def send_command_ctrl_event_bss_added(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-BSS-ADDED
 
         WPA_EVENT_BSS_ADDED: A new BSS entry was added. The event prefix is followed
             by the BSS entry id and BSSID.
         """
-        return self.send_command("CTRL-EVENT-BSS-ADDED")
+        return self.send_command("CTRL-EVENT-BSS-ADDED", timeout)
 
-    def send_command_ctrl_event_bss_removed(self) -> bytes:
+    def send_command_ctrl_event_bss_removed(self, timeout: float = 1) -> bytes:
         """Send message: CTRL-EVENT-BSS-REMOVED
 
         WPA_EVENT_BSS_REMOVED: A BSS entry was removed. The event prefix is followed
             by BSS entry id and BSSID.
         """
-        return self.send_command("CTRL-EVENT-BSS-REMOVED")
+        return self.send_command("CTRL-EVENT-BSS-REMOVED", timeout)
 
-    def send_command_wps_overlap_detected(self) -> bytes:
+    def send_command_wps_overlap_detected(self, timeout: float = 1) -> bytes:
         """Send message: WPS-OVERLAP-DETECTED
 
         WPS_EVENT_OVERLAP: WPS overlap detected in PBC mode
         """
-        return self.send_command("WPS-OVERLAP-DETECTED")
+        return self.send_command("WPS-OVERLAP-DETECTED", timeout)
 
-    def send_command_wps_ap_available_pbc(self) -> bytes:
+    def send_command_wps_ap_available_pbc(self, timeout: float = 1) -> bytes:
         """Send message: WPS-AP-AVAILABLE-PBC
 
         WPS_EVENT_AP_AVAILABLE_PBC: Available WPS AP with active PBC found in scan
             results.
         """
-        return self.send_command("WPS-AP-AVAILABLE-PBC")
+        return self.send_command("WPS-AP-AVAILABLE-PBC", timeout)
 
-    def send_command_wps_ap_available_pin(self) -> bytes:
+    def send_command_wps_ap_available_pin(self, timeout: float = 1) -> bytes:
         """Send message: WPS-AP-AVAILABLE-PIN
 
         WPS_EVENT_AP_AVAILABLE_PIN: Available WPS AP with recently selected PIN
             registrar found in scan results.
         """
-        return self.send_command("WPS-AP-AVAILABLE-PIN")
+        return self.send_command("WPS-AP-AVAILABLE-PIN", timeout)
 
-    def send_command_wps_ap_available(self) -> bytes:
+    def send_command_wps_ap_available(self, timeout: float = 1) -> bytes:
         """Send message: WPS-AP-AVAILABLE
 
         WPS_EVENT_AP_AVAILABLE: Available WPS AP found in scan results
         """
-        return self.send_command("WPS-AP-AVAILABLE")
+        return self.send_command("WPS-AP-AVAILABLE", timeout)
 
-    def send_command_wps_cred_received(self) -> bytes:
+    def send_command_wps_cred_received(self, timeout: float = 1) -> bytes:
         """Send message: WPS-CRED-RECEIVED
 
         WPS_EVENT_CRED_RECEIVED: A new credential received
         """
-        return self.send_command("WPS-CRED-RECEIVED")
+        return self.send_command("WPS-CRED-RECEIVED", timeout)
 
-    def send_command_wps_m2d(self) -> bytes:
+    def send_command_wps_m2d(self, timeout: float = 1) -> bytes:
         """Send message: WPS-M2D
 
         WPS_EVENT_M2D: M2D received
         """
-        return self.send_command("WPS-M2D")
+        return self.send_command("WPS-M2D", timeout)
 
-    def send_command_ctrl_iface_event_wps_fail(self) -> bytes:
+    def send_command_ctrl_iface_event_wps_fail(self, timeout: float = 1) -> bytes:
         """Send message: ctrl_iface_event_WPS_FAIL
 
         WPS_EVENT_FAIL: WPS registration failed after M2/M2D
         """
-        return self.send_command("ctrl_iface_event_WPS_FAIL")
+        return self.send_command("ctrl_iface_event_WPS_FAIL", timeout)
 
-    def send_command_wps_success(self) -> bytes:
+    def send_command_wps_success(self, timeout: float = 1) -> bytes:
         """Send message: WPS-SUCCESS
 
         WPS_EVENT_SUCCESS: WPS registration completed successfully
         """
-        return self.send_command("WPS-SUCCESS")
+        return self.send_command("WPS-SUCCESS", timeout)
 
-    def send_command_wps_timeout(self) -> bytes:
+    def send_command_wps_timeout(self, timeout: float = 1) -> bytes:
         """Send message: WPS-TIMEOUT
 
         WPS_EVENT_TIMEOUT: WPS enrollment attempt timed out and was terminated
 
         """
-        return self.send_command("WPS-TIMEOUT")
+        return self.send_command("WPS-TIMEOUT", timeout)
 
-    def send_command_wps_enrollee_seen(self) -> bytes:
+    def send_command_wps_enrollee_seen(self, timeout: float = 1) -> bytes:
         """Send message: WPS-ENROLLEE-SEEN
 
         WPS_EVENT_ENROLLEE_SEEN: WPS Enrollee was detected (used in AP mode). The
             event prefix is followed by MAC addr, UUID-E, pri dev type, config
             methods, dev passwd id, request type, [dev name].
         """
-        return self.send_command("WPS-ENROLLEE-SEEN")
+        return self.send_command("WPS-ENROLLEE-SEEN", timeout)
 
-    def send_command_wps_er_ap_add(self) -> bytes:
+    def send_command_wps_er_ap_add(self, timeout: float = 1) -> bytes:
         """Send message: WPS-ER-AP-ADD
 
         WPS_EVENT_ER_AP_ADD: WPS ER discovered an AP
         """
-        return self.send_command("WPS-ER-AP-ADD")
+        return self.send_command("WPS-ER-AP-ADD", timeout)
 
-    def send_command_wps_er_ap_remove(self) -> bytes:
+    def send_command_wps_er_ap_remove(self, timeout: float = 1) -> bytes:
         """Send message: WPS-ER-AP-REMOVE
 
         WPS_EVENT_ER_AP_REMOVE: WPS ER removed an AP entry
         """
-        return self.send_command("WPS-ER-AP-REMOVE")
+        return self.send_command("WPS-ER-AP-REMOVE", timeout)
 
-    def send_command_wps_er_enrollee_add(self) -> bytes:
+    def send_command_wps_er_enrollee_add(self, timeout: float = 1) -> bytes:
         """Send message: WPS-ER-ENROLLEE-ADD
 
         WPS_EVENT_ER_ENROLLEE_ADD: WPS ER discovered a new Enrollee
         """
-        return self.send_command("WPS-ER-ENROLLEE-ADD")
+        return self.send_command("WPS-ER-ENROLLEE-ADD", timeout)
 
-    def send_command_wps_er_enrollee_remove(self) -> bytes:
+    def send_command_wps_er_enrollee_remove(self, timeout: float = 1) -> bytes:
         """Send message: WPS-ER-ENROLLEE-REMOVE
 
         WPS_EVENT_ER_ENROLLEE_REMOVE: WPS ER removed an Enrollee entry
         """
-        return self.send_command("WPS-ER-ENROLLEE-REMOVE")
+        return self.send_command("WPS-ER-ENROLLEE-REMOVE", timeout)
 
-    def send_command_wps_pin_needed(self) -> bytes:
+    def send_command_wps_pin_needed(self, timeout: float = 1) -> bytes:
         """Send message: WPS-PIN-NEEDED
 
         WPS_EVENT_PIN_NEEDED: PIN is needed to complete provisioning with an Enrollee.
@@ -697,95 +710,95 @@ class WPASupplicant:
             device name, manufacturer, model name, model number, serial number,
             primary device type).
         """
-        return self.send_command("WPS-PIN-NEEDED")
+        return self.send_command("WPS-PIN-NEEDED", timeout)
 
-    def send_command_wps_new_ap_settings(self) -> bytes:
+    def send_command_wps_new_ap_settings(self, timeout: float = 1) -> bytes:
         """Send message: WPS-NEW-AP-SETTINGS
 
         WPS_EVENT_NEW_AP_SETTINGS: New AP settings were received
         """
-        return self.send_command("WPS-NEW-AP-SETTINGS")
+        return self.send_command("WPS-NEW-AP-SETTINGS", timeout)
 
-    def send_command_wps_reg_success(self) -> bytes:
+    def send_command_wps_reg_success(self, timeout: float = 1) -> bytes:
         """Send message: WPS-REG-SUCCESS
 
         WPS_EVENT_REG_SUCCESS: WPS provisioning was completed successfully (AP/Registrar)
 
         """
-        return self.send_command("WPS-REG-SUCCESS")
+        return self.send_command("WPS-REG-SUCCESS", timeout)
 
-    def send_command_wps_ap_setup_locked(self) -> bytes:
+    def send_command_wps_ap_setup_locked(self, timeout: float = 1) -> bytes:
         """Send message: WPS-AP-SETUP-LOCKED
 
         WPS_EVENT_AP_SETUP_LOCKED: AP changed into setup locked state due to multiple
             failed configuration attempts using the AP PIN.
         """
-        return self.send_command("WPS-AP-SETUP-LOCKED")
+        return self.send_command("WPS-AP-SETUP-LOCKED", timeout)
 
-    def send_command_ap_sta_connected(self) -> bytes:
+    def send_command_ap_sta_connected(self, timeout: float = 1) -> bytes:
         """Send message: AP-STA-CONNECTED
 
         AP_STA_CONNECTED: A station associated with us (AP mode event). The event
             prefix is followed by the MAC address of the station.
         """
-        return self.send_command("AP-STA-CONNECTED")
+        return self.send_command("AP-STA-CONNECTED", timeout)
 
-    def send_command_ap_sta_disconnected(self) -> bytes:
+    def send_command_ap_sta_disconnected(self, timeout: float = 1) -> bytes:
         """Send message: AP-STA-DISCONNECTED
 
         AP_STA_DISCONNECTED: A station disassociated (AP mode event)
         """
-        return self.send_command("AP-STA-DISCONNECTED")
+        return self.send_command("AP-STA-DISCONNECTED", timeout)
 
-    def send_command_p2p_device_found(self) -> bytes:
+    def send_command_p2p_device_found(self, timeout: float = 1) -> bytes:
         """Send message: P2P-DEVICE-FOUND
 
         P2P_EVENT_DEVICE_FOUND: Indication of a discovered P2P device with information
             about that device.
         """
-        return self.send_command("P2P-DEVICE-FOUND")
+        return self.send_command("P2P-DEVICE-FOUND", timeout)
 
-    def send_command_p2p_go_neg_request(self) -> bytes:
+    def send_command_p2p_go_neg_request(self, timeout: float = 1) -> bytes:
         """Send message: P2P-GO-NEG-REQUEST
 
         P2P_EVENT_GO_NEG_REQUEST: A P2P device requested GO negotiation, but we
             were not ready to start the negotiation.
         """
-        return self.send_command("P2P-GO-NEG-REQUEST")
+        return self.send_command("P2P-GO-NEG-REQUEST", timeout)
 
-    def send_command_p2p_go_neg_success(self) -> bytes:
+    def send_command_p2p_go_neg_success(self, timeout: float = 1) -> bytes:
         """Send message: P2P-GO-NEG-SUCCESS
 
         P2P_EVENT_GO_NEG_SUCCESS: Indication of successfully complete group owner
             negotiation.
         """
-        return self.send_command("P2P-GO-NEG-SUCCESS")
+        return self.send_command("P2P-GO-NEG-SUCCESS", timeout)
 
-    def send_command_p2p_go_neg_failure(self) -> bytes:
+    def send_command_p2p_go_neg_failure(self, timeout: float = 1) -> bytes:
         """Send message: P2P-GO-NEG-FAILURE
 
         P2P_EVENT_GO_NEG_FAILURE: Indication of failed group owner negotiation.
 
         """
-        return self.send_command("P2P-GO-NEG-FAILURE")
+        return self.send_command("P2P-GO-NEG-FAILURE", timeout)
 
-    def send_command_p2p_group_formation_success(self) -> bytes:
+    def send_command_p2p_group_formation_success(self, timeout: float = 1) -> bytes:
         """Send message: P2P-GROUP-FORMATION-SUCCESS
 
         P2P_EVENT_GROUP_FORMATION_SUCCESS: Indication that P2P group formation
             has been completed successfully.
         """
-        return self.send_command("P2P-GROUP-FORMATION-SUCCESS")
+        return self.send_command("P2P-GROUP-FORMATION-SUCCESS", timeout)
 
-    def send_command_p2p_group_formation_failure(self) -> bytes:
+    def send_command_p2p_group_formation_failure(self, timeout: float = 1) -> bytes:
         """Send message: P2P-GROUP-FORMATION-FAILURE
 
         P2P_EVENT_GROUP_FORMATION_FAILURE: Indication that P2P group formation
             failed (e.g., due to provisioning failure or timeout).
         """
-        return self.send_command("P2P-GROUP-FORMATION-FAILURE")
+        return self.send_command("P2P-GROUP-FORMATION-FAILURE", timeout)
 
-    def send_command_p2p_group_started(self) -> bytes:
+    def send_command_p2p_group_started(self, timeout: float = 1) -> bytes:
         """Send message: P2P-GROUP-STARTED
 
         P2P_EVENT_GROUP_STARTED: Indication of a new P2P group having been started.
@@ -794,18 +807,18 @@ class WPASupplicant:
             here if known (on GO) or PSK (on client). If the group is a persistent
             one, a flag indicating that is included.
         """
-        return self.send_command("P2P-GROUP-STARTED")
+        return self.send_command("P2P-GROUP-STARTED", timeout)
 
-    def send_command_p2p_group_removed(self) -> bytes:
+    def send_command_p2p_group_removed(self, timeout: float = 1) -> bytes:
         """Send message: P2P-GROUP-REMOVED
 
         P2P_EVENT_GROUP_REMOVED: Indication of a P2P group having been removed.
             Additional parameters: network interface name for the group, role
             (GO/client).
         """
-        return self.send_command("P2P-GROUP-REMOVED")
+        return self.send_command("P2P-GROUP-REMOVED", timeout)
 
-    def send_command_p2p_prov_disc_show_pin(self) -> bytes:
+    def send_command_p2p_prov_disc_show_pin(self, timeout: float = 1) -> bytes:
         """Send message: P2P-PROV-DISC-SHOW-PIN
 
         P2P_EVENT_PROV_DISC_SHOW_PIN: Request from the peer for us to display a
@@ -815,18 +828,18 @@ class WPASupplicant:
             can be used to accept the request with the same PIN configured
             for the connection.
         """
-        return self.send_command("P2P-PROV-DISC-SHOW-PIN")
+        return self.send_command("P2P-PROV-DISC-SHOW-PIN", timeout)
 
-    def send_command_p2p_prov_disc_enter_pin(self) -> bytes:
+    def send_command_p2p_prov_disc_enter_pin(self, timeout: float = 1) -> bytes:
         """Send message: P2P-PROV-DISC-ENTER-PIN
 
         P2P_EVENT_PROV_DISC_ENTER_PIN: Request from the peer for us to enter a
             PIN displayed on the peer. The following parameter is included
             after the event prefix: peer address.
         """
-        return self.send_command("P2P-PROV-DISC-ENTER-PIN")
+        return self.send_command("P2P-PROV-DISC-ENTER-PIN", timeout)
 
-    def send_command_p2p_prov_disc_pbc_req(self) -> bytes:
+    def send_command_p2p_prov_disc_pbc_req(self, timeout: float = 1) -> bytes:
         """Send message: P2P-PROV-DISC-PBC-REQ
 
         P2P_EVENT_PROV_DISC_PBC_REQ: Request from the peer for us to connect using
@@ -834,9 +847,9 @@ class WPASupplicant:
             peer_address. P2P_CONNECT command can be used to accept the request.
 
         """
-        return self.send_command("P2P-PROV-DISC-PBC-REQ")
+        return self.send_command("P2P-PROV-DISC-PBC-REQ", timeout)
 
-    def send_command_p2p_prov_disc_pbc_resp(self) -> bytes:
+    def send_command_p2p_prov_disc_pbc_resp(self, timeout: float = 1) -> bytes:
         """Send message: P2P-PROV-DISC-PBC-RESP
 
         P2P-SERV-DISC-RESP: Indicate reception of a P2P service discovery response.
@@ -844,24 +857,24 @@ class WPASupplicant:
             address, Service Update Indicator, Service Response TLV(s) as hexdump.
 
         """
-        return self.send_command("P2P-PROV-DISC-PBC-RESP")
+        return self.send_command("P2P-PROV-DISC-PBC-RESP", timeout)
 
-    def send_command_p2p_invitation_received(self) -> bytes:
+    def send_command_p2p_invitation_received(self, timeout: float = 1) -> bytes:
         """Send message: P2P-INVITATION-RECEIVED
 
         P2P-INVITATION-RECEIVED: Indicate reception of a P2P Invitation Request.
             For persistent groups, the parameter after the event prefix indicates
             which network block includes the persistent group data.
         """
-        return self.send_command("P2P-INVITATION-RECEIVED")
+        return self.send_command("P2P-INVITATION-RECEIVED", timeout)
 
-    def send_command_p2p_invitation_result(self) -> bytes:
+    def send_command_p2p_invitation_result(self, timeout: float = 1) -> bytes:
         """Send message: P2P-INVITATION-RESULT
 
         shows the status code returned by the peer (or -1 on local failure or timeout).
 
         """
-        return self.send_command("P2P-INVITATION-RESULT")
+        return self.send_command("P2P-INVITATION-RESULT", timeout)
 
 
 if __name__ == "__main__":
