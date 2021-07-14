@@ -21,3 +21,7 @@ class SockCommError(ConnectionError):
 
 class WPAOperationFail(ConnectionError):
     """Raised when a WPA operation fails."""
+
+
+class NetworkAddFail(ValueError):
+    """Raised when a WPA add_network operation fails to return an int."""
