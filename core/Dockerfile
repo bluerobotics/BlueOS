@@ -2,7 +2,7 @@ FROM node:current-buster-slim AS frontendBuilder
 
 # Build frontend
 COPY frontend /home/pi/frontend
-RUN cd /home/pi/frontend && yarn install && yarn build --skip-plugins @vue/cli-plugin-eslint
+RUN cd /home/pi/frontend && yarn install --network-timeout=300000 && yarn build --skip-plugins @vue/cli-plugin-eslint
 
 # Download binaries
 FROM bluerobotics/companion-base:v0.0.1 as downloadBinaries
