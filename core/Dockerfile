@@ -5,7 +5,7 @@ COPY frontend /home/pi/frontend
 RUN cd /home/pi/frontend && yarn install --network-timeout=300000 && yarn build --skip-plugins @vue/cli-plugin-eslint
 
 # Download binaries
-FROM bluerobotics/companion-base:v0.0.1 as downloadBinaries
+FROM bluerobotics/companion-base:v0.0.2 as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/bridges/bootstrap.sh
 RUN /home/pi/tools/mavlink2rest/bootstrap.sh
@@ -13,7 +13,7 @@ RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
 RUN /home/pi/tools/mavlink_router/bootstrap.sh
 RUN /home/pi/tools/ttyd/bootstrap.sh
 
-FROM bluerobotics/companion-base:v0.0.1
+FROM bluerobotics/companion-base:v0.0.2
 
 # Install necessary tools
 COPY tools /home/pi/tools
