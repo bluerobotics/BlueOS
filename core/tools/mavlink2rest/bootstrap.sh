@@ -2,7 +2,7 @@
 
 LOCAL_BINARY_PATH="/usr/bin/mavlink2rest"
 
-VERSION=t0.11.1
+VERSION=t0.11.2
 
 # By default we install armv7
 REMOTE_BINARY_URL="https://github.com/patrickelectric/mavlink2rest/releases/download/${VERSION}/mavlink2rest-armv7-unknown-linux-musleabihf"
