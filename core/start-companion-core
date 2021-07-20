@@ -4,13 +4,18 @@ COMPANION_PATH=/home/pi
 SERVICES_PATH=$COMPANION_PATH/services
 TOOLS_PATH=$COMPANION_PATH/tools
 
+# MAVLink configuration
+MAV_SYSTEM_ID=1
+## We use the last ID for the companion computer component reserved address for our usage
+MAV_COMPONENT_ID_ONBOARD_COMPUTER4=194
+
 SERVICES=(
     'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
     'wifi',"$SERVICES_PATH/wifi/main.py --socket wlan0"
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
     'video',"mavlink-camera-manager --default-settings BlueROVUDP --verbose"
-    'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040"
+    'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
     'linux2rest',"linux2rest"
     'filebrowser',"filebrowser --database /etc/filebrowser/filebrowser.db"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
