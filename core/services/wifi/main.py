@@ -69,13 +69,13 @@ async def saved() -> Any:
 
 @app.post("/connect", summary="Connect to wifi network.")
 @version(1, 0)
-async def connect(credentials: WifiCredentials) -> Any:
+async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
     try:
         saved_networks = await wifi_manager.get_saved_wifi_network()
         match_network = next(filter(lambda network: network.ssid == credentials.ssid, saved_networks))
         network_id = match_network.networkid
     except StopIteration:
-        network_id = await wifi_manager.add_network(credentials)
+        network_id = await wifi_manager.add_network(credentials, hidden)
 
     try:
         await wifi_manager.connect_to_network(network_id)
