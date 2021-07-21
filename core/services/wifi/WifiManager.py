@@ -128,11 +128,13 @@ class WifiManager:
         except Exception as error:
             raise FetchError("Failed to fetch saved networks list.") from error
 
-    async def add_network(self, credentials: WifiCredentials) -> int:
+    async def add_network(self, credentials: WifiCredentials, hidden: bool = False) -> int:
         """Set network ssid and password
 
         Arguments:
             credentials {[WifiCredentials]} -- object containing ssid and password of the network
+            hidden {bool} -- Should be set as true when adding hidden networks (networks that do not broadcast
+            the SSID, or on other words, that have SSID as blank or null on the scan results). False by default.
         """
         try:
             network_number = await self.wpa.send_command_add_network()
@@ -142,6 +144,8 @@ class WifiManager:
                 await self.wpa.send_command_set_network(network_number, "key_mgmt", "NONE")
             else:
                 await self.wpa.send_command_set_network(network_number, "psk", f'"{credentials.password}"')
+            if hidden:
+                await self.wpa.send_command_set_network(network_number, "scan_ssid", "1")
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             return network_number
