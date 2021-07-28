@@ -22,6 +22,7 @@ module.exports = {
     'max-len': ['error', { 'code': 120 }],
     'no-extra-parens': ['error', 'all'],
     'no-multi-spaces': 'error',
+    'object-curly-spacing': ['error', 'always'],
     'object-shorthand': 'error',
     'prefer-const': 'error',
     'space-before-function-paren': ['error', 'always'],
