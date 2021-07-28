@@ -144,7 +144,7 @@
         networksToShow () {
           let showable_networks = this.available_networks.map((network) => {
             if (network.ssid) return network
-            return {...network, ssid: '[HIDDEN_SSID]'}
+            return { ...network, ssid: '[HIDDEN_SSID]' }
           })
           if (showable_networks && showable_networks.length) {
             if (this.connected_network) {
@@ -192,7 +192,7 @@
                 const available_connected_network = this.available_networks.filter((network) => {
                   return network.ssid === response.data.ssid
                 })[0]
-                this.connected_network = {...response.data, ...available_connected_network}
+                this.connected_network = { ...response.data, ...available_connected_network }
               } else {
                 this.connected_network = null
               }
