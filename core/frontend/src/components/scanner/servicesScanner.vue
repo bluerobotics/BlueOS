@@ -7,7 +7,7 @@ import Vue from 'vue'
 import axios from 'axios'
 import { getModule } from 'vuex-module-decorators'
 import ServicesScannerStore from '@/store/servicesScanner'
-import {Service} from '@/types/SERVICE'
+import { Service } from '@/types/SERVICE'
 
 const servicesHelper: ServicesScannerStore = getModule(ServicesScannerStore)
 
