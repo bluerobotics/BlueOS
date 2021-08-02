@@ -26,7 +26,7 @@ module.exports = {
     'object-shorthand': 'error',
     'prefer-const': 'error',
     'space-before-function-paren': ['error', 'always'],
-    indent: ['error', 2],
+    indent: ['error', 2, { 'SwitchCase': 1 }],
     quotes: ['error', 'single'],
     semi: ['error', 'never'],
   },
