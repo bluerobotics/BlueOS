@@ -25,6 +25,7 @@ module.exports = {
     'object-curly-spacing': ['error', 'always'],
     'object-shorthand': 'error',
     'prefer-const': 'error',
+    'sort-imports': 'error',
     'space-before-function-paren': ['error', 'always'],
     indent: ['error', 2, { 'SwitchCase': 1 }],
     quotes: ['error', 'single'],
