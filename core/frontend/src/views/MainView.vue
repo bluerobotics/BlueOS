@@ -5,8 +5,8 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
 import AvailableServicesTable from '../components/scanner/availableServicesTable.vue'
+import Vue from 'vue'
 
 export default Vue.extend({
   name: 'Main',
