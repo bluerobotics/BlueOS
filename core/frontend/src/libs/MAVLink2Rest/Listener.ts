@@ -5,11 +5,14 @@ import type Endpoint from './Endpoint'
 
 export default class Listener {
   callback: (msg: any) => void = () => { console.log('Listener not assigned a callback') };
+
   parent: Endpoint;
+
   frequency = 1
+
   interval = -1;
 
-  constructor (parent: Endpoint) {
+  constructor(parent: Endpoint) {
     this.parent = parent
     this.setFrequency(1)
   }
@@ -19,7 +22,7 @@ export default class Listener {
    * @param  {(msg:any)=>void} callback
    * @returns Listener
    */
-  setCallback (callback: (msg: any) => void): Listener {
+  setCallback(callback: (msg: any) => void): Listener {
     this.callback = callback
     return this
   }
@@ -29,7 +32,7 @@ export default class Listener {
    * @param  {number} frequency
    * @returns Listener
    */
-  setFrequency (frequency: number): Listener {
+  setFrequency(frequency: number): Listener {
     clearInterval(this.interval)
     this.interval = window.setInterval(() => {
       if (this.parent.latestData !== null) {
@@ -39,7 +42,7 @@ export default class Listener {
     return this
   }
 
-  discard () {
+  discard(): void {
     clearInterval(this.interval)
     this.parent.removeListener(this)
   }

@@ -5,10 +5,12 @@ import Listener from './Listener'
 
 export default class Endpoint {
   socket: WebSocket;
+
   listeners: Array<Listener> = [];
+
   latestData: any = null;
 
-  constructor (url: string) {
+  constructor(url: string) {
     this.socket = this.createSocket(url)
   }
 
@@ -16,7 +18,7 @@ export default class Endpoint {
    * Update Endpoint url
    * @param  {string} url
    */
-  updateUrl (url: string) {
+  updateUrl(url: string): void {
     this.socket.close()
     this.socket = this.createSocket(url)
   }
@@ -26,7 +28,7 @@ export default class Endpoint {
    * @param  {string} url
    * @returns WebSocket
    */
-  createSocket (url: string): WebSocket {
+  createSocket(url: string): WebSocket {
     const socket = new WebSocket(url)
     socket.onmessage = (message: MessageEvent) => {
       this.latestData = JSON.parse(message.data)
@@ -37,7 +39,7 @@ export default class Endpoint {
   /**
    * Return a new listener for Endpoint
    */
-  addListener () {
+  addListener(): Listener {
     const newListener = new Listener(this)
     this.listeners.push(newListener)
     return newListener
@@ -47,7 +49,7 @@ export default class Endpoint {
    * Remove sired listener from Endpoint
    * @param  {Listener} listener
    */
-  removeListener (listener: Listener) {
+  removeListener(listener: Listener): void {
     this.listeners = this.listeners.filter((item) => item !== listener)
   }
 }
