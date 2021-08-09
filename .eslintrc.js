@@ -1,4 +1,3 @@
-/*global module*/
 module.exports = {
   root: true,
   env: {
@@ -18,7 +17,7 @@ module.exports = {
   rules: {
     camelcase: 'off',
     'func-style': ['error', 'declaration'],
-    'max-len': ['error', { 'code': 120 }],
+    'max-len': ['error', { code: 120 }],
     'no-extra-parens': ['error', 'all'],
     'sort-imports': 'error',
     semi: ['error', 'never'],
