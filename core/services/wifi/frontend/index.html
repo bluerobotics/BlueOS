@@ -120,11 +120,11 @@
   </body>
 
   <script>
-    /*global Metro, axios, Vue*/
+    /* global Metro, axios, Vue */
 
-    new Vue({
+    new Vue({ // eslint-disable-line no-new
       el: '#app',
-      data () {
+      data() {
         return {
           available_networks: [],
           Metro: null,
@@ -134,35 +134,35 @@
           wpa_state: 'starting',
         }
       },
-      mounted () {
-        this.API_URL = 'v1.0'
-        this.Metro = Metro
-        this.Metro.init()
-        setInterval(this.updateData, 5000)
-      },
       computed: {
-        networksToShow () {
+        networksToShow() {
           let showable_networks = this.available_networks.map((network) => {
             if (network.ssid) return network
             return { ...network, ssid: '[HIDDEN_SSID]' }
           })
           if (showable_networks && showable_networks.length) {
             if (this.connected_network) {
-              showable_networks = showable_networks.filter((network) => network.ssid != this.connected_network.ssid)
+              showable_networks = showable_networks.filter((network) => network.ssid !== this.connected_network.ssid)
             }
-            return showable_networks.sort((a,b) => b.signallevel - a.signallevel)
+            return showable_networks.sort((a, b) => b.signallevel - a.signallevel)
           }
           // Non-empty return is necessary to force Metro rendering of the networks list
           return [{}]
         },
       },
+      mounted() {
+        this.API_URL = 'v1.0'
+        this.Metro = Metro
+        this.Metro.init()
+        setInterval(this.updateData, 5000)
+      },
       methods: {
-        async updateData () {
+        async updateData() {
           this.checkNetworkStatus()
           await this.sleep(500)
           this.scanAvailableNetworks()
         },
-        scanAvailableNetworks () {
+        scanAvailableNetworks() {
           axios({
             method: 'get',
             url: `${this.API_URL}/scan`,
@@ -180,28 +180,28 @@
               }
             })
         },
-        checkNetworkStatus () {
+        checkNetworkStatus() {
           axios({
             method: 'get',
             url: `${this.API_URL}/status`,
             timeout: 500,
           })
             .then((response) => {
-              if (response.data.wpa_state === 'COMPLETED'){
+              if (response.data.wpa_state === 'COMPLETED') {
                 // Merge status and scan data on connected_network
-                const available_connected_network = this.available_networks.filter((network) => {
-                  return network.ssid === response.data.ssid
-                })[0]
+                const available_connected_network = this.available_networks.filter(
+                  (network) => network.ssid === response.data.ssid,
+                )[0]
                 this.connected_network = { ...response.data, ...available_connected_network }
               } else {
                 this.connected_network = null
               }
-              this.wpa_state = response.data.wpa_state.toLowerCase()  
+              this.wpa_state = response.data.wpa_state.toLowerCase()
               this.closeErrorAlert()
             })
             .catch(() => this.openErrorAlert('Could not fetch network status.'))
         },
-        connectToNetwork () {
+        connectToNetwork() {
           axios({
             method: 'post',
             url: `${this.API_URL}/connect`,
@@ -211,20 +211,20 @@
               password: document.getElementById('passwordInput').value,
             },
           })
-            .then(() => this.wpa_state = 'connecting')
-            .catch(() => this.openErrorAlert(`Could not connect to ${this.selected_network.ssid}.`))
-            .finally(() => document.getElementById('passwordInput').value = '')
+            .then(() => { this.wpa_state = 'connecting' })
+            .catch(() => { this.openErrorAlert(`Could not connect to ${this.selected_network.ssid}.`) })
+            .finally(() => { document.getElementById('passwordInput').value = '' })
         },
-        disconnectFromNetwork () {
+        disconnectFromNetwork() {
           axios({
             method: 'get',
             url: `${this.API_URL}/disconnect`,
             timeout: 500,
           })
-            .then(() => this.wpa_state = 'disconnecting')
-            .catch(() => this.openErrorAlert('Could not disconnect from network.'))
+            .then(() => { this.wpa_state = 'disconnecting' })
+            .catch(() => { this.openErrorAlert('Could not disconnect from network.') })
         },
-        closeErrorAlert () {
+        closeErrorAlert() {
           if (this.alert_box) {
             if (Metro.infobox.isOpen(this.alert_box)) {
               Metro.infobox.close(this.alert_box)
@@ -232,7 +232,7 @@
             }
           }
         },
-        openErrorAlert (message) {
+        openErrorAlert(message) {
           this.closeErrorAlert()
           this.alert_box = Metro.infobox.create(`
             <div id='alert_box'>
@@ -241,15 +241,14 @@
             </div>
             `, 'alert')
         },
-        openConnectionDialog (network) {
+        openConnectionDialog(network) {
           this.selected_network = network
           Metro.dialog.open('#connection_dialog')
         },
-        openDisconnectionDialog () {
+        openDisconnectionDialog() {
           Metro.dialog.open('#disconnection_dialog')
         },
-        signalStrengthClass (network) {
-
+        signalStrengthClass(network) {
           /*eslint-disable */
           // | Signal Strength | TL;DR     |  Description                                                                                                                               |
           // |-----------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|
@@ -259,18 +258,18 @@
           // | -80 dBm         | Not Good  | Minimum signal strength for basic connectivity. Packet delivery may be unreliable.                                                         |
           // | -90 dBm         | Unusable  | Approaching or drowning in the noise floor. Any functionality is highly unlikely.                                                           |
           // Reference: metageek.com/training/resources/wifi-signal-strength-basics.html
-          /*eslint-enable */
+          /* eslint-enable */
 
           if (network.signallevel >= -67) return 'mif-wifi-full'
           if (network.signallevel >= -70) return 'mif-wifi-mid'
           if (network.signallevel >= -80) return 'mif-wifi-low'
           return ''
         },
-        networkProtectionClass (network) {
+        networkProtectionClass(network) {
           if (!network.flags) return 'mif-question'
           return network.flags.includes('WPA') ? 'mif-lock' : ''
         },
-        sleep (ms) {
+        sleep(ms) {
           return new Promise((resolve) => setTimeout(resolve, ms))
         },
       },
