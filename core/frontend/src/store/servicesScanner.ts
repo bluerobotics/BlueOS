@@ -1,5 +1,5 @@
 import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
-import { Service } from '@/types/SERVICE'
+import { Service } from '@/types/SERVICE.d'
 import store from '@/store'
 
 @Module({
@@ -11,9 +11,8 @@ import store from '@/store'
 export default class ServicesScannerStore extends VuexModule {
   services: Service[] = []
 
-
   @Mutation
-  updateFoundServices (services: Service[]): void {
+  updateFoundServices(services: Service[]): void {
     this.services = services
   }
 }

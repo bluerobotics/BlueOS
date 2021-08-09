@@ -15,11 +15,22 @@
       >
         <td>{{ service.port }}</td>
         <td>{{ service.title }}</td>
-        <td v-html="createWebpageHyperlink(service.port)" />
-        <td
-          v-if="service.documentation_url"
-          v-html="createWebpageHyperlink(service.port, service.documentation_url)"
-        />
+        <td>
+          <v-btn
+            text
+            :href="createWebpageUrl(service.port)"
+          >
+            {{ createWebpageUrl(service.port) }}
+          </v-btn>
+        </td>
+        <td v-if="service.documentationUrl">
+          <v-btn
+            text
+            :href="createWebpageUrl(service.port)"
+          >
+            {{ createWebpageUrl(service.port, service.documentationUrl) }}
+          </v-btn>
+        </td>
         <td v-else>
           No API documentation
         </td>
@@ -41,33 +52,21 @@ const servicesHelperStore: ServicesScannerStore = getModule(ServicesScannerStore
  */
 export default Vue.extend({
   name: 'AvailableServicesTable',
+  computed: {
+    availableServices() {
+      return servicesHelperStore.services
+    },
+  },
 
   methods: {
-    /**
-     * Turns a url into proper <a> tags
-     */
-    createUrlHyperlink (url: string): string {
-      return `<a href='${url}'>${url}</a>`
-    },
     /**
      * Generates a url at the current host but different port and path.
      * e.g. http://[currenthost]:[newport]/[newpath]
      */
-    createWebpageUrl (port: number, path = ''): string {
+    createWebpageUrl(port: number, path = ''): string {
       return `${window.location.protocol}//${
         window.location.host.split(':')[0]
       }:${port}${path}`
-    },
-    /**
-     * Creates a clickable <a> tag from a service port number and path
-     */
-    createWebpageHyperlink (port: number, path = ''): string {
-      return this.createUrlHyperlink(this.createWebpageUrl(port, path))
-    },
-  },
-  computed: {
-    availableServices () {
-      return servicesHelperStore.services
     },
   },
 })
