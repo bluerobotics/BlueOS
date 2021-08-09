@@ -16,10 +16,14 @@ module.exports = {
   },
   plugins: ['vue', 'html'],
   rules: {
+    camelcase: 'off',
     'func-style': ['error', 'declaration'],
     'max-len': ['error', { 'code': 120 }],
     'no-extra-parens': ['error', 'all'],
     'sort-imports': 'error',
     semi: ['error', 'never'],
+    'import/order': 'off',
+    'no-alert': 'off',
+    'no-console': 'off',
   },
 }
