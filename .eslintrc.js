@@ -8,6 +8,7 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:vue/recommended',
+    '@vue/airbnb',
     '@vue/typescript/recommended',
   ],
   parserOptions: {
