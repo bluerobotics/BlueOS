@@ -14,7 +14,7 @@ DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup
 
 current_folder = pathlib.Path(__file__).parent.parent.absolute()
 # Folder for static files (mostly css/js)
-STATIC_FOLDER = pathlib.Path.joinpath(current_folder, "static")
+STATIC_FOLDER = pathlib.Path.joinpath(current_folder, "frontend")
 
 logging.basicConfig(level=logging.INFO)
 
