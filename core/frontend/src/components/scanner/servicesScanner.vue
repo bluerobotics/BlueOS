@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import { Service } from '@/types/SERVICE'
+import { Service } from '@/types/SERVICE.d'
 import ServicesScannerStore from '@/store/servicesScanner'
 import Vue from 'vue'
 import axios from 'axios'
@@ -19,29 +19,29 @@ const servicesHelper: ServicesScannerStore = getModule(ServicesScannerStore)
  */
 export default Vue.extend({
   name: 'ServicesFetcher',
-  data () {
+  data() {
     return {
       // IntervalId is a number (id) returned by setInterval()
       intervalId: 0,
     }
   },
-  mounted () {
+  mounted() {
     // Fetch network data
     this.requestData()
 
     // Fetch periodic API request
     this.startPeriodicRequest()
   },
-  beforeDestroy () {
+  beforeDestroy() {
     clearInterval(this.intervalId)
   },
   methods: {
-    startPeriodicRequest () {
+    startPeriodicRequest() {
       this.intervalId = setInterval(() => {
         this.requestData()
       }, 5000)
     },
-    requestData () {
+    requestData() {
       axios.get('/helper/latest/web_services').then((response) => {
         // Sort services by port number
         const services = response.data.sort(
