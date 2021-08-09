@@ -2,6 +2,7 @@
 // The library is an interface for MAVLink objects, messages can by of any type
 
 import Endpoint from './Endpoint'
+import Listener from './Listener'
 
 interface Dictionary<T> {
   [key: string]: T;
@@ -9,14 +10,16 @@ interface Dictionary<T> {
 
 class Mavlink2RestManager {
   baseUrl: string;
+
   // Dictionary mapping endpoints to websocket
   endpoints: Dictionary<Endpoint> = {}
+
   baseUrlCandidates: Array<string>
 
   private static instance: Mavlink2RestManager;
 
-  private constructor () {
-    this.baseUrl = `${this.getWebsocketPrefix()}://${window.location.host}/mavlink2rest/ws/mavlink`
+  private constructor() {
+    this.baseUrl = `${Mavlink2RestManager.getWebsocketPrefix()}://${window.location.host}/mavlink2rest/ws/mavlink`
     this.baseUrlCandidates = [this.baseUrl, 'ws://localhost:8088/ws/mavlink']
     this.probeBaseUrlCandidates()
   }
@@ -25,7 +28,7 @@ class Mavlink2RestManager {
    * Singleton access
    * @returns Mavlink2RestManager
    */
-  public static getInstance (): Mavlink2RestManager {
+  public static getInstance(): Mavlink2RestManager {
     if (!Mavlink2RestManager.instance) {
       Mavlink2RestManager.instance = new Mavlink2RestManager()
     }
@@ -35,8 +38,8 @@ class Mavlink2RestManager {
   /**
    * Check for valid base URL from REST API
    */
-  probeBaseUrlCandidates () {
-    for (const url of this.baseUrlCandidates) {
+  probeBaseUrlCandidates() {
+    this.baseUrlCandidates.forEach((url) => {
       const asHttp = url.replace('wss://', 'https://').replace('ws://', 'http://').replace('/ws/mavlink', '')
       fetch(asHttp)
         .then(async (res) => {
@@ -48,18 +51,18 @@ class Mavlink2RestManager {
             }
           }
         })
-    }
+    })
   }
 
   /**
    * Force base URL for REST API
    * @param  {string} url
    */
-  setBaseUrl (url: string) {
+  setBaseUrl(url: string) {
     // close all websockets and discard them
-    for (const [name, endpoint] of Object.entries(this.endpoints)) {
+    Object.entries(this.endpoints).forEach(([name, endpoint]) => {
       endpoint.updateUrl(`${url}?filter=${name}`)
-    }
+    })
   }
 
   /**
@@ -67,7 +70,7 @@ class Mavlink2RestManager {
    * @param  {string} endpointName
    * @returns Listener
    */
-  startListening (endpointName: string): Listener {
+  startListening(endpointName: string): Listener {
     const endpoint = this.endpoints[endpointName] || this.createEndpoint(endpointName)
     this.endpoints[endpointName] = endpoint
     return endpoint.addListener()
@@ -78,17 +81,16 @@ class Mavlink2RestManager {
    * @param  {string} endpoint
    * @returns Endpoint
    */
-  createEndpoint (messageName: string): Endpoint {
+  createEndpoint(messageName: string): Endpoint {
     return new Endpoint(`${this.baseUrl}?filter=${messageName}`)
   }
 
   /**
    * Check for valid mavlink websocket prefix
    */
-  getWebsocketPrefix () {
-    return window.location.protocol == 'https:' ? 'wss' : 'ws'
+  public static getWebsocketPrefix() {
+    return window.location.protocol === 'https:' ? 'wss' : 'ws'
   }
-
 }
 
 // Define public instance of singleton
