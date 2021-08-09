@@ -121,11 +121,11 @@
 </body>
 
 <script>
-    /*global Metro axios, Vue*/
+    /* global Metro axios, Vue */
 
-    new Vue({
+    new Vue({ // eslint-disable-line no-new
       el: '#app',
-      data () {
+      data() {
         return {
           new_endpoint: {
             name: '',
@@ -143,11 +143,11 @@
         }
       },
       computed: {
-        readableConnectionType () {
+        readableConnectionType() {
           return (connection_type) => this.connection_type_options[connection_type]
         },
       },
-      created () {
+      created() {
         this.API_URL = 'v1.0/endpoints'
         this.connection_type_options = {
           serial: 'Serial',
@@ -157,14 +157,14 @@
           tcpout: 'TCP Client',
         }
       },
-      mounted () {
+      mounted() {
         Metro.init()
         this.Metro = Metro
         this.fetchRegisteredEndpoints()
         setInterval(this.fetchRegisteredEndpoints, 5000)
       },
       methods: {
-        fetchRegisteredEndpoints () {
+        fetchRegisteredEndpoints() {
           axios({
             method: 'get',
             url: this.API_URL,
@@ -179,7 +179,7 @@
               Metro.infobox.open('#infobox')
             })
         },
-        createEndpoint () {
+        createEndpoint() {
           axios({
             method: 'post',
             url: this.API_URL,
@@ -195,7 +195,7 @@
               Metro.infobox.open('#infobox')
             })
         },
-        deleteEndpoint (endpoint) {
+        deleteEndpoint(endpoint) {
           axios({
             method: 'delete',
             url: this.API_URL,
@@ -211,7 +211,7 @@
               Metro.infobox.open('#infobox')
             })
         },
-        getValidationErrorMessages (error) {
+        getValidationErrorMessages(error) {
           if ('message' in error.response.data) {
             return [error.response.data.message]
           }
@@ -220,9 +220,10 @@
               if (validation_obj.loc[2] === '__root__') {
                 return `${validation_obj.msg}`
               }
-              return`${validation_obj.loc[2]}: ${validation_obj.msg}`
+              return `${validation_obj.loc[2]}: ${validation_obj.msg}`
             })
           }
+          return 'No validation details available.'
         },
       },
     })
