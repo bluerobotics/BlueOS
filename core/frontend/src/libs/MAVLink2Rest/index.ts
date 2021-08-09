@@ -1,99 +1,10 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 // The library is an interface for MAVLink objects, messages can by of any type
 
+import Endpoint from './Endpoint'
+
 interface Dictionary<T> {
   [key: string]: T;
-}
-
-class Listener {
-  callback: (msg: any) => void = () => { console.log('Listener not assigned a callback') };
-  parent: Endpoint;
-  frequency = 1
-  interval = -1;
-
-  constructor (parent: Endpoint) {
-    this.parent = parent
-    this.setFrequency(1)
-  }
-
-  /**
-   * Define callback to be used when a new message is available
-   * @param  {(msg:any)=>void} callback
-   * @returns Listener
-   */
-  setCallback (callback: (msg: any) => void): Listener {
-    this.callback = callback
-    return this
-  }
-
-  /**
-   * Set desired frequency for the callback
-   * @param  {number} frequency
-   * @returns Listener
-   */
-  setFrequency (frequency: number): Listener {
-    clearInterval(this.interval)
-    this.interval = window.setInterval(() => {
-      if (this.parent.latestData !== null) {
-        this.callback(this.parent.latestData)
-      }
-    }, 1000 / frequency)
-    return this
-  }
-
-  discard () {
-    clearInterval(this.interval)
-    this.parent.removeListener(this)
-  }
-}
-
-class Endpoint {
-  socket: WebSocket;
-  listeners: Array<Listener> = [];
-  latestData: any = null;
-
-  constructor (url: string) {
-    this.socket = this.createSocket(url)
-  }
-
-  /**
-   * Update Endpoint url
-   * @param  {string} url
-   */
-  updateUrl (url: string) {
-    this.socket.close()
-    this.socket = this.createSocket(url)
-  }
-
-  /**
-   * Create websocket for desired URL
-   * @param  {string} url
-   * @returns WebSocket
-   */
-  createSocket (url: string): WebSocket {
-    const socket = new WebSocket(url)
-    socket.onmessage = (message: MessageEvent) => {
-      this.latestData = JSON.parse(message.data)
-    }
-    return socket
-  }
-
-  /**
-   * Return a new listener for Endpoint
-   */
-  addListener () {
-    const newListener = new Listener(this)
-    this.listeners.push(newListener)
-    return newListener
-  }
-
-  /**
-   * Remove sired listener from Endpoint
-   * @param  {Listener} listener
-   */
-  removeListener (listener: Listener) {
-    this.listeners = this.listeners.filter((item) => item !== listener)
-  }
 }
 
 class Mavlink2RestManager {
