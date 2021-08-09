@@ -23,7 +23,9 @@ static_files = {
 }
 
 current_folder = pathlib.Path(__file__).parent.absolute()
-static_folder = pathlib.Path.joinpath(current_folder, "static")
+frontend_folder = pathlib.Path.joinpath(current_folder, "frontend")
+static_folder = pathlib.Path.joinpath(frontend_folder, "static")
+static_folder.mkdir(exist_ok=True)
 
 for filename, url in static_files.items():
     path = pathlib.Path.joinpath(static_folder, filename)
