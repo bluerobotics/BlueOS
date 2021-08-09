@@ -156,10 +156,18 @@
   </body>
 
   <script>
-    /*global Metro axios, Vue, timeago*/
-    new Vue({
+    /* global Metro axios, Vue, timeago */
+    new Vue({ // eslint-disable-line no-new
       el: '#app',
-      data () {
+      filters: {
+        asTimeAgo(value) {
+          return timeago().format(new Date(Date.parse(value)), 'twitter')
+        },
+        shortsha(value) {
+          return value.replace('sha256:', '').substring(0, 8)
+        },
+      },
+      data() {
         return {
           pullOutput: '',
           availableVersions: {},
@@ -171,13 +179,13 @@
           deleting: null, // image currently being deleted, if any
         }
       },
-      mounted () {
+      mounted() {
         Metro.init()
         this.Metro = Metro
         this.loadCurrentVersion()
       },
       methods: {
-        checkIfBackendIsOnline () {
+        checkIfBackendIsOnline() {
           axios({
             method: 'get',
             url: 'v1.0/version/current',
@@ -187,7 +195,7 @@
               if (this.waiting) {
                 // Allow 3 seconds so the user can read the "complete" message
                 // reload(true) forces the browser to fetch the page again
-                setTimeout(() => {window.location.reload(true)} , 3000)
+                setTimeout(() => { window.location.reload(true) }, 3000)
               }
             })
             .catch((error) => {
@@ -197,31 +205,32 @@
               Metro.infobox.open('#infobox')
             })
         },
-        loadAvailableversions () {
+        loadAvailableversions() {
           // TODO: validate repository, treat error fetching
           this.loadingImages = true
-          axios.get('v1.0/version/available/' + this.selectedImage).then((response) => {
+          axios.get(`v1.0/version/available/${this.selectedImage}`).then((response) => {
             this.availableVersions = response.data
           }).catch(() => { this.availableVersions = {} })
-            .finally(() => this.loadingImages = false)
+            .finally(() => { this.loadingImages = false })
         },
-        loadCurrentVersion () {
+        loadCurrentVersion() {
           return axios.get('v1.0/version/current/').then((response) => {
             const image = response.data
             this.currentVersion = image
             const fullname = `${image.repository}:${image.tag}`
-            this.selectedImage = fullname.split(':')[0]
+            const [image_first_name] = fullname.split(':')
+            this.selectedImage = image_first_name
             this.loadAvailableversions()
           })
         },
-        updateIsAvailable (image) {
+        updateIsAvailable(image) {
           const remote_counterpart = this.availableVersions.remote.find((remoteImage) => remoteImage.tag === image.tag)
-          if (!remote_counterpart){
+          if (!remote_counterpart) {
             return false
           }
           return remote_counterpart.sha !== image.sha
         },
-        pullAndSetVersion (fullname) {
+        pullAndSetVersion(fullname) {
           // This streams the output of docker pull
           console.log(fullname)
           const [repository, tag] = fullname.split(':')
@@ -240,44 +249,43 @@
               tag,
             },
             onDownloadProgress: (progressEvent) => {
-            // dataChunk contains the data that have been obtained so far (the whole data so far)..
-            // The data is sent with two newlines after each message, so we split there
-            // Due to the trailing /n/n, we need the index "last -2"
-            // The received data is descbribed at
-            // https://docker-py.readthedocs.io/en/stable/api.html#docker.api.image.ImageApiMixin.pull
+              // dataChunk contains the data that have been obtained so far (the whole data so far)..
+              // The data is sent with two newlines after each message, so we split there
+              // Due to the trailing /n/n, we need the index "last -2"
+              // The received data is descbribed at
+              // https://docker-py.readthedocs.io/en/stable/api.html#docker.api.image.ImageApiMixin.pull
               const dataChunk = progressEvent.currentTarget.response
               const dataList = dataChunk.split('\n\n')
 
               const data = JSON.parse(dataList[dataList.length - 2])
               if ('id' in data) {
-                const id = data['id']
+                const { id } = data
                 if (!layers.includes(id)) {
                   layers.push(id)
                 }
                 if ('progress' in data) {
-                  layerProgress[id] = data['progress']
+                  layerProgress[id] = data.progress
                 }
                 if ('status' in data) {
-                  layerStatus[id] = data['status']
+                  layerStatus[id] = data.status
                 }
               } else {
-                overallStatus = data['status']
+                overallStatus = data.status
                 // Axios returns the promise too early (before the pull is done)
                 // so we check the overall docker status instead
                 if (overallStatus.indexOf('Downloaded newer image for') >= 0) {
-                  setTimeout(() => {this.setVersion(fullname)}, 1000)
+                  setTimeout(() => { this.setVersion(fullname) }, 1000)
                 }
               }
               this.pullOutput = ''
-              for (const image of layers) {
-                this.pullOutput = this.pullOutput + `[${image}] ${layerStatus[image]}  ${layerProgress[image] || ''}\n`
-              }
-              this.pullOutput = this.pullOutput + `${overallStatus}\n`
+              layers.forEach((image) => {
+                this.pullOutput = `${this.pullOutput}[${image}] ${layerStatus[image]}  ${layerProgress[image] || ''}\n`
+              })
+              this.pullOutput = `${this.pullOutput}${overallStatus}\n`
             },
           })
-
         },
-        setVersion (fullname) {
+        setVersion(fullname) {
           const [repository, tag] = fullname.split(':')
           axios({
             method: 'post',
@@ -288,7 +296,7 @@
             },
           }).finally(() => setInterval(this.checkIfBackendIsOnline, 1000))
         },
-        deleteVersion (fullname) {
+        deleteVersion(fullname) {
           if (this.deleting === fullname) {
             return
           }
@@ -304,27 +312,18 @@
           }).then(() => {
             // Remove this image in the frontend, as calling loadAvailableversions()
             // takes a longer time to fetch all images
-            this.availableVersions['local'] = this.availableVersions['local'].filter(
-              (element) => { return element.repository !== repository || element.tag !== tag},
+            this.availableVersions.local = this.availableVersions.local.filter(
+              (element) => element.repository !== repository || element.tag !== tag,
             )
           })
-            .catch((error) => {alert(error.response.data)})
-            .finally(() => this.deleting = null)
+            .catch((error) => { alert(error.response.data) })
+            .finally(() => { this.deleting = null })
         },
-        imageIsAvailableLocally (sha) {
+        imageIsAvailableLocally(sha) {
           if (!('local' in this.availableVersions)) {
             return false
           }
-          return this.availableVersions['local'].some((image) => image.sha === sha)
-        },
-
-      },
-      filters: {
-        asTimeAgo (value) {
-          return timeago().format(new Date(Date.parse(value)), 'twitter')
-        },
-        shortsha (value) {
-          return value.replace('sha256:','').substring(0, 8)
+          return this.availableVersions.local.some((image) => image.sha === sha)
         },
       },
     })
