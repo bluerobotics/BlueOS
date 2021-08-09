@@ -17,8 +17,8 @@
 
     <style>
       body {
-        min-height: 75rem
-        padding-top: 4.5rem
+        min-height: 75rem;
+        padding-top: 4.5rem;
       }
     </style>
   </head>
@@ -50,10 +50,15 @@
     </div>
 
     <script>
-      /*global Metro, Vue, axios*/
+      /* global Metro, Vue, axios */
       window.app = new Vue({
         el: '#app',
-        mounted () {
+        data() {
+          return {
+            services: [],
+          }
+        },
+        mounted() {
           // Start metro
           Metro.init()
 
@@ -63,29 +68,24 @@
           // Fetch periodic API request
           this.startPeriodicRequest()
         },
-        data () {
-          return {
-            services: [],
-          }
-        },
         methods: {
-          createUrlHyperlink (url) {
+          createUrlHyperlink(url) {
             return `<a href='${url}'>${url}</a>`
           },
-          createWebpageUrl (port, path = '') {
+          createWebpageUrl(port, path = '') {
             return `${window.location.protocol}//${
               window.location.host.split(':')[0]
             }:${port}${path}`
           },
-          createWebpageHyperlink (port, path = '') {
+          createWebpageHyperlink(port, path = '') {
             return this.createUrlHyperlink(this.createWebpageUrl(port, path))
           },
-          startPeriodicRequest () {
+          startPeriodicRequest() {
             setInterval(() => {
               this.requestData()
             }, 5000)
           },
-          requestData () {
+          requestData() {
             console.debug('Requesting status..')
             axios.get('latest/web_services').then((response) => {
               // Sort services by port number
