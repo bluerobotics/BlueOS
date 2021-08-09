@@ -65,11 +65,11 @@
   </div>
 
   <script>
-  /*global $, Metro, Vue, axios*/
+  /* global $, Metro, Vue, axios */
   // Call metro validator manualy
-  function runValidator () {
-    var inputs = $('#network-form [data-validate]')
-    $.each(inputs, function () {
+  function runValidator() {
+    const inputs = $('#network-form [data-validate]')
+    $.each(inputs, () => {
       Metro.validator.validate(this, {
         val: 0,
         log: [],
@@ -79,7 +79,21 @@
 
   window.app = new Vue({
     el: '#app',
-    mounted () {
+    filters: {
+      // This is javascript, there is no capitalize function
+      capitalize(value) {
+        if (!value) return ''
+        const new_value = value.toString()
+        return new_value.charAt(0).toUpperCase() + new_value.slice(1)
+      },
+    },
+    data() {
+      return {
+        devices: [],
+        userInputChanged: false,
+      }
+    },
+    mounted() {
       // Start metro
       Metro.init()
 
@@ -89,76 +103,66 @@
       // Fetch periodic API request
       this.startPeriodicRequest()
     },
-    updated () {
+    updated() {
       // Run validator for each tick
-      this.$nextTick(function () {
+      this.$nextTick(() => {
         console.debug('Next tick.')
         runValidator()
       })
     },
-    data () {
-      return {
-        devices: [],
-        userInputChanged: false,
-      }
-    },
-    filters: {
-      // This is javascript, there is no capitalize function
-      capitalize (value) {
-        if (!value) return ''
-        value = value.toString()
-        return value.charAt(0).toUpperCase() + value.slice(1)
-      },
-    },
     methods: {
-      controlInput () {
+      controlInput() {
         console.debug('User input detected.')
         this.userInputChanged = true
       },
-      startPeriodicRequest () {
-        setInterval(function () {
+      startPeriodicRequest() {
+        setInterval(() => {
           this.requestData()
-        }.bind(this), 5000)
+        }, 5000)
       },
-      requestData () {
+      requestData() {
         console.debug('Requesting status..')
         axios
           .get('v1.0/ethernet')
-          .then(function (response) {
+          .then((response) => {
             console.debug(`userInputChanged ${this.userInputChanged}`)
             // Prevent vue to rewrite user configuration
             // Ignore API input and replace it with user configuration
-            if (this.userInputChanged) {
-              for (const item of response.data) {
-                delete item.configuration
-                for (const device of this.devices) {
-                  if (device.name == item.name) {
-                    item.configuration = device.configuration
-                  }
-                }
-              }
+            if (!this.userInputChanged) {
+              this.devices = response.data
+              return
             }
-            this.devices = response.data
-          }.bind(this))
+
+            this.devices = response.data.map((adapter_remote) => {
+              const found_device = this.devices.find((device) => device.name === adapter_remote.name)
+              if (found_device) {
+                return found_device
+              }
+              const reseted_adapter = { ...adapter_remote }
+              delete reseted_adapter.b
+              return reseted_adapter
+            })
+          })
       },
       // Define possible modes
-      modes () {
+      modes() {
         return ['client', 'server', 'unmanaged']
       },
       // Send struct to api
-      apply (data) {
-        delete data.info
+      apply(data) {
+        const clean_adapter = { ...data }
+        delete clean_adapter.info
         this.userInputChanged = false
-        console.debug(`Sending: ${JSON.stringify(data)}`)
+        console.debug(`Sending: ${JSON.stringify(clean_adapter)}`)
         axios
-          .post('v1.0/ethernet', data)
-          .then(function (response) {
+          .post('v1.0/ethernet', clean_adapter)
+          .then((response) => {
             console.debug(`Done ${JSON.stringify(response, null, ' ')}`)
             setTimeout(
               this.requestData,
               2000,
             )
-          }.bind(this))
+          })
       },
     },
   })
