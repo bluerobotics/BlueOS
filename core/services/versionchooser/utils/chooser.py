@@ -14,7 +14,8 @@ DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup
 
 current_folder = pathlib.Path(__file__).parent.parent.absolute()
 # Folder for static files (mostly css/js)
-STATIC_FOLDER = pathlib.Path.joinpath(current_folder, "frontend")
+FRONTEND_FOLDER = pathlib.Path.joinpath(current_folder, "frontend")
+STATIC_FOLDER = pathlib.Path.joinpath(FRONTEND_FOLDER, "static")
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,7 +27,7 @@ class VersionChooser:
     @staticmethod
     def index() -> web.FileResponse:
         """Serve index.html"""
-        return web.FileResponse(str(STATIC_FOLDER) + "/index.html", headers={"cache-control": "no-cache"})
+        return web.FileResponse(str(FRONTEND_FOLDER) + "/index.html", headers={"cache-control": "no-cache"})
 
     @staticmethod
     def get_current_image_and_tag() -> Optional[Tuple[str, str]]:
