@@ -40,9 +40,10 @@
 </template>
 
 <script lang="ts">
-import ServicesScannerStore from '@/store/servicesScanner'
 import Vue from 'vue'
 import { getModule } from 'vuex-module-decorators'
+
+import ServicesScannerStore from '@/store/servicesScanner'
 
 const servicesHelperStore: ServicesScannerStore = getModule(ServicesScannerStore)
 

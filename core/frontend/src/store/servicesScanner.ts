@@ -1,6 +1,7 @@
 import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
-import { Service } from '@/types/SERVICE.d'
+
 import store from '@/store'
+import { Service } from '@/types/SERVICE.d'
 
 @Module({
   dynamic: true,
