@@ -7,9 +7,13 @@ import axios from 'axios'
 import Vue from 'vue'
 import { getModule } from 'vuex-module-decorators'
 
+import NotificationStore from '@/store/notifications'
 import ServicesScannerStore from '@/store/servicesScanner'
+import { service_scanner_service } from '@/types/frontend_services'
+import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { Service } from '@/types/SERVICE.d'
 
+const notification_store: NotificationStore = getModule(NotificationStore)
 const servicesHelper: ServicesScannerStore = getModule(ServicesScannerStore)
 
 /**
@@ -50,8 +54,14 @@ export default Vue.extend({
         )
         servicesHelper.updateFoundServices(services)
       }).catch((error) => {
-        console.log('Error scanning for services:', error)
         servicesHelper.updateFoundServices([])
+
+        notification_store.pushNotification(new LiveNotification(
+          NotificationLevel.Error,
+          service_scanner_service,
+          'SERVICE_SCAN_FAIL',
+          `Error scanning for services: ${error}`,
+        ))
       })
     },
   },
