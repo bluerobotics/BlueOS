@@ -38,7 +38,7 @@ class Mavlink2RestManager {
   /**
    * Check for valid base URL from REST API
    */
-  probeBaseUrlCandidates() {
+  probeBaseUrlCandidates(): void {
     this.baseUrlCandidates.forEach((url) => {
       const asHttp = url.replace('wss://', 'https://').replace('ws://', 'http://').replace('/ws/mavlink', '')
       fetch(asHttp)
@@ -58,7 +58,7 @@ class Mavlink2RestManager {
    * Force base URL for REST API
    * @param  {string} url
    */
-  setBaseUrl(url: string) {
+  setBaseUrl(url: string): void {
     // close all websockets and discard them
     Object.entries(this.endpoints).forEach(([name, endpoint]) => {
       endpoint.updateUrl(`${url}?filter=${name}`)
@@ -88,7 +88,7 @@ class Mavlink2RestManager {
   /**
    * Check for valid mavlink websocket prefix
    */
-  public static getWebsocketPrefix() {
+  public static getWebsocketPrefix(): string {
     return window.location.protocol === 'https:' ? 'wss' : 'ws'
   }
 }
