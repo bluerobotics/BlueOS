@@ -2,6 +2,7 @@
 
 import pathlib
 import ssl
+import sys
 import urllib.request
 from warnings import warn
 
@@ -32,6 +33,7 @@ for filename, url in static_files.items():
         urllib.request.urlretrieve(url, path)
     except Exception as error:
         warn(f"unable to open url {url}, error {error}")
+        sys.exit(1)
 
 
 setuptools.setup(
