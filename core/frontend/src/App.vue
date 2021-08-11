@@ -67,8 +67,9 @@
 </template>
 
 <script lang="ts">
-import ServicesScanner from './components/scanner/servicesScanner.vue'
 import Vue from 'vue'
+
+import ServicesScanner from './components/scanner/servicesScanner.vue'
 
 export default Vue.extend({
   name: 'App',
