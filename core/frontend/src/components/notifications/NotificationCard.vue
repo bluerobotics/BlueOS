@@ -1,0 +1,97 @@
+<template>
+  <v-lazy
+    :options="{threshold: .5}"
+    transition="slide-x-transition"
+  >
+    <v-card elevation="0">
+      <v-list-item>
+        <v-list-item-icon>
+          <v-icon :color="level_color">
+            {{ level_icon }}
+          </v-icon>
+        </v-list-item-icon>
+
+        <v-list-item-content>
+          <v-list-item-title>{{ notification.service.name }}</v-list-item-title>
+          <v-list-item-subtitle>{{ notification.type }} - {{ notification.message }}</v-list-item-subtitle>
+          <v-list-item-subtitle>{{ time_since }} ({{ count }} times)</v-list-item-subtitle>
+        </v-list-item-content>
+
+        <v-list-item-action>
+          <v-btn icon>
+            <v-icon
+              color="grey lighten-1"
+              size="medium"
+              @click="dismiss"
+            >
+              mdi-close
+            </v-icon>
+          </v-btn>
+        </v-list-item-action>
+      </v-list-item>
+      <v-divider />
+    </v-card>
+  </v-lazy>
+</template>
+
+<script lang="ts">
+import { formatDistance } from 'date-fns'
+import Vue, { PropType } from 'vue'
+
+import { Notification, NotificationLevel } from '@/types/notifications'
+
+export default Vue.extend({
+  name: 'NotificationCard',
+  props: {
+    count: {
+      type: Number,
+      required: true,
+    },
+    notification: {
+      type: Object as PropType<Notification>,
+      required: true,
+    },
+    timestamp: {
+      type: Date,
+      required: true,
+    },
+  },
+  data() {
+    return {
+      updated_time: new Date(),
+    }
+  },
+  computed: {
+    time_since(): string {
+      const date_now = new Date(this.timestamp)
+      const date_notification = new Date(this.notification.time_created)
+      return `${formatDistance(date_now, date_notification)} ago`
+    },
+    level_icon(): string {
+      switch (this.notification.level) {
+        case NotificationLevel.Success: return 'mdi-check-bold'
+        case NotificationLevel.Error: return 'mdi-close-circle'
+        case NotificationLevel.Info: return 'mdi-information'
+        case NotificationLevel.Warning: return 'mdi-alert'
+        case NotificationLevel.Critical: return 'mdi-skull'
+        default: return 'mdi-help-circle'
+      }
+    },
+    level_color(): string {
+      switch (this.notification.level) {
+        case NotificationLevel.Success: return 'green accent-4'
+        case NotificationLevel.Error: return 'red darken-2'
+        case NotificationLevel.Info: return 'indigo darken-1'
+        case NotificationLevel.Warning: return 'yellow lighten-1'
+        case NotificationLevel.Critical: return 'black'
+        default: return 'mdi-help-circle'
+      }
+    },
+  },
+  methods: {
+    dismiss(): void {
+      this.$emit('dismiss', this.notification)
+    },
+  },
+})
+</script>
