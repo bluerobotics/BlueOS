@@ -30,7 +30,7 @@ export default class Endpoint {
    */
   createSocket(url: string): WebSocket {
     const socket = new WebSocket(url)
-    socket.onmessage = (message: MessageEvent) => {
+    socket.onmessage = (message: MessageEvent): void => {
       this.latestData = JSON.parse(message.data)
     }
     return socket
