@@ -66,17 +66,6 @@
 
   <script>
   /* global $, Metro, Vue, axios */
-  // Call metro validator manualy
-  function runValidator() {
-    const inputs = $('#network-form [data-validate]')
-    $.each(inputs, () => {
-      Metro.validator.validate(this, {
-        val: 0,
-        log: [],
-      })
-    })
-  }
-
   window.app = new Vue({
     el: '#app',
     filters: {
@@ -107,7 +96,14 @@
       // Run validator for each tick
       this.$nextTick(() => {
         console.debug('Next tick.')
-        runValidator()
+        // Call metro validator manualy
+        const inputs = $('#network-form [data-validate]')
+        $.each(inputs, () => {
+          Metro.validator.validate(this, {
+            val: 0,
+            log: [],
+          })
+        })
       })
     },
     methods: {
