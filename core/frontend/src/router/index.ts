@@ -1,6 +1,7 @@
-import VueRouter, { RouteConfig } from 'vue-router'
-import Main from '@/views/MainView.vue'
 import Vue from 'vue'
+import VueRouter, { RouteConfig } from 'vue-router'
+
+import Main from '@/views/MainView.vue'
 
 Vue.use(VueRouter)
 
