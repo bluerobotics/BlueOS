@@ -24,5 +24,10 @@ module.exports = {
     'import/order': 'off',
     'no-alert': 'off',
     'no-console': 'off',
+    'no-useless-constructor': 'off',
+    '@typescript-eslint/no-useless-constructor': ['error'],
+    'no-shadow': 'off',
+    '@typescript-eslint/no-shadow': ['error'],
+    '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true }],
   },
 }
