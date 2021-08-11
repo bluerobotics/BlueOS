@@ -3,11 +3,12 @@
 </template>
 
 <script lang="ts">
-import { Service } from '@/types/SERVICE.d'
-import ServicesScannerStore from '@/store/servicesScanner'
-import Vue from 'vue'
 import axios from 'axios'
+import Vue from 'vue'
 import { getModule } from 'vuex-module-decorators'
+
+import ServicesScannerStore from '@/store/servicesScanner'
+import { Service } from '@/types/SERVICE.d'
 
 const servicesHelper: ServicesScannerStore = getModule(ServicesScannerStore)
 
