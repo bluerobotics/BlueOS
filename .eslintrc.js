@@ -13,13 +13,13 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 12,
   },
-  plugins: ['vue', 'html'],
+  plugins: ['vue', 'html', 'simple-import-sort'],
   rules: {
     camelcase: 'off',
     'func-style': ['error', 'declaration'],
     'max-len': ['error', { code: 120 }],
     'no-extra-parens': ['error', 'all'],
-    'sort-imports': 'error',
+    'sort-imports': 'off',
     semi: ['error', 'never'],
     'import/order': 'off',
     'no-alert': 'off',
@@ -29,5 +29,8 @@ module.exports = {
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': ['error'],
     '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true }],
+    'import/extensions': 'off',
+    'simple-import-sort/imports': 'error',
+    'simple-import-sort/exports': 'error',
   },
 }
