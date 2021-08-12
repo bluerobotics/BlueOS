@@ -13,6 +13,8 @@
         />
 
         <v-spacer />
+
+        <notification-tray-button />
       </v-app-bar>
     </v-card>
 
@@ -69,12 +71,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 
 export default Vue.extend({
   name: 'App',
 
   components: {
+    'notification-tray-button': NotificationTrayButton,
     'services-scanner': ServicesScanner,
   },
 
