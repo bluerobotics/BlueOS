@@ -14,6 +14,7 @@
 
         <v-spacer />
 
+        <wifi-tray-menu />
         <notification-tray-button />
       </v-app-bar>
     </v-card>
@@ -73,6 +74,7 @@ import Vue from 'vue'
 
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
+import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 
 export default Vue.extend({
   name: 'App',
@@ -80,6 +82,7 @@ export default Vue.extend({
   components: {
     'notification-tray-button': NotificationTrayButton,
     'services-scanner': ServicesScanner,
+    'wifi-tray-menu': WifiTrayMenu,
   },
 
   data: () => ({
