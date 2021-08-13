@@ -8,3 +8,10 @@ export const service_scanner_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const wifi_service: Service = {
+  name: 'Wifi Manager',
+  description: 'Service responsible for managing wifi configuration on Companion.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
