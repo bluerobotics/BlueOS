@@ -145,7 +145,12 @@ class ArduPilotManager(metaclass=Singleton):
             self.add_new_endpoints(
                 {
                     Endpoint(
-                        "GCS Link", self.settings.app_name, EndpointType.UDPClient, "192.168.2.1", 14550, protected=True
+                        "GCS Link",
+                        self.settings.app_name,
+                        EndpointType.UDPServer,
+                        "0.0.0.0",
+                        14550,
+                        protected=True,
                     )
                 }
             )
