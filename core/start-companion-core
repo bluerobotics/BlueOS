@@ -36,7 +36,13 @@ tmux -f /etc/tmux.conf start-server
 
 function create_service {
     tmux new -d -s "$1" || true
-    tmux send-keys -t "$1:0" "$2" C-m
+    SESSION_NAME="$1:0"
+    # Set all necessary environment variables for the new tmux session
+    for NAME in $(compgen -v | grep MAV_); do
+        VALUE=${!NAME}
+        tmux setenv -t $SESSION_NAME -g $NAME $VALUE
+    done
+    tmux send-keys -t $SESSION_NAME "$2" C-m
 }
 
 echo "Starting services.."
