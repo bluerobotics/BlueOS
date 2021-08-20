@@ -7,4 +7,9 @@
     <type>_http._tcp</type>
     <port>80</port>
   </service>
+  <service>
+    <type>_mavlink._udp</type>
+    <port>14550</port>
+    <txt-record>name=ArduSub</txt-record>
+  </service>
 </service-group>
