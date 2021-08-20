@@ -32,7 +32,8 @@ SERVICES=(
     'nginx',"nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
 )
 
-tmux start-server -f /etc/tmux.conf
+tmux -f /etc/tmux.conf start-server
+
 function create_service {
     tmux new -d -s "$1" || true
     tmux send-keys -t "$1:0" "$2" C-m
