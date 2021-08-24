@@ -16,20 +16,19 @@
         <td>{{ service.port }}</td>
         <td>{{ service.title }}</td>
         <td>
-          <v-btn
-            text
+          <a
             :href="createWebpageUrl(service.port)"
           >
             {{ createWebpageUrl(service.port) }}
-          </v-btn>
+          </a>
         </td>
-        <td v-if="service.documentationUrl">
-          <v-btn
+        <td v-if="service.documentation_url">
+          <a
             text
-            :href="createWebpageUrl(service.port)"
+            :href="createWebpageUrl(service.port, service.documentation_url)"
           >
-            {{ createWebpageUrl(service.port, service.documentationUrl) }}
-          </v-btn>
+            {{ createWebpageUrl(service.port, service.documentation_url) }}
+          </a>
         </td>
         <td v-else>
           No API documentation
