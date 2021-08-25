@@ -31,7 +31,7 @@ class VersionChooser:
 
     @staticmethod
     def get_current_image_and_tag() -> Optional[Tuple[str, str]]:
-        with open(DOCKER_CONFIG_PATH) as startup_file:
+        with open(DOCKER_CONFIG_PATH, encoding="utf-8") as startup_file:
             try:
                 core = json.load(startup_file)["core"]
                 tag = core["tag"]
@@ -116,7 +116,7 @@ class VersionChooser:
         if not self.is_valid_version(image, tag):
             return web.Response(status=400, text="Invalid version")
 
-        with open(DOCKER_CONFIG_PATH, "r+") as startup_file:
+        with open(DOCKER_CONFIG_PATH, "r+", encoding="utf-8") as startup_file:
             try:
                 data = json.load(startup_file)
                 data["core"]["image"] = image

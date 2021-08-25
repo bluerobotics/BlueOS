@@ -36,7 +36,7 @@ for filename, url in static_files.items():
         sys.exit(1)
 
 
-with open("README.md", "r") as readme:
+with open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
 setuptools.setup(
