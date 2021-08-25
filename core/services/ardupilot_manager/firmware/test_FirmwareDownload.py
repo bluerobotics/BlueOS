@@ -2,11 +2,11 @@ import os
 
 import pytest
 
-from firmware.FirmwareDownload import FirmwareDownload, Platform, Vehicle
+from firmware.FirmwareDownload import FirmwareDownloader, Platform, Vehicle
 
 
 def test_static() -> None:
-    downloaded_file = FirmwareDownload._download(FirmwareDownload._manifest_remote)
+    downloaded_file = FirmwareDownloader._download(FirmwareDownloader._manifest_remote)
     assert downloaded_file, "Failed to download file."
     assert downloaded_file.exists(), "Download file does not exist."
 
@@ -15,7 +15,7 @@ def test_static() -> None:
 
 
 def test_firmware_download() -> None:
-    firmware_download = FirmwareDownload()
+    firmware_download = FirmwareDownloader()
     assert firmware_download.download_manifest(), "Failed to download/validate manifest file."
 
     versions = firmware_download._find_version_item(

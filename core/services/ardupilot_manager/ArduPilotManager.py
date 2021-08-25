@@ -7,7 +7,7 @@ from typing import Any, List, Optional, Set, Tuple
 
 from loguru import logger
 
-from firmware.FirmwareDownload import FirmwareDownload, Platform, Vehicle
+from firmware.FirmwareDownload import FirmwareDownloader, Platform, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
@@ -36,7 +36,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.configuration = deepcopy(self.settings.content)
         self._load_endpoints()
         self.subprocess: Optional[Any] = None
-        self.firmware_download = FirmwareDownload()
+        self.firmware_download = FirmwareDownloader()
 
     def run_with_board(self) -> None:
         ArduPilotManager.check_running_as_root()

@@ -62,7 +62,7 @@ class FirmwareFormat(str, Enum):
     ELF = "ELF"
 
 
-class FirmwareDownload:
+class FirmwareDownloader:
     _manifest_remote = "https://firmware.ardupilot.org/manifest.json.gz"
     _supported_firmware_formats = {
         Platform.SITL: FirmwareFormat.ELF,
@@ -101,7 +101,7 @@ class FirmwareDownload:
 
         # We append the url filename to the generated random name to avoid collisions and preserve extension
         name = pathlib.Path(urlparse(url).path).name
-        filename = pathlib.Path(f"{FirmwareDownload._generate_random_filename()}-{name}")
+        filename = pathlib.Path(f"{FirmwareDownloader._generate_random_filename()}-{name}")
         try:
             logger.debug(f"Downloading: {url}")
             urlretrieve(url, filename)
@@ -134,7 +134,7 @@ class FirmwareDownload:
         Returns:
             bool: True if file was downloaded and validated, False if not.
         """
-        with urlopen(FirmwareDownload._manifest_remote) as http_response:
+        with urlopen(FirmwareDownloader._manifest_remote) as http_response:
             manifest_gzip = http_response.read()
             manifest = gzip.decompress(manifest_gzip)
             self._manifest = json.loads(manifest)
@@ -193,7 +193,7 @@ class FirmwareDownload:
         items = self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
 
         for item in items:
-            if item["format"] == FirmwareDownload._supported_firmware_formats[platform]:
+            if item["format"] == FirmwareDownloader._supported_firmware_formats[platform]:
                 available_versions.append(item["mav-firmware-version-type"])
 
         return available_versions
@@ -211,7 +211,7 @@ class FirmwareDownload:
             str: URL of valid firmware.
         """
         if platform == Platform.Navigator and vehicle == Vehicle.Sub:
-            return FirmwareDownload._navigator_firmware_url()
+            return FirmwareDownloader._navigator_firmware_url()
 
         versions = self.get_available_versions(vehicle, platform)
         logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
@@ -222,7 +222,7 @@ class FirmwareDownload:
         if version and version not in versions:
             raise NoVersionAvailable(f"Version {version} was not found for {platform}/{vehicle}.")
 
-        firmware_format = FirmwareDownload._supported_firmware_formats[platform]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[platform]
 
         # Autodetect the latest supported version.
         # For .apj firmwares (e.g. Pixhawk), we use the latest STABLE version while for the others (e.g. SITL and
@@ -269,4 +269,4 @@ class FirmwareDownload:
             pathlib.Path: Temporary path for the firmware file.
         """
         url = self.get_download_url(vehicle, platform, version)
-        return FirmwareDownload._download(url)
+        return FirmwareDownloader._download(url)
