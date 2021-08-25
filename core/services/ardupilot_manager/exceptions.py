@@ -21,3 +21,15 @@ class ManifestUnavailable(RuntimeError):
 
 class MoreThanOneCandidate(ValueError):
     """More than one firmware candidate found for specified configuration."""
+
+
+class FirmwareUploadFail(RuntimeError):
+    """Firmware upload operation failed."""
+
+
+class UploadToolNotFound(RuntimeError):
+    """Firmware upload tool not found."""
+
+
+class InvalidUploadTool(ValueError):
+    """Firmware upload tool cannot be validated."""
