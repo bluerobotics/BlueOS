@@ -14,14 +14,17 @@ from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
 from Singleton import Singleton
+from typedefs import SITLFrame
 
 
 class ArduPilotManager(metaclass=Singleton):
+    # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         self.settings = Settings()
         self.mavlink_manager = MavlinkManager()
         self.mavlink_manager.set_logdir(self.settings.log_path)
         self._current_platform: Platform = Platform.Undefined
+        self._current_sitl_frame: SITLFrame = SITLFrame.UNDEFINED
 
         # Load settings and do the initial configuration
         if self.settings.load():
@@ -55,6 +58,15 @@ class ArduPilotManager(metaclass=Singleton):
     def current_platform(self, platform: Platform) -> None:
         self._current_platform = platform
         logger.info(f"Setting {platform} as current platform.")
+
+    @property
+    def current_sitl_frame(self) -> SITLFrame:
+        return self._current_sitl_frame
+
+    @current_sitl_frame.setter
+    def current_sitl_frame(self, frame: SITLFrame) -> None:
+        self._current_sitl_frame = frame
+        logger.info(f"Setting {frame.value} as frame for SITL.")
 
     def start_navigator(self) -> None:
         self.current_platform = Platform.Navigator
@@ -107,13 +119,17 @@ class ArduPilotManager(metaclass=Singleton):
             Endpoint("Master", self.settings.app_name, EndpointType.Serial, device, 115200, protected=True)
         )
 
-    def run_with_sitl(self, vehicle: str = "vectored") -> None:
+    def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
         self.current_platform = Platform.SITL
         firmware = os.path.join(self.settings.firmware_path, "sitl")
         if not os.path.exists(firmware):
             temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.SITL)
             assert temporary_file, "Failed to download SITL binary."
             shutil.move(str(temporary_file), firmware)
+        if frame == SITLFrame.UNDEFINED:
+            frame = SITLFrame.VECTORED
+            logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
+        self.current_sitl_frame = frame
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
@@ -132,7 +148,7 @@ class ArduPilotManager(metaclass=Singleton):
             [
                 firmware,
                 "--model",
-                vehicle,
+                self.current_sitl_frame.value,
                 "--base-port",
                 str(master_endpoint.argument),
                 "--home",
