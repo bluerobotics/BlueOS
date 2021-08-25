@@ -1,4 +1,5 @@
 import os
+import pathlib
 import subprocess
 import threading
 import time
@@ -9,7 +10,7 @@ import psutil
 from loguru import logger
 
 from exceptions import ArdupilotProcessKillFail
-from firmware.FirmwareDownload import Platform, Vehicle
+from firmware.FirmwareDownload import Firmware, Platform, Vehicle
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
@@ -359,3 +360,12 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.error(f"Failed to remove endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
                 raise
+
+    def get_available_firmwares(self, vehicle: Vehicle) -> List[Firmware]:
+        return self.firmware_manager.get_available_firmwares(vehicle, self.current_platform)
+
+    def install_firmware_from_file(self, firmware_path: pathlib.Path) -> None:
+        self.firmware_manager.install_firmware_from_file(firmware_path, self.current_platform)
+
+    def install_firmware_from_url(self, url: str) -> None:
+        self.firmware_manager.install_firmware_from_url(url, self.current_platform)
