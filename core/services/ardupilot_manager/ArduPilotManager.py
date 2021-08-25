@@ -1,5 +1,4 @@
 import os
-import shutil
 import subprocess
 import time
 from copy import deepcopy
@@ -7,7 +6,8 @@ from typing import Any, List, Optional, Set, Tuple
 
 from loguru import logger
 
-from firmware.FirmwareDownload import FirmwareDownloader, Platform, Vehicle
+from firmware.FirmwareDownload import Platform, Vehicle
+from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
@@ -36,7 +36,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.configuration = deepcopy(self.settings.content)
         self._load_endpoints()
         self.subprocess: Optional[Any] = None
-        self.firmware_download = FirmwareDownloader()
+        self.firmware_manager = FirmwareManager(self.settings.firmware_folder)
 
     def run_with_board(self) -> None:
         ArduPilotManager.check_running_as_root()
@@ -70,11 +70,8 @@ class ArduPilotManager(metaclass=Singleton):
 
     def start_navigator(self) -> None:
         self.current_platform = Platform.Navigator
-        firmware = os.path.join(self.settings.firmware_folder, "ardusub")
-        if not os.path.isfile(firmware):
-            temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.Navigator)
-            assert temporary_file, "Failed to download navigator binary."
-            shutil.move(str(temporary_file), firmware)
+        if not self.firmware_manager.is_firmware_installed(self.current_platform):
+            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_platform)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -98,7 +95,8 @@ class ArduPilotManager(metaclass=Singleton):
 
         self.subprocess = subprocess.Popen(
             "while true; do "
-            f"{firmware} -A udp:{master_endpoint.place}:{master_endpoint.argument}"
+            f"{self.firmware_manager.firmware_path(self.current_platform)}"
+            f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
             f" -C /dev/ttyS0"
@@ -121,11 +119,8 @@ class ArduPilotManager(metaclass=Singleton):
 
     def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
         self.current_platform = Platform.SITL
-        firmware = os.path.join(self.settings.firmware_folder, "sitl")
-        if not os.path.exists(firmware):
-            temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.SITL)
-            assert temporary_file, "Failed to download SITL binary."
-            shutil.move(str(temporary_file), firmware)
+        if not self.firmware_manager.is_firmware_installed(self.current_platform):
+            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_platform)
         if frame == SITLFrame.UNDEFINED:
             frame = SITLFrame.VECTORED
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
@@ -146,7 +141,7 @@ class ArduPilotManager(metaclass=Singleton):
         # pylint: disable=consider-using-with
         self.subprocess = subprocess.Popen(
             [
-                firmware,
+                self.firmware_manager.firmware_path(self.current_platform),
                 "--model",
                 self.current_sitl_frame.value,
                 "--base-port",
