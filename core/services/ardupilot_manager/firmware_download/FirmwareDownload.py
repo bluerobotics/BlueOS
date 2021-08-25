@@ -45,6 +45,7 @@ class Platform(str, Enum):
     Pixhawk1 = "Pixhawk1"
     Navigator = "navigator"
     SITL = get_sitl_platform_name()
+    Undefined = "Undefined"
 
 
 class FirmwareFormat(str, Enum):
