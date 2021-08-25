@@ -65,3 +65,7 @@ class FetchUpdatedMessageFail(RuntimeError):
 
 class VehicleDisarmFail(RuntimeError):
     """Could not disarm vehicle."""
+
+
+class ArdupilotProcessKillFail(RuntimeError):
+    """Could not kill Ardupilot process."""

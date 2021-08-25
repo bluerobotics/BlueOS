@@ -1,15 +1,19 @@
 import os
 import subprocess
+import threading
 import time
 from copy import deepcopy
 from typing import Any, List, Optional, Set, Tuple
 
+import psutil
 from loguru import logger
 
+from exceptions import ArdupilotProcessKillFail
 from firmware.FirmwareDownload import Platform, Vehicle
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
+from mavlink_comm.VehicleManager import VehicleManager
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
@@ -37,6 +41,26 @@ class ArduPilotManager(metaclass=Singleton):
         self._load_endpoints()
         self.subprocess: Optional[Any] = None
         self.firmware_manager = FirmwareManager(self.settings.firmware_folder)
+        self.vehicle_manager = VehicleManager()
+
+        self.should_be_running = False
+        auto_restart_thread = threading.Thread(target=self.auto_restart, args=())
+        auto_restart_thread.daemon = True
+        auto_restart_thread.start()
+
+    def auto_restart(self) -> None:
+        """Auto-restart Ardupilot process if it dies when not supposed to."""
+        while True:
+            subprocess_stopped = self.subprocess is not None and self.subprocess.poll() is not None
+            needs_restart = (
+                self.should_be_running
+                and self.current_platform in [Platform.SITL, Platform.Navigator]
+                and (len(self.running_ardupilot_processes()) == 0 or subprocess_stopped)
+            )
+            if needs_restart:
+                logger.debug("Restarting ardupilot...")
+                self.start_ardupilot()
+            time.sleep(5.0)
 
     def run_with_board(self) -> None:
         ArduPilotManager.check_running_as_root()
@@ -94,7 +118,6 @@ class ArduPilotManager(metaclass=Singleton):
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
         self.subprocess = subprocess.Popen(
-            "while true; do "
             f"{self.firmware_manager.firmware_path(self.current_platform)}"
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
@@ -102,8 +125,7 @@ class ArduPilotManager(metaclass=Singleton):
             f" -C /dev/ttyS0"
             f" -B /dev/ttyAMA1"
             f" -E /dev/ttyAMA2"
-            f" -F /dev/ttyAMA3"
-            "; sleep 1; done",
+            f" -F /dev/ttyAMA3",
             shell=True,
             encoding="utf-8",
             errors="ignore",
@@ -208,8 +230,70 @@ class ArduPilotManager(metaclass=Singleton):
             return True
         raise RuntimeError("Invalid board type: {boards}")
 
-    def restart(self) -> None:
-        self.mavlink_manager.restart()
+    def running_ardupilot_processes(self) -> List[psutil.Process]:
+        """Return list of all Ardupilot process running on system."""
+
+        def is_ardupilot_process(process: psutil.Process) -> bool:
+            """Checks if given process is using Ardupilot's firmware file for current platform."""
+            return str(self.firmware_manager.firmware_path(self.current_platform)) in " ".join(process.cmdline())
+
+        return list(filter(is_ardupilot_process, psutil.process_iter()))
+
+    def terminate_ardupilot_subprocess(self) -> None:
+        """Terminate Ardupilot subprocess."""
+        if self.subprocess:
+            self.subprocess.terminate()
+            for _ in range(10):
+                if self.subprocess.poll() is not None:
+                    logger.info("Ardupilot subprocess terminated.")
+                    return
+                logger.debug("Waiting for process to die...")
+                time.sleep(0.5)
+            raise ArdupilotProcessKillFail("Could not terminate Ardupilot subprocess.")
+        logger.warning("Ardupilot subprocess already not running.")
+
+    def prune_ardupilot_processes(self) -> None:
+        """Kill all system processes using Ardupilot's firmware file."""
+        for process in self.running_ardupilot_processes():
+            try:
+                logger.debug(f"Killing Ardupilot process {process.name()}::{process.pid}.")
+                process.kill()
+                time.sleep(0.5)
+            except Exception as error:
+                raise ArdupilotProcessKillFail(f"Could not kill {process.name()}::{process.pid}.") from error
+
+    def kill_ardupilot(self) -> None:
+        self.should_be_running = False
+
+        if not self.current_platform == Platform.SITL:
+            logger.info("Disarming vehicle.")
+            self.vehicle_manager.disarm_vehicle()
+            logger.info("Vehicle disarmed.")
+
+        # TODO: Add shutdown command on HAL_SITL and HAL_LINUX, changing terminate/prune
+        # logic with a simple "self.vehicle_manager.shutdown_vehicle()"
+        logger.info("Terminating Ardupilot subprocess.")
+        self.terminate_ardupilot_subprocess()
+        logger.info("Ardupilot subprocess terminated.")
+        logger.info("Pruning Ardupilot's system processes.")
+        self.prune_ardupilot_processes()
+        logger.info("Ardupilot's system processes pruned.")
+
+        logger.info("Stopping Mavlink manager.")
+        self.mavlink_manager.stop()
+        logger.info("Mavlink manager stopped.")
+
+    def start_ardupilot(self) -> None:
+        if self.current_platform == Platform.SITL:
+            self.run_with_sitl(self.current_sitl_frame)
+            self.should_be_running = True
+            return
+        self.run_with_board()
+        self.should_be_running = True
+
+    def restart_ardupilot(self) -> None:
+        self.kill_ardupilot()
+        self.start_ardupilot()
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
@@ -238,7 +322,7 @@ class ArduPilotManager(metaclass=Singleton):
             persistent_endpoints = set(filter(lambda endpoint: endpoint.persistent, self.get_endpoints()))
             self._save_endpoints_to_configuration(persistent_endpoints)
             self.settings.save(self.configuration)
-            self.restart()
+            self.mavlink_manager.restart()
         except Exception as error:
             logger.error(f"Error updating endpoints: {error}")
 
