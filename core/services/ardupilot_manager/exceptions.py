@@ -49,3 +49,16 @@ class UnsupportedPlatform(ValueError):
 
 class FirmwareInstallFail(RuntimeError):
     """Firmware install operation failed."""
+
+
+class MavlinkMessageSendFail(RuntimeError):
+    """Mavlink message could no be sent."""
+
+
+class MavlinkMessageReceiveFail(RuntimeError):
+    """Could not retrieve Mavlink message."""
+
+
+class FetchUpdatedMessageFail(RuntimeError):
+    """Unable to get an updated mavlink message."""
+
