@@ -60,6 +60,9 @@ class Manager:
     def start(self) -> None:
         self.tool.start(self.master)
 
+    def stop(self) -> None:
+        self.tool.exit()
+
     def restart(self) -> None:
         self.tool.restart()
 
