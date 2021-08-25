@@ -7,7 +7,7 @@ from typing import Any, List, Optional, Set, Tuple
 
 from loguru import logger
 
-from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
+from firmware.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.Detector import FlightControllerType
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
