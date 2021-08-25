@@ -7,6 +7,7 @@ RUN cd /home/pi/frontend && yarn install --network-timeout=300000 && yarn build 
 # Download binaries
 FROM bluerobotics/companion-base:v0.0.2 as downloadBinaries
 COPY tools /home/pi/tools
+RUN /home/pi/tools/ardupilot_tools/bootstrap.sh
 RUN /home/pi/tools/bridges/bootstrap.sh
 RUN /home/pi/tools/mavlink2rest/bootstrap.sh
 RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
@@ -36,6 +37,7 @@ COPY start-companion-core /usr/bin/start-companion-core
 
 # Copy binaries from downloadBinaries to this stage
 COPY --from=downloadBinaries \
+    /usr/bin/ardupilot_fw_uploader.py \
     /usr/bin/bridges \
     /usr/bin/mavlink2rest \
     /usr/bin/mavlink-camera-manager \
