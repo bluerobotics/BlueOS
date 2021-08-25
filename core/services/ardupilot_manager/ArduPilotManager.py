@@ -21,6 +21,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.settings = Settings()
         self.mavlink_manager = MavlinkManager()
         self.mavlink_manager.set_logdir(self.settings.log_path)
+        self._current_platform: Platform = Platform.Undefined
 
         # Load settings and do the initial configuration
         if self.settings.load():
@@ -46,7 +47,17 @@ class ArduPilotManager(metaclass=Singleton):
         if os.geteuid() != 0:
             raise RuntimeError("ArduPilot manager needs to run with root privilege.")
 
+    @property
+    def current_platform(self) -> Platform:
+        return self._current_platform
+
+    @current_platform.setter
+    def current_platform(self, platform: Platform) -> None:
+        self._current_platform = platform
+        logger.info(f"Setting {platform} as current platform.")
+
     def start_navigator(self) -> None:
+        self.current_platform = Platform.Navigator
         firmware = os.path.join(self.settings.firmware_path, "ardusub")
         if not os.path.isfile(firmware):
             temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.Navigator)
@@ -91,11 +102,13 @@ class ArduPilotManager(metaclass=Singleton):
         self.start_mavlink_manager(master_endpoint)
 
     def start_serial(self, device: str) -> None:
+        self.current_platform = Platform.Pixhawk1
         self.start_mavlink_manager(
             Endpoint("Master", self.settings.app_name, EndpointType.Serial, device, 115200, protected=True)
         )
 
     def run_with_sitl(self, vehicle: str = "vectored") -> None:
+        self.current_platform = Platform.SITL
         firmware = os.path.join(self.settings.firmware_path, "sitl")
         if not os.path.exists(firmware):
             temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.SITL)
