@@ -40,11 +40,10 @@ class Vehicle(str, Enum):
 
 class Platform(str, Enum):
     """Valid platform types to download
-    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest,
-    with the exception being Navigator, which is not on the manifest yet."""
+    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
 
     Pixhawk1 = "Pixhawk1"
-    Navigator = "Navigator"
+    Navigator = "navigator"
     SITL = get_sitl_platform_name()
 
 
