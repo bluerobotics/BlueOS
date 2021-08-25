@@ -70,7 +70,7 @@ class ArduPilotManager(metaclass=Singleton):
 
     def start_navigator(self) -> None:
         self.current_platform = Platform.Navigator
-        firmware = os.path.join(self.settings.firmware_path, "ardusub")
+        firmware = os.path.join(self.settings.firmware_folder, "ardusub")
         if not os.path.isfile(firmware):
             temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.Navigator)
             assert temporary_file, "Failed to download navigator binary."
@@ -99,8 +99,8 @@ class ArduPilotManager(metaclass=Singleton):
         self.subprocess = subprocess.Popen(
             "while true; do "
             f"{firmware} -A udp:{master_endpoint.place}:{master_endpoint.argument}"
-            f" --log-directory {self.settings.firmware_path}/logs/"
-            f" --storage-directory {self.settings.firmware_path}/storage/"
+            f" --log-directory {self.settings.firmware_folder}/logs/"
+            f" --storage-directory {self.settings.firmware_folder}/storage/"
             f" -C /dev/ttyS0"
             f" -B /dev/ttyAMA1"
             f" -E /dev/ttyAMA2"
@@ -121,7 +121,7 @@ class ArduPilotManager(metaclass=Singleton):
 
     def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
         self.current_platform = Platform.SITL
-        firmware = os.path.join(self.settings.firmware_path, "sitl")
+        firmware = os.path.join(self.settings.firmware_folder, "sitl")
         if not os.path.exists(firmware):
             temporary_file = self.firmware_download.download(Vehicle.Sub, Platform.SITL)
             assert temporary_file, "Failed to download SITL binary."
