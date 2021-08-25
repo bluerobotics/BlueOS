@@ -343,8 +343,6 @@ class ArduPilotManager(metaclass=Singleton):
                 self._reset_endpoints(loaded_endpoints)
                 raise
 
-        self.reload_endpoints()
-
     def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
         loaded_endpoints = self.get_endpoints()
@@ -361,5 +359,3 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.error(f"Failed to remove endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
                 raise
-
-        self.reload_endpoints()
