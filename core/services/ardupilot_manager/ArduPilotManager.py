@@ -317,7 +317,7 @@ class ArduPilotManager(metaclass=Singleton):
         except Exception as error:
             logger.error(f"Error resetting endpoints: {error}")
 
-    def _update_endpoints(self) -> None:
+    def reload_endpoints(self) -> None:
         try:
             persistent_endpoints = set(filter(lambda endpoint: endpoint.persistent, self.get_endpoints()))
             self._save_endpoints_to_configuration(persistent_endpoints)
@@ -343,7 +343,7 @@ class ArduPilotManager(metaclass=Singleton):
                 self._reset_endpoints(loaded_endpoints)
                 raise
 
-        self._update_endpoints()
+        self.reload_endpoints()
 
     def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
@@ -362,4 +362,4 @@ class ArduPilotManager(metaclass=Singleton):
                 self._reset_endpoints(loaded_endpoints)
                 raise
 
-        self._update_endpoints()
+        self.reload_endpoints()
