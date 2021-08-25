@@ -67,8 +67,7 @@ app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 if __name__ == "__main__":
     if args.sitl:
-        autopilot.run_with_sitl()
-    else:
-        autopilot.run_with_board()
+        autopilot.current_platform = Platform.SITL
+    autopilot.start_ardupilot()
     # Running uvicorn with log disabled so loguru can handle it
     uvicorn.run(app, host="0.0.0.0", port=8000, log_config=None)

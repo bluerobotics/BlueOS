@@ -63,5 +63,6 @@ setuptools.setup(
         "loguru == 0.5.3",
         "commonwealth == 0.1.0",
         "pyelftools == 0.27",
+        "psutil == 5.7.2",
     ],
 )
