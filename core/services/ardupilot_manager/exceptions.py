@@ -1,0 +1,3 @@
+"""
+Ardupilot-manager exception classes.
+"""
