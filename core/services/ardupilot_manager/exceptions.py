@@ -62,3 +62,6 @@ class MavlinkMessageReceiveFail(RuntimeError):
 class FetchUpdatedMessageFail(RuntimeError):
     """Unable to get an updated mavlink message."""
 
+
+class VehicleDisarmFail(RuntimeError):
+    """Could not disarm vehicle."""
