@@ -302,6 +302,12 @@ class EthernetManager:
         """
         result = []
         for interface, addresses in psutil.net_if_addrs().items():
+            # We don't care about virtual ethernet interfaces
+            ## Virtual interfaces are created by programs such as docker
+            ## and they are an abstraction of real interfaces, the ones that we want to configure.
+            if str(interface).startswith("veth"):
+                continue
+
             for address in addresses:
                 # We don't care about ipv6
                 if address.family == AddressFamily.AF_INET6:
