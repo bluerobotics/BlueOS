@@ -126,7 +126,7 @@ class FirmwareDownload:
             bool: True if valid, False if otherwise.
         """
         if FirmwareFormat.APJ.value in firmware_path.suffix:
-            with open(firmware_path, "r") as firmware_file:
+            with open(firmware_path, "r", encoding="utf-8") as firmware_file:
                 data = json.load(firmware_file)
                 keys = data.keys()
                 if "image_size" in keys and "image" in keys:

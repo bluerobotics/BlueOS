@@ -7,7 +7,7 @@ import setuptools
 ## Fix problems related to calling setup.py from different paths
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
-with open(pathlib.Path(__file__).parent.joinpath("README.md"), "r") as readme:
+with open(pathlib.Path(__file__).parent.joinpath("README.md"), "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
 setuptools.setup(

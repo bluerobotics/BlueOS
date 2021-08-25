@@ -55,7 +55,7 @@ class Bootstrapper:
         # Tries to open the current file
         config = {}
         try:
-            with open(Bootstrapper.DOCKER_CONFIG_FILE_PATH) as config_file:
+            with open(Bootstrapper.DOCKER_CONFIG_FILE_PATH, encoding="utf-8") as config_file:
                 config = json.load(config_file)
                 assert "core" in config, "missing core entry in startup.json"
                 necessary_keys = ["image", "tag", "binds", "privileged", "network"]
@@ -66,7 +66,7 @@ class Bootstrapper:
             print(f"unable to read startup.json file ({error}), reverting to defaults...")
             # Copy defaults over and read again
             Bootstrapper.overwrite_config_file_with_defaults()
-            with open(Bootstrapper.DEFAULT_FILE_PATH) as config_file:
+            with open(Bootstrapper.DEFAULT_FILE_PATH, encoding="utf-8") as config_file:
                 config = json.load(config_file)
 
         config["core"]["binds"][str(Bootstrapper.HOST_CONFIG_PATH)] = {

@@ -34,7 +34,7 @@ class Settings:
         """Create settings file."""
         try:
             if not Path.is_file(self.settings_file):
-                with open(self.settings_file, "w+") as file:
+                with open(self.settings_file, "w+", encoding="utf-8") as file:
                     logger.info(f"Creating settings file: {self.settings_file}")
                     json.dump(self.root, file, sort_keys=True, indent=4)
 
@@ -71,7 +71,7 @@ class Settings:
 
         data = None
         try:
-            with open(self.settings_file) as file:
+            with open(self.settings_file, encoding="utf-8") as file:
                 data = json.load(file)
                 if data["version"] != self.root["version"]:
                     logger.error("User settings does not match with our supported version.")
@@ -100,7 +100,7 @@ class Settings:
         try:
             Path.mkdir(self.settings_path, exist_ok=True)
 
-            with open(self.settings_file, "w+") as file:
+            with open(self.settings_file, "w+", encoding="utf-8") as file:
                 logger.info(f"Updating settings file: {self.settings_file}")
                 json.dump(self.root, file, sort_keys=True, indent=4)
         except Exception as error:

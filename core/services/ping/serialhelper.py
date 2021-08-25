@@ -32,7 +32,7 @@ def set_low_latency(port: SysFS) -> None:
     logging.info(f"Latency file: {latency_file}")
 
     try:
-        with open(latency_file, "w") as p:
+        with open(latency_file, "w", encoding="utf-8") as p:
             p.write("1")
             p.flush()
     except IOError:

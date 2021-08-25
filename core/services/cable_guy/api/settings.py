@@ -34,7 +34,7 @@ class Settings:
 
         data = None
         try:
-            with open(self.settings_file) as file:
+            with open(self.settings_file, encoding="utf-8") as file:
                 data = json.load(file)
                 if data["version"] != self.root["version"]:
                     print("User settings does not match with our supported version.")
@@ -62,6 +62,6 @@ class Settings:
         if not os.path.exists(self.settings_path):
             os.makedirs(self.settings_path)
 
-        with open(self.settings_file, "w+") as file:
+        with open(self.settings_file, "w+", encoding="utf-8") as file:
             print(f"Updating settings file: {self.settings_file}")
             json.dump(self.root, file, sort_keys=True, indent=4)
