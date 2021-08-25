@@ -62,5 +62,6 @@ setuptools.setup(
         "aiofiles == 0.6.0",
         "loguru == 0.5.3",
         "commonwealth == 0.1.0",
+        "pyelftools == 0.27",
     ],
 )
