@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from firmware_download.FirmwareDownload import FirmwareDownload, Platform, Vehicle
+from firmware.FirmwareDownload import FirmwareDownload, Platform, Vehicle
 
 
 def test_static() -> None:
