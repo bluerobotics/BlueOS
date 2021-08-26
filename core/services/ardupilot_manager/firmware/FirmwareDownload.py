@@ -115,17 +115,6 @@ class FirmwareDownloader:
             raise FirmwareDownloadFail("Could not download firmware file.") from error
         return filename
 
-    @staticmethod
-    def _navigator_firmware_url() -> str:
-        """This is a temporary method should be removed after navigator builds are provided
-            by ArduPilot community.
-            TODO: This function should not exist and be removed asap
-
-        Returns:
-            str: Navigator url
-        """
-        return "https://s3.amazonaws.com/downloads.bluerobotics.com/ardusub/navigator/ardusub"
-
     def _manifest_is_valid(self) -> bool:
         """Check if internal content is valid and update it if not.
 
@@ -216,9 +205,6 @@ class FirmwareDownloader:
         Returns:
             str: URL of valid firmware.
         """
-        if platform == Platform.Navigator and vehicle == Vehicle.Sub:
-            return FirmwareDownloader._navigator_firmware_url()
-
         versions = self.get_available_versions(vehicle, platform)
         logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
 
