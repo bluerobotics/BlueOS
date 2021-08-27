@@ -14,6 +14,7 @@ from urllib.request import urlopen, urlretrieve
 
 from loguru import logger
 from packaging.version import Version
+from pydantic import BaseModel, HttpUrl
 
 from exceptions import (
     FirmwareDownloadFail,
@@ -33,6 +34,11 @@ def get_sitl_platform_name() -> str:
     if machine() == "x86_64":
         return "SITL_x86_64_linux_gnu"
     return "SITL_arm_linux_gnueabihf"
+
+
+class Firmware(BaseModel):
+    name: str
+    url: HttpUrl
 
 
 class Vehicle(str, Enum):
