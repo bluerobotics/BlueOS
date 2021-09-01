@@ -11,5 +11,6 @@ wget $REMOTE_URL
 tar -zxf logviewer.tar.gz
 mkdir -p $DESTINATION_PATH
 mv dist/* $DESTINATION_PATH
+find $DESTINATION_PATH -name "*.gz" -type f -delete
 rm -r dist
 rm -r logviewer.tar.gz
