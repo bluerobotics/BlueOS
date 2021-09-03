@@ -25,42 +25,68 @@
       absolute
       temporary
     >
-      <v-list
-        nav
-        dense
+      <v-container
+        elevation="0"
+        class="d-flex justify-center"
       >
-        <v-list-item-group
-          active-class="deep-blue--text text--accent-4"
+        <v-img
+          alt="Blue Robotics Logo"
+          class="shrink mr-2"
+          contain
+          src="./assets/logo.svg"
+          width="60"
+        />
+      </v-container>
+
+      <v-container
+        class="pa-1"
+      >
+        <v-divider />
+        <v-list
+          v-for="(menu, i) in menus"
+          :key="i"
+          class="pa-0"
+          nav
+          dense
         >
-          <v-card
-            elevation="0"
-            class="d-flex justify-center"
-          >
-            <v-img
-              alt="Blue Robotics Logo"
-              class="shrink mr-2"
-              contain
-              src="./assets/logo.svg"
-              width="60"
-            />
-          </v-card>
+          <v-list-item-group color="primary">
+            <v-list-group
+              v-if="menu.submenus"
+              :prepend-icon="menu.icon"
+              :to="menu.route"
+              no-action
+            >
+              <template #activator>
+                <v-list-item-title v-text="menu.title" />
+              </template>
 
-          <v-card
-            elevation="0"
-            height="30"
-            class="pa-4"
-          >
-            <v-divider />
-          </v-card>
+              <v-list-item
+                v-for="(submenu, j) in menu.submenus"
+                :key="j"
+                :to="submenu.route"
+              >
+                <v-list-item-title
+                  v-text="submenu.title"
+                />
+                <v-list-item-icon>
+                  <v-icon v-text="submenu.icon" />
+                </v-list-item-icon>
+              </v-list-item>
+            </v-list-group>
 
-          <v-list-item to="/">
-            <v-list-item-icon>
-              <v-icon>mdi-home</v-icon>
-            </v-list-item-icon>
-            <v-list-item-title>Main</v-list-item-title>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
+            <v-list-item
+              v-else
+              :to="menu.route"
+            >
+              <v-list-item-icon>
+                <v-icon v-text="menu.icon" />
+              </v-list-item-icon>
+
+              <v-list-item-title v-text="menu.title" />
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-container>
     </v-navigation-drawer>
 
     <v-main>
@@ -90,6 +116,19 @@ export default Vue.extend({
 
   data: () => ({
     drawer: false,
+    menus: [
+      {
+        title: 'Main',
+        icon: 'mdi-home',
+        route: '/',
+      },
+    ],
   }),
 })
 </script>
+
+<style>
+.active_menu {
+  color: blue;
+}
+</style>
