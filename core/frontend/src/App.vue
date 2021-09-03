@@ -13,7 +13,7 @@
         />
 
         <v-spacer />
-
+        <health-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
         <notification-tray-button />
@@ -74,6 +74,7 @@
 import Vue from 'vue'
 
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
+import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
@@ -86,6 +87,7 @@ export default Vue.extend({
     'services-scanner': ServicesScanner,
     'wifi-tray-menu': WifiTrayMenu,
     'ethernet-tray-menu': EthernetTrayMenu,
+    'health-tray-menu': HealthTrayMenu,
   },
 
   data: () => ({
