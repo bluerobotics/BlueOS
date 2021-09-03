@@ -122,6 +122,17 @@ export default Vue.extend({
         icon: 'mdi-home',
         route: '/',
       },
+      {
+        title: 'Autopilot',
+        icon: 'mdi-submarine',
+        submenus: [
+          {
+            title: 'Firmware',
+            icon: 'mdi-chip',
+            route: '/firmware',
+          },
+        ],
+      },
     ],
   }),
 })
