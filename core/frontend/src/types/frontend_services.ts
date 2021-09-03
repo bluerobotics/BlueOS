@@ -20,3 +20,10 @@ export const ethernet_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const autopilot_service: Service = {
+  name: 'Autopilot Manager',
+  description: 'Responsible for management of autopilot status and configuration.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
