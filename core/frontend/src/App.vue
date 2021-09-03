@@ -13,7 +13,7 @@
         />
 
         <v-spacer />
-
+        <health-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
         <notification-tray-button />
@@ -105,6 +105,7 @@ import Vue from 'vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
+import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
@@ -121,6 +122,7 @@ export default Vue.extend({
     'ethernet-tray-menu': EthernetTrayMenu,
     'ethernet-updater': EthernetUpdater,
     'autopilot-manager-updater': AutopilotManagerUpdater,
+    'health-tray-menu': HealthTrayMenu,
   },
 
   data: () => ({
