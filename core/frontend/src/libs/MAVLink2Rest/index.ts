@@ -4,7 +4,7 @@
 import Endpoint from './Endpoint'
 import Listener from './Listener'
 
-interface Dictionary<T> {
+export interface Dictionary<T> {
   [key: string]: T;
 }
 
