@@ -1,11 +1,18 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 // The library is an interface for MAVLink objects, messages can by of any type
 
+import axios from 'axios'
+
+import { Dictionary } from '@/types/common'
+
 import Endpoint from './Endpoint'
 import Listener from './Listener'
 
-export interface Dictionary<T> {
-  [key: string]: T;
+// Maps message names to message IDs
+// TODO: should we get this generated somehow?
+const messageId: Dictionary<number> = {
+  HEARTBEAT: 0,
+  SYS_STATUS: 1,
 }
 
 class Mavlink2RestManager {
@@ -74,6 +81,49 @@ class Mavlink2RestManager {
     const endpoint = this.endpoints[endpointName] || this.createEndpoint(endpointName)
     this.endpoints[endpointName] = endpoint
     return endpoint.addListener()
+  }
+
+  /**
+   * Requests a message at a given rate
+   * @param  {string} messsage name
+   * @returns Listener
+   */
+  requestMessageRate(message: string, rate:number): void {
+    if (rate < 0) {
+      console.warn(`Requested invalid message rate for ${message}: ${rate}`)
+      return
+    }
+
+    const payload = {
+      header: {
+        system_id: 255,
+        component_id: 0,
+        sequence: 0,
+      },
+      message: {
+        type: 'COMMAND_LONG',
+        param1: messageId[message],
+        param2: 1000000 / rate,
+        param3: 0.0,
+        param4: 0.0,
+        param5: 0.0,
+        param6: 0.0,
+        param7: 0.0,
+        command: {
+          type: 'MAV_CMD_SET_MESSAGE_INTERVAL',
+        },
+        target_system: 0,
+        target_component: 0,
+        confirmation: 0,
+      },
+    }
+    // TODO: Abstract that and use websocket to do the post and deal with the answer somehow
+    axios.post(`${this.baseUrl}/mavlink`.replace('/ws/mavlink', '').replace('ws', 'http'), payload)
+      .then(
+        () => {
+          console.log('message rate set succesfully')
+        },
+      ).catch((error) => console.log(`unable to set message rate of ${message} to ${rate}: ${error}`))
   }
 
   /**
