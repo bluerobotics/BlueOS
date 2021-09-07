@@ -26,7 +26,9 @@ class Mavlink2RestManager {
 
   private constructor() {
     this.baseUrl = `${Mavlink2RestManager.getWebsocketPrefix()}://${window.location.host}/mavlink2rest/ws/mavlink`
-    this.baseUrlCandidates = [this.baseUrl, 'ws://localhost:8088/ws/mavlink']
+    this.baseUrlCandidates = [
+      this.baseUrl,
+    ]
     this.probeBaseUrlCandidates()
   }
 
