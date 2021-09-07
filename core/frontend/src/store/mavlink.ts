@@ -10,7 +10,7 @@ import { Dictionary } from '@/types/common'
 import { MavlinkMessage } from '@/types/mavlink'
 
 interface messsageRefreshRate {
-  message: string
+  messageName: string
   refreshRate: number
 }
 
