@@ -27,3 +27,10 @@ export const autopilot_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const filebrowser_service: Service = {
+  name: 'Filebrowser',
+  description: 'File browsing service.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
