@@ -131,6 +131,11 @@ export default Vue.extend({
             icon: 'mdi-chip',
             route: '/firmware',
           },
+          {
+            title: 'Log Browser',
+            icon: 'mdi-file-multiple',
+            route: '/logs',
+          },
         ],
       },
     ],
