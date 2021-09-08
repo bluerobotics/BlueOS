@@ -276,17 +276,17 @@ export default Vue.extend({
         })
         .catch((error) => {
           this.install_status = InstallStatus.Failed
-          notification_store.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_service,
-            'FILE_FIRMWARE_UPLOAD_FAIL',
-            `Could not upload firmware: ${error}.`,
-          ))
           try {
             this.install_result_message = error.response.data.message
           } catch {
             this.install_result_message = 'Invalid backend error message.'
           }
+          notification_store.pushNotification(new LiveNotification(
+            NotificationLevel.Error,
+            autopilot_service,
+            'FILE_FIRMWARE_UPLOAD_FAIL',
+            `Could not upload firmware: ${this.install_result_message}.`,
+          ))
         })
     },
   },
