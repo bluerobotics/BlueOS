@@ -136,6 +136,11 @@ export default Vue.extend({
             icon: 'mdi-file-multiple',
             route: '/logs',
           },
+          {
+            title: 'Endpoints',
+            icon: 'mdi-arrow-decision',
+            route: '/endpoints',
+          },
         ],
       },
     ],

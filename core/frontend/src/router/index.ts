@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
+import Endpoint from '../views/EndpointView.vue'
 import Firmware from '../views/FirmwareView.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
@@ -22,6 +23,11 @@ const routes: Array<RouteConfig> = [
     path: '/logs',
     name: 'LogManager',
     component: LogView,
+  },
+  {
+    path: '/endpoints',
+    name: 'Endpoints',
+    component: Endpoint,
   },
 ]
 
