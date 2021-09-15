@@ -119,14 +119,14 @@ import axios, { AxiosRequestConfig } from 'axios'
 import Vue from 'vue'
 import { getModule } from 'vuex-module-decorators'
 
-import AutopilotStore from '@/store/autopilot'
+import AutopilotManagerStore from '@/store/autopilot_manager'
 import NotificationStore from '@/store/notifications'
 import { Firmware, Vehicle } from '@/types/autopilot'
-import { autopilot_service } from '@/types/frontend_services'
+import { autopilot_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 const notification_store: NotificationStore = getModule(NotificationStore)
-const autopilot_store: AutopilotStore = getModule(AutopilotStore)
+const autopilot_manager_store: AutopilotManagerStore = getModule(AutopilotManagerStore)
 
 enum InstallStatus {
   NotStarted,
@@ -213,7 +213,7 @@ export default Vue.extend({
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
       await axios({
         method: 'get',
-        url: `${autopilot_store.API_URL}/available_firmwares`,
+        url: `${autopilot_manager_store.API_URL}/available_firmwares`,
         timeout: 10000,
         params: { vehicle: this.chosen_vehicle },
       })
@@ -224,7 +224,7 @@ export default Vue.extend({
         .catch((error) => {
           notification_store.pushNotification(new LiveNotification(
             NotificationLevel.Error,
-            autopilot_service,
+            autopilot_manager_service,
             'FIRMWARE_FETCH_FAIL',
             `Could not fetch available firmwares: ${error.message}.`,
           ))
@@ -246,7 +246,7 @@ export default Vue.extend({
       if (this.upload_type === UploadType.Cloud) {
         // Populate request with data for cloud install
         Object.assign(axios_request_config, {
-          url: `${autopilot_store.API_URL}/install_firmware_from_url`,
+          url: `${autopilot_manager_store.API_URL}/install_firmware_from_url`,
           params: { url: this.chosen_firmware_url },
         })
       } else {
@@ -254,7 +254,7 @@ export default Vue.extend({
         if (!this.firmware_file) {
           notification_store.pushNotification(new LiveNotification(
             NotificationLevel.Warning,
-            autopilot_service,
+            autopilot_manager_service,
             'FILE_FIRMWARE_UPLOAD_FAIL',
             'Could not upload firmware: no firmware file selected.',
           ))
@@ -263,7 +263,7 @@ export default Vue.extend({
         const form_data = new FormData()
         form_data.append('binary', this.firmware_file)
         Object.assign(axios_request_config, {
-          url: `${autopilot_store.API_URL}/install_firmware_from_file`,
+          url: `${autopilot_manager_store.API_URL}/install_firmware_from_file`,
           headers: { 'Content-Type': 'multipart/form-data' },
           data: form_data,
         })
@@ -283,7 +283,7 @@ export default Vue.extend({
           }
           notification_store.pushNotification(new LiveNotification(
             NotificationLevel.Error,
-            autopilot_service,
+            autopilot_manager_service,
             'FILE_FIRMWARE_UPLOAD_FAIL',
             `Could not upload firmware: ${this.install_result_message}.`,
           ))
