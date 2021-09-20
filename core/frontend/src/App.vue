@@ -152,6 +152,11 @@ export default Vue.extend({
             icon: 'mdi-file-tree',
             route: '/filebrowser',
           },
+          {
+            title: 'Terminal',
+            icon: 'mdi-console',
+            route: '/web-terminal',
+          },
         ],
       },
     ],
