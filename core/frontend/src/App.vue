@@ -157,6 +157,11 @@ export default Vue.extend({
             icon: 'mdi-console',
             route: '/web-terminal',
           },
+          {
+            title: 'Version-chooser',
+            icon: 'mdi-cellphone-arrow-down',
+            route: '/versionchooser',
+          },
         ],
       },
     ],
