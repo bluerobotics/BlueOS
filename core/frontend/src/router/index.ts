@@ -7,6 +7,7 @@ import Firmware from '../views/FirmwareView.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
 import TerminalView from '../views/TerminalView.vue'
+import VersionChooser from '../views/VersionChooser.vue'
 
 Vue.use(VueRouter)
 
@@ -40,6 +41,11 @@ const routes: Array<RouteConfig> = [
     path: '/web-terminal',
     name: 'Terminal',
     component: TerminalView,
+  },
+  {
+    path: '/versionchooser',
+    name: 'VersionChooser',
+    component: VersionChooser,
   },
 ]
 
