@@ -6,6 +6,7 @@ import FileBrowserView from '../views/FileBrowserView.vue'
 import Firmware from '../views/FirmwareView.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
+import TerminalView from '../views/TerminalView.vue'
 
 Vue.use(VueRouter)
 
@@ -34,6 +35,11 @@ const routes: Array<RouteConfig> = [
     path: '/filebrowser',
     name: 'FileBrowser',
     component: FileBrowserView,
+  },
+  {
+    path: '/web-terminal',
+    name: 'Terminal',
+    component: TerminalView,
   },
 ]
 
