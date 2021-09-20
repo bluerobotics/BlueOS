@@ -143,6 +143,17 @@ export default Vue.extend({
           },
         ],
       },
+      {
+        title: 'Tools',
+        icon: 'mdi-hammer-screwdriver',
+        submenus: [
+          {
+            title: 'Filebrowser',
+            icon: 'mdi-file-tree',
+            route: '/filebrowser',
+          },
+        ],
+      },
     ],
   }),
 })
