@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
 import Endpoint from '../views/EndpointView.vue'
+import FileBrowserView from '../views/FileBrowserView.vue'
 import Firmware from '../views/FirmwareView.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
@@ -28,6 +29,11 @@ const routes: Array<RouteConfig> = [
     path: '/endpoints',
     name: 'Endpoints',
     component: Endpoint,
+  },
+  {
+    path: '/filebrowser',
+    name: 'FileBrowser',
+    component: FileBrowserView,
   },
 ]
 
