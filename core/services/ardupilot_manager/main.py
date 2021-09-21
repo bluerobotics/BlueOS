@@ -113,6 +113,16 @@ def install_firmware_from_file(response: Response, binary: UploadFile = File(...
         autopilot.start_ardupilot()
 
 
+@app.get("/platform", response_model=Platform, summary="Check what is the current running platform.")
+@version(1, 0)
+def platform(response: Response) -> Any:
+    try:
+        return autopilot.current_platform
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
