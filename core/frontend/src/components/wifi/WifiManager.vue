@@ -22,7 +22,7 @@
         />
       </v-container>
       <v-container v-else>
-        <spinning-logo />
+        <spinning-logo size="30%" />
       </v-container>
     </v-container>
     <wifi-updater />
