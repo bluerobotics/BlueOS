@@ -139,6 +139,16 @@ def set_platform(response: Response, use_sitl: bool, sitl_frame: SITLFrame = SIT
         return {"message": f"{error}"}
 
 
+@app.post("/restart", summary="Restart the autopilot with current set options.")
+@version(1, 0)
+def restart(response: Response) -> Any:
+    try:
+        autopilot.restart_ardupilot()
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
