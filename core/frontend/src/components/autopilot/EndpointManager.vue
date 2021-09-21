@@ -23,7 +23,7 @@
     </v-list>
 
     <v-container v-else-if="updating_endpoints">
-      <spinning-logo />
+      <spinning-logo size="30%" />
     </v-container>
     <v-container v-else>
       <div>

@@ -52,7 +52,7 @@
       </v-card-text>
     </v-card>
     <v-container v-else>
-      <spinning-logo />
+      <spinning-logo size="30%" />
     </v-container>
   </v-container>
 </template>

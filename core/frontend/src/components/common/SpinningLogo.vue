@@ -1,6 +1,8 @@
 <template>
   <v-img
     class="lds-dual-ring"
+    :width="size"
+    :height="size"
     src="../../assets/logo.svg"
   />
 </template>
@@ -10,14 +12,18 @@ import Vue from 'vue'
 
 export default Vue.extend({
   name: 'SpinningLogo',
+  props: {
+    size: {
+      type: String,
+      required: true,
+    },
+  },
 })
 </script>
 
 <style>
   .lds-dual-ring {
     display: block;
-    width: 30%;
-    height: 30%;
     margin: 5% auto;
     animation-name: rotation360;
     animation-duration: 2s;
