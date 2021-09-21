@@ -17,6 +17,7 @@ from ArduPilotManager import ArduPilotManager
 from exceptions import InvalidFirmwareFile
 from firmware.FirmwareDownload import Firmware, Platform, Vehicle
 from mavlink_proxy.Endpoint import Endpoint
+from typedefs import SITLFrame
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
@@ -118,6 +119,21 @@ def install_firmware_from_file(response: Response, binary: UploadFile = File(...
 def platform(response: Response) -> Any:
     try:
         return autopilot.current_platform
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+
+
+@app.post("/platform", summary="Toggle between SITL and default platform (auto-detected).")
+@version(1, 0)
+def set_platform(response: Response, use_sitl: bool, sitl_frame: SITLFrame = SITLFrame.VECTORED) -> Any:
+    try:
+        if use_sitl:
+            autopilot.current_platform = Platform.SITL
+            autopilot.current_sitl_frame = sitl_frame
+        else:
+            autopilot.current_platform = Platform.Undefined
+        autopilot.restart_ardupilot()
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
