@@ -43,7 +43,7 @@ const routes: Array<RouteConfig> = [
     component: TerminalView,
   },
   {
-    path: '/versionchooser',
+    path: '/version-chooser',
     name: 'VersionChooser',
     component: VersionChooser,
   },
