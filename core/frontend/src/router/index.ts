@@ -4,6 +4,7 @@ import VueRouter, { RouteConfig } from 'vue-router'
 import Endpoint from '../views/EndpointView.vue'
 import FileBrowserView from '../views/FileBrowserView.vue'
 import Firmware from '../views/FirmwareView.vue'
+import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
 import TerminalView from '../views/TerminalView.vue'
@@ -21,6 +22,11 @@ const routes: Array<RouteConfig> = [
     path: '/firmware',
     name: 'Firmware',
     component: Firmware,
+  },
+  {
+    path: '/autopilot/general',
+    name: 'GeneralAutopilot',
+    component: GeneralAutopilot,
   },
   {
     path: '/logs',
