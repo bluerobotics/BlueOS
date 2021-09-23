@@ -18,6 +18,13 @@ export default class AutopilotManagerStore extends VuexModule {
 
   updating_endpoints = true
 
+  restarting = false
+
+  @Mutation
+  setRestarting(restarting: boolean): void {
+    this.restarting = restarting
+  }
+
   @Mutation
   setUpdatingEndpoints(updating: boolean): void {
     this.updating_endpoints = updating
