@@ -130,6 +130,11 @@ export default Vue.extend({
         icon: 'mdi-submarine',
         submenus: [
           {
+            title: 'General',
+            icon: 'mdi-image-filter-center-focus-strong',
+            route: '/autopilot/general',
+          },
+          {
             title: 'Firmware',
             icon: 'mdi-chip',
             route: '/firmware',
