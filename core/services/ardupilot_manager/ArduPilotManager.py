@@ -293,8 +293,11 @@ class ArduPilotManager(metaclass=Singleton):
         self.should_be_running = True
 
     def restart_ardupilot(self) -> None:
-        self.kill_ardupilot()
-        self.start_ardupilot()
+        if self.current_platform in [Platform.SITL, Platform.Navigator]:
+            self.kill_ardupilot()
+            self.start_ardupilot()
+            return
+        self.vehicle_manager.reboot_vehicle()
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
