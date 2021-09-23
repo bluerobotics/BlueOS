@@ -1,7 +1,7 @@
 import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { AutopilotEndpoint } from '@/types/autopilot'
+import { AutopilotEndpoint, Platform } from '@/types/autopilot'
 
 @Module({
   dynamic: true,
@@ -14,11 +14,18 @@ export default class AutopilotManagerStore extends VuexModule {
 
   available_endpoints: AutopilotEndpoint[] = []
 
+  current_platform: Platform = Platform.Undefined
+
   updating_endpoints = true
 
   @Mutation
   setUpdatingEndpoints(updating: boolean): void {
     this.updating_endpoints = updating
+  }
+
+  @Mutation
+  setCurrentPlatform(platform: Platform): void {
+    this.current_platform = platform
   }
 
   @Mutation
