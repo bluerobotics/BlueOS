@@ -10,6 +10,14 @@ export enum Vehicle {
     Copter = 'Copter',
 }
 
+export enum Platform {
+  Pixhawk1 = 'Pixhawk1',
+  Navigator = 'navigator',
+  SITL_X86 = 'SITL_x86_64_linux_gnu',
+  SITL_ARM = 'SITL_arm_linux_gnueabihf',
+  Undefined = 'Undefined',
+}
+
 export enum EndpointType {
     udpin = 'udpin',
     udpout = 'udpout',
