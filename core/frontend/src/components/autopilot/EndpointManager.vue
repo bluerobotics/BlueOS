@@ -51,8 +51,6 @@
     <creation-dialog
       v-model="show_creation_dialog"
     />
-
-    <autopilot-manager-updater />
   </v-card>
 </template>
 
@@ -64,7 +62,6 @@ import AutopilotManagerStore from '@/store/autopilot_manager'
 import { AutopilotEndpoint } from '@/types/autopilot'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
-import AutopilotManagerUpdater from './AutopilotManagerUpdater.vue'
 import EndpointCard from './EndpointCard.vue'
 import CreationDialog from './EndpointCreationDialog.vue'
 
@@ -76,7 +73,6 @@ export default Vue.extend({
     EndpointCard,
     SpinningLogo,
     CreationDialog,
-    AutopilotManagerUpdater,
   },
   data() {
     return {
