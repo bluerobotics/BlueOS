@@ -9,12 +9,17 @@ from warnings import warn
 
 import setuptools
 
+from settings import Settings
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
 current_folder = pathlib.Path(__file__).parent.absolute()
 frontend_folder = pathlib.Path.joinpath(current_folder, "frontend")
 static_folder = pathlib.Path.joinpath(frontend_folder, "static")
+
+autopilot_settings = Settings()
+defaults_folder = autopilot_settings.defaults_folder
 
 StaticFile = namedtuple("StaticFile", "parent filename url")
 
@@ -32,6 +37,8 @@ static_files = [
     ),
     StaticFile(static_folder, "mif/metro.woff", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.woff"),
     StaticFile(static_folder, "mif/metro.ttf", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.ttf"),
+    StaticFile(defaults_folder, "ardupilot_navigator", "https://firmware.ardupilot.org/Sub/latest/navigator/ardusub"),
+    StaticFile(defaults_folder, "ardupilot_pixhawk1", "https://firmware.ardupilot.org/Sub/latest/Pixhawk1/ardusub.apj"),
 ]
 
 for file in static_files:
