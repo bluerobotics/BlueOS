@@ -27,6 +27,10 @@ export function isIpAddress(ip: string): boolean {
   return ip_pattern.test(ip)
 }
 
+export function isUdpAddress(url: string): boolean {
+  return url.match(/udp:\/\/[a-zA-Z0-9@:%._+~#=]{2,256}:[0-9]{1,6}/) !== null
+}
+
 export function isFilepath(filepath: string): boolean {
   const filepath_pattern = /^(.+)\/([^/]+)$/
   return filepath_pattern.test(filepath)
