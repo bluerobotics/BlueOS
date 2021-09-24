@@ -20,7 +20,7 @@
           <v-icon class="mr-2">
             mdi-cloud
           </v-icon>
-          <div>Choose firmware from repository</div>
+          <div>Choose from repository</div>
         </v-btn>
       </v-item>
       <v-item
@@ -29,12 +29,27 @@
       >
         <v-btn
           :color="active ? 'primary' : ''"
+          class="mr-2"
           @click="toggle"
         >
           <v-icon class="mr-2">
             mdi-paperclip
           </v-icon>
-          <div>Upload custom firmware file</div>
+          <div>Upload custom file</div>
+        </v-btn>
+      </v-item>
+      <v-item
+        v-slot="{ active, toggle }"
+        :value="UploadType.Restore"
+      >
+        <v-btn
+          :color="active ? 'primary' : ''"
+          @click="toggle"
+        >
+          <v-icon class="mr-2">
+            mdi-file-restore
+          </v-icon>
+          <div>Restore default</div>
         </v-btn>
       </v-item>
     </v-item-group>
@@ -68,6 +83,12 @@
       label="Firmware file"
       @change="setFileFirmware"
     />
+
+    <p
+      v-if="upload_type === UploadType.Restore"
+    >
+      This option will restore the default firmware for your current platform.
+    </p>
 
     <v-btn
       :disabled="!allow_installing"
@@ -145,7 +166,8 @@ enum CloudFirmwareOptionsStatus {
 
 enum UploadType {
   Cloud,
-  File
+  File,
+  Restore
 }
 
 export default Vue.extend({
@@ -204,7 +226,10 @@ export default Vue.extend({
       if (this.upload_type === UploadType.Cloud) {
         return this.cloud_firmware_options_status === CloudFirmwareOptionsStatus.Chosen
       }
-      return this.firmware_file !== null
+      if (this.upload_type === UploadType.File) {
+        return this.firmware_file !== null
+      }
+      return true
     },
   },
   methods: {
@@ -249,6 +274,11 @@ export default Vue.extend({
           url: `${autopilot_manager_store.API_URL}/install_firmware_from_url`,
           params: { url: this.chosen_firmware_url },
         })
+      } else if (this.upload_type === UploadType.Restore) {
+        // Populate request with data for restore install
+        Object.assign(axios_request_config, {
+          url: `${autopilot_manager_store.API_URL}/restore_default_firmware`,
+        })
       } else {
         // Populate request with data for file install
         if (!this.firmware_file) {
@@ -284,8 +314,8 @@ export default Vue.extend({
           notification_store.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             autopilot_manager_service,
-            'FILE_FIRMWARE_UPLOAD_FAIL',
-            `Could not upload firmware: ${this.install_result_message}.`,
+            'FILE_FIRMWARE_INSTALL_FAIL',
+            `Could not install firmware: ${this.install_result_message}.`,
           ))
         })
     },
