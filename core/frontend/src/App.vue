@@ -149,6 +149,11 @@ export default Vue.extend({
             icon: 'mdi-arrow-decision',
             route: '/endpoints',
           },
+          {
+            title: 'Video',
+            icon: 'mdi-video-vintage',
+            route: '/videomanager',
+          },
         ],
       },
       {

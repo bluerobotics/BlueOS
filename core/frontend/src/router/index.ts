@@ -9,6 +9,7 @@ import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
 import TerminalView from '../views/TerminalView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
+import VideoManagerView from '../views/VideoManagerView.vue'
 
 Vue.use(VueRouter)
 
@@ -52,6 +53,11 @@ const routes: Array<RouteConfig> = [
     path: '/version-chooser',
     name: 'VersionChooser',
     component: VersionChooser,
+  },
+  {
+    path: '/videomanager',
+    name: 'VideoManager',
+    component: VideoManagerView,
   },
 ]
 
