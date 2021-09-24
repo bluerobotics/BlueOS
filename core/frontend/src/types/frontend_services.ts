@@ -34,3 +34,10 @@ export const filebrowser_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const video_manager_service: Service = {
+  name: 'Video Manager',
+  description: 'Video management service for companion.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
