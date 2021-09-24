@@ -26,6 +26,7 @@ class ArduPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         self.settings = Settings()
+        self.settings.create_app_folders()
         self.mavlink_manager = MavlinkManager()
         self.mavlink_manager.set_logdir(self.settings.log_path)
         self._current_platform: Platform = Platform.Undefined

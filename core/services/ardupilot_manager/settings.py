@@ -17,7 +17,6 @@ class Settings:
 
     def __init__(self) -> None:
         self.root: Dict[str, Union[int, Dict[str, Any]]] = {"version": 0, "content": {}}
-        self.create_app_folders()
 
     @staticmethod
     def create_app_folders() -> None:
