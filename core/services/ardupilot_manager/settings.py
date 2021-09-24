@@ -23,7 +23,7 @@ class Settings:
         """Create the necessary folders for proper app function."""
         for folder in Settings.app_folders:
             try:
-                Path.mkdir(folder, exist_ok=True)
+                Path.mkdir(folder, parents=True, exist_ok=True)
             except FileExistsError:
                 logger.warning(f"Found file {folder} where a folder should be. Removing file and creating folder.")
                 Path.unlink(folder)
