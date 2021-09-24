@@ -69,3 +69,7 @@ class VehicleDisarmFail(RuntimeError):
 
 class ArdupilotProcessKillFail(RuntimeError):
     """Could not kill Ardupilot process."""
+
+
+class NoDefaultFirmwareAvailable(RuntimeError):
+    """Default firmware file is not available."""

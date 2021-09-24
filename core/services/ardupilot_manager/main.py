@@ -149,6 +149,19 @@ def restart(response: Response) -> Any:
         return {"message": f"{error}"}
 
 
+@app.post("/restore_default_firmware", summary="Restore default firmware.")
+@version(1, 0)
+def restore_default_firmware(response: Response) -> Any:
+    try:
+        autopilot.kill_ardupilot()
+        autopilot.restore_default_firmware()
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+    finally:
+        autopilot.start_ardupilot()
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 

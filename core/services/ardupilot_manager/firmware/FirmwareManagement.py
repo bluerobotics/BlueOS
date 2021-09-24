@@ -5,6 +5,7 @@ from loguru import logger
 
 from exceptions import (
     FirmwareInstallFail,
+    NoDefaultFirmwareAvailable,
     NoVersionAvailable,
     UndefinedPlatform,
     UnsupportedPlatform,
@@ -20,8 +21,9 @@ from firmware.FirmwareInstall import FirmwareInstaller
 
 
 class FirmwareManager:
-    def __init__(self, firmware_folder: pathlib.Path) -> None:
+    def __init__(self, firmware_folder: pathlib.Path, defaults_folder: pathlib.Path) -> None:
         self.firmware_folder = firmware_folder
+        self.defaults_folder = defaults_folder
         self.firmware_download = FirmwareDownloader()
         self.firmware_installer = FirmwareInstaller()
 
@@ -34,6 +36,13 @@ class FirmwareManager:
         """Get firmware's path for given platform. This is the path where we expect to find
         a valid Ardupilot binary for Linux boards."""
         return pathlib.Path.joinpath(self.firmware_folder, self.firmware_name(platform))
+
+    def default_firmware_path(self, platform: Platform) -> pathlib.Path:
+        """Get path of default firmware for given platform."""
+        return pathlib.Path.joinpath(self.defaults_folder, self.firmware_name(platform))
+
+    def is_default_firmware_available(self, platform: Platform) -> bool:
+        return pathlib.Path.is_file(self.default_firmware_path(platform))
 
     def is_firmware_installed(self, platform: Platform) -> bool:
         """Check if firmware for given platform is installed."""
@@ -86,3 +95,9 @@ class FirmwareManager:
     def install_firmware_from_params(self, vehicle: Vehicle, platform: Platform, version: str = "") -> None:
         url = self.firmware_download.get_download_url(vehicle, platform, version)
         self.install_firmware_from_url(url, platform)
+
+    def restore_default_firmware(self, platform: Platform) -> None:
+        if not self.is_default_firmware_available(platform):
+            raise NoDefaultFirmwareAvailable(f"Default firmware not available for platform '{platform}'.")
+
+        self.install_firmware_from_file(self.default_firmware_path(platform), platform)
