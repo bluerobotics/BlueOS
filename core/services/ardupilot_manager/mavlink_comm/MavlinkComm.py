@@ -53,7 +53,7 @@ class MavlinkMessenger:
         message_name: str,
         vehicle: int = 1,
         component: int = 1,
-        timeout: float = 5.0,
+        timeout: float = 10.0,
     ) -> Any:
         first_message = self.get_mavlink_message(message_name, vehicle, component)
         first_message_counter = first_message["status"]["time"]["counter"]
