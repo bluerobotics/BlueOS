@@ -266,7 +266,7 @@ export default Vue.extend({
       this.install_status = InstallStatus.Installing
       const axios_request_config: AxiosRequestConfig = {
         method: 'post',
-        timeout: 60000,
+        timeout: 180000,
       }
       if (this.upload_type === UploadType.Cloud) {
         // Populate request with data for cloud install
