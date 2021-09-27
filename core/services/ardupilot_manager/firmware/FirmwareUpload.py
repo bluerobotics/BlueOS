@@ -58,8 +58,8 @@ class FirmwareUploader:
             encoding="utf-8",
         )
 
-        # Using a timer of 40 seconds to prevent being stuck on upload. Upload usually takes 20 seconds.
-        timer = threading.Timer(40, process.kill)
+        # Using a timer of 180 seconds to prevent being stuck on upload. Upload usually takes 20-40 seconds.
+        timer = threading.Timer(180, process.kill)
         try:
             timer.start()
             if process.stdout is not None:
