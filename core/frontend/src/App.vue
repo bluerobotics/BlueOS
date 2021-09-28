@@ -95,6 +95,7 @@
     <services-scanner />
     <autopilot-manager-updater />
     <ethernet-updater />
+    <wifi-updater />
   </v-app>
 </template>
 
@@ -107,6 +108,7 @@ import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
+import WifiUpdater from './components/wifi/WifiUpdater.vue'
 
 export default Vue.extend({
   name: 'App',
@@ -115,6 +117,7 @@ export default Vue.extend({
     'notification-tray-button': NotificationTrayButton,
     'services-scanner': ServicesScanner,
     'wifi-tray-menu': WifiTrayMenu,
+    'wifi-updater': WifiUpdater,
     'ethernet-tray-menu': EthernetTrayMenu,
     'ethernet-updater': EthernetUpdater,
     'autopilot-manager-updater': AutopilotManagerUpdater,

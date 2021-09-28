@@ -25,7 +25,6 @@
         <spinning-logo size="30%" />
       </v-container>
     </v-container>
-    <wifi-updater />
 
     <connection-dialog
       v-if="selected_network"
@@ -53,7 +52,6 @@ import SpinningLogo from '../common/SpinningLogo.vue'
 import ConnectionDialog from './ConnectionDialog.vue'
 import DisconnectionDialog from './DisconnectionDialog.vue'
 import NetworkCard from './NetworkCard.vue'
-import WifiUpdater from './WifiUpdater.vue'
 
 const wifi_store: WifiStore = getModule(WifiStore)
 
@@ -64,7 +62,6 @@ export default Vue.extend({
     SpinningLogo,
     ConnectionDialog,
     DisconnectionDialog,
-    WifiUpdater,
   },
   data() {
     return {
