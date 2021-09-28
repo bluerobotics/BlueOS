@@ -20,7 +20,6 @@
         No ethernet interfaces available
       </div>
     </v-container>
-    <ethernet-updater />
   </v-card>
 </template>
 
@@ -36,7 +35,6 @@ import { EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
-import EthernetUpdater from './EthernetUpdater.vue'
 import InterfaceCard from './InterfaceCard.vue'
 
 const notification_store: NotificationsStore = getModule(NotificationsStore)
@@ -46,7 +44,6 @@ export default Vue.extend({
   name: 'EthernetManager',
   components: {
     InterfaceCard,
-    EthernetUpdater,
     SpinningLogo,
   },
   computed: {
