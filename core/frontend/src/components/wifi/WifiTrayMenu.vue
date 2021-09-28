@@ -15,7 +15,7 @@
         v-on="on"
       >
         <v-icon color="white">
-          mdi-wifi
+          {{ signal_strength_icon }}
         </v-icon>
       </v-card>
     </template>
@@ -25,13 +25,25 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { getModule } from 'vuex-module-decorators'
+
+import WifiStore from '@/store/wifi'
+import wifi_status_icon from '@/utils/wifi'
 
 import WifiManager from './WifiManager.vue'
+
+const wifi_store: WifiStore = getModule(WifiStore)
 
 export default Vue.extend({
   name: 'WifiTrayMenu',
   components: {
     WifiManager,
+  },
+  computed: {
+    signal_strength_icon(): string {
+      const signal = wifi_store.current_network ? wifi_store.current_network.signal : -1000
+      return wifi_status_icon(signal)
+    },
   },
 })
 </script>
