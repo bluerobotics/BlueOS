@@ -35,6 +35,7 @@
 import Vue, { PropType } from 'vue'
 
 import { Network } from '@/types/wifi.d'
+import wifi_status_icon from '@/utils/wifi'
 
 export default Vue.extend({
   name: 'NetworkCard',
@@ -58,22 +59,7 @@ export default Vue.extend({
       return this.network.locked ? 'mdi-lock' : 'mdi-lock-open-outline'
     },
     signal_strength_icon(): string {
-      /*eslint-disable */
-      // | Signal Strength | TL;DR     |  Description                                                                                                                               |
-      // |-----------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|
-      // | -30 dBm         | Amazing   | Max achievable signal strength. The client can only be a few feet from the AP to achieve this. Not typical or desirable in the real world. |
-      // | -67 dBm         | Very Good | Minimum signal strength for applications that require very reliable, timely delivery of data packets.                                      |
-      // | -70 dBm         | Okay      | Minimum signal strength for reliable packet delivery.                                                                                      |
-      // | -80 dBm         | Not Good  | Minimum signal strength for basic connectivity. Packet delivery may be unreliable.                                                         |
-      // | -90 dBm         | Unusable  | Approaching or drowning in the noise floor. Any functionality is highly unlikely.                                                           |
-      // Reference: metageek.com/training/resources/wifi-signal-strength-basics.html
-      /* eslint-enable */
-
-      if (this.network.signal >= -30) return 'mdi-wifi-strength-4'
-      if (this.network.signal >= -67) return 'mdi-wifi-strength-3'
-      if (this.network.signal >= -70) return 'mdi-wifi-strength-2'
-      if (this.network.signal >= -80) return 'mdi-wifi-strength-1'
-      return 'mdi-wifi-strength-outline'
+      return wifi_status_icon(this.network.signal)
     },
   },
   methods: {
