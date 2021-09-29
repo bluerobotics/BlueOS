@@ -48,3 +48,10 @@ export const mavlink_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const bridget_service: Service = {
+  name: 'Bridget',
+  description: 'Bridges management service for companion.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
