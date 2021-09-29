@@ -79,9 +79,11 @@
   },
   "dependencies": {
     "@mdi/font": "^5.9.55",
+    "@types/lodash": "^4.14.175",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
     "date-fns": "^2.23.0",
+    "lodash": "^4.17.21",
     "register-service-worker": "^1.7.1",
     "roboto-fontface": "*",
     "vue": "^2.6.11",
