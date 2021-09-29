@@ -41,3 +41,10 @@ export const video_manager_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const mavlink_service: Service = {
+  name: 'MavLink2Rest',
+  description: 'MavLink communication layer over REST API.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
