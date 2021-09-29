@@ -97,6 +97,7 @@
     <ethernet-updater />
     <wifi-updater />
     <mavlink-updater />
+    <bridget-updater />
   </v-app>
 </template>
 
@@ -104,6 +105,7 @@
 import Vue from 'vue'
 
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
+import BridgetUpdater from './components/bridges/BridgetUpdater.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
@@ -126,6 +128,7 @@ export default Vue.extend({
     'autopilot-manager-updater': AutopilotManagerUpdater,
     'health-tray-menu': HealthTrayMenu,
     'mavlink-updater': MavlinkUpdater,
+    'bridget-updater': BridgetUpdater,
   },
 
   data: () => ({
@@ -171,6 +174,11 @@ export default Vue.extend({
         title: 'Tools',
         icon: 'mdi-hammer-screwdriver',
         submenus: [
+          {
+            title: 'Bridges',
+            icon: 'mdi-bridge',
+            route: '/bridges',
+          },
           {
             title: 'Filebrowser',
             icon: 'mdi-file-tree',

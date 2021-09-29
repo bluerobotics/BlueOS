@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
+import BridgesView from '../views/BridgesView.vue'
 import Endpoint from '../views/EndpointView.vue'
 import FileBrowserView from '../views/FileBrowserView.vue'
 import Firmware from '../views/FirmwareView.vue'
@@ -58,6 +59,11 @@ const routes: Array<RouteConfig> = [
     path: '/videomanager',
     name: 'VideoManager',
     component: VideoManagerView,
+  },
+  {
+    path: '/bridges',
+    name: 'Bridges',
+    component: BridgesView,
   },
 ]
 
