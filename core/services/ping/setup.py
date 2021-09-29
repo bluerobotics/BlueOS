@@ -14,5 +14,9 @@ setup(
     version="0.1.0",
     description="Ping service for BlueRobotics' Ping1D and Pìng360",
     license="MIT",
-    install_requires=["pyserial == 3.5", "bluerobotics-ping == 0.1.0"],
+    install_requires=[
+        "bluerobotics-ping == 0.1.0",
+        "bridges == 0.1.0",
+        "pyserial == 3.5",
+    ],
 )

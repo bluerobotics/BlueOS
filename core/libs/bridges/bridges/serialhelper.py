@@ -5,7 +5,7 @@ from pathlib import Path
 from serial.tools.list_ports_linux import SysFS
 
 
-class Baudrates(IntEnum):
+class Baudrate(IntEnum):
     b115200 = 115200
     b230400 = 230400
     b460800 = 460800

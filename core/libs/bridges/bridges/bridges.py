@@ -5,13 +5,13 @@ from subprocess import Popen
 
 from serial.tools.list_ports_linux import SysFS
 
-from serialhelper import Baudrates
+from bridges.serialhelper import Baudrate
 
 
-class Bridges:
+class Bridge:
     """Basic abstraction of Bridges. Used to bridge serial devices to UDP ports"""
 
-    def __init__(self, serial_port: SysFS, baud: Baudrates, ip: str, udp_port: int) -> None:
+    def __init__(self, serial_port: SysFS, baud: Baudrate, ip: str, udp_port: int) -> None:
         bridges = which("bridges")
         command_line = f"{bridges} -u {ip}:{udp_port} -p {serial_port.device}:{baud}"
         logging.info(f"Launching {command_line}")
