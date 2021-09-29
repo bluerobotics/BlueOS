@@ -96,6 +96,7 @@
     <autopilot-manager-updater />
     <ethernet-updater />
     <wifi-updater />
+    <mavlink-updater />
   </v-app>
 </template>
 
@@ -106,6 +107,7 @@ import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpda
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
+import MavlinkUpdater from './components/mavlink/MavlinkUpdater.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
@@ -123,6 +125,7 @@ export default Vue.extend({
     'ethernet-updater': EthernetUpdater,
     'autopilot-manager-updater': AutopilotManagerUpdater,
     'health-tray-menu': HealthTrayMenu,
+    'mavlink-updater': MavlinkUpdater,
   },
 
   data: () => ({
