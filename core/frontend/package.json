@@ -8,6 +8,9 @@
         "^/ardupilot-manager": {
           "target": "http://companion.local/"
         },
+        "^/bridget": {
+          "target": "http://companion.local/"
+        },
         "^/cable-guy": {
           "target": "http://companion.local/"
         },
