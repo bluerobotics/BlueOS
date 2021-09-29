@@ -28,6 +28,9 @@ cd /home/pi/services/cable_guy/ && python3 setup.py install
 # Ardupilot manager service:
 cd /home/pi/services/ardupilot_manager/ && python3 setup.py install
 
+# Bridget service:
+cd /home/pi/services/bridget/ && python3 setup.py install
+
 # Helper service
 cd /home/pi/services/helper/ && python3 setup.py install
 
