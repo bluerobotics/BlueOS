@@ -1,3 +1,5 @@
+import { Baudrate } from '@/types/common'
+
 export function isSocketPort(port: number, public_range = true): boolean {
   if (!Number.isInteger(port)) {
     return false
@@ -16,10 +18,7 @@ export function isIntegerString(input: string): boolean {
 }
 
 export function isBaudrate(baudrate: number): boolean {
-  const VALID_SERIAL_BAUDRATES = [
-    3000000, 2000000, 1000000, 921600, 570600, 460800, 257600, 250000, 230400, 115200, 57600, 38400, 19200, 9600,
-  ]
-  return VALID_SERIAL_BAUDRATES.includes(baudrate)
+  return Object.values(Baudrate).map((baud) => parseInt(baud, 10)).includes(baudrate)
 }
 
 export function isIpAddress(ip: string): boolean {
