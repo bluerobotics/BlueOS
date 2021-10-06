@@ -55,3 +55,10 @@ export const bridget_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const commander_service: Service = {
+  name: 'Commander',
+  description: 'Helper program to provide easy access to commands via REST API.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
