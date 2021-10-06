@@ -31,6 +31,9 @@ cd /home/pi/services/ardupilot_manager/ && python3 setup.py install
 # Bridget service:
 cd /home/pi/services/bridget/ && python3 setup.py install
 
+# Commander service:
+cd /home/pi/services/commander/ && python3 setup.py install
+
 # Helper service
 cd /home/pi/services/helper/ && python3 setup.py install
 
