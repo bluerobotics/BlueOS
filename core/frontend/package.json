@@ -14,6 +14,9 @@
         "^/cable-guy": {
           "target": "http://companion.local/"
         },
+        "^/commander": {
+          "target": "http://companion.local/"
+        },
         "^/docker": {
           "target": "http://companion.local/"
         },
