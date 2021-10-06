@@ -86,6 +86,8 @@
             </v-list-item>
           </v-list-item-group>
         </v-list>
+        <v-divider />
+        <power-menu />
       </v-container>
     </v-navigation-drawer>
 
@@ -104,6 +106,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import PowerMenu from './components/app/PowerMenu.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
 import BridgetUpdater from './components/bridges/BridgetUpdater.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
@@ -129,6 +132,7 @@ export default Vue.extend({
     'health-tray-menu': HealthTrayMenu,
     'mavlink-updater': MavlinkUpdater,
     'bridget-updater': BridgetUpdater,
+    'power-menu': PowerMenu,
   },
 
   data: () => ({
