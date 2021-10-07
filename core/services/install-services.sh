@@ -20,28 +20,26 @@ fi
 # Wifi service:
 ## Bind path for wpa
 mkdir -p /var/run/wpa_supplicant/
-cd /home/pi/services/wifi/ && python3 setup.py install
 
-# Ethernet service:
-cd /home/pi/services/cable_guy/ && python3 setup.py install
+# Install services
+SERVICES=(
+    ardupilot_manager
+    bridget
+    cable_guy
+    commander
+    helper
+    ping
+    versionchooser
+    wifi
+)
 
-# Ardupilot manager service:
-cd /home/pi/services/ardupilot_manager/ && python3 setup.py install
+# We need to install loguru and appdirs since they may be used inside setup.py
+python -m pip install appdirs==1.4.4 loguru==0.5.3
 
-# Bridget service:
-cd /home/pi/services/bridget/ && python3 setup.py install
-
-# Commander service:
-cd /home/pi/services/commander/ && python3 setup.py install
-
-# Helper service
-cd /home/pi/services/helper/ && python3 setup.py install
-
-# Version Chooser service:
-cd /home/pi/services/versionchooser/ && python3 setup.py install
-
-# Ping service:
-cd /home/pi/services/ping/ && python3 setup.py install
+for SERVICE in "${SERVICES[@]}"; do
+    echo "Installing service: $SERVICE"
+    cd "/home/pi/services/$SERVICE/" && python3 setup.py install
+done
 
 apt -y remove ${BUILD_PACKAGES[*]}
 apt -y autoremove
