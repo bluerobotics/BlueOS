@@ -24,11 +24,7 @@ jobs:
         sudo ./core/tools/mavlink_router/bootstrap.sh
         ./core/tools/ardupilot_tools/bootstrap.sh
         sudo apt install shellcheck
-        npm install \
-          eslint eslint-plugin-vue eslint-plugin-html @vue/eslint-config-typescript @typescript-eslint/parser \
-          @typescript-eslint/eslint-plugin typescript @vue/eslint-config-airbnb @vue/cli-service \
-          eslint-plugin-simple-import-sort \
-          --save-dev
+        yarn --cwd core/frontend install
         python -m pip install --upgrade pip
         pip install wheel # wheel need to be installed before mavproxy
         pip install mavproxy
@@ -41,6 +37,7 @@ jobs:
     -
       name: Run tests
       run: |
+        export PATH="$(yarn --cwd core/frontend bin):$PATH"
         ./.hooks/pre-push
 
     - uses: actions/upload-artifact@v2
