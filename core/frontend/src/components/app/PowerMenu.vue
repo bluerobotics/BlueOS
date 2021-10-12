@@ -63,6 +63,7 @@ const notification_store: NotificationStore = getModule(NotificationStore)
 
 const API_URL = '/commander/v1.0'
 
+// Used to communicate with REST API
 enum ShutdownType {
   Reboot = 'reboot',
   PowerOff = 'poweroff',
