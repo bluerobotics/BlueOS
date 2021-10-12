@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 
 import argparse
+import asyncio
 import logging
 import os
 import sys
 from pathlib import Path
 from typing import Any, List
 
-import uvicorn
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from uvicorn import Config, Server
 
 from exceptions import BusyError, FetchError
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
@@ -144,4 +145,12 @@ if __name__ == "__main__":
             print(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
             sys.exit(1)
 
-    uvicorn.run(app, host="0.0.0.0", port=9000, log_config=None)
+    loop = asyncio.new_event_loop()
+
+    # # Running uvicorn with log disabled so loguru can handle it
+    config = Config(app=app, loop=loop, host="0.0.0.0", port=9000, log_config=None)
+    server = Server(config)
+
+    loop.create_task(server.serve())
+    loop.create_task(wifi_manager.auto_reconnect(10.0))
+    loop.run_forever()

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
@@ -21,3 +22,11 @@ class SavedWifiNetwork(BaseModel):
 class WifiCredentials(BaseModel):
     ssid: str
     password: str
+
+
+class ConnectionStatus(str, Enum):
+    JUST_DISCONNECTED = "JUST_DISCONNECTED"
+    STILL_DISCONNECTED = "STILL_DISCONNECTED"
+    JUST_CONNECTED = "JUST_CONNECTED"
+    STILL_CONNECTED = "STILL_CONNECTED"
+    UNKNOWN = "UNKNOWN"
