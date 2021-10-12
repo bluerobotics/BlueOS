@@ -1,10 +1,16 @@
 import asyncio
+import time
 from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
 from exceptions import FetchError, ParseError
-from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
+from typedefs import (
+    ConnectionStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+)
 from wpa_supplicant import WPASupplicant
 
 
@@ -20,6 +26,7 @@ class WifiManager:
         self.wpa.run(path)
         self._scan_task: Optional[asyncio.Task[bytes]] = None
         self._updated_scan_results: Optional[List[ScannedWifiNetwork]] = None
+        self.connection_status = ConnectionStatus.UNKNOWN
 
     @staticmethod
     def __decode_escaped(data: bytes) -> str:
@@ -172,12 +179,7 @@ class WifiManager:
             network_id {int} -- Network ID provided by WPA Supplicant
         """
         try:
-            # Using select_network forces connection on the desired network by disabling all the others. To ensure we
-            # can still automatically connect to the other saved networks when far from this one, we re-enable them.
             await self.wpa.send_command_select_network(network_id)
-            saved_networks = await self.get_saved_wifi_network()
-            for network in saved_networks:
-                await self.wpa.send_command_enable_network(network.networkid)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             await self.wpa.send_command_reconnect()
@@ -209,3 +211,58 @@ class WifiManager:
             await self.wpa.send_command_disconnect()
         except Exception as error:
             raise ConnectionError("Failed to disconnect from wifi network.") from error
+
+    async def enable_saved_networks(self) -> None:
+        """Enable saved networks."""
+        try:
+            saved_networks = await self.get_saved_wifi_network()
+            for network in saved_networks:
+                await self.wpa.send_command_enable_network(network.networkid)
+            await self.wpa.send_command_save_config()
+            await self.wpa.send_command_reconfigure()
+        except Exception as error:
+            raise RuntimeError("Failed to enable saved networks.") from error
+
+    async def auto_reconnect(self, seconds_before_reconnecting: float) -> None:
+        """Re-enable all saved networks if disconnected for more than specified time.
+        When a connection is made, using the 'select' wpa command, all other saved networks are disabled, to ensure
+        connection to the desired network. This prevents the system from reconnecting to one of those networks when
+        away from the last connected one.
+
+        This watchdog re-enable all connections after a specified time to ensure the system don't stay disconnected
+        forever even if there are known networks nearby.
+
+        Arguments:
+            seconds_before_reconnecting {float} -- Seconds to wait disconnected before enabling all saved networks.
+        """
+        seconds_disconnected = 0.0
+        networks_reenabled = False
+        was_connected = True
+        while True:
+            await asyncio.sleep(2.5)
+            status = await self.status()
+            is_connected = "wpa_state" in status and not status["wpa_state"] in ["DISCONNECTED", "SCANNING"]
+
+            if was_connected and not is_connected:
+                self.connection_status = ConnectionStatus.JUST_DISCONNECTED
+                time_disconnection = time.time()
+                was_connected = False
+                logger.debug("Lost connection.")
+            elif not was_connected and not is_connected:
+                self.connection_status = ConnectionStatus.STILL_DISCONNECTED
+                seconds_disconnected = time.time() - time_disconnection
+                logger.debug(f"Seconds since disconnection: {seconds_disconnected}.")
+            elif not was_connected and is_connected:
+                self.connection_status = ConnectionStatus.JUST_CONNECTED
+                seconds_disconnected = 0
+                networks_reenabled = False
+                was_connected = True
+                logger.debug("Regained connection.")
+            else:
+                self.connection_status = ConnectionStatus.STILL_CONNECTED
+
+            if not networks_reenabled and seconds_disconnected >= seconds_before_reconnecting:
+                await self.enable_saved_networks()
+                await self.wpa.send_command_reconnect()
+                networks_reenabled = True
+                logger.debug("Enabled all networks.")
