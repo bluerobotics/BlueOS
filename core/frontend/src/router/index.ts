@@ -8,6 +8,7 @@ import Firmware from '../views/FirmwareView.vue'
 import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
+import NMEAInjectorView from '../views/NMEAInjectorView.vue'
 import TerminalView from '../views/TerminalView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
 import VideoManagerView from '../views/VideoManagerView.vue'
@@ -64,6 +65,11 @@ const routes: Array<RouteConfig> = [
     path: '/bridges',
     name: 'Bridges',
     component: BridgesView,
+  },
+  {
+    path: '/tools/nmea-injector',
+    name: 'NMEAInjector',
+    component: NMEAInjectorView,
   },
 ]
 
