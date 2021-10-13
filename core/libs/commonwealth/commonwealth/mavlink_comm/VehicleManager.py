@@ -6,13 +6,11 @@ from commonwealth.mavlink_comm.exceptions import VehicleDisarmFail
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
-MAVLINK2REST_ADDRESS = "0.0.0.0:6040"
 
 
 class VehicleManager:
     def __init__(self) -> None:
         self.mavlink2rest = MavlinkMessenger()
-        self.mavlink2rest.set_m2r_address(MAVLINK2REST_ADDRESS)
 
         self.target_system = 1
         self.target_component = 1
