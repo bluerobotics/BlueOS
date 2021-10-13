@@ -37,3 +37,8 @@ export enum Baudrate {
   b3500000 = '3500000',
   b4000000 = '4000000',
 }
+
+export enum SocketKind {
+  UDP = 'UDP',
+  TCP = 'TCP',
+}
