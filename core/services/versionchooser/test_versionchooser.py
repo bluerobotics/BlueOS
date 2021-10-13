@@ -52,19 +52,19 @@ async def test_get_version() -> None:
         - docker client (get images)
         - Settigns file
     """
-    client_mock = mock.MagicMock()
+    client_mock = mock.AsyncMock()
     chooser = VersionChooser(client_mock)
 
     attrs = {
-        "images.get.return_value.id": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
-        "images.get.return_value.attrs.__getitem__.return_value": {"date": "2021-04-09T17:51:18.065721638Z"},
+        "images.get.return_value.Id": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
+        "images.get.return_value.__getitem__.return_value": {"date": "2021-04-09T17:51:18.065721638Z"},
     }
     client_mock.configure_mock(**attrs)
 
     # Mock so it doesn't try to read a real file from the filesystem
     with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
 
-        response = chooser.get_version()
+        response = await chooser.get_version()
         result = json.loads(response.text)
         assert result["repository"] == "bluerobotics/companion-core"
         assert result["tag"] == "master"
@@ -105,7 +105,7 @@ EXPECTED_SET_VERSION_WRITE_CALL = """{  "core": {
 @pytest.mark.asyncio
 @mock.patch("aiohttp.web.StreamResponse.write", new_callable=AsyncMock)
 async def test_set_version(write_mock: AsyncMock) -> None:
-    client = mock.MagicMock()
+    client = mock.AsyncMock()
     chooser = VersionChooser(client)
     with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
 
@@ -128,16 +128,22 @@ async def test_set_version_invalid_settings(json_mock: mock.MagicMock) -> None:
 
 
 image_list = [
-    mock.MagicMock(
-        attrs={"Created": "2021-04-09T17:51:18.065721638Z", "Architecture": "amd64"},
-        id="856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
-        tags=["companion-core:test1"],
-    ),
-    mock.MagicMock(
-        attrs={"Created": "2021-04-09T17:51:18.065721638Z", "Architecture": "amd64"},
-        id="856fdf5e66c9b36remoteID856fdf5e66c9b36",
-        tags=["companion-core:test2"],
-    ),
+    {
+        "Created": 1634315959,
+        "Architecture": "amd64",
+        "Id": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
+        "RepoTags": [
+            "companion-core:test1",
+        ],
+    },
+    {
+        "Created": 1634315959,
+        "Architecture": "amd64",
+        "Id": "856fdf5e66c9b36remoteID856fdf5e66c9b36",
+        "RepoTags": [
+            "companion-core:test2",
+        ],
+    },
 ]
 
 
@@ -148,7 +154,7 @@ async def test_get_available_versions_dockerhub_unavailable(
     get_mock: mock.MagicMock,
 ) -> None:
     get_mock.configure_mock(status=500)
-    client_mock = mock.MagicMock()
+    client_mock = mock.AsyncMock()
     attrs = {"images.list.return_value": image_list}
     client_mock.configure_mock(**attrs)
     chooser = VersionChooser(client_mock)
@@ -163,7 +169,7 @@ async def test_get_available_versions_dockerhub_unavailable(
 
 @pytest.mark.asyncio
 async def test_get_available_versions() -> None:
-    client_mock = mock.MagicMock()
+    client_mock = mock.AsyncMock()
     attrs = {"images.list.return_value": image_list}
     client_mock.configure_mock(**attrs)
 
@@ -182,7 +188,7 @@ async def test_get_version_invalid_file() -> None:
     client = mock.MagicMock()
     with mock.patch("builtins.open", mock.mock_open(read_data="{}")):
         chooser = VersionChooser(client)
-        response = chooser.get_version()
+        response = await chooser.get_version()
         assert response.status == 500
 
 
@@ -193,7 +199,7 @@ async def test_get_version_json_exception(json_mock: mock.MagicMock) -> None:
     json_mock.side_effect = Exception()
     with mock.patch("builtins.open", mock.mock_open(read_data="")):
         chooser = VersionChooser(client)
-        response = chooser.get_version()
+        response = await chooser.get_version()
         assert response.status == 500
         assert len(json_mock.mock_calls) > 0
 
