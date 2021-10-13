@@ -41,19 +41,19 @@ class ArduPilotManager(metaclass=Singleton):
 
         self.configuration = deepcopy(self.settings.content)
         self._load_endpoints()
-        self.subprocess: Optional[Any] = None
+        self.ardupilot_subprocess: Optional[Any] = None
         self.firmware_manager = FirmwareManager(self.settings.firmware_folder, self.settings.defaults_folder)
         self.vehicle_manager = VehicleManager()
 
         self.should_be_running = False
-        auto_restart_thread = threading.Thread(target=self.auto_restart, args=())
-        auto_restart_thread.daemon = True
-        auto_restart_thread.start()
+        auto_restart_ardupilot_thread = threading.Thread(target=self.auto_restart_ardupilot, args=())
+        auto_restart_ardupilot_thread.daemon = True
+        auto_restart_ardupilot_thread.start()
 
-    def auto_restart(self) -> None:
+    def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot process if it dies when not supposed to."""
         while True:
-            subprocess_stopped = self.subprocess is not None and self.subprocess.poll() is not None
+            subprocess_stopped = self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
             needs_restart = (
                 self.should_be_running
                 and self.current_platform in [Platform.SITL, Platform.Navigator]
@@ -119,7 +119,7 @@ class ArduPilotManager(metaclass=Singleton):
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
-        self.subprocess = subprocess.Popen(
+        self.ardupilot_subprocess = subprocess.Popen(
             f"{self.firmware_manager.firmware_path(self.current_platform)}"
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
@@ -163,7 +163,7 @@ class ArduPilotManager(metaclass=Singleton):
         # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
         #
         # pylint: disable=consider-using-with
-        self.subprocess = subprocess.Popen(
+        self.ardupilot_subprocess = subprocess.Popen(
             [
                 self.firmware_manager.firmware_path(self.current_platform),
                 "--model",
@@ -243,10 +243,10 @@ class ArduPilotManager(metaclass=Singleton):
 
     def terminate_ardupilot_subprocess(self) -> None:
         """Terminate Ardupilot subprocess."""
-        if self.subprocess:
-            self.subprocess.terminate()
+        if self.ardupilot_subprocess:
+            self.ardupilot_subprocess.terminate()
             for _ in range(10):
-                if self.subprocess.poll() is not None:
+                if self.ardupilot_subprocess.poll() is not None:
                     logger.info("Ardupilot subprocess terminated.")
                     return
                 logger.debug("Waiting for process to die...")
