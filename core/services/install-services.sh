@@ -28,6 +28,7 @@ SERVICES=(
     cable_guy
     commander
     helper
+    nmea_injector
     ping
     versionchooser
     wifi
