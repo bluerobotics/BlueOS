@@ -50,7 +50,7 @@ class MavlinkGpsInput(BaseModel):
     ignore_flags: Optional[Mavlink2RestBitEnum] = Mavlink2RestBitEnum(bits=(nmea_ignore_flags.value))
     time_week_ms: Optional[int] = 0
     time_week: Optional[int] = 0
-    fix_type: Optional[GPS_FIX_TYPE] = GPS_FIX_TYPE.GPS_FIX_TYPE_3D_FIX
+    fix_type: Optional[int] = GPS_FIX_TYPE.GPS_FIX_TYPE_3D_FIX.value
     lat: int
     lon: int
     alt: Optional[float] = 0
