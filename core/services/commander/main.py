@@ -1,8 +1,11 @@
 #! /usr/bin/env python3
 import logging
+import shutil
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable
 
+import appdirs
 import uvicorn
 from commonwealth.utils.logs import InterceptHandler
 from fastapi import FastAPI, HTTPException, Response, status
@@ -65,6 +68,34 @@ async def shutdown(response: Response, shutdown_type: ShutdownType, i_know_what_
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         logger.exception(error)
         return {"message": f"{error}"}
+
+
+@app.post("/settings/reset", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def reset_settings(response: Response, i_know_what_i_am_doing: bool = False) -> Any:
+    if not i_know_what_i_am_doing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Developer, you don't know what you are doing, command aborted.",
+        )
+
+    try:
+        user_config_dir = Path(appdirs.user_config_dir())
+        for item in user_config_dir.glob("*"):
+            try:
+                if item.is_file():
+                    item.unlink()
+                if item.is_dir():
+                    # Delete folder and its contents
+                    shutil.rmtree(item)
+            except Exception as exception:
+                logger.warning(f"Failed to delete: {item}, {exception}")
+
+        return HTMLResponse(status_code=200)
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        logger.exception(error)
+        return {"message": f"Could not reset user configuration, {error}"}
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
