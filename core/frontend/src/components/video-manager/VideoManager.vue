@@ -42,7 +42,7 @@ import { getModule } from 'vuex-module-decorators'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import VideoStore from '@/store/video'
-import { Device } from '@/types/video'
+import { Device, Format, VideoEncodeType } from '@/types/video'
 
 import VideoDevice from './VideoDevice.vue'
 import VideoUpdater from './VideoUpdater.vue'
@@ -61,7 +61,12 @@ export default Vue.extend({
       return this.video_devices.length !== 0
     },
     video_devices(): Device[] {
-      return video_store.available_devices
+      // Check if a device provides H264
+      function has_h264(device: Device): boolean {
+        return device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).length !== 0
+      }
+
+      return video_store.available_devices.filter(has_h264)
     },
     updating_devices(): boolean {
       return video_store.updating_devices
