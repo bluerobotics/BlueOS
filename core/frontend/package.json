@@ -26,6 +26,9 @@
         "^/helper": {
           "target": "http://companion.local/"
         },
+        "^/nmea-injector": {
+          "target": "http://companion.local/"
+        },
         "^/logviewer": {
           "target": "http://companion.local/"
         },
