@@ -62,3 +62,10 @@ export const commander_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const nmea_injector_service: Service = {
+  name: 'NMEA Injector',
+  description: 'Allows management of sockets for NMEA data injectior.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
