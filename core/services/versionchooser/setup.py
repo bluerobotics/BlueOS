@@ -45,8 +45,8 @@ setup(
     install_requires=[
         "aiohttp-jinja2 == 1.4.2",
         "aiohttp == 3.7.4",
+        "aiodocker == 0.21.0",
         "connexion[swagger-ui, aiohttp] == 2.7.0",
-        "docker == 4.4.4",
         "appdirs == 1.4.4",
         "pytest-asyncio == 0.14.0",
         "asyncmock == 0.4.2",

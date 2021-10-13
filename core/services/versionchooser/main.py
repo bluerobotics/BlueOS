@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 from typing import Any
 
+import aiodocker
 import connexion
-import docker
 from aiohttp import web
 
 from utils.chooser import STATIC_FOLDER, VersionChooser
 
-versionChooser = VersionChooser(docker.client.from_env())
+versionChooser = VersionChooser(aiodocker.Docker())
 
 
 async def index(_request: web.Request) -> Any:

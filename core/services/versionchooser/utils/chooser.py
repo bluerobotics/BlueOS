@@ -2,10 +2,11 @@ import json
 import logging
 import pathlib
 from dataclasses import asdict
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
+import aiodocker
 import appdirs
-import docker
 from aiohttp import web
 
 from utils.dockerhub import TagFetcher
@@ -21,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 class VersionChooser:
-    def __init__(self, client: docker.DockerClient):
+    def __init__(self, client: aiodocker.Docker):
         self.client = client
 
     @staticmethod
@@ -43,7 +44,7 @@ class VersionChooser:
                 logging.warning(f"Unable to load settings file: {e}")
         return None
 
-    def get_version(self) -> web.Response:
+    async def get_version(self) -> web.Response:
         """Fetches current version from config file
 
         Returns:
@@ -55,13 +56,13 @@ class VersionChooser:
             return web.Response(status=500, text="Unable to load current version from settings. Check the log")
         image_name, tag = version
         full_name = f"{image_name}:{tag}"
-        image = self.client.images.get(full_name)
+        image = await self.client.images.get(full_name)
         output = {
             "repository": image_name,
             "tag": tag,
-            "last_modified": image.attrs["Created"],
-            "sha": image.id,
-            "architecture": image.attrs["Architecture"],
+            "last_modified": image["Created"],
+            "sha": image["Id"],
+            "architecture": image["Architecture"],
         }
         return web.json_response(output)
 
@@ -88,14 +89,11 @@ class VersionChooser:
         # This step actually starts the chunked response
         await response.prepare(request)
 
-        low_level_api = docker.APIClient(base_url="unix://var/run/docker.sock")
         # Stream every line of the output back to the client
-        for line in low_level_api.pull(f"{repository}:{tag}", stream=True, decode=True):
-            await response.write(f"{line}\n\n".replace("'", '"').encode("utf-8"))
+        async for line in self.client.images.pull(f"{repository}:{tag}", repo=repository, tag=tag, stream=True):
+            await response.write(json.dumps(line).encode("utf-8"))
         await response.write_eof()
-        # Remove any untagged and unused images after pulling
-        # If updating a tag, the previous image will be cleaned up in this step
-        self.client.images.prune(filters={"dangling": True})
+        # TODO: restore pruning
         return response
 
     async def set_version(self, image: str, tag: str) -> web.StreamResponse:
@@ -128,12 +126,12 @@ class VersionChooser:
                 startup_file.truncate()
 
                 logging.info("Starting bootstrap...")
-                bootstrap = self.client.containers.get("companion-bootstrap")
-                bootstrap.start()
+                bootstrap = await self.client.containers.get("companion-bootstrap")  # type: ignore
+                await bootstrap.start()
 
                 logging.info("Stopping core...")
-                core = self.client.containers.get("companion-core")
-                core.kill()
+                core = await self.client.containers.get("companion-core")  # type: ignore
+                await core.kill()
                 return web.Response(status=200, text=f"Changed to version {image}:{tag}, restarting...")
 
             except KeyError:
@@ -163,7 +161,7 @@ class VersionChooser:
             return web.Response(status=500, text=f"Image {full_name} is in use and cannot be deleted.")
         # check if image exists
         try:
-            image = self.client.images.get(full_name)
+            await self.client.images.get(full_name)
         except Exception as error:
             logging.warning(f"Image not found: {full_name} ({error})")
             return web.Response(status=404, text=f"image '{full_name}' not found ({error})")
@@ -171,7 +169,7 @@ class VersionChooser:
         # actually attempt to delete it
         logging.info(f"Deleting image {image}:{tag}...")
         try:
-            self.client.images.remove(full_name, force=False, noprune=False)
+            await self.client.images.delete(full_name, force=False, noprune=False)
             logging.info("Image deleted successfully")
             return web.Response(status=200)
         except Exception as e:
@@ -189,18 +187,19 @@ class VersionChooser:
             web.Response: json described in the openapi file
         """
         output: Dict[str, List[Dict[str, str]]] = {"local": [], "remote": []}
-        for image in self.client.images.list():
-            if not any("companion-core" in tag for tag in image.tags):
+        for image in await self.client.images.list():
+            if not image["RepoTags"]:
                 continue
-            for image_tag in image.tags:
+            if not any("companion-core" in tag for tag in image["RepoTags"]):
+                continue
+            for image_tag in image["RepoTags"]:
                 image_repository, tag = image_tag.split(":")
                 output["local"].append(
                     {
                         "repository": image_repository,
                         "tag": tag,
-                        "last_modified": image.attrs["Created"],
-                        "sha": image.id,
-                        "architecture": image.attrs["Architecture"],
+                        "last_modified": datetime.fromtimestamp(image["Created"]).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                        "sha": image["Id"],
                     }
                 )
         try:
