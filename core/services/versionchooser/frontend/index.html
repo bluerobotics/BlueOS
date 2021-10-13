@@ -240,6 +240,7 @@
           const layers = []
           const layerProgress = {}
           let overallStatus = ''
+          let leftOverData = ''
 
           axios({
             url: 'v1.0/version/pull/',
@@ -250,31 +251,40 @@
             },
             onDownloadProgress: (progressEvent) => {
               // dataChunk contains the data that have been obtained so far (the whole data so far)..
-              // The data is sent with two newlines after each message, so we split there
-              // Due to the trailing /n/n, we need the index "last -2"
               // The received data is descbribed at
               // https://docker-py.readthedocs.io/en/stable/api.html#docker.api.image.ImageApiMixin.pull
               const dataChunk = progressEvent.currentTarget.response
-              const dataList = dataChunk.split('\n\n')
+              // As the data consists of multiple jsons, the following like is a hack to split them
+              const dataList = (leftOverData + dataChunk.replaceAll('}{', '}\n\n{')).split('\n\n')
+              leftOverData = ''
 
-              const data = JSON.parse(dataList[dataList.length - 2])
-              if ('id' in data) {
-                const { id } = data
-                if (!layers.includes(id)) {
-                  layers.push(id)
-                }
-                if ('progress' in data) {
-                  layerProgress[id] = data.progress
-                }
-                if ('status' in data) {
-                  layerStatus[id] = data.status
-                }
-              } else {
-                overallStatus = data.status
-                // Axios returns the promise too early (before the pull is done)
-                // so we check the overall docker status instead
-                if (overallStatus.indexOf('Downloaded newer image for') >= 0) {
-                  setTimeout(() => { this.setVersion(fullname) }, 1000)
+              for (const line of dataList) {
+                try {
+                  const data = JSON.parse(line)
+                  if ('id' in data) {
+                    const { id } = data
+                    if (!layers.includes(id)) {
+                      layers.push(id)
+                    }
+                    if ('progress' in data) {
+                      layerProgress[id] = data.progress
+                    }
+                    if ('status' in data) {
+                      layerStatus[id] = data.status
+                    }
+                  } else {
+                    overallStatus = data.status
+                    // Axios returns the promise too early (before the pull is done)
+                    // so we check the overall docker status instead
+                    if (overallStatus.includes('Downloaded newer image for')) {
+                      setTimeout(() => { this.setVersion(fullname) }, 1000)
+                    }
+                  }
+                } catch (error) {
+                  console.log('uname to consume data, saving it for later:')
+                  console.log(line)
+                  console.log(error)
+                  leftOverData = line
                 }
               }
               this.pullOutput = ''
