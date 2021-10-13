@@ -100,6 +100,7 @@
     <wifi-updater />
     <mavlink-updater />
     <bridget-updater />
+    <nmea-injector-updater />
   </v-app>
 </template>
 
@@ -113,6 +114,7 @@ import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
 import MavlinkUpdater from './components/mavlink/MavlinkUpdater.vue'
+import NMEAInjectorUpdater from './components/nmea-injector/NMEAInjectorUpdater.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
@@ -131,6 +133,7 @@ export default Vue.extend({
     'autopilot-manager-updater': AutopilotManagerUpdater,
     'health-tray-menu': HealthTrayMenu,
     'mavlink-updater': MavlinkUpdater,
+    'nmea-injector-updater': NMEAInjectorUpdater,
     'bridget-updater': BridgetUpdater,
     'power-menu': PowerMenu,
   },
@@ -187,6 +190,11 @@ export default Vue.extend({
             title: 'Filebrowser',
             icon: 'mdi-file-tree',
             route: '/filebrowser',
+          },
+          {
+            title: 'NMEA Injector',
+            icon: 'mdi-map-marker',
+            route: '/tools/nmea-injector',
           },
           {
             title: 'Terminal',
