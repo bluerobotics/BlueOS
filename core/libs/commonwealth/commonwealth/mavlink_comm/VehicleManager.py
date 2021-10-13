@@ -2,8 +2,8 @@ from typing import Any, Dict, List
 
 from loguru import logger
 
-from exceptions import VehicleDisarmFail
-from mavlink_comm.MavlinkComm import MavlinkMessenger
+from commonwealth.mavlink_comm.exceptions import VehicleDisarmFail
+from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
 MAVLINK2REST_ADDRESS = "0.0.0.0:6040"

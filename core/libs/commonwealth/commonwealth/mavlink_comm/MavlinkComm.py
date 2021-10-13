@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 import requests
 
-from exceptions import (
+from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
     MavlinkMessageReceiveFail,
     MavlinkMessageSendFail,
@@ -77,4 +77,4 @@ class MavlinkMessenger:
 
         response = requests.post(self.m2r_rest_url, data=json.dumps(mavlink2rest_package), timeout=5.0)
         if not response.status_code == 200:
-            raise MavlinkMessageSendFail
+            raise MavlinkMessageSendFail(f"Failed to send Mavlink message: {response.status_code} - {response.text}")
