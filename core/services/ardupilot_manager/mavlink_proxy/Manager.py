@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Set, Type
+from typing import Any, List, Set, Type
 
 # Plugins
 # pylint: disable=unused-import
@@ -80,3 +80,6 @@ class Manager:
 
     def set_logdir(self, log_dir: pathlib.Path) -> None:
         self.tool.set_logdir(log_dir)
+
+    def router_process(self) -> Any:
+        return self.tool.process()
