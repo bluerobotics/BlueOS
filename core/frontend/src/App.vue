@@ -87,7 +87,10 @@
           </v-list-item-group>
         </v-list>
         <v-divider />
-        <power-menu />
+        <v-container class="d-flex justify-center">
+          <power-menu />
+          <settings-menu />
+        </v-container>
       </v-container>
     </v-navigation-drawer>
 
@@ -107,6 +110,7 @@
 import Vue from 'vue'
 
 import PowerMenu from './components/app/PowerMenu.vue'
+import SettingsMenu from './components/app/SettingsMenu.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
 import BridgetUpdater from './components/bridges/BridgetUpdater.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
@@ -133,6 +137,7 @@ export default Vue.extend({
     'mavlink-updater': MavlinkUpdater,
     'bridget-updater': BridgetUpdater,
     'power-menu': PowerMenu,
+    'settings-menu': SettingsMenu,
   },
 
   data: () => ({
