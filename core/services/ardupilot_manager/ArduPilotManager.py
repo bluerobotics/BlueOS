@@ -49,6 +49,9 @@ class ArduPilotManager(metaclass=Singleton):
         auto_restart_ardupilot_thread = threading.Thread(target=self.auto_restart_ardupilot, args=())
         auto_restart_ardupilot_thread.daemon = True
         auto_restart_ardupilot_thread.start()
+        auto_restart_router_thread = threading.Thread(target=self.auto_restart_router, args=())
+        auto_restart_router_thread.daemon = True
+        auto_restart_router_thread.start()
 
     def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot process if it dies when not supposed to."""
@@ -62,6 +65,28 @@ class ArduPilotManager(metaclass=Singleton):
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
                 self.start_ardupilot()
+            time.sleep(5.0)
+
+    def auto_restart_router(self) -> None:
+        """Auto-restart Mavlink router process if it dies."""
+        while True:
+            try:
+                subprocess_stopped = (
+                    self.mavlink_manager.router_process() is not None
+                    and self.mavlink_manager.router_process().poll() is not None
+                )
+                if self.should_be_running and subprocess_stopped:
+                    logger.debug("Trying to restart Mavlink router...")
+                    self.mavlink_manager.restart()
+                    time.sleep(1)
+                    if self.mavlink_manager.router_process().poll() is not None:
+                        error = self.mavlink_manager.router_process().communicate()[1]
+                        raise RuntimeError(error)
+                    logger.debug("Mavlink router successfully restarted.")
+            except AssertionError:
+                logger.debug("Mavlink router did not start yet.")
+            except Exception as error:
+                logger.debug(f"Could not restart Mavlink router: {error}. Will try again soon.")
             time.sleep(5.0)
 
     def run_with_board(self) -> None:
