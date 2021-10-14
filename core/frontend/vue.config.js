@@ -1,3 +1,9 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { gitDescribeSync } = require('git-describe')
+
+process.env.VUE_APP_GIT_DESCRIBE = gitDescribeSync().raw
+process.env.VUE_APP_BUILD_DATE = JSON.stringify(new Date())
+
 module.exports = {
   devServer: {
     proxy: {
