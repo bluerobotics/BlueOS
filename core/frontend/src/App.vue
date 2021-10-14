@@ -91,6 +91,8 @@
           <power-menu />
           <settings-menu />
         </v-container>
+        <span class="buildinfo">Version: {{ git_info }}</span>
+        <span class="buildinfo">Build: {{ build_date }}</span>
       </v-container>
     </v-navigation-drawer>
 
@@ -215,6 +217,14 @@ export default Vue.extend({
       },
     ],
   }),
+  computed: {
+    git_info(): string {
+      return process.env.VUE_APP_GIT_DESCRIBE
+    },
+    build_date(): string {
+      return process.env.VUE_APP_BUILD_DATE
+    },
+  },
 })
 </script>
 
@@ -226,4 +236,12 @@ html {
 .active_menu {
   color: blue;
 }
+
+span.buildinfo {
+  font-size: 70%;
+  margin-left: 30px;
+  display: block;
+  opacity: 50%;
+}
+
 </style>

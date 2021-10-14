@@ -49,6 +49,7 @@
     "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-vue": "^7.11.1",
+    "git-describe": "^4.1.0",
     "sass": "~1.32.0",
     "sass-loader": "^10.0.0",
     "typescript": "~4.1.5",
