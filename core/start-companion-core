@@ -31,7 +31,7 @@ SERVICES=(
     'filebrowser',"filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
-    'ttyd',"ttyd -p 8088 /usr/bin/tmux"
+    'ttyd',"ttyd -p 8088 /usr/bin/tmux new-session \\\\; send-keys 'cat /etc/motd' C-m \\\\;"
     'nginx',"nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
 )
 

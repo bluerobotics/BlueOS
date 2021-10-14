@@ -32,6 +32,7 @@ RUN /home/pi/libs/install-libs.sh
 
 # Set tmux configuration file
 COPY configuration/tmux.conf /etc/tmux.conf
+COPY configuration/motd /etc/motd
 
 # Install services
 COPY services /home/pi/services
