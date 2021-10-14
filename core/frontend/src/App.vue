@@ -91,8 +91,8 @@
           <power-menu />
           <settings-menu />
         </v-container>
-        <span class="buildinfo">Version: {{ git_info }}</span>
-        <span class="buildinfo">Build: {{ build_date }}</span>
+        <span class="build_info">Version: {{ git_info }}</span>
+        <span class="build_info">Build: {{ build_date }}</span>
       </v-container>
     </v-navigation-drawer>
 
@@ -237,7 +237,7 @@ html {
   color: blue;
 }
 
-span.buildinfo {
+span.build_info {
   font-size: 70%;
   margin-left: 30px;
   display: block;
