@@ -241,7 +241,6 @@ span.buildinfo {
   font-size: 70%;
   margin-left: 30px;
   display: block;
-  opacity: 50%;
 }
 
 </style>
