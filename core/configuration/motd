@@ -1,0 +1,18 @@
+
+Welcome to Companion 1.0!
+
+What you currently see is a tmux session built into Companion's docker container.
+This means you are not in the host Raspbian OS itself, and most of the data in here is
+not-persistent, except for things in /root/.config, although you should not store your data there.
+
+USAGE NOTES:
+To check all running services, press ctrl+b, then s. This will show all current sessions,
+and is helpful for checking the state of individual services, restarting them, and checking their verbose outputs.
+
+To split the screen horizontally, press ctrl+b then %
+To split the screen vertically  press ctrl+b then " (this is currently not working)
+To switch tabs, press ctrl+b then use the directional keys in the keyboard
+
+To login into the Raspberry Pi itself, do "ssh localhost" (NOT IMPLEMENTED)
+
+Happy Hacking!
