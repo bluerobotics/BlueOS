@@ -1,7 +1,8 @@
 # Build frontend
 FROM node:current-buster-slim AS frontendBuilder
-RUN apt update
-RUN apt install git -y
+
+ARG VUE_APP_GIT_DESCRIBE
+
 COPY frontend /home/pi/frontend
 RUN cd /home/pi/frontend && yarn install --network-timeout=300000 && yarn build --skip-plugins @vue/cli-plugin-eslint
 
