@@ -1,6 +1,5 @@
-FROM node:current-buster-slim AS frontendBuilder
-
 # Build frontend
+FROM node:current-buster-slim AS frontendBuilder
 RUN apt update
 RUN apt install git -y
 COPY frontend /home/pi/frontend
@@ -15,6 +14,7 @@ RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
 RUN /home/pi/tools/mavlink_router/bootstrap.sh
 RUN /home/pi/tools/ttyd/bootstrap.sh
 
+# Companion-docker base image
 FROM bluerobotics/companion-base:v0.0.2
 
 # Install necessary tools
