@@ -75,7 +75,7 @@ export default Vue.extend({
 
 <style scoped>
 .helper-table {
-    max-width: 70%;
+    max-width: 80%;
     margin: auto;
 }
 </style>
