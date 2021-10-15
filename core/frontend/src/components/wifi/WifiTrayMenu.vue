@@ -28,7 +28,7 @@ import Vue from 'vue'
 import { getModule } from 'vuex-module-decorators'
 
 import WifiStore from '@/store/wifi'
-import wifi_strenght_icon from '@/utils/wifi'
+import { wifi_strenght_icon } from '@/utils/wifi'
 
 import WifiManager from './WifiManager.vue'
 
