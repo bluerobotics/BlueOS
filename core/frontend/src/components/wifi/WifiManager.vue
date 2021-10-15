@@ -78,12 +78,7 @@ export default Vue.extend({
       return wifi_store.current_network
     },
     connectable_networks(): Network[] {
-      let showable_networks = wifi_store.available_networks
-      const { current_network } = wifi_store
-      if (current_network) {
-        showable_networks = showable_networks.filter((network: Network) => network.ssid !== current_network.ssid)
-      }
-      return showable_networks.sort((a: Network, b: Network) => b.signal - a.signal)
+      return wifi_store.connectable_networks
     },
     are_connectable_networks_available(): boolean {
       return this.connectable_networks.length !== 0
