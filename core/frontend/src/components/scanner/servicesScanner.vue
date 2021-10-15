@@ -10,8 +10,8 @@ import { getModule } from 'vuex-module-decorators'
 import NotificationStore from '@/store/notifications'
 import ServicesScannerStore from '@/store/servicesScanner'
 import { service_scanner_service } from '@/types/frontend_services'
+import { Service } from '@/types/helper'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-import { Service } from '@/types/SERVICE.d'
 
 const notification_store: NotificationStore = getModule(NotificationStore)
 const servicesHelper: ServicesScannerStore = getModule(ServicesScannerStore)
