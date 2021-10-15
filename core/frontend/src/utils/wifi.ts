@@ -14,5 +14,5 @@ export default function wifi_status_icon(signal_db: number): string {
   if (signal_db >= -67) return 'mdi-wifi-strength-3'
   if (signal_db >= -70) return 'mdi-wifi-strength-2'
   if (signal_db >= -80) return 'mdi-wifi-strength-1'
-  return 'mdi-wifi-strength-outline'
+  return 'mdi-wifi-strength-alert-outline'
 }
