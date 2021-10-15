@@ -106,7 +106,7 @@ import NotificationsStore from '@/store/notifications'
 import WifiStore from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-import { Network, NetworkCredentials } from '@/types/wifi.d'
+import { Network, NetworkCredentials } from '@/types/wifi'
 
 import PasswordInput from '../common/PasswordInput.vue'
 

@@ -1,7 +1,7 @@
 import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { Network, SavedNetwork, WifiStatus } from '@/types/wifi.d'
+import { Network, SavedNetwork, WifiStatus } from '@/types/wifi'
 
 @Module({
   dynamic: true,

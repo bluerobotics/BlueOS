@@ -63,7 +63,7 @@ import NotificationStore from '@/store/notifications'
 import WifiStore from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-import { Network, WifiStatus } from '@/types/wifi.d'
+import { Network, WifiStatus } from '@/types/wifi'
 
 const notification_store: NotificationStore = getModule(NotificationStore)
 const wifi_store: WifiStore = getModule(WifiStore)

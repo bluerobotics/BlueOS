@@ -11,7 +11,7 @@ import NotificationsStore from '@/store/notifications'
 import WifiStore from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-import { SavedNetwork, WPANetwork } from '@/types/wifi.d'
+import { SavedNetwork, WPANetwork } from '@/types/wifi'
 import { callPeriodically } from '@/utils/helper_functions'
 
 const notification_store: NotificationsStore = getModule(NotificationsStore)

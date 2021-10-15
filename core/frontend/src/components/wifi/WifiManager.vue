@@ -46,7 +46,7 @@ import Vue from 'vue'
 import { getModule } from 'vuex-module-decorators'
 
 import WifiStore from '@/store/wifi'
-import { Network, WifiStatus } from '@/types/wifi.d'
+import { Network, WifiStatus } from '@/types/wifi'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import ConnectionDialog from './ConnectionDialog.vue'
