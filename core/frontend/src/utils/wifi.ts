@@ -1,4 +1,6 @@
-export default function wifi_strenght_icon(signal_db: number): string {
+import { Network } from '@/types/wifi'
+
+export function wifi_strenght_icon(signal_db: number): string {
   /*eslint-disable */
   // | Signal Strength | TL;DR     |  Description                                                                                                                               |
   // |-----------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|
@@ -15,4 +17,8 @@ export default function wifi_strenght_icon(signal_db: number): string {
   if (signal_db >= -70) return 'mdi-wifi-strength-2'
   if (signal_db >= -80) return 'mdi-wifi-strength-1'
   return 'mdi-wifi-strength-alert-outline'
+}
+
+export function sorted_networks(networks: Network[]): Network[] {
+  return networks.sort((a: Network, b: Network) => b.signal - a.signal)
 }

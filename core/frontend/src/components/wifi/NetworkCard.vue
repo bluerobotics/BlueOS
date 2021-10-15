@@ -35,7 +35,7 @@
 import Vue, { PropType } from 'vue'
 
 import { Network } from '@/types/wifi'
-import wifi_strenght_icon from '@/utils/wifi'
+import { wifi_strenght_icon } from '@/utils/wifi'
 
 export default Vue.extend({
   name: 'NetworkCard',
