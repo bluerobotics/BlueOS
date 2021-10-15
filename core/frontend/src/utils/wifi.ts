@@ -1,4 +1,4 @@
-export default function wifi_status_icon(signal_db: number): string {
+export default function wifi_strenght_icon(signal_db: number): string {
   /*eslint-disable */
   // | Signal Strength | TL;DR     |  Description                                                                                                                               |
   // |-----------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------|

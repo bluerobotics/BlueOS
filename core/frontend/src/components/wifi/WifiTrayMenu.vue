@@ -28,7 +28,7 @@ import Vue from 'vue'
 import { getModule } from 'vuex-module-decorators'
 
 import WifiStore from '@/store/wifi'
-import wifi_status_icon from '@/utils/wifi'
+import wifi_strenght_icon from '@/utils/wifi'
 
 import WifiManager from './WifiManager.vue'
 
@@ -42,7 +42,7 @@ export default Vue.extend({
   computed: {
     wifi_icon(): string {
       const signal = wifi_store.current_network ? wifi_store.current_network.signal : -1000
-      return wifi_status_icon(signal)
+      return wifi_strenght_icon(signal)
     },
   },
 })

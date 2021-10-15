@@ -35,7 +35,7 @@
 import Vue, { PropType } from 'vue'
 
 import { Network } from '@/types/wifi.d'
-import wifi_status_icon from '@/utils/wifi'
+import wifi_strenght_icon from '@/utils/wifi'
 
 export default Vue.extend({
   name: 'NetworkCard',
@@ -59,7 +59,7 @@ export default Vue.extend({
       return this.network.locked ? 'mdi-lock' : 'mdi-lock-open-outline'
     },
     signal_strength_icon(): string {
-      return wifi_status_icon(this.network.signal)
+      return wifi_strenght_icon(this.network.signal)
     },
   },
   methods: {
