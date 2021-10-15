@@ -31,12 +31,14 @@
             v-model="selected_size"
             :items="available_sizes"
             :label="size_selector_label"
+            :disabled="!selected_format"
             required
           />
           <v-select
             v-model="selected_interval"
             :items="available_framerates"
             :label="framerate_selector_label"
+            :disabled="!selected_size"
             required
           />
 
