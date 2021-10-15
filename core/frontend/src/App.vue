@@ -189,6 +189,11 @@ export default Vue.extend({
         icon: 'mdi-hammer-screwdriver',
         submenus: [
           {
+            title: 'Available Services',
+            icon: 'mdi-account-hard-hat',
+            route: '/available-services',
+          },
+          {
             title: 'Bridges',
             icon: 'mdi-bridge',
             route: '/bridges',
