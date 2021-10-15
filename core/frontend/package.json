@@ -45,6 +45,7 @@
     "@vue/eslint-config-airbnb": "^5.3.0",
     "@vue/eslint-config-typescript": "^7.0.0",
     "eslint": "^7.29.0",
+    "eslint-import-resolver-typescript": "^2.5.0",
     "eslint-plugin-html": "^6.1.2",
     "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-simple-import-sort": "^7.0.0",
