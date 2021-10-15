@@ -41,6 +41,9 @@ export default Vue.extend({
   },
   computed: {
     wifi_icon(): string {
+      if (wifi_store.connectable_networks.length === 0) {
+        return 'mdi-wifi-sync'
+      }
       const signal = wifi_store.current_network ? wifi_store.current_network.signal : -1000
       return wifi_strenght_icon(signal)
     },
