@@ -66,7 +66,9 @@ export default Vue.extend({
         return device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).length !== 0
       }
 
-      return video_store.available_devices.filter(has_h264)
+      return video_store.available_devices
+        .filter(has_h264)
+        .sort((a: Device, b: Device) => a.name.localeCompare(b.name))
     },
     updating_devices(): boolean {
       return video_store.updating_devices
