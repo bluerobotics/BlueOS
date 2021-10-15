@@ -15,7 +15,7 @@
         v-on="on"
       >
         <v-icon color="white">
-          {{ signal_strength_icon }}
+          {{ wifi_icon }}
         </v-icon>
       </v-card>
     </template>
@@ -40,7 +40,7 @@ export default Vue.extend({
     WifiManager,
   },
   computed: {
-    signal_strength_icon(): string {
+    wifi_icon(): string {
       const signal = wifi_store.current_network ? wifi_store.current_network.signal : -1000
       return wifi_status_icon(signal)
     },
