@@ -28,7 +28,7 @@ import AvailableServicesTable from '@/components/scanner/availableServicesTable.
 export default Vue.extend({
   name: 'Main',
   components: {
-    AvailableServicesTable,
+    'available-services-table': AvailableServicesTable,
   },
 })
 </script>
