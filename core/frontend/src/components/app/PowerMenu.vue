@@ -29,6 +29,7 @@
           >
             <v-btn
               class="mr-2"
+              :disabled="non_default_status"
               @click="poweroff"
             >
               <v-icon color="red">
@@ -37,6 +38,7 @@
             </v-btn>
             <v-btn
               class="mr-2"
+              :disabled="non_default_status"
               @click="reboot"
             >
               <v-icon color="orange">
@@ -45,7 +47,7 @@
             </v-btn>
           </v-row>
         </v-container>
-        <v-container v-if="waiting">
+        <v-container v-if="non_default_status">
           <p class="text-md-center">
             {{ service_status_text }}
           </p>
@@ -100,7 +102,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    waiting(): boolean {
+    non_default_status(): boolean {
       return this.service_status !== Status.None
     },
     service_status_text(): string {
