@@ -73,7 +73,7 @@ export default Vue.extend({
 
     battery_current(): string {
       const current_centiampere = mavlink_store_get(mavlink_store, 'SYS_STATUS.messageData.current_battery') as number
-      return (current_centiampere as number / 1000).toFixed(2)
+      return (current_centiampere as number / 100).toFixed(2)
     },
   },
 })
