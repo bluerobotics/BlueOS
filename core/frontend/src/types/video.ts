@@ -148,3 +148,16 @@ export interface StreamStatus {
   running: boolean
   video_and_stream: VideoAndStreamInformation
 }
+
+export interface VideoDimensions {
+  height: number
+  width: number
+}
+
+export interface StreamPrototype {
+  name: string
+  encode: VideoEncodeType | null
+  dimensions: VideoDimensions | null
+  interval: FrameInterval | null
+  endpoint: string
+}
