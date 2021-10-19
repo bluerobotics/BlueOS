@@ -84,7 +84,7 @@ export interface Device {
 }
 
 export interface CaptureConfiguration {
-  encode: string
+  encode: VideoEncodeType
   height: number
   width: number
   frame_interval: FrameInterval
