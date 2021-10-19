@@ -7,7 +7,7 @@ import store from '@/store'
 import NotificationStore from '@/store/notifications'
 import { video_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-import { Device, StreamStatus } from '@/types/video'
+import { CreatedStream, Device, StreamStatus } from '@/types/video'
 
 const notification_store: NotificationStore = getModule(NotificationStore)
 
@@ -64,6 +64,28 @@ export default class VideoStore extends VuexModule {
           'VIDEO_STREAM_DELETE_FAIL',
           `Could not delete video stream: ${error.message}.`,
         ))
+      })
+  }
+
+  @Action
+  async createStream(stream: CreatedStream): Promise<boolean> {
+    this.setUpdatingStreams(true)
+
+    return axios({
+      method: 'post',
+      url: `${this.API_URL}/streams`,
+      timeout: 10000,
+      data: stream,
+    })
+      .then(() => true)
+      .catch((error) => {
+        notification_store.pushNotification(new LiveNotification(
+          NotificationLevel.Error,
+          video_manager_service,
+          'VIDEO_STREAM_CREATION_FAIL',
+          `Could not create video stream: ${error.message}.`,
+        ))
+        return false
       })
   }
 }

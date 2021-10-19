@@ -62,21 +62,17 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
 import VideoStore from '@/store/video'
-import { video_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import {
   CreatedStream, Device, Format, FrameInterval, Size, VideoEncodeType,
 } from '@/types/video'
+import { VForm } from '@/types/vuetify'
 import { isNotEmpty, isUdpAddress } from '@/utils/pattern_validators'
 
 const video_store: VideoStore = getModule(VideoStore)
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 export default Vue.extend({
   name: 'VideoStreamCreationDialog',
@@ -104,6 +100,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    form(): VForm {
+      return this.$refs.form as VForm
+    },
     created_stream(): (CreatedStream | null) {
       if (this.selected_encode === null
         || this.selected_size === null
@@ -171,33 +170,19 @@ export default Vue.extend({
     is_udp_address(input: string): (true | string) {
       return isUdpAddress(input) ? true : 'Invalid UDP stream endpoint.'
     },
-    async createStream(): Promise<void> {
-      if (this.created_stream === null) {
-        notification_store.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          video_manager_service,
-          'VIDEO_STREAM_CREATION_FAIL',
-          'Could not create video stream: one os more stream configuration fields are not set.',
-        ))
+    async createStream(): Promise<boolean> {
+      // Validate form before proceeding with API request
+      if (!this.form.validate()) {
+        return false
       }
-
-      video_store.setUpdatingStreams(true)
-      this.showDialog(false)
-
-      await axios({
-        method: 'post',
-        url: `${video_store.API_URL}/streams`,
-        timeout: 10000,
-        data: this.created_stream,
-      })
-        .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            video_manager_service,
-            'VIDEO_STREAM_CREATION_FAIL',
-            `Could not create video stream: ${error.message}.`,
-          ))
-        })
+      if (this.created_stream === null) {
+        return false
+      }
+      const sucess = await video_store.createStream(this.created_stream)
+      if (sucess) {
+        this.showDialog(false)
+      }
+      return sucess
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
