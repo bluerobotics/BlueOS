@@ -39,8 +39,8 @@ export default Vue.extend({
             return
           }
 
-          const scanned_network = wifi_store.available_networks.find((network) => network.ssid === response.data.ssid)
-          const saved_network = wifi_store.saved_networks.find((network) => network.ssid === response.data.ssid)
+          const scanned_network = wifi_store.available_networks?.find((network) => network.ssid === response.data.ssid)
+          const saved_network = wifi_store.saved_networks?.find((network) => network.ssid === response.data.ssid)
 
           wifi_store.setCurrentNetwork({
             ssid: response.data.ssid,
@@ -66,17 +66,17 @@ export default Vue.extend({
         timeout: 20000,
       })
         .then((response) => {
-          const saved_networks_ssids = wifi_store.saved_networks.map((network: SavedNetwork) => network.ssid)
+          const saved_networks_ssids = wifi_store.saved_networks?.map((network: SavedNetwork) => network.ssid)
           const available_networks = response.data.map((network: WPANetwork) => ({
             ssid: network.ssid,
             signal: network.signallevel,
             locked: network.flags.includes('WPA'),
-            saved: saved_networks_ssids.includes(network.ssid),
+            saved: saved_networks_ssids?.includes(network.ssid) || false,
           }))
           wifi_store.setAvailableNetworks(available_networks)
         })
         .catch((error) => {
-          wifi_store.setAvailableNetworks([])
+          wifi_store.setAvailableNetworks(null)
           notification_store.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             wifi_service,
@@ -95,7 +95,7 @@ export default Vue.extend({
           wifi_store.setSavedNetworks(response.data)
         })
         .catch((error) => {
-          wifi_store.setSavedNetworks([])
+          wifi_store.setSavedNetworks(null)
           notification_store.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             wifi_service,

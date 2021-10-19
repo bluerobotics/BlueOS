@@ -41,7 +41,7 @@ export default Vue.extend({
   },
   computed: {
     wifi_icon(): string {
-      if (wifi_store.connectable_networks.length === 0) {
+      if (wifi_store.connectable_networks === null) {
         return 'mdi-wifi-sync'
       }
       if (wifi_store.current_network === null) {
