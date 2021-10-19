@@ -123,9 +123,6 @@ export default Vue.extend({
     this.active_intervals.forEach((interval) => clearInterval(interval))
   },
   methods: {
-    showOldMessages(value: boolean): void {
-      this.show_old_messages = value
-    },
     dismissAllNotifications(): void {
       notification_store.notifications.forEach((notification) => {
         this.dismissNotification(notification)

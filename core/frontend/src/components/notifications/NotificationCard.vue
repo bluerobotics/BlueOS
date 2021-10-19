@@ -56,11 +56,6 @@ export default Vue.extend({
       required: true,
     },
   },
-  data() {
-    return {
-      updated_time: new Date(),
-    }
-  },
   computed: {
     time_since(): string {
       const date_now = new Date(this.timestamp)
