@@ -3,53 +3,55 @@
     width="100%"
     class="pa-0 my-4"
   >
-    <div class="d-flex flex-no-wrap align-center justify-space-between">
-      <div>
-        <v-card-title>{{ stream.video_and_stream.name }}</v-card-title>
-        <v-card-subtitle>{{ settings_summary }}</v-card-subtitle>
-        <p class="pl-4">
-          Status: {{ stream.running ? 'running' : 'Not running' }}
-        </p>
-      </div>
-      <div>
-        <v-simple-table
-          dense
-          class="text-center"
-        >
-          <template #default>
-            <tbody>
-              <tr>
-                <td>{{ stream.video_and_stream.stream_information.configuration.encode }}</td>
-              </tr>
-              <tr>
-                <td>{{ stream.video_and_stream.stream_information.endpoints[0] }}</td>
-              </tr>
-              <tr>
-                <td>{{ source_path }}</td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-      </div>
-      <div class="mr-4">
-        <v-btn
-          class="ma-2 blue lighten-4"
-          elevation="2"
-          icon
-          @click="openStreamEditDialog"
-        >
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn
-          class="ma-2 red lighten-4"
-          elevation="2"
-          icon
-          @click="deleteStream"
-        >
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </div>
-    </div>
+    <v-container>
+      <v-row align="center">
+        <v-col cols="5">
+          <v-card-title>{{ stream.video_and_stream.name }}</v-card-title>
+          <v-card-subtitle>{{ settings_summary }}</v-card-subtitle>
+          <p class="pl-4">
+            Status: {{ stream.running ? 'running' : 'Not running' }}
+          </p>
+        </v-col>
+        <v-col cols="5">
+          <v-simple-table
+            dense
+            class="text-center"
+          >
+            <template #default>
+              <tbody>
+                <tr>
+                  <td>{{ stream.video_and_stream.stream_information.configuration.encode }}</td>
+                </tr>
+                <tr>
+                  <td>{{ stream.video_and_stream.stream_information.endpoints[0] }}</td>
+                </tr>
+                <tr>
+                  <td>{{ source_path }}</td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </v-col>
+        <v-col cols="2">
+          <v-btn
+            class="ma-2 blue lighten-4"
+            elevation="2"
+            icon
+            @click="openStreamEditDialog"
+          >
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+          <v-btn
+            class="ma-2 red lighten-4"
+            elevation="2"
+            icon
+            @click="deleteStream"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-container>
     <video-stream-creation-dialog
       v-model="show_stream_edit_dialog"
       :device="device"
