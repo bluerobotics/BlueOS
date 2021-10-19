@@ -55,7 +55,7 @@ import VideoStore from '@/store/video'
 import { video_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { StreamStatus } from '@/types/video'
-import { video_dimension_framerate_text, video_dimension_text, video_framerate_text } from '@/utils/video'
+import { video_dimension_framerate_text } from '@/utils/video'
 
 const video_store: VideoStore = getModule(VideoStore)
 const notification_store: NotificationStore = getModule(NotificationStore)
@@ -70,23 +70,10 @@ export default Vue.extend({
       required: true,
     },
   },
-  data() {
-    return {
-      show_details_dialog: false,
-    }
-  },
   computed: {
     settings_summary(): string {
       const { height, width, frame_interval } = this.stream.video_and_stream.stream_information.configuration
       return video_dimension_framerate_text(height, width, frame_interval)
-    },
-    size(): string {
-      const { height, width } = this.stream.video_and_stream.stream_information.configuration
-      return video_dimension_text(height, width)
-    },
-    framerate(): string {
-      const { frame_interval } = this.stream.video_and_stream.stream_information.configuration
-      return video_framerate_text(frame_interval)
     },
     source_path(): string {
       if ('Gst' in this.stream.video_and_stream.video_source) {
@@ -98,9 +85,6 @@ export default Vue.extend({
     },
   },
   methods: {
-    openDetailsDialog(): void {
-      this.show_details_dialog = true
-    },
     async deleteStream(): Promise<void> {
       video_store.setUpdatingStreams(true)
 

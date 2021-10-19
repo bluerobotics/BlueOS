@@ -75,7 +75,6 @@ export default Vue.extend({
     return {
       sortBy: 'modified',
       sortDesc: true,
-      auth_key: '',
       available_logs: [] as FilebrowserFile[],
       fetching_logs: false,
       selected_logs: [] as FilebrowserFile[],
@@ -108,9 +107,6 @@ export default Vue.extend({
         modified: format(new Date(log.modified), 'yyyy-MM-dd HH:mm:ss'),
         size: log.size / 1e6,
       }))
-    },
-    are_logs_available(): boolean {
-      return this.available_logs.length !== 0
     },
   },
   async mounted() {

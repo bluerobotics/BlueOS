@@ -174,9 +174,7 @@ export default Vue.extend({
   name: 'FirmwareManager',
   data() {
     return {
-      CloudFirmwareOptionsStatus,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
-      InstallStatus,
       install_status: InstallStatus.NotStarted,
       UploadType,
       upload_type: UploadType.Cloud,
