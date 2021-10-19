@@ -2,6 +2,7 @@
   <v-card
     class="mx-auto my-6"
     max-width="1000"
+    elevation="0"
   >
     <v-card-title>Video Manager</v-card-title>
     <v-container>
