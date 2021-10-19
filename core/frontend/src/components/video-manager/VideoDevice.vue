@@ -55,7 +55,10 @@
             v-for="(stream, i) in device_streams"
             :key="i"
           >
-            <video-stream :stream="stream" />
+            <video-stream
+              :stream="stream"
+              :device="device"
+            />
           </v-col>
         </v-row>
       </v-container>
