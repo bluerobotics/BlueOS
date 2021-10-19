@@ -55,6 +55,11 @@ module.exports = {
     '@typescript-eslint/no-useless-constructor': ['error'],
     '@typescript-eslint/no-shadow': ['error'],
     '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true }],
+    'vue/no-unused-properties': ['error', {
+      groups: ['props', 'data', 'computed', 'methods', 'setup'],
+      deepData: true,
+      ignorePublicMembers: false,
+    }],
     'vue/valid-v-slot': ['error', { allowModifiers: true }],
     'no-await-in-loop': 'off',
   },
