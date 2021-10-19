@@ -15,9 +15,9 @@ export default class WifiStore extends VuexModule {
 
   current_network: Network | null = null
 
-  available_networks: Network[] = []
+  available_networks: Network[] | null = null
 
-  saved_networks: SavedNetwork[] = []
+  saved_networks: SavedNetwork[] | null = null
 
   network_status: WifiStatus | null = null
 
@@ -27,12 +27,12 @@ export default class WifiStore extends VuexModule {
   }
 
   @Mutation
-  setAvailableNetworks(available_networks: Network[]): void {
+  setAvailableNetworks(available_networks: Network[] | null): void {
     this.available_networks = available_networks
   }
 
   @Mutation
-  setSavedNetworks(saved_networks: SavedNetwork[]): void {
+  setSavedNetworks(saved_networks: SavedNetwork[] | null): void {
     this.saved_networks = saved_networks
   }
 
@@ -41,7 +41,10 @@ export default class WifiStore extends VuexModule {
     this.network_status = status
   }
 
-  get connectable_networks(): Network[] {
+  get connectable_networks(): Network[] | null {
+    if (this.available_networks === null) {
+      return null
+    }
     return sorted_networks(this.available_networks.filter((network: Network) => network !== this.current_network))
   }
 }

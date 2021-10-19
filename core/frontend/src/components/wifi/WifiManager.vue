@@ -12,17 +12,28 @@
         />
       </v-container>
 
-      <v-container v-if="are_connectable_networks_available">
-        <network-card
-          v-for="(network, key) in connectable_networks"
-          :key="key"
-          class="available-network"
-          :network="network"
-          @click="openConnectionDialog"
-        />
-      </v-container>
-      <v-container v-else>
-        <spinning-logo size="30%" />
+      <v-container>
+        <div v-if="connectable_networks !== null">
+          <div v-if="connectable_networks.length !== 0">
+            <network-card
+              v-for="(network, key) in connectable_networks"
+              :key="key"
+              class="available-network"
+              :network="network"
+              @click="openConnectionDialog"
+            />
+          </div>
+          <v-card-text
+            v-else
+            flat
+            class="text-body-1"
+          >
+            No wifi networks available :(
+          </v-card-text>
+        </div>
+        <div v-else>
+          <spinning-logo size="30%" />
+        </div>
       </v-container>
     </v-container>
 
@@ -77,11 +88,8 @@ export default Vue.extend({
     current_network(): Network | null {
       return wifi_store.current_network
     },
-    connectable_networks(): Network[] {
+    connectable_networks(): Network[] | null {
       return wifi_store.connectable_networks
-    },
-    are_connectable_networks_available(): boolean {
-      return this.connectable_networks.length !== 0
     },
   },
   methods: {
