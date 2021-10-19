@@ -45,6 +45,7 @@ export default class WifiStore extends VuexModule {
     if (this.available_networks === null) {
       return null
     }
-    return sorted_networks(this.available_networks.filter((network: Network) => network !== this.current_network))
+    return sorted_networks(this.available_networks
+      .filter((network: Network) => network.ssid !== this.current_network?.ssid))
   }
 }
