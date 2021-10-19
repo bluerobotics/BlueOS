@@ -53,7 +53,7 @@
             class="mr-4"
             @click="createStream"
           >
-            Create
+            {{ finishButtonText }}
           </v-btn>
         </v-form>
       </v-card-text>
@@ -63,22 +63,18 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import VideoStore from '@/store/video'
 import {
-  CreatedStream, Device, Format, FrameInterval, Size, VideoEncodeType,
+  CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, VideoEncodeType,
 } from '@/types/video'
 import { VForm } from '@/types/vuetify'
 import { isNotEmpty, isUdpAddress } from '@/utils/pattern_validators'
-
-const video_store: VideoStore = getModule(VideoStore)
 
 export default Vue.extend({
   name: 'VideoStreamCreationDialog',
   model: {
     prop: 'show',
-    event: 'change',
+    event: 'visibilityChange',
   },
   props: {
     show: {
@@ -89,14 +85,37 @@ export default Vue.extend({
       type: Object as PropType<Device>,
       required: true,
     },
+    finishButtonText: {
+      type: String,
+      required: false,
+      default: 'Create',
+    },
+    stream: {
+      type: Object as PropType<StreamPrototype>,
+      required: false,
+      default() {
+        return {
+          name: '',
+          encode: null,
+          dimensions: null,
+          interval: null,
+          endpoint: 'udp://0.0.0.0:5600',
+        }
+      },
+    },
   },
   data() {
+    const format_match = this.device.formats
+      .find((format) => format.encode === this.stream.encode)
+    const size_match = format_match?.sizes
+      .find((size) => size.width === this.stream.dimensions?.width && size.height === this.stream.dimensions?.height)
+
     return {
-      stream_name: '',
-      selected_encode: null as (VideoEncodeType | null),
-      selected_size: null as (Size | null),
-      selected_interval: null as (FrameInterval | null),
-      stream_endpoint: 'udp://0.0.0.0:5600',
+      stream_name: this.stream.name,
+      selected_encode: this.stream.encode,
+      selected_size: size_match || null,
+      selected_interval: this.stream.interval,
+      stream_endpoint: this.stream.endpoint,
     }
   },
   computed: {
@@ -170,7 +189,7 @@ export default Vue.extend({
     is_udp_address(input: string): (true | string) {
       return isUdpAddress(input) ? true : 'Invalid UDP stream endpoint.'
     },
-    async createStream(): Promise<boolean> {
+    createStream(): boolean {
       // Validate form before proceeding with API request
       if (!this.form.validate()) {
         return false
@@ -178,14 +197,12 @@ export default Vue.extend({
       if (this.created_stream === null) {
         return false
       }
-      const sucess = await video_store.createStream(this.created_stream)
-      if (sucess) {
-        this.showDialog(false)
-      }
-      return sucess
+      this.$emit('streamChange', this.created_stream)
+      this.showDialog(false)
+      return true
     },
     showDialog(state: boolean) {
-      this.$emit('change', state)
+      this.$emit('visibilityChange', state)
     },
   },
 })

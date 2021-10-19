@@ -44,6 +44,7 @@
     <video-stream-creation-dialog
       v-model="show_stream_creation_dialog"
       :device="device"
+      @streamChange="createNewStream"
     />
     <v-card flat>
       <v-container
@@ -71,7 +72,7 @@ import { getModule } from 'vuex-module-decorators'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import VideoStore from '@/store/video'
-import { Device, StreamStatus } from '@/types/video'
+import { CreatedStream, Device, StreamStatus } from '@/types/video'
 
 import VideoControlsDialog from './VideoControlsDialog.vue'
 import VideoStream from './VideoStream.vue'
@@ -126,6 +127,9 @@ export default Vue.extend({
     },
     openStreamCreationDialog(): void {
       this.show_stream_creation_dialog = true
+    },
+    async createNewStream(stream: CreatedStream): Promise<void> {
+      await video_store.createStream(stream)
     },
   },
 })
