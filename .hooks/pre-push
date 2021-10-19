@@ -12,11 +12,6 @@ echo "Running shellcheck..."
 #SC2086: Allow word splitting
 git ls-files '*.sh' | xargs --max-lines=1 shellcheck --exclude=SC2005,SC2015,SC2046,SC2086
 
-echo "Running eslint.."
-./node_modules/.bin/eslint core/ \
-    --ext=.js,.html,.vue,.ts \
-    --ignore-pattern='core/frontend/' --ignore-pattern='static/'
-
 echo "Running isort.."
 # Run isort for each python project
 dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only --diff "{}"
