@@ -96,7 +96,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      stream_name: null as (string | null),
+      stream_name: '',
       selected_encode: null as (VideoEncodeType | null),
       selected_size: null as (Size | null),
       selected_interval: null as (FrameInterval | null),
@@ -108,7 +108,7 @@ export default Vue.extend({
       if (this.selected_encode === null
         || this.selected_size === null
         || this.selected_interval === null
-        || this.stream_name === null
+        || this.stream_name === ''
         || this.stream_endpoint === '') {
         return null
       }
