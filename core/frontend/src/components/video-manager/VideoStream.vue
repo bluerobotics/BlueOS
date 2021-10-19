@@ -46,19 +46,14 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
 import VideoStore from '@/store/video'
-import { video_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { StreamStatus } from '@/types/video'
 import { video_dimension_framerate_text } from '@/utils/video'
 
 const video_store: VideoStore = getModule(VideoStore)
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 export default Vue.extend({
   name: 'VideoStream',
@@ -86,22 +81,7 @@ export default Vue.extend({
   },
   methods: {
     async deleteStream(): Promise<void> {
-      video_store.setUpdatingStreams(true)
-
-      await axios({
-        method: 'delete',
-        url: `${video_store.API_URL}/delete_stream`,
-        timeout: 10000,
-        params: { name: this.stream.video_and_stream.name },
-      })
-        .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            video_manager_service,
-            'VIDEO_STREAM_DELETE_FAIL',
-            `Could not delete video stream: ${error.message}.`,
-          ))
-        })
+      video_store.deleteStream(this.stream)
     },
   },
 })
