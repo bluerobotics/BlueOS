@@ -38,6 +38,11 @@ static_files = [
     StaticFile(static_folder, "mif/metro.woff", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.woff"),
     StaticFile(static_folder, "mif/metro.ttf", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.ttf"),
     StaticFile(defaults_folder, "ardupilot_navigator", "https://firmware.ardupilot.org/Sub/latest/navigator/ardusub"),
+    StaticFile(
+        defaults_folder,
+        "ardupilot_navigator_r4",
+        "https://s3.us-west-1.amazonaws.com/ardusub.bluerobotics.com/test-builds/ardusub-a09013c6-navigator-r4-preview",
+    ),
     StaticFile(defaults_folder, "ardupilot_pixhawk1", "https://firmware.ardupilot.org/Sub/latest/Pixhawk1/ardusub.apj"),
 ]
 
