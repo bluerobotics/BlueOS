@@ -119,10 +119,15 @@ class ArduPilotManager(metaclass=Singleton):
         self._current_sitl_frame = frame
         logger.info(f"Setting {frame.value} as frame for SITL.")
 
-    def start_navigator(self) -> None:
+    def start_navigator(self, navigator_type: FlightControllerType) -> None:
         self.current_platform = Platform.Navigator
-        if not self.firmware_manager.is_firmware_installed(self.current_platform):
-            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_platform)
+        if navigator_type == FlightControllerType.NavigatorR3:
+            if not self.firmware_manager.is_firmware_installed(self.current_platform):
+                self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_platform)
+        else:
+            self.install_firmware_from_file(
+                pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator_r4")
+            )
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -249,8 +254,8 @@ class ArduPilotManager(metaclass=Singleton):
         flight_controller_type, place = boards[0]
         logger.info(f"Board in use: {flight_controller_type.name}.")
 
-        if FlightControllerType.Navigator == flight_controller_type:
-            self.start_navigator()
+        if flight_controller_type in [FlightControllerType.NavigatorR3, FlightControllerType.NavigatorR4]:
+            self.start_navigator(flight_controller_type)
             return True
         if FlightControllerType.Serial == flight_controller_type:
             self.start_serial(place)
