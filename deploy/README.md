@@ -1,0 +1,1 @@
+# Temporary helpers to generate companion images
