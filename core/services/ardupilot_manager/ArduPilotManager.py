@@ -121,13 +121,13 @@ class ArduPilotManager(metaclass=Singleton):
 
     def start_navigator(self, navigator_type: FlightControllerType) -> None:
         self.current_platform = Platform.Navigator
-        if navigator_type == FlightControllerType.NavigatorR3:
-            if not self.firmware_manager.is_firmware_installed(self.current_platform):
+        if not self.firmware_manager.is_firmware_installed(self.current_platform):
+            if navigator_type == FlightControllerType.NavigatorR3:
                 self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_platform)
-        else:
-            self.install_firmware_from_file(
-                pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator_r4")
-            )
+            else:
+                self.install_firmware_from_file(
+                    pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator_r4")
+                )
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
