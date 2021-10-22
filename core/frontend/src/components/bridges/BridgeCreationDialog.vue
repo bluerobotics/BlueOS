@@ -64,7 +64,6 @@ import bridget from '@/store/bridget'
 import notifications from '@/store/notifications'
 import { Baudrate } from '@/types/common'
 import { bridget_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { VForm } from '@/types/vuetify'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
@@ -154,12 +153,8 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            bridget_service,
-            'BRIDGE_CREATE_FAIL',
-            `Could not create bridge: ${error.message}.`,
-          ))
+          const message = `Could not create bridge: ${error.message}.`
+          notifications.pushError({ service: bridget_service, type: 'BRIDGE_CREATE_FAIL', message })
         })
       return true
     },

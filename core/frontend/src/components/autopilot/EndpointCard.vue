@@ -92,7 +92,6 @@ import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { AutopilotEndpoint, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 export default Vue.extend({
   name: 'EndpointCard',
@@ -117,12 +116,8 @@ export default Vue.extend({
         data: [this.endpoint],
       })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_manager_service,
-            'AUTOPILOT_ENDPOINT_DELETE_FAIL',
-            `Could not remove endpoint: ${error.message}.`,
-          ))
+          const message = `Could not remove endpoint: ${error.message}.`
+          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_ENDPOINT_DELETE_FAIL', message })
         })
     },
   },

@@ -32,7 +32,6 @@ import ethernet from '@/store/ethernet'
 import notifications from '@/store/notifications'
 import { EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 import InterfaceCard from './InterfaceCard.vue'
 
@@ -63,12 +62,8 @@ export default Vue.extend({
         data: ethernet_interface,
       })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            ethernet_service,
-            'ETHERNET_INTERFACE_UPDATE_FAIL',
-            `Could not update ethernet interface: ${error.message}`,
-          ))
+          const message = `Could not update ethernet interface: ${error.message}`
+          notifications.pushError({ service: ethernet_service, type: 'ETHERNET_INTERFACE_UPDATE_FAIL', message })
         })
     },
   },

@@ -61,7 +61,6 @@ import Vue, { PropType } from 'vue'
 import notifications from '@/store/notifications'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { Network, WifiStatus } from '@/types/wifi'
 
 export default Vue.extend({
@@ -115,12 +114,8 @@ export default Vue.extend({
           wifi.setCurrentNetwork(null)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            wifi_service,
-            'WIFI_DISCONNECT_FAIL',
-            `Could not disconnect from wifi network: ${error.message}.`,
-          ))
+          const message = `Could not disconnect from wifi network: ${error.message}.`
+          notifications.pushError({ service: wifi_service, type: 'WIFI_DISCONNECT_FAIL', message })
         })
         .finally(() => {
           this.showDialog(false)

@@ -25,7 +25,6 @@ import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Platform } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 export default Vue.extend({
   name: 'GeneralAutopilot',
@@ -46,12 +45,8 @@ export default Vue.extend({
         timeout: 10000,
       })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_manager_service,
-            'AUTOPILOT_RESTART_FAIL',
-            `Could not restart autopilot: ${error.message}`,
-          ))
+          const message = `Could not restart autopilot: ${error.message}`
+          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_RESTART_FAIL', message })
         })
         .finally(() => {
           autopilot.setRestarting(false)

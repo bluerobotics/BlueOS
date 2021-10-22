@@ -3,7 +3,6 @@ import axios from 'axios'
 import notifications from '@/store/notifications'
 import { FilebrowserCredentials, FilebrowserFile, FilebrowserFolder } from '@/types/filebrowser'
 import { filebrowser_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 const filebrowser_url = '/file-browser/api'
 const filebrowser_credentials: FilebrowserCredentials = { username: '', password: '', recaptcha: '' }
@@ -30,12 +29,8 @@ class Filebrowser {
       })
       .catch((error) => {
         const error_message = `Could not authenticate to filebrowser API: ${error.message}`
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          filebrowser_service,
-          'FILEBROWSER_AUTH_FAIL',
-          error_message,
-        ))
+        const message = error_message
+        notifications.pushError({ service: filebrowser_service, type: 'FILEBROWSER_AUTH_FAIL', message })
         throw new Error(error)
       })
   }
@@ -66,12 +61,8 @@ class Filebrowser {
       .then((response) => response.data)
       .catch((error) => {
         const error_message = `Could not fetch folder ${folder_path}: ${error.message}`
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          filebrowser_service,
-          'FOLDER_FETCH_FAIL',
-          error_message,
-        ))
+        const message = error_message
+        notifications.pushError({ service: filebrowser_service, type: 'FOLDER_FETCH_FAIL', message })
         throw new Error(error_message)
       })
   }
@@ -90,12 +81,8 @@ class Filebrowser {
     })
       .catch((error) => {
         const error_message = `Could not delete file ${file.path}: ${error.message}`
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          filebrowser_service,
-          'FILE_DELETE_FAIL',
-          error_message,
-        ))
+        const message = error_message
+        notifications.pushError({ service: filebrowser_service, type: 'FILE_DELETE_FAIL', message })
         throw new Error(error_message)
       })
   }

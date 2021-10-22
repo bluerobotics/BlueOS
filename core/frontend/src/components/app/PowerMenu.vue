@@ -67,7 +67,6 @@ import Vue from 'vue'
 
 import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 
@@ -147,13 +146,8 @@ export default Vue.extend({
 
         const detail_message = 'detail' in error.response.data
           ? error.response.data.detail : ''
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          commander_service,
-          'SHUTDOWN_FAIL',
-          `Failed to commit operation: ${error.message}, ${detail_message}`
-          ,
-        ))
+        const message = `Failed to commit operation: ${error.message}, ${detail_message}`
+        notifications.pushError({ service: commander_service, type: 'SHUTDOWN_FAIL', message })
       })
     },
     showDialog(state: boolean): void {

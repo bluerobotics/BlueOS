@@ -59,7 +59,6 @@ import Vue from 'vue'
 
 import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 const API_URL = '/commander/v1.0'
 
@@ -89,13 +88,8 @@ export default Vue.extend({
       }).catch((error) => {
         const detail_message = 'data' in error.response
             && 'message' in error.response.data ? error.response.data.message : 'No details available.'
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          commander_service,
-          'RESET_SETTINGS_FAIL',
-          `Failed to commit operation: ${error.message}, ${detail_message}`
-          ,
-        ))
+        const message = `Failed to commit operation: ${error.message}, ${detail_message}`
+        notifications.pushError({ service: commander_service, type: 'RESET_SETTINGS_FAIL', message })
       })
     },
     showDialog(state: boolean): void {

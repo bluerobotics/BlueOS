@@ -9,7 +9,6 @@ import Vue from 'vue'
 import nmea_injector from '@/store/nmea-injector'
 import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { callPeriodically } from '@/utils/helper_functions'
 
 /**
@@ -36,12 +35,8 @@ export default Vue.extend({
           nmea_injector.setAvailableNMEASockets(available_nmea_sockets)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            nmea_injector_service,
-            'BRIDGES_FETCH_FAIL',
-            `Could not fetch available bridges: ${error.message}`,
-          ))
+          const message = `Could not fetch available bridges: ${error.message}`
+          notifications.pushError({ service: nmea_injector_service, type: 'BRIDGES_FETCH_FAIL', message })
           nmea_injector.setAvailableNMEASockets([])
         })
         .finally(() => {
