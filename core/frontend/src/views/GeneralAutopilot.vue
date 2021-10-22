@@ -24,7 +24,7 @@ import Vue from 'vue'
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Platform } from '@/types/autopilot'
-import { autopilot_manager_service } from '@/types/frontend_services'
+import { autopilot_service } from '@/types/frontend_services'
 
 export default Vue.extend({
   name: 'GeneralAutopilot',
@@ -46,7 +46,7 @@ export default Vue.extend({
       })
         .catch((error) => {
           const message = `Could not restart autopilot: ${error.message}`
-          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_RESTART_FAIL', message })
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_RESTART_FAIL', message })
         })
         .finally(() => {
           autopilot.setRestarting(false)

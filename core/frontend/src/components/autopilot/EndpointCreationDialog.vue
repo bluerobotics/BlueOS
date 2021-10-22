@@ -79,7 +79,7 @@ import Vue from 'vue'
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
-import { autopilot_manager_service } from '@/types/frontend_services'
+import { autopilot_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
@@ -155,7 +155,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           const message = `Could not create endpoint: ${error.message}.`
-          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_ENDPOINT_CREATE_FAIL', message })
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_CREATE_FAIL', message })
         })
       return true
     },
