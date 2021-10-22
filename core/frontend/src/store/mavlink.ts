@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import {
-  Action, Module, Mutation, VuexModule,
+  Action, getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -17,10 +17,10 @@ interface messsageRefreshRate {
 @Module({
   dynamic: true,
   store,
-  name: 'mavlink_store',
+  name: 'mavlink',
 })
 
-export default class MavlinkStore extends VuexModule {
+class MavlinkStore extends VuexModule {
   available_messages: Dictionary<MavlinkMessage> = {}
 
   message_listeners: Dictionary<Listener> = {}
@@ -64,3 +64,8 @@ export default class MavlinkStore extends VuexModule {
     }
   }
 }
+
+export { MavlinkStore }
+
+const mavlink: MavlinkStore = getModule(MavlinkStore)
+export default mavlink

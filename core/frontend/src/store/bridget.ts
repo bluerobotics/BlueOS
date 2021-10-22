@@ -1,4 +1,6 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
 
 import store from '@/store'
 import { Bridge } from '@/types/bridges'
@@ -6,10 +8,10 @@ import { Bridge } from '@/types/bridges'
 @Module({
   dynamic: true,
   store,
-  name: 'bridget_store',
+  name: 'bridget',
 })
 
-export default class BridgetStore extends VuexModule {
+class BridgetStore extends VuexModule {
   API_URL = '/bridget/v1.0'
 
   available_bridges: Bridge[] = []
@@ -42,3 +44,8 @@ export default class BridgetStore extends VuexModule {
     this.updating_bridges = false
   }
 }
+
+export { BridgetStore }
+
+const bridget: BridgetStore = getModule(BridgetStore)
+export default bridget

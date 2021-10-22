@@ -1,4 +1,6 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
 
 import store from '@/store'
 import { EthernetInterface } from '@/types/ethernet'
@@ -6,10 +8,10 @@ import { EthernetInterface } from '@/types/ethernet'
 @Module({
   dynamic: true,
   store,
-  name: 'ethernet_store',
+  name: 'ethernet',
 })
 
-export default class EthernetStore extends VuexModule {
+class EthernetStore extends VuexModule {
   API_URL = '/cable-guy/v1.0'
 
   available_interfaces: EthernetInterface[] = []
@@ -27,3 +29,8 @@ export default class EthernetStore extends VuexModule {
     this.updating_interfaces = false
   }
 }
+
+export { EthernetStore }
+
+const ethernet: EthernetStore = getModule(EthernetStore)
+export default ethernet
