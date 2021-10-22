@@ -10,7 +10,6 @@ import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Platform } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { callPeriodically } from '@/utils/helper_functions'
 
 /**
@@ -38,12 +37,8 @@ export default Vue.extend({
           autopilot.setAvailableEndpoints(available_endpoints)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_manager_service,
-            'AUTOPILOT_ENDPOINT_FETCH_FAIL',
-            `Could not fetch available MAVLink endpoints: ${error.message}`,
-          ))
+          const message = `Could not fetch available MAVLink endpoints: ${error.message}`
+          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_ENDPOINT_FETCH_FAIL', message })
           autopilot.setAvailableEndpoints([])
         })
     },
@@ -57,12 +52,8 @@ export default Vue.extend({
           autopilot.setCurrentPlatform(response.data)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_manager_service,
-            'AUTOPILOT_PLATFORM_FETCH_FAIL',
-            `Could not fetch current Autopilot platform: ${error.message}`,
-          ))
+          const message = `Could not fetch current Autopilot platform: ${error.message}`
+          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_PLATFORM_FETCH_FAIL', message })
           autopilot.setCurrentPlatform(Platform.Undefined)
         })
     },

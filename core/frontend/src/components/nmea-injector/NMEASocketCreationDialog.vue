@@ -57,7 +57,6 @@ import nmea_injector from '@/store/nmea-injector'
 import notifications from '@/store/notifications'
 import { SocketKind } from '@/types/common'
 import { nmea_injector_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { VForm } from '@/types/vuetify'
 import {
   isIntegerString, isNotEmpty, isSocketPort,
@@ -135,12 +134,8 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            nmea_injector_service,
-            'NMEA_SOCKET_CREATE_FAIL',
-            `Could not create NMEA socket: ${error.message}.`,
-          ))
+          const message = `Could not create NMEA socket: ${error.message}.`
+          notifications.pushError({ service: nmea_injector_service, type: 'NMEA_SOCKET_CREATE_FAIL', message })
         })
       return true
     },

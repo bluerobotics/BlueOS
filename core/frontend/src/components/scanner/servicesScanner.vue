@@ -10,7 +10,6 @@ import notifications from '@/store/notifications'
 import services_scanner from '@/store/servicesScanner'
 import { service_scanner_service } from '@/types/frontend_services'
 import { Service } from '@/types/helper'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 /**
  * Actual scanner for running services.
@@ -52,12 +51,9 @@ export default Vue.extend({
       }).catch((error) => {
         services_scanner.updateFoundServices([])
 
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          service_scanner_service,
-          'SERVICE_SCAN_FAIL',
-          `Error scanning for services: ${error}`,
-        ))
+        const message = `Error scanning for services: ${error}`
+
+        notifications.pushError({ service: service_scanner_service, type: 'SERVICE_SCAN_FAIL', message })
       })
     },
   },

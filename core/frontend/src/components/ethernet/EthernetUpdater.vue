@@ -9,7 +9,6 @@ import Vue from 'vue'
 import ethernet from '@/store/ethernet'
 import notifications from '@/store/notifications'
 import { ethernet_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
@@ -28,12 +27,8 @@ export default Vue.extend({
           ethernet.setInterfaces(response.data)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            ethernet_service,
-            'ETHERNET_AVAILABLE_FETCH_FAIL',
-            `Could not fetch for available ethernet interfaces: ${error.message}`,
-          ))
+          const message = `Could not fetch for available ethernet interfaces: ${error.message}`
+          notifications.pushError({ service: ethernet_service, type: 'ETHERNET_AVAILABLE_FETCH_FAIL', message })
           ethernet.setInterfaces([])
         })
     },

@@ -6,7 +6,6 @@ import {
 import store from '@/store'
 import notifications from '@/store/notifications'
 import { video_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { CreatedStream, Device, StreamStatus } from '@/types/video'
 
 @Module({
@@ -56,12 +55,8 @@ class VideoStore extends VuexModule {
       params: { name: stream.video_and_stream.name },
     })
       .catch((error) => {
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          video_manager_service,
-          'VIDEO_STREAM_DELETE_FAIL',
-          `Could not delete video stream: ${error.message}.`,
-        ))
+        const message = `Could not delete video stream: ${error.message}.`
+        notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAM_DELETE_FAIL', message })
       })
   }
 
@@ -77,12 +72,8 @@ class VideoStore extends VuexModule {
     })
       .then(() => true)
       .catch((error) => {
-        notifications.pushNotification(new LiveNotification(
-          NotificationLevel.Error,
-          video_manager_service,
-          'VIDEO_STREAM_CREATION_FAIL',
-          `Could not create video stream: ${error.message}.`,
-        ))
+        const message = `Could not create video stream: ${error.message}.`
+        notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAM_CREATION_FAIL', message })
         return false
       })
   }

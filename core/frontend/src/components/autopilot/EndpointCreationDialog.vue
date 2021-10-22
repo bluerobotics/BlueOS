@@ -80,7 +80,6 @@ import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { VForm } from '@/types/vuetify'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
@@ -155,12 +154,8 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_manager_service,
-            'AUTOPILOT_ENDPOINT_CREATE_FAIL',
-            `Could not create endpoint: ${error.message}.`,
-          ))
+          const message = `Could not create endpoint: ${error.message}.`
+          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_ENDPOINT_CREATE_FAIL', message })
         })
       return true
     },

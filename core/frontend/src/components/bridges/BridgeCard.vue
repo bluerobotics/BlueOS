@@ -45,7 +45,6 @@ import bridget from '@/store/bridget'
 import notifications from '@/store/notifications'
 import { Bridge } from '@/types/bridges'
 import { bridget_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 export default Vue.extend({
   name: 'BridgeCard',
@@ -65,12 +64,8 @@ export default Vue.extend({
         data: this.bridge,
       })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            bridget_service,
-            'BRIDGE_DELETE_FAIL',
-            `Could not remove bridge: ${error.message}.`,
-          ))
+          const message = `Could not remove bridge: ${error.message}.`
+          notifications.pushError({ service: bridget_service, type: 'BRIDGE_DELETE_FAIL', message })
         })
     },
   },

@@ -143,7 +143,6 @@ import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 enum InstallStatus {
   NotStarted,
@@ -241,12 +240,8 @@ export default Vue.extend({
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchSucceeded
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_manager_service,
-            'FIRMWARE_FETCH_FAIL',
-            `Could not fetch available firmwares: ${error.message}.`,
-          ))
+          const message = `Could not fetch available firmwares: ${error.message}.`
+          notifications.pushError({ service: autopilot_manager_service, type: 'FIRMWARE_FETCH_FAIL', message })
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchFailed
         })
     },
@@ -276,12 +271,8 @@ export default Vue.extend({
       } else {
         // Populate request with data for file install
         if (!this.firmware_file) {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Warning,
-            autopilot_manager_service,
-            'FILE_FIRMWARE_UPLOAD_FAIL',
-            'Could not upload firmware: no firmware file selected.',
-          ))
+          const message = 'Could not upload firmware: no firmware file selected.'
+          notifications.pushWarning({ service: autopilot_manager_service, type: 'FILE_FIRMWARE_UPLOAD_FAIL', message })
           return
         }
         const form_data = new FormData()
@@ -305,12 +296,8 @@ export default Vue.extend({
           } catch {
             this.install_result_message = 'Invalid backend error message.'
           }
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            autopilot_manager_service,
-            'FILE_FIRMWARE_INSTALL_FAIL',
-            `Could not install firmware: ${this.install_result_message}.`,
-          ))
+          const message = `Could not install firmware: ${this.install_result_message}.`
+          notifications.pushError({ service: autopilot_manager_service, type: 'FILE_FIRMWARE_INSTALL_FAIL', message })
         })
     },
   },

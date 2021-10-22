@@ -9,7 +9,6 @@ import Vue from 'vue'
 import notifications from '@/store/notifications'
 import video from '@/store/video'
 import { video_manager_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
@@ -29,12 +28,8 @@ export default Vue.extend({
           video.setAvailableDevices(response.data)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            video_manager_service,
-            'VIDEO_DEVICES_FETCH_FAIL',
-            `Could not fetch video devices: ${error.message}`,
-          ))
+          const message = `Could not fetch video devices: ${error.message}`
+          notifications.pushError({ service: video_manager_service, type: 'VIDEO_DEVICES_FETCH_FAIL', message })
         })
     },
     async fetchStreams(): Promise<void> {
@@ -47,12 +42,8 @@ export default Vue.extend({
           video.setAvailableStreams(response.data)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            video_manager_service,
-            'VIDEO_STREAMS_FETCH_FAIL',
-            `Could not fetch video streams: ${error.message}`,
-          ))
+          const message = `Could not fetch video streams: ${error.message}`
+          notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAMS_FETCH_FAIL', message })
         })
     },
   },

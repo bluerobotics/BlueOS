@@ -45,7 +45,6 @@ import nmea_injector from '@/store/nmea-injector'
 import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { NMEASocket } from '@/types/nmea-injector'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 export default Vue.extend({
   name: 'NMEASocketCard',
@@ -65,12 +64,8 @@ export default Vue.extend({
         data: this.nmeaSocket,
       })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            nmea_injector_service,
-            'nmeaSocket_DELETE_FAIL',
-            `Could not remove NMEA socket: ${error.message}.`,
-          ))
+          const message = `Could not remove NMEA socket: ${error.message}.`
+          notifications.pushError({ service: nmea_injector_service, type: 'nmeaSocket_DELETE_FAIL', message })
         })
     },
   },

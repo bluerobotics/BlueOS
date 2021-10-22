@@ -9,7 +9,6 @@ import Vue from 'vue'
 import bridget from '@/store/bridget'
 import notifications from '@/store/notifications'
 import { bridget_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { callPeriodically } from '@/utils/helper_functions'
 
 /**
@@ -37,12 +36,8 @@ export default Vue.extend({
           bridget.setAvailableBridges(available_bridges)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            bridget_service,
-            'BRIDGES_FETCH_FAIL',
-            `Could not fetch available bridges: ${error.message}`,
-          ))
+          const message = `Could not fetch available bridges: ${error.message}`
+          notifications.pushError({ service: bridget_service, type: 'BRIDGES_FETCH_FAIL', message })
           bridget.setAvailableBridges([])
         })
         .finally(() => {
@@ -60,12 +55,8 @@ export default Vue.extend({
           bridget.setAvailableSerialPorts(available_ports)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            bridget_service,
-            'BRIDGET_SERIAL_PORTS_FETCH_FAIL',
-            `Could not fetch available serial ports: ${error.message}`,
-          ))
+          const message = `Could not fetch available serial ports: ${error.message}`
+          notifications.pushError({ service: bridget_service, type: 'BRIDGET_SERIAL_PORTS_FETCH_FAIL', message })
           bridget.setAvailableSerialPorts([])
         })
         .finally(() => {

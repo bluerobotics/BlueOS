@@ -9,7 +9,6 @@ import Vue from 'vue'
 import notifications from '@/store/notifications'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { SavedNetwork, WPANetwork } from '@/types/wifi'
 import { callPeriodically } from '@/utils/helper_functions'
 
@@ -47,12 +46,8 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setCurrentNetwork(null)
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            wifi_service,
-            'WIFI_STATUS_FETCH_FAIL',
-            `Could not fetch wifi status: ${error.message}`,
-          ))
+          const message = `Could not fetch wifi status: ${error.message}`
+          notifications.pushError({ service: wifi_service, type: 'WIFI_STATUS_FETCH_FAIL', message })
         })
     },
     async fetchAvailableNetworks(): Promise<void> {
@@ -73,12 +68,8 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setAvailableNetworks(null)
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            wifi_service,
-            'WIFI_SCAN_FAIL',
-            `Could not scan for wifi networks: ${error.message}`,
-          ))
+          const message = `Could not scan for wifi networks: ${error.message}`
+          notifications.pushError({ service: wifi_service, type: 'WIFI_SCAN_FAIL', message })
         })
     },
     async fetchSavedNetworks(): Promise<void> {
@@ -92,12 +83,8 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setSavedNetworks(null)
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            wifi_service,
-            'WIFI_SAVED_FETCH_FAIL',
-            `Could not fetch saved networks: ${error.message}.`,
-          ))
+          const message = `Could not fetch saved networks: ${error.message}.`
+          notifications.pushError({ service: wifi_service, type: 'WIFI_SAVED_FETCH_FAIL', message })
         })
     },
   },

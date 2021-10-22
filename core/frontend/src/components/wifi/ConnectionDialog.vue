@@ -104,7 +104,6 @@ import Vue, { PropType } from 'vue'
 import notifications from '@/store/notifications'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
-import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { Network, NetworkCredentials } from '@/types/wifi'
 
 import PasswordInput from '../common/PasswordInput.vue'
@@ -176,12 +175,8 @@ export default Vue.extend({
           wifi.setNetworkStatus(null)
         })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            wifi_service,
-            'WIFI_CONNECT_FAIL',
-            `Could not connect to wifi network: ${error.message}.`,
-          ))
+          const message = `Could not connect to wifi network: ${error.message}.`
+          notifications.pushError({ service: wifi_service, type: 'WIFI_CONNECT_FAIL', message })
         })
         .finally(() => {
           this.password = ''
@@ -196,12 +191,8 @@ export default Vue.extend({
         params: { ssid: this.network.ssid },
       })
         .catch((error) => {
-          notifications.pushNotification(new LiveNotification(
-            NotificationLevel.Error,
-            wifi_service,
-            'WIFI_FORGET_FAIL',
-            `Could not remove saved wifi network: ${error.message}.`,
-          ))
+          const message = `Could not remove saved wifi network: ${error.message}.`
+          notifications.pushError({ service: wifi_service, type: 'WIFI_FORGET_FAIL', message })
         })
         .finally(() => {
           this.showDialog(false)
