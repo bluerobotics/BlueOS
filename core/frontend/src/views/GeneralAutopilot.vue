@@ -20,37 +20,33 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import AutopilotManagerStore from '@/store/autopilot_manager'
-import NotificationStore from '@/store/notifications'
+import autopilot from '@/store/autopilot_manager'
+import notifications from '@/store/notifications'
 import { Platform } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const autopilot_manager_store: AutopilotManagerStore = getModule(AutopilotManagerStore)
 
 export default Vue.extend({
   name: 'GeneralAutopilot',
   computed: {
     current_platform(): Platform {
-      return autopilot_manager_store.current_platform
+      return autopilot.current_platform
     },
     restarting(): boolean {
-      return autopilot_manager_store.restarting
+      return autopilot.restarting
     },
   },
   methods: {
     async restart_autopilot(): Promise<void> {
-      autopilot_manager_store.setRestarting(true)
+      autopilot.setRestarting(true)
       await axios({
         method: 'post',
-        url: `${autopilot_manager_store.API_URL}/restart`,
+        url: `${autopilot.API_URL}/restart`,
         timeout: 10000,
       })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             autopilot_manager_service,
             'AUTOPILOT_RESTART_FAIL',
@@ -58,7 +54,7 @@ export default Vue.extend({
           ))
         })
         .finally(() => {
-          autopilot_manager_store.setRestarting(false)
+          autopilot.setRestarting(false)
         })
     },
   },

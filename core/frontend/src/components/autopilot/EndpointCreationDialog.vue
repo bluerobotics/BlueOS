@@ -75,10 +75,9 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import AutopilotManagerStore from '@/store/autopilot_manager'
-import NotificationStore from '@/store/notifications'
+import autopilot from '@/store/autopilot_manager'
+import notifications from '@/store/notifications'
 import { EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
@@ -86,9 +85,6 @@ import { VForm } from '@/types/vuetify'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const autopilot_manager_store: AutopilotManagerStore = getModule(AutopilotManagerStore)
 
 export default Vue.extend({
   name: 'ConnectionDialog',
@@ -146,12 +142,12 @@ export default Vue.extend({
         return false
       }
 
-      autopilot_manager_store.setUpdatingEndpoints(true)
+      autopilot.setUpdatingEndpoints(true)
       this.showDialog(false)
 
       await axios({
         method: 'post',
-        url: `${autopilot_manager_store.API_URL}/endpoints`,
+        url: `${autopilot.API_URL}/endpoints`,
         timeout: 10000,
         data: [this.endpoint],
       })
@@ -159,7 +155,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             autopilot_manager_service,
             'AUTOPILOT_ENDPOINT_CREATE_FAIL',

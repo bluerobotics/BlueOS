@@ -40,12 +40,9 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import ServicesScannerStore from '@/store/servicesScanner'
+import services_scanner from '@/store/servicesScanner'
 import { Service } from '@/types/helper'
-
-const servicesHelperStore: ServicesScannerStore = getModule(ServicesScannerStore)
 
 /**
  * Display all scanned services info as a pretty table.
@@ -55,7 +52,7 @@ export default Vue.extend({
   name: 'AvailableServicesTable',
   computed: {
     availableServices() {
-      return servicesHelperStore.services.sort((a: Service, b: Service) => a.title.localeCompare(b.title))
+      return services_scanner.services.sort((a: Service, b: Service) => a.title.localeCompare(b.title))
     },
   },
 

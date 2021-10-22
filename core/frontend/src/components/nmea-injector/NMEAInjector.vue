@@ -63,16 +63,13 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NMEAInjectorStore from '@/store/nmea-injector'
+import nmea_injector from '@/store/nmea-injector'
 import { NMEASocket } from '@/types/nmea-injector'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import NMEASocketCard from './NMEASocketCard.vue'
 import CreationDialog from './NMEASocketCreationDialog.vue'
-
-const bridget_store: NMEAInjectorStore = getModule(NMEAInjectorStore)
 
 export default Vue.extend({
   name: 'NMEAInjector',
@@ -88,10 +85,10 @@ export default Vue.extend({
   },
   computed: {
     updating_nmea_sockets(): boolean {
-      return bridget_store.updating_nmea_sockets
+      return nmea_injector.updating_nmea_sockets
     },
     available_nmea_sockets(): NMEASocket[] {
-      return bridget_store.available_nmea_sockets
+      return nmea_injector.available_nmea_sockets
     },
     are_nmea_sockets_available(): boolean {
       return this.available_nmea_sockets.length !== 0

@@ -71,17 +71,14 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
-import VideoStore from '@/store/video'
+import video from '@/store/video'
 import { CreatedStream, Device, StreamStatus } from '@/types/video'
 
 import VideoControlsDialog from './VideoControlsDialog.vue'
 import VideoStream from './VideoStream.vue'
 import VideoStreamCreationDialog from './VideoStreamCreationDialog.vue'
-
-const video_store: VideoStore = getModule(VideoStore)
 
 export default Vue.extend({
   name: 'VideoDevice',
@@ -118,10 +115,10 @@ export default Vue.extend({
       })
     },
     video_streams(): StreamStatus[] {
-      return video_store.available_streams
+      return video.available_streams
     },
     updating_streams(): boolean {
-      return video_store.updating_streams
+      return video.updating_streams
     },
   },
   methods: {
@@ -132,7 +129,7 @@ export default Vue.extend({
       this.show_stream_creation_dialog = true
     },
     async createNewStream(stream: CreatedStream): Promise<void> {
-      await video_store.createStream(stream)
+      await video.createStream(stream)
     },
   },
 })

@@ -73,15 +73,12 @@
 <script lang="ts">
 import { differenceInSeconds } from 'date-fns'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
+import notifications from '@/store/notifications'
 import { CumulatedNotification, Notification } from '@/types/notifications'
 
 import NotificationsConfigMenu from './ConfigMenu.vue'
 import NotificationCard from './NotificationCard.vue'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 export default Vue.extend({
   name: 'NotificationManager',
@@ -100,7 +97,7 @@ export default Vue.extend({
   },
   computed: {
     notifications(): CumulatedNotification[] {
-      return notification_store.active_cumulated_notifications
+      return notifications.active_cumulated_notifications
     },
     recent_notifications(): CumulatedNotification[] {
       return this.notifications.filter((cumulated) => {
@@ -124,12 +121,12 @@ export default Vue.extend({
   },
   methods: {
     dismissAllNotifications(): void {
-      notification_store.notifications.forEach((notification) => {
+      notifications.notifications.forEach((notification) => {
         this.dismissNotification(notification)
       })
     },
     dismissNotification(notification: Notification): void {
-      notification_store.dismissNotification(notification)
+      notifications.dismissNotification(notification)
     },
     updateTimestamp(): void {
       this.timestamp = new Date()

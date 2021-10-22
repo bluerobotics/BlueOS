@@ -4,12 +4,10 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import NotificationStore from '@/store/notifications'
+import notifications from '@/store/notifications'
 import { video_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { CreatedStream, Device, StreamStatus } from '@/types/video'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 @Module({
   dynamic: true,
@@ -58,7 +56,7 @@ class VideoStore extends VuexModule {
       params: { name: stream.video_and_stream.name },
     })
       .catch((error) => {
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           video_manager_service,
           'VIDEO_STREAM_DELETE_FAIL',
@@ -79,7 +77,7 @@ class VideoStore extends VuexModule {
     })
       .then(() => true)
       .catch((error) => {
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           video_manager_service,
           'VIDEO_STREAM_CREATION_FAIL',

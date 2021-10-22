@@ -57,16 +57,12 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
-import WifiStore from '@/store/wifi'
+import notifications from '@/store/notifications'
+import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { Network, WifiStatus } from '@/types/wifi'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const wifi_store: WifiStore = getModule(WifiStore)
 
 export default Vue.extend({
   name: 'DisconnectionDialog',
@@ -111,15 +107,15 @@ export default Vue.extend({
     async disconnectFromWifiNetwork(): Promise<void> {
       await axios({
         method: 'get',
-        url: `${wifi_store.API_URL}/disconnect`,
+        url: `${wifi.API_URL}/disconnect`,
         timeout: 10000,
       })
         .then(() => {
-          wifi_store.setNetworkStatus(null)
-          wifi_store.setCurrentNetwork(null)
+          wifi.setNetworkStatus(null)
+          wifi.setCurrentNetwork(null)
         })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             wifi_service,
             'WIFI_DISCONNECT_FAIL',

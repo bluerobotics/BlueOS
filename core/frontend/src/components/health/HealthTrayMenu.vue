@@ -50,12 +50,9 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import MavlinkStore from '@/store/mavlink'
+import mavlink from '@/store/mavlink'
 import mavlink_store_get from '@/utils/mavlink'
-
-const mavlink_store: MavlinkStore = getModule(MavlinkStore)
 
 export default Vue.extend({
   name: 'HealthTrayMenu',
@@ -67,12 +64,12 @@ export default Vue.extend({
       return 'WIP'
     },
     battery_voltage(): string {
-      const voltage_microvolts = mavlink_store_get(mavlink_store, 'SYS_STATUS.messageData.voltage_battery') as number
+      const voltage_microvolts = mavlink_store_get(mavlink, 'SYS_STATUS.messageData.voltage_battery') as number
       return (voltage_microvolts as number / 1000).toFixed(2)
     },
 
     battery_current(): string {
-      const current_centiampere = mavlink_store_get(mavlink_store, 'SYS_STATUS.messageData.current_battery') as number
+      const current_centiampere = mavlink_store_get(mavlink, 'SYS_STATUS.messageData.current_battery') as number
       return (current_centiampere as number / 100).toFixed(2)
     },
   },

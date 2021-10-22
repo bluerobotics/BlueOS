@@ -56,16 +56,13 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import AutopilotManagerStore from '@/store/autopilot_manager'
+import autopilot from '@/store/autopilot_manager'
 import { AutopilotEndpoint } from '@/types/autopilot'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import EndpointCard from './EndpointCard.vue'
 import CreationDialog from './EndpointCreationDialog.vue'
-
-const autopilot_manager_store: AutopilotManagerStore = getModule(AutopilotManagerStore)
 
 export default Vue.extend({
   name: 'WifiManager',
@@ -81,10 +78,10 @@ export default Vue.extend({
   },
   computed: {
     updating_endpoints(): boolean {
-      return autopilot_manager_store.updating_endpoints
+      return autopilot.updating_endpoints
     },
     available_endpoints(): AutopilotEndpoint[] {
-      return autopilot_manager_store.available_endpoints
+      return autopilot.available_endpoints
     },
   },
   methods: {

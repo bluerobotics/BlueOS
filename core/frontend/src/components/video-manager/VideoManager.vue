@@ -39,16 +39,13 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
-import VideoStore from '@/store/video'
+import video from '@/store/video'
 import { Device, Format, VideoEncodeType } from '@/types/video'
 
 import VideoDevice from './VideoDevice.vue'
 import VideoUpdater from './VideoUpdater.vue'
-
-const video_store: VideoStore = getModule(VideoStore)
 
 export default Vue.extend({
   name: 'VideoManager',
@@ -67,12 +64,12 @@ export default Vue.extend({
         return device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).length !== 0
       }
 
-      return video_store.available_devices
+      return video.available_devices
         .filter(has_h264)
         .sort((a: Device, b: Device) => a.name.localeCompare(b.name))
     },
     updating_devices(): boolean {
-      return video_store.updating_devices
+      return video.updating_devices
     },
   },
 })

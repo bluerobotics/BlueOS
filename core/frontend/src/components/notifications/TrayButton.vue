@@ -31,13 +31,10 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
+import notifications from '@/store/notifications'
 
 import NotificationManager from './NotificationManager.vue'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 export default Vue.extend({
   name: 'NotificationTrayButton',
@@ -46,7 +43,7 @@ export default Vue.extend({
   },
   computed: {
     number_of_notifications(): number {
-      return notification_store.active_cumulated_notifications.length
+      return notifications.active_cumulated_notifications.length
     },
   },
 })

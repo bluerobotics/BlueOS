@@ -63,16 +63,13 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import BridgetStore from '@/store/bridget'
+import bridget from '@/store/bridget'
 import { Bridge } from '@/types/bridges'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import BridgeCard from './BridgeCard.vue'
 import CreationDialog from './BridgeCreationDialog.vue'
-
-const bridget_store: BridgetStore = getModule(BridgetStore)
 
 export default Vue.extend({
   name: 'Bridget',
@@ -88,10 +85,10 @@ export default Vue.extend({
   },
   computed: {
     updating_bridges(): boolean {
-      return bridget_store.updating_bridges
+      return bridget.updating_bridges
     },
     available_bridges(): Bridge[] {
-      return bridget_store.available_bridges
+      return bridget.available_bridges
     },
     are_bridges_available(): boolean {
       return this.available_bridges.length !== 0

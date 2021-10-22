@@ -5,16 +5,12 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NMEAInjectorStore from '@/store/nmea-injector'
-import NotificationStore from '@/store/notifications'
+import nmea_injector from '@/store/nmea-injector'
+import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { callPeriodically } from '@/utils/helper_functions'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const nmea_injector_store: NMEAInjectorStore = getModule(NMEAInjectorStore)
 
 /**
  * Responsible for updating NMEA sockets.
@@ -32,24 +28,24 @@ export default Vue.extend({
     async fetchAvailableNMEASockets(): Promise<void> {
       axios({
         method: 'get',
-        url: `${nmea_injector_store.API_URL}/socks`,
+        url: `${nmea_injector.API_URL}/socks`,
         timeout: 10000,
       })
         .then((response) => {
           const available_nmea_sockets = response.data
-          nmea_injector_store.setAvailableNMEASockets(available_nmea_sockets)
+          nmea_injector.setAvailableNMEASockets(available_nmea_sockets)
         })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             nmea_injector_service,
             'BRIDGES_FETCH_FAIL',
             `Could not fetch available bridges: ${error.message}`,
           ))
-          nmea_injector_store.setAvailableNMEASockets([])
+          nmea_injector.setAvailableNMEASockets([])
         })
         .finally(() => {
-          nmea_injector_store.setUpdatingNMEASockets(false)
+          nmea_injector.setUpdatingNMEASockets(false)
         })
     },
   },

@@ -27,13 +27,10 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import EthernetStore from '@/store/ethernet'
+import ethernet from '@/store/ethernet'
 
 import EthernetManager from './EthernetManager.vue'
-
-const ethernet_store: EthernetStore = getModule(EthernetStore)
 
 export default Vue.extend({
   name: 'EthernetTrayMenu',
@@ -42,7 +39,7 @@ export default Vue.extend({
   },
   computed: {
     interface_connected_icon(): string {
-      const connected_interfaces = ethernet_store.available_interfaces
+      const connected_interfaces = ethernet.available_interfaces
         .filter((ethernet_interface) => ethernet_interface.info && ethernet_interface.info.connected)
       return connected_interfaces.length !== 0 ? 'mdi-lan-connect' : 'mdi-lan-disconnect'
     },
