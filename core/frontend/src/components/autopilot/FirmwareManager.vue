@@ -142,7 +142,7 @@ import Vue from 'vue'
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Firmware, Vehicle } from '@/types/autopilot'
-import { autopilot_manager_service } from '@/types/frontend_services'
+import { autopilot_service } from '@/types/frontend_services'
 
 enum InstallStatus {
   NotStarted,
@@ -241,7 +241,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           const message = `Could not fetch available firmwares: ${error.message}.`
-          notifications.pushError({ service: autopilot_manager_service, type: 'FIRMWARE_FETCH_FAIL', message })
+          notifications.pushError({ service: autopilot_service, type: 'FIRMWARE_FETCH_FAIL', message })
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchFailed
         })
     },
@@ -272,7 +272,7 @@ export default Vue.extend({
         // Populate request with data for file install
         if (!this.firmware_file) {
           const message = 'Could not upload firmware: no firmware file selected.'
-          notifications.pushWarning({ service: autopilot_manager_service, type: 'FILE_FIRMWARE_UPLOAD_FAIL', message })
+          notifications.pushWarning({ service: autopilot_service, type: 'FILE_FIRMWARE_UPLOAD_FAIL', message })
           return
         }
         const form_data = new FormData()
@@ -297,7 +297,7 @@ export default Vue.extend({
             this.install_result_message = 'Invalid backend error message.'
           }
           const message = `Could not install firmware: ${this.install_result_message}.`
-          notifications.pushError({ service: autopilot_manager_service, type: 'FILE_FIRMWARE_INSTALL_FAIL', message })
+          notifications.pushError({ service: autopilot_service, type: 'FILE_FIRMWARE_INSTALL_FAIL', message })
         })
     },
   },

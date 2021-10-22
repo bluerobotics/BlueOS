@@ -91,7 +91,7 @@ import Vue, { PropType } from 'vue'
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { AutopilotEndpoint, userFriendlyEndpointType } from '@/types/autopilot'
-import { autopilot_manager_service } from '@/types/frontend_services'
+import { autopilot_service } from '@/types/frontend_services'
 
 export default Vue.extend({
   name: 'EndpointCard',
@@ -117,7 +117,7 @@ export default Vue.extend({
       })
         .catch((error) => {
           const message = `Could not remove endpoint: ${error.message}.`
-          notifications.pushError({ service: autopilot_manager_service, type: 'AUTOPILOT_ENDPOINT_DELETE_FAIL', message })
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_DELETE_FAIL', message })
         })
     },
   },
