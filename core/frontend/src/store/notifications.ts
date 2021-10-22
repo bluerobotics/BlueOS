@@ -1,9 +1,11 @@
 import {
-  getModule, Module, Mutation, VuexModule,
+  Action, getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { CumulatedNotification, Notification, NotificationLevel } from '@/types/notifications'
+import {
+  CumulatedNotification, LiveNotification, Notification, NotificationContent, NotificationLevel,
+} from '@/types/notifications'
 
 @Module({
   dynamic: true,
@@ -55,6 +57,31 @@ class NotificationsStore extends VuexModule {
       return
     }
     this.cumulated_notifications.push({ notification, count: 1 })
+  }
+
+  @Action
+  async pushSuccess(notif: NotificationContent): Promise<void> {
+    this.pushNotification(new LiveNotification(NotificationLevel.Success, notif.service, notif.type, notif.message))
+  }
+
+  @Action
+  async pushError(notif: NotificationContent): Promise<void> {
+    this.pushNotification(new LiveNotification(NotificationLevel.Error, notif.service, notif.type, notif.message))
+  }
+
+  @Action
+  async pushInfo(notif: NotificationContent): Promise<void> {
+    this.pushNotification(new LiveNotification(NotificationLevel.Info, notif.service, notif.type, notif.message))
+  }
+
+  @Action
+  async pushWarning(notif: NotificationContent): Promise<void> {
+    this.pushNotification(new LiveNotification(NotificationLevel.Warning, notif.service, notif.type, notif.message))
+  }
+
+  @Action
+  async pushCritical(notif: NotificationContent): Promise<void> {
+    this.pushNotification(new LiveNotification(NotificationLevel.Critical, notif.service, notif.type, notif.message))
   }
 
   @Mutation
