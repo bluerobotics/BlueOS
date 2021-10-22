@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import argparse
 import logging
+import os
 import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Set
@@ -103,6 +104,7 @@ def install_firmware_from_file(response: Response, binary: UploadFile = File(...
             shutil.copyfileobj(binary.file, buffer)
         autopilot.kill_ardupilot()
         autopilot.install_firmware_from_file(custom_firmware)
+        os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         response.status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
         return {"message": f"Cannot use this file: {error}"}

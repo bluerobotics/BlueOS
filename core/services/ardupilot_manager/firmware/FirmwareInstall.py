@@ -155,7 +155,6 @@ class FirmwareInstaller:
                 if not firmware_dest_path:
                     raise FirmwareInstallFail("Firmware file destination not provided.")
                 shutil.copy(new_firmware_path, firmware_dest_path)
-                os.remove(new_firmware_path)
                 return
         except Exception as error:
             raise FirmwareInstallFail(f"Error installing firmware: {error}") from error
