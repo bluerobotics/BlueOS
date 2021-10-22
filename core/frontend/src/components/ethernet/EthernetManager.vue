@@ -26,19 +26,15 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
-import EthernetStore from '@/store/ethernet'
-import NotificationsStore from '@/store/notifications'
+import ethernet from '@/store/ethernet'
+import notifications from '@/store/notifications'
 import { EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 import InterfaceCard from './InterfaceCard.vue'
-
-const notification_store: NotificationsStore = getModule(NotificationsStore)
-const ethernet_store: EthernetStore = getModule(EthernetStore)
 
 export default Vue.extend({
   name: 'EthernetManager',
@@ -48,26 +44,26 @@ export default Vue.extend({
   },
   computed: {
     are_interfaces_available(): boolean {
-      return ethernet_store.available_interfaces.length > 0
+      return ethernet.available_interfaces.length > 0
     },
     available_interfaces(): EthernetInterface[] {
-      return ethernet_store.available_interfaces
+      return ethernet.available_interfaces
     },
     updating_interfaces(): boolean {
-      return ethernet_store.updating_interfaces
+      return ethernet.updating_interfaces
     },
   },
   methods: {
     async updateInterface(ethernet_interface: EthernetInterface): Promise<void> {
-      ethernet_store.setUpdatingInterfaces(true)
+      ethernet.setUpdatingInterfaces(true)
       await axios({
         method: 'post',
-        url: `${ethernet_store.API_URL}/ethernet`,
+        url: `${ethernet.API_URL}/ethernet`,
         timeout: 5000,
         data: ethernet_interface,
       })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             ethernet_service,
             'ETHERNET_INTERFACE_UPDATE_FAIL',

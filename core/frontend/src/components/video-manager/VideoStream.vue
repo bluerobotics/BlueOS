@@ -64,17 +64,14 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import VideoStore from '@/store/video'
+import video from '@/store/video'
 import {
   CreatedStream, Device, StreamPrototype, StreamStatus,
 } from '@/types/video'
 import { video_dimension_framerate_text } from '@/utils/video'
 
 import VideoStreamCreationDialog from './VideoStreamCreationDialog.vue'
-
-const video_store: VideoStore = getModule(VideoStore)
 
 export default Vue.extend({
   name: 'VideoStream',
@@ -127,11 +124,11 @@ export default Vue.extend({
       this.show_stream_edit_dialog = true
     },
     async editStream(edited_stream: CreatedStream): Promise<void> {
-      await video_store.deleteStream(this.stream)
-      await video_store.createStream(edited_stream)
+      await video.deleteStream(this.stream)
+      await video.createStream(edited_stream)
     },
     async deleteStream(): Promise<void> {
-      video_store.deleteStream(this.stream)
+      video.deleteStream(this.stream)
     },
   },
 })

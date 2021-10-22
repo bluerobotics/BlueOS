@@ -138,16 +138,12 @@
 <script lang="ts">
 import axios, { AxiosRequestConfig } from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import AutopilotManagerStore from '@/store/autopilot_manager'
-import NotificationStore from '@/store/notifications'
+import autopilot from '@/store/autopilot_manager'
+import notifications from '@/store/notifications'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { autopilot_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const autopilot_manager_store: AutopilotManagerStore = getModule(AutopilotManagerStore)
 
 enum InstallStatus {
   NotStarted,
@@ -236,7 +232,7 @@ export default Vue.extend({
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
       await axios({
         method: 'get',
-        url: `${autopilot_manager_store.API_URL}/available_firmwares`,
+        url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 10000,
         params: { vehicle: this.chosen_vehicle },
       })
@@ -245,7 +241,7 @@ export default Vue.extend({
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchSucceeded
         })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             autopilot_manager_service,
             'FIRMWARE_FETCH_FAIL',
@@ -269,18 +265,18 @@ export default Vue.extend({
       if (this.upload_type === UploadType.Cloud) {
         // Populate request with data for cloud install
         Object.assign(axios_request_config, {
-          url: `${autopilot_manager_store.API_URL}/install_firmware_from_url`,
+          url: `${autopilot.API_URL}/install_firmware_from_url`,
           params: { url: this.chosen_firmware_url },
         })
       } else if (this.upload_type === UploadType.Restore) {
         // Populate request with data for restore install
         Object.assign(axios_request_config, {
-          url: `${autopilot_manager_store.API_URL}/restore_default_firmware`,
+          url: `${autopilot.API_URL}/restore_default_firmware`,
         })
       } else {
         // Populate request with data for file install
         if (!this.firmware_file) {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Warning,
             autopilot_manager_service,
             'FILE_FIRMWARE_UPLOAD_FAIL',
@@ -291,7 +287,7 @@ export default Vue.extend({
         const form_data = new FormData()
         form_data.append('binary', this.firmware_file)
         Object.assign(axios_request_config, {
-          url: `${autopilot_manager_store.API_URL}/install_firmware_from_file`,
+          url: `${autopilot.API_URL}/install_firmware_from_file`,
           headers: { 'Content-Type': 'multipart/form-data' },
           data: form_data,
         })
@@ -309,7 +305,7 @@ export default Vue.extend({
           } catch {
             this.install_result_message = 'Invalid backend error message.'
           }
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             autopilot_manager_service,
             'FILE_FIRMWARE_INSTALL_FAIL',

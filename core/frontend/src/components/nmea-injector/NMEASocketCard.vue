@@ -40,16 +40,12 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NMEAInjectorStore from '@/store/nmea-injector'
-import NotificationStore from '@/store/notifications'
+import nmea_injector from '@/store/nmea-injector'
+import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { NMEASocket } from '@/types/nmea-injector'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const nmea_injector_store: NMEAInjectorStore = getModule(NMEAInjectorStore)
 
 export default Vue.extend({
   name: 'NMEASocketCard',
@@ -61,15 +57,15 @@ export default Vue.extend({
   },
   methods: {
     async removeNMEASocket(): Promise<void> {
-      nmea_injector_store.setUpdatingNMEASockets(true)
+      nmea_injector.setUpdatingNMEASockets(true)
       await axios({
         method: 'delete',
-        url: `${nmea_injector_store.API_URL}/socks`,
+        url: `${nmea_injector.API_URL}/socks`,
         timeout: 10000,
         data: this.nmeaSocket,
       })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             nmea_injector_service,
             'nmeaSocket_DELETE_FAIL',

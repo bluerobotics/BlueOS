@@ -64,15 +64,12 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
+import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 const API_URL = '/commander/v1.0'
 
@@ -150,7 +147,7 @@ export default Vue.extend({
 
         const detail_message = 'detail' in error.response.data
           ? error.response.data.detail : ''
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           commander_service,
           'SHUTDOWN_FAIL',

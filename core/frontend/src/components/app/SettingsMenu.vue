@@ -56,13 +56,10 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
+import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 const API_URL = '/commander/v1.0'
 
@@ -92,7 +89,7 @@ export default Vue.extend({
       }).catch((error) => {
         const detail_message = 'data' in error.response
             && 'message' in error.response.data ? error.response.data.message : 'No details available.'
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           commander_service,
           'RESET_SETTINGS_FAIL',

@@ -5,16 +5,12 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
-import ServicesScannerStore from '@/store/servicesScanner'
+import notifications from '@/store/notifications'
+import services_scanner from '@/store/servicesScanner'
 import { service_scanner_service } from '@/types/frontend_services'
 import { Service } from '@/types/helper'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const servicesHelper: ServicesScannerStore = getModule(ServicesScannerStore)
 
 /**
  * Actual scanner for running services.
@@ -52,11 +48,11 @@ export default Vue.extend({
         const services = response.data.sort(
           (first: Service, second: Service) => first.port - second.port,
         )
-        servicesHelper.updateFoundServices(services)
+        services_scanner.updateFoundServices(services)
       }).catch((error) => {
-        servicesHelper.updateFoundServices([])
+        services_scanner.updateFoundServices([])
 
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           service_scanner_service,
           'SERVICE_SCAN_FAIL',

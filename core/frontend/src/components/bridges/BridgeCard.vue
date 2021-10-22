@@ -40,16 +40,12 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import BridgetStore from '@/store/bridget'
-import NotificationStore from '@/store/notifications'
+import bridget from '@/store/bridget'
+import notifications from '@/store/notifications'
 import { Bridge } from '@/types/bridges'
 import { bridget_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const bridget_store: BridgetStore = getModule(BridgetStore)
 
 export default Vue.extend({
   name: 'BridgeCard',
@@ -61,15 +57,15 @@ export default Vue.extend({
   },
   methods: {
     async removeBridge(): Promise<void> {
-      bridget_store.setUpdatingBridges(true)
+      bridget.setUpdatingBridges(true)
       await axios({
         method: 'delete',
-        url: `${bridget_store.API_URL}/bridges`,
+        url: `${bridget.API_URL}/bridges`,
         timeout: 10000,
         data: this.bridge,
       })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             bridget_service,
             'BRIDGE_DELETE_FAIL',

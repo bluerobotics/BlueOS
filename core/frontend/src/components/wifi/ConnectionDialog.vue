@@ -100,18 +100,14 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationsStore from '@/store/notifications'
-import WifiStore from '@/store/wifi'
+import notifications from '@/store/notifications'
+import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { Network, NetworkCredentials } from '@/types/wifi'
 
 import PasswordInput from '../common/PasswordInput.vue'
-
-const notification_store: NotificationsStore = getModule(NotificationsStore)
-const wifi_store: WifiStore = getModule(WifiStore)
 
 export default Vue.extend({
   name: 'ConnectionDialog',
@@ -171,16 +167,16 @@ export default Vue.extend({
       const credentials: NetworkCredentials = { ssid: this.real_ssid, password: this.password }
       await axios({
         method: 'post',
-        url: `${wifi_store.API_URL}/connect`,
+        url: `${wifi.API_URL}/connect`,
         timeout: 2000,
         data: credentials,
         params: { hidden: this.is_hidden },
       })
         .then(() => {
-          wifi_store.setNetworkStatus(null)
+          wifi.setNetworkStatus(null)
         })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             wifi_service,
             'WIFI_CONNECT_FAIL',
@@ -195,12 +191,12 @@ export default Vue.extend({
     async removeSavedWifiNetwork(): Promise<void> {
       await axios({
         method: 'post',
-        url: `${wifi_store.API_URL}/remove`,
+        url: `${wifi.API_URL}/remove`,
         timeout: 10000,
         params: { ssid: this.network.ssid },
       })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             wifi_service,
             'WIFI_FORGET_FAIL',

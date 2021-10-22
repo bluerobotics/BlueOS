@@ -25,14 +25,11 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import WifiStore from '@/store/wifi'
+import wifi from '@/store/wifi'
 import { wifi_strenght_icon } from '@/utils/wifi'
 
 import WifiManager from './WifiManager.vue'
-
-const wifi_store: WifiStore = getModule(WifiStore)
 
 export default Vue.extend({
   name: 'WifiTrayMenu',
@@ -41,13 +38,13 @@ export default Vue.extend({
   },
   computed: {
     wifi_icon(): string {
-      if (wifi_store.connectable_networks === null) {
+      if (wifi.connectable_networks === null) {
         return 'mdi-wifi-sync'
       }
-      if (wifi_store.current_network === null) {
+      if (wifi.current_network === null) {
         return 'mdi-wifi-off'
       }
-      return wifi_strenght_icon(wifi_store.current_network.signal)
+      return wifi_strenght_icon(wifi.current_network.signal)
     },
   },
 })

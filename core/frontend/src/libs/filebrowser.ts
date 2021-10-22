@@ -1,12 +1,9 @@
 import axios from 'axios'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationsStore from '@/store/notifications'
+import notifications from '@/store/notifications'
 import { FilebrowserCredentials, FilebrowserFile, FilebrowserFolder } from '@/types/filebrowser'
 import { filebrowser_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-
-const notification_store: NotificationsStore = getModule(NotificationsStore)
 
 const filebrowser_url = '/file-browser/api'
 const filebrowser_credentials: FilebrowserCredentials = { username: '', password: '', recaptcha: '' }
@@ -33,7 +30,7 @@ class Filebrowser {
       })
       .catch((error) => {
         const error_message = `Could not authenticate to filebrowser API: ${error.message}`
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           filebrowser_service,
           'FILEBROWSER_AUTH_FAIL',
@@ -69,7 +66,7 @@ class Filebrowser {
       .then((response) => response.data)
       .catch((error) => {
         const error_message = `Could not fetch folder ${folder_path}: ${error.message}`
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           filebrowser_service,
           'FOLDER_FETCH_FAIL',
@@ -93,7 +90,7 @@ class Filebrowser {
     })
       .catch((error) => {
         const error_message = `Could not delete file ${file.path}: ${error.message}`
-        notification_store.pushNotification(new LiveNotification(
+        notifications.pushNotification(new LiveNotification(
           NotificationLevel.Error,
           filebrowser_service,
           'FILE_DELETE_FAIL',

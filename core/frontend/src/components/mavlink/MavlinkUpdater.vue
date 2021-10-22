@@ -4,17 +4,14 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import MavlinkStore from '@/store/mavlink'
-
-const mavlink_store: MavlinkStore = getModule(MavlinkStore)
+import mavlink from '@/store/mavlink'
 
 export default Vue.extend({
   name: 'MavlinkUpdater',
   mounted() {
-    mavlink_store.setMessageRefreshRate({ messageName: 'HEARTBEAT', refreshRate: 1 })
-    mavlink_store.setMessageRefreshRate({ messageName: 'SYS_STATUS', refreshRate: 3 })
+    mavlink.setMessageRefreshRate({ messageName: 'HEARTBEAT', refreshRate: 1 })
+    mavlink.setMessageRefreshRate({ messageName: 'SYS_STATUS', refreshRate: 3 })
   },
 })
 </script>

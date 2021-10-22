@@ -52,10 +52,9 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NMEASocketStore from '@/store/nmea-injector'
-import NotificationStore from '@/store/notifications'
+import nmea_injector from '@/store/nmea-injector'
+import notifications from '@/store/notifications'
 import { SocketKind } from '@/types/common'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
@@ -63,9 +62,6 @@ import { VForm } from '@/types/vuetify'
 import {
   isIntegerString, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const nmea_injector_store: NMEASocketStore = getModule(NMEASocketStore)
 
 export default Vue.extend({
   name: 'NMEASocketCreationDialog',
@@ -126,12 +122,12 @@ export default Vue.extend({
         return false
       }
 
-      nmea_injector_store.setUpdatingNMEASockets(true)
+      nmea_injector.setUpdatingNMEASockets(true)
       this.showDialog(false)
 
       await axios({
         method: 'post',
-        url: `${nmea_injector_store.API_URL}/socks`,
+        url: `${nmea_injector.API_URL}/socks`,
         timeout: 10000,
         data: this.nmea_socket,
       })
@@ -139,7 +135,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             nmea_injector_service,
             'NMEA_SOCKET_CREATE_FAIL',

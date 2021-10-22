@@ -54,17 +54,14 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import WifiStore from '@/store/wifi'
+import wifi from '@/store/wifi'
 import { Network, WifiStatus } from '@/types/wifi'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import ConnectionDialog from './ConnectionDialog.vue'
 import DisconnectionDialog from './DisconnectionDialog.vue'
 import NetworkCard from './NetworkCard.vue'
-
-const wifi_store: WifiStore = getModule(WifiStore)
 
 export default Vue.extend({
   name: 'WifiManager',
@@ -83,13 +80,13 @@ export default Vue.extend({
   },
   computed: {
     wifi_status(): WifiStatus | null {
-      return wifi_store.network_status
+      return wifi.network_status
     },
     current_network(): Network | null {
-      return wifi_store.current_network
+      return wifi.current_network
     },
     connectable_networks(): Network[] | null {
-      return wifi_store.connectable_networks
+      return wifi.connectable_networks
     },
   },
   methods: {

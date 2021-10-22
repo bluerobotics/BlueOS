@@ -58,18 +58,14 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue, { PropType } from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import NotificationStore from '@/store/notifications'
-import VideoStore from '@/store/video'
+import notifications from '@/store/notifications'
+import video from '@/store/video'
 import { video_manager_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import {
   Bool, Control, Device, Menu, Slider,
 } from '@/types/video'
-
-const video_store: VideoStore = getModule(VideoStore)
-const notification_store: NotificationStore = getModule(NotificationStore)
 
 export default Vue.extend({
   name: 'VideoControlsDialog',
@@ -127,7 +123,7 @@ export default Vue.extend({
 
       await axios({
         method: 'post',
-        url: `${video_store.API_URL}/v4l`,
+        url: `${video.API_URL}/v4l`,
         timeout: 10000,
         data: {
           device: this.device.source,
@@ -136,7 +132,7 @@ export default Vue.extend({
         },
       })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             video_manager_service,
             'CONTROL_VALUE_UPDATE_FAIL',

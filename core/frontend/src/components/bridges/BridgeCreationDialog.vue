@@ -59,10 +59,9 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
-import { getModule } from 'vuex-module-decorators'
 
-import BridgetStore from '@/store/bridget'
-import NotificationStore from '@/store/notifications'
+import bridget from '@/store/bridget'
+import notifications from '@/store/notifications'
 import { Baudrate } from '@/types/common'
 import { bridget_service } from '@/types/frontend_services'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
@@ -70,9 +69,6 @@ import { VForm } from '@/types/vuetify'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
-
-const notification_store: NotificationStore = getModule(NotificationStore)
-const bridget_store: BridgetStore = getModule(BridgetStore)
 
 export default Vue.extend({
   name: 'BridgeCreationDialog',
@@ -107,12 +103,12 @@ export default Vue.extend({
       )
     },
     available_serial_ports(): {value: string, text: string}[] {
-      return bridget_store.available_serial_ports.map(
+      return bridget.available_serial_ports.map(
         (port) => ({ value: port, text: port }),
       )
     },
     updating_serial_ports(): boolean {
-      return bridget_store.updating_serial_ports
+      return bridget.updating_serial_ports
     },
     serial_selector_label(): string {
       return this.updating_serial_ports ? 'Fetching available serial ports...' : 'Serial port'
@@ -145,12 +141,12 @@ export default Vue.extend({
         return false
       }
 
-      bridget_store.setUpdatingBridges(true)
+      bridget.setUpdatingBridges(true)
       this.showDialog(false)
 
       await axios({
         method: 'post',
-        url: `${bridget_store.API_URL}/bridges`,
+        url: `${bridget.API_URL}/bridges`,
         timeout: 10000,
         data: this.bridge,
       })
@@ -158,7 +154,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          notification_store.pushNotification(new LiveNotification(
+          notifications.pushNotification(new LiveNotification(
             NotificationLevel.Error,
             bridget_service,
             'BRIDGE_CREATE_FAIL',
