@@ -1,4 +1,6 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
 
 import store from '@/store'
 import { Network, SavedNetwork, WifiStatus } from '@/types/wifi'
@@ -7,10 +9,10 @@ import { sorted_networks } from '@/utils/wifi'
 @Module({
   dynamic: true,
   store,
-  name: 'wifi_store',
+  name: 'wifi',
 })
 
-export default class WifiStore extends VuexModule {
+class WifiStore extends VuexModule {
   API_URL = '/wifi-manager/v1.0'
 
   current_network: Network | null = null
@@ -49,3 +51,8 @@ export default class WifiStore extends VuexModule {
       .filter((network: Network) => network.ssid !== this.current_network?.ssid))
   }
 }
+
+export { WifiStore }
+
+const wifi: WifiStore = getModule(WifiStore)
+export default wifi

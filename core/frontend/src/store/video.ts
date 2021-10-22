@@ -14,11 +14,11 @@ const notification_store: NotificationStore = getModule(NotificationStore)
 @Module({
   dynamic: true,
   store,
-  name: 'video_store',
+  name: 'video',
 })
 
 @Module
-export default class VideoStore extends VuexModule {
+class VideoStore extends VuexModule {
   API_URL = '/mavlink-camera-manager'
 
   available_streams: StreamStatus[] = []
@@ -89,3 +89,8 @@ export default class VideoStore extends VuexModule {
       })
   }
 }
+
+export { VideoStore }
+
+const video: VideoStore = getModule(VideoStore)
+export default video

@@ -1,4 +1,6 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
 
 import store from '@/store'
 import { Service } from '@/types/helper'
@@ -6,10 +8,10 @@ import { Service } from '@/types/helper'
 @Module({
   dynamic: true,
   store,
-  name: 'servicesScanner',
+  name: 'services_scanner',
 })
 
-export default class ServicesScannerStore extends VuexModule {
+class ServicesScannerStore extends VuexModule {
   services: Service[] = []
 
   @Mutation
@@ -17,3 +19,8 @@ export default class ServicesScannerStore extends VuexModule {
     this.services = services
   }
 }
+
+export { ServicesScannerStore }
+
+const services_scanner: ServicesScannerStore = getModule(ServicesScannerStore)
+export default services_scanner

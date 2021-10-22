@@ -1,4 +1,6 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
 
 import store from '@/store'
 import { NMEASocket } from '@/types/nmea-injector'
@@ -6,10 +8,10 @@ import { NMEASocket } from '@/types/nmea-injector'
 @Module({
   dynamic: true,
   store,
-  name: 'nmea_injector_store',
+  name: 'nmea_injector',
 })
 
-export default class NMEAInjectorStore extends VuexModule {
+class NMEAInjectorStore extends VuexModule {
   API_URL = '/nmea-injector/v1.0'
 
   available_nmea_sockets: NMEASocket[] = []
@@ -27,3 +29,8 @@ export default class NMEAInjectorStore extends VuexModule {
     this.updating_nmea_sockets = false
   }
 }
+
+export { NMEAInjectorStore }
+
+const nmea_injector: NMEAInjectorStore = getModule(NMEAInjectorStore)
+export default nmea_injector

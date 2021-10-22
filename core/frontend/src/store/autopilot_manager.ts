@@ -1,4 +1,6 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
 
 import store from '@/store'
 import { AutopilotEndpoint, Platform } from '@/types/autopilot'
@@ -6,10 +8,10 @@ import { AutopilotEndpoint, Platform } from '@/types/autopilot'
 @Module({
   dynamic: true,
   store,
-  name: 'autopilot_manager_store',
+  name: 'autopilot',
 })
 
-export default class AutopilotManagerStore extends VuexModule {
+class AutopilotManagerStore extends VuexModule {
   API_URL = '/ardupilot-manager/v1.0'
 
   available_endpoints: AutopilotEndpoint[] = []
@@ -41,3 +43,8 @@ export default class AutopilotManagerStore extends VuexModule {
     this.updating_endpoints = false
   }
 }
+
+export { AutopilotManagerStore }
+
+const autopilot: AutopilotManagerStore = getModule(AutopilotManagerStore)
+export default autopilot

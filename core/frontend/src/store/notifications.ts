@@ -1,4 +1,6 @@
-import { Module, Mutation, VuexModule } from 'vuex-module-decorators'
+import {
+  getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
 
 import store from '@/store'
 import { CumulatedNotification, Notification, NotificationLevel } from '@/types/notifications'
@@ -6,11 +8,11 @@ import { CumulatedNotification, Notification, NotificationLevel } from '@/types/
 @Module({
   dynamic: true,
   store,
-  name: 'notification_store',
+  name: 'notifications',
 })
 
 @Module
-export default class NotificationStore extends VuexModule {
+class NotificationsStore extends VuexModule {
   notifications: Notification[] = []
 
   cumulated_notifications: CumulatedNotification[] = []
@@ -72,3 +74,8 @@ export default class NotificationStore extends VuexModule {
     )
   }
 }
+
+export { NotificationsStore }
+
+const notifications: NotificationsStore = getModule(NotificationsStore)
+export default notifications
