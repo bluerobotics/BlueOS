@@ -3,6 +3,9 @@ process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
 module.exports = {
   devServer: {
     proxy: {
+      '^/status': {
+        target: 'http://companion.local/',
+      },
       '^/ardupilot-manager': {
         target: 'http://companion.local/',
       },
