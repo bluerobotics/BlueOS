@@ -1,5 +1,12 @@
 import { Service } from './common'
 
+export const frontend_service: Service = {
+  name: 'Companion Frontend',
+  description: 'Frontend status and logic.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
+
 export const service_scanner_service: Service = {
   name: 'Service Scanner',
   description: 'Actual scanner for running services.',
