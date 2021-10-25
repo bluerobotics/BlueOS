@@ -56,7 +56,6 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 
 import notifications from '@/store/notifications'
@@ -65,6 +64,7 @@ import { video_manager_service } from '@/types/frontend_services'
 import {
   Bool, Control, Device, Menu, Slider,
 } from '@/types/video'
+import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'VideoControlsDialog',
@@ -120,7 +120,7 @@ export default Vue.extend({
         value = control.configuration.Slider.value
       }
 
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${video.API_URL}/v4l`,
         timeout: 10000,

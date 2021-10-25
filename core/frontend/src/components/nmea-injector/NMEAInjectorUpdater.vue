@@ -3,12 +3,12 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import nmea_injector from '@/store/nmea-injector'
 import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
+import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
 
 /**
@@ -25,7 +25,7 @@ export default Vue.extend({
   },
   methods: {
     async fetchAvailableNMEASockets(): Promise<void> {
-      axios({
+      back_axios({
         method: 'get',
         url: `${nmea_injector.API_URL}/socks`,
         timeout: 10000,
@@ -35,9 +35,10 @@ export default Vue.extend({
           nmea_injector.setAvailableNMEASockets(available_nmea_sockets)
         })
         .catch((error) => {
+          nmea_injector.setAvailableNMEASockets([])
+          if (error === backend_offline_error) { return }
           const message = `Could not fetch available bridges: ${error.message}`
           notifications.pushError({ service: nmea_injector_service, type: 'BRIDGES_FETCH_FAIL', message })
-          nmea_injector.setAvailableNMEASockets([])
         })
         .finally(() => {
           nmea_injector.setUpdatingNMEASockets(false)

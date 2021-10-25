@@ -50,7 +50,6 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import nmea_injector from '@/store/nmea-injector'
@@ -58,6 +57,7 @@ import notifications from '@/store/notifications'
 import { SocketKind } from '@/types/common'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
+import back_axios from '@/utils/api'
 import {
   isIntegerString, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
@@ -124,7 +124,7 @@ export default Vue.extend({
       nmea_injector.setUpdatingNMEASockets(true)
       this.showDialog(false)
 
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${nmea_injector.API_URL}/socks`,
         timeout: 10000,

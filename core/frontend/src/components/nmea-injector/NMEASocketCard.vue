@@ -38,13 +38,13 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 
 import nmea_injector from '@/store/nmea-injector'
 import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { NMEASocket } from '@/types/nmea-injector'
+import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'NMEASocketCard',
@@ -57,7 +57,7 @@ export default Vue.extend({
   methods: {
     async removeNMEASocket(): Promise<void> {
       nmea_injector.setUpdatingNMEASockets(true)
-      await axios({
+      await back_axios({
         method: 'delete',
         url: `${nmea_injector.API_URL}/socks`,
         timeout: 10000,

@@ -54,11 +54,11 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
+import back_axios from '@/utils/api'
 
 const API_URL = '/commander/v1.0'
 
@@ -76,21 +76,23 @@ export default Vue.extend({
   },
   methods: {
     async reset_settings(): Promise<void> {
-      await axios({
+      await back_axios({
         url: `${API_URL}/settings/reset`,
         method: 'post',
         params: {
           i_know_what_i_am_doing: true,
         },
         timeout: 2000,
-      }).then(() => {
-        this.show_reset_dialog = true
-      }).catch((error) => {
-        const detail_message = 'data' in error.response
-            && 'message' in error.response.data ? error.response.data.message : 'No details available.'
-        const message = `Failed to commit operation: ${error.message}, ${detail_message}`
-        notifications.pushError({ service: commander_service, type: 'RESET_SETTINGS_FAIL', message })
       })
+        .then(() => {
+          this.show_reset_dialog = true
+        })
+        .catch((error) => {
+          const detail_message = 'data' in error.response
+            && 'message' in error.response.data ? error.response.data.message : 'No details available.'
+          const message = `Failed to commit operation: ${error.message}, ${detail_message}`
+          notifications.pushError({ service: commander_service, type: 'RESET_SETTINGS_FAIL', message })
+        })
     },
     showDialog(state: boolean): void {
       this.show_dialog = state

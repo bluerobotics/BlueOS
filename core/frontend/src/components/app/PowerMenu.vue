@@ -62,11 +62,11 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
+import back_axios from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 
@@ -130,7 +130,7 @@ export default Vue.extend({
       this.waitForShutdown()
     },
     async shutdown(shutdown_type: ShutdownType): Promise<void> {
-      await axios({
+      await back_axios({
         url: `${API_URL}/shutdown`,
         method: 'post',
         params: {
@@ -138,17 +138,18 @@ export default Vue.extend({
           i_know_what_i_am_doing: true,
         },
         timeout: 2000,
-      }).catch((error) => {
-        // Connection lost/timeout, normal when we are turnning off/rebooting
-        if (error.code === 'ECONNABORTED') {
-          return
-        }
-
-        const detail_message = 'detail' in error.response.data
-          ? error.response.data.detail : ''
-        const message = `Failed to commit operation: ${error.message}, ${detail_message}`
-        notifications.pushError({ service: commander_service, type: 'SHUTDOWN_FAIL', message })
       })
+        .catch((error) => {
+          // Connection lost/timeout, normal when we are turnning off/rebooting
+          if (error.code === 'ECONNABORTED') {
+            return
+          }
+
+          const detail_message = 'detail' in error.response.data
+            ? error.response.data.detail : ''
+          const message = `Failed to commit operation: ${error.message}, ${detail_message}`
+          notifications.pushError({ service: commander_service, type: 'SHUTDOWN_FAIL', message })
+        })
     },
     showDialog(state: boolean): void {
       this.show_dialog = state
@@ -160,7 +161,7 @@ export default Vue.extend({
     },
     async waitForBackendToBeOnline(): Promise<void> {
       this.service_status = Status.Rebooting
-      axios({
+      back_axios({
         method: 'get',
         url: '/helper/latest/web_services',
       })

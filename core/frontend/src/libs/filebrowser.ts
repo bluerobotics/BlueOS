@@ -1,8 +1,7 @@
-import axios from 'axios'
-
 import notifications from '@/store/notifications'
 import { FilebrowserCredentials, FilebrowserFile, FilebrowserFolder } from '@/types/filebrowser'
 import { filebrowser_service } from '@/types/frontend_services'
+import back_axios, { backend_offline_error } from '@/utils/api'
 
 const filebrowser_url = '/file-browser/api'
 const filebrowser_credentials: FilebrowserCredentials = { username: '', password: '', recaptcha: '' }
@@ -18,7 +17,7 @@ class Filebrowser {
   /* Fetch filebrowser API for a authentication token and store it.
      This method should be called on constructor so other methods have a token to use. */
   update_filebrowser_token(): void {
-    axios({
+    back_axios({
       method: 'post',
       url: `${filebrowser_url}/login`,
       timeout: 10000,
@@ -52,7 +51,7 @@ class Filebrowser {
    * @returns FilebrowserFolder object
   * */
   async fetchFolder(folder_path: string): Promise<FilebrowserFolder> {
-    return axios({
+    return back_axios({
       method: 'get',
       url: `${filebrowser_url}/resources${folder_path}`,
       timeout: 10000,
@@ -60,6 +59,7 @@ class Filebrowser {
     })
       .then((response) => response.data)
       .catch((error) => {
+        if (error === backend_offline_error) { return }
         const error_message = `Could not fetch folder ${folder_path}: ${error.message}`
         const message = error_message
         notifications.pushError({ service: filebrowser_service, type: 'FOLDER_FETCH_FAIL', message })
@@ -73,7 +73,7 @@ class Filebrowser {
    * @param file - FilebrowserFile object to be deleted
   * */
   async deleteFile(file: FilebrowserFile): Promise<void> {
-    axios({
+    back_axios({
       method: 'delete',
       url: `/file-browser/api/resources${file.path}`,
       timeout: 10000,

@@ -85,13 +85,13 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { AutopilotEndpoint, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
+import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'EndpointCard',
@@ -109,7 +109,7 @@ export default Vue.extend({
   methods: {
     async removeEndpoint(): Promise<void> {
       autopilot.setUpdatingEndpoints(true)
-      await axios({
+      await back_axios({
         method: 'delete',
         url: `${autopilot.API_URL}/endpoints`,
         timeout: 10000,

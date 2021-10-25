@@ -98,13 +98,13 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 
 import notifications from '@/store/notifications'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, NetworkCredentials } from '@/types/wifi'
+import back_axios from '@/utils/api'
 
 import PasswordInput from '../common/PasswordInput.vue'
 
@@ -164,7 +164,7 @@ export default Vue.extend({
     },
     async connectToWifiNetwork(): Promise<void> {
       const credentials: NetworkCredentials = { ssid: this.real_ssid, password: this.password }
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${wifi.API_URL}/connect`,
         timeout: 2000,
@@ -184,7 +184,7 @@ export default Vue.extend({
         })
     },
     async removeSavedWifiNetwork(): Promise<void> {
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${wifi.API_URL}/remove`,
         timeout: 10000,
