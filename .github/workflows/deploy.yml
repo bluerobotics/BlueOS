@@ -14,7 +14,7 @@ jobs:
       matrix:
         docker: [bootstrap, core]
         project: [bluerobotics/companion]
-        platforms: ["linux/amd64,linux/arm/v7"]
+        platforms: ["linux/arm/v7"]
     steps:
       -
         name: Checkout
@@ -110,3 +110,18 @@ jobs:
         run: |
           docker buildx imagetools \
             inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
+      -
+        name: Create image artifact
+        if: success() && matrix.docker == 'core'
+        run: |
+          GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
+          docker buildx build \
+            ${{ steps.prepare.outputs.buildx_args }} \
+            --tag bluerobotics/companion-core:${GIT_HASH_SHORT} \
+            --output "type=docker,dest=companion-core-${GIT_HASH_SHORT}.tar" \
+      -
+        name: Upload artifact
+        uses: actions/upload-artifact@v2
+        if: success() && matrix.docker == 'core'
+        with:
+          path: '*.tar'
