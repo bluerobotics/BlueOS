@@ -18,13 +18,13 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Platform } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
+import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'GeneralAutopilot',
@@ -39,7 +39,7 @@ export default Vue.extend({
   methods: {
     async restart_autopilot(): Promise<void> {
       autopilot.setRestarting(true)
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${autopilot.API_URL}/restart`,
         timeout: 10000,

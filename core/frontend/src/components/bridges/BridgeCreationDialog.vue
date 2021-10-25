@@ -57,7 +57,6 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import bridget from '@/store/bridget'
@@ -65,6 +64,7 @@ import notifications from '@/store/notifications'
 import { Baudrate } from '@/types/common'
 import { bridget_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
+import back_axios from '@/utils/api'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
@@ -143,7 +143,7 @@ export default Vue.extend({
       bridget.setUpdatingBridges(true)
       this.showDialog(false)
 
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${bridget.API_URL}/bridges`,
         timeout: 10000,

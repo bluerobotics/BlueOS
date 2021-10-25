@@ -3,13 +3,13 @@
 </template>
 
 <script lang="ts">
-import axios, { AxiosResponse } from 'axios'
 import Vue from 'vue'
 
 import notifications from '@/store/notifications'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { SavedNetwork, WPANetwork } from '@/types/wifi'
+import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
@@ -21,12 +21,12 @@ export default Vue.extend({
   },
   methods: {
     async fetchNetworkStatus(): Promise<void> {
-      await axios({
+      await back_axios({
         method: 'get',
         url: `${wifi.API_URL}/status`,
         timeout: 10000,
       })
-        .then((response: AxiosResponse) => {
+        .then((response) => {
           wifi.setNetworkStatus(response.data)
 
           if (response.data.wpa_state !== 'COMPLETED') {
@@ -46,12 +46,13 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setCurrentNetwork(null)
+          if (error === backend_offline_error) { return }
           const message = `Could not fetch wifi status: ${error.message}`
           notifications.pushError({ service: wifi_service, type: 'WIFI_STATUS_FETCH_FAIL', message })
         })
     },
     async fetchAvailableNetworks(): Promise<void> {
-      await axios({
+      await back_axios({
         method: 'get',
         url: `${wifi.API_URL}/scan`,
         timeout: 20000,
@@ -68,12 +69,13 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setAvailableNetworks(null)
+          if (error === backend_offline_error) { return }
           const message = `Could not scan for wifi networks: ${error.message}`
           notifications.pushError({ service: wifi_service, type: 'WIFI_SCAN_FAIL', message })
         })
     },
     async fetchSavedNetworks(): Promise<void> {
-      await axios({
+      await back_axios({
         method: 'get',
         url: `${wifi.API_URL}/saved`,
         timeout: 10000,
@@ -83,6 +85,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setSavedNetworks(null)
+          if (error === backend_offline_error) { return }
           const message = `Could not fetch saved networks: ${error.message}.`
           notifications.pushError({ service: wifi_service, type: 'WIFI_SAVED_FETCH_FAIL', message })
         })

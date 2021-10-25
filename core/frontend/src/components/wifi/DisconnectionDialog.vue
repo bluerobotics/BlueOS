@@ -55,13 +55,13 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 
 import notifications from '@/store/notifications'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, WifiStatus } from '@/types/wifi'
+import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'DisconnectionDialog',
@@ -104,7 +104,7 @@ export default Vue.extend({
       this.show_more_info = !this.show_more_info
     },
     async disconnectFromWifiNetwork(): Promise<void> {
-      await axios({
+      await back_axios({
         method: 'get',
         url: `${wifi.API_URL}/disconnect`,
         timeout: 10000,

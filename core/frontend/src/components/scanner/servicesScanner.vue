@@ -3,13 +3,13 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import notifications from '@/store/notifications'
 import services_scanner from '@/store/servicesScanner'
 import { service_scanner_service } from '@/types/frontend_services'
 import { Service } from '@/types/helper'
+import back_axios, { backend_offline_error } from '@/utils/api'
 
 /**
  * Actual scanner for running services.
@@ -42,19 +42,25 @@ export default Vue.extend({
       }, 5000)
     },
     requestData() {
-      axios.get('/helper/latest/web_services').then((response) => {
-        // Sort services by port number
-        const services = response.data.sort(
-          (first: Service, second: Service) => first.port - second.port,
-        )
-        services_scanner.updateFoundServices(services)
-      }).catch((error) => {
-        services_scanner.updateFoundServices([])
-
-        const message = `Error scanning for services: ${error}`
-
-        notifications.pushError({ service: service_scanner_service, type: 'SERVICE_SCAN_FAIL', message })
+      back_axios({
+        method: 'get',
+        url: '/helper/latest/web_services',
+        timeout: 10000,
       })
+        .then((response) => {
+          // Sort services by port number
+          const services = response.data.sort(
+            (first: Service, second: Service) => first.port - second.port,
+          )
+          services_scanner.updateFoundServices(services)
+        })
+        .catch((error) => {
+          services_scanner.updateFoundServices([])
+          if (error === backend_offline_error) { return }
+
+          const message = `Error scanning for services: ${error}`
+          notifications.pushError({ service: service_scanner_service, type: 'SERVICE_SCAN_FAIL', message })
+        })
     },
   },
 })

@@ -136,13 +136,14 @@
 </template>
 
 <script lang="ts">
-import axios, { AxiosRequestConfig } from 'axios'
+import { AxiosRequestConfig } from 'axios'
 import Vue from 'vue'
 
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
+import back_axios, { backend_offline_error } from '@/utils/api'
 
 enum InstallStatus {
   NotStarted,
@@ -229,7 +230,7 @@ export default Vue.extend({
     async updateAvailableFirmwares(): Promise<void> {
       this.chosen_firmware_url = null
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
-      await axios({
+      await back_axios({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 10000,
@@ -240,9 +241,10 @@ export default Vue.extend({
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchSucceeded
         })
         .catch((error) => {
+          this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchFailed
+          if (error === backend_offline_error) { return }
           const message = `Could not fetch available firmwares: ${error.message}.`
           notifications.pushError({ service: autopilot_service, type: 'FIRMWARE_FETCH_FAIL', message })
-          this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchFailed
         })
     },
     setCloudFirmwareChosen(): void {
@@ -284,13 +286,14 @@ export default Vue.extend({
         })
       }
 
-      await axios(axios_request_config)
+      await back_axios(axios_request_config)
         .then(() => {
           this.install_status = InstallStatus.Succeeded
           this.install_result_message = 'Successfully installed new firmware'
         })
         .catch((error) => {
           this.install_status = InstallStatus.Failed
+          if (error === backend_offline_error) { return }
           try {
             this.install_result_message = error.response.data.message
           } catch {

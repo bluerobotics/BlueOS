@@ -38,13 +38,13 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue, { PropType } from 'vue'
 
 import bridget from '@/store/bridget'
 import notifications from '@/store/notifications'
 import { Bridge } from '@/types/bridges'
 import { bridget_service } from '@/types/frontend_services'
+import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'BridgeCard',
@@ -57,7 +57,7 @@ export default Vue.extend({
   methods: {
     async removeBridge(): Promise<void> {
       bridget.setUpdatingBridges(true)
-      await axios({
+      await back_axios({
         method: 'delete',
         url: `${bridget.API_URL}/bridges`,
         timeout: 10000,

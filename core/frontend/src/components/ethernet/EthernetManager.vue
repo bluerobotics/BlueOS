@@ -24,7 +24,6 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -32,6 +31,7 @@ import ethernet from '@/store/ethernet'
 import notifications from '@/store/notifications'
 import { EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
+import back_axios from '@/utils/api'
 
 import InterfaceCard from './InterfaceCard.vue'
 
@@ -55,7 +55,7 @@ export default Vue.extend({
   methods: {
     async updateInterface(ethernet_interface: EthernetInterface): Promise<void> {
       ethernet.setUpdatingInterfaces(true)
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${ethernet.API_URL}/ethernet`,
         timeout: 5000,

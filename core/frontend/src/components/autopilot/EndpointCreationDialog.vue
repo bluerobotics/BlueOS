@@ -73,7 +73,6 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
 import Vue from 'vue'
 
 import autopilot from '@/store/autopilot_manager'
@@ -81,6 +80,7 @@ import notifications from '@/store/notifications'
 import { EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
+import back_axios from '@/utils/api'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
@@ -144,7 +144,7 @@ export default Vue.extend({
       autopilot.setUpdatingEndpoints(true)
       this.showDialog(false)
 
-      await axios({
+      await back_axios({
         method: 'post',
         url: `${autopilot.API_URL}/endpoints`,
         timeout: 10000,

@@ -1,4 +1,3 @@
-import axios from 'axios'
 import {
   Action, getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
@@ -7,6 +6,7 @@ import store from '@/store'
 import notifications from '@/store/notifications'
 import { video_manager_service } from '@/types/frontend_services'
 import { CreatedStream, Device, StreamStatus } from '@/types/video'
+import back_axios, { backend_offline_error } from '@/utils/api'
 
 @Module({
   dynamic: true,
@@ -48,7 +48,7 @@ class VideoStore extends VuexModule {
   async deleteStream(stream: StreamStatus): Promise<void> {
     this.setUpdatingStreams(true)
 
-    await axios({
+    await back_axios({
       method: 'delete',
       url: `${this.API_URL}/delete_stream`,
       timeout: 10000,
@@ -64,7 +64,7 @@ class VideoStore extends VuexModule {
   async createStream(stream: CreatedStream): Promise<boolean> {
     this.setUpdatingStreams(true)
 
-    return axios({
+    return back_axios({
       method: 'post',
       url: `${this.API_URL}/streams`,
       timeout: 10000,
@@ -72,6 +72,7 @@ class VideoStore extends VuexModule {
     })
       .then(() => true)
       .catch((error) => {
+        if (error === backend_offline_error) { return false }
         const message = `Could not create video stream: ${error.message}.`
         notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAM_CREATION_FAIL', message })
         return false
