@@ -3,5 +3,7 @@
 **/.mypy_cache
 **/.pytest_cache
 **/*.pyc
+**/*.egg-info
 **/node_modules
 **/dist
+**/build
