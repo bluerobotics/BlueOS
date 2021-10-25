@@ -4,14 +4,16 @@
       flat
     >
       <v-app-bar
-        color="#08c"
         rounded="0"
+        :color="app_bar_color"
       >
         <v-app-bar-nav-icon
           color="white"
           @click="drawer = true"
         />
 
+        <v-spacer />
+        <backend-status-checker @statusChange="changeBackendStatus" />
         <v-spacer />
         <health-tray-menu />
         <wifi-tray-menu />
@@ -112,6 +114,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
@@ -143,10 +146,12 @@ export default Vue.extend({
     'bridget-updater': BridgetUpdater,
     'power-menu': PowerMenu,
     'settings-menu': SettingsMenu,
+    'backend-status-checker': BackendStatusChecker,
   },
 
   data: () => ({
     drawer: false,
+    backend_offline: false,
     menus: [
       {
         title: 'Main',
@@ -228,6 +233,14 @@ export default Vue.extend({
     },
     build_date(): string {
       return process.env.VUE_APP_BUILD_DATE
+    },
+    app_bar_color(): string {
+      return this.backend_offline ? 'grey darken-1' : '#08c'
+    },
+  },
+  methods: {
+    changeBackendStatus(backend_offline: boolean): void {
+      this.backend_offline = backend_offline
     },
   },
 })
