@@ -90,8 +90,6 @@ class ArduPilotManager(metaclass=Singleton):
             time.sleep(5.0)
 
     def run_with_board(self) -> None:
-        ArduPilotManager.check_running_as_root()
-
         while not self.start_board(BoardDetector.detect()):
             logger.warning("Flight controller board not detected, will try again.")
             time.sleep(2)
