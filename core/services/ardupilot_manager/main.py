@@ -38,6 +38,7 @@ app = FastAPI(
 )
 logger.info("Starting ArduPilot Manager.")
 autopilot = ArduPilotManager()
+autopilot.check_running_as_root()
 
 
 @app.get("/endpoints", response_model=List[Dict[str, Any]])
