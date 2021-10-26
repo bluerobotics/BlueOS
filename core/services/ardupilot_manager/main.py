@@ -136,7 +136,8 @@ def set_platform(response: Response, use_sitl: bool, sitl_frame: SITLFrame = SIT
         else:
             autopilot.current_platform = Platform.Undefined
         logger.debug("Restarting ardupilot...")
-        autopilot.restart_ardupilot()
+        autopilot.kill_ardupilot()
+        autopilot.start_ardupilot()
         logger.debug("Ardupilot successfully restarted.")
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
