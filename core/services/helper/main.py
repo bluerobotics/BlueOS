@@ -9,6 +9,7 @@ import requests
 import uvicorn
 from bs4 import BeautifulSoup
 from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.decorators import temporary_cache
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -59,6 +60,7 @@ class Helper:
         return info
 
     @staticmethod
+    @temporary_cache(timeout_seconds=10)
     def scan_ports() -> List[ServiceInfo]:
         # Filter for TCP ports that are listen and can be accessed by external users (server in 0.0.0.0)
         connections = iter(psutil.net_connections("tcp"))
