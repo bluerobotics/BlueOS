@@ -298,9 +298,12 @@ class ArduPilotManager(metaclass=Singleton):
         self.should_be_running = False
 
         if not self.current_platform == Platform.SITL:
-            logger.info("Disarming vehicle.")
-            self.vehicle_manager.disarm_vehicle()
-            logger.info("Vehicle disarmed.")
+            try:
+                logger.info("Disarming vehicle.")
+                self.vehicle_manager.disarm_vehicle()
+                logger.info("Vehicle disarmed.")
+            except Exception as error:
+                logger.warning(f"Could not disarm vehicle: {error}. Proceeding with kill.")
 
         # TODO: Add shutdown command on HAL_SITL and HAL_LINUX, changing terminate/prune
         # logic with a simple "self.vehicle_manager.shutdown_vehicle()"
