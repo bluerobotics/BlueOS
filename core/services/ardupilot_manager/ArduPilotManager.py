@@ -47,17 +47,26 @@ class ArduPilotManager(metaclass=Singleton):
         self.should_be_running = False
 
     async def auto_restart_ardupilot(self) -> None:
-        """Auto-restart Ardupilot process if it dies when not supposed to."""
+        """Auto-restart Ardupilot when it's not running but was supposed to."""
         while True:
-            subprocess_stopped = self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
-            needs_restart = (
-                self.should_be_running
-                and self.current_platform in [Platform.SITL, Platform.Navigator]
-                and (len(self.running_ardupilot_processes()) == 0 or subprocess_stopped)
+            process_not_running = (
+                self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
+            ) or len(self.running_ardupilot_processes()) == 0
+            needs_restart = self.should_be_running and (
+                (self.current_platform in [Platform.SITL, Platform.Navigator] and process_not_running)
+                or self.current_platform == Platform.Undefined
             )
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
-                await self.start_ardupilot()
+                try:
+                    await self.kill_ardupilot()
+                except Exception as error:
+                    logger.warning(f"Could not kill Ardupilot: {error}")
+                try:
+                    await self.start_ardupilot()
+                except Exception as error:
+                    logger.warning(f"Could not start Ardupilot: {error}")
+                self.should_be_running = True
             await asyncio.sleep(5.0)
 
     async def auto_restart_router(self) -> None:
@@ -82,10 +91,9 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.debug(f"Could not restart Mavlink router: {error}. Will try again soon.")
             await asyncio.sleep(5.0)
 
-    async def run_with_board(self) -> None:
-        while not self.start_board(BoardDetector.detect()):
-            logger.warning("Flight controller board not detected, will try again.")
-            await asyncio.sleep(2)
+    def run_with_board(self) -> None:
+        if not self.start_board(BoardDetector.detect()):
+            logger.warning("Flight controller board not detected.")
 
     @staticmethod
     def check_running_as_root() -> None:
@@ -314,7 +322,7 @@ class ArduPilotManager(metaclass=Singleton):
             self.run_with_sitl(self.current_sitl_frame)
             self.should_be_running = True
             return
-        await self.run_with_board()
+        self.run_with_board()
         self.should_be_running = True
 
     async def restart_ardupilot(self) -> None:
