@@ -1,8 +1,7 @@
+import asyncio
 import os
 import pathlib
 import subprocess
-import threading
-import time
 from copy import deepcopy
 from typing import Any, List, Optional, Set, Tuple
 
@@ -46,14 +45,8 @@ class ArduPilotManager(metaclass=Singleton):
         self.vehicle_manager = VehicleManager()
 
         self.should_be_running = False
-        auto_restart_ardupilot_thread = threading.Thread(target=self.auto_restart_ardupilot, args=())
-        auto_restart_ardupilot_thread.daemon = True
-        auto_restart_ardupilot_thread.start()
-        auto_restart_router_thread = threading.Thread(target=self.auto_restart_router, args=())
-        auto_restart_router_thread.daemon = True
-        auto_restart_router_thread.start()
 
-    def auto_restart_ardupilot(self) -> None:
+    async def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot process if it dies when not supposed to."""
         while True:
             subprocess_stopped = self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
@@ -64,10 +57,10 @@ class ArduPilotManager(metaclass=Singleton):
             )
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
-                self.start_ardupilot()
-            time.sleep(5.0)
+                await self.start_ardupilot()
+            await asyncio.sleep(5.0)
 
-    def auto_restart_router(self) -> None:
+    async def auto_restart_router(self) -> None:
         """Auto-restart Mavlink router process if it dies."""
         while True:
             try:
@@ -78,7 +71,7 @@ class ArduPilotManager(metaclass=Singleton):
                 if self.should_be_running and subprocess_stopped:
                     logger.debug("Trying to restart Mavlink router...")
                     self.mavlink_manager.restart()
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                     if self.mavlink_manager.router_process().poll() is not None:
                         error = self.mavlink_manager.router_process().communicate()[1]
                         raise RuntimeError(error)
@@ -87,12 +80,12 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.debug("Mavlink router did not start yet.")
             except Exception as error:
                 logger.debug(f"Could not restart Mavlink router: {error}. Will try again soon.")
-            time.sleep(5.0)
+            await asyncio.sleep(5.0)
 
-    def run_with_board(self) -> None:
+    async def run_with_board(self) -> None:
         while not self.start_board(BoardDetector.detect()):
             logger.warning("Flight controller board not detected, will try again.")
-            time.sleep(2)
+            await asyncio.sleep(2)
 
     @staticmethod
     def check_running_as_root() -> None:
@@ -269,7 +262,7 @@ class ArduPilotManager(metaclass=Singleton):
 
         return list(filter(is_ardupilot_process, psutil.process_iter()))
 
-    def terminate_ardupilot_subprocess(self) -> None:
+    async def terminate_ardupilot_subprocess(self) -> None:
         """Terminate Ardupilot subprocess."""
         if self.ardupilot_subprocess:
             self.ardupilot_subprocess.terminate()
@@ -278,21 +271,21 @@ class ArduPilotManager(metaclass=Singleton):
                     logger.info("Ardupilot subprocess terminated.")
                     return
                 logger.debug("Waiting for process to die...")
-                time.sleep(0.5)
+                await asyncio.sleep(0.5)
             raise ArdupilotProcessKillFail("Could not terminate Ardupilot subprocess.")
         logger.warning("Ardupilot subprocess already not running.")
 
-    def prune_ardupilot_processes(self) -> None:
+    async def prune_ardupilot_processes(self) -> None:
         """Kill all system processes using Ardupilot's firmware file."""
         for process in self.running_ardupilot_processes():
             try:
                 logger.debug(f"Killing Ardupilot process {process.name()}::{process.pid}.")
                 process.kill()
-                time.sleep(0.5)
+                await asyncio.sleep(0.5)
             except Exception as error:
                 raise ArdupilotProcessKillFail(f"Could not kill {process.name()}::{process.pid}.") from error
 
-    def kill_ardupilot(self) -> None:
+    async def kill_ardupilot(self) -> None:
         self.should_be_running = False
 
         if not self.current_platform == Platform.SITL:
@@ -306,28 +299,28 @@ class ArduPilotManager(metaclass=Singleton):
         # TODO: Add shutdown command on HAL_SITL and HAL_LINUX, changing terminate/prune
         # logic with a simple "self.vehicle_manager.shutdown_vehicle()"
         logger.info("Terminating Ardupilot subprocess.")
-        self.terminate_ardupilot_subprocess()
+        await self.terminate_ardupilot_subprocess()
         logger.info("Ardupilot subprocess terminated.")
         logger.info("Pruning Ardupilot's system processes.")
-        self.prune_ardupilot_processes()
+        await self.prune_ardupilot_processes()
         logger.info("Ardupilot's system processes pruned.")
 
         logger.info("Stopping Mavlink manager.")
         self.mavlink_manager.stop()
         logger.info("Mavlink manager stopped.")
 
-    def start_ardupilot(self) -> None:
+    async def start_ardupilot(self) -> None:
         if self.current_platform == Platform.SITL:
             self.run_with_sitl(self.current_sitl_frame)
             self.should_be_running = True
             return
-        self.run_with_board()
+        await self.run_with_board()
         self.should_be_running = True
 
-    def restart_ardupilot(self) -> None:
+    async def restart_ardupilot(self) -> None:
         if self.current_platform in [Platform.SITL, Platform.Navigator]:
-            self.kill_ardupilot()
-            self.start_ardupilot()
+            await self.kill_ardupilot()
+            await self.start_ardupilot()
             return
         self.vehicle_manager.reboot_vehicle()
 
