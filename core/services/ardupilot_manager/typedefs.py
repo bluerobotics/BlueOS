@@ -57,10 +57,10 @@ class SITLFrame(str, Enum):
     UNDEFINED = " undefined"
 
 
-def get_sitl_platform_name() -> str:
+def get_sitl_platform_name(machine_arch: str) -> str:
     """Get SITL platform name based on machine architecture."""
 
-    if machine() == "x86_64":
+    if machine_arch == "x86_64":
         return "SITL_x86_64_linux_gnu"
     return "SITL_arm_linux_gnueabihf"
 
@@ -88,7 +88,7 @@ class Platform(str, Enum):
 
     Pixhawk1 = "Pixhawk1"
     Navigator = "navigator"
-    SITL = get_sitl_platform_name()
+    SITL = get_sitl_platform_name(machine())
     Undefined = "Undefined"
 
 
