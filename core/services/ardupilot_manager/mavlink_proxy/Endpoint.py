@@ -1,17 +1,10 @@
-from enum import Enum
 from typing import Any, Dict, Optional, Type
 
 import validators
 from pydantic import constr, root_validator
 from pydantic.dataclasses import dataclass
 
-
-class EndpointType(str, Enum):
-    UDPServer = "udpin"
-    UDPClient = "udpout"
-    TCPServer = "tcpin"
-    TCPClient = "tcpout"
-    Serial = "serial"
+from typedefs import EndpointType
 
 
 @dataclass

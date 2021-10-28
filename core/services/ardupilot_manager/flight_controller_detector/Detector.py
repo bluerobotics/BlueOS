@@ -1,15 +1,10 @@
 import os
-from enum import IntEnum
 from typing import List, Tuple
 
 from loguru import logger
 from smbus2 import SMBus
 
-
-class FlightControllerType(IntEnum):
-    Serial = 1
-    NavigatorR3 = 2
-    NavigatorR4 = 3
+from typedefs import FlightControllerType
 
 
 class Detector:

@@ -11,9 +11,10 @@ import pytest
 sys.path.append(str(pathlib.Path(__file__).absolute().parent.parent))
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
-from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
 from mavlink_proxy.MAVProxy import MAVProxy
+from typedefs import EndpointType
 
 
 @pytest.fixture

@@ -3,8 +3,9 @@ import pathlib
 import pytest
 
 from exceptions import InvalidFirmwareFile, UndefinedPlatform
-from firmware.FirmwareDownload import FirmwareDownloader, Platform, Vehicle
+from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareInstall import FirmwareInstaller
+from typedefs import Platform, Vehicle
 
 
 def test_firmware_validation() -> None:

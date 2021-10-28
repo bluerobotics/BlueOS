@@ -15,8 +15,9 @@ from exceptions import (
     UndefinedPlatform,
     UnsupportedPlatform,
 )
-from firmware.FirmwareDownload import FirmwareDownloader, FirmwareFormat, Platform
+from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareUpload import FirmwareUploader
+from typedefs import FirmwareFormat, Platform
 
 
 def get_board_id(platform: Platform) -> int:
