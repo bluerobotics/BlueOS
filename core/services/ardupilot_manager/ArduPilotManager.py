@@ -10,7 +10,11 @@ from commonwealth.mavlink_comm.VehicleManager import VehicleManager
 from commonwealth.utils.Singleton import Singleton
 from loguru import logger
 
-from exceptions import ArdupilotProcessKillFail
+from exceptions import (
+    ArdupilotProcessKillFail,
+    EndpointCreationFail,
+    EndpointDeleteFail,
+)
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from mavlink_proxy.Endpoint import Endpoint
@@ -381,9 +385,8 @@ class ArduPilotManager(metaclass=Singleton):
                 self.mavlink_manager.add_endpoint(endpoint)
                 logger.info(f"Adding endpoint '{endpoint.name}' and saving it to the settings file.")
             except Exception as error:
-                logger.error(f"Failed to add endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
-                raise
+                raise EndpointCreationFail(f"Failed to add endpoint '{endpoint.name}': {error}") from error
 
     def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
@@ -398,9 +401,8 @@ class ArduPilotManager(metaclass=Singleton):
                 self.mavlink_manager.remove_endpoint(endpoint)
                 logger.info(f"Deleting endpoint '{endpoint.name}' and removing it from the settings file.")
             except Exception as error:
-                logger.error(f"Failed to remove endpoint '{endpoint.name}': {error}")
                 self._reset_endpoints(loaded_endpoints)
-                raise
+                raise EndpointDeleteFail(f"Failed to remove endpoint '{endpoint.name}': {error}") from error
 
     def get_available_firmwares(self, vehicle: Vehicle) -> List[Firmware]:
         return self.firmware_manager.get_available_firmwares(vehicle, self.current_platform)

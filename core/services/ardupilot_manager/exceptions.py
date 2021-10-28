@@ -57,3 +57,11 @@ class ArdupilotProcessKillFail(RuntimeError):
 
 class NoDefaultFirmwareAvailable(RuntimeError):
     """Default firmware file is not available."""
+
+
+class EndpointCreationFail(RuntimeError):
+    """Failed to add endpoint."""
+
+
+class EndpointDeleteFail(RuntimeError):
+    """Failed to delete endpoint."""
