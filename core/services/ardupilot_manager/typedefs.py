@@ -58,18 +58,23 @@ class SITLFrame(str, Enum):
 
 
 def get_sitl_platform_name() -> str:
+    """Get SITL platform name based on machine architecture."""
+
     if machine() == "x86_64":
         return "SITL_x86_64_linux_gnu"
     return "SITL_arm_linux_gnueabihf"
 
 
 class Firmware(BaseModel):
+    """Simplified representation of a firmware, as available on Ardupilot's manifest."""
+
     name: str
     url: HttpUrl
 
 
 class Vehicle(str, Enum):
-    """Valid vehicle types to download"""
+    """Valid Ardupilot vehicle types.
+    The Enum values are 1:1 representations of the vehicles available on the ArduPilot manifest."""
 
     Sub = "Sub"
     Rover = "Rover"
@@ -78,7 +83,7 @@ class Vehicle(str, Enum):
 
 
 class Platform(str, Enum):
-    """Valid platform types to download
+    """Valid Ardupilot platform types.
     The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
 
     Pixhawk1 = "Pixhawk1"
@@ -88,7 +93,7 @@ class Platform(str, Enum):
 
 
 class FirmwareFormat(str, Enum):
-    """Valid firmware formats to download.
+    """Valid firmware formats.
     The Enum values are 1:1 representations of the formats available on the ArduPilot manifest."""
 
     APJ = "apj"
@@ -96,12 +101,16 @@ class FirmwareFormat(str, Enum):
 
 
 class FlightControllerType(IntEnum):
+    """Supported flight-controller types."""
+
     Serial = 1
     NavigatorR3 = 2
     NavigatorR4 = 3
 
 
 class EndpointType(str, Enum):
+    """Supported Mavlink endpoint types."""
+
     UDPServer = "udpin"
     UDPClient = "udpout"
     TCPServer = "tcpin"
