@@ -391,7 +391,7 @@ class ArduPilotManager(metaclass=Singleton):
 
         protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_remove))
         if protected_endpoints:
-            raise ValueError(f"Endpoints {protected_endpoints} are protected. Aborting operation.")
+            raise ValueError(f"Endpoints {[e.name for e in protected_endpoints]} are protected. Aborting operation.")
 
         for endpoint in endpoints_to_remove:
             try:
