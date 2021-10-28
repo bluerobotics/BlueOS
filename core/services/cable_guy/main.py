@@ -8,6 +8,7 @@ from typing import Any, List
 
 import uvicorn
 from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.logs import InterceptHandler
 from fastapi import Body, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
@@ -55,6 +56,7 @@ app = FastAPI(
 
 @app.get("/ethernet", response_model=List[EthernetInterface], summary="Retrieve ethernet interfaces.")
 @version(1, 0)
+@temporary_cache(timeout_seconds=10)
 def retrieve_interfaces() -> Any:
     """REST API endpoint to retrieve the configured ethernet interfaces."""
     return manager.get_interfaces()
