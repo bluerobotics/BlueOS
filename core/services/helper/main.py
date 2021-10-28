@@ -63,16 +63,16 @@ class Helper:
     @temporary_cache(timeout_seconds=10)
     def scan_ports() -> List[ServiceInfo]:
         # Filter for TCP ports that are listen and can be accessed by external users (server in 0.0.0.0)
-        connections = iter(psutil.net_connections("tcp"))
-        connections = filter(lambda connection: connection.status == psutil.CONN_LISTEN, connections)
-        connections = filter(lambda connection: connection.laddr.ip in Helper.LOCALSERVER_CANDIDATES, connections)
+        connections = (
+            connection
+            for connection in psutil.net_connections("tcp")
+            if connection.status == psutil.CONN_LISTEN and connection.laddr.ip in Helper.LOCALSERVER_CANDIDATES
+        )
 
         # And check if there is a webpage available that is not us
-        ports = iter([connection.laddr.port for connection in connections])
-        ports = filter(lambda port: port != PORT, ports)
-        services = map(Helper.detect_service, ports)
-        valid_services = filter(lambda service: service.valid, services)
-        return list(valid_services)
+        ports = (connection.laddr.port for connection in connections)
+        services = (Helper.detect_service(port) for port in ports if port != PORT)
+        return [service for service in services if service.valid]
 
 
 fast_api_app = FastAPI(
