@@ -25,11 +25,16 @@
     <v-container v-else-if="updating_endpoints">
       <spinning-logo size="30%" />
     </v-container>
-    <v-container v-else>
-      <div>
-        No endpoints available
-      </div>
-    </v-container>
+    <v-card
+      v-else
+      class="d-flex align-center justify-center ma-12"
+      height="100"
+      elevation="1"
+    >
+      <p class="text-h6">
+        No endpoints available.
+      </p>
+    </v-card>
 
     <v-fab-transition>
       <v-btn
