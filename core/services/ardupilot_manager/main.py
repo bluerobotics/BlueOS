@@ -17,9 +17,8 @@ from uvicorn import Config, Server
 
 from ArduPilotManager import ArduPilotManager
 from exceptions import InvalidFirmwareFile
-from firmware.FirmwareDownload import Firmware, Platform, Vehicle
 from mavlink_proxy.Endpoint import Endpoint
-from typedefs import SITLFrame
+from typedefs import Firmware, Platform, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 

@@ -10,14 +10,9 @@ from exceptions import (
     UndefinedPlatform,
     UnsupportedPlatform,
 )
-from firmware.FirmwareDownload import (
-    Firmware,
-    FirmwareDownloader,
-    FirmwareFormat,
-    Platform,
-    Vehicle,
-)
+from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareInstall import FirmwareInstaller
+from typedefs import Firmware, FirmwareFormat, Platform, Vehicle
 
 
 class FirmwareManager:

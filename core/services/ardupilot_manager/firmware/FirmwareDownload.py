@@ -6,15 +6,12 @@ import random
 import ssl
 import string
 import tempfile
-from enum import Enum
-from platform import machine
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
 
 from loguru import logger
 from packaging.version import Version
-from pydantic import BaseModel, HttpUrl
 
 from exceptions import (
     FirmwareDownloadFail,
@@ -23,49 +20,12 @@ from exceptions import (
     MoreThanOneCandidate,
     NoVersionAvailable,
 )
+from typedefs import FirmwareFormat, Platform, Vehicle
 
 # TODO: This should be not necessary
 # Disable SSL verification
 if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverified_context", None):
     ssl._create_default_https_context = ssl._create_unverified_context
-
-
-def get_sitl_platform_name() -> str:
-    if machine() == "x86_64":
-        return "SITL_x86_64_linux_gnu"
-    return "SITL_arm_linux_gnueabihf"
-
-
-class Firmware(BaseModel):
-    name: str
-    url: HttpUrl
-
-
-class Vehicle(str, Enum):
-    """Valid vehicle types to download"""
-
-    Sub = "Sub"
-    Rover = "Rover"
-    Plane = "Plane"
-    Copter = "Copter"
-
-
-class Platform(str, Enum):
-    """Valid platform types to download
-    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
-
-    Pixhawk1 = "Pixhawk1"
-    Navigator = "navigator"
-    SITL = get_sitl_platform_name()
-    Undefined = "Undefined"
-
-
-class FirmwareFormat(str, Enum):
-    """Valid firmware formats to download.
-    The Enum values are 1:1 representations of the formats available on the ArduPilot manifest."""
-
-    APJ = "apj"
-    ELF = "ELF"
 
 
 class FirmwareDownloader:

@@ -11,14 +11,19 @@ from commonwealth.utils.Singleton import Singleton
 from loguru import logger
 
 from exceptions import ArdupilotProcessKillFail
-from firmware.FirmwareDownload import Firmware, Platform, Vehicle
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
-from flight_controller_detector.Detector import FlightControllerType
-from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
-from typedefs import SITLFrame
+from typedefs import (
+    EndpointType,
+    Firmware,
+    FlightControllerType,
+    Platform,
+    SITLFrame,
+    Vehicle,
+)
 
 
 class ArduPilotManager(metaclass=Singleton):

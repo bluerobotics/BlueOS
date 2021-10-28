@@ -1,4 +1,7 @@
-from enum import Enum
+from enum import Enum, IntEnum
+from platform import machine
+
+from pydantic import BaseModel, HttpUrl
 
 
 class SITLFrame(str, Enum):
@@ -52,3 +55,55 @@ class SITLFrame(str, Enum):
     WEBOTS = "webots"
     JSON = " JSON"
     UNDEFINED = " undefined"
+
+
+def get_sitl_platform_name() -> str:
+    if machine() == "x86_64":
+        return "SITL_x86_64_linux_gnu"
+    return "SITL_arm_linux_gnueabihf"
+
+
+class Firmware(BaseModel):
+    name: str
+    url: HttpUrl
+
+
+class Vehicle(str, Enum):
+    """Valid vehicle types to download"""
+
+    Sub = "Sub"
+    Rover = "Rover"
+    Plane = "Plane"
+    Copter = "Copter"
+
+
+class Platform(str, Enum):
+    """Valid platform types to download
+    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
+
+    Pixhawk1 = "Pixhawk1"
+    Navigator = "navigator"
+    SITL = get_sitl_platform_name()
+    Undefined = "Undefined"
+
+
+class FirmwareFormat(str, Enum):
+    """Valid firmware formats to download.
+    The Enum values are 1:1 representations of the formats available on the ArduPilot manifest."""
+
+    APJ = "apj"
+    ELF = "ELF"
+
+
+class FlightControllerType(IntEnum):
+    Serial = 1
+    NavigatorR3 = 2
+    NavigatorR4 = 3
+
+
+class EndpointType(str, Enum):
+    UDPServer = "udpin"
+    UDPClient = "udpout"
+    TCPServer = "tcpin"
+    TCPClient = "tcpout"
+    Serial = "serial"
