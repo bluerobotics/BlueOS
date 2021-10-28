@@ -5,7 +5,7 @@
     class="mb-12 pb-12 endpoints-list"
   >
     <v-list
-      v-if="available_endpoints && !updating_endpoints"
+      v-if="are_endpoints_available && !updating_endpoints"
       dense
     >
       <template v-for="(endpoint, index) in available_endpoints">
@@ -82,6 +82,9 @@ export default Vue.extend({
     },
     available_endpoints(): AutopilotEndpoint[] {
       return autopilot.available_endpoints
+    },
+    are_endpoints_available(): boolean {
+      return this.available_endpoints.length !== 0
     },
   },
   methods: {
