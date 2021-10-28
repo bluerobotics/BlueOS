@@ -32,7 +32,7 @@ SERVICES=(
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
     'ttyd',"ttyd -p 8088 /usr/bin/tmux new-session \\\\; send-keys 'cat /etc/motd' C-m \\\\;"
-    'nginx',"nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
+    'nginx',"nice --18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
 )
 
 tmux -f /etc/tmux.conf start-server
