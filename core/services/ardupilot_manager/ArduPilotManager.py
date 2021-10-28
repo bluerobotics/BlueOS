@@ -7,6 +7,7 @@ from typing import Any, List, Optional, Set, Tuple
 
 import psutil
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
+from commonwealth.utils.Singleton import Singleton
 from loguru import logger
 
 from exceptions import ArdupilotProcessKillFail
@@ -17,7 +18,6 @@ from flight_controller_detector.Detector import FlightControllerType
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
-from Singleton import Singleton
 from typedefs import SITLFrame
 
 
