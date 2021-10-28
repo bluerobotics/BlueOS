@@ -1,5 +1,5 @@
 # Build frontend
-FROM node:current-buster-slim AS frontendBuilder
+FROM node:16-buster-slim AS frontendBuilder
 
 ARG VUE_APP_GIT_DESCRIBE
 
