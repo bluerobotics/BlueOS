@@ -35,6 +35,10 @@
               </v-icon>
               Reset Settings
             </v-btn>
+            <v-switch
+              v-model="dark_mode"
+              label="Dark mode"
+            />
           </v-row>
         </v-container>
       </v-card>
@@ -67,12 +71,19 @@ export default Vue.extend({
   components: {
   },
   data() {
+    const system_dark_mode_state = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
     return {
       show_dialog: false,
       show_reset_dialog: false,
+      dark_mode: system_dark_mode_state,
     }
   },
   computed: {
+  },
+  watch: {
+    dark_mode(val: boolean): void {
+      this.$vuetify.theme.dark = val
+    },
   },
   methods: {
     async reset_settings(): Promise<void> {
