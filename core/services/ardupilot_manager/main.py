@@ -184,8 +184,8 @@ if __name__ == "__main__":
     config = Config(app=app, loop=loop, host="0.0.0.0", port=8000, log_config=None)
     server = Server(config)
 
-    loop.create_task(server.serve())
     loop.create_task(autopilot.start_ardupilot())
     loop.create_task(autopilot.auto_restart_ardupilot())
     loop.create_task(autopilot.auto_restart_router())
-    loop.run_forever()
+    loop.run_until_complete(server.serve())
+    loop.run_until_complete(autopilot.kill_ardupilot())
