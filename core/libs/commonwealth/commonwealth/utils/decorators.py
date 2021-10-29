@@ -10,7 +10,7 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[Callable[[Any], An
         timeout_seconds (float, optional): Timeout to be used for cache invalidation. Defaults to 10.
 
     Returns:
-        [type]: [description]
+        Any: Return of the decorated function
     """
     cache: Dict[Any, Any] = {}
     last_sample_time = 0.0
