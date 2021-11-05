@@ -13,7 +13,8 @@ if __name__ == "__main__":
         print("Example docker command line:")
         print(
             "docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.config/companion:"
-            "/root/.config/companion -e COMPANION_CONFIG_PATH=$HOME/.config/companion  bluerobotics/bootstrap:master"
+            "/root/.config/companion -e COMPANION_CONFIG_PATH=$HOME/.config/companion"
+            "bluerobotics/companion-bootstrap:master"
         )
         sys.exit(1)
 
