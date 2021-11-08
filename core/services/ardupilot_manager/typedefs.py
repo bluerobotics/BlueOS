@@ -60,7 +60,7 @@ class SITLFrame(str, Enum):
 def get_sitl_platform_name(machine_arch: str) -> str:
     """Get SITL platform name based on machine architecture."""
 
-    if machine_arch == "x86_64":
+    if "arm" not in machine_arch.lower():
         return "SITL_x86_64_linux_gnu"
     return "SITL_arm_linux_gnueabihf"
 
