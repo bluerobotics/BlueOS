@@ -23,7 +23,7 @@ const routes: Array<RouteConfig> = [
     component: Main,
   },
   {
-    path: '/firmware',
+    path: '/autopilot/firmware',
     name: 'Firmware',
     component: Firmware,
   },
@@ -33,37 +33,37 @@ const routes: Array<RouteConfig> = [
     component: GeneralAutopilot,
   },
   {
-    path: '/logs',
+    path: '/autopilot/logs',
     name: 'LogManager',
     component: LogView,
   },
   {
-    path: '/endpoints',
+    path: '/autopilot/endpoints',
     name: 'Endpoints',
     component: Endpoint,
   },
   {
-    path: '/filebrowser',
+    path: '/tools/filebrowser',
     name: 'FileBrowser',
     component: FileBrowserView,
   },
   {
-    path: '/web-terminal',
+    path: '/tools/web-terminal',
     name: 'Terminal',
     component: TerminalView,
   },
   {
-    path: '/version-chooser',
+    path: '/tools/version-chooser',
     name: 'VersionChooser',
     component: VersionChooser,
   },
   {
-    path: '/videomanager',
+    path: '/autopilot/videomanager',
     name: 'VideoManager',
     component: VideoManagerView,
   },
   {
-    path: '/bridges',
+    path: '/tools/bridges',
     name: 'Bridges',
     component: BridgesView,
   },
@@ -73,7 +73,7 @@ const routes: Array<RouteConfig> = [
     component: NMEAInjectorView,
   },
   {
-    path: '/available-services',
+    path: '/tools/available-services',
     name: 'Available Services',
     component: AvailableServicesView,
   },
