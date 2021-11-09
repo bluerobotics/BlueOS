@@ -170,22 +170,22 @@ export default Vue.extend({
           {
             title: 'Firmware',
             icon: 'mdi-chip',
-            route: '/firmware',
+            route: '/autopilot/firmware',
           },
           {
             title: 'Log Browser',
             icon: 'mdi-file-multiple',
-            route: '/logs',
+            route: '/autopilot/logs',
           },
           {
             title: 'Endpoints',
             icon: 'mdi-arrow-decision',
-            route: '/endpoints',
+            route: '/autopilot/endpoints',
           },
           {
             title: 'Video',
             icon: 'mdi-video-vintage',
-            route: '/videomanager',
+            route: '/autopilot/videomanager',
           },
         ],
       },
@@ -196,17 +196,17 @@ export default Vue.extend({
           {
             title: 'Available Services',
             icon: 'mdi-account-hard-hat',
-            route: '/available-services',
+            route: '/tools/available-services',
           },
           {
             title: 'Bridges',
             icon: 'mdi-bridge',
-            route: '/bridges',
+            route: '/tools/bridges',
           },
           {
             title: 'Filebrowser',
             icon: 'mdi-file-tree',
-            route: '/filebrowser',
+            route: '/tools/filebrowser',
           },
           {
             title: 'NMEA Injector',
@@ -216,12 +216,12 @@ export default Vue.extend({
           {
             title: 'Terminal',
             icon: 'mdi-console',
-            route: '/web-terminal',
+            route: '/tools/web-terminal',
           },
           {
             title: 'Version-chooser',
             icon: 'mdi-cellphone-arrow-down',
-            route: '/version-chooser',
+            route: '/tools/version-chooser',
           },
         ],
       },
