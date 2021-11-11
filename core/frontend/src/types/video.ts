@@ -57,8 +57,14 @@ export interface SliderConfig {
   Slider: SliderConfigType
 }
 
+export interface ControlState {
+  is_disabled: boolean
+  is_inactive: boolean
+}
+
 export interface Control {
   configuration: MenuConfig | BoolConfig | SliderConfig
+  state: ControlState
   cpp_type: string
   id: number
   name: string
