@@ -25,6 +25,9 @@ class PingDriver:
 
         last_valid_baud = Baudrate.b115200
         for baud in Baudrate:
+            # Ping1D hangs with a baudrate bigger than 3M, going to ignore it for now
+            if baud > 3000000:
+                continue
             logging.debug(f"Trying baud {baud}...")
             failures = 0
             ping = PingDevice()
