@@ -43,6 +43,11 @@ async def get_available_versions(repository: str, image: str) -> Any:
     return await versionChooser.get_available_versions(f"{repository}/{image}")
 
 
+async def load(request: web.Request) -> Any:
+    data = await request.read()
+    return await versionChooser.load(data)
+
+
 if __name__ == "__main__":
     app = connexion.AioHttpApp(__name__, specification_dir="openapi/")
     app.add_api(
