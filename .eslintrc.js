@@ -26,6 +26,7 @@ module.exports = {
     'max-len': ['error', { code: 120 }],
     'no-alert': 'off',
     'no-console': 'off',
+    'no-continue': 'off',
     'no-extra-parens': ['error', 'all'],
     // modified https://github.com/airbnb/javascript/blob/master/packages/eslint-config-airbnb-base/rules/style.js#L339
     // In our opinion, readability comes first and ForOF statements are more readable,
