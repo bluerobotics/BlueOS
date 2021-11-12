@@ -138,6 +138,8 @@ export default Vue.extend({
             notifications.pushError({ service: video_manager_service, type: 'CONTROL_VALUE_UPDATE_FAIL', message })
           })
       }
+
+      video.fetchDevices()
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
