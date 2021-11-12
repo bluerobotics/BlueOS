@@ -119,6 +119,26 @@ paths:
                   type: string
                   example: master
 
+  /version/load/:
+    post:
+      operationId: main.load
+      summary: Load a docker tar file
+      responses:
+        '200':
+          description: Successfully loaded the file
+        '400':
+          description: Error while processing file
+        '500':
+          description: Internal server error while processing docker import
+        '501':
+          description: Failed to handle docker result
+      requestBody:
+        content:
+          application/x-tar:
+            schema:
+              type: string
+              format: binary
+
 components:
   schemas:
     Version:
