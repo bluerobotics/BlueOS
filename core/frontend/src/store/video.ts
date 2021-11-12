@@ -78,6 +78,42 @@ class VideoStore extends VuexModule {
         return false
       })
   }
+
+  @Action
+  async fetchDevices(): Promise<void> {
+    await back_axios({
+      method: 'get',
+      url: `${this.API_URL}/v4l`,
+      timeout: 10000,
+    })
+      .then((response) => {
+        this.setAvailableDevices(response.data)
+      })
+      .catch((error) => {
+        this.setAvailableDevices([])
+        if (error === backend_offline_error) { return }
+        const message = `Could not fetch video devices: ${error.message}`
+        notifications.pushError({ service: video_manager_service, type: 'VIDEO_DEVICES_FETCH_FAIL', message })
+      })
+  }
+
+  @Action
+  async fetchStreams(): Promise<void> {
+    await back_axios({
+      method: 'get',
+      url: `${this.API_URL}/streams`,
+      timeout: 10000,
+    })
+      .then((response) => {
+        this.setAvailableStreams(response.data)
+      })
+      .catch((error) => {
+        this.setAvailableStreams([])
+        if (error === backend_offline_error) { return }
+        const message = `Could not fetch video streams: ${error.message}`
+        notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAMS_FETCH_FAIL', message })
+      })
+  }
 }
 
 export { VideoStore }
