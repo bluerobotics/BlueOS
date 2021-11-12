@@ -66,6 +66,35 @@ class VersionChooser:
         }
         return web.json_response(output)
 
+    async def load(self, data: bytes) -> web.Response:
+        """Load a docker image file.
+
+        Args:
+            data (bytes): Tar file from `docker save` output
+
+        Returns:
+            web.Response:
+                200 - OK
+                400 - Error while processing data
+                500 - Internal server error while processing docker import image
+                501 - Failed to handle docker result
+        """
+        response = {}
+        try:
+            # import_image only returns a single line
+            response_list = await self.client.images.import_image(data)
+            response = response_list[0]
+        except Exception as error:
+            logging.critical("Error: %s: %s", type(error), error)
+            return web.Response(status=500, text=f"Error: {type(error)}: {error}")
+
+        if "errorDetail" in response:
+            return web.Response(status=500, text=response["errorDetail"]["message"])
+        if "stream" in response:
+            return web.json_response(response)
+
+        return web.Response(status=501, text=f"Response: {response}")
+
     @staticmethod
     def is_valid_version(_repository: str, _tag: str) -> bool:
         # TODO implement basic validation
