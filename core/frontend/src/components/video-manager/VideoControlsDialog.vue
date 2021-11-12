@@ -19,6 +19,7 @@
             :max="control.configuration.Slider.max"
             :step="control.configuration.Slider.step"
             :label="control.name"
+            :disabled="!isActive(control)"
             @change="updateControlsValues([control])"
           />
           <v-select
@@ -29,6 +30,7 @@
             item-text="name"
             item-value="value"
             :label="control.name"
+            :disabled="!isActive(control)"
             @change="updateControlsValues([control])"
           />
           <v-checkbox
@@ -36,6 +38,7 @@
             :key="control.id"
             v-model="control.configuration.Bool.value"
             :label="control.name"
+            :disabled="!isActive(control)"
             @change="updateControlsValues([control])"
           />
           <div class="d-flex">
@@ -100,6 +103,9 @@ export default Vue.extend({
     async restoreDefaultValues(): Promise<void> {
       const updated_controls: Control[] = []
       for (const control of this.device.controls) {
+        if (!this.isActive(control)) {
+          continue
+        }
         const conf = control.configuration
         if ('Menu' in conf && conf.Menu.value !== conf.Menu.default) {
           conf.Menu.value = conf.Menu.default
@@ -143,6 +149,9 @@ export default Vue.extend({
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
+    },
+    isActive(control: Control): boolean {
+      return !(control.state.is_disabled || control.state.is_inactive)
     },
   },
 })
