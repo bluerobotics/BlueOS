@@ -19,7 +19,7 @@
             :max="control.configuration.Slider.max"
             :step="control.configuration.Slider.step"
             :label="control.name"
-            @change="updateControlValue(control)"
+            @change="updateControlsValues([control])"
           />
           <v-select
             v-for="control in menu_controls"
@@ -29,14 +29,14 @@
             item-text="name"
             item-value="value"
             :label="control.name"
-            @change="updateControlValue(control)"
+            @change="updateControlsValues([control])"
           />
           <v-checkbox
             v-for="control in bool_controls"
             :key="control.id"
             v-model="control.configuration.Bool.value"
             :label="control.name"
-            @change="updateControlValue(control)"
+            @change="updateControlsValues([control])"
           />
           <div class="d-flex">
             <v-spacer />
@@ -98,6 +98,7 @@ export default Vue.extend({
   },
   methods: {
     async restoreDefaultValues(): Promise<void> {
+      const updated_controls: Control[] = []
       for (const control of this.device.controls) {
         const conf = control.configuration
         if ('Menu' in conf && conf.Menu.value !== conf.Menu.default) {
@@ -107,33 +108,36 @@ export default Vue.extend({
         } else if ('Slider' in conf && conf.Slider.value !== conf.Slider.default) {
           conf.Slider.value = conf.Slider.default
         }
-        await this.updateControlValue(control)
+        updated_controls.push(control)
       }
+      await this.updateControlsValues(updated_controls)
     },
-    async updateControlValue(control: Control): Promise<void> {
-      let value = 0
-      if ('Menu' in control.configuration) {
-        value = control.configuration.Menu.value
-      } else if ('Bool' in control.configuration) {
-        value = control.configuration.Bool.value ? 1 : 0
-      } else if ('Slider' in control.configuration) {
-        value = control.configuration.Slider.value
-      }
+    async updateControlsValues(controls: Control[]): Promise<void> {
+      for await (const control of controls) {
+        let value = 0
+        if ('Menu' in control.configuration) {
+          value = control.configuration.Menu.value
+        } else if ('Bool' in control.configuration) {
+          value = control.configuration.Bool.value ? 1 : 0
+        } else if ('Slider' in control.configuration) {
+          value = control.configuration.Slider.value
+        }
 
-      await back_axios({
-        method: 'post',
-        url: `${video.API_URL}/v4l`,
-        timeout: 10000,
-        data: {
-          device: this.device.source,
-          v4l_id: control.id,
-          value,
-        },
-      })
-        .catch((error) => {
-          const message = `Could not update value on ${control.name} control: ${error}.`
-          notifications.pushError({ service: video_manager_service, type: 'CONTROL_VALUE_UPDATE_FAIL', message })
+        back_axios({
+          method: 'post',
+          url: `${video.API_URL}/v4l`,
+          timeout: 10000,
+          data: {
+            device: this.device.source,
+            v4l_id: control.id,
+            value,
+          },
         })
+          .catch((error) => {
+            const message = `Could not update value on ${control.name} control: ${error}.`
+            notifications.pushError({ service: video_manager_service, type: 'CONTROL_VALUE_UPDATE_FAIL', message })
+          })
+      }
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
