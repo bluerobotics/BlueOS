@@ -144,6 +144,29 @@
             </div>
           </div>
         </div>
+        <h3>Upload:</h3>
+        <div>
+          <div class="grid" :class="disableUploadControls ? 'disabled' : ''">
+            <div class="flex-row">
+              <div class="cell-10" style="display: inline-block; vertical-align: middle">
+                <input id="file" type="file" accept=".tar" data-role="file" data-prepend="Docker Image file:" data-button-title="Select file">
+              </div>
+              <span
+                class="button success cell-1"
+                style="display: inline-block; vertical-align: middle"
+                @click="upload()"
+              >
+                Upload!
+              </span>
+            </div>
+            <div class="row remark primary" v-if="uploadPercentage === 100 && disableUploadControls">
+              <h3 style="color:black">Decompressing file, this may take up to 15 minutes.</h3>
+            </div>
+            <div class="row" v-if="disableUploadControls && uploadPercentage !== 100">
+              <div data-role="progress" data-type="load" :data-value="uploadPercentage"></div>
+            </div>
+          </div>
+        </div>
       </div>
       <div id="infobox" class="info-box" data-role="infobox" data-width="700p">
         <span class="button square closer"></span>
@@ -171,6 +194,8 @@
         return {
           pullOutput: '',
           availableVersions: {},
+          disableUploadControls: false,
+          uploadPercentage: 0,
           currentVersion: '',
           waiting: false,
           loadingImages: false,
@@ -229,6 +254,22 @@
             return false
           }
           return remote_counterpart.sha !== image.sha
+        },
+        upload() {
+          this.disableUploadControls = true
+          let file = document.getElementById("file").files[0];
+          axios({
+            method: 'POST',
+            url: 'v1.0/version/load/',
+            timeout: 15 * 60 * 1000, // Wait for 15min
+            data: file,
+            onUploadProgress: (event) => {
+              this.uploadPercentage = Math.round(100 * event.loaded / event.total)
+            },
+          }).finally(() => {
+            this.disableUploadControls = false
+            setTimeout(() => { this.loadAvailableversions() }, 3000)
+          });
         },
         pullAndSetVersion(fullname) {
           // This streams the output of docker pull
