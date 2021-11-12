@@ -20,7 +20,7 @@ paths:
       summary: Sets the current version of Companion to a new tag
       responses:
         '200':
-          description: Sucessfully set a new version
+          description: Successfully set a new version
         '400':
           description: Attempted to set an unavailable version
       requestBody:
@@ -103,7 +103,7 @@ paths:
 
       responses:
         '200':
-          description: Sucessfully set a new version
+          description: Successfully set a new version
         '400':
           description: Attempted to set an unavailable version
       requestBody:
