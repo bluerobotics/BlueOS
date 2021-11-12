@@ -18,6 +18,7 @@ from exceptions import (
     InvalidManifest,
     ManifestUnavailable,
     MoreThanOneCandidate,
+    NoCandidate,
     NoVersionAvailable,
 )
 from typedefs import FirmwareFormat, Platform, Vehicle
@@ -200,6 +201,11 @@ class FirmwareDownloader:
             mav_firmware_version_type=version,
             format=firmware_format,
         )
+
+        if len(items) == 0:
+            raise NoCandidate(
+                f"Found no candidate for configuration: {vehicle=}, {platform=}, {version=}, {firmware_format=}"
+            )
 
         if len(items) != 1:
             raise MoreThanOneCandidate(f"Found a number of candidates different of one ({len(items)}): {items}.")

@@ -19,6 +19,10 @@ class ManifestUnavailable(RuntimeError):
     """Ardupilot manifest file unavailable."""
 
 
+class NoCandidate(ValueError):
+    """No firmware candidate found for specified configuration."""
+
+
 class MoreThanOneCandidate(ValueError):
     """More than one firmware candidate found for specified configuration."""
 
