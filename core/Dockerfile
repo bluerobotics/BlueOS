@@ -4,7 +4,8 @@ FROM node:16-buster-slim AS frontendBuilder
 ARG VUE_APP_GIT_DESCRIBE
 
 COPY frontend /home/pi/frontend
-RUN cd /home/pi/frontend && yarn install --network-timeout=300000 && yarn build --skip-plugins @vue/cli-plugin-eslint
+RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend install --network-timeout=300000
+RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend build --skip-plugins @vue/cli-plugin-eslint
 
 # Download binaries
 FROM bluerobotics/companion-base:v0.0.2 as downloadBinaries
