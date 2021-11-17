@@ -17,7 +17,11 @@ setup(
     install_requires=[
         "bluerobotics-ping == 0.1.2",
         "bridges == 0.1.0",
+        "fastapi == 0.63.0",
+        "fastapi-versioning == 0.9.1",
         "loguru == 0.5.3",
         "pyserial == 3.5",
+        "starlette == 0.13.6",
+        "uvicorn == 0.13.4",
     ],
 )
