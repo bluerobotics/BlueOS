@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 
+from loguru import logger
 from serial.tools.list_ports_linux import SysFS
 
 
@@ -9,6 +10,19 @@ class PingType(IntEnum):
     # These match the definitions in the ping firmwares
     PING1D = 1
     PING360 = 2
+
+    # TODO: This should be fixed in ping-python documentation
+    def __str__(self) -> str:
+        names = {
+            0: "UNKNOWN",
+            1: "Ping1D",
+            2: "Ping360",
+        }
+        try:
+            return names[self.value]
+        except Exception as _:
+            logger.error(f"Wrong ping type: {self.value}")
+            return "ErrorType"
 
 
 # pylint: disable=too-many-instance-attributes
