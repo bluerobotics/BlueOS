@@ -55,6 +55,8 @@ class PingDriver:
     def stop(self) -> None:
         """Stops the driver"""
         logging.info(f"Forcing Ping1d at port {self.port} to stop.")
+        if self.bridge:
+            self.bridge.stop()
 
     def __del__(self) -> None:
         self.stop()
