@@ -1,8 +1,8 @@
 <template>
   <v-img
+    :aspect-ratio="1/1"
     class="lds-dual-ring"
     :width="size"
-    :height="size"
     src="../../assets/logo.svg"
   />
 </template>
