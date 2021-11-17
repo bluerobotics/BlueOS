@@ -17,6 +17,7 @@ setup(
     install_requires=[
         "bluerobotics-ping == 0.1.2",
         "bridges == 0.1.0",
+        "loguru == 0.5.3",
         "pyserial == 3.5",
     ],
 )
