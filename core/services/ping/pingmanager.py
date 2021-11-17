@@ -1,5 +1,5 @@
 import logging
-from typing import Dict
+from typing import Dict, List
 
 from serial import Serial
 
@@ -33,3 +33,6 @@ class PingManager:
 
         self.drivers[ping] = driver
         driver.start()
+
+    def devices(self) -> List[PingDeviceDescriptor]:
+        return list(self.drivers.keys())
