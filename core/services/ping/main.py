@@ -10,14 +10,14 @@ from portwatcher import PortWatcher
 
 async def main() -> None:
     logging.info("Starting Ping Service")
-    pingprober = PingProber()
-    pingmanager = PingManager()
-    portwatcher = PortWatcher(probe_callback=pingprober.probe)
-    portwatcher.set_port_post_callback(pingmanager.stop_driver_at_port)
+    ping_prober = PingProber()
+    ping_manager = PingManager()
+    port_watcher = PortWatcher(probe_callback=ping_prober.probe)
+    port_watcher.set_port_post_callback(ping_manager.stop_driver_at_port)
 
-    pingprober.on_ping_found(pingmanager.launch_driver_instance)
+    ping_prober.on_ping_found(ping_manager.launch_driver_instance)
 
-    await portwatcher.start_watching()
+    await port_watcher.start_watching()
 
 
 if __name__ == "__main__":
