@@ -77,7 +77,7 @@ class Filebrowser {
       method: 'delete',
       url: `/file-browser/api/resources${file.path}`,
       timeout: 10000,
-      headers: { 'X-Auth': this.filebrowserToken() },
+      headers: { 'X-Auth': await this.filebrowserToken() },
     })
       .catch((error) => {
         const error_message = `Could not delete file ${file.path}: ${error.message}`
@@ -104,29 +104,29 @@ class Filebrowser {
   /**
    * @param file - FilebrowserFile object
   * */
-  singleFileRelativeURL(file: FilebrowserFile): string {
-    return `${filebrowser_url}/raw${file.path}?auth=${this.filebrowserToken()}`
+  async singleFileRelativeURL(file: FilebrowserFile): Promise<string> {
+    return `${filebrowser_url}/raw${file.path}?auth=${await this.filebrowserToken()}`
   }
 
   /* Returns the relative URL (without hostname) of a zip of multiple files. */
   /**
    * @param files - FilebrowserFile objects
   * */
-  multipleFilesRelativeURL(files: FilebrowserFile[]): string {
+  async multipleFilesRelativeURL(files: FilebrowserFile[]): Promise<string> {
     const files_arg = files.map((file) => file.path).join(',')
-    return `${filebrowser_url}/raw/?files=${files_arg}&algo=zip&auth=${this.filebrowserToken()}`
+    return `${filebrowser_url}/raw/?files=${files_arg}&algo=zip&auth=${await this.filebrowserToken()}`
   }
 
   /* Download files (single or multiple). */
   /**
    * @param files - FilebrowserFile objects array
   * */
-  downloadFiles(files: FilebrowserFile[]): void {
+  async downloadFiles(files: FilebrowserFile[]): Promise<void> {
     let url = ''
     if (files.length === 1) {
-      url = this.singleFileRelativeURL(files[0])
+      url = await this.singleFileRelativeURL(files[0])
     } else {
-      url = this.multipleFilesRelativeURL(files)
+      url = await this.multipleFilesRelativeURL(files)
     }
     window.open(url)
   }
