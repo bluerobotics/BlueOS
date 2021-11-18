@@ -11,12 +11,12 @@ class Filebrowser {
 
   constructor() {
     this.auth_token = null
-    this.update_filebrowser_token()
+    this.updateFilebrowserToken()
   }
 
   /* Fetch filebrowser API for a authentication token and store it.
      This method should be called on constructor so other methods have a token to use. */
-  async update_filebrowser_token(): Promise<void> {
+  async updateFilebrowserToken(): Promise<void> {
     await back_axios({
       method: 'post',
       url: `${filebrowser_url}/login`,
@@ -35,9 +35,9 @@ class Filebrowser {
   }
 
   /* Helper to get the auth token, checking before if it was set. */
-  async filebrowser_token(): Promise<string> {
+  async filebrowserToken(): Promise<string> {
     if (this.auth_token === null) {
-      await this.update_filebrowser_token()
+      await this.updateFilebrowserToken()
       if (this.auth_token === null) {
         throw new Error('Authentication token not set.')
       }
@@ -55,7 +55,7 @@ class Filebrowser {
       method: 'get',
       url: `${filebrowser_url}/resources${folder_path}`,
       timeout: 10000,
-      headers: { 'X-Auth': await this.filebrowser_token() },
+      headers: { 'X-Auth': await this.filebrowserToken() },
     })
       .then((response) => response.data)
       .catch((error) => {
@@ -77,7 +77,7 @@ class Filebrowser {
       method: 'delete',
       url: `/file-browser/api/resources${file.path}`,
       timeout: 10000,
-      headers: { 'X-Auth': this.filebrowser_token() },
+      headers: { 'X-Auth': this.filebrowserToken() },
     })
       .catch((error) => {
         const error_message = `Could not delete file ${file.path}: ${error.message}`
@@ -105,7 +105,7 @@ class Filebrowser {
    * @param file - FilebrowserFile object
   * */
   singleFileRelativeURL(file: FilebrowserFile): string {
-    return `${filebrowser_url}/raw${file.path}?auth=${this.filebrowser_token()}`
+    return `${filebrowser_url}/raw${file.path}?auth=${this.filebrowserToken()}`
   }
 
   /* Returns the relative URL (without hostname) of a zip of multiple files. */
@@ -114,7 +114,7 @@ class Filebrowser {
   * */
   multipleFilesRelativeURL(files: FilebrowserFile[]): string {
     const files_arg = files.map((file) => file.path).join(',')
-    return `${filebrowser_url}/raw/?files=${files_arg}&algo=zip&auth=${this.filebrowser_token()}`
+    return `${filebrowser_url}/raw/?files=${files_arg}&algo=zip&auth=${this.filebrowserToken()}`
   }
 
   /* Download files (single or multiple). */
