@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler
@@ -91,17 +91,34 @@ async def saved() -> Any:
 @version(1, 0)
 async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
     logger.info(f"Trying to connect to '{credentials.ssid}' with password '{credentials.password}'.")
+
+    network_id: Optional[int] = None
     try:
         saved_networks = await wifi_manager.get_saved_wifi_network()
         match_network = next(filter(lambda network: network.ssid == credentials.ssid, saved_networks))
         logger.info("Network is already known.")
         network_id = match_network.networkid
     except StopIteration:
-        logger.info("Network is not known. Saving it.")
-        network_id = await wifi_manager.add_network(credentials, hidden)
+        logger.info("Network is not known.")
+
+    if credentials.password == "" and network_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No password received and network not found among saved ones.",
+        )
 
     try:
+        if credentials.password != "":
+            if network_id:
+                logger.info("Removing old entry for known network.")
+                await wifi_manager.remove_network(network_id)
+            else:
+                logger.info("Saving new network entry.")
+            network_id = await wifi_manager.add_network(credentials, hidden)
+
         logger.info("Performing network connection.")
+        if network_id is None:
+            raise ValueError("Missing 'network_id' for network connection.")
         await wifi_manager.connect_to_network(network_id)
     except ConnectionError as error:
         logger.error("Connection failed.")
