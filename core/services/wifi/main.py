@@ -135,7 +135,10 @@ if __name__ == "__main__":
             socket_name = args.socket_name
         else:
             logger.info("Connecting via default socket.")
-            socket_name = os.listdir(wpa_socket_folder)[0]
+            available_sockets = os.listdir(wpa_socket_folder)
+            if not available_sockets:
+                raise RuntimeError("No wifi sockets available.")
+            socket_name = available_sockets[0]
         WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
         wifi_manager.connect(WLAN_SOCKET)
     except Exception as socket_connection_error:
