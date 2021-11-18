@@ -26,6 +26,7 @@ class WifiManager:
         self.wpa.run(path)
         self._scan_task: Optional[asyncio.Task[bytes]] = None
         self._updated_scan_results: Optional[List[ScannedWifiNetwork]] = None
+        self._ignored_reconnection_networks: List[str] = []
         self.connection_status = ConnectionStatus.UNKNOWN
 
     @staticmethod
@@ -196,6 +197,12 @@ class WifiManager:
                 if timer > timeout:
                     raise RuntimeError("Could not stablish a wifi connection in time.")
                 await asyncio.sleep(2.0)
+
+            # Remove network from ignored list if user deliberately connected
+            current_network = await self.get_current_network()
+            if current_network and current_network.ssid in self._ignored_reconnection_networks:
+                logger.debug(f"Removing '{current_network.ssid}' from ignored list.")
+                self._ignored_reconnection_networks.remove(current_network.ssid)
         except Exception as error:
             raise ConnectionError(f"Failed to connect to network. {error}") from error
 
@@ -221,15 +228,24 @@ class WifiManager:
         This will force the reevaluation of the conf file
         """
         try:
+            # Save current network in ignored list so the watchdog doesn't auto-reconnect to it
+            current_network = await self.get_current_network()
+            if current_network:
+                logger.debug(f"Adding '{current_network.ssid}' to ignored list.")
+                self._ignored_reconnection_networks.append(current_network.ssid)
+                await self.wpa.send_command_disable_network(current_network.networkid)
+
             await self.wpa.send_command_disconnect()
         except Exception as error:
             raise ConnectionError("Failed to disconnect from wifi network.") from error
 
-    async def enable_saved_networks(self) -> None:
+    async def enable_saved_networks(self, ignore: Optional[List[str]] = None) -> None:
         """Enable saved networks."""
         try:
             saved_networks = await self.get_saved_wifi_network()
             for network in saved_networks:
+                if ignore and network.ssid in ignore:
+                    continue
                 await self.wpa.send_command_enable_network(network.networkid)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
@@ -288,6 +304,6 @@ class WifiManager:
 
             if not networks_reenabled and seconds_disconnected >= seconds_before_reconnecting:
                 logger.debug("Watchdog activated. Trying to reconnect to available networks.")
-                await self.enable_saved_networks()
+                await self.enable_saved_networks(self._ignored_reconnection_networks)
                 await self.wpa.send_command_reconnect()
                 networks_reenabled = True
