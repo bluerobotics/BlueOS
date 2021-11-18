@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Immediately exit on errors
+set -e
+
 ## Download and install necessary tools to user binary folder with the correct permissions
 
 ### Ardupilot's uploader is used to upload firmwares to serial boards
