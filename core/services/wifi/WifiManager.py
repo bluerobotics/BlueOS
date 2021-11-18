@@ -184,7 +184,7 @@ class WifiManager:
             await self.wpa.send_command_reconfigure()
             await self.wpa.send_command_reconnect()
         except Exception as error:
-            raise ConnectionError("Failed to connect to network.") from error
+            raise ConnectionError(f"Failed to connect to network. {error}") from error
 
     async def status(self) -> Dict[str, Any]:
         """Check wpa_supplicant status"""
