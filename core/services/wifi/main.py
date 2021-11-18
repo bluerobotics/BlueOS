@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from tabulate import tabulate
 from uvicorn import Config, Server
 
 from exceptions import BusyError, FetchError
@@ -39,8 +40,13 @@ app = FastAPI(
 @version(1, 0)
 async def network_status() -> Any:
     try:
-        return await wifi_manager.status()
+        wifi_status = await wifi_manager.status()
+        logger.info("Status:")
+        for line in tabulate(list(wifi_status.items())).splitlines():
+            logger.info(line)
+        return wifi_status
     except FetchError as error:
+        logger.error("Status fetch fail.")
         logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
@@ -48,12 +54,19 @@ async def network_status() -> Any:
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
 @version(1, 0)
 async def scan() -> Any:
+    logger.info("Trying to perform network scan.")
     try:
-        return await wifi_manager.get_wifi_available()
+        available_networks = await wifi_manager.get_wifi_available()
+        logger.info("Available networks:")
+        for line in tabulate([network.dict() for network in available_networks], headers="keys").splitlines():
+            logger.info(line)
+        return available_networks
     except BusyError as error:
+        logger.error("Failed to scan networks.")
         logger.exception(error)
         raise HTTPException(status_code=status.HTTP_425_TOO_EARLY, detail=str(error)) from error
     except FetchError as error:
+        logger.error("Failed to scan networks.")
         logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
@@ -61,9 +74,15 @@ async def scan() -> Any:
 @app.get("/saved", response_model=List[SavedWifiNetwork], summary="Retrieve saved wifi networks.")
 @version(1, 0)
 async def saved() -> Any:
+    logger.info("Trying to fetch saved networks.")
     try:
-        return await wifi_manager.get_saved_wifi_network()
+        saved_networks = await wifi_manager.get_saved_wifi_network()
+        logger.info("Saved networks:")
+        for line in tabulate([network.dict() for network in saved_networks], headers="keys").splitlines():
+            logger.info(line)
+        return saved_networks
     except FetchError as error:
+        logger.error("Failed to fetch saved networks.")
         logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
@@ -71,42 +90,55 @@ async def saved() -> Any:
 @app.post("/connect", summary="Connect to wifi network.")
 @version(1, 0)
 async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
+    logger.info(f"Trying to connect to '{credentials.ssid}' with password '{credentials.password}'.")
     try:
         saved_networks = await wifi_manager.get_saved_wifi_network()
         match_network = next(filter(lambda network: network.ssid == credentials.ssid, saved_networks))
+        logger.info("Network is already known.")
         network_id = match_network.networkid
     except StopIteration:
+        logger.info("Network is not known. Saving it.")
         network_id = await wifi_manager.add_network(credentials, hidden)
 
     try:
+        logger.info("Performing network connection.")
         await wifi_manager.connect_to_network(network_id)
     except ConnectionError as error:
+        logger.error("Connection failed.")
         logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+    logger.info(f"Succesfully connected to '{credentials.ssid}'.")
 
 
 @app.post("/remove", summary="Remove saved wifi network.")
 @version(1, 0)
 async def remove(ssid: str) -> Any:
+    logger.info(f"Trying to remove network '{ssid}'.")
     try:
         saved_networks = await wifi_manager.get_saved_wifi_network()
         match_network = next(filter(lambda network: network.ssid == ssid, saved_networks))
         await wifi_manager.remove_network(match_network.networkid)
     except StopIteration as error:
+        logger.info(f"Network '{ssid}' is unknown.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Network '{ssid}' not saved.") from error
     except ConnectionError as error:
+        logger.error("Failed to remove network.")
         logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+    logger.info(f"Succesfully removed '{ssid}'.")
 
 
 @app.get("/disconnect", summary="Disconnect from wifi network.")
 @version(1, 0)
 async def disconnect() -> Any:
+    logger.info("Trying to disconnect from current network.")
     try:
         await wifi_manager.disconnect()
     except ConnectionError as error:
+        logger.error("Failed to perform disconnection.")
         logger.exception(error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+    logger.info("Succesfully disconnected from network.")
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
