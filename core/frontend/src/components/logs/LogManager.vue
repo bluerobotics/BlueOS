@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-card
-      v-if="!fetching_logs"
+      v-if="logs_fetched"
       flat
     >
       <v-card-title>
@@ -76,7 +76,7 @@ export default Vue.extend({
       sortBy: 'modified',
       sortDesc: true,
       available_logs: [] as FilebrowserFile[],
-      fetching_logs: false,
+      logs_fetched: false,
       selected_logs: [] as FilebrowserFile[],
       headers: [
         {
@@ -115,19 +115,24 @@ export default Vue.extend({
   methods: {
     async fetchAvailableLogs(): Promise<void> {
       const new_logs: FilebrowserFile[] = []
-      this.fetching_logs = true
 
       const log_folders = ['/root/.config/ardupilot-manager/firmware/logs/', '/root/.config/ardupilot-manager/logs/']
 
-      for (const folder_path of log_folders) {
-        await filebrowser.fetchFolder(folder_path)
-          .then((folder) => {
-            Array.prototype.push.apply(new_logs, folder.items)
-          })
+      // We fetch all paths in parallel and wait for everything to finish
+      // If it fails the folder does not exist, we display a 'No data available' message
+      // If it succeeds, it'll populate the array and show the logs to the user
+      try {
+        await Promise.all(log_folders.map(async (folder_path) => {
+          const folder = await filebrowser.fetchFolder(folder_path)
+          Array.prototype.push.apply(new_logs, folder.items)
+        }))
+      } catch (_) {
+        // We are going to ignore the error as described on the first comment and
+        // continue with the following lines
       }
 
+      this.logs_fetched = true
       this.available_logs = new_logs.filter((log) => ['.bin', '.tlog'].includes(log.extension.toLowerCase()))
-      this.fetching_logs = false
     },
     downloadSelectedLogs(): void {
       this.downloadLogs(this.selected_logs)
