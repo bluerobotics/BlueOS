@@ -96,7 +96,7 @@
       // Run validator for each tick
       this.$nextTick(() => {
         console.debug('Next tick.')
-        // Call metro validator manualy
+        // Call metro validator manually
         const inputs = $('#network-form [data-validate]')
         $.each(inputs, () => {
           Metro.validator.validate(this, {
