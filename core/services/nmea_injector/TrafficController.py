@@ -22,7 +22,7 @@ class SocketKind(str, Enum):
 
 class NMEASocket(BaseModel):
     """NMEA server socket.
-    Serializable model containing the neccessary information (network and mavlink-wise) used to specify a socket."""
+    Serializable model containing the necessary information (network and mavlink-wise) used to specify a socket."""
 
     kind: SocketKind
     port: conint(gt=1023, lt=65536)  # type: ignore
@@ -84,7 +84,7 @@ class TrafficController:
         return list(self._socks)
 
     async def add_sock(self, sock: NMEASocket) -> None:
-        """Open a new network server socket and asyncronously wait for connections to arrive."""
+        """Open a new network server socket and asynchronously wait for connections to arrive."""
         loop = asyncio.get_running_loop()
         server_socket: Union[asyncio.AbstractServer, asyncio.BaseTransport]
         if sock.kind == SocketKind.TCP:
