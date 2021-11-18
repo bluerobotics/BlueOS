@@ -13,7 +13,7 @@ MAX_ATTEMPTS = 10
 
 class PortWatcher:
     """Watches the Serial ports on the system, calls set_prober when a port is found,
-    port_post_callback when a port is no longe present"""
+    port_post_callback when a port is no longer present"""
 
     def __init__(self, probe_callback: Callable[[SysFS], Optional[PingDeviceDescriptor]]) -> None:
         logging.info("PortWatcher Started")
