@@ -223,6 +223,17 @@ class WifiManager:
         except Exception as error:
             raise RuntimeError("Failed to enable saved networks.") from error
 
+    async def get_current_network(self) -> Optional[SavedWifiNetwork]:
+        """Get current network, if connected."""
+        try:
+            saved_networks = await self.get_saved_wifi_network()
+            for network in saved_networks:
+                if network.flags is not None and "current" in network.flags.lower():
+                    return network
+            return None
+        except Exception as error:
+            raise RuntimeError("Failed to get current network.") from error
+
     async def auto_reconnect(self, seconds_before_reconnecting: float) -> None:
         """Re-enable all saved networks if disconnected for more than specified time.
         When a connection is made, using the 'select' wpa command, all other saved networks are disabled, to ensure
