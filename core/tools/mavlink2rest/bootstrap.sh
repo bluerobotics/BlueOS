@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Immediately exit on errors
+set -e
+
 LOCAL_BINARY_PATH="/usr/bin/mavlink2rest"
 
 VERSION=t0.11.6
