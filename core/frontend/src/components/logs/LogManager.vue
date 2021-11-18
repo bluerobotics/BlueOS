@@ -150,7 +150,7 @@ export default Vue.extend({
       this.selected_logs = []
     },
     async replay_log(log: FilebrowserFile): Promise<void> {
-      const log_url = encodeURIComponent(filebrowser.singleFileRelativeURL(log))
+      const log_url = encodeURIComponent(await filebrowser.singleFileRelativeURL(log))
       window.open(`/logviewer/#/?file=${log_url}`)
     },
   },
