@@ -172,7 +172,7 @@ class WifiManager:
         except Exception as error:
             raise ConnectionError("Failed to remove existing network.") from error
 
-    async def connect_to_network(self, network_id: int) -> None:
+    async def connect_to_network(self, network_id: int, timeout: float = 10.0) -> None:
         """Connect to wifi network
 
         Arguments:
@@ -183,6 +183,19 @@ class WifiManager:
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             await self.wpa.send_command_reconnect()
+            start_time = time.time()
+            while True:
+                status = await self.status()
+                is_connected = status.get("wpa_state") == "COMPLETED"
+                if is_connected:
+                    current_network = await self.get_current_network()
+                    if current_network and current_network.networkid == network_id:
+                        break
+                    raise RuntimeError("Association or authentication failed.")
+                timer = time.time() - start_time
+                if timer > timeout:
+                    raise RuntimeError("Could not stablish a wifi connection in time.")
+                await asyncio.sleep(2.0)
         except Exception as error:
             raise ConnectionError(f"Failed to connect to network. {error}") from error
 
