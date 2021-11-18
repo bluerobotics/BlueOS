@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Immediately exist on errors
+# Immediately exit on errors
 set -e
 
 BUILD_PACKAGES=(
