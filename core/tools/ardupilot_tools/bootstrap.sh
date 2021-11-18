@@ -9,8 +9,13 @@ set -e
 COMMIT_HASH=4ea8c32c61781fa36dff9748fe3a18cdb5743abb
 LOCAL_PATH_UPLOADER="/usr/bin/ardupilot_fw_uploader.py"
 REMOTE_URL_UPLOADER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/uploader.py"
-wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
-chmod +x "$LOCAL_PATH_UPLOADER"
+
+# Sudo command is not available on docker and the script is also used in different environments
+# The SUDO alias allow the usage of sudo when such command exists and also ignore if it doesn't
+SUDO="$(command -v sudo || echo '')"
+readonly SUDO
+$SUDO wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
+$SUDO chmod +x "$LOCAL_PATH_UPLOADER"
 
 ## Download and install necessary modules to user-site folder
 
