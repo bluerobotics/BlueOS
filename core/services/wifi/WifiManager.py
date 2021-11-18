@@ -261,11 +261,12 @@ class WifiManager:
         """
         seconds_disconnected = 0.0
         networks_reenabled = False
-        was_connected = True
+        was_connected = False
+        logger.debug("Watchdog starting disconnected.")
+        time_disconnection = time.time()
         while True:
             await asyncio.sleep(2.5)
-            status = await self.status()
-            is_connected = "wpa_state" in status and not status["wpa_state"] in ["DISCONNECTED", "SCANNING"]
+            is_connected = await self.get_current_network() is not None
 
             if was_connected and not is_connected:
                 self.connection_status = ConnectionStatus.JUST_DISCONNECTED
@@ -275,7 +276,7 @@ class WifiManager:
             elif not was_connected and not is_connected:
                 self.connection_status = ConnectionStatus.STILL_DISCONNECTED
                 seconds_disconnected = time.time() - time_disconnection
-                logger.debug(f"Seconds since disconnection: {seconds_disconnected}.")
+                logger.debug(f"{int(seconds_disconnected)} seconds passed since disconnection.")
             elif not was_connected and is_connected:
                 self.connection_status = ConnectionStatus.JUST_CONNECTED
                 seconds_disconnected = 0
@@ -286,7 +287,7 @@ class WifiManager:
                 self.connection_status = ConnectionStatus.STILL_CONNECTED
 
             if not networks_reenabled and seconds_disconnected >= seconds_before_reconnecting:
+                logger.debug("Watchdog activated. Trying to reconnect to available networks.")
                 await self.enable_saved_networks()
                 await self.wpa.send_command_reconnect()
                 networks_reenabled = True
-                logger.debug("Enabled all networks.")
