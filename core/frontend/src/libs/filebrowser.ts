@@ -55,7 +55,7 @@ class Filebrowser {
       method: 'get',
       url: `${filebrowser_url}/resources${folder_path}`,
       timeout: 10000,
-      headers: { 'X-Auth': this.filebrowser_token() },
+      headers: { 'X-Auth': await this.filebrowser_token() },
     })
       .then((response) => response.data)
       .catch((error) => {
