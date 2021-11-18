@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Immediately exit on errors
+set -e
+
 DESTINATION_PATH="/home/pi/tools/logviewer"
 
 VERSION=v0.9.2
