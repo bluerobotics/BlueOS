@@ -16,8 +16,8 @@ class Filebrowser {
 
   /* Fetch filebrowser API for a authentication token and store it.
      This method should be called on constructor so other methods have a token to use. */
-  update_filebrowser_token(): void {
-    back_axios({
+  async update_filebrowser_token(): Promise<void> {
+    await back_axios({
       method: 'post',
       url: `${filebrowser_url}/login`,
       timeout: 10000,
