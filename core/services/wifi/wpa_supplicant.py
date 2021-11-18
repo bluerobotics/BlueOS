@@ -55,8 +55,6 @@ class WPASupplicant:
             command {str} -- WPA Supplicant command to be sent
             timeout {float} -- Maximum time (in seconds) allowed for receiving an answer before raising a BusyError
         """
-        logger.info(f">\n{command}")
-
         assert self.sock, "No socket assigned to WPA Supplicant"
 
         timeout_start = time.time()
@@ -74,9 +72,6 @@ class WPASupplicant:
             break
         else:
             raise BusyError(f"{command} operation took more than specified timeout ({timeout}). Cancelling.")
-
-        if data:
-            logger.info(f"<\n{data.decode('utf-8').strip()}")
 
         if data == b"FAIL":
             raise WPAOperationFail(f"WPA operation {command} failed.")
