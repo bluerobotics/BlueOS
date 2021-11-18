@@ -87,7 +87,7 @@ class Mavlink2RestManager {
 
   /**
    * Requests a message at a given rate
-   * @param  {string} messsage name
+   * @param  {string} message name
    * @returns Listener
    */
   requestMessageRate(message: string, rate:number): void {
