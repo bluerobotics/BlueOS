@@ -179,6 +179,7 @@ class WifiManager:
         Arguments:
             network_id {int} -- Network ID provided by WPA Supplicant
         """
+        self.connection_status = ConnectionStatus.CONNECTING
         try:
             await self.wpa.send_command_select_network(network_id)
             await self.wpa.send_command_save_config()
@@ -203,7 +204,9 @@ class WifiManager:
             if current_network and current_network.ssid in self._ignored_reconnection_networks:
                 logger.debug(f"Removing '{current_network.ssid}' from ignored list.")
                 self._ignored_reconnection_networks.remove(current_network.ssid)
+            self.connection_status = ConnectionStatus.JUST_CONNECTED
         except Exception as error:
+            self.connection_status = ConnectionStatus.UNKNOWN
             raise ConnectionError(f"Failed to connect to network. {error}") from error
 
     async def status(self) -> Dict[str, Any]:
@@ -227,6 +230,7 @@ class WifiManager:
         """Reconfigure wpa_supplicant
         This will force the reevaluation of the conf file
         """
+        self.connection_status = ConnectionStatus.DISCONNECTING
         try:
             # Save current network in ignored list so the watchdog doesn't auto-reconnect to it
             current_network = await self.get_current_network()
@@ -236,7 +240,9 @@ class WifiManager:
                 await self.wpa.send_command_disable_network(current_network.networkid)
 
             await self.wpa.send_command_disconnect()
+            self.connection_status = ConnectionStatus.JUST_DISCONNECTED
         except Exception as error:
+            self.connection_status = ConnectionStatus.UNKNOWN
             raise ConnectionError("Failed to disconnect from wifi network.") from error
 
     async def enable_saved_networks(self, ignore: Optional[List[str]] = None) -> None:
@@ -282,6 +288,11 @@ class WifiManager:
         time_disconnection = time.time()
         while True:
             await asyncio.sleep(2.5)
+
+            # Disable watchdog checks while deliberately connecting or disconnecting
+            if self.connection_status in [ConnectionStatus.CONNECTING, ConnectionStatus.DISCONNECTING]:
+                continue
+
             is_connected = await self.get_current_network() is not None
 
             if was_connected and not is_connected:
