@@ -35,9 +35,9 @@ class Filebrowser {
   }
 
   /* Helper to get the auth token, checking before if it was set. */
-  filebrowser_token(): string {
+  async filebrowser_token(): Promise<string> {
     if (this.auth_token === null) {
-      this.update_filebrowser_token()
+      await this.update_filebrowser_token()
       if (this.auth_token === null) {
         throw new Error('Authentication token not set.')
       }
