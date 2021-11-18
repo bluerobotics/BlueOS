@@ -13,7 +13,7 @@ import aiohttp
 
 
 def get_current_arch() -> str:
-    """Maps paltform.machine() outputs to docker architectures"""
+    """Maps platform.machine() outputs to docker architectures"""
     arch_map = {"x86_64": "amd64", "aarch64": "arm", "armv7l": "arm"}  # TODO: differentiate arm64v8/ arm32v7
     machine = platform.machine()
     arch = arch_map.get(machine, None)
