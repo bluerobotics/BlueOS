@@ -116,7 +116,7 @@ app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 if __name__ == "__main__":
 
     if os.geteuid() != 0:
-        print("You need root privileges to run this script.\nPlease try again, this time using **sudo**. Exiting.")
+        logger.error("You need root privileges to run this script.\nPlease try again using **sudo**. Exiting.")
         sys.exit(1)
 
     parser = argparse.ArgumentParser(description="Abstraction CLI for WifiManager configuration.")
@@ -131,18 +131,20 @@ if __name__ == "__main__":
     wpa_socket_folder = "/var/run/wpa_supplicant/"
     try:
         if args.socket_name:
+            logger.info("Connecting via provided socket.")
             socket_name = args.socket_name
         else:
+            logger.info("Connecting via default socket.")
             socket_name = os.listdir(wpa_socket_folder)[0]
         WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
         wifi_manager.connect(WLAN_SOCKET)
     except Exception as socket_connection_error:
-        print(socket_connection_error)
-        print("Could not connect with provided socket. Connecting via internet socket.")
+        logger.warning(f"Could not connect with wifi socket. {socket_connection_error}")
+        logger.info("Connecting via internet wifi socket.")
         try:
             wifi_manager.connect(("127.0.0.1", 6664))
         except Exception as udp_connection_error:
-            print(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
+            logger.error(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
             sys.exit(1)
 
     loop = asyncio.new_event_loop()
