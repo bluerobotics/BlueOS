@@ -93,6 +93,7 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
     logger.info(f"Trying to connect to '{credentials.ssid}' with password '{credentials.password}'.")
 
     network_id: Optional[int] = None
+    is_new_network = False
     try:
         saved_networks = await wifi_manager.get_saved_wifi_network()
         match_network = next(filter(lambda network: network.ssid == credentials.ssid, saved_networks))
@@ -100,6 +101,7 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
         network_id = match_network.networkid
     except StopIteration:
         logger.info("Network is not known.")
+        is_new_network = True
 
     if credentials.password == "" and network_id is None:
         raise HTTPException(
@@ -123,6 +125,14 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
     except ConnectionError as error:
         logger.error("Connection failed.")
         logger.exception(error)
+
+        try:
+            if is_new_network and network_id is not None:
+                logger.info("Removing new network entry since connection failed.")
+                await wifi_manager.remove_network(network_id)
+        except ConnectionError:
+            logger.info("Failed to remove network entry.")
+
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
     logger.info(f"Succesfully connected to '{credentials.ssid}'.")
 
