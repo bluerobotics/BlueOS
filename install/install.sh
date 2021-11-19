@@ -8,9 +8,16 @@ ROOT="$REMOTE/$VERSION"
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Check if the script is running in ARM architecture
-[[ "$(uname -m)" != "arm"* ]] && (
-    echo "Companion only supports ARM computers."
+# Check if the script is running in a supported architecture
+SUPPORTED_ARCHITECTURES=(
+  "armhf" # Pi, Pi2, Pi3, Pi4
+  "armv7" # Pi2, Pi3, Pi4
+  "aarch64" # Pi3, Pi4
+)
+ARCHITECTURE="$(uname -m)"
+[[ ! "${SUPPORTED_ARCHITECTURES[*]}" =~ $ARCHITECTURE ]] && (
+    echo "Invalid architecture: $ARCHITECTURE"
+    echo "Supported architectures: ${SUPPORTED_ARCHITECTURES[*]}"
     exit 1
 )
 
