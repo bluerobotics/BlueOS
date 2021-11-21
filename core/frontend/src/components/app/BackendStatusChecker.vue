@@ -20,8 +20,8 @@ export default Vue.extend({
       return this.backend_offline ? 'Disconnected' : ''
     },
   },
-  async mounted() {
-    await callPeriodically(this.checkBackendStatus, 3000)
+  mounted() {
+    callPeriodically(this.checkBackendStatus, 3000)
   },
   methods: {
     async checkBackendStatus(): Promise<void> {

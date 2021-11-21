@@ -21,9 +21,9 @@ import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'AutopilotManagerUpdater',
-  async mounted() {
-    await callPeriodically(this.fetchAvailableEndpoints, 5000)
-    await callPeriodically(this.fetchCurrentPlatform, 5000)
+  mounted() {
+    callPeriodically(this.fetchAvailableEndpoints, 5000)
+    callPeriodically(this.fetchCurrentPlatform, 5000)
   },
   methods: {
     async fetchAvailableEndpoints(): Promise<void> {

@@ -20,9 +20,9 @@ import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'BridgetUpdater',
-  async mounted() {
-    await callPeriodically(this.fetchAvailableBridges, 5000)
-    await callPeriodically(this.fetchAvailableSerialPorts, 5000)
+  mounted() {
+    callPeriodically(this.fetchAvailableBridges, 5000)
+    callPeriodically(this.fetchAvailableSerialPorts, 5000)
   },
   methods: {
     async fetchAvailableBridges(): Promise<void> {

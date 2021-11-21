@@ -14,10 +14,10 @@ import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'WifiUpdater',
-  async mounted() {
-    await callPeriodically(this.fetchSavedNetworks, 5000)
-    await callPeriodically(this.fetchNetworkStatus, 5000)
-    await callPeriodically(this.fetchAvailableNetworks, 10000)
+  mounted() {
+    callPeriodically(this.fetchSavedNetworks, 5000)
+    callPeriodically(this.fetchNetworkStatus, 5000)
+    callPeriodically(this.fetchAvailableNetworks, 10000)
   },
   methods: {
     async fetchNetworkStatus(): Promise<void> {

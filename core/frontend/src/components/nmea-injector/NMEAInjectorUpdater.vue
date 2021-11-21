@@ -20,8 +20,8 @@ import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'NMEAInjectorUpdater',
-  async mounted() {
-    await callPeriodically(this.fetchAvailableNMEASockets, 5000)
+  mounted() {
+    callPeriodically(this.fetchAvailableNMEASockets, 5000)
   },
   methods: {
     async fetchAvailableNMEASockets(): Promise<void> {
