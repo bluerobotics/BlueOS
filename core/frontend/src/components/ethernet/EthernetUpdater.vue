@@ -13,8 +13,8 @@ import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'EthernetUpdater',
-  async mounted() {
-    await callPeriodically(this.fetchAvailableInterfaces, 5000)
+  mounted() {
+    callPeriodically(this.fetchAvailableInterfaces, 5000)
   },
   methods: {
     async fetchAvailableInterfaces(): Promise<void> {

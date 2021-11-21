@@ -13,9 +13,9 @@ import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'VideoUpdater',
-  async mounted() {
-    await callPeriodically(video.fetchDevices, 5000)
-    await callPeriodically(video.fetchStreams, 5000)
+  mounted() {
+    callPeriodically(video.fetchDevices, 5000)
+    callPeriodically(video.fetchStreams, 5000)
   },
 })
 </script>
