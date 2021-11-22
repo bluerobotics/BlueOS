@@ -188,7 +188,7 @@ export default Vue.extend({
     connection_result_type(): string {
       switch (this.connection_status) {
         case ConnectionStatus.Succeeded:
-          return 'success.'
+          return 'success'
         case ConnectionStatus.Failed:
           return 'error'
         default:
