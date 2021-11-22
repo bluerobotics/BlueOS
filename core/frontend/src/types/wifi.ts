@@ -3,6 +3,8 @@ export interface Network {
     signal: number
     locked: boolean
     saved: boolean
+    bssid: string
+    frequency: number
 }
 
 export interface WifiStatus {

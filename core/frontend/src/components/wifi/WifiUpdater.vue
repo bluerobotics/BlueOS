@@ -42,6 +42,8 @@ export default Vue.extend({
             signal: scanned_network ? scanned_network.signal : 0,
             locked: response.data.key_mgmt.includes('WPA'),
             saved: saved_network != null,
+            bssid: scanned_network ? scanned_network.bssid : '',
+            frequency: scanned_network ? scanned_network.frequency : 0,
           })
         })
         .catch((error) => {
@@ -64,6 +66,8 @@ export default Vue.extend({
             signal: network.signallevel,
             locked: network.flags.includes('WPA'),
             saved: saved_networks_ssids?.includes(network.ssid) || false,
+            bssid: network.bssid,
+            frequency: network.frequency,
           }))
           wifi.setAvailableNetworks(available_networks)
         })
