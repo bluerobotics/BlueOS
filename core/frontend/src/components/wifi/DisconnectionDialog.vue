@@ -104,6 +104,7 @@ export default Vue.extend({
       this.show_more_info = !this.show_more_info
     },
     async disconnectFromWifiNetwork(): Promise<void> {
+      this.showDialog(false)
       await back_axios({
         method: 'get',
         url: `${wifi.API_URL}/disconnect`,
@@ -116,9 +117,6 @@ export default Vue.extend({
         .catch((error) => {
           const message = `Could not disconnect from wifi network: ${error.message}.`
           notifications.pushError({ service: wifi_service, type: 'WIFI_DISCONNECT_FAIL', message })
-        })
-        .finally(() => {
-          this.showDialog(false)
         })
     },
     showDialog(state: boolean): void {
