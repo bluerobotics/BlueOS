@@ -238,7 +238,6 @@ export default Vue.extend({
         })
         .finally(() => {
           this.password = ''
-          this.showDialog(false)
         })
     },
     async removeSavedWifiNetwork(): Promise<void> {
