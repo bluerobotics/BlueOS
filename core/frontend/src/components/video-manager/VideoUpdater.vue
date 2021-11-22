@@ -5,10 +5,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import notifications from '@/store/notifications'
 import video from '@/store/video'
-import { video_manager_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
