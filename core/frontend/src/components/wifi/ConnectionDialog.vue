@@ -231,7 +231,8 @@ export default Vue.extend({
         })
         .catch((error) => {
           this.connection_status = ConnectionStatus.Failed
-          const message = `Could not connect to wifi network: ${error.message}.`
+          let message = error.response.data.detail ? error.response.data.detail : `Connection failed: ${error}`
+          message = message.concat('\n', 'Please check if the password is correct.')
           this.connection_result_message = message
           notifications.pushError({ service: wifi_service, type: 'WIFI_CONNECT_FAIL', message })
         })
@@ -248,7 +249,7 @@ export default Vue.extend({
         params: { ssid: this.network.ssid },
       })
         .catch((error) => {
-          const message = `Could not remove saved wifi network: ${error.message}.`
+          const message = error.response.data.detail ? error.response.data.detail : `Connection failed: ${error}`
           notifications.pushError({ service: wifi_service, type: 'WIFI_FORGET_FAIL', message })
         })
         .finally(() => {
