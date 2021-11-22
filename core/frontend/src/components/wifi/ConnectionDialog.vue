@@ -1,6 +1,6 @@
 <template>
   <v-dialog
-    width="300"
+    width="350"
     :value="show"
     @input="showDialog"
   >
