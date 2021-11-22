@@ -2,6 +2,7 @@
   <v-card
     elevation="1"
     width="500"
+    max-height="80vh"
   >
     <v-container class="pa-0">
       <v-container v-if="current_network">
