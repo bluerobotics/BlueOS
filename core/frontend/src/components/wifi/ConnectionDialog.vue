@@ -228,6 +228,8 @@ export default Vue.extend({
           this.connection_status = ConnectionStatus.Succeeded
           this.connection_result_message = `Successfully connected to '${this.real_ssid}'`
           wifi.setNetworkStatus(null)
+          this.password = ''
+          this.force_password = false
         })
         .catch((error) => {
           this.connection_status = ConnectionStatus.Failed
@@ -235,9 +237,6 @@ export default Vue.extend({
           message = message.concat('\n', 'Please check if the password is correct.')
           this.connection_result_message = message
           notifications.pushError({ service: wifi_service, type: 'WIFI_CONNECT_FAIL', message })
-        })
-        .finally(() => {
-          this.password = ''
         })
     },
     async removeSavedWifiNetwork(): Promise<void> {
