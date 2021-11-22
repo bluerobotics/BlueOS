@@ -93,6 +93,22 @@
           </v-row>
         </v-container>
       </v-card-actions>
+      <v-card-text v-if="connecting">
+        Connecting to network, please wait...
+        <v-progress-linear
+          indeterminate
+          color="blue"
+          class="mb-0"
+        />
+      </v-card-text>
+      <v-card-text v-if="tried_connecting">
+        <v-alert
+          :type="connection_result_type"
+          class="mx-1"
+        >
+          {{ connection_result_message }}
+        </v-alert>
+      </v-card-text>
     </v-card>
   </v-dialog>
 </template>
@@ -107,6 +123,13 @@ import { Network, NetworkCredentials } from '@/types/wifi'
 import back_axios from '@/utils/api'
 
 import PasswordInput from '../common/PasswordInput.vue'
+
+enum ConnectionStatus {
+  NotStarted,
+  Connecting,
+  Succeeded,
+  Failed
+}
 
 export default Vue.extend({
   name: 'ConnectionDialog',
@@ -133,6 +156,8 @@ export default Vue.extend({
       force_password: false,
       inputed_ssid: 'HIDDEN SSID',
       show_more_info: false,
+      connection_status: ConnectionStatus.NotStarted,
+      connection_result_message: '',
     }
   },
   computed: {
@@ -154,6 +179,23 @@ export default Vue.extend({
       }
       return true
     },
+    connecting(): boolean {
+      return this.connection_status === ConnectionStatus.Connecting
+    },
+    tried_connecting(): boolean {
+      return [ConnectionStatus.Succeeded, ConnectionStatus.Failed].includes(this.connection_status)
+    },
+    connection_result_type(): string {
+      switch (this.connection_status) {
+        case ConnectionStatus.Succeeded:
+          return 'success.'
+        case ConnectionStatus.Failed:
+          return 'error'
+        default:
+          return 'info'
+      }
+    },
+  },
   },
   methods: {
     toggleInfoShow(): void {
@@ -164,6 +206,8 @@ export default Vue.extend({
     },
     async connectToWifiNetwork(): Promise<void> {
       const credentials: NetworkCredentials = { ssid: this.real_ssid, password: this.password }
+      this.connection_status = ConnectionStatus.Connecting
+      this.connection_result_message = ''
       await back_axios({
         method: 'post',
         url: `${wifi.API_URL}/connect`,
@@ -172,10 +216,14 @@ export default Vue.extend({
         params: { hidden: this.is_hidden },
       })
         .then(() => {
+          this.connection_status = ConnectionStatus.Succeeded
+          this.connection_result_message = `Successfully connected to '${this.real_ssid}'`
           wifi.setNetworkStatus(null)
         })
         .catch((error) => {
+          this.connection_status = ConnectionStatus.Failed
           const message = `Could not connect to wifi network: ${error.message}.`
+          this.connection_result_message = message
           notifications.pushError({ service: wifi_service, type: 'WIFI_CONNECT_FAIL', message })
         })
         .finally(() => {
