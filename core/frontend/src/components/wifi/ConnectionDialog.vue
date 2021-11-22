@@ -196,6 +196,15 @@ export default Vue.extend({
       }
     },
   },
+  watch: {
+    show(val: boolean): void {
+      if (val === false) {
+        this.connection_status = ConnectionStatus.NotStarted
+        this.connection_result_message = ''
+        this.password = ''
+        this.force_password = false
+      }
+    },
   },
   methods: {
     toggleInfoShow(): void {
