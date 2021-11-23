@@ -294,10 +294,15 @@ export default Vue.extend({
         .catch((error) => {
           this.install_status = InstallStatus.Failed
           if (error === backend_offline_error) { return }
-          try {
-            this.install_result_message = error.response.data.message
-          } catch {
-            this.install_result_message = 'Invalid backend error message.'
+          // Catch Chrome's net:::ERR_UPLOAD_FILE_CHANGED error
+          if (error.message && error.message === 'Network Error') {
+            this.install_result_message = 'Upload fail. If the file was changed, clean the form and re-select it.'
+          } else {
+            try {
+              this.install_result_message = error.response.data.message
+            } catch {
+              this.install_result_message = 'Invalid backend error message.'
+            }
           }
           const message = `Could not install firmware: ${this.install_result_message}.`
           notifications.pushError({ service: autopilot_service, type: 'FILE_FIRMWARE_INSTALL_FAIL', message })
