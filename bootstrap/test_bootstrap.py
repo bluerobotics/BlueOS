@@ -31,6 +31,15 @@ SAMPLE_JSON = """{
             }
         },
         "privileged": true
+    },
+    "ttyd": {
+        "tag": "master",
+        "image": "bluerobotics/companion-ttyd",
+        "enabled": true,
+        "webui": false,
+        "network": "host",
+        "binds": {},
+        "privileged": true
     }
 }"""
 
@@ -128,7 +137,17 @@ class BootstrapperTests(TestCase):  # type: ignore
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
-        bootstrapper.start_core()
+        bootstrapper.start("core")
+
+    @pytest.mark.timeout(10)
+    def test_start_core_and_ttyd(self) -> None:
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
+        fake_client = FakeClient()
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
+        bootstrapper.start("core")
+        bootstrapper.start("ttyd")
+        assert bootstrapper.is_running("core")
+        assert bootstrapper.is_running("ttyd")
 
     @pytest.mark.timeout(10)
     def test_start_core_no_config(self) -> None:
@@ -136,17 +155,17 @@ class BootstrapperTests(TestCase):  # type: ignore
         self.fs.create_dir(Path(Bootstrapper.DOCKER_CONFIG_PATH))
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
-        bootstrapper.start_core()
+        bootstrapper.start("core")
 
     @staticmethod
     @pytest.mark.timeout(10)
     def test_is_running() -> None:
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
-        assert bootstrapper.core_is_running() is False
+        assert bootstrapper.is_running("core") is False
         fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
         fake_client.set_active_dockers([fake_core])
-        assert bootstrapper.core_is_running()
+        assert bootstrapper.is_running("core")
 
     @staticmethod
     @pytest.mark.timeout(10)
@@ -155,17 +174,17 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
         fake_client.set_active_dockers([fake_core])
-        assert bootstrapper.core_is_running() is True
-        bootstrapper.remove_core()
-        assert bootstrapper.core_is_running() is False
+        assert bootstrapper.is_running("core") is True
+        bootstrapper.remove("core")
+        assert bootstrapper.is_running("core") is False
 
     @pytest.mark.timeout(10)
     def test_bootstrap_start(self) -> None:
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
         bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
-        assert bootstrapper.core_is_running() is False
+        assert bootstrapper.is_running("core") is False
         bootstrapper.run()
-        assert bootstrapper.core_is_running()
+        assert bootstrapper.is_running("core")
 
     @pytest.mark.timeout(10)
     def test_bootstrap_start_bad_json(self) -> None:
@@ -173,4 +192,4 @@ class BootstrapperTests(TestCase):  # type: ignore
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=json.dumps({"potato": "bread"}))
         bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
         bootstrapper.run()
-        assert bootstrapper.core_is_running()
+        assert bootstrapper.is_running("core")

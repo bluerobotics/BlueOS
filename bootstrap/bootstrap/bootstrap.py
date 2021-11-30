@@ -75,11 +75,17 @@ class Bootstrapper:
         }
         return config
 
-    def pull_core(self) -> None:
+    def pull(self, component_name: str) -> None:
+        """Pulls an image
 
-        core = self.config["core"]
-        image = core["image"]
-        tag = core["tag"]
+        Args:
+            component_name (str): name of one of our components in startup.json, such as
+            "core", "ttyd", or "bootstrap"
+        """
+
+        image = self.config[component_name]
+        image_name = image["image"]
+        tag = image["tag"]
 
         curses_ui = True
         try:
@@ -93,7 +99,7 @@ class Bootstrapper:
 
         # if there is no curses support, like in the testing environment, just dump everything
         if not curses_ui:
-            self.client.images.pull(f"{image}:{tag}")
+            self.client.images.pull(f"{image_name}:{tag}")
             return
 
         # if there is ncurses support, proceed with it
@@ -101,7 +107,7 @@ class Bootstrapper:
         # map each id to a line
         id_line: Dict[str, int] = {}
         try:
-            for line in self.low_level_api.pull(f"{image}:{tag}", stream=True, decode=True):
+            for line in self.low_level_api.pull(f"{image_name}:{tag}", stream=True, decode=True):
                 if len(line.keys()) == 1 and "status" in line:
                     # in some cases there is only "status", print that on the last line
                     screen.addstr(lines, 0, line["status"])
@@ -133,22 +139,29 @@ class Bootstrapper:
         images = self.client.images.list(image_name)
         return any(f"{image_name}:{tag}" in image.tags for image in images)
 
-    def start_core(self) -> bool:
-        """Loads core settings and launches the core docker. Loads default settings if no settings are found"""
-        core_version = "stable"
+    def start(self, component_name: str) -> bool:
+        """Loads settings and starts the containers. Loads default settings if no settings are found
+
+        Args:
+            component_name (str): one of our images names, such as "core", "bootstrap", or "ttyd"
+
+        Returns:
+            bool: True if successful
+        """
+        image_version = "stable"
 
         self.config = Bootstrapper.read_config_file()
 
-        core = self.config["core"]
-        image = core["image"]
-        core_version = core["tag"]
-        binds = core["binds"]
-        privileged = core["privileged"]
-        network = core["network"]
+        image = self.config[component_name]
+        image_name = image["image"]
+        image_version = image["tag"]
+        binds = image["binds"]
+        privileged = image["privileged"]
+        network = image["network"]
 
-        if not self.image_is_available_locally(image, core_version):
+        if not self.image_is_available_locally(image_name, image_version):
             try:
-                self.pull_core()
+                self.pull(component_name)
             except docker.errors.ImageNotFound:
                 warn("Image not found, reverting to default...")
                 self.overwrite_config_file_with_defaults()
@@ -157,11 +170,11 @@ class Bootstrapper:
                 warn(f"Error trying to pull an update image: {error}")
                 return False
 
-        print("Starting core")
+        print(f"Starting {image_name}")
         try:
             self.client.containers.run(
-                f"{image}:{core_version}",
-                name=Bootstrapper.CORE_CONTAINER_NAME,
+                f"{image_name}:{image_version}",
+                name=f"companion-{component_name}",
                 volumes=binds,
                 privileged=privileged,
                 network=network,
@@ -175,20 +188,24 @@ class Bootstrapper:
         print("Core started")
         return True
 
-    def core_is_running(self) -> bool:
-        """
+    def is_running(self, component: str) -> bool:
+        """Checks if the container for a given component of companion is running
+
+        Args:
+            component (str): component name ("core", "bootstrap", "ttyd", ...)
+
         Returns:
-            bool: True if the core container is running
+            bool: True if the chosen container is running
         """
         for container in self.client.containers.list():
-            if Bootstrapper.CORE_CONTAINER_NAME in container.name:
+            if container.name.endswith(component):
                 return True
         return False
 
-    def remove_core(self) -> None:
-        """Deletes the core container if it exists (needed for updating the running image)"""
+    def remove(self, container: str) -> None:
+        """Deletes the chosen container if it exists (needed for updating the running image)"""
         try:
-            old_container = self.client.containers.get(Bootstrapper.CORE_CONTAINER_NAME)
+            old_container = self.client.containers.get(f"companion-{container}")
             old_container.remove()
         except docker.errors.NotFound:
             # This exception is raised if the container does not exist
@@ -197,13 +214,13 @@ class Bootstrapper:
     def run(self) -> None:
         """Runs the bootstrapper"""
         while True:
-            if self.core_is_running():
-                print("core is already running, waiting for it to stop...")
-                time.sleep(1)
-            else:
+            for image in self.read_config_file():
+                if self.is_running(image):
+                    print(f"{image} is already running, waiting for it to stop...")
+                    continue
                 try:
-                    self.remove_core()
-                    if self.start_core():
+                    self.remove(image)
+                    if self.start(image):
                         print("Done")
                         return
                 except Exception as error:
