@@ -54,6 +54,7 @@
 </template>
 
 <script lang="ts">
+import { uniqBy } from 'lodash'
 import Vue from 'vue'
 
 import wifi from '@/store/wifi'
@@ -87,7 +88,7 @@ export default Vue.extend({
       return wifi.current_network
     },
     connectable_networks(): Network[] | null {
-      return wifi.connectable_networks
+      return uniqBy(wifi.connectable_networks, 'ssid')
     },
   },
   methods: {
