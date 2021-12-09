@@ -30,7 +30,8 @@ class MAVProxy(AbstractRouter):
                 return f"--out={str(endpoint)}"
             return f"--out={serial_endpoint_as_input(endpoint)}"
 
-        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in self.endpoints()])
+        filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
+        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in filtered_endpoints])
 
         master_string = str(master)
         if master.connection_type == EndpointType.Serial:

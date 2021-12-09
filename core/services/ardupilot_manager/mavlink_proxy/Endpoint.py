@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Iterable, Optional, Type
 
 import validators
 from pydantic import constr, root_validator
@@ -48,6 +48,10 @@ class Endpoint:
         raise ValueError(
             f"Invalid connection_type: {connection_type}. Valid types are: {[e.value for e in EndpointType]}."
         )
+
+    @staticmethod
+    def filter_enabled(endpoints: Iterable["Endpoint"]) -> Iterable["Endpoint"]:
+        return [endpoint for endpoint in endpoints if endpoint.enabled is True]
 
     def __str__(self) -> str:
         return ":".join([self.connection_type, self.place, str(self.argument)])

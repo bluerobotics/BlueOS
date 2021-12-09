@@ -49,7 +49,8 @@ class MAVLinkRouter(AbstractRouter):
         sorted_endpoints = sorted(
             self.endpoints(), key=lambda endpoint: types_order[endpoint.connection_type]  # type: ignore
         )
-        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in sorted_endpoints])
+        filtered_endpoints = Endpoint.filter_enabled(sorted_endpoints)
+        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in filtered_endpoints])
 
         if master.connection_type not in [
             EndpointType.UDPServer,
