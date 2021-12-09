@@ -14,6 +14,7 @@ from exceptions import (
     ArdupilotProcessKillFail,
     EndpointCreationFail,
     EndpointDeleteFail,
+    EndpointUpdateFail,
 )
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
@@ -403,6 +404,26 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 self._reset_endpoints(loaded_endpoints)
                 raise EndpointDeleteFail(f"Failed to remove endpoint '{endpoint.name}': {error}") from error
+
+    def update_endpoints(self, endpoints_to_update: Set[Endpoint]) -> None:
+        """Update multiple endpoints from the mavlink manager and save them on the configuration file."""
+        loaded_endpoints = self.get_endpoints()
+
+        protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_update))
+        if protected_endpoints:
+            raise ValueError(f"Endpoints {[e.name for e in protected_endpoints]} are protected. Aborting operation.")
+
+        for updated_endpoint in endpoints_to_update:
+            old_endpoint = next((e for e in loaded_endpoints if e.name == updated_endpoint.name), None)
+            try:
+                if not old_endpoint:
+                    raise ValueError(f"Endpoint '{updated_endpoint.name}' does not exist.")
+                logger.info(f"Updating endpoint '{updated_endpoint.name}'.")
+                self.mavlink_manager.remove_endpoint(old_endpoint)
+                self.mavlink_manager.add_endpoint(updated_endpoint)
+            except Exception as error:
+                self._reset_endpoints(loaded_endpoints)
+                raise EndpointUpdateFail(f"Failed to update endpoint '{updated_endpoint.name}': {error}") from error
 
     def get_available_firmwares(self, vehicle: Vehicle) -> List[Firmware]:
         return self.firmware_manager.get_available_firmwares(vehicle, self.current_platform)

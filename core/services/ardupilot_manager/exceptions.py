@@ -69,3 +69,7 @@ class EndpointCreationFail(RuntimeError):
 
 class EndpointDeleteFail(RuntimeError):
     """Failed to delete endpoint."""
+
+
+class EndpointUpdateFail(RuntimeError):
+    """Failed to update endpoint."""
