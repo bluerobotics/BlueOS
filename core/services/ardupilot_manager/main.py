@@ -69,6 +69,17 @@ def remove_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -
         return {"message": f"{error}"}
 
 
+@app.put("/endpoints", status_code=status.HTTP_200_OK)
+@version(1, 0)
+def update_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
+    try:
+        autopilot.update_endpoints(endpoints)
+        autopilot.reload_endpoints()
+    except Exception as error:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"message": f"{error}"}
+
+
 @app.get(
     "/available_firmwares",
     response_model=List[Firmware],
