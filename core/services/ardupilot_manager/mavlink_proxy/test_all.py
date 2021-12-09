@@ -57,6 +57,7 @@ def test_endpoint() -> None:
         "argument": 14550,
         "persistent": False,
         "protected": False,
+        "enabled": True,
     }, "Endpoint dict does not match."
 
 
