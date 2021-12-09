@@ -55,7 +55,8 @@ class PortWatcher:
         # TODO: try https://pypi.org/project/inotify/
         while True:
             ports = serial.tools.list_ports.comports()
-            logging.debug(f"Currently detected ports: {ports}")
+            ports_description = [f"{port.subsystem}:{port.name}" for port in ports]
+            logging.debug(f"Currently detected ports: {ports_description}")
             found_ports = set()
             for port in ports:
                 if self.port_should_be_probed(port):
