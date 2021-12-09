@@ -8,6 +8,7 @@ from typedefs import EndpointType
 
 
 @dataclass
+# pylint: disable=too-many-instance-attributes
 class Endpoint:
     name: constr(strip_whitespace=True, min_length=3, max_length=50)  # type: ignore
     owner: constr(strip_whitespace=True, min_length=3, max_length=50)  # type: ignore
@@ -18,6 +19,7 @@ class Endpoint:
 
     persistent: Optional[bool] = False
     protected: Optional[bool] = False
+    enabled: Optional[bool] = True
 
     @root_validator
     @classmethod
