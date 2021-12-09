@@ -51,15 +51,13 @@
             <v-card class="elevation-0 d-flex flex-column align-center pa-0">
               <v-icon
                 class="ma-1"
-                :disabled="!endpoint.persistent"
               >
-                mdi-content-save
+                {{ persistent_icon }}
               </v-icon>
               <v-icon
                 class="ma-1"
-                :disabled="!endpoint.protected"
               >
-                mdi-lock
+                {{ protected_icon }}
               </v-icon>
             </v-card>
           </v-col>
@@ -105,6 +103,14 @@ export default Vue.extend({
     return {
       userFriendlyEndpointType,
     }
+  },
+  computed: {
+    persistent_icon(): string {
+      return this.endpoint.persistent ? 'mdi-content-save' : 'mdi-content-save-off'
+    },
+    protected_icon(): string {
+      return this.endpoint.protected ? 'mdi-lock' : 'mdi-lock-off'
+    },
   },
   methods: {
     async removeEndpoint(): Promise<void> {
