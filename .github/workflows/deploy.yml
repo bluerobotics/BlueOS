@@ -86,7 +86,7 @@ jobs:
           # Check if the image size is lower than our limit
           docker image list
           IMAGE_ID=$(docker images -q bluerobotics/companion-core | head -n 1)
-          LIMIT_SIZE_MB=550
+          LIMIT_SIZE_MB=700
           IMAGE_SIZE_MB=$(( $(docker inspect $IMAGE_ID --format {{.Size}})/(2**20) ))
           echo "Core size is: $IMAGE_SIZE_MB MB"
           ((IMAGE_SIZE_MB < LIMIT_SIZE_MB))
