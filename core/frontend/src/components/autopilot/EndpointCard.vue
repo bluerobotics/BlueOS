@@ -59,6 +59,11 @@
               >
                 {{ protected_icon }}
               </v-icon>
+              <v-icon
+                class="ma-1"
+              >
+                {{ enabled_icon }}
+              </v-icon>
             </v-card>
           </v-col>
         </v-row>
@@ -110,6 +115,9 @@ export default Vue.extend({
     },
     protected_icon(): string {
       return this.endpoint.protected ? 'mdi-lock' : 'mdi-lock-off'
+    },
+    enabled_icon(): string {
+      return this.endpoint.enabled ? 'mdi-lightbulb-on' : 'mdi-lightbulb-off'
     },
   },
   methods: {

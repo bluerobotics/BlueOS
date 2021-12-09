@@ -59,6 +59,11 @@
             disabled
           />
 
+          <v-checkbox
+            v-model="endpoint.enabled"
+            label="Start endpoint already enabled?"
+          />
+
           <v-btn
             color="success"
             class="mr-4"
@@ -108,6 +113,7 @@ export default Vue.extend({
         argument: '',
         protected: false,
         persistent: false,
+        enabled: true,
       },
     }
   },

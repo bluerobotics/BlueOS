@@ -44,4 +44,5 @@ export interface AutopilotEndpoint {
     argument: number
     persistent: boolean
     protected: boolean
+    enabled: boolean
 }
