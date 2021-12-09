@@ -68,22 +68,60 @@
           </v-col>
         </v-row>
       </v-container>
-      <v-fab-transition>
-        <v-btn
-          color="pink"
-          fab
-          dark
-          small
-          absolute
-          bottom
-          right
-          :disabled="endpoint.protected"
-          @click="removeEndpoint"
-        >
-          <v-icon>mdi-minus</v-icon>
-        </v-btn>
-      </v-fab-transition>
     </v-card-text>
+    <v-speed-dial
+      v-if="!endpoint.protected"
+      v-model="floating_action_button"
+      class="endpoint-edit-fab"
+      right
+      direction="left"
+      transition="slide-y-reverse-transition"
+      absolute
+    >
+      <template #activator>
+        <v-btn
+          v-model="floating_action_button"
+          color="pink"
+          dark
+          fab
+          small
+          relative
+        >
+          <v-icon v-if="floating_action_button">
+            mdi-close
+          </v-icon>
+          <v-icon v-else>
+            mdi-pencil
+          </v-icon>
+        </v-btn>
+      </template>
+      <v-btn
+        color="pink"
+        fab
+        dark
+        small
+        relative
+        @click="toggleEndpointEnabled"
+      >
+        <v-icon v-if="endpoint.enabled">
+          mdi-lightbulb-off
+        </v-icon>
+        <v-icon v-else>
+          mdi-lightbulb-on
+        </v-icon>
+      </v-btn>
+      <v-btn
+        color="red"
+        fab
+        dark
+        small
+        relative
+        :disabled="endpoint.protected"
+        @click="removeEndpoint"
+      >
+        <v-icon>mdi-delete</v-icon>
+      </v-btn>
+    </v-speed-dial>
   </v-card>
 </template>
 
@@ -107,6 +145,8 @@ export default Vue.extend({
   data() {
     return {
       userFriendlyEndpointType,
+      floating_action_button: false,
+      updated_endpoint: this.endpoint,
     }
   },
   computed: {
@@ -134,6 +174,30 @@ export default Vue.extend({
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_DELETE_FAIL', message })
         })
     },
+    async toggleEndpointEnabled(): Promise<void> {
+      this.updated_endpoint.enabled = !this.updated_endpoint.enabled
+      this.updateEndpoint()
+    },
+    async updateEndpoint(): Promise<void> {
+      autopilot.setUpdatingEndpoints(true)
+      await back_axios({
+        method: 'put',
+        url: `${autopilot.API_URL}/endpoints`,
+        timeout: 10000,
+        data: [this.updated_endpoint],
+      })
+        .catch((error) => {
+          const message = `Could not update endpoint: ${error.message}.`
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_UPDATE_FAIL', message })
+        })
+    },
   },
 })
 </script>
+
+<style scoped>
+.endpoint-edit-fab {
+  bottom: 32%;
+  left: 96%;
+}
+</style>
