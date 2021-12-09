@@ -12,6 +12,7 @@ set -e
 SUPPORTED_ARCHITECTURES=(
   "armhf" # Pi, Pi2, Pi3, Pi4
   "armv7" # Pi2, Pi3, Pi4
+  "armv7l" # Pi2, Pi3, Pi4 (Raspberry Pi OS Bullseye)
   "aarch64" # Pi3, Pi4
 )
 ARCHITECTURE="$(uname -m)"
