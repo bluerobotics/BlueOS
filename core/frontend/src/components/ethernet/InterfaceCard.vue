@@ -34,7 +34,7 @@
                         v-model="mode_set"
                         dense
                         :items="mode_types"
-                        required
+                        :rules="[validate_required_field]"
                       />
                     </td>
                   </tr>
@@ -55,6 +55,7 @@
                           single-line
                           dense
                           class="pa-1"
+                          :rules="[is_ip_address]"
                         />
                       </div>
                     </td>
@@ -103,6 +104,8 @@
 import Vue, { PropType } from 'vue'
 
 import { EthernetInterface, InterfaceConfiguration, InterfaceMode } from '@/types/ethernet'
+import { VForm } from '@/types/vuetify'
+import { isIpAddress, isNotEmpty } from '@/utils/pattern_validators'
 
 export default Vue.extend({
   name: 'NetworkCard',
@@ -144,8 +147,17 @@ export default Vue.extend({
       }
       return this.adapter.configuration.ip
     },
+    form(): VForm {
+      return this.$refs.form as VForm
+    },
   },
   methods: {
+    validate_required_field(input: string): (true | string) {
+      return isNotEmpty(input) ? true : 'Required field.'
+    },
+    is_ip_address(input: string): (true | string) {
+      return isIpAddress(input) ? true : 'Invalid IP address.'
+    },
     showable_mode_name(mode: InterfaceMode): string {
       switch (mode) {
         case InterfaceMode.client: return 'Dynamic IP'
@@ -158,6 +170,9 @@ export default Vue.extend({
       this.editing = state
     },
     emitEdit() {
+      if (!this.form.validate()) {
+        return
+      }
       const interface_configuration: InterfaceConfiguration = {
         mode: this.mode_set,
         ip: this.ip_set,
