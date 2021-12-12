@@ -11,53 +11,58 @@
     <v-expansion-panel-content>
       <v-row align="center">
         <v-col cols="10">
-          <v-simple-table dense>
-            <template #default>
-              <tbody>
-                <tr>
-                  <td>Name</td>
-                  <td>{{ adapter.name }}</td>
-                </tr>
+          <v-form
+            ref="form"
+            lazy-validation
+          >
+            <v-simple-table dense>
+              <template #default>
+                <tbody>
+                  <tr>
+                    <td>Name</td>
+                    <td>{{ adapter.name }}</td>
+                  </tr>
 
-                <tr>
-                  <td>Mode</td>
-                  <td v-if="!editing">
-                    {{ showable_mode_name(adapter.configuration.mode) }}
-                  </td>
+                  <tr>
+                    <td>Mode</td>
+                    <td v-if="!editing">
+                      {{ showable_mode_name(adapter.configuration.mode) }}
+                    </td>
 
-                  <td v-else>
-                    <v-select
-                      v-model="mode_set"
-                      dense
-                      :items="mode_types"
-                      required
-                    />
-                  </td>
-                </tr>
-
-                <tr>
-                  <td>IP address</td>
-                  <td v-if="!editing">
-                    {{ current_ip }}
-                  </td>
-
-                  <td
-                    v-else
-                  >
-                    <div v-if="editable_ip">
-                      <v-text-field
-                        v-model="ip_set"
-                        label="IP Address"
-                        single-line
+                    <td v-else>
+                      <v-select
+                        v-model="mode_set"
                         dense
-                        class="pa-1"
+                        :items="mode_types"
+                        required
                       />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>IP address</td>
+                    <td v-if="!editing">
+                      {{ current_ip }}
+                    </td>
+
+                    <td
+                      v-else
+                    >
+                      <div v-if="editable_ip">
+                        <v-text-field
+                          v-model="ip_set"
+                          label="IP Address"
+                          single-line
+                          dense
+                          class="pa-1"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
+          </v-form>
         </v-col>
 
         <v-col cols="2">
