@@ -96,3 +96,7 @@ class FirmwareManager:
             raise NoDefaultFirmwareAvailable(f"Default firmware not available for platform '{platform}'.")
 
         self.install_firmware_from_file(self.default_firmware_path(platform), platform)
+
+    @staticmethod
+    def validate_firmware(firmware_path: pathlib.Path, platform: Platform) -> None:
+        FirmwareInstaller.validate_firmware(firmware_path, platform)
