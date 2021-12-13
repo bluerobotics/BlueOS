@@ -128,6 +128,9 @@ class ArduPilotManager(metaclass=Singleton):
         self._current_sitl_frame = frame
         logger.info(f"Setting {frame.value} as frame for SITL.")
 
+    def current_firmware_path(self) -> pathlib.Path:
+        return self.firmware_manager.firmware_path(self.current_platform)
+
     def start_navigator(self, navigator_type: FlightControllerType) -> None:
         self.current_platform = Platform.Navigator
         if not self.firmware_manager.is_firmware_installed(self.current_platform):
@@ -137,6 +140,8 @@ class ArduPilotManager(metaclass=Singleton):
                 self.install_firmware_from_file(
                     pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator_r4")
                 )
+
+        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_platform)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -159,7 +164,7 @@ class ArduPilotManager(metaclass=Singleton):
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
         self.ardupilot_subprocess = subprocess.Popen(
-            f"{self.firmware_manager.firmware_path(self.current_platform)}"
+            f"{self.current_firmware_path()}"
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
@@ -189,6 +194,8 @@ class ArduPilotManager(metaclass=Singleton):
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
         self.current_sitl_frame = frame
 
+        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_platform)
+
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
             "Master", self.settings.app_name, EndpointType.TCPServer, "127.0.0.1", 5760, protected=True
@@ -204,7 +211,7 @@ class ArduPilotManager(metaclass=Singleton):
         # pylint: disable=consider-using-with
         self.ardupilot_subprocess = subprocess.Popen(
             [
-                self.firmware_manager.firmware_path(self.current_platform),
+                self.current_firmware_path(),
                 "--model",
                 self.current_sitl_frame.value,
                 "--base-port",
@@ -287,7 +294,7 @@ class ArduPilotManager(metaclass=Singleton):
 
         def is_ardupilot_process(process: psutil.Process) -> bool:
             """Checks if given process is using Ardupilot's firmware file for current platform."""
-            return str(self.firmware_manager.firmware_path(self.current_platform)) in " ".join(process.cmdline())
+            return str(self.current_firmware_path()) in " ".join(process.cmdline())
 
         return list(filter(is_ardupilot_process, psutil.process_iter()))
 
