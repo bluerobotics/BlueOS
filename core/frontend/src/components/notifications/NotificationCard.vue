@@ -3,7 +3,10 @@
     :options="{threshold: .5}"
     transition="slide-x-transition"
   >
-    <v-card elevation="0">
+    <v-card
+      elevation="0"
+      @click="toggleReveal"
+    >
       <v-list-item>
         <v-list-item-icon>
           <v-icon :color="level_color">
@@ -13,7 +16,28 @@
 
         <v-list-item-content>
           <v-list-item-title>{{ notification.service.name }}</v-list-item-title>
-          <v-list-item-subtitle>{{ notification.type }} - {{ notification.message }}</v-list-item-subtitle>
+          <v-list-item-subtitle>{{ notification.type }}</v-list-item-subtitle>
+          <v-slide-y-reverse-transition
+            leave-absolute
+            hide-on-leave
+          >
+            <v-list-item-subtitle
+              v-if="!reveal"
+            >
+              {{ notification.message }}
+            </v-list-item-subtitle>
+          </v-slide-y-reverse-transition>
+          <v-slide-y-transition
+            leave-absolute
+            hide-on-leave
+          >
+            <v-list-item-subtitle
+              v-if="reveal"
+              class="really-wrap-text"
+            >
+              {{ notification.message }}
+            </v-list-item-subtitle>
+          </v-slide-y-transition>
           <v-list-item-subtitle>{{ time_since }} ({{ count }} times)</v-list-item-subtitle>
         </v-list-item-content>
 
@@ -56,6 +80,11 @@ export default Vue.extend({
       required: true,
     },
   },
+  data() {
+    return {
+      reveal: false,
+    }
+  },
   computed: {
     time_since(): string {
       const date_now = new Date(this.timestamp)
@@ -87,6 +116,15 @@ export default Vue.extend({
     dismiss(): void {
       this.$emit('dismiss', this.notification)
     },
+    toggleReveal(): void {
+      this.reveal = !this.reveal
+    },
   },
 })
 </script>
+
+<style scoped>
+.really-wrap-text {
+  -webkit-line-clamp: unset !important;
+}
+</style>
