@@ -48,8 +48,8 @@
           v-if="notifications_to_show.length != 0"
         >
           <notification-card
-            v-for="({notification, count}, index) in notifications_to_show"
-            :key="index"
+            v-for="{notification, count} in notifications_to_show"
+            :key="JSON.stringify(notification)"
             :notification="notification"
             :count="count"
             :timestamp="timestamp"
