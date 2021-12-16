@@ -36,7 +36,7 @@
               Reset Settings
             </v-btn>
             <v-switch
-              v-model="dark_mode"
+              v-model="settings.is_dark_theme"
               label="Dark mode"
             />
           </v-row>
@@ -60,6 +60,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import settings from '@/libs/settings'
 import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -71,19 +72,11 @@ export default Vue.extend({
   components: {
   },
   data() {
-    const system_dark_mode_state = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
     return {
       show_dialog: false,
       show_reset_dialog: false,
-      dark_mode: system_dark_mode_state,
+      settings,
     }
-  },
-  computed: {
-  },
-  watch: {
-    dark_mode(val: boolean): void {
-      this.$vuetify.theme.dark = val
-    },
   },
   methods: {
     async reset_settings(): Promise<void> {
