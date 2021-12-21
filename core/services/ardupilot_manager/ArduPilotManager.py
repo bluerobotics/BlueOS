@@ -227,47 +227,39 @@ class ArduPilotManager(metaclass=Singleton):
         self.start_mavlink_manager(master_endpoint)
 
     def start_mavlink_manager(self, device: Endpoint) -> None:
-        try:
-            self.add_new_endpoints(
-                {
-                    Endpoint(
-                        "GCS Server Link",
-                        self.settings.app_name,
-                        EndpointType.UDPServer,
-                        "0.0.0.0",
-                        14550,
-                        persistent=True,
-                    )
-                }
-            )
-            self.add_new_endpoints(
-                {
-                    Endpoint(
-                        "GCS Client Link",
-                        self.settings.app_name,
-                        EndpointType.UDPClient,
-                        "192.168.2.1",
-                        14550,
-                        persistent=True,
-                        enabled=False,
-                    )
-                }
-            )
-            self.add_new_endpoints(
-                {
-                    Endpoint(
-                        "MAVLink2Rest",
-                        self.settings.app_name,
-                        EndpointType.UDPClient,
-                        "127.0.0.1",
-                        14000,
-                        persistent=True,
-                        protected=True,
-                    )
-                }
-            )
-        except Exception as error:
-            logger.error(f"Could not create default GCS endpoint: {error}")
+        default_endpoints = [
+            Endpoint(
+                "GCS Server Link",
+                self.settings.app_name,
+                EndpointType.UDPServer,
+                "0.0.0.0",
+                14550,
+                persistent=True,
+            ),
+            Endpoint(
+                "GCS Client Link",
+                self.settings.app_name,
+                EndpointType.UDPClient,
+                "192.168.2.1",
+                14550,
+                persistent=True,
+                enabled=False,
+            ),
+            Endpoint(
+                "MAVLink2Rest",
+                self.settings.app_name,
+                EndpointType.UDPClient,
+                "127.0.0.1",
+                14000,
+                persistent=True,
+                protected=True,
+            ),
+        ]
+        for endpoint in default_endpoints:
+            try:
+                self.add_new_endpoints({endpoint})
+            except Exception as error:
+                logger.error(f"Could not create default endpoint '{endpoint.name}': {error}")
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
 
