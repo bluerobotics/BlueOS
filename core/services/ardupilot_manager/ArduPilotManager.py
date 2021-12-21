@@ -236,6 +236,7 @@ class ArduPilotManager(metaclass=Singleton):
                         EndpointType.UDPServer,
                         "0.0.0.0",
                         14550,
+                        persistent=True,
                     )
                 }
             )
@@ -247,6 +248,7 @@ class ArduPilotManager(metaclass=Singleton):
                         EndpointType.UDPClient,
                         "192.168.2.1",
                         14550,
+                        persistent=True,
                         enabled=False,
                     )
                 }
@@ -259,6 +261,7 @@ class ArduPilotManager(metaclass=Singleton):
                         EndpointType.UDPClient,
                         "127.0.0.1",
                         14000,
+                        persistent=True,
                         protected=True,
                     )
                 }
