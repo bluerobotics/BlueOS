@@ -259,7 +259,7 @@ class ArduPilotManager(metaclass=Singleton):
             try:
                 self.add_new_endpoints({endpoint})
             except Exception as error:
-                logger.error(f"Could not create default endpoint '{endpoint.name}': {error}")
+                logger.warning(str(error))
         self.mavlink_manager.set_master_endpoint(device)
         self.mavlink_manager.start()
 
