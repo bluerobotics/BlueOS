@@ -235,6 +235,7 @@ class ArduPilotManager(metaclass=Singleton):
                 "0.0.0.0",
                 14550,
                 persistent=True,
+                enabled=False,
             ),
             Endpoint(
                 "GCS Client Link",
@@ -243,7 +244,7 @@ class ArduPilotManager(metaclass=Singleton):
                 "192.168.2.1",
                 14550,
                 persistent=True,
-                enabled=False,
+                enabled=True,
             ),
             Endpoint(
                 "MAVLink2Rest",
