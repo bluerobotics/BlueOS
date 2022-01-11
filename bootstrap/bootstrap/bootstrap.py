@@ -17,9 +17,8 @@ class Bootstrapper:
     DEFAULT_FILE_PATH = pathlib.Path("/bootstrap/startup.json.default")
     DOCKER_CONFIG_PATH = pathlib.Path("/root/.config")
     DOCKER_CONFIG_FILE_PATH = DOCKER_CONFIG_PATH.joinpath("bootstrap/startup.json")
-    HOST_CONFIG_PATH = os.environ.get("COMPANION_CONFIG_PATH", "/tmp/companion/.config")
-    CORE_CONTAINER_NAME = "companion-core"
-    core_last_response_time = time.time()
+    HOST_CONFIG_PATH = os.environ.get("BLUEOS_CONFIG_PATH", "/tmp/blueos/.config")
+    CORE_CONTAINER_NAME = "blueos-core"
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
         self.client: docker.DockerClient = client
