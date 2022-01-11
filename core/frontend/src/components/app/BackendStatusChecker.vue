@@ -28,7 +28,7 @@ export default Vue.extend({
       this.backend_offline = frontend.backend_offline
       this.$emit('statusChange', this.backend_offline)
       if (this.backend_offline) {
-        const message = 'Could not communicate with Companion backend.'
+        const message = 'Could not communicate with BlueOS backend.'
         notifications.pushError({ service: frontend_service, type: 'BACKEND_OFFLINE', message })
       }
     },

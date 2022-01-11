@@ -1,4 +1,4 @@
-/** Represents a Companion service, with the necessary information to identify it on the system */
+/** Represents a BlueOS service, with the necessary information to identify it on the system */
 
 export interface Dictionary<T> {
   [key: string]: T;

@@ -1,7 +1,7 @@
 import { Service } from './common'
 
 export const frontend_service: Service = {
-  name: 'Companion Frontend',
+  name: 'BlueOS Frontend',
   description: 'Frontend status and logic.',
   company: 'Blue Robotics',
   version: '0.1.0',
@@ -16,7 +16,7 @@ export const service_scanner_service: Service = {
 
 export const wifi_service: Service = {
   name: 'Wifi Manager',
-  description: 'Service responsible for managing wifi configuration on Companion.',
+  description: 'Service responsible for managing wifi configuration on BlueOS.',
   company: 'Blue Robotics',
   version: '0.1.0',
 }
@@ -44,7 +44,7 @@ export const filebrowser_service: Service = {
 
 export const video_manager_service: Service = {
   name: 'Video Manager',
-  description: 'Video management service for companion.',
+  description: 'Video management service for BlueOS.',
   company: 'Blue Robotics',
   version: '0.1.0',
 }
@@ -58,7 +58,7 @@ export const mavlink_service: Service = {
 
 export const bridget_service: Service = {
   name: 'Bridget',
-  description: 'Bridges management service for companion.',
+  description: 'Bridges management service for BlueOS.',
   company: 'Blue Robotics',
   version: '0.1.0',
 }

@@ -55,7 +55,7 @@ module.exports = {
   },
   transpileDependencies: ['vuetify', 'vuex-module-decorators'],
   pwa: {
-    name: 'Companion',
+    name: 'BlueOS',
     themeColor: '#08c',
     appleMobileWebAppCapable: 'yes',
     appleMobileWebAppStatusBarStyle: 'white',
