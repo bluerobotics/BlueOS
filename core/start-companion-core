@@ -25,7 +25,7 @@ SERVICES=(
     'commander',"$SERVICES_PATH/commander/main.py"
     'nmea_injector',"$SERVICES_PATH/nmea_injector/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
-    'video',"mavlink-camera-manager --default-settings BlueROVUDP --verbose"
+    'video',"mavlink-camera-manager --default-settings BlueROVUDP --mavlink udpout:192.168.2.1:14550 --verbose"
     'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
     'linux2rest',"linux2rest"
     'filebrowser',"filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
