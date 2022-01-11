@@ -29,7 +29,7 @@ class SettingsStore extends VuexModule {
      * @returns string
      */
     private static settingsName(name: string): string {
-      return `bluerobotics-companion-${name}`
+      return `bluerobotics-blueos-${name}`
     }
 
     /**

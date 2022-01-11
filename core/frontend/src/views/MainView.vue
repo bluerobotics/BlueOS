@@ -1,16 +1,16 @@
 <template>
   <v-container>
     <v-card>
-      <v-card-title><p>Welcome to companion <strong>B.E.T.A test</strong>!</p></v-card-title>
+      <v-card-title><p>Welcome to BlueOS <strong>B.E.T.A test</strong>!</p></v-card-title>
       <v-card-text>
         <p>
-          You are now running Companion <strong>B.E.T.A (Break it Early Test Application)</strong>!.<br>
-          We have been working for the last couple of months on a totally new experience on the companion computer,
+          You are now running BlueOS <strong>B.E.T.A (Break it Early Test Application)</strong>!.<br>
+          We have been working for the last couple of months on a totally new experience,
           and are now confident enough to open our work to a small number of users to test and check
           the changes!
         </p>
         <p>Be aware that the B.E.T.A may not be stable and changes will occur during the development.</p>
-        <p>There are 3 types of releases on the new Companion.</p>
+        <p>There are 3 types of releases on BlueOS.</p>
         <ul>
           <li>
             "Stable" releases, that are not available in this B.E.T.A
