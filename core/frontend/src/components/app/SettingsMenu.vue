@@ -23,24 +23,20 @@
 
         <v-divider />
 
-        <v-container class="pa-8">
-          <v-row
-            justify="center"
+        <v-card-actions class="d-flex flex-column justify-space-around align-center">
+          <v-btn
+            @click="reset_settings"
           >
-            <v-btn
-              @click="reset_settings"
-            >
-              <v-icon left>
-                mdi-trash-can
-              </v-icon>
-              Reset Settings
-            </v-btn>
-            <v-switch
-              v-model="settings.is_dark_theme"
-              label="Dark mode"
-            />
-          </v-row>
-        </v-container>
+            <v-icon left>
+              mdi-trash-can
+            </v-icon>
+            Reset Settings
+          </v-btn>
+          <v-switch
+            v-model="settings.is_dark_theme"
+            label="Dark mode"
+          />
+        </v-card-actions>
       </v-card>
     </v-dialog>
     <v-dialog
