@@ -168,6 +168,30 @@ async def restart(response: Response) -> Any:
         return {"message": f"{error}"}
 
 
+@app.post("/start", summary="Start the autopilot.")
+@version(1, 0)
+async def start(response: Response) -> Any:
+    try:
+        logger.debug("Starting ardupilot...")
+        await autopilot.start_ardupilot()
+        logger.debug("Ardupilot successfully started.")
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+
+
+@app.post("/stop", summary="Stop the autopilot.")
+@version(1, 0)
+async def stop(response: Response) -> Any:
+    try:
+        logger.debug("Stopping ardupilot...")
+        await autopilot.kill_ardupilot()
+        logger.debug("Ardupilot successfully stopped.")
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
+
+
 @app.post("/restore_default_firmware", summary="Restore default firmware.")
 @version(1, 0)
 async def restore_default_firmware(response: Response) -> Any:
