@@ -14,6 +14,22 @@
         {{ toggle_button_text }}
       </v-btn>
       <v-btn
+        v-if="settings.is_pirate_mode"
+        color="red lighten-3"
+        :disabled="restarting"
+        @click="start_autopilot"
+      >
+        Start autopilot
+      </v-btn>
+      <v-btn
+        v-if="settings.is_pirate_mode"
+        color="red lighten-3"
+        :disabled="restarting"
+        @click="stop_autopilot"
+      >
+        Stop autopilot
+      </v-btn>
+      <v-btn
         color="red lighten-3"
         :disabled="restarting"
         @click="restart_autopilot"
@@ -26,6 +42,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import settings from '@/libs/settings'
 
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
@@ -35,6 +52,11 @@ import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'GeneralAutopilot',
+  data() {
+    return {
+      settings,
+    }
+  },
   computed: {
     current_platform(): Platform {
       return autopilot.current_platform
@@ -53,6 +75,36 @@ export default Vue.extend({
     },
   },
   methods: {
+    async start_autopilot(): Promise<void> {
+      autopilot.setRestarting(true)
+      await back_axios({
+        method: 'post',
+        url: `${autopilot.API_URL}/start`,
+        timeout: 10000,
+      })
+        .catch((error) => {
+          const message = `Could not start autopilot: ${error.message}`
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_START_FAIL', message })
+        })
+        .finally(() => {
+          autopilot.setRestarting(false)
+        })
+    },
+    async stop_autopilot(): Promise<void> {
+      autopilot.setRestarting(true)
+      await back_axios({
+        method: 'post',
+        url: `${autopilot.API_URL}/stop`,
+        timeout: 10000,
+      })
+        .catch((error) => {
+          const message = `Could not stop autopilot: ${error.message}`
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_STOP_FAIL', message })
+        })
+        .finally(() => {
+          autopilot.setRestarting(false)
+        })
+    },
     async restart_autopilot(): Promise<void> {
       autopilot.setRestarting(true)
       await back_axios({
