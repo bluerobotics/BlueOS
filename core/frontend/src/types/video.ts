@@ -107,14 +107,8 @@ export interface CreatedStream {
   stream_information: StreamInformation
 }
 
-export interface UsbBus {
-  interface: string
-  usb_hub: number
-  usb_port: number
-}
-
 export interface UsbBusType {
-  Usb: UsbBus
+  Usb: string
 }
 
 export interface IspType {
