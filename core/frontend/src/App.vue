@@ -13,6 +13,25 @@
         />
 
         <v-spacer />
+        <div 
+          v-if="settings.is_pirate_mode"
+        >
+          Ahoy matey! You're running
+          <v-icon>
+            mdi-flag-variant
+          </v-icon>
+          <v-icon>
+            mdi-skull-crossbones
+          </v-icon>
+          Pirate Mode
+          <v-icon>
+            mdi-skull-crossbones
+          </v-icon>
+          <v-icon>
+            mdi-flag-variant
+          </v-icon>
+        </div>
+
         <backend-status-checker @statusChange="changeBackendStatus" />
         <v-spacer />
         <health-tray-menu />
@@ -114,6 +133,8 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import settings from '@/libs/settings'
+
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
@@ -150,6 +171,7 @@ export default Vue.extend({
   },
 
   data: () => ({
+    settings,
     drawer: false,
     backend_offline: false,
     menus: [

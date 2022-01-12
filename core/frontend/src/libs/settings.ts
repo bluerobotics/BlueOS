@@ -12,6 +12,16 @@ class Settings {
   set is_dark_theme(value: boolean) {
     settingsStore.setDarkTheme(value)
   }
+
+  // eslint-disable-next-line
+  get is_pirate_mode(): boolean {
+    return settingsStore.is_pirate_mode
+  }
+
+  // eslint-disable-next-line
+  set is_pirate_mode(value: boolean) {
+    settingsStore.setPirateMode(value)
+  }
 }
 
 const settings = new Settings()
