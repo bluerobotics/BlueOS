@@ -247,15 +247,6 @@ class ArduPilotManager(metaclass=Singleton):
                 enabled=True,
             ),
             Endpoint(
-                "MAVLink2Rest",
-                self.settings.app_name,
-                EndpointType.UDPClient,
-                "127.0.0.1",
-                14000,
-                persistent=True,
-                protected=True,
-            ),
-            Endpoint(
                 "Internal Link",
                 self.settings.app_name,
                 EndpointType.UDPServer,
