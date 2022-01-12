@@ -255,6 +255,15 @@ class ArduPilotManager(metaclass=Singleton):
                 persistent=True,
                 protected=True,
             ),
+            Endpoint(
+                "Internal Link",
+                self.settings.app_name,
+                EndpointType.UDPServer,
+                "127.0.0.1",
+                14001,
+                persistent=True,
+                protected=True,
+            ),
         ]
         for endpoint in default_endpoints:
             try:
