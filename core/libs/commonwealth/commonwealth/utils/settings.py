@@ -22,11 +22,15 @@ class OldSettings(ValueError):
 class MigrationFail(RuntimeError):
     """Could not apply migration."""
 
+class BadAttributes(BadSettingsFile):
+    """Attributes on settings file are not valid for current version."""
+
 
 class Settings:
-    def __init__(self, service_name: str, settings_version: int, settings_filepath: Optional[pathlib.Path] = None) -> None:
-        self.service_name = service_name
-        self.settings_version = settings_version
+    SERVICE_NAME = ''
+    VERSION = 0
+
+    def __init__(self, settings_filepath: Optional[pathlib.Path] = None) -> None:
         self.settings_filepath = settings_filepath
 
         if self.settings_filepath is None:
@@ -35,6 +39,7 @@ class Settings:
 
         try:
             self.validate_settings_file()
+            self.validate_attributes()
         except NoSettingsFile as error:
             if settings_filepath:
                 raise error
@@ -49,7 +54,7 @@ class Settings:
             self.validate_version()
         except OldSettings:
             logger.warning("Old settings file detected. Trying to perform upgrade.")
-            self.upgrade_settings_file()
+            self.upgrade_to_latest_version()
 
     def get_content(self) -> Dict[str, Any]:
         with open(self.settings_filepath, encoding='utf-8') as file:
@@ -60,19 +65,48 @@ class Settings:
         with open(self.settings_filepath, 'w', encoding='utf-8') as file:
             json.dump(content, file, indent=2)
 
-    def create_initial_settings_file(self) -> None:
-        content = self.get_initial_content()
+    def get_attributes(self, attribute_name: Optional[str] = None) -> Any:
+        content = self.get_content()
+        saved_attributes = content.get('attributes')
+
+        if attribute_name is None:
+            return saved_attributes
+        else:
+            try:
+                return saved_attributes[attribute_name]
+            except Exception as error:
+                raise ValueError(f"Attribute '{attribute_name}' not available on settings content.") from error
+
+    def save_attribute(self, attribute_name: str, attribute: Any) -> Any:
+        content = self.get_content()
+        saved_attributes = content.get('attributes')
+
+        logger.debug(f"Removing old attribute '{attribute_name}' from settings content.")
+        old_attribute_value = saved_attributes.pop(attribute_name, None)
+        if old_attribute_value:
+            logger.debug(f"Old attribute value was: {old_attribute_value}.")
+        else: 
+            logger.debug(f"No old value found for attribute '{attribute_name}'.")
+
+        logger.debug(f"Saving new data for '{attribute_name}' on settings file.")
+        saved_attributes[attribute_name] = attribute
+        content['attributes'] = saved_attributes
+
         self.save_content(content)
 
     def get_initial_content(self) -> Dict[str, Any]:
         return {
-            "service_name": self.service_name,
-            "settings_version": self.settings_version,
+            "service_name": self.SERVICE_NAME,
+            "settings_version": self.VERSION,
             "attributes": {},
         }
 
+    def create_initial_settings_file(self) -> None:
+        content = self.get_initial_content()
+        self.save_content(content)
+
     def get_default_settings_filepath(self) -> None:
-        service_config_path = appdirs.user_config_dir(self.service_name)
+        service_config_path = appdirs.user_config_dir(self.SERVICE_NAME)
         return pathlib.Path(service_config_path, "settings.json")
 
     def validate_settings_file(self) -> None:
@@ -87,6 +121,8 @@ class Settings:
             service_name = content.get('service_name')
             if service_name is None:
                 raise ValueError("'service_name' variable not found on settings file.")
+            if service_name != self.SERVICE_NAME:
+                raise ValueError("'service_name' variable from settings file diverges from service's name.")
             settings_version = content.get('settings_version')
             if settings_version is None:
                 raise ValueError("'settings_version' variable not found on settings file.")
@@ -100,86 +136,62 @@ class Settings:
 
     def validate_version(self) -> None:
         content = self.get_content()
-        if content['settings_version'] > self.settings_version:
+        if content['settings_version'] > self.VERSION:
             raise SettingsFromTheFuture("Settings file is from a newer version of the service.")
-        if self.settings_version > content['settings_version']:
+        if self.VERSION > content['settings_version']:
             raise OldSettings("Settings file is old and need to be updated.")
+
+    def validate_attributes(self) -> None:
+        # Test settings-file schema
+        pass
 
     def backup_settings_file(self) -> None:
         backup_path = self.settings_filepath.parent / (self.settings_filepath.stem + f"_{int(time.time())}" + '.bkp')
         self.settings_filepath.rename(backup_path)
 
-    def upgrade_settings_file(self) -> None:
+    def update_settings_version(self) -> None:
         content = self.get_content()
-        migrate_versions = range(content['settings_version'] + 1, self.settings_version + 1)
-        migration_files = [self.migration_path(version) for version in migrate_versions]
-        for file in migration_files:
-            if not file.exists():
-                raise MigrationFail(f"Migration file '{file}' not found. Cannot perform migration.")
-            self.apply_migration(file)
+        content["settings_version"] = self.VERSION
 
-    @staticmethod
-    def migration_name(desired_version: int) -> str:
-        return f"migration_{desired_version-1}_to_{desired_version}.py"
+    def migrate_from_previous_version(self) -> None:
+        pass
 
-    def migration_path(self, desired_version: int) -> pathlib.Path:
-        settings_dir = self.settings_filepath.parent
-        migration_name = self.migration_name(desired_version)
-        return settings_dir.joinpath(migration_name)
-
-    def apply_migration(self, migration_file: pathlib.Path) -> None:
-        try:
-            spec = importlib.util.spec_from_file_location("migration_module", str(migration_file))
-            migration_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(migration_module)
-            migration_module.migrate(self.settings_filepath)
-        except Exception as error:
-            raise MigrationFail(
-                f"Failed to migrate '{self.settings_filepath}' with instructions on '{migration_file}'."
-            ) from error
-
-    def get_attribute(self, attribute: Optional[str] = None) -> Any:
+    def upgrade_to_latest_version(self) -> None:
         content = self.get_content()
-        saved_attributes = content.get('attributes')
-        if not attribute:
-            return saved_attributes
-        else:
-            try:
-                return saved_attributes[attribute]
-            except Exception as error:
-                raise ValueError(f"attribute '{attribute}' not available on settings content.") from error
+        file_version = content['settings_version']
 
-    def save_attribute(self, attribute_name: str, attribute: Any) -> Any:
-        content = self.get_content()
-        saved_attributes = content.get('attributes')
-        logger.debug(f"Removing attribute '{attribute_name}' from settings content.")
-        old_attribute_value = saved_attributes.pop(attribute_name, None)
-        if old_attribute_value:
-            logger.debug(f"Old attribute value: {old_attribute_value}.")
-        else: 
-            logger.debug(f"No old value found for attribute '{attribute_name}'.")
+        if file_version <= 0:
+            raise BadSettingsFile("Settings version should be equal or bigger than 1.")
 
-        logger.debug(f"Saving new data for '{attribute_name}' on settings file.")
-        saved_attributes[attribute_name] = attribute
-        content['attributes'] = saved_attributes
+        if file_version <= self.VERSION:
+            super().upgrade_to_latest_version()
+            self.migrate_from_previous_version()
+            self.update_settings_version()
 
-        self.save_content(content)
+class ArdupilotManagerSettingsV1(Settings):
+    SERVICE_NAME = "ardupilot-manager"
+    VERSION = 1
+
+class ArdupilotManagerSettingsV2(ArdupilotManagerSettingsV1):
+    VERSION = 2
+
+    def migrate_from_previous_version(self) -> None:
+        old_attributes = self.get_attributes()
+        old_endpoints = old_attributes.get("endpoints") or []
+        new_endpoints = [{**endpoint, "owner":"undefined_owner"} for endpoint in old_endpoints]
+        self.save_attribute("endpoints", new_endpoints)
 
 
 if __name__ == "__main__":
-    settings = Settings(
-        service_name='ardupilot-manager',
-        settings_version=2,
-        settings_filepath=pathlib.Path(os.path.dirname(__file__), "settings.json")
-    )
+    settings = ArdupilotManagerSettingsV2(settings_filepath=pathlib.Path(os.path.dirname(__file__), "settings.json"))
 
-    saved_endpoints = settings.get_attribute('endpoints')
+    saved_endpoints = settings.get_attributes('endpoints')
     logger.info(f"Saved endpoints: {saved_endpoints}.")
 
     endpoints = saved_endpoints
     endpoints.append({"name": "e4", "port": 0, "owner": "rafael"})
-    logger.info(f"Current modified endpoints: {endpoints}.")
+    logger.info(f"Modified endpoints: {endpoints}.")
 
-    settings.save_attribute('endpoints', endpoints)
-    all_attributes = settings.get_attribute()
-    logger.info(f"All attributes: {all_attributes}.")
+    settings.save_attribute("endpoints", endpoints)
+    all_attributes = settings.get_attributes()
+    logger.info(f"Modified saved attributes: {all_attributes}.")
