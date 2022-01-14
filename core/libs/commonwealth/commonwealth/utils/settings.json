@@ -1,0 +1,20 @@
+{
+    "service_name": "ardupilot-manager",
+    "settings_version": 1,
+    "attributes": {
+        "endpoints": [
+            {
+                "name": "e1",
+                "port": 4
+            },
+            {
+                "name": "e2",
+                "port": 6
+            },
+            {
+                "name": "e3",
+                "port": 8
+            }
+        ]
+    }
+}
