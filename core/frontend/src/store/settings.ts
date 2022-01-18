@@ -4,6 +4,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
+import { castString } from '@/utils/helper_functions'
 
 @Module({
   dynamic: true,
@@ -46,7 +47,9 @@ class SettingsStore extends VuexModule {
      * @returns T
      */
     static loadVariable<T>(name: string): T {
-      return (window.localStorage.getItem(SettingsStore.settingsName(name)) as unknown) as T
+      const storedVariable = window.localStorage.getItem(SettingsStore.settingsName(name))
+      const castedVariable = storedVariable === null ? null : castString(storedVariable)
+      return castedVariable as T
     }
 
     /**
