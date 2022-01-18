@@ -42,8 +42,8 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import settings from '@/libs/settings'
 
+import settings from '@/libs/settings'
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
 import { Platform } from '@/types/autopilot'

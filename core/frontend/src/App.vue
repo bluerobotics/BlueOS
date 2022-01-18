@@ -13,7 +13,7 @@
         />
 
         <v-spacer />
-        <div 
+        <div
           v-if="settings.is_pirate_mode"
         >
           Ahoy matey! You're running
