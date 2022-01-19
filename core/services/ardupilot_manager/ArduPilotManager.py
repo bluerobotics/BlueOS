@@ -320,7 +320,7 @@ class ArduPilotManager(metaclass=Singleton):
     async def kill_ardupilot(self) -> None:
         self.should_be_running = False
 
-        if not self.current_platform == Platform.SITL:
+        if self.current_platform != Platform.SITL:
             try:
                 logger.info("Disarming vehicle.")
                 self.vehicle_manager.disarm_vehicle()

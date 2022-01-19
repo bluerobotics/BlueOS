@@ -70,7 +70,7 @@ class FirmwareUploader:
             while process.poll() is None:
                 logger.debug("Waiting for upload tool to finish its job.")
                 time.sleep(0.5)
-            if not process.returncode == 0:
+            if process.returncode != 0:
                 raise FirmwareUploadFail(f"Upload process returned non-zero code {process.returncode}.")
             logger.info("Successfully uploaded firmware to board.")
         except Exception as error:
