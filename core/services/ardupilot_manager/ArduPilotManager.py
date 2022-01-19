@@ -79,27 +79,8 @@ class ArduPilotManager(metaclass=Singleton):
                 self.should_be_running = True
             await asyncio.sleep(5.0)
 
-    async def auto_restart_router(self) -> None:
-        """Auto-restart Mavlink router process if it dies."""
-        while True:
-            try:
-                subprocess_stopped = (
-                    self.mavlink_manager.router_process() is not None
-                    and self.mavlink_manager.router_process().poll() is not None
-                )
-                if self.should_be_running and subprocess_stopped:
-                    logger.debug("Trying to restart Mavlink router...")
-                    self.mavlink_manager.restart()
-                    await asyncio.sleep(1)
-                    if self.mavlink_manager.router_process().poll() is not None:
-                        error = self.mavlink_manager.router_process().communicate()[1]
-                        raise RuntimeError(error)
-                    logger.debug("Mavlink router successfully restarted.")
-            except AssertionError:
-                logger.debug("Mavlink router did not start yet.")
-            except Exception as error:
-                logger.debug(f"Could not restart Mavlink router: {error}. Will try again soon.")
-            await asyncio.sleep(5.0)
+    async def start_mavlink_manager_watchdog(self) -> None:
+        await self.mavlink_manager.auto_restart_router()
 
     def run_with_board(self) -> None:
         if not self.start_board(BoardDetector.detect()):
