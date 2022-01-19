@@ -2,12 +2,14 @@ import abc
 import pathlib
 import shlex
 import shutil
-import subprocess
 import tempfile
+import time
+from subprocess import PIPE, Popen
 from typing import Any, List, Optional, Set, Type
 
 from loguru import logger
 
+from exceptions import MavlinkRouterStartFail
 from mavlink_proxy.Endpoint import Endpoint
 
 
@@ -77,7 +79,16 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         command = self.assemble_command(self._master_endpoint)
         logger.debug(f"Calling router using following command: '{command}'.")
         # pylint: disable=consider-using-with
-        self._subprocess = subprocess.Popen(shlex.split(command), shell=False, encoding="utf-8", errors="ignore")
+        self._subprocess = Popen(shlex.split(command), shell=False, encoding="utf-8", stdout=PIPE, stderr=PIPE)
+
+        # Since the process takes some time to successfully start or fail, we need to wait before checking it's state
+        time.sleep(1)
+        if not self.is_running():
+            exit_code = self._subprocess.returncode
+            info, error = self._subprocess.communicate()
+            logger.debug(info)
+            logger.error(error)
+            raise MavlinkRouterStartFail(f"Failed to initialize Mavlink router ({exit_code}): {error}.")
 
     def exit(self) -> None:
         if self.is_running():
