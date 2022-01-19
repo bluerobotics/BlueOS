@@ -15,6 +15,7 @@ from exceptions import (
     EndpointCreationFail,
     EndpointDeleteFail,
     EndpointUpdateFail,
+    MavlinkRouterStartFail,
 )
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
@@ -315,12 +316,15 @@ class ArduPilotManager(metaclass=Singleton):
         logger.info("Mavlink manager stopped.")
 
     async def start_ardupilot(self) -> None:
-        if self.current_platform == Platform.SITL:
-            self.run_with_sitl(self.current_sitl_frame)
+        try:
+            if self.current_platform == Platform.SITL:
+                self.run_with_sitl(self.current_sitl_frame)
+                return
+            self.run_with_board()
+        except MavlinkRouterStartFail as error:
+            logger.warning(f"Failed to start Mavlink router. {error}")
+        finally:
             self.should_be_running = True
-            return
-        self.run_with_board()
-        self.should_be_running = True
 
     async def restart_ardupilot(self) -> None:
         if self.current_platform in [Platform.SITL, Platform.Navigator]:
