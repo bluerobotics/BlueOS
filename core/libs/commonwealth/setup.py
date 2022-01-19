@@ -20,7 +20,10 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires=">=3.9",
     install_requires=[
+        "appdirs == 1.4.4",
         "loguru == 0.5.3",
         "starlette == 0.13.6",
+        # Waiting for PRs to get merged in pykson
+        "pykson @ git+https://github.com/patrickelectric/pykson.git@master_fixes",
     ],
 )
