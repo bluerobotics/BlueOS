@@ -47,7 +47,7 @@ def test_firmware_download() -> None:
 
     # It'll fail if running in an arch different of ARM
     if "x86" in os.uname().machine:
-        assert firmware_download.download(Vehicle.Sub, Platform.Navigator), "Failed to download navigator binary."
+        assert firmware_download.download(Vehicle.Sub, Platform.NavigatorR5), "Failed to download navigator binary."
     else:
         with pytest.raises(Exception):
-            firmware_download.download(Vehicle.Sub, Platform.Navigator)
+            firmware_download.download(Vehicle.Sub, Platform.NavigatorR5)

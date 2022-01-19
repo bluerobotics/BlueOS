@@ -38,7 +38,8 @@ def get_correspondent_elf_arch(platform_arch: str) -> str:
 def get_correspondent_decoder_platform(current_platform: Platform) -> Union[BoardType, BoardSubType]:
     correspondent_decoder_platform = {
         Platform.SITL: BoardType.SITL,
-        Platform.Navigator: BoardSubType.LINUX_NAVIGATOR,
+        Platform.NavigatorR3: BoardSubType.LINUX_NAVIGATOR,
+        Platform.NavigatorR5: BoardSubType.LINUX_NAVIGATOR,
     }
     return correspondent_decoder_platform.get(current_platform, BoardType.EMPTY)
 
