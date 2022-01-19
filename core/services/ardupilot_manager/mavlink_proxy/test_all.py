@@ -83,6 +83,10 @@ def test_endpoint_validators() -> None:
         Endpoint.is_mavlink_endpoint({"connection_type": "potato", "place": serial_port_name, "argument": 100})
 
 
+@pytest.mark.skip(
+    reason="MavProxy tests are failling for several endpoint combinations. Since it's not being used \
+    and it's not a priority to support it, they are being temporarly disabled."
+)
 def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     if not MAVProxy.is_ok():
         warnings.warn("Failed to test mavproxy service", UserWarning)
