@@ -1,5 +1,6 @@
-from enum import Enum, IntEnum
+from enum import Enum, auto
 from platform import machine
+from typing import Optional
 
 from pydantic import BaseModel, HttpUrl
 
@@ -82,14 +83,47 @@ class Vehicle(str, Enum):
     Copter = "Copter"
 
 
+# TODO: This class can be deprecated once we move to Python 3.11, which introduces the equivalent StrEnum
+class LowerStringEnum(str, Enum):
+    def __str__(self) -> str:
+        return self.name.lower()
+
+
+class PlatformType(LowerStringEnum):
+    Serial = auto()
+    Linux = auto()
+    SITL = auto()
+    Unknown = auto()
+
+
 class Platform(str, Enum):
     """Valid Ardupilot platform types.
     The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
 
     Pixhawk1 = "Pixhawk1"
-    Navigator = "navigator"
+    NavigatorR3 = "navigator"
+    NavigatorR5 = "navigator"
     SITL = get_sitl_platform_name(machine())
     Undefined = "Undefined"
+
+    @property
+    def type(self) -> PlatformType:
+        platform_types = {
+            Platform.Pixhawk1: PlatformType.Serial,
+            Platform.NavigatorR3: PlatformType.Linux,
+            Platform.NavigatorR5: PlatformType.Linux,
+            Platform.SITL: PlatformType.SITL,
+        }
+        return platform_types.get(self, PlatformType.Unknown)
+
+
+class FlightController(BaseModel):
+    """Flight-controller board."""
+
+    name: str
+    manufacturer: Optional[str]
+    platform: Platform
+    path: Optional[str]
 
 
 class FirmwareFormat(str, Enum):
@@ -98,14 +132,6 @@ class FirmwareFormat(str, Enum):
 
     APJ = "apj"
     ELF = "ELF"
-
-
-class FlightControllerType(IntEnum):
-    """Supported flight-controller types."""
-
-    Serial = 1
-    NavigatorR3 = 2
-    NavigatorR4 = 3
 
 
 class EndpointType(str, Enum):

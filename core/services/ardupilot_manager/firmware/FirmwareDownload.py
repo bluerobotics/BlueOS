@@ -34,7 +34,8 @@ class FirmwareDownloader:
     _supported_firmware_formats = {
         Platform.SITL: FirmwareFormat.ELF,
         Platform.Pixhawk1: FirmwareFormat.APJ,
-        Platform.Navigator: FirmwareFormat.ELF,
+        Platform.NavigatorR3: FirmwareFormat.ELF,
+        Platform.NavigatorR5: FirmwareFormat.ELF,
     }
 
     def __init__(self) -> None:

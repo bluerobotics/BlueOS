@@ -84,5 +84,6 @@ setuptools.setup(
         "commonwealth == 0.1.0",
         "pyelftools == 0.27",
         "psutil == 5.7.2",
+        "pyserial == 3.5",
     ],
 )
