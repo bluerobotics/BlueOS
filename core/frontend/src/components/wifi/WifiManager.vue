@@ -114,6 +114,6 @@ export default Vue.extend({
 
   .available-network:hover {
       cursor: pointer;
-      background-color: #c5c5c5;
+      background-color: #62b9e4;
   }
 </style>
