@@ -39,9 +39,11 @@ profile = "black"
 
 [tool.mypy]
 allow_untyped_decorators = true
+disallow_subclassing_any = false
 ignore_missing_imports = true
 strict = true
 warn_unreachable = true
+warn_unused_ignores = false
 plugins = "pydantic.mypy"
 
 [tool.pylint]
