@@ -1,5 +1,7 @@
 # pylint: disable=redefined-outer-name
+import os
 import pathlib
+import pty
 import re
 import sys
 import warnings
@@ -16,6 +18,9 @@ from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
 from mavlink_proxy.MAVProxy import MAVProxy
 from typedefs import EndpointType
 
+_, slave_port = pty.openpty()
+serial_port_name = os.ttyname(slave_port)
+
 
 @pytest.fixture
 def valid_output_endpoints() -> Set[Endpoint]:
@@ -24,7 +29,7 @@ def valid_output_endpoints() -> Set[Endpoint]:
         Endpoint("Test endpoint 2", "pytest", EndpointType.UDPClient, "0.0.0.0", 14552),
         Endpoint("Test endpoint 3", "pytest", EndpointType.TCPServer, "0.0.0.0", 14553),
         Endpoint("Test endpoint 4", "pytest", EndpointType.TCPClient, "0.0.0.0", 14554),
-        Endpoint("Test endpoint 5", "pytest", EndpointType.Serial, "/dev/radiolink", 57600),
+        Endpoint("Test endpoint 5", "pytest", EndpointType.Serial, serial_port_name, 57600),
     }
 
 
@@ -35,7 +40,7 @@ def valid_master_endpoints() -> Set[Endpoint]:
         Endpoint("Master endpoint 2", "pytest", EndpointType.UDPClient, "0.0.0.0", 14550),
         Endpoint("Master endpoint 3", "pytest", EndpointType.TCPServer, "0.0.0.0", 14550),
         Endpoint("Master endpoint 4", "pytest", EndpointType.TCPClient, "0.0.0.0", 14550),
-        Endpoint("Master endpoint 5", "pytest", EndpointType.Serial, "/dev/autopilot", 115200),
+        Endpoint("Master endpoint 5", "pytest", EndpointType.Serial, serial_port_name, 115200),
     }
 
 
@@ -72,10 +77,10 @@ def test_endpoint_validators() -> None:
         )
     with pytest.raises(ValueError):
         Endpoint.is_mavlink_endpoint(
-            {"connection_type": EndpointType.Serial, "place": "/dev/autopilot", "argument": 100000}
+            {"connection_type": EndpointType.Serial, "place": serial_port_name, "argument": 100000}
         )
     with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": "potato", "place": "path/to/file", "argument": 100})
+        Endpoint.is_mavlink_endpoint({"connection_type": "potato", "place": serial_port_name, "argument": 100})
 
 
 def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
