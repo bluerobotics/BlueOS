@@ -91,6 +91,7 @@ docker run \
     -t \
     --restart unless-stopped \
     --name companion-bootstrap \
+    --net=host \
     -v $HOME/.config/companion/bootstrap:/root/.config/bootstrap \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -e COMPANION_CONFIG_PATH=$HOME/.config/companion \
