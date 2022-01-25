@@ -9,6 +9,7 @@ from typing import Any, Dict
 from warnings import warn
 
 import docker
+import requests
 
 
 class Bootstrapper:
@@ -18,6 +19,7 @@ class Bootstrapper:
     DOCKER_CONFIG_FILE_PATH = DOCKER_CONFIG_PATH.joinpath("bootstrap/startup.json")
     HOST_CONFIG_PATH = os.environ.get("COMPANION_CONFIG_PATH", "/tmp/companion/.config")
     CORE_CONTAINER_NAME = "companion-core"
+    core_last_response_time = time.time()
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
         self.client: docker.DockerClient = client
@@ -151,6 +153,8 @@ class Bootstrapper:
         """
         image_version = "stable"
 
+        if component_name == "core":
+            self.core_last_response_time = time.time()
         self.config = Bootstrapper.read_config_file()
 
         image = self.config[component_name]
@@ -198,15 +202,28 @@ class Bootstrapper:
         Returns:
             bool: True if the chosen container is running
         """
-        for container in self.client.containers.list():
-            if container.name.endswith(component):
-                return True
-        return False
+        if not any(container.name.endswith(component) for container in self.client.containers.list()):
+            return False
+
+        if component == "core":
+            try:
+                response = requests.get("http://localhost/version-chooser/v1.0/version/current")
+                if "core" in response.json()["repository"]:
+                    self.core_last_response_time = time.time()
+                    return True
+            except Exception as e:
+                print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
+                if time.time() - self.core_last_response_time > 60:
+                    print("Reseting startup.json...")
+                    self.overwrite_config_file_with_defaults()
+                    return False
+        return True
 
     def remove(self, container: str) -> None:
         """Deletes the chosen container if it exists (needed for updating the running image)"""
         try:
             old_container = self.client.containers.get(f"companion-{container}")
+            old_container.stop()
             old_container.remove()
         except docker.errors.NotFound:
             # This exception is raised if the container does not exist

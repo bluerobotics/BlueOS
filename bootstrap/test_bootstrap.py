@@ -57,6 +57,9 @@ class FakeContainer:
     def remove(self) -> None:
         self.client.containers.remove(self.name)
 
+    def stop(self) -> None:
+        pass
+
 
 class FakeContainers:
     """Mocks "Containers" class from docker-py"""
