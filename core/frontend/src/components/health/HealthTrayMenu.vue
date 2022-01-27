@@ -56,9 +56,6 @@ import mavlink_store_get from '@/utils/mavlink'
 
 export default Vue.extend({
   name: 'HealthTrayMenu',
-  components: {
-  },
-
   computed: {
     cpu_temperature(): string {
       return 'WIP'
