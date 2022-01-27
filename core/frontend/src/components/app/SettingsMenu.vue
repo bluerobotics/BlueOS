@@ -83,8 +83,6 @@ const API_URL = '/commander/v1.0'
 
 export default Vue.extend({
   name: 'PowerMenu',
-  components: {
-  },
   data() {
     return {
       show_dialog: false,
