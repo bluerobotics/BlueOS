@@ -236,6 +236,11 @@ export default Vue.extend({
             route: '/tools/nmea-injector',
           },
           {
+            title: 'System information',
+            icon: 'mdi-chart-pie',
+            route: '/tools/system-information',
+          },
+          {
             title: 'Terminal',
             icon: 'mdi-console',
             route: '/tools/web-terminal',
