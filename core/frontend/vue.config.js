@@ -1,55 +1,56 @@
 process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
+const SERVER_ADDRESS = 'http://companion.local/'
 
 module.exports = {
   devServer: {
     proxy: {
       '^/status': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/ardupilot-manager': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/bridget': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/cable-guy': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/commander': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/docker': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/file-browser': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/helper': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/nmea-injector': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/logviewer': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/mavlink2rest': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/mavlink-camera-manager': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/system-information': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/terminal': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/version-chooser': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
       '^/wifi-manager': {
-        target: 'http://companion.local/',
+        target: SERVER_ADDRESS,
       },
     },
   },
