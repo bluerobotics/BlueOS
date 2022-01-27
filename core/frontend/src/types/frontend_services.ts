@@ -76,3 +76,10 @@ export const nmea_injector_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const system_information_service: Service = {
+  name: 'System Information',
+  description: 'Provides system information, E.g: CPU, disk, network interface and etc.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
