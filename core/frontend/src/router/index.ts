@@ -10,6 +10,7 @@ import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
+import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
 import VideoManagerView from '../views/VideoManagerView.vue'
@@ -76,6 +77,11 @@ const routes: Array<RouteConfig> = [
     path: '/tools/available-services',
     name: 'Available Services',
     component: AvailableServicesView,
+  },
+  {
+    path: '/tools/system-information',
+    name: 'SystemInformation',
+    component: SystemInformationView,
   },
 ]
 
