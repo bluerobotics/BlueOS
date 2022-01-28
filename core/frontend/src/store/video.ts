@@ -2,6 +2,7 @@ import {
   Action, getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
+import error_message_manager from '@/libs/error-message'
 import store from '@/store'
 import notifications from '@/store/notifications'
 import { video_manager_service } from '@/types/frontend_services'
@@ -74,6 +75,7 @@ class VideoStore extends VuexModule {
       .catch((error) => {
         if (error === backend_offline_error) { return false }
         const message = `Could not create video stream: ${error.message}. ${error.response.data}.`
+        error_message_manager.emitMessage(message)
         notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAM_CREATION_FAIL', message })
         return false
       })
