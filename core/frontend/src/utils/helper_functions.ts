@@ -34,3 +34,32 @@ export function castString(value: string): any { // eslint-disable-line @typescr
 
   return value
 }
+
+/* Convert git describe text to a valid URL for the project. */
+/**
+ * @param func - Function to be called.
+ * @param interval - Time in milliseconds to wait after the previous request is done
+* */
+export function convertGitDescribeToUrl(git_describe: string): string {
+  const user = 'bluerobotics'
+  const repository = 'companion-docker'
+  const project_url = `https://github.com/${user}/${repository}`
+
+  // Local development version, pointing to root page
+  if (git_describe.endsWith('-dirty') || git_describe.length === 0) {
+    return project_url
+  }
+
+  // Show tag release page
+  if (git_describe.startsWith('tags')) {
+    const match = /tags\/(?<tag>|.*)-\d-.*/gm.exec(git_describe)
+    if (match && match.groups?.tag) {
+      const { tag } = match.groups
+      return `${project_url}/releases/tag/${tag}`
+    }
+  }
+
+  // Show git source files page for commit
+  const hash = git_describe.slice(git_describe.length - 7)
+  return `${project_url}/tree/${hash}`
+}
