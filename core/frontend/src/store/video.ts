@@ -73,7 +73,7 @@ class VideoStore extends VuexModule {
       .then(() => true)
       .catch((error) => {
         if (error === backend_offline_error) { return false }
-        const message = `Could not create video stream: ${error.message}, ${error.response.data}}.`
+        const message = `Could not create video stream: ${error.message}. ${error.response.data}.`
         notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAM_CREATION_FAIL', message })
         return false
       })
