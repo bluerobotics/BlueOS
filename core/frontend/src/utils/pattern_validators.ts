@@ -30,6 +30,14 @@ export function isUdpAddress(url: string): boolean {
   return url.match(/udp:\/\/[a-zA-Z0-9@:%._+~#=]{2,256}:[0-9]{1,6}/) !== null
 }
 
+export function isRtspAddress(address: string): boolean {
+  try {
+    return new URL(address).protocol === 'rtsp:'
+  } catch (error) {
+    return false
+  }
+}
+
 export function isFilepath(filepath: string): boolean {
   const filepath_pattern = /^(.+)\/([^/]+)$/
   return filepath_pattern.test(filepath)
