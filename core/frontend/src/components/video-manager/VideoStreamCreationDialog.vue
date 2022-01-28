@@ -45,7 +45,7 @@
           <v-text-field
             v-model="stream_endpoint"
             label="Stream endpoint"
-            :rules="[validate_required_field, is_udp_address]"
+            :rules="[validate_required_field, is_valid_schema]"
           />
 
           <v-btn
@@ -68,7 +68,7 @@ import {
   CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, VideoEncodeType,
 } from '@/types/video'
 import { VForm } from '@/types/vuetify'
-import { isNotEmpty, isUdpAddress } from '@/utils/pattern_validators'
+import { isNotEmpty, isRtspAddress, isUdpAddress } from '@/utils/pattern_validators'
 
 export default Vue.extend({
   name: 'VideoStreamCreationDialog',
@@ -186,8 +186,8 @@ export default Vue.extend({
     validate_required_field(input: string | null): (true | string) {
       return input !== null && isNotEmpty(input) ? true : 'Required field.'
     },
-    is_udp_address(input: string): (true | string) {
-      return isUdpAddress(input) ? true : 'Invalid UDP stream endpoint.'
+    is_valid_schema(input: string): (true | string) {
+      return isUdpAddress(input) || isRtspAddress(input) ? true : 'Invalid UDP/RTSP stream endpoint.'
     },
     createStream(): boolean {
       // Validate form before proceeding with API request
