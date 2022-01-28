@@ -127,6 +127,7 @@
     <mavlink-updater />
     <bridget-updater />
     <nmea-injector-updater />
+    <error-message />
   </v-app>
 </template>
 
@@ -136,6 +137,7 @@ import Vue from 'vue'
 import settings from '@/libs/settings'
 
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
+import ErrorMessage from './components/app/ErrorMessage.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
@@ -168,6 +170,7 @@ export default Vue.extend({
     'power-menu': PowerMenu,
     'settings-menu': SettingsMenu,
     'backend-status-checker': BackendStatusChecker,
+    'error-message': ErrorMessage,
   },
 
   data: () => ({
