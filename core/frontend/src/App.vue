@@ -112,7 +112,18 @@
           <power-menu />
           <settings-menu />
         </v-container>
-        <span class="build_info">Version: {{ git_info }}</span>
+        <span
+          class="build_info"
+        >
+          Version:
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            :href="git_info_url"
+          >
+            {{ git_info }}
+          </a>
+        </span>
         <span class="build_info">Build: {{ build_date }}</span>
       </v-container>
     </v-navigation-drawer>
@@ -134,6 +145,7 @@
 import Vue from 'vue'
 
 import settings from '@/libs/settings'
+import { convertGitDescribeToUrl } from '@/utils/helper_functions.ts'
 
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
@@ -257,6 +269,9 @@ export default Vue.extend({
   computed: {
     git_info(): string {
       return process.env.VUE_APP_GIT_DESCRIBE
+    },
+    git_info_url(): string {
+      return convertGitDescribeToUrl(process.env.VUE_APP_GIT_DESCRIBE)
     },
     build_date(): string {
       return process.env.VUE_APP_BUILD_DATE
