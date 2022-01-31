@@ -81,3 +81,15 @@ class MavlinkRouterStartFail(RuntimeError):
 
 class NoMasterMavlinkEndpoint(ValueError):
     """No master Mavlink endpoint set."""
+
+
+class EndpointAlreadyExists(ValueError):
+    """Mavlink endpoint already exists."""
+
+
+class DuplicateEndpointName(ValueError):
+    """Another mavlink endpoint with same name already exists."""
+
+
+class EndpointDontExist(ValueError):
+    """Given Mavlink endpoint do not exist."""
