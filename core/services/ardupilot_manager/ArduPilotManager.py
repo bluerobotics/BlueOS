@@ -350,14 +350,6 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 logger.error(f"Could not load endpoint {endpoint}: {error}")
 
-    def _reset_endpoints(self, endpoints: Set[Endpoint]) -> None:
-        try:
-            self.mavlink_manager.clear_endpoints()
-            self.mavlink_manager.add_endpoints(endpoints)
-            logger.info("Resetting endpoints to previous state.")
-        except Exception as error:
-            logger.error(f"Error resetting endpoints: {error}")
-
     def reload_endpoints(self) -> None:
         try:
             persistent_endpoints = set(filter(lambda endpoint: endpoint.persistent, self.get_endpoints()))
@@ -373,20 +365,16 @@ class ArduPilotManager(metaclass=Singleton):
 
     def add_new_endpoints(self, new_endpoints: Set[Endpoint]) -> None:
         """Add multiple endpoints to the mavlink manager and save them on the configuration file."""
-        loaded_endpoints = self.get_endpoints()
-
         for endpoint in new_endpoints:
             try:
                 self.mavlink_manager.add_endpoint(endpoint)
                 logger.info(f"Adding endpoint '{endpoint.name}' and saving it to the settings file.")
             except Exception as error:
-                self._reset_endpoints(loaded_endpoints)
+                self.mavlink_manager.reset_endpoints()
                 raise EndpointCreationFail(f"Failed to add endpoint '{endpoint.name}': {error}") from error
 
     def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
-        loaded_endpoints = self.get_endpoints()
-
         protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_remove))
         if protected_endpoints:
             raise ValueError(f"Endpoints {[e.name for e in protected_endpoints]} are protected. Aborting operation.")
@@ -396,7 +384,7 @@ class ArduPilotManager(metaclass=Singleton):
                 self.mavlink_manager.remove_endpoint(endpoint)
                 logger.info(f"Deleting endpoint '{endpoint.name}' and removing it from the settings file.")
             except Exception as error:
-                self._reset_endpoints(loaded_endpoints)
+                self.mavlink_manager.reset_endpoints()
                 raise EndpointDeleteFail(f"Failed to remove endpoint '{endpoint.name}': {error}") from error
 
     def update_endpoints(self, endpoints_to_update: Set[Endpoint]) -> None:
@@ -416,7 +404,7 @@ class ArduPilotManager(metaclass=Singleton):
                 self.mavlink_manager.remove_endpoint(old_endpoint)
                 self.mavlink_manager.add_endpoint(updated_endpoint)
             except Exception as error:
-                self._reset_endpoints(loaded_endpoints)
+                self.mavlink_manager.reset_endpoints()
                 raise EndpointUpdateFail(f"Failed to update endpoint '{updated_endpoint.name}': {error}") from error
 
     def get_available_firmwares(self, vehicle: Vehicle) -> List[Firmware]:

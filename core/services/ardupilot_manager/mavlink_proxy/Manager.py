@@ -59,6 +59,10 @@ class Manager:
         """Remove all output endpoints."""
         self.tool.clear_endpoints()
 
+    def reset_endpoints(self) -> None:
+        self.clear_endpoints()
+        self.add_endpoints(self._last_valid_endpoints)
+
     def set_master_endpoint(self, master: Endpoint) -> None:
         self.master = master
 
