@@ -96,9 +96,14 @@ export interface CaptureConfiguration {
   frame_interval: FrameInterval
 }
 
+export interface ExtendedConfiguration {
+  thermal: boolean,
+}
+
 export interface StreamInformation {
   endpoints: string[]
   configuration: CaptureConfiguration
+  extended_configuration: ExtendedConfiguration | undefined
 }
 
 export interface CreatedStream {
@@ -160,4 +165,5 @@ export interface StreamPrototype {
   dimensions: VideoDimensions | null
   interval: FrameInterval | null
   endpoint: string
+  thermal: boolean
 }
