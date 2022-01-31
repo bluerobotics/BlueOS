@@ -77,3 +77,7 @@ class EndpointUpdateFail(RuntimeError):
 
 class MavlinkRouterStartFail(RuntimeError):
     """Failed to initiate Mavlink router."""
+
+
+class NoMasterMavlinkEndpoint(ValueError):
+    """No master Mavlink endpoint set."""

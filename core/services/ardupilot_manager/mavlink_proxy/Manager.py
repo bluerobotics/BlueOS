@@ -14,7 +14,6 @@ from mavlink_proxy.Endpoint import Endpoint
 
 class Manager:
     def __init__(self) -> None:
-        self.master: Endpoint
         available_interfaces = Manager.available_interfaces()
         if not available_interfaces:
             raise RuntimeError(
@@ -63,12 +62,12 @@ class Manager:
         self.clear_endpoints()
         self.add_endpoints(self._last_valid_endpoints)
 
-    def set_master_endpoint(self, master: Endpoint) -> None:
-        self.master = master
+    def set_master_endpoint(self, master_endpoint: Endpoint) -> None:
+        self.tool.set_master_endpoint(master_endpoint)
 
     def start(self) -> None:
         self.should_be_running = True
-        self.tool.start(self.master)
+        self.tool.start()
         self._last_valid_endpoints = self.endpoints()
 
     def stop(self) -> None:
@@ -82,10 +81,7 @@ class Manager:
         self.should_be_running = True
 
     def command_line(self) -> str:
-        if not self.master:
-            raise RuntimeError("Master endpoint was not defined.")
-
-        return self.tool.assemble_command(self.master)
+        return self.tool.assemble_command()
 
     def is_running(self) -> bool:
         return self.tool.is_running()
