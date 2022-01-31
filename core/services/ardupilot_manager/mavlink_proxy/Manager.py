@@ -25,6 +25,7 @@ class Manager:
 
         self.tool = available_interfaces[0]()
         self.should_be_running = False
+        self._last_valid_endpoints: Set[Endpoint] = set()
 
     @staticmethod
     def possible_interfaces() -> List[str]:
@@ -64,6 +65,7 @@ class Manager:
     def start(self) -> None:
         self.should_be_running = True
         self.tool.start(self.master)
+        self._last_valid_endpoints = self.endpoints()
 
     def stop(self) -> None:
         self.should_be_running = False
@@ -72,6 +74,7 @@ class Manager:
     def restart(self) -> None:
         self.should_be_running = False
         self.tool.restart()
+        self._last_valid_endpoints = self.endpoints()
         self.should_be_running = True
 
     def command_line(self) -> str:
