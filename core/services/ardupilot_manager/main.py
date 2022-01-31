@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Set
 
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler
-from fastapi import Body, FastAPI, File, Response, UploadFile, status
+from fastapi import Body, FastAPI, File, HTTPException, Response, UploadFile, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -49,32 +49,32 @@ def get_available_endpoints() -> Any:
 
 @app.post("/endpoints", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
-def create_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
+def create_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
     try:
         autopilot.add_new_endpoints(endpoints)
-    except ValueError as error:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"message": f"{error}"}
+    except Exception as error:
+        logger.error(error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
 
 
 @app.delete("/endpoints", status_code=status.HTTP_200_OK)
 @version(1, 0)
-def remove_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
+def remove_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
     try:
         autopilot.remove_endpoints(endpoints)
-    except ValueError as error:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"message": f"{error}"}
+    except Exception as error:
+        logger.error(error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
 
 
 @app.put("/endpoints", status_code=status.HTTP_200_OK)
 @version(1, 0)
-def update_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
+def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
     try:
         autopilot.update_endpoints(endpoints)
     except Exception as error:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"message": f"{error}"}
+        logger.error(error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
 
 
 @app.get(
