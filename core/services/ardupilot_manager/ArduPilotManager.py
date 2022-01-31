@@ -12,6 +12,7 @@ from loguru import logger
 
 from exceptions import (
     ArdupilotProcessKillFail,
+    EndpointAlreadyExists,
     EndpointCreationFail,
     EndpointDeleteFail,
     EndpointUpdateFail,
@@ -235,7 +236,9 @@ class ArduPilotManager(metaclass=Singleton):
         ]
         for endpoint in default_endpoints:
             try:
-                self.add_new_endpoints({endpoint})
+                self.mavlink_manager.add_endpoint(endpoint)
+            except EndpointAlreadyExists:
+                pass
             except Exception as error:
                 logger.warning(str(error))
         self.mavlink_manager.set_master_endpoint(device)
