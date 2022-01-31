@@ -219,7 +219,7 @@ class VersionChooser:
         for image in await self.client.images.list():
             if not image["RepoTags"]:
                 continue
-            if not any(tag.startswith("companion-core:") for tag in image["RepoTags"]):
+            if not any("/companion-core:" in tag for tag in image["RepoTags"]):
                 continue
             for image_tag in image["RepoTags"]:
                 image_repository, tag = image_tag.split(":")
