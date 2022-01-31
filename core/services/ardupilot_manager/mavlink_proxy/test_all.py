@@ -168,7 +168,8 @@ def run_common_routing_tests(
 
     for endpoint in unallowed_master_endpoints:
         with pytest.raises(ValueError):
-            router.start(endpoint)
+            router.set_master_endpoint(endpoint)
+            router.start()
 
     def test_endpoint_combinations(master_endpoints: Set[Endpoint], output_endpoints: List[Endpoint]) -> None:
         for master_endpoint in master_endpoints:
@@ -178,7 +179,8 @@ def run_common_routing_tests(
                 router.add_endpoint(output_endpoint)
             assert set(router.endpoints()) == set(output_endpoints), "Endpoint list does not match."
 
-            router.start(master_endpoint)
+            router.set_master_endpoint(master_endpoint)
+            router.start()
             assert router.is_running(), f"{router.name()} is not running after start."
             router.exit()
             while router.is_running():

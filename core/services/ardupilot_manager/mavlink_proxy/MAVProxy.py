@@ -2,6 +2,7 @@ import re
 import subprocess
 from typing import Callable, Optional
 
+from exceptions import NoMasterMavlinkEndpoint
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 from typedefs import EndpointType
@@ -21,7 +22,9 @@ class MAVProxy(AbstractRouter):
                     return regex.group("version")
         return None
 
-    def assemble_command(self, master: Endpoint) -> str:
+    def assemble_command(self) -> str:
+        if self._master_endpoint is None:
+            raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot proceed.")
         serial_endpoint_as_input: Callable[[Endpoint], str] = lambda endpoint: f"{endpoint.place},{endpoint.argument}"
 
         # Convert endpoint format to mavproxy format
@@ -33,6 +36,7 @@ class MAVProxy(AbstractRouter):
         filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in filtered_endpoints])
 
+        master = self._master_endpoint
         master_string = str(master)
         if master.connection_type == EndpointType.Serial:
             if not master.argument:

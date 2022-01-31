@@ -16,6 +16,7 @@ from mavlink_proxy.Endpoint import Endpoint
 class AbstractRouter(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._endpoints: Set[Endpoint] = set()
+        self._master_endpoint: Optional[Endpoint] = None
         self._subprocess: Optional[Any] = None
 
         # Since this methods can fail we need to have the other variables defined
@@ -49,7 +50,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def assemble_command(self, master: Endpoint) -> str:
+    def assemble_command(self) -> str:
         pass
 
     @staticmethod
@@ -73,10 +74,11 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def version(self) -> Optional[str]:
         return self._version
 
-    def start(self, vehicle_endpoint: Optional[Endpoint] = None, _verbose: bool = False) -> None:
-        if vehicle_endpoint is not None:
-            self._master_endpoint = vehicle_endpoint
-        command = self.assemble_command(self._master_endpoint)
+    def set_master_endpoint(self, master_endpoint: Endpoint) -> None:
+        self._master_endpoint = master_endpoint
+
+    def start(self, _verbose: bool = False) -> None:
+        command = self.assemble_command()
         logger.debug(f"Calling router using following command: '{command}'.")
         # pylint: disable=consider-using-with
         self._subprocess = Popen(shlex.split(command), shell=False, encoding="utf-8", stdout=PIPE, stderr=PIPE)

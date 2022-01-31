@@ -2,6 +2,7 @@ import re
 import subprocess
 from typing import Optional
 
+from exceptions import NoMasterMavlinkEndpoint
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 from typedefs import EndpointType
@@ -22,7 +23,9 @@ class MAVLinkRouter(AbstractRouter):
 
         return None
 
-    def assemble_command(self, master: Endpoint) -> str:
+    def assemble_command(self) -> str:
+        if self._master_endpoint is None:
+            raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot proceed.")
         # Convert endpoint format to mavlink-router format
         def convert_endpoint(endpoint: Endpoint) -> str:
             # TCP uses a special argument and only works with localhost
@@ -52,6 +55,7 @@ class MAVLinkRouter(AbstractRouter):
         filtered_endpoints = Endpoint.filter_enabled(sorted_endpoints)
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in filtered_endpoints])
 
+        master = self._master_endpoint
         if master.connection_type not in [
             EndpointType.UDPServer,
             EndpointType.Serial,
