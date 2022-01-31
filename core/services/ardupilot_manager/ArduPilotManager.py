@@ -353,14 +353,13 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 logger.error(f"Could not load endpoint {endpoint}: {error}")
 
-    def reload_endpoints(self) -> None:
+    def _save_current_endpoints(self) -> None:
         try:
             persistent_endpoints = set(filter(lambda endpoint: endpoint.persistent, self.get_endpoints()))
             self._save_endpoints_to_configuration(persistent_endpoints)
             self.settings.save(self.configuration)
-            self.mavlink_manager.restart()
         except Exception as error:
-            logger.error(f"Error updating endpoints: {error}")
+            logger.error(f"Could not save endpoints. {error}")
 
     def get_endpoints(self) -> Set[Endpoint]:
         """Get all endpoints from the mavlink manager."""
@@ -375,6 +374,8 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 self.mavlink_manager.reset_endpoints()
                 raise EndpointCreationFail(f"Failed to add endpoint '{endpoint.name}': {error}") from error
+        self._save_current_endpoints()
+        self.mavlink_manager.restart()
 
     def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
@@ -389,6 +390,8 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 self.mavlink_manager.reset_endpoints()
                 raise EndpointDeleteFail(f"Failed to remove endpoint '{endpoint.name}': {error}") from error
+        self._save_current_endpoints()
+        self.mavlink_manager.restart()
 
     def update_endpoints(self, endpoints_to_update: Set[Endpoint]) -> None:
         """Update multiple endpoints from the mavlink manager and save them on the configuration file."""
@@ -409,6 +412,8 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 self.mavlink_manager.reset_endpoints()
                 raise EndpointUpdateFail(f"Failed to update endpoint '{updated_endpoint.name}': {error}") from error
+        self._save_current_endpoints()
+        self.mavlink_manager.restart()
 
     def get_available_firmwares(self, vehicle: Vehicle) -> List[Firmware]:
         return self.firmware_manager.get_available_firmwares(vehicle, self.current_platform)
