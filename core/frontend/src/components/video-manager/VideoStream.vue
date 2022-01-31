@@ -104,6 +104,7 @@ export default Vue.extend({
         },
         interval: this.stream.video_and_stream.stream_information.configuration.frame_interval,
         endpoint: this.stream.video_and_stream.stream_information.endpoints[0],
+        thermal: this.stream.video_and_stream.stream_information?.extended_configuration?.thermal ?? false,
       }
     },
     settings_summary(): string {
