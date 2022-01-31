@@ -52,7 +52,6 @@ def get_available_endpoints() -> Any:
 def create_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
     try:
         autopilot.add_new_endpoints(endpoints)
-        autopilot.reload_endpoints()
     except ValueError as error:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message": f"{error}"}
@@ -63,7 +62,6 @@ def create_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -
 def remove_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
     try:
         autopilot.remove_endpoints(endpoints)
-        autopilot.reload_endpoints()
     except ValueError as error:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message": f"{error}"}
@@ -74,7 +72,6 @@ def remove_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -
 def update_endpoints(response: Response, endpoints: Set[Endpoint] = Body(...)) -> Any:
     try:
         autopilot.update_endpoints(endpoints)
-        autopilot.reload_endpoints()
     except Exception as error:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"message": f"{error}"}
