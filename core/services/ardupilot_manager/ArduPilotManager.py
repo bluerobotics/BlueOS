@@ -13,9 +13,6 @@ from loguru import logger
 from exceptions import (
     ArdupilotProcessKillFail,
     EndpointAlreadyExists,
-    EndpointCreationFail,
-    EndpointDeleteFail,
-    EndpointUpdateFail,
     MavlinkRouterStartFail,
 )
 from firmware.FirmwareManagement import FirmwareManager
@@ -367,51 +364,22 @@ class ArduPilotManager(metaclass=Singleton):
 
     def add_new_endpoints(self, new_endpoints: Set[Endpoint]) -> None:
         """Add multiple endpoints to the mavlink manager and save them on the configuration file."""
-        for endpoint in new_endpoints:
-            try:
-                self.mavlink_manager.add_endpoint(endpoint)
-                logger.info(f"Adding endpoint '{endpoint.name}' and saving it to the settings file.")
-            except Exception as error:
-                self.mavlink_manager.reset_endpoints()
-                raise EndpointCreationFail(f"Failed to add endpoint '{endpoint.name}': {error}") from error
+        logger.info(f"Adding endpoints {[e.name for e in new_endpoints]} and updating settings file.")
+        self.mavlink_manager.add_endpoints(new_endpoints)
         self._save_current_endpoints()
         self.mavlink_manager.restart()
 
     def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
-        protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_remove))
-        if protected_endpoints:
-            raise ValueError(f"Endpoints {[e.name for e in protected_endpoints]} are protected. Aborting operation.")
-
-        for endpoint in endpoints_to_remove:
-            try:
-                self.mavlink_manager.remove_endpoint(endpoint)
-                logger.info(f"Deleting endpoint '{endpoint.name}' and removing it from the settings file.")
-            except Exception as error:
-                self.mavlink_manager.reset_endpoints()
-                raise EndpointDeleteFail(f"Failed to remove endpoint '{endpoint.name}': {error}") from error
+        logger.info(f"Removing endpoints {[e.name for e in endpoints_to_remove]} and updating settings file.")
+        self.mavlink_manager.remove_endpoints(endpoints_to_remove)
         self._save_current_endpoints()
         self.mavlink_manager.restart()
 
     def update_endpoints(self, endpoints_to_update: Set[Endpoint]) -> None:
         """Update multiple endpoints from the mavlink manager and save them on the configuration file."""
-        loaded_endpoints = self.get_endpoints()
-
-        protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_update))
-        if protected_endpoints:
-            raise ValueError(f"Endpoints {[e.name for e in protected_endpoints]} are protected. Aborting operation.")
-
-        for updated_endpoint in endpoints_to_update:
-            old_endpoint = next((e for e in loaded_endpoints if e.name == updated_endpoint.name), None)
-            try:
-                if not old_endpoint:
-                    raise ValueError(f"Endpoint '{updated_endpoint.name}' does not exist.")
-                logger.info(f"Updating endpoint '{updated_endpoint.name}'.")
-                self.mavlink_manager.remove_endpoint(old_endpoint)
-                self.mavlink_manager.add_endpoint(updated_endpoint)
-            except Exception as error:
-                self.mavlink_manager.reset_endpoints()
-                raise EndpointUpdateFail(f"Failed to update endpoint '{updated_endpoint.name}': {error}") from error
+        logger.info(f"Modifying endpoints {[e.name for e in endpoints_to_update]} and updating settings file.")
+        self.mavlink_manager.update_endpoints(endpoints_to_update)
         self._save_current_endpoints()
         self.mavlink_manager.restart()
 
