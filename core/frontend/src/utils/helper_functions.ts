@@ -46,7 +46,7 @@ export function convertGitDescribeToUrl(git_describe: string): string {
   const project_url = `https://github.com/${user}/${repository}`
 
   // Local development version, pointing to root page
-  if (git_describe.endsWith('-dirty') || git_describe.length === 0) {
+  if (!git_describe || git_describe.endsWith('-dirty') || git_describe.length === 0) {
     return project_url
   }
 
