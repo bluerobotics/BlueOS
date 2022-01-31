@@ -49,7 +49,7 @@ async def load(request: web.Request) -> Any:
 
 
 if __name__ == "__main__":
-    maximum_number_of_bytes = 2 * (2 ** 30)  # 2 GBs
+    maximum_number_of_bytes = 2 * (2**30)  # 2 GBs
     app = connexion.AioHttpApp(__name__, specification_dir="openapi/")
     app.add_api(
         "versionchooser.yaml", arguments={"title": "Companion Version Chooser"}, pass_context_arg_name="request"
