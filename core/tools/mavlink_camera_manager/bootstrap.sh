@@ -5,7 +5,7 @@ set -e
 
 LOCAL_BINARY_PATH="/usr/bin/mavlink-camera-manager"
 
-VERSION=t3.2.1
+VERSION=t3.3.0
 
 # By default we install armv7
 REMOTE_BINARY_URL="https://github.com/bluerobotics/mavlink-camera-manager/releases/download/${VERSION}/mavlink-camera-manager-armv7"
