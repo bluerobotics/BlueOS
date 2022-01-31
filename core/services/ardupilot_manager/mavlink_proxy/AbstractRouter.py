@@ -9,7 +9,12 @@ from typing import Any, List, Optional, Set, Type
 
 from loguru import logger
 
-from exceptions import MavlinkRouterStartFail
+from exceptions import (
+    DuplicateEndpointName,
+    EndpointAlreadyExists,
+    EndpointDontExist,
+    MavlinkRouterStartFail,
+)
 from mavlink_proxy.Endpoint import Endpoint
 
 
@@ -122,16 +127,16 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         self._validate_endpoint(endpoint)
 
         if endpoint in self._endpoints:
-            raise ValueError("Endpoint already exists.")
+            raise EndpointAlreadyExists(f"Endpoint '{endpoint.name}' already exists.")
 
         if endpoint.name in [endpoint.name for endpoint in self._endpoints]:
-            raise ValueError("Name already being used by an existing endpoint.")
+            raise DuplicateEndpointName(f"Name '{endpoint.name}' already being used by an existing endpoint.")
 
         self._endpoints.add(endpoint)
 
     def remove_endpoint(self, endpoint: Endpoint) -> None:
         if endpoint not in self._endpoints:
-            raise ValueError("Endpoint not found.")
+            raise EndpointDontExist(f"Endpoint '{endpoint.name}' not found.")
 
         self._endpoints.remove(endpoint)
 
