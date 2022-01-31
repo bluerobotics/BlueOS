@@ -48,6 +48,22 @@
             :rules="[validate_required_field, is_valid_schema]"
           />
 
+          <v-expansion-panels>
+            <v-expansion-panel>
+              <v-expansion-panel-header>
+                Extra configuration
+              </v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-checkbox
+                  v-model="is_thermal"
+                  label="Thermal camera"
+                />
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
+
+          <v-divider class="ma-3" />
+
           <v-btn
             color="success"
             class="mr-4"
@@ -100,6 +116,7 @@ export default Vue.extend({
           dimensions: null,
           interval: null,
           endpoint: 'udp://0.0.0.0:5600',
+          thermal: false,
         }
       },
     },
@@ -116,6 +133,7 @@ export default Vue.extend({
       selected_size: size_match || null,
       selected_interval: this.stream.interval,
       stream_endpoint: this.stream.endpoint,
+      is_thermal: this.stream.thermal,
     }
   },
   computed: {
@@ -140,6 +158,9 @@ export default Vue.extend({
             height: this.selected_size.height,
             width: this.selected_size.width,
             frame_interval: this.selected_interval,
+          },
+          extended_configuration: {
+            thermal: this.is_thermal,
           },
         },
       }
