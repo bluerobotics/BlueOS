@@ -1,0 +1,49 @@
+name: Report bug
+description: Report a bug found
+title: ""
+labels: ["bug", "triage", "ui"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please fill out the following details so we can respond and act efficiently.
+
+  - type: textarea
+    attributes:
+      label: Bug description
+      description: Describe roughly what the bug is.
+      placeholder: |
+        Example: "Wifi service stops working"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Provide an example of how to replicate the bug.
+      placeholder: |
+        Example:
+        1. Click here
+        2. Click That
+        3. Put this here
+        4. And etc
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Primary pain point(s)
+      description: What is this bug actively stopping you from doing? This is helpful for us to suggest temporary workarounds while the actual issue is being fixed.
+      placeholder: |
+        Example: "No internet means I can't download new vehicle firmware"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following (and check the boxes) before submitting.
+      options:
+        - label: I have checked to make sure that a similar request has not already been filed or fixed.
+          required: true
