@@ -133,7 +133,7 @@ image_list = [
         "Architecture": "amd64",
         "Id": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
         "RepoTags": [
-            "companion-core:test1",
+            "bluerobotics/companion-core:test1",
         ],
     },
     {
@@ -141,7 +141,7 @@ image_list = [
         "Architecture": "amd64",
         "Id": "856fdf5e66c9b36remoteID856fdf5e66c9b36",
         "RepoTags": [
-            "companion-core:test2",
+            "bluerobotics/companion-core:test2",
         ],
     },
 ]
