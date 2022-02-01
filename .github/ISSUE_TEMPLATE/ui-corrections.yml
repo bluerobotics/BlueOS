@@ -1,0 +1,36 @@
+name: Improve User Interface or Experience
+description: Suggestion to improve UI/UX.
+title: "core: frontend: "
+labels: ["core", "enhancement", "triage", "ui"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest improvements to our interface! Please fill out the following details so we can respond and act efficiently.
+
+  - type: textarea
+    attributes:
+      label: Current behaviour
+      description: Describe what you see, why that is bad, and any issues it is causing.
+      placeholder: |
+        Example: "The small margins between the buttons make it harder to distinguish between them, and looks unusual"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected or desired behaviour
+      description: Explain what you expect or would like to see instead, and why.
+      placeholder: |
+        Example: "An extra margin or space between the buttons may help"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following (and check the boxes) before submitting.
+      options:
+        - label: I have checked to make sure that a similar request has not already been filed or fixed.
+          required: true
