@@ -5,6 +5,42 @@ VERSION="${VERSION:-master}"
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/bluerobotics/companion-docker}"
 ROOT="$REMOTE/$VERSION"
 
+# Additional options
+DO_BOARD_CONFIG=1 # default to do the board config
+
+usage_help()
+{
+    cat <<EOF
+BlueOS Installer
+Usage: install.sh [options]
+
+Options:
+    --help                  Show this help
+    --skip-board-config     Skip the board-specific configuration.
+                            Useful if you are not using Linux ArduPilot.
+EOF
+}
+
+get_options()
+{
+    while [[ $# -gt 0 ]]
+    do
+        opt="$1"
+        case $opt in 
+            --help)
+                usage_help
+                exit
+                ;;
+            --skip-board-config)
+                shift
+                DO_BOARD_CONFIG=0
+                shift
+                ;;
+        esac
+    done
+}
+get_options $*
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 
@@ -32,8 +68,13 @@ curl -fsSL --silent $ROOT/install/install.sh 1> /dev/null || (
 )
 
 # Detect CPU and do necessary hardware configuration for each supported hardware
-echo "Starting hardware configuration."
-curl -fsSL "$ROOT/install/boards/configure_board.sh" | bash
+if [ $DO_BOARD_CONFIG -eq 1 ]
+then
+    echo "Starting hardware configuration."
+    curl -fsSL "$ROOT/install/boards/configure_board.sh" | bash
+else
+    echo "Skipping hardware configuration"
+fi
 
 echo "Checking for blocked wifi and bluetooth."
 rfkill unblock all
