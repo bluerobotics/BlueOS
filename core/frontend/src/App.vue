@@ -111,6 +111,7 @@
         <v-container class="d-flex justify-center">
           <power-menu />
           <settings-menu />
+          <report-menu />
         </v-container>
         <span
           class="build_info"
@@ -151,6 +152,7 @@ import { convertGitDescribeToUrl } from '@/utils/helper_functions.ts'
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import ErrorMessage from './components/app/ErrorMessage.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
+import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
 import BridgetUpdater from './components/bridges/BridgetUpdater.vue'
@@ -181,6 +183,7 @@ export default Vue.extend({
     'bridget-updater': BridgetUpdater,
     'power-menu': PowerMenu,
     'settings-menu': SettingsMenu,
+    'report-menu': ReportMenu,
     'backend-status-checker': BackendStatusChecker,
     'error-message': ErrorMessage,
   },
