@@ -26,7 +26,7 @@ get_options()
     while [[ $# -gt 0 ]]
     do
         opt="$1"
-        case $opt in 
+        case $opt in
             --help)
                 usage_help
                 exit
