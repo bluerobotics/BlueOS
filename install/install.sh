@@ -34,7 +34,6 @@ get_options()
             --skip-board-config)
                 shift
                 DO_BOARD_CONFIG=0
-                shift
                 ;;
         esac
     done
