@@ -38,7 +38,7 @@ get_options()
         esac
     done
 }
-get_options $*
+get_options "$@"
 
 # Exit immediately if a command exits with a non-zero status
 set -e
