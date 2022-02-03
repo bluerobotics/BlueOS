@@ -116,6 +116,9 @@
                 </form>
               </span>
               <i class="lds-dual-ring" v-if="loadingImages"></i>
+              <p v-if="error" class="remark alert">
+                {{error}}
+              </p>
               <div class="row bg-white m-4" v-for="image in availableVersions['remote']">
                 <div class="cell-5">
                   <div class="ml-3 mt-1" style="display: inline-block; vertical-align: middle">
@@ -202,6 +205,7 @@
           selectedImage: 'bluerobotics/companion-core',
           Metro: null,
           deleting: null, // image currently being deleted, if any
+          error: null,
         }
       },
       mounted() {
@@ -233,8 +237,10 @@
         loadAvailableversions() {
           // TODO: validate repository, treat error fetching
           this.loadingImages = true
+          this.error = null
           axios.get(`v1.0/version/available/${this.selectedImage}`).then((response) => {
             this.availableVersions = response.data
+            this.error = response.data.error
           }).catch(() => { this.availableVersions = {} })
             .finally(() => { this.loadingImages = false })
         },
