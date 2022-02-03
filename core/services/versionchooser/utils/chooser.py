@@ -3,7 +3,7 @@ import logging
 import pathlib
 from dataclasses import asdict
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import aiodocker
 import appdirs
@@ -215,7 +215,7 @@ class VersionChooser:
         Returns:
             web.Response: json described in the openapi file
         """
-        output: Dict[str, List[Dict[str, str]]] = {"local": [], "remote": []}
+        output: Dict[str, Optional[Union[str, List[Dict[str, str]]]]] = {"local": [], "remote": [], "error": None}
         for image in await self.client.images.list():
             if not image["RepoTags"]:
                 continue
@@ -223,6 +223,7 @@ class VersionChooser:
                 continue
             for image_tag in image["RepoTags"]:
                 image_repository, tag = image_tag.split(":")
+                assert isinstance(output["local"], list)
                 output["local"].append(
                     {
                         "repository": image_repository,
@@ -234,8 +235,10 @@ class VersionChooser:
         try:
             online_tags = await TagFetcher().fetch_remote_tags(repository)
         except Exception as error:
-            logging.critical("error fetching online tags: %s", error)
+            logging.critical(f"error fetching online tags: {error}")
             online_tags = []
+            output["error"] = f"error fetching online tags: {error}"
+        assert isinstance(output["remote"], list)
         output["remote"].extend([asdict(tag) for tag in online_tags])
 
         return web.json_response(output)
