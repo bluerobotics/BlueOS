@@ -1,6 +1,6 @@
 name: Report bug
 description: Report a bug found
-title: ""
+title: "bug: "
 labels: ["bug", "triage", "ui"]
 body:
   - type: markdown
