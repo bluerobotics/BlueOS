@@ -61,7 +61,6 @@ import Network from '@/components/system-information/Network.vue'
 import Processes from '@/components/system-information/Processes.vue'
 import SystemCondition from '@/components/system-information/SystemCondition.vue'
 import system_information from '@/store/system-information'
-import { callPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'SystemInformationView',
@@ -81,9 +80,6 @@ export default Vue.extend({
       ],
       page_selected: 'process',
     }
-  },
-  mounted() {
-    callPeriodically(system_information.fetchSystem, 5000)
   },
 })
 </script>
