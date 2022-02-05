@@ -52,13 +52,16 @@
 import Vue from 'vue'
 
 import mavlink from '@/store/mavlink'
+import system_information from '@/store/system-information'
 import mavlink_store_get from '@/utils/mavlink'
 
 export default Vue.extend({
   name: 'HealthTrayMenu',
   computed: {
     cpu_temperature(): string {
-      return 'WIP'
+      const temperature_sensors = system_information.system?.temperature
+      const main_sensor = temperature_sensors?.find((sensor) => sensor.name === 'CPU')
+      return main_sensor ? main_sensor.temperature.toFixed(1) : 'Loading..'
     },
     battery_voltage(): string {
       const voltage_microvolts = mavlink_store_get(mavlink, 'SYS_STATUS.messageData.voltage_battery') as number
