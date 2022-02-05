@@ -1,23 +1,18 @@
 <template>
-  <Iframe
-    :source="service_path"
-  />
+  <v-container>
+    <version-chooser />
+  </v-container>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
-import Iframe from '@/components/utils/iframe.vue'
+import VersionChooser from '@/components/version-chooser/VersionChooser.vue'
 
 export default Vue.extend({
-  name: 'VersionChooser',
+  name: 'VersionChooserView',
   components: {
-    Iframe,
-  },
-  data() {
-    return {
-      service_path: '/version-chooser',
-    }
+    VersionChooser,
   },
 })
 </script>
