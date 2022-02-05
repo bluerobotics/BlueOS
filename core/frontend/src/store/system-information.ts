@@ -77,7 +77,6 @@ class SystemInformationStore extends VuexModule {
 
   @Action
   async fetchSystem(): Promise<void> {
-    console.debug('System!')
     await this.fetchSystemInformation(FetchType.SystemType)
   }
 
