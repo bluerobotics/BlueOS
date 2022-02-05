@@ -14,6 +14,7 @@ import { KernelMessage } from '@/types/system-information/kernel'
 import { Netstat } from '@/types/system-information/netstat'
 import { Platform } from '@/types/system-information/platform'
 import { System } from '@/types/system-information/system'
+import { callPeriodically } from '@/utils/helper_functions'
 
 enum FetchType {
     KernelType = 'kernel_buffer',
@@ -118,4 +119,7 @@ class SystemInformationStore extends VuexModule {
 export { SystemInformationStore }
 
 const system_information: SystemInformationStore = getModule(SystemInformationStore)
+
+callPeriodically(system_information.fetchSystem, 5000)
+
 export default system_information
