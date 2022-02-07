@@ -90,21 +90,21 @@ class Detector:
             ]
         return []
 
-    @staticmethod
-    def detect() -> List[FlightController]:
+    @classmethod
+    def detect(cls) -> List[FlightController]:
         """Return a list of available flight controllers
 
         Returns:
             List[FlightController]: List of available flight controllers
         """
         available: List[FlightController] = []
-        if not Detector._is_root():
+        if not cls._is_root():
             return available
 
-        navigator = Detector.detect_navigator()
+        navigator = cls.detect_navigator()
         if navigator:
             available.append(navigator)
 
-        available.extend(Detector().detect_serial_flight_controllers())
+        available.extend(cls().detect_serial_flight_controllers())
 
         return available
