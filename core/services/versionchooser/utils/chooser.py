@@ -9,7 +9,7 @@ import aiodocker
 import appdirs
 from aiohttp import web
 
-from utils.dockerhub import TagFetcher
+from utils.dockerhub import TagFetcher, TagMetadata
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
 
@@ -215,7 +215,7 @@ class VersionChooser:
         Returns:
             web.Response: json described in the openapi file
         """
-        output: Dict[str, Optional[Union[str, List[Dict[str, str]]]]] = {"local": [], "remote": [], "error": None}
+        output: Dict[str, Optional[Union[str, List[TagMetadata]]]] = {"local": [], "remote": [], "error": None}
         for image in await self.client.images.list():
             if not image["RepoTags"]:
                 continue
@@ -233,7 +233,10 @@ class VersionChooser:
                     }
                 )
         try:
-            online_tags = await TagFetcher().fetch_remote_tags(repository, [image["tag"] for image in output["local"]])
+            assert isinstance(output["local"], list)
+            output["error"], online_tags = await TagFetcher().fetch_remote_tags(
+                repository, [image["tag"] for image in output["local"]]
+            )
         except Exception as error:
             logging.critical(f"error fetching online tags: {error}")
             online_tags = []

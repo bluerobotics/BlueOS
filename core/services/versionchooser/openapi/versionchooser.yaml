@@ -95,6 +95,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Version'
+                  error:
+                    type: string
+                    example: "Unable to fetch sha."
 
   /version/pull/:
     post:

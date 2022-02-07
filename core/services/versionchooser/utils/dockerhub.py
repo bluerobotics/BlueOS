@@ -6,7 +6,7 @@ adapted from https://github.com/al4/docker-registry-list
 
 import platform
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import List, Optional, Tuple
 from warnings import warn
 
 import aiohttp
@@ -82,10 +82,10 @@ class TagFetcher:
                 data = await resp.json()
                 return str(data["config"]["digest"])
 
-    async def fetch_remote_tags(self, repository: str, local_images: List[str]) -> List[Dict[str, str]]:
+    async def fetch_remote_tags(self, repository: str, local_images: List[str]) -> Tuple[str, List[TagMetadata]]:
         """Fetches the tags available for an image in DockerHub"""
         print("fetching", repository)
-
+        errors = []
         self.last_token = await self._get_token(auth_url="https://auth.docker.io", image_name=repository)
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -111,6 +111,10 @@ class TagFetcher:
                                 digest=image["digest"],
                             )
                             if tag.tag in local_images:
-                                tag.sha = await self.fetch_sha(tag)
+                                try:
+                                    tag.sha = await self.fetch_sha(tag)
+                                except Exception as new_error:
+                                    if str(new_error) not in errors:
+                                        errors.append(str(new_error))
                             valid_images.append(tag)
-                return valid_images
+                return "\n".join(errors), valid_images
