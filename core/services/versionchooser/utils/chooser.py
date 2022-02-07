@@ -233,7 +233,7 @@ class VersionChooser:
                     }
                 )
         try:
-            online_tags = await TagFetcher().fetch_remote_tags(repository)
+            online_tags = await TagFetcher().fetch_remote_tags(repository, [image["tag"] for image in output["local"]])
         except Exception as error:
             logging.critical(f"error fetching online tags: {error}")
             online_tags = []

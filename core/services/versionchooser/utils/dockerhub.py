@@ -82,7 +82,7 @@ class TagFetcher:
                 data = await resp.json()
                 return str(data["config"]["digest"])
 
-    async def fetch_remote_tags(self, repository: str) -> List[Dict[str, str]]:
+    async def fetch_remote_tags(self, repository: str, local_images: List[str]) -> List[Dict[str, str]]:
         """Fetches the tags available for an image in DockerHub"""
         print("fetching", repository)
 
@@ -110,7 +110,7 @@ class TagFetcher:
                                 sha=None,
                                 digest=image["digest"],
                             )
-                            tag.sha = await self.fetch_sha(tag)
-
+                            if tag.tag in local_images:
+                                tag.sha = await self.fetch_sha(tag)
                             valid_images.append(tag)
                 return valid_images

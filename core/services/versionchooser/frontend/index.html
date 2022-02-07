@@ -190,6 +190,9 @@
           return timeago().format(new Date(Date.parse(value)), 'twitter')
         },
         shortsha(value) {
+          if (value === null) {
+            return "Unknown"
+          }
           return value.replace('sha256:', '').substring(0, 8)
         },
       },
