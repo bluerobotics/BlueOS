@@ -14,10 +14,20 @@
         v-on="on"
       >
         <v-icon
+          v-if="heartbeat_age() < 3000"
           class="px-1"
-          color="white"
+          :color="`rgba(255,255,255,${0.4 + (1000-heartbeat_age())/1000}`"
+          title="MAVLink heartbeats arriving as expected"
         >
           mdi-heart-pulse
+        </v-icon>
+        <v-icon
+          v-if="heartbeat_age() >= 3000"
+          class="px-1 white-shadow"
+          color="red"
+          title="MAVLink heartbeat lost"
+        >
+          mdi-heart-broken
         </v-icon>
       </v-card>
     </template>
@@ -73,8 +83,20 @@ export default Vue.extend({
       return (current_centiampere as number / 100).toFixed(2)
     },
   },
+  methods: {
+    heartbeat_age(): number {
+      const last_date = mavlink_store_get(mavlink, 'HEARTBEAT.timestamp') as Date
+      if (last_date === undefined) {
+        return 5000
+      }
+      return new Date().valueOf() - last_date.valueOf()
+    },
+  },
 })
 </script>
 
 <style>
+.white-shadow {
+  text-shadow: 0 0 3px #FFF;
+}
 </style>
