@@ -51,6 +51,7 @@ class MavlinkStore extends VuexModule {
         messageName,
         messageData: receivedMessage,
         requestedMessageRate: refreshRate,
+        timestamp: new Date(),
       })
     }).setFrequency(refreshRate)
   }
