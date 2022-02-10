@@ -31,6 +31,7 @@
               class="mr-2"
               :disabled="non_default_status"
               @click="poweroff"
+              title="Power Off"
             >
               <v-icon color="red">
                 mdi-power-standby
@@ -40,9 +41,20 @@
               class="mr-2"
               :disabled="non_default_status"
               @click="reboot"
+              title="Reboot"
             >
               <v-icon color="orange">
                 mdi-restart-alert
+              </v-icon>
+            </v-btn>
+            <v-btn
+              class="mr-2"
+              :disabled="non_default_status"
+              @click="restartContainer"
+              title="Restart Core container"
+            >
+              <v-icon color="orange">
+                mdi-folder-refresh
               </v-icon>
             </v-btn>
           </v-row>
@@ -123,6 +135,13 @@ export default Vue.extend({
       this.shutdown(ShutdownType.Reboot)
       // Let wait a bit before starting to check
       setTimeout(this.waitForBackendToBeOnline, 5000)
+    },
+    async restartContainer(): Promise<void> {
+      this.service_status = Status.Rebooting
+      await back_axios({
+        method: 'post',
+        url: '/version-chooser/v1.0/version/restart',
+      }).finally(() => setTimeout(this.waitForBackendToBeOnline, 5000))
     },
     async poweroff(): Promise<void> {
       this.service_status = Status.PoweringOff
