@@ -36,6 +36,13 @@ paths:
                   type: string
                   example: master
 
+  /version/restart:
+    post:
+      operationId: main.restart
+      responses:
+        '200':
+          description: Restart the currently running docker container
+
   /version/delete:
     delete:
       operationId: main.delete_version

@@ -245,3 +245,13 @@ class VersionChooser:
         output["remote"].extend([asdict(tag) for tag in online_tags])
 
         return web.json_response(output)
+
+    async def restart(self) -> web.Response:
+        """Returns versions available locally and in the remote
+        Returns:
+            web.Response: always 200
+        """
+        logging.info("Stopping core...")
+        core = await self.client.containers.get("companion-core")  # type: ignore
+        await core.kill()
+        return web.Response(status=200, text="Restarting...")
