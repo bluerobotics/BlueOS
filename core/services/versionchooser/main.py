@@ -48,6 +48,10 @@ async def load(request: web.Request) -> Any:
     return await versionChooser.load(data)
 
 
+async def restart() -> Any:
+    return await versionChooser.restart()
+
+
 if __name__ == "__main__":
     maximum_number_of_bytes = 2 * (2**30)  # 2 GBs
     app = connexion.AioHttpApp(__name__, specification_dir="openapi/")
