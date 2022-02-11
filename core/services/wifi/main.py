@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler
+from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -22,8 +22,10 @@ from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
 from WifiManager import WifiManager
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
+SERVICE_NAME = "wifi-manager"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+logger.add(get_new_log_path(SERVICE_NAME))
 
 logger.info("Starting Wifi Manager.")
 wifi_manager = WifiManager()

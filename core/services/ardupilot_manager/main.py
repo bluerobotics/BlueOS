@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler
+from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import Body, FastAPI, File, HTTPException, Response, UploadFile, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -18,6 +18,7 @@ from uvicorn import Config, Server
 from ArduPilotManager import ArduPilotManager
 from exceptions import InvalidFirmwareFile
 from mavlink_proxy.Endpoint import Endpoint
+from settings import SERVICE_NAME
 from typedefs import Firmware, Platform, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
@@ -28,6 +29,7 @@ parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any boa
 args = parser.parse_args()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+logger.add(get_new_log_path(SERVICE_NAME))
 
 
 app = FastAPI(

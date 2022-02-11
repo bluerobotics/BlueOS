@@ -5,7 +5,7 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler
+from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI, Response, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -14,6 +14,8 @@ from uvicorn import Config, Server
 
 from TrafficController import NMEASocket, SocketKind, TrafficController
 
+SERVICE_NAME = "nmea-injector"
+
 parser = argparse.ArgumentParser(description="NMEA Injector service for Blue Robotics Companion")
 parser.add_argument("-u", "--udp", type=int, help="change the default UDP input port")
 parser.add_argument("-t", "--tcp", type=int, help="change the default TCP input port")
@@ -21,6 +23,7 @@ parser.add_argument("-t", "--tcp", type=int, help="change the default TCP input 
 args = parser.parse_args()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+logger.add(get_new_log_path(SERVICE_NAME))
 
 
 app = FastAPI(

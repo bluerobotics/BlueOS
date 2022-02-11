@@ -9,7 +9,7 @@ from typing import Any, List
 import uvicorn
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
-from commonwealth.utils.logs import InterceptHandler
+from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import Body, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -21,6 +21,8 @@ from api.manager import (
     InterfaceConfiguration,
     InterfaceMode,
 )
+
+SERVICE_NAME = "cable-guy"
 
 parser = argparse.ArgumentParser(description="CableGuy service for Blue Robotics Companion")
 parser.add_argument(
@@ -43,6 +45,7 @@ if args.default_config == "bluerov2":
 manager = EthernetManager(default_config, dhcp_gateway)
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+logger.add(get_new_log_path(SERVICE_NAME))
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
