@@ -6,7 +6,7 @@
     <v-list>
       <v-list-item>
         <v-switch
-          :value="showOld"
+          :input-value="showOld"
           color="blue lighten-1"
           @change="emitShowOldChange"
         />
