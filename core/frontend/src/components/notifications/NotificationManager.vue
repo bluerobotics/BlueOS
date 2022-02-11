@@ -89,7 +89,7 @@ export default Vue.extend({
   data() {
     return {
       show_config_menu: false,
-      show_old_messages: true,
+      show_old_messages: false,
       timestamp: new Date(),
       seconds_recent: 60,
       active_intervals: [] as number[],
