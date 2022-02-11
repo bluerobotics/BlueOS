@@ -6,9 +6,11 @@ from typing import Any, Dict, Union, cast
 import appdirs
 from loguru import logger
 
+SERVICE_NAME = "ardupilot-manager"
+
 
 class Settings:
-    app_name = "ardupilot-manager"
+    app_name = SERVICE_NAME
     settings_path = Path(appdirs.user_config_dir(app_name))
     settings_file = Path.joinpath(settings_path, "settings.json")
     firmware_folder = Path.joinpath(settings_path, "firmware")

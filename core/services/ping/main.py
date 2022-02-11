@@ -5,7 +5,7 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler
+from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -16,6 +16,8 @@ from pingmanager import PingManager
 from pingprober import PingProber
 from portwatcher import PortWatcher
 from typedefs import PingDeviceDescriptorModel
+
+SERVICE_NAME = "ping"
 
 app = FastAPI(
     title="Ping Manager API",
@@ -67,6 +69,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
+    logger.add(get_new_log_path(SERVICE_NAME))
 
     loop = asyncio.new_event_loop()
 

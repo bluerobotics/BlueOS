@@ -7,13 +7,16 @@ from typing import Any, Callable
 
 import appdirs
 import uvicorn
-from commonwealth.utils.logs import InterceptHandler
+from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
+SERVICE_NAME = "commander"
+
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+logger.add(get_new_log_path(SERVICE_NAME))
 
 app = FastAPI(
     title="Commander API",
