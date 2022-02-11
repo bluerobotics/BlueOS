@@ -93,6 +93,7 @@ export default Vue.extend({
       timestamp: new Date(),
       seconds_recent: 60,
       active_intervals: [] as number[],
+      max_number_notifications: 100,
     }
   },
   computed: {
@@ -104,12 +105,12 @@ export default Vue.extend({
         const date_now = new Date()
         const date_notification = new Date(cumulated.notification.time_created)
         return differenceInSeconds(date_now, date_notification) < this.seconds_recent
-      })
+      }).slice(-this.max_number_notifications)
     },
     notifications_to_show(): CumulatedNotification[] {
       const notifications_to_show = this.show_old_messages ? this.notifications : this.recent_notifications
       // Returning the notifications reversed to show the last ones first
-      return notifications_to_show.slice().reverse()
+      return notifications_to_show.reverse()
     },
   },
   mounted() {
