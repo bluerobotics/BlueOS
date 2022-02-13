@@ -9,6 +9,7 @@ import Firmware from '../views/FirmwareView.vue'
 import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
+import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
@@ -82,6 +83,11 @@ const routes: Array<RouteConfig> = [
     path: '/tools/system-information',
     name: 'SystemInformation',
     component: SystemInformationView,
+  },
+  {
+    path: '/tools/mavlink-inspector',
+    name: 'MavlinkInspector',
+    component: MavlinkInspectorView,
   },
 ]
 

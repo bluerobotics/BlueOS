@@ -34,12 +34,25 @@ export default class Listener {
    */
   setFrequency(frequency: number): Listener {
     clearInterval(this.interval)
+    this.frequency = frequency
+    if (frequency === 0) {
+      return this
+    }
     this.interval = window.setInterval(() => {
       if (this.parent.latestData !== null) {
         this.callback(this.parent.latestData)
       }
     }, 1000 / frequency)
     return this
+  }
+
+  /**
+   * If frequency is set to zero, consume data as soon as received
+   */
+  onNewData(data: any): void {
+    if (this.frequency === 0) {
+      this.callback(data)
+    }
   }
 
   discard(): void {
