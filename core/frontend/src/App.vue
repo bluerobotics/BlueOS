@@ -264,6 +264,11 @@ export default Vue.extend({
             route: '/tools/web-terminal',
           },
           {
+            title: 'MAVLink Inspector',
+            icon: 'mdi-chart-areaspline',
+            route: '/tools/mavlink-inspector',
+          },
+          {
             title: 'Version-chooser',
             icon: 'mdi-cellphone-arrow-down',
             route: '/tools/version-chooser',

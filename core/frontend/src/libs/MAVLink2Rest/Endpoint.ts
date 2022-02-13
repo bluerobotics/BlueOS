@@ -32,6 +32,9 @@ export default class Endpoint {
     const socket = new WebSocket(url)
     socket.onmessage = (message: MessageEvent): void => {
       this.latestData = JSON.parse(message.data)
+      for (const listener of this.listeners) {
+        listener.onNewData(JSON.parse(message.data))
+      }
     }
     return socket
   }
