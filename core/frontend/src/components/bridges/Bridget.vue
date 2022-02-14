@@ -11,7 +11,7 @@
       <template v-for="(bridge, index) in available_bridges">
         <v-divider
           v-if="index!==0"
-          :key="index"
+          :key="`divider-${index}`"
         />
         <v-list-item
           :key="index"
@@ -93,6 +93,9 @@ export default Vue.extend({
     are_bridges_available(): boolean {
       return this.available_bridges.length !== 0
     },
+  },
+  mounted() {
+    bridget.registerObject(this)
   },
   methods: {
     openCreationDialog(): void {
