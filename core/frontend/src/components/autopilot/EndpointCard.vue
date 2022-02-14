@@ -50,19 +50,22 @@
           >
             <v-card class="elevation-0 d-flex flex-column align-center pa-0">
               <v-icon
+                v-tooltip="persistency.tooltip"
                 class="ma-1"
               >
-                {{ persistent_icon }}
+                {{ persistency.icon }}
               </v-icon>
               <v-icon
+                v-tooltip="protection.tooltip"
                 class="ma-1"
               >
-                {{ protected_icon }}
+                {{ protection.icon }}
               </v-icon>
               <v-icon
+                v-tooltip="status.tooltip"
                 class="ma-1"
               >
-                {{ enabled_icon }}
+                {{ status.icon }}
               </v-icon>
             </v-card>
           </v-col>
@@ -103,14 +106,21 @@
         relative
         @click="toggleEndpointEnabled"
       >
-        <v-icon v-if="endpoint.enabled">
-          mdi-lightbulb-off
+        <v-icon
+          v-if="endpoint.enabled"
+          v-tooltip="disable_action.tooltip"
+        >
+          {{ disable_action.icon }}
         </v-icon>
-        <v-icon v-else>
-          mdi-lightbulb-on
+        <v-icon
+          v-else
+          v-tooltip="enable_action.tooltip"
+        >
+          {{ enable_action.icon }}
         </v-icon>
       </v-btn>
       <v-btn
+        v-tooltip="remove_action.tooltip"
         color="red"
         fab
         dark
@@ -119,7 +129,7 @@
         :disabled="endpoint.protected"
         @click="removeEndpoint"
       >
-        <v-icon>mdi-delete</v-icon>
+        <v-icon>{{ remove_action.icon }}</v-icon>
       </v-btn>
     </v-speed-dial>
   </v-card>
@@ -150,14 +160,32 @@ export default Vue.extend({
     }
   },
   computed: {
-    persistent_icon(): string {
-      return this.endpoint.persistent ? 'mdi-content-save' : 'mdi-content-save-off'
+    persistency(): { icon: string, tooltip: string } {
+      if (this.endpoint.persistent) {
+        return { icon: 'mdi-content-save', tooltip: 'Persistent' }
+      }
+      return { icon: 'mdi-content-save-off', tooltip: 'Not persistent' }
     },
-    protected_icon(): string {
-      return this.endpoint.protected ? 'mdi-lock' : 'mdi-lock-off'
+    protection(): { icon: string, tooltip: string } {
+      if (this.endpoint.protected) {
+        return { icon: 'mdi-lock', tooltip: 'Protected' }
+      }
+      return { icon: 'mdi-lock-off', tooltip: 'Not protected' }
     },
-    enabled_icon(): string {
-      return this.endpoint.enabled ? 'mdi-lightbulb-on' : 'mdi-lightbulb-off'
+    status(): { icon: string, tooltip: string } {
+      if (this.endpoint.enabled) {
+        return { icon: 'mdi-lightbulb-on', tooltip: 'Enabled' }
+      }
+      return { icon: 'mdi-lightbulb-off', tooltip: 'Disabled' }
+    },
+    enable_action(): { icon: string, tooltip: string } {
+      return { icon: 'mdi-lightbulb-on', tooltip: 'Enable' }
+    },
+    disable_action(): { icon: string, tooltip: string } {
+      return { icon: 'mdi-lightbulb-off', tooltip: 'Disable' }
+    },
+    remove_action(): { icon: string, tooltip: string } {
+      return { icon: 'mdi-delete', tooltip: 'Remove' }
     },
   },
   methods: {
