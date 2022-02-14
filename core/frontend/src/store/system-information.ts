@@ -97,7 +97,7 @@ class SystemInformationStore extends VuexModule {
             this.updateNetstat(response.data)
             break
           case FetchType.PlatformType:
-            this.updatePlatform(response.data)
+            this.updatePlatform(response.data.Ok)
             break
           case FetchType.SystemType:
             console.debug('system case')
