@@ -137,7 +137,6 @@
     <ethernet-updater />
     <wifi-updater />
     <mavlink-updater />
-    <bridget-updater />
     <nmea-injector-updater />
     <error-message />
   </v-app>
@@ -155,7 +154,6 @@ import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
-import BridgetUpdater from './components/bridges/BridgetUpdater.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
@@ -180,7 +178,6 @@ export default Vue.extend({
     'health-tray-menu': HealthTrayMenu,
     'mavlink-updater': MavlinkUpdater,
     'nmea-injector-updater': NMEAInjectorUpdater,
-    'bridget-updater': BridgetUpdater,
     'power-menu': PowerMenu,
     'settings-menu': SettingsMenu,
     'report-menu': ReportMenu,
