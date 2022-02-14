@@ -13,7 +13,7 @@ export interface RaspberryEvent {
      * @param type - E.g: "BCM2711"
     * */
     time: string,
-    event: RaspberryEventType,
+    type: RaspberryEventType,
 }
 
 /** Base structure that provides system events for Raspberry */
