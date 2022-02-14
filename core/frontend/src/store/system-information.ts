@@ -120,5 +120,6 @@ export { SystemInformationStore }
 const system_information: SystemInformationStore = getModule(SystemInformationStore)
 
 callPeriodically(system_information.fetchSystem, 5000)
+callPeriodically(system_information.fetchPlatform, 5000)
 
 export default system_information
