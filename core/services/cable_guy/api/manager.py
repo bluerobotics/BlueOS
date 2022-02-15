@@ -15,15 +15,15 @@ from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 from api import settings
 
 
-class InterfaceMode(str, Enum):
+class AddressMode(str, Enum):
     Client = "client"
     Server = "server"
     Unmanaged = "unmanaged"
 
 
-class InterfaceConfiguration(BaseModel):
+class InterfaceAddress(BaseModel):
     ip: str
-    mode: InterfaceMode
+    mode: AddressMode
 
 
 class InterfaceInfo(BaseModel):
@@ -33,7 +33,7 @@ class InterfaceInfo(BaseModel):
 
 class EthernetInterface(BaseModel):
     name: str
-    configuration: InterfaceConfiguration
+    addresses: List[InterfaceAddress]
     info: Optional[InterfaceInfo]
 
 
@@ -95,32 +95,16 @@ class EthernetManager:
         logger.debug(f"Found following ethernet interfaces: {interfaces}.")
         valid_names = [interface.name for interface in interfaces]
 
-        name = interface.name
-        ip = interface.configuration.ip
-        mode = interface.configuration.mode
+        if interface.name not in valid_names:
+            raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
 
-        if name not in valid_names:
-            raise ValueError(f"Invalid interface name ('{name}'). Valid names are: {valid_names}")
+        self.flush_interface(interface.name)
 
-        if mode != InterfaceMode.Server and self._server.is_running():
+        for address in interface.addresses:
+            self.add_ip(interface.name, address.mode, address.ip)
+
+        if not self._is_server_address_present(interface) and self._server.is_running():
             self._server.stop()
-
-        if mode == InterfaceMode.Client:
-            self.set_dynamic_ip(name)
-            logger.info(f"Interface '{name}' configured with dynamic IP.")
-            return
-        if mode == InterfaceMode.Server:
-            self.set_static_ip(name, self._dhcp_server_gateway)
-            if not self._server.is_running():
-                self._server.start()
-            logger.info(f"Interface '{name}' configured as DHCP server with static IP.")
-            return
-        if mode == InterfaceMode.Unmanaged:
-            self.set_static_ip(name, ip)
-            logger.info(f"Interface '{name}' configured with static IP.")
-            return
-
-        raise RuntimeError(f"Could not configure interface '{name}'.")
 
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
@@ -170,6 +154,10 @@ class EthernetManager:
             bool: True if valid, False if not
         """
         return self.is_valid_interface_name(interface.name)
+
+    @staticmethod
+    def _is_server_address_present(interface: EthernetInterface) -> bool:
+        return any(address.mode == AddressMode.Server for address in interface.addresses)
 
     @staticmethod
     def weak_is_ip_address(ip: str) -> bool:
@@ -276,8 +264,6 @@ class EthernetManager:
         Args:
             interface_name (str): Interface name
         """
-        # Remove all address
-        self.flush_interface(interface_name)
         # Trigger DHCP service to add a new dynamic ip address
         self.trigger_dhcp_service(interface_name)
         logger.info(f"Getting dynamic IP to interface {interface_name}.")
@@ -289,10 +275,68 @@ class EthernetManager:
             interface_name (str): Interface name
             ip (str): ip address
         """
-        # Remove all address
-        self.flush_interface(interface_name)
         # Set new ip address
         self.set_ip(interface_name, ip)
+
+    def add_ip(self, interface_name: str, mode: AddressMode, ip_address: Optional[str] = None) -> None:
+        """Add IP address to a given interface
+
+        Args:
+            interface_name (str): Interface name
+            ip_address (str): IP address to be added
+        """
+        parsed_ip = self._dhcp_server_gateway if not ip_address and mode == AddressMode.Server else ip_address
+        logger.info(f"Adding IP '{parsed_ip}' on interface '{interface_name}' in {mode} mode.")
+        try:
+            interface = self.get_interface_by_name(interface_name)
+
+            if parsed_ip is None or parsed_ip == "" and mode in [AddressMode.Unmanaged, AddressMode.Server]:
+                raise ValueError("No IP address was specified. Cannot add static IP.")
+
+            # Remove old IP address, if it already exists, and use the new one
+            for address in interface.addresses:
+                if address.ip == parsed_ip:
+                    self.remove_ip(interface_name, parsed_ip)
+
+            if mode == AddressMode.Client:
+                self.set_dynamic_ip(interface_name)
+                return
+            if mode == AddressMode.Server:
+                self.set_static_ip(interface_name, parsed_ip)
+                if not self._server.is_running():
+                    self._server.start()
+                return
+            if mode == AddressMode.Unmanaged:
+                self.set_static_ip(interface_name, parsed_ip)
+        except Exception as error:
+            error_msg = f"Cannot add IP '{parsed_ip}' to interface {interface_name}. {error}"
+            logger.error(error_msg)
+            raise ValueError(error_msg) from error
+
+    def remove_ip(self, interface_name: str, ip_address: str) -> None:
+        """Delete IP address appended on the interface
+
+        Args:
+            interface_name (str): Interface name
+            ip_address (str): IP address to be deleted
+        """
+        logger.info(f"Deleting IP {ip_address} from interface {interface_name}.")
+        try:
+            interface = self.get_interface_by_name(interface_name)
+            if self._is_server_address_present(interface) and self._server.is_running():
+                self._server.stop()
+            interface_index = self._get_interface_index(interface_name)
+            self.ipr.addr("del", index=interface_index, address=ip_address, prefixlen=24)
+        except Exception as error:
+            error_msg = f"Cannot delete IP '{ip_address}' from interface {interface_name}. {error}"
+            logger.error(error_msg)
+            raise ValueError(error_msg) from error
+
+    def get_interface_by_name(self, name: str) -> EthernetInterface:
+        for interface in self.get_interfaces():
+            if interface.name == name:
+                return interface
+        raise ValueError(f"No interface with name '{name}' is present.")
 
     def get_interfaces(self) -> List[EthernetInterface]:
         """Get interfaces information
@@ -308,6 +352,7 @@ class EthernetManager:
             if str(interface).startswith("veth"):
                 continue
 
+            valid_addresses = []
             for address in addresses:
                 # We don't care about ipv6
                 if address.family == AddressFamily.AF_INET6:
@@ -322,18 +367,16 @@ class EthernetManager:
 
                 # Populate our output item
                 if self._server.is_running() and is_gateway_ip:
-                    mode = InterfaceMode.Server
+                    mode = AddressMode.Server
                 else:
-                    mode = InterfaceMode.Unmanaged if is_static_ip and valid_ip else InterfaceMode.Client
+                    mode = AddressMode.Unmanaged if is_static_ip and valid_ip else AddressMode.Client
                 info = self.get_interface_info(interface)
-                data = EthernetInterface(
-                    name=interface, configuration=InterfaceConfiguration(ip=ip, mode=mode), info=info
-                )
+                valid_addresses.append(InterfaceAddress(ip=ip, mode=mode))
 
-                # Check if it's valid and add to the result
-                if self.validate_interface_data(data):
-                    result += [data]
-                    break
+            interface_data = EthernetInterface(name=interface, addresses=valid_addresses, info=info)
+            # Check if it's valid and add to the result
+            if self.validate_interface_data(interface_data):
+                result += [interface_data]
 
         self.result = result
         return result
