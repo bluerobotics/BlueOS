@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 import uvicorn
 from commonwealth.utils.apis import PrettyJSONResponse
@@ -16,10 +16,10 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
 from api.manager import (
+    AddressMode,
     EthernetInterface,
     EthernetManager,
-    InterfaceConfiguration,
-    InterfaceMode,
+    InterfaceAddress,
 )
 
 SERVICE_NAME = "cable-guy"
@@ -38,7 +38,7 @@ args = parser.parse_args()
 
 if args.default_config == "bluerov2":
     default_config = EthernetInterface(
-        name="eth0", configuration=InterfaceConfiguration(ip="192.168.2.2", mode=InterfaceMode.Unmanaged)
+        name="eth0", addresses=[InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Unmanaged)]
     )
     dhcp_gateway = "192.168.2.2"
 
@@ -79,6 +79,28 @@ def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
 
     manager.save()
     return interface
+
+
+@app.post("/address", summary="Add IP address to interface.")
+@version(1, 0)
+def add_address(interface_name: str, mode: AddressMode, ip_address: Optional[str] = None) -> Any:
+    """REST API endpoint to add an IP address to an ethernet interface."""
+    try:
+        manager.add_ip(interface_name, mode, ip_address)
+        manager.save()
+    except Exception as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+
+
+@app.delete("/address", summary="Delete IP address from interface.")
+@version(1, 0)
+def delete_address(interface_name: str, ip_address: str) -> Any:
+    """REST API endpoint to delete an IP address from an ethernet interface."""
+    try:
+        manager.remove_ip(interface_name, ip_address)
+        manager.save()
+    except Exception as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
 
 
 app = VersionedFastAPI(
