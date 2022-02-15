@@ -57,14 +57,19 @@ class EthernetManager:
         # Load settings and do the initial configuration
         if not self.settings.load():
             logger.error(f"Failed to load previous settings. Using default configuration: {default_config}")
-            self.set_configuration(default_config)
+            try:
+                self.set_configuration(default_config)
+            except Exception as error:
+                logger.error(f"Failed loading default configuration. {error}")
             return
 
         logger.info("Previous settings loaded:")
         for item in self.settings.root["content"]:
             logger.info(f"Configuration with: {item}")
-            if not self.set_configuration(EthernetInterface(**item)):
-                logger.error("Failed.")
+            try:
+                self.set_configuration(EthernetInterface(**item))
+            except Exception as error:
+                logger.error(f"Failed loading saved configuration. {error}")
 
     def save(self) -> None:
         """Save actual configuration"""
@@ -80,14 +85,11 @@ class EthernetManager:
         result = [interface.dict(exclude={"info"}) for interface in self.result]
         self.settings.save(result)
 
-    def set_configuration(self, interface: EthernetInterface) -> bool:
+    def set_configuration(self, interface: EthernetInterface) -> None:
         """Modify hardware based in the configuration
 
         Args:
             interface: EthernetInterface
-
-        Returns:
-            bool: Configuration was accepted
         """
         interfaces = self.get_interfaces()
         logger.debug(f"Found following ethernet interfaces: {interfaces}.")
@@ -98,8 +100,7 @@ class EthernetManager:
         mode = interface.configuration.mode
 
         if name not in valid_names:
-            logger.error(f"Invalid interface name ('{name}'). Valid names are: {valid_names}")
-            return False
+            raise ValueError(f"Invalid interface name ('{name}'). Valid names are: {valid_names}")
 
         if mode != InterfaceMode.Server and self._server.is_running():
             self._server.stop()
@@ -107,20 +108,19 @@ class EthernetManager:
         if mode == InterfaceMode.Client:
             self.set_dynamic_ip(name)
             logger.info(f"Interface '{name}' configured with dynamic IP.")
-            return True
+            return
         if mode == InterfaceMode.Server:
             self.set_static_ip(name, self._dhcp_server_gateway)
             if not self._server.is_running():
                 self._server.start()
             logger.info(f"Interface '{name}' configured as DHCP server with static IP.")
-            return True
+            return
         if mode == InterfaceMode.Unmanaged:
             self.set_static_ip(name, ip)
             logger.info(f"Interface '{name}' configured with static IP.")
-            return True
+            return
 
-        logger.error(f"Could not configure interface '{name}'.")
-        return False
+        raise RuntimeError(f"Could not configure interface '{name}'.")
 
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
