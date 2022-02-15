@@ -69,11 +69,13 @@ def retrieve_interfaces() -> Any:
 @version(1, 0)
 def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
     """REST API endpoint to configure a new ethernet interface or modify an existing one."""
-    if not manager.set_configuration(interface):
+    try:
+        manager.set_configuration(interface)
+    except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not configure ethernet interface with provided configuration.",
-        )
+            detail=f"Could not configure ethernet interface with provided configuration. {error}",
+        ) from error
 
     manager.save()
     return interface
