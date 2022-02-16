@@ -1,9 +1,9 @@
 import json
 import os
-import pprint
 from typing import Any, Dict, List
 
 import appdirs
+from loguru import logger
 
 
 class Settings:
@@ -29,7 +29,7 @@ class Settings:
             bool: False if failed
         """
         if not self.settings_exist():
-            print(f"User settings does not exist: {self.settings_file}")
+            logger.debug(f"User settings does not exist: {self.settings_file}")
             return False
 
         data = None
@@ -37,13 +37,13 @@ class Settings:
             with open(self.settings_file, encoding="utf-8") as file:
                 data = json.load(file)
                 if data["version"] != self.root["version"]:
-                    print("User settings does not match with our supported version.")
+                    logger.debug("User settings does not match with our supported version.")
                     return False
 
                 self.root = data
         except Exception as exception:
-            print(f"Failed to fetch data from file ({self.settings_file}): {exception}")
-            pprint.pprint(data)
+            logger.debug(f"Failed to fetch data from file ({self.settings_file}): {exception}")
+            logger.debug(data)
 
         return True
 
@@ -63,5 +63,5 @@ class Settings:
             os.makedirs(self.settings_path)
 
         with open(self.settings_file, "w+", encoding="utf-8") as file:
-            print(f"Updating settings file: {self.settings_file}")
+            logger.debug(f"Updating settings file: {self.settings_file}")
             json.dump(self.root, file, sort_keys=True, indent=4)
