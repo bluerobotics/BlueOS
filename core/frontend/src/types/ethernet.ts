@@ -1,12 +1,12 @@
-export enum InterfaceMode {
+export enum AddressMode {
     client = 'client',
     server = 'server',
     unmanaged = 'unmanaged',
 }
 
-export interface InterfaceConfiguration {
+export interface InterfaceAddress {
     ip: string,
-    mode: InterfaceMode,
+    mode: AddressMode,
 }
 
 export interface InterfaceInfo {
@@ -16,6 +16,6 @@ export interface InterfaceInfo {
 
 export interface EthernetInterface {
     name: string,
-    configuration: InterfaceConfiguration,
+    addresses: InterfaceAddress[],
     info?: InterfaceInfo,
 }
