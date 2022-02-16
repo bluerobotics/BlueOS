@@ -9,7 +9,6 @@
         :key="key"
         class="available-interface"
         :adapter="ethernet_interface"
-        @edit="updateInterface"
       />
     </v-expansion-panels>
     <v-container v-else-if="updating_interfaces">
@@ -28,10 +27,7 @@ import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import ethernet from '@/store/ethernet'
-import notifications from '@/store/notifications'
 import { EthernetInterface } from '@/types/ethernet'
-import { ethernet_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
 
 import InterfaceCard from './InterfaceCard.vue'
 
@@ -50,21 +46,6 @@ export default Vue.extend({
     },
     updating_interfaces(): boolean {
       return ethernet.updating_interfaces
-    },
-  },
-  methods: {
-    async updateInterface(ethernet_interface: EthernetInterface): Promise<void> {
-      ethernet.setUpdatingInterfaces(true)
-      await back_axios({
-        method: 'post',
-        url: `${ethernet.API_URL}/ethernet`,
-        timeout: 5000,
-        data: ethernet_interface,
-      })
-        .catch((error) => {
-          const message = `Could not update ethernet interface: ${error.message}`
-          notifications.pushError({ service: ethernet_service, type: 'ETHERNET_INTERFACE_UPDATE_FAIL', message })
-        })
     },
   },
 })
