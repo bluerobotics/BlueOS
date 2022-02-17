@@ -1,2 +1,2 @@
-SUBSYSTEM=="tty", ATTRS{manufacturer}=="3D Robotics", ATTRS{product}=="PX4*", SYMLINK+="autopilot"
-SUBSYSTEM=="tty", ATTRS{manufacturer}=="ArduPilot", SYMLINK+="autopilot"
+SUBSYSTEM=="tty", ATTRS{manufacturer}=="3D Robotics", ATTRS{product}=="PX4*", SYMLINK+="autopilot", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{manufacturer}=="ArduPilot", SYMLINK+="autopilot", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1"
