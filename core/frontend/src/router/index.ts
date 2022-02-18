@@ -13,8 +13,8 @@ import Main from '../views/MainView.vue'
 import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
 import NetworkTestView from '../views/NetworkTestView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
-import Pings from '../views/Pings.vue'
 import ParameterEditorView from '../views/ParameterEditorView.vue'
+import Pings from '../views/Pings.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
@@ -109,7 +109,7 @@ const routes: Array<RouteConfig> = [
     component: ExtensionManagerView,
   },
   {
-    path: '/autopilot/parameters',
+    path: '/vehicle/parameters',
     name: 'ParameterEditor',
     component: ParameterEditorView,
   },

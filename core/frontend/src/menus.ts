@@ -25,6 +25,12 @@ const menus = [
               + 'either your Onboard Computer or its local network.',
       },
       {
+        title: 'Parameters',
+        icon: 'mdi-table-settings',
+        route: '/vehicle/parameters',
+        text: 'Allow changing vehicle parameters',
+      },
+      {
         title: 'Log Browser',
         icon: 'mdi-file-multiple',
         route: '/vehicle/logs',

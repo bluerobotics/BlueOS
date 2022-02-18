@@ -1,0 +1,105 @@
+import mavlink2rest from '@/libs/MAVLink2Rest'
+// eslint-disable-next-line import/no-cycle
+import { AutopilotStore } from '@/store/autopilot'
+
+import ParametersTable from './parameter-table'
+
+export default class ParameterFetcher {
+  parameter_table = new ParametersTable()
+
+  listener = mavlink2rest.startListening('PARAM_VALUE')
+
+  store = null as (AutopilotStore | null)
+
+  loaded_params_count = 0
+
+  total_params_count = null as null | number
+
+  watchdog_last_count = 0
+
+  constructor() {
+    this.setupWs()
+  }
+
+  setStore(store: AutopilotStore): void {
+    this.store = store
+  }
+
+  reset(): void {
+    this.loaded_params_count = 0
+    this.total_params_count = null
+    this.watchdog_last_count = 0
+    this.parameter_table.reset()
+  }
+
+  updateStore(): void {
+    if (!this.store) {
+      return
+    }
+    this.store.setParameters(this.parameter_table.parameters())
+    this.store.setLoadedParametersCount(this.loaded_params_count)
+    this.store.setTotalParametersCount(this.total_params_count ?? 0)
+  }
+
+  requestParamsWatchdog(): void {
+    if (this.loaded_params_count > 0 && this.loaded_params_count === this.total_params_count) {
+      return
+    }
+    if (this.loaded_params_count > this.watchdog_last_count) {
+      // We received something since the last watchdog update
+      this.watchdog_last_count = this.loaded_params_count
+      return
+    }
+    // we don't have all parameters, and haven't received any for at least 5 seconds
+    // let's ask for the parameters again.
+    mavlink2rest.sendMessage(
+      {
+        header: {
+          system_id: 255,
+          component_id: 0,
+          sequence: 0,
+        },
+        message: {
+          type: 'PARAM_REQUEST_LIST',
+          target_system: 0,
+          target_component: 0,
+        },
+      },
+    )
+    this.watchdog_last_count = this.loaded_params_count
+  }
+
+  setupWs(): void {
+    this.listener.setCallback((receivedMessage) => {
+      if (receivedMessage.count > 0) {
+        this.parameter_table.setCount(receivedMessage.count)
+      }
+      const param_name = receivedMessage.message.param_id.join('').replace(/\0/g, '')
+      const { param_index, param_value, param_type } = receivedMessage.message
+      // We need this due to mismatches between js 64-bit floats and REAL32 in MAVLink
+      const trimmed_value = Math.round(param_value * 10000) / 10000
+      if (param_index === 65535) {
+        this.parameter_table.updateParam(param_name, trimmed_value)
+      } else {
+        this.parameter_table.addParam(
+          {
+            name: param_name as string,
+            id: param_index as number,
+            value: trimmed_value as number,
+            readonly: false,
+            rebootRequired: false,
+            description: '',
+            shortDescription: '',
+            paramType: param_type,
+          },
+        )
+        if (receivedMessage.message.param_count) {
+          this.total_params_count = receivedMessage.message.param_count
+        }
+        this.loaded_params_count += 1
+      }
+      this.updateStore()
+    }).setFrequency(0)
+    setInterval(() => { this.requestParamsWatchdog() }, 2000)
+  }
+}

@@ -118,3 +118,10 @@ export const kraken_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const parameters_service: Service = {
+  name: 'Parameters service',
+  description: 'Service to manage vehicle Parameters',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
