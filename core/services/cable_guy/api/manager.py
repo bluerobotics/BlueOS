@@ -354,11 +354,10 @@ class EthernetManager:
 
             valid_addresses = []
             for address in addresses:
-                # We don't care about ipv6
-                if address.family == AddressFamily.AF_INET6:
+                # We just care about IPV4 addresses
+                if not address.family == AddressFamily.AF_INET:
                     continue
 
-                # If there is no ip address the mac address will be provided (⊙＿⊙')
                 valid_ip = EthernetManager.weak_is_ip_address(address.address)
                 ip = address.address if valid_ip else "undefined"
 
