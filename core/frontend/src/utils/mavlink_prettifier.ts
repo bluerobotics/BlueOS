@@ -51,6 +51,9 @@ const formatters = {
   NAMED_VALUE_FLOAT(message: any) {
     return `${message.name.join('')} = ${message.value.toFixed(2)}`
   },
+  PARAM_VALUE(message: any) {
+    return `${message.param_id.join('')}: ${message.param_value}`
+  },
   STATUSTEXT(message: any): string {
     return `${message.severity.type.replace('MAV_SEVERITY_', '')}: ${message.text.join('')}`
   },
