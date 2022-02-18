@@ -86,6 +86,17 @@ class Mavlink2RestManager {
   }
 
   /**
+   * Sends a mesage using mavlink2rest
+   * @param  {string} message data
+   *
+   */
+  sendMessage(message: any): void {
+    // TODO: Abstract that and use websocket to do the post and deal with the answer somehow
+    axios.post(`${this.baseUrl}/mavlink`.replace('/ws/mavlink', '').replace('ws', 'http'), message)
+      .catch((error) => console.log(`unable to send message ${message}: ${error}`))
+  }
+
+  /**
    * Requests a message at a given rate
    * @param  {string} message name
    * @returns Listener
@@ -119,9 +130,7 @@ class Mavlink2RestManager {
         confirmation: 0,
       },
     }
-    // TODO: Abstract that and use websocket to do the post and deal with the answer somehow
-    axios.post(`${this.baseUrl}/mavlink`.replace('/ws/mavlink', '').replace('ws', 'http'), payload)
-      .catch((error) => console.log(`unable to set message rate of ${message} to ${rate}: ${error}`))
+    this.sendMessage(payload)
   }
 
   /**
