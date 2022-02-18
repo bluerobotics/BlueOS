@@ -41,5 +41,5 @@ export default function prettify(message: any): string {
   if (message_type in formatters) {
     return formatters[message_type](message)
   }
-  return message.type as string
+  return message_type
 }
