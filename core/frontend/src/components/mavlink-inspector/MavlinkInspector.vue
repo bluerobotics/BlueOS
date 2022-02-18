@@ -63,7 +63,9 @@
                   @click="showDetailed(item)"
                 >
                   <v-list-item-content>
-                    <v-list-item-title>{{ item | prettyPrint }}</v-list-item-title>
+                    <v-list-item-title>
+                      {{ item.timestamp.toLocaleString() }} | {{ item | prettyPrint }}
+                    </v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
               </template>
