@@ -32,6 +32,16 @@ const formatters = {
     return `${message.command.type.replace('MAV_CMD_', '')}`
       + ` - ${message.result.type.replace('MAV_RESULT_', '')}`
   },
+  COMMAND_LONG(message: any) {
+    function getParameters(): string {
+      return Object.getOwnPropertyNames(message)
+        .filter((name) => name.includes('param'))
+        .map((name) => `${name}: ${message[name]}`)
+        .join(', ')
+    }
+    return `${message.command.type.replace('MAV_CMD_', '')}`
+      + ` - ${getParameters()}`
+  },
   GLOBAL_POSITION_INT(message: any) {
     return `Lat: ${message.lat.toFixed(5)} Lon: ${message.lon.toFixed(5)}`
   },
