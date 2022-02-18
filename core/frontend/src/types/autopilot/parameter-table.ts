@@ -1,0 +1,115 @@
+import { isNumber } from 'lodash'
+
+import * as arducopter_metadata from '@/ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.json'
+import * as ardurover_metadata from '@/ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.json'
+import * as ardusub_metadata from '@/ArduPilot-Parameter-Repository/Sub-4.1/apm.pdef.json'
+import Notifier from '@/libs/notifier'
+import autopilot from '@/store/autopilot_manager'
+import { Dictionary } from '@/types/common'
+
+import { parameters_service } from '../frontend_services'
+import Parameter from './parameter'
+
+const notifier = new Notifier(parameters_service)
+
+// Parameter metadata as in the JSON files
+interface Metadata {
+  Description?: string
+  DisplayName: string
+  Increment?: string
+  Range?: {
+    high: string
+    low: string
+  }
+  RebootRequired?: string,
+  ReadOnly?: string,
+  Bitmask?: {[key:number] : string}
+  Values?: {[key:number] : string}
+  User?: string
+}
+
+interface MetadataCategory {
+  [key: string]: Metadata | number; // number deals with a sneaky {"json": 0} entry
+}
+interface MetadataFile {
+    [key: string]: MetadataCategory;
+}
+export default class ParametersTable {
+    parametersDict: {[key: number] : Parameter} = {}
+
+    count = 0
+
+    metadata = {} as Dictionary<Metadata>
+
+    constructor() {
+      this.fetchMetadata()
+    }
+
+    reset(): void {
+      this.parametersDict = {}
+      this.count = 0
+    }
+
+    fetchMetadata(): void {
+      if (autopilot.vehicle_type === null) {
+        // Check again later if we have a vehicle type identified
+        setTimeout(() => { this.fetchMetadata() }, 1000)
+        return
+      }
+      // default to submarine
+      let metadata : MetadataFile = ardusub_metadata
+      // This is to avoid importing a 40 lines enum from mavlink and adding a switch case with 40 cases
+      if (autopilot.vehicle_type.toLowerCase().includes('copter')
+      || autopilot.vehicle_type.toLowerCase().includes('rotor')) {
+        metadata = arducopter_metadata
+      } else if (autopilot.vehicle_type.toLowerCase().includes('rover')
+      || autopilot.vehicle_type.toLowerCase().includes('boat')) {
+        metadata = ardurover_metadata
+      }
+
+      for (const category of Object.values(metadata)) {
+        for (const [name, parameter] of Object.entries(category)) {
+          if (isNumber(parameter)) { // ignore "json" entry
+            console.log(`ignoring ${name} : ${parameter}`)
+            continue
+          }
+          this.metadata[name] = parameter
+        }
+      }
+    }
+
+    addParam(param: Parameter): void {
+      if (param.name in this.metadata) {
+        param.description = this.metadata[param.name].Description ?? ''
+        param.shortDescription = this.metadata[param.name].DisplayName
+        const {
+          Values, Bitmask, ReadOnly, Increment, RebootRequired, Range,
+        } = this.metadata[param.name]
+        param.options = Values
+        param.bitmask = Bitmask
+        param.readonly = ReadOnly === 'True'
+        param.increment = Increment ? parseFloat(Increment) : undefined
+        param.rebootRequired = RebootRequired === 'True'
+        param.range = Range ? { high: parseFloat(Range.high), low: parseFloat(Range.low) } : undefined
+      }
+      this.parametersDict[param.id] = param
+    }
+
+    updateParam(param_name: string, param_value: number): void {
+      const index = Object.entries(this.parametersDict).find(([key, value]) => value.name === param_name)
+      if (!index) {
+        const message = `unable to update param in store: ${param_name}. Parameter not known.`
+        notifier.pushError('PARAM_SET_FAIL', message)
+        return
+      }
+      this.parametersDict[parseInt(index[0], 10)].value = param_value
+    }
+
+    setCount(count: number): void {
+      this.count = count
+    }
+
+    parameters(): Parameter[] {
+      return Object.values(this.parametersDict)
+    }
+}
