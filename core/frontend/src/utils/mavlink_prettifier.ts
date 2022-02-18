@@ -12,6 +12,22 @@ const formatters = {
   BATTERY_STATUS(message: any) {
     return `${message.voltages[0] / 1000} V ${message.current_consumed} mAh consumed`
   },
+  CAMERA_INFORMATION(message: any) {
+    function byteArrayToString(array: [number]): string {
+      return array
+        .filter((value: number) => value !== 0)
+        .map((value: number) => String.fromCharCode(value))
+        .join('')
+    }
+    function removeNullFromCharArray(array: [string]): string {
+      return array
+        .filter((value) => value !== '\x00')
+        .join('')
+    }
+    const vendor_name = byteArrayToString(message.vendor_name)
+    const definition_url = removeNullFromCharArray(message.cam_definition_uri)
+    return `vendor: ${vendor_name}, definition_url: ${definition_url}`
+  },
   COMMAND_ACK(message: any) {
     return `${message.command.type.replace('MAV_CMD_', '')}`
       + ` - ${message.result.type.replace('MAV_RESULT_', '')}`
