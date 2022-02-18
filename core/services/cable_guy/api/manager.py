@@ -63,9 +63,9 @@ class EthernetManager:
                 logger.error(f"Failed loading default configuration. {error}")
             return
 
-        logger.info("Previous settings loaded:")
+        logger.info("Loading previous settings.")
         for item in self.settings.root["content"]:
-            logger.info(f"Configuration with: {item}")
+            logger.info(f"Loading following configuration: {item}.")
             try:
                 self.set_configuration(EthernetInterface(**item))
             except Exception as error:
