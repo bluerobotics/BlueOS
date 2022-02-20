@@ -166,6 +166,9 @@ import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
 
+// This needs to be commented out to build the external component for some reason
+window.Vue = Vue
+
 export default Vue.extend({
   name: 'App',
 

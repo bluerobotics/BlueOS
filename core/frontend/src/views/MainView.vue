@@ -36,13 +36,25 @@
         <v-card-text />
       </v-card-text>
     </v-card>
+    <user-component />
   </v-container>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
+import externalComponent from '@/utils/external_component'
+
+function UserComponent(): any {
+  return externalComponent(
+    'http://192.168.15.172:8000/UserComponent/UserComponent.umd.min.js',
+  )
+}
+
 export default Vue.extend({
   name: 'Main',
+  components: {
+    UserComponent,
+  },
 })
 </script>
