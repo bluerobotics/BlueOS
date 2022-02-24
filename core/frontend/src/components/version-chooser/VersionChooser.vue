@@ -77,7 +77,7 @@
         >
           <v-text-field
             v-model="selected_image"
-            label="Remote repositoy"
+            label="Remote repository"
           />
         </v-form>
         <v-alert
