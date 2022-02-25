@@ -126,12 +126,12 @@ export default Vue.extend({
       return temperature_limit !== undefined
     },
     battery_voltage(): string {
-      const voltage_microvolts = mavlink_store_get(mavlink, 'SYS_STATUS.messageData.voltage_battery') as number
+      const voltage_microvolts = mavlink_store_get(mavlink, 'SYS_STATUS.messageData.message.voltage_battery') as number
       return (voltage_microvolts as number / 1000).toFixed(2)
     },
 
     battery_current(): string {
-      const current_centiampere = mavlink_store_get(mavlink, 'SYS_STATUS.messageData.current_battery') as number
+      const current_centiampere = mavlink_store_get(mavlink, 'SYS_STATUS.messageData.message.current_battery') as number
       return (current_centiampere as number / 100).toFixed(2)
     },
     disk_usage_percent(): number {
