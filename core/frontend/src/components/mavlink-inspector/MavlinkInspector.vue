@@ -113,9 +113,10 @@ class MAVLinkMessageTable {
     this.tables = {}
   }
 
-  add(message: Dictionary<any>): void {
-    const message_timed = message
+  add(mavlink_message: Dictionary<any>): void {
+    const message_timed = mavlink_message
     message_timed.timestamp = new Date()
+    const { message } = mavlink_message
     if (message.type in this.tables) {
       this.tables[message.type].push(message_timed)
       if (this.tables[message.type].length > this.size_limit) {
@@ -144,8 +145,8 @@ export default Vue.extend({
   components: {
   },
   filters: {
-    prettyPrint(message: any) {
-      return prettify(message)
+    prettyPrint(mavlink_message: any) {
+      return prettify(mavlink_message.message)
     },
   },
   data() {
