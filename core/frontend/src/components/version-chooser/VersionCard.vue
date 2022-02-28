@@ -90,7 +90,7 @@
         :color="'primary'"
         class="mr-2 mb-4"
         @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
-        v-text="'Pull and Apply'"
+        v-text="'Download and Apply'"
       />
     </v-list-item-action>
   </v-list-item>
