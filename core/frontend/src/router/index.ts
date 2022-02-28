@@ -45,7 +45,7 @@ const routes: Array<RouteConfig> = [
     component: Endpoint,
   },
   {
-    path: '/tools/filebrowser',
+    path: '/tools/file-browser',
     name: 'FileBrowser',
     component: FileBrowserView,
   },
@@ -60,7 +60,7 @@ const routes: Array<RouteConfig> = [
     component: VersionChooser,
   },
   {
-    path: '/autopilot/videomanager',
+    path: '/autopilot/video-manager',
     name: 'VideoManager',
     component: VideoManagerView,
   },
