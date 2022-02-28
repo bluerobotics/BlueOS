@@ -28,7 +28,7 @@
             @click="reset_settings"
           >
             <v-icon left>
-              mdi-trash-can
+              mdi-cog-refresh
             </v-icon>
             Reset Settings
           </v-btn>
