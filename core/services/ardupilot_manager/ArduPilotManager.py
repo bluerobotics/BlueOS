@@ -239,6 +239,15 @@ class ArduPilotManager(metaclass=Singleton):
                 persistent=True,
                 protected=True,
             ),
+            Endpoint(
+                "Ping360 Heading",
+                self.settings.app_name,
+                EndpointType.UDPServer,
+                "0.0.0.0",
+                14660,
+                persistent=True,
+                protected=True,
+            ),
         ]
         for endpoint in default_endpoints:
             try:
