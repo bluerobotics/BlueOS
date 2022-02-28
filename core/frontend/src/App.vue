@@ -222,7 +222,7 @@ export default Vue.extend({
           {
             title: 'Video',
             icon: 'mdi-video-vintage',
-            route: '/autopilot/videomanager',
+            route: '/autopilot/video-manager',
           },
         ],
       },
@@ -241,9 +241,9 @@ export default Vue.extend({
             route: '/tools/bridges',
           },
           {
-            title: 'Filebrowser',
+            title: 'File Browser',
             icon: 'mdi-file-tree',
-            route: '/tools/filebrowser',
+            route: '/tools/file-browser',
           },
           {
             title: 'NMEA Injector',
