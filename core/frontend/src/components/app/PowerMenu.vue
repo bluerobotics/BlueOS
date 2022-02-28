@@ -12,7 +12,7 @@
       <v-icon>mdi-power-settings</v-icon>
     </v-btn>
     <v-dialog
-      width="320"
+      width="400px"
       :value="show_dialog"
       @input="showDialog"
     >
@@ -24,40 +24,56 @@
         <v-divider />
 
         <v-container class="pa-8">
-          <v-row
+          <v-col
+            align="center"
             justify="center"
           >
-            <v-btn
-              class="mr-2"
-              :disabled="non_default_status"
-              @click="poweroff"
-              title="Power Off"
-            >
-              <v-icon color="red">
-                mdi-power-standby
-              </v-icon>
-            </v-btn>
-            <v-btn
-              class="mr-2"
-              :disabled="non_default_status"
-              @click="reboot"
-              title="Reboot"
-            >
-              <v-icon color="orange">
-                mdi-restart-alert
-              </v-icon>
-            </v-btn>
-            <v-btn
-              class="mr-2"
-              :disabled="non_default_status"
-              @click="restartContainer"
-              title="Restart Core container"
-            >
-              <v-icon color="orange">
-                mdi-folder-refresh
-              </v-icon>
-            </v-btn>
-          </v-row>
+            <v-col>
+              <v-btn
+                class="mr-2"
+                :disabled="non_default_status"
+                @click="poweroff"
+              >
+                <v-icon
+                  left
+                  color="red"
+                >
+                  mdi-power-standby
+                </v-icon>
+                Power off
+              </v-btn>
+            </v-col>
+            <v-col>
+              <v-btn
+                class="mr-2"
+                :disabled="non_default_status"
+                @click="reboot"
+              >
+                <v-icon
+                  left
+                  color="orange"
+                >
+                  mdi-restart-alert
+                </v-icon>
+                Reboot
+              </v-btn>
+            </v-col>
+            <v-col>
+              <v-btn
+                class="mr-2"
+                :disabled="non_default_status"
+                @click="restartContainer"
+              >
+                <v-icon
+                  left
+                  color="orange"
+                >
+                  mdi-folder-refresh
+                </v-icon>
+                Restart Core container
+              </v-btn>
+            </v-col>
+          </v-col>
         </v-container>
         <v-container v-if="non_default_status">
           <p class="text-md-center">
