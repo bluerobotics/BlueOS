@@ -196,7 +196,7 @@ export default Vue.extend({
         route: '/',
       },
       {
-        title: 'Autopilot',
+        title: 'Vehicle',
         icon: 'mdi-submarine',
         submenus: [
           {
