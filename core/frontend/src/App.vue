@@ -82,7 +82,7 @@
               </template>
 
               <v-list-item
-                v-for="(submenu, j) in menu.submenus"
+                v-for="(submenu, j) in menu.submenus.filter((menu) => menu.show)"
                 :key="j"
                 :to="submenu.route"
               >
@@ -203,26 +203,31 @@ export default Vue.extend({
             title: 'General',
             icon: 'mdi-image-filter-center-focus-strong',
             route: '/autopilot/general',
+            show: true,
           },
           {
             title: 'Firmware',
             icon: 'mdi-chip',
             route: '/autopilot/firmware',
+            show: true,
           },
           {
             title: 'Log Browser',
             icon: 'mdi-file-multiple',
             route: '/autopilot/logs',
+            show: true,
           },
           {
             title: 'Endpoints',
             icon: 'mdi-arrow-decision',
             route: '/autopilot/endpoints',
+            show: settings.is_pirate_mode,
           },
           {
             title: 'Video',
             icon: 'mdi-video-vintage',
             route: '/autopilot/video-manager',
+            show: true,
           },
         ],
       },
@@ -234,41 +239,49 @@ export default Vue.extend({
             title: 'Available Services',
             icon: 'mdi-account-hard-hat',
             route: '/tools/available-services',
+            show: settings.is_pirate_mode,
           },
           {
             title: 'Bridges',
             icon: 'mdi-bridge',
             route: '/tools/bridges',
+            show: settings.is_pirate_mode,
           },
           {
             title: 'File Browser',
             icon: 'mdi-file-tree',
             route: '/tools/file-browser',
+            show: settings.is_pirate_mode,
           },
           {
             title: 'NMEA Injector',
             icon: 'mdi-map-marker',
             route: '/tools/nmea-injector',
+            show: settings.is_pirate_mode,
           },
           {
             title: 'System information',
             icon: 'mdi-chart-pie',
             route: '/tools/system-information',
+            show: true,
           },
           {
             title: 'Terminal',
             icon: 'mdi-console',
             route: '/tools/web-terminal',
+            show: settings.is_pirate_mode,
           },
           {
             title: 'MAVLink Inspector',
             icon: 'mdi-chart-areaspline',
             route: '/tools/mavlink-inspector',
+            show: settings.is_pirate_mode,
           },
           {
             title: 'Version-chooser',
             icon: 'mdi-cellphone-arrow-down',
             route: '/tools/version-chooser',
+            show: true,
           },
         ],
       },
