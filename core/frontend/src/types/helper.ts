@@ -1,6 +1,6 @@
 export interface Service {
     valid: boolean;
     title: string;
-    documentationUrl: string;
+    documentation_url: string;
     port: number;
   }
