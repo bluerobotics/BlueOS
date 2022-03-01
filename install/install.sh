@@ -173,6 +173,9 @@ docker create \
     -e COMPANION_CONFIG_PATH=$HOME/.config/companion \
     $COMPANION_BOOTSTRAP
 
+# add docker entry to rc.local
+sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "sed failed to add expand_fs entry in /etc/rc.local"
+
 # Configure network settings
 ## This should be after everything, otherwise network problems can happen
 echo "Starting network configuration."
