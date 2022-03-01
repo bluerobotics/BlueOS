@@ -34,6 +34,7 @@ class Helper:
     LOCALSERVER_CANDIDATES = ["0.0.0.0", "::"]
 
     @staticmethod
+    @temporary_cache(timeout_seconds=60)
     def detect_service(port: int) -> ServiceInfo:
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
 
