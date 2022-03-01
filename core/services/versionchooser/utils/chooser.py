@@ -160,7 +160,11 @@ class VersionChooser:
 
                 logging.info("Stopping core...")
                 core = await self.client.containers.get("companion-core")  # type: ignore
-                await core.kill()
+                if core:
+                    await core.kill()
+                core = await self.client.containers.get("blueos-core")  # type: ignore
+                if core:
+                    await core.kill()
                 return web.Response(status=200, text=f"Changed to version {image}:{tag}, restarting...")
 
             except KeyError:
