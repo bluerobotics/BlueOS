@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 PORT = 81
 DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
+API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
@@ -25,6 +26,7 @@ class ServiceInfo(BaseModel):
     valid: bool
     title: str
     documentation_url: str
+    versions: List[str]
     port: int
 
 
@@ -33,7 +35,7 @@ class Helper:
 
     @staticmethod
     def detect_service(port: int) -> ServiceInfo:
-        info = ServiceInfo(valid=False, title="Unknown", documentation_url="", port=port)
+        info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
 
         try:
             with requests.get(f"http://127.0.0.1:{port}/", timeout=0.2) as response:
@@ -51,9 +53,24 @@ class Helper:
         for documentation_path in DOCS_CANDIDATE_URLS:
             try:
                 with requests.get(f"http://127.0.0.1:{port}{documentation_path}", timeout=0.2) as response:
-                    if response.status_code == http.HTTPStatus.OK:
-                        info.documentation_url = documentation_path
-                        break
+                    if response.status_code != http.HTTPStatus.OK:
+                        continue
+                    info.documentation_url = documentation_path
+
+                # Get main openapi json description file
+                for api_path in API_CANDIDATE_URLS:
+                    with requests.get(f"http://127.0.0.1:{port}{api_path}", timeout=0.2) as response:
+                        if response.status_code != http.HTTPStatus.OK:
+                            continue
+                        api = response.json()
+                        # Check all available versions
+                        ## The ones that provide a swagger-ui
+                        for path in api["paths"].keys():
+                            with requests.get(f"http://127.0.0.1:{port}{path}", timeout=0.2) as response:
+                                if "swagger-ui" in response.text:
+                                    info.versions += [path]
+                break
+
             except Exception:
                 # This should be avoided by the first try block, but better safe than sorry
                 break
