@@ -19,6 +19,7 @@ Options:
     --help                  Show this help
     --skip-board-config     Skip the board-specific configuration.
                             Useful if you are not using Linux ArduPilot.
+    --ci-run                Used for building images in CI
 EOF
 }
 
@@ -35,6 +36,10 @@ get_options()
             --skip-board-config)
                 shift
                 DO_BOARD_CONFIG=0
+                ;;
+            --ci-run)
+                shift
+                RUNNING_IN_CI=1
                 ;;
         esac
     done
@@ -93,11 +98,38 @@ echo "Checking for docker."
 ## Docker uses VERSION environment variable to set the docker version,
 ## We unset this variable for this command to avoid conflicts with companion version
 docker --version || curl -fsSL https://get.docker.com | env -u VERSION sh || (
-    echo "Failed to start docker, something is wrong."
-    echo "Please report this problem."
-    exit 1
+    echo "Failed to start docker, something may be wrong."
+    if [ $RUNNING_IN_CI -ne 1 ]
+    then
+        exit 1
+    fi
+    echo "Running in CI is enabled, trying dind."
 )
+
 systemctl enable docker
+
+if [ $RUNNING_IN_CI -eq 1 ]
+then
+
+    # Download Docker-in-Docker scripts
+    # This is used to allow running dockers from within other dockers, as this scripts usually runs in a docker in CI.
+    DIND_COMMIT="52379fa76dee07ca038624d639d9e14f4fb719ff"
+    curl -fL -o /usr/local/bin/dind "https://raw.githubusercontent.com/moby/moby/${DIND_COMMIT}/hack/dind" && chmod +x /usr/local/bin/dind
+
+    addgroup --system dockremap && \
+    adduser --system --ingroup dockremap dockremap && \
+    echo 'dockremap:165536:65536' >> /etc/subuid && \
+    echo 'dockremap:165536:65536' >> /etc/subgid
+
+    dind dockerd $DOCKER_EXTRA_OPTS &
+      while(! docker info > /dev/null 2>&1); do
+        echo "==> Waiting for the Docker daemon to come online..."
+        sleep 1
+      done
+    alias docker=dind
+fi
+
+sudo usermod -aG docker pi
 
 # Stop and remove all docker if NO_CLEAN is not defined
 test $NO_CLEAN || (
