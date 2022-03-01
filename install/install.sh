@@ -158,12 +158,15 @@ sed -i '$ a noipv4ll' /etc/dhcpcd.conf
 
 echo "Downloading bootstrap"
 COMPANION_BOOTSTRAP="bluerobotics/companion-bootstrap:master" # We don't have others tags for now
+BLUEOS_CORE="bluerobotics/companion-core:$VERSION" # We don't have a stable tag yet
+
 docker pull $COMPANION_BOOTSTRAP
-# Start bootstrap for the first time to fetch the other images and allow docker to restart it after reboot
-docker run \
+docker pull $BLUEOS_CORE
+# Create blueos-bootstrap container
+docker create \
     -t \
     --restart unless-stopped \
-    --name companion-bootstrap \
+    --name blueos-bootstrap \
     --net=host \
     -v $HOME/.config/companion/bootstrap:/root/.config/bootstrap \
     -v /var/run/docker.sock:/var/run/docker.sock \
