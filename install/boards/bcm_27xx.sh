@@ -3,7 +3,8 @@
 echo "Configuring BCM27XX board (Raspberry Pi 4).."
 
 VERSION="${VERSION:-master}"
-REMOTE="${REMOTE:-https://raw.githubusercontent.com/bluerobotics/companion-docker}"
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
+REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 
 # Download, compile, and install spi0 mosi-only device tree overlay for

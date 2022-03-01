@@ -2,7 +2,8 @@
 
 # Set desired version to be installed
 VERSION="${VERSION:-master}"
-REMOTE="${REMOTE:-https://raw.githubusercontent.com/bluerobotics/companion-docker}"
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
+REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 
 # Additional options
