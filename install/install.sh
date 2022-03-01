@@ -87,7 +87,7 @@ rfkill unblock all
 # Get the number of free blocks and the block size in bytes, and calculate the value in GB
 echo "Checking for available space."
 AVAILABLE_SPACE_GB=$(($(stat -f / --format="%a*%S/1024**3")))
-NECESSARY_SPACE_GB=4
+NECESSARY_SPACE_GB=1
 (( AVAILABLE_SPACE_GB < NECESSARY_SPACE_GB )) && (
     echo "Not enough free space to install companion, at least ${NECESSARY_SPACE_GB}GB required"
     exit 1
