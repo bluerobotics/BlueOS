@@ -1,0 +1,24 @@
+FROM https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip
+
+PUMP 1000M
+
+# expand_fs
+INSTALL deploy/expand_fs.sh /usr/bin/expand_fs.sh
+RUN chmod +x /usr/bin/expand_fs.sh
+
+RUN touch /boot/ssh
+
+# rfkill can't run in chroot, run here instead
+RUN sed -i "\%^exit 0%irfkill unblock all" /etc/rc.local
+
+RUN bash -c '
+  mkdir -p /root/.config/companion/bootstrap/
+  curl -o /root/.config/companion/bootstrap/startup.json https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$VERSION/bootstrap/startup.json.default
+  sed -i 's/master/$VERSION/g' /root/.config/companion/bootstrap/startup.json
+'
+
+RUN bash -c '
+  curl -O https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$VERSION/install/install.sh
+  chmod +x install.sh
+  ./install.sh --ci-run
+'
