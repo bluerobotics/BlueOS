@@ -6,6 +6,7 @@
         <th>Service Name</th>
         <th>Webpage</th>
         <th>API Documentation</th>
+        <th>Versions</th>
       </tr>
     </thead>
     <tbody>
@@ -32,6 +33,22 @@
         </td>
         <td v-else>
           No API documentation
+        </td>
+        <td v-if="service.versions.length !== 0">
+          <div
+            v-for="version in service.versions"
+            :key="service.port + '-' + version"
+          >
+            <a
+              text
+              :href="createWebpageUrl(service.port, version)"
+            >
+              {{ version }}
+            </a>
+          </div>
+        </td>
+        <td v-else>
+          No versions
         </td>
       </tr>
     </tbody>
