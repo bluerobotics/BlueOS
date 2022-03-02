@@ -1,5 +1,8 @@
 name: Build and Deploy Images
 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
 on:
     pull_request:
     push:
@@ -13,8 +16,8 @@ jobs:
     strategy:
       matrix:
         docker: [bootstrap, core]
-        project: [bluerobotics/companion]
-        new_project: [bluerobotics/blueos]
+        project: [companion]
+        new_project: [blueos]
         platforms: ["linux/arm/v7"]
     steps:
       -
@@ -26,8 +29,7 @@ jobs:
         run: |
           # Deploy image with the name of the branch, if the build is a git tag, replace tag with the tag name.
           # If git tag matches semver, append latest tag to the push.
-
-          DOCKER_IMAGE=${{ matrix.project }}-${{ matrix.docker }}
+          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
           VERSION=${GITHUB_REF##*/}
 
           if [[ $GITHUB_REF == refs/tags/* ]]; then
@@ -78,7 +80,7 @@ jobs:
         run: |
           # Pull latest version of image to help with build speed
           for platform in $(echo ${{ matrix.platforms }} | tr ',' '\n'); do
-            docker pull --platform ${platform} ${{ matrix.project }}-${{ matrix.docker }}:master || true
+            docker pull --platform ${platform} ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}:master || true
           done
           docker buildx build \
             --output "type=image,push=false" \
@@ -89,7 +91,7 @@ jobs:
         run: |
           # Check if the image size is lower than our limit
           docker image list
-          IMAGE_ID=$(docker images -q bluerobotics/companion-core | head -n 1)
+          IMAGE_ID=$(docker images -q ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }} | head -n 1)
           LIMIT_SIZE_MB=700
           IMAGE_SIZE_MB=$(( $(docker inspect $IMAGE_ID --format {{.Size}})/(2**20) ))
           echo "Core size is: $IMAGE_SIZE_MB MB"
@@ -118,11 +120,12 @@ jobs:
         name: Create image artifact
         if: success() && matrix.docker == 'core'
         run: |
+          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
           docker buildx build \
             ${{ steps.prepare.outputs.buildx_args }} \
-            --tag bluerobotics/companion-core:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=companion-core-${GIT_HASH_SHORT}.tar" \
+            --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
+            --output "type=docker,dest=blueos-core-${GIT_HASH_SHORT}.tar" \
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
