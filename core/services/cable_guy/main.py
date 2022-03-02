@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
 import argparse
+import asyncio
 import logging
 import os
 import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
-import uvicorn
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
@@ -14,6 +14,7 @@ from fastapi import Body, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from uvicorn import Config, Server
 
 from api.manager import (
     AddressMode,
@@ -118,5 +119,10 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    # Running uvicorn with log disabled so loguru can handle it
-    uvicorn.run(app, host="0.0.0.0", port=9090, log_config=None)
+    loop = asyncio.new_event_loop()
+
+    # # Running uvicorn with log disabled so loguru can handle it
+    config = Config(app=app, loop=loop, host="0.0.0.0", port=9090, log_config=None)
+    server = Server(config)
+
+    loop.run_until_complete(server.serve())
