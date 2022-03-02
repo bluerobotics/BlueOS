@@ -29,7 +29,7 @@ class Settings:
             bool: False if failed
         """
         if not self.settings_exist():
-            logger.debug(f"User settings does not exist: {self.settings_file}")
+            logger.warning(f"User settings does not exist: {self.settings_file}")
             return False
 
         data = None
@@ -37,13 +37,13 @@ class Settings:
             with open(self.settings_file, encoding="utf-8") as file:
                 data = json.load(file)
                 if data["version"] != self.root["version"]:
-                    logger.debug("User settings does not match with our supported version.")
+                    logger.warning("User settings does not match with our supported version.")
                     return False
 
                 self.root = data
         except Exception as exception:
-            logger.debug(f"Failed to fetch data from file ({self.settings_file}): {exception}")
-            logger.debug(data)
+            logger.warning(f"Failed to fetch data from file ({self.settings_file}): {exception}")
+            logger.warning(data)
 
         return True
 
