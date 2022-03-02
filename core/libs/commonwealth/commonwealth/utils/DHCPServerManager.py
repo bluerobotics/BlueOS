@@ -1,7 +1,7 @@
 import pathlib
 import shutil
 import subprocess
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 from loguru import logger
 
@@ -50,7 +50,7 @@ class Dnsmasq:
             logger.error(f"Invalid configuration file: {error}")
             return False
 
-    def command_list(self) -> list[Union[str, pathlib.Path]]:
+    def command_list(self) -> List[Union[str, pathlib.Path]]:
         return [self.binary(), "--no-daemon", f"--conf-file={self.config_path()}"]
 
     def start(self) -> None:
