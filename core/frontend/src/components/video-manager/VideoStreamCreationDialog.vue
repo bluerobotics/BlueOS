@@ -45,6 +45,7 @@
           <v-text-field
             v-model="stream_endpoint"
             label="Stream endpoint"
+            placeholder="e.g. udp://192.168.2.2:5600 or rtsp://0.0.0.0:8554/video0"
             :rules="[validate_required_field, is_valid_schema]"
           />
 
@@ -115,7 +116,7 @@ export default Vue.extend({
           encode: null,
           dimensions: null,
           interval: null,
-          endpoint: 'udp://0.0.0.0:5600',
+          endpoint: '',
           thermal: false,
         }
       },
