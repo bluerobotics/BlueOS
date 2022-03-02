@@ -56,7 +56,6 @@ class SystemInformationStore extends VuexModule {
 
   @Mutation
   updateSystem(system: System): void {
-    console.debug('System update!')
     this.system = system
   }
 
@@ -88,7 +87,6 @@ class SystemInformationStore extends VuexModule {
       timeout: 10000,
     })
       .then((response) => {
-        console.debug(`RESPONSE: ${type}`)
         switch (type) {
           case FetchType.KernelType:
             this.updateKernelMessage(response.data)
@@ -100,7 +98,6 @@ class SystemInformationStore extends VuexModule {
             this.updatePlatform(response.data.Ok)
             break
           case FetchType.SystemType:
-            console.debug('system case')
             this.updateSystem(response.data)
             break
           default:
