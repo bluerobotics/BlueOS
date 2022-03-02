@@ -64,7 +64,7 @@ class TagFetcher:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
                     raise Exception("Could not get auth token")
-                return str((await resp.json())["token"])
+                return str((await resp.json(content_type=None))["token"])
 
     async def fetch_sha(self, metadata: TagMetadata) -> str:
         """Fetches the digest sha from a tag. This returns the image id displayed by 'docker image ls'"""
@@ -79,7 +79,7 @@ class TagFetcher:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
                     raise Exception("Failed getting sha from DockerHub!")
-                data = await resp.json()
+                data = await resp.json(content_type=None)
                 return str(data["config"]["digest"])
 
     async def fetch_remote_tags(self, repository: str, local_images: List[str]) -> Tuple[str, List[TagMetadata]]:
@@ -94,7 +94,7 @@ class TagFetcher:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
                     raise Exception("Failed getting tags from DockerHub!")
-                data = await resp.json()
+                data = await resp.json(content_type=None)
                 tags = data["results"]
 
                 my_architecture = get_current_arch()
