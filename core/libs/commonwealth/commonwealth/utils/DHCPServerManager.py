@@ -33,7 +33,7 @@ class Dnsmasq:
             return False
 
         try:
-            subprocess.check_output([self.binary()])
+            subprocess.check_output([self.binary(), "--test"])
             return True
         except subprocess.CalledProcessError as error:
             logger.error(f"Invalid binary: {error}")
