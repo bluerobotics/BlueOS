@@ -270,6 +270,12 @@ export default Vue.extend({
             advanced: false,
           },
           {
+            title: 'Network test',
+            icon: 'mdi-speedometer',
+            route: '/tools/network-test',
+            show: true,
+          },
+          {
             title: 'Terminal',
             icon: 'mdi-console',
             route: '/tools/web-terminal',
