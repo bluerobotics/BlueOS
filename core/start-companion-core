@@ -30,6 +30,7 @@ SERVICES=(
     'linux2rest',"linux2rest"
     'filebrowser',"filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
+    'pardal',"$SERVICES_PATH/pardal/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
     'user_terminal',"cat /etc/motd"
     'ttyd',"ttyd -p 8088 /usr/bin/tmux attach -t user_terminal"
