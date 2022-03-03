@@ -41,6 +41,7 @@
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import settings from '@/libs/settings'
 import video from '@/store/video'
 import { Device, Format, VideoEncodeType } from '@/types/video'
 
@@ -64,8 +65,13 @@ export default Vue.extend({
         return device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).length !== 0
       }
 
+      function should_show(device: Device): boolean {
+        return device.name !== 'Fake source' || settings.is_pirate_mode
+      }
+
       return video.available_devices
         .filter(has_h264)
+        .filter(should_show)
         .sort((a: Device, b: Device) => a.name.localeCompare(b.name))
     },
     updating_devices(): boolean {
