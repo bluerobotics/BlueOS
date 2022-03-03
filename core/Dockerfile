@@ -53,6 +53,10 @@ COPY --from=downloadBinaries \
 # Copy frontend built on frontendBuild to this stage
 COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 
+# Copy .param files
+RUN mkdir /navigator
+COPY configuration/ardupilot/navigator/default.parm /navigator
+
 # Asserts
 ## When running, the .config folder in the docker is not accessible,
 ## since it gets shadowed by the host's `.config` folder.
