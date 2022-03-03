@@ -27,8 +27,7 @@ class Filebrowser {
         this.auth_token = response.data
       })
       .catch((error) => {
-        const error_message = `Could not authenticate to filebrowser API: ${error.message}`
-        const message = error_message
+        const message = `Could not authenticate to filebrowser API: ${error.message}`
         notifications.pushError({ service: filebrowser_service, type: 'FILEBROWSER_AUTH_FAIL', message })
         throw new Error(error)
       })
@@ -60,10 +59,9 @@ class Filebrowser {
       .then((response) => response.data)
       .catch((error) => {
         if (error === backend_offline_error) { return }
-        const error_message = `Could not fetch folder ${folder_path}: ${error.message}`
-        const message = error_message
+        const message = `Could not fetch folder ${folder_path}: ${error.message}`
         notifications.pushError({ service: filebrowser_service, type: 'FOLDER_FETCH_FAIL', message })
-        throw new Error(error_message)
+        throw new Error(message)
       })
   }
 
@@ -80,10 +78,9 @@ class Filebrowser {
       headers: { 'X-Auth': await this.filebrowserToken() },
     })
       .catch((error) => {
-        const error_message = `Could not delete file ${file.path}: ${error.message}`
-        const message = error_message
+        const message = `Could not delete file ${file.path}: ${error.message}`
         notifications.pushError({ service: filebrowser_service, type: 'FILE_DELETE_FAIL', message })
-        throw new Error(error_message)
+        throw new Error(message)
       })
   }
 
