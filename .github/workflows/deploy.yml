@@ -42,7 +42,8 @@ jobs:
           fi
 
           # Add temporary tag for the new project name
-          TAGS="$TAGS --tag ${{ matrix.new_project }}-${{ matrix.docker }}:${VERSION}"
+          # Temporarily disabled until the 'authorization status: 401: authorization failed' is solved
+          # TAGS="$TAGS --tag ${{ matrix.new_project }}-${{ matrix.docker }}:${VERSION}"
 
           echo ::set-output name=docker_image::${DOCKER_IMAGE}
           echo ::set-output name=version::${VERSION}
