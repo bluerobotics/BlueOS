@@ -10,6 +10,7 @@ import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
 import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
+import NetworkTestView from '../views/NetworkTestView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
@@ -88,6 +89,11 @@ const routes: Array<RouteConfig> = [
     path: '/tools/mavlink-inspector',
     name: 'MavlinkInspector',
     component: MavlinkInspectorView,
+  },
+  {
+    path: '/tools/network-test',
+    name: 'NetworkTest',
+    component: NetworkTestView,
   },
 ]
 
