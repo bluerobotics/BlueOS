@@ -137,7 +137,7 @@ export default Vue.extend({
     disk_usage_percent(): number {
       const disks = system_information.system?.disk
       const main_disk = disks?.find((sensor) => sensor.mount_point === '/')
-      return main_disk ? main_disk.available_space_B / main_disk.total_space_B / 0.01 : 0
+      return main_disk ? 100 - main_disk.available_space_B / main_disk.total_space_B / 0.01 : 0
     },
     disk_usage_high(): boolean {
       return this.disk_usage_percent > 85
