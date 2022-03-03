@@ -40,6 +40,9 @@ module.exports = {
       '^/mavlink-camera-manager': {
         target: SERVER_ADDRESS,
       },
+      '^/network-test': {
+        target: SERVER_ADDRESS,
+      },
       '^/system-information': {
         target: SERVER_ADDRESS,
       },
