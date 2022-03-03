@@ -42,7 +42,7 @@ jobs:
           fi
 
           # Add temporary tag for the new project name
-          TAGS="$TAGS --tag ${{ matrix.new_project }}-${{ matrix.docker }}:${VERSION}"
+          TAGS="$TAGS --tag ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.new_project }}-${{ matrix.docker }}:${VERSION}"
 
           echo ::set-output name=docker_image::${DOCKER_IMAGE}
           echo ::set-output name=version::${VERSION}
