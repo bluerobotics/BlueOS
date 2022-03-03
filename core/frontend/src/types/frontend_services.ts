@@ -83,3 +83,10 @@ export const system_information_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const network_speed_test_service: Service = {
+  name: 'Network Speed Test',
+  description: 'Service to test network speed',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
