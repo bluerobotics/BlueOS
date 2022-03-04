@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 import logging
 import shutil
+import subprocess
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import appdirs
 import uvicorn
@@ -34,6 +35,25 @@ class ShutdownType(str, Enum):
     POWEROFF = "poweroff"
 
 
+def run_command(command: str) -> "subprocess.CompletedProcess['bytes']":
+    user = "pi"
+    password = "raspberry"
+
+    return subprocess.run(
+        [
+            "sshpass",
+            "-p",
+            password,
+            "ssh",
+            "-o",
+            "StrictHostKeyChecking=no",
+            f"{user}@localhost",
+            command,
+        ],
+        check=True,
+    )
+
+
 # TODO: Update commander to work with openapi modules and improve modularity and code organization
 @app.post("/shutdown", status_code=status.HTTP_200_OK)
 @version(1, 0)
@@ -44,27 +64,13 @@ async def shutdown(response: Response, shutdown_type: ShutdownType, i_know_what_
             detail="Developer, you don't know what you are doing, command aborted.",
         )
     try:
-        # For more information about sysrq: https://www.kernel.org/doc/html/latest/admin-guide/sysrq.html
-        ## We enable all functions of sysrq to allow a safe reboot/shutdown
-        # pylint: disable=consider-using-with
-        open("/proc/sys/kernel/sysrq", "wb").write(b"1")
-
-        # We are doing it!
-        # pylint: disable=consider-using-with
-        run_sysrq_command: Callable[[str], int] = lambda command: open("/proc/sysrq-trigger", "wb").write(
-            command.encode()
-        )
-        pre_commands = [
-            "s",  # Will attempt to sync all mounted filesystems.
-            "u",  # Will attempt to remount all mounted filesystems read-only. (To make sure that sync was done!)
-        ]
-        for command in pre_commands:
-            run_sysrq_command(command)
-
+        hold_time_seconds = 5
         if shutdown_type == ShutdownType.REBOOT:
-            run_sysrq_command("b")
+            output = run_command(f"(sleep {hold_time_seconds}; sudo shutdown --reboot -h now)&")
+            logger.debug(f"reboot: {output}")
         elif shutdown_type == ShutdownType.POWEROFF:
-            run_sysrq_command("o")
+            output = run_command(f"(sleep {hold_time_seconds}; sudo shutdown --poweroff -h now)&")
+            logger.debug(f"shutdown: {output}")
 
         return HTMLResponse(status_code=200)
     except Exception as error:
