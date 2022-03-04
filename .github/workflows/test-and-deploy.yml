@@ -204,15 +204,6 @@ jobs:
         with:
           path: '*.tar'
 
-      - name: Upload docker image for release
-        uses: svenstaro/upload-release-action@v2
-        if: startsWith(github.ref, 'refs/tags/') && matrix.docker == 'core'
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: '*.tar'
-          tag: ${{ github.ref }}
-          overwrite: true
-          prerelease: true
 
   deploy-raspberry-image:
     needs: deploy-docker-images
