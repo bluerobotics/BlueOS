@@ -180,8 +180,8 @@ class FirmwareDownloader:
 
         # Autodetect the latest supported version.
         # For .apj firmwares (e.g. Pixhawk), we use the latest STABLE version while for the others (e.g. SITL and
-        # Navigator) we use latest DEV. Specially on this development phase of the companion-docker/navigator, using
-        # the DEV release allow us to track and fix introduced bugs faster.
+        # Navigator) we use latest BETA. Specially on this development phase of the companion-docker/navigator, using
+        # the BETA release allow us to track and fix introduced bugs faster.
         if not version:
             if firmware_format == FirmwareFormat.APJ:
                 supported_versions = [version for version in versions if "STABLE" in version]
@@ -194,7 +194,7 @@ class FirmwareDownloader:
                     raise NoVersionAvailable(f"No firmware versions found for {platform}/{vehicle}.")
                 version = f"STABLE-{newest_version}"
             else:
-                version = "DEV"
+                version = "BETA"
 
         items = self._find_version_item(
             vehicletype=vehicle.value,
