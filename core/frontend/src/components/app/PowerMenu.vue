@@ -150,14 +150,14 @@ export default Vue.extend({
       this.service_status = Status.Rebooting
       this.shutdown(ShutdownType.Reboot)
       // Let wait a bit before starting to check
-      setTimeout(this.waitForBackendToBeOnline, 5000)
+      setTimeout(this.waitForBackendToBeOnline, 15000)
     },
     async restartContainer(): Promise<void> {
       this.service_status = Status.Rebooting
       await back_axios({
         method: 'post',
         url: '/version-chooser/v1.0/version/restart',
-      }).finally(() => setTimeout(this.waitForBackendToBeOnline, 5000))
+      }).finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
     },
     async poweroff(): Promise<void> {
       this.service_status = Status.PoweringOff
