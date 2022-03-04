@@ -227,15 +227,33 @@ jobs:
             --workdir=/files \
             --platform ${{ matrix.platforms }} williangalvani/pimod:latest pimod.sh deploy/pimod/blueos.Pifile
 
+      # TODO: add GITHUB_REF_NAME after https://github.com/actions/upload-artifact/issues/231 is fixed
+      # name: blueos-${{ env.GITHUB_REF_NAME }}.zip
+      -
+        name: Zip image
+        run: |
+          sudo apt install zip
+          zip BlueOS-raspberry.zip deploy/pimod/blueos.img
+
       -
         name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          # TODO: add GITHUB_REF_NAME after https://github.com/actions/upload-artifact/issues/231 is fixed
-          # name: blueos-${{ env.GITHUB_REF_NAME }}.zip
-          name: blueos.zip
+          # We use the .img to avoid a zip of a zip
+          name: BlueOS-raspberry.zip
           path: deploy/pimod/blueos.img
           if-no-files-found: error
+
+      -
+        name: Upload image for release
+        uses: svenstaro/upload-release-action@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: BlueOS-raspberry.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          prerelease: true
 
       # This is required because docker has root permissions, which means the runner is unable to clear this cache normally
       - name: Cleanup
