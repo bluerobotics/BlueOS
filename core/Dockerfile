@@ -27,6 +27,7 @@ RUN /home/pi/tools/filebrowser/bootstrap.sh
 RUN /home/pi/tools/linux2rest/bootstrap.sh
 RUN /home/pi/tools/logviewer/bootstrap.sh
 RUN /home/pi/tools/nginx/bootstrap.sh
+RUN /home/pi/tools/scripts/bootstrap.sh
 
 # Install custom libraries
 COPY libs /home/pi/libs
