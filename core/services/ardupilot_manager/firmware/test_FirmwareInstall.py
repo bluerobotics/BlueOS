@@ -25,9 +25,9 @@ def test_firmware_validation() -> None:
         installer.validate_firmware(pathlib.Path(""), Platform.Undefined)
 
     # Raise when validating Navigator firmwares (as test platform is x86)
-    temporary_file = downloader.download(Vehicle.Sub, Platform.NavigatorR5)
+    temporary_file = downloader.download(Vehicle.Sub, Platform.Navigator)
     with pytest.raises(InvalidFirmwareFile):
-        installer.validate_firmware(temporary_file, Platform.NavigatorR5)
+        installer.validate_firmware(temporary_file, Platform.Navigator)
 
     # Install SITL firmware
     temporary_file = downloader.download(Vehicle.Sub, Platform.SITL, version="DEV")

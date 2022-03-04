@@ -46,26 +46,10 @@ class Detector:
             except Exception:
                 return False
 
-        def is_navigator_r3_connected() -> bool:
-            try:
-                bus = SMBus(1)
-                ADS1115_address = 0x48
-                bus.read_byte_data(ADS1115_address, 0)
-
-                bus = SMBus(4)
-                PCA9685_address = 0x40
-                bus.read_byte_data(PCA9685_address, 0)
-                return True
-            except Exception:
-                return False
-
         logger.debug("Trying to detect Navigator board.")
         if is_navigator_r5_connected():
             logger.debug("Navigator R5 detected.")
-            return FlightController(name="NavigatorR5", manufacturer="Blue Robotics", platform=Platform.NavigatorR5)
-        if is_navigator_r3_connected():
-            logger.debug("Navigator R3 detected.")
-            return FlightController(name="NavigatorR3", manufacturer="Blue Robotics", platform=Platform.NavigatorR3)
+            return FlightController(name="Navigator", manufacturer="Blue Robotics", platform=Platform.Navigator)
         logger.debug("No Navigator board detected.")
         return None
 

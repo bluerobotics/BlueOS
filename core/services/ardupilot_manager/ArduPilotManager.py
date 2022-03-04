@@ -115,11 +115,9 @@ class ArduPilotManager(metaclass=Singleton):
     def start_navigator(self, board: FlightController) -> None:
         self.current_platform = board.platform
         if not self.firmware_manager.is_firmware_installed(self.current_platform):
-            if board.platform == Platform.NavigatorR3:
-                self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_platform)
-            else:
+            if board.platform == Platform.Navigator:
                 self.install_firmware_from_file(
-                    pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator_r4")
+                    pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator")
                 )
 
         self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_platform)
@@ -272,7 +270,7 @@ class ArduPilotManager(metaclass=Singleton):
         flight_controller = boards[0]
         logger.info(f"Board in use: {flight_controller}.")
 
-        if flight_controller.platform in [Platform.NavigatorR3, Platform.NavigatorR5]:
+        if flight_controller.platform in [Platform.Navigator]:
             self.start_navigator(flight_controller)
             return True
         if flight_controller.platform.type == PlatformType.Serial:
