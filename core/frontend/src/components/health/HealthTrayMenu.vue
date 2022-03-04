@@ -116,7 +116,6 @@ export default Vue.extend({
     },
     cpu_undervoltage() : boolean {
       const events = system_information.platform?.raspberry?.events
-      console.log(events)
       const undervoltage = events?.occurring?.find((event) => event.type === RaspberryEventType.UnderVoltage)
       return undervoltage !== undefined
     },
