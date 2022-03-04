@@ -154,10 +154,6 @@ class VersionChooser:
                 startup_file.write(json.dumps(data, indent=2))
                 startup_file.truncate()
 
-                logging.info("Starting bootstrap...")
-                bootstrap = await self.client.containers.get("companion-bootstrap")  # type: ignore
-                await bootstrap.start()
-
                 logging.info("Stopping core...")
                 core = await self.client.containers.get("companion-core")  # type: ignore
                 if core:
