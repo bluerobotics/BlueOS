@@ -13,6 +13,6 @@ To split the screen horizontally, press ctrl+b then %
 To split the screen vertically  press ctrl+b then " (this is currently not working)
 To switch tabs, press ctrl+b then use the directional keys in the keyboard
 
-To login into the Raspberry Pi itself, do "ssh localhost" (NOT IMPLEMENTED)
+To login into the Raspberry Pi itself, do `red-pill`.
 
 Happy Hacking!
