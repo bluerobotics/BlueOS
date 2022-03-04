@@ -206,7 +206,7 @@ jobs:
 
       - name: Upload docker image for release
         uses: svenstaro/upload-release-action@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && matrix.docker == 'core'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: '*.tar'
