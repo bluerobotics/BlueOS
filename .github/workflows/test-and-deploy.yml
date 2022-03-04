@@ -257,6 +257,7 @@ jobs:
           name: BlueOS-raspberry.zip
           path: deploy/pimod/blueos.img
           if-no-files-found: error
+          retention-days: 7
 
       - name: Upload raspberry image for release
         uses: svenstaro/upload-release-action@v2
