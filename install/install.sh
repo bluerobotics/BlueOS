@@ -49,6 +49,12 @@ get_options "$@"
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Enable command trace when running over CI
+if [ $RUNNING_IN_CI -eq 1 ]
+then
+    set -x
+fi
+
 # Check if the script is running in a supported architecture
 SUPPORTED_ARCHITECTURES=(
   "armhf" # Pi, Pi2, Pi3, Pi4
