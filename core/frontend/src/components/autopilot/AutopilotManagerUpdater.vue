@@ -7,7 +7,6 @@ import Vue from 'vue'
 
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
-import { Platform } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
@@ -23,7 +22,8 @@ export default Vue.extend({
   name: 'AutopilotManagerUpdater',
   mounted() {
     callPeriodically(this.fetchAvailableEndpoints, 5000)
-    callPeriodically(this.fetchCurrentPlatform, 5000)
+    callPeriodically(this.fetchAvailableBoards, 5000)
+    callPeriodically(this.fetchCurrentBoard, 5000)
   },
   methods: {
     async fetchAvailableEndpoints(): Promise<void> {
@@ -43,20 +43,37 @@ export default Vue.extend({
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_FETCH_FAIL', message })
         })
     },
-    async fetchCurrentPlatform(): Promise<void> {
+    async fetchAvailableBoards(): Promise<void> {
       await back_axios({
         method: 'get',
-        url: `${autopilot.API_URL}/platform`,
+        url: `${autopilot.API_URL}/available_boards`,
         timeout: 10000,
       })
         .then((response) => {
-          autopilot.setCurrentPlatform(response.data)
+          const available_boards = response.data
+          autopilot.setAvailableBoards(available_boards)
         })
         .catch((error) => {
-          autopilot.setCurrentPlatform(Platform.Undefined)
+          autopilot.setAvailableBoards([])
           if (error === backend_offline_error) { return }
-          const message = `Could not fetch current Autopilot platform: ${error.message}`
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_PLATFORM_FETCH_FAIL', message })
+          const message = `Could not fetch available Ardupilot boards: ${error.message}`
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARDS_FETCH_FAIL', message })
+        })
+    },
+    async fetchCurrentBoard(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${autopilot.API_URL}/board`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          autopilot.setCurrentBoard(response.data)
+        })
+        .catch((error) => {
+          autopilot.setCurrentBoard(null)
+          if (error === backend_offline_error) { return }
+          const message = `Could not fetch current Autopilot board: ${error.message}`
+          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARD_FETCH_FAIL', message })
         })
     },
   },
