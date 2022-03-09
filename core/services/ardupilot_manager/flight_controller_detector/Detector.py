@@ -54,12 +54,16 @@ class Detector:
         return None
 
     @staticmethod
-    def is_valid_serial_controller(port: SysFS) -> bool:
-        return port.manufacturer == "ArduPilot" or (port.manufacturer == "3D Robotics" and "PX4" in port.product)
+    def detect_serial_platform(port: SysFS) -> Optional[Platform]:
+        if port.manufacturer == "ArduPilot":
+            return Platform.Pixhawk1
+        if port.manufacturer == "3D Robotics" and "PX4" in port.product:
+            return Platform.Pixhawk4
+        return None
 
     @staticmethod
     def detect_serial_flight_controllers() -> List[FlightController]:
-        """Check if a Pixhawk1 or any other valid serial flight controller is connected.
+        """Check if a Pixhawk1 or a Pixhawk4 is connected.
 
         Returns:
             List[FlightController]: List with connected serial flight controller.
@@ -68,11 +72,11 @@ class Detector:
             FlightController(
                 name=port.product or port.name,
                 manufacturer=port.manufacturer,
-                platform=Platform.Pixhawk1,
+                platform=Detector.detect_serial_platform(port),
                 path=port.device,
             )
             for port in comports()
-            if Detector.is_valid_serial_controller(port)
+            if Detector.detect_serial_platform(port) is not None
         ]
 
     @staticmethod

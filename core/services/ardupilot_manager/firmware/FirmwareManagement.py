@@ -76,7 +76,7 @@ class FirmwareManager:
 
     def install_firmware_from_file(self, new_firmware_path: pathlib.Path, board: FlightController) -> None:
         try:
-            if board.platform == Platform.Pixhawk1:
+            if board.type == PlatformType.Serial:
                 self.firmware_installer.install_firmware(new_firmware_path, board)
             else:
                 self.firmware_installer.install_firmware(new_firmware_path, board, self.firmware_path(board.platform))

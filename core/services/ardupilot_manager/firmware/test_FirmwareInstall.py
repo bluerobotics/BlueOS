@@ -12,9 +12,12 @@ def test_firmware_validation() -> None:
     downloader = FirmwareDownloader()
     installer = FirmwareInstaller()
 
-    # Pixhawk1 APJ firmwares should always work
+    # Pixhawk1 and Pixhawk4 APJ firmwares should always work
     temporary_file = downloader.download(Vehicle.Sub, Platform.Pixhawk1)
     installer.validate_firmware(temporary_file, Platform.Pixhawk1)
+
+    temporary_file = downloader.download(Vehicle.Sub, Platform.Pixhawk4)
+    installer.validate_firmware(temporary_file, Platform.Pixhawk4)
 
     # New SITL firmwares should always work
     temporary_file = downloader.download(Vehicle.Sub, Platform.SITL, version="DEV")
