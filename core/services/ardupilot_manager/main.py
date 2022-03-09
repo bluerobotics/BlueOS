@@ -88,7 +88,7 @@ def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
 @version(1, 0)
 def get_available_firmwares(response: Response, vehicle: Vehicle) -> Any:
     try:
-        return autopilot.get_available_firmwares(vehicle)
+        return autopilot.get_available_firmwares(vehicle, autopilot.current_platform)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -99,7 +99,7 @@ def get_available_firmwares(response: Response, vehicle: Vehicle) -> Any:
 async def install_firmware_from_url(response: Response, url: str) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url)
+        autopilot.install_firmware_from_url(url, autopilot.current_platform)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -115,7 +115,7 @@ async def install_firmware_from_file(response: Response, binary: UploadFile = Fi
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_file(custom_firmware)
+        autopilot.install_firmware_from_file(custom_firmware, autopilot.current_platform)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         response.status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
@@ -197,7 +197,7 @@ async def stop(response: Response) -> Any:
 async def restore_default_firmware(response: Response) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware()
+        autopilot.restore_default_firmware(autopilot.current_platform)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
