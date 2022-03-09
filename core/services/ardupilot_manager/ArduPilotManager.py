@@ -84,7 +84,7 @@ class ArduPilotManager(metaclass=Singleton):
         await self.mavlink_manager.auto_restart_router()
 
     def run_with_board(self) -> None:
-        if not self.start_board(BoardDetector.detect()):
+        if not self.start_board(BoardDetector.detect(include_sitl=False)):
             logger.warning("Flight controller board not detected.")
 
     @staticmethod
