@@ -307,8 +307,12 @@ class ArduPilotManager(metaclass=Singleton):
         """Return list of all Ardupilot process running on system."""
 
         def is_ardupilot_process(process: psutil.Process) -> bool:
-            """Checks if given process is using Ardupilot's firmware file for current platform."""
-            return str(self.current_firmware_path()) in " ".join(process.cmdline())
+            """Checks if given process is using a Ardupilot's firmware file, for any known platform."""
+            for platform in Platform:
+                firmware_path = self.firmware_manager.firmware_path(platform)
+                if str(firmware_path) in " ".join(process.cmdline()):
+                    return True
+            return False
 
         return list(filter(is_ardupilot_process, psutil.process_iter()))
 
