@@ -21,7 +21,7 @@ from exceptions import InvalidFirmwareFile
 from flight_controller_detector.Detector import Detector as BoardDetector
 from mavlink_proxy.Endpoint import Endpoint
 from settings import SERVICE_NAME
-from typedefs import Firmware, FlightController, Platform, SITLFrame, Vehicle
+from typedefs import Firmware, FlightController, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
@@ -136,13 +136,11 @@ async def install_firmware_from_file(response: Response, binary: UploadFile = Fi
         await autopilot.start_ardupilot()
 
 
-@app.get("/platform", response_model=Platform, summary="Check what is the current running platform.")
+@app.get("/board", response_model=FlightController, summary="Check what is the current running board.")
 @version(1, 0)
-def platform(response: Response) -> Any:
+def get_board(response: Response) -> Any:
     try:
-        if not autopilot.current_board:
-            raise RuntimeError("Cannot fetch current platform as there's no board running.")
-        return autopilot.current_board.platform
+        return autopilot.current_board
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
