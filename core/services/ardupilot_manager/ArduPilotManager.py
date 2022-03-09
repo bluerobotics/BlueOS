@@ -38,7 +38,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.settings.create_app_folders()
         self.mavlink_manager = MavlinkManager()
         self.mavlink_manager.set_logdir(self.settings.log_path)
-        self._current_platform: Optional[Platform] = None
+        self._current_board: Optional[FlightController] = None
         self._current_sitl_frame: SITLFrame = SITLFrame.UNDEFINED
 
         # Load settings and do the initial configuration
@@ -63,8 +63,8 @@ class ArduPilotManager(metaclass=Singleton):
                 self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
             ) or len(self.running_ardupilot_processes()) == 0
             needs_restart = self.should_be_running and (
-                self.current_platform is None
-                or (self.current_platform.type in [PlatformType.SITL, PlatformType.Linux] and process_not_running)
+                self.current_board is None
+                or (self.current_board.type in [PlatformType.SITL, PlatformType.Linux] and process_not_running)
             )
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
@@ -87,16 +87,16 @@ class ArduPilotManager(metaclass=Singleton):
             logger.warning("Flight controller board not detected.")
 
     @property
-    def current_platform(self) -> Optional[Platform]:
-        return self._current_platform
+    def current_board(self) -> Optional[FlightController]:
+        return self._current_board
 
-    @current_platform.setter
-    def current_platform(self, platform: Optional[Platform]) -> None:
-        if platform is None:
+    @current_board.setter
+    def current_board(self, board: Optional[FlightController]) -> None:
+        if board is None:
             logger.info("Resetting current platform (auto-detect mode).")
         else:
-            logger.info(f"Setting {platform} as current platform.")
-        self._current_platform = platform
+            logger.info(f"Setting {board.name} as current board.")
+        self._current_board = board
 
     @property
     def current_sitl_frame(self) -> SITLFrame:
@@ -108,18 +108,18 @@ class ArduPilotManager(metaclass=Singleton):
         logger.info(f"Setting {frame.value} as frame for SITL.")
 
     def current_firmware_path(self) -> pathlib.Path:
-        return self.firmware_manager.firmware_path(self.current_platform)
+        return self.firmware_manager.firmware_path(self.current_board.platform)
 
     def start_navigator(self, board: FlightController) -> None:
-        self.current_platform = board.platform
-        if not self.firmware_manager.is_firmware_installed(self.current_platform):
+        self.current_board = board
+        if not self.firmware_manager.is_firmware_installed(self.current_board.platform):
             if board.platform == Platform.Navigator:
                 self.firmware_manager.install_firmware_from_file(
                     pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator"),
                     board.platform,
                 )
 
-        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_platform)
+        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_board.platform)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -160,21 +160,21 @@ class ArduPilotManager(metaclass=Singleton):
     def start_serial(self, board: FlightController) -> None:
         if not board.path:
             raise ValueError(f"Could not find device path for board {board.name}.")
-        self.current_platform = board.platform
+        self.current_board = board
         self.start_mavlink_manager(
             Endpoint("Master", self.settings.app_name, EndpointType.Serial, board.path, 115200, protected=True)
         )
 
     def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
-        self.current_platform = Platform.SITL
-        if not self.firmware_manager.is_firmware_installed(self.current_platform):
-            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_platform)
+        self.current_board = BoardDetector.detect_sitl()
+        if not self.firmware_manager.is_firmware_installed(self.current_board.platform):
+            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_board.platform)
         if frame == SITLFrame.UNDEFINED:
             frame = SITLFrame.VECTORED
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
         self.current_sitl_frame = frame
 
-        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_platform)
+        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_board.platform)
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
@@ -338,7 +338,7 @@ class ArduPilotManager(metaclass=Singleton):
     async def kill_ardupilot(self) -> None:
         self.should_be_running = False
 
-        if self.current_platform != Platform.SITL:
+        if not self.current_board or self.current_board.platform != Platform.SITL:
             try:
                 logger.info("Disarming vehicle.")
                 self.vehicle_manager.disarm_vehicle()
@@ -361,7 +361,7 @@ class ArduPilotManager(metaclass=Singleton):
 
     async def start_ardupilot(self) -> None:
         try:
-            if self.current_platform == Platform.SITL:
+            if self.current_board and self.current_board.platform == Platform.SITL:
                 self.run_with_sitl(self.current_sitl_frame)
                 return
             self.run_with_board()
@@ -371,7 +371,7 @@ class ArduPilotManager(metaclass=Singleton):
             self.should_be_running = True
 
     async def restart_ardupilot(self) -> None:
-        if self.current_platform is None or self.current_platform.type in [PlatformType.SITL, PlatformType.Linux]:
+        if self.current_board is None or self.current_board.type in [PlatformType.SITL, PlatformType.Linux]:
             await self.kill_ardupilot()
             await self.start_ardupilot()
             return

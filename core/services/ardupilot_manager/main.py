@@ -90,7 +90,9 @@ def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
 @version(1, 0)
 def get_available_firmwares(response: Response, vehicle: Vehicle) -> Any:
     try:
-        return autopilot.get_available_firmwares(vehicle, autopilot.current_platform)
+        if not autopilot.current_board:
+            raise RuntimeError("Cannot fetch available firmwares as there's no board running.")
+        return autopilot.get_available_firmwares(vehicle, autopilot.current_board.platform)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -100,8 +102,10 @@ def get_available_firmwares(response: Response, vehicle: Vehicle) -> Any:
 @version(1, 0)
 async def install_firmware_from_url(response: Response, url: str) -> Any:
     try:
+        if not autopilot.current_board:
+            raise RuntimeError("Cannot install firmware as there's no board running.")
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, autopilot.current_platform)
+        autopilot.install_firmware_from_url(url, autopilot.current_board.platform)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -114,10 +118,12 @@ async def install_firmware_from_url(response: Response, url: str) -> Any:
 async def install_firmware_from_file(response: Response, binary: UploadFile = File(...)) -> Any:
     custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
     try:
+        if not autopilot.current_board:
+            raise RuntimeError("Cannot install firmware as there's no board running.")
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_file(custom_firmware, autopilot.current_platform)
+        autopilot.install_firmware_from_file(custom_firmware, autopilot.current_board.platform)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         response.status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
@@ -134,7 +140,9 @@ async def install_firmware_from_file(response: Response, binary: UploadFile = Fi
 @version(1, 0)
 def platform(response: Response) -> Any:
     try:
-        return autopilot.current_platform
+        if not autopilot.current_board:
+            raise RuntimeError("Cannot fetch current platform as there's no board running.")
+        return autopilot.current_board.platform
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -145,10 +153,10 @@ def platform(response: Response) -> Any:
 async def set_platform(response: Response, use_sitl: bool, sitl_frame: SITLFrame = SITLFrame.VECTORED) -> Any:
     try:
         if use_sitl:
-            autopilot.current_platform = Platform.SITL
+            autopilot.current_board = BoardDetector.detect_sitl()
             autopilot.current_sitl_frame = sitl_frame
         else:
-            autopilot.current_platform = None
+            autopilot.current_board = None
         logger.debug("Restarting ardupilot...")
         await autopilot.kill_ardupilot()
         await autopilot.start_ardupilot()
@@ -198,8 +206,10 @@ async def stop(response: Response) -> Any:
 @version(1, 0)
 async def restore_default_firmware(response: Response) -> Any:
     try:
+        if not autopilot.current_board:
+            raise RuntimeError("Cannot restore firmware as there's no board running.")
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware(autopilot.current_platform)
+        autopilot.restore_default_firmware(autopilot.current_board.platform)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -223,7 +233,7 @@ app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 if __name__ == "__main__":
     if args.sitl:
-        autopilot.current_platform = Platform.SITL
+        autopilot.current_board = BoardDetector.detect_sitl()
 
     loop = asyncio.new_event_loop()
 
