@@ -39,7 +39,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.settings.create_app_folders()
         self.mavlink_manager = MavlinkManager()
         self.mavlink_manager.set_logdir(self.settings.log_path)
-        self._current_platform: Platform = Platform.Undefined
+        self._current_platform: Optional[Platform] = None
         self._current_sitl_frame: SITLFrame = SITLFrame.UNDEFINED
 
         # Load settings and do the initial configuration
@@ -64,8 +64,8 @@ class ArduPilotManager(metaclass=Singleton):
                 self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
             ) or len(self.running_ardupilot_processes()) == 0
             needs_restart = self.should_be_running and (
-                (self.current_platform.type in [PlatformType.SITL, PlatformType.Linux] and process_not_running)
-                or self.current_platform == Platform.Undefined
+                self.current_platform is None
+                or (self.current_platform.type in [PlatformType.SITL, PlatformType.Linux] and process_not_running)
             )
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
@@ -93,13 +93,16 @@ class ArduPilotManager(metaclass=Singleton):
             raise RuntimeError("ArduPilot manager needs to run with root privilege.")
 
     @property
-    def current_platform(self) -> Platform:
+    def current_platform(self) -> Optional[Platform]:
         return self._current_platform
 
     @current_platform.setter
-    def current_platform(self, platform: Platform) -> None:
+    def current_platform(self, platform: Optional[Platform]) -> None:
+        if platform is None:
+            logger.info("Resetting current platform (auto-detect mode).")
+        else:
+            logger.info(f"Setting {platform} as current platform.")
         self._current_platform = platform
-        logger.info(f"Setting {platform} as current platform.")
 
     @property
     def current_sitl_frame(self) -> SITLFrame:
@@ -375,7 +378,7 @@ class ArduPilotManager(metaclass=Singleton):
             self.should_be_running = True
 
     async def restart_ardupilot(self) -> None:
-        if self.current_platform.type in [PlatformType.SITL, PlatformType.Linux]:
+        if self.current_platform is None or self.current_platform.type in [PlatformType.SITL, PlatformType.Linux]:
             await self.kill_ardupilot()
             await self.start_ardupilot()
             return
