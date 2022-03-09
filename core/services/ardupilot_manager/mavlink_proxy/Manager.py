@@ -1,6 +1,6 @@
 import asyncio
 import pathlib
-from typing import List, Set, Type
+from typing import List, Optional, Set, Type
 
 from loguru import logger
 
@@ -8,7 +8,12 @@ from loguru import logger
 # pylint: disable=unused-import
 import mavlink_proxy.MAVLinkRouter
 import mavlink_proxy.MAVProxy
-from exceptions import EndpointCreationFail, EndpointDeleteFail, EndpointUpdateFail
+from exceptions import (
+    EndpointCreationFail,
+    EndpointDeleteFail,
+    EndpointUpdateFail,
+    NoMasterMavlinkEndpoint,
+)
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 
@@ -99,12 +104,13 @@ class Manager:
         self.clear_endpoints()
         self.add_endpoints(self._last_valid_endpoints)
 
-    def set_master_endpoint(self, master_endpoint: Endpoint) -> None:
-        self.tool.set_master_endpoint(master_endpoint)
+    @property
+    def master_endpoint(self) -> Optional[Endpoint]:
+        return self.tool.master_endpoint
 
-    def start(self) -> None:
+    def start(self, master_endpoint: Endpoint) -> None:
         self.should_be_running = True
-        self.tool.start()
+        self.tool.start(master_endpoint)
         self._last_valid_endpoints = self.endpoints()
 
     def stop(self) -> None:
@@ -118,7 +124,9 @@ class Manager:
         self.should_be_running = True
 
     def command_line(self) -> str:
-        return self.tool.assemble_command()
+        if self.master_endpoint is None:
+            raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot build command line.")
+        return self.tool.assemble_command(self.master_endpoint)
 
     def is_running(self) -> bool:
         return self.tool.is_running()

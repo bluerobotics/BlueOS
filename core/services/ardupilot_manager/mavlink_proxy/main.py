@@ -51,10 +51,9 @@ if __name__ == "__main__":
 
     manager.use(tool)
     manager.add_endpoints(args.output.split(":"))
-    manager.set_master_endpoint(args.master.split(":"))
 
     logger.info(f"Command: {manager.command_line()}")
-    manager.start()
+    manager.start(args.master.split(":"))
     while manager.is_running():
         time.sleep(1)
     logger.info("Done.")

@@ -259,8 +259,7 @@ class ArduPilotManager(metaclass=Singleton):
                 pass
             except Exception as error:
                 logger.warning(str(error))
-        self.mavlink_manager.set_master_endpoint(device)
-        self.mavlink_manager.start()
+        self.mavlink_manager.start(device)
 
     def set_preferred_board(self, board: FlightController) -> None:
         logger.info(f"Setting {board.name} as preferred flight-controller.")

@@ -2,7 +2,6 @@ import re
 import subprocess
 from typing import Callable, Optional
 
-from exceptions import NoMasterMavlinkEndpoint
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 from typedefs import EndpointType
@@ -22,9 +21,7 @@ class MAVProxy(AbstractRouter):
                     return regex.group("version")
         return None
 
-    def assemble_command(self) -> str:
-        if self._master_endpoint is None:
-            raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot proceed.")
+    def assemble_command(self, master_endpoint: Endpoint) -> str:
         serial_endpoint_as_input: Callable[[Endpoint], str] = lambda endpoint: f"{endpoint.place},{endpoint.argument}"
 
         # Convert endpoint format to mavproxy format
@@ -36,15 +33,14 @@ class MAVProxy(AbstractRouter):
         filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in filtered_endpoints])
 
-        master = self._master_endpoint
-        master_string = str(master)
-        if master.connection_type == EndpointType.Serial:
-            if not master.argument:
-                master_string = f"{master.place}"
+        master_string = str(master_endpoint)
+        if master_endpoint.connection_type == EndpointType.Serial:
+            if not master_endpoint.argument:
+                master_string = f"{master_endpoint.place}"
             else:
-                master_string = f"{serial_endpoint_as_input(master)}"
-        if master.connection_type == EndpointType.TCPServer:
-            master_string = f"tcp:{master.place}:{master.argument}"
+                master_string = f"{serial_endpoint_as_input(master_endpoint)}"
+        if master_endpoint.connection_type == EndpointType.TCPServer:
+            master_string = f"tcp:{master_endpoint.place}:{master_endpoint.argument}"
 
         log = f"--state-basedir={self.logdir().resolve()}"
         return f"{self.binary()} --master={master_string} {endpoints} {log} --non-interactive"

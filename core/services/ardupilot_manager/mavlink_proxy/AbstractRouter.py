@@ -14,6 +14,7 @@ from exceptions import (
     EndpointAlreadyExists,
     EndpointDontExist,
     MavlinkRouterStartFail,
+    NoMasterMavlinkEndpoint,
 )
 from mavlink_proxy.Endpoint import Endpoint
 
@@ -55,7 +56,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def assemble_command(self) -> str:
+    def assemble_command(self, master_endpoint: Endpoint) -> str:
         pass
 
     @staticmethod
@@ -79,11 +80,13 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def version(self) -> Optional[str]:
         return self._version
 
-    def set_master_endpoint(self, master_endpoint: Endpoint) -> None:
-        self._master_endpoint = master_endpoint
+    @property
+    def master_endpoint(self) -> Optional[Endpoint]:
+        return self._master_endpoint
 
-    def start(self, _verbose: bool = False) -> None:
-        command = self.assemble_command()
+    def start(self, master_endpoint: Endpoint, _verbose: bool = False) -> None:
+        self._master_endpoint = master_endpoint
+        command = self.assemble_command(self._master_endpoint)
         logger.debug(f"Calling router using following command: '{command}'.")
         # pylint: disable=consider-using-with
         self._subprocess = Popen(shlex.split(command), shell=False, encoding="utf-8", stdout=PIPE, stderr=PIPE)
@@ -105,8 +108,10 @@ class AbstractRouter(metaclass=abc.ABCMeta):
             logger.info("Tried to stop router, but it was already not running.")
 
     def restart(self) -> None:
+        if self._master_endpoint is None:
+            raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot restart router.")
         self.exit()
-        self.start()
+        self.start(self._master_endpoint)
 
     def is_running(self) -> bool:
         return self._subprocess is not None and self._subprocess.poll() is None

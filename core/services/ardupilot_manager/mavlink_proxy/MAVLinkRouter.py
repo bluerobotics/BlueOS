@@ -2,7 +2,6 @@ import re
 import subprocess
 from typing import Optional
 
-from exceptions import NoMasterMavlinkEndpoint
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 from typedefs import EndpointType
@@ -23,9 +22,7 @@ class MAVLinkRouter(AbstractRouter):
 
         return None
 
-    def assemble_command(self) -> str:
-        if self._master_endpoint is None:
-            raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot proceed.")
+    def assemble_command(self, master_endpoint: Endpoint) -> str:
         # Convert endpoint format to mavlink-router format
         def convert_endpoint(endpoint: Endpoint) -> str:
             # TCP uses a special argument and only works with localhost
@@ -55,19 +52,21 @@ class MAVLinkRouter(AbstractRouter):
         filtered_endpoints = Endpoint.filter_enabled(sorted_endpoints)
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in filtered_endpoints])
 
-        master = self._master_endpoint
-        if master.connection_type not in [
+        if master_endpoint.connection_type not in [
             EndpointType.UDPServer,
             EndpointType.Serial,
             EndpointType.TCPServer,
         ]:
-            raise ValueError(f"Master endpoint of type {master.connection_type} not supported on MavlinkRouter.")
+            raise ValueError(
+                f"Master endpoint of type {master_endpoint.connection_type} not supported on MavlinkRouter."
+            )
 
-        if master.connection_type == EndpointType.TCPServer:
+        if master_endpoint.connection_type == EndpointType.TCPServer:
             # The "--tcp-port 0" argument is used to prevent the router from binding TCP port 5760
-            return f"{self.binary()} --tcp-endpoint {master.place}:{master.argument} --tcp-port 0 {endpoints}"
+            return f"{self.binary()} \
+                --tcp-endpoint {master_endpoint.place}:{master_endpoint.argument} --tcp-port 0 {endpoints}"
 
-        return f"{self.binary()} {master.place}:{master.argument} --tcp-port 0 {endpoints}"
+        return f"{self.binary()} {master_endpoint.place}:{master_endpoint.argument} --tcp-port 0 {endpoints}"
 
     @staticmethod
     def name() -> str:
