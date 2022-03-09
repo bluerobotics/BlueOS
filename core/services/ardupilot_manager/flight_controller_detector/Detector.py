@@ -55,9 +55,9 @@ class Detector:
 
     @staticmethod
     def detect_serial_platform(port: SysFS) -> Optional[Platform]:
-        if port.manufacturer == "ArduPilot":
+        if port.product in ["Pixhawk1", "PX4 FMU v2.x"]:
             return Platform.Pixhawk1
-        if port.manufacturer == "3D Robotics" and "PX4" in port.product:
+        if port.product in ["Pixhawk4", "PX4 FMU v5.x"]:
             return Platform.Pixhawk4
         return None
 
