@@ -21,7 +21,7 @@ from exceptions import (
     NoCandidate,
     NoVersionAvailable,
 )
-from typedefs import FirmwareFormat, Platform, Vehicle
+from typedefs import FirmwareFormat, Platform, PlatformType, Vehicle
 
 # TODO: This should be not necessary
 # Disable SSL verification
@@ -32,10 +32,9 @@ if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverif
 class FirmwareDownloader:
     _manifest_remote = "https://firmware.ardupilot.org/manifest.json.gz"
     _supported_firmware_formats = {
-        Platform.SITL: FirmwareFormat.ELF,
-        Platform.Pixhawk1: FirmwareFormat.APJ,
-        Platform.Pixhawk4: FirmwareFormat.APJ,
-        Platform.Navigator: FirmwareFormat.ELF,
+        PlatformType.SITL: FirmwareFormat.ELF,
+        PlatformType.Serial: FirmwareFormat.APJ,
+        PlatformType.Linux: FirmwareFormat.ELF,
     }
 
     def __init__(self) -> None:
@@ -150,7 +149,7 @@ class FirmwareDownloader:
         items = self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
 
         for item in items:
-            if item["format"] == FirmwareDownloader._supported_firmware_formats[platform]:
+            if item["format"] == FirmwareDownloader._supported_firmware_formats[platform.type]:
                 available_versions.append(item["mav-firmware-version-type"])
 
         return available_versions
@@ -176,7 +175,7 @@ class FirmwareDownloader:
         if version and version not in versions:
             raise NoVersionAvailable(f"Version {version} was not found for {platform}/{vehicle}.")
 
-        firmware_format = FirmwareDownloader._supported_firmware_formats[platform]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[platform.type]
 
         # Autodetect the latest supported version.
         # For .apj firmwares (e.g. Pixhawk), we use the latest STABLE version while for the others (e.g. SITL and
