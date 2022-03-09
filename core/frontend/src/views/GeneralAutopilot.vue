@@ -3,15 +3,18 @@
     class="main-manager"
   >
     <v-card-title>Autopilot</v-card-title>
-    <v-card-subtitle>Currently running '{{ current_platform }}' </v-card-subtitle>
+    <v-card-subtitle>
+      <span v-if="board_undefined">No board running</span>
+      <span v-else>Currently running: '{{ current_board.name }}'</span>
+    </v-card-subtitle>
     <v-card-actions>
       <v-spacer />
       <v-btn
         color="blue lighten-3"
         :disabled="restarting"
-        @click="togglePlatform"
+        @click="openBoardChangeDialog"
       >
-        {{ toggle_button_text }}
+        Change board
       </v-btn>
       <v-btn
         v-if="settings.is_pirate_mode"
@@ -37,38 +40,40 @@
         Restart autopilot
       </v-btn>
     </v-card-actions>
+    <board-change-dialog
+      v-model="show_board_change_dialog"
+    />
   </v-card>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
+import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import settings from '@/libs/settings'
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
-import { Platform } from '@/types/autopilot'
+import { FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'GeneralAutopilot',
+  components: {
+    BoardChangeDialog,
+  },
   data() {
     return {
       settings,
+      show_board_change_dialog: false,
     }
   },
   computed: {
-    current_platform(): Platform {
-      return autopilot.current_platform
+    current_board(): FlightController | null {
+      return autopilot.current_board
     },
-    running_sitl(): boolean {
-      return [Platform.SITL_X86, Platform.SITL_ARM].includes(this.current_platform)
-    },
-    platform_undefined(): boolean {
-      return this.current_platform === Platform.Undefined
-    },
-    toggle_button_text(): string {
-      return this.platform_undefined || !this.running_sitl ? 'Use SITL' : 'Use board'
+    board_undefined(): boolean {
+      return this.current_board === null
     },
     restarting(): boolean {
       return autopilot.restarting
@@ -110,7 +115,6 @@ export default Vue.extend({
       await back_axios({
         method: 'post',
         url: `${autopilot.API_URL}/restart`,
-        params: { use_sitl: !this.running_sitl },
         timeout: 10000,
       })
         .catch((error) => {
@@ -121,21 +125,8 @@ export default Vue.extend({
           autopilot.setRestarting(false)
         })
     },
-    async togglePlatform(): Promise<void> {
-      autopilot.setRestarting(true)
-      await back_axios({
-        method: 'post',
-        url: `${autopilot.API_URL}/platform`,
-        params: { use_sitl: !this.running_sitl },
-        timeout: 10000,
-      })
-        .catch((error) => {
-          const { message } = error
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_PLATFORM_TOGGLE_FAIL', message })
-        })
-        .finally(() => {
-          autopilot.setRestarting(false)
-        })
+    openBoardChangeDialog(): void {
+      this.show_board_change_dialog = true
     },
   },
 })

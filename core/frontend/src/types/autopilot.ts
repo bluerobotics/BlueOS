@@ -45,3 +45,10 @@ export interface AutopilotEndpoint {
     protected: boolean
     enabled: boolean
 }
+
+export interface FlightController {
+  name: string
+  manufacturer: string
+  platform: Platform
+  path: string
+}

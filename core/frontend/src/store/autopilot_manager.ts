@@ -3,7 +3,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { AutopilotEndpoint, Platform } from '@/types/autopilot'
+import { AutopilotEndpoint, FlightController } from '@/types/autopilot'
 
 @Module({
   dynamic: true,
@@ -16,9 +16,13 @@ class AutopilotManagerStore extends VuexModule {
 
   available_endpoints: AutopilotEndpoint[] = []
 
-  current_platform: Platform = Platform.Undefined
+  available_boards: FlightController[] = []
+
+  current_board: FlightController | null = null
 
   updating_endpoints = true
+
+  updating_boards = true
 
   restarting = false
 
@@ -33,14 +37,20 @@ class AutopilotManagerStore extends VuexModule {
   }
 
   @Mutation
-  setCurrentPlatform(platform: Platform): void {
-    this.current_platform = platform
+  setCurrentBoard(board: FlightController | null): void {
+    this.current_board = board
   }
 
   @Mutation
   setAvailableEndpoints(available_endpoints: AutopilotEndpoint[]): void {
     this.available_endpoints = available_endpoints
     this.updating_endpoints = false
+  }
+
+  @Mutation
+  setAvailableBoards(available_boards: FlightController[]): void {
+    this.available_boards = available_boards
+    this.updating_boards = false
   }
 }
 
