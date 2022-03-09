@@ -2,7 +2,7 @@ import os
 from typing import List, Optional
 
 from loguru import logger
-from serial.tools.list_ports_linux import comports
+from serial.tools.list_ports_linux import SysFS, comports
 from smbus2 import SMBus
 
 from typedefs import FlightController, Platform
@@ -54,25 +54,26 @@ class Detector:
         return None
 
     @staticmethod
+    def is_valid_serial_controller(port: SysFS) -> bool:
+        return port.manufacturer == "ArduPilot" or (port.manufacturer == "3D Robotics" and "PX4" in port.product)
+
+    @staticmethod
     def detect_serial_flight_controllers() -> List[FlightController]:
         """Check if a Pixhawk1 or any other valid serial flight controller is connected.
 
         Returns:
             List[FlightController]: List with connected serial flight controller.
         """
-        serial_path = "/dev/autopilot"
-        for port in comports(include_links=True):
-            if not port.device == serial_path:
-                continue
-            return [
-                FlightController(
-                    name=port.product or port.name,
-                    manufacturer=port.manufacturer,
-                    platform=Platform.Pixhawk1,
-                    path=serial_path,
-                )
-            ]
-        return []
+        return [
+            FlightController(
+                name=port.product or port.name,
+                manufacturer=port.manufacturer,
+                platform=Platform.Pixhawk1,
+                path=port.device,
+            )
+            for port in comports()
+            if Detector.is_valid_serial_controller(port)
+        ]
 
     @classmethod
     def detect(cls) -> List[FlightController]:

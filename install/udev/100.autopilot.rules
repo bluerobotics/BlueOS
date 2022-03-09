@@ -1,6 +1,3 @@
-SUBSYSTEM=="tty", ATTRS{manufacturer}=="3D Robotics", ATTRS{product}=="PX4*", SYMLINK+="autopilot", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1"
-SUBSYSTEM=="tty", ATTRS{manufacturer}=="ArduPilot", SYMLINK+="autopilot", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1"
-
 # CP210X USB UART
 ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0666", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1"
 
