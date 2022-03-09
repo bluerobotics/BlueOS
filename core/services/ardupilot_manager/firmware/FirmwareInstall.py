@@ -100,7 +100,7 @@ class FirmwareInstaller:
     @staticmethod
     def validate_firmware(firmware_path: pathlib.Path, platform: Platform) -> None:
         """Check if given firmware is valid for given platform."""
-        firmware_format = FirmwareDownloader._supported_firmware_formats[platform]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[platform.type]
 
         if firmware_format == FirmwareFormat.APJ:
             FirmwareInstaller._validate_apj(firmware_path, platform)
@@ -133,7 +133,7 @@ class FirmwareInstaller:
         if not new_firmware_path.is_file():
             raise InvalidFirmwareFile("Given path is not a valid file.")
 
-        firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform.type]
         if firmware_format == FirmwareFormat.ELF:
             self.add_run_permission(new_firmware_path)
 

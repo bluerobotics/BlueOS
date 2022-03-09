@@ -52,7 +52,7 @@ class FirmwareManager:
             # TODO: Validate if properly. The uploader tool seems capable of doing this.
             return True
 
-        firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform.type]
         if firmware_format == FirmwareFormat.ELF:
             return pathlib.Path.is_file(self.firmware_path(board.platform))
 
