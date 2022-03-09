@@ -107,9 +107,6 @@ class ArduPilotManager(metaclass=Singleton):
         self._current_sitl_frame = frame
         logger.info(f"Setting {frame.value} as frame for SITL.")
 
-    def current_firmware_path(self) -> pathlib.Path:
-        return self.firmware_manager.firmware_path(self.current_board.platform)
-
     def start_navigator(self, board: FlightController) -> None:
         self.current_board = board
         if not self.firmware_manager.is_firmware_installed(self.current_board):
@@ -119,7 +116,8 @@ class ArduPilotManager(metaclass=Singleton):
                     board,
                 )
 
-        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_board.platform)
+        firmware_path = self.firmware_manager.firmware_path(self.current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self.current_board.platform)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -142,7 +140,7 @@ class ArduPilotManager(metaclass=Singleton):
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
         self.ardupilot_subprocess = subprocess.Popen(
-            f"{self.current_firmware_path()}"
+            f"{firmware_path}"
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
@@ -174,7 +172,8 @@ class ArduPilotManager(metaclass=Singleton):
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
         self.current_sitl_frame = frame
 
-        self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_board.platform)
+        firmware_path = self.firmware_manager.firmware_path(self.current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self.current_board.platform)
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
@@ -183,7 +182,7 @@ class ArduPilotManager(metaclass=Singleton):
         # pylint: disable=consider-using-with
         self.ardupilot_subprocess = subprocess.Popen(
             [
-                self.current_firmware_path(),
+                firmware_path,
                 "--model",
                 self.current_sitl_frame.value,
                 "--base-port",
