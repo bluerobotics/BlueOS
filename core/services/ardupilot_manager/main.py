@@ -17,9 +17,10 @@ from uvicorn import Config, Server
 
 from ArduPilotManager import ArduPilotManager
 from exceptions import InvalidFirmwareFile
+from flight_controller_detector.Detector import Detector as BoardDetector
 from mavlink_proxy.Endpoint import Endpoint
 from settings import SERVICE_NAME
-from typedefs import Firmware, Platform, SITLFrame, Vehicle
+from typedefs import Firmware, FlightController, Platform, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
@@ -202,6 +203,16 @@ async def restore_default_firmware(response: Response) -> Any:
         return {"message": f"{error}"}
     finally:
         await autopilot.start_ardupilot()
+
+
+@app.get("/available_boards", response_model=List[FlightController], summary="Retrieve list of connected boards.")
+@version(1, 0)
+def available_boards(response: Response) -> Any:
+    try:
+        return BoardDetector.detect()
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"{error}"}
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
