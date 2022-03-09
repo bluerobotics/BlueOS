@@ -102,10 +102,10 @@ class AbstractRouter(metaclass=abc.ABCMeta):
 
     def exit(self) -> None:
         if self.is_running():
-            assert self._subprocess is not None
-            self._subprocess.kill()
+            # `is_running` already infers `_subprocess` is not None
+            self._subprocess.kill()  # type: ignore
         else:
-            logger.info("Tried to stop router, but it was already not running.")
+            logger.debug("Tried to stop router, but it was already not running.")
 
     def restart(self) -> None:
         if self._master_endpoint is None:
