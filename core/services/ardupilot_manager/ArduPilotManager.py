@@ -1,5 +1,4 @@
 import asyncio
-import os
 import pathlib
 import subprocess
 from copy import deepcopy
@@ -86,11 +85,6 @@ class ArduPilotManager(metaclass=Singleton):
     def run_with_board(self) -> None:
         if not self.start_board(BoardDetector.detect(include_sitl=False)):
             logger.warning("Flight controller board not detected.")
-
-    @staticmethod
-    def check_running_as_root() -> None:
-        if os.geteuid() != 0:
-            raise RuntimeError("ArduPilot manager needs to run with root privilege.")
 
     @property
     def current_platform(self) -> Optional[Platform]:

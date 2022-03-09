@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Set
 
 from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import Body, FastAPI, File, HTTPException, Response, UploadFile, status
 from fastapi.staticfiles import StaticFiles
@@ -41,7 +42,8 @@ app = FastAPI(
 )
 logger.info("Starting ArduPilot Manager.")
 autopilot = ArduPilotManager()
-autopilot.check_running_as_root()
+if not is_running_as_root():
+    raise RuntimeError("ArduPilot manager needs to run with root privilege.")
 
 
 @app.get("/endpoints", response_model=List[Dict[str, Any]])
