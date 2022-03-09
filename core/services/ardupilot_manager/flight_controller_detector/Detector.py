@@ -70,6 +70,12 @@ class Detector:
         Returns:
             List[FlightController]: List with connected serial flight controller.
         """
+        sorted_serial_ports = sorted(comports(), key=lambda port: port.name)  # type: ignore
+        unique_serial_devices: List[SysFS] = []
+        for port in sorted_serial_ports:
+            # usb_device_path property will be the same for two serial connections using the same USB port
+            if port.usb_device_path not in [device.usb_device_path for device in unique_serial_devices]:
+                unique_serial_devices.append(port)
         return [
             FlightController(
                 name=port.product or port.name,
@@ -77,7 +83,7 @@ class Detector:
                 platform=Detector.detect_serial_platform(port),
                 path=port.device,
             )
-            for port in comports()
+            for port in unique_serial_devices
             if Detector.detect_serial_platform(port) is not None
         ]
 
