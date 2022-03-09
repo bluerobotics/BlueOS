@@ -59,6 +59,8 @@ class Detector:
             return Platform.Pixhawk1
         if port.product in ["Pixhawk4", "PX4 FMU v5.x"]:
             return Platform.Pixhawk4
+        if port.manufacturer in ["ArduPilot", "3D Robotics"] and (port.product and not "BL" in port.product):
+            return Platform.GenericSerial
         return None
 
     @staticmethod
