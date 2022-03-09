@@ -148,19 +148,12 @@ def platform(response: Response) -> Any:
         return {"message": f"{error}"}
 
 
-@app.post("/platform", summary="Toggle between SITL and default platform (auto-detected).")
+@app.post("/board", summary="Set board to be used.")
 @version(1, 0)
-async def set_platform(response: Response, use_sitl: bool, sitl_frame: SITLFrame = SITLFrame.VECTORED) -> Any:
+async def set_board(response: Response, board: FlightController, sitl_frame: SITLFrame = SITLFrame.VECTORED) -> Any:
     try:
-        if use_sitl:
-            autopilot.current_board = BoardDetector.detect_sitl()
-            autopilot.current_sitl_frame = sitl_frame
-        else:
-            autopilot.current_board = None
-        logger.debug("Restarting ardupilot...")
-        await autopilot.kill_ardupilot()
-        await autopilot.start_ardupilot()
-        logger.debug("Ardupilot successfully restarted.")
+        autopilot.current_sitl_frame = sitl_frame
+        await autopilot.change_board(board)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -232,9 +225,6 @@ app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 
 if __name__ == "__main__":
-    if args.sitl:
-        autopilot.current_board = BoardDetector.detect_sitl()
-
     loop = asyncio.new_event_loop()
 
     # # Running uvicorn with log disabled so loguru can handle it
@@ -244,5 +234,7 @@ if __name__ == "__main__":
     loop.create_task(autopilot.start_ardupilot())
     loop.create_task(autopilot.auto_restart_ardupilot())
     loop.create_task(autopilot.start_mavlink_manager_watchdog())
+    if args.sitl:
+        loop.create_task(autopilot.change_board(BoardDetector.detect_sitl()))
     loop.run_until_complete(server.serve())
     loop.run_until_complete(autopilot.kill_ardupilot())

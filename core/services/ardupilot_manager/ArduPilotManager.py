@@ -90,14 +90,6 @@ class ArduPilotManager(metaclass=Singleton):
     def current_board(self) -> Optional[FlightController]:
         return self._current_board
 
-    @current_board.setter
-    def current_board(self, board: Optional[FlightController]) -> None:
-        if board is None:
-            logger.info("Resetting current platform (auto-detect mode).")
-        else:
-            logger.info(f"Setting {board.name} as current board.")
-        self._current_board = board
-
     @property
     def current_sitl_frame(self) -> SITLFrame:
         return self._current_sitl_frame
@@ -108,16 +100,16 @@ class ArduPilotManager(metaclass=Singleton):
         logger.info(f"Setting {frame.value} as frame for SITL.")
 
     def start_navigator(self, board: FlightController) -> None:
-        self.current_board = board
-        if not self.firmware_manager.is_firmware_installed(self.current_board):
+        self._current_board = board
+        if not self.firmware_manager.is_firmware_installed(self._current_board):
             if board.platform == Platform.Navigator:
                 self.firmware_manager.install_firmware_from_file(
                     pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator"),
                     board,
                 )
 
-        firmware_path = self.firmware_manager.firmware_path(self.current_board.platform)
-        self.firmware_manager.validate_firmware(firmware_path, self.current_board.platform)
+        firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self._current_board.platform)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -158,22 +150,22 @@ class ArduPilotManager(metaclass=Singleton):
     def start_serial(self, board: FlightController) -> None:
         if not board.path:
             raise ValueError(f"Could not find device path for board {board.name}.")
-        self.current_board = board
+        self._current_board = board
         self.start_mavlink_manager(
             Endpoint("Master", self.settings.app_name, EndpointType.Serial, board.path, 115200, protected=True)
         )
 
     def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
-        self.current_board = BoardDetector.detect_sitl()
-        if not self.firmware_manager.is_firmware_installed(self.current_board):
-            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_board)
+        self._current_board = BoardDetector.detect_sitl()
+        if not self.firmware_manager.is_firmware_installed(self._current_board):
+            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self._current_board)
         if frame == SITLFrame.UNDEFINED:
             frame = SITLFrame.VECTORED
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
         self.current_sitl_frame = frame
 
-        firmware_path = self.firmware_manager.firmware_path(self.current_board.platform)
-        self.firmware_manager.validate_firmware(firmware_path, self.current_board.platform)
+        firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self._current_board.platform)
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
@@ -253,6 +245,15 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 logger.warning(str(error))
         self.mavlink_manager.start(device)
+
+    async def change_board(self, board: FlightController) -> None:
+        logger.info(f"Trying to run with '{board.name}'.")
+        if not board in BoardDetector.detect():
+            raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
+        self.set_preferred_board(board)
+        await self.kill_ardupilot()
+        self._current_board = board
+        await self.start_ardupilot()
 
     def set_preferred_board(self, board: FlightController) -> None:
         logger.info(f"Setting {board.name} as preferred flight-controller.")
