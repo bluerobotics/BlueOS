@@ -93,3 +93,7 @@ class DuplicateEndpointName(ValueError):
 
 class EndpointDontExist(ValueError):
     """Given Mavlink endpoint do not exist."""
+
+
+class NoPreferredBoardSet(RuntimeError):
+    """No preferred board is set yet."""
