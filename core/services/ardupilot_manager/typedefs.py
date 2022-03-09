@@ -103,7 +103,6 @@ class Platform(str, Enum):
     Pixhawk1 = "Pixhawk1"
     Navigator = "navigator"
     SITL = get_sitl_platform_name(machine())
-    Undefined = "Undefined"
 
     @property
     def type(self) -> PlatformType:

@@ -146,7 +146,7 @@ async def set_platform(response: Response, use_sitl: bool, sitl_frame: SITLFrame
             autopilot.current_platform = Platform.SITL
             autopilot.current_sitl_frame = sitl_frame
         else:
-            autopilot.current_platform = Platform.Undefined
+            autopilot.current_platform = None
         logger.debug("Restarting ardupilot...")
         await autopilot.kill_ardupilot()
         await autopilot.start_ardupilot()
