@@ -105,7 +105,7 @@ async def install_firmware_from_url(response: Response, url: str) -> Any:
         if not autopilot.current_board:
             raise RuntimeError("Cannot install firmware as there's no board running.")
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, autopilot.current_board.platform)
+        autopilot.install_firmware_from_url(url, autopilot.current_board)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}
@@ -123,7 +123,7 @@ async def install_firmware_from_file(response: Response, binary: UploadFile = Fi
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_file(custom_firmware, autopilot.current_board.platform)
+        autopilot.install_firmware_from_file(custom_firmware, autopilot.current_board)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         response.status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
@@ -209,7 +209,7 @@ async def restore_default_firmware(response: Response) -> Any:
         if not autopilot.current_board:
             raise RuntimeError("Cannot restore firmware as there's no board running.")
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware(autopilot.current_board.platform)
+        autopilot.restore_default_firmware(autopilot.current_board)
     except Exception as error:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"{error}"}

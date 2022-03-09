@@ -112,11 +112,11 @@ class ArduPilotManager(metaclass=Singleton):
 
     def start_navigator(self, board: FlightController) -> None:
         self.current_board = board
-        if not self.firmware_manager.is_firmware_installed(self.current_board.platform):
+        if not self.firmware_manager.is_firmware_installed(self.current_board):
             if board.platform == Platform.Navigator:
                 self.firmware_manager.install_firmware_from_file(
                     pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator"),
-                    board.platform,
+                    board,
                 )
 
         self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_board.platform)
@@ -167,8 +167,8 @@ class ArduPilotManager(metaclass=Singleton):
 
     def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
         self.current_board = BoardDetector.detect_sitl()
-        if not self.firmware_manager.is_firmware_installed(self.current_board.platform):
-            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_board.platform)
+        if not self.firmware_manager.is_firmware_installed(self.current_board):
+            self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self.current_board)
         if frame == SITLFrame.UNDEFINED:
             frame = SITLFrame.VECTORED
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
@@ -427,11 +427,11 @@ class ArduPilotManager(metaclass=Singleton):
     def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
         return self.firmware_manager.get_available_firmwares(vehicle, platform)
 
-    def install_firmware_from_file(self, firmware_path: pathlib.Path, platform: Platform) -> None:
-        self.firmware_manager.install_firmware_from_file(firmware_path, platform)
+    def install_firmware_from_file(self, firmware_path: pathlib.Path, board: FlightController) -> None:
+        self.firmware_manager.install_firmware_from_file(firmware_path, board)
 
-    def install_firmware_from_url(self, url: str, platform: Platform) -> None:
-        self.firmware_manager.install_firmware_from_url(url, platform)
+    def install_firmware_from_url(self, url: str, board: FlightController) -> None:
+        self.firmware_manager.install_firmware_from_url(url, board)
 
-    def restore_default_firmware(self, platform: Platform) -> None:
-        self.firmware_manager.restore_default_firmware(platform)
+    def restore_default_firmware(self, board: FlightController) -> None:
+        self.firmware_manager.restore_default_firmware(board)

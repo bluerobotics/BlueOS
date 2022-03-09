@@ -12,7 +12,7 @@ from elftools.elf.elffile import ELFFile
 from exceptions import FirmwareInstallFail, InvalidFirmwareFile, UnsupportedPlatform
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareUpload import FirmwareUploader
-from typedefs import FirmwareFormat, Platform
+from typedefs import FirmwareFormat, FlightController, Platform, PlatformType
 
 
 def get_board_id(platform: Platform) -> int:
@@ -123,21 +123,27 @@ class FirmwareInstaller:
         os.chmod(firmware_path, firmware_path.stat().st_mode | stat.S_IXOTH | stat.S_IXUSR | stat.S_IXGRP)
 
     def install_firmware(
-        self, new_firmware_path: pathlib.Path, platform: Platform, firmware_dest_path: Optional[pathlib.Path] = None
+        self,
+        new_firmware_path: pathlib.Path,
+        board: FlightController,
+        firmware_dest_path: Optional[pathlib.Path] = None,
     ) -> None:
         """Install given firmware."""
         if not new_firmware_path.is_file():
             raise InvalidFirmwareFile("Given path is not a valid file.")
 
-        firmware_format = FirmwareDownloader._supported_firmware_formats[platform]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform]
         if firmware_format == FirmwareFormat.ELF:
             self.add_run_permission(new_firmware_path)
 
-        self.validate_firmware(new_firmware_path, platform)
+        self.validate_firmware(new_firmware_path, board.platform)
 
         try:
-            if platform == Platform.Pixhawk1:
+            if board.type == PlatformType.Serial:
                 firmware_uploader = FirmwareUploader()
+                if not board.path:
+                    raise ValueError("Board path not available.")
+                firmware_uploader.set_autopilot_port(pathlib.Path(board.path))
                 firmware_uploader.upload(new_firmware_path)
                 return
             if firmware_format == FirmwareFormat.ELF:

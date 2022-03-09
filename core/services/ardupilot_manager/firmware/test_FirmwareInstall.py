@@ -5,7 +5,7 @@ import pytest
 from exceptions import InvalidFirmwareFile
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareInstall import FirmwareInstaller
-from typedefs import Platform, Vehicle
+from typedefs import FlightController, Platform, Vehicle
 
 
 def test_firmware_validation() -> None:
@@ -27,4 +27,5 @@ def test_firmware_validation() -> None:
 
     # Install SITL firmware
     temporary_file = downloader.download(Vehicle.Sub, Platform.SITL, version="DEV")
-    installer.install_firmware(temporary_file, Platform.SITL, pathlib.Path(f"{temporary_file}_dest"))
+    board = FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL)
+    installer.install_firmware(temporary_file, board, pathlib.Path(f"{temporary_file}_dest"))
