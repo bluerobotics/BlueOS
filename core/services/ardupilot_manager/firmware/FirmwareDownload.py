@@ -34,6 +34,7 @@ class FirmwareDownloader:
     _supported_firmware_formats = {
         Platform.SITL: FirmwareFormat.ELF,
         Platform.Pixhawk1: FirmwareFormat.APJ,
+        Platform.Pixhawk4: FirmwareFormat.APJ,
         Platform.Navigator: FirmwareFormat.ELF,
     }
 

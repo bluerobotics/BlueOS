@@ -101,6 +101,7 @@ class Platform(str, Enum):
     The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
 
     Pixhawk1 = "Pixhawk1"
+    Pixhawk4 = "Pixhawk4"
     Navigator = "navigator"
     SITL = get_sitl_platform_name(machine())
 
@@ -108,6 +109,7 @@ class Platform(str, Enum):
     def type(self) -> PlatformType:
         platform_types = {
             Platform.Pixhawk1: PlatformType.Serial,
+            Platform.Pixhawk4: PlatformType.Serial,
             Platform.Navigator: PlatformType.Linux,
             Platform.SITL: PlatformType.SITL,
         }

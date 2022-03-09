@@ -43,6 +43,8 @@ def test_firmware_download() -> None:
 
     assert firmware_download.download(Vehicle.Sub, Platform.Pixhawk1), "Failed to download latest valid firmware file."
 
+    assert firmware_download.download(Vehicle.Sub, Platform.Pixhawk4), "Failed to download latest valid firmware file."
+
     assert firmware_download.download(Vehicle.Sub, Platform.SITL), "Failed to download SITL."
 
     # It'll fail if running in an arch different of ARM
