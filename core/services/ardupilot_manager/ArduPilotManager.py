@@ -117,8 +117,9 @@ class ArduPilotManager(metaclass=Singleton):
         self.current_platform = board.platform
         if not self.firmware_manager.is_firmware_installed(self.current_platform):
             if board.platform == Platform.Navigator:
-                self.install_firmware_from_file(
-                    pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator")
+                self.firmware_manager.install_firmware_from_file(
+                    pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator"),
+                    board.platform,
                 )
 
         self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_platform)
@@ -427,14 +428,14 @@ class ArduPilotManager(metaclass=Singleton):
         self._save_current_endpoints()
         self.mavlink_manager.restart()
 
-    def get_available_firmwares(self, vehicle: Vehicle) -> List[Firmware]:
-        return self.firmware_manager.get_available_firmwares(vehicle, self.current_platform)
+    def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
+        return self.firmware_manager.get_available_firmwares(vehicle, platform)
 
-    def install_firmware_from_file(self, firmware_path: pathlib.Path) -> None:
-        self.firmware_manager.install_firmware_from_file(firmware_path, self.current_platform)
+    def install_firmware_from_file(self, firmware_path: pathlib.Path, platform: Platform) -> None:
+        self.firmware_manager.install_firmware_from_file(firmware_path, platform)
 
-    def install_firmware_from_url(self, url: str) -> None:
-        self.firmware_manager.install_firmware_from_url(url, self.current_platform)
+    def install_firmware_from_url(self, url: str, platform: Platform) -> None:
+        self.firmware_manager.install_firmware_from_url(url, platform)
 
-    def restore_default_firmware(self) -> None:
-        self.firmware_manager.restore_default_firmware(self.current_platform)
+    def restore_default_firmware(self, platform: Platform) -> None:
+        self.firmware_manager.restore_default_firmware(platform)
