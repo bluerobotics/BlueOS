@@ -78,3 +78,5 @@ class FirmwareUploader:
             raise FirmwareUploadFail(f"Unable to upload firmware: {error}") from error
         finally:
             timer.cancel()
+            # Give some time for the board to reboot (preventing fail reconnecting to it)
+            time.sleep(10)
