@@ -8,13 +8,13 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-NAME=companion-runner
+NAME=blueos-runner
 ORG=bluerobotics
 WORKDIR="/tmp/github-runner-${NAME}"
 sudo docker rm -f "${NAME}"
 sudo docker run -d --restart=always \
     --privileged \
-    -e LABELS="companion" \
+    -e LABELS="blueos" \
     -e ORG_NAME="${ORG}" \
     -e ACCESS_TOKEN="$1" \
     -e RUNNER_NAME="${NAME}" \
