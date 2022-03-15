@@ -13,7 +13,7 @@ with open(pathlib.Path(__file__).parent.joinpath("README.md"), "r", encoding="ut
 setuptools.setup(
     name="commonwealth",
     version="0.1.0",
-    description="Companion library to share common code.",
+    description="BlueOS library to share common code.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="MIT",
