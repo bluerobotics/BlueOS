@@ -35,7 +35,7 @@ class ShutdownType(str, Enum):
     POWEROFF = "poweroff"
 
 
-def run_command(command: str) -> "subprocess.CompletedProcess['bytes']":
+def run_command(command: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
     user = "pi"
     password = "raspberry"
 
@@ -50,7 +50,10 @@ def run_command(command: str) -> "subprocess.CompletedProcess['bytes']":
             f"{user}@localhost",
             command,
         ],
-        check=True,
+        check=check,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
 
 
@@ -60,6 +63,28 @@ def check_what_i_am_doing(i_know_what_i_am_doing: bool = False) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Developer, you don't know what you are doing, command aborted.",
         )
+
+
+@app.post("/command/host", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def command_host(response: Response, command: str, i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    logger.debug(f"Running command: {command}")
+
+    try:
+        output = run_command(command, False)
+        logger.debug(f"Output: {output}")
+        response.status_code = status.HTTP_200_OK
+        message = {
+            "stdout": f"{output.stdout!r}",
+            "stderr": f"{output.stderr!r}",
+            "return_code": output.returncode,
+        }
+        return message
+    except Exception as error:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        logger.exception(error)
+        return {"message": f"{error}"}
 
 
 # TODO: Update commander to work with openapi modules and improve modularity and code organization
