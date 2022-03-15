@@ -95,14 +95,14 @@ echo "Checking for available space."
 AVAILABLE_SPACE_GB=$(($(stat -f / --format="%a*%S/1024**3")))
 NECESSARY_SPACE_GB=1
 (( AVAILABLE_SPACE_GB < NECESSARY_SPACE_GB )) && (
-    echo "Not enough free space to install companion, at least ${NECESSARY_SPACE_GB}GB required"
+    echo "Not enough free space to install blueos, at least ${NECESSARY_SPACE_GB}GB required"
     exit 1
 )
 
 # Check for docker and install it if not found
 echo "Checking for docker."
 ## Docker uses VERSION environment variable to set the docker version,
-## We unset this variable for this command to avoid conflicts with companion version
+## We unset this variable for this command to avoid conflicts with blueos version
 docker --version || curl -fsSL https://get.docker.com | env -u VERSION sh || (
     echo "Failed to start docker, something may be wrong."
     if [ $RUNNING_IN_CI -ne 1 ]
@@ -151,7 +151,7 @@ test $NO_CLEAN || (
 )
 
 # Start installing necessary files and system configuration
-echo "Going to install companion-docker version ${VERSION}."
+echo "Going to install blueos-docker version ${VERSION}."
 
 echo "Downloading and installing udev rules."
 curl -fsSL $ROOT/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
@@ -163,10 +163,10 @@ sed -i '/noipv4ll/d' /etc/dhcpcd.conf
 sed -i '$ a noipv4ll' /etc/dhcpcd.conf
 
 echo "Downloading bootstrap"
-COMPANION_BOOTSTRAP="bluerobotics/companion-bootstrap:master" # We don't have others tags for now
-BLUEOS_CORE="bluerobotics/companion-core:$VERSION" # We don't have a stable tag yet
+BLUEOS_BOOTSTRAP="bluerobotics/blueos-bootstrap:master" # We don't have others tags for now
+BLUEOS_CORE="bluerobotics/blueos-core:$VERSION" # We don't have a stable tag yet
 
-docker pull $COMPANION_BOOTSTRAP
+docker pull $BLUEOS_BOOTSTRAP
 docker pull $BLUEOS_CORE
 # Create blueos-bootstrap container
 docker create \
@@ -174,10 +174,10 @@ docker create \
     --restart unless-stopped \
     --name blueos-bootstrap \
     --net=host \
-    -v $HOME/.config/companion/bootstrap:/root/.config/bootstrap \
+    -v $HOME/.config/blueos/bootstrap:/root/.config/bootstrap \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -e COMPANION_CONFIG_PATH=$HOME/.config/companion \
-    $COMPANION_BOOTSTRAP
+    -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos \
+    $BLUEOS_BOOTSTRAP
 
 # add docker entry to rc.local
 sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "sed failed to add expand_fs entry in /etc/rc.local"
@@ -189,7 +189,7 @@ curl -fsSL $ROOT/install/network/avahi.sh | bash
 
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
-echo "- The computer webpage: http://companion.local"
-echo "- The ssh client: pi@companion.local"
+echo "- The computer webpage: http://blueos.local"
+echo "- The ssh client: pi@blueos.local"
 echo "System will reboot in 10 seconds."
 sleep 10 && reboot
