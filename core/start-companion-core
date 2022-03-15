@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-COMPANION_PATH=/home/pi
-SERVICES_PATH=$COMPANION_PATH/services
-TOOLS_PATH=$COMPANION_PATH/tools
+BLUEOS_PATH=/home/pi
+SERVICES_PATH=$BLUEOS_PATH/services
+TOOLS_PATH=$BLUEOS_PATH/tools
 
 # MAVLink configuration
 MAV_SYSTEM_ID=1
@@ -57,4 +57,4 @@ for TUPLE in "${SERVICES[@]}"; do
     create_service $NAME "$EXECUTABLE"
 done
 
-echo "Companion running!"
+echo "BlueOS running!"
