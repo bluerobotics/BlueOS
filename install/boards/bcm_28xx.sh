@@ -15,7 +15,7 @@ done
 if [ -f "/etc/modules" ]; then
     MODULES_FILE="/etc/modules"
 else
-    MODULES_FILE="/etc/modules-load.d/companion.conf"
+    MODULES_FILE="/etc/modules-load.d/blueos.conf"
     touch "$MODULES_FILE" || true # Create if it does not exist
 fi
 
