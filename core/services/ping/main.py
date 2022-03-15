@@ -21,7 +21,7 @@ SERVICE_NAME = "ping"
 
 app = FastAPI(
     title="Ping Manager API",
-    description="Ping Manager is responsible for managing Ping devices connected to Companion.",
+    description="Ping Manager is responsible for managing Ping devices connected to BlueOS.",
     default_response_class=PrettyJSONResponse,
     debug=True,
 )
@@ -65,7 +65,7 @@ async def sensor_manager() -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Ping Service for Bluerobotics Companion")
+    parser = argparse.ArgumentParser(description="Ping Service for Bluerobotics BlueOS")
     args = parser.parse_args()
 
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
