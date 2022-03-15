@@ -12,7 +12,7 @@ pytestmark = pytest.mark.asyncio
 SAMPLE_JSON = """{
     "core": {
         "tag": "master",
-        "image": "bluerobotics/companion-core",
+        "image": "bluerobotics/blueos-core",
         "enabled": true,
         "webui": false,
         "network": "host",
@@ -66,16 +66,16 @@ async def test_get_version() -> None:
 
         response = await chooser.get_version()
         result = json.loads(response.text)
-        assert result["repository"] == "bluerobotics/companion-core"
+        assert result["repository"] == "bluerobotics/blueos-core"
         assert result["tag"] == "master"
         assert len(client_mock.mock_calls) > 0
 
 
-version = {"tag": "master", "image": "bluerobotics/companion-core", "pull": False}
+version = {"tag": "master", "image": "bluerobotics/blueos-core", "pull": False}
 
 EXPECTED_SET_VERSION_WRITE_CALL = """{  "core": {
     "tag": "master",
-    "image": "bluerobotics/companion-core",
+    "image": "bluerobotics/blueos-core",
     "enabled": true,
   '
             '  "webui": false,
@@ -109,7 +109,7 @@ async def test_set_version(write_mock: AsyncMock) -> None:
     chooser = VersionChooser(client)
     with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
 
-        result = await chooser.set_version("bluerobotics/companion-core", "master")
+        result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert await write_mock.called_once_with(EXPECTED_SET_VERSION_WRITE_CALL)
         assert result.status == 200
 
@@ -122,7 +122,7 @@ async def test_set_version_invalid_settings(json_mock: mock.MagicMock) -> None:
     with mock.patch("builtins.open", mock.mock_open(read_data="{}")):
         request_mock = AsyncMock()
         request_mock.json = AsyncMock(return_value=version)
-        result = await chooser.set_version("bluerobotics/companion-core", "master")
+        result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert result.status == 500
         assert len(json_mock.mock_calls) > 0
 
@@ -158,7 +158,7 @@ async def test_get_available_versions_dockerhub_unavailable(
     attrs = {"images.list.return_value": image_list}
     client_mock.configure_mock(**attrs)
     chooser = VersionChooser(client_mock)
-    result = await chooser.get_available_versions("bluerobotics/companion-core")
+    result = await chooser.get_available_versions("bluerobotics/blueos-core")
     data = json.loads(result.text)
     assert "local" in data
     assert "remote" in data
@@ -174,7 +174,7 @@ async def test_get_available_versions() -> None:
     client_mock.configure_mock(**attrs)
 
     chooser = VersionChooser(client_mock)
-    result = await chooser.get_available_versions("bluerobotics/companion-core")
+    result = await chooser.get_available_versions("bluerobotics/blueos-core")
     data = json.loads(result.text)
     assert "local" in data
     assert "remote" in data
@@ -211,6 +211,6 @@ async def test_set_version_json_exception(json_mock: mock.MagicMock) -> None:
     json_mock.side_effect = Exception()
     chooser = VersionChooser(client)
     with mock.patch("builtins.open", mock.mock_open(read_data="{}")):
-        result = await chooser.set_version("bluerobotics/companion-core", "master")
+        result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert result.status == 500
         assert len(json_mock.mock_calls) > 0
