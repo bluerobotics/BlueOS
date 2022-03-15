@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Legacy script used to generate companion images from sdcards
+# Legacy script used to generate BlueOS images from sdcards
 
 DEV_DISK=$1
 IMAGE_FILE=$2
@@ -43,7 +43,7 @@ if udevadm info $DEV_DISK | grep ID_BUS=usb > /dev/null; then
     error "$DEV_DISK is not on the USB bus!"
 fi
 
-# TODO: make sure the disk contains a companion OS image
+# TODO: make sure the disk contains a BlueOS OS image
 # check it is top level disk device, not a partition
 
 # Check size
@@ -54,7 +54,7 @@ echo "$DEV_DISK is $DEV_DISK_SIZE"
 echo "Are you sure you want to make an image with $DEV_DISK?"
 input "y"
 
-MOUNT_LOCATION=/tmp/companion_deploy
+MOUNT_LOCATION=/tmp/blueos_deploy
 mkdir -p $MOUNT_LOCATION
 
 DEV_PART2=$DEV_DISK
@@ -74,7 +74,7 @@ cp wpa_supplicant.conf $MOUNT_LOCATION/etc/wpa_supplicant/wpa_supplicant.conf ||
 cp expand_fs.sh $MOUNT_LOCATION/usr/bin/expand_fs.sh || error "failed to copy expand_fs.sh"
 
 # insert expand_fs command in /etc/rc.local
-# above the line to start the companion services
+# above the line to start the blueos services
 echo "adding expand_fs entry to /etc/rc.local"
 EXPAND="/usr/bin/expand_fs.sh"
 sed -i "\%$EXPAND%d" $MOUNT_LOCATION/etc/rc.local || error "sed failed to remove expand_fs entry in /etc/rc.local"

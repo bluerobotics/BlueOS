@@ -12,9 +12,9 @@ RUN touch /boot/ssh
 RUN sed -i "\%^exit 0%irfkill unblock all" /etc/rc.local
 
 RUN bash -c '
-  mkdir -p /root/.config/companion/bootstrap/
-  curl -o /root/.config/companion/bootstrap/startup.json https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$VERSION/bootstrap/startup.json.default
-  sed -i 's/master/$VERSION/g' /root/.config/companion/bootstrap/startup.json
+  mkdir -p /root/.config/blueos/bootstrap/
+  curl -o /root/.config/blueos/bootstrap/startup.json https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$VERSION/bootstrap/startup.json.default
+  sed -i 's/master/$VERSION/g' /root/.config/blueos/bootstrap/startup.json
 '
 
 RUN bash -c '
