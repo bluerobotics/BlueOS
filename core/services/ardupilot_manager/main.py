@@ -25,7 +25,7 @@ from typedefs import Firmware, FlightController, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
-parser = argparse.ArgumentParser(description="ArduPilot Manager service for Blue Robotics Companion")
+parser = argparse.ArgumentParser(description="ArduPilot Manager service for Blue Robotics BlueOS")
 parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any board", action="store_true")
 
 args = parser.parse_args()
@@ -36,7 +36,7 @@ logger.add(get_new_log_path(SERVICE_NAME))
 
 app = FastAPI(
     title="ArduPilot Manager API",
-    description="ArduPilot Manager is responsible for managing ArduPilot devices connected to Companion.",
+    description="ArduPilot Manager is responsible for managing ArduPilot devices connected to BlueOS.",
     default_response_class=PrettyJSONResponse,
     debug=True,
 )
