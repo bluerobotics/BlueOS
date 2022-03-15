@@ -54,15 +54,20 @@ def run_command(command: str) -> "subprocess.CompletedProcess['bytes']":
     )
 
 
-# TODO: Update commander to work with openapi modules and improve modularity and code organization
-@app.post("/shutdown", status_code=status.HTTP_200_OK)
-@version(1, 0)
-async def shutdown(response: Response, shutdown_type: ShutdownType, i_know_what_i_am_doing: bool = False) -> Any:
+def check_what_i_am_doing(i_know_what_i_am_doing: bool = False) -> None:
     if not i_know_what_i_am_doing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Developer, you don't know what you are doing, command aborted.",
         )
+
+
+# TODO: Update commander to work with openapi modules and improve modularity and code organization
+@app.post("/shutdown", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def shutdown(response: Response, shutdown_type: ShutdownType, i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+
     try:
         hold_time_seconds = 5
         if shutdown_type == ShutdownType.REBOOT:
@@ -82,11 +87,7 @@ async def shutdown(response: Response, shutdown_type: ShutdownType, i_know_what_
 @app.post("/settings/reset", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def reset_settings(response: Response, i_know_what_i_am_doing: bool = False) -> Any:
-    if not i_know_what_i_am_doing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Developer, you don't know what you are doing, command aborted.",
-        )
+    check_what_i_am_doing(i_know_what_i_am_doing)
 
     try:
         user_config_dir = Path(appdirs.user_config_dir())
