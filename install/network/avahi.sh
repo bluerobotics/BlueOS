@@ -14,17 +14,17 @@ systemctl is-active --quiet avahi-daemon || (
     exit 1
 )
 
-echo "Configuring companion avahi service"
+echo "Configuring blueos avahi service"
 AVAHI_SERVICE_PATH="/etc/avahi/services"
 [ ! -d "${AVAHI_SERVICE_PATH}" ] && (
     echo "Avahi service directory does not exist: ${AVAHI_SERVICE_PATH}"
     exit 1
 )
-curl -fsSL $CONFIGURE_NETWORK_PATH/companion.service > "${AVAHI_SERVICE_PATH}/companion.service"
+curl -fsSL $CONFIGURE_NETWORK_PATH/blueos.service > "${AVAHI_SERVICE_PATH}/blueos.service"
 
-echo "Configure hostname to companion"
+echo "Configure hostname to blueos"
 OLD_HOSTNAME="$(cat /etc/hostname)"
-NEW_HOSTNAME="companion"
+NEW_HOSTNAME="blueos"
 # Overwrite with new name
 echo $NEW_HOSTNAME > /etc/hostname
 # Replace current name
