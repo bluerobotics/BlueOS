@@ -95,7 +95,7 @@ class Helper:
 
 fast_api_app = FastAPI(
     title="Helper API",
-    description="Everybody's helper to find web services that are running in companion.",
+    description="Everybody's helper to find web services that are running in BlueOS.",
     default_response_class=PrettyJSONResponse,
 )
 

@@ -9,7 +9,7 @@ setuptools.setup(
     version="0.0.1",
     author="Rafael Araujo Lehmkuhl",
     author_email="rafael@bluerobotics.com",
-    description="Companion NMEA Injector.",
+    description="BlueOS NMEA Injector.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),

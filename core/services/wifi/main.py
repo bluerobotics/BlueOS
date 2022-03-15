@@ -33,7 +33,7 @@ wifi_manager = WifiManager()
 
 app = FastAPI(
     title="WiFi Manager API",
-    description="WiFi Manager is responsible for managing WiFi connections on Companion.",
+    description="WiFi Manager is responsible for managing WiFi connections on BlueOS.",
     default_response_class=PrettyJSONResponse,
 )
 
