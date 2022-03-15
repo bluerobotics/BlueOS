@@ -1,7 +1,7 @@
 
-Welcome to Companion 1.0!
+Welcome to BlueOS 1.0!
 
-What you currently see is a tmux session built into Companion's docker container.
+What you currently see is a tmux session built into BlueOS's docker container.
 This means you are not in the host Raspbian OS itself, and most of the data in here is
 not-persistent, except for things in /root/.config, although you should not store your data there.
 
