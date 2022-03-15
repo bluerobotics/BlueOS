@@ -117,7 +117,7 @@ class ArduPilotManager(metaclass=Singleton):
         if not self.firmware_manager.is_firmware_installed(self.current_platform):
             if board.platform == Platform.Navigator:
                 self.install_firmware_from_file(
-                    pathlib.Path("/root/companion-files/ardupilot-manager/default/ardupilot_navigator")
+                    pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator")
                 )
 
         self.firmware_manager.validate_firmware(self.current_firmware_path(), self.current_platform)

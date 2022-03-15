@@ -17,8 +17,8 @@ class Settings:
     log_path = Path.joinpath(settings_path, "logs")
     app_folders = [settings_path, firmware_folder, log_path]
 
-    companion_files_folder = Path.joinpath(Path.home(), "companion-files")
-    defaults_folder = Path.joinpath(companion_files_folder, "ardupilot-manager/default")
+    blueos_files_folder = Path.joinpath(Path.home(), "blueos-files")
+    defaults_folder = Path.joinpath(blueos_files_folder, "ardupilot-manager/default")
 
     def __init__(self) -> None:
         self.root: Dict[str, Union[int, Dict[str, Any]]] = {"version": 0, "content": {}}
