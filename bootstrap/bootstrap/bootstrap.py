@@ -17,8 +17,8 @@ class Bootstrapper:
     DEFAULT_FILE_PATH = pathlib.Path("/bootstrap/startup.json.default")
     DOCKER_CONFIG_PATH = pathlib.Path("/root/.config")
     DOCKER_CONFIG_FILE_PATH = DOCKER_CONFIG_PATH.joinpath("bootstrap/startup.json")
-    HOST_CONFIG_PATH = os.environ.get("COMPANION_CONFIG_PATH", "/tmp/companion/.config")
-    CORE_CONTAINER_NAME = "companion-core"
+    HOST_CONFIG_PATH = os.environ.get("BLUEOS_CONFIG_PATH", "/tmp/blueos/.config")
+    CORE_CONTAINER_NAME = "blueos-core"
     core_last_response_time = time.time()
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
@@ -179,7 +179,7 @@ class Bootstrapper:
         try:
             self.client.containers.run(
                 f"{image_name}:{image_version}",
-                name=f"companion-{component_name}",
+                name=f"blueos-{component_name}",
                 volumes=binds,
                 privileged=privileged,
                 network=network,
@@ -194,7 +194,7 @@ class Bootstrapper:
         return True
 
     def is_running(self, component: str) -> bool:
-        """Checks if the container for a given component of companion is running
+        """Checks if the container for a given component of blueos is running
 
         Args:
             component (str): component name ("core", "bootstrap", "ttyd", ...)
@@ -222,7 +222,7 @@ class Bootstrapper:
     def remove(self, container: str) -> None:
         """Deletes the chosen container if it exists (needed for updating the running image)"""
         try:
-            old_container = self.client.containers.get(f"companion-{container}")
+            old_container = self.client.containers.get(f"blueos-{container}")
             old_container.stop()
             old_container.remove()
         except docker.errors.NotFound:
