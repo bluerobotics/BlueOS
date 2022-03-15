@@ -35,7 +35,7 @@ export interface Disk {
 /** Base structure that provides basic OS/computer information */
 export interface Info {
     /**
-     * @param host_name - E.g: companion, pichau
+     * @param host_name - E.g: blueos, pichau
      * @param kernel_version - E.g: "5.16.2-arch1-1", "5.10.63-v7l+"
      * @param os_version - E.g: rolling, 11
      * @param system_name - E.g: "Arch Linux", "Debian GNU/Linux"

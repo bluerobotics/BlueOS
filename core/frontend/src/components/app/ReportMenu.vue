@@ -95,7 +95,7 @@ export default Vue.extend({
       this.show_dialog = state
     },
     openGitHub(): void {
-      window.open('https://github.com/bluerobotics/companion-docker/issues/new/choose', '_blank')
+      window.open('https://github.com/bluerobotics/blueos-docker/issues/new/choose', '_blank')
     },
     openDiscuss(): void {
       window.open(this.discussUrl(), '_blank')
