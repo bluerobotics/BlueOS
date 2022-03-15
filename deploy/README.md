@@ -1,1 +1,1 @@
-# Temporary helpers to generate companion images
+# Temporary helpers to generate BlueOS images
