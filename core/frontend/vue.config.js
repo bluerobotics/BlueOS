@@ -1,5 +1,5 @@
 process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
-const SERVER_ADDRESS = 'http://companion.local/'
+const SERVER_ADDRESS = 'http://blueos.local/'
 
 module.exports = {
   devServer: {

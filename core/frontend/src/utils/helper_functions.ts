@@ -42,7 +42,7 @@ export function castString(value: string): any { // eslint-disable-line @typescr
 * */
 export function convertGitDescribeToUrl(git_describe: string): string {
   const user = 'bluerobotics'
-  const repository = 'companion-docker'
+  const repository = 'blueos-docker'
   const project_url = `https://github.com/${user}/${repository}`
 
   // Local development version, pointing to root page

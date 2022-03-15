@@ -205,7 +205,7 @@ export default Vue.extend({
       current_version: null as (null | Version),
       loading_images: false,
       waiting: false,
-      selected_image: 'bluerobotics/companion-core',
+      selected_image: 'bluerobotics/blueos-core',
       deleting: '', // image currently being deleted, if any
       error: null as (null | string),
     }

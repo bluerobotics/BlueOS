@@ -60,7 +60,7 @@ class MavlinkStore extends VuexModule {
   updateMessage(message: MavlinkMessage): void {
     if (message) {
       // TODO: Check if this is the best possible way to update `available_messages`
-      // Reference: https://github.com/bluerobotics/companion-docker/pull/508#discussion_r718729077
+      // Reference: https://github.com/bluerobotics/blueos-docker/pull/508#discussion_r718729077
       Vue.set(this.available_messages, message.messageName, message)
     }
   }
