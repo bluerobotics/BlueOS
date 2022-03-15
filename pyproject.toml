@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "companion-docker"
+name = "blueos-docker"
 version = "0.0.1"
-description = "Blue Robotics Companion computer project"
+description = "Blue Robotics BlueOS computer project"
 authors = ["software@bluerobotics.com"]
 license = "MIT"
 
