@@ -107,7 +107,7 @@ class VersionChooser:
 
         Args:
             request (web.Request): http request from aiohttp
-            repository (str): name of the image, such as bluerobotics/companion-core
+            repository (str): name of the image, such as bluerobotics/blueos-core
             tag (str): image tag
 
         Returns:
@@ -155,7 +155,7 @@ class VersionChooser:
                 startup_file.truncate()
 
                 logging.info("Stopping core...")
-                core = await self.client.containers.get("companion-core")  # type: ignore
+                core = await self.client.containers.get("blueos-core")  # type: ignore
                 if core:
                     await core.kill()
                 core = await self.client.containers.get("blueos-core")  # type: ignore
@@ -209,7 +209,7 @@ class VersionChooser:
         """Returns versions available locally and in the remote
 
         Args:
-            repository (str): repository name (such as bluerobotics/companion-core)
+            repository (str): repository name (such as bluerobotics/blueos-core)
             tag (str): tag (such as "master" or "latest")
 
         Returns:
@@ -219,7 +219,7 @@ class VersionChooser:
         for image in await self.client.images.list():
             if not image["RepoTags"]:
                 continue
-            if not any("/companion-core:" in tag for tag in image["RepoTags"]):
+            if not any("/blueos-core:" in tag for tag in image["RepoTags"]):
                 continue
             for image_tag in image["RepoTags"]:
                 image_repository, tag = image_tag.split(":")
@@ -252,6 +252,6 @@ class VersionChooser:
             web.Response: always 200
         """
         logging.info("Stopping core...")
-        core = await self.client.containers.get("companion-core")  # type: ignore
+        core = await self.client.containers.get("blueos-core")  # type: ignore
         await core.kill()
         return web.Response(status=200, text="Restarting...")

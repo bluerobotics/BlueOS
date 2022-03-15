@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Companion Version Chooser
+  title: BlueOS Version Chooser
   license:
     name: MIT
 servers:
@@ -11,13 +11,13 @@ paths:
   /version/current:
     get:
       operationId: main.get_version
-      summary: Return the current running version of Companion
+      summary: Return the current running version of BlueOS
       responses:
         '200':
-          description: The current running version of Companion
+          description: The current running version of BlueOS
     post:
       operationId: main.set_version
-      summary: Sets the current version of Companion to a new tag
+      summary: Sets the current version of BlueOS to a new tag
       responses:
         '200':
           description: Successfully set a new version
@@ -31,7 +31,7 @@ paths:
               properties:
                 repository:
                   type: string
-                  example: bluerobotics/companion-core
+                  example: bluerobotics/blueos-core
                 tag:
                   type: string
                   example: master
@@ -46,7 +46,7 @@ paths:
   /version/delete:
     delete:
       operationId: main.delete_version
-      summary: Delete the selected version of companion
+      summary: Delete the selected version of BlueOS
       responses:
         '200':
           description: Version as deleted successfully
@@ -64,7 +64,7 @@ paths:
               properties:
                 repository:
                   type: string
-                  example: bluerobotics/companion-core
+                  example: bluerobotics/blueos-core
                 tag:
                   type: string
                   example: master
@@ -85,7 +85,7 @@ paths:
           schema:
             type: string
           required: true
-          example: companion-core
+          example: blueos-core
       responses:
         '200':
           description: A list of versions available locally and on the remote(s)
@@ -124,7 +124,7 @@ paths:
               properties:
                 repository:
                   type: string
-                  example: bluerobotics/companion-core
+                  example: bluerobotics/blueos-core
                 tag:
                   type: string
                   example: master
@@ -156,7 +156,7 @@ components:
       properties:
         image:
           type: string
-          example: bluerobotics/companion-core
+          example: bluerobotics/blueos-core
         tag:
           type: string
           example: master

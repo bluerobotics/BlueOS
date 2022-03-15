@@ -40,7 +40,7 @@ for filename, url in static_files.items():
 setup(
     name="versionchooser_service",
     version="0.1.0",
-    description="Blue Robotics Ardusub Companion Version Chooser",
+    description="Blue Robotics Ardusub BlueOS Version Chooser",
     license="MIT",
     install_requires=[
         "aiohttp-jinja2 == 1.4.2",
