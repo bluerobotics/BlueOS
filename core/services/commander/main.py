@@ -21,7 +21,7 @@ logger.add(get_new_log_path(SERVICE_NAME))
 
 app = FastAPI(
     title="Commander API",
-    description="Commander is a Companion service responsible to abstract simple commands to the frontend.",
+    description="Commander is a BlueOS service responsible to abstract simple commands to the frontend.",
 )
 logger.info("Starting Commander!")
 
