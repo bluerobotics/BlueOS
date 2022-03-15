@@ -40,7 +40,7 @@ COPY configuration/motd /etc/motd
 # Install services
 COPY services /home/pi/services
 RUN /home/pi/services/install-services.sh
-COPY start-companion-core /usr/bin/start-companion-core
+COPY start-blueos-core /usr/bin/start-blueos-core
 
 # Copy binaries from downloadBinaries to this stage
 COPY --from=downloadBinaries \
@@ -61,4 +61,4 @@ COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 RUN [ ! -d "/root/.config" ]
 
 # Start
-ENTRYPOINT /usr/bin/start-companion-core && sleep infinity
+ENTRYPOINT /usr/bin/start-blueos-core && sleep infinity
