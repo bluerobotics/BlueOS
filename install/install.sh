@@ -163,8 +163,8 @@ sed -i '/noipv4ll/d' /etc/dhcpcd.conf
 sed -i '$ a noipv4ll' /etc/dhcpcd.conf
 
 echo "Downloading bootstrap"
-BLUEOS_BOOTSTRAP="bluerobotics/blueos-bootstrap:master" # We don't have others tags for now
-BLUEOS_CORE="bluerobotics/blueos-core:$VERSION" # We don't have a stable tag yet
+BLUEOS_BOOTSTRAP="patrickelectric/blueos-bootstrap:master" # We don't have others tags for now
+BLUEOS_CORE="patrickelectric/blueos-core:$VERSION" # We don't have a stable tag yet
 
 docker pull $BLUEOS_BOOTSTRAP
 docker pull $BLUEOS_CORE
