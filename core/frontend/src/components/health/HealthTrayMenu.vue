@@ -46,7 +46,7 @@
           mdi-lightning-bolt
         </v-icon>
         <v-icon
-          v-if="heartbeat_age() < 3000"
+          v-if="heartbeat_age() < time_limit_heartbeat"
           class="px-1"
           :color="`rgba(255,255,255,${0.4 + (1000-heartbeat_age())/1000}`"
           title="MAVLink heartbeats arriving as expected"
@@ -54,7 +54,7 @@
           mdi-heart-pulse
         </v-icon>
         <v-icon
-          v-if="heartbeat_age() >= 3000"
+          v-if="heartbeat_age() >= time_limit_heartbeat"
           class="px-1 white-shadow"
           color="red"
           title="MAVLink heartbeat lost"
@@ -95,11 +95,18 @@ import Vue from 'vue'
 
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
+import { MavlinkMessage } from '@/types/mavlink'
 import { RaspberryEventType } from '@/types/system-information/platform'
 import mavlink_store_get from '@/utils/mavlink'
 
 export default Vue.extend({
   name: 'HealthTrayMenu',
+  data() {
+    return {
+      time_limit_heartbeat: 3000,
+      last_date_diff: 5000,
+    }
+  },
   computed: {
     cpu_temperature(): string {
       const temperature_sensors = system_information.system?.temperature
@@ -143,12 +150,20 @@ export default Vue.extend({
     },
   },
   methods: {
-    heartbeat_age(): number {
-      const last_date = mavlink_store_get(mavlink, 'HEARTBEAT.timestamp') as Date
+    heartbeat_age(): number | undefined {
+      const heartbeat = mavlink_store_get(mavlink, 'HEARTBEAT') as MavlinkMessage
+      const last_date = heartbeat?.timestamp
       if (last_date === undefined) {
-        return 5000
+        this.last_date_diff = this.time_limit_heartbeat
+        return this.last_date_diff
       }
-      return new Date().valueOf() - last_date.valueOf()
+
+      if (heartbeat?.messageData.header.system_id !== 1 || heartbeat?.messageData.header.component_id !== 1) {
+        return this.last_date_diff
+      }
+
+      this.last_date_diff = new Date().valueOf() - last_date.valueOf()
+      return this.last_date_diff
     },
   },
 })
