@@ -1,0 +1,36 @@
+{
+    "VERSION": 1,
+    "default": {
+      "domain_names": ["blueos"],
+      "advertise": ["_http"],
+      "ip": "ips[0]"
+    },
+    "blacklist": ["lo", "docker"],
+    "interfaces": [
+      {
+        "name": "eth0",
+        "domain_names": ["blueos", "companion"],
+        "advertise": ["_mavlink", "_http"],
+        "ip": "ips[*]"
+      },
+      {
+        "name": "wlan0",
+        "domain_names": ["companion", "blueos", "blueos-wifi"],
+        "advertise": ["_http"],
+        "ip": "ips[0]"
+      }
+    ],
+    "advertisement_types": [
+      {
+        "name": "_mavlink",
+        "protocol": "_udp",
+        "port": 14550,
+        "properties": "{\"name\": \"ardusub\"}"
+      },
+      {
+        "name": "_http",
+        "protocol": "_tcp",
+        "port": 80
+      }
+    ]
+  }
