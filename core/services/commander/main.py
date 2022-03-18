@@ -2,6 +2,7 @@
 import logging
 import shutil
 import subprocess
+import time
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -85,6 +86,21 @@ async def command_host(response: Response, command: str, i_know_what_i_am_doing:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         logger.exception(error)
         return {"message": f"{error}"}
+
+
+@app.post("/set_time", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def set_time(response: Response, unix_time_seconds: int, i_know_what_i_am_doing: bool = False) -> Any:
+    unix_time_seconds_now = int(time.time())
+    if abs(unix_time_seconds_now - unix_time_seconds) < 5 * 60:
+        return {
+            "message": f"External time ({unix_time_seconds}) is close to internal time ({unix_time_seconds_now})"
+            ", not updating."
+        }
+
+    # It's necessary to stop ntp sync before setting time
+    command = f"sudo timedatectl set-ntp false; sudo date -s '@{unix_time_seconds}'; sudo timedatectl set-ntp true"
+    return await command_host(response, command, i_know_what_i_am_doing)
 
 
 # TODO: Update commander to work with openapi modules and improve modularity and code organization
