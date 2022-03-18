@@ -90,3 +90,10 @@ export const network_speed_test_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const update_time_service: Service = {
+  name: 'Update time',
+  description: 'Service to update system time',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
