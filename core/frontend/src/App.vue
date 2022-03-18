@@ -143,6 +143,7 @@
     <mavlink-updater />
     <nmea-injector-updater />
     <error-message />
+    <update-time />
   </v-app>
 </template>
 
@@ -157,6 +158,7 @@ import ErrorMessage from './components/app/ErrorMessage.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
+import UpdateTime from './components/app/UpdateTime.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
@@ -187,6 +189,7 @@ export default Vue.extend({
     'report-menu': ReportMenu,
     'backend-status-checker': BackendStatusChecker,
     'error-message': ErrorMessage,
+    'update-time': UpdateTime,
   },
 
   data: () => ({
