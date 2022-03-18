@@ -201,6 +201,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: success() && matrix.docker == 'core'
         with:
+          name: BlueOS-core-docker-image.zip
           path: '*.tar'
 
 
