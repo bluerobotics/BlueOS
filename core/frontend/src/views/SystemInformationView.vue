@@ -60,7 +60,6 @@ import AboutThisSystem from '@/components/system-information/AboutThisSystem.vue
 import Network from '@/components/system-information/Network.vue'
 import Processes from '@/components/system-information/Processes.vue'
 import SystemCondition from '@/components/system-information/SystemCondition.vue'
-import system_information from '@/store/system-information'
 
 export default Vue.extend({
   name: 'SystemInformationView',
