@@ -47,7 +47,8 @@ export default Vue.extend({
   computed: {
     info(): Record<string, unknown>[] | undefined {
       const info = system_information.system?.info
-      if (!info) {
+      const unix_time_seconds = system_information.system?.unix_time_seconds
+      if (!info || !unix_time_seconds) {
         return undefined
       }
 
@@ -60,6 +61,9 @@ export default Vue.extend({
         },
         {
           title: 'Hostname', value: `${info.host_name}`,
+        },
+        {
+          title: 'Time', value: new Date(unix_time_seconds * 1000).toTimeString(),
         },
       ]
     },
