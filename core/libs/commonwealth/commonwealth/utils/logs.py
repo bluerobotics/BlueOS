@@ -5,7 +5,6 @@ from pathlib import Path
 from types import FrameType
 from typing import Optional, Union
 
-import appdirs
 from loguru import logger
 
 
@@ -39,7 +38,7 @@ def get_new_log_path(service_name: str) -> Path:
         raise ValueError("Service name cannot contain extension-separation character ('.').")
 
     # Create folder for service logs if it doesn't exist yet
-    default_log_folder = Path(appdirs.user_log_dir())
+    default_log_folder = Path("/var/logs/blueos/services")
     service_log_folder = default_log_folder.joinpath(service_name)
     service_log_folder.mkdir(parents=True, exist_ok=True)
 
