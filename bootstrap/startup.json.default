@@ -25,6 +25,10 @@
             "/var/run/docker.sock": {
                 "bind": "/var/run/docker.sock",
                 "mode": "rw"
+            },
+            "/var/logs/blueos": {
+                "bind": "/var/logs/blueos",
+                "mode": "rw"
             }
         },
         "privileged": true
