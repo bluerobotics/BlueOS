@@ -182,6 +182,7 @@ export interface System {
      * @param network - Array that contains information for all network interfaces
      * @param process - Array that contains information for all processes
      * @param temperature - Array that contains information for all temperature indicators
+     * @param unix_time_seconds - System unix time in seconds
     * */
     cpu: CPU[],
     disk: Disk[],
@@ -190,4 +191,5 @@ export interface System {
     network: Network[],
     process: Process[],
     temperature: Temperature[],
+    unix_time_seconds: number,
 }
