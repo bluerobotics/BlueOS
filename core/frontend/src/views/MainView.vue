@@ -1,38 +1,20 @@
 <template>
   <v-container>
     <v-card>
-      <v-card-title><p>Welcome to BlueOS <strong>B.E.T.A test</strong>!</p></v-card-title>
+      <v-card-title><p>Welcome to BlueOS!</p></v-card-title>
       <v-card-text>
         <p>
-          You are now running BlueOS <strong>B.E.T.A (Break it Early Test Application)</strong>!.<br>
-          We have been working for the last couple of months on a totally new experience,
-          and are now confident enough to open our work to a small number of users to test and check
-          the changes!
+          Before start using, we highly recommend to <a
+            href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#connect-wifi"
+          >
+            connect first on the internet
+          </a>
+          and do the
+          <a href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#select-version">
+            system update to the latest version available
+          </a>
+          .
         </p>
-        <p>Be aware that the B.E.T.A may not be stable and changes will occur during the development.</p>
-        <p>There are 3 types of releases on BlueOS.</p>
-        <ul>
-          <li>
-            "Stable" releases, that are not available in this B.E.T.A
-            <ul>
-              <li>Stable and long supported versions</li>
-            </ul>
-          </li>
-          <li>
-            "B.E.T.A" releases
-            <ul>
-              <li>Versions that will be released after an internal test</li>
-            </ul>
-          </li>
-          <li>
-            "Master" releases, not recommended
-            <ul>
-              <li>The very latest features, that may not have been tested yet</li>
-            </ul>
-          </li>
-        </ul>
-        <br>
-        We recommend using only the B.E.T.A releases.
         <v-card-text />
       </v-card-text>
     </v-card>
