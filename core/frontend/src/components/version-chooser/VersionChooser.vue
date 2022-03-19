@@ -361,7 +361,10 @@ export default Vue.extend({
                 // Axios returns the promise too early (before the pull is done)
                 // so we check the overall docker status instead
                 if (overall_status.includes('Downloaded newer image for')) {
-                  setTimeout(() => { this.setVersion(fullname) }, 1000)
+                  setTimeout(() => {
+                    this.show_pull_output = false
+                    this.setVersion(fullname)
+                  }, 1000)
                 }
                 if (overall_status.includes('Image is up to date')) {
                   setTimeout(() => { this.setVersion(fullname) }, 1000)
