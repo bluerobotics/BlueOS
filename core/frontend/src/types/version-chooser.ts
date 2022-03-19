@@ -10,3 +10,10 @@ export interface VersionsQuery {
     remote: Version[],
     error: (string | null)
   }
+
+export enum VersionType {
+    Custom = 'custom',
+    Master = 'master',
+    Beta = 'beta',
+    Stable = 'stable',
+  }
