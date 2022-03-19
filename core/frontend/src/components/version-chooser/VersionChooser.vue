@@ -219,6 +219,7 @@ export default Vue.extend({
   },
   methods: {
     async checkIfBackendIsOnline() {
+      this.waiting = true
       await back_axios({
         method: 'get',
         url: '/version-chooser/v1.0/version/current',
