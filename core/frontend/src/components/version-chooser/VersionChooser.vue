@@ -176,8 +176,10 @@ import Vue from 'vue'
 
 import settings from '@/libs/settings'
 import { Dictionary } from '@/types/common'
-import { Version, VersionsQuery } from '@/types/version-chooser'
+import { Version, VersionsQuery, VersionType } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
+// Version Chooser Utils
+import * as VCU from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import VersionCard from './VersionCard.vue'
@@ -234,50 +236,8 @@ export default Vue.extend({
           this.waiting = true
         })
     },
-    fixVersion(version: string) {
-      /** It turned out that our semvers are wrong... oopss
-      This turns 1.0.0.beta12 into 1.0.0-beta.12
-      Additionally filters out tags with no '.' in it, which
-      can be improved
-      */
-      if (version.includes('.beta')) {
-        return version.replace('.beta', '-beta.')
-      }
-      if (!version.includes('.')) {
-        return null
-      }
-      return version
-    },
-    isSemVer(version: string): boolean {
-      // validates a version as SemVer compliant
-      try {
-        const fixed_version = this.fixVersion(version)
-        if (fixed_version == null) {
-          return false
-        }
-        const semver = new SemVer(fixed_version)
-        return semver !== null
-      } catch (error) {
-        return false
-      }
-    },
-    sortVersions(versions: string[]) {
-      return versions.sort(
-        (a: string, b: string) => {
-          const ver_a = this.fixVersion(a)
-          const ver_b = this.fixVersion(b)
-          if (ver_a === null) {
-            return 1
-          }
-          if (ver_b === null) {
-            return -1
-          }
-          return sem_ver_greater(new SemVer(ver_a), new SemVer(ver_b)) === true ? -1 : 1
-        },
-      )
-    },
     runningBeta() {
-      return this.current_version?.tag?.includes('beta') ?? false
+      return VCU.getVersionType(this.current_version) === VersionType.Beta
     },
     newBetaAvailable() {
       if (!this.current_version) {
@@ -297,70 +257,35 @@ export default Vue.extend({
       }
       return ''
     },
-    getLatestBeta() {
-      const ordered_list = this.sortVersions(
-        this.available_versions.remote.map((image) => image.tag)
-          .filter((tag) => this.isSemVer(tag) && tag.includes('beta')),
-      )
-      return ordered_list ? ordered_list[0] : undefined
-    },
-    getLatestStable() {
-      const ordered_list = this.sortVersions(
-        this.available_versions.remote.map((image) => image.tag)
-          .filter((tag) => this.isSemVer(tag) && !tag.includes('beta')),
-      )
-      return ordered_list ? ordered_list[0] : undefined
-    },
-    sortImages() {
-      this.available_versions = {
-        local: this.available_versions.local.sort(
-          (a: Version, b: Version) => Date.parse(b.last_modified) - Date.parse(a.last_modified),
-        ),
-        remote: this.available_versions.remote.sort(
-          (a: Version, b: Version) => Date.parse(b.last_modified) - Date.parse(a.last_modified),
-        ),
-        error: this.available_versions.error,
-      }
-    },
     async loadAvailableversions() {
-      this.available_versions = {
-        local: [],
-        remote: [],
-        error: null,
-      } as VersionsQuery
       this.loading_images = true
       this.error = null
-      await back_axios({
-        method: 'get',
-        url: `/version-chooser/v1.0/version/available/${this.selected_image}`,
-      }).then((response) => {
-        this.available_versions = response.data
-        this.error = response.data.error
-      }).catch(() => {
-        this.available_versions = {
-          local: [],
-          remote: [],
-          error: 'Unable to communicate with backend',
-        }
-      }).finally(() => {
-        this.loading_images = false
-        this.sortImages()
-        this.latest_beta = this.getLatestBeta()
-        this.latest_stable = this.getLatestStable()
-      })
+
+      await VCU.loadAvailableVersions(this.selected_image)
+        .then((versions_query) => {
+          this.available_versions = versions_query
+        })
+        .finally(() => {
+          this.loading_images = false
+          this.available_versions = VCU.sortImages(this.available_versions)
+          this.latest_beta = VCU.getLatestBeta(this.available_versions)
+          this.latest_stable = VCU.getLatestStable(this.available_versions)
+        })
+        .catch((error) => {
+          this.available_versions = {
+            local: [],
+            remote: [],
+            error: `Failed to communicate with backend: ${error}`,
+          }
+        })
     },
     async loadCurrentVersion() {
-      await back_axios({
-        method: 'get',
-        url: '/version-chooser/v1.0/version/current/',
-      }).then((response) => {
-        const image = response.data
-        this.current_version = image
-        const fullname = `${image.repository}:${image.tag}`
-        const [image_first_name] = fullname.split(':')
-        this.selected_image = image_first_name
-        this.loadAvailableversions()
-      })
+      await VCU.loadCurrentVersion()
+        .then((image) => {
+          this.current_version = image
+          this.selected_image = image.repository
+          this.loadAvailableversions()
+        })
     },
     updateIsAvailable(image: Version) {
       const remote_counterpart = this.available_versions.remote.find(
