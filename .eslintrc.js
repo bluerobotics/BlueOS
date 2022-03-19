@@ -47,6 +47,7 @@ module.exports = {
         message: '`with` is disallowed in strict mode because it makes code impossible to predict and optimize.',
       },
     ],
+    'no-param-reassign': 'off',
     'no-shadow': 'off',
     'no-useless-constructor': 'off',
     semi: ['error', 'never'],
