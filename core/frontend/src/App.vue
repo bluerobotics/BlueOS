@@ -142,6 +142,7 @@
     <wifi-updater />
     <mavlink-updater />
     <nmea-injector-updater />
+    <new-version-notificator />
     <error-message />
     <update-time />
   </v-app>
@@ -155,6 +156,7 @@ import { convertGitDescribeToUrl } from '@/utils/helper_functions.ts'
 
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import ErrorMessage from './components/app/ErrorMessage.vue'
+import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
@@ -190,6 +192,7 @@ export default Vue.extend({
     'backend-status-checker': BackendStatusChecker,
     'error-message': ErrorMessage,
     'update-time': UpdateTime,
+    'new-version-notificator': NewVersionNotificator,
   },
 
   data: () => ({
