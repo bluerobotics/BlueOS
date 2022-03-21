@@ -34,6 +34,7 @@
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",
     "vue-tooltip-directive": "^1.0.2",
+    "vue-tour": "^2.0.0",
     "vuetify": "^2.4.0",
     "vuex": "^3.4.0",
     "vuex-module-decorators": "^1.0.1"
