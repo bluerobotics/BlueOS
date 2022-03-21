@@ -99,6 +99,36 @@ function getLatestStable(versions_query: VersionsQuery): string | undefined {
   return ordered_list ? ordered_list[0] : undefined
 }
 
+function getMaster(versions_query: VersionsQuery): Version | undefined {
+  return versions_query.remote.find((version: Version) => version.tag === 'master')
+}
+
+function getLatestVersion(versions_query: VersionsQuery, current_version: Version): Version | undefined {
+  const beta_version = getLatestBeta(versions_query)
+  const stable_version = getLatestStable(versions_query)
+
+  switch (getVersionType(current_version)) {
+    case VersionType.Master:
+      return getMaster(versions_query)
+
+    case VersionType.Beta: {
+      let last_version = beta_version
+      if (stable_version !== undefined && beta_version !== undefined) {
+        [last_version] = sortVersions([stable_version, beta_version])
+      }
+      return versions_query.remote.find((version) => version.tag === last_version?.tag)
+    }
+
+    case VersionType.Stable: {
+      return versions_query.remote.find((version) => version.tag === stable_version?.tag)
+    }
+
+    case VersionType.Custom:
+    default:
+      return undefined
+  }
+}
+
 async function loadAvailableVersions(remote_image_name?: string): Promise<VersionsQuery> {
   remote_image_name = remote_image_name ?? DEFAULT_REMOTE_IMAGE
   return back_axios({
@@ -125,6 +155,7 @@ export {
   fixVersion,
   getLatestBeta,
   getLatestStable,
+  getLatestVersion,
   getVersionType,
   isSemVer,
   loadAvailableVersions,
