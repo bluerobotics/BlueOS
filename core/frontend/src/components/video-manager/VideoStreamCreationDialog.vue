@@ -42,12 +42,38 @@
             required
           />
 
-          <v-text-field
-            v-model="stream_endpoint"
-            label="Stream endpoint"
-            placeholder="e.g. udp://192.168.2.2:5600 or rtsp://0.0.0.0:8554/video0"
-            :rules="[validate_required_field, is_valid_schema]"
-          />
+          <div
+            v-for="(endpoint, index) in stream_endpoints"
+            :key="index"
+            class="d-flex justify-space-between align-center"
+          >
+            <v-text-field
+              v-model="stream_endpoints[index]"
+              label="Stream endpoint"
+              placeholder="e.g. udp://192.168.2.2:5600 or rtsp://0.0.0.0:8554/video0"
+              :rules="[validate_required_field, is_valid_schema, is_endpoint_combining_correct]"
+            />
+            <v-btn
+              v-if="stream_endpoints.length>1"
+              color="fail"
+              rounded
+              small
+              icon
+              @click="removeEndpoint(index)"
+            >
+              <v-icon>mdi-close-thick</v-icon>
+            </v-btn>
+            <v-btn
+              v-if="(index+1)===stream_endpoints.length"
+              color="success"
+              rounded
+              small
+              icon
+              @click="addNewEndpoint"
+            >
+              <v-icon>mdi-plus-thick</v-icon>
+            </v-btn>
+          </div>
 
           <v-expansion-panels>
             <v-expansion-panel>
@@ -116,7 +142,7 @@ export default Vue.extend({
           encode: null,
           dimensions: null,
           interval: null,
-          endpoint: '',
+          endpoints: [''],
           thermal: false,
         }
       },
@@ -133,7 +159,7 @@ export default Vue.extend({
       selected_encode: this.stream.encode,
       selected_size: size_match || null,
       selected_interval: this.stream.interval,
-      stream_endpoint: this.stream.endpoint,
+      stream_endpoints: this.stream.endpoints,
       is_thermal: this.stream.thermal,
     }
   },
@@ -146,14 +172,14 @@ export default Vue.extend({
         || this.selected_size === null
         || this.selected_interval === null
         || this.stream_name === ''
-        || this.stream_endpoint === '') {
+        || this.stream_endpoints === ['']) {
         return null
       }
       return {
         name: this.stream_name,
         source: this.device.source,
         stream_information: {
-          endpoints: [this.stream_endpoint],
+          endpoints: this.stream_endpoints,
           configuration: {
             encode: this.selected_encode,
             height: this.selected_size.height,
@@ -211,17 +237,40 @@ export default Vue.extend({
     is_valid_schema(input: string): (true | string) {
       return isUdpAddress(input) || isRtspAddress(input) ? true : 'Invalid UDP/RTSP stream endpoint.'
     },
-    createStream(): boolean {
+    is_endpoint_combining_correct(): (true | string) {
+      const rtsp_endpoints = this.stream_endpoints.filter(isRtspAddress)
+      const udp_endpoints = this.stream_endpoints.filter(isUdpAddress)
+      if (rtsp_endpoints.length > 1) {
+        return 'You can only have one RTSP endpoint.'
+      }
+      if (rtsp_endpoints.length > 0 && udp_endpoints.length > 0) {
+        return 'You cannot mix UDP and RTSP endpoints.'
+      }
+      return true
+    },
+    validateForm(): boolean {
+      return this.form.validate()
+    },
+    createStream(): boolean | string {
       // Validate form before proceeding with API request
-      if (!this.form.validate()) {
+      if (!this.validateForm()) {
         return false
       }
+
       if (this.created_stream === null) {
         return false
       }
       this.$emit('streamChange', this.created_stream)
       this.showDialog(false)
       return true
+    },
+    addNewEndpoint() {
+      this.validateForm()
+      this.stream_endpoints.push('')
+    },
+    removeEndpoint(index: number) {
+      this.validateForm()
+      this.stream_endpoints.splice(index, 1)
     },
     showDialog(state: boolean) {
       this.$emit('visibilityChange', state)

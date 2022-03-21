@@ -164,6 +164,6 @@ export interface StreamPrototype {
   encode: VideoEncodeType | null
   dimensions: VideoDimensions | null
   interval: FrameInterval | null
-  endpoint: string
+  endpoints: string[]
   thermal: boolean
 }

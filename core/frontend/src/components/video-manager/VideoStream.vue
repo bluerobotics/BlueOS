@@ -22,8 +22,13 @@
                 <tr>
                   <td>{{ stream.video_and_stream.stream_information.configuration.encode }}</td>
                 </tr>
-                <tr>
-                  <td>{{ stream.video_and_stream.stream_information.endpoints[0] }}</td>
+                <tr
+                  v-for="(endpoint, index) in stream.video_and_stream.stream_information.endpoints"
+                  :key="index"
+                >
+                  <td>
+                    {{ endpoint }}
+                  </td>
                 </tr>
                 <tr>
                   <td>{{ source_path }}</td>
@@ -103,7 +108,7 @@ export default Vue.extend({
           height: this.stream.video_and_stream.stream_information.configuration.height,
         },
         interval: this.stream.video_and_stream.stream_information.configuration.frame_interval,
-        endpoint: this.stream.video_and_stream.stream_information.endpoints[0],
+        endpoints: this.stream.video_and_stream.stream_information.endpoints,
         thermal: this.stream.video_and_stream.stream_information?.extended_configuration?.thermal ?? false,
       }
     },
