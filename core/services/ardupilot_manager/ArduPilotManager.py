@@ -143,6 +143,7 @@ class ArduPilotManager(metaclass=Singleton):
             shell=True,
             encoding="utf-8",
             errors="ignore",
+            cwd=self.settings.firmware_folder,
         )
 
         self.start_mavlink_manager(master_endpoint)
@@ -185,6 +186,7 @@ class ArduPilotManager(metaclass=Singleton):
             shell=False,
             encoding="utf-8",
             errors="ignore",
+            cwd=self.settings.firmware_folder,
         )
 
         self.start_mavlink_manager(master_endpoint)
