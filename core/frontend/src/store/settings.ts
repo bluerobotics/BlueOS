@@ -20,6 +20,8 @@ class SettingsStore extends VuexModule {
 
     is_pirate_mode = false
 
+    last_version_update_notification_time = 0 // Start in 1970: https://www.youtube.com/watch?v=wwcKs5K1oWg
+
     @Mutation
     setDarkTheme(value: boolean): void {
       this.is_dark_theme = value
@@ -29,6 +31,12 @@ class SettingsStore extends VuexModule {
     @Mutation
     setPirateMode(value: boolean): void {
       this.is_pirate_mode = value
+      SettingsStore.save()
+    }
+
+    @Mutation
+    updateVersionUpdateNotificationTime(): void {
+      this.last_version_update_notification_time = new Date().getTime()
       SettingsStore.save()
     }
 
