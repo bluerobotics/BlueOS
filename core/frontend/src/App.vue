@@ -46,6 +46,7 @@
       v-model="drawer"
       absolute
       temporary
+      @input="drawerEvent"
     >
       <v-container
         elevation="0"
@@ -150,6 +151,10 @@
     <new-version-notificator />
     <error-message />
     <update-time />
+    <v-tour
+      name="welcomeTour"
+      :steps="steps"
+    />
   </v-app>
 </template>
 
@@ -203,6 +208,7 @@ export default Vue.extend({
   data: () => ({
     settings,
     drawer: false,
+    drawer_running_tour: false,
     backend_offline: false,
     menus: [
       {
@@ -309,6 +315,79 @@ export default Vue.extend({
     ],
   }),
   computed: {
+    steps() {
+      return [
+        {
+          header: {
+            title: 'Welcome to BlueOS!',
+          },
+          content: `We are happy to have you using this brand new companion system, and there are some tips we want to
+          give you!`,
+        },
+        {
+          target: '#welcome-card',
+          content: `As stated on our welcome card, one of the first things you should do on you first usage of BlueOS
+          is to connect it to the internet.`,
+        },
+        {
+          target: '#wifi-tray-menu-button',
+          content: 'You can do it by connecting to a wifi network of yours...',
+        },
+        {
+          target: '#ethernet-tray-menu-button',
+          content: '...or connecting your system to a cabled internet provider (usually a router).',
+        },
+        {
+          target: '#hamburguer-menu-button',
+          content: `This is the main menu of BlueOS. You can access all services that are running and system control
+          here.`,
+        },
+        {
+          target: '#button-to-vehicle',
+          content: `Under the Vehicle menu you can check the status of your autopilot, download logs from it,
+          setup video streams and even update it's firmware!`,
+          before: () => {
+            // It's necessary to control the drawer tour event otherwise the internal state control will close it
+            this.drawer_running_tour = true
+            // We will open the drawer for the message
+            this.drawer = true
+          },
+        },
+        {
+          target: '#button-to-tools',
+          content: `Here you will find all kind of tools to improve your BlueOS experience.
+          There are system-diagnosis tools, network-speed testers and others, all under the Tools menu.`,
+        },
+        {
+          target: '#power-menu-button',
+          content: 'You can shutdown, restart the running computer and BlueOs under the power button.',
+        },
+        {
+          target: '#settings-menu-button',
+          content: 'With the settings button you can control your BlueOS experience.',
+        },
+        {
+          target: '#feature-request-button',
+          content: 'Here you can get in touch with us, requesting new features, reporting bugs and more!',
+        },
+        {
+          target: '#current-version',
+          content: `You can check the current version of BlueOS installed here.
+          This is an important information to provide when seeking help.`,
+        },
+        {
+          target: '#notifications-tray-menu-button',
+          content: 'Last but not least, any event related to your system can be found under the notifications menu.',
+          before: () => {
+            // The close vent will happen after the next tick of the state control
+            this.drawer_running_tour = false
+          },
+        },
+        {
+          content: 'Hope you enjoy your experience with BlueOS! Happy exploration!',
+        },
+      ]
+    },
     git_info(): string {
       return process.env.VUE_APP_GIT_DESCRIBE
     },
@@ -322,7 +401,33 @@ export default Vue.extend({
       return this.backend_offline ? 'grey darken-1' : '#08c'
     },
   },
+
+  watch: {
+    $route() {
+      // In an update process the page may not be the 'Main' page, check tour when page changes
+      this.checkTour()
+    },
+  },
+
+  mounted() {
+    this.checkTour()
+  },
+
   methods: {
+    checkTour(): void {
+      // Check the current page and tour version to be sure that we are in the correct place before starting
+      if (this.$route.name === 'Main') {
+        settings.run_tour_version(1)
+          .then(() => this.$tours.welcomeTour.start())
+          .catch((message) => console.log(message))
+      }
+    },
+    drawerEvent(): void {
+      // If we are inside the tour, let the drawer open, the function will be called by the drawer state control
+      if (this.drawer_running_tour) {
+        this.$nextTick(() => { this.drawer = true })
+      }
+    },
     changeBackendStatus(backend_offline: boolean): void {
       this.backend_offline = backend_offline
     },
