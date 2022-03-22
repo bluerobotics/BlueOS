@@ -269,8 +269,8 @@ export default Vue.extend({
         .finally(() => {
           this.loading_images = false
           this.available_versions = VCU.sortImages(this.available_versions)
-          this.latest_beta = VCU.getLatestBeta(this.available_versions)
-          this.latest_stable = VCU.getLatestStable(this.available_versions)
+          this.latest_beta = VCU.getLatestBeta(this.available_versions)?.tag
+          this.latest_stable = VCU.getLatestStable(this.available_versions)?.tag
         })
         .catch((error) => {
           this.available_versions = {
