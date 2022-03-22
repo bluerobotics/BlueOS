@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-card>
+    <v-card id="welcome-card">
       <v-card-title><p>Welcome to BlueOS!</p></v-card-title>
       <v-card-text>
         <p>

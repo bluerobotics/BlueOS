@@ -8,6 +8,7 @@
       #activator="{ on, attrs }"
     >
       <v-card
+        id="ethernet-tray-menu-button"
         elevation="0"
         color="transparent"
         v-bind="attrs"

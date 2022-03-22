@@ -8,6 +8,7 @@
         :color="app_bar_color"
       >
         <v-app-bar-nav-icon
+          id="hamburguer-menu-button"
           color="white"
           @click="drawer = true"
         />
@@ -73,6 +74,7 @@
           <v-list-item-group color="primary">
             <v-list-group
               v-if="menu.submenus"
+              :id="'button-to-' + menu.title.toLowerCase()"
               :prepend-icon="menu.icon"
               :to="menu.route"
               no-action
@@ -129,7 +131,10 @@
             {{ git_info }}
           </a>
         </span>
-        <span class="build_info">Build: {{ build_date }}</span>
+        <span
+          id="current-version"
+          class="build_info"
+        >Build: {{ build_date }}</span>
       </v-container>
     </v-navigation-drawer>
 
