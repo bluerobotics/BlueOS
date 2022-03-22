@@ -8,6 +8,7 @@
       #activator="{ on, attrs }"
     >
       <v-card
+        id="wifi-tray-menu-button"
         class="px-1"
         elevation="0"
         color="transparent"

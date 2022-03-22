@@ -1,5 +1,6 @@
 <template>
   <v-container
+    id="feature-request-button"
     class="d-flex justify-center"
   >
     <v-btn

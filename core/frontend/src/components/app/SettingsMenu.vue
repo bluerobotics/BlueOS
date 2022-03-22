@@ -1,5 +1,6 @@
 <template>
   <v-container
+    id="settings-menu-button"
     class="d-flex justify-center"
   >
     <v-btn
