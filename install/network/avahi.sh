@@ -22,6 +22,13 @@ AVAHI_SERVICE_PATH="/etc/avahi/services"
 )
 curl -fsSL $CONFIGURE_NETWORK_PATH/blueos.service > "${AVAHI_SERVICE_PATH}/blueos.service"
 
+AVAHI_DAEMON_CONFIG_PATH="/etc/avahi/avahi-daemon.conf"
+AVAHI_HOST_NAME="blueos-avahi"
+[ ! -d "${AVAHI_DAEMON_CONFIG_PATH}" ] && (
+    echo "Avahi daemon config file found, changing avahi host name to: ${AVAHI_HOST_NAME}"
+    sed -i "s/#host-name=.*/host-name=${AVAHI_HOST_NAME}/g" ${AVAHI_DAEMON_CONFIG_PATH}
+) || echo "Avahi daemon config file not found in ${AVAHI_DAEMON_CONFIG_PATH}"
+
 echo "Configure hostname to blueos"
 OLD_HOSTNAME="$(cat /etc/hostname)"
 NEW_HOSTNAME="blueos"
