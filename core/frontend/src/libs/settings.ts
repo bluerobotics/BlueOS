@@ -22,6 +22,17 @@ class Settings {
   set is_pirate_mode(value: boolean) {
     settingsStore.setPirateMode(value)
   }
+
+  // eslint-disable-next-line
+  get last_version_update_notification_time(): Date {
+    const time = settingsStore.last_version_update_notification_time
+    return time ? new Date(time) : new Date(0)
+  }
+
+  // eslint-disable-next-line
+  updateVersionUpdateNotificationTime() {
+    settingsStore.updateVersionUpdateNotificationTime()
+  }
 }
 
 const settings = new Settings()
