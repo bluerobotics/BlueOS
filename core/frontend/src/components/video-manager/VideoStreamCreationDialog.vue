@@ -49,7 +49,9 @@
             :rules="[validate_required_field, is_valid_schema]"
           />
 
-          <v-expansion-panels>
+          <v-expansion-panels
+            v-if="settings.is_pirate_mode"
+          >
             <v-expansion-panel>
               <v-expansion-panel-header>
                 Extra configuration
@@ -81,6 +83,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import settings from '@/libs/settings'
 import {
   CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, VideoEncodeType,
 } from '@/types/video'
@@ -135,6 +138,7 @@ export default Vue.extend({
       selected_interval: this.stream.interval,
       stream_endpoint: this.stream.endpoint,
       is_thermal: this.stream.thermal,
+      settings,
     }
   },
   computed: {
