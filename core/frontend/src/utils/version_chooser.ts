@@ -1,11 +1,4 @@
 import { gt as sem_ver_greater, SemVer } from 'semver'
-import {
-  Action,
-  getModule,
-  Module,
-  Mutation,
-  VuexModule,
-} from 'vuex-module-decorators'
 
 import { Version, VersionsQuery, VersionType } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
