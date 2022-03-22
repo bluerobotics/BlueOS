@@ -48,11 +48,11 @@ function getVersionType(version: Version | null) : VersionType | undefined {
   return VersionType.Custom
 }
 
-function sortVersions(versions: string[]): string[] {
+function sortVersions(versions: Version[]): Version[] {
   return versions.sort(
-    (a: string, b: string) => {
-      const ver_a = fixVersion(a)
-      const ver_b = fixVersion(b)
+    (a: Version, b: Version) => {
+      const ver_a = fixVersion(a.tag)
+      const ver_b = fixVersion(b.tag)
       if (ver_a === null) {
         return 1
       }
@@ -76,18 +76,18 @@ function sortImages(versions_query: VersionsQuery): VersionsQuery {
   }
 }
 
-function getLatestBeta(versions_query: VersionsQuery): string | undefined {
+function getLatestBeta(versions_query: VersionsQuery): Version | undefined {
   const ordered_list = sortVersions(
-    versions_query.remote.map((image) => image.tag)
-      .filter((tag) => isSemVer(tag) && tag.includes('beta')),
+    versions_query.remote
+      .filter((image) => isSemVer(image.tag) && image.tag.includes('beta')),
   )
   return ordered_list ? ordered_list[0] : undefined
 }
 
-function getLatestStable(versions_query: VersionsQuery): string | undefined {
+function getLatestStable(versions_query: VersionsQuery): Version | undefined {
   const ordered_list = sortVersions(
-    versions_query.remote.map((image) => image.tag)
-      .filter((tag) => isSemVer(tag) && !tag.includes('beta')),
+    versions_query.remote
+      .filter((image) => isSemVer(image.tag) && !image.tag.includes('beta')),
   )
   return ordered_list ? ordered_list[0] : undefined
 }
