@@ -272,6 +272,7 @@
             url: 'v1.0/version/load/',
             timeout: 15 * 60 * 1000, // Wait for 15min
             data: file,
+            headers: { 'Content-Type': 'undefined' },
             onUploadProgress: (event) => {
               this.uploadPercentage = Math.round(100 * event.loaded / event.total)
             },
