@@ -150,7 +150,6 @@
     <nmea-injector-updater />
     <new-version-notificator />
     <error-message />
-    <update-time />
     <v-tour
       name="welcomeTour"
       :steps="steps"
@@ -163,6 +162,7 @@ import Vue from 'vue'
 
 import settings from '@/libs/settings'
 import { convertGitDescribeToUrl } from '@/utils/helper_functions.ts'
+import updateTime from '@/utils/update_time.ts'
 
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import ErrorMessage from './components/app/ErrorMessage.vue'
@@ -170,7 +170,6 @@ import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
-import UpdateTime from './components/app/UpdateTime.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
@@ -201,7 +200,6 @@ export default Vue.extend({
     'report-menu': ReportMenu,
     'backend-status-checker': BackendStatusChecker,
     'error-message': ErrorMessage,
-    'update-time': UpdateTime,
     'new-version-notificator': NewVersionNotificator,
   },
 
@@ -410,6 +408,7 @@ export default Vue.extend({
   },
 
   mounted() {
+    updateTime()
     this.checkTour()
   },
 
