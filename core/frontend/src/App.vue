@@ -316,6 +316,7 @@ export default Vue.extend({
     steps() {
       return [
         {
+          target: '#welcome-card',
           header: {
             title: 'Welcome to BlueOS!',
           },
