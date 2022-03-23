@@ -28,22 +28,31 @@
         class="mt-10"
       >
         <v-card
-          class="py-4 px-4"
+          class="py-3 px-3"
           style="min-height: 100%"
           :href="route"
         >
           <v-theme-provider dark>
-            <div>
-              <v-avatar
-                color="primary"
-                size="88"
-              >
-                <v-icon
-                  large
-                  v-text="icon"
-                />
-              </v-avatar>
-            </div>
+            <v-row
+              class="py-3 px-3"
+            >
+              <v-card-title
+                class="text-subtitle-1 font-weight-bold"
+                v-text="title"
+              />
+              <v-spacer />
+              <div>
+                <v-avatar
+                  color="primary"
+                  size="50"
+                >
+                  <v-icon
+                    large
+                    v-text="icon"
+                  />
+                </v-avatar>
+              </div>
+            </v-row>
           </v-theme-provider>
           <v-theme-provider dark>
             <div
@@ -61,14 +70,8 @@
               </v-avatar>
             </div>
           </v-theme-provider>
-
-          <v-card-title
-            class="justify-center font-weight-black text-uppercase mt-0"
-            v-text="title"
-          />
-
           <v-card-text
-            class="subtitle-1 text-justify"
+            class="subtitle-1 text-justify-start"
             v-text="text"
           />
         </v-card>
