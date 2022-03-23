@@ -49,7 +49,7 @@ import { Version, VersionsQuery } from '@/types/version-chooser'
 import * as VCU from '@/utils/version_chooser'
 
 export default Vue.extend({
-  name: 'UpdateTime',
+  name: 'NewVersionNotificator',
   data() {
     return {
       available_versions: {
