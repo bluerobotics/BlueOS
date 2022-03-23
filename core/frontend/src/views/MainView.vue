@@ -1,24 +1,31 @@
 <template>
   <v-container>
-    <v-card id="welcome-card">
-      <v-card-title><p>Welcome to BlueOS!</p></v-card-title>
-      <v-card-text>
-        <p>
-          Before start using, we highly recommend to <a
-            href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#connect-wifi"
-          >
-            connect first on the internet
-          </a>
-          and do the
-          <a href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#select-version">
-            system update to the latest version available
-          </a>
-          .
-        </p>
-        <v-card-text />
-      </v-card-text>
-    </v-card>
-
+    <v-row
+      class="mb-6 mt-6"
+      justify="center"
+      no-gutters
+    >
+      <v-alert
+        border="top"
+        colored-border
+        type="info"
+        elevation="2"
+        dismissible
+        class=''
+      >
+      <h3>Welcome to BlueOS!</h3>
+        Before start using, we highly recommend to <a
+          href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#connect-wifi"
+        >
+          connect first on the internet
+        </a>
+        and do the
+        <a href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#select-version">
+          system update to the latest version available
+        </a>
+        .
+      </v-alert>
+    </v-row>
     <v-row>
       <v-col
         v-for="({ icon, title, text, route, advanced}, i) in apps"
