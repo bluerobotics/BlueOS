@@ -22,6 +22,8 @@ class SettingsStore extends VuexModule {
 
     last_version_update_notification_time = 0 // Start in 1970: https://www.youtube.com/watch?v=wwcKs5K1oWg
 
+    tour_version = 0
+
     @Mutation
     setDarkTheme(value: boolean): void {
       this.is_dark_theme = value
@@ -37,6 +39,12 @@ class SettingsStore extends VuexModule {
     @Mutation
     updateVersionUpdateNotificationTime(): void {
       this.last_version_update_notification_time = new Date().getTime()
+      SettingsStore.save()
+    }
+
+    @Mutation
+    setTourVersion(value: number): void {
+      this.tour_version = value
       SettingsStore.save()
     }
 

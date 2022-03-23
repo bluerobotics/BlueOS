@@ -33,6 +33,19 @@ class Settings {
   updateVersionUpdateNotificationTime() {
     settingsStore.updateVersionUpdateNotificationTime()
   }
+
+  // eslint-disable-next-line
+  run_tour_version(version: number) : Promise<void> {
+    return new Promise((resolve) => {
+      const store_tour_version = settingsStore.tour_version
+      if (version === store_tour_version) {
+        throw new Error(`Tour version (${version}) is the same as in store (${store_tour_version}})`)
+      }
+
+      settingsStore.setTourVersion(version)
+      resolve()
+    })
+  }
 }
 
 const settings = new Settings()
