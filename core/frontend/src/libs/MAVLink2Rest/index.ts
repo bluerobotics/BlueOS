@@ -121,11 +121,7 @@ class Mavlink2RestManager {
     }
     // TODO: Abstract that and use websocket to do the post and deal with the answer somehow
     axios.post(`${this.baseUrl}/mavlink`.replace('/ws/mavlink', '').replace('ws', 'http'), payload)
-      .then(
-        () => {
-          console.log('message rate set succesfully')
-        },
-      ).catch((error) => console.log(`unable to set message rate of ${message} to ${rate}: ${error}`))
+      .catch((error) => console.log(`unable to set message rate of ${message} to ${rate}: ${error}`))
   }
 
   /**
