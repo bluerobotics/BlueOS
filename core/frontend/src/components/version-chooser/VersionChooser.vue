@@ -306,6 +306,7 @@ export default Vue.extend({
           url: '/version-chooser/v1.0/version/load/',
           timeout: 15 * 60 * 1000, // Wait for 15min
           data: files[0],
+          headers: { 'Content-Type': 'undefined' },
           onUploadProgress: (event) => {
             this.upload_percentage = Math.round(100 * (event.loaded / event.total))
           },
