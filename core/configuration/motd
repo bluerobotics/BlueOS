@@ -10,8 +10,8 @@ To check all running services, press ctrl+b, then s. This will show all current 
 and is helpful for checking the state of individual services, restarting them, and checking their verbose outputs.
 
 To split the screen horizontally, press ctrl+b then %
-To split the screen vertically  press ctrl+b then " (this is currently not working)
-To switch tabs, press ctrl+b then use the directional keys in the keyboard
+To split the screen vertically  press ctrl+b then "
+To switch tabs, click them or press ctrl+b then use the directional keys in the keyboard
 
 To login into the Raspberry Pi itself, do `red-pill`.
 
