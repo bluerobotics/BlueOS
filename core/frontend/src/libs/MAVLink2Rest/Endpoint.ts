@@ -33,7 +33,7 @@ export default class Endpoint {
     socket.onmessage = (message: MessageEvent): void => {
       this.latestData = JSON.parse(message.data)
       for (const listener of this.listeners) {
-        listener.onNewData(JSON.parse(message.data))
+        listener.onNewData(this.latestData)
       }
     }
     return socket
