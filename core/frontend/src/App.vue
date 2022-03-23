@@ -180,6 +180,7 @@ import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
+import menus from './menus'
 
 export default Vue.extend({
   name: 'App',
@@ -208,109 +209,7 @@ export default Vue.extend({
     drawer: false,
     drawer_running_tour: false,
     backend_offline: false,
-    menus: [
-      {
-        title: 'Main',
-        icon: 'mdi-home',
-        route: '/',
-      },
-      {
-        title: 'Vehicle',
-        icon: 'mdi-submarine',
-        submenus: [
-          {
-            title: 'General',
-            icon: 'mdi-image-filter-center-focus-strong',
-            route: '/autopilot/general',
-            advanced: false,
-          },
-          {
-            title: 'Firmware',
-            icon: 'mdi-chip',
-            route: '/autopilot/firmware',
-            advanced: false,
-          },
-          {
-            title: 'Log Browser',
-            icon: 'mdi-file-multiple',
-            route: '/autopilot/logs',
-            advanced: false,
-          },
-          {
-            title: 'Endpoints',
-            icon: 'mdi-arrow-decision',
-            route: '/autopilot/endpoints',
-            advanced: true,
-          },
-          {
-            title: 'Video',
-            icon: 'mdi-video-vintage',
-            route: '/autopilot/video-manager',
-            advanced: false,
-          },
-        ],
-      },
-      {
-        title: 'Tools',
-        icon: 'mdi-hammer-screwdriver',
-        submenus: [
-          {
-            title: 'Available Services',
-            icon: 'mdi-account-hard-hat',
-            route: '/tools/available-services',
-            advanced: true,
-          },
-          {
-            title: 'Bridges',
-            icon: 'mdi-bridge',
-            route: '/tools/bridges',
-            advanced: true,
-          },
-          {
-            title: 'File Browser',
-            icon: 'mdi-file-tree',
-            route: '/tools/file-browser',
-            advanced: true,
-          },
-          {
-            title: 'NMEA Injector',
-            icon: 'mdi-map-marker',
-            route: '/tools/nmea-injector',
-            advanced: true,
-          },
-          {
-            title: 'System information',
-            icon: 'mdi-chart-pie',
-            route: '/tools/system-information',
-            advanced: false,
-          },
-          {
-            title: 'Network test',
-            icon: 'mdi-speedometer',
-            route: '/tools/network-test',
-            show: true,
-          },
-          {
-            title: 'Terminal',
-            icon: 'mdi-console',
-            route: '/tools/web-terminal',
-            advanced: true,
-          },
-          {
-            title: 'MAVLink Inspector',
-            icon: 'mdi-chart-areaspline',
-            route: '/tools/mavlink-inspector',
-            advanced: true,
-          },
-          {
-            title: 'Version-chooser',
-            icon: 'mdi-cellphone-arrow-down',
-            route: '/tools/version-chooser',
-            advanced: false,
-          },
-        ],
-      },
-    ],
+    menus,
   }),
   computed: {
     steps() {

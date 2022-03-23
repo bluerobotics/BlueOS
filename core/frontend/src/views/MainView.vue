@@ -18,13 +18,76 @@
         <v-card-text />
       </v-card-text>
     </v-card>
+
+    <v-row>
+      <v-col
+        v-for="({ icon, title, text, route}, i) in apps"
+        :key="i"
+        cols="12"
+        md="3"
+        class="mt-10"
+      >
+        <v-card
+          class="py-4 px-4"
+          style="min-height: 100%"
+          :href="route"
+        >
+          <v-theme-provider dark>
+            <div>
+              <v-avatar
+                color="primary"
+                size="88"
+              >
+                <v-icon
+                  large
+                  v-text="icon"
+                />
+              </v-avatar>
+            </div>
+          </v-theme-provider>
+
+          <v-card-title
+            class="justify-center font-weight-black text-uppercase mt-0"
+            v-text="title"
+          />
+
+          <v-card-text
+            class="subtitle-1 text-justify"
+            v-text="text"
+          />
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
+import settings from '@/libs/settings'
+
+import menus, { menuItem } from '../menus'
+
 export default Vue.extend({
   name: 'Main',
+  data: () => ({
+    menus,
+    settings,
+  }),
+  computed: {
+    apps() {
+      const items: menuItem[] = []
+      for (const item of this.menus) {
+        if (item.submenus !== undefined) {
+          for (const subitem of item.submenus) {
+            if (!subitem.advanced || this.settings.is_pirate_mode) {
+              items.push(subitem)
+            }
+          }
+        }
+      }
+      return items
+    },
+  },
 })
 </script>
