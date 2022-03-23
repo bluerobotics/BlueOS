@@ -21,7 +21,7 @@
 
     <v-row>
       <v-col
-        v-for="({ icon, title, text, route}, i) in apps"
+        v-for="({ icon, title, text, route, advanced}, i) in apps"
         :key="i"
         cols="12"
         md="3"
@@ -41,6 +41,22 @@
                 <v-icon
                   large
                   v-text="icon"
+                />
+              </v-avatar>
+            </div>
+          </v-theme-provider>
+          <v-theme-provider dark>
+            <div
+              v-if="advanced"
+              v-tooltip="'This is an advanced feature'"
+              class="pirate-marker"
+            >
+              <v-avatar
+                color="error"
+                size="35"
+              >
+                <v-icon
+                  v-text="'mdi-skull-crossbones'"
                 />
               </v-avatar>
             </div>
@@ -78,11 +94,9 @@ export default Vue.extend({
     apps() {
       const items: menuItem[] = []
       for (const item of this.menus) {
-        if (item.submenus !== undefined) {
-          for (const subitem of item.submenus) {
-            if (!subitem.advanced || this.settings.is_pirate_mode) {
-              items.push(subitem)
-            }
+        for (const subitem of item.submenus || []) {
+          if (!subitem.advanced || this.settings.is_pirate_mode) {
+            items.push(subitem)
           }
         }
       }
@@ -91,3 +105,19 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style>
+
+div.pirate-marker {
+  position: absolute;
+  width: 35px;
+  right: 0;
+  top: 0px;
+  opacity: 0.7;
+}
+
+div.pirate-marker.v-icon {
+    font-size: 10px;
+}
+
+</style>

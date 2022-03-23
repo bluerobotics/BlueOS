@@ -13,15 +13,14 @@ const menus = [
         icon: 'mdi-image-filter-center-focus-strong',
         route: '/autopilot/general',
         advanced: false,
-        text: 'General Autopilot settings, allow you to start/stop Ardupilot if using Navigator or SITL, and switch'
-              + ' boards if more than one is present',
+        text: 'General Autopilot settings, allows you to start/stop Ardupilot if using Navigator or SITL',
       },
       {
         title: 'Firmware',
         icon: 'mdi-chip',
         route: '/autopilot/firmware',
         advanced: false,
-        text: 'Used to download and flash new firmware to your board',
+        text: 'Used to download and flash new firmware to your current flight controller',
       },
       {
         title: 'Log Browser',
@@ -36,8 +35,8 @@ const menus = [
         icon: 'mdi-arrow-decision',
         route: '/autopilot/endpoints',
         advanced: true,
-        text: 'Manage Mavlink endpoints for internal/external systems. Used this if you need to connect additional'
-              + ' mavlink systems to your vehicle',
+        text: 'Manage MAVLink endpoints for internal/external systems. Use this if you need to connect additional'
+              + ' MAVLink systems to your vehicle',
       },
       {
         title: 'Video',
@@ -81,17 +80,17 @@ const menus = [
         icon: 'mdi-map-marker',
         route: '/tools/nmea-injector',
         advanced: true,
-        text: 'Used for forwarding UDP NMEA stream into Ardupilot',
+        text: 'Used for forwarding UDP NMEA streams into Ardupilot',
       },
       {
-        title: 'System information',
+        title: 'System Information',
         icon: 'mdi-chart-pie',
         route: '/tools/system-information',
         advanced: false,
         text: 'Detailed system status information, CPU, memory, disk, and ethernet status',
       },
       {
-        title: 'Network test',
+        title: 'Network Test',
         icon: 'mdi-speedometer',
         route: '/tools/network-test',
         show: true,
@@ -112,11 +111,11 @@ const menus = [
         text: 'View detailed MAVLink traffic coming from your vehicle',
       },
       {
-        title: 'Version-chooser',
+        title: 'Version Chooser',
         icon: 'mdi-cellphone-arrow-down',
         route: '/tools/version-chooser',
         advanced: false,
-        text: 'Manage versions and update to latest available',
+        text: 'Manage BlueOS versions and update to the latest available',
       },
     ],
   },
