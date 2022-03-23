@@ -93,6 +93,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import mavlink2rest from '@/libs/MAVLink2Rest'
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
 import { MavlinkMessage } from '@/types/mavlink'
@@ -104,7 +105,7 @@ export default Vue.extend({
   data() {
     return {
       time_limit_heartbeat: 3000,
-      last_date_diff: 5000,
+      last_heartbeat_date: new Date(),
     }
   },
   computed: {
@@ -149,21 +150,18 @@ export default Vue.extend({
       return this.disk_usage_percent > 85
     },
   },
+  mounted() {
+    mavlink2rest.startListening('HEARTBEAT').setCallback((message) => {
+      if (message?.header.system_id !== 1 || message?.header.component_id !== 1) {
+        return
+      }
+
+      this.last_heartbeat_date = new Date()
+    }).setFrequency(0)
+  },
   methods: {
-    heartbeat_age(): number | undefined {
-      const heartbeat = mavlink_store_get(mavlink, 'HEARTBEAT') as MavlinkMessage
-      const last_date = heartbeat?.timestamp
-      if (last_date === undefined) {
-        this.last_date_diff = this.time_limit_heartbeat
-        return this.last_date_diff
-      }
-
-      if (heartbeat?.messageData.header.system_id !== 1 || heartbeat?.messageData.header.component_id !== 1) {
-        return this.last_date_diff
-      }
-
-      this.last_date_diff = new Date().valueOf() - last_date.valueOf()
-      return this.last_date_diff
+    heartbeat_age(): number {
+      return new Date().valueOf() - this.last_heartbeat_date.getTime()
     },
   },
 })
