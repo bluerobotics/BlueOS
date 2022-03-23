@@ -142,6 +142,7 @@
       <a href="https://github.com/bluerobotics/BlueOS-docker/actions/workflows/deploy.yml">Github's CI</a>
       or generated locally using "docker save"
       <v-file-input
+        v-if="!disable_upload_controls"
         id="file"
         show-size
         accept=".tar"
@@ -149,15 +150,30 @@
       />
       <v-progress-linear
         v-if="disable_upload_controls && upload_percentage !== 100"
-        class="mb-4"
+        class="mb-4 mt-4"
         :value="upload_percentage"
       />
       <v-btn
+        v-if="!disable_upload_controls"
         :color="'primary'"
         class="mr-2 mb-4"
         @click="upload()"
         v-text="'Upload'"
       />
+
+      <v-alert
+        v-if="upload_percentage == 100"
+        border="bottom"
+        colored-border
+        type="info"
+        elevation="2"
+      >
+        Decompressing file, this usually takes up to one minute, please standy by...
+        <spinning-logo
+          v-if="upload_percentage == 100"
+          size="15%"
+        />
+      </v-alert>
     </v-card>
     <v-overlay
       :z-index="10"
@@ -312,7 +328,8 @@ export default Vue.extend({
           },
         }).finally(() => {
           this.disable_upload_controls = false
-          setTimeout(() => { this.loadAvailableversions() }, 3000)
+          this.upload_percentage = 0
+          setTimeout(() => { this.loadAvailableversions() }, 1000)
         })
       }
     },
