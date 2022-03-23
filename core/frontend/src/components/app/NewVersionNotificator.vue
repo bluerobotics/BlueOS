@@ -1,5 +1,8 @@
 <template>
-  <v-row justify="space-around">
+  <v-row
+    justify="space-around"
+    style="position: absolute;"
+  >
     <v-col cols="auto">
       <v-dialog
         v-model="should_open"
