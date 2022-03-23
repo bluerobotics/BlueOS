@@ -6,12 +6,14 @@
     :left="position === 'left'"
     :activator="activator"
   >
-    <span>{{ content }}</span>
+    <span>{{ pirate_prefix }}{{ content }}</span>
   </v-tooltip>
 </template>
 
 <script>
 import Vue from 'vue'
+
+import settings from '@/libs/settings'
 
 export default Vue.extend({
   name: 'DefaultTooltip',
@@ -19,6 +21,16 @@ export default Vue.extend({
     activator: { required: true }, // eslint-disable
     content: { type: String, required: true },
     position: { type: String, required: false, default: 'bottom' },
+  },
+  data() {
+    return {
+      settings,
+    }
+  },
+  computed: {
+    pirate_prefix() {
+      return this.settings.is_pirate_mode ? 'Arrrgh! ' : ''
+    },
   },
 })
 </script>
