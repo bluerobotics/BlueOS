@@ -56,7 +56,11 @@ class Interface(JsonObject):
         matches = re.findall(r"ips\[(\d+)]", self.ip)
         if len(matches) != 0:
             index = int(matches[0])
-            address = str(self.get_phys()[index].address)
+            try:
+                address = str(self.get_phys()[index].address)
+            except Exception as e:
+                logger.warning(f"unable to get {index}-th IP address: {e}")
+                return []
         # Validate ip
         try:
             socket.inet_aton(address)
