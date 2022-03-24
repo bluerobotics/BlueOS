@@ -72,6 +72,7 @@
         />
         <v-card-actions class="justify-center">
           <v-btn
+            :disabled="!allow_test_start"
             @click="start()"
           >
             <v-icon color="green">
@@ -115,6 +116,11 @@ export default Vue.extend({
       upload_buffer: new ArrayBuffer(100 * 2 ** 20), // Generate 100MB buffer only once
       interval: 0,
     }
+  },
+  computed: {
+    allow_test_start(): boolean {
+      return [State.None, State.Done].includes(this.state)
+    },
   },
   beforeDestroy() {
     clearInterval(this.interval)
