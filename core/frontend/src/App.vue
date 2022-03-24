@@ -6,6 +6,8 @@
       <v-app-bar
         rounded="0"
         :color="app_bar_color"
+        :extended="extend_toolbar"
+        extension-height="10"
       >
         <v-app-bar-nav-icon
           id="hamburguer-menu-button"
@@ -14,27 +16,27 @@
         />
 
         <v-spacer />
-        <div
-          v-if="settings.is_pirate_mode"
-        >
-          Ahoy matey! You're running
-          <v-icon>
-            mdi-flag-variant
-          </v-icon>
-          <v-icon>
-            mdi-skull-crossbones
-          </v-icon>
-          Pirate Mode
-          <v-icon>
-            mdi-skull-crossbones
-          </v-icon>
-          <v-icon>
-            mdi-flag-variant
-          </v-icon>
-        </div>
-
-        <backend-status-checker @statusChange="changeBackendStatus" />
+        <span class="d-flex flex-column align-center">
+          <backend-status-checker @statusChange="changeBackendStatus" />
+          <span v-if="settings.is_pirate_mode">
+            Ahoy matey! You're running
+            <v-icon>
+              mdi-flag-variant
+            </v-icon>
+            <v-icon>
+              mdi-skull-crossbones
+            </v-icon>
+            Pirate Mode
+            <v-icon>
+              mdi-skull-crossbones
+            </v-icon>
+            <v-icon>
+              mdi-flag-variant
+            </v-icon>
+          </span>
+        </span>
         <v-spacer />
+
         <health-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
@@ -213,6 +215,9 @@ export default Vue.extend({
     menus,
   }),
   computed: {
+    extend_toolbar(): boolean {
+      return settings.is_pirate_mode && this.backend_offline
+    },
     steps() {
       return [
         {
