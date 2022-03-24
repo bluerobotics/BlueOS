@@ -1,0 +1,4 @@
+/* Prevent words in titles to break in half */
+.v-card__text, .v-card__title {
+    word-break: normal;
+}

@@ -8,6 +8,7 @@ import vuetify from './plugins/vuetify'
 import router from './router'
 import store from './store'
 
+require('@/assets/css/vuetify-global.css')
 require('vue-tour/dist/vue-tour.css')
 
 Vue.use(VueTooltipDirective, {
