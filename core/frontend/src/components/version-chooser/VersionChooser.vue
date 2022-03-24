@@ -30,12 +30,12 @@
           />
         </v-list>
         <v-alert
-          v-if="error"
+          v-if="available_versions.error"
 
           color="red lighten-2"
           dark
         >
-          {{ error }}
+          {{ available_versions.error }}
         </v-alert>
       </v-card>
 
@@ -81,12 +81,12 @@
           />
         </v-form>
         <v-alert
-          v-if="error"
+          v-if="available_versions.error"
 
           color="red lighten-2"
           dark
         >
-          {{ error }}
+          {{ available_versions.error }}
         </v-alert>
         <v-list
           subheader
@@ -225,7 +225,6 @@ export default Vue.extend({
       waiting: false,
       selected_image: 'bluerobotics/blueos-core',
       deleting: '', // image currently being deleted, if any
-      error: null as (null | string),
     }
   },
   computed: {
@@ -328,7 +327,7 @@ export default Vue.extend({
     },
     async loadAvailableversions() {
       this.loading_images = true
-      this.error = null
+      this.available_versions.error = null
 
       await VCU.loadAvailableVersions(this.selected_image)
         .then((versions_query) => {
