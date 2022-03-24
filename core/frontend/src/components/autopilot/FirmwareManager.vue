@@ -6,7 +6,7 @@
     <v-item-group
       v-model="upload_type"
       mandatory
-      class="ma-6"
+      class="ma-6 d-flex align-center justify-center flex-wrap"
     >
       <v-item
         v-slot="{ active, toggle }"
@@ -14,7 +14,7 @@
       >
         <v-btn
           :color="active ? 'primary' : ''"
-          class="mr-2"
+          class="ma-1"
           @click="toggle"
         >
           <v-icon class="mr-2">
@@ -29,7 +29,7 @@
       >
         <v-btn
           :color="active ? 'primary' : ''"
-          class="mr-2"
+          class="ma-1"
           @click="toggle"
         >
           <v-icon class="mr-2">
@@ -44,6 +44,7 @@
       >
         <v-btn
           :color="active ? 'primary' : ''"
+          class="ma-1"
           @click="toggle"
         >
           <v-icon class="mr-2">
