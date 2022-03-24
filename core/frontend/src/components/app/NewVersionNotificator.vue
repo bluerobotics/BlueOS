@@ -89,6 +89,9 @@ export default Vue.extend({
           this.available_versions = versions_query
         })
         .finally(() => {
+          if (this.available_versions.error) {
+            return
+          }
           this.available_versions = VCU.sortImages(this.available_versions)
           this.latest_beta = VCU.getLatestBeta(this.available_versions)
           this.latest_stable = VCU.getLatestStable(this.available_versions)

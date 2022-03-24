@@ -129,10 +129,6 @@ async function loadAvailableVersions(remote_image_name?: string): Promise<Versio
     url: `${API_URL}/available/${remote_image_name}`,
   }).then((response) => {
     const available_versions = response.data as VersionsQuery
-    const { error } = response.data
-    if (error && error !== '') {
-      throw new Error(`Error: ${error}`)
-    }
     return sortImages(available_versions)
   })
 }
