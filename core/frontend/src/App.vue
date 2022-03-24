@@ -154,6 +154,7 @@
       name="welcomeTour"
       :steps="steps"
     />
+    <div id="tour-center-hook" />
   </v-app>
 </template>
 
@@ -215,7 +216,7 @@ export default Vue.extend({
     steps() {
       return [
         {
-          target: '#welcome-card',
+          target: '#tour-center-hook',
           header: {
             title: 'Welcome to BlueOS!',
           },
@@ -223,7 +224,7 @@ export default Vue.extend({
           give you!`,
         },
         {
-          target: '#welcome-card',
+          target: '#tour-center-hook',
           content: `As stated on our welcome card, one of the first things you should do on you first usage of BlueOS
           is to connect it to the internet.`,
         },
@@ -347,6 +348,12 @@ span.build_info {
   font-size: 70%;
   margin-left: 30px;
   display: block;
+}
+
+#tour-center-hook {
+  position: absolute;
+  top: 20%;
+  left: 50%;
 }
 
 </style>
