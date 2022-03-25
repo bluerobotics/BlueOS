@@ -141,6 +141,7 @@ async function loadCurrentVersion(): Promise<Version> {
 }
 
 export {
+  DEFAULT_REMOTE_IMAGE,
   fixVersion,
   getLatestBeta,
   getLatestStable,
