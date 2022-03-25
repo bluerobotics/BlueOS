@@ -1,6 +1,6 @@
 {
     "core": {
-        "tag": "master",
+        "tag": "factory",
         "image": "bluerobotics/blueos-core",
         "enabled": true,
         "webui": false,
