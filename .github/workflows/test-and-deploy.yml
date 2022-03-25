@@ -237,7 +237,7 @@ jobs:
       # TODO: add GITHUB_REF_NAME after https://github.com/actions/upload-artifact/issues/231 is fixed
       # name: blueos-${{ env.GITHUB_REF_NAME }}.zip
       - name: Zip image
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           sudo apt install zip
           zip BlueOS-raspberry.zip deploy/pimod/blueos.img
