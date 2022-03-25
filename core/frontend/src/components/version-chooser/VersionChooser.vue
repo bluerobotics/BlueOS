@@ -234,25 +234,77 @@ export default Vue.extend({
     this.loadCurrentVersion()
   },
   methods: {
-    async checkIfBackendIsOnline() {
-      this.waiting = true
-      await back_axios({
-        method: 'get',
-        url: '/version-chooser/v1.0/version/current',
-        timeout: 500,
+    backendIsOnline() {
+      return new Promise((resolve) => {
+        back_axios({
+          method: 'get',
+          url: '/version-chooser/v1.0/version/current',
+          timeout: 500,
+        })
+          .then(() => {
+            resolve(true)
+          })
+          .catch(() => {
+            resolve(false)
+          })
       })
-        .then(() => {
-          if (this.waiting) {
-            // Allow 3 seconds so the user can read the "complete" message
-            // reload(true) forces the browser to fetch the page again
-            setTimeout(() => { window.location.reload(true) }, 3000)
-          }
-        })
-        .catch((error) => {
-          console.log(error)
-          this.waiting = true
-        })
     },
+
+    async waitForBackendToGoOffline() {
+      let timeout = 0
+      let interval = 0
+      return new Promise((resolve, reject) => {
+        timeout = setTimeout(
+          () => {
+            reject(new Error('backend took to long to shutdown!'))
+            clearInterval(interval)
+          },
+          20000,
+        )
+        interval = setInterval(() => {
+          this.backendIsOnline().then((backend_online) => {
+            if (!backend_online) {
+              clearTimeout(timeout)
+              clearInterval(interval)
+              resolve('backend went offline')
+            }
+          })
+        }, 1000)
+      })
+    },
+
+    waitForBackendToGoOnline() {
+      let timeout = 0
+      let interval = 0
+      return new Promise((resolve, reject) => {
+        timeout = setTimeout(
+          () => {
+            reject(new Error('backend took to long to come back'))
+            clearInterval(interval)
+          },
+          20000,
+        )
+        interval = setInterval(() => {
+          this.backendIsOnline().then((backend_online) => {
+            if (backend_online) {
+              clearTimeout(timeout)
+              clearInterval(interval)
+              resolve('backend went online')
+            }
+          })
+        }, 1000)
+      })
+    },
+
+    async waitForBackendToRestart(reload: boolean) {
+      this.waiting = true
+      await this.waitForBackendToGoOffline()
+      await this.waitForBackendToGoOnline()
+      if (reload) {
+        window.location.reload()
+      }
+    },
+
     runningBeta() {
       return VCU.getVersionType(this.current_version) === VersionType.Beta
     },
@@ -401,7 +453,7 @@ export default Vue.extend({
           // Force it to true again in case the user tried to close the dialog
           this.show_pull_output = true
         },
-      }).then(() => setInterval(this.checkIfBackendIsOnline, 1000))
+      }).then(() => { this.waitForBackendToRestart(true) })
     },
     async setVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
@@ -413,7 +465,7 @@ export default Vue.extend({
           repository,
           tag,
         },
-      }).finally(() => setInterval(this.checkIfBackendIsOnline, 1000))
+      }).finally(() => { this.waitForBackendToRestart(true) })
     },
     async deleteVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
