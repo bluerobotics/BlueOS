@@ -356,12 +356,18 @@ export default Vue.extend({
   },
 
   mounted() {
-    updateTime()
+    this.checkAddress()
     this.setupCallbacks()
     this.checkTour()
+    updateTime()
   },
 
   methods: {
+    checkAddress(): void {
+      if (window.location.host.includes('companion.local')) {
+        window.location.replace('http://blueos.local')
+      }
+    },
     setupCallbacks(): void {
       this.tourCallbacks = {
         onSkip: this.skipTour,
