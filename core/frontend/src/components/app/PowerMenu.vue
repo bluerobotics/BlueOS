@@ -74,7 +74,7 @@
                 >
                   mdi-folder-refresh
                 </v-icon>
-                Restart Core container
+                {{ settings.is_pirate_mode? "Restart Core container" : "Soft restart" }}
               </v-btn>
             </v-col>
           </v-col>
@@ -96,6 +96,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import settings from '@/libs/settings'
 import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -125,6 +126,7 @@ export default Vue.extend({
   },
   data() {
     return {
+      settings,
       service_status: Status.None,
       show_dialog: false,
     }
