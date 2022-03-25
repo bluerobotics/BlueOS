@@ -11,7 +11,6 @@
         type="info"
         elevation="2"
         dismissible
-        class=''
       >
       <h3>Welcome to BlueOS!</h3>
         Before start using, we highly recommend to <a
