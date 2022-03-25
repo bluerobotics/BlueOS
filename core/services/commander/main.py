@@ -112,7 +112,7 @@ async def shutdown(response: Response, shutdown_type: ShutdownType, i_know_what_
     try:
         hold_time_seconds = 5
         if shutdown_type == ShutdownType.REBOOT:
-            output = run_command(f"(sleep {hold_time_seconds}; sudo shutdown --reboot -h now)&")
+            output = run_command(f"(sleep {hold_time_seconds}; sudo reboot)&")
             logger.debug(f"reboot: {output}")
         elif shutdown_type == ShutdownType.POWEROFF:
             output = run_command(f"(sleep {hold_time_seconds}; sudo shutdown --poweroff -h now)&")
