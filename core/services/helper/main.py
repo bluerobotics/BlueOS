@@ -48,6 +48,7 @@ class Helper:
             # The server is not available, any error code will be handle by the 'with' block
             pass
 
+        # If not valid web server, documentation will not be available
         if not info.valid:
             return info
 
