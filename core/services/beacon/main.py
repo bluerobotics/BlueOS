@@ -29,7 +29,7 @@ class AsyncRunner:
 
     async def register_services(self) -> None:
         self.aiozc = AsyncZeroconf(ip_version=self.ip_version, interfaces=[self.interfaces])  # type: ignore
-        tasks = [self.aiozc.async_register_service(info, cooperating_responders=True) for info in self.services]
+        tasks = [self.aiozc.async_register_service(info, cooperating_responders=True, ttl=25) for info in self.services]
         background_tasks = await asyncio.gather(*tasks)
         await asyncio.gather(*background_tasks)
         logger.info("Finished registration, press Ctrl-C to exit...")
