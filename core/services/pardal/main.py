@@ -39,6 +39,7 @@ async def post_file(request: web.Request) -> web.Response:
     return web.Response(status=200)
 
 
+# pylint: disable=unused-argument
 async def root(request: web.Request) -> web.Response:
     html_content = """
     <html>

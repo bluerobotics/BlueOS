@@ -89,7 +89,8 @@ class Helper:
         )
 
         # And check if there is a webpage available that is not us
-        ports = (connection.laddr.port for connection in connections)
+        # Use it as a set to remove duplicated ports
+        ports = set(connection.laddr.port for connection in connections)
         services = (Helper.detect_service(port) for port in ports if port != PORT)
         return [service for service in services if service.valid]
 
