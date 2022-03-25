@@ -69,7 +69,7 @@
         v-text="`Upgrade to ${newBetaAvailable}`"
       />
     </v-list-item-action>
-    <v-list-item-action v-if="!current && !remote">
+    <v-list-item-action v-if="!current && !remote && imageCanBeDeleted()">
       <v-btn
         :color="'error'"
         class="mr-2 mb-4"
@@ -103,6 +103,7 @@ import Vue, { PropType } from 'vue'
 
 import settings from '@/libs/settings'
 import { Dictionary } from '@/types/common'
+import { DEFAULT_REMOTE_IMAGE } from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 
@@ -170,6 +171,9 @@ export default Vue.extend({
         return 'Unknown'
       }
       return value.replace('sha256:', '').substring(0, 8)
+    },
+    imageCanBeDeleted() {
+      return this.image.tag !== 'factory' || this.image.repository !== DEFAULT_REMOTE_IMAGE
     },
   },
 })
