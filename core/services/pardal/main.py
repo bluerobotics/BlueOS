@@ -39,10 +39,22 @@ async def post_file(request: web.Request) -> web.Response:
     return web.Response(status=200)
 
 
+async def root(request: web.Request) -> web.Response:
+    html_content = """
+    <html>
+        <head>
+            <title>Pardal</title>
+        </head>
+    </html>
+    """
+    return web.Response(text=html_content, content_type="text/html")
+
+
 app = web.Application()
 maximum_number_of_bytes = 2 * (2**30)  # 2 GBs
 app._client_max_size = maximum_number_of_bytes
 app.add_routes([web.get("/ws", websocket_echo)])
+app.router.add_get("/", root, name="root")
 app.router.add_get("/get_file", get_file, name="get_file")
 app.router.add_post("/post_file", post_file, name="post_file")
 web.run_app(app, path="0.0.0.0", port=args.port)
