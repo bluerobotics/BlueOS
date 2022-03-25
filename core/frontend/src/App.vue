@@ -155,6 +155,7 @@
     <v-tour
       name="welcomeTour"
       :steps="steps"
+      :callbacks="tourCallbacks"
     />
     <div id="tour-center-hook" />
   </v-app>
@@ -213,6 +214,7 @@ export default Vue.extend({
     drawer_running_tour: false,
     backend_offline: false,
     menus,
+    tourCallbacks: {}, // we are setting this up in mounted otherwise "this" can be undefined
   }),
   computed: {
     extend_toolbar(): boolean {
@@ -315,10 +317,20 @@ export default Vue.extend({
 
   mounted() {
     updateTime()
+    this.setupCallbacks()
     this.checkTour()
   },
 
   methods: {
+    setupCallbacks(): void {
+      this.tourCallbacks = {
+        onSkip: this.skipTour,
+        onStop: this.skipTour,
+      }
+    },
+    skipTour(): void {
+      this.drawer_running_tour = false
+    },
     checkTour(): void {
       // Check the current page and tour version to be sure that we are in the correct place before starting
       if (this.$route.name === 'Main') {
