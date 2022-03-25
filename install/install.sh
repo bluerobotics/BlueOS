@@ -165,9 +165,13 @@ sed -i '$ a noipv4ll' /etc/dhcpcd.conf
 echo "Downloading bootstrap"
 BLUEOS_BOOTSTRAP="bluerobotics/blueos-bootstrap:$VERSION" # Use current version
 BLUEOS_CORE="bluerobotics/blueos-core:$VERSION" # We don't have a stable tag yet
+BLUEOS_FACTORY="bluerobotics/blueos-core:factory" # used for "factory reset"
 
 docker pull $BLUEOS_BOOTSTRAP
 docker pull $BLUEOS_CORE
+# Use current release version for factory fallback
+docker image tag $BLUEOS_CORE $BLUEOS_FACTORY
+
 # Create blueos-bootstrap container
 docker create \
     -t \
