@@ -229,24 +229,39 @@ export default Vue.extend({
           },
           content: `We are happy to have you using this brand new companion system, and there are some tips we want to
           give you!`,
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#tour-center-hook',
           content: `As stated on our welcome card, one of the first things you should do on you first usage of BlueOS
           is to connect it to the internet.`,
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#wifi-tray-menu-button',
           content: 'You can do it by connecting to a wifi network of yours...',
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#ethernet-tray-menu-button',
           content: '...or connecting your system to a cabled internet provider (usually a router).',
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#hamburguer-menu-button',
           content: `This is the main menu of BlueOS. You can access all services that are running and system control
           here.`,
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#button-to-vehicle',
@@ -258,28 +273,46 @@ export default Vue.extend({
             // We will open the drawer for the message
             this.drawer = true
           },
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#button-to-tools',
           content: `Here you will find all kind of tools to improve your BlueOS experience.
           There are system-diagnosis tools, network-speed testers and others, all under the Tools menu.`,
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#power-menu-button',
           content: 'You can shutdown, restart the running computer and BlueOs under the power button.',
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#settings-menu-button',
           content: 'With the settings button you can control your BlueOS experience.',
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#feature-request-button',
           content: 'Here you can get in touch with us, requesting new features, reporting bugs and more!',
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#current-version',
           content: `You can check the current version of BlueOS installed here.
           This is an important information to provide when seeking help.`,
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#notifications-tray-menu-button',
@@ -288,10 +321,16 @@ export default Vue.extend({
             // The close vent will happen after the next tick of the state control
             this.drawer_running_tour = false
           },
+          params: {
+            enableScrolling: false,
+          },
         },
         {
           target: '#tour-center-hook',
           content: 'Hope you enjoy your experience with BlueOS! Happy exploration!',
+          params: {
+            enableScrolling: false,
+          },
         },
       ]
     },
