@@ -6,6 +6,7 @@
       no-gutters
     >
       <v-alert
+        v-if="!current_network"
         border="top"
         colored-border
         type="info"
@@ -90,6 +91,8 @@
 import Vue from 'vue'
 
 import settings from '@/libs/settings'
+import wifi from '@/store/wifi'
+import { Network } from '@/types/wifi'
 
 import menus, { menuItem } from '../menus'
 
@@ -110,6 +113,9 @@ export default Vue.extend({
         }
       }
       return items
+    },
+    current_network(): Network | null {
+      return wifi.current_network
     },
   },
 })
