@@ -290,6 +290,7 @@ export default Vue.extend({
           },
         },
         {
+          target: '#tour-center-hook',
           content: 'Hope you enjoy your experience with BlueOS! Happy exploration!',
         },
       ]
