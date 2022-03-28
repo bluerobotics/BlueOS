@@ -109,9 +109,7 @@ export default Vue.extend({
           this.show_reset_dialog = true
         })
         .catch((error) => {
-          const detail_message = 'data' in error.response
-            && 'message' in error.response.data ? error.response.data.message : 'No details available.'
-          const message = `Failed to commit operation: ${error.message}, ${detail_message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: commander_service, type: 'RESET_SETTINGS_FAIL', message })
         })
     },
