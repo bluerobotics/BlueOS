@@ -39,7 +39,7 @@ export default Vue.extend({
         .catch((error) => {
           autopilot.setAvailableEndpoints([])
           if (error === backend_offline_error) { return }
-          const message = `Could not fetch available MAVLink endpoints: ${error.message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_FETCH_FAIL', message })
         })
     },
@@ -56,7 +56,7 @@ export default Vue.extend({
         .catch((error) => {
           autopilot.setAvailableBoards([])
           if (error === backend_offline_error) { return }
-          const message = `Could not fetch available Ardupilot boards: ${error.message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARDS_FETCH_FAIL', message })
         })
     },
@@ -72,7 +72,7 @@ export default Vue.extend({
         .catch((error) => {
           autopilot.setCurrentBoard(null)
           if (error === backend_offline_error) { return }
-          const message = `Could not fetch current Autopilot board: ${error.message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARD_FETCH_FAIL', message })
         })
     },
