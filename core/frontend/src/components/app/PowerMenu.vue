@@ -185,10 +185,7 @@ export default Vue.extend({
           if (error.code === 'ECONNABORTED') {
             return
           }
-
-          const detail_message = 'detail' in error.response.data
-            ? error.response.data.detail : ''
-          const message = `Failed to commit operation: ${error.message}, ${detail_message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: commander_service, type: 'SHUTDOWN_FAIL', message })
         })
     },
