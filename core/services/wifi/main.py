@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
-from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
@@ -36,21 +36,17 @@ app = FastAPI(
     description="WiFi Manager is responsible for managing WiFi connections on BlueOS.",
     default_response_class=PrettyJSONResponse,
 )
+app.router.route_class = GenericErrorHandlingRoute
 
 
 @app.get("/status", summary="Retrieve status of wifi manager.")
 @version(1, 0)
 async def network_status() -> Any:
-    try:
-        wifi_status = await wifi_manager.status()
-        logger.info("Status:")
-        for line in tabulate(list(wifi_status.items())).splitlines():
-            logger.info(line)
-        return wifi_status
-    except FetchError as error:
-        logger.error("Status fetch fail.")
-        logger.exception(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+    wifi_status = await wifi_manager.status()
+    logger.info("Status:")
+    for line in tabulate(list(wifi_status.items())).splitlines():
+        logger.info(line)
+    return wifi_status
 
 
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
@@ -77,16 +73,11 @@ async def scan() -> Any:
 @version(1, 0)
 async def saved() -> Any:
     logger.info("Trying to fetch saved networks.")
-    try:
-        saved_networks = await wifi_manager.get_saved_wifi_network()
-        logger.info("Saved networks:")
-        for line in tabulate([network.dict() for network in saved_networks], headers="keys").splitlines():
-            logger.info(line)
-        return saved_networks
-    except FetchError as error:
-        logger.error("Failed to fetch saved networks.")
-        logger.exception(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+    saved_networks = await wifi_manager.get_saved_wifi_network()
+    logger.info("Saved networks:")
+    for line in tabulate([network.dict() for network in saved_networks], headers="keys").splitlines():
+        logger.info(line)
+    return saved_networks
 
 
 @app.post("/connect", summary="Connect to wifi network.")
