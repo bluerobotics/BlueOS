@@ -153,7 +153,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = `Could not create bridge: ${error.message}.`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: bridget_service, type: 'BRIDGE_CREATE_FAIL', message })
         })
       return true

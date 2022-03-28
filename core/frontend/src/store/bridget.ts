@@ -86,7 +86,7 @@ class BridgetStore extends VuexModule {
       .catch((error) => {
         this.setAvailableBridges([])
         if (error === backend_offline_error) { return }
-        const message = `Could not fetch available bridges: ${error.message}`
+        const message = error.response.data.detail ?? error.message
         notifications.pushError({ service: bridget_service, type: 'BRIDGES_FETCH_FAIL', message })
       })
       .finally(() => {
@@ -112,7 +112,7 @@ class BridgetStore extends VuexModule {
       .catch((error) => {
         this.setAvailableSerialPorts([])
         if (error === backend_offline_error) { return }
-        const message = `Could not fetch available serial ports: ${error.message}`
+        const message = error.response.data.detail ?? error.message
         notifications.pushError({ service: bridget_service, type: 'BRIDGET_SERIAL_PORTS_FETCH_FAIL', message })
       })
       .finally(() => {
