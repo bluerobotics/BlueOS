@@ -7,10 +7,10 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
-from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
-from fastapi import Body, FastAPI, File, HTTPException, Response, UploadFile, status
+from fastapi import Body, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -40,6 +40,7 @@ app = FastAPI(
     default_response_class=PrettyJSONResponse,
     debug=True,
 )
+app.router.route_class = GenericErrorHandlingRoute
 logger.info("Starting ArduPilot Manager.")
 autopilot = ArduPilotManager()
 if not is_running_as_root():
@@ -55,31 +56,19 @@ def get_available_endpoints() -> Any:
 @app.post("/endpoints", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
 def create_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
-    try:
-        autopilot.add_new_endpoints(endpoints)
-    except Exception as error:
-        logger.error(error)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    autopilot.add_new_endpoints(endpoints)
 
 
 @app.delete("/endpoints", status_code=status.HTTP_200_OK)
 @version(1, 0)
 def remove_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
-    try:
-        autopilot.remove_endpoints(endpoints)
-    except Exception as error:
-        logger.error(error)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    autopilot.remove_endpoints(endpoints)
 
 
 @app.put("/endpoints", status_code=status.HTTP_200_OK)
 @version(1, 0)
 def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
-    try:
-        autopilot.update_endpoints(endpoints)
-    except Exception as error:
-        logger.error(error)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    autopilot.update_endpoints(endpoints)
 
 
 @app.get(
@@ -88,34 +77,29 @@ def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
     summary="Retrieve dictionary of available firmwares versions with their respective URL.",
 )
 @version(1, 0)
-def get_available_firmwares(response: Response, vehicle: Vehicle) -> Any:
-    try:
-        if not autopilot.current_board:
-            raise RuntimeError("Cannot fetch available firmwares as there's no board running.")
-        return autopilot.get_available_firmwares(vehicle, autopilot.current_board.platform)
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+def get_available_firmwares(vehicle: Vehicle) -> Any:
+    if not autopilot.current_board:
+        raise RuntimeError("Cannot fetch available firmwares as there's no board running.")
+    return autopilot.get_available_firmwares(vehicle, autopilot.current_board.platform)
 
 
 @app.post("/install_firmware_from_url", summary="Install firmware for given URL.")
 @version(1, 0)
-async def install_firmware_from_url(response: Response, url: str) -> Any:
+async def install_firmware_from_url(url: str) -> Any:
     try:
         if not autopilot.current_board:
             raise RuntimeError("Cannot install firmware as there's no board running.")
         await autopilot.kill_ardupilot()
         autopilot.install_firmware_from_url(url, autopilot.current_board)
     except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+        raise error
     finally:
         await autopilot.start_ardupilot()
 
 
 @app.post("/install_firmware_from_file", summary="Install firmware from user file.")
 @version(1, 0)
-async def install_firmware_from_file(response: Response, binary: UploadFile = File(...)) -> Any:
+async def install_firmware_from_file(binary: UploadFile = File(...)) -> Any:
     custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
     try:
         if not autopilot.current_board:
@@ -126,11 +110,9 @@ async def install_firmware_from_file(response: Response, binary: UploadFile = Fi
         autopilot.install_firmware_from_file(custom_firmware, autopilot.current_board)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
-        response.status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
-        return {"message": f"Cannot use this file: {error}"}
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail={"message": f"Cannot use this file: {error}"}
+        ) from error
     finally:
         binary.file.close()
         await autopilot.start_ardupilot()
@@ -138,84 +120,59 @@ async def install_firmware_from_file(response: Response, binary: UploadFile = Fi
 
 @app.get("/board", response_model=FlightController, summary="Check what is the current running board.")
 @version(1, 0)
-def get_board(response: Response) -> Any:
-    try:
-        return autopilot.current_board
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+def get_board() -> Any:
+    return autopilot.current_board
 
 
 @app.post("/board", summary="Set board to be used.")
 @version(1, 0)
-async def set_board(response: Response, board: FlightController, sitl_frame: SITLFrame = SITLFrame.VECTORED) -> Any:
-    try:
-        autopilot.current_sitl_frame = sitl_frame
-        await autopilot.change_board(board)
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+async def set_board(board: FlightController, sitl_frame: SITLFrame = SITLFrame.VECTORED) -> Any:
+    autopilot.current_sitl_frame = sitl_frame
+    await autopilot.change_board(board)
 
 
 @app.post("/restart", summary="Restart the autopilot with current set options.")
 @version(1, 0)
-async def restart(response: Response) -> Any:
-    try:
-        logger.debug("Restarting ardupilot...")
-        await autopilot.restart_ardupilot()
-        logger.debug("Ardupilot successfully restarted.")
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+async def restart() -> Any:
+    logger.debug("Restarting ardupilot...")
+    await autopilot.restart_ardupilot()
+    logger.debug("Ardupilot successfully restarted.")
 
 
 @app.post("/start", summary="Start the autopilot.")
 @version(1, 0)
-async def start(response: Response) -> Any:
-    try:
-        logger.debug("Starting ardupilot...")
-        await autopilot.start_ardupilot()
-        logger.debug("Ardupilot successfully started.")
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+async def start() -> Any:
+    logger.debug("Starting ardupilot...")
+    await autopilot.start_ardupilot()
+    logger.debug("Ardupilot successfully started.")
 
 
 @app.post("/stop", summary="Stop the autopilot.")
 @version(1, 0)
-async def stop(response: Response) -> Any:
-    try:
-        logger.debug("Stopping ardupilot...")
-        await autopilot.kill_ardupilot()
-        logger.debug("Ardupilot successfully stopped.")
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+async def stop() -> Any:
+    logger.debug("Stopping ardupilot...")
+    await autopilot.kill_ardupilot()
+    logger.debug("Ardupilot successfully stopped.")
 
 
 @app.post("/restore_default_firmware", summary="Restore default firmware.")
 @version(1, 0)
-async def restore_default_firmware(response: Response) -> Any:
+async def restore_default_firmware() -> Any:
     try:
         if not autopilot.current_board:
             raise RuntimeError("Cannot restore firmware as there's no board running.")
         await autopilot.kill_ardupilot()
         autopilot.restore_default_firmware(autopilot.current_board)
     except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+        raise error
     finally:
         await autopilot.start_ardupilot()
 
 
 @app.get("/available_boards", response_model=List[FlightController], summary="Retrieve list of connected boards.")
 @version(1, 0)
-def available_boards(response: Response) -> Any:
-    try:
-        return BoardDetector.detect()
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+def available_boards() -> Any:
+    return BoardDetector.detect()
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
