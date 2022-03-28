@@ -7,10 +7,10 @@ import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
-from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
-from fastapi import Body, FastAPI, HTTPException, status
+from fastapi import Body, FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -56,6 +56,7 @@ app = FastAPI(
     default_response_class=PrettyJSONResponse,
     debug=True,
 )
+app.router.route_class = GenericErrorHandlingRoute
 
 
 @app.get("/ethernet", response_model=List[EthernetInterface], summary="Retrieve ethernet interfaces.")
@@ -70,14 +71,7 @@ def retrieve_interfaces() -> Any:
 @version(1, 0)
 def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
     """REST API endpoint to configure a new ethernet interface or modify an existing one."""
-    try:
-        manager.set_configuration(interface)
-    except Exception as error:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Could not configure ethernet interface with provided configuration. {error}",
-        ) from error
-
+    manager.set_configuration(interface)
     manager.save()
     return interface
 
@@ -86,22 +80,16 @@ def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
 @version(1, 0)
 def add_address(interface_name: str, mode: AddressMode, ip_address: Optional[str] = None) -> Any:
     """REST API endpoint to add an IP address to an ethernet interface."""
-    try:
-        manager.add_ip(interface_name, mode, ip_address)
-        manager.save()
-    except Exception as error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    manager.add_ip(interface_name, mode, ip_address)
+    manager.save()
 
 
 @app.delete("/address", summary="Delete IP address from interface.")
 @version(1, 0)
 def delete_address(interface_name: str, ip_address: str) -> Any:
     """REST API endpoint to delete an IP address from an ethernet interface."""
-    try:
-        manager.remove_ip(interface_name, ip_address)
-        manager.save()
-    except Exception as error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    manager.remove_ip(interface_name, ip_address)
+    manager.save()
 
 
 app = VersionedFastAPI(
