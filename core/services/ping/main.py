@@ -4,7 +4,7 @@ import asyncio
 import logging
 from typing import Any, List
 
-from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
@@ -25,6 +25,7 @@ app = FastAPI(
     default_response_class=PrettyJSONResponse,
     debug=True,
 )
+app.router.route_class = GenericErrorHandlingRoute
 logger.info("Starting Ping Service.")
 
 # TODO: move to singleton
