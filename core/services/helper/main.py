@@ -8,7 +8,7 @@ import psutil
 import requests
 import uvicorn
 from bs4 import BeautifulSoup
-from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -100,6 +100,7 @@ fast_api_app = FastAPI(
     description="Everybody's helper to find web services that are running in BlueOS.",
     default_response_class=PrettyJSONResponse,
 )
+fast_api_app.router.route_class = GenericErrorHandlingRoute
 
 
 @fast_api_app.get(
