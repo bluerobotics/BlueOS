@@ -134,7 +134,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = `Could not create new address on ${this.interfaceName}: ${error.message}.`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: ethernet_service, type: 'ETHERNET_ADDRESS_CREATION_FAIL', message })
         })
       return true
