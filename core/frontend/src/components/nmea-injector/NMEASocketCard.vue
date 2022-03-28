@@ -64,7 +64,7 @@ export default Vue.extend({
         data: this.nmeaSocket,
       })
         .catch((error) => {
-          const message = `Could not remove NMEA socket: ${error.message}.`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: nmea_injector_service, type: 'nmeaSocket_DELETE_FAIL', message })
         })
     },
