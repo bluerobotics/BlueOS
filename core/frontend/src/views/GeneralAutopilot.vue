@@ -88,7 +88,7 @@ export default Vue.extend({
         timeout: 10000,
       })
         .catch((error) => {
-          const message = `Could not start autopilot: ${error.message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_START_FAIL', message })
         })
         .finally(() => {
@@ -103,7 +103,7 @@ export default Vue.extend({
         timeout: 10000,
       })
         .catch((error) => {
-          const message = `Could not stop autopilot: ${error.message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_STOP_FAIL', message })
         })
         .finally(() => {
@@ -118,7 +118,7 @@ export default Vue.extend({
         timeout: 10000,
       })
         .catch((error) => {
-          const message = `Could not restart autopilot: ${error.message}`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_RESTART_FAIL', message })
         })
         .finally(() => {

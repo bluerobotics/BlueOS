@@ -244,7 +244,7 @@ export default Vue.extend({
         .catch((error) => {
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchFailed
           if (error === backend_offline_error) { return }
-          const message = `Could not fetch available firmwares: ${error.message}.`
+          const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'FIRMWARE_FETCH_FAIL', message })
         })
     },
@@ -299,11 +299,7 @@ export default Vue.extend({
           if (error.message && error.message === 'Network Error') {
             this.install_result_message = 'Upload fail. If the file was changed, clean the form and re-select it.'
           } else {
-            try {
-              this.install_result_message = error.response.data.message
-            } catch {
-              this.install_result_message = 'Invalid backend error message.'
-            }
+            this.install_result_message = error.response.data.detail ?? error.message
           }
           const message = `Could not install firmware: ${this.install_result_message}.`
           notifications.pushError({ service: autopilot_service, type: 'FILE_FIRMWARE_INSTALL_FAIL', message })
