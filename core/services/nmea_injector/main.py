@@ -4,9 +4,9 @@ import asyncio
 import logging
 from typing import Any, List
 
-from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -32,20 +32,17 @@ app = FastAPI(
     default_response_class=PrettyJSONResponse,
     debug=True,
 )
+app.router.route_class = GenericErrorHandlingRoute
 logger.info("Starting NMEA Injector.")
 controller = TrafficController()
 
 
 @app.get("/socks", response_model=List[NMEASocket])
 @version(1, 0)
-def get_socks(response: Response) -> Any:
-    try:
-        socks = controller.get_socks()
-        logger.debug(f"Available NMEA sockets: {[str(sock) for sock in socks]}.")
-        return socks
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+def get_socks() -> Any:
+    socks = controller.get_socks()
+    logger.debug(f"Available NMEA sockets: {[str(sock) for sock in socks]}.")
+    return socks
 
 
 @app.post(
@@ -55,12 +52,8 @@ def get_socks(response: Response) -> Any:
     description="Component ID refers to the Mavlink specification. Usual for GPS units are 220 and 221.",
 )
 @version(1, 0)
-async def add_sock(response: Response, sock: NMEASocket) -> Any:
-    try:
-        await controller.add_sock(sock)
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+async def add_sock(sock: NMEASocket) -> Any:
+    await controller.add_sock(sock)
 
 
 @app.delete(
@@ -69,12 +62,8 @@ async def add_sock(response: Response, sock: NMEASocket) -> Any:
     summary="Remove existing NMEA socket.",
 )
 @version(1, 0)
-def remove_sock(response: Response, sock: NMEASocket) -> Any:
-    try:
-        controller.remove_sock(sock)
-    except Exception as error:
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"message": f"{error}"}
+def remove_sock(sock: NMEASocket) -> Any:
+    controller.remove_sock(sock)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
