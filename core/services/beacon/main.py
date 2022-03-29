@@ -8,11 +8,14 @@ from typing import Any, Dict, List, Optional
 
 import psutil
 from commonwealth.settings.manager import Manager
+from commonwealth.utils.logs import get_new_log_path
 from loguru import logger
 from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
 from settings import ServiceTypes, SettingsV1
+
+SERVICE_NAME = "beacon"
 
 
 class AsyncRunner:
@@ -53,7 +56,7 @@ class AsyncRunner:
 class Beacon:
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
-        self.manager = Manager("Beacon", SettingsV1)
+        self.manager = Manager(SERVICE_NAME, SettingsV1)
         # manager still returns "valid" settings even if file is absent, so we check for the "default" field
         # TODO: fix after https://github.com/bluerobotics/BlueOS-docker/issues/880 is solved
         if self.manager.settings.default is None:
@@ -200,6 +203,7 @@ class Beacon:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
+    logger.add(get_new_log_path(SERVICE_NAME))
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
