@@ -19,7 +19,7 @@
         <span class="d-flex flex-column align-center">
           <backend-status-checker @statusChange="changeBackendStatus" />
           <span v-if="settings.is_pirate_mode">
-            <span class="d-none d-md-flex d-lg-none">Ahoy matey! You're running</span>
+            <span class="hidden-sm-and-down">Ahoy matey! You're running</span>
             <v-icon>
               mdi-flag-variant
             </v-icon>
