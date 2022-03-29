@@ -11,7 +11,7 @@
             class="pa-1"
           >
             <v-card class="elevation-0 d-flex flex-column align-center pa-0">
-              <p class="ma-0 pt-2 text-h5">
+              <p class="ma-0 pt-2 text-h5 text-center">
                 {{ endpoint.name }}
               </p>
               <p class="ma-0 pb-2 text-body-2">
