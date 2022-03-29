@@ -41,13 +41,12 @@
         >
           <v-theme-provider dark>
             <v-row
-              class="py-3 px-3"
+              class="py-3 px-3 d-flex justify-space-between flex-nowrap"
             >
               <v-card-title
                 class="text-subtitle-1 font-weight-bold"
                 v-text="title"
               />
-              <v-spacer />
               <div>
                 <v-avatar
                   color="primary"
