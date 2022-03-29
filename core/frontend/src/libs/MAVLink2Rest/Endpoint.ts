@@ -36,6 +36,11 @@ export default class Endpoint {
         listener.onNewData(this.latestData)
       }
     }
+    socket.onclose = () => {
+      setTimeout(() => {
+        this.socket = this.createSocket(url)
+      }, 5000)
+    }
     return socket
   }
 
