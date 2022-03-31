@@ -207,7 +207,7 @@ export default Vue.extend({
       )
     },
     disable_firmware_selection(): boolean {
-      return this.chosen_vehicle == null
+      return this.chosen_vehicle == null || this.loading_firmware_options
     },
     showable_firmwares(): {value: URL, text: string}[] {
       return this.available_firmwares.map(
