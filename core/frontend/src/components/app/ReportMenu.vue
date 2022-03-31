@@ -56,6 +56,7 @@
           </v-btn>
 
           <v-btn
+            v-if="settings.is_pirate_mode"
             class="ma-2"
             block
             @click="openSlack()"
@@ -88,6 +89,7 @@ export default Vue.extend({
   name: 'PowerMenu',
   data() {
     return {
+      settings,
       show_dialog: false,
     }
   },
