@@ -56,7 +56,13 @@ class Dnsmasq:
             return False
 
     def command_list(self) -> List[Union[str, pathlib.Path]]:
-        return [self.binary(), "--no-daemon", f"--interface={self._interface}", f"--conf-file={self.config_path()}"]
+        return [
+            self.binary(),
+            "--no-daemon",
+            f"--interface={self._interface}",
+            f"--conf-file={self.config_path()}",
+            "--bind-interfaces",
+        ]
 
     def start(self) -> None:
         try:
