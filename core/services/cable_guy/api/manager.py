@@ -136,7 +136,7 @@ class EthernetManager:
         Returns:
             bool: True if valid, False if not
         """
-        blacklist = ["lo", "ham.*", "docker.*"]
+        blacklist = ["lo", "ham.*", "docker.*", "veth.*"]
         wifi_interfaces = self._get_wifi_interfaces()
         blacklist += wifi_interfaces
 
@@ -295,7 +295,7 @@ class EthernetManager:
             # We don't care about virtual ethernet interfaces
             ## Virtual interfaces are created by programs such as docker
             ## and they are an abstraction of real interfaces, the ones that we want to configure.
-            if str(interface).startswith("veth"):
+            if not self.is_valid_interface_name(interface):
                 continue
 
             valid_addresses = []
