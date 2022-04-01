@@ -47,6 +47,7 @@ class Dnsmasq:
         self.validate_binary()
 
         self.validate_config()
+        self.start()
 
     @staticmethod
     def binary_name() -> str:
