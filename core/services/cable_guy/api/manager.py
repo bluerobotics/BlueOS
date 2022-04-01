@@ -1,4 +1,3 @@
-import pathlib
 import re
 import time
 from enum import Enum
@@ -6,7 +5,7 @@ from socket import AddressFamily
 from typing import Any, List, Optional, Tuple
 
 import psutil
-from commonwealth.utils.DHCPServerManager import Dnsmasq
+from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pydantic import BaseModel
 from pyroute2 import IW, NDB, IPRoute
@@ -47,12 +46,10 @@ class EthernetManager:
 
     result: List[EthernetInterface] = []
 
-    def __init__(self, default_config: EthernetInterface, dhcp_gateway: str) -> None:
+    def __init__(self, default_config: EthernetInterface) -> None:
         self.settings = settings.Settings()
 
-        self._config_path = pathlib.Path(__file__).parent.absolute().joinpath("settings", "dnsmasq.conf")
-        self._server = Dnsmasq(self._config_path)
-        self._dhcp_server_gateway = dhcp_gateway
+        self._dhcp_servers: List[DHCPServerManager] = []
 
         # Load settings and do the initial configuration
         if not self.settings.load():
@@ -98,13 +95,22 @@ class EthernetManager:
         if interface.name not in valid_names:
             raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
 
+        # Reset the interface by removing all IPs and DHCP servers associated with it
         self.flush_interface(interface.name)
+        try:
+            self.remove_dhcp_server_from_interface(interface.name)
+        except Exception:
+            pass
+
+        # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
+        if any(address.mode == AddressMode.Client for address in interface.addresses):
+            self.trigger_dynamic_ip_acquisition(interface.name)
 
         for address in interface.addresses:
-            self.add_ip(interface.name, address.mode, address.ip)
-
-        if not self._is_server_address_present(interface) and self._server.is_running():
-            self._server.stop()
+            if address.mode == AddressMode.Unmanaged:
+                self.add_static_ip(interface.name, address.ip)
+            elif address.mode == AddressMode.Server:
+                self.add_dhcp_server_to_interface(interface.name, address.ip)
 
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
@@ -240,61 +246,16 @@ class EthernetManager:
         time.sleep(1)
         self.enable_interface(interface_name, True)
 
-    def set_ip(self, interface_name: str, ip: str) -> None:
+    def add_static_ip(self, interface_name: str, ip: str) -> None:
         """Set ip address for a specific interface
 
         Args:
             interface_name (str): Interface name
             ip (str): Desired ip address
         """
+        logger.info(f"Adding static IP '{ip}' to interface '{interface_name}'.")
         interface_index = self._get_interface_index(interface_name)
         self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
-        logger.info(f"Setting interface {interface_name} to IP '{ip}'.")
-
-    def set_static_ip(self, interface_name: str, ip: str) -> None:
-        """Set interface to use static ip address
-
-        Args:
-            interface_name (str): Interface name
-            ip (str): ip address
-        """
-        # Set new ip address
-        self.set_ip(interface_name, ip)
-
-    def add_ip(self, interface_name: str, mode: AddressMode, ip_address: Optional[str] = None) -> None:
-        """Add IP address to a given interface
-
-        Args:
-            interface_name (str): Interface name
-            ip_address (str): IP address to be added
-        """
-        parsed_ip = self._dhcp_server_gateway if not ip_address and mode == AddressMode.Server else ip_address
-        logger.info(f"Adding IP '{parsed_ip}' on interface '{interface_name}' in {mode} mode.")
-        try:
-            interface = self.get_interface_by_name(interface_name)
-
-            if parsed_ip is None or parsed_ip == "" and mode in [AddressMode.Unmanaged, AddressMode.Server]:
-                raise ValueError("No IP address was specified. Cannot add static IP.")
-
-            # Remove old IP address, if it already exists, and use the new one
-            for address in interface.addresses:
-                if address.ip == parsed_ip:
-                    self.remove_ip(interface_name, parsed_ip)
-
-            if mode == AddressMode.Client:
-                self.trigger_dynamic_ip_acquisition(interface_name)
-                return
-            if mode == AddressMode.Server:
-                self.set_static_ip(interface_name, parsed_ip)
-                if not self._server.is_running():
-                    self._server.start()
-                return
-            if mode == AddressMode.Unmanaged:
-                self.set_static_ip(interface_name, parsed_ip)
-        except Exception as error:
-            error_msg = f"Cannot add IP '{parsed_ip}' to interface {interface_name}. {error}"
-            logger.error(error_msg)
-            raise ValueError(error_msg) from error
 
     def remove_ip(self, interface_name: str, ip_address: str) -> None:
         """Delete IP address appended on the interface
@@ -305,9 +266,11 @@ class EthernetManager:
         """
         logger.info(f"Deleting IP {ip_address} from interface {interface_name}.")
         try:
-            interface = self.get_interface_by_name(interface_name)
-            if self._is_server_address_present(interface) and self._server.is_running():
-                self._server.stop()
+            if (
+                self._is_dhcp_server_running_on_interface(interface_name)
+                and self._dhcp_server_on_interface(interface_name).ipv4_gateway == ip_address
+            ):
+                self.remove_dhcp_server_from_interface(interface_name)
             interface_index = self._get_interface_index(interface_name)
             self.ipr.addr("del", index=interface_index, address=ip_address, prefixlen=24)
         except Exception as error:
@@ -345,10 +308,12 @@ class EthernetManager:
                 ip = address.address if valid_ip else "undefined"
 
                 is_static_ip = self.is_static_ip(ip)
-                is_gateway_ip = ip == self._dhcp_server_gateway
 
                 # Populate our output item
-                if self._server.is_running() and is_gateway_ip:
+                if (
+                    self._is_dhcp_server_running_on_interface(interface)
+                    and self._dhcp_server_on_interface(interface).ipv4_gateway == ip
+                ):
                     mode = AddressMode.Server
                 else:
                     mode = AddressMode.Unmanaged if is_static_ip and valid_ip else AddressMode.Client
@@ -385,3 +350,35 @@ class EthernetManager:
         """
         interface = self.get_interface_ndb(interface_name)
         return InterfaceInfo(connected=interface.carrier != 0, number_of_disconnections=interface.carrier_down_count)
+
+    def _is_ip_on_interface(self, interface_name: str, ip_address: str) -> bool:
+        interface = self.get_interface_by_name(interface_name)
+        return any(True for address in interface.addresses if address.ip == ip_address)
+
+    def _dhcp_server_on_interface(self, interface_name: str) -> DHCPServerManager:
+        try:
+            return next(dhcp_server for dhcp_server in self._dhcp_servers if dhcp_server.interface == interface_name)
+        except StopIteration as error:
+            raise ValueError(f"No DHCP server running on interface {interface_name}.") from error
+
+    def _is_dhcp_server_running_on_interface(self, interface_name: str) -> bool:
+        try:
+            return bool(self._dhcp_server_on_interface(interface_name))
+        except Exception:
+            return False
+
+    def remove_dhcp_server_from_interface(self, interface_name: str) -> DHCPServerManager:
+        logger.info(f"Removing DHCP server from interface '{interface_name}'.")
+        try:
+            self._dhcp_servers.remove(self._dhcp_server_on_interface(interface_name))
+        except Exception as error:
+            raise ValueError(f"Cannot remove DHCP server from interface. {error}") from error
+
+    def add_dhcp_server_to_interface(self, interface_name: str, ipv4_gateway: str) -> None:
+        if self._is_dhcp_server_running_on_interface(interface_name):
+            self.remove_dhcp_server_from_interface(interface_name)
+        if self._is_ip_on_interface(interface_name, ipv4_gateway):
+            self.remove_ip(interface_name, ipv4_gateway)
+        self.add_static_ip(interface_name, ipv4_gateway)
+        logger.info(f"Adding DHCP server with gateway '{ipv4_gateway}' to interface '{interface_name}'.")
+        self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway))

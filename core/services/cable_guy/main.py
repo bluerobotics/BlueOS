@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
@@ -41,9 +41,8 @@ if args.default_config == "bluerov2":
     default_config = EthernetInterface(
         name="eth0", addresses=[InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Unmanaged)]
     )
-    dhcp_gateway = "192.168.2.2"
 
-manager = EthernetManager(default_config, dhcp_gateway)
+manager = EthernetManager(default_config)
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 logger.add(get_new_log_path(SERVICE_NAME))
@@ -78,9 +77,9 @@ def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
 
 @app.post("/address", summary="Add IP address to interface.")
 @version(1, 0)
-def add_address(interface_name: str, mode: AddressMode, ip_address: Optional[str] = None) -> Any:
-    """REST API endpoint to add an IP address to an ethernet interface."""
-    manager.add_ip(interface_name, mode, ip_address)
+def add_address(interface_name: str, ip_address: str) -> Any:
+    """REST API endpoint to add a static IP address to an ethernet interface."""
+    manager.add_static_ip(interface_name, ip_address)
     manager.save()
 
 
@@ -89,6 +88,30 @@ def add_address(interface_name: str, mode: AddressMode, ip_address: Optional[str
 def delete_address(interface_name: str, ip_address: str) -> Any:
     """REST API endpoint to delete an IP address from an ethernet interface."""
     manager.remove_ip(interface_name, ip_address)
+    manager.save()
+
+
+@app.post("/dhcp", summary="Add local DHCP server to interface.")
+@version(1, 0)
+def add_dhcp_server(interface_name: str, ipv4_gateway: str) -> Any:
+    """REST API endpoint to enable/disable local DHCP server."""
+    manager.add_dhcp_server_to_interface(interface_name, ipv4_gateway)
+    manager.save()
+
+
+@app.delete("/dhcp", summary="Remove local DHCP server from interface.")
+@version(1, 0)
+def remove_dhcp_server(interface_name: str) -> Any:
+    """REST API endpoint to enable/disable local DHCP server."""
+    manager.remove_dhcp_server_from_interface(interface_name)
+    manager.save()
+
+
+@app.post("/dynamic_ip", summary="Trigger reception of dynamic IP.")
+@version(1, 0)
+def trigger_dynamic_ip_acquisition(interface_name: str) -> Any:
+    """REST API endpoint to trigger interface to receive a new dynamic IP."""
+    manager.trigger_dynamic_ip_acquisition(interface_name)
     manager.save()
 
 
