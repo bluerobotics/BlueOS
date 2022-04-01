@@ -317,9 +317,9 @@ class EthernetManager:
                     mode = AddressMode.Server
                 else:
                     mode = AddressMode.Unmanaged if is_static_ip and valid_ip else AddressMode.Client
-                info = self.get_interface_info(interface)
                 valid_addresses.append(InterfaceAddress(ip=ip, mode=mode))
 
+            info = self.get_interface_info(interface)
             interface_data = EthernetInterface(name=interface, addresses=valid_addresses, info=info)
             # Check if it's valid and add to the result
             if self.validate_interface_data(interface_data):
