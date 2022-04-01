@@ -1,19 +1,43 @@
 import pathlib
 import shutil
 import subprocess
+from ipaddress import IPv4Address, IPv4Interface, IPv4Network
 from typing import Any, List, Optional, Union
 
 import psutil
 from loguru import logger
 
 
+# pylint: disable=too-many-arguments
 class Dnsmasq:
-    def __init__(self, config_path: pathlib.Path, interface: str) -> None:
+    def __init__(
+        self,
+        config_path: pathlib.Path,
+        interface: str,
+        ipv4_gateway: IPv4Address,
+        subnet_mask: Optional[IPv4Address] = None,
+        ipv4_lease_range: Optional[tuple[IPv4Address, IPv4Address]] = None,
+        lease_time: str = "24h",
+    ) -> None:
         self._subprocess: Optional[Any] = None
 
         if interface not in psutil.net_if_stats():
             raise ValueError(f"Interface '{interface}' not found. Available interfaces are {psutil.net_if_stats()}.")
         self._interface = interface
+
+        self._ipv4_gateway = ipv4_gateway
+
+        if subnet_mask is None:
+            # If no subnet mask is defined we assume a class C (24 bit) subnet
+            subnet_mask = IPv4Address("255.255.255.0")
+        self._subnet_mask = subnet_mask
+
+        if ipv4_lease_range is None:
+            # If no lease-range is defined we offer all available IPs for lease
+            ipv4_lease_range = (list(self.ipv4_network.hosts())[0], list(self.ipv4_network.hosts())[-1])
+        self._ipv4_lease_range = ipv4_lease_range
+
+        self._lease_time = lease_time
 
         binary_path = shutil.which(self.binary_name())
         if binary_path is None:
@@ -43,6 +67,12 @@ class Dnsmasq:
         return self._config_path
 
     def validate_config(self) -> None:
+        if not (self._ipv4_lease_range[0] in self.ipv4_network and self._ipv4_lease_range[1] in self.ipv4_network):
+            raise ValueError("Initial and final DHCP lease addresses must be in the gateway/subnet network.")
+
+        if not self._ipv4_lease_range[1] > self._ipv4_lease_range[0]:
+            raise ValueError("Final DHCP lease address must be greater than the initial one.")
+
         subprocess.check_output([*self.command_list(), "--test"])
 
     def command_list(self) -> List[Union[str, pathlib.Path]]:
@@ -50,6 +80,8 @@ class Dnsmasq:
             self.binary(),
             "--no-daemon",
             f"--interface={self._interface}",
+            f"--dhcp-range={self._ipv4_lease_range[0]},{self._ipv4_lease_range[1]},{self._subnet_mask},{self._lease_time}",  # fmt: skip
+            f"--dhcp-option=option:router,{self._ipv4_gateway}",
             f"--conf-file={self.config_path()}",
             "--bind-interfaces",
         ]
@@ -80,6 +112,18 @@ class Dnsmasq:
     @property
     def interface(self) -> str:
         return self._interface
+
+    @property
+    def ipv4_gateway(self) -> IPv4Address:
+        return self._ipv4_gateway
+
+    @property
+    def ipv4_lease_range(self) -> tuple[IPv4Address, IPv4Address]:
+        return self._ipv4_lease_range
+
+    @property
+    def ipv4_network(self) -> IPv4Network:
+        return IPv4Interface(f"{self._ipv4_gateway}/{self._subnet_mask}").network
 
     def __del__(self) -> None:
         self.stop()
