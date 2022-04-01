@@ -5,24 +5,16 @@
     @input="showDialog"
   >
     <v-card>
-      <v-card-title>New IP address on '{{ interfaceName }}'</v-card-title>
+      <v-card-title>New static IP address on '{{ interfaceName }}'</v-card-title>
 
       <v-card-text class="d-flex flex-column">
         <v-form
           ref="form"
           lazy-validation
         >
-          <v-select
-            v-model="mode"
-            :items="mode_types"
-            label="Mode"
-            :rules="[validate_required_field]"
-          />
-
           <v-text-field
             v-model="ip_address"
             :rules="[is_valid_ip_input]"
-            :disabled="!editable_ip"
             label="IP address"
           />
 
@@ -48,7 +40,7 @@ import { AddressMode } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
-import { isIpAddress, isNotEmpty } from '@/utils/pattern_validators'
+import { isIpAddress } from '@/utils/pattern_validators'
 
 export default Vue.extend({
   name: 'NetworkCard',
@@ -68,20 +60,11 @@ export default Vue.extend({
   },
   data() {
     return {
-      mode: AddressMode.unmanaged,
       ip_address: '',
     }
   },
 
   computed: {
-    mode_types(): {value: AddressMode, text: string}[] {
-      return Object.entries(AddressMode).map(
-        (mode) => ({ value: mode[1], text: this.showable_mode_name(mode[1]) }),
-      )
-    },
-    editable_ip(): boolean {
-      return this.mode === AddressMode.unmanaged
-    },
     form(): VForm {
       return this.$refs.form as VForm
     },
@@ -89,28 +72,13 @@ export default Vue.extend({
   watch: {
     show(val: boolean): void {
       if (val === false) {
-        this.mode = AddressMode.unmanaged
         this.ip_address = ''
       }
     },
   },
   methods: {
-    validate_required_field(input: string): (true | string) {
-      return isNotEmpty(input) ? true : 'Required field.'
-    },
     is_valid_ip_input(input: string): (true | string) {
-      if (this.mode === AddressMode.unmanaged) {
-        return isIpAddress(input) ? true : 'Invalid IP address.'
-      }
-      return true
-    },
-    showable_mode_name(mode: AddressMode): string {
-      switch (mode) {
-        case AddressMode.client: return 'Dynamic IP'
-        case AddressMode.server: return 'DHCP Server'
-        case AddressMode.unmanaged: return 'Static IP'
-        default: return 'Undefined mode'
-      }
+      return isIpAddress(input) ? true : 'Invalid IP address.'
     },
     async createNewAddress(): Promise<boolean> {
       // Validate form before proceeding with API request
@@ -126,8 +94,8 @@ export default Vue.extend({
         timeout: 10000,
         params: {
           interface_name: this.interfaceName,
-          mode: this.mode,
-          ip_address: this.ip_address === '' ? null : this.ip_address,
+          mode: AddressMode.unmanaged,
+          ip_address: this.ip_address,
         },
       })
         .then(() => {
