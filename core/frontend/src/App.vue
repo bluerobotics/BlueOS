@@ -58,7 +58,7 @@
           alt="Blue Robotics Logo"
           class="shrink mr-2"
           contain
-          src="./assets/logo.svg"
+          src="./assets/img/logo.svg"
           width="60"
         />
       </v-container>

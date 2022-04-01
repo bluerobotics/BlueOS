@@ -3,7 +3,7 @@
     :aspect-ratio="1/1"
     class="lds-dual-ring"
     :width="size"
-    src="../../assets/logo.svg"
+    src="../../assets/img/logo.svg"
   />
 </template>
 

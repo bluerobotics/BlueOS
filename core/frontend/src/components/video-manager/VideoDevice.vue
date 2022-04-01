@@ -32,7 +32,7 @@
         >
           <v-img
             contain
-            src="../../assets/wip-video.svg"
+            src="../../assets/img/wip-video.svg"
           />
         </v-avatar>
       </div>
