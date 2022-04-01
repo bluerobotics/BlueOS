@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
+import itertools
 import logging
 import pathlib
 import socket
@@ -8,12 +9,18 @@ from typing import Any, Dict, List, Optional
 
 import psutil
 from commonwealth.settings.manager import Manager
+from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import get_new_log_path
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from uvicorn import Config, Server
 from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
 from settings import ServiceTypes, SettingsV2
+from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
 
@@ -30,6 +37,19 @@ class AsyncRunner:
         logger.info("Adding services:")
         logger.info(service)
         self.services.append(service)
+
+    def get_services(self) -> List[MdnsEntry]:
+        return [
+            MdnsEntry(
+                ip=self.interface,
+                fullname=service.name,
+                hostname=service.name.split(".")[0],
+                service_type=service.name.split(".")[1],
+                interface=self.interface_name,
+                interface_type=InterfaceType.guess_from_name(self.interface_name),
+            )
+            for service in self.services
+        ]
 
     async def register_services(self) -> None:
         self.aiozc = AsyncZeroconf(ip_version=self.ip_version, interfaces=[self.interface])  # type: ignore
@@ -202,6 +222,44 @@ class Beacon:
         await asyncio.gather(*[runner.unregister_services() for runner in self.runners.values()])
 
 
+app = FastAPI(
+    title="Beacon API",
+    description="Beacon is responsible for publishing mDNS domains.",
+    default_response_class=PrettyJSONResponse,
+    debug=True,
+)
+
+beacon = Beacon()
+
+
+@app.get("/services", response_model=List[MdnsEntry], summary="Current domains broadcasted.")
+@version(1, 0)
+def get_services() -> Any:
+    return list(itertools.chain.from_iterable([runner.get_services() for runner in beacon.runners.values()]))
+
+
+@app.get("/ip", response_model=IpInfo, summary="Ip Information")
+@version(1, 0)
+def get_ip(request: Request) -> Any:
+    """Returns the IP address of the client and of the network interface serving the client"""
+    return IpInfo(client_ip=request.headers["x-real-ip"], interface_ip=request.headers["x-interface-ip"])
+
+
+app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+
+
+@app.get("/")
+async def root() -> Any:
+    html_content = """
+    <html>
+        <head>
+            <title>Beacon Service</title>
+        </head>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger.add(get_new_log_path(SERVICE_NAME))
@@ -213,10 +271,13 @@ if __name__ == "__main__":
     if args.debug:
         logging.getLogger("zeroconf").setLevel(logging.DEBUG)
 
-    beacon = Beacon()
+    logger.info("Starting Beacon Service.")
 
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(beacon.run())
-    except KeyboardInterrupt:
-        loop.run_until_complete(beacon.stop())
+    loop = asyncio.new_event_loop()
+
+    config = Config(app=app, loop=loop, host="0.0.0.0", port=9111, log_config=None)
+    server = Server(config)
+
+    loop.create_task(beacon.run())
+    loop.run_until_complete(server.serve())
+    loop.run_until_complete(beacon.stop())
