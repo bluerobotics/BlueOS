@@ -21,10 +21,10 @@ class Dnsmasq:
             raise ValueError
 
         self._binary = pathlib.Path(binary_path)
-        assert self.is_binary_working()
+        self.validate_binary()
 
         self._config_path = config_path
-        assert self.is_valid_config()
+        self.validate_config()
 
     @staticmethod
     def binary_name() -> str:
@@ -33,27 +33,17 @@ class Dnsmasq:
     def binary(self) -> pathlib.Path:
         return self._binary
 
-    def is_binary_working(self) -> bool:
+    def validate_binary(self) -> None:
         if self.binary() is None:
-            return False
+            raise RuntimeError("Binary not available.")
 
-        try:
-            subprocess.check_output([self.binary(), "--test"])
-            return True
-        except subprocess.CalledProcessError as error:
-            logger.error(f"Invalid binary: {error}")
-            return False
+        subprocess.check_output([self.binary(), "--test"])
 
     def config_path(self) -> pathlib.Path:
         return self._config_path
 
-    def is_valid_config(self) -> bool:
-        try:
-            subprocess.check_output([*self.command_list(), "--test"])
-            return True
-        except subprocess.CalledProcessError as error:
-            logger.error(f"Invalid configuration file: {error}")
-            return False
+    def validate_config(self) -> None:
+        subprocess.check_output([*self.command_list(), "--test"])
 
     def command_list(self) -> List[Union[str, pathlib.Path]]:
         return [
