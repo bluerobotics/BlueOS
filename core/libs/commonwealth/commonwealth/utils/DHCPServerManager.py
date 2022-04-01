@@ -12,7 +12,6 @@ from loguru import logger
 class Dnsmasq:
     def __init__(
         self,
-        config_path: pathlib.Path,
         interface: str,
         ipv4_gateway: IPv4Address,
         subnet_mask: Optional[IPv4Address] = None,
@@ -47,7 +46,6 @@ class Dnsmasq:
         self._binary = pathlib.Path(binary_path)
         self.validate_binary()
 
-        self._config_path = config_path
         self.validate_config()
 
     @staticmethod
@@ -63,9 +61,6 @@ class Dnsmasq:
 
         subprocess.check_output([self.binary(), "--test"])
 
-    def config_path(self) -> pathlib.Path:
-        return self._config_path
-
     def validate_config(self) -> None:
         if not (self._ipv4_lease_range[0] in self.ipv4_network and self._ipv4_lease_range[1] in self.ipv4_network):
             raise ValueError("Initial and final DHCP lease addresses must be in the gateway/subnet network.")
@@ -76,14 +71,25 @@ class Dnsmasq:
         subprocess.check_output([*self.command_list(), "--test"])
 
     def command_list(self) -> List[Union[str, pathlib.Path]]:
+        """List of arguments to be used in the command line call.
+        Refer to https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html for details about each argument."""
+
         return [
             self.binary(),
             "--no-daemon",
             f"--interface={self._interface}",
             f"--dhcp-range={self._ipv4_lease_range[0]},{self._ipv4_lease_range[1]},{self._subnet_mask},{self._lease_time}",  # fmt: skip
             f"--dhcp-option=option:router,{self._ipv4_gateway}",
-            f"--conf-file={self.config_path()}",
             "--bind-interfaces",
+            "--dhcp-option=option6:information-refresh-time,6h",
+            "--dhcp-authoritative",
+            "--dhcp-rapid-commit",
+            "--cache-size=1500",
+            "--no-negcache",
+            "--no-resolv",
+            "--no-poll",
+            "--port=0",
+            "--user=root",
         ]
 
     def start(self) -> None:
