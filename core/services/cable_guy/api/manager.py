@@ -1,6 +1,6 @@
-import asyncio
 import pathlib
 import re
+import time
 from enum import Enum
 from socket import AddressFamily
 from typing import Any, List, Optional, Tuple
@@ -229,23 +229,16 @@ class EthernetManager:
         self.ipr.link("set", index=interface_index, state=interface_state)
         logger.info(f"Setting interface {interface_name} to '{interface_state}' state.")
 
-    async def _trigger_dhcp_service(self, interface_name: str) -> None:
-        """Internal async trigger for dhcp service
+    def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
+        """Trigger external DHCP servers to possibly aquire a dynamic IP by restarting the interface.
 
         Args:
             interface_name (str): Interface name
         """
+        logger.info(f"Restaring interface {interface_name} to trigger dynamic IP acquisition.")
         self.enable_interface(interface_name, False)
-        await asyncio.sleep(1)
+        time.sleep(1)
         self.enable_interface(interface_name, True)
-
-    def trigger_dhcp_service(self, interface_name: str) -> None:
-        """Trigger DHCP service via async
-
-        Args:
-            interface_name (str): Interface name
-        """
-        asyncio.run(self._trigger_dhcp_service(interface_name))
 
     def set_ip(self, interface_name: str, ip: str) -> None:
         """Set ip address for a specific interface
@@ -257,16 +250,6 @@ class EthernetManager:
         interface_index = self._get_interface_index(interface_name)
         self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
         logger.info(f"Setting interface {interface_name} to IP '{ip}'.")
-
-    def set_dynamic_ip(self, interface_name: str) -> None:
-        """Set interface to use dynamic ip address
-
-        Args:
-            interface_name (str): Interface name
-        """
-        # Trigger DHCP service to add a new dynamic ip address
-        self.trigger_dhcp_service(interface_name)
-        logger.info(f"Getting dynamic IP to interface {interface_name}.")
 
     def set_static_ip(self, interface_name: str, ip: str) -> None:
         """Set interface to use static ip address
@@ -299,7 +282,7 @@ class EthernetManager:
                     self.remove_ip(interface_name, parsed_ip)
 
             if mode == AddressMode.Client:
-                self.set_dynamic_ip(interface_name)
+                self.trigger_dynamic_ip_acquisition(interface_name)
                 return
             if mode == AddressMode.Server:
                 self.set_static_ip(interface_name, parsed_ip)
