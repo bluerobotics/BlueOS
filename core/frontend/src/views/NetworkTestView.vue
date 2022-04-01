@@ -178,10 +178,10 @@ export default Vue.extend({
           break
       }
     },
-    async checkUploadSpeed(): Promise<void> {
+    checkUploadSpeed(): void {
       let start_time: number
 
-      await back_axios({
+      back_axios({
         method: 'post',
         url: '/network-test/post_file',
         timeout: 20000,
@@ -208,15 +208,13 @@ export default Vue.extend({
         const message = `Failed to do speed test: ${error.message}`
         notifications.pushError({ service: network_speed_test_service, type: 'NETWORK_SPEED_TEST_UPLOAD', message })
         console.error(message)
-      })
-
-      this.updateState(State.Done)
+      }).finally(() => this.updateState(State.Done))
     },
-    async checkDownloadSpeed(): Promise<void> {
+    checkDownloadSpeed(): void {
       const one_hundred_mega_bytes = 100 * 2 ** 20
       let start_time: number
 
-      await back_axios({
+      back_axios({
         method: 'get',
         url: '/network-test/get_file',
         timeout: 20000,
@@ -246,9 +244,7 @@ export default Vue.extend({
         const message = `Failed to do speed test: ${error.message}`
         notifications.pushError({ service: network_speed_test_service, type: 'NETWORK_SPEED_TEST_DOWNLOAD', message })
         console.error(message)
-      })
-
-      this.updateState(State.UploadSpeed)
+      }).finally(() => this.updateState(State.UploadSpeed))
     },
   },
 })
