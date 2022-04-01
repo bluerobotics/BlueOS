@@ -37,7 +37,14 @@ class SystemInformationStore extends VuexModule {
 
   platform: Platform | null = null;
 
+  socket: WebSocket | null = null;
+
   system: System | null = null;
+
+  @Mutation
+  appendKernelMessage(kernel_message: KernelMessage): void {
+    this.kernel_message.push(kernel_message)
+  }
 
   @Mutation
   updateKernelMessage(kernel_message: KernelMessage[]): void {
@@ -118,5 +125,14 @@ const system_information: SystemInformationStore = getModule(SystemInformationSt
 
 callPeriodically(system_information.fetchSystem, 5000)
 callPeriodically(system_information.fetchPlatform, 5000)
+
+// It appears that the store is incompatible with websockets or callbacks.
+// Right now the only way to have it working is to have the websocket definition outside the store
+const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+const websocketUrl = `${protocol}://${window.location.host}${system_information.API_URL}/ws/kernel_buffer?start=0`
+const socket = new WebSocket(websocketUrl)
+socket.onmessage = (message) => {
+  system_information.appendKernelMessage(JSON.parse(message.data))
+}
 
 export default system_information
