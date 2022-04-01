@@ -48,7 +48,6 @@ plugins = "pydantic.mypy"
 
 [tool.pylint]
     [tool.pylint.master]
-    max-line-length = 120
     enable = "all"
     disable = [
         "attribute-defined-outside-init",
@@ -58,6 +57,7 @@ plugins = "pydantic.mypy"
         "import-error",
         "inconsistent-return-statements",
         "invalid-name",
+        "line-too-long", # We already have this in black.
         "locally-disabled", # We know what we are doing, necessary to load plugins in runtime
         "logging-fstring-interpolation", # We want a good-to-read logging interface
         "missing-class-docstring",
