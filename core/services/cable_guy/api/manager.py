@@ -382,3 +382,11 @@ class EthernetManager:
         self.add_static_ip(interface_name, ipv4_gateway)
         logger.info(f"Adding DHCP server with gateway '{ipv4_gateway}' to interface '{interface_name}'.")
         self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway))
+
+    def stop(self) -> None:
+        """Perform steps necessary to properly stop the manager."""
+        for dhcp_server in self._dhcp_servers:
+            dhcp_server.stop()
+
+    def __del__(self) -> None:
+        self.stop()
