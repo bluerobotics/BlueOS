@@ -231,9 +231,14 @@ export default Vue.extend({
       return this.chosen_vehicle == null || this.loading_firmware_options
     },
     showable_firmwares(): {value: URL, text: string}[] {
-      return this.available_firmwares.map(
-        (firmware) => ({ value: firmware.url, text: firmware.name }),
-      )
+      return this.available_firmwares
+        .map((firmware) => ({ value: firmware.url, text: firmware.name }))
+        .sort((a, b) => {
+          const release_show_order = ['official', 'beta', 'dev', 'stable']
+          const prior_a = release_show_order.indexOf(a.text.toLowerCase().split('-')[0])
+          const prior_b = release_show_order.indexOf(b.text.toLowerCase().split('-')[0])
+          return prior_a > prior_b ? 1 : -1
+        })
     },
     allow_installing(): boolean {
       if (this.install_status === InstallStatus.Installing) {
