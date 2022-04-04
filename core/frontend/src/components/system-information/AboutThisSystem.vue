@@ -40,10 +40,15 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 
 export default Vue.extend({
   name: 'Processes',
+  data() {
+    return {
+      timer: 0,
+    }
+  },
   computed: {
     info(): Record<string, unknown>[] | undefined {
       const info = system_information.system?.info
@@ -82,6 +87,12 @@ export default Vue.extend({
         ? map.find((item) => info.system_name.toLowerCase().includes(item.os))?.icon
         : 'mdi-help-circle'
     },
+  },
+  mounted() {
+    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemUnixTimeSecondsType), 1000)
+  },
+  beforeDestroy() {
+    clearInterval(this.timer)
   },
 })
 </script>
