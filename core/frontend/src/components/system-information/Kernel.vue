@@ -57,14 +57,14 @@ export default Vue.extend({
   methods: {
     getClass(message: KernelMessage): string {
       const level_color = {
-        Emergency: 'red darken-1 white--text',
-        Alert: 'deep-orange darken-4 white--text',
-        Critical: 'red darken-4 white--text',
-        Error: 'red',
-        Warning: 'deep-orange white--text',
-        Notice: 'blue-grey darken-1',
-        Info: 'indigo lighten-5',
-        Debug: 'green darken-4 white--text',
+        emerg: 'red darken-1 white--text',
+        alert: 'deep-orange darken-4 white--text',
+        crit: 'red darken-4 white--text',
+        err: 'red',
+        warn: 'deep-orange white--text',
+        notice: 'blue-grey darken-1',
+        info: 'indigo lighten-5',
+        debug: 'green darken-4 white--text',
       } as Dictionary<string>
 
       if (level_color[message.level]) {
