@@ -19,10 +19,10 @@ SERVICE_NAME = "beacon"
 
 
 class AsyncRunner:
-    def __init__(self, ip_version: IPVersion, interfaces: List[str]) -> None:
+    def __init__(self, ip_version: IPVersion, interface: str) -> None:
         self.ip_version = ip_version
         self.aiozc: Optional[AsyncZeroconf] = None
-        self.interfaces: List[str] = interfaces
+        self.interface: str = interface
         self.services: List[AsyncServiceInfo] = []
 
     def add_services(self, service: AsyncServiceInfo) -> None:
@@ -31,7 +31,7 @@ class AsyncRunner:
         self.services.append(service)
 
     async def register_services(self) -> None:
-        self.aiozc = AsyncZeroconf(ip_version=self.ip_version, interfaces=[self.interfaces])  # type: ignore
+        self.aiozc = AsyncZeroconf(ip_version=self.ip_version, interfaces=[self.interface])  # type: ignore
         tasks = [self.aiozc.async_register_service(info, cooperating_responders=True, ttl=25) for info in self.services]
         background_tasks = await asyncio.gather(*tasks)
         await asyncio.gather(*background_tasks)
@@ -45,12 +45,12 @@ class AsyncRunner:
         await self.aiozc.async_close()
 
     def __eq__(self, other: Any) -> bool:
-        return {str(service) for service in self.services} == {str(service) for service in other.services} and set(
-            self.interfaces
-        ) == set(other.interfaces)
+        return {str(service) for service in self.services} == {
+            str(service) for service in other.services
+        } and self.interface == other.interface
 
     def __repr__(self) -> str:
-        return f"Runner on {self.interfaces}, serving {[service.name for service in self.services]}."
+        return f"Runner on {self.interface}, serving {[service.name for service in self.services]}."
 
 
 class Beacon:
@@ -128,7 +128,7 @@ class Beacon:
                 for domain in self.settings.default.domain_names:
                     runner_name = f"{domain}-{interface_name}-{count}"
                     try:
-                        runner = AsyncRunner(IPVersion.V4Only, interfaces=ip)
+                        runner = AsyncRunner(IPVersion.V4Only, interface=ip)
                         logger.info(f"Created runner {runner_name}")
                     except Exception as e:
                         logger.warning(f"Error creating {runner_name}: {e}, skipping this interface")
@@ -153,7 +153,7 @@ class Beacon:
                 for domain in interface.domain_names:
                     runner = None
                     try:
-                        runner = AsyncRunner(IPVersion.V4Only, interfaces=ip)
+                        runner = AsyncRunner(IPVersion.V4Only, interface=ip)
                         logger.info(f"Created runner for interface {interface.name}, broadcasting on {ip}")
                     except Exception as e:
                         logger.warning(f"Error creating runner for {interface.name}: {e}, skipping this interface")
