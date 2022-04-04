@@ -13,7 +13,9 @@ import { system_information_service } from '@/types/frontend_services'
 import { KernelMessage } from '@/types/system-information/kernel'
 import { Netstat } from '@/types/system-information/netstat'
 import { Platform } from '@/types/system-information/platform'
-import { System } from '@/types/system-information/system'
+import {
+  CPU, Disk, Info, Memory, Network, Process, System, Temperature,
+} from '@/types/system-information/system'
 import { callPeriodically } from '@/utils/helper_functions'
 
 enum FetchType {
@@ -21,6 +23,14 @@ enum FetchType {
     NetstatType = 'netstat',
     PlatformType = 'platform',
     SystemType = 'system',
+    SystemCpuType = 'system/cpu',
+    SystemDiskType = 'system/disk',
+    SystemInfoType = 'system/info',
+    SystemMemoryType = 'system/memory',
+    SystemNetworkType = 'system/network',
+    SystemProcessType = 'system/process',
+    SystemTemperatureType = 'system/temperature',
+    SystemUnixTimeSecondsType = 'system/unix_time_seconds',
 }
 
 @Module({
@@ -66,6 +76,62 @@ class SystemInformationStore extends VuexModule {
     this.system = system
   }
 
+  @Mutation
+  updateSystemCpu(cpu: [CPU]): void {
+    if (this.system) {
+      this.system.cpu = cpu
+    }
+  }
+
+  @Mutation
+  updateSystemDisk(disk: [Disk]): void {
+    if (this.system) {
+      this.system.disk = disk
+    }
+  }
+
+  @Mutation
+  updateSystemInfo(info: Info): void {
+    if (this.system) {
+      this.system.info = info
+    }
+  }
+
+  @Mutation
+  updateSystemMemory(memory: Memory): void {
+    if (this.system) {
+      this.system.memory = memory
+    }
+  }
+
+  @Mutation
+  updateSystemNetwork(network: [Network]): void {
+    if (this.system) {
+      this.system.network = network
+    }
+  }
+
+  @Mutation
+  updateSystemProcess(process: [Process]): void {
+    if (this.system) {
+      this.system.process = process
+    }
+  }
+
+  @Mutation
+  updateSystemTemperature(temperature: [Temperature]): void {
+    if (this.system) {
+      this.system.temperature = temperature
+    }
+  }
+
+  @Mutation
+  updateSystemUnixTimeSeconds(unix_time_seconds: number): void {
+    if (this.system) {
+      this.system.unix_time_seconds = unix_time_seconds
+    }
+  }
+
   @Action
   async fetchKernelMessage(): Promise<void> {
     await this.fetchSystemInformation(FetchType.KernelType)
@@ -88,6 +154,26 @@ class SystemInformationStore extends VuexModule {
 
   @Action
   async fetchSystemInformation(type: FetchType): Promise<void> {
+    // Do not fetch system specific information if system is not populate yet
+    // system type does not have optional fields, they need to be populate before fetching it
+    switch (type) {
+      case FetchType.SystemCpuType:
+      case FetchType.SystemDiskType:
+      case FetchType.SystemInfoType:
+      case FetchType.SystemMemoryType:
+      case FetchType.SystemNetworkType:
+      case FetchType.SystemProcessType:
+      case FetchType.SystemTemperatureType:
+      case FetchType.SystemUnixTimeSecondsType:
+        if (!this.system) {
+          await this.fetchSystemInformation(FetchType.SystemType)
+          return
+        }
+        break
+      default:
+        break
+    }
+
     await axios({
       method: 'get',
       url: `${this.API_URL}/${type}`,
@@ -106,6 +192,30 @@ class SystemInformationStore extends VuexModule {
             break
           case FetchType.SystemType:
             this.updateSystem(response.data)
+            break
+          case FetchType.SystemCpuType:
+            this.updateSystemCpu(response.data)
+            break
+          case FetchType.SystemDiskType:
+            this.updateSystemDisk(response.data)
+            break
+          case FetchType.SystemInfoType:
+            this.updateSystemInfo(response.data)
+            break
+          case FetchType.SystemMemoryType:
+            this.updateSystemMemory(response.data)
+            break
+          case FetchType.SystemNetworkType:
+            this.updateSystemNetwork(response.data)
+            break
+          case FetchType.SystemProcessType:
+            this.updateSystemProcess(response.data)
+            break
+          case FetchType.SystemTemperatureType:
+            this.updateSystemTemperature(response.data)
+            break
+          case FetchType.SystemUnixTimeSecondsType:
+            this.updateSystemUnixTimeSeconds(response.data)
             break
           default:
             console.error(`Invalid fetch type: ${type}`)
