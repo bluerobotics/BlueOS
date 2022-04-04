@@ -65,17 +65,38 @@
         :items="vehicle_types"
         label="Vehicle"
         required
+        class="mr-10"
         @change="updateAvailableFirmwares"
       />
-      <v-select
-        v-model="chosen_firmware_url"
-        :disabled="disable_firmware_selection"
-        :items="showable_firmwares"
-        :label="firmware_selector_label"
-        :loading="loading_firmware_options"
-        required
-        @change="setCloudFirmwareChosen"
-      />
+      <div class="d-flex">
+        <v-select
+          v-model="chosen_firmware_url"
+          :disabled="disable_firmware_selection"
+          :items="showable_firmwares"
+          :label="firmware_selector_label"
+          :loading="loading_firmware_options"
+          required
+          @change="setCloudFirmwareChosen"
+        />
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-icon
+              class="ml-4"
+              v-bind="attrs"
+              v-on="on"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <p>Official - The latest stable release. Recommended for most users.</p>
+          <p>Stable - A production-ready release. Suitable for most users.</p>
+          <p>Beta - In-testing release, with new features and improvements, aiming to become stable. May have bugs.</p>
+          <p>
+            Dev - Development branch, with all the newest features.
+            Intentionally unstable (changes quickly), and possibly untested/dangerous.
+          </p>
+        </v-tooltip>
+      </div>
     </v-form>
 
     <v-file-input
