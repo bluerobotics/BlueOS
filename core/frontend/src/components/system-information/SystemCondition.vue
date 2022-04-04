@@ -13,14 +13,21 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue'
+
 import SystemConditionCard from '@/components/system-information/SystemConditionCard.vue'
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 import { Disk } from '@/types/system-information/system'
 
-export default {
+export default Vue.extend({
   name: 'SystemCondition',
   components: {
     SystemConditionCard,
+  },
+  data() {
+    return {
+      timer: 0,
+    }
   },
   // TODO: move to computeds
   computed: {
@@ -118,5 +125,16 @@ export default {
       }
     },
   },
-}
+  mounted() {
+    this.timer = setInterval(() => {
+      system_information.fetchSystemInformation(FetchType.SystemCpuType)
+      system_information.fetchSystemInformation(FetchType.SystemDiskType)
+      system_information.fetchSystemInformation(FetchType.SystemMemoryType)
+      system_information.fetchSystemInformation(FetchType.SystemTemperatureType)
+    }, 2000)
+  },
+  beforeDestroy() {
+    clearInterval(this.timer)
+  },
+})
 </script>
