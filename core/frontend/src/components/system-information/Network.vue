@@ -22,19 +22,32 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue'
+
 import NetworkCard from '@/components/system-information/NetworkCard.vue'
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 import { Network } from '@/types/system-information/system'
 
-export default {
+export default Vue.extend({
   name: 'Network',
   components: {
     NetworkCard,
+  },
+  data() {
+    return {
+      timer: 0,
+    }
   },
   computed: {
     networks(): Network[] {
       return system_information.system?.network ?? []
     },
   },
-}
+  mounted() {
+    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemNetworkType), 2000)
+  },
+  beforeDestroy() {
+    clearInterval(this.timer)
+  },
+})
 </script>
