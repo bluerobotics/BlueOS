@@ -233,7 +233,7 @@ export { SystemInformationStore }
 
 const system_information: SystemInformationStore = getModule(SystemInformationStore)
 
-callPeriodically(system_information.fetchSystem, 5000)
+system_information.fetchSystem()
 callPeriodically(system_information.fetchPlatform, 5000)
 
 // It appears that the store is incompatible with websockets or callbacks.
