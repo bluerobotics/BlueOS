@@ -218,7 +218,7 @@ class SystemInformationStore extends VuexModule {
             this.updateSystemUnixTimeSeconds(response.data)
             break
           default:
-            console.error(`Invalid fetch type: ${type}`)
+            throw new Error(`Invalid fetch type: ${type}`)
             break
         }
       })
