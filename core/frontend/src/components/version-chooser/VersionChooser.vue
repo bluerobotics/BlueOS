@@ -113,7 +113,7 @@
       width="auto"
     >
       <v-card>
-        <v-card-title class="text-h5 grey lighten-2">
+        <v-card-title class="text-h5 grey lighten-2 black--text">
           Pulling new version
         </v-card-title>
 
