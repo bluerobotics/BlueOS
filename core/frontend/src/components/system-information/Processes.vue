@@ -52,13 +52,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 import { Process } from '@/types/system-information/system'
 
 export default Vue.extend({
   name: 'Processes',
   data() {
     return {
+      timer: 0,
       search: null,
       filterHeader: [
         'pid',
@@ -93,6 +94,12 @@ export default Vue.extend({
     filteredHeader(): Record<string, unknown>[] {
       return this.headers.filter((header) => this.filterHeader.includes(header.value))
     },
+  },
+  mounted() {
+    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemProcessType), 5000)
+  },
+  beforeDestroy() {
+    clearInterval(this.timer)
   },
   methods: {
     filterName(value: any, search: string, item: any) {
