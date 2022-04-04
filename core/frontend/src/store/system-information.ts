@@ -18,7 +18,7 @@ import {
 } from '@/types/system-information/system'
 import { callPeriodically } from '@/utils/helper_functions'
 
-enum FetchType {
+export enum FetchType {
     KernelType = 'kernel_buffer',
     NetstatType = 'netstat',
     PlatformType = 'platform',
