@@ -56,6 +56,13 @@ export const mavlink_service: Service = {
   version: '0.1.0',
 }
 
+export const beacon_service: Service = {
+  name: 'Beacon',
+  description: 'Publishes mDNS entries and related utilities',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
+
 export const bridget_service: Service = {
   name: 'Bridget',
   description: 'Bridges management service for BlueOS.',
