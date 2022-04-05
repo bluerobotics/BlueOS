@@ -2,10 +2,11 @@
   <v-card
     width="500"
     elevation="0"
-    class="mb-12 pb-12 endpoints-list"
+    class="mb-12 pa-6 endpoints-list"
   >
     <v-list
       v-if="are_endpoints_available && !updating_endpoints"
+      style="background-color: transparent"
       dense
     >
       <template v-for="(endpoint, index) in available_endpoints">
@@ -104,5 +105,6 @@ export default Vue.extend({
 .endpoints-list {
     max-width: 70%;
     margin: auto;
+    background-color: transparent;
 }
 </style>
