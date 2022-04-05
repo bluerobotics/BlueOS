@@ -37,7 +37,7 @@
           </span>
         </span>
         <v-spacer />
-
+        <beacon-tray-menu />
         <health-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
@@ -190,6 +190,7 @@ import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
 import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
+import BeaconTrayMenu from './components/beacon/BeaconTrayMenu.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
@@ -205,6 +206,7 @@ export default Vue.extend({
   name: 'App',
 
   components: {
+    'beacon-tray-menu': BeaconTrayMenu,
     'notification-tray-button': NotificationTrayButton,
     'services-scanner': ServicesScanner,
     'wifi-tray-menu': WifiTrayMenu,
