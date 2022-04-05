@@ -3,36 +3,37 @@
     class="mx-auto my-6"
     max-width="1000"
     elevation="0"
+    style="background-color: transparent"
   >
-    <v-card-title>Video Manager</v-card-title>
-    <v-container>
-      <v-row dense>
-        <v-col
-          class="mr-2"
+    <v-row dense>
+      <v-col
+        class="mr-2"
+      >
+        <template v-if="are_video_devices_available && !updating_devices">
+          <template v-for="(device, index) in video_devices">
+            <v-divider
+              v-if="index!==0"
+              :key="index"
+            />
+            <video-device
+              :key="device.source"
+              :device="device"
+            />
+          </template>
+        </template>
+        <spinning-logo
+          v-else-if="updating_devices"
+          size="30%"
+        />
+        <v-card
+          v-else
+          class="mx-auto my-12 pa-8 text-h6 text-center"
+          width="300"
         >
-          <v-card flat>
-            <v-container
-              v-if="are_video_devices_available && !updating_devices"
-            >
-              <video-device
-                v-for="device in video_devices"
-                :key="device.source"
-                :device="device"
-              />
-            </v-container>
-            <v-container v-else-if="updating_devices">
-              <spinning-logo size="30%" />
-            </v-container>
-            <v-container
-              v-else
-              class="text-h6 text-center"
-            >
-              No video-devices available.
-            </v-container>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
+          No video-devices available.
+        </v-card>
+      </v-col>
+    </v-row>
     <video-updater />
   </v-card>
 </template>
