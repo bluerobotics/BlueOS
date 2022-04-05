@@ -2,9 +2,9 @@
   <v-container>
     <v-card
       v-if="logs_fetched"
-      flat
+      elevation="1"
     >
-      <v-card-title>
+      <v-card-title class="ma-4">
         Autopilot logs
         <v-spacer />
         <v-btn
