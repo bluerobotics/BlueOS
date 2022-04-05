@@ -1,7 +1,9 @@
 <template>
   <v-card
-    elevation="0"
-    class="mb-12 pb-12 text-center"
+    elevation="1"
+    class="mx-auto my-12 px-12 py-6 text-center"
+    min-width="350"
+    max-width="950"
   >
     <v-item-group
       v-model="upload_type"
