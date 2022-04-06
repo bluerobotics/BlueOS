@@ -1,10 +1,7 @@
 <template>
   <v-sheet
-    elevation="1"
-    outlined
     shaped
-    class="mx-auto"
-    max-width="500"
+    class="pa-6"
   >
     <v-responsive :aspect-ratio="32/9">
       <v-row justify="center">

@@ -3,7 +3,7 @@
     dense
     :headers="filteredHeader"
     :items="process"
-    class="elevation-1 pa-3"
+    class="pa-6"
     item-key="pid"
     :items-per-page="-1"
     :sort-by="['cpu_usage']"
