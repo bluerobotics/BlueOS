@@ -1,32 +1,25 @@
 <template>
   <v-sheet
     shaped
-    class="pa-6"
+    class="pa-6 d-flex flex-column align-center"
   >
-    <v-responsive :aspect-ratio="32/9">
-      <v-row justify="center">
-        <v-icon
-          size="100"
-        >
-          {{ avatar }}
-        </v-icon>
-        <v-list dense>
-          <v-list-item
-            v-for="(item, i) in info"
-            :key="i"
-            selectable
-          >
-            <v-list-item-icon>
-              <v-icon v-text="item.icon" />
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="item.title" />
-              <v-list-item-subtitle v-text="item.value" />
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-row>
-    </v-responsive>
+    <v-icon
+      size="100"
+    >
+      {{ avatar }}
+    </v-icon>
+    <v-list dense>
+      <v-list-item
+        v-for="(item, i) in info"
+        :key="i"
+        selectable
+      >
+        <v-list-item-content>
+          <v-list-item-title v-text="item.title" />
+          <v-list-item-subtitle v-text="item.value" />
+        </v-list-item-content>
+      </v-list-item>
+    </v-list>
   </v-sheet>
 </template>
 
