@@ -125,3 +125,30 @@ class SettingsV1(settings.BaseSettings):
         )
         self.interfaces.append(new)
         return new
+
+
+class SettingsV2(SettingsV1):
+    VERSION = 2
+
+    def __init__(self, *args: str, **kwargs: int) -> None:
+        super().__init__(*args, **kwargs)
+        self.VERSION = SettingsV2.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.VERSION:
+            super().migrate(data)
+
+        data["default"]["domain_names"] = [domain for domain in data["default"]["domain_names"] if domain != "blueos"]
+        try:
+            for interface in data["interfaces"]:
+                if interface["name"] == "wlan0":
+                    interface["domain_names"] = [
+                        name for name in interface["domain_names"] if name not in ["blueos", "companion"]
+                    ]
+        except Exception as e:
+            logger.error(f"unable to update SettingsV1 to SettingsV2: {e}")
+
+        data["VERSION"] = SettingsV2.VERSION
