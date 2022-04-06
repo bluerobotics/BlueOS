@@ -279,7 +279,7 @@ export default Vue.extend({
         },
         {
           target: '#button-to-tools',
-          content: `Here you will find all kind of tools to improve your BlueOS experience.
+          content: `Here you will find all kinds of tools to improve your BlueOS experience.
           There are system-diagnosis tools, network-speed testers and others, all under the Tools menu.`,
           params: {
             enableScrolling: false,
@@ -287,7 +287,7 @@ export default Vue.extend({
         },
         {
           target: '#power-menu-button',
-          content: 'You can shutdown, restart the running computer and BlueOs under the power button.',
+          content: 'You can shut down or restart the running computer and BlueOs under the power button.',
           params: {
             enableScrolling: false,
           },
