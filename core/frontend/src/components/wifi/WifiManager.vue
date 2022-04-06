@@ -9,6 +9,7 @@
         <network-card
           class="connected-network"
           :network="current_network"
+          :ip-address="wifi_status.ip_address"
           @click="openDisconnectionDialog"
         />
       </v-container>
