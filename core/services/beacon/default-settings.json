@@ -15,7 +15,7 @@
       },
       {
         "name": "wlan0",
-        "domain_names": ["companion", "blueos", "blueos-wifi"],
+        "domain_names": ["blueos-wifi"],
         "advertise": ["_http"],
         "ip": "ips[0]"
       }
