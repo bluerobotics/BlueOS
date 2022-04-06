@@ -235,7 +235,7 @@ export default Vue.extend({
         },
         {
           target: '#tour-center-hook',
-          content: `As stated on our welcome card, one of the first things you should do on you first usage of BlueOS
+          content: `As stated on our welcome card, one of the first things you should do on your first use of BlueOS
           is to connect it to the internet.`,
           params: {
             enableScrolling: false,
