@@ -1,12 +1,22 @@
 <template>
   <v-row
     flat
+    class="d-flex align-center"
     @click="emitClick"
   >
     <v-col :cols="1" />
 
-    <v-col :cols="7">
-      {{ network_name }}
+    <v-col
+      :cols="7"
+      class="d-flex flex-column justify-center"
+    >
+      <span>{{ network_name }}</span>
+      <span
+        v-if="ipAddress !== ''"
+        class="text-subtitle-2"
+      >
+        {{ ipAddress }}
+      </span>
     </v-col>
 
     <v-col :cols="1">
@@ -43,6 +53,11 @@ export default Vue.extend({
     network: {
       type: Object as PropType<Network>,
       required: true,
+    },
+    ipAddress: {
+      type: String,
+      default: '',
+      required: false,
     },
   },
   computed: {
