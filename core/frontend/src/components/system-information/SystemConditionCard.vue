@@ -1,6 +1,5 @@
 <template>
   <v-card
-    class="mt-4 mr-4 mx-auto"
     max-width="400"
     min-width="300"
   >
