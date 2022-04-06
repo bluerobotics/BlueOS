@@ -1,56 +1,49 @@
 <template>
   <v-container
     style="max-width:90%"
+    class="d-flex my-6"
   >
-    <v-row
-      no-gutters
+    <v-card
+      elevation="2"
+      class="mr-4"
     >
-      <v-col
-        md="3"
+      <v-navigation-drawer
+        floating
+        permanent
       >
-        <v-card
-          elevation="2"
-          class="ma-3"
+        <v-list
+          dense
+          rounded
         >
-          <v-navigation-drawer
-            floating
-            permanent
+          <v-list-item
+            v-for="item in pages"
+            :key="item.title"
+            link
+            :input-value="item.value == page_selected"
+            @click="page_selected=item.value"
           >
-            <v-list
-              dense
-              rounded
-            >
-              <v-list-item
-                v-for="item in pages"
-                :key="item.title"
-                link
-                :input-value="item.value == page_selected"
-                @click="page_selected=item.value"
-              >
-                <v-list-item-icon>
-                  <v-icon>{{ item.icon }}</v-icon>
-                </v-list-item-icon>
+            <v-list-item-icon>
+              <v-icon>{{ item.icon }}</v-icon>
+            </v-list-item-icon>
 
-                <v-list-item-content>
-                  <v-list-item-title>{{ item.title }}</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
-          </v-navigation-drawer>
-        </v-card>
-      </v-col>
+            <v-list-item-content>
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+    </v-card>
 
-      <v-col
-        v-if="true"
-        md="9"
-      >
-        <processes v-if="page_selected == 'process'" />
-        <system-condition v-if="page_selected == 'system_condition'" />
-        <network v-if="page_selected == 'network'" />
-        <kernel v-if="page_selected == 'kernel'" />
-        <about-this-system v-if="page_selected == 'about'" />
-      </v-col>
-    </v-row>
+    <v-card
+      elevation="2"
+      width="100%"
+    >
+      <processes v-if="page_selected == 'process'" />
+      <system-condition v-if="page_selected == 'system_condition'" />
+      <network v-if="page_selected == 'network'" />
+      <kernel v-if="page_selected == 'kernel'" />
+      <about-this-system v-if="page_selected == 'about'" />
+    </v-card>
   </v-container>
 </template>
 

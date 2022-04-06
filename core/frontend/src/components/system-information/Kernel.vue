@@ -6,7 +6,9 @@
           min-height="70vh"
           rounded="lg"
         >
-          <v-card>
+          <v-card
+            elevation="0"
+          >
             <v-virtual-scroll
               :item-height="20"
               :items="messages"
