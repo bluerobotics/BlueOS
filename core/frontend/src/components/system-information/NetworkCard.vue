@@ -1,7 +1,7 @@
 <template>
   <v-card
-    class="mx-auto"
-    min-width="400"
+    class="ma-3"
+    min-width="340"
   >
     <v-list-item two-line>
       <v-list-item-content>

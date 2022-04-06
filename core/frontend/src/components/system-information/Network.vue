@@ -1,13 +1,12 @@
 <template>
-  <v-row
-
-    class="ma-5"
+  <v-card
+    flat
+    class="ma-3 d-flex flex-wrap"
   >
     <network-card
       v-for="(network, i) in networks"
       :key="i"
       :network="network"
-      class="ma-5"
     />
     <v-card>
       <v-skeleton-loader
@@ -18,7 +17,7 @@
         type="article, list-item@5"
       />
     </v-card>
-  </v-row>
+  </v-card>
 </template>
 
 <script lang="ts">
