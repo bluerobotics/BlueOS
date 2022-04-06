@@ -115,8 +115,6 @@ export default Vue.extend({
         our_value = value.join(' ')
       }
 
-      console.warn(`>>> ${our_value}, ${search}, ${typeof our_value}`)
-
       return our_value != null
           && typeof our_value === 'string'
           && our_value.toString().toLowerCase().indexOf(search.toLowerCase()) !== -1
