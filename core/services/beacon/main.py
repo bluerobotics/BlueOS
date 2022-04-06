@@ -13,7 +13,7 @@ from loguru import logger
 from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
-from settings import ServiceTypes, SettingsV1
+from settings import ServiceTypes, SettingsV2
 
 SERVICE_NAME = "beacon"
 
@@ -56,7 +56,7 @@ class AsyncRunner:
 class Beacon:
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
-        self.manager = Manager(SERVICE_NAME, SettingsV1)
+        self.manager = Manager(SERVICE_NAME, SettingsV2)
         # manager still returns "valid" settings even if file is absent, so we check for the "default" field
         # TODO: fix after https://github.com/bluerobotics/BlueOS-docker/issues/880 is solved
         if self.manager.settings.default is None:
@@ -64,7 +64,7 @@ class Beacon:
             current_folder = pathlib.Path(__file__).parent.resolve()
             default_settings_file = current_folder / "default-settings.json"
             logger.debug("loading settings from ", default_settings_file)
-            self.manager.settings = self.manager.load_from_file(SettingsV1, default_settings_file)
+            self.manager.settings = self.manager.load_from_file(SettingsV2, default_settings_file)
             self.manager.save()
         self.settings = self.manager.settings
         self.service_types = self.load_service_types()
