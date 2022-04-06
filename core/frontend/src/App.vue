@@ -266,7 +266,7 @@ export default Vue.extend({
         {
           target: '#button-to-vehicle',
           content: `Under the Vehicle menu you can check the status of your autopilot, download logs from it,
-          setup video streams and even update it's firmware!`,
+          set up video streams and even update its firmware!`,
           before: () => {
             // It's necessary to control the drawer tour event otherwise the internal state control will close it
             this.drawer_running_tour = true
@@ -294,7 +294,7 @@ export default Vue.extend({
         },
         {
           target: '#settings-menu-button',
-          content: 'With the settings button you can control your BlueOS experience.',
+          content: 'With the settings button you can customize your BlueOS experience.',
           params: {
             enableScrolling: false,
           },
