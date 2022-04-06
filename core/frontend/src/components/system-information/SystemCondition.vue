@@ -3,7 +3,7 @@
     <system-condition-card
       v-for="(item, i) in [cpu, memory, disk, temperature]"
       :key="i"
-      class="grow ma-10"
+      class="grow mx-3 my-6"
       :title="item.name"
       :value="item.value"
       :text="item.text"
