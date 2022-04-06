@@ -227,8 +227,8 @@ export default Vue.extend({
           header: {
             title: 'Welcome to BlueOS!',
           },
-          content: `We are happy to have you using this brand new companion system, and there are some tips we want to
-          give you!`,
+          content: `We are happy to have you navigating with us! Follow this quick tour guide to get familiar with
+          your brand-new companion system.`,
           params: {
             enableScrolling: false,
           },
@@ -243,29 +243,28 @@ export default Vue.extend({
         },
         {
           target: '#wifi-tray-menu-button',
-          content: 'You can do it by connecting to a wifi network of yours...',
+          content: 'You can do it by connecting to a wifi network...',
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#ethernet-tray-menu-button',
-          content: '...or connecting your system to a cabled internet provider (usually a router).',
+          content: '...or by connecting to a cable internet (usually from/to a router).',
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#hamburguer-menu-button',
-          content: `This is the main menu of BlueOS. You can access all services that are running and system control
-          here.`,
+          content: 'This is the main BlueOS menu. Here you can access all the running services and system utilities.',
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#button-to-vehicle',
-          content: `Under the Vehicle menu you can check the status of your autopilot, download logs from it,
+          content: `Under the Vehicle menu, you can check the status of your autopilot, download logs from it,
           set up video streams and even update its firmware!`,
           before: () => {
             // It's necessary to control the drawer tour event otherwise the internal state control will close it
@@ -279,44 +278,45 @@ export default Vue.extend({
         },
         {
           target: '#button-to-tools',
-          content: `Here you will find all kinds of tools to improve your BlueOS experience.
-          There are system-diagnosis tools, network-speed testers and others, all under the Tools menu.`,
+          content: `Here you can find all kinds of tools to improve your BlueOS experience.
+          There are system-diagnosis tools, like network-speed tester and others, all under the Tools menu.`,
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#power-menu-button',
-          content: 'You can shut down or restart the running computer and BlueOs under the power button.',
+          content: 'Here you can safely shut down or restart the running computer.',
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#settings-menu-button',
-          content: 'With the settings button you can customize your BlueOS experience.',
+          content: 'With the settings button, you can customize your BlueOS experience.',
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#feature-request-button',
-          content: 'Here you can get in touch with us, requesting new features, reporting bugs and more!',
+          content: `Here you can get in touch with us, request new features, report bugs, interact with our
+          community, and more!`,
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#current-version',
-          content: `You can check the current version of BlueOS installed here.
-          This is an important information to provide when seeking help.`,
+          content: `You can check the version of BlueOS installed here. This version number is particularly important
+          when looking for help.`,
           params: {
             enableScrolling: false,
           },
         },
         {
           target: '#notifications-tray-menu-button',
-          content: 'Last but not least, any event related to your system can be found under the notifications menu.',
+          content: 'Last but not least, you can find any event related to your system under the notifications menu.',
           before: () => {
             // The close vent will happen after the next tick of the state control
             this.drawer_running_tour = false
@@ -327,7 +327,8 @@ export default Vue.extend({
         },
         {
           target: '#tour-center-hook',
-          content: 'Hope you enjoy your experience with BlueOS! Happy exploration!',
+          content: `That's it! Now we want you to enjoy your experience with BlueOS! Also, don't forget to get in touch
+          if you need anything else to improve your journey! Happy exploring!`,
           params: {
             enableScrolling: false,
           },
