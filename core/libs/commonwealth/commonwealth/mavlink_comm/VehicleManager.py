@@ -8,6 +8,7 @@ from commonwealth.mavlink_comm.typedefs import (
     FirmwareInfo,
     FirmwareVersionType,
     MavlinkMessageId,
+    MavlinkVehicleType,
 )
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
@@ -64,6 +65,10 @@ class VehicleManager:
         version_type = FirmwareVersionType.from_value(version_type_raw)
 
         return FirmwareInfo(version=firmware_version, type=version_type)
+
+    async def get_vehicle_type(self) -> MavlinkVehicleType:
+        heartbeat_message = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
+        return MavlinkVehicleType[heartbeat_message["message"]["mavtype"]["type"]]  # type: ignore
 
     async def reboot_vehicle(self) -> None:
         message = self.command_long_message("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", [1.0])
