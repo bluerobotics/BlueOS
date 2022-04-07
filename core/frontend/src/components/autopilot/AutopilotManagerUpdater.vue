@@ -26,6 +26,7 @@ export default Vue.extend({
     callPeriodically(this.fetchAvailableBoards, 5000)
     callPeriodically(this.fetchCurrentBoard, 5000)
     callPeriodically(this.fetchFirmwareInfo, 5000)
+    callPeriodically(this.fetchVehicleType, 5000)
   },
   methods: {
     async fetchAvailableEndpoints(): Promise<void> {
@@ -91,6 +92,21 @@ export default Vue.extend({
         if (error === backend_offline_error) { return }
         const message = error.response?.data?.detail ?? error.message
         notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_FIRM_INFO_FETCH_FAIL', message })
+      }
+    },
+    async fetchVehicleType(): Promise<void> {
+      try {
+        const response: AxiosResponse = await back_axios({
+          method: 'get',
+          url: `${autopilot.API_URL}/vehicle_type`,
+          timeout: 10000,
+        })
+        autopilot.setVehicleType(response.data)
+      } catch (error) {
+        autopilot.setVehicleType(null)
+        if (error === backend_offline_error) { return }
+        const message = error.response?.data?.detail ?? error.message
+        notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_VEHICLE_TYPE_FETCH_FAIL', message })
       }
     },
   },

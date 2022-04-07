@@ -19,6 +19,9 @@
         <span v-if="firmware_info === null">Unknown</span>
         <span v-else>{{ firmware_info.version }} ({{ firmware_info.type }})</span>
         <br>
+        <span class="font-weight-bold">Vehicle type: </span>
+        <span>{{ vehicle_type }}</span>
+        <br>
         <span
           v-if="current_board.path"
           class="font-weight-bold"
@@ -100,6 +103,9 @@ export default Vue.extend({
     },
     firmware_info(): FirmwareInfo | null {
       return autopilot.firmware_info
+    },
+    vehicle_type(): string | null {
+      return autopilot.vehicle_type
     },
     board_undefined(): boolean {
       return this.current_board === null
