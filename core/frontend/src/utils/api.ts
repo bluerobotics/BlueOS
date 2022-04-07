@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 
 import frontend from '@/store/frontend'
 
@@ -6,7 +6,7 @@ const backend_offline_error = new Error('Backend is offline')
 backend_offline_error.name = 'BackendOffline'
 export { backend_offline_error }
 
-const axios_backend_instance = axios.create()
+const axios_backend_instance: AxiosInstance = axios.create()
 
 axios_backend_instance.interceptors.request.use(async (config) => {
   // Check if there's already a backend status request running. If yes, use it. If not, start one.
