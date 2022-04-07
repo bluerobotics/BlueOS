@@ -22,6 +22,8 @@ class AutopilotManagerStore extends VuexModule {
 
   firmware_info: FirmwareInfo | null = null
 
+  vehicle_type: string | null = null
+
   updating_endpoints = true
 
   updating_boards = true
@@ -46,6 +48,11 @@ class AutopilotManagerStore extends VuexModule {
   @Mutation
   setFirmwareInfo(firmware_info: FirmwareInfo | null): void {
     this.firmware_info = firmware_info
+  }
+
+  @Mutation
+  setVehicleType(vehicle_type: string | null): void {
+    this.vehicle_type = vehicle_type
   }
 
   @Mutation
