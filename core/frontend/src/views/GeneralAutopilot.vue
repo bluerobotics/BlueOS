@@ -3,10 +3,28 @@
     class="main-manager"
   >
     <v-card-title>Autopilot</v-card-title>
-    <v-card-subtitle>
+    <v-card-text>
       <span v-if="board_undefined">No board running</span>
-      <span v-else>Currently running: '{{ current_board.name }}'</span>
-    </v-card-subtitle>
+      <div v-else>
+        <span class="font-weight-bold">Board name: </span>
+        <span>{{ current_board.name }}</span>
+        <br>
+        <span class="font-weight-bold">Manufacturer: </span>
+        <span>{{ current_board.manufacturer }}</span>
+        <br>
+        <span class="font-weight-bold">Mavlink platform: </span>
+        <span>{{ current_board.platform }}</span>
+        <br>
+        <span
+          v-if="current_board.path"
+          class="font-weight-bold"
+        >
+          Path:
+        </span>
+        <span>{{ current_board.path }}</span>
+        <br>
+      </div>
+    </v-card-text>
     <v-card-actions class="d-flex justify-end align-center flex-wrap">
       <v-spacer />
       <v-btn
