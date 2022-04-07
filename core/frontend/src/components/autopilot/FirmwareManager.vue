@@ -237,11 +237,12 @@ export default Vue.extend({
         .map((firmware) => ({ value: firmware.url, text: firmware.name }))
         .filter((firmware) => firmware.text !== 'OFFICIAL')
         .sort((a, b) => {
-          const release_show_order = ['official', 'beta', 'dev', 'stable']
+          const release_show_order = ['dev', 'beta', 'stable']
           const prior_a = release_show_order.indexOf(a.text.toLowerCase().split('-')[0])
           const prior_b = release_show_order.indexOf(b.text.toLowerCase().split('-')[0])
           return prior_a > prior_b ? 1 : -1
         })
+        .reverse()
     },
     allow_installing(): boolean {
       if (this.install_status === InstallStatus.Installing) {
