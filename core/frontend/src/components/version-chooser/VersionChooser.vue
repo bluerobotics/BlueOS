@@ -487,7 +487,7 @@ export default Vue.extend({
           (element) => element.repository !== repository || element.tag !== tag,
         )
       })
-        .catch((error) => { alert(error.response.data) })
+        .catch((error) => { alert(error.response?.data ?? error.message) })
         .finally(() => { this.deleting = '' })
     },
     imageIsAvailableLocally(sha: string) : boolean {

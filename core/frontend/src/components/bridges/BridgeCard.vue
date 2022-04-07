@@ -64,7 +64,7 @@ export default Vue.extend({
         data: this.bridge,
       })
         .catch((error) => {
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: bridget_service, type: 'BRIDGE_DELETE_FAIL', message })
         })
     },

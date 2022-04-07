@@ -185,7 +185,7 @@ export default Vue.extend({
           if (error.code === 'ECONNABORTED') {
             return
           }
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: commander_service, type: 'SHUTDOWN_FAIL', message })
         })
     },
