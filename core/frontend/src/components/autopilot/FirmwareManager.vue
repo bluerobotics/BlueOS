@@ -235,6 +235,7 @@ export default Vue.extend({
     showable_firmwares(): {value: URL, text: string}[] {
       return this.available_firmwares
         .map((firmware) => ({ value: firmware.url, text: firmware.name }))
+        .filter((firmware) => firmware.text !== 'OFFICIAL')
         .sort((a, b) => {
           const release_show_order = ['official', 'beta', 'dev', 'stable']
           const prior_a = release_show_order.indexOf(a.text.toLowerCase().split('-')[0])
