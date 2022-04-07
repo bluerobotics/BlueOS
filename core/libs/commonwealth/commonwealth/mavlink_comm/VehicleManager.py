@@ -4,6 +4,11 @@ from loguru import logger
 
 from commonwealth.mavlink_comm.exceptions import VehicleDisarmFail
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
+from commonwealth.mavlink_comm.typedefs import (
+    FirmwareInfo,
+    FirmwareVersionType,
+    MavlinkMessageId,
+)
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
 
@@ -40,6 +45,25 @@ class VehicleManager:
             "target_component": self.target_component,
             "confirmation": self.confirmation,
         }
+
+    async def request_message(self, message_id: int) -> None:
+        message = self.command_long_message("MAV_CMD_REQUEST_MESSAGE", [message_id])
+        await self.mavlink2rest.send_mavlink_message(message)
+
+    async def get_firmware_info(self) -> FirmwareInfo:
+        request_message = self.command_long_message(
+            "MAV_CMD_REQUEST_MESSAGE", [MavlinkMessageId.AUTOPILOT_VERSION.value]
+        )
+        await self.mavlink2rest.send_mavlink_message(request_message)
+        autopilot_version = await self.mavlink2rest.get_mavlink_message(MavlinkMessageId.AUTOPILOT_VERSION.name)
+        flight_sw_version_raw = autopilot_version["message"]["flight_sw_version"]
+
+        major, minor, patch, version_type_raw = flight_sw_version_raw.to_bytes(4, byteorder="big")
+
+        firmware_version = f"{major}.{minor}.{patch}"
+        version_type = FirmwareVersionType.from_value(version_type_raw)
+
+        return FirmwareInfo(version=firmware_version, type=version_type)
 
     async def reboot_vehicle(self) -> None:
         message = self.command_long_message("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", [1.0])
