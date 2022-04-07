@@ -49,6 +49,14 @@ class VehicleManager:
         shutdown_message = self.command_long_message("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", [2.0])
         await self.mavlink2rest.send_mavlink_message(shutdown_message)
 
+    async def is_heart_beating(self) -> bool:
+        try:
+            await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
+            return True
+        except Exception as error:
+            logger.error(f"Failed to check heartbeat. {error}")
+            return False
+
     async def is_vehicle_armed(self) -> bool:
         get_response = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
         base_mode_bits = get_response["message"]["base_mode"]["bits"]
