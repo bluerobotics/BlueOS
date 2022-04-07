@@ -1,3 +1,5 @@
+import { SemVer } from 'semver'
+
 export interface Firmware {
     name: string
     url: URL
@@ -53,4 +55,17 @@ export interface FlightController {
   manufacturer: string
   platform: Platform
   path: string
+}
+
+export enum FirmwareType {
+  DEV = 'DEV',
+  ALPHA = 'ALPHA',
+  BETA = 'BETA',
+  RC = 'RC',
+  STABLE = 'STABLE',
+}
+
+export interface FirmwareInfo {
+  version: SemVer
+  type: FirmwareType
 }

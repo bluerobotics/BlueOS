@@ -3,7 +3,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { AutopilotEndpoint, FlightController } from '@/types/autopilot'
+import { AutopilotEndpoint, FirmwareInfo, FlightController } from '@/types/autopilot'
 
 @Module({
   dynamic: true,
@@ -19,6 +19,8 @@ class AutopilotManagerStore extends VuexModule {
   available_boards: FlightController[] = []
 
   current_board: FlightController | null = null
+
+  firmware_info: FirmwareInfo | null = null
 
   updating_endpoints = true
 
@@ -39,6 +41,11 @@ class AutopilotManagerStore extends VuexModule {
   @Mutation
   setCurrentBoard(board: FlightController | null): void {
     this.current_board = board
+  }
+
+  @Mutation
+  setFirmwareInfo(firmware_info: FirmwareInfo | null): void {
+    this.firmware_info = firmware_info
   }
 
   @Mutation

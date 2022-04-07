@@ -3,6 +3,7 @@
 </template>
 
 <script lang="ts">
+import { AxiosResponse } from 'axios'
 import Vue from 'vue'
 
 import autopilot from '@/store/autopilot_manager'
@@ -24,6 +25,7 @@ export default Vue.extend({
     callPeriodically(this.fetchAvailableEndpoints, 5000)
     callPeriodically(this.fetchAvailableBoards, 5000)
     callPeriodically(this.fetchCurrentBoard, 5000)
+    callPeriodically(this.fetchFirmwareInfo, 5000)
   },
   methods: {
     async fetchAvailableEndpoints(): Promise<void> {
@@ -75,6 +77,21 @@ export default Vue.extend({
           const message = error.response.data.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARD_FETCH_FAIL', message })
         })
+    },
+    async fetchFirmwareInfo(): Promise<void> {
+      try {
+        const response: AxiosResponse = await back_axios({
+          method: 'get',
+          url: `${autopilot.API_URL}/firmware_info`,
+          timeout: 10000,
+        })
+        autopilot.setFirmwareInfo(response.data)
+      } catch (error) {
+        autopilot.setFirmwareInfo(null)
+        if (error === backend_offline_error) { return }
+        const message = error.response?.data?.detail ?? error.message
+        notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_FIRM_INFO_FETCH_FAIL', message })
+      }
     },
   },
 })

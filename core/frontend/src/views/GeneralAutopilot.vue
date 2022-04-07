@@ -15,6 +15,10 @@
         <span class="font-weight-bold">Mavlink platform: </span>
         <span>{{ current_board.platform }}</span>
         <br>
+        <span class="font-weight-bold">Firmware version: </span>
+        <span v-if="firmware_info === null">Unknown</span>
+        <span v-else>{{ firmware_info.version }} ({{ firmware_info.type }})</span>
+        <br>
         <span
           v-if="current_board.path"
           class="font-weight-bold"
@@ -75,7 +79,7 @@ import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import settings from '@/libs/settings'
 import autopilot from '@/store/autopilot_manager'
 import notifications from '@/store/notifications'
-import { FlightController } from '@/types/autopilot'
+import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -93,6 +97,9 @@ export default Vue.extend({
   computed: {
     current_board(): FlightController | null {
       return autopilot.current_board
+    },
+    firmware_info(): FirmwareInfo | null {
+      return autopilot.firmware_info
     },
     board_undefined(): boolean {
       return this.current_board === null
