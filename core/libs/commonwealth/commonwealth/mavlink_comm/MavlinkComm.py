@@ -19,7 +19,6 @@ class MavlinkMessenger:
         self.component_id = int(os.environ.get("MAV_COMPONENT_ID_ONBOARD_COMPUTER4", 194))
         self.sequence = 0
         self.m2r_address = "localhost:6040"
-        self.m2r_rest_url = f"http://{self.m2r_address}/mavlink"
 
     def set_system_id(self, system_id: int) -> None:
         self.system_id = system_id
@@ -34,7 +33,10 @@ class MavlinkMessenger:
         if len(address.split(":")) != 2:
             raise ValueError("Invalid address. Valid address should follow the format 'localhost:6040'.")
         self.m2r_address = address
-        self.m2r_rest_url = f"http://{self.m2r_address}/mavlink"
+
+    @property
+    def m2r_rest_url(self) -> str:
+        return f"http://{self.m2r_address}/mavlink"
 
     async def get_mavlink_message(
         self, message_name: Optional[str] = None, vehicle: Optional[int] = 1, component: Optional[int] = 1
