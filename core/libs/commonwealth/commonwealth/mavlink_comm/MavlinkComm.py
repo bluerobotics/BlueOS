@@ -1,9 +1,10 @@
+import asyncio
 import json
 import os
 import time
 from typing import Any, Dict, Optional
 
-import requests
+import aiohttp
 
 from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
@@ -35,46 +36,59 @@ class MavlinkMessenger:
         self.m2r_address = address
         self.m2r_rest_url = f"http://{self.m2r_address}/mavlink"
 
-    def get_mavlink_message(
+    async def get_mavlink_message(
         self, message_name: Optional[str] = None, vehicle: Optional[int] = 1, component: Optional[int] = 1
     ) -> Any:
         request_url = f"{self.m2r_rest_url}/vehicles/{vehicle}/components/{component}/messages"
         if message_name:
             request_url += f"/{message_name.upper()}"
 
-        response = requests.get(request_url, timeout=1)
-        if not response.status_code == 200:
-            raise MavlinkMessageReceiveFail
+        request_timeout = 1.0
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(request_url, timeout=request_timeout) as response:
+                    if not response.status == 200:
+                        raise MavlinkMessageReceiveFail(f"Received status code of {response.status}.")
+                    message = await response.json()
+            except asyncio.exceptions.TimeoutError as error:
+                raise MavlinkMessageReceiveFail(f"Request timed out after {request_timeout} second.") from error
 
-        return response.json()
+        return message
 
-    def get_updated_mavlink_message(
+    async def get_updated_mavlink_message(
         self,
         message_name: str,
         vehicle: int = 1,
         component: int = 1,
         timeout: float = 10.0,
     ) -> Any:
-        first_message = self.get_mavlink_message(message_name, vehicle, component)
+        first_message = await self.get_mavlink_message(message_name, vehicle, component)
         first_message_counter = first_message["status"]["time"]["counter"]
         t0 = time.time()
         while True:
-            new_message = self.get_mavlink_message(message_name, vehicle, component)
+            new_message = await self.get_mavlink_message(message_name, vehicle, component)
             new_message_counter = new_message["status"]["time"]["counter"]
             if new_message_counter > first_message_counter:
                 break
             if (time.time() - t0) > timeout:
                 raise FetchUpdatedMessageFail(f"Did not receive an updated {message_name} before timeout.")
-            time.sleep(timeout / 10.0)
+            await asyncio.sleep(timeout / 10.0)
 
         return new_message
 
-    def send_mavlink_message(self, message: Dict[str, Any]) -> None:
+    async def send_mavlink_message(self, message: Dict[str, Any]) -> None:
         mavlink2rest_package = {
             "header": {"system_id": self.system_id, "component_id": self.component_id, "sequence": self.sequence},
             "message": message,
         }
 
-        response = requests.post(self.m2r_rest_url, data=json.dumps(mavlink2rest_package), timeout=5.0)
-        if not response.status_code == 200:
-            raise MavlinkMessageSendFail(f"Failed to send Mavlink message: {response.status_code} - {response.text}")
+        request_timeout = 1.0
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(
+                    self.m2r_rest_url, data=json.dumps(mavlink2rest_package), timeout=request_timeout
+                ) as response:
+                    if not response.status == 200:
+                        raise MavlinkMessageSendFail(f"Received status code of {response.status}.")
+            except asyncio.exceptions.TimeoutError as error:
+                raise MavlinkMessageSendFail(f"Request timed out after {request_timeout} second.") from error
