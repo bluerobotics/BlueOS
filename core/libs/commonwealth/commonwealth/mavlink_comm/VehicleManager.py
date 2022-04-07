@@ -41,16 +41,16 @@ class VehicleManager:
             "confirmation": self.confirmation,
         }
 
-    def reboot_vehicle(self) -> None:
+    async def reboot_vehicle(self) -> None:
         message = self.command_long_message("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", [1.0])
-        self.mavlink2rest.send_mavlink_message(message)
+        await self.mavlink2rest.send_mavlink_message(message)
 
-    def shutdown_vehicle(self) -> None:
+    async def shutdown_vehicle(self) -> None:
         shutdown_message = self.command_long_message("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", [2.0])
-        self.mavlink2rest.send_mavlink_message(shutdown_message)
+        await self.mavlink2rest.send_mavlink_message(shutdown_message)
 
-    def is_vehicle_armed(self) -> bool:
-        get_response = self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
+    async def is_vehicle_armed(self) -> bool:
+        get_response = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
         base_mode_bits = get_response["message"]["base_mode"]["bits"]
         if not isinstance(base_mode_bits, int):
             raise ValueError("Got unexpected HEARTBEAT message from Autopilot.")
@@ -58,8 +58,8 @@ class VehicleManager:
         # Check if bit representing an armed vehicle is on base_mode bit array
         return bool(base_mode_bits & MAV_MODE_FLAG_SAFETY_ARMED)
 
-    def disarm_vehicle(self) -> None:
-        if not self.is_vehicle_armed():
+    async def disarm_vehicle(self) -> None:
+        if not await self.is_vehicle_armed():
             logger.debug("Vehicle already disarmed.")
             return
 
@@ -67,8 +67,8 @@ class VehicleManager:
 
         disarm_message = self.command_long_message("MAV_CMD_COMPONENT_ARM_DISARM", [])
 
-        self.mavlink2rest.send_mavlink_message(disarm_message)
-        if self.is_vehicle_armed():
+        await self.mavlink2rest.send_mavlink_message(disarm_message)
+        if await self.is_vehicle_armed():
             raise VehicleDisarmFail("Failed to disarm vehicle. Please try a manual disarm.")
 
         logger.debug("Successfully disarmed vehicle.")
