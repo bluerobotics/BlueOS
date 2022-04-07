@@ -63,12 +63,8 @@ class VehicleManager:
             logger.debug("Vehicle already disarmed.")
             return
 
-        logger.debug("Trying to disarm vehicle.")
-
         disarm_message = self.command_long_message("MAV_CMD_COMPONENT_ARM_DISARM", [])
 
         await self.mavlink2rest.send_mavlink_message(disarm_message)
         if await self.is_vehicle_armed():
             raise VehicleDisarmFail("Failed to disarm vehicle. Please try a manual disarm.")
-
-        logger.debug("Successfully disarmed vehicle.")
