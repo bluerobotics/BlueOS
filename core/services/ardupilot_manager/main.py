@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
-from commonwealth.mavlink_comm.typedefs import FirmwareInfo
+from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
@@ -78,6 +78,14 @@ async def get_firmware_info() -> Any:
     if not autopilot.current_board:
         raise RuntimeError("Cannot fetch firmware info as there's no board running.")
     return await autopilot.vehicle_manager.get_firmware_info()
+
+
+@app.get("/vehicle_type", response_model=MavlinkVehicleType, summary="Get mavlink vehicle type.")
+@version(1, 0)
+async def get_vehicle_type() -> Any:
+    if not autopilot.current_board:
+        raise RuntimeError("Cannot fetch vehicle type info as there's no board running.")
+    return await autopilot.vehicle_manager.get_vehicle_type()
 
 
 @app.get(
