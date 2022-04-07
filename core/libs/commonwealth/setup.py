@@ -20,6 +20,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires=">=3.9",
     install_requires=[
+        "aiohttp == 3.7.4",
         "appdirs == 1.4.4",
         "loguru == 0.5.3",
         "starlette == 0.13.6",
