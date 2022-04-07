@@ -198,7 +198,7 @@ export default Vue.extend({
         data: [this.endpoint],
       })
         .catch((error) => {
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_DELETE_FAIL', message })
         })
     },
@@ -215,7 +215,7 @@ export default Vue.extend({
         data: [this.updated_endpoint],
       })
         .catch((error) => {
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_UPDATE_FAIL', message })
         })
     },

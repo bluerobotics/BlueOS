@@ -37,7 +37,7 @@ export default Vue.extend({
         .catch((error) => {
           nmea_injector.setAvailableNMEASockets([])
           if (error === backend_offline_error) { return }
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: nmea_injector_service, type: 'BRIDGES_FETCH_FAIL', message })
         })
         .finally(() => {

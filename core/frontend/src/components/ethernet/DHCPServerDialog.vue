@@ -135,7 +135,7 @@ export default Vue.extend({
           this.connection_result_message = 'Successfully enabled DHCP server.'
         })
         .catch((error) => {
-          const message = error.response.data.detail ? error.response.data.detail : error.message
+          const message = error.response?.data?.detail ? error.response?.data?.detail : error.message
           this.connection_result_message = message
           notifications.pushError({ service: ethernet_service, type: 'DHCP_SERVER_ADD_FAIL', message })
         })

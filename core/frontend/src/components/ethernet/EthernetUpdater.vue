@@ -29,7 +29,7 @@ export default Vue.extend({
         .catch((error) => {
           ethernet.setInterfaces([])
           if (error === backend_offline_error) { return }
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: ethernet_service, type: 'ETHERNET_AVAILABLE_FETCH_FAIL', message })
         })
     },

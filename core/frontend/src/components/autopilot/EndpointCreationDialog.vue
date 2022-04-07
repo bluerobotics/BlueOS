@@ -160,7 +160,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_CREATE_FAIL', message })
         })
       return true

@@ -109,7 +109,7 @@ export default Vue.extend({
           this.show_reset_dialog = true
         })
         .catch((error) => {
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: commander_service, type: 'RESET_SETTINGS_FAIL', message })
         })
     },

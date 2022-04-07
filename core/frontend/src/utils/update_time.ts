@@ -21,7 +21,7 @@ export default async function run() : Promise<void> {
         return
       }
 
-      const message = error.response.data.detail ?? error.message
+      const message = error.response?.data?.detail ?? error.message
       notifications.pushError({ service: update_time_service, type: 'UPDATE_TIME_FAIL', message })
     })
 }

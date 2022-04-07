@@ -134,7 +134,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: nmea_injector_service, type: 'NMEA_SOCKET_CREATE_FAIL', message })
         })
       return true

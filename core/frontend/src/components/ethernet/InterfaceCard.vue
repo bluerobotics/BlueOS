@@ -147,7 +147,7 @@ export default Vue.extend({
         params: { interface_name: this.adapter.name, ip_address: ip },
       })
         .catch((error) => {
-          const message = error.response.data.detail ?? error.message
+          const message = error.response?.data?.detail ?? error.message
           notifications.pushError({ service: ethernet_service, type: 'ETHERNET_ADDRESS_DELETE_FAIL', message })
         })
     },
