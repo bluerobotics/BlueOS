@@ -44,7 +44,8 @@ jobs:
         pip install pyfakefs pytest-cov pytest-timeout pylint mypy isort black==22.1.0 asyncmock types-requests
         pip install git+https://github.com/patrickelectric/pykson.git@master_fixes
         ## Install our own libraries
-        ./core/libs/install-libs.sh
+        python ./core/libs/bridges/setup.py install
+        python ./core/libs/commonwealth/setup.py install
         ## We need to install loguru and appdirs since they may be used inside setup.py
         python -m pip install --user appdirs==1.4.4 loguru==0.5.3
         find . -type f -name "setup.py" | xargs --max-lines=1 --replace=% python % install --user
