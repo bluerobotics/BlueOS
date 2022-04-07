@@ -9,7 +9,6 @@
     />
     <iframe
       v-show="iframe_loaded"
-      loading="lazy"
       :src="source"
       height="100%"
       width="100%"
