@@ -347,7 +347,7 @@ class ArduPilotManager(metaclass=Singleton):
         if not self.current_board or self.current_board.platform != Platform.SITL:
             try:
                 logger.info("Disarming vehicle.")
-                self.vehicle_manager.disarm_vehicle()
+                await self.vehicle_manager.disarm_vehicle()
                 logger.info("Vehicle disarmed.")
             except Exception as error:
                 logger.warning(f"Could not disarm vehicle: {error}. Proceeding with kill.")
@@ -381,7 +381,7 @@ class ArduPilotManager(metaclass=Singleton):
             await self.kill_ardupilot()
             await self.start_ardupilot()
             return
-        self.vehicle_manager.reboot_vehicle()
+        await self.vehicle_manager.reboot_vehicle()
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
