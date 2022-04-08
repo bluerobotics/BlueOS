@@ -19,11 +19,12 @@ SERVICE_NAME = "beacon"
 
 
 class AsyncRunner:
-    def __init__(self, ip_version: IPVersion, interface: str) -> None:
+    def __init__(self, ip_version: IPVersion, interface: str, interface_name: str) -> None:
         self.ip_version = ip_version
         self.aiozc: Optional[AsyncZeroconf] = None
         self.interface: str = interface
         self.services: List[AsyncServiceInfo] = []
+        self.interface_name = interface_name
 
     def add_services(self, service: AsyncServiceInfo) -> None:
         logger.info("Adding services:")
@@ -128,7 +129,7 @@ class Beacon:
                 for domain in self.settings.default.domain_names:
                     runner_name = f"{domain}-{interface_name}-{count}"
                     try:
-                        runner = AsyncRunner(IPVersion.V4Only, interface=ip)
+                        runner = AsyncRunner(IPVersion.V4Only, interface=ip, interface_name=interface_name)
                         logger.info(f"Created runner {runner_name}")
                     except Exception as e:
                         logger.warning(f"Error creating {runner_name}: {e}, skipping this interface")
@@ -153,7 +154,7 @@ class Beacon:
                 for domain in interface.domain_names:
                     runner = None
                     try:
-                        runner = AsyncRunner(IPVersion.V4Only, interface=ip)
+                        runner = AsyncRunner(IPVersion.V4Only, interface=ip, interface_name=interface_name)
                         logger.info(f"Created runner for interface {interface.name}, broadcasting on {ip}")
                     except Exception as e:
                         logger.warning(f"Error creating runner for {interface.name}: {e}, skipping this interface")
