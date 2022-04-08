@@ -381,7 +381,7 @@ export default Vue.extend({
     checkTour(): void {
       // Check the current page and tour version to be sure that we are in the correct place before starting
       if (this.$route.name === 'Main') {
-        settings.run_tour_version(1)
+        settings.run_tour_version(2)
           .then(() => this.$tours.welcomeTour.start())
           .catch((message) => console.log(message))
       }
