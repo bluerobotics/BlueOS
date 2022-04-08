@@ -3,11 +3,13 @@ import {
 } from 'vuex-module-decorators'
 
 import error_message_manager from '@/libs/error-message'
+import Notifier from '@/libs/notifier'
 import store from '@/store'
-import notifications from '@/store/notifications'
 import { video_manager_service } from '@/types/frontend_services'
 import { CreatedStream, Device, StreamStatus } from '@/types/video'
 import back_axios, { backend_offline_error } from '@/utils/api'
+
+const notifier = new Notifier(video_manager_service)
 
 @Module({
   dynamic: true,
@@ -57,7 +59,7 @@ class VideoStore extends VuexModule {
     })
       .catch((error) => {
         const message = `Could not delete video stream: ${error.message}.`
-        notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAM_DELETE_FAIL', message })
+        notifier.pushError('VIDEO_STREAM_DELETE_FAIL', message)
       })
   }
 
@@ -76,7 +78,7 @@ class VideoStore extends VuexModule {
         if (error === backend_offline_error) { return false }
         const message = `Could not create video stream: ${error.response?.data ?? error.message}.`
         error_message_manager.emitMessage(message)
-        notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAM_CREATION_FAIL', message })
+        notifier.pushError('VIDEO_STREAM_CREATION_FAIL', message)
         return false
       })
   }
@@ -95,7 +97,7 @@ class VideoStore extends VuexModule {
         this.setAvailableDevices([])
         if (error === backend_offline_error) { return }
         const message = `Could not fetch video devices: ${error.message}`
-        notifications.pushError({ service: video_manager_service, type: 'VIDEO_DEVICES_FETCH_FAIL', message })
+        notifier.pushError('VIDEO_DEVICES_FETCH_FAIL', message)
       })
   }
 
@@ -113,7 +115,7 @@ class VideoStore extends VuexModule {
         this.setAvailableStreams([])
         if (error === backend_offline_error) { return }
         const message = `Could not fetch video streams: ${error.message}`
-        notifications.pushError({ service: video_manager_service, type: 'VIDEO_STREAMS_FETCH_FAIL', message })
+        notifier.pushError('VIDEO_STREAMS_FETCH_FAIL', message)
       })
   }
 }

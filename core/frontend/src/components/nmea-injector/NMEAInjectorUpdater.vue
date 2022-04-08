@@ -5,11 +5,13 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import nmea_injector from '@/store/nmea-injector'
-import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
+
+const notifier = new Notifier(nmea_injector_service)
 
 /**
  * Responsible for updating NMEA sockets.
@@ -36,9 +38,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           nmea_injector.setAvailableNMEASockets([])
-          if (error === backend_offline_error) { return }
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: nmea_injector_service, type: 'BRIDGES_FETCH_FAIL', message })
+          notifier.pushBackError('BRIDGES_FETCH_FAIL', error)
         })
         .finally(() => {
           nmea_injector.setUpdatingNMEASockets(false)

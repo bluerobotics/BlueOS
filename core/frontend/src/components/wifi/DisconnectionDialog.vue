@@ -57,11 +57,13 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import notifications from '@/store/notifications'
+import Notifier from '@/libs/notifier'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, WifiStatus } from '@/types/wifi'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(wifi_service)
 
 export default Vue.extend({
   name: 'DisconnectionDialog',
@@ -116,7 +118,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           const message = `Could not disconnect from wifi network: ${error.message}.`
-          notifications.pushError({ service: wifi_service, type: 'WIFI_DISCONNECT_FAIL', message })
+          notifier.pushError('WIFI_DISCONNECT_FAIL', message)
         })
     },
     showDialog(state: boolean): void {

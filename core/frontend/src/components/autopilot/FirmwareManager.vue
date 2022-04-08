@@ -163,11 +163,13 @@
 import { AxiosRequestConfig } from 'axios'
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import notifications from '@/store/notifications'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { backend_offline_error } from '@/utils/api'
+
+const notifier = new Notifier(autopilot_service)
 
 enum InstallStatus {
   NotStarted,
@@ -273,9 +275,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchFailed
-          if (error === backend_offline_error) { return }
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'FIRMWARE_FETCH_FAIL', message })
+          notifier.pushError('FIRMWARE_FETCH_FAIL', error)
         })
     },
     setCloudFirmwareChosen(): void {
@@ -305,7 +305,7 @@ export default Vue.extend({
         // Populate request with data for file install
         if (!this.firmware_file) {
           const message = 'Could not upload firmware: no firmware file selected.'
-          notifications.pushWarning({ service: autopilot_service, type: 'FILE_FIRMWARE_UPLOAD_FAIL', message })
+          notifier.pushWarning('FILE_FIRMWARE_UPLOAD_FAIL', message)
           return
         }
         const form_data = new FormData()
@@ -332,7 +332,7 @@ export default Vue.extend({
             this.install_result_message = error.response?.data?.detail ?? error.message
           }
           const message = `Could not install firmware: ${this.install_result_message}.`
-          notifications.pushError({ service: autopilot_service, type: 'FILE_FIRMWARE_INSTALL_FAIL', message })
+          notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
         })
     },
   },

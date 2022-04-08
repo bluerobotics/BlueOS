@@ -116,7 +116,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import notifications from '@/store/notifications'
+import Notifier from '@/libs/notifier'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, NetworkCredentials } from '@/types/wifi'
@@ -130,6 +130,8 @@ enum ConnectionStatus {
   Succeeded,
   Failed
 }
+
+const notifier = new Notifier(wifi_service)
 
 export default Vue.extend({
   name: 'ConnectionDialog',
@@ -236,7 +238,7 @@ export default Vue.extend({
           let message = error.response?.data?.detail ?? error.message
           message = message.concat('\n', 'Please check if the password is correct.')
           this.connection_result_message = message
-          notifications.pushError({ service: wifi_service, type: 'WIFI_CONNECT_FAIL', message })
+          notifier.pushError('WIFI_CONNECT_FAIL', message)
         })
     },
     async removeSavedWifiNetwork(): Promise<void> {
@@ -247,8 +249,7 @@ export default Vue.extend({
         params: { ssid: this.network.ssid },
       })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: wifi_service, type: 'WIFI_FORGET_FAIL', message })
+          notifier.pushBackError('WIFI_FORGET_FAIL', error)
         })
         .finally(() => {
           this.showDialog(false)

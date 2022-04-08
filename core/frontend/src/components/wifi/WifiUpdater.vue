@@ -5,12 +5,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import notifications from '@/store/notifications'
+import Notifier from '@/libs/notifier'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { SavedNetwork, WPANetwork } from '@/types/wifi'
 import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
+
+const notifier = new Notifier(wifi_service)
 
 export default Vue.extend({
   name: 'WifiUpdater',
@@ -50,7 +52,7 @@ export default Vue.extend({
           wifi.setCurrentNetwork(null)
           if (error === backend_offline_error) { return }
           const message = `Could not fetch wifi status: ${error.message}`
-          notifications.pushError({ service: wifi_service, type: 'WIFI_STATUS_FETCH_FAIL', message })
+          notifier.pushError('WIFI_STATUS_FETCH_FAIL', message)
         })
     },
     async fetchAvailableNetworks(): Promise<void> {
@@ -75,7 +77,7 @@ export default Vue.extend({
           wifi.setAvailableNetworks(null)
           if (error === backend_offline_error) { return }
           const message = `Could not scan for wifi networks: ${error.message}`
-          notifications.pushError({ service: wifi_service, type: 'WIFI_SCAN_FAIL', message })
+          notifier.pushError('WIFI_SCAN_FAIL', message)
         })
     },
     async fetchSavedNetworks(): Promise<void> {
@@ -91,7 +93,7 @@ export default Vue.extend({
           wifi.setSavedNetworks(null)
           if (error === backend_offline_error) { return }
           const message = `Could not fetch saved networks: ${error.message}.`
-          notifications.pushError({ service: wifi_service, type: 'WIFI_SAVED_FETCH_FAIL', message })
+          notifier.pushError('WIFI_SAVED_FETCH_FAIL', message)
         })
     },
   },

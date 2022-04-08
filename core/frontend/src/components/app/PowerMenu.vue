@@ -96,14 +96,16 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
-import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 
 const API_URL = '/commander/v1.0'
+
+const notifier = new Notifier(commander_service)
 
 // Used to communicate with REST API
 enum ShutdownType {
@@ -185,8 +187,7 @@ export default Vue.extend({
           if (error.code === 'ECONNABORTED') {
             return
           }
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: commander_service, type: 'SHUTDOWN_FAIL', message })
+          notifier.pushBackError('SHUTDOWN_FAIL', error)
         })
     },
     showDialog(state: boolean): void {

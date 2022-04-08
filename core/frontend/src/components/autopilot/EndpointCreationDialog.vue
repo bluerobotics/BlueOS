@@ -80,8 +80,8 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import notifications from '@/store/notifications'
 import { EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
@@ -89,6 +89,8 @@ import back_axios from '@/utils/api'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
+
+const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'ConnectionDialog',
@@ -160,8 +162,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_CREATE_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_ENDPOINT_CREATE_FAIL', error)
         })
       return true
     },

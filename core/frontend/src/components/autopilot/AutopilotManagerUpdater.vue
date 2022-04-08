@@ -6,11 +6,13 @@
 import { AxiosResponse } from 'axios'
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import notifications from '@/store/notifications'
 import { autopilot_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
+
+const notifier = new Notifier(autopilot_service)
 
 /**
  * Responsible for updating autopilot-manager-related data.
@@ -41,9 +43,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           autopilot.setAvailableEndpoints([])
-          if (error === backend_offline_error) { return }
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_ENDPOINT_FETCH_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_ENDPOINT_FETCH_FAIL', error)
         })
     },
     async fetchAvailableBoards(): Promise<void> {
@@ -58,9 +58,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           autopilot.setAvailableBoards([])
-          if (error === backend_offline_error) { return }
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARDS_FETCH_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_BOARDS_FETCH_FAIL', error)
         })
     },
     async fetchCurrentBoard(): Promise<void> {
@@ -74,9 +72,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           autopilot.setCurrentBoard(null)
-          if (error === backend_offline_error) { return }
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARD_FETCH_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_BOARD_FETCH_FAIL', error)
         })
     },
     async fetchFirmwareInfo(): Promise<void> {
@@ -89,9 +85,7 @@ export default Vue.extend({
         autopilot.setFirmwareInfo(response.data)
       } catch (error) {
         autopilot.setFirmwareInfo(null)
-        if (error === backend_offline_error) { return }
-        const message = error.response?.data?.detail ?? error.message
-        notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_FIRM_INFO_FETCH_FAIL', message })
+        notifier.pushBackError('AUTOPILOT_FIRM_INFO_FETCH_FAIL', error)
       }
     },
     async fetchVehicleType(): Promise<void> {
@@ -104,9 +98,7 @@ export default Vue.extend({
         autopilot.setVehicleType(response.data)
       } catch (error) {
         autopilot.setVehicleType(null)
-        if (error === backend_offline_error) { return }
-        const message = error.response?.data?.detail ?? error.message
-        notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_VEHICLE_TYPE_FETCH_FAIL', message })
+        notifier.pushBackError('AUTOPILOT_VEHICLE_TYPE_FETCH_FAIL', error)
       }
     },
   },

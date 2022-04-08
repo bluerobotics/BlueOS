@@ -75,12 +75,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
-import notifications from '@/store/notifications'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 const API_URL = '/commander/v1.0'
+
+const notifier = new Notifier(commander_service)
 
 export default Vue.extend({
   name: 'PowerMenu',
@@ -109,8 +111,7 @@ export default Vue.extend({
           this.show_reset_dialog = true
         })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: commander_service, type: 'RESET_SETTINGS_FAIL', message })
+          notifier.pushBackError('RESET_SETTINGS_FAIL', error)
         })
     },
     showDialog(state: boolean): void {

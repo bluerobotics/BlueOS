@@ -5,10 +5,12 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import frontend from '@/store/frontend'
-import notifications from '@/store/notifications'
 import { frontend_service } from '@/types/frontend_services'
 import { callPeriodically } from '@/utils/helper_functions'
+
+const notifier = new Notifier(frontend_service)
 
 export default Vue.extend({
   name: 'BackendStatusChecker',
@@ -29,7 +31,7 @@ export default Vue.extend({
       this.$emit('statusChange', this.backend_offline)
       if (this.backend_offline) {
         const message = 'Could not communicate with BlueOS backend.'
-        notifications.pushError({ service: frontend_service, type: 'BACKEND_OFFLINE', message })
+        notifier.pushError('BACKEND_OFFLINE', message)
       }
     },
   },

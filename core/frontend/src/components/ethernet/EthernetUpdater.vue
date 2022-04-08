@@ -5,11 +5,13 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
-import notifications from '@/store/notifications'
 import { ethernet_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
+
+const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'EthernetUpdater',
@@ -28,9 +30,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           ethernet.setInterfaces([])
-          if (error === backend_offline_error) { return }
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: ethernet_service, type: 'ETHERNET_AVAILABLE_FETCH_FAIL', message })
+          notifier.pushBackError('ETHERNET_AVAILABLE_FETCH_FAIL', error)
         })
     },
   },

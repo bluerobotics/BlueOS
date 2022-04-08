@@ -89,9 +89,11 @@
 import { differenceInSeconds } from 'date-fns'
 import Vue from 'vue'
 
-import notifications from '@/store/notifications'
+import Notifier from '@/libs/notifier'
 import { network_speed_test_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(network_speed_test_service)
 
 enum State {
   None = 'Click to start',
@@ -206,7 +208,7 @@ export default Vue.extend({
         },
       }).catch((error) => {
         const message = `Failed to do speed test: ${error.message}`
-        notifications.pushError({ service: network_speed_test_service, type: 'NETWORK_SPEED_TEST_UPLOAD', message })
+        notifier.pushError('NETWORK_SPEED_TEST_UPLOAD', message)
         console.error(message)
       }).finally(() => this.updateState(State.Done))
     },
@@ -242,7 +244,7 @@ export default Vue.extend({
         },
       }).catch((error) => {
         const message = `Failed to do speed test: ${error.message}`
-        notifications.pushError({ service: network_speed_test_service, type: 'NETWORK_SPEED_TEST_DOWNLOAD', message })
+        notifier.pushError('NETWORK_SPEED_TEST_DOWNLOAD', message)
         console.error(message)
       }).finally(() => this.updateState(State.UploadSpeed))
     },

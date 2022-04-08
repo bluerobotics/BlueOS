@@ -40,11 +40,13 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import Notifier from '@/libs/notifier'
 import bridget from '@/store/bridget'
-import notifications from '@/store/notifications'
 import { Bridge } from '@/types/bridges'
 import { bridget_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(bridget_service)
 
 export default Vue.extend({
   name: 'BridgeCard',
@@ -64,8 +66,7 @@ export default Vue.extend({
         data: this.bridge,
       })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: bridget_service, type: 'BRIDGE_DELETE_FAIL', message })
+          notifier.pushBackError('BRIDGE_DELETE_FAIL', error)
         })
     },
   },

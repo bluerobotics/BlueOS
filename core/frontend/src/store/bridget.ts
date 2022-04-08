@@ -3,12 +3,14 @@ import {
   getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
+import Notifier from '@/libs/notifier'
 import store from '@/store'
-import notifications from '@/store/notifications'
 import { Bridge } from '@/types/bridges'
 import { bridget_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
+
+const notifier = new Notifier(bridget_service)
 
 let prefetched_bridges = false
 let prefetched_serial = false
@@ -85,9 +87,7 @@ class BridgetStore extends VuexModule {
       })
       .catch((error) => {
         this.setAvailableBridges([])
-        if (error === backend_offline_error) { return }
-        const message = error.response?.data?.detail ?? error.message
-        notifications.pushError({ service: bridget_service, type: 'BRIDGES_FETCH_FAIL', message })
+        notifier.pushBackError('BRIDGES_FETCH_FAIL', error)
       })
       .finally(() => {
         this.setUpdatingBridges(false)
@@ -111,9 +111,7 @@ class BridgetStore extends VuexModule {
       })
       .catch((error) => {
         this.setAvailableSerialPorts([])
-        if (error === backend_offline_error) { return }
-        const message = error.response?.data?.detail ?? error.message
-        notifications.pushError({ service: bridget_service, type: 'BRIDGET_SERIAL_PORTS_FETCH_FAIL', message })
+        notifier.pushBackError('BRIDGET_SERIAL_PORTS_FETCH_FAIL', error)
       })
       .finally(() => {
         this.setUpdatingSerialPorts(false)

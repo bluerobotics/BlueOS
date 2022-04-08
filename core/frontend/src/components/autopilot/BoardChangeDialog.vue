@@ -37,12 +37,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import notifications from '@/store/notifications'
 import { FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'ConnectionDialog',
@@ -93,8 +95,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const { message } = error
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_BOARD_CHANGE_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_BOARD_CHANGE_FAIL', error)
           return false
         })
         .finally(() => {

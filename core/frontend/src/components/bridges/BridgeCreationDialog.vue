@@ -59,8 +59,8 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import bridget from '@/store/bridget'
-import notifications from '@/store/notifications'
 import { Baudrate } from '@/types/common'
 import { bridget_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
@@ -68,6 +68,8 @@ import back_axios from '@/utils/api'
 import {
   isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
+
+const notifier = new Notifier(bridget_service)
 
 export default Vue.extend({
   name: 'BridgeCreationDialog',
@@ -153,8 +155,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: bridget_service, type: 'BRIDGE_CREATE_FAIL', message })
+          notifier.pushBackError('BRIDGE_CREATE_FAIL', error)
         })
       return true
     },

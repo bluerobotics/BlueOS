@@ -79,12 +79,14 @@
 import Vue from 'vue'
 
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
+import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
 import autopilot from '@/store/autopilot_manager'
-import notifications from '@/store/notifications'
 import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'GeneralAutopilot',
@@ -123,8 +125,7 @@ export default Vue.extend({
         timeout: 10000,
       })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_START_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_START_FAIL', error)
         })
         .finally(() => {
           autopilot.setRestarting(false)
@@ -138,8 +139,7 @@ export default Vue.extend({
         timeout: 10000,
       })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_STOP_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_STOP_FAIL', error)
         })
         .finally(() => {
           autopilot.setRestarting(false)
@@ -153,8 +153,7 @@ export default Vue.extend({
         timeout: 10000,
       })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: autopilot_service, type: 'AUTOPILOT_RESTART_FAIL', message })
+          notifier.pushBackError('AUTOPILOT_RESTART_FAIL', error)
         })
         .finally(() => {
           autopilot.setRestarting(false)
