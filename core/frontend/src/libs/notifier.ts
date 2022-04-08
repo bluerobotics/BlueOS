@@ -13,23 +13,23 @@ class Notifier {
   }
 
   pushSuccess(type: string, message: string): void {
-    notifications.pushNotification(new LiveNotification(NotificationLevel.Success, this.service, type, message))
+    this.push(NotificationLevel.Success, type, message)
   }
 
   pushError(type: string, message: string): void {
-    notifications.pushNotification(new LiveNotification(NotificationLevel.Error, this.service, type, message))
+    this.push(NotificationLevel.Error, type, message)
   }
 
   pushInfo(type: string, message: string): void {
-    notifications.pushNotification(new LiveNotification(NotificationLevel.Info, this.service, type, message))
+    this.push(NotificationLevel.Info, type, message)
   }
 
   pushWarning(type: string, message: string): void {
-    notifications.pushNotification(new LiveNotification(NotificationLevel.Warning, this.service, type, message))
+    this.push(NotificationLevel.Warning, type, message)
   }
 
   pushCritical(type: string, message: string): void {
-    notifications.pushNotification(new LiveNotification(NotificationLevel.Critical, this.service, type, message))
+    this.push(NotificationLevel.Critical, type, message)
   }
 
   pushBackError(type: string, error: any): void {
