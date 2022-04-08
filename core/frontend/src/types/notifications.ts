@@ -27,18 +27,6 @@ export interface NotificationInterface {
   time_created: number
 }
 
-/** Notification content used for abstract methods */
-export interface NotificationContent {
-  /**
-   * @param service - The service that is pushing this notification
-   * @param type - Free string used for notification categorization
-   * @param message - What is being communicated
-  * */
-  service: Service
-  type: string
-  message: string
-}
-
 /** Base class for frontend notification system. */
 export class Notification implements NotificationInterface {
   constructor(
