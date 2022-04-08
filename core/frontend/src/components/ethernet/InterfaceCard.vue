@@ -83,14 +83,16 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
-import notifications from '@/store/notifications'
 import { AddressMode, EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 import AddressCreationDialog from './AddressCreationDialog.vue'
 import DHCPServerDialog from './DHCPServerDialog.vue'
+
+const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'InterfaceCard',
@@ -147,8 +149,7 @@ export default Vue.extend({
         params: { interface_name: this.adapter.name, ip_address: ip },
       })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: ethernet_service, type: 'ETHERNET_ADDRESS_DELETE_FAIL', message })
+          notifier.pushBackError('ETHERNET_ADDRESS_DELETE_FAIL', error)
         })
     },
     async triggerForDynamicIP(): Promise<void> {
@@ -162,7 +163,7 @@ export default Vue.extend({
       })
         .catch((error) => {
           const message = `Could not trigger for dynamic IP address on '${this.adapter.name}': ${error.message}.`
-          notifications.pushError({ service: ethernet_service, type: 'DYNAMIC_IP_TRIGGER_FAIL', message })
+          notifier.pushError('DYNAMIC_IP_TRIGGER_FAIL', message)
         })
     },
     openDHCPServerDialog(): void {
@@ -179,7 +180,7 @@ export default Vue.extend({
       })
         .catch((error) => {
           const message = `Could not remove DHCP server from interface '${this.adapter.name}': ${error.message}.`
-          notifications.pushError({ service: ethernet_service, type: 'DHCP_SERVER_REMOVE_FAIL', message })
+          notifier.pushError('DHCP_SERVER_REMOVE_FAIL', message)
         })
     },
   },

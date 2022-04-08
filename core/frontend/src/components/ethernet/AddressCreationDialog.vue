@@ -34,13 +34,15 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
-import notifications from '@/store/notifications'
 import { AddressMode } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
 import { isIpAddress } from '@/utils/pattern_validators'
+
+const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'NetworkCard',
@@ -102,8 +104,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: ethernet_service, type: 'ETHERNET_ADDRESS_CREATION_FAIL', message })
+          notifier.pushBackError('ETHERNET_ADDRESS_CREATION_FAIL', error)
         })
       return true
     },

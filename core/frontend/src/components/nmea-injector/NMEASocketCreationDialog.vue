@@ -52,8 +52,8 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import nmea_injector from '@/store/nmea-injector'
-import notifications from '@/store/notifications'
 import { SocketKind } from '@/types/common'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
@@ -61,6 +61,8 @@ import back_axios from '@/utils/api'
 import {
   isIntegerString, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
+
+const notifier = new Notifier(nmea_injector_service)
 
 export default Vue.extend({
   name: 'NMEASocketCreationDialog',
@@ -134,8 +136,7 @@ export default Vue.extend({
           this.form.reset()
         })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: nmea_injector_service, type: 'NMEA_SOCKET_CREATE_FAIL', message })
+          notifier.pushBackError('NMEA_SOCKET_CREATE_FAIL', error)
         })
       return true
     },

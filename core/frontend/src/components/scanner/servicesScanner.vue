@@ -5,11 +5,13 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import notifications from '@/store/notifications'
+import Notifier from '@/libs/notifier'
 import services_scanner from '@/store/servicesScanner'
 import { service_scanner_service } from '@/types/frontend_services'
 import { Service } from '@/types/helper'
 import back_axios, { backend_offline_error } from '@/utils/api'
+
+const notifier = new Notifier(service_scanner_service)
 
 /**
  * Actual scanner for running services.
@@ -59,7 +61,7 @@ export default Vue.extend({
           if (error === backend_offline_error) { return }
 
           const message = `Error scanning for services: ${error}`
-          notifications.pushError({ service: service_scanner_service, type: 'SERVICE_SCAN_FAIL', message })
+          notifier.pushError('SERVICE_SCAN_FAIL', message)
         })
     },
   },

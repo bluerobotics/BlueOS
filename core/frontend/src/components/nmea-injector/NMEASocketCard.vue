@@ -40,11 +40,13 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import Notifier from '@/libs/notifier'
 import nmea_injector from '@/store/nmea-injector'
-import notifications from '@/store/notifications'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { NMEASocket } from '@/types/nmea-injector'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(nmea_injector_service)
 
 export default Vue.extend({
   name: 'NMEASocketCard',
@@ -64,8 +66,7 @@ export default Vue.extend({
         data: this.nmeaSocket,
       })
         .catch((error) => {
-          const message = error.response?.data?.detail ?? error.message
-          notifications.pushError({ service: nmea_injector_service, type: 'nmeaSocket_DELETE_FAIL', message })
+          notifier.pushBackError('nmeaSocket_DELETE_FAIL', error)
         })
     },
   },

@@ -7,8 +7,8 @@ import {
   VuexModule,
 } from 'vuex-module-decorators'
 
+import Notifier from '@/libs/notifier'
 import store from '@/store'
-import notifications from '@/store/notifications'
 import { system_information_service } from '@/types/frontend_services'
 import { KernelMessage } from '@/types/system-information/kernel'
 import { Netstat } from '@/types/system-information/netstat'
@@ -32,6 +32,8 @@ export enum FetchType {
     SystemTemperatureType = 'system/temperature',
     SystemUnixTimeSecondsType = 'system/unix_time_seconds',
 }
+
+const notifier = new Notifier(system_information_service)
 
 @Module({
   dynamic: true,
@@ -224,7 +226,7 @@ class SystemInformationStore extends VuexModule {
       })
       .catch((error) => {
         const message = `Could not fetch system information '${type}': ${error.message}`
-        notifications.pushError({ service: system_information_service, type: 'SYSTEM_FETCH_FAIL', message })
+        notifier.pushError('SYSTEM_FETCH_FAIL', message)
       })
   }
 }

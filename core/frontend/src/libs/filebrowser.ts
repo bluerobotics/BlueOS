@@ -1,7 +1,9 @@
-import notifications from '@/store/notifications'
+import Notifier from '@/libs/notifier'
 import { FilebrowserCredentials, FilebrowserFile, FilebrowserFolder } from '@/types/filebrowser'
 import { filebrowser_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios from '@/utils/api'
+
+const notifier = new Notifier(filebrowser_service)
 
 const filebrowser_url = '/file-browser/api'
 const filebrowser_credentials: FilebrowserCredentials = { username: '', password: '', recaptcha: '' }
@@ -28,7 +30,7 @@ class Filebrowser {
       })
       .catch((error) => {
         const message = `Could not authenticate to filebrowser API: ${error.message}`
-        notifications.pushError({ service: filebrowser_service, type: 'FILEBROWSER_AUTH_FAIL', message })
+        notifier.pushError('FILEBROWSER_AUTH_FAIL', message)
         throw new Error(error)
       })
   }
@@ -58,9 +60,8 @@ class Filebrowser {
     })
       .then((response) => response.data)
       .catch((error) => {
-        if (error === backend_offline_error) { return }
         const message = `Could not fetch folder ${folder_path}: ${error.message}`
-        notifications.pushError({ service: filebrowser_service, type: 'FOLDER_FETCH_FAIL', message })
+        notifier.pushError('FOLDER_FETCH_FAIL', message)
         throw new Error(message)
       })
   }
@@ -79,7 +80,7 @@ class Filebrowser {
     })
       .catch((error) => {
         const message = `Could not delete file ${file.path}: ${error.message}`
-        notifications.pushError({ service: filebrowser_service, type: 'FILE_DELETE_FAIL', message })
+        notifier.pushError('FILE_DELETE_FAIL', message)
         throw new Error(message)
       })
   }

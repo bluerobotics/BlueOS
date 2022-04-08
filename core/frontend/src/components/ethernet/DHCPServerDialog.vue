@@ -50,8 +50,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
-import notifications from '@/store/notifications'
 import { AddressMode, EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -62,6 +62,8 @@ enum ServerCreationStatus {
   Succeeded,
   Failed
 }
+
+const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'DHCPServerDialog',
@@ -135,9 +137,9 @@ export default Vue.extend({
           this.connection_result_message = 'Successfully enabled DHCP server.'
         })
         .catch((error) => {
-          const message = error.response?.data?.detail ? error.response?.data?.detail : error.message
+          const message = error.response?.data?.detail ?? error.message
           this.connection_result_message = message
-          notifications.pushError({ service: ethernet_service, type: 'DHCP_SERVER_ADD_FAIL', message })
+          notifier.pushBackError('DHCP_SERVER_ADD_FAIL', error)
         })
         .finally(() => {
           ethernet.setUpdatingInterfaces(false)

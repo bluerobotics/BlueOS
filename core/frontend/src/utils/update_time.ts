@@ -1,8 +1,11 @@
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import notifications from '@/store/notifications'
 import { update_time_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(update_time_service)
 
 export default async function run() : Promise<void> {
   await back_axios({
@@ -21,7 +24,6 @@ export default async function run() : Promise<void> {
         return
       }
 
-      const message = error.response?.data?.detail ?? error.message
-      notifications.pushError({ service: update_time_service, type: 'UPDATE_TIME_FAIL', message })
+      notifier.pushBackError('UPDATE_TIME_FAIL', error)
     })
 }

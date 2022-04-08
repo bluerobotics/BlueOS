@@ -61,13 +61,15 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import notifications from '@/store/notifications'
+import Notifier from '@/libs/notifier'
 import video from '@/store/video'
 import { video_manager_service } from '@/types/frontend_services'
 import {
   Bool, Control, Device, Menu, Slider,
 } from '@/types/video'
 import back_axios from '@/utils/api'
+
+const notifier = new Notifier(video_manager_service)
 
 export default Vue.extend({
   name: 'VideoControlsDialog',
@@ -141,7 +143,7 @@ export default Vue.extend({
         })
           .catch((error) => {
             const message = `Could not update value on ${control.name} control: ${error}.`
-            notifications.pushError({ service: video_manager_service, type: 'CONTROL_VALUE_UPDATE_FAIL', message })
+            notifier.pushError('CONTROL_VALUE_UPDATE_FAIL', message)
           })
       }
 
