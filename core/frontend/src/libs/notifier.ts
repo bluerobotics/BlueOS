@@ -1,8 +1,6 @@
 import notifications from '@/store/notifications'
 import { Service } from '@/types/common'
-import {
-  CumulatedNotification, LiveNotification, Notification, NotificationLevel,
-} from '@/types/notifications'
+import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { backend_offline_error } from '@/utils/api'
 
 class Notifier {
