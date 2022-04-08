@@ -138,8 +138,11 @@
       class="mx-auto pa-4"
     >
       <h2>Manual upload</h2>
-      Use this to upload a .tar docker image. These can be download from
-      <a href="https://github.com/bluerobotics/BlueOS-docker/actions/workflows/deploy.yml">Github's CI</a>
+      Use this to upload a .tar docker image. These can be downloaded from
+      <a
+        href="https://github.com/bluerobotics/BlueOS-docker/actions/workflows/deploy.yml"
+        target="_blank"
+      >Github's CI</a>
       or generated locally using "docker save"
       <v-file-input
         v-if="!disable_upload_controls"
@@ -168,7 +171,7 @@
         type="info"
         elevation="2"
       >
-        Decompressing file, this usually takes up to one minute, please standy by...
+        Decompressing file, this usually takes up to one minute, please stand by...
         <spinning-logo
           v-if="upload_percentage == 100"
           size="15%"
