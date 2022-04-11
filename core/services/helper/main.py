@@ -2,7 +2,7 @@
 
 import http
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 import psutil
 import requests
@@ -22,12 +22,23 @@ API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
 
+class ServiceMetadata(BaseModel):
+    name: str
+    description: str
+    icon: str
+    company: str
+    version: str
+    webpage: str
+    api: str
+
+
 class ServiceInfo(BaseModel):
     valid: bool
     title: str
     documentation_url: str
     versions: List[str]
     port: int
+    metadata: Optional[ServiceMetadata]
 
 
 class Helper:
@@ -51,6 +62,15 @@ class Helper:
         # If not valid web server, documentation will not be available
         if not info.valid:
             return info
+
+        # Check for service description metadata
+        try:
+            with requests.get(f"http://127.0.0.1:{port}/register_service", timeout=0.2) as response:
+                if response.status_code == http.HTTPStatus.OK:
+                    info.metadata = ServiceMetadata.parse_obj(response.json())
+        except Exception:
+            # This should be avoided by the first try block, but better safe than sorry
+            pass
 
         for documentation_path in DOCS_CANDIDATE_URLS:
             try:
