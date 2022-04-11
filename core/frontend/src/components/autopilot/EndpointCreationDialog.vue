@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        New endpoint
+        Endpoint
       </v-card-title>
 
       <v-card-text class="d-flex flex-column">
@@ -15,61 +15,65 @@
           lazy-validation
         >
           <v-text-field
-            v-model="endpoint.name"
+            v-model="edited_endpoint.name"
             :counter="50"
             label="Name"
+            :disabled="edit"
+            :hint="edit ? 'Cannot edit name. If needed, create a new endpoint.' : 'Indicates endpoint usage.'"
+            :persistent-hint="edit"
             :rules="[validate_required_field]"
           />
 
           <v-text-field
-            v-model="endpoint.owner"
+            v-model="edited_endpoint.owner"
             :counter="50"
             label="Owner"
+            hint="Helps identifying who created this endpoint."
             :rules="[validate_required_field]"
           />
 
           <v-select
-            v-model="endpoint.connection_type"
+            v-model="edited_endpoint.connection_type"
             :items="endpoint_types"
             label="Type"
             :rules="[validate_required_field]"
           />
 
           <v-text-field
-            v-model="endpoint.place"
+            v-model="edited_endpoint.place"
             :rules="[validate_required_field, is_ip_address_path]"
             label="IP/Device"
           />
 
           <v-text-field
-            v-model="endpoint.argument"
+            v-model.number="edited_endpoint.argument"
             :counter="50"
             label="Port/Baudrate"
-            :rules="[validate_required_field, is_socket_port_baudrate]"
+            :rules="[is_socket_port_baudrate]"
           />
 
           <v-checkbox
-            v-model="endpoint.persistent"
+            v-model="edited_endpoint.persistent"
             label="Save endpoint between system sessions?"
           />
 
           <v-checkbox
-            v-model="endpoint.protected"
+            v-model="edited_endpoint.protected"
             label="Protect endpoint from being deleted?"
             disabled
           />
 
           <v-checkbox
-            v-model="endpoint.enabled"
+            v-model="edited_endpoint.enabled"
             label="Start endpoint already enabled?"
           />
 
           <v-btn
             color="success"
             class="mr-4"
-            @click="createEndpoint"
+            @click="createEditEndpoint"
           >
-            Create
+            {{ edit ? 'Update endpoint' : 'Create endpoint' }}
           </v-btn>
         </v-form>
       </v-card-text>
@@ -78,22 +82,17 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { PropType } from 'vue'
 
-import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import { EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
-import { autopilot_service } from '@/types/frontend_services'
+import { AutopilotEndpoint, EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { VForm } from '@/types/vuetify'
-import back_axios from '@/utils/api'
 import {
-  isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
+  isBaudrate, isFilepath, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
 
-const notifier = new Notifier(autopilot_service)
-
 export default Vue.extend({
-  name: 'ConnectionDialog',
+  name: 'EndpointCreationDialog',
   model: {
     prop: 'show',
     event: 'change',
@@ -103,20 +102,31 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
+    edit: {
+      type: Boolean,
+      default: false,
+    },
+    baseEndpoint: {
+      type: Object as PropType<AutopilotEndpoint>,
+      required: false,
+      default() {
+        return {
+          name: '',
+          owner: '',
+          connection_type: EndpointType.udpin,
+          place: '0.0.0.0',
+          argument: 14550,
+          protected: false,
+          persistent: true,
+          enabled: true,
+        }
+      },
+    },
   },
 
   data() {
     return {
-      endpoint: {
-        name: '',
-        owner: '',
-        connection_type: EndpointType.udpin,
-        place: '',
-        argument: '',
-        protected: false,
-        persistent: false,
-        enabled: true,
-      },
+      edited_endpoint: this.baseEndpoint,
     }
   },
   computed: {
@@ -136,14 +146,13 @@ export default Vue.extend({
     is_ip_address_path(input: string): (true | string) {
       return isIpAddress(input) || isFilepath(input) ? true : 'Invalid IP/Device-path.'
     },
-    is_socket_port_baudrate(input: string): (true | string) {
-      if (!isIntegerString(input)) {
+    is_socket_port_baudrate(input: number): (true | string) {
+      if (typeof input === 'string') {
         return 'Please use an integer value.'
       }
-      const int_input = parseInt(input, 10)
-      return isSocketPort(int_input) || isBaudrate(int_input) ? true : 'Invalid Port/Baudrate.'
+      return isSocketPort(input) || isBaudrate(input) ? true : 'Invalid Port/Baudrate.'
     },
-    async createEndpoint(): Promise<boolean> {
+    createEditEndpoint(): boolean {
       // Validate form before proceeding with API request
       if (!this.form.validate()) {
         return false
@@ -152,18 +161,7 @@ export default Vue.extend({
       autopilot.setUpdatingEndpoints(true)
       this.showDialog(false)
 
-      await back_axios({
-        method: 'post',
-        url: `${autopilot.API_URL}/endpoints`,
-        timeout: 10000,
-        data: [this.endpoint],
-      })
-        .then(() => {
-          this.form.reset()
-        })
-        .catch((error) => {
-          notifier.pushBackError('AUTOPILOT_ENDPOINT_CREATE_FAIL', error)
-        })
+      this.$emit('endpointChange', this.edited_endpoint)
       return true
     },
     showDialog(state: boolean) {
