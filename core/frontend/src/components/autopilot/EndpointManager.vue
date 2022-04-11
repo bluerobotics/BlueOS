@@ -56,6 +56,7 @@
 
     <creation-dialog
       v-model="show_creation_dialog"
+      @endpointChange="createEndpoint"
     />
   </v-card>
 </template>
@@ -63,12 +64,17 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
 import { AutopilotEndpoint } from '@/types/autopilot'
+import { autopilot_service } from '@/types/frontend_services'
+import back_axios from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import EndpointCard from './EndpointCard.vue'
 import CreationDialog from './EndpointCreationDialog.vue'
+
+const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'WifiManager',
@@ -96,6 +102,17 @@ export default Vue.extend({
   methods: {
     openCreationDialog(): void {
       this.show_creation_dialog = true
+    },
+    async createEndpoint(endpoint: AutopilotEndpoint): Promise<void> {
+      await back_axios({
+        method: 'post',
+        url: `${autopilot.API_URL}/endpoints`,
+        timeout: 10000,
+        data: [endpoint],
+      })
+        .catch((error) => {
+          notifier.pushBackError('AUTOPILOT_ENDPOINT_CREATE_FAIL', error, true)
+        })
     },
   },
 })
