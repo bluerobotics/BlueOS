@@ -174,7 +174,7 @@ export default Vue.extend({
         data: [this.endpoint],
       })
         .catch((error) => {
-          notifier.pushBackError('AUTOPILOT_ENDPOINT_DELETE_FAIL', error)
+          notifier.pushBackError('AUTOPILOT_ENDPOINT_DELETE_FAIL', error, true)
         })
     },
     async toggleEndpointEnabled(): Promise<void> {
@@ -190,7 +190,7 @@ export default Vue.extend({
         data: [this.updated_endpoint],
       })
         .catch((error) => {
-          notifier.pushBackError('AUTOPILOT_ENDPOINT_UPDATE_FAIL', error)
+          notifier.pushBackError('AUTOPILOT_ENDPOINT_UPDATE_FAIL', error, true)
         })
     },
   },
