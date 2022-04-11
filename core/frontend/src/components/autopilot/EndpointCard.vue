@@ -1,7 +1,7 @@
 <template>
   <v-card
     width="100%"
-    class="available-endpoint pa-0 my-4"
+    class="available-endpoint py-0 px-2 my-4"
   >
     <v-card-text class="pa-2">
       <v-container class="pa-1">
@@ -61,13 +61,15 @@
               >
                 {{ protection.icon }}
               </v-icon>
-              <v-icon
-                v-tooltip="status.tooltip"
-                class="ma-1"
-                @click="toggleEndpointEnabled"
-              >
-                {{ status.icon }}
-              </v-icon>
+              <v-switch
+                v-model="updated_endpoint.enabled"
+                v-tooltip="updated_endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'"
+                color="light-blue darken-4"
+                class="my-1 ml-2"
+                hide-details
+                dense
+                @change="toggleEndpointEnabled"
+              />
             </v-card>
           </v-col>
         </v-row>
@@ -121,6 +123,7 @@ import autopilot from '@/store/autopilot_manager'
 import { AutopilotEndpoint, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { sleep } from '@/utils/helper_functions'
 
 import EndpointCreationDialog from './EndpointCreationDialog.vue'
 
@@ -157,12 +160,6 @@ export default Vue.extend({
       }
       return { icon: 'mdi-lock-off', tooltip: 'Not protected' }
     },
-    status(): { icon: string, tooltip: string } {
-      if (this.endpoint.enabled) {
-        return { icon: 'mdi-lightbulb-on', tooltip: 'Disable endpoint' }
-      }
-      return { icon: 'mdi-lightbulb-off', tooltip: 'Enable endpoint' }
-    },
   },
   methods: {
     async removeEndpoint(): Promise<void> {
@@ -178,7 +175,8 @@ export default Vue.extend({
         })
     },
     async toggleEndpointEnabled(): Promise<void> {
-      this.updated_endpoint.enabled = !this.updated_endpoint.enabled
+      // Sleep for half a second so user can see the switch-toggling animation
+      await sleep(500)
       this.updateEndpoint(this.updated_endpoint)
     },
     openEditDialog(): void {
