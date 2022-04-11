@@ -73,45 +73,43 @@
         </v-row>
       </v-container>
     </v-card-text>
-    <v-speed-dial
+    <v-btn
       v-if="!endpoint.protected"
-      v-model="floating_action_button"
-      class="endpoint-edit-fab"
-      right
-      direction="left"
-      transition="slide-y-reverse-transition"
+      color="blue"
+      class="endpoint-edit-btn"
+      dark
+      fab
+      x-small
       absolute
+      right
+      @click="openEditDialog"
     >
-      <template #activator>
-        <v-btn
-          v-model="floating_action_button"
-          color="pink"
-          dark
-          fab
-          small
-          relative
-        >
-          <v-icon v-if="floating_action_button">
-            mdi-close
-          </v-icon>
-          <v-icon v-else>
-            mdi-pencil
-          </v-icon>
-        </v-btn>
-      </template>
-      <v-btn
-        v-tooltip="remove_action.tooltip"
-        color="red"
-        fab
-        dark
-        small
-        relative
-        :disabled="endpoint.protected"
-        @click="removeEndpoint"
-      >
-        <v-icon>{{ remove_action.icon }}</v-icon>
-      </v-btn>
-    </v-speed-dial>
+      <v-icon>
+        mdi-pencil
+      </v-icon>
+    </v-btn>
+    <v-btn
+      v-if="!endpoint.protected"
+      color="pink"
+      class="endpoint-remove-btn"
+      dark
+      fab
+      x-small
+      absolute
+      right
+      @click="removeEndpoint"
+    >
+      <v-icon>
+        mdi-trash-can
+      </v-icon>
+    </v-btn>
+
+    <endpoint-creation-dialog
+      v-model="show_edit_dialog"
+      :base-endpoint="updated_endpoint"
+      edit
+      @endpointChange="updateEndpoint"
+    />
   </v-card>
 </template>
 
@@ -124,10 +122,15 @@ import { AutopilotEndpoint, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
+import EndpointCreationDialog from './EndpointCreationDialog.vue'
+
 const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'EndpointCard',
+  components: {
+    EndpointCreationDialog,
+  },
   props: {
     endpoint: {
       type: Object as PropType<AutopilotEndpoint>,
@@ -137,7 +140,7 @@ export default Vue.extend({
   data() {
     return {
       userFriendlyEndpointType,
-      floating_action_button: false,
+      show_edit_dialog: false,
       updated_endpoint: this.endpoint,
     }
   },
@@ -160,9 +163,6 @@ export default Vue.extend({
       }
       return { icon: 'mdi-lightbulb-off', tooltip: 'Enable endpoint' }
     },
-    remove_action(): { icon: string, tooltip: string } {
-      return { icon: 'mdi-delete', tooltip: 'Remove' }
-    },
   },
   methods: {
     async removeEndpoint(): Promise<void> {
@@ -179,15 +179,18 @@ export default Vue.extend({
     },
     async toggleEndpointEnabled(): Promise<void> {
       this.updated_endpoint.enabled = !this.updated_endpoint.enabled
-      this.updateEndpoint()
+      this.updateEndpoint(this.updated_endpoint)
     },
-    async updateEndpoint(): Promise<void> {
+    openEditDialog(): void {
+      this.show_edit_dialog = true
+    },
+    async updateEndpoint(endpoint: AutopilotEndpoint): Promise<void> {
       autopilot.setUpdatingEndpoints(true)
       await back_axios({
         method: 'put',
         url: `${autopilot.API_URL}/endpoints`,
         timeout: 10000,
-        data: [this.updated_endpoint],
+        data: [endpoint],
       })
         .catch((error) => {
           notifier.pushBackError('AUTOPILOT_ENDPOINT_UPDATE_FAIL', error, true)
@@ -198,8 +201,12 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.endpoint-edit-fab {
-  bottom: 32%;
-  left: 96%;
+.endpoint-edit-btn {
+  bottom: 55%;
+  left: 97%;
+}
+.endpoint-remove-btn {
+  bottom: 15%;
+  left: 97%;
 }
 </style>
