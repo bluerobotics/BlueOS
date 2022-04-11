@@ -64,6 +64,7 @@
               <v-icon
                 v-tooltip="status.tooltip"
                 class="ma-1"
+                @click="toggleEndpointEnabled"
               >
                 {{ status.icon }}
               </v-icon>
@@ -98,27 +99,6 @@
           </v-icon>
         </v-btn>
       </template>
-      <v-btn
-        color="pink"
-        fab
-        dark
-        small
-        relative
-        @click="toggleEndpointEnabled"
-      >
-        <v-icon
-          v-if="endpoint.enabled"
-          v-tooltip="disable_action.tooltip"
-        >
-          {{ disable_action.icon }}
-        </v-icon>
-        <v-icon
-          v-else
-          v-tooltip="enable_action.tooltip"
-        >
-          {{ enable_action.icon }}
-        </v-icon>
-      </v-btn>
       <v-btn
         v-tooltip="remove_action.tooltip"
         color="red"
@@ -176,15 +156,9 @@ export default Vue.extend({
     },
     status(): { icon: string, tooltip: string } {
       if (this.endpoint.enabled) {
-        return { icon: 'mdi-lightbulb-on', tooltip: 'Enabled' }
+        return { icon: 'mdi-lightbulb-on', tooltip: 'Disable endpoint' }
       }
-      return { icon: 'mdi-lightbulb-off', tooltip: 'Disabled' }
-    },
-    enable_action(): { icon: string, tooltip: string } {
-      return { icon: 'mdi-lightbulb-on', tooltip: 'Enable' }
-    },
-    disable_action(): { icon: string, tooltip: string } {
-      return { icon: 'mdi-lightbulb-off', tooltip: 'Disable' }
+      return { icon: 'mdi-lightbulb-off', tooltip: 'Enable endpoint' }
     },
     remove_action(): { icon: string, tooltip: string } {
       return { icon: 'mdi-delete', tooltip: 'Remove' }
