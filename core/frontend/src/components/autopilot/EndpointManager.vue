@@ -12,7 +12,7 @@
       <template v-for="(endpoint, index) in available_endpoints">
         <v-divider
           v-if="index!==0"
-          :key="index"
+          :key="`spacer-${index}`"
         />
         <v-list-item
           :key="index"
