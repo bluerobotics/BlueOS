@@ -258,22 +258,22 @@ export default Vue.extend({
           },
         },
         {
-          target: '#hamburguer-menu-button',
+          target: '#current-version',
           content: 'This is the main BlueOS menu. Here you can access all the running services and system utilities.',
           params: {
             enableScrolling: false,
           },
-        },
-        {
-          target: '#button-to-vehicle',
-          content: `Under the Vehicle menu, you can check the status of your autopilot, download logs from it,
-          set up video streams and even update its firmware!`,
           before: () => {
             // It's necessary to control the drawer tour event otherwise the internal state control will close it
             this.drawer_running_tour = true
             // We will open the drawer for the message
             this.drawer = true
           },
+        },
+        {
+          target: '#button-to-vehicle',
+          content: `Under the Vehicle menu, you can check the status of your autopilot, download logs from it,
+          set up video streams and even update its firmware!`,
           params: {
             enableScrolling: false,
           },
