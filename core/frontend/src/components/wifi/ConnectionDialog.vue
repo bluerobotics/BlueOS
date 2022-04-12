@@ -197,26 +197,26 @@ export default Vue.extend({
     async connectToWifiNetwork(): Promise<void> {
       const credentials: NetworkCredentials = { ssid: this.real_ssid, password: this.password }
       this.connection_status = ConnectionStatus.Connecting
-      await back_axios({
-        method: 'post',
-        url: `${wifi.API_URL}/connect`,
-        timeout: 20000,
-        data: credentials,
-        params: { hidden: this.is_hidden },
-      })
-        .then(() => {
-          this.connection_status = ConnectionStatus.Succeeded
-          notifier.pushSuccess('WIFI_CONNECT_SUCCESS', `Successfully connected to '${this.real_ssid}'`, true)
-          wifi.setNetworkStatus(null)
-          this.password = ''
-          this.force_password = false
+      try {
+        await back_axios({
+          method: 'post',
+          url: `${wifi.API_URL}/connect`,
+          timeout: 20000,
+          data: credentials,
+          params: { hidden: this.is_hidden },
         })
-        .catch((error) => {
-          this.connection_status = ConnectionStatus.Failed
-          let message = error.response?.data?.detail ?? error.message
-          message = message.concat('\n', 'Please check if the password is correct.')
-          notifier.pushError('WIFI_CONNECT_FAIL', message, true)
-        })
+        this.showDialog(false)
+        this.connection_status = ConnectionStatus.Succeeded
+        notifier.pushSuccess('WIFI_CONNECT_SUCCESS', `Successfully connected to '${this.real_ssid}'`, true)
+        wifi.setNetworkStatus(null)
+        this.password = ''
+        this.force_password = false
+      } catch (error) {
+        this.connection_status = ConnectionStatus.Failed
+        let message = error.response?.data?.detail ?? error.message
+        message = message.concat('\n', 'Please check if the password is correct.')
+        notifier.pushError('WIFI_CONNECT_FAIL', message, true)
+      }
     },
     async removeSavedWifiNetwork(): Promise<void> {
       await back_axios({
