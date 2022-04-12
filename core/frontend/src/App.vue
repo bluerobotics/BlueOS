@@ -151,7 +151,7 @@
     <mavlink-updater />
     <nmea-injector-updater />
     <new-version-notificator />
-    <error-message />
+    <alerter />
     <v-tour
       name="welcomeTour"
       :steps="steps"
@@ -168,8 +168,8 @@ import settings from '@/libs/settings'
 import { convertGitDescribeToUrl } from '@/utils/helper_functions.ts'
 import updateTime from '@/utils/update_time.ts'
 
+import Alerter from './components/app/Alerter.vue'
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
-import ErrorMessage from './components/app/ErrorMessage.vue'
 import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
@@ -204,7 +204,7 @@ export default Vue.extend({
     'settings-menu': SettingsMenu,
     'report-menu': ReportMenu,
     'backend-status-checker': BackendStatusChecker,
-    'error-message': ErrorMessage,
+    Alerter,
     'new-version-notificator': NewVersionNotificator,
   },
 
