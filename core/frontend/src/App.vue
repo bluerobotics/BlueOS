@@ -94,12 +94,12 @@
                   :key="j"
                   :to="submenu.route"
                 >
-                  <v-list-item-title
-                    v-text="submenu.title"
-                  />
                   <v-list-item-icon>
                     <v-icon v-text="submenu.icon" />
                   </v-list-item-icon>
+                  <v-list-item-title
+                    v-text="submenu.title"
+                  />
                 </v-list-item>
               </template>
             </v-list-group>
