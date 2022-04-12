@@ -1,4 +1,4 @@
-import error_message_manager from '@/libs/error-message'
+import message_manager, { MessageLevel } from '@/libs/error-message'
 import notifications from '@/store/notifications'
 import { Service } from '@/types/common'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
@@ -13,24 +13,28 @@ class Notifier {
     notifications.pushNotification(new LiveNotification(level, this.service, type, message))
   }
 
-  pushSuccess(type: string, message: string): void {
+  pushSuccess(type: string, message: string, alert = false): void {
+    if (alert) { message_manager.emitMessage(MessageLevel.Success, message) }
     this.push(NotificationLevel.Success, type, message)
   }
 
   pushError(type: string, message: string, alert = false): void {
-    if (alert) { error_message_manager.emitMessage(message) }
+    if (alert) { message_manager.emitMessage(MessageLevel.Error, message) }
     this.push(NotificationLevel.Error, type, message)
   }
 
-  pushInfo(type: string, message: string): void {
+  pushInfo(type: string, message: string, alert = false): void {
+    if (alert) { message_manager.emitMessage(MessageLevel.Info, message) }
     this.push(NotificationLevel.Info, type, message)
   }
 
-  pushWarning(type: string, message: string): void {
+  pushWarning(type: string, message: string, alert = false): void {
+    if (alert) { message_manager.emitMessage(MessageLevel.Warning, message) }
     this.push(NotificationLevel.Warning, type, message)
   }
 
-  pushCritical(type: string, message: string): void {
+  pushCritical(type: string, message: string, alert = false): void {
+    if (alert) { message_manager.emitMessage(MessageLevel.Critical, message) }
     this.push(NotificationLevel.Critical, type, message)
   }
 

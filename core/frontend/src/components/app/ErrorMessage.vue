@@ -7,7 +7,7 @@
 
     <template #action="{ attrs }">
       <v-btn
-        color="pink"
+        :color="color"
         text
         v-bind="attrs"
         @click="show = false"
@@ -21,18 +21,38 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import error_message_manager from '@/libs/error-message'
+import message_manager, { MessageLevel } from '@/libs/error-message'
 
 export default Vue.extend({
   name: 'ErrorMessage',
   data() {
     return {
+      level: undefined as MessageLevel|undefined,
       message: '',
       show: false,
     }
   },
+  computed: {
+    color(): string {
+      switch (this.level) {
+        case MessageLevel.Success:
+          return 'green'
+        case MessageLevel.Error:
+          return 'pink'
+        case MessageLevel.Info:
+          return 'grey'
+        case MessageLevel.Warning:
+          return 'yellow'
+        case MessageLevel.Critical:
+          return 'red'
+        default:
+          return 'grey'
+      }
+    },
+  },
   mounted() {
-    error_message_manager.addCallback((message) => {
+    message_manager.addCallback((level: MessageLevel, message: string) => {
+      this.level = level
       this.message = message
       this.show = true
     })
