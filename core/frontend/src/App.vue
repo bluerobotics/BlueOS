@@ -7,8 +7,7 @@
         app
         rounded="0"
         :color="app_bar_color"
-        :extended="extend_toolbar"
-        extension-height="10"
+        :height="toolbar_height"
       >
         <v-app-bar-nav-icon
           id="hamburguer-menu-button"
@@ -219,8 +218,8 @@ export default Vue.extend({
     tourCallbacks: {}, // we are setting this up in mounted otherwise "this" can be undefined
   }),
   computed: {
-    extend_toolbar(): boolean {
-      return settings.is_pirate_mode && this.backend_offline
+    toolbar_height(): number {
+      return settings.is_pirate_mode && this.backend_offline ? 66 : 56
     },
     steps() {
       return [
