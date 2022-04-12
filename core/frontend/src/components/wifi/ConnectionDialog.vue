@@ -86,6 +86,7 @@
               dark
               color="blue darken-1"
               depressed
+              :disabled="connection_status === ConnectionStatus.Connecting"
               @click="connectToWifiNetwork"
             >
               Connect
@@ -154,6 +155,7 @@ export default Vue.extend({
   },
   data() {
     return {
+      ConnectionStatus,
       password: '',
       force_password: false,
       inputed_ssid: 'HIDDEN SSID',
