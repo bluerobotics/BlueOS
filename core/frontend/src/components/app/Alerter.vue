@@ -21,7 +21,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import message_manager, { MessageLevel } from '@/libs/error-message'
+import message_manager, { MessageLevel } from '@/libs/message-manager'
 
 export default Vue.extend({
   name: 'ErrorMessage',

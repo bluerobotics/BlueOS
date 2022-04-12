@@ -1,4 +1,4 @@
-import message_manager, { MessageLevel } from '@/libs/error-message'
+import message_manager, { MessageLevel } from '@/libs/message-manager'
 import notifications from '@/store/notifications'
 import { Service } from '@/types/common'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
