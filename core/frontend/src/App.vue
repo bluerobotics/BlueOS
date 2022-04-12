@@ -4,6 +4,7 @@
       flat
     >
       <v-app-bar
+        app
         rounded="0"
         :color="app_bar_color"
         :extended="extend_toolbar"
@@ -46,8 +47,8 @@
 
     <v-navigation-drawer
       v-model="drawer"
-      absolute
-      temporary
+      app
+      fixed
       @input="drawerEvent"
     >
       <v-container
