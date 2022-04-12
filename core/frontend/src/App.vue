@@ -12,6 +12,7 @@
       >
         <v-app-bar-nav-icon
           id="hamburguer-menu-button"
+          :style="{visibility: drawer ? 'hidden' : 'visible'}"
           color="white"
           @click="drawer = true"
         />
@@ -211,7 +212,7 @@ export default Vue.extend({
 
   data: () => ({
     settings,
-    drawer: false,
+    drawer: undefined as boolean|undefined,
     drawer_running_tour: false,
     backend_offline: false,
     menus,
