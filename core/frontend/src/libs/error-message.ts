@@ -1,39 +1,65 @@
-// Singleton library for error message emitter
+import { NotificationLevel as MessageLevel } from '@/types/notifications'
 
-class ErrorMessageManager {
-  private static instance: ErrorMessageManager;
+// Singleton library for message emitter
 
-  callbacks: ((message: string) => void)[] = [(message: string) => { console.error(`Error: ${message}`) }]
+class MessageManager {
+  private static instance: MessageManager;
+
+  callbacks: ((level: MessageLevel, message: string) => void)[] = [
+    (message, level) => {
+      switch (level) {
+        case MessageLevel.Success:
+          console.log(message)
+          break
+        case MessageLevel.Error:
+          console.error(message)
+          break
+        case MessageLevel.Info:
+          console.info(message)
+          break
+        case MessageLevel.Warning:
+          console.warn(message)
+          break
+        case MessageLevel.Critical:
+          console.exception(message)
+          break
+        default:
+          console.log(message)
+          break
+      }
+    },
+  ]
 
   /**
    * Singleton access
-   * @returns ErrorMessageManager
+   * @returns MessageManager
    */
-  public static getInstance(): ErrorMessageManager {
-    if (!ErrorMessageManager.instance) {
-      ErrorMessageManager.instance = new ErrorMessageManager()
+  public static getInstance(): MessageManager {
+    if (!MessageManager.instance) {
+      MessageManager.instance = new MessageManager()
     }
-    return ErrorMessageManager.instance
+    return MessageManager.instance
   }
 
   /**
    * Add callback to be used when a new message is received
    */
-  addCallback(callback:(msg: string) => void): void {
+  addCallback(callback:(level: MessageLevel, msg: string) => void): void {
     this.callbacks.push(callback)
   }
 
   /**
    * Emit a new message to be used in all callbacks
    */
-  emitMessage(message: string): void {
+  emitMessage(level: MessageLevel, message: string): void {
     for (const callback of this.callbacks) {
-      callback(message)
+      callback(level, message)
     }
   }
 }
 
 // Define public instance of singleton
-const error_message_manager = ErrorMessageManager.getInstance()
+const message_manager = MessageManager.getInstance()
 
-export default error_message_manager
+export { MessageLevel }
+export default message_manager
