@@ -45,3 +45,13 @@ def get_new_log_path(service_name: str) -> Path:
     # Returned log path are service-specific and store datetime information
     datetime_now = datetime.now().strftime("%m-%d-%Y_%H:%M:%S")
     return service_log_folder.joinpath(f"logfile_{datetime_now}.log")
+
+
+def stack_trace_message(error: BaseException) -> str:
+    """Get string containing joined messages from all exceptions in stack trace, beggining with the most recent one."""
+    message = str(error)
+    sub_error = error.__cause__
+    while sub_error is not None:
+        message = f"{message} {sub_error}"
+        sub_error = sub_error.__cause__
+    return message
