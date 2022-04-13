@@ -6,6 +6,8 @@ from fastapi.routing import APIRoute
 from loguru import logger
 from starlette.responses import Response as StarletteResponse
 
+from commonwealth.utils.logs import stack_trace_message
+
 
 class PrettyJSONResponse(StarletteResponse):
     media_type = "application/json"
@@ -33,6 +35,7 @@ class GenericErrorHandlingRoute(APIRoute):
             except Exception as error:
                 logger.error("Unhandled service exception.")
                 logger.exception(error)
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+                error_msg = stack_trace_message(error)
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg) from error
 
         return custom_route_handler
