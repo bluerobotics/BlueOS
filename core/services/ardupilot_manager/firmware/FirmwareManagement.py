@@ -82,9 +82,7 @@ class FirmwareManager:
                 self.firmware_installer.install_firmware(new_firmware_path, board, self.firmware_path(board.platform))
             logger.info(f"Succefully installed firmware for {board.name}.")
         except Exception as error:
-            error_message = f"Could not install firmware: {error}"
-            logger.exception(error_message)
-            raise FirmwareInstallFail(error_message) from error
+            raise FirmwareInstallFail("Could not install firmware.") from error
 
     def install_firmware_from_url(self, url: str, board: FlightController) -> None:
         temporary_file = self.firmware_download._download(url.strip())

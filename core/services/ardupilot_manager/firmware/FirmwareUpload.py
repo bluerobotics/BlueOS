@@ -75,7 +75,7 @@ class FirmwareUploader:
             logger.info("Successfully uploaded firmware to board.")
         except Exception as error:
             process.kill()
-            raise FirmwareUploadFail(f"Unable to upload firmware: {error}") from error
+            raise FirmwareUploadFail("Unable to upload firmware to board.") from error
         finally:
             timer.cancel()
             # Give some time for the board to reboot (preventing fail reconnecting to it)

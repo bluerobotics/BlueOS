@@ -10,7 +10,11 @@ from typing import Any, Dict, List, Set
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.general import is_running_as_root
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
+from commonwealth.utils.logs import (
+    InterceptHandler,
+    get_new_log_path,
+    stack_trace_message,
+)
 from fastapi import Body, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -108,8 +112,6 @@ async def install_firmware_from_url(url: str) -> Any:
             raise RuntimeError("Cannot install firmware as there's no board running.")
         await autopilot.kill_ardupilot()
         autopilot.install_firmware_from_url(url, autopilot.current_board)
-    except Exception as error:
-        raise error
     finally:
         await autopilot.start_ardupilot()
 
@@ -128,7 +130,7 @@ async def install_firmware_from_file(binary: UploadFile = File(...)) -> Any:
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail={"message": f"Cannot use this file: {error}"}
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=stack_trace_message(error)
         ) from error
     finally:
         binary.file.close()
