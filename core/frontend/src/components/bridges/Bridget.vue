@@ -23,7 +23,10 @@
     </v-list>
 
     <v-container v-else-if="updating_bridges">
-      <spinning-logo size="30%" />
+      <spinning-logo
+        size="30%"
+        subtitle="Fetching available bridges..."
+      />
     </v-container>
     <v-container
       v-else

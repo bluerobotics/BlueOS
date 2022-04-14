@@ -43,6 +43,7 @@
       <spinning-logo
         style="max-width:10%"
         size="10%"
+        :subtitle="loading ? 'Loading image...' : 'Deleting image...'"
       />
     </v-list-item-action>
     <v-list-item-action v-if="newStableAvailable">

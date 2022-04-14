@@ -24,6 +24,7 @@
         <spinning-logo
           v-else-if="updating_devices"
           size="30%"
+          subtitle="Fetching available video devices..."
         />
         <v-card
           v-else

@@ -34,7 +34,10 @@
           </v-card-text>
         </div>
         <div v-else>
-          <spinning-logo size="30%" />
+          <spinning-logo
+            size="30%"
+            subtitle="Scanning for wifi networks..."
+          />
         </div>
       </v-container>
     </v-container>

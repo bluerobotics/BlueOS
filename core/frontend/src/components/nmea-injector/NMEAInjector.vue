@@ -23,7 +23,10 @@
     </v-list>
 
     <v-container v-else-if="updating_nmea_sockets">
-      <spinning-logo size="30%" />
+      <spinning-logo
+        size="30%"
+        subtitle="Fetching available NMEA sockets..."
+      />
     </v-container>
     <v-container
       v-else
