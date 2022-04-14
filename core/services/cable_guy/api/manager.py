@@ -97,10 +97,7 @@ class EthernetManager:
 
         # Reset the interface by removing all IPs and DHCP servers associated with it
         self.flush_interface(interface.name)
-        try:
-            self.remove_dhcp_server_from_interface(interface.name)
-        except Exception:
-            pass
+        self.remove_dhcp_server_from_interface(interface.name)
 
         # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
         if any(address.mode == AddressMode.Client for address in interface.addresses):
@@ -274,9 +271,7 @@ class EthernetManager:
             interface_index = self._get_interface_index(interface_name)
             self.ipr.addr("del", index=interface_index, address=ip_address, prefixlen=24)
         except Exception as error:
-            error_msg = f"Cannot delete IP '{ip_address}' from interface {interface_name}. {error}"
-            logger.error(error_msg)
-            raise ValueError(error_msg) from error
+            raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
 
     def get_interface_by_name(self, name: str) -> EthernetInterface:
         for interface in self.get_interfaces():
@@ -371,8 +366,11 @@ class EthernetManager:
         logger.info(f"Removing DHCP server from interface '{interface_name}'.")
         try:
             self._dhcp_servers.remove(self._dhcp_server_on_interface(interface_name))
+        except ValueError:
+            # If the interface does not have a DHCP server running on, no need to raise
+            pass
         except Exception as error:
-            raise ValueError(f"Cannot remove DHCP server from interface. {error}") from error
+            raise RuntimeError("Cannot remove DHCP server from interface.") from error
 
     def add_dhcp_server_to_interface(self, interface_name: str, ipv4_gateway: str) -> None:
         if self._is_dhcp_server_running_on_interface(interface_name):
