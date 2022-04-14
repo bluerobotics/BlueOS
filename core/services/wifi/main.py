@@ -8,7 +8,11 @@ import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    StackedHTTPException,
+)
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +21,7 @@ from loguru import logger
 from tabulate import tabulate
 from uvicorn import Config, Server
 
-from exceptions import BusyError, FetchError
+from exceptions import BusyError
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
 from WifiManager import WifiManager
 
@@ -60,13 +64,7 @@ async def scan() -> Any:
             logger.info(line)
         return available_networks
     except BusyError as error:
-        logger.error("Failed to scan networks.")
-        logger.exception(error)
-        raise HTTPException(status_code=status.HTTP_425_TOO_EARLY, detail=str(error)) from error
-    except FetchError as error:
-        logger.error("Failed to scan networks.")
-        logger.exception(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+        raise StackedHTTPException(status_code=status.HTTP_425_TOO_EARLY, error=error) from error
 
 
 @app.get("/saved", response_model=List[SavedWifiNetwork], summary="Retrieve saved wifi networks.")
@@ -116,17 +114,10 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
             raise ValueError("Missing 'network_id' for network connection.")
         await wifi_manager.connect_to_network(network_id)
     except ConnectionError as error:
-        logger.error("Connection failed.")
-        logger.exception(error)
-
-        try:
-            if is_new_network and network_id is not None:
-                logger.info("Removing new network entry since connection failed.")
-                await wifi_manager.remove_network(network_id)
-        except ConnectionError:
-            logger.info("Failed to remove network entry.")
-
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+        if is_new_network and network_id is not None:
+            logger.info("Removing new network entry since connection failed.")
+            await wifi_manager.remove_network(network_id)
+        raise error
     logger.info(f"Succesfully connected to '{credentials.ssid}'.")
 
 
@@ -141,10 +132,6 @@ async def remove(ssid: str) -> Any:
     except StopIteration as error:
         logger.info(f"Network '{ssid}' is unknown.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Network '{ssid}' not saved.") from error
-    except ConnectionError as error:
-        logger.error("Failed to remove network.")
-        logger.exception(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
     logger.info(f"Succesfully removed '{ssid}'.")
 
 
@@ -152,12 +139,7 @@ async def remove(ssid: str) -> Any:
 @version(1, 0)
 async def disconnect() -> Any:
     logger.info("Trying to disconnect from current network.")
-    try:
-        await wifi_manager.disconnect()
-    except ConnectionError as error:
-        logger.error("Failed to perform disconnection.")
-        logger.exception(error)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+    await wifi_manager.disconnect()
     logger.info("Succesfully disconnected from network.")
 
 
