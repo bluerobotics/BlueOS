@@ -69,7 +69,7 @@
       >
         <v-divider />
         <v-list
-          v-for="(menu, i) in menus"
+          v-for="(menu, i) in computed_menu"
           :key="i"
           class="pa-0"
           nav
@@ -93,10 +93,23 @@
                 <v-list-item
                   v-if="!submenu.advanced || (submenu.advanced && settings.is_pirate_mode)"
                   :key="j"
-                  :to="submenu.route"
+                  :to="menu.extension ? undefined : submenu.route"
+                  :href="menu.extension ? submenu.route : undefined"
+                  :target="menu.extension ? '_blank' : undefined"
                 >
                   <v-list-item-icon>
-                    <v-icon v-text="submenu.icon" />
+                    <v-icon
+                      v-if="!submenu.icon.startsWith('http')"
+                      class="mr-0"
+                      v-text="submenu.icon"
+                    />
+                    <v-img
+                      v-else
+                      class="shrink mr-0"
+                      contain
+                      :src="submenu.icon"
+                      width="24"
+                    />
                   </v-list-item-icon>
                   <v-list-item-title
                     v-text="submenu.title"
@@ -166,6 +179,7 @@
 import Vue from 'vue'
 
 import settings from '@/libs/settings'
+import services_scanner from '@/store/servicesScanner'
 import { convertGitDescribeToUrl } from '@/utils/helper_functions.ts'
 import updateTime from '@/utils/update_time.ts'
 
@@ -220,6 +234,37 @@ export default Vue.extend({
   computed: {
     toolbar_height(): number {
       return settings.is_pirate_mode && this.backend_offline ? 66 : 56
+    },
+    computed_menu(): any {
+      const submenus = services_scanner.services
+        .filter((service) : boolean => service.metadata !== null)
+        .map((service) => {
+          const address = `${window.location.protocol}//${window.location.hostname}:${service.port}`
+          return {
+            title: service.metadata?.name ?? 'Service name',
+            icon: service.metadata?.icon?.startsWith('/')
+              ? `${address}${service.metadata.icon}`
+              : service.metadata?.icon ?? 'mdi-puzzle',
+            route: address,
+            advanced: false,
+            text: service.metadata?.description ?? 'Service text',
+          }
+        })
+
+      // No extensions, return the default menus
+      if (submenus.length === 0) {
+        return this.menus
+      }
+
+      const extensions = {
+        title: 'Extensions',
+        icon: 'mdi-puzzle',
+        extension: true,
+        submenus,
+      }
+
+      const full_menu = { ...this.menus }
+      return Object.assign(full_menu, { extensions })
     },
     steps() {
       return [
