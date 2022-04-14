@@ -66,7 +66,7 @@ class FirmwareInstaller:
                 raise InvalidFirmwareFile(f"Expected board_id {expected_board_id}, found {firm_board_id}.")
             return
         except Exception as error:
-            raise InvalidFirmwareFile(f"Could not load firmware file for validation: {error}") from error
+            raise InvalidFirmwareFile("Could not load firmware file for validation.") from error
 
     @staticmethod
     def _validate_elf(firmware_path: pathlib.Path, platform: Platform) -> None:
@@ -76,7 +76,7 @@ class FirmwareInstaller:
                 elf_file = ELFFile(file)
                 firm_arch = elf_file.get_machine_arch()
             except Exception as error:
-                raise InvalidFirmwareFile(f"Given file is not a valid ELF: {error}") from error
+                raise InvalidFirmwareFile("Given file is not a valid ELF.") from error
         running_arch = system_platform.machine()
         if firm_arch != get_correspondent_elf_arch(running_arch):
             raise InvalidFirmwareFile(
@@ -139,21 +139,18 @@ class FirmwareInstaller:
 
         self.validate_firmware(new_firmware_path, board.platform)
 
-        try:
-            if board.type == PlatformType.Serial:
-                firmware_uploader = FirmwareUploader()
-                if not board.path:
-                    raise ValueError("Board path not available.")
-                firmware_uploader.set_autopilot_port(pathlib.Path(board.path))
-                firmware_uploader.upload(new_firmware_path)
-                return
-            if firmware_format == FirmwareFormat.ELF:
-                # Using copy() instead of move() since the last can't handle cross-device properly (e.g. docker binds)
-                if not firmware_dest_path:
-                    raise FirmwareInstallFail("Firmware file destination not provided.")
-                shutil.copy(new_firmware_path, firmware_dest_path)
-                return
-        except Exception as error:
-            raise FirmwareInstallFail(f"Error installing firmware: {error}") from error
+        if board.type == PlatformType.Serial:
+            firmware_uploader = FirmwareUploader()
+            if not board.path:
+                raise ValueError("Board path not available.")
+            firmware_uploader.set_autopilot_port(pathlib.Path(board.path))
+            firmware_uploader.upload(new_firmware_path)
+            return
+        if firmware_format == FirmwareFormat.ELF:
+            # Using copy() instead of move() since the last can't handle cross-device properly (e.g. docker binds)
+            if not firmware_dest_path:
+                raise FirmwareInstallFail("Firmware file destination not provided.")
+            shutil.copy(new_firmware_path, firmware_dest_path)
+            return
 
         raise UnsupportedPlatform("Firmware install is not implemented for this platform.")
