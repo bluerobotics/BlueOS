@@ -1,10 +1,13 @@
 <template>
-  <v-img
-    :aspect-ratio="1/1"
-    class="lds-dual-ring"
-    :width="size"
-    src="../../assets/img/logo.svg"
-  />
+  <v-container class="d-flex flex-column align-center justify-space-between">
+    <v-img
+      :aspect-ratio="1/1"
+      class="lds-dual-ring"
+      :width="size"
+      src="../../assets/img/logo.svg"
+    />
+    <span class="text-subtitle-2">{{ subtitle }}</span>
+  </v-container>
 </template>
 
 <script lang="ts">
@@ -16,6 +19,11 @@ export default Vue.extend({
     size: {
       type: String,
       required: true,
+    },
+    subtitle: {
+      type: String,
+      required: false,
+      default: '',
     },
   },
 })
