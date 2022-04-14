@@ -99,7 +99,7 @@ class Dnsmasq:
             self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
             logger.info("DHCP Server started.")
         except Exception as error:
-            raise RuntimeError(f"Unable to start DHCP Server: {error}") from error
+            raise RuntimeError("Unable to start DHCP Server.") from error
 
     def stop(self) -> None:
         if self.is_running():
