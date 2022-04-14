@@ -1,5 +1,5 @@
 import json
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, Dict, Optional
 
 from fastapi import HTTPException, Request, Response, status
 from fastapi.routing import APIRoute
@@ -39,3 +39,8 @@ class GenericErrorHandlingRoute(APIRoute):
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg) from error
 
         return custom_route_handler
+
+
+class StackedHTTPException(HTTPException):
+    def __init__(self, status_code: int, error: BaseException, headers: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(status_code=status_code, detail=stack_trace_message(error), headers=headers)
