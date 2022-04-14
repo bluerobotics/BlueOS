@@ -52,7 +52,10 @@
       </v-card-text>
     </v-card>
     <v-container v-else>
-      <spinning-logo size="30%" />
+      <spinning-logo
+        size="30%"
+        subtitle="Fetching available logs..."
+      />
     </v-container>
   </v-container>
 </template>

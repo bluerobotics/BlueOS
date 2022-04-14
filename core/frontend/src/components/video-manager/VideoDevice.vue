@@ -63,7 +63,10 @@
         </v-row>
       </v-container>
       <v-container v-else-if="updating_streams">
-        <spinning-logo size="10%" />
+        <spinning-logo
+          size="10%"
+          subtitle="Fetching available streams..."
+        />
       </v-container>
     </v-card>
   </v-card>

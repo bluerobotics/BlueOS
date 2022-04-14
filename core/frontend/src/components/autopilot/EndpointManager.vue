@@ -24,7 +24,10 @@
     </v-list>
 
     <v-container v-else-if="updating_endpoints">
-      <spinning-logo size="30%" />
+      <spinning-logo
+        size="30%"
+        subtitle="Fetching available endpoints..."
+      />
     </v-container>
     <v-card
       v-else

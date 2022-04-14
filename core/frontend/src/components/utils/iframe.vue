@@ -6,6 +6,7 @@
     <spinning-logo
       v-if="!iframe_loaded"
       size="15%"
+      subtitle="Loading external application..."
     />
     <iframe
       v-show="iframe_loaded"

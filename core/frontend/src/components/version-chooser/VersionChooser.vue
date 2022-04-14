@@ -63,6 +63,7 @@
           <spinning-logo
             v-if="loading_images"
             size="15%"
+            subtitle="Loading local images..."
           />
         </v-list>
       </v-card>
@@ -95,6 +96,7 @@
           <spinning-logo
             v-if="loading_images"
             size="15%"
+            subtitle="Loading remote images..."
           />
           <version-card
             v-for="image in available_versions['remote']"
@@ -172,6 +174,7 @@
         <spinning-logo
           v-if="upload_percentage == 100"
           size="15%"
+          subtitle="Decompressing file..."
         />
       </v-alert>
     </v-card>
@@ -181,6 +184,7 @@
     >
       <spinning-logo
         size="100%"
+        subtitle="Waiting for updates..."
       />
     </v-overlay>
   </div>

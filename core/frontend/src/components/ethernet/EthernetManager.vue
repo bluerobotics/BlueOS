@@ -12,7 +12,10 @@
       />
     </v-expansion-panels>
     <v-container v-else-if="updating_interfaces">
-      <spinning-logo size="30%" />
+      <spinning-logo
+        size="30%"
+        subtitle="Fetching available ethernet interfaces..."
+      />
     </v-container>
     <v-container v-else>
       <div>
