@@ -88,6 +88,7 @@ if __name__ == "__main__":
     config = Config(app=app, loop=loop, host="0.0.0.0", port=2748, log_config=None)
     server = Server(config)
 
+    loop.create_task(controller.load_socks_from_settings())
     if args.udp:
         loop.create_task(controller.add_sock(NMEASocket(kind=SocketKind.UDP, port=args.udp, component_id=220)))
     if args.tcp:
