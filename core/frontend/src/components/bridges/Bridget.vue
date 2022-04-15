@@ -35,10 +35,6 @@
       <p class="text-h6">
         No bridges available.
       </p>
-      <p class="text-subtitle-1">
-        Remember that for the time, bridges are not persistent along system reboots, so
-        if you have restarted your system you need to re-create your bridges.
-      </p>
     </v-container>
 
     <v-fab-transition>
