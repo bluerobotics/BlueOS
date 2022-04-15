@@ -93,5 +93,4 @@ if __name__ == "__main__":
         loop.create_task(controller.add_sock(NMEASocket(kind=SocketKind.UDP, port=args.udp, component_id=220)))
     if args.tcp:
         loop.create_task(controller.add_sock(NMEASocket(kind=SocketKind.TCP, port=args.tcp, component_id=221)))
-    loop.create_task(server.serve())
-    loop.run_forever()
+    loop.run_until_complete(server.serve())
