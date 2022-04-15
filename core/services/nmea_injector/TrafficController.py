@@ -6,11 +6,13 @@ from typing import Dict, List, Tuple, Union
 
 import pynmea2
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
+from commonwealth.settings.manager import Manager
 from loguru import logger
 from pydantic import BaseModel, conint
 
 from exceptions import UnsupportedSocketKind
 from MavlinkNMEA import MavlinkGpsInput, parse_mavlink_from_sentence
+from settings import NmeaInjectorSettingsSpecV1, SettingsV1
 
 
 class SocketKind(str, Enum):
@@ -33,6 +35,21 @@ class NMEASocket(BaseModel):
 
     def __hash__(self) -> int:
         return hash(str(self))
+
+    @staticmethod
+    def from_settings_spec(settings_spec: NmeaInjectorSettingsSpecV1) -> "NMEASocket":
+        return NMEASocket(
+            kind=settings_spec.kind,
+            port=settings_spec.port,
+            component_id=settings_spec.component_id,
+        )
+
+    def to_settings_spec(self) -> NmeaInjectorSettingsSpecV1:
+        return NmeaInjectorSettingsSpecV1(
+            kind=self.kind,
+            port=self.port,
+            component_id=self.component_id,
+        )
 
 
 class TcpNmeaProtocol(asyncio.Protocol):
@@ -78,6 +95,12 @@ class TrafficController:
 
     def __init__(self) -> None:
         self._socks: Dict[NMEASocket, Union[asyncio.AbstractServer, asyncio.BaseTransport]] = {}
+        self._settings_manager = Manager("nmea-injector", SettingsV1)
+
+    async def load_socks_from_settings(self) -> None:
+        self._settings_manager.load()
+        for nmea_settings_spec in self._settings_manager.settings.specs:
+            await self.add_sock(NMEASocket.from_settings_spec(nmea_settings_spec))
 
     def get_socks(self) -> List[NMEASocket]:
         """Retrieve information about available server sockets."""
@@ -96,6 +119,10 @@ class TrafficController:
         else:
             raise UnsupportedSocketKind(f"Got {sock.kind}. Expected one of: {[kind.value for kind in SocketKind]}.")
         self._socks[sock] = server_socket
+        settings_spec = sock.to_settings_spec()
+        if settings_spec not in self._settings_manager.settings.specs:
+            self._settings_manager.settings.specs.append(settings_spec)
+            self._settings_manager.save()
         logger.debug(f"Added new sock: {sock}.")
 
     def remove_sock(self, sock: NMEASocket) -> None:
@@ -104,6 +131,8 @@ class TrafficController:
         if server_socket is None:
             raise ValueError(f"Socket {sock} does not exist.")
         server_socket.close()
+        self._settings_manager.settings.specs.remove(sock.to_settings_spec())
+        self._settings_manager.save()
         logger.debug(f"Removed sock. Socks now: {self.get_socks()}.")
 
     @staticmethod
