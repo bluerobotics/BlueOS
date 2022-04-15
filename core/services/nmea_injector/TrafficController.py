@@ -147,3 +147,7 @@ class TrafficController:
         mavlink2rest = MavlinkMessenger()
         mavlink2rest.set_component_id(component_id)
         await mavlink2rest.send_mavlink_message(message.dict())
+
+    def __del__(self) -> None:
+        for server_socket in self._socks.values():
+            server_socket.close()
