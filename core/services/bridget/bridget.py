@@ -39,7 +39,7 @@ class Bridget:
 
     def __init__(self) -> None:
         self._bridges: Dict[BridgeSpec, Bridge] = {}
-        self._settings_manager = Manager("Bridget", SettingsV1)
+        self._settings_manager = Manager("bridget", SettingsV1)
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specs:
             self.add_bridge(BridgeSpec.from_settings_spec(bridge_settings_spec))
