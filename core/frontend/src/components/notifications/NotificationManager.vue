@@ -113,6 +113,11 @@ export default Vue.extend({
       return notifications_to_show.reverse()
     },
   },
+  watch: {
+    notifications(): void {
+      this.$emit('notificationsChange', this.notifications_to_show)
+    },
+  },
   mounted() {
     const interval = setInterval(this.updateTimestamp, 1000)
     this.active_intervals.push(interval)
