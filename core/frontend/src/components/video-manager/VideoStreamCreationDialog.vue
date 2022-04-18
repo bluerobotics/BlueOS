@@ -93,6 +93,14 @@
 
           <v-divider class="ma-3" />
 
+          <p
+            v-if="device.name === 'Fake source'"
+            class="text-caption"
+          >
+            Be aware that "Fake source" streams consume a lot of computing power. If you just need it for connection
+            tests we recommend you to use small resolutions and low framerates.
+          </p>
+
           <v-btn
             color="success"
             class="mr-4"
