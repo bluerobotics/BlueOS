@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi
 RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend build --skip-plugins @vue/cli-plugin-eslint
 
 # Download binaries
-FROM bluerobotics/companion-base:v0.0.4 as downloadBinaries
+FROM bluerobotics/companion-base:v0.0.5 as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/bridges/bootstrap.sh
 RUN /home/pi/tools/mavlink2rest/bootstrap.sh
@@ -17,7 +17,7 @@ RUN /home/pi/tools/mavlink_router/bootstrap.sh
 RUN /home/pi/tools/ttyd/bootstrap.sh
 
 # Companion-docker base image
-FROM bluerobotics/companion-base:v0.0.4
+FROM bluerobotics/companion-base:v0.0.5
 
 # Install necessary tools
 COPY tools /home/pi/tools
