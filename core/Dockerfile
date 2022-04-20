@@ -10,24 +10,14 @@ RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi
 # Download binaries
 FROM bluerobotics/companion-base:v0.0.5 as downloadBinaries
 COPY tools /home/pi/tools
-RUN /home/pi/tools/bridges/bootstrap.sh
-RUN /home/pi/tools/mavlink2rest/bootstrap.sh
-RUN /home/pi/tools/mavlink_camera_manager/bootstrap.sh
-RUN /home/pi/tools/mavlink_router/bootstrap.sh
-RUN /home/pi/tools/ttyd/bootstrap.sh
+RUN /home/pi/tools/install-static-binaries.sh
 
 # Companion-docker base image
 FROM bluerobotics/companion-base:v0.0.5
 
 # Install necessary tools
 COPY tools /home/pi/tools
-RUN /home/pi/tools/ardupilot_tools/bootstrap.sh
-RUN /home/pi/tools/dnsmasq/bootstrap.sh
-RUN /home/pi/tools/filebrowser/bootstrap.sh
-RUN /home/pi/tools/linux2rest/bootstrap.sh
-RUN /home/pi/tools/logviewer/bootstrap.sh
-RUN /home/pi/tools/nginx/bootstrap.sh
-RUN /home/pi/tools/scripts/bootstrap.sh
+RUN /home/pi/tools/install-system-tools.sh
 
 # Install custom libraries
 COPY libs /home/pi/libs
