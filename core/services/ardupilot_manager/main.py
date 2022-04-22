@@ -207,7 +207,10 @@ if __name__ == "__main__":
 
     if args.sitl:
         autopilot.set_preferred_board(BoardDetector.detect_sitl())
-    loop.create_task(autopilot.start_ardupilot())
+    try:
+        loop.run_until_complete(autopilot.start_ardupilot())
+    except Exception as start_error:
+        logger.exception(start_error)
     loop.create_task(autopilot.auto_restart_ardupilot())
     loop.create_task(autopilot.start_mavlink_manager_watchdog())
     loop.run_until_complete(server.serve())
