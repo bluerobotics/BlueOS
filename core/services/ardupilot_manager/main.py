@@ -107,9 +107,9 @@ def get_available_firmwares(vehicle: Vehicle) -> Any:
 @app.post("/install_firmware_from_url", summary="Install firmware for given URL.")
 @version(1, 0)
 async def install_firmware_from_url(url: str) -> Any:
+    if not autopilot.current_board:
+        raise RuntimeError("Cannot install firmware as there's no board running.")
     try:
-        if not autopilot.current_board:
-            raise RuntimeError("Cannot install firmware as there's no board running.")
         await autopilot.kill_ardupilot()
         autopilot.install_firmware_from_url(url, autopilot.current_board)
     finally:
@@ -119,10 +119,10 @@ async def install_firmware_from_url(url: str) -> Any:
 @app.post("/install_firmware_from_file", summary="Install firmware from user file.")
 @version(1, 0)
 async def install_firmware_from_file(binary: UploadFile = File(...)) -> Any:
-    custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
+    if not autopilot.current_board:
+        raise RuntimeError("Cannot install firmware as there's no board running.")
     try:
-        if not autopilot.current_board:
-            raise RuntimeError("Cannot install firmware as there's no board running.")
+        custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         await autopilot.kill_ardupilot()
@@ -175,9 +175,9 @@ async def stop() -> Any:
 @app.post("/restore_default_firmware", summary="Restore default firmware.")
 @version(1, 0)
 async def restore_default_firmware() -> Any:
+    if not autopilot.current_board:
+        raise RuntimeError("Cannot restore firmware as there's no board running.")
     try:
-        if not autopilot.current_board:
-            raise RuntimeError("Cannot restore firmware as there's no board running.")
         await autopilot.kill_ardupilot()
         autopilot.restore_default_firmware(autopilot.current_board)
     finally:
