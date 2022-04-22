@@ -75,7 +75,6 @@ class ArduPilotManager(metaclass=Singleton):
                     await self.start_ardupilot()
                 except Exception as error:
                     logger.warning(f"Could not start Ardupilot: {error}")
-                self.should_be_running = True
             await asyncio.sleep(5.0)
 
     async def start_mavlink_manager_watchdog(self) -> None:
@@ -321,8 +320,6 @@ class ArduPilotManager(metaclass=Singleton):
                 raise ArdupilotProcessKillFail(f"Could not kill {process.name()}::{process.pid}.") from error
 
     async def kill_ardupilot(self) -> None:
-        self.should_be_running = False
-
         if not self.current_board or self.current_board.platform != Platform.SITL:
             try:
                 logger.info("Disarming vehicle.")
@@ -331,18 +328,21 @@ class ArduPilotManager(metaclass=Singleton):
             except Exception as error:
                 logger.warning(f"Could not disarm vehicle: {error}. Proceeding with kill.")
 
-        # TODO: Add shutdown command on HAL_SITL and HAL_LINUX, changing terminate/prune
-        # logic with a simple "self.vehicle_manager.shutdown_vehicle()"
-        logger.info("Terminating Ardupilot subprocess.")
-        await self.terminate_ardupilot_subprocess()
-        logger.info("Ardupilot subprocess terminated.")
-        logger.info("Pruning Ardupilot's system processes.")
-        await self.prune_ardupilot_processes()
-        logger.info("Ardupilot's system processes pruned.")
+        try:
+            # TODO: Add shutdown command on HAL_SITL and HAL_LINUX, changing terminate/prune
+            # logic with a simple "self.vehicle_manager.shutdown_vehicle()"
+            logger.info("Terminating Ardupilot subprocess.")
+            await self.terminate_ardupilot_subprocess()
+            logger.info("Ardupilot subprocess terminated.")
+            logger.info("Pruning Ardupilot's system processes.")
+            await self.prune_ardupilot_processes()
+            logger.info("Ardupilot's system processes pruned.")
 
-        logger.info("Stopping Mavlink manager.")
-        self.mavlink_manager.stop()
-        logger.info("Mavlink manager stopped.")
+            logger.info("Stopping Mavlink manager.")
+            self.mavlink_manager.stop()
+            logger.info("Mavlink manager stopped.")
+        finally:
+            self.should_be_running = False
 
     async def start_ardupilot(self) -> None:
         try:
