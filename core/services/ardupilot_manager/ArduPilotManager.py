@@ -12,7 +12,6 @@ from loguru import logger
 from exceptions import (
     ArdupilotProcessKillFail,
     EndpointAlreadyExists,
-    MavlinkRouterStartFail,
     NoPreferredBoardSet,
 )
 from firmware.FirmwareManagement import FirmwareManager
@@ -371,8 +370,6 @@ class ArduPilotManager(metaclass=Singleton):
                 self.run_with_sitl(self.current_sitl_frame)
                 return
             self.run_with_board()
-        except MavlinkRouterStartFail as error:
-            logger.warning(f"Failed to start Mavlink router. {error}")
         finally:
             self.should_be_running = True
 
