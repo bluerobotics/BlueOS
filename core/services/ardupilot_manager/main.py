@@ -180,8 +180,6 @@ async def restore_default_firmware() -> Any:
             raise RuntimeError("Cannot restore firmware as there's no board running.")
         await autopilot.kill_ardupilot()
         autopilot.restore_default_firmware(autopilot.current_board)
-    except Exception as error:
-        raise error
     finally:
         await autopilot.start_ardupilot()
 
