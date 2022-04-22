@@ -81,10 +81,6 @@ class ArduPilotManager(metaclass=Singleton):
     async def start_mavlink_manager_watchdog(self) -> None:
         await self.mavlink_manager.auto_restart_router()
 
-    def run_with_board(self) -> None:
-        if not self.start_board(BoardDetector.detect(include_sitl=False)):
-            logger.warning("Flight controller board not detected.")
-
     @property
     def current_board(self) -> Optional[FlightController]:
         return self._current_board
@@ -155,7 +151,7 @@ class ArduPilotManager(metaclass=Singleton):
             Endpoint("Master", self.settings.app_name, EndpointType.Serial, board.path, 115200, protected=True)
         )
 
-    def run_with_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
+    def start_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
         self._current_board = BoardDetector.detect_sitl()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
             self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self._current_board)
@@ -253,7 +249,6 @@ class ArduPilotManager(metaclass=Singleton):
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
         self.set_preferred_board(board)
         await self.kill_ardupilot()
-        self._current_board = board
         await self.start_ardupilot()
 
     def set_preferred_board(self, board: FlightController) -> None:
@@ -280,27 +275,14 @@ class ArduPilotManager(metaclass=Singleton):
         except NoPreferredBoardSet as error:
             logger.warning(error)
 
-        boards.sort(key=lambda board: board.platform)
-        return boards[0]
-
-    def start_board(self, boards: List[FlightController]) -> bool:
-        if not boards:
-            return False
-
-        if len(boards) > 1:
-            logger.warning(f"More than a single board detected: {boards}")
-
-        flight_controller = self.get_board_to_be_used(boards)
-
-        logger.info(f"Using {flight_controller.name} flight-controller.")
-
-        if flight_controller.platform in [Platform.Navigator]:
-            self.start_navigator(flight_controller)
-            return True
-        if flight_controller.platform.type == PlatformType.Serial:
-            self.start_serial(flight_controller)
-            return True
-        raise RuntimeError("Invalid board type: {boards}")
+        # SITL should only be used if explicitly set by user, in which case it's a preferred board and the
+        # previous return logic will get it. We do this to prevent the user thinking that it's physical board
+        # is correctly running when in fact it was SITL automatically starting.
+        real_boards = [board for board in boards if board.type != PlatformType.SITL]
+        if not real_boards:
+            raise RuntimeError("Only available board is SITL, and it wasn't explicitly chosen.")
+        real_boards.sort(key=lambda board: board.platform)
+        return real_boards[0]
 
     def running_ardupilot_processes(self) -> List[psutil.Process]:
         """Return list of all Ardupilot process running on system."""
@@ -364,11 +346,23 @@ class ArduPilotManager(metaclass=Singleton):
 
     async def start_ardupilot(self) -> None:
         try:
-            preferred_board = self.get_preferred_board()
-            if preferred_board.platform == Platform.SITL:
-                self.run_with_sitl(self.current_sitl_frame)
-                return
-            self.run_with_board()
+            available_boards = BoardDetector.detect()
+            if not available_boards:
+                raise RuntimeError("No boards available.")
+            if len(available_boards) > 1:
+                logger.warning(f"More than a single board detected: {available_boards}")
+
+            flight_controller = self.get_board_to_be_used(available_boards)
+            logger.info(f"Using {flight_controller.name} flight-controller.")
+
+            if flight_controller.platform == Platform.Navigator:
+                self.start_navigator(flight_controller)
+            elif flight_controller.platform.type == PlatformType.Serial:
+                self.start_serial(flight_controller)
+            elif flight_controller.platform == Platform.SITL:
+                self.start_sitl(self.current_sitl_frame)
+            else:
+                raise RuntimeError(f"Invalid board type: {flight_controller}")
         finally:
             self.should_be_running = True
 
