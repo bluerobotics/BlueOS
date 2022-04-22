@@ -205,10 +205,10 @@ if __name__ == "__main__":
     config = Config(app=app, loop=loop, host="0.0.0.0", port=8000, log_config=None)
     server = Server(config)
 
+    if args.sitl:
+        autopilot.set_preferred_board(BoardDetector.detect_sitl())
     loop.create_task(autopilot.start_ardupilot())
     loop.create_task(autopilot.auto_restart_ardupilot())
     loop.create_task(autopilot.start_mavlink_manager_watchdog())
-    if args.sitl:
-        loop.create_task(autopilot.change_board(BoardDetector.detect_sitl()))
     loop.run_until_complete(server.serve())
     loop.run_until_complete(autopilot.kill_ardupilot())

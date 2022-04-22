@@ -366,7 +366,8 @@ class ArduPilotManager(metaclass=Singleton):
 
     async def start_ardupilot(self) -> None:
         try:
-            if self.current_board and self.current_board.platform == Platform.SITL:
+            preferred_board = self.get_preferred_board()
+            if preferred_board.platform == Platform.SITL:
                 self.run_with_sitl(self.current_sitl_frame)
                 return
             self.run_with_board()
