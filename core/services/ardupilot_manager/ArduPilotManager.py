@@ -281,9 +281,7 @@ class ArduPilotManager(metaclass=Singleton):
             logger.warning(error)
 
         boards.sort(key=lambda board: board.platform)
-        preferred_board = boards[0]
-        self.set_preferred_board(preferred_board)
-        return preferred_board
+        return boards[0]
 
     def start_board(self, boards: List[FlightController]) -> bool:
         if not boards:
