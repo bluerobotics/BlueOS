@@ -68,7 +68,7 @@ class TcpNmeaProtocol(asyncio.Protocol):
         message = data.decode()
         logger.info(f"Message received for component {self._component_id}: {message}")
         mavlink_package = TrafficController.parse_mavlink_package(message)
-        asyncio.run(TrafficController.forward_message(mavlink_package, self._component_id))
+        asyncio.create_task(TrafficController.forward_message(mavlink_package, self._component_id))
         logger.info("Successfully forwarded mavlink coordinates package.")
 
 
@@ -86,7 +86,7 @@ class UdpNmeaProtocol(asyncio.DatagramProtocol):
         message = data.decode()
         logger.info(f"Message received for component {self._component_id}: {message}")
         mavlink_package = TrafficController.parse_mavlink_package(message)
-        asyncio.run(TrafficController.forward_message(mavlink_package, self._component_id))
+        asyncio.create_task(TrafficController.forward_message(mavlink_package, self._component_id))
         logger.info("Successfully forwarded mavlink coordinates package.")
 
 
