@@ -242,7 +242,11 @@ def get_services() -> Any:
 @version(1, 0)
 def get_ip(request: Request) -> Any:
     """Returns the IP address of the client and of the network interface serving the client"""
-    return IpInfo(client_ip=request.headers["x-real-ip"], interface_ip=request.headers["x-interface-ip"])
+    try:
+        return IpInfo(client_ip=request.headers["x-real-ip"], interface_ip=request.headers["x-interface-ip"])
+    except KeyError:
+        # We're not going through Nginx for some reason
+        return IpInfo(client_ip=request.scope["client"][0], interface_ip=request.scope["server"][0])
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
