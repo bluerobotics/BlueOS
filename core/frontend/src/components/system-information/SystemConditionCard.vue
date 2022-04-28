@@ -1,8 +1,5 @@
 <template>
-  <v-card
-    max-width="400"
-    min-width="300"
-  >
+  <v-card width="400">
     <v-sheet
       class="v-sheet--offset mx-auto"
       color="primary"

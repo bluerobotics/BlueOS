@@ -1,9 +1,9 @@
 <template>
-  <v-row class="ma-5">
+  <v-row class="ma-5 d-flex justify-center">
     <system-condition-card
       v-for="(item, i) in [cpu, memory, disk, temperature]"
       :key="i"
-      class="grow mx-3 my-6"
+      class="mx-auto my-6"
       :title="item.name"
       :value="item.value"
       :text="item.text"
