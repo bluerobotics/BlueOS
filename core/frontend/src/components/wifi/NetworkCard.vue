@@ -1,44 +1,49 @@
 <template>
-  <v-row
-    flat
-    class="d-flex align-center"
-    @click="emitClick"
+  <v-sheet
+    class="network-card"
+    :color="connected ? 'primary' : ''"
   >
-    <v-col :cols="1" />
-
-    <v-col
-      :cols="7"
-      class="d-flex flex-column justify-center"
+    <v-row
+      flat
+      class="d-flex align-center pa-0 ma-0"
+      @click="emitClick"
     >
-      <span>{{ network_name }}</span>
-      <span
-        v-if="ipAddress !== ''"
-        class="text-subtitle-2"
+      <v-col :cols="1" />
+
+      <v-col
+        :cols="7"
+        class="d-flex flex-column justify-center"
       >
-        {{ ipAddress }}
-      </span>
-    </v-col>
+        <span>{{ network_name }}</span>
+        <span
+          v-if="ipAddress !== ''"
+          class="text-subtitle-2"
+        >
+          {{ ipAddress }}
+        </span>
+      </v-col>
 
-    <v-col :cols="1">
-      <v-icon class="d-flex flex-justify-center">
-        {{ network_saved_icon }}
-      </v-icon>
-    </v-col>
+      <v-col :cols="1">
+        <v-icon class="d-flex flex-justify-center">
+          {{ network_saved_icon }}
+        </v-icon>
+      </v-col>
 
-    <v-col :cols="1">
-      <v-icon class="d-flex flex-justify-center">
-        {{ network_protection_icon }}
-      </v-icon>
-    </v-col>
+      <v-col :cols="1">
+        <v-icon class="d-flex flex-justify-center">
+          {{ network_protection_icon }}
+        </v-icon>
+      </v-col>
 
-    <v-col :cols="1">
-      <v-icon class="d-flex flex-justify-center">
-        {{ signal_strength_icon }}
-      </v-icon>
-    </v-col>
+      <v-col :cols="1">
+        <v-icon class="d-flex flex-justify-center">
+          {{ signal_strength_icon }}
+        </v-icon>
+      </v-col>
 
-    <v-col :cols="1" />
-  </v-row>
+      <v-col :cols="1" />
+    </v-row>
+  </v-sheet>
 </template>
 
 <script lang="ts">
@@ -50,6 +55,11 @@ import { wifi_strenght_icon } from '@/utils/wifi'
 export default Vue.extend({
   name: 'NetworkCard',
   props: {
+    connected: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
     network: {
       type: Object as PropType<Network>,
       required: true,
@@ -86,4 +96,8 @@ export default Vue.extend({
 </script>
 
 <style>
+  .network-card:hover {
+    cursor: pointer;
+    background-color: #2174aa;
+  }
 </style>

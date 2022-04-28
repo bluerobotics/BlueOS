@@ -4,17 +4,16 @@
     width="500"
     max-height="80vh"
   >
-    <v-container class="pa-0">
-      <v-container v-if="current_network">
-        <network-card
-          class="connected-network"
-          :network="current_network"
-          :ip-address="wifi_status.ip_address"
-          @click="openDisconnectionDialog"
-        />
-      </v-container>
+    <v-sheet>
+      <network-card
+        v-if="current_network"
+        connected
+        :network="current_network"
+        :ip-address="wifi_status.ip_address"
+        @click="openDisconnectionDialog"
+      />
 
-      <v-container>
+      <v-sheet>
         <div v-if="connectable_networks !== null">
           <div v-if="connectable_networks.length !== 0">
             <network-card
@@ -39,8 +38,8 @@
             subtitle="Scanning for wifi networks..."
           />
         </div>
-      </v-container>
-    </v-container>
+      </v-sheet>
+    </v-sheet>
 
     <connection-dialog
       v-if="selected_network"
@@ -106,18 +105,3 @@ export default Vue.extend({
   },
 })
 </script>
-
-<style>
-  .connected-network {
-      background-color: #2799D2
-  }
-
-  .connected-network:hover {
-      cursor: pointer;
-  }
-
-  .available-network:hover {
-      cursor: pointer;
-      background-color: #62b9e4;
-  }
-</style>
