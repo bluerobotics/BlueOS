@@ -22,12 +22,11 @@
       <v-fab-transition>
         <v-btn
           color="error"
+          class="bridge-remove-btn"
           fab
           dark
           small
           absolute
-          bottom
-          right
           @click="removeBridge"
         >
           <v-icon>mdi-minus</v-icon>
@@ -72,3 +71,10 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.bridge-remove-btn {
+  bottom: 15%;
+  left: 95%;
+}
+</style>

@@ -22,12 +22,11 @@
       <v-fab-transition>
         <v-btn
           color="error"
+          class="injector-remove-btn"
           fab
           dark
           small
           absolute
-          bottom
-          right
           @click="removeNMEASocket"
         >
           <v-icon>mdi-minus</v-icon>
@@ -72,3 +71,10 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.injector-remove-btn {
+  bottom: 15%;
+  left: 95%;
+}
+</style>
