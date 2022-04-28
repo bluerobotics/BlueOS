@@ -2,10 +2,11 @@
   <v-card
     width="500"
     elevation="0"
-    class="mx-auto my-6"
+    class="mb-12 pa-6 bridges-list"
   >
     <v-list
       v-if="are_bridges_available && !updating_bridges"
+      style="background-color: transparent"
       dense
     >
       <template v-for="(bridge, index) in available_bridges">
@@ -103,3 +104,11 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.bridges-list {
+  background-color: transparent;
+  max-width: 70%;
+  margin: auto;
+}
+</style>
