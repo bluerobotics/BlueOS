@@ -1,80 +1,66 @@
 <template>
   <v-card
-    width="100%"
-    class="available-endpoint py-0 px-2 my-4"
+    width="320px"
+    height="130px"
+    class="d-flex align-center justify-center mx-4 px-2"
   >
-    <v-card-text class="pa-2">
-      <v-container class="pa-1">
-        <v-row>
-          <v-col
-            cols="6"
-            class="pa-1"
-          >
-            <v-card class="elevation-0 d-flex flex-column align-center pa-0">
-              <p class="ma-0 pt-2 text-h5 text-center">
-                {{ endpoint.name }}
-              </p>
-              <p class="ma-0 pb-2 text-body-2">
-                {{ endpoint.owner }}
-              </p>
-            </v-card>
-          </v-col>
-          <v-col
-            cols="4"
-            class="pa-1"
-          >
-            <v-card class="elevation-0 d-flex flex-column align-center pa-0">
-              <v-simple-table
-                dense
-                class="text-center"
-              >
-                <template #default>
-                  <tbody>
-                    <tr>
-                      <td>{{ userFriendlyEndpointType(endpoint.connection_type) }}</td>
-                    </tr>
-                    <tr>
-                      <td>{{ endpoint.place }}</td>
-                    </tr>
-                    <tr>
-                      <td>{{ endpoint.argument }}</td>
-                    </tr>
-                  </tbody>
-                </template>
-              </v-simple-table>
-            </v-card>
-          </v-col>
-          <v-col
-            cols="2"
-            class="pa-1"
-          >
-            <v-card class="elevation-0 d-flex flex-column align-center pa-0">
-              <v-icon
-                v-tooltip="persistency.tooltip"
-                class="ma-1"
-              >
-                {{ persistency.icon }}
-              </v-icon>
-              <v-icon
-                v-tooltip="protection.tooltip"
-                class="ma-1"
-              >
-                {{ protection.icon }}
-              </v-icon>
-              <v-switch
-                v-model="updated_endpoint.enabled"
-                v-tooltip="updated_endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'"
-                color="primary"
-                class="my-1 ml-2"
-                hide-details
-                dense
-                @change="toggleEndpointEnabled"
-              />
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-card-text>
+    <div class="d-flex flex-column align-center justify-center px-3 py-1">
+      <p class="text-h6 text-center ma-0">
+        {{ endpoint.name }}
+      </p>
+      <p class="text-body-2 text-center ma-0">
+        {{ endpoint.owner }}
+      </p>
+    </div>
+    <div
+      min-width="106px"
+      class="d-flex flex-column justify-center elevation-0 pa-1"
+    >
+      <v-simple-table
+        dense
+        class="text-center"
+      >
+        <template #default>
+          <tbody>
+            <tr>
+              <td>{{ userFriendlyEndpointType(endpoint.connection_type) }}</td>
+            </tr>
+            <tr>
+              <td>{{ endpoint.place }}</td>
+            </tr>
+            <tr>
+              <td>{{ endpoint.argument }}</td>
+            </tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+    </div>
+    <div
+      width="62px"
+      class="d-flex flex-column justify-center elevation-0 pa-1"
+    >
+      <v-icon
+        v-tooltip="persistency.tooltip"
+        class="ma-1"
+      >
+        {{ persistency.icon }}
+      </v-icon>
+      <v-icon
+        v-tooltip="protection.tooltip"
+        class="ma-1"
+      >
+        {{ protection.icon }}
+      </v-icon>
+      <v-switch
+        v-model="updated_endpoint.enabled"
+        v-tooltip="updated_endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'"
+        color="primary"
+        class="my-1 ml-2"
+        hide-details
+        dense
+        @change="toggleEndpointEnabled"
+      />
+    </div>
     <v-btn
       v-if="!endpoint.protected"
       color="primary"
@@ -83,7 +69,6 @@
       fab
       x-small
       absolute
-      right
       @click="openEditDialog"
     >
       <v-icon>
@@ -98,7 +83,6 @@
       fab
       x-small
       absolute
-      right
       @click="removeEndpoint"
     >
       <v-icon>
@@ -200,11 +184,11 @@ export default Vue.extend({
 
 <style scoped>
 .endpoint-edit-btn {
-  bottom: 55%;
-  left: 97%;
+  top: 20%;
+  right: -16px;
 }
 .endpoint-remove-btn {
-  bottom: 15%;
-  left: 97%;
+  bottom: 20%;
+  right: -16px;
 }
 </style>
