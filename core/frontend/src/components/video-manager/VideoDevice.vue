@@ -37,15 +37,6 @@
         </v-avatar>
       </div>
     </div>
-    <video-controls-dialog
-      v-model="show_controls_dialog"
-      :device="device"
-    />
-    <video-stream-creation-dialog
-      v-model="show_stream_creation_dialog"
-      :device="device"
-      @streamChange="createNewStream"
-    />
     <v-card flat>
       <v-container
         v-if="are_video_streams_available && !updating_streams"
@@ -69,6 +60,15 @@
         />
       </v-container>
     </v-card>
+    <video-controls-dialog
+      v-model="show_controls_dialog"
+      :device="device"
+    />
+    <video-stream-creation-dialog
+      v-model="show_stream_creation_dialog"
+      :device="device"
+      @streamChange="createNewStream"
+    />
   </v-card>
 </template>
 
