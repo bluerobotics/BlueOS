@@ -2,10 +2,11 @@
   <v-card
     width="500"
     elevation="0"
-    class="mx-auto my-6"
+    class="mx-auto my-6 injectors-list"
   >
     <v-list
       v-if="are_nmea_sockets_available && !updating_nmea_sockets"
+      style="background-color: transparent"
       dense
     >
       <template v-for="(nmea_socket, index) in available_nmea_sockets">
@@ -100,3 +101,11 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.injectors-list {
+  background-color: transparent;
+  max-width: 70%;
+  margin: auto;
+}
+</style>
