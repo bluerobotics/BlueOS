@@ -1,48 +1,27 @@
 <template>
-  <v-row
-    justify="space-around"
-    style="position: absolute;"
+  <v-dialog
+    v-model="should_open"
+    transition="dialog-top-transition"
+    width="fit-content"
+    max-width="80%"
   >
-    <v-col cols="auto">
-      <v-dialog
-        v-model="should_open"
-        transition="dialog-top-transition"
-        max-width="600"
-      >
-        <template #default="dialog">
-          <v-card>
-            <v-toolbar
-              color="primary"
-              dark
-            >
-              <div class="text-h4">
-                A new version is available!
-              </div>
-            </v-toolbar>
-            <v-card-actions class="justify-center">
-              <v-btn
-                text
-                elevation="2"
-                x-large
-                dialog.value
-                href="/tools/version-chooser"
-              >
-                Update to {{ latest_version && latest_version.tag }}
-              </v-btn>
-            </v-card-actions>
-            <v-card-actions class="justify-end">
-              <v-btn
-                text
-                @click="dialog.value = false"
-              >
-                Close
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </template>
-      </v-dialog>
-    </v-col>
-  </v-row>
+    <v-card>
+      <v-card-title class="justify-center pt-6">
+        A new version is available!
+      </v-card-title>
+      <v-card-actions class="justify-center">
+        <v-btn
+          class="ma-6 elevation-2"
+          x-large
+          color="primary"
+          href="/tools/version-chooser"
+          @click="should_open = false"
+        >
+          Update to {{ latest_version && latest_version.tag }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 <script lang="ts">
 import Vue from 'vue'
