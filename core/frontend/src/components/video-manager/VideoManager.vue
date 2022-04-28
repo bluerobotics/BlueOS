@@ -1,40 +1,37 @@
 <template>
   <v-card
-    class="mx-auto my-6"
-    max-width="1000"
     elevation="0"
-    style="background-color: transparent"
+    class="video-manager"
   >
-    <v-row dense>
-      <v-col
-        class="mr-2"
+    <div
+      v-if="are_video_devices_available && !updating_devices"
+      class="videos-list"
+    >
+      <template
+        v-for="(device, index) in video_devices"
       >
-        <template v-if="are_video_devices_available && !updating_devices">
-          <template v-for="(device, index) in video_devices">
-            <v-divider
-              v-if="index!==0"
-              :key="index"
-            />
-            <video-device
-              :key="device.source"
-              :device="device"
-            />
-          </template>
-        </template>
-        <spinning-logo
-          v-else-if="updating_devices"
-          size="30%"
-          subtitle="Fetching available video devices..."
+        <v-divider
+          v-if="index!==0"
+          :key="index"
         />
-        <v-card
-          v-else
-          class="mx-auto my-12 pa-8 text-h6 text-center"
-          width="300"
-        >
-          No video-devices available.
-        </v-card>
-      </v-col>
-    </v-row>
+        <video-device
+          :key="device.source"
+          :device="device"
+        />
+      </template>
+    </div>
+    <spinning-logo
+      v-else-if="updating_devices"
+      size="30%"
+      subtitle="Fetching available video devices..."
+    />
+    <v-card
+      v-else
+      class="mx-auto my-12 pa-8 text-h6 text-center"
+      width="300"
+    >
+      No video-devices available.
+    </v-card>
     <video-updater />
   </v-card>
 </template>
@@ -82,3 +79,15 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.video-manager {
+  max-width: 700px;
+  margin: auto;
+  background-color: transparent;
+}
+.videos-list {
+  margin: 30px 15px;
+  background-color: transparent;
+}
+</style>

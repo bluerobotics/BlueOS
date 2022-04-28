@@ -3,19 +3,23 @@
     width="100%"
     class="pa-2 my-4"
   >
-    <div class="d-flex flex-no-wrap align-center justify-space-between">
-      <div>
-        <v-card-title>{{ device.name }}</v-card-title>
-        <v-card-subtitle>{{ device.source }}</v-card-subtitle>
+    <div class="d-flex flex-column flex-sm-row align-center justify-space-between ma-4">
+      <div class="d-flex flex-column align-center align-sm-start">
+        <p class="font-weigth-medium text-sm-h6 ma-0">
+          {{ device.name }}
+        </p>
+        <p class="text-subtitle-2 font text--secondary ma-0">
+          {{ device.source }}
+        </p>
         <v-btn
-          class="ma-2"
+          class="my-2"
           @click="openControlsDialog"
         >
           <v-icon>mdi-cog</v-icon>
           Configure
         </v-btn>
         <v-btn
-          class="ma-2"
+          class="my-2"
           :disabled="are_video_streams_available || updating_streams"
           @click="openStreamCreationDialog"
         >
@@ -23,11 +27,11 @@
           Add stream
         </v-btn>
       </div>
-      <div class="mr-12">
+      <div>
         <v-avatar
-          class="ma-3"
+          v-if="$vuetify.breakpoint.smAndUp"
           height="150"
-          width="250"
+          width="230"
           tile
         >
           <v-img
