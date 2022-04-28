@@ -35,6 +35,7 @@
     <v-card-actions class="d-flex justify-end align-center flex-wrap">
       <v-spacer />
       <v-btn
+        v-if="settings.is_pirate_mode"
         color="secondary"
         class="ma-1"
         :disabled="restarting"
