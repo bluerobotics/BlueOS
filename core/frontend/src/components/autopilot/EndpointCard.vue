@@ -64,7 +64,7 @@
               <v-switch
                 v-model="updated_endpoint.enabled"
                 v-tooltip="updated_endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'"
-                color="light-blue darken-4"
+                color="primary"
                 class="my-1 ml-2"
                 hide-details
                 dense
@@ -77,7 +77,7 @@
     </v-card-text>
     <v-btn
       v-if="!endpoint.protected"
-      color="blue"
+      color="primary"
       class="endpoint-edit-btn"
       dark
       fab
@@ -92,7 +92,7 @@
     </v-btn>
     <v-btn
       v-if="!endpoint.protected"
-      color="pink"
+      color="error"
       class="endpoint-remove-btn"
       dark
       fab

@@ -2,7 +2,7 @@
   <v-expansion-panel
     flat
   >
-    <v-expansion-panel-header class="interface-header">
+    <v-expansion-panel-header color="primary">
       {{ adapter.name }}
       <v-spacer />
       {{ status_info }}
@@ -24,12 +24,13 @@
           </v-col>
           <v-col cols="2">
             <v-btn
+              class="text-center elevation-1"
+              color="error"
               icon
-              class="text-center"
               @click.native.stop="deleteAddress(address.ip)"
             >
               <v-icon>
-                mdi-delete-circle
+                mdi-delete
               </v-icon>
             </v-btn>
           </v-col>
@@ -186,9 +187,3 @@ export default Vue.extend({
   },
 })
 </script>
-
-<style>
-.interface-header {
-  background-color: #2799D2
-}
-</style>

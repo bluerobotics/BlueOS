@@ -122,21 +122,18 @@ export default Vue.extend({
     getCpuColor(cpu: number): string {
       // TODO: Work on a common gradient color interface
       if (cpu < 15) {
-        return 'green'
+        return 'success'
       }
       if (cpu < 40) {
-        return 'yellow'
+        return 'warning'
       }
       if (cpu < 60) {
         return 'orange'
       }
       if (cpu < 100) {
-        return 'red'
+        return 'error'
       }
-      if (cpu < 200) {
-        return 'purple'
-      }
-      return 'pink'
+      return 'critical'
     },
   },
 })

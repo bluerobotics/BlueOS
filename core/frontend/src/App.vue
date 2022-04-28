@@ -393,7 +393,7 @@ export default Vue.extend({
       return process.env.VUE_APP_BUILD_DATE
     },
     app_bar_color(): string {
-      return this.backend_offline ? 'grey darken-1' : '#08c'
+      return this.backend_offline ? 'grey darken-1' : 'primary'
     },
   },
 

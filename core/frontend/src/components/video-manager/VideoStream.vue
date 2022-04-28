@@ -39,16 +39,16 @@
         </v-col>
         <v-col cols="2">
           <v-btn
-            class="ma-2 blue lighten-4"
-            elevation="2"
+            class="ma-2 elevation-1"
+            color="primary"
             icon
             @click="openStreamEditDialog"
           >
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
           <v-btn
-            class="ma-2 red lighten-4"
-            elevation="2"
+            class="ma-2 elevation-1"
+            color="error"
             icon
             @click="deleteStream"
           >

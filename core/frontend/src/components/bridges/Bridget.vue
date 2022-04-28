@@ -40,7 +40,7 @@
     <v-fab-transition>
       <v-btn
         :key="'create_button'"
-        :color="'blue'"
+        color="primary"
         fab
         large
         dark

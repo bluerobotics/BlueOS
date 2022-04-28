@@ -65,7 +65,7 @@
             </v-btn>
             <v-btn
               v-if="(index+1)===stream_endpoints.length"
-              color="success"
+              color="primary"
               rounded
               small
               icon
@@ -102,7 +102,7 @@
           </p>
 
           <v-btn
-            color="success"
+            color="primary"
             class="mr-4"
             @click="createStream"
           >

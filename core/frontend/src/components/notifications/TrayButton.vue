@@ -18,7 +18,7 @@
         <v-badge
           :content="number_of_notifications"
           :value="number_of_notifications"
-          color="red"
+          color="error"
           overlap
         >
           <v-icon color="white">

@@ -103,12 +103,12 @@ export default Vue.extend({
     },
     level_color(): string {
       switch (this.notification.level) {
-        case NotificationLevel.Success: return 'green accent-4'
-        case NotificationLevel.Error: return 'red darken-2'
-        case NotificationLevel.Info: return 'indigo darken-1'
-        case NotificationLevel.Warning: return 'yellow lighten-1'
-        case NotificationLevel.Critical: return 'black'
-        default: return 'mdi-help-circle'
+        case NotificationLevel.Success: return 'success'
+        case NotificationLevel.Error: return 'error'
+        case NotificationLevel.Info: return 'info'
+        case NotificationLevel.Warning: return 'warning'
+        case NotificationLevel.Critical: return 'critical'
+        default: return 'info'
       }
     },
   },

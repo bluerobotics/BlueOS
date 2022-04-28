@@ -15,7 +15,7 @@
         </v-btn>
         <v-btn
           icon
-          color="green darken-1"
+          color="success"
           :disabled="disable_batch_operations"
           @click="downloadSelectedLogs"
         >
@@ -23,7 +23,7 @@
         </v-btn>
         <v-btn
           icon
-          color="red darken-1"
+          color="error"
           :disabled="disable_batch_operations"
           @click="removeLogs"
         >
