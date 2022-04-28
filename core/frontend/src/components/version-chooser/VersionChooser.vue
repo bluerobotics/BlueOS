@@ -10,25 +10,20 @@
         class="mx-auto my-12 pa-4"
       >
         <h2>Current Version</h2>
-        <v-list
-          subheader
-          two-line
-        >
-          <version-card
-            v-if="current_version"
-            :image="current_version"
-            :current="true"
-            :last-modified="current_version.last_modified"
-            :loading="loading_images"
-            :up-to-date="!loading_images &&
-              !newStableAvailable() && !newBetaAvailable() && !updateIsAvailable(current_version)"
-            :new-stable-available="newStableAvailable()"
-            :new-beta-available="runningBeta() ? newBetaAvailable() : ''"
-            :update-available="updateIsAvailable(current_version)"
-            @apply="setVersion"
-            @pull-and-apply="pullAndSetVersion"
-          />
-        </v-list>
+        <version-card
+          v-if="current_version"
+          :image="current_version"
+          :current="true"
+          :last-modified="current_version.last_modified"
+          :loading="loading_images"
+          :up-to-date="!loading_images &&
+            !newStableAvailable() && !newBetaAvailable() && !updateIsAvailable(current_version)"
+          :new-stable-available="newStableAvailable()"
+          :new-beta-available="runningBeta() ? newBetaAvailable() : ''"
+          :update-available="updateIsAvailable(current_version)"
+          @apply="setVersion"
+          @pull-and-apply="pullAndSetVersion"
+        />
         <v-alert
           v-if="available_versions.error"
 
@@ -45,27 +40,22 @@
         class="mx-auto my-12 pa-4"
       >
         <h2>Local Versions</h2>
-        <v-list
-          subheader
-          two-line
-        >
-          <version-card
-            v-for="image in available_versions['local']"
-            :key="image.sha"
-            :image="image"
-            :current="image.tag === current_version.tag"
-            :update-available="updateIsAvailable(image)"
-            :deleting="deleting.endsWith(image.tag)"
-            @delete="deleteVersion"
-            @apply="setVersion"
-            @pull-and-apply="pullAndSetVersion"
-          />
-          <spinning-logo
-            v-if="loading_images"
-            size="15%"
-            subtitle="Loading local images..."
-          />
-        </v-list>
+        <version-card
+          v-for="image in available_versions['local']"
+          :key="image.sha"
+          :image="image"
+          :current="image.tag === current_version.tag"
+          :update-available="updateIsAvailable(image)"
+          :deleting="deleting.endsWith(image.tag)"
+          @delete="deleteVersion"
+          @apply="setVersion"
+          @pull-and-apply="pullAndSetVersion"
+        />
+        <spinning-logo
+          v-if="loading_images"
+          size="15%"
+          subtitle="Loading local images..."
+        />
       </v-card>
       <v-card
         v-if="settings.is_pirate_mode"
@@ -89,25 +79,20 @@
         >
           {{ available_versions.error }}
         </v-alert>
-        <v-list
-          subheader
-          two-line
-        >
-          <spinning-logo
-            v-if="loading_images"
-            size="15%"
-            subtitle="Loading remote images..."
-          />
-          <version-card
-            v-for="image in available_versions['remote']"
-            :key="image.sha"
-            :image="image"
-            :remote="true"
-            :update-available="updateIsAvailable(image)"
-            :show-pull-button="!imageIsAvailableLocally(image.sha)"
-            @pull-and-apply="pullAndSetVersion"
-          />
-        </v-list>
+        <spinning-logo
+          v-if="loading_images"
+          size="15%"
+          subtitle="Loading remote images..."
+        />
+        <version-card
+          v-for="image in available_versions['remote']"
+          :key="image.sha"
+          :image="image"
+          :remote="true"
+          :update-available="updateIsAvailable(image)"
+          :show-pull-button="!imageIsAvailableLocally(image.sha)"
+          @pull-and-apply="pullAndSetVersion"
+        />
       </v-card>
     </v-col>
     <v-dialog
