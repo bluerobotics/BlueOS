@@ -1,29 +1,42 @@
 <template>
-  <v-list-item>
-    <v-list-item-avatar>
-      <v-icon
-        :class="current ? 'green' : 'grey'"
-      >
-        {{ remote? 'mdi-earth' : '' }}
-        {{ current? 'mdi-checkbox-blank-circle' : 'mdi-checkbox-blank-circle-outline' }}
-      </v-icon>
-    </v-list-item-avatar>
+  <v-sheet
+    class="d-flex flex-column align-center my-4 pa-4 flex-sm-row py-sm-0"
+    :elevation="$vuetify.breakpoint.xs ? 1 : 0"
+  >
+    <div class="d-flex">
+      <v-list-item-avatar>
+        <v-icon :class="current ? 'green' : 'grey'">
+          {{ remote? 'mdi-earth' : '' }}
+          {{ current? 'mdi-checkbox-blank-circle' : 'mdi-checkbox-blank-circle-outline' }}
+        </v-icon>
+      </v-list-item-avatar>
 
-    <v-list-item-content>
-      <v-list-item-title v-text="image.tag" />
-      <v-list-item-subtitle
-        v-if="settings.is_pirate_mode"
-        v-text="`${image.sha? shortSha(image.sha) : 'N/A'} - ${asTimeAgo(image.last_modified)}`"
-      />
-      <v-list-item-subtitle
-        v-else
-        v-text="`${asTimeAgo(image.last_modified)}`"
-      />
-      <v-list-item-subtitle v-text="image.repository" />
-    </v-list-item-content>
-    <v-list-item-action>
+      <div>
+        <p
+          class="text-body-1 ma-0"
+          v-text="image.tag"
+        />
+        <p
+          v-if="settings.is_pirate_mode"
+          class="text-caption text--secondary ma-0"
+          v-text="`${image.sha? shortSha(image.sha) : 'N/A'} - ${asTimeAgo(image.last_modified)}`"
+        />
+        <p
+          v-else
+          class="text-caption text--secondary ma-0"
+          v-text="`${asTimeAgo(image.last_modified)}`"
+        />
+        <p
+          class="text-caption text--secondary ma-0"
+          v-text="image.repository"
+        />
+      </div>
+    </div>
+    <v-spacer />
+    <div class="d-flex flex-wrap justify-center align-center my-2">
       <v-alert
         v-if="upToDate && !settings.is_pirate_mode"
+        class="mx-2 my-1"
         dense
         text
         type="success"
@@ -32,69 +45,64 @@
       </v-alert>
       <v-alert
         v-if="settings.is_pirate_mode && current"
+        class="mx-2 my-1"
         dense
         text
         type="success"
       >
         Running
       </v-alert>
-    </v-list-item-action>
-    <v-list-item-action v-if="loading || deleting">
-      <spinning-logo
-        style="max-width:10%"
-        size="10%"
-        :subtitle="loading ? 'Loading image...' : 'Deleting image...'"
-      />
-    </v-list-item-action>
-    <v-list-item-action v-if="newStableAvailable">
+      <div v-if="loading || deleting">
+        <spinning-logo
+          style="max-width:10%"
+          size="10%"
+          :subtitle="loading ? 'Loading image...' : 'Deleting image...'"
+        />
+      </div>
       <v-btn
+        v-if="newStableAvailable"
         color="primary"
-        class="mr-2 mb-4"
+        class="mx-2 my-1"
         @click="$emit('pull-and-apply',`${image.repository}:${newStableAvailable}`)"
         v-text="`Upgrade to ${newStableAvailable}`"
       />
-    </v-list-item-action>
-    <v-list-item-action v-if="current && updateAvailable">
       <v-btn
+        v-if="current && updateAvailable"
         color="primary"
-        class="mr-2 mb-4"
+        class="mx-2 my-1"
         @click="$emit('pull-and-apply',`${image.repository}:${image.tag}`)"
         v-text="`Update to latest ${image.tag}`"
       />
-    </v-list-item-action>
-    <v-list-item-action v-if="newBetaAvailable">
       <v-btn
+        v-if="newBetaAvailable"
         color="primary"
-        class="mr-2 mb-4"
+        class="mx-2 my-1"
         @click="$emit('pull-and-apply',`${image.repository}:${newBetaAvailable}`)"
         v-text="`Upgrade to ${newBetaAvailable}`"
       />
-    </v-list-item-action>
-    <v-list-item-action v-if="!current && !remote && imageCanBeDeleted()">
       <v-btn
+        v-if="!current && !remote && imageCanBeDeleted()"
         color="error"
-        class="mr-2 mb-4"
+        class="mx-2 my-1"
         @click="$emit('delete', `${image.repository}:${image.tag}`)"
         v-text="'Delete'"
       />
-    </v-list-item-action>
-    <v-list-item-action v-if="!current && !remote">
       <v-btn
+        v-if="!current && !remote"
         color="primary"
-        class="mr-2 mb-4"
+        class="mx-2 my-1"
         @click="$emit('apply',`${image.repository}:${image.tag}`)"
         v-text="'Apply'"
       />
-    </v-list-item-action>
-    <v-list-item-action v-if="showPullButton">
       <v-btn
+        v-if="showPullButton"
         color="primary"
-        class="mr-2 mb-4"
+        class="mx-2 my-1"
         @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
         v-text="'Download and Apply'"
       />
-    </v-list-item-action>
-  </v-list-item>
+    </div>
+  </v-sheet>
 </template>
 
 <script lang="ts">
