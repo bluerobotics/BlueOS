@@ -62,10 +62,10 @@ export default Vue.extend({
         emerg: 'red darken-1 white--text',
         alert: 'deep-orange darken-4 white--text',
         crit: 'red darken-4 white--text',
-        err: 'red',
+        err: 'red white--text',
         warn: 'deep-orange white--text',
-        notice: 'blue-grey darken-1',
-        info: 'indigo lighten-5',
+        notice: 'blue-grey darken-1 white--text',
+        info: 'indigo lighten-5 black--text',
         debug: 'green darken-4 white--text',
       } as Dictionary<string>
 
