@@ -1,7 +1,7 @@
 <template>
   <v-card
     flat
-    class="ma-3 d-flex flex-wrap"
+    class="ma-3 d-flex flex-wrap justify-center"
   >
     <network-card
       v-for="(network, i) in networks"

@@ -1,50 +1,35 @@
 <template>
-  <v-container
-    style="max-width:90%"
-    class="d-flex my-6"
+  <v-card
+    height="100%"
   >
-    <v-card
-      elevation="2"
-      class="mr-4"
+    <v-tabs
+      v-model="page_selected"
+      centered
+      icons-and-text
+      show-arrows
     >
-      <v-navigation-drawer
-        floating
-        permanent
+      <v-tabs-slider />
+      <v-tab
+        v-for="page in pages"
+        :key="page.value"
       >
-        <v-list
-          dense
-          rounded
-        >
-          <v-list-item
-            v-for="item in pages"
-            :key="item.title"
-            link
-            :input-value="item.value == page_selected"
-            @click="page_selected=item.value"
-          >
-            <v-list-item-icon>
-              <v-icon>{{ item.icon }}</v-icon>
-            </v-list-item-icon>
-
-            <v-list-item-content>
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-navigation-drawer>
-    </v-card>
-
-    <v-card
-      elevation="2"
-      width="100%"
-    >
-      <processes v-if="page_selected == 'process'" />
-      <system-condition v-if="page_selected == 'system_condition'" />
-      <network v-if="page_selected == 'network'" />
-      <kernel v-if="page_selected == 'kernel'" />
-      <about-this-system v-if="page_selected == 'about'" />
-    </v-card>
-  </v-container>
+        {{ page.title }}
+        <v-icon>{{ page.icon }}</v-icon>
+      </v-tab>
+    </v-tabs>
+    <v-tabs-items v-model="page_selected">
+      <v-tab-item
+        v-for="page in pages"
+        :key="page.value"
+      >
+        <processes v-if="page.value === 'process'" />
+        <system-condition v-else-if="page.value === 'system_condition'" />
+        <network v-else-if="page.value === 'network'" />
+        <kernel v-else-if="page.value === 'kernel'" />
+        <about-this-system v-else-if="page.value === 'about'" />
+      </v-tab-item>
+    </v-tabs-items>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -58,10 +43,10 @@ import SystemCondition from '@/components/system-information/SystemCondition.vue
 import settings from '@/libs/settings'
 
 export interface Item {
-    title: string,
-    icon: string,
-    value: string,
-    is_pirate?: boolean,
+  title: string,
+  icon: string,
+  value: string,
+  is_pirate?: boolean,
 }
 
 export default Vue.extend({
@@ -85,7 +70,7 @@ export default Vue.extend({
         },
         { title: 'About', icon: 'mdi-information', value: 'about' },
       ] as Item[],
-      page_selected: 'process',
+      page_selected: null as string | null,
     }
   },
   computed: {
