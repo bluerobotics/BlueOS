@@ -1,27 +1,22 @@
 <template>
-  <v-card
-    width="500"
-    elevation="0"
-    class="mb-12 pa-6 endpoints-list"
-  >
-    <v-list
+  <div class="endpoints-manager">
+    <div
       v-if="are_endpoints_available && !updating_endpoints"
-      style="background-color: transparent"
-      dense
+      class="d-flex flex-column align-center"
     >
       <template v-for="(endpoint, index) in available_endpoints">
         <v-divider
           v-if="index!==0"
-          :key="`spacer-${index}`"
-        />
-        <v-list-item
           :key="index"
-          class="pa-0"
-        >
-          <endpoint-card :endpoint="endpoint" />
-        </v-list-item>
+          width="80%"
+          class="my-4"
+        />
+        <endpoint-card
+          :key="endpoint.name"
+          :endpoint="endpoint"
+        />
       </template>
-    </v-list>
+    </div>
 
     <v-container v-else-if="updating_endpoints">
       <spinning-logo
@@ -31,9 +26,7 @@
     </v-container>
     <v-card
       v-else
-      class="d-flex align-center justify-center ma-12"
-      height="100"
-      elevation="1"
+      class="d-flex align-center justify-center pa-6"
     >
       <p class="text-h6">
         No endpoints available.
@@ -61,7 +54,7 @@
       v-model="show_creation_dialog"
       @endpointChange="createEndpoint"
     />
-  </v-card>
+  </div>
 </template>
 
 <script lang="ts">
@@ -122,9 +115,8 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.endpoints-list {
-    max-width: 70%;
-    margin: auto;
-    background-color: transparent;
+.endpoints-manager {
+  margin-top: 20px;
+  margin-bottom: 100px;
 }
 </style>
