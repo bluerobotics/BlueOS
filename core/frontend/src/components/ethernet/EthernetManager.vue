@@ -7,7 +7,6 @@
       <interface-card
         v-for="(ethernet_interface, key) in available_interfaces"
         :key="key"
-        class="available-interface"
         :adapter="ethernet_interface"
       />
     </v-expansion-panels>
@@ -53,14 +52,3 @@ export default Vue.extend({
   },
 })
 </script>
-
-<style>
-  .available-interface {
-      background-color: #f8f8f8;
-  }
-
-  .available-interface:hover {
-      cursor: pointer;
-      background-color: #c5c5c5;
-  }
-</style>
