@@ -19,21 +19,13 @@
         <v-spacer />
         <span class="d-flex flex-column align-center">
           <backend-status-checker @statusChange="changeBackendStatus" />
-          <span v-if="settings.is_pirate_mode">
-            <span class="hidden-sm-and-down">Ahoy matey! You're running</span>
-            <v-icon>
-              mdi-flag-variant
-            </v-icon>
-            <v-icon>
-              mdi-skull-crossbones
-            </v-icon>
+          <span
+            v-if="settings.is_pirate_mode"
+            class="black--text font-weight-bold"
+          >
+            <v-icon color="black">mdi-skull-crossbones</v-icon>
             Pirate Mode
-            <v-icon>
-              mdi-skull-crossbones
-            </v-icon>
-            <v-icon>
-              mdi-flag-variant
-            </v-icon>
+            <v-icon color="black">mdi-skull-crossbones</v-icon>
           </span>
         </span>
         <v-spacer />
