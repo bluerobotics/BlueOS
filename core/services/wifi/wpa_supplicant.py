@@ -880,20 +880,24 @@ class WPASupplicant:
         return await self.send_command("P2P-INVITATION-RESULT", timeout)
 
 
-if __name__ == "__main__":
+async def main() -> None:
     wpa = WPASupplicant()
     wpa.run(("localhost", 6664))
     time.sleep(1)
-    wpa.send_command_list_networks()
+    await wpa.send_command_list_networks()
     for i in range(5):
-        wpa.send_command_remove_network(i)
+        await wpa.send_command_remove_network(i)
 
-    wpa.send_command_add_network()
-    wpa.send_command_set_network(0, "ssid", '"wifi_ssid"')
-    wpa.send_command_set_network(0, "psk", '"wifi_password"')
-    wpa.send_command_enable_network(0)
-    wpa.send_command_save_config()
-    wpa.send_command_reconfigure()
+    await wpa.send_command_add_network()
+    await wpa.send_command_set_network(0, "ssid", '"wifi_ssid"')
+    await wpa.send_command_set_network(0, "psk", '"wifi_password"')
+    await wpa.send_command_enable_network(0)
+    await wpa.send_command_save_config()
+    await wpa.send_command_reconfigure()
     while True:
         time.sleep(1)
-        wpa.send_command_ping()
+        await wpa.send_command_ping()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
