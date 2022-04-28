@@ -44,7 +44,7 @@
         <v-btn
           elevation="1"
           dark
-          color="red darken-1"
+          color="error"
           @click="disconnectFromWifiNetwork"
         >
           Disconnect

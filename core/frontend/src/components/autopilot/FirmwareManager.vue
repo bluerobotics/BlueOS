@@ -15,7 +15,7 @@
         :value="UploadType.Cloud"
       >
         <v-btn
-          :color="active ? 'primary' : ''"
+          :color="active ? 'accent' : ''"
           class="ma-1"
           @click="toggle"
         >
@@ -30,7 +30,7 @@
         :value="UploadType.File"
       >
         <v-btn
-          :color="active ? 'primary' : ''"
+          :color="active ? 'accent' : ''"
           class="ma-1"
           @click="toggle"
         >
@@ -45,7 +45,7 @@
         :value="UploadType.Restore"
       >
         <v-btn
-          :color="active ? 'primary' : ''"
+          :color="active ? 'accent' : ''"
           class="ma-1"
           @click="toggle"
         >
@@ -117,6 +117,7 @@
     <v-btn
       :disabled="!allow_installing"
       class="mt-6"
+      color="primary"
       @click="installFirmware"
     >
       <v-icon>mdi-paperclip</v-icon>

@@ -160,7 +160,7 @@
       />
       <v-btn
         v-if="!disable_upload_controls"
-        :color="'primary'"
+        color="primary"
         class="mr-2 mb-4"
         @click="upload()"
         v-text="'Upload'"

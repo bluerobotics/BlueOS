@@ -36,17 +36,17 @@ export default Vue.extend({
     color(): string {
       switch (this.level) {
         case MessageLevel.Success:
-          return 'green'
+          return 'success'
         case MessageLevel.Error:
-          return 'pink'
+          return 'error'
         case MessageLevel.Info:
-          return 'grey'
+          return 'info'
         case MessageLevel.Warning:
-          return 'yellow'
+          return 'warning'
         case MessageLevel.Critical:
-          return 'red'
+          return 'critical'
         default:
-          return 'grey'
+          return 'info'
       }
     },
   },

@@ -18,7 +18,7 @@
             :width="15"
             :value="speed * 100 / max_speed"
             ratio="1"
-            color="blue"
+            color="primary"
             size="200"
           >
             {{ speed.toFixed(2) }} Mbps
@@ -72,10 +72,11 @@
         />
         <v-card-actions class="justify-center">
           <v-btn
+            color="primary"
             :disabled="!allow_test_start"
             @click="start()"
           >
-            <v-icon color="green">
+            <v-icon>
               mdi-play
             </v-icon>
           </v-btn>

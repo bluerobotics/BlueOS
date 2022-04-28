@@ -37,7 +37,7 @@
           />
 
           <v-btn
-            color="success"
+            color="primary"
             class="mr-4"
             @click="createNMEASocket"
           >

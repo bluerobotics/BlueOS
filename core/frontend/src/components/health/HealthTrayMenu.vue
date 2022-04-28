@@ -24,7 +24,7 @@
         <v-icon
           v-if="cpu_temperature_limit_reached"
           class="px-1 blinking white-shadow"
-          color="red"
+          color="error"
           :title="`CPU temperature too high (${cpu_temperature} ºC), please cool down your vehicle!`"
         >
           mdi-thermometer
@@ -32,7 +32,7 @@
         <v-icon
           v-if="cpu_throttled"
           class="px-1 blinking white-shadow"
-          color="red"
+          color="error"
           :title="`CPU is throttled. Performance may be affected. Please check your power supply and cooling!`"
         >
           mdi-gauge-empty
@@ -40,7 +40,7 @@
         <v-icon
           v-if="cpu_undervoltage"
           class="px-1 blinking white-shadow"
-          color="red"
+          color="error"
           :title="`CPU has reported low voltage. Please check your power supply!`"
         >
           mdi-lightning-bolt
@@ -56,7 +56,7 @@
         <v-icon
           v-if="heartbeat_age() >= time_limit_heartbeat"
           class="px-1 white-shadow"
-          color="red"
+          color="error"
           title="MAVLink heartbeat lost"
         >
           mdi-heart-broken

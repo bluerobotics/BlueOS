@@ -44,6 +44,7 @@
           <div class="d-flex">
             <v-spacer />
             <v-btn
+              color="primary"
               @click="restoreDefaultValues"
             >
               Restore defaults

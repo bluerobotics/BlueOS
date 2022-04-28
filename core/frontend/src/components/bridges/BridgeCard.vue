@@ -21,7 +21,7 @@
       </v-container>
       <v-fab-transition>
         <v-btn
-          color="pink"
+          color="error"
           fab
           dark
           small

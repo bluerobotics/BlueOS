@@ -48,7 +48,7 @@
     </v-list-item-action>
     <v-list-item-action v-if="newStableAvailable">
       <v-btn
-        :color="'primary'"
+        color="primary"
         class="mr-2 mb-4"
         @click="$emit('pull-and-apply',`${image.repository}:${newStableAvailable}`)"
         v-text="`Upgrade to ${newStableAvailable}`"
@@ -56,7 +56,7 @@
     </v-list-item-action>
     <v-list-item-action v-if="current && updateAvailable">
       <v-btn
-        :color="'primary'"
+        color="primary"
         class="mr-2 mb-4"
         @click="$emit('pull-and-apply',`${image.repository}:${image.tag}`)"
         v-text="`Update to latest ${image.tag}`"
@@ -64,7 +64,7 @@
     </v-list-item-action>
     <v-list-item-action v-if="newBetaAvailable">
       <v-btn
-        :color="'primary'"
+        color="primary"
         class="mr-2 mb-4"
         @click="$emit('pull-and-apply',`${image.repository}:${newBetaAvailable}`)"
         v-text="`Upgrade to ${newBetaAvailable}`"
@@ -72,7 +72,7 @@
     </v-list-item-action>
     <v-list-item-action v-if="!current && !remote && imageCanBeDeleted()">
       <v-btn
-        :color="'error'"
+        color="error"
         class="mr-2 mb-4"
         @click="$emit('delete', `${image.repository}:${image.tag}`)"
         v-text="'Delete'"
@@ -80,7 +80,7 @@
     </v-list-item-action>
     <v-list-item-action v-if="!current && !remote">
       <v-btn
-        :color="'primary'"
+        color="primary"
         class="mr-2 mb-4"
         @click="$emit('apply',`${image.repository}:${image.tag}`)"
         v-text="'Apply'"
@@ -88,7 +88,7 @@
     </v-list-item-action>
     <v-list-item-action v-if="showPullButton">
       <v-btn
-        :color="'primary'"
+        color="primary"
         class="mr-2 mb-4"
         @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
         v-text="'Download and Apply'"

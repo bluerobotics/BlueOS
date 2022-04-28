@@ -35,7 +35,7 @@
     <v-card-actions class="d-flex justify-end align-center flex-wrap">
       <v-spacer />
       <v-btn
-        color="blue lighten-3"
+        color="secondary"
         class="ma-1"
         :disabled="restarting"
         @click="openBoardChangeDialog"
@@ -45,7 +45,7 @@
       <v-btn
         v-if="settings.is_pirate_mode"
         class="ma-1"
-        color="red lighten-3"
+        color="secondary"
         :disabled="restarting"
         @click="start_autopilot"
       >
@@ -54,14 +54,14 @@
       <v-btn
         v-if="settings.is_pirate_mode"
         class="ma-1"
-        color="red lighten-3"
+        color="secondary"
         :disabled="restarting"
         @click="stop_autopilot"
       >
         Stop autopilot
       </v-btn>
       <v-btn
-        color="red lighten-3"
+        color="primary"
         class="ma-1"
         :disabled="restarting"
         @click="restart_autopilot"

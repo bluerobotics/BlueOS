@@ -7,7 +7,7 @@
       <v-list-item>
         <v-switch
           :input-value="showOld"
-          color="blue lighten-1"
+          color="primary"
           @change="emitShowOldChange"
         />
         <div>Show old messages</div>

@@ -30,7 +30,7 @@
         Enabling DHCP server, please wait...
         <v-progress-linear
           indeterminate
-          color="blue"
+          color="primary"
           class="mb-0"
         />
       </v-card-text>
