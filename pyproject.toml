@@ -21,6 +21,11 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest]
 addopts = "--cov-report html --cov-report term"
 
+[tool.pytest.ini_options]
+markers = [
+    "timeout",
+]
+
 [tool.coverage.run]
 branch = true
 omit = [
