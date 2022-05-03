@@ -1,12 +1,14 @@
 import json
 import logging
 import pathlib
+import sys
 from dataclasses import asdict
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Union
 
 import aiodocker
 import appdirs
+import docker
 from aiohttp import web
 
 from utils.dockerhub import TagFetcher, TagMetadata
@@ -24,6 +26,15 @@ logging.basicConfig(level=logging.INFO)
 class VersionChooser:
     def __init__(self, client: aiodocker.Docker):
         self.client = client
+        self.cleanup()
+
+    @staticmethod
+    def cleanup() -> None:
+        if "pytest" in sys.modules:  # don't run this in testing environment
+            return
+        # TODO: migrate this to aiodocker once https://github.com/aio-libs/aiodocker/issues/696 is fixed
+        client = docker.from_env()
+        client.images.prune({"dangling": True})
 
     @staticmethod
     def index() -> web.FileResponse:
