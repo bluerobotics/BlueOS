@@ -77,13 +77,12 @@ def parse_mavlink_from_sentence(msg: pynmea2.NMEASentence) -> MavlinkGpsInput:
     data["lat"] = int(msg.latitude * 1e7)
     data["lon"] = int(msg.longitude * 1e7)
 
-    if msg.sentence_type in ["GGA", "GNS"]:
-        data["satellites_visible"] = int(msg.num_sats)
-
     if msg.sentence_type == "GGA":
         data["hdop"] = float(msg.horizontal_dil)
         data["alt"] = float(msg.altitude)
+        data["satellites_visible"] = int(msg.num_sats)
     elif msg.sentence_type == "GNS":
         data["hdop"] = float(msg.hdop)
+        data["satellites_visible"] = int(msg.num_sats)
 
     return MavlinkGpsInput(**data)
