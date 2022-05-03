@@ -12,7 +12,7 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
 
-from TrafficController import NMEASocket, SocketKind, TrafficController
+from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
 
 SERVICE_NAME = "nmea-injector"
 

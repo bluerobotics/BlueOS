@@ -24,7 +24,7 @@ SERVICES=(
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'bridget',"$SERVICES_PATH/bridget/main.py"
     'commander',"$SERVICES_PATH/commander/main.py"
-    'nmea_injector',"$SERVICES_PATH/nmea_injector/main.py"
+    'nmea_injector',"$SERVICES_PATH/nmea_injector/nmea_injector/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
     'video',"mavlink-camera-manager --default-settings BlueROVUDP  --mavlink udpout:127.0.0.1:14001 --verbose"
     'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"

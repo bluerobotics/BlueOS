@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 import pynmea2
 from pydantic import BaseModel
 
-from exceptions import UnsupportedSentenceType
+from nmea_injector.exceptions import UnsupportedSentenceType
 
 
 class GPS_FIX_TYPE(IntEnum):
