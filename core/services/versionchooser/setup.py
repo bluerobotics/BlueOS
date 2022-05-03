@@ -46,6 +46,7 @@ setup(
         "aiohttp-jinja2 == 1.4.2",
         "aiohttp == 3.7.4",
         "aiodocker == 0.21.0",
+        "docker == 5.0.3",
         "jsonschema == 3.2.0",
         "pyrsistent == 0.16.0",
         "connexion[swagger-ui, aiohttp] @ https://github.com/zalando/connexion.git@jsonschema-4.0.0",
