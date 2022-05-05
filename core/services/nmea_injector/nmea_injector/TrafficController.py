@@ -56,7 +56,8 @@ class TcpNmeaProtocol(asyncio.Protocol):
     """Protocol class used to interface with Python's TCP Transport API."""
 
     def __init__(self, component_id: int) -> None:
-        self._component_id = component_id
+        self.mavlink2rest = MavlinkMessenger()
+        self.mavlink2rest.set_component_id(component_id)
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         """Behavior when a new connection is stablished."""
@@ -66,15 +67,16 @@ class TcpNmeaProtocol(asyncio.Protocol):
     def data_received(self, data: bytes) -> None:
         """What happens when data is received from a client socket."""
         message = data.decode()
-        logger.info(f"Message received for component {self._component_id}: {message}")
+        logger.info(f"Message received for component {self.mavlink2rest.component_id}: {message}")
         mavlink_package = TrafficController.parse_mavlink_package(message)
-        asyncio.create_task(TrafficController.forward_message(mavlink_package, self._component_id))
+        asyncio.create_task(TrafficController.forward_message(mavlink_package, self.mavlink2rest))
         logger.info("Successfully forwarded mavlink coordinates package.")
 
 
 class UdpNmeaProtocol(asyncio.DatagramProtocol):
     def __init__(self, component_id: int) -> None:
-        self._component_id = component_id
+        self.mavlink2rest = MavlinkMessenger()
+        self.mavlink2rest.set_component_id(component_id)
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         """Behavior when a new connection is stablished."""
@@ -84,9 +86,9 @@ class UdpNmeaProtocol(asyncio.DatagramProtocol):
     def datagram_received(self, data: bytes, addr: Tuple[str, int]) -> None:
         """What happens when data is received from a client socket."""
         message = data.decode()
-        logger.info(f"Message received for component {self._component_id}: {message}")
+        logger.info(f"Message received for component {self.mavlink2rest.component_id}: {message}")
         mavlink_package = TrafficController.parse_mavlink_package(message)
-        asyncio.create_task(TrafficController.forward_message(mavlink_package, self._component_id))
+        asyncio.create_task(TrafficController.forward_message(mavlink_package, self.mavlink2rest))
         logger.info("Successfully forwarded mavlink coordinates package.")
 
 
@@ -142,10 +144,8 @@ class TrafficController:
         return parse_mavlink_from_sentence(nmea_sentence)
 
     @staticmethod
-    async def forward_message(message: MavlinkGpsInput, component_id: int) -> None:
+    async def forward_message(message: MavlinkGpsInput, mavlink2rest: MavlinkMessenger) -> None:
         """Forward Mavlink message package to Mavlink2Rest, on the specified component ID."""
-        mavlink2rest = MavlinkMessenger()
-        mavlink2rest.set_component_id(component_id)
         await mavlink2rest.send_mavlink_message(message.dict())
 
     def __del__(self) -> None:
