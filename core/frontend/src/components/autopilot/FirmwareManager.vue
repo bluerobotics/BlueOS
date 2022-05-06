@@ -90,7 +90,6 @@
               mdi-information
             </v-icon>
           </template>
-          <p>Official - The latest stable release. Recommended for most users.</p>
           <p>Stable - A production-ready release. Suitable for most users.</p>
           <p>Beta - In-testing release, with new features and improvements, aiming to become stable. May have bugs.</p>
           <p>
