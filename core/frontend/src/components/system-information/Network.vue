@@ -10,7 +10,7 @@
     />
     <v-card>
       <v-skeleton-loader
-        v-if="networks.length === 0"
+        v-if="networks.isEmpty()"
         v-bind="attrs"
         class="mx-auto"
         min-width="400"

@@ -92,7 +92,7 @@ export default Vue.extend({
       return autopilot.available_endpoints
     },
     are_endpoints_available(): boolean {
-      return this.available_endpoints.length !== 0
+      return !this.available_endpoints.isEmpty()
     },
   },
   methods: {

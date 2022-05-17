@@ -1,3 +1,5 @@
+import './cosmos'
+
 import Vue from 'vue'
 import VueTooltipDirective from 'vue-tooltip-directive'
 import VueTour from 'vue-tour'

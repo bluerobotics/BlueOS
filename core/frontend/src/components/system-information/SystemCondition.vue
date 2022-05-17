@@ -40,7 +40,7 @@ export default Vue.extend({
       const cpu_text = cpus
         ? cpus?.map((cpu) => `${cpu.name}: ${cpu.usage.toFixed(0)}% (${cpu.frequency}MHz)`).join('<br/>') : 'Loading..'
 
-      const cpu_brand = cpus ? cpus[0].brand : 'None'
+      const cpu_brand = cpus?.first()?.brand ?? 'None'
 
       return {
         name: `CPU ${cpu_brand}`,

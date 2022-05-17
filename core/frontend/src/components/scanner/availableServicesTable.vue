@@ -34,7 +34,7 @@
         <td v-else>
           No API documentation
         </td>
-        <td v-if="service.versions.length !== 0">
+        <td v-if="!service.versions.isEmpty()">
           <div
             v-for="version in service.versions"
             :key="service.port + '-' + version"

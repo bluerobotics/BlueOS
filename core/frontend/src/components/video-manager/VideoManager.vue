@@ -56,12 +56,12 @@ export default Vue.extend({
   },
   computed: {
     are_video_devices_available(): boolean {
-      return this.video_devices.length !== 0
+      return !this.video_devices.isEmpty()
     },
     video_devices(): Device[] {
       // Check if a device provides H264
       function has_h264(device: Device): boolean {
-        return device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).length !== 0
+        return !device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).isEmpty()
       }
 
       function should_show(device: Device): boolean {

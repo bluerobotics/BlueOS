@@ -42,7 +42,7 @@ export default Vue.extend({
     interface_connected_icon(): string {
       const connected_interfaces = ethernet.available_interfaces
         .filter((ethernet_interface) => ethernet_interface.info && ethernet_interface.info.connected)
-      return connected_interfaces.length !== 0 ? 'mdi-lan-connect' : 'mdi-lan-disconnect'
+      return connected_interfaces.isEmpty() ? 'mdi-lan-disconnect' : 'mdi-lan-connect'
     },
   },
 })

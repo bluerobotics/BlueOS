@@ -102,7 +102,7 @@ export default Vue.extend({
   },
   computed: {
     disable_batch_operations(): boolean {
-      return this.selected_logs.length === 0
+      return this.selected_logs.isEmpty()
     },
     parsed_logs(): FilebrowserFile[] {
       return this.available_logs.map((log) => ({
@@ -145,7 +145,7 @@ export default Vue.extend({
       filebrowser.downloadFiles(logs)
     },
     async removeLogs(): Promise<void> {
-      if (this.selected_logs.length === 0) return
+      if (this.selected_logs.isEmpty()) return
 
       await filebrowser.deleteFiles(this.selected_logs)
 

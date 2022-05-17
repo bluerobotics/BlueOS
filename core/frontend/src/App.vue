@@ -246,7 +246,7 @@ export default Vue.extend({
         })
 
       // No extensions, return the default menus
-      if (submenus.length === 0) {
+      if (submenus.isEmpty()) {
         return this.menus
       }
 

@@ -15,7 +15,7 @@
 
       <v-sheet>
         <div v-if="connectable_networks !== null">
-          <div v-if="connectable_networks.length !== 0">
+          <div v-if="!connectable_networks.isEmpty()">
             <network-card
               v-for="(network, key) in connectable_networks"
               :key="key"
