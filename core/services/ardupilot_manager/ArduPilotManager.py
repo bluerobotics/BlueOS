@@ -125,7 +125,7 @@ class ArduPilotManager(metaclass=Singleton):
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
-        self.ardupilot_subprocess = subprocess.Popen(
+        command_line = (
             f"{firmware_path}"
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
@@ -133,7 +133,11 @@ class ArduPilotManager(metaclass=Singleton):
             f" -C /dev/ttyS0"
             f" -B /dev/ttyAMA1"
             f" -E /dev/ttyAMA2"
-            f" -F /dev/ttyAMA3",
+            f" -F /dev/ttyAMA3"
+        )
+        logger.info(f"Using command line: '{command_line}'")
+        self.ardupilot_subprocess = subprocess.Popen(
+            command_line,
             shell=True,
             encoding="utf-8",
             errors="ignore",
