@@ -4,6 +4,7 @@ import subprocess
 from copy import deepcopy
 from typing import Any, List, Optional, Set
 
+import magic
 import psutil
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
 from commonwealth.utils.Singleton import Singleton
@@ -94,6 +95,10 @@ class ArduPilotManager(metaclass=Singleton):
         self._current_sitl_frame = frame
         logger.info(f"Setting {frame.value} as frame for SITL.")
 
+    @staticmethod
+    def firmware_has_debug_symbols(firmware_path: pathlib.Path) -> bool:
+        return "with debug_info" in magic.from_file(firmware_path)
+
     def start_navigator(self, board: FlightController) -> None:
         self._current_board = board
         if not self.firmware_manager.is_firmware_installed(self._current_board):
@@ -136,6 +141,11 @@ class ArduPilotManager(metaclass=Singleton):
             f" -E /dev/ttyAMA2"
             f" -F /dev/ttyAMA3"
         )
+
+        if self.firmware_has_debug_symbols(firmware_path):
+            logger.info("Debug symbols found, launching with gdb server...")
+            command_line = f"gdbserver 0.0.0.0:5555 {command_line}"
+
         logger.info(f"Using command line: '{command_line}'")
         self.ardupilot_subprocess = subprocess.Popen(
             command_line,
