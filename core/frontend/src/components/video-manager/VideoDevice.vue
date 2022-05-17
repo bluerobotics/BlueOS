@@ -109,7 +109,7 @@ export default Vue.extend({
   },
   computed: {
     are_video_streams_available(): boolean {
-      return this.device_streams.length !== 0
+      return !this.device_streams.isEmpty()
     },
     device_streams(): StreamStatus[] {
       return this.video_streams.filter((stream) => {

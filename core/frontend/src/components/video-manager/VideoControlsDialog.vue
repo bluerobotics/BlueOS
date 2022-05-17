@@ -90,7 +90,7 @@ export default Vue.extend({
   },
   computed: {
     are_controllers_available(): boolean {
-      return this.device.controls.length !== 0
+      return !this.device.controls.isEmpty()
     },
     menu_controls(): Menu[] {
       return this.device.controls.filter((control): control is Menu => 'Menu' in control.configuration)

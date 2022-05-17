@@ -91,7 +91,7 @@ export default Vue.extend({
       return bridget.available_bridges
     },
     are_bridges_available(): boolean {
-      return this.available_bridges.length !== 0
+      return !this.available_bridges.isEmpty()
     },
   },
   mounted() {

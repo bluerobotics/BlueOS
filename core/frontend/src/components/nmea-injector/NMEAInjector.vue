@@ -91,7 +91,7 @@ export default Vue.extend({
       return nmea_injector.available_nmea_sockets
     },
     are_nmea_sockets_available(): boolean {
-      return this.available_nmea_sockets.length !== 0
+      return !this.available_nmea_sockets.isEmpty()
     },
   },
   methods: {
