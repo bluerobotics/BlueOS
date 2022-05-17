@@ -81,7 +81,7 @@ function getLatestBeta(versions_query: VersionsQuery): Version | undefined {
     versions_query.remote
       .filter((image) => isSemVer(image.tag) && image.tag.includes('beta')),
   )
-  return ordered_list ? ordered_list[0] : undefined
+  return ordered_list?.[0]
 }
 
 function getLatestStable(versions_query: VersionsQuery): Version | undefined {
@@ -89,7 +89,7 @@ function getLatestStable(versions_query: VersionsQuery): Version | undefined {
     versions_query.remote
       .filter((image) => isSemVer(image.tag) && !image.tag.includes('beta')),
   )
-  return ordered_list ? ordered_list[0] : undefined
+  return ordered_list?.[0]
 }
 
 function getMaster(versions_query: VersionsQuery): Version | undefined {
