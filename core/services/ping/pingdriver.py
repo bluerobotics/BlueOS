@@ -44,13 +44,13 @@ class PingDriver:
         logging.info(f"Highest baudrate detected: {last_valid_baud}")
         return last_valid_baud
 
-    def start(self) -> None:
+    async def start(self) -> None:
         """Starts the driver"""
         baud = self.detect_highest_baud()
         # Do a ping connection to set the baudrate
         PingDevice().connect_serial(self.ping.port.device, baud)
         set_low_latency(self.ping.port)
-        self.bridge = Bridge(self.ping.port, baud, "0.0.0.0", self.port)
+        self.bridge = Bridge(self.ping.port, baud, "0.0.0.0", self.port, automatic_disconnect=False)
 
     def stop(self) -> None:
         """Stops the driver"""

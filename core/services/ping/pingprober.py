@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Optional
+from typing import Any, Callable, Coroutine, Optional
 
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION, PING1D_FIRMWARE_VERSION
@@ -11,19 +11,16 @@ from pingutils import PingDeviceDescriptor, PingType
 class PingProber:
     """PingProber is responsible for identifying Ping-enabled devices on serial ports"""
 
-    def __init__(self) -> None:
-        self.ping_found_callback: Callable[[PingDeviceDescriptor], None] = lambda x: None
-
-    def probe(self, port: SysFS) -> Optional[PingDeviceDescriptor]:
+    async def probe(self, port: SysFS) -> Optional[PingDeviceDescriptor]:
         """Attempts to communicate via Ping Protocol at port "port",
         calls on_ping_found when a ping device is found"""
         logging.info(f"Probing {port}")
         detected_device = self.detect_device(port)
         if detected_device:
-            self.ping_found_callback(detected_device)
+            await self.ping_found_callback(detected_device)
         return detected_device
 
-    def on_ping_found(self, callback: Callable[[PingDeviceDescriptor], None]) -> None:
+    def on_ping_found(self, callback: Callable[[PingDeviceDescriptor], Coroutine[Any, Any, None]]) -> None:
         self.ping_found_callback = callback
 
     @staticmethod

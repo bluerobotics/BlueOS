@@ -21,7 +21,7 @@ class PingManager:
         if ping_at_port:
             self.drivers[ping_at_port[0]].stop()
 
-    def launch_driver_instance(self, ping: PingDeviceDescriptor) -> None:
+    async def launch_driver_instance(self, ping: PingDeviceDescriptor) -> None:
         """Launches a new driver instance for the PingDeviceDescriptor "ping" """
         driver: PingDriver
         if ping.ping_type == PingType.PING1D:
@@ -32,7 +32,7 @@ class PingManager:
             driver = Ping360Driver(ping, self.ping360_current_port)
 
         self.drivers[ping] = driver
-        driver.start()
+        await driver.start()
 
     def devices(self) -> List[PingDeviceDescriptor]:
         return list(self.drivers.keys())
