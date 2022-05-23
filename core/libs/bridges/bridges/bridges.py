@@ -9,12 +9,21 @@ from serial.tools.list_ports_linux import SysFS
 from bridges.serialhelper import Baudrate
 
 
+# pylint: disable=too-many-arguments
 class Bridge:
     """Basic abstraction of Bridges. Used to bridge serial devices to UDP ports"""
 
-    def __init__(self, serial_port: SysFS, baud: Baudrate, ip: str, udp_port: int) -> None:
+    def __init__(
+        self,
+        serial_port: SysFS,
+        baud: Baudrate,
+        ip: str,
+        udp_port: int,
+        automatic_disconnect: bool = True,
+    ) -> None:
         bridges = which("bridges")
-        command_line = f"{bridges} -u {ip}:{udp_port} -p {serial_port.device}:{baud}"
+        automatic_disconnect_clients = "" if automatic_disconnect else "--no-udp-disconnection"
+        command_line = f"{bridges} -u {ip}:{udp_port} -p {serial_port.device}:{baud} {automatic_disconnect_clients}"
         logging.info(f"Launching bridge link with command '{command_line}'.")
         # pylint: disable=consider-using-with
         self.process = Popen(shlex.split(command_line), stdout=PIPE, stderr=PIPE)
