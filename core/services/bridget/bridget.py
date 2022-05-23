@@ -70,7 +70,13 @@ class Bridget:
     def add_bridge(self, bridge_spec: BridgeSpec) -> None:
         if bridge_spec in self._bridges:
             raise RuntimeError("Bridge already exist.")
-        new_bridge = Bridge(SysFS(bridge_spec.serial_path), bridge_spec.baud, bridge_spec.ip, bridge_spec.udp_port)
+        new_bridge = Bridge(
+            SysFS(bridge_spec.serial_path),
+            bridge_spec.baud,
+            bridge_spec.ip,
+            bridge_spec.udp_port,
+            automatic_disconnect=False,
+        )
         logging.debug("Stopping Bridget and removing all bridges.")
         self._bridges[bridge_spec] = new_bridge
         settings_spec = BridgeSettingsSpecV1.from_spec(bridge_spec)
