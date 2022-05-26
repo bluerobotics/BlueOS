@@ -6,7 +6,7 @@ set -e
 ## Download and install necessary tools to user binary folder with the correct permissions
 
 ### Ardupilot's uploader is used to upload firmwares to serial boards
-COMMIT_HASH=4ea8c32c61781fa36dff9748fe3a18cdb5743abb
+COMMIT_HASH=f6544ca25ab232407ec102b7a5adf0adca0f2062
 LOCAL_PATH_UPLOADER="/usr/bin/ardupilot_fw_uploader.py"
 REMOTE_URL_UPLOADER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/uploader.py"
 
