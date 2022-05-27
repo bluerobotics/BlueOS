@@ -67,7 +67,10 @@ export default Vue.extend({
   computed: {
     board_options(): {value: FlightController, text: string}[] {
       return this.available_boards.map(
-        (board) => ({ value: board, text: board.name }),
+        (board) => ({
+          value: board,
+          text: board.name === autopilot.current_board?.name ? `${board.name} (current)` : board.name,
+        }),
       )
     },
     available_boards(): FlightController[] {
