@@ -1,6 +1,6 @@
 from enum import Enum, auto
 from platform import machine
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, HttpUrl
 
@@ -136,6 +136,11 @@ class FlightController(BaseModel):
     @property
     def type(self) -> PlatformType:
         return self.platform.type
+
+
+class AvailableBoards(BaseModel):
+    regular: List[FlightController]
+    bootloaders: List[FlightController]
 
 
 class FirmwareFormat(str, Enum):
