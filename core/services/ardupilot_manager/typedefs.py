@@ -118,6 +118,12 @@ class Platform(str, Enum):
         return platform_types.get(self, PlatformType.Unknown)
 
 
+class FlightControllerFlags(str, Enum):
+    """Flags for the Flight-controller class."""
+
+    is_bootloader = "is_bootloader"
+
+
 class FlightController(BaseModel):
     """Flight-controller board."""
 
@@ -125,6 +131,7 @@ class FlightController(BaseModel):
     manufacturer: Optional[str]
     platform: Platform
     path: Optional[str]
+    flags: List[FlightControllerFlags] = []
 
     @property
     def type(self) -> PlatformType:
