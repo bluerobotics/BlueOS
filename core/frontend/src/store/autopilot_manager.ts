@@ -62,8 +62,8 @@ class AutopilotManagerStore extends VuexModule {
   }
 
   @Mutation
-  setAvailableBoards(available_boards: FlightController[]): void {
-    this.available_boards = available_boards
+  setAvailableBoards(boards: FlightController[]): void {
+    this.available_boards = boards
     this.updating_boards = false
   }
 }

@@ -57,6 +57,15 @@
       </v-item>
     </v-item-group>
 
+    <v-select
+      v-if="settings.is_pirate_mode"
+      v-model="chosen_board"
+      :items="available_boards"
+      label="Board"
+      hint="If no board is chosen the system will try to flash the currently running board."
+      class="mr-10"
+      @change="chosen_vehicle = null"
+    />
     <v-form
       v-if="upload_type === UploadType.Cloud"
       ref="form"
@@ -102,6 +111,7 @@
 
     <v-file-input
       v-if="upload_type === UploadType.File"
+      class="mr-10"
       show-size
       label="Firmware file"
       @change="setFileFirmware"
@@ -110,7 +120,7 @@
     <p
       v-if="upload_type === UploadType.Restore"
     >
-      This option will restore the default firmware for your current platform.
+      This option will restore the default firmware for your platform.
     </p>
 
     <v-btn
@@ -164,8 +174,9 @@ import { AxiosRequestConfig } from 'axios'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
+import settings from '@/libs/settings'
 import autopilot from '@/store/autopilot_manager'
-import { Firmware, Vehicle } from '@/types/autopilot'
+import { Firmware, FlightController, Vehicle } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { backend_offline_error } from '@/utils/api'
 
@@ -195,11 +206,14 @@ enum UploadType {
 export default Vue.extend({
   name: 'FirmwareManager',
   data() {
+    const { current_board } = autopilot
     return {
+      settings,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
       install_status: InstallStatus.NotStarted,
       UploadType,
       upload_type: UploadType.Cloud,
+      chosen_board: current_board as (FlightController | null),
       chosen_vehicle: null as (Vehicle | null),
       chosen_firmware_url: null as (URL | null),
       available_firmwares: [] as Firmware[],
@@ -229,6 +243,14 @@ export default Vue.extend({
     vehicle_types(): {value: string, text: Vehicle}[] {
       return Object.entries(Vehicle).map(
         (vehicle) => ({ value: vehicle[0], text: vehicle[1] }),
+      )
+    },
+    available_boards(): {value: FlightController, text: string}[] {
+      return autopilot.available_boards.map(
+        (board) => ({
+          value: board,
+          text: board.name === autopilot.current_board?.name ? `${board.name} (current)` : board.name,
+        }),
       )
     },
     disable_firmware_selection(): boolean {
@@ -267,7 +289,7 @@ export default Vue.extend({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 10000,
-        params: { vehicle: this.chosen_vehicle },
+        params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.name },
       })
         .then((response) => {
           this.available_firmwares = response.data
@@ -294,12 +316,13 @@ export default Vue.extend({
         // Populate request with data for cloud install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_url`,
-          params: { url: this.chosen_firmware_url },
+          params: { url: this.chosen_firmware_url, board_name: this.chosen_board?.name },
         })
       } else if (this.upload_type === UploadType.Restore) {
         // Populate request with data for restore install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/restore_default_firmware`,
+          params: { board_name: this.chosen_board?.name },
         })
       } else {
         // Populate request with data for file install
@@ -313,6 +336,7 @@ export default Vue.extend({
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_file`,
           headers: { 'Content-Type': 'multipart/form-data' },
+          params: { board_name: this.chosen_board?.name },
           data: form_data,
         })
       }

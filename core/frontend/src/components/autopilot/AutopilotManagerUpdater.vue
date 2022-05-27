@@ -8,6 +8,7 @@ import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
+import { FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
@@ -47,19 +48,17 @@ export default Vue.extend({
         })
     },
     async fetchAvailableBoards(): Promise<void> {
-      await back_axios({
-        method: 'get',
-        url: `${autopilot.API_URL}/available_boards`,
-        timeout: 10000,
-      })
-        .then((response) => {
-          const available_boards = response.data
-          autopilot.setAvailableBoards(available_boards)
+      try {
+        const response: AxiosResponse = await back_axios({
+          method: 'get',
+          url: `${autopilot.API_URL}/available_boards`,
+          timeout: 10000,
         })
-        .catch((error) => {
-          autopilot.setAvailableBoards([])
-          notifier.pushBackError('AUTOPILOT_BOARDS_FETCH_FAIL', error)
-        })
+        autopilot.setAvailableBoards(response.data)
+      } catch (error) {
+        autopilot.setAvailableBoards([])
+        notifier.pushBackError('AUTOPILOT_BOARDS_FETCH_FAIL', error)
+      }
     },
     async fetchCurrentBoard(): Promise<void> {
       await back_axios({
