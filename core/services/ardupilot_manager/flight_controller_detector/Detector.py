@@ -1,6 +1,6 @@
-import os
 from typing import List, Optional
 
+from commonwealth.utils.general import is_running_as_root
 from loguru import logger
 from serial.tools.list_ports_linux import SysFS, comports
 from smbus2 import SMBus
@@ -9,15 +9,6 @@ from typedefs import FlightController, Platform
 
 
 class Detector:
-    @staticmethod
-    def _is_root() -> bool:
-        """Check if the script is running as root
-
-        Returns:
-            bool: True if running as root
-        """
-        return os.geteuid() == 0
-
     @staticmethod
     def detect_navigator() -> Optional[FlightController]:
         """Returns Navigator board if connected.
@@ -99,7 +90,7 @@ class Detector:
             List[FlightController]: List of available flight controllers
         """
         available: List[FlightController] = []
-        if not cls._is_root():
+        if not is_running_as_root():
             return available
 
         navigator = cls.detect_navigator()
