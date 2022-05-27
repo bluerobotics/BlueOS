@@ -50,11 +50,16 @@ export interface AutopilotEndpoint {
     enabled: boolean
 }
 
+export enum FlightControllerFlags {
+  is_bootloader = 'is_bootloader',
+}
+
 export interface FlightController {
   name: string
   manufacturer: string
   platform: Platform
   path: string
+  flags: FlightControllerFlags[]
 }
 
 export enum FirmwareType {

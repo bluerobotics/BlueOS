@@ -39,7 +39,7 @@ import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import { FlightController } from '@/types/autopilot'
+import { FlightController, FlightControllerFlags } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
@@ -71,7 +71,9 @@ export default Vue.extend({
       )
     },
     available_boards(): FlightController[] {
-      return autopilot.available_boards
+      return autopilot.available_boards.filter(
+        (board: FlightController) => !board.flags.includes(FlightControllerFlags.is_bootloader),
+      )
     },
     form(): VForm {
       return this.$refs.form as VForm
