@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import (
@@ -50,6 +50,26 @@ logger.info("Starting ArduPilot Manager.")
 autopilot = ArduPilotManager()
 if not is_running_as_root():
     raise RuntimeError("ArduPilot manager needs to run with root privilege.")
+
+
+def target_board(board_name: Optional[str]) -> FlightController:
+    """Returns the board that should be used to perform operations on.
+
+    Most of the API routes that have operations related to board management will give the option to perform those
+    operations on the running board or on some of the connected boards. This function abstract this logic that is
+    common on all the routes.
+
+    If the `board_name` argument is None, it will check if there's a running board, and return it if so. If one
+    provides the `board_name`, this function will check if there's a connected board with that name and return it if so.
+    """
+    if board_name is not None:
+        try:
+            return next(board for board in autopilot.available_boards(True) if board.name == board_name)
+        except StopIteration as error:
+            raise ValueError("Chosen board not available.") from error
+    if autopilot.current_board is None:
+        raise RuntimeError("No board running and no target board set.")
+    return autopilot.current_board
 
 
 @app.get("/endpoints", response_model=List[Dict[str, Any]])
@@ -98,35 +118,29 @@ async def get_vehicle_type() -> Any:
     summary="Retrieve dictionary of available firmwares versions with their respective URL.",
 )
 @version(1, 0)
-def get_available_firmwares(vehicle: Vehicle) -> Any:
-    if not autopilot.current_board:
-        raise RuntimeError("Cannot fetch available firmwares as there's no board running.")
-    return autopilot.get_available_firmwares(vehicle, autopilot.current_board.platform)
+def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) -> Any:
+    return autopilot.get_available_firmwares(vehicle, target_board(board_name).platform)
 
 
 @app.post("/install_firmware_from_url", summary="Install firmware for given URL.")
 @version(1, 0)
-async def install_firmware_from_url(url: str) -> Any:
-    if not autopilot.current_board:
-        raise RuntimeError("Cannot install firmware as there's no board running.")
+async def install_firmware_from_url(url: str, board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, autopilot.current_board)
+        autopilot.install_firmware_from_url(url, target_board(board_name))
     finally:
         await autopilot.start_ardupilot()
 
 
 @app.post("/install_firmware_from_file", summary="Install firmware from user file.")
 @version(1, 0)
-async def install_firmware_from_file(binary: UploadFile = File(...)) -> Any:
-    if not autopilot.current_board:
-        raise RuntimeError("Cannot install firmware as there's no board running.")
+async def install_firmware_from_file(binary: UploadFile = File(...), board_name: Optional[str] = None) -> Any:
     try:
         custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_file(custom_firmware, autopilot.current_board)
+        autopilot.install_firmware_from_file(custom_firmware, target_board(board_name))
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
@@ -174,12 +188,10 @@ async def stop() -> Any:
 
 @app.post("/restore_default_firmware", summary="Restore default firmware.")
 @version(1, 0)
-async def restore_default_firmware() -> Any:
-    if not autopilot.current_board:
-        raise RuntimeError("Cannot restore firmware as there's no board running.")
+async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware(autopilot.current_board)
+        autopilot.restore_default_firmware(target_board(board_name))
     finally:
         await autopilot.start_ardupilot()
 
