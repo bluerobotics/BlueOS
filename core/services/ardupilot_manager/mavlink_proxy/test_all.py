@@ -53,7 +53,7 @@ def test_endpoint() -> None:
     assert endpoint.connection_type == EndpointType.UDPClient, "Connection type does not match."
     assert endpoint.place == "0.0.0.0", "Connection place does not match."
     assert endpoint.argument == 14550, "Connection argument does not match."
-    assert endpoint.__str__() == "udpout:0.0.0.0:14550", "Connection string does not match."
+    assert str(endpoint) == "udpout:0.0.0.0:14550", "Connection string does not match."
     assert endpoint.as_dict() == {
         "name": "Test endpoint",
         "owner": "pytest",
