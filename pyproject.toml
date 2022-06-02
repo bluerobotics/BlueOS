@@ -57,7 +57,6 @@ plugins = "pydantic.mypy"
     enable = "all"
     disable = [
         "attribute-defined-outside-init",
-        "bad-continuation", # Black takes care of that for us
         "broad-except",
         "duplicate-code",
         "import-error",
