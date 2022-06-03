@@ -59,8 +59,11 @@ export default Vue.extend({
       return !this.video_devices.isEmpty()
     },
     video_devices(): Device[] {
-      // Check if a device provides H264
-      function has_h264(device: Device): boolean {
+      function has_supported_encode(device: Device): boolean {
+        if (settings.is_pirate_mode) {
+          return true
+        }
+
         return !device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).isEmpty()
       }
 
@@ -69,7 +72,7 @@ export default Vue.extend({
       }
 
       return video.available_devices
-        .filter(has_h264)
+        .filter(has_supported_encode)
         .filter(should_show)
         .sort((a: Device, b: Device) => a.name.localeCompare(b.name))
     },
