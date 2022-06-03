@@ -89,7 +89,13 @@ export interface Device {
   controls: Control[]
 }
 
+export enum VideoCaptureType {
+  Video = 'video',
+  Redirect = 'redirect',
+}
+
 export interface CaptureConfiguration {
+  type: VideoCaptureType
   encode: VideoEncodeType
   height: number
   width: number
