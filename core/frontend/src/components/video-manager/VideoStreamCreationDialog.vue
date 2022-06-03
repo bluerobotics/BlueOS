@@ -119,7 +119,8 @@ import Vue, { PropType } from 'vue'
 
 import settings from '@/libs/settings'
 import {
-  CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, VideoEncodeType,
+  CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, VideoCaptureType,
+  VideoEncodeType,
 } from '@/types/video'
 import { VForm } from '@/types/vuetify'
 import { isNotEmpty, isRtspAddress, isUdpAddress } from '@/utils/pattern_validators'
@@ -193,6 +194,7 @@ export default Vue.extend({
         stream_information: {
           endpoints: this.stream_endpoints,
           configuration: {
+            type: VideoCaptureType.Video,
             encode: this.selected_encode,
             height: this.selected_size.height,
             width: this.selected_size.width,
