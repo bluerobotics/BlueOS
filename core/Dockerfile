@@ -32,11 +32,10 @@ COPY services /home/pi/services
 RUN /home/pi/services/install-services.sh
 COPY start-blueos-core /usr/bin/start-blueos-core
 
-# Copy binaries from downloadBinaries to this stage
+# Copy binaries and necessary folders from downloadBinaries to this stage
 COPY --from=downloadBinaries \
     /usr/bin/bridges \
     /usr/bin/mavlink2rest \
-    /usr/bin/mavlink-camera-manager \
     /usr/bin/mavlink-routerd \
     /usr/bin/ttyd \
     /usr/bin/
