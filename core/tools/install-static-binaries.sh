@@ -5,7 +5,6 @@ TOOLS=(
     bridges
     linux2rest
     mavlink2rest
-    mavlink_camera_manager
     mavlink_router
     ttyd
 )
