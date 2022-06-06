@@ -2,6 +2,10 @@
 FROM node:16-buster-slim AS frontendBuilder
 
 ARG VUE_APP_GIT_DESCRIBE
+RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
+    && echo "VUE_APP_GIT_DESCRIBE argument not provided." \
+    && echo "Use: --build-arg VUE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)" \
+    && exit 1 || exit 0
 
 COPY frontend /home/pi/frontend
 RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend install --network-timeout=300000
