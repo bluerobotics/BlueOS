@@ -2,6 +2,7 @@
 # Script to install tools that are simple static binaries
 
 TOOLS=(
+    blueos_startup_update
     bridges
     linux2rest
     mavlink2rest
