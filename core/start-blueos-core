@@ -9,8 +9,10 @@ MAV_SYSTEM_ID=1
 ## We use the last ID for the companion computer component reserved address for our usage
 MAV_COMPONENT_ID_ONBOARD_COMPUTER4=194
 
-# Set permission of docker unix socket file to be accessible by nginx
+# Update docker binds, if we need to restart, exit!
+blueos_startup_update
 
+# Set permission of docker unix socket file to be accessible by nginx
 if [ -e "/var/run/docker.sock" ]; then
     chmod 777 /var/run/docker.sock
 else
