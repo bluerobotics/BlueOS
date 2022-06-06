@@ -17,7 +17,7 @@ COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
 # Companion-docker base image
-FROM bluerobotics/companion-base:v0.0.5
+FROM joaoantoniocardoso/blueos-base:gstreamer_1.20.2_with_webrtcsink
 
 # Install necessary tools
 COPY tools /home/pi/tools
