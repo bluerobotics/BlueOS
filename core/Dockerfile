@@ -38,6 +38,7 @@ COPY start-blueos-core /usr/bin/start-blueos-core
 
 # Copy binaries and necessary folders from downloadBinaries to this stage
 COPY --from=downloadBinaries \
+    /usr/bin/blueos_startup_update \
     /usr/bin/bridges \
     /usr/bin/mavlink2rest \
     /usr/bin/mavlink-routerd \
