@@ -232,6 +232,7 @@ class Bootstrapper:
     def run(self) -> None:
         """Runs the bootstrapper"""
         while True:
+            time.sleep(1)
             for image in self.read_config_file():
                 if self.is_running(image):
                     print(f"{image} is already running, waiting for it to stop...")
@@ -245,4 +246,3 @@ class Bootstrapper:
             # This is required for the tests, we need to "finish" somehow
             if "pytest" in sys.modules:
                 return
-            time.sleep(1)
