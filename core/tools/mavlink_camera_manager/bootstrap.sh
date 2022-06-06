@@ -23,3 +23,6 @@ chmod +x "$LOCAL_BINARY_PATH"
 # WWW folder
 mkdir -p /opt/blueos/mavlink-camera-manager
 cp -r "${ARTIFACT_PREFIX}/www" /opt/blueos/mavlink-camera-manager
+
+# Remove temporary files
+rm -rf "${ARTIFACT_PREFIX}.zip" "${ARTIFACT_PREFIX}"
