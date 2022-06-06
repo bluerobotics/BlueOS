@@ -53,5 +53,15 @@ COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 ## If the folder exists during the build step, it means we put it here by mistake.
 RUN [ ! -d "/root/.config" ]
 
+ARG GIT_DESCRIBE_TAGS
+RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
+    && echo "GIT_DESCRIBE_TAGS argument not provided." \
+    && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long)" \
+    && exit 1 || exit 0
+
+# Update blueosrc with the necessary environment variables
+RUN RCFILE_PATH="/etc/blueosrc" \
+    && echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
+
 # Start
 ENTRYPOINT /usr/bin/start-blueos-core && sleep infinity
