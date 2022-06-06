@@ -5,6 +5,7 @@
 set -e
 
 TOOLS=(
+    blueos_startup_update
     bridges
     linux2rest
     mavlink2rest
