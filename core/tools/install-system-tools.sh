@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Script to install tools that needs to configure filesystem of the running docker
 
+# Immediately exit on errors
+set -e
+
 TOOLS=(
     ardupilot_tools
     filebrowser
