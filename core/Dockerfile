@@ -65,4 +65,4 @@ RUN RCFILE_PATH="/etc/blueosrc" \
     && echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
 
 # Start
-ENTRYPOINT /usr/bin/start-blueos-core && sleep infinity
+CMD /bin/bash -i /usr/bin/start-blueos-core && sleep infinity
