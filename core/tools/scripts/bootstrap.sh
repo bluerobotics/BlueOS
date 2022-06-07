@@ -3,5 +3,5 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-SCRIPTS_PATH=$(dirname "$0")
-cp $PWD/$SCRIPTS_PATH/red-pill /usr/bin/
+SCRIPTS_PATH="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
+cp $SCRIPTS_PATH/red-pill /usr/bin/
