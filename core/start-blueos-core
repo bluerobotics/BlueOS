@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Immediately exit on errors
+set -e
+
 BLUEOS_PATH=/home/pi
 SERVICES_PATH=$BLUEOS_PATH/services
 TOOLS_PATH=$BLUEOS_PATH/tools
