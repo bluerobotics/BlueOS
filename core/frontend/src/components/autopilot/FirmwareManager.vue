@@ -1,128 +1,140 @@
 <template>
   <v-card
-    elevation="1"
-    class="mx-auto my-12 px-12 py-6 text-center"
-    min-width="350"
-    max-width="950"
+    elevation="0"
+    class="pa-2"
   >
-    <v-item-group
-      v-model="upload_type"
-      mandatory
-      class="ma-6 d-flex align-center justify-center flex-wrap"
-    >
-      <v-item
-        v-slot="{ active, toggle }"
-        :value="UploadType.Cloud"
-      >
-        <v-btn
-          :color="active ? 'accent' : ''"
-          class="ma-1"
-          @click="toggle"
+    <div id="update-configs">
+      <div id="update-modes">
+        <v-item-group
+          v-model="upload_type"
+          mandatory
+          class="ma-2 d-flex align-center justify-center flex-wrap"
         >
-          <v-icon class="mr-2">
-            mdi-cloud
-          </v-icon>
-          <div>Choose from repository</div>
-        </v-btn>
-      </v-item>
-      <v-item
-        v-slot="{ active, toggle }"
-        :value="UploadType.File"
-      >
-        <v-btn
-          :color="active ? 'accent' : ''"
-          class="ma-1"
-          @click="toggle"
-        >
-          <v-icon class="mr-2">
-            mdi-paperclip
-          </v-icon>
-          <div>Upload custom file</div>
-        </v-btn>
-      </v-item>
-      <v-item
-        v-slot="{ active, toggle }"
-        :value="UploadType.Restore"
-      >
-        <v-btn
-          :color="active ? 'accent' : ''"
-          class="ma-1"
-          @click="toggle"
-        >
-          <v-icon class="mr-2">
-            mdi-file-restore
-          </v-icon>
-          <div>Restore default</div>
-        </v-btn>
-      </v-item>
-    </v-item-group>
-
-    <v-select
-      v-if="settings.is_pirate_mode"
-      v-model="chosen_board"
-      :items="available_boards"
-      label="Board"
-      hint="If no board is chosen the system will try to flash the currently running board."
-      class="mr-10"
-      @change="chosen_vehicle = null"
-    />
-    <v-form
-      v-if="upload_type === UploadType.Cloud"
-      ref="form"
-      lazy-validation
-    >
-      <v-select
-        v-model="chosen_vehicle"
-        :items="vehicle_types"
-        label="Vehicle"
-        required
-        class="mr-10"
-        @change="updateAvailableFirmwares"
-      />
-      <div class="d-flex">
-        <v-select
-          v-model="chosen_firmware_url"
-          :disabled="disable_firmware_selection"
-          :items="showable_firmwares"
-          :label="firmware_selector_label"
-          :loading="loading_firmware_options"
-          required
-          @change="setCloudFirmwareChosen"
-        />
-        <v-tooltip bottom>
-          <template #activator="{ on, attrs }">
-            <v-icon
-              class="ml-4"
-              v-bind="attrs"
-              v-on="on"
+          <v-item
+            v-slot="{ active, toggle }"
+            :value="UploadType.Cloud"
+          >
+            <v-btn
+              block
+              small
+              width="180"
+              :color="active ? 'accent' : ''"
+              class="ma-1"
+              @click="toggle"
             >
-              mdi-information
-            </v-icon>
-          </template>
-          <p>Stable - A production-ready release. Suitable for most users.</p>
-          <p>Beta - In-testing release, with new features and improvements, aiming to become stable. May have bugs.</p>
-          <p>
-            Dev - Development branch, with all the newest features.
-            Intentionally unstable (changes quickly), and possibly untested/dangerous.
-          </p>
-        </v-tooltip>
+              <v-icon class="mr-2">
+                mdi-cloud
+              </v-icon>
+              <div>Choose from repository</div>
+            </v-btn>
+          </v-item>
+          <v-item
+            v-slot="{ active, toggle }"
+            :value="UploadType.File"
+          >
+            <v-btn
+              block
+              small
+              width="180"
+              :color="active ? 'accent' : ''"
+              class="ma-1"
+              @click="toggle"
+            >
+              <v-icon class="mr-2">
+                mdi-paperclip
+              </v-icon>
+              <div>Upload custom file</div>
+            </v-btn>
+          </v-item>
+          <v-item
+            v-slot="{ active, toggle }"
+            :value="UploadType.Restore"
+          >
+            <v-btn
+              block
+              small
+              width="180"
+              :color="active ? 'accent' : ''"
+              class="ma-1"
+              @click="toggle"
+            >
+              <v-icon class="mr-2">
+                mdi-file-restore
+              </v-icon>
+              <div>Restore default</div>
+            </v-btn>
+          </v-item>
+        </v-item-group>
       </div>
-    </v-form>
+      <div id="update-options">
+        <v-select
+          v-if="settings.is_pirate_mode"
+          v-model="chosen_board"
+          :items="available_boards"
+          label="Board"
+          hint="If no board is chosen the system will try to flash the currently running board."
+          class="ma-1 pa-0"
+          @change="chosen_vehicle = null"
+        />
+        <v-form
+          v-if="upload_type === UploadType.Cloud"
+          ref="form"
+          lazy-validation
+        >
+          <v-select
+            v-model="chosen_vehicle"
+            :items="vehicle_types"
+            label="Vehicle"
+            required
+            class="ma-1 pa-0"
+            @change="updateAvailableFirmwares"
+          />
+          <div class="d-flex">
+            <v-select
+              v-model="chosen_firmware_url"
+              class="ma-1 pa-0"
+              :disabled="disable_firmware_selection"
+              :items="showable_firmwares"
+              :label="firmware_selector_label"
+              :loading="loading_firmware_options"
+              required
+              @change="setCloudFirmwareChosen"
+            />
+            <v-tooltip bottom>
+              <template #activator="{ on, attrs }">
+                <v-icon
+                  class="ml-4"
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  mdi-information
+                </v-icon>
+              </template>
+              <p>Stable - A production-ready release. Suitable for most users.</p>
+              <p>Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.</p>
+              <p>
+                Dev - Development branch, with all the newest features.
+                Intentionally unstable (changes quickly), and possibly untested/dangerous.
+              </p>
+            </v-tooltip>
+          </div>
+        </v-form>
 
-    <v-file-input
-      v-if="upload_type === UploadType.File"
-      class="mr-10"
-      show-size
-      label="Firmware file"
-      @change="setFileFirmware"
-    />
+        <v-file-input
+          v-if="upload_type === UploadType.File"
+          class="mr-2"
+          show-size
+          label="Firmware file"
+          @change="setFileFirmware"
+        />
 
-    <p
-      v-if="upload_type === UploadType.Restore"
-    >
-      This option will restore the default firmware for your platform.
-    </p>
-
+        <p
+          v-if="upload_type === UploadType.Restore"
+        >
+          This option will restore the default firmware for your platform.
+        </p>
+      </div>
+    </div>
     <v-btn
       :disabled="!allow_installing"
       class="mt-6"
@@ -362,3 +374,30 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+#update-configs {
+  display: grid;
+  grid-template-areas: 'modes modes options options options';
+  gap: 20px;
+}
+@media (max-width: 600px) {
+  #update-configs {
+    grid-template-areas:
+      'modes'
+      'options';
+  }
+}
+#update-modes {
+  grid-area: modes;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#update-options {
+  grid-area: options;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+</style>

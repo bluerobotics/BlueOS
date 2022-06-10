@@ -13,14 +13,8 @@ const menus = [
         icon: 'mdi-image-filter-center-focus-strong',
         route: '/autopilot/general',
         advanced: false,
-        text: 'General Autopilot settings, allows you to start/stop Ardupilot if using Navigator or SITL',
-      },
-      {
-        title: 'Firmware',
-        icon: 'mdi-chip',
-        route: '/autopilot/firmware',
-        advanced: false,
-        text: 'Used to download and flash new firmware to your current flight controller',
+        text: `General Autopilot settings. Allows you to start/stop Ardupilot (if using Navigator or SITL), or update
+        the firmware of your flight controller.`,
       },
       {
         title: 'Log Browser',

@@ -5,7 +5,6 @@ import AvailableServicesView from '../views/AvailableServicesView.vue'
 import BridgesView from '../views/BridgesView.vue'
 import Endpoint from '../views/EndpointView.vue'
 import FileBrowserView from '../views/FileBrowserView.vue'
-import Firmware from '../views/FirmwareView.vue'
 import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
@@ -24,11 +23,6 @@ const routes: Array<RouteConfig> = [
     path: '/',
     name: 'Main',
     component: Main,
-  },
-  {
-    path: '/autopilot/firmware',
-    name: 'Firmware',
-    component: Firmware,
   },
   {
     path: '/autopilot/general',
