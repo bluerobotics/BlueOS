@@ -245,20 +245,20 @@ export default Vue.extend({
           }
         })
 
-      // No extensions, return the default menus
+      // No packages, return the default menus
       if (submenus.isEmpty()) {
         return this.menus
       }
 
-      const extensions = {
-        title: 'Extensions',
+      const packages = {
+        title: 'Packages',
         icon: 'mdi-puzzle',
         extension: true,
         submenus,
       }
 
       const full_menu = { ...this.menus }
-      return Object.assign(full_menu, { extensions })
+      return Object.assign(full_menu, { packages })
     },
     steps() {
       return [
