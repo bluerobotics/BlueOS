@@ -42,7 +42,10 @@ class Bridget:
         self._settings_manager = Manager("bridget", SettingsV1)
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specs:
-            self.add_bridge(BridgeSpec.from_settings_spec(bridge_settings_spec))
+            try:
+                self.add_bridge(BridgeSpec.from_settings_spec(bridge_settings_spec))
+            except Exception as error:
+                logging.debug(f"Could not add bridge '{bridge_settings_spec}'. {error}")
 
     def is_port_available(self, port: str) -> bool:
         if port in [bridge.serial_path for bridge in self._bridges]:
