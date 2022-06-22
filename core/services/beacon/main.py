@@ -207,7 +207,10 @@ class Beacon:
             for runner_name, runner in all_runners.items():
                 if runner_name not in self.runners:
                     self.runners[runner_name] = runner
-                    await runner.register_services()
+                    try:
+                        await runner.register_services()
+                    except Exception as e:
+                        logger.warning(e)
                 elif self.runners[runner_name] != runner:
                     # unregister old one and register new one
                     logger.info(f"runner {runner_name} has changed, updating runner...")
