@@ -78,8 +78,8 @@ export default Vue.extend({
             this.latest_version = VCU.getLatestVersion(this.available_versions, this.current_version)
           }
           const milliseconds_diff = Date.now() - settings.last_version_update_notification_time.getTime()
-          const minutes_diff = milliseconds_diff / (60 * 1000)
-          if (minutes_diff > 10) {
+          const days_diff = milliseconds_diff / (24 * 60 * 60 * 1000)
+          if (days_diff > 1) {
             settings.updateVersionUpdateNotificationTime()
             this.should_open = this.latestVersion()
           }
