@@ -102,6 +102,7 @@ class Platform(str, Enum):
 
     Pixhawk1 = "Pixhawk1"
     Pixhawk4 = "Pixhawk4"
+    CubeOrange = "CubeOrange"
     GenericSerial = "GenericSerial"
     Navigator = "navigator"
     SITL = get_sitl_platform_name(machine())
@@ -111,6 +112,7 @@ class Platform(str, Enum):
         platform_types = {
             Platform.Pixhawk1: PlatformType.Serial,
             Platform.Pixhawk4: PlatformType.Serial,
+            Platform.CubeOrange: PlatformType.Serial,
             Platform.GenericSerial: PlatformType.Serial,
             Platform.Navigator: PlatformType.Linux,
             Platform.SITL: PlatformType.SITL,
