@@ -43,9 +43,10 @@ class Bridget:
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specs:
             try:
+                logging.debug(f"Adding following bridge from persistency '{bridge_settings_spec}'.")
                 self.add_bridge(BridgeSpec.from_settings_spec(bridge_settings_spec))
             except Exception as error:
-                logging.debug(f"Could not add bridge '{bridge_settings_spec}'. {error}")
+                logging.exception(f"Could not add bridge '{bridge_settings_spec}'. {error}")
 
     def is_port_available(self, port: str) -> bool:
         if port in [bridge.serial_path for bridge in self._bridges]:
@@ -80,7 +81,6 @@ class Bridget:
             bridge_spec.udp_port,
             automatic_disconnect=False,
         )
-        logging.debug("Stopping Bridget and removing all bridges.")
         self._bridges[bridge_spec] = new_bridge
         settings_spec = BridgeSettingsSpecV1.from_spec(bridge_spec)
         if settings_spec not in self._settings_manager.settings.specs:
