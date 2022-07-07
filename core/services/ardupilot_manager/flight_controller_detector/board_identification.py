@@ -25,4 +25,5 @@ identifiers: List[SerialBoardIdentifier] = [
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="CubeOrange", platform=Platform.CubeOrange),
     SerialBoardIdentifier(attribute=SerialAttr.manufacturer, id_value="ArduPilot", platform=Platform.GenericSerial),
     SerialBoardIdentifier(attribute=SerialAttr.manufacturer, id_value="3D Robotics", platform=Platform.GenericSerial),
+    SerialBoardIdentifier(attribute=SerialAttr.manufacturer, id_value="Hex/ProfiCNC", platform=Platform.GenericSerial),
 ]
