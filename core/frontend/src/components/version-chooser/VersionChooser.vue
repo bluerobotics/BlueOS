@@ -191,7 +191,6 @@
 </template>
 
 <script lang="ts">
-import { gt as sem_ver_greater, SemVer } from 'semver'
 import Vue from 'vue'
 
 import settings from '@/libs/settings'

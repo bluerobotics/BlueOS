@@ -1,5 +1,3 @@
-import Vue from 'vue'
-
 import notifications from '@/store/notifications'
 import { update_time_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
