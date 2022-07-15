@@ -21,7 +21,43 @@
             :rules="[validate_required_field, is_path]"
             no-data-text="No serial ports available"
             :loading="updating_serial_ports"
-          />
+            item-text="name"
+            :item-value="(item) => item.by_path ? item.by_path : item.name"
+            dense
+          >
+            <template #item="{item}">
+              <v-list
+                fluid
+                max-width="400"
+                ripple
+                @mousedown.prevent
+              >
+                <v-list-item dense>
+                  <v-list-item-content dense>
+                    <v-list-item-title md-1>
+                      Device: {{ item.name }}
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="text-wrap">
+                      Path: {{ item.by_path ? item.by_path : item.name }}
+                    </v-list-item-subtitle>
+                    <v-list-item-subtitle
+                      v-if="item.by_path_created_ms_ago"
+                      class="text-wrap"
+                    >
+                      Created: {{ create_time_ago(item.by_path_created_ms_ago) }}
+                    </v-list-item-subtitle>
+                    <div
+                      v-if="item.udev_properties && item.udev_properties['ID_VENDOR']"
+                    >
+                      <v-list-item-subtitle class="text-wrap">
+                        Info: {{ item.udev_properties["ID_VENDOR"] }} / {{ item.udev_properties["ID_MODEL"] }}
+                      </v-list-item-subtitle>
+                    </div>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </template>
+          </v-select>
 
           <v-select
             v-model="bridge.baud"
@@ -57,16 +93,24 @@
 </template>
 
 <script lang="ts">
+import { formatDistanceToNow } from 'date-fns'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
 import bridget from '@/store/bridget'
+import system_information from '@/store/system-information'
 import { Baudrate } from '@/types/common'
 import { bridget_service } from '@/types/frontend_services'
+import { SerialPortInfo } from '@/types/system-information/serial'
 import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
 import {
-  isBaudrate, isFilepath, isIntegerString, isIpAddress, isNotEmpty, isSocketPort,
+  isBaudrate,
+  isFilepath,
+  isIntegerString,
+  isIpAddress,
+  isNotEmpty,
+  isSocketPort,
 } from '@/utils/pattern_validators'
 
 const notifier = new Notifier(bridget_service)
@@ -103,10 +147,19 @@ export default Vue.extend({
         (baud) => ({ value: parseInt(baud[1], 10), text: baud[1] }),
       )
     },
-    available_serial_ports(): {value: string, text: string}[] {
-      return bridget.available_serial_ports.map(
-        (port) => ({ value: port, text: port }),
-      )
+    available_serial_ports(): SerialPortInfo[] {
+      const system_serial_ports: SerialPortInfo[] | undefined = system_information.serial?.ports
+      if (system_serial_ports === undefined || system_serial_ports.isEmpty()) {
+        return bridget.available_serial_ports.map((port) => ({
+          name: port,
+          by_path: port,
+          by_path_created_ms_ago: null,
+          udev_properties: null,
+        }))
+      }
+
+      return system_serial_ports
+        .filter((serial_info) => bridget.available_serial_ports.includes(serial_info.name))
     },
     updating_serial_ports(): boolean {
       return bridget.updating_serial_ports
@@ -116,6 +169,12 @@ export default Vue.extend({
     },
   },
   methods: {
+    create_time_ago(ms_time: number): string {
+      const time_now = new Date().valueOf()
+      const creation_time = time_now - ms_time
+      const creation_date = new Date(creation_time)
+      return `${formatDistanceToNow(creation_time)} ago (${creation_date.toLocaleTimeString()})`
+    },
     validate_required_field(input: string | number): (true | string) {
       const string_input = String(input)
       return isNotEmpty(string_input) ? true : 'Required field.'
