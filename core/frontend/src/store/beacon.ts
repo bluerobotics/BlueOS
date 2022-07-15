@@ -7,7 +7,7 @@ import Notifier from '@/libs/notifier'
 import store from '@/store'
 import { Domain } from '@/types/beacon'
 import { beacon_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(beacon_service)

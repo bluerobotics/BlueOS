@@ -8,7 +8,6 @@ import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import { FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'

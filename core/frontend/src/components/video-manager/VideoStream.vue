@@ -80,7 +80,7 @@ import Vue, { PropType } from 'vue'
 
 import video from '@/store/video'
 import {
-  CreatedStream, Device, StreamPrototype, StreamStatus, VideoCaptureType,
+  CreatedStream, Device, StreamPrototype, StreamStatus,
 } from '@/types/video'
 import { video_dimension_framerate_text } from '@/utils/video'
 

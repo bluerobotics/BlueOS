@@ -1,7 +1,4 @@
-import Vue from 'vue'
-
 import Notifier from '@/libs/notifier'
-import notifications from '@/store/notifications'
 import { update_time_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 

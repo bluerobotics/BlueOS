@@ -96,7 +96,6 @@ import Vue from 'vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
-import { MavlinkMessage } from '@/types/mavlink'
 import { RaspberryEventType } from '@/types/system-information/platform'
 import mavlink_store_get from '@/utils/mavlink'
 
