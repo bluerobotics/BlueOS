@@ -17,6 +17,14 @@ const menus = [
         the firmware of your flight controller.`,
       },
       {
+        title: 'Pings',
+        icon: 'mdi-radar',
+        route: '/autopilot/pings',
+        advanced: false,
+        text: 'Ping devices discovery and management. This allows you to see all detected Ping devices connected to '
+              + 'either your Onboard Computer or its local network.',
+      },
+      {
         title: 'Log Browser',
         icon: 'mdi-file-multiple',
         route: '/autopilot/logs',
