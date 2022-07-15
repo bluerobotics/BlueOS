@@ -13,6 +13,7 @@ import { system_information_service } from '@/types/frontend_services'
 import { KernelMessage } from '@/types/system-information/kernel'
 import { Netstat } from '@/types/system-information/netstat'
 import { Platform } from '@/types/system-information/platform'
+import { Serial } from '@/types/system-information/serial'
 import {
   CPU, Disk, Info, Memory, Network, Process, System, Temperature,
 } from '@/types/system-information/system'
@@ -22,6 +23,7 @@ export enum FetchType {
     KernelType = 'kernel_buffer',
     NetstatType = 'netstat',
     PlatformType = 'platform',
+    SerialType = 'serial?udev=true',
     SystemType = 'system',
     SystemCpuType = 'system/cpu',
     SystemDiskType = 'system/disk',
@@ -53,6 +55,8 @@ class SystemInformationStore extends VuexModule {
 
   system: System | null = null;
 
+  serial: Serial | null = null
+
   @Mutation
   appendKernelMessage(kernel_message: [KernelMessage]): void {
     this.kernel_message = this.kernel_message.concat(kernel_message)
@@ -71,6 +75,11 @@ class SystemInformationStore extends VuexModule {
   @Mutation
   updatePlatform(platform: Platform): void {
     this.platform = platform
+  }
+
+  @Mutation
+  updateSerial(serial: Serial): void {
+    this.serial = serial
   }
 
   @Mutation
@@ -150,6 +159,11 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Action
+  async fetchSerial(): Promise<void> {
+    await this.fetchSystemInformation(FetchType.SerialType)
+  }
+
+  @Action
   async fetchSystem(): Promise<void> {
     await this.fetchSystemInformation(FetchType.SystemType)
   }
@@ -191,6 +205,9 @@ class SystemInformationStore extends VuexModule {
             break
           case FetchType.PlatformType:
             this.updatePlatform(response.data)
+            break
+          case FetchType.SerialType:
+            this.updateSerial(response.data)
             break
           case FetchType.SystemType:
             this.updateSystem(response.data)
@@ -237,6 +254,7 @@ const system_information: SystemInformationStore = getModule(SystemInformationSt
 
 system_information.fetchSystem()
 callPeriodically(system_information.fetchPlatform, 5000)
+callPeriodically(system_information.fetchSerial, 5000)
 
 // It appears that the store is incompatible with websockets or callbacks.
 // Right now the only way to have it working is to have the websocket definition outside the store
