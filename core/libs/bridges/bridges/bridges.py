@@ -2,7 +2,7 @@ import logging
 import shlex
 import time
 from shutil import which
-from subprocess import PIPE, Popen
+from subprocess import DEVNULL, Popen
 
 from serial.tools.list_ports_linux import SysFS
 
@@ -26,7 +26,7 @@ class Bridge:
         command_line = f"{bridges} -u {ip}:{udp_port} -p {serial_port.device}:{baud} {automatic_disconnect_clients}"
         logging.info(f"Launching bridge link with command '{command_line}'.")
         # pylint: disable=consider-using-with
-        self.process = Popen(shlex.split(command_line), stdout=PIPE, stderr=PIPE)
+        self.process = Popen(shlex.split(command_line), stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(1.0)
         if self.process.poll() is not None:
             error = self.process.communicate()[1]
