@@ -79,11 +79,6 @@
 import Vue from 'vue'
 
 import settings from '@/libs/settings'
-import notifications from '@/store/notifications'
-import { commander_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
-
-const API_URL = '/commander/v1.0'
 
 export default Vue.extend({
   name: 'ReportMenu',
