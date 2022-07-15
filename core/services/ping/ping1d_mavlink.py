@@ -44,8 +44,7 @@ def distance_message(time_boot_ms: int, distance: int, device_id: int) -> Dict[s
 
 
 # pylint: disable=too-many-locals
-
-
+# pylint: disable=too-many-statements
 async def drive(port: int) -> None:
     """Main function"""
     ## The time that this script was started
