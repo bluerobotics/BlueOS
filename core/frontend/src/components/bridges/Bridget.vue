@@ -9,7 +9,7 @@
       style="background-color: transparent"
       dense
     >
-      <template v-for="(bridge, index) in available_bridges">
+      <template v-for="(info, index) in available_bridges">
         <v-divider
           v-if="index!==0"
           :key="`divider-${index}`"
@@ -18,7 +18,7 @@
           :key="index"
           class="pa-0"
         >
-          <bridge-card :bridge="bridge" />
+          <bridge-card :bridge_serial_info="info" />
         </v-list-item>
       </template>
     </v-list>
@@ -65,7 +65,9 @@
 import Vue from 'vue'
 
 import bridget from '@/store/bridget'
-import { Bridge } from '@/types/bridges'
+import system_information from '@/store/system-information'
+import { BridgeWithSerialInfo } from '@/types/bridges'
+import { SerialPortInfo } from '@/types/system-information/serial'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import BridgeCard from './BridgeCard.vue'
@@ -87,8 +89,14 @@ export default Vue.extend({
     updating_bridges(): boolean {
       return bridget.updating_bridges
     },
-    available_bridges(): Bridge[] {
-      return bridget.available_bridges
+    available_bridges(): BridgeWithSerialInfo[] {
+      const system_serial_ports: SerialPortInfo[] | undefined = system_information.serial?.ports
+      return bridget.available_bridges.map((bridge) => ({
+        bridge,
+        serial_info: system_serial_ports?.filter(
+          (serial_info) => (serial_info.by_path ?? serial_info.name) === bridge.serial_path,
+        )?.first(),
+      }))
     },
     are_bridges_available(): boolean {
       return !this.available_bridges.isEmpty()
