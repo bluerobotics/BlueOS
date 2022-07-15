@@ -17,6 +17,13 @@ const menus = [
         the firmware of your flight controller.`,
       },
       {
+        title: 'Peripherals',
+        icon: 'mdi-robot-industrial',
+        route: '/autopilot/peripherals',
+        advanced: false,
+        text: 'Peripherals settings',
+      },
+      {
         title: 'Log Browser',
         icon: 'mdi-file-multiple',
         route: '/autopilot/logs',
