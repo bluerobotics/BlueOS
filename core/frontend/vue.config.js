@@ -49,6 +49,9 @@ module.exports = {
       '^/network-test': {
         target: SERVER_ADDRESS,
       },
+      '^/ping': {
+        target: SERVER_ADDRESS,
+      },
       '^/system-information': {
         target: SERVER_ADDRESS,
       },
