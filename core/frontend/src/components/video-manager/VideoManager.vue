@@ -33,6 +33,46 @@
       No video-devices available.
     </v-card>
     <video-updater />
+
+    <v-fab-transition>
+      <v-btn
+        :key="'create_button'"
+        color="primary"
+        fab
+        large
+        dark
+        fixed
+        bottom
+        right
+        class="v-btn--example"
+        @click="openResetDialog"
+      >
+        <v-icon>mdi-restart-alert</v-icon>
+      </v-btn>
+    </v-fab-transition>
+
+    <v-dialog
+      width="500"
+      :value="show_reset_dialog"
+      @input="show_reset_dialog = false"
+    >
+      <v-card>
+        <v-card-title>
+          Reset video settings
+        </v-card-title>
+
+        <v-card-actions class="d-flex flex-column justify-space-around align-center pb-6">
+          <v-btn
+            @click="resetSettings"
+          >
+            <v-icon left>
+              mdi-cog-refresh
+            </v-icon>
+            Reset Settings
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -53,6 +93,11 @@ export default Vue.extend({
     VideoDevice,
     VideoUpdater,
     SpinningLogo,
+  },
+  data() {
+    return {
+      show_reset_dialog: false,
+    }
   },
   computed: {
     are_video_devices_available(): boolean {
@@ -78,6 +123,15 @@ export default Vue.extend({
     },
     updating_devices(): boolean {
       return video.updating_devices
+    },
+  },
+  methods: {
+    openResetDialog(): void {
+      this.show_reset_dialog = true
+    },
+    resetSettings(): void {
+      video.resetSettings()
+      this.show_reset_dialog = false
     },
   },
 })
