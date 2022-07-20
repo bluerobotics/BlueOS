@@ -2,6 +2,7 @@ import {
   Action, getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
+import message_manager, { MessageLevel } from '@/libs/message-manager'
 import Notifier from '@/libs/notifier'
 import store from '@/store'
 import { video_manager_service } from '@/types/frontend_services'
@@ -114,6 +115,24 @@ class VideoStore extends VuexModule {
         if (error === backend_offline_error) { return }
         const message = `Could not fetch video streams: ${error.message}`
         notifier.pushError('VIDEO_STREAMS_FETCH_FAIL', message)
+      })
+  }
+
+  @Action
+  async resetSettings(): Promise<void> {
+    await back_axios({
+      url: `${this.API_URL}/reset_settings`,
+      method: 'post',
+      params: {
+        all: true,
+      },
+      timeout: 1000,
+    })
+      .then(() => {
+        message_manager.emitMessage(MessageLevel.Success, 'Stream configuration set to factory default')
+      })
+      .catch((error) => {
+        notifier.pushBackError('RESET_VIDEO_SETTINGS_FAIL', error, true)
       })
   }
 }
