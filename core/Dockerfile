@@ -12,12 +12,12 @@ RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi
 RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend build --skip-plugins @vue/cli-plugin-eslint
 
 # Download binaries
-FROM bluerobotics/companion-base:v0.0.6 as downloadBinaries
+FROM bluerobotics/blueos-base:v0.0.7 as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
 # Companion-docker base image
-FROM bluerobotics/companion-base:v0.0.6
+FROM bluerobotics/blueos-base:v0.0.7
 
 # Install necessary tools
 COPY tools /home/pi/tools
