@@ -108,8 +108,8 @@ const notifier = new Notifier(network_speed_test_service)
 
 enum State {
   None = 'Click to start',
-  DownloadSpeed = 'Testing download speed',
-  UploadSpeed = 'Testing upload speed',
+  DownloadSpeed = 'Downloading from vehicle..',
+  UploadSpeed = 'Uploading to vehicle..',
   Done = 'Test done',
 }
 
