@@ -69,10 +69,14 @@
       <v-btn
         v-if="current && updateAvailable"
         color="primary"
-        class="mx-2 my-1"
+        class="mx-2 my-1 scroll-container"
+        width="195"
         @click="$emit('pull-and-apply',`${image.repository}:${image.tag}`)"
-        v-text="`Update to latest ${image.tag}`"
-      />
+      >
+        <div class="scroll-text">
+          Update to latest {{ image.tag }}
+        </div>
+      </v-btn>
       <v-btn
         v-if="newBetaAvailable"
         color="primary"
