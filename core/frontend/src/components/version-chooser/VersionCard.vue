@@ -184,7 +184,7 @@ export default Vue.extend({
       return value.replace('sha256:', '').substring(0, 8)
     },
     imageCanBeDeleted() {
-      return this.image.tag !== 'factory' || this.image.repository !== DEFAULT_REMOTE_IMAGE
+      return (this.image.tag !== 'factory' || this.image.repository !== DEFAULT_REMOTE_IMAGE) && !this.deleting
     },
   },
 })
