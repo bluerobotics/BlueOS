@@ -54,9 +54,7 @@
       </v-alert>
       <div v-if="loading || deleting">
         <spinning-logo
-          style="max-width:10%"
-          size="10%"
-          :subtitle="loading ? 'Loading image...' : 'Deleting image...'"
+          size="30px"
         />
       </div>
       <v-btn
