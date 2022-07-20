@@ -70,6 +70,16 @@
           align="center"
           v-text="state"
         />
+        <v-alert
+          v-if="result"
+          dense
+          align-center
+          justify-center
+          flex-wrap
+          :type="result.type"
+        >
+          {{ result.message }}
+        </v-alert>
         <v-card-actions class="justify-center">
           <v-btn
             color="primary"
@@ -103,6 +113,11 @@ enum State {
   Done = 'Test done',
 }
 
+interface NetworkTestResult {
+  type: string;
+  message: string;
+}
+
 export default Vue.extend({
   name: 'NetworkTestView',
   components: {
@@ -111,6 +126,7 @@ export default Vue.extend({
     return {
       max_speed: 100,
       state: State.None,
+      result: undefined as NetworkTestResult | undefined,
       speed: 0,
       download_speed: undefined as number | undefined,
       upload_speed: undefined as number | undefined,
@@ -176,6 +192,33 @@ export default Vue.extend({
         case State.UploadSpeed:
           this.clearSpeed()
           this.checkUploadSpeed()
+          break
+        case State.Done:
+          if (this.download_speed === undefined || this.upload_speed === undefined) {
+            break
+          }
+
+          if (this.download_speed >= 40 && this.upload_speed >= 40) {
+            this.result = {
+              type: 'success',
+              message: 'Great upload and download speed.',
+            }
+          } else if (this.download_speed < 40 && this.upload_speed < 40) {
+            this.result = {
+              type: 'error',
+              message: 'Download and upload speed are below threshold, check your hardware interface.',
+            }
+          } else if (this.upload_speed < 40) {
+            this.result = {
+              type: 'warning',
+              message: 'Upload speed below threshold, video may contain artifacts, check your hardware interface.',
+            }
+          } else if (this.download_speed < 40) {
+            this.result = {
+              type: 'warning',
+              message: 'Download speed below threshold, connection may be unstable, check your hardware interface.',
+            }
+          }
           break
         default:
           break
