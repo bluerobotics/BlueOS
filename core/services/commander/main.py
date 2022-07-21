@@ -112,6 +112,37 @@ async def shutdown(shutdown_type: ShutdownType, i_know_what_i_am_doing: bool = F
         logger.debug(f"shutdown: {output}")
 
 
+@app.get("/raspi_config/camera_legacy", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def raspi_config_camera_legacy() -> Any:
+    output = await command_host("raspi-config nonint get_legacy", True)
+    logger.debug(f"raspi-config get_legacy: {output}")
+    if output["return_code"] != 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to get legacy mode: {output}",
+        )
+    stdout_result = (
+        bytes(output["stdout"], encoding="raw_unicode_escape").decode("unicode_escape").replace("'", "").strip()
+    )
+    return {"enabled": stdout_result == "0"}
+
+
+@app.post("/raspi_config/camera_legacy", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def raspi_config_camera_legacy_set(enable: bool = True) -> Any:
+    argument = "0" if enable else "1"
+    output = await command_host(f"sudo raspi-config nonint do_legacy {argument}", True)
+    logger.debug(f"raspi-config do_legacy: {output}")
+    if output["return_code"] != 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to set legacy mode: {output}",
+        )
+
+    return output
+
+
 @app.post("/settings/reset", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
