@@ -14,18 +14,17 @@
         dismissible
       >
         <h3>Welcome to BlueOS!</h3>
-        Before start using, we highly recommend to <a
+        Before you start, we highly recommend <a
           href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#connect-wifi"
           target="_blank"
         >
-          connect first on the internet
+          connecting to the internet
         </a>
-        and do the
-        <a
+        and performing a <a
           href="https://docs.bluerobotics.com/ardusub-zola/software/companion/1.0/configuration/#select-version"
           target="_blank"
         >
-          system update to the latest version available
+          system update to the latest available BlueOS version
         </a>
         .
       </v-alert>
