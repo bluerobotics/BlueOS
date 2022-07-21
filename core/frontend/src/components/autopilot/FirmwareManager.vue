@@ -147,21 +147,25 @@
 
     <v-dialog
       v-model="show_install_progress"
-      hide-overlay
       persistent
-      width="300"
+      width="70%"
     >
       <v-card
         color="primary"
         dark
       >
-        <v-card-text>
+        <v-card-text class="px-4 py-2">
           Installing firmware. Please wait.
           <v-progress-linear
             indeterminate
             color="white"
-            class="mb-0"
           />
+          <v-divider />
+          <div id="install-output-window">
+            <p id="install-output">
+              {{ install_output }}
+            </p>
+          </div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -191,6 +195,7 @@ import autopilot from '@/store/autopilot_manager'
 import { Firmware, FlightController, Vehicle } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { backend_offline_error } from '@/utils/api'
+import { sleep } from '@/utils/helper_functions'
 
 const notifier = new Notifier(autopilot_service)
 
@@ -231,6 +236,7 @@ export default Vue.extend({
       available_firmwares: [] as Firmware[],
       firmware_file: null as (Blob | null),
       install_result_message: '',
+      install_output: '',
     }
   },
   computed: {
@@ -323,6 +329,9 @@ export default Vue.extend({
       const axios_request_config: AxiosRequestConfig = {
         method: 'post',
         timeout: 180000,
+        onDownloadProgress: (progressEvent) => {
+          this.install_output = progressEvent.currentTarget.response
+        },
       }
       if (this.upload_type === UploadType.Cloud) {
         // Populate request with data for cloud install
@@ -355,8 +364,11 @@ export default Vue.extend({
 
       await back_axios(axios_request_config)
         .then(() => {
-          this.install_status = InstallStatus.Succeeded
-          this.install_result_message = 'Successfully installed new firmware'
+          sleep(2000).then(() => {
+            this.install_status = InstallStatus.Succeeded
+            this.install_result_message = 'Successfully installed new firmware'
+            this.install_output = ''
+          })
         })
         .catch((error) => {
           this.install_status = InstallStatus.Failed
@@ -399,5 +411,19 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+#install-output-window {
+  background-color: #151515;
+  margin: 10px auto;
+  padding: 20px;
+  border-radius: 5px;
+}
+#install-output {
+  position: relative;
+  text-align: left;
+  font-size: 1.25em;
+  font-family: monospace;
+  overflow: hidden;
+  white-space: normal;
 }
 </style>
