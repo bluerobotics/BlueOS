@@ -2,7 +2,7 @@ import asyncio
 import pathlib
 import subprocess
 from copy import deepcopy
-from typing import Any, List, Optional, Set
+from typing import Any, Iterable, List, Optional, Set
 
 import psutil
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
@@ -435,11 +435,11 @@ class ArduPilotManager(metaclass=Singleton):
     def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
         return self.firmware_manager.get_available_firmwares(vehicle, platform)
 
-    def install_firmware_from_file(self, firmware_path: pathlib.Path, board: FlightController) -> None:
-        self.firmware_manager.install_firmware_from_file(firmware_path, board)
+    def install_firmware_from_file(self, firmware_path: pathlib.Path, board: FlightController) -> Iterable[str]:
+        yield from self.firmware_manager.install_firmware_from_file(firmware_path, board)
 
-    def install_firmware_from_url(self, url: str, board: FlightController) -> None:
-        self.firmware_manager.install_firmware_from_url(url, board)
+    def install_firmware_from_url(self, url: str, board: FlightController) -> Iterable[str]:
+        yield from self.firmware_manager.install_firmware_from_url(url, board)
 
-    def restore_default_firmware(self, board: FlightController) -> None:
-        self.firmware_manager.restore_default_firmware(board)
+    def restore_default_firmware(self, board: FlightController) -> Iterable[str]:
+        yield from self.firmware_manager.restore_default_firmware(board)

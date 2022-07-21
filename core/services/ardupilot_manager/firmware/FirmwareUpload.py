@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import threading
 import time
+from typing import Generator
 
 from loguru import logger
 
@@ -44,7 +45,7 @@ class FirmwareUploader:
     def set_baudrate_flightstack(self, baudrate: int) -> None:
         self._baudrate_flightstack = baudrate
 
-    def upload(self, firmware_path: pathlib.Path) -> None:
+    def upload(self, firmware_path: pathlib.Path) -> Generator[str, None, None]:
         logger.info("Starting upload of firmware to board.")
         # pylint: disable=consider-using-with
         process = subprocess.Popen(
@@ -65,6 +66,7 @@ class FirmwareUploader:
             if process.stdout is not None:
                 for line in iter(process.stdout.readline, b""):
                     logger.debug(line)
+                    yield f"{line}\n"
                     if process.poll() is not None:
                         break
             while process.poll() is None:
