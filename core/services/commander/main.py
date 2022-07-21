@@ -176,5 +176,8 @@ async def root() -> Any:
 
 
 if __name__ == "__main__":
+    # Register ssh client and remove message from the following commands
+    run_command("ls")
+
     # Running uvicorn with log disabled so loguru can handle it
     uvicorn.run(app, host="0.0.0.0", port=9100, log_config=None)
