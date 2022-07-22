@@ -11,7 +11,7 @@ import Main from '../views/MainView.vue'
 import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
 import NetworkTestView from '../views/NetworkTestView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
-import Peripherals from '../views/Peripherals.vue'
+import Pings from '../views/Pings.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
@@ -31,9 +31,9 @@ const routes: Array<RouteConfig> = [
     component: GeneralAutopilot,
   },
   {
-    path: '/autopilot/peripherals',
-    name: 'Peripherals',
-    component: Peripherals,
+    path: '/autopilot/pings',
+    name: 'Pings',
+    component: Pings,
   },
   {
     path: '/autopilot/logs',

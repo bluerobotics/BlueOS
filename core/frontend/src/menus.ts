@@ -17,11 +17,11 @@ const menus = [
         the firmware of your flight controller.`,
       },
       {
-        title: 'Peripherals',
-        icon: 'mdi-robot-industrial',
-        route: '/autopilot/peripherals',
+        title: 'Pings',
+        icon: 'mdi-radar',
+        route: '/autopilot/pings',
         advanced: false,
-        text: 'Peripherals settings',
+        text: 'Pings settings',
       },
       {
         title: 'Log Browser',
