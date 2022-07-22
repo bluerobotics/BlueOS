@@ -13,6 +13,14 @@ DELTA_JSON = {
             '/run/udev': {
                 'bind': '/run/udev',
                 'mode': 'ro'
+            },
+            '/etc/machine-id': {
+                'bind': '/etc/machine-id',
+                'mode': 'ro'
+            },
+            '/etc/dhcpcd.conf': {
+                'bind': '/etc/dhcpcd.conf',
+                'mode': 'rw'
             }
         }
     }
