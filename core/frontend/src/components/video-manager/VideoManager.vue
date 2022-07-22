@@ -45,23 +45,28 @@
         bottom
         right
         class="v-btn--example"
-        @click="openResetDialog"
+        @click="openSettingsDialog"
       >
-        <v-icon>mdi-restart-alert</v-icon>
+        <v-icon>mdi-cog</v-icon>
       </v-btn>
     </v-fab-transition>
 
     <v-dialog
       width="500"
-      :value="show_reset_dialog"
-      @input="show_reset_dialog = false"
+      :value="show_settings_dialog"
+      @input="show_settings_dialog = false"
     >
       <v-card>
         <v-card-title>
-          Reset video settings
+          Video Manager Settings
         </v-card-title>
 
         <v-card-actions class="d-flex flex-column justify-space-around align-center pb-6">
+          <v-switch
+            v-model="legacy_mode"
+            label="Raspberry legacy camera support"
+            @change="toggleLegacyMode"
+          />
           <v-btn
             @click="resetSettings"
           >
@@ -80,12 +85,17 @@
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
 import video from '@/store/video'
+import { commander_service } from '@/types/frontend_services'
 import { Device, Format, VideoEncodeType } from '@/types/video'
+import back_axios from '@/utils/api'
 
 import VideoDevice from './VideoDevice.vue'
 import VideoUpdater from './VideoUpdater.vue'
+
+const notifier = new Notifier(commander_service)
 
 export default Vue.extend({
   name: 'VideoManager',
@@ -96,7 +106,8 @@ export default Vue.extend({
   },
   data() {
     return {
-      show_reset_dialog: false,
+      show_settings_dialog: false,
+      legacy_mode: false,
     }
   },
   computed: {
@@ -125,13 +136,58 @@ export default Vue.extend({
       return video.updating_devices
     },
   },
+  async mounted() {
+    await this.updateCameraLegacy()
+  },
   methods: {
-    openResetDialog(): void {
-      this.show_reset_dialog = true
+    async updateCameraLegacy(): Promise<void> {
+      await back_axios({
+        url: '/commander/v1.0/raspi_config/camera_legacy',
+        method: 'get',
+        timeout: 3000,
+      })
+        .then((response) => {
+          this.legacy_mode = response.data?.enabled
+        })
+        .catch((error) => {
+          // Connection lost/timeout, normal when we are turning off/rebooting
+          if (error.code === 'ECONNABORTED') {
+            return
+          }
+
+          notifier.pushBackError('GET_CAMERA_LEGACY_FAILED', error, true)
+        })
+    },
+    async setCameraLegacy(enable: boolean): Promise<void> {
+      await back_axios({
+        url: '/commander/v1.0/raspi_config/camera_legacy',
+        method: 'post',
+        params: {
+          enable,
+        },
+        timeout: 3000,
+      })
+        .then(() => {
+          const message = 'Reboot is required for this action to take effect.'
+          notifier.pushInfo('DO_CAMERA_LEGACY_REBOOT_REQUIRED', message, true)
+        })
+        .catch((error) => {
+          // Connection lost/timeout, normal when we are turning off/rebooting
+          if (error.code === 'ECONNABORTED') {
+            return
+          }
+          notifier.pushBackError('SET_CAMERA_LEGACY_FAILED', error, true)
+        })
+    },
+    async toggleLegacyMode(): Promise<void> {
+      await this.setCameraLegacy(this.legacy_mode)
+    },
+    openSettingsDialog(): void {
+      this.show_settings_dialog = true
     },
     resetSettings(): void {
       video.resetSettings()
-      this.show_reset_dialog = false
+      this.show_settings_dialog = false
     },
   },
 })
