@@ -3,7 +3,9 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { Network, SavedNetwork, WifiStatus } from '@/types/wifi'
+import {
+  Network, NetworkCredentials, SavedNetwork, WifiStatus,
+} from '@/types/wifi'
 import { sorted_networks } from '@/utils/wifi'
 
 @Module({
@@ -23,6 +25,10 @@ class WifiStore extends VuexModule {
 
   network_status: WifiStatus | null = null
 
+  hotspot_status: boolean | null = null
+
+  hotspot_credentials: NetworkCredentials | null = null
+
   @Mutation
   setCurrentNetwork(network: Network | null): void {
     this.current_network = network
@@ -41,6 +47,16 @@ class WifiStore extends VuexModule {
   @Mutation
   setNetworkStatus(status: WifiStatus | null): void {
     this.network_status = status
+  }
+
+  @Mutation
+  setHotspotStatus(status: boolean | null): void {
+    this.hotspot_status = status
+  }
+
+  @Mutation
+  setHotspotCredentials(credentials: NetworkCredentials | null): void {
+    this.hotspot_credentials = credentials
   }
 
   get connectable_networks(): Network[] | null {
