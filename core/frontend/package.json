@@ -37,7 +37,8 @@
     "vue-tour": "^2.0.0",
     "vuetify": "^2.4.0",
     "vuex": "^3.4.0",
-    "vuex-module-decorators": "^1.0.1"
+    "vuex-module-decorators": "^1.0.1",
+    "wifi-qr-code-generator": "^1.1.1"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.18.0",

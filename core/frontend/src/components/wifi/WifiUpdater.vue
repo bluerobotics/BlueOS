@@ -19,7 +19,9 @@ export default Vue.extend({
   mounted() {
     callPeriodically(this.fetchSavedNetworks, 5000)
     callPeriodically(this.fetchNetworkStatus, 5000)
+    callPeriodically(this.fetchHotspotStatus, 10000)
     callPeriodically(this.fetchAvailableNetworks, 10000)
+    callPeriodically(this.fetchHotspotCredentials, 10000)
   },
   methods: {
     async fetchNetworkStatus(): Promise<void> {
@@ -53,6 +55,34 @@ export default Vue.extend({
           if (error === backend_offline_error) { return }
           const message = `Could not fetch wifi status: ${error.message}`
           notifier.pushError('WIFI_STATUS_FETCH_FAIL', message)
+        })
+    },
+    async fetchHotspotStatus(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL}/hotspot`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setHotspotStatus(response.data)
+        })
+        .catch((error) => {
+          wifi.setHotspotStatus(null)
+          notifier.pushBackError('HOTSPOT_STATUS_FETCH_FAIL', error)
+        })
+    },
+    async fetchHotspotCredentials(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL}/hotspot_credentials`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setHotspotCredentials(response.data)
+        })
+        .catch((error) => {
+          wifi.setHotspotCredentials(null)
+          notifier.pushBackError('HOTSPOT_CREDENTIALS_FETCH_FAIL', error)
         })
     },
     async fetchAvailableNetworks(): Promise<void> {
