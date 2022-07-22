@@ -18,6 +18,12 @@
         "domain_names": ["blueos-wifi"],
         "advertise": ["_http"],
         "ip": "ips[0]"
+      },
+      {
+        "name": "uap0",
+        "domain_names": ["blueos-wifi"],
+        "advertise": ["_http"],
+        "ip": "ips[0]"
       }
     ],
     "advertisement_types": [
