@@ -20,7 +20,7 @@ export default Vue.extend({
     callPeriodically(this.fetchSavedNetworks, 5000)
     callPeriodically(this.fetchNetworkStatus, 5000)
     callPeriodically(this.fetchHotspotStatus, 10000)
-    callPeriodically(this.fetchAvailableNetworks, 10000)
+    callPeriodically(this.fetchAvailableNetworks, 20000)
     callPeriodically(this.fetchHotspotCredentials, 10000)
   },
   methods: {
