@@ -114,7 +114,7 @@ class WifiManager:
                 # where this one is running can check when it has finished.
                 # Otherwise, it could happen that a new scan is initiated before the ones waiting know
                 # the previous one has finished, making them stay on the loop unnecessarily.
-                self._scan_task = asyncio.create_task(self.wpa.send_command_scan(timeout=15))
+                self._scan_task = asyncio.create_task(self.wpa.send_command_scan(timeout=30))
                 await self._scan_task
                 data = await self.wpa.send_command_scan_results()
                 networks_list = WifiManager.__dict_from_table(data)
@@ -186,7 +186,7 @@ class WifiManager:
         except Exception as error:
             raise ConnectionError("Failed to remove existing network.") from error
 
-    async def connect_to_network(self, network_id: int, timeout: float = 10.0) -> None:
+    async def connect_to_network(self, network_id: int, timeout: float = 20.0) -> None:
         """Connect to wifi network
 
         Arguments:
