@@ -7,6 +7,7 @@ set -e
 TOOLS=(
     ardupilot_tools
     filebrowser
+    hotspot
     linux2rest
     logviewer
     mavlink_camera_manager
