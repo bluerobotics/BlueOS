@@ -33,6 +33,7 @@ class WifiManager:
         self._ignored_reconnection_networks: List[str] = []
         self.connection_status = ConnectionStatus.UNKNOWN
         self._hotspot = HotspotManager("wlan0", IPv4Address("192.168.42.1"))
+        self._time_last_scan = 0.0
 
         self._settings_manager = Manager("wifi-manager", SettingsV1)
         self._settings_manager.load()
@@ -119,12 +120,16 @@ class WifiManager:
                 data = await self.wpa.send_command_scan_results()
                 networks_list = WifiManager.__dict_from_table(data)
                 self._updated_scan_results = [ScannedWifiNetwork(**network) for network in networks_list]
+                self._time_last_scan = time.time()
             except Exception as error:
                 if self._scan_task is not None:
                     self._scan_task.cancel()
                 self._updated_scan_results = None
                 raise FetchError("Failed to fetch wifi list.") from error
 
+        # Performs a new scan only if more than 30 seconds passed since last scan
+        if time.time() - self._time_last_scan < 30:
+            return self._updated_scan_results or []
         # Performs a new scan only if it's the first one or the last one is already done
         # In case there's one running already, wait for it to finish and use its result
         if self._scan_task is None or self._scan_task.done():
