@@ -143,6 +143,42 @@ async def disconnect() -> Any:
     logger.info("Succesfully disconnected from network.")
 
 
+@app.get("/hotspot", summary="Get hotspot state.")
+@version(1, 0)
+def hotspot_state() -> Any:
+    return wifi_manager._hotspot.is_running()
+
+
+@app.post("/hotspot", summary="Enable/disable hotspot.")
+@version(1, 0)
+def toggle_hotspot(enable: bool) -> Any:
+    if enable:
+        wifi_manager.enable_hotspot()
+        return
+    wifi_manager.disable_hotspot()
+
+
+@app.post("/smart_hotspot", summary="Enable/disable smart-hotspot.")
+@version(1, 0)
+def toggle_smart_hotspot(enable: bool) -> Any:
+    if enable:
+        wifi_manager.enable_smart_hotspot()
+        return
+    wifi_manager.disable_smart_hotspot()
+
+
+@app.post("/hotspot_credentials", summary="Update hotspot credentials.")
+@version(1, 0)
+def set_hotspot_credentials(credentials: WifiCredentials) -> Any:
+    wifi_manager.set_hotspot_credentials(credentials)
+
+
+@app.get("/hotspot_credentials", summary="Get hotspot credentials.")
+@version(1, 0)
+def get_hotspot_credentials() -> Any:
+    return wifi_manager.hotspot_credentials()
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 

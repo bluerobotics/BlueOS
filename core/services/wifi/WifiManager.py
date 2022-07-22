@@ -1,10 +1,14 @@
 import asyncio
 import time
+from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
+from commonwealth.settings.manager import Manager
 from loguru import logger
 
 from exceptions import FetchError, ParseError
+from Hotspot import HotspotManager
+from settings import SettingsV1
 from typedefs import (
     ConnectionStatus,
     SavedWifiNetwork,
@@ -28,6 +32,15 @@ class WifiManager:
         self._updated_scan_results: Optional[List[ScannedWifiNetwork]] = None
         self._ignored_reconnection_networks: List[str] = []
         self.connection_status = ConnectionStatus.UNKNOWN
+        self._hotspot = HotspotManager("wlan0", IPv4Address("192.168.42.1"))
+
+        self._settings_manager = Manager("wifi-manager", SettingsV1)
+        self._settings_manager.load()
+        ssid, password = self._settings_manager.settings.hotspot_ssid, self._settings_manager.settings.hotspot_password
+        if ssid is not None and password is not None:
+            self.set_hotspot_credentials(WifiCredentials(ssid=ssid, password=password))
+        if self._settings_manager.settings.hotspot_enabled in [True, None]:
+            self.enable_hotspot()
 
     @staticmethod
     def __decode_escaped(data: bytes) -> str:
@@ -180,7 +193,10 @@ class WifiManager:
             network_id {int} -- Network ID provided by WPA Supplicant
         """
         self.connection_status = ConnectionStatus.CONNECTING
+        was_hotspot_enabled = self._hotspot.is_running()
         try:
+            if was_hotspot_enabled:
+                self.disable_hotspot()
             await self.wpa.send_command_select_network(network_id)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
@@ -208,6 +224,9 @@ class WifiManager:
         except Exception as error:
             self.connection_status = ConnectionStatus.UNKNOWN
             raise ConnectionError(f"Failed to connect to network. {error}") from error
+        finally:
+            if was_hotspot_enabled and self.connection_status != ConnectionStatus.JUST_CONNECTED:
+                self.enable_hotspot()
 
     async def status(self) -> Dict[str, Any]:
         """Check wpa_supplicant status"""
@@ -314,7 +333,49 @@ class WifiManager:
                 self.connection_status = ConnectionStatus.STILL_CONNECTED
 
             if not networks_reenabled and seconds_disconnected >= seconds_before_reconnecting:
-                logger.debug("Watchdog activated. Trying to reconnect to available networks.")
+                logger.debug("Watchdog activated.")
+                logger.debug("Trying to reconnect to available networks.")
                 await self.enable_saved_networks(self._ignored_reconnection_networks)
                 await self.wpa.send_command_reconnect()
+                if self._settings_manager.settings.smart_hotspot_enabled in [None, True]:
+                    logger.debug("Starting smart-hotspot.")
+                    self.enable_hotspot()
                 networks_reenabled = True
+
+    def set_hotspot_credentials(self, credentials: WifiCredentials) -> None:
+        self._settings_manager.settings.hotspot_ssid = credentials.ssid
+        self._settings_manager.settings.hotspot_password = credentials.password
+        self._settings_manager.save()
+
+        self._hotspot.set_credentials(credentials)
+
+        if self._hotspot.is_running():
+            self.disable_hotspot()
+            time.sleep(5)
+            self.enable_hotspot()
+
+    def hotspot_credentials(self) -> WifiCredentials:
+        return self._hotspot.credentials
+
+    def enable_hotspot(self) -> None:
+        self._settings_manager.settings.hotspot_enabled = True
+        self._settings_manager.save()
+
+        if self._hotspot.is_running():
+            logger.warning("Hotspot already running. No need to enable it again.")
+            return
+        self._hotspot.start()
+
+    def disable_hotspot(self) -> None:
+        self._settings_manager.settings.hotspot_enabled = False
+        self._settings_manager.save()
+
+        self._hotspot.stop()
+
+    def enable_smart_hotspot(self) -> None:
+        self._settings_manager.settings.smart_hotspot_enabled = True
+        self._settings_manager.save()
+
+    def disable_smart_hotspot(self) -> None:
+        self._settings_manager.settings.smart_hotspot_enabled = False
+        self._settings_manager.save()
