@@ -74,7 +74,7 @@ class Ping1DMavlinkDriver():
                 distance = 0
             print(f"sendind {distance}")
             await self.mavlink2rest.send_mavlink_message(
-                distance_message(int((time.time() - tboot) * 1000), int(distance / 10), deviceid)
+                self.distance_message(int((time.time() - tboot) * 1000), int(distance / 10), deviceid)
             )
 
         ## Send a request for distance_simple message to ping device
