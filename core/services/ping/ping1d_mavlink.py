@@ -25,6 +25,12 @@ from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 class Ping1DMavlinkDriver():
     mavlink2rest = MavlinkMessenger()
 
+    def __init__(self):
+        self.should_run = True
+
+    def set_should_run(self, should_run):
+        self.should_run = should_run
+
     def distance_message(self, time_boot_ms: int, distance: int, device_id: int) -> Dict[str, Any]:
         return {
             "type": "DISTANCE_SENSOR",
@@ -41,7 +47,6 @@ class Ping1DMavlinkDriver():
             "quaternion": [0, 0, 0, 0],
             "signal_quality": 0,
         }
-
 
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
@@ -101,6 +106,9 @@ class Ping1DMavlinkDriver():
         ping1d_io.sendall(data.msg_data)
 
         while True:
+            if not self.should_run:
+                await asyncio.sleep(1)
+                continue
             await asyncio.sleep(0.001)
             tnow = time.time()
 
@@ -119,9 +127,12 @@ class Ping1DMavlinkDriver():
                 data, _ = ping1d_io.recvfrom(4096)
             except socket.error as exception:
                 # check if it's waiting for data
-                if exception.errno != errno.EAGAIN:
-                    raise exception
-                continue
+                    if exception.errno == errno.EAGAIN:
+                        continue
+                    elif exception.errno == errno.ECONNREFUSED:
+                        print("Ping1D connection lost, stopping MAVLink driver")
+                        return
+                    continue
 
             # decode data from ping device, forward to autopilot
             for byte in data:

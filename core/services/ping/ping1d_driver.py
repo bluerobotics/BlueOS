@@ -12,3 +12,6 @@ class Ping1DDriver(PingDriver):
     async def start(self) -> None:
         await super().start()
         await self.mavlink_driver.drive(self.port)
+
+    def set_mavlink_driver_running(self, should_run: bool):
+        self.mavlink_driver.set_should_run(should_run)

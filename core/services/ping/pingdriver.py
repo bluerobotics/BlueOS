@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate, set_low_latency
@@ -57,6 +57,13 @@ class PingDriver:
         logging.info(f"Forcing Ping1d at port {self.port} to stop.")
         if self.bridge:
             self.bridge.stop()
+
+    def update_settings(self, sensor_settings: dict[str,Any]):
+        if "mavlink_driver" in sensor_settings:
+            self.set_mavlink_driver_running(sensor_settings["mavlink_driver"])
+
+    def set_mavlink_driver_running(self, should_run: bool):
+        pass
 
     def __del__(self) -> None:
         self.stop()
