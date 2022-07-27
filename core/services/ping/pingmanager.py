@@ -29,9 +29,11 @@ class PingManager:
         if ping.ping_type == PingType.PING1D:
             logging.info("Launching ping1d driver")
             driver = Ping1DDriver(ping, self.ping1d_current_port)
+            self.ping1d_current_port -= 1
         elif ping.ping_type == PingType.PING360:
             logging.info("Launching ping360 driver")
             driver = Ping360Driver(ping, self.ping360_current_port)
+            self.ping360_current_port += 1
 
         self.drivers[ping] = driver
         await driver.start()
