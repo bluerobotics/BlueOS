@@ -11,6 +11,8 @@ import errno
 import socket
 import time
 from typing import Any, Dict
+from loguru import logger
+
 
 from brping import (
     PING1D_DISTANCE,
@@ -22,11 +24,12 @@ from brping import (
 )
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 
-class Ping1DMavlinkDriver():
+
+class Ping1DMavlinkDriver:
     mavlink2rest = MavlinkMessenger()
 
-    def __init__(self):
-        self.should_run = True
+    def __init__(self, should_run):
+        self.should_run = should_run
 
     def set_should_run(self, should_run):
         self.should_run = should_run
@@ -74,17 +77,17 @@ class Ping1DMavlinkDriver():
 
         ## Send distance_sensor message to autopilot
         async def send_distance_data(distance: int, deviceid: int, confidence: int) -> None:
-            # print("sending distance %d confidence %d" % (distance, confidence))
+            # logger.debug("sending distance %d confidence %d" % (distance, confidence))
             if confidence < 0.5:
                 distance = 0
-            print(f"sendind {distance}")
+            logger.debug(f"sendind {distance}")
             await self.mavlink2rest.send_mavlink_message(
                 self.distance_message(int((time.time() - tboot) * 1000), int(distance / 10), deviceid)
             )
 
         ## Send a request for distance_simple message to ping device
         async def send_ping1d_request() -> None:
-            print("requesting new data")
+            logger.debug("requesting new data")
             data = PingMessage()
             data.request_id = PING1D_DISTANCE_SIMPLE
             data.src_device_id = 0
@@ -119,21 +122,26 @@ class Ping1DMavlinkDriver():
                     await send_ping1d_request()
 
             if tnow > last_distance_measurement_time + ping_interval_ms * 10:
-                print("attempting reconnection...")
+                logger.info("attempting reconnection...")
                 ping1d_io.connect(pingserver)
+                await asyncio.sleep(0.1)
+
 
             # read data in from ping device
             try:
                 data, _ = ping1d_io.recvfrom(4096)
             except socket.error as exception:
                 # check if it's waiting for data
-                    if exception.errno == errno.EAGAIN:
-                        continue
-                    elif exception.errno == errno.ECONNREFUSED:
-                        print("Ping1D connection lost, stopping MAVLink driver")
-                        return
+                if exception.errno == errno.EAGAIN:
                     continue
+                elif exception.errno == errno.ECONNREFUSED:
+                    logger.warning("Ping1D connection lost, stopping MAVLink driver")
+                    return
+                continue
 
+            if tnow - last_distance_measurement_time < ping_interval_ms * 0.8:
+                # skip decoding data if too fast
+                continue
             # decode data from ping device, forward to autopilot
             for byte in data:
                 try:
@@ -145,4 +153,4 @@ class Ping1DMavlinkDriver():
                             confidence = ping_parser.rx_msg.confidence
                             await send_distance_data(distance, deviceid, confidence)
                 except Exception as error:
-                    print(error)
+                    logger.warning(error)
