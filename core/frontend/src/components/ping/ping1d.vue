@@ -10,13 +10,20 @@
       </v-icon>
       {{ device.ping_type }}
     </v-card-title>
+    <v-switch
+      v-model="user_desired_mavlink_driver_state"
+      :loading="switch_loading()? 'warning' : false"
+      inset
+      label="Send MAVLink messages"
+      @change="update_mavlink_driver()"
+    />
     <v-row class="justify-end">
       <v-btn
         icon
         class="pa-6"
         @click="show = !show"
       >
-        <v-icon >{{ show ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+        <v-icon>{{ show ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
       </v-btn>
     </v-row>
     <v-expand-transition>
@@ -35,15 +42,8 @@
             <tr><td>Model</td><td>{{ device.device_model }}</td></tr>
             <tr><td>Revision</td><td>{{ device.device_revision }}</td></tr>
             <tr><td>Device</td><td>{{ device.port }}</td></tr>
-            <tr><td>Bridge</td><td> N/A </td></tr>
-            <tr>
-              <td>Mavlink Driver</td><td>
-                <v-switch
-                  inset
-                  disabled
-                />
-              </td>
-            </tr>
+            <tr><td>Bridge</td><td> udp://0.0.0.0:{{ device.driver_status.udp_port }} </td></tr>
+            <tr />
           </tbody>
         </v-simple-table>
       </div>
@@ -55,6 +55,7 @@
 import Vue, { PropType } from 'vue'
 
 import { PingDevice } from '@/types/ping'
+import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'PingCard',
@@ -67,12 +68,31 @@ export default Vue.extend({
   data() {
     return {
       show: false,
+      user_desired_mavlink_driver_state: true,
     }
   },
   computed: {
   },
-  methods: {
+  mounted() {
+    console.log(this.device.driver_status.mavlink_driver_enabled)
+    this.user_desired_mavlink_driver_state = Boolean(this.device.driver_status.mavlink_driver_enabled)
   },
+  methods: {
+    switch_loading() {
+      return this.user_desired_mavlink_driver_state !== !!this.device.driver_status.mavlink_driver_enabled
+    },
+    async update_mavlink_driver() {
+      await back_axios({
+        method: 'post',
+        url: '/ping/v1.0/sensors',
+        data: {
+          port: this.device.port,
+          mavlink_driver: this.user_desired_mavlink_driver_state,
+        },
+      })
+    },
+  },
+
 })
 </script>
 <style scoped>
