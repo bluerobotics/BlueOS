@@ -9,11 +9,15 @@ from brping.definitions import COMMON_DEVICE_INFORMATION
 from pingutils import PingDeviceDescriptor
 
 
+
+
 class PingDriver:
     def __init__(self, ping: PingDeviceDescriptor, port: int) -> None:
         self.ping = ping
         self.port = port
         self.bridge: Optional[Bridge] = None
+        self.driver_status: Dict[str,int|float|str|bool] = {"udp_port": port}
+        self.ping.driver = self
 
     def detect_highest_baud(self) -> Baudrate:
         """Tries to communicate in increasingly high baudrates up to 4M
@@ -55,10 +59,11 @@ class PingDriver:
     def stop(self) -> None:
         """Stops the driver"""
         logging.info(f"Forcing Ping1d at port {self.port} to stop.")
+        self.ping.driver = None
         if self.bridge:
             self.bridge.stop()
 
-    def update_settings(self, sensor_settings: dict[str,Any]):
+    def update_settings(self, sensor_settings: dict[str, Any]):
         if "mavlink_driver" in sensor_settings:
             self.set_mavlink_driver_running(sensor_settings["mavlink_driver"])
 
