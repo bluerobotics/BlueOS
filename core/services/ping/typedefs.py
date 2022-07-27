@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Union
 
 from pingutils import PingDeviceDescriptor
 
@@ -16,6 +17,7 @@ class PingDeviceDescriptorModel:
     firmware_version_minor: int
     firmware_version_patch: int
     port: str
+    driver_status: dict[str, Union[int, float, str, bool]]
 
     @staticmethod
     def from_descriptor(descriptor: PingDeviceDescriptor) -> "PingDeviceDescriptorModel":
@@ -28,4 +30,5 @@ class PingDeviceDescriptorModel:
             firmware_version_minor=descriptor.firmware_version_minor,
             firmware_version_patch=descriptor.firmware_version_patch,
             port=descriptor.port.device,
+            driver_status=descriptor.driver.driver_status
         )
