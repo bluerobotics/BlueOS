@@ -16,7 +16,7 @@
         class="pa-6"
         @click="show = !show"
       >
-        <v-icon >{{ show ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+        <v-icon>{{ show ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
       </v-btn>
     </v-row>
     <v-expand-transition>
