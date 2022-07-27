@@ -40,12 +40,13 @@ def get_sensors() -> Any:
     return [PingDeviceDescriptorModel.from_descriptor(device) for device in ping_manager.devices()]
 
 
-@app.post("/sensors/", status_code=status.HTTP_200_OK)
+@app.post("/sensors", status_code=status.HTTP_200_OK, summary="Set sensor settings.")
 @version(1, 0)
-def set_sensor(sensor_settings: dict[str,Any]) -> Any:
+def set_sensor(sensor_settings: dict[str, Any]) -> Any:
     if "port" not in sensor_settings:
         raise ValueError("'device' key is missing")
     return ping_manager.update_device_settings(sensor_settings)
+
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 
