@@ -4,7 +4,7 @@
   >
     <v-card>
       <v-card-title class="justify-center">
-        Network speed and latency test
+        Local Network speed and latency tests
       </v-card-title>
 
       <v-divider />
