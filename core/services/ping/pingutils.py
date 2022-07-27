@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import Optional
 
 from loguru import logger
 from serial.tools.list_ports_linux import SysFS
@@ -36,6 +37,7 @@ class PingDeviceDescriptor:
     firmware_version_minor: int
     firmware_version_patch: int
     port: SysFS
+    driver: Optional["PingDriver"]
 
     def __hash__(self) -> int:
         return hash(self.port.hwid)
