@@ -10,13 +10,42 @@
       </v-icon>
       {{ device.ping_type }}
     </v-card-title>
-    <v-switch
-      v-model="user_desired_mavlink_driver_state"
-      :loading="switch_loading()? 'warning' : false"
-      inset
-      label="Send MAVLink messages"
-      @change="update_mavlink_driver()"
-    />
+    <v-simple-table dense>
+      <tbody>
+        <tr><td>Bridge</td><td> UDP {{ device.driver_status.udp_port }} </td></tr>
+        <tr
+          v-tooltip="'Send MAVLink DISTANCE_SENSOR messages to the vehicle. This allows Ground \
+        Stations such as QGroundControl to display the information on the telemetry overlay'"
+        >
+          <td>MAVLink Distances</td><td>
+            <v-switch
+              v-model="user_desired_mavlink_driver_state"
+              :loading="switch_loading()? 'warning' : false"
+              @change="update_mavlink_driver()"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </v-simple-table>
+    <v-expand-transition>
+      <div v-show="show">
+        <v-divider />
+        <v-simple-table dense>
+          <tbody>
+            <tr>
+              <td>FW</td><td>
+                {{ device.firmware_version_major }}.{{ device.firmware_version_minor }}.{{ device.firmware_version_patch }}
+              </td>
+            </tr>
+            <tr><td>ID</td><td>{{ device.device_id }}</td></tr>
+            <tr><td>Model</td><td>{{ device.device_model }}</td></tr>
+            <tr><td>Revision</td><td>{{ device.device_revision }}</td></tr>
+            <tr><td>Device</td><td>{{ device.port }} <device-path-helper :device="device.port" /></td></tr>
+          </tbody>
+        </v-simple-table>
+      </div>
+    </v-expand-transition>
+
     <v-row class="justify-end">
       <v-btn
         icon
@@ -26,39 +55,21 @@
         <v-icon>{{ show ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
       </v-btn>
     </v-row>
-    <v-expand-transition>
-      <div v-show="show">
-        <v-divider />
-        <v-simple-table dense>
-          <tbody>
-            <tr>
-              <td>Firmware</td><td>
-                {{ `${device.firmware_version_major}.\
-                ${device.firmware_version_minor}.\
-                ${device.firmware_version_patch}` }}
-              </td>
-            </tr>
-            <tr><td>ID</td><td>{{ device.device_id }}</td></tr>
-            <tr><td>Model</td><td>{{ device.device_model }}</td></tr>
-            <tr><td>Revision</td><td>{{ device.device_revision }}</td></tr>
-            <tr><td>Device</td><td>{{ device.port }}</td></tr>
-            <tr><td>Bridge</td><td> udp://0.0.0.0:{{ device.driver_status.udp_port }} </td></tr>
-            <tr />
-          </tbody>
-        </v-simple-table>
-      </div>
-    </v-expand-transition>
   </v-card>
 </template>
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import DevicePathHelper from '@/components/common/DevicePathHelper.vue'
 import { PingDevice } from '@/types/ping'
 import back_axios from '@/utils/api'
 
 export default Vue.extend({
   name: 'PingCard',
+  components: {
+    DevicePathHelper,
+  },
   props: {
     device: {
       type: Object as PropType<PingDevice>,
