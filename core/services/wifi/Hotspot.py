@@ -215,7 +215,7 @@ class HotspotManager:
             f'ssid2="{self._ap_ssid}"\n'
             "# Passphrase for the access point\n"
             f"wpa_passphrase={self._ap_passphrase}\n"
-            "# Use the 2.4GHz band\n"
+            "# Operation mode. Uses 'g' for 2.4GHz bands and 'a' for 5GHz.\n"
             f"hw_mode={HostapdFrequency.mode_from_channel_frequency(desired_channel_frequency).value}\n"
             "# Accept all MAC addresses\n"
             "macaddr_acl=0\n"
