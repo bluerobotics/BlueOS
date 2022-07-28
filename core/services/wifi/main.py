@@ -146,7 +146,7 @@ async def disconnect() -> Any:
 @app.get("/hotspot", summary="Get hotspot state.")
 @version(1, 0)
 def hotspot_state() -> Any:
-    return wifi_manager._hotspot.is_running()
+    return wifi_manager.hotspot.is_running()
 
 
 @app.post("/hotspot", summary="Enable/disable hotspot.")

@@ -32,16 +32,23 @@ class WifiManager:
         self._updated_scan_results: Optional[List[ScannedWifiNetwork]] = None
         self._ignored_reconnection_networks: List[str] = []
         self.connection_status = ConnectionStatus.UNKNOWN
-        self._hotspot = HotspotManager("wlan0", IPv4Address("192.168.42.1"))
         self._time_last_scan = 0.0
 
         self._settings_manager = Manager("wifi-manager", SettingsV1)
         self._settings_manager.load()
-        ssid, password = self._settings_manager.settings.hotspot_ssid, self._settings_manager.settings.hotspot_password
-        if ssid is not None and password is not None:
-            self.set_hotspot_credentials(WifiCredentials(ssid=ssid, password=password))
-        if self._settings_manager.settings.hotspot_enabled in [True, None]:
-            self.enable_hotspot()
+        try:
+            self._hotspot: Optional[HotspotManager] = None
+            ssid, password = (
+                self._settings_manager.settings.hotspot_ssid,
+                self._settings_manager.settings.hotspot_password,
+            )
+            if ssid is not None and password is not None:
+                self.set_hotspot_credentials(WifiCredentials(ssid=ssid, password=password))
+            if self._settings_manager.settings.hotspot_enabled in [True, None]:
+                time.sleep(5)
+                self.enable_hotspot()
+        except Exception:
+            logger.exception("Could not load previous hotspot settings.")
 
     @staticmethod
     def __decode_escaped(data: bytes) -> str:
@@ -105,6 +112,16 @@ class WifiManager:
                 raise ParseError("Failed parsing dictionary data from list.") from error
 
         return output
+
+    @property
+    def hotspot(self) -> HotspotManager:
+        if self._hotspot is None:
+            try:
+                self._hotspot = HotspotManager("wlan0", IPv4Address("192.168.42.1"))
+            except Exception as error:
+                self._hotspot = None
+                raise error
+        return self._hotspot
 
     async def get_wifi_available(self) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
@@ -198,7 +215,7 @@ class WifiManager:
             network_id {int} -- Network ID provided by WPA Supplicant
         """
         self.connection_status = ConnectionStatus.CONNECTING
-        was_hotspot_enabled = self._hotspot.is_running()
+        was_hotspot_enabled = self.hotspot.is_running()
         try:
             if was_hotspot_enabled:
                 self.disable_hotspot()
@@ -342,9 +359,12 @@ class WifiManager:
                 logger.debug("Trying to reconnect to available networks.")
                 await self.enable_saved_networks(self._ignored_reconnection_networks)
                 await self.wpa.send_command_reconnect()
-                if self._settings_manager.settings.smart_hotspot_enabled in [None, True]:
-                    logger.debug("Starting smart-hotspot.")
-                    self.enable_hotspot()
+                try:
+                    if self._settings_manager.settings.smart_hotspot_enabled in [None, True]:
+                        logger.debug("Starting smart-hotspot.")
+                        self.enable_hotspot()
+                except Exception:
+                    logger.exception("Could not start smart-hotspot.")
                 networks_reenabled = True
 
     def set_hotspot_credentials(self, credentials: WifiCredentials) -> None:
@@ -352,30 +372,30 @@ class WifiManager:
         self._settings_manager.settings.hotspot_password = credentials.password
         self._settings_manager.save()
 
-        self._hotspot.set_credentials(credentials)
+        self.hotspot.set_credentials(credentials)
 
-        if self._hotspot.is_running():
+        if self.hotspot.is_running():
             self.disable_hotspot()
             time.sleep(5)
             self.enable_hotspot()
 
     def hotspot_credentials(self) -> WifiCredentials:
-        return self._hotspot.credentials
+        return self.hotspot.credentials
 
     def enable_hotspot(self) -> None:
         self._settings_manager.settings.hotspot_enabled = True
         self._settings_manager.save()
 
-        if self._hotspot.is_running():
+        if self.hotspot.is_running():
             logger.warning("Hotspot already running. No need to enable it again.")
             return
-        self._hotspot.start()
+        self.hotspot.start()
 
     def disable_hotspot(self) -> None:
         self._settings_manager.settings.hotspot_enabled = False
         self._settings_manager.save()
 
-        self._hotspot.stop()
+        self.hotspot.stop()
 
     def enable_smart_hotspot(self) -> None:
         self._settings_manager.settings.smart_hotspot_enabled = True
