@@ -367,6 +367,17 @@ class WifiManager:
                     logger.exception("Could not start smart-hotspot.")
                 networks_reenabled = True
 
+    async def start_hotspot_watchdog(self) -> None:
+        logger.debug("Starting hotspot watchdog.")
+        while True:
+            await asyncio.sleep(30)
+            try:
+                if self._settings_manager.settings.hotspot_enabled and not self.hotspot.is_running():
+                    logger.warning("Hotspot should be working but is not. Restarting it.")
+                    self.enable_hotspot()
+            except Exception:
+                logger.exception("Could not start hotspot from the watchdog routine.")
+
     def set_hotspot_credentials(self, credentials: WifiCredentials) -> None:
         self._settings_manager.settings.hotspot_ssid = credentials.ssid
         self._settings_manager.settings.hotspot_password = credentials.password

@@ -227,4 +227,5 @@ if __name__ == "__main__":
     server = Server(config)
 
     loop.create_task(wifi_manager.auto_reconnect(60))
+    loop.create_task(wifi_manager.start_hotspot_watchdog())
     loop.run_until_complete(server.serve())
