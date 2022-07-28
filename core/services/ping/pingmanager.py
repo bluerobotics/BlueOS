@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Dict, List
 
@@ -36,7 +37,8 @@ class PingManager:
             self.ping360_current_port += 1
 
         self.drivers[ping] = driver
-        await driver.start()
+        loop = asyncio.get_running_loop()
+        loop.create_task(driver.start())
 
     def devices(self) -> List[PingDeviceDescriptor]:
         return list(self.drivers.keys())
