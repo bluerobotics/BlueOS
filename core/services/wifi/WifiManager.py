@@ -34,6 +34,9 @@ class WifiManager:
         self.connection_status = ConnectionStatus.UNKNOWN
         self._time_last_scan = 0.0
 
+        # Perform first scan so the wlan interface gets configured (for just-flashed-images)
+        asyncio.run(self.get_wifi_available())
+
         self._settings_manager = Manager("wifi-manager", SettingsV1)
         self._settings_manager.load()
         try:
