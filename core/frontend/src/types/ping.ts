@@ -9,5 +9,6 @@ export interface PingDevice {
   firmware_version_minor: number,
   firmware_version_patch: number,
   port: string,
-  driver_status: Dictionary<number|boolean|string>
+  driver_status: Dictionary<number|boolean|string>,
+  ethernet_info: string
 }
