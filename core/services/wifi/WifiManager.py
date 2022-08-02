@@ -221,7 +221,7 @@ class WifiManager:
         was_hotspot_enabled = self.hotspot.is_running()
         try:
             if was_hotspot_enabled:
-                self.disable_hotspot()
+                self.disable_hotspot(save_settings=False)
             await self.wpa.send_command_select_network(network_id)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
@@ -251,7 +251,7 @@ class WifiManager:
             raise ConnectionError(f"Failed to connect to network. {error}") from error
         finally:
             if was_hotspot_enabled:
-                self.enable_hotspot()
+                self.enable_hotspot(save_settings=False)
 
     async def status(self) -> Dict[str, Any]:
         """Check wpa_supplicant status"""
@@ -389,25 +389,27 @@ class WifiManager:
         self.hotspot.set_credentials(credentials)
 
         if self.hotspot.is_running():
-            self.disable_hotspot()
+            self.disable_hotspot(save_settings=False)
             time.sleep(5)
-            self.enable_hotspot()
+            self.enable_hotspot(save_settings=False)
 
     def hotspot_credentials(self) -> WifiCredentials:
         return self.hotspot.credentials
 
-    def enable_hotspot(self) -> None:
-        self._settings_manager.settings.hotspot_enabled = True
-        self._settings_manager.save()
+    def enable_hotspot(self, save_settings: bool = True) -> None:
+        if save_settings:
+            self._settings_manager.settings.hotspot_enabled = True
+            self._settings_manager.save()
 
         if self.hotspot.is_running():
             logger.warning("Hotspot already running. No need to enable it again.")
             return
         self.hotspot.start()
 
-    def disable_hotspot(self) -> None:
-        self._settings_manager.settings.hotspot_enabled = False
-        self._settings_manager.save()
+    def disable_hotspot(self, save_settings: bool = True) -> None:
+        if save_settings:
+            self._settings_manager.settings.hotspot_enabled = False
+            self._settings_manager.save()
 
         self.hotspot.stop()
 
