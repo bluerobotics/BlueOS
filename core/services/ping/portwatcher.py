@@ -6,7 +6,8 @@ from warnings import warn
 import serial.tools.list_ports
 from serial.tools.list_ports_linux import SysFS
 
-from pingutils import PingDeviceDescriptor
+from pingutils import PingDeviceDescriptor, PingType
+from ping360_ethernet_prober import find_ping360_ethernet
 
 MAX_ATTEMPTS = 10
 
@@ -15,12 +16,16 @@ class PortWatcher:
     """Watches the Serial ports on the system, calls set_prober when a port is found,
     port_post_callback when a port is no longer present"""
 
-    def __init__(self, probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]]) -> None:
+    def __init__(self, probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]], found_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]]) -> None:
         logging.info("PortWatcher Started")
         self.known_ports: Set[str] = set()
+        self.known_ips: Set[str] = set()
+
         self.probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = probe_callback
+        self.ethernet_ping_found_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = found_callback
         self.port_lost_callback: Optional[Callable[[SysFS], None]] = None
         self.probe_attempts_counter: Dict[SysFS, int] = {}
+
 
     def set_port_post_callback(self, callback: Callable[[SysFS], None]) -> None:
         self.port_lost_callback = callback
@@ -50,6 +55,31 @@ class PortWatcher:
         if attempts == MAX_ATTEMPTS:
             logging.info(f"Max number of probing attempts reached for {port}. Giving up.")
 
+    async def add_ping360(self) -> None:
+        ips = await find_ping360_ethernet()
+        ips = set(ips)
+        lost_ips = self.known_ips - ips
+        new_ips = ips - self.known_ips
+        for ip in lost_ips:
+            self.port_lost_callback(ip)
+            self.known_ips.remove(ip)
+        for ip in new_ips:
+            self.known_ips.add(ip)
+            await self.ethernet_ping_found_callback(
+                PingDeviceDescriptor(
+                    ping_type=PingType.PING360,
+                    device_id=0,
+                    device_model=0,
+                    device_revision=0,  # not available in this message
+                    firmware_version_major=0,
+                    firmware_version_minor=0,
+                    firmware_version_patch=0,
+                    ethernet_info=f"{ip}:12345",
+                    port=None,
+                    driver=None
+                )
+            )
+
     async def start_watching(self) -> None:
         """Start watching for plugged/unplugged serial devices in the system"""
         # TODO: try https://pypi.org/project/inotify/
@@ -69,5 +99,5 @@ class PortWatcher:
                 self.known_ports.remove(port)
                 if self.port_lost_callback is not None:
                     self.port_lost_callback(port)
-
+            await self.add_ping360()
             await asyncio.sleep(1)

@@ -65,7 +65,7 @@ async def root() -> Any:
 
 async def sensor_manager() -> None:
     ping_prober = PingProber()
-    port_watcher = PortWatcher(probe_callback=ping_prober.probe)
+    port_watcher = PortWatcher(probe_callback=ping_prober.probe, found_callback=ping_manager.register_ethernet_ping360)
     port_watcher.set_port_post_callback(ping_manager.stop_driver_at_port)
 
     ping_prober.on_ping_found(ping_manager.launch_driver_instance)

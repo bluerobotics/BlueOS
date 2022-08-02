@@ -24,6 +24,10 @@ class PingManager:
             self.drivers[ping_at_port[0]].stop()
             del self.drivers[ping_at_port[0]]
 
+    async def register_ethernet_ping360(self, ping: PingDeviceDescriptor) -> None:
+        if ping not in self.drivers:
+            self.drivers[ping] = Ping360Driver(ping, -1)
+
     async def launch_driver_instance(self, ping: PingDeviceDescriptor) -> None:
         """Launches a new driver instance for the PingDeviceDescriptor "ping" """
         driver: PingDriver
