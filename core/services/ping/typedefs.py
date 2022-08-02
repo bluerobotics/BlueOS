@@ -32,5 +32,5 @@ class PingDeviceDescriptorModel:
             firmware_version_patch=descriptor.firmware_version_patch,
             port=descriptor.port.device if descriptor.port != None else "",
             ethernet_info=descriptor.ethernet_info,
-            driver_status=descriptor.driver.driver_status
+            driver_status=descriptor.driver.driver_status,
         )

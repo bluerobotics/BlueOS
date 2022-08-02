@@ -95,7 +95,7 @@ class PingProber:
             firmware_version_patch=0,
             port=port,
             ethernet_info="",
-            driver=None
+            driver=None,
         )
         logging.info("Identified ping device:")
         logging.info(descriptor)

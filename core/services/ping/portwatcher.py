@@ -6,8 +6,8 @@ from warnings import warn
 import serial.tools.list_ports
 from serial.tools.list_ports_linux import SysFS
 
-from pingutils import PingDeviceDescriptor, PingType
 from ping360_ethernet_prober import find_ping360_ethernet
+from pingutils import PingDeviceDescriptor, PingType
 
 MAX_ATTEMPTS = 10
 
@@ -16,16 +16,21 @@ class PortWatcher:
     """Watches the Serial ports on the system, calls set_prober when a port is found,
     port_post_callback when a port is no longer present"""
 
-    def __init__(self, probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]], found_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]]) -> None:
+    def __init__(
+        self,
+        probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]],
+        found_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]],
+    ) -> None:
         logging.info("PortWatcher Started")
         self.known_ports: Set[str] = set()
         self.known_ips: Set[str] = set()
 
         self.probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = probe_callback
-        self.ethernet_ping_found_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = found_callback
+        self.ethernet_ping_found_callback: Callable[
+            [Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]
+        ] = found_callback
         self.port_lost_callback: Optional[Callable[[SysFS], None]] = None
         self.probe_attempts_counter: Dict[SysFS, int] = {}
-
 
     def set_port_post_callback(self, callback: Callable[[SysFS], None]) -> None:
         self.port_lost_callback = callback
@@ -76,7 +81,7 @@ class PortWatcher:
                     firmware_version_patch=0,
                     ethernet_info=f"{ip}:12345",
                     port=None,
-                    driver=None
+                    driver=None,
                 )
             )
 

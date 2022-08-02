@@ -1,9 +1,12 @@
+from commonwealth.settings.manager import Manager
+
 from ping1d_mavlink import Ping1DMavlinkDriver
 from pingdriver import PingDriver
 from pingutils import PingDeviceDescriptor
-from commonwealth.settings.manager import Manager
-from settings import SettingsV1, Ping1dSettingsSpecV1
+from settings import Ping1dSettingsSpecV1, SettingsV1
+
 SERVICE_NAME = "ping"
+
 
 class Ping1DDriver(PingDriver):
     def __init__(self, ping: PingDeviceDescriptor, port: int) -> None:

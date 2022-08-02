@@ -9,14 +9,12 @@ from brping.definitions import COMMON_DEVICE_INFORMATION
 from pingutils import PingDeviceDescriptor
 
 
-
-
 class PingDriver:
     def __init__(self, ping: PingDeviceDescriptor, port: int) -> None:
         self.ping = ping
         self.port = port
         self.bridge: Optional[Bridge] = None
-        self.driver_status: Dict[str,int|float|str|bool] = {"udp_port": port}
+        self.driver_status: Dict[str, int | float | str | bool] = {"udp_port": port}
         self.ping.driver = self
 
     def detect_highest_baud(self) -> Baudrate:

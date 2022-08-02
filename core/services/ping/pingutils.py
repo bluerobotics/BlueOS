@@ -48,7 +48,6 @@ class PingDeviceDescriptor:
     def __hash__(self) -> int:
         return hash(self.get_hw_or_eth_info())
 
-
     def __str__(self) -> str:
         return f"""{self.ping_type.name}
 ID: {self.device_id}

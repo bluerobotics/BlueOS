@@ -11,8 +11,6 @@ import errno
 import socket
 import time
 from typing import Any, Dict
-from loguru import logger
-
 
 from brping import (
     PING1D_DISTANCE,
@@ -23,6 +21,7 @@ from brping import (
     PingParser,
 )
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
+from loguru import logger
 
 
 class Ping1DMavlinkDriver:
@@ -125,7 +124,6 @@ class Ping1DMavlinkDriver:
                 logger.info("attempting reconnection...")
                 ping1d_io.connect(pingserver)
                 await asyncio.sleep(0.1)
-
 
             # read data in from ping device
             try:

@@ -4,6 +4,7 @@ import pykson  # type: ignore
 from commonwealth.settings import settings
 from serial.tools.list_ports_linux import SysFS
 
+
 class Ping1dSettingsSpecV1(pykson.JsonObject):
     port = pykson.StringField()
     mavlink_enabled = pykson.BooleanField()
@@ -13,10 +14,8 @@ class Ping1dSettingsSpecV1(pykson.JsonObject):
 
     @staticmethod
     def new(port: str, enabled: bool):
-        return Ping1dSettingsSpecV1(
-            port=port,
-            mavlink_enabled=enabled
-        )
+        return Ping1dSettingsSpecV1(port=port, mavlink_enabled=enabled)
+
 
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
