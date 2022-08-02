@@ -250,7 +250,7 @@ class WifiManager:
             self.connection_status = ConnectionStatus.UNKNOWN
             raise ConnectionError(f"Failed to connect to network. {error}") from error
         finally:
-            if was_hotspot_enabled and self.connection_status != ConnectionStatus.JUST_CONNECTED:
+            if was_hotspot_enabled:
                 self.enable_hotspot()
 
     async def status(self) -> Dict[str, Any]:
