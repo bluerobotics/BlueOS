@@ -53,7 +53,7 @@ setup(
         "appdirs == 1.4.4",
         "pytest-asyncio == 0.14.0",
         "asyncmock == 0.4.2",
-        "werkzeug == 2.0.0",
+        "werkzeug >= 2.0.0",
         "attrs == 20.3.0",
         "jinja2 == 3.0.3",
         "itsdangerous == 2.1.1",
