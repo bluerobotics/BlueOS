@@ -21,7 +21,7 @@
       },
       {
         "name": "uap0",
-        "domain_names": ["blueos-wifi"],
+        "domain_names": ["blueos-hotspot"],
         "advertise": ["_http"],
         "ip": "ips[0]"
       }
