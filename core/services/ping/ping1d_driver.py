@@ -18,15 +18,15 @@ class Ping1DDriver(PingDriver):
         settings = list(filter(lambda x: x.port == self.ping.port, self.manager.settings.ping1d_specs))
         if not settings:
             self.manager.settings.ping1d_specs.append(Ping1dSettingsSpecV1.new(self.ping.port.device, False))
-        settings = list(filter(lambda x: x.port == self.ping.port.device, self.manager.settings.ping1d_specs))[0]
+        our_settings = list(filter(lambda x: x.port == self.ping.port.device, self.manager.settings.ping1d_specs))[0]
         self.manager.save()
-        self.driver_status["mavlink_driver_enabled"] = settings.mavlink_enabled
-        self.mavlink_driver = Ping1DMavlinkDriver(settings.mavlink_enabled)
+        self.driver_status["mavlink_driver_enabled"] = our_settings.mavlink_enabled
+        self.mavlink_driver = Ping1DMavlinkDriver(our_settings.mavlink_enabled)
 
     async def start(self) -> None:
         await super().start()
         await self.mavlink_driver.drive(self.port)
 
-    def set_mavlink_driver_running(self, should_run: bool):
+    def set_mavlink_driver_running(self, should_run: bool) -> None:
         self.mavlink_driver.set_should_run(should_run)
         self.driver_status["mavlink_driver_enabled"] = should_run

@@ -3,15 +3,14 @@
 Scan with ./findPing360.py [current IP of the interface to scan]
 """
 
-import argparse
 import asyncio
 import socket
-import time
+from typing import List
 
 import psutil
 
 
-def list_ips():
+def list_ips() -> List[str]:
     stats = psutil.net_if_stats()
 
     available_networks = []
@@ -26,12 +25,12 @@ def list_ips():
     return ips
 
 
-def remove_zeros(ip):
+def remove_zeros(ip: str) -> str:
     new_ip = ".".join([str(int(i)) for i in ip.split(".")])
     return new_ip
 
 
-async def find_ping360_ethernet():
+async def find_ping360_ethernet() -> List[str]:
     found = []
     for ip in list_ips():
         server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -46,7 +45,7 @@ async def find_ping360_ethernet():
         # print("Discovery message sent...")
         await asyncio.sleep(1)
         try:
-            data, client = server.recvfrom(1048)
+            data, _ = server.recvfrom(1048)
             raw_ip = data.decode("utf8").split("IP Address:- ")[1].strip()
             found.append(remove_zeros(raw_ip))
         except socket.timeout as e:

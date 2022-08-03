@@ -61,12 +61,13 @@ class PortWatcher:
             logging.info(f"Max number of probing attempts reached for {port}. Giving up.")
 
     async def add_ping360(self) -> None:
-        ips = await find_ping360_ethernet()
-        ips = set(ips)
+        ips_list = await find_ping360_ethernet()
+        ips = set(ips_list)
         lost_ips = self.known_ips - ips
         new_ips = ips - self.known_ips
         for ip in lost_ips:
-            self.port_lost_callback(ip)
+            if self.port_lost_callback is not None:
+                self.port_lost_callback(ip)
             self.known_ips.remove(ip)
         for ip in new_ips:
             self.known_ips.add(ip)

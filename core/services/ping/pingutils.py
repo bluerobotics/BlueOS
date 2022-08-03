@@ -38,12 +38,12 @@ class PingDeviceDescriptor:
     firmware_version_patch: int
     port: SysFS
     ethernet_info: Optional[str]
-    driver: Optional["PingDriver"]
+    driver: Optional["PingDriver"]  # type: ignore
 
     def get_hw_or_eth_info(self) -> str:
         if self.port:
-            return self.port.hwid
-        return self.ethernet_info
+            return str(self.port.hwid)
+        return str(self.ethernet_info)
 
     def __hash__(self) -> int:
         return hash(self.get_hw_or_eth_info())

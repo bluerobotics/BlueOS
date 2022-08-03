@@ -27,13 +27,14 @@ from loguru import logger
 class Ping1DMavlinkDriver:
     mavlink2rest = MavlinkMessenger()
 
-    def __init__(self, should_run):
+    def __init__(self, should_run: bool) -> None:
         self.should_run = should_run
 
-    def set_should_run(self, should_run):
+    def set_should_run(self, should_run: bool) -> None:
         self.should_run = should_run
 
-    def distance_message(self, time_boot_ms: int, distance: int, device_id: int) -> Dict[str, Any]:
+    @staticmethod
+    def distance_message(time_boot_ms: int, distance: int, device_id: int) -> Dict[str, Any]:
         return {
             "type": "DISTANCE_SENSOR",
             "time_boot_ms": time_boot_ms,
@@ -52,6 +53,7 @@ class Ping1DMavlinkDriver:
 
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
+    # pylint: disable=too-many-branches
     async def drive(self, port: int) -> None:
         """Main function"""
         ## The time that this script was started
@@ -132,7 +134,7 @@ class Ping1DMavlinkDriver:
                 # check if it's waiting for data
                 if exception.errno == errno.EAGAIN:
                     continue
-                elif exception.errno == errno.ECONNREFUSED:
+                if exception.errno == errno.ECONNREFUSED:
                     logger.warning("Ping1D connection lost, stopping MAVLink driver")
                     return
                 continue

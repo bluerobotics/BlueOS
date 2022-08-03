@@ -2,18 +2,17 @@ from typing import Any, Dict
 
 import pykson  # type: ignore
 from commonwealth.settings import settings
-from serial.tools.list_ports_linux import SysFS
 
 
 class Ping1dSettingsSpecV1(pykson.JsonObject):
     port = pykson.StringField()
     mavlink_enabled = pykson.BooleanField()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.port} - {self.mavlink_enabled}"
 
     @staticmethod
-    def new(port: str, enabled: bool):
+    def new(port: str, enabled: bool) -> "Ping1dSettingsSpecV1":
         return Ping1dSettingsSpecV1(port=port, mavlink_enabled=enabled)
 
 

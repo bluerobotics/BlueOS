@@ -30,7 +30,7 @@ class PingDeviceDescriptorModel:
             firmware_version_major=descriptor.firmware_version_major,
             firmware_version_minor=descriptor.firmware_version_minor,
             firmware_version_patch=descriptor.firmware_version_patch,
-            port=descriptor.port.device if descriptor.port != None else "",
-            ethernet_info=descriptor.ethernet_info,
-            driver_status=descriptor.driver.driver_status,
+            port=descriptor.port.device if descriptor.port is not None else "",
+            ethernet_info=descriptor.ethernet_info if descriptor.ethernet_info is not None else "",
+            driver_status=descriptor.driver.driver_status if descriptor.driver is not None else {},
         )
