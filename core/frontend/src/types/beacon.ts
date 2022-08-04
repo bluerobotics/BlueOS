@@ -1,6 +1,7 @@
 export enum InterfaceType {
   WIRED = 'WIRED',
   WIFI = 'WIFI',
+  HOTSPOT = 'HOTSPOT',
   UNKNOWN = 'UNKNOWN',
 }
 export interface Domain {

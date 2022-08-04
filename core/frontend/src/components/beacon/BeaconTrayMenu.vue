@@ -74,7 +74,7 @@ export default Vue.extend({
       return beacon.available_domains.filter((entry) => entry.interface_type === InterfaceType.WIRED)
     },
     wireless_interface_domains(): Domain[] {
-      return beacon.available_domains.filter((entry) => entry.interface_type === InterfaceType.WIFI)
+      return beacon.available_domains.filter((entry) => entry.interface_type !== InterfaceType.WIRED)
     },
     is_connected_to_wifi(): boolean {
       return this.wireless_interface_domains.some((domain) => domain.ip === beacon.nginx_ip_address)
