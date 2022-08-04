@@ -38,3 +38,13 @@ class PingManager:
 
     def devices(self) -> List[PingDeviceDescriptor]:
         return list(self.drivers.keys())
+
+    def update_device_settings(self, sensor_settings: Dict[str, Any]) -> None:
+        found = [
+            driver
+            for (sensor, driver) in self.drivers.items()
+            if sensor.port is not None and sensor.port.device == sensor_settings["port"]
+        ]
+        if not found:
+            raise ValueError(f"unknown device: {sensor_settings}")
+        found[0].update_settings(sensor_settings)
