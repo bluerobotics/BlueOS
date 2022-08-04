@@ -41,6 +41,7 @@ class PingProber:
             firmware_version_major=firmware_version.firmware_version_major,
             firmware_version_minor=firmware_version.firmware_version_minor,
             firmware_version_patch=0,
+            ethernet_discovery_info=None,
             driver=None,
             port=port,
         )
@@ -94,6 +95,7 @@ class PingProber:
             firmware_version_minor=device_info.firmware_version_minor,
             firmware_version_patch=0,
             port=port,
+            ethernet_discovery_info=None,
             driver=None,
         )
         logging.info("Identified ping device:")
