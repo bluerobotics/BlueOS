@@ -4,6 +4,21 @@ set -e
 
 echo "Running pre push hook!"
 repository_path=$(git rev-parse --show-toplevel)
+tag_name=$(git tag --points-at=HEAD | head -n 1)
+
+[ -n "$tag_name" ] && {
+    echo "Current reference has the following tag: ${tag_name}"
+    dialog --defaultno --yesno "Are you pushing a tag ?" 20 60 && {
+        echo "Checking tag name.."
+        # Check if tag follows our semver convention
+        # MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-SOMETHING.VERSION
+        $(echo "$tag_name" | grep -Po "^\d+\.\d+\.\d+(\-[A-z]+\.\d+)?$|^\d+\.\d+\.\d+$" > /dev/null) || {
+            echo "Invalid tag name!"
+            exit 1
+        }
+        echo "Tag name is valid, congratulations for the new release!"
+    }
+}
 
 echo "Running shellcheck..."
 #SC2005: Allow us to break line while running command
