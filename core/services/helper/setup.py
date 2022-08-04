@@ -25,11 +25,11 @@ def populate_static_files() -> None:
     static_files = {
         "js": [
             "https://unpkg.com/axios@0.19.2/dist/axios.min.js",
-            "https://cdn.metroui.org.ua/v4/js/metro.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/js/metro.min.js",
             "https://unpkg.com/vue@2.6.11/dist/vue.js",
         ],
         "css": [
-            "https://cdn.metroui.org.ua/v4/css/metro-all.min.css",
+            "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/css/metro-all.min.css",
         ],
     }
 
