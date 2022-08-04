@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate, set_low_latency
@@ -14,6 +14,8 @@ class PingDriver:
         self.ping = ping
         self.port = port
         self.bridge: Optional[Bridge] = None
+        self.ping.driver = self
+        self.driver_status = DriverStatus(udp_port=port, mavlink_driver_enabled=False)
 
     def detect_highest_baud(self) -> Baudrate:
         """Tries to communicate in increasingly high baudrates up to 4M
@@ -55,8 +57,16 @@ class PingDriver:
     def stop(self) -> None:
         """Stops the driver"""
         logging.info(f"Forcing Ping1d at port {self.port} to stop.")
+        self.ping.driver = None
         if self.bridge:
             self.bridge.stop()
+
+    def update_settings(self, sensor_settings: Dict[str, Any]) -> None:
+        if "mavlink_driver" in sensor_settings:
+            self.set_mavlink_driver_running(sensor_settings["mavlink_driver"])
+
+    def set_mavlink_driver_running(self, should_run: bool) -> None:
+        pass
 
     def __del__(self) -> None:
         self.stop()
