@@ -36,6 +36,7 @@ class PingDeviceDescriptor:
     firmware_version_minor: int
     firmware_version_patch: int
     port: SysFS
+    driver: Optional["PingDriver"]  # type: ignore
 
     def __hash__(self) -> int:
         return hash(self.port.hwid)
