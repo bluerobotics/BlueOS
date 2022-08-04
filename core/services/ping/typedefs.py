@@ -17,6 +17,7 @@ class PingDeviceDescriptorModel:
     firmware_version_minor: int
     firmware_version_patch: int
     port: str
+    ethernet_discovery_info: str  # ip:port string for pings found with ethernet discovery
     driver_status: dict[str, Union[int, float, str, bool]]
 
     @staticmethod
@@ -30,5 +31,8 @@ class PingDeviceDescriptorModel:
             firmware_version_minor=descriptor.firmware_version_minor,
             firmware_version_patch=descriptor.firmware_version_patch,
             port=descriptor.port.device if descriptor.port is not None else "",
+            ethernet_discovery_info=descriptor.ethernet_discovery_info
+            if descriptor.ethernet_discovery_info is not None
+            else "",
             driver_status=descriptor.driver.driver_status if descriptor.driver is not None else {},
         )
