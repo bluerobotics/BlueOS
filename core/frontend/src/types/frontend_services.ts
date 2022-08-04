@@ -104,3 +104,10 @@ export const update_time_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const ping_service: Service = {
+  name: 'Ping service',
+  description: 'Service to manage ping devices',
+  company: 'Blue Robotics',
+  version: '0.2.0',
+}
