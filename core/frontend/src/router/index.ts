@@ -11,6 +11,7 @@ import Main from '../views/MainView.vue'
 import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
 import NetworkTestView from '../views/NetworkTestView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
+import Pings from '../views/Pings.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
@@ -28,6 +29,11 @@ const routes: Array<RouteConfig> = [
     path: '/autopilot/general',
     name: 'GeneralAutopilot',
     component: GeneralAutopilot,
+  },
+  {
+    path: '/autopilot/pings',
+    name: 'Pings',
+    component: Pings,
   },
   {
     path: '/autopilot/logs',
