@@ -5,8 +5,8 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
-from fastapi import FastAPI
+from commonwealth.utils.logs import get_new_log_path
+from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -38,6 +38,14 @@ def get_sensors() -> Any:
     devices = ping_manager.devices()
     logger.debug(f"Sensors available: {devices}")
     return [PingDeviceDescriptorModel.from_descriptor(device) for device in ping_manager.devices()]
+
+
+@app.post("/sensors", status_code=status.HTTP_200_OK, summary="Set sensor settings.")
+@version(1, 0)
+def set_sensor(sensor_settings: dict[str, Any]) -> Any:
+    if "port" not in sensor_settings:
+        raise ValueError("'device' key is missing")
+    return ping_manager.update_device_settings(sensor_settings)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
