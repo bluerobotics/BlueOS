@@ -22,8 +22,8 @@ class PingManager:
             self.drivers[ping_at_port[0]].stop()
             del self.drivers[ping_at_port[0]]
 
-    def launch_driver_instance(self, ping: PingDeviceDescriptor) -> None:
-        """Launches a new driver instance for the PingDeviceDescriptor "ping" """
+    async def launch_driver_instance(self, ping: PingDeviceDescriptor) -> None:
+        """Launches a new driver instance for the PingDeviceDescriptor "ping"."""
         driver: PingDriver
         if ping.ping_type == PingType.PING1D:
             logging.info("Launching ping1d driver")
@@ -33,7 +33,8 @@ class PingManager:
             driver = Ping360Driver(ping, self.ping360_current_port)
 
         self.drivers[ping] = driver
-        driver.start()
+        loop = asyncio.get_running_loop()
+        loop.create_task(driver.start())
 
     def devices(self) -> List[PingDeviceDescriptor]:
         return list(self.drivers.keys())

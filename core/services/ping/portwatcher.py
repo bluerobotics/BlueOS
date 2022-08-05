@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Callable, Dict, Optional, Set
+from typing import Any, Callable, Coroutine, Dict, Optional, Set
 from warnings import warn
 
 import serial.tools.list_ports
@@ -15,10 +15,10 @@ class PortWatcher:
     """Watches the Serial ports on the system, calls set_prober when a port is found,
     port_post_callback when a port is no longer present"""
 
-    def __init__(self, probe_callback: Callable[[SysFS], Optional[PingDeviceDescriptor]]) -> None:
+    def __init__(self, probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]]) -> None:
         logging.info("PortWatcher Started")
         self.known_ports: Set[str] = set()
-        self.probe_callback: Callable[[SysFS], Optional[PingDeviceDescriptor]] = probe_callback
+        self.probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = probe_callback
         self.port_lost_callback: Optional[Callable[[SysFS], None]] = None
         self.probe_attempts_counter: Dict[SysFS, int] = {}
 
@@ -35,14 +35,14 @@ class PortWatcher:
             return False
         return True
 
-    def probe_port(self, port: SysFS) -> None:
+    async def probe_port(self, port: SysFS) -> None:
         """Attempts to probe port "port" for up to MAX_ATTEMPTS times"""
         logging.info(f"Probing port: {port.hwid}")
         if port in self.known_ports:
             warn(f"Developer error: Port is already known, but being probed again: {port}")
             return
         attempts = self.probe_attempts_counter.get(port, 0)
-        good_port = self.probe_callback(port)
+        good_port = await self.probe_callback(port)
         if good_port:
             self.known_ports.add(port)
         attempts += 1
@@ -60,7 +60,7 @@ class PortWatcher:
             found_ports = set()
             for port in ports:
                 if self.port_should_be_probed(port):
-                    self.probe_port(port)
+                    await self.probe_port(port)
                 found_ports.add(port)
 
             missing = self.known_ports - found_ports
