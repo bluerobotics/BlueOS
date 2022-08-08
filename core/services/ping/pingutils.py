@@ -1,7 +1,9 @@
+import socket
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Optional
 
+import psutil
 from loguru import logger
 from serial.tools.list_ports_linux import SysFS
 
@@ -53,3 +55,8 @@ class PingDeviceDescriptor:
 ID: {self.device_id}
 FW: v{self.firmware_version_major}.{self.firmware_version_minor}.{self.firmware_version_patch}
 port: {self.get_hw_or_eth_info()}"""
+
+
+def udp_port_is_in_use(port: int) -> bool:
+    return any(conn.laddr.port == port and conn.type == socket.SocketKind.SOCK_DGRAM
+               for conn in psutil.net_connections())
