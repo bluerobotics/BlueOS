@@ -20,6 +20,7 @@ class PingManager:
         ping_at_port = list(filter(lambda ping: ping.port == port, self.drivers.keys()))
         if ping_at_port:
             self.drivers[ping_at_port[0]].stop()
+            del self.drivers[ping_at_port[0]]
 
     def launch_driver_instance(self, ping: PingDeviceDescriptor) -> None:
         """Launches a new driver instance for the PingDeviceDescriptor "ping" """
