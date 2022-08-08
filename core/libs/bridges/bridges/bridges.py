@@ -29,8 +29,9 @@ class Bridge:
         self.process = Popen(shlex.split(command_line), stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(1.0)
         if self.process.poll() is not None:
-            error = self.process.communicate()[1]
-            raise RuntimeError(f"Failed to initialize bridge: {self.process.returncode} - {error.decode('utf-8')}.")
+            _stdout, strerr = self.process.communicate()
+            error = strerr.decode("utf-8") if strerr else "Empty error"
+            raise RuntimeError(f'Failed to initialize bridge, code: {self.process.returncode}, message: "{error}".')
 
     def stop(self) -> None:
         if not self.process:
