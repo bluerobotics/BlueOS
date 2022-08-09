@@ -58,5 +58,6 @@ port: {self.get_hw_or_eth_info()}"""
 
 
 def udp_port_is_in_use(port: int) -> bool:
-    return any(conn.laddr.port == port and conn.type == socket.SocketKind.SOCK_DGRAM
-               for conn in psutil.net_connections())
+    return any(
+        conn.laddr.port == port and conn.type == socket.SocketKind.SOCK_DGRAM for conn in psutil.net_connections()
+    )

@@ -41,7 +41,7 @@ class Ping1DMavlinkDriver:
         self.should_run = should_run
 
     @staticmethod
-    def distance_message(time_boot_ms: int, distance: int, device_id: int) -> Dict[str, Any]:
+    def distance_message(time_boot_ms: int, distance: int, device_id: int, confidence: int) -> Dict[str, Any]:
         return {
             "type": "DISTANCE_SENSOR",
             "time_boot_ms": time_boot_ms,
@@ -51,21 +51,20 @@ class Ping1DMavlinkDriver:
             "mavtype": {"type": "MAV_DISTANCE_SENSOR_ULTRASOUND"},
             "id": device_id,
             "orientation": {"type": "MAV_SENSOR_ROTATION_PITCH_270"},
-            "covariance": 0,
-            "horizontal_fov": 0,
-            "vertical_fov": 0,
+            "covariance": 255,
+            "horizontal_fov": 0.52,
+            "vertical_fov": 0.52,
             "quaternion": [0, 0, 0, 0],
-            "signal_quality": 0,
+            "signal_quality": confidence,
         }
 
     ## Send distance_sensor message to autopilot
     async def send_distance_data(self, distance: int, deviceid: int, confidence: int) -> None:
-        # logger.debug("sending distance %d confidence %d" % (distance, confidence))
-        if confidence < 0.5:
-            distance = 0
         logger.debug(f"sending {distance} ({confidence})")
         await self.mavlink2rest.send_mavlink_message(
-            self.distance_message(int((time.time() - self.tboot) * 1000), int(distance / 10), deviceid)
+            self.distance_message(
+                int((time.time() - self.time_since_boot) * 1000), int(distance / 10), deviceid, confidence
+            )
         )
 
     ## Send a request for distance_simple message to ping device
