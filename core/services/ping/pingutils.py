@@ -7,6 +7,8 @@ import psutil
 from loguru import logger
 from serial.tools.list_ports_linux import SysFS
 
+from exceptions import InvalidDeviceDescriptor
+
 
 class PingType(IntEnum):
     UNKNOWN = 0
@@ -38,9 +40,13 @@ class PingDeviceDescriptor:
     firmware_version_major: int
     firmware_version_minor: int
     firmware_version_patch: int
-    port: SysFS
+    port: Optional[SysFS]
     ethernet_discovery_info: Optional[str]
     driver: Optional["PingDriver"]  # type: ignore
+
+    def __post_init__(self) -> None:
+        if not (self.port or self.ethernet_discovery_info):
+            raise InvalidDeviceDescriptor("PingDeviceDescriptor needs either port or ethernet_info")
 
     def get_hw_or_eth_info(self) -> str:
         if self.port:
