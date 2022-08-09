@@ -6,8 +6,9 @@ from bridges.serialhelper import Baudrate, set_low_latency
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION
 
+from exceptions import InvalidDeviceDescriptor, NoUDPPortAssignedToPingDriver
 from pingutils import PingDeviceDescriptor
-from typedefs import DriverStatus, InvalidDeviceDescriptor
+from typedefs import DriverStatus
 
 
 class PingDriver:
@@ -25,8 +26,11 @@ class PingDriver:
         failure_threshold = 0.1  # allow up to 10% failure rate
         attempts = 10  # try up to 10 times per baudrate
         max_failures = attempts * failure_threshold
-
         last_valid_baud = Baudrate.b115200
+
+        if self.ping.port is None:
+            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no useable port")
+
         for baud in Baudrate:
             # Ping1D hangs with a baudrate bigger than 3M, going to ignore it for now
             if baud > 3000000:
@@ -49,6 +53,12 @@ class PingDriver:
 
     async def start(self) -> None:
         """Starts the driver"""
+        if self.ping.port is None:
+            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no useable port.")
+
+        if self.port is None:
+            raise NoUDPPortAssignedToPingDriver("PingDriver attempted to stash with no UDP port.")
+
         baud = self.detect_highest_baud()
         # Do a ping connection to set the baudrate
         PingDevice().connect_serial(self.ping.port.device, baud)
