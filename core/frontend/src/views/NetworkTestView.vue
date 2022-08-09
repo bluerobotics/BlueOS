@@ -60,7 +60,7 @@
                 </v-icon>
               </v-list-item-icon>
               <v-list-item-subtitle>
-                {{ latency_us ? latency_us.toFixed(0) : '...' }} us
+                {{ latency_ms ? latency_ms.toFixed(0) : '...' }} ms
               </v-list-item-subtitle>
             </v-list-item>
           </v-list>
@@ -130,7 +130,7 @@ export default Vue.extend({
       speed: 0,
       download_speed: undefined as number | undefined,
       upload_speed: undefined as number | undefined,
-      latency_us: undefined as number | undefined,
+      latency_ms: undefined as number | undefined,
       websocket: undefined as WebSocket | undefined,
       upload_buffer: new ArrayBuffer(100 * 2 ** 20), // Generate 100MB buffer only once
       interval: 0,
@@ -153,10 +153,10 @@ export default Vue.extend({
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
       this.websocket = new WebSocket(`${protocol}://${window.location.host}/network-test/ws`)
       this.websocket.onmessage = (message: MessageEvent): void => {
-        this.latency_us = window.performance.now() - parseInt(message.data, 10)
+        this.latency_ms = window.performance.now() - parseInt(message.data, 10)
       }
       this.websocket.onerror = () => {
-        this.latency_us = -1
+        this.latency_ms = -1
       }
 
       this.interval = setInterval(() => {
