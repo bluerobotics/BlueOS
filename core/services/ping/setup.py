@@ -11,7 +11,7 @@ if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverif
 
 setup(
     name="ping_service",
-    version="0.1.0",
+    version="0.2.0",
     description="Ping service for BlueRobotics' Ping1D and Pìng360",
     license="MIT",
     install_requires=[
