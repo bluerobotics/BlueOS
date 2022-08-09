@@ -18,7 +18,7 @@ class PingManager:
 
     def stop_driver_at_port(self, port: Serial) -> None:
         """Stops the driver instance running for port "port" """
-        ping_at_port = list(filter(lambda ping: ping.port == port, self.drivers.keys()))
+        ping_at_port = [ping for ping in self.drivers if ping.port == port]
         if ping_at_port:
             self.drivers[ping_at_port[0]].stop()
             del self.drivers[ping_at_port[0]]
