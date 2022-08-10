@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import http
+from functools import cache
 from pathlib import Path
 from typing import Any, List, Optional
 
@@ -45,7 +46,7 @@ class Helper:
     LOCALSERVER_CANDIDATES = ["0.0.0.0", "::"]
 
     @staticmethod
-    @temporary_cache(timeout_seconds=60)
+    @cache
     def detect_service(port: int) -> ServiceInfo:
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
 
