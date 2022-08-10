@@ -69,7 +69,7 @@
           <v-text-field
             v-model="bridge.ip"
             :rules="[validate_required_field, is_ip_address]"
-            label="IP address"
+            :label="'IP address ' + bridge_mode"
           />
 
           <v-text-field
@@ -160,6 +160,19 @@ export default Vue.extend({
 
       return system_serial_ports
         .filter((serial_info) => bridget.available_serial_ports.includes(serial_info.name))
+    },
+    bridge_mode(): string {
+      switch (this.bridge.ip) {
+        case '127.0.0.1':
+          return '(Server mode, local only)'
+        case '0.0.0.0':
+          return '(Server mode)'
+        default:
+          if (this.is_ip_address(this.bridge.ip) === true) {
+            return '(Client mode)'
+          }
+          return ''
+      }
     },
     updating_serial_ports(): boolean {
       return bridget.updating_serial_ports
