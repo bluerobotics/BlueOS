@@ -7,6 +7,7 @@ from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION
 
 from pingutils import PingDeviceDescriptor
+from typedefs import DriverStatus, InvalidDeviceDescriptor
 
 
 class PingDriver:
