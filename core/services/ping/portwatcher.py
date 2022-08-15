@@ -13,8 +13,8 @@ MAX_ATTEMPTS = 10
 
 
 class PortWatcher:
-    """Watches the Serial ports on the system, calls set_prober when a port is found,
-    port_post_callback when a port is no longer present"""
+    """Watches the Serial ports on the system.
+    Calls set_prober when a port is found, and port_post_callback when a port is no longer present."""
 
     def __init__(
         self,
@@ -46,7 +46,7 @@ class PortWatcher:
         return True
 
     async def probe_port(self, port: SysFS) -> None:
-        """Attempts to probe port "port" for up to MAX_ATTEMPTS times"""
+        """Attempts to probe "port" for up to MAX_ATTEMPTS times."""
         logging.info(f"Probing port: {port.hwid}")
         if port in self.known_ports:
             warn(f"Developer error: Port is already known, but being probed again: {port}")
@@ -87,7 +87,7 @@ class PortWatcher:
             )
 
     async def start_watching(self) -> None:
-        """Start watching for plugged/unplugged serial devices in the system"""
+        """Start watching for plugged/unplugged serial devices in the system."""
         # TODO: try https://pypi.org/project/inotify/
         while True:
             ports = serial.tools.list_ports.comports()
