@@ -41,13 +41,13 @@ class Ping1DMavlinkDriver:
         self.should_run = should_run
 
     @staticmethod
-    def distance_message(time_boot_ms: int, distance: int, device_id: int, confidence: int) -> Dict[str, Any]:
+    def distance_message(time_boot_ms: int, distance_cm: int, device_id: int, confidence: int) -> Dict[str, Any]:
         return {
             "type": "DISTANCE_SENSOR",
             "time_boot_ms": time_boot_ms,
             "min_distance": 20,
             "max_distance": 5000,
-            "current_distance": int(distance),
+            "current_distance": int(distance_cm),
             "mavtype": {"type": "MAV_DISTANCE_SENSOR_ULTRASOUND"},
             "id": device_id,
             "orientation": {"type": "MAV_SENSOR_ROTATION_PITCH_270"},
