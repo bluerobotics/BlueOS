@@ -9,11 +9,11 @@ from pingutils import PingDeviceDescriptor, PingType
 
 
 class PingProber:
-    """PingProber is responsible for identifying Ping-enabled devices on serial ports"""
+    """PingProber is responsible for identifying Ping-enabled devices on serial ports."""
 
     async def probe(self, port: SysFS) -> Optional[PingDeviceDescriptor]:
-        """Attempts to communicate via Ping Protocol at port "port",
-        calls on_ping_found when a ping device is found"""
+        """Attempts to communicate via Ping Protocol at port "port".
+        Calls on_ping_found callback when a ping device is found."""
         logging.info(f"Probing {port}")
         detected_device = self.detect_device(port)
         if detected_device:
