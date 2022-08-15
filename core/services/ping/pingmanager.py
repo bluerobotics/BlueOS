@@ -27,14 +27,14 @@ class PingManager:
         if ping not in self.drivers:
             self.drivers[ping] = Ping360Driver(ping, -1)
 
-    async def find_next_port(self, base_port: int, direction: int) -> int:
+    async def find_next_port(self, base_port: int, step: int) -> int:
         """
-        Find the next unused udp port, starts on base_port and increments/decrements
-        accordingly to direction
+        Finds the next unused UDP port.
+        Starts at 'base_port' and increments/decrements by 'step'.
         """
         port = base_port
         while udp_port_is_in_use(port):
-            port += direction
+            port += step
             await asyncio.sleep(0.1)
         return port
 
@@ -55,7 +55,7 @@ class PingManager:
         loop.create_task(driver.start())
 
     def devices(self) -> List[PingDeviceDescriptor]:
-        return list(self.drivers.keys())
+        return list(self.drivers)
 
     def update_device_settings(self, sensor_settings: Dict[str, Any]) -> None:
         found = [
