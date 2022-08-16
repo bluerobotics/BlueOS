@@ -42,7 +42,7 @@ jobs:
         pip install wheel # wheel need to be installed before mavproxy
         pip install mavproxy
         pip install pyfakefs pytest-cov pytest-timeout pylint mypy isort black==22.1.0 asyncmock types-requests \
-          pytest-mock nmeasim
+          pytest-mock nmeasim geographiclib
         pip install git+https://github.com/patrickelectric/pykson.git@master_fixes
         ## Install our own libraries
         python ./core/libs/bridges/setup.py install
