@@ -6,6 +6,7 @@ from serial import Serial
 
 from ping1d_driver import Ping1DDriver
 from ping360_driver import Ping360Driver
+from ping360_ethernet_driver import Ping360EthernetDriver
 from pingdriver import PingDriver
 from pingutils import PingDeviceDescriptor, PingType, udp_port_is_in_use
 
@@ -25,7 +26,7 @@ class PingManager:
 
     async def register_ethernet_ping360(self, ping: PingDeviceDescriptor) -> None:
         if ping not in self.drivers:
-            self.drivers[ping] = Ping360Driver(ping, -1)
+            self.drivers[ping] = Ping360EthernetDriver(ping)
 
     async def find_next_port(self, base_port: int, step: int) -> int:
         """

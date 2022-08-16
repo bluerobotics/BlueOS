@@ -12,7 +12,7 @@ from typedefs import DriverStatus
 
 
 class PingDriver:
-    def __init__(self, ping: PingDeviceDescriptor, port: int) -> None:
+    def __init__(self, ping: PingDeviceDescriptor, port: Optional[int]) -> None:
         self.ping = ping
         self.port = port
         self.bridge: Optional[Bridge] = None
