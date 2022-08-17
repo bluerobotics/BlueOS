@@ -222,9 +222,9 @@ class ArduPilotManager(metaclass=Singleton):
             Endpoint(
                 "Internal Link",
                 self.settings.app_name,
-                EndpointType.UDPServer,
+                EndpointType.TCPServer,
                 "127.0.0.1",
-                14001,
+                5777,
                 persistent=True,
                 protected=True,
             ),

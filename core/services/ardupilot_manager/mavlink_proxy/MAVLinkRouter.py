@@ -62,11 +62,10 @@ class MAVLinkRouter(AbstractRouter):
             )
 
         if master_endpoint.connection_type == EndpointType.TCPServer:
-            # The "--tcp-port 0" argument is used to prevent the router from binding TCP port 5760
             return f"{self.binary()} \
-                --tcp-endpoint {master_endpoint.place}:{master_endpoint.argument} --tcp-port 0 {endpoints}"
+                --tcp-endpoint {master_endpoint.place}:{master_endpoint.argument} {endpoints}"
 
-        return f"{self.binary()} {master_endpoint.place}:{master_endpoint.argument} --tcp-port 0 {endpoints}"
+        return f"{self.binary()} {master_endpoint.place}:{master_endpoint.argument} {endpoints}"
 
     @staticmethod
     def name() -> str:
