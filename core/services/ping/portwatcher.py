@@ -9,7 +9,7 @@ from serial.tools.list_ports_linux import SysFS
 from ping360_ethernet_prober import find_ping360_ethernet
 from pingutils import PingDeviceDescriptor, PingType
 
-MAX_ATTEMPTS = 10
+MAX_ATTEMPTS = 3
 
 
 class PortWatcher:
