@@ -17,6 +17,7 @@ class PingDriver:
         self.port = port
         self.bridge: Optional[Bridge] = None
         self.ping.driver = self
+        self.baud: Optional[Baudrate] = None
         self.driver_status = DriverStatus(udp_port=port, mavlink_driver_enabled=False)
 
     def detect_highest_baud(self) -> Baudrate:
@@ -59,11 +60,11 @@ class PingDriver:
         if self.port is None:
             raise NoUDPPortAssignedToPingDriver("PingDriver attempted to stash with no UDP port.")
 
-        baud = self.detect_highest_baud()
+        self.baud = self.detect_highest_baud()
         # Do a ping connection to set the baudrate
-        PingDevice().connect_serial(self.ping.port.device, baud)
+        PingDevice().connect_serial(self.ping.port.device, self.baud)
         set_low_latency(self.ping.port)
-        self.bridge = Bridge(self.ping.port, baud, "0.0.0.0", self.port, automatic_disconnect=False)
+        self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", self.port, automatic_disconnect=False)
 
     def stop(self) -> None:
         """Stops the driver"""
