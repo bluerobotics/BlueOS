@@ -1,7 +1,7 @@
 import asyncio
-import logging
 from typing import Any, Dict, List
 
+from loguru import logger
 from serial import Serial
 
 from ping1d_driver import Ping1DDriver
@@ -43,11 +43,11 @@ class PingManager:
         """Launches a new driver instance for the PingDeviceDescriptor "ping"."""
         driver: PingDriver
         if ping.ping_type == PingType.PING1D:
-            logging.info("Launching ping1d driver")
+            logger.info("Launching ping1d driver")
             port = await self.find_next_port(self.ping1d_base_port, step=-1)
             driver = Ping1DDriver(ping, port)
         elif ping.ping_type == PingType.PING360:
-            logging.info("Launching ping360 driver")
+            logger.info("Launching ping360 driver")
             port = await self.find_next_port(self.ping360_base_port, step=+1)
             driver = Ping360Driver(ping, port)
 

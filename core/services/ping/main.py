@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
-import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
@@ -77,7 +76,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ping Service for Bluerobotics BlueOS")
     args = parser.parse_args()
 
-    logging.basicConfig(handlers=[InterceptHandler()], level=0)
     logger.add(get_new_log_path(SERVICE_NAME))
 
     loop = asyncio.new_event_loop()

@@ -1,9 +1,9 @@
 import asyncio
-import logging
 from typing import Any, Callable, Coroutine, Dict, Optional, Set
 from warnings import warn
 
 import serial.tools.list_ports
+from loguru import logger
 from serial.tools.list_ports_linux import SysFS
 
 from ping360_ethernet_prober import find_ping360_ethernet
@@ -21,7 +21,7 @@ class PortWatcher:
         probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]],
         found_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]],
     ) -> None:
-        logging.info("PortWatcher Started")
+        logger.info("PortWatcher Started")
         self.known_ports: Set[str] = set()
         self.known_ips: Set[str] = set()
 
@@ -47,7 +47,7 @@ class PortWatcher:
 
     async def probe_port(self, port: SysFS) -> None:
         """Attempts to probe "port" for up to MAX_ATTEMPTS times."""
-        logging.info(f"Probing port: {port.hwid}")
+        logger.info(f"Probing port: {port.hwid}")
         if port in self.known_ports:
             warn(f"Developer error: Port is already known, but being probed again: {port}")
             return
@@ -58,7 +58,7 @@ class PortWatcher:
         attempts += 1
         self.probe_attempts_counter[port] = attempts
         if attempts == MAX_ATTEMPTS:
-            logging.info(f"Max number of probing attempts reached for {port}. Giving up.")
+            logger.info(f"Max number of probing attempts reached for {port}. Giving up.")
 
     async def add_ping360(self) -> None:
         ips_list = await find_ping360_ethernet()
@@ -92,7 +92,7 @@ class PortWatcher:
         while True:
             ports = serial.tools.list_ports.comports()
             ports_description = [f"{port.subsystem}:{port.name}" for port in ports]
-            logging.debug(f"Currently detected ports: {ports_description}")
+            logger.debug(f"Currently detected ports: {ports_description}")
             found_ports = set()
             for port in ports:
                 if self.port_should_be_probed(port):
@@ -101,7 +101,7 @@ class PortWatcher:
 
             missing = self.known_ports - found_ports
             for port in missing:
-                logging.info(f"Port lost: {port.hwid}")
+                logger.info(f"Port lost: {port.hwid}")
                 self.known_ports.remove(port)
                 if self.port_lost_callback is not None:
                     self.port_lost_callback(port)

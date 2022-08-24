@@ -1,10 +1,10 @@
-import logging
 from typing import Any, Dict, Optional
 
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate, set_low_latency
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION
+from loguru import logger
 
 from exceptions import InvalidDeviceDescriptor, NoUDPPortAssignedToPingDriver
 from pingutils import PingDeviceDescriptor
@@ -35,7 +35,7 @@ class PingDriver:
             # Ping1D hangs with a baudrate bigger than 3M, going to ignore it for now
             if baud > 3000000:
                 continue
-            logging.debug(f"Trying baud {baud}...")
+            logger.debug(f"Trying baud {baud}...")
             failures = 0
             ping = PingDevice()
             ping.connect_serial(self.ping.port.device, baud)
@@ -47,8 +47,8 @@ class PingDriver:
                         break  # there's no pointing in testing again if we already failed.
             if failures <= max_failures:
                 last_valid_baud = baud
-            logging.debug(f"Baudrate {baud} is {'valid' if baud==last_valid_baud else 'invalid'}")
-        logging.info(f"Highest baudrate detected: {last_valid_baud}")
+            logger.debug(f"Baudrate {baud} is {'valid' if baud==last_valid_baud else 'invalid'}")
+        logger.info(f"Highest baudrate detected: {last_valid_baud}")
         return last_valid_baud
 
     async def start(self) -> None:
@@ -67,7 +67,7 @@ class PingDriver:
 
     def stop(self) -> None:
         """Stops the driver"""
-        logging.info(f"Forcing Ping1d at port {self.port} to stop.")
+        logger.info(f"Forcing Ping1d at port {self.port} to stop.")
         self.ping.driver = None
         if self.bridge:
             self.bridge.stop()

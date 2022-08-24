@@ -1,4 +1,5 @@
 from commonwealth.settings.manager import Manager
+from loguru import logger
 
 from ping1d_mavlink import Ping1DMavlinkDriver
 from pingdriver import PingDriver

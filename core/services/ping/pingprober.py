@@ -1,8 +1,8 @@
-import logging
 from typing import Any, Callable, Coroutine, Optional
 
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION, PING1D_FIRMWARE_VERSION
+from loguru import logger
 from serial.tools.list_ports_linux import SysFS
 
 from pingutils import PingDeviceDescriptor, PingType
@@ -14,7 +14,7 @@ class PingProber:
     async def probe(self, port: SysFS) -> Optional[PingDeviceDescriptor]:
         """Attempts to communicate via Ping Protocol at port "port".
         Calls on_ping_found callback when a ping device is found."""
-        logging.info(f"Probing {port}")
+        logger.info(f"Probing {port}")
         detected_device = self.detect_device(port)
         if detected_device:
             await self.ping_found_callback(detected_device)
@@ -45,8 +45,8 @@ class PingProber:
             driver=None,
             port=port,
         )
-        logging.info("Identified ping device:")
-        logging.info(descriptor)
+        logger.info("Identified ping device:")
+        logger.info(descriptor)
         return descriptor
 
     def detect_device(self, port: SysFS) -> Optional[PingDeviceDescriptor]:
@@ -62,10 +62,10 @@ class PingProber:
 
         except Exception as exception:
             if exception.args[0] and "Errno 16" in exception.args[0]:
-                logging.info(f"Device {port.hwid} is busy. Re-trying...")
+                logger.info(f"Device {port.hwid} is busy. Re-trying...")
                 return None
 
-            logging.info(
+            logger.info(
                 f"An exception has occurred while attempting to"
                 f"talk Ping to device {port.hwid}: {exception}"
                 f"If this is not a Ping device, this is expected."
@@ -80,7 +80,7 @@ class PingProber:
             return self.legacy_detect_ping1d(port)
 
         if device_info.device_type not in [PingType.PING1D, PingType.PING360]:
-            logging.warning(
+            logger.warning(
                 f"PingProber was able to talk Ping to {port.hwid},"
                 f"but the device id {device_info.device_type} is not known"
             )
@@ -98,6 +98,6 @@ class PingProber:
             ethernet_discovery_info=None,
             driver=None,
         )
-        logging.info("Identified ping device:")
-        logging.info(descriptor)
+        logger.info("Identified ping device:")
+        logger.info(descriptor)
         return descriptor
