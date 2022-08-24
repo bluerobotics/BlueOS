@@ -36,7 +36,7 @@ ping_manager = PingManager()
 @version(1, 0)
 def get_sensors() -> Any:
     devices = ping_manager.devices()
-    logger.debug(f"Sensors available: {devices}")
+    logger.info(f"Sensors available: {devices}")
     return [PingDeviceDescriptorModel.from_descriptor(device) for device in ping_manager.devices()]
 
 

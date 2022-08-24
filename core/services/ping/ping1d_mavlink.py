@@ -60,7 +60,7 @@ class Ping1DMavlinkDriver:
 
     ## Send distance_sensor message to autopilot
     async def send_distance_data(self, distance: int, deviceid: int, confidence: int) -> None:
-        logger.debug(f"sending {distance} ({confidence})")
+        logger.info(f"sending {distance} ({confidence})")
         await self.mavlink2rest.send_mavlink_message(
             self.distance_message(
                 int((time.time() - self.time_since_boot) * 1000), int(distance / 10), deviceid, confidence
