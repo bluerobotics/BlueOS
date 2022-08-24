@@ -1,3 +1,6 @@
+import asyncio
+
+from bridges.bridges import Bridge
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
@@ -32,7 +35,16 @@ class Ping1DDriver(PingDriver):
         # self.port shouldn't be None, as we force port to Int in the constructor
         # the following assert makes mypy happy
         assert self.port is not None, "Ping1d port is None."
-        await self.mavlink_driver.drive(self.port)
+        while True:
+            try:
+                logger.info("trying to start mavlink driver")
+                await self.mavlink_driver.drive(self.port)
+            except Exception as error:
+                logger.warning(error)
+                assert self.bridge is not None
+                self.bridge.stop()
+                await asyncio.sleep(5)
+                self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", self.port, automatic_disconnect=False)
 
     def save_settings(self) -> None:
         self.manager.load()  # re-load as other sensors could have changed it
