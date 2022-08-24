@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Optional
 
 from pydantic import BaseModel
@@ -17,9 +16,7 @@ class DriverStatus(BaseModel):
 
 # TODO: This is a ugly workaround to have SysFS working for us
 # Issue: https://github.com/tiangolo/fastapi/issues/4189
-# pylint: disable=too-many-instance-attributes
-@dataclass
-class PingDeviceDescriptorModel:
+class PingDeviceDescriptorModel(BaseModel):
     ping_type: str
     device_id: int
     device_model: int
