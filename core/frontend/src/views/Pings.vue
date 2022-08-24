@@ -18,6 +18,14 @@
           :device="ping"
         />
       </div>
+      <v-container
+        v-if="ping_devices.length === 0"
+        class="text-center"
+      >
+        <p class="text-h6">
+          No Ping devices available.
+        </p>
+      </v-container>
     </div>
   </v-container>
 </template>
