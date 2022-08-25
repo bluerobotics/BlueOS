@@ -7,6 +7,7 @@
       v-if="are_video_devices_available && !updating_devices"
       class="videos-list"
     >
+      <video-diagnostic-helper />
       <template
         v-for="(device, index) in video_devices"
       >
@@ -93,6 +94,7 @@ import { Device, Format, VideoEncodeType } from '@/types/video'
 import back_axios from '@/utils/api'
 
 import VideoDevice from './VideoDevice.vue'
+import VideoDiagnosticHelper from './VideoDiagnosticHelper.vue'
 import VideoUpdater from './VideoUpdater.vue'
 
 const notifier = new Notifier(commander_service)
@@ -103,6 +105,7 @@ export default Vue.extend({
     VideoDevice,
     VideoUpdater,
     SpinningLogo,
+    VideoDiagnosticHelper,
   },
   data() {
     return {
