@@ -37,6 +37,7 @@
             :items="endpoint_types"
             label="Type"
             :rules="[validate_required_field]"
+            @change="updateIp"
           />
 
           <v-text-field
@@ -85,6 +86,7 @@
 import Vue, { PropType } from 'vue'
 
 import autopilot from '@/store/autopilot_manager'
+import beacon from '@/store/beacon'
 import { AutopilotEndpoint, EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { VForm } from '@/types/vuetify'
 import {
@@ -138,6 +140,9 @@ export default Vue.extend({
     form(): VForm {
       return this.$refs.form as VForm
     },
+    user_ip_address(): string {
+      return beacon.client_ip_address
+    },
   },
   methods: {
     validate_required_field(input: string): (true | string) {
@@ -166,6 +171,20 @@ export default Vue.extend({
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
+    },
+    updateIp() {
+      switch (this.edited_endpoint.connection_type) {
+        case EndpointType.udpin:
+        case EndpointType.tcpin:
+          this.edited_endpoint.place = '0.0.0.0'
+          break
+        case EndpointType.udpout:
+        case EndpointType.tcpout:
+          this.edited_endpoint.place = this.user_ip_address
+          break
+        default:
+          this.edited_endpoint.place = '/dev/ttyAMA1' // Serial3
+      }
     },
   },
 })
