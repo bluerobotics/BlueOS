@@ -59,6 +59,7 @@
               label="Stream endpoint"
               placeholder="e.g. udp://192.168.2.2:5600 or rtsp://0.0.0.0:8554/video0"
               :rules="[validate_required_field, is_valid_schema, is_endpoint_combining_correct, no_repetitions]"
+              @change="validateForm"
             />
             <v-btn
               v-if="stream_endpoints.length>1"
@@ -300,10 +301,12 @@ export default Vue.extend({
       this.validateForm()
       this.stream_endpoints.push('')
       this.set_default_address_for_stream(this.stream_endpoints.length - 1, StreamType.UDP)
+      this.validateForm()
     },
     removeEndpoint(index: number) {
       this.validateForm()
       this.stream_endpoints.splice(index, 1)
+      this.validateForm()
     },
     showDialog(state: boolean) {
       this.$emit('visibilityChange', state)
