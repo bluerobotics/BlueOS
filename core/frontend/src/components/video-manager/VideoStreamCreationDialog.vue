@@ -258,6 +258,9 @@ export default Vue.extend({
     vehicle_ip_address(): string {
       return beacon.nginx_ip_address
     },
+    sanitized_stream_name(): string {
+      return this.stream_name.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+    },
   },
   methods: {
     validate_required_field(input: string | null): (true | string) {
@@ -318,13 +321,17 @@ export default Vue.extend({
         case StreamType.UDP:
           if (!this.stream_endpoints[index].includes('udp://')) {
             // Vue.set() forces the update of a nested property
-            Vue.set(this.stream_endpoints, index, `udp://${this.user_ip_address}:5600`)
+            Vue.set(this.stream_endpoints, index, `udp://${this.user_ip_address}:${5600 + index}`)
           }
           break
         case StreamType.RTSP:
           if (!this.stream_endpoints[index].includes('rtsp://')) {
             // Vue.set() forces the update of a nested property
-            Vue.set(this.stream_endpoints, index, `rtsp://${this.vehicle_ip_address}:8554/video0`)
+            Vue.set(
+              this.stream_endpoints,
+              index,
+              `rtsp://${this.vehicle_ip_address}:8554/video_${this.sanitized_stream_name}`,
+            )
           }
           break
         default:
