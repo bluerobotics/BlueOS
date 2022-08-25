@@ -256,6 +256,9 @@ export default Vue.extend({
     user_ip_address(): string {
       return beacon.client_ip_address
     },
+    vehicle_ip_address(): string {
+      return beacon.nginx_ip_address
+    },
   },
   methods: {
     validate_required_field(input: string | null): (true | string) {
@@ -322,7 +325,7 @@ export default Vue.extend({
         case StreamType.RTSP:
           if (!this.stream_endpoints[index].includes('rtsp://')) {
             // Vue.set() forces the update of a nested property
-            Vue.set(this.stream_endpoints, index, 'rtsp://0.0.0.0:8554/video0')
+            Vue.set(this.stream_endpoints, index, `rtsp://${this.vehicle_ip_address}:8554/video0`)
           }
           break
         default:
