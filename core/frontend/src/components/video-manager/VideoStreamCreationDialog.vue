@@ -47,6 +47,13 @@
             :key="index"
             class="d-flex justify-space-between align-center"
           >
+            <v-select
+              :items="[StreamType.UDP, StreamType.RTSP]"
+              :value="endpoint.startsWith('rtsp://') ? StreamType.RTSP : StreamType.UDP"
+              class="mr-10"
+              style="width:20%;"
+              @change="set_default_address_for_stream(index, $event)"
+            />
             <v-text-field
               v-model="stream_endpoints[index]"
               label="Stream endpoint"
@@ -118,8 +125,9 @@
 import Vue, { PropType } from 'vue'
 
 import settings from '@/libs/settings'
+import beacon from '@/store/beacon'
 import {
-  CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, VideoCaptureType,
+  CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, StreamType, VideoCaptureType,
   VideoEncodeType,
 } from '@/types/video'
 import { VForm } from '@/types/vuetify'
@@ -174,6 +182,7 @@ export default Vue.extend({
       stream_endpoints: this.stream.endpoints,
       is_thermal: this.stream.thermal,
       settings,
+      StreamType,
     }
   },
   computed: {
@@ -243,6 +252,9 @@ export default Vue.extend({
         .map((interval) => ({ text: `${Math.round(interval.denominator / interval.numerator)} FPS`, value: interval }))
         .sort((a, b) => a.value.numerator - b.value.numerator)
     },
+    user_ip_address(): string {
+      return beacon.client_ip_address
+    },
   },
   methods: {
     validate_required_field(input: string | null): (true | string) {
@@ -281,6 +293,7 @@ export default Vue.extend({
     addNewEndpoint() {
       this.validateForm()
       this.stream_endpoints.push('')
+      this.set_default_address_for_stream(this.stream_endpoints.length - 1, StreamType.UDP)
     },
     removeEndpoint(index: number) {
       this.validateForm()
@@ -288,6 +301,24 @@ export default Vue.extend({
     },
     showDialog(state: boolean) {
       this.$emit('visibilityChange', state)
+    },
+    set_default_address_for_stream(index: number, stream_type: StreamType) {
+      switch (stream_type) {
+        case StreamType.UDP:
+          if (!this.stream_endpoints[index].includes('udp://')) {
+            // Vue.set() forces the update of a nested property
+            Vue.set(this.stream_endpoints, index, `udp://${this.user_ip_address}:5600`)
+          }
+          break
+        case StreamType.RTSP:
+          if (!this.stream_endpoints[index].includes('rtsp://')) {
+            // Vue.set() forces the update of a nested property
+            Vue.set(this.stream_endpoints, index, 'rtsp://0.0.0.0:8554/video0')
+          }
+          break
+        default:
+          break
+      }
     },
   },
 })

@@ -16,6 +16,11 @@ export enum VideoEncodeType {
   YUYV = 'YUYV',
 }
 
+export enum StreamType {
+  RTSP = 'RTSP',
+  UDP = 'UDP',
+}
+
 export interface Format {
   encode: VideoEncodeType
   sizes: Size[]
