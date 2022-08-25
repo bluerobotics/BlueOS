@@ -58,7 +58,7 @@
               v-model="stream_endpoints[index]"
               label="Stream endpoint"
               placeholder="e.g. udp://192.168.2.2:5600 or rtsp://0.0.0.0:8554/video0"
-              :rules="[validate_required_field, is_valid_schema, is_endpoint_combining_correct]"
+              :rules="[validate_required_field, is_valid_schema, is_endpoint_combining_correct, no_repetitions]"
             />
             <v-btn
               v-if="stream_endpoints.length>1"
@@ -271,6 +271,12 @@ export default Vue.extend({
       }
       if (rtsp_endpoints.length > 0 && udp_endpoints.length > 0) {
         return 'You cannot mix UDP and RTSP endpoints.'
+      }
+      return true
+    },
+    no_repetitions(input: string): (true | string) {
+      if (this.stream_endpoints.filter((x) => x === input).length > 1) {
+        return 'Streams must be unique'
       }
       return true
     },
