@@ -55,9 +55,10 @@ def test_endpoint() -> None:
     assert endpoint.argument == 14550, "Connection argument does not match."
     assert str(endpoint) == "udpout:0.0.0.0:14550", "Connection string does not match."
     assert endpoint.as_dict() == {
+        "__pydantic_initialised__": True,
         "name": "Test endpoint",
         "owner": "pytest",
-        "connection_type": EndpointType.UDPClient,
+        "connection_type": EndpointType.UDPClient.value,
         "place": "0.0.0.0",
         "argument": 14550,
         "persistent": False,
