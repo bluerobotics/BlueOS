@@ -15,18 +15,17 @@ jobs:
   python-tests:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: [3.9] # Our base image has Python 3.9
+    env:
+      python-version: 3.9 # Our base image has Python 3.9
 
     steps:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ env.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ env.python-version }}
 
     - name: Install dependencies
       run: |
