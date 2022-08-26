@@ -207,7 +207,7 @@ class Bootstrapper:
 
         if component == "core":
             try:
-                response = requests.get("http://localhost/version-chooser/v1.0/version/current")
+                response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10)
                 if "core" in response.json()["repository"]:
                     self.core_last_response_time = time.time()
                     return True
