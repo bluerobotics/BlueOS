@@ -55,18 +55,18 @@
 
           <v-checkbox
             v-model="edited_endpoint.persistent"
-            label="Save endpoint between system sessions?"
+            label="Save endpoint between system sessions"
           />
 
           <v-checkbox
             v-model="edited_endpoint.protected"
-            label="Protect endpoint from being deleted?"
+            label="Protect endpoint from being deleted"
             disabled
           />
 
           <v-checkbox
             v-model="edited_endpoint.enabled"
-            label="Start endpoint already enabled?"
+            label="Start endpoint already enabled"
           />
 
           <v-btn
