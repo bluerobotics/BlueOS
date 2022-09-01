@@ -68,7 +68,7 @@
     <video-stream-creation-dialog
       v-model="show_stream_edit_dialog"
       :device="device"
-      finish-button-text="Edit"
+      finish-button-text="Apply"
       :stream="stream_prototype"
       @streamChange="editStream"
     />
