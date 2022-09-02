@@ -227,6 +227,7 @@ class ArduPilotManager(metaclass=Singleton):
                 5777,
                 persistent=True,
                 protected=True,
+                overwrite_settings=True,
             ),
             Endpoint(
                 "Ping360 Heading",
