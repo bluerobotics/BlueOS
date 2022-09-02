@@ -64,6 +64,7 @@ def test_endpoint() -> None:
         "persistent": False,
         "protected": False,
         "enabled": True,
+        "overwrite_settings": False,
     }, "Endpoint dict does not match."
 
 
