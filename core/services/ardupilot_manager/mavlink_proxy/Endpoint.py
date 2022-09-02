@@ -20,6 +20,7 @@ class Endpoint:
     persistent: Optional[bool] = False
     protected: Optional[bool] = False
     enabled: Optional[bool] = True
+    overwrite_settings: Optional[bool] = False
 
     @root_validator
     @classmethod
