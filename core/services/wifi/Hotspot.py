@@ -101,7 +101,7 @@ class HotspotManager:
 
     def base_interface_channel_frequency(self) -> int:
         wireless_interfaces = self.iw.get_interfaces_dict()
-        if not self._base_interface in wireless_interfaces:
+        if self._base_interface not in wireless_interfaces:
             raise RuntimeError("Could not find base interface.")
         last_channel = -1
         time_last_channel_change = time.time()
