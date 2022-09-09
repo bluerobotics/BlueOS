@@ -52,6 +52,14 @@ warn_unreachable = true
 warn_unused_ignores = false
 plugins = "pydantic.mypy"
 
+[tool.ruff]
+ignore = [
+    "E501", # LineTooLong: Let black take care of
+    "F401", # UnusedImport: We are using pylint 'ignore' comments for it
+    "F821", # UndefinedName: We are using pylint 'ignore' comments for it
+    "F841", # UnusedVariable: We are using pylint 'ignore' comments for it
+]
+
 [tool.pylint]
     [tool.pylint.master]
     enable = "all"
