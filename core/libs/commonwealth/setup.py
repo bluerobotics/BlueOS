@@ -24,6 +24,6 @@ setuptools.setup(
         "loguru == 0.5.3",
         "starlette == 0.13.6",
         # Waiting for PRs to get merged in pykson
-        "pykson @ git+https://github.com/patrickelectric/pykson.git@master_fixes",
+        "pykson @ git+https://github.com/patrickelectric/pykson.git@1.0.0",
     ],
 )
