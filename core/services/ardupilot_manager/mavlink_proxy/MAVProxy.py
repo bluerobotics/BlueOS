@@ -62,7 +62,7 @@ class MAVProxy(AbstractRouter):
             EndpointType.TCPServer,
             EndpointType.TCPClient,
         ]
-        if not endpoint.connection_type in valid_connection_types:
+        if endpoint.connection_type not in valid_connection_types:
             raise ValueError(f"Connection_type '{endpoint.connection_type}' not supported by router {MAVProxy.name()}.")
 
     @staticmethod

@@ -257,7 +257,7 @@ class ArduPilotManager(metaclass=Singleton):
 
     async def change_board(self, board: FlightController) -> None:
         logger.info(f"Trying to run with '{board.name}'.")
-        if not board in self.available_boards():
+        if board not in self.available_boards():
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
         self.set_preferred_board(board)
         await self.kill_ardupilot()

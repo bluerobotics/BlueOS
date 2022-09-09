@@ -35,14 +35,14 @@ class Endpoint:
         ]:
             if not (validators.domain(place) or validators.ipv4(place) or validators.ipv6(place)):
                 raise ValueError(f"Invalid network address: {place}")
-            if not argument in range(1, 65536):
+            if argument not in range(1, 65536):
                 raise ValueError(f"Ports must be in the range 1:65535. Received {argument}.")
             return values
 
         if connection_type == EndpointType.Serial.value:
             if not place.startswith("/") or place.endswith("/"):
                 raise ValueError(f"Bad serial address: {place}. Make sure to use an absolute path.")
-            if not argument in VALID_SERIAL_BAUDRATES:
+            if argument not in VALID_SERIAL_BAUDRATES:
                 raise ValueError(f"Invalid serial baudrate: {argument}. Valid option are {VALID_SERIAL_BAUDRATES}.")
             return values
 
