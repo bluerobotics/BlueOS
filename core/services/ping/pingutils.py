@@ -25,7 +25,7 @@ class PingType(IntEnum):
         }
         try:
             return names[self.value]
-        except Exception as _:
+        except Exception:
             logger.error(f"Wrong ping type: {self.value}")
             return "ErrorType"
 
