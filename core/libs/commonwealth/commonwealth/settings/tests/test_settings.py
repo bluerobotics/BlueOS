@@ -11,16 +11,22 @@ class Animal(pykson.JsonObject):
     name: str = pykson.StringField()
     animal_type: str = pykson.StringField()
 
-    def __init__(self, *args: str, **kwargs: int) -> None:
+    def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
 
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
-    animal = pykson.ObjectField(Animal, default_value=Animal("bilica", "dog"))
+    animal = pykson.ObjectField(
+        Animal,
+        default_value=Animal(
+            name="bilica",
+            animal_type="dog",
+        ),
+    )
     first_variable = pykson.IntegerField(default_value=42)
 
-    def __init__(self, *args: str, **kwargs: int) -> None:
+    def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.VERSION = SettingsV1.VERSION
@@ -44,9 +50,15 @@ class SettingsV1Expanded(SettingsV1):
 class SettingsV2(settings.BaseSettings):
     VERSION = 2
     first_variable = pykson.IntegerField(default_value=66)
-    new_animal_name = pykson.ObjectField(Animal, default_value=Animal("bilica", "dog"))
+    new_animal = pykson.ObjectField(
+        Animal,
+        default_value=Animal(
+            name="bilica",
+            animal_type="dog",
+        ),
+    )
 
-    def __init__(self, *args: str, **kwargs: int) -> None:
+    def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.VERSION = SettingsV2.VERSION
