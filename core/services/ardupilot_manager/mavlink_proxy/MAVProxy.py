@@ -1,6 +1,6 @@
 import re
 import subprocess
-from typing import Callable, Optional
+from typing import Optional
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
@@ -22,7 +22,8 @@ class MAVProxy(AbstractRouter):
         return None
 
     def assemble_command(self, master_endpoint: Endpoint) -> str:
-        serial_endpoint_as_input: Callable[[Endpoint], str] = lambda endpoint: f"{endpoint.place},{endpoint.argument}"
+        def serial_endpoint_as_input(endpoint: Endpoint) -> str:
+            return f"{endpoint.place},{endpoint.argument}"
 
         # Convert endpoint format to mavproxy format
         def convert_endpoint(endpoint: Endpoint) -> str:
