@@ -1,15 +1,21 @@
 import pathlib
 import tempfile
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pykson  # type: ignore
 
 from .. import settings
 
 
+class JsonExample(pykson.JsonObject):
+    name = pykson.StringField()
+
+
 class Animal(pykson.JsonObject):
     name: str = pykson.StringField()
     animal_type: str = pykson.StringField()
+    parts: List[str] = pykson.ListField(item_type=str)
+    animal_json: List[pykson.JsonObject] = pykson.ObjectListField(item_type=JsonExample)
 
     def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -22,6 +28,8 @@ class SettingsV1(settings.BaseSettings):
         default_value=Animal(
             name="bilica",
             animal_type="dog",
+            parts=["finger", "eyes"],
+            animal_json=[JsonExample(name="Json!")],
         ),
     )
     first_variable = pykson.IntegerField(default_value=42)
@@ -74,8 +82,44 @@ class SettingsV2(settings.BaseSettings):
         data["first_variable"] = self.first_variable
 
         # Update variable name
-        data["new_animal_name"] = data["animal"]
+        data["new_animal"] = data["animal"]
         data.pop("animal")
+
+
+class SettingsV3(SettingsV2):
+    VERSION = 3
+
+    def __init__(self, *args: str, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.VERSION = SettingsV3.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV3.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV3.VERSION:
+            super().migrate(data)
+
+        data["VERSION"] = SettingsV3.VERSION
+
+
+class SettingsV4(SettingsV3):
+    VERSION = 4
+
+    def __init__(self, *args: str, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.VERSION = SettingsV4.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV4.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV4.VERSION:
+            super().migrate(data)
+
+        data["VERSION"] = SettingsV4.VERSION
 
 
 def test_basic_settings_save_load() -> None:
@@ -83,6 +127,10 @@ def test_basic_settings_save_load() -> None:
     settings_v1 = SettingsV1()
     assert settings_v1.VERSION == 1
     assert settings_v1.first_variable == 42
+    assert settings_v1.animal.name == "bilica"
+    assert settings_v1.animal.animal_type == "dog"
+    assert settings_v1.animal.parts == ["finger", "eyes"]
+    assert settings_v1.animal.animal_json[0].name == "Json!"
 
     # pylint: disable=consider-using-with
     temporary_file = tempfile.NamedTemporaryFile().name
@@ -151,10 +199,26 @@ def test_simple_migration_settings_save_load() -> None:
     # Check if migration works
     settings_v2 = SettingsV2()
     settings_v2.load(file_path)
+    settings_v2.save(file_path)
 
     assert settings_v1.first_variable == settings_v2.first_variable
-    assert settings_v1.animal.name == settings_v2.new_animal_name.name
-    assert settings_v1.animal.animal_type == settings_v2.new_animal_name.animal_type
+    assert settings_v1.animal.name == settings_v2.new_animal.name
+    assert settings_v1.animal.animal_type == settings_v2.new_animal.animal_type
+
+    settings_v3 = SettingsV3()
+    settings_v3.load(file_path)
+    settings_v3.save(file_path)
+
+    settings_v4 = SettingsV4()
+    settings_v4.load(file_path)
+    settings_v4.save(file_path)
+
+    assert settings_v2.first_variable == settings_v4.first_variable
+    assert settings_v2.new_animal.name == settings_v4.new_animal.name
+    assert settings_v2.new_animal.animal_type == settings_v4.new_animal.animal_type
+    assert settings_v2.new_animal.parts[0] == settings_v4.new_animal.parts[0]
+    assert settings_v2.new_animal.parts[1] == settings_v4.new_animal.parts[1]
+    assert settings_v2.new_animal.animal_json[0].name == settings_v4.new_animal.animal_json[0].name
 
 
 def test_simple_settings_expanded_save_load() -> None:
