@@ -35,6 +35,10 @@ dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-
 echo "Running black.."
 black --check --diff "$repository_path"
 
+# Faster than pylint to check for issues
+echo "Running ruff.."
+ruff "$repository_path"
+
 echo "Running pylint.."
 pylint $(git ls-files '*.py')
 
