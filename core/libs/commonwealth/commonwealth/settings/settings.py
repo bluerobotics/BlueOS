@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import pykson  # type: ignore
 from loguru import logger
-from pykson import Pykson
+from pykson import Field, Pykson
 
 
 class BadSettingsFile(ValueError):
@@ -30,6 +30,16 @@ class BaseSettings(pykson.JsonObject):
     VERSION = pykson.IntegerField(default_value=0)
 
     def __init__(self, *args: str, **kwargs: int) -> None:
+        # Make sure that all attributes are derivated from Pykson.Field
+        for key, item in type(self).__dict__.items():
+            # Remove default attributes and version tracker from validation
+            if key in ["__doc__", "__module__", "VERSION"]:
+                continue
+            if callable(item):
+                continue
+            assert isinstance(
+                item, Field
+            ), f"Class attributes must be from Pykson.Field or derivated: {type(item)}: {key}"
         super().__init__(*args, **kwargs)
 
     @abc.abstractmethod
