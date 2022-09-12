@@ -29,7 +29,7 @@ class SettingsV1(settings.BaseSettings):
             name="bilica",
             animal_type="dog",
             parts=["finger", "eyes"],
-            animal_json=[JsonExample(name="Json!")],
+            animal_json=[{"name": "Json!"}],
         ),
     )
     first_variable = pykson.IntegerField(default_value=42)
