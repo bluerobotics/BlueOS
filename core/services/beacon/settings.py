@@ -93,7 +93,7 @@ class ServiceTypes(JsonObject):
 
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
-    default = ObjectField(DefaultSettings())
+    default = ObjectField(DefaultSettings)
     blacklist = ListField(item_type=str)
     interfaces = ObjectListField(Interface)
     advertisement_types = ObjectListField(ServiceTypes)
