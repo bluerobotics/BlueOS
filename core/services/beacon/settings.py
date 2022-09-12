@@ -153,3 +153,28 @@ class SettingsV2(SettingsV1):
             logger.error(f"unable to update SettingsV1 to SettingsV2: {e}")
 
         data["VERSION"] = SettingsV2.VERSION
+
+
+class SettingsV3(SettingsV2):
+    VERSION = 3
+
+    def __init__(self, *args: str, **kwargs: int) -> None:
+        super().__init__(*args, **kwargs)
+        self.VERSION = SettingsV3.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV3.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV3.VERSION:
+            super().migrate(data)
+
+        try:
+            if not any(interface["name"] == "uap0" for interface in data["interfaces"]):
+                data["interfaces"].append(
+                    {"name": "uap0", "domain_names": ["blueos-hotspot"], "advertise": ["_http"], "ip": "ips[0]"}
+                )
+        except Exception as e:
+            logger.error(f"unable to update SettingsV2 to SettingsV3: {e}")
+
+        data["VERSION"] = SettingsV3.VERSION
