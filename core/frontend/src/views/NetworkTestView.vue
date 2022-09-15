@@ -97,7 +97,7 @@
 </template>
 
 <script lang="ts">
-import { differenceInSeconds } from 'date-fns'
+import { differenceInMilliseconds } from 'date-fns'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
@@ -237,13 +237,10 @@ export default Vue.extend({
             start_time = new Date().getTime()
             return
           }
-          const seconds = differenceInSeconds(new Date().getTime(), start_time)
-          // Avoid huge speeds on start
-          if (seconds < 2) {
-            return
-          }
+          const seconds = differenceInMilliseconds(new Date().getTime(), start_time) * 1e-3
           const speed_Mb = 8 * (progress_event.loaded / seconds / 2 ** 20)
-          this.upload_speed = speed_Mb
+          const alpha_factor = 0.7
+          this.upload_speed = (this.upload_speed ?? 0) * (1 - alpha_factor) + alpha_factor * speed_Mb
           const percentage = 100 * (progress_event.loaded / progress_event.total)
           console.debug(
             `network-test: Upload: ${speed_Mb.toFixed(2)}Mbps ${percentage.toFixed(2)}% ${seconds.toFixed(2)}s`,
@@ -273,13 +270,10 @@ export default Vue.extend({
             start_time = new Date().getTime()
             return
           }
-          const seconds = differenceInSeconds(new Date().getTime(), start_time)
-          // Avoid huge speeds on start
-          if (seconds < 2) {
-            return
-          }
+          const seconds = differenceInMilliseconds(new Date().getTime(), start_time) * 1e-3
           const speed_Mb = 8 * (progress_event.loaded / seconds / 2 ** 20)
-          this.download_speed = speed_Mb
+          const alpha_factor = 0.7
+          this.download_speed = (this.download_speed ?? 0) * (1 - alpha_factor) + alpha_factor * speed_Mb
           const percentage = 100 * (progress_event.loaded / progress_event.total)
           console.debug(
             `network-test: Download: ${speed_Mb.toFixed(2)}Mbps ${percentage.toFixed(2)}% ${seconds.toFixed(2)}s`,
