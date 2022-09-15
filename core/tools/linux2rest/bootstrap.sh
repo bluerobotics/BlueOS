@@ -13,6 +13,6 @@ if [[ "$(uname -m)" == "x86_64"* ]]; then
 fi
 
 # Download and install necessary libraries for linux2rest
-DEBIAN_FRONTEND=noninteractive apt --yes install libudev-dev
+DEBIAN_FRONTEND=noninteractive apt update && apt install -y libudev-dev
 wget "$REMOTE_BINARY_URL" -O "$LOCAL_BINARY_PATH"
 chmod +x "$LOCAL_BINARY_PATH"

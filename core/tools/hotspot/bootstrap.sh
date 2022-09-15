@@ -5,6 +5,7 @@ set -e
 
 # Hostapd turns a network wireless interface into a wifi hotspot
 echo "Installing hostapd."
+apt update
 apt install -y --no-install-recommends hostapd
 
 # Iw and net-tools are used by the hotspot manager to configure the network interfaces
