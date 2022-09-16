@@ -4,6 +4,7 @@ import VueRouter, { RouteConfig } from 'vue-router'
 import AvailableServicesView from '../views/AvailableServicesView.vue'
 import BridgesView from '../views/BridgesView.vue'
 import Endpoint from '../views/EndpointView.vue'
+import ExtensionView from '../views/ExtensionView.vue'
 import FileBrowserView from '../views/FileBrowserView.vue'
 import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
@@ -94,6 +95,11 @@ const routes: Array<RouteConfig> = [
     path: '/tools/network-test',
     name: 'NetworkTest',
     component: NetworkTestView,
+  },
+  {
+    path: '/extensions/:port',
+    name: 'Extensions',
+    component: ExtensionView,
   },
 ]
 

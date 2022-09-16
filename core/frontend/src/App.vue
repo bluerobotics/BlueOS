@@ -87,7 +87,6 @@
                   :key="j"
                   :to="menu.extension ? undefined : submenu.route"
                   :href="menu.extension ? submenu.route : undefined"
-                  :target="menu.extension ? '_blank' : undefined"
                 >
                   <v-list-item-icon>
                     <v-icon
@@ -233,7 +232,7 @@ export default Vue.extend({
       const submenus = services_scanner.services
         .filter((service) : boolean => service.metadata !== null)
         .map((service) => {
-          const address = `${window.location.protocol}//${window.location.hostname}:${service.port}`
+          const address = `/extensions/${service.port}`
           return {
             title: service.metadata?.name ?? 'Service name',
             icon: service.metadata?.icon?.startsWith('/')
