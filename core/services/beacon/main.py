@@ -128,7 +128,7 @@ class Beacon:
 
         available_networks = []
         for interface in stats.keys():
-            if any(interface.startswith(filter) for filter in self.settings.blacklist):
+            if any(interface.startswith(filter_) for filter_ in self.settings.blacklist):
                 continue
             if interface in stats and getattr(stats[interface], "isup"):
                 available_networks.append(interface)
