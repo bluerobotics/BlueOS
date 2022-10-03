@@ -29,6 +29,7 @@ SERVICES=(
     cable_guy
     commander
     helper
+    kraken
     nmea_injector
     ping
     versionchooser
