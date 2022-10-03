@@ -4,6 +4,7 @@ import VueRouter, { RouteConfig } from 'vue-router'
 import AvailableServicesView from '../views/AvailableServicesView.vue'
 import BridgesView from '../views/BridgesView.vue'
 import Endpoint from '../views/EndpointView.vue'
+import ExtensionManagerView from '../views/ExtensionManagerView.vue'
 import ExtensionView from '../views/ExtensionView.vue'
 import FileBrowserView from '../views/FileBrowserView.vue'
 import GeneralAutopilot from '../views/GeneralAutopilot.vue'
@@ -100,6 +101,11 @@ const routes: Array<RouteConfig> = [
     path: '/extensions/:port',
     name: 'Extensions',
     component: ExtensionView,
+  },
+  {
+    path: '/tools/extensions-manager',
+    name: 'Extension Manager',
+    component: ExtensionManagerView,
   },
 ]
 

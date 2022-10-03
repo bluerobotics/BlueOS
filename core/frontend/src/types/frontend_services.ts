@@ -111,3 +111,10 @@ export const ping_service: Service = {
   company: 'Blue Robotics',
   version: '0.2.0',
 }
+
+export const kraken_service: Service = {
+  name: 'Kraken service',
+  description: 'Service to manage BlueOS extensions',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
