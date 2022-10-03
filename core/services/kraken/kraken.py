@@ -47,7 +47,10 @@ class Kraken:
         await container.start()
 
     async def check(self, extension: Extension) -> None:
-        if not any(container["Names"][0][1:] == extension.container_name() for container in self.running_containers):
+        extension_name = extension.container_name()
+        # Names is a list of of lists like ["[['/blueos-core'], ..."]
+        # We assume which container has only one tag, and remove '/' using the [1:] slicing
+        if not any(container["Names"][0][1:] == extension_name for container in self.running_containers):
             await self.start_extension(extension)
 
     def load_settings(self) -> None:

@@ -34,6 +34,9 @@ module.exports = {
       '^/helper': {
         target: SERVER_ADDRESS,
       },
+      '^/kraken': {
+        target: SERVER_ADDRESS,
+      },
       '^/nmea-injector': {
         target: SERVER_ADDRESS,
       },
