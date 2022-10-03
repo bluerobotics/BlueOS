@@ -25,6 +25,7 @@ fi
 SERVICES=(
     'beacon',"$SERVICES_PATH/beacon/main.py"
     'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
+    'kraken',"$SERVICES_PATH/kraken/main.py"
     'wifi',"$SERVICES_PATH/wifi/main.py --socket wlan0"
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'bridget',"$SERVICES_PATH/bridget/main.py"
