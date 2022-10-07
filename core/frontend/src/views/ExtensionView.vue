@@ -14,10 +14,10 @@ export default Vue.extend({
   components: {
     Iframe,
   },
-  data() {
-    return {
-      service_path: `${window.location.protocol}//${window.location.hostname}:${this.$route.params.port}`,
-    }
+  computed: {
+    service_path() {
+      return `${window.location.protocol}//${window.location.hostname}:${this.$route.params.port}`
+    },
   },
 })
 </script>
