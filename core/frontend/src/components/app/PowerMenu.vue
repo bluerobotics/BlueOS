@@ -205,7 +205,7 @@ export default Vue.extend({
       })
         .then(() => {
           // reload(true) forces the browser to fetch the page again
-          setTimeout(() => { window.location.reload(true) }, 1000)
+          setTimeout(() => { window.location.reload() }, 1000)
         })
         .catch((error) => {
           // Backend is not available yet, check again soon

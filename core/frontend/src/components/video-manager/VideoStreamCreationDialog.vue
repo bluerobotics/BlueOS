@@ -175,8 +175,7 @@ export default Vue.extend({
       if (this.selected_encode === null
         || this.selected_size === null
         || this.selected_interval === null
-        || this.stream_name === ''
-        || this.stream_endpoints === ['']) {
+        || this.stream_name === '') {
         return null
       }
       return {
