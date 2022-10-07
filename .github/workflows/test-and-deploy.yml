@@ -72,7 +72,7 @@ jobs:
       - name: Yarn install
         uses: borales/actions-yarn@v3.0.0
         with:
-          cmd: --cwd ./core/frontend install
+          cmd: --cwd ./core/frontend install --frozen-lockfile
 
       - name: Yarn lint
         uses: borales/actions-yarn@v3.0.0
