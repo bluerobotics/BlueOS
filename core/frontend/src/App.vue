@@ -165,8 +165,8 @@
 import Vue from 'vue'
 
 import settings from '@/libs/settings'
-import { convertGitDescribeToUrl } from '@/utils/helper_functions.ts'
-import updateTime from '@/utils/update_time.ts'
+import { convertGitDescribeToUrl } from '@/utils/helper_functions'
+import updateTime from '@/utils/update_time'
 
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import ErrorMessage from './components/app/ErrorMessage.vue'
