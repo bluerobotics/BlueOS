@@ -211,7 +211,7 @@ export default Vue.extend({
         wifi.setNetworkStatus(null)
         this.password = ''
         this.force_password = false
-      } catch (error) {
+      } catch (error: any) {
         this.connection_status = ConnectionStatus.Failed
         let message = error.response?.data?.detail ?? error.message
         message = message.concat('\n', 'Please check if the password is correct.')

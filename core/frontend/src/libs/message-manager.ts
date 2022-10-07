@@ -21,7 +21,7 @@ class MessageManager {
           console.warn(message)
           break
         case MessageLevel.Critical:
-          console.exception(message)
+          console.error(message)
           break
         default:
           console.log(message)
