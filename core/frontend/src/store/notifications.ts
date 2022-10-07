@@ -39,7 +39,7 @@ class NotificationsStore extends VuexModule {
         console.warn(notification.message)
         break
       case NotificationLevel.Critical:
-        console.exception(notification.message)
+        console.error(notification.message)
         break
       default:
         console.warn(`A new notification level was added but we have not updated
