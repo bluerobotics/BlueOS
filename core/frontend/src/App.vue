@@ -85,7 +85,7 @@
                 <v-list-item
                   v-if="!submenu.advanced || (submenu.advanced && settings.is_pirate_mode)"
                   :key="j"
-                  :to="menu.extension ? undefined : submenu.route"
+                  :to="submenu.route"
                   :href="menu.extension ? submenu.route : undefined"
                 >
                   <v-list-item-icon>
