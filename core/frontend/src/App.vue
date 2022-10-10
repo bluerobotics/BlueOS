@@ -76,7 +76,19 @@
               no-action
             >
               <template #activator>
-                <v-list-item-title v-text="menu.title" />
+                <v-list-item-title>
+                  {{ menu.title }}
+                  <v-chip
+                    v-if="menu.beta"
+                    class="ma-2 pl-2 pr-2"
+                    color="red"
+                    pill
+                    x-small
+                    text-color="white"
+                  >
+                    Alpha
+                  </v-chip>
+                </v-list-item-title>
               </template>
 
               <template
@@ -248,6 +260,7 @@ export default Vue.extend({
         title: 'Extensions',
         icon: 'mdi-puzzle',
         extension: true,
+        beta: true,
         submenus: [
           {
             title: 'Extensions Manager',
