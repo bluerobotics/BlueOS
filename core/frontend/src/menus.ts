@@ -130,6 +130,7 @@ export interface menuItem {
   submenus?: menuItem[]
   advanced?: boolean
   text?: string
+  beta?: boolean
 }
 
 export default menus
