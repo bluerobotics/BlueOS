@@ -77,18 +77,27 @@ class AsyncRunner:
 class Beacon:
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
-        self.manager = Manager(SERVICE_NAME, SettingsV3)
+        try:
+            self.manager = Manager(SERVICE_NAME, SettingsV3)
+        except Exception as e:
+            logger.warning(f"failed to load configuration file ({e}), loading defaults")
+            self.load_default_settings()
+
         # manager still returns "valid" settings even if file is absent, so we check for the "default" field
         # TODO: fix after https://github.com/bluerobotics/BlueOS-docker/issues/880 is solved
         if self.manager.settings.default is None:
             logger.warning("No configuration found, loading defaults...")
-            current_folder = pathlib.Path(__file__).parent.resolve()
-            default_settings_file = current_folder / "default-settings.json"
-            logger.debug("loading settings from ", default_settings_file)
-            self.manager.settings = self.manager.load_from_file(SettingsV3, default_settings_file)
-            self.manager.save()
+            self.load_default_settings()
         self.settings = self.manager.settings
         self.service_types = self.load_service_types()
+
+    def load_default_settings(self) -> None:
+        current_folder = pathlib.Path(__file__).parent.resolve()
+        default_settings_file = current_folder / "default-settings.json"
+        logger.debug("loading settings from ", default_settings_file)
+        self.manager = Manager(SERVICE_NAME, SettingsV3, load=False)
+        self.manager.settings = self.manager.load_from_file(SettingsV3, default_settings_file)
+        self.manager.save()
 
     def load_service_types(self) -> Dict[str, ServiceTypes]:
         """
