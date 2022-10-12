@@ -10,7 +10,7 @@ from loguru import logger
 
 from settings import Extension, SettingsV1
 
-REPO_URL = "https://williangalvani.github.io/BlueOS-Extensions-Repository/manifest.json"
+REPO_URL = "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json"
 SERVICE_NAME = "Kraken"
 
 
