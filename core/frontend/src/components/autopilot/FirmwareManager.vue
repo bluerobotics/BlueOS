@@ -84,7 +84,7 @@
           <v-select
             v-model="chosen_vehicle"
             :items="vehicle_types"
-            label="Vehicle"
+            label="Vehicle type"
             required
             class="ma-1 pa-0"
             @change="updateAvailableFirmwares"
