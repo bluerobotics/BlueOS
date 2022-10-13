@@ -152,7 +152,7 @@ def test_basic_settings_save_load() -> None:
     assert settings_manager.settings.version_3_variable == 222
     assert settings_manager.settings.version_12_variable == 14
 
-    assert len(os.listdir(config_path.joinpath("ManagerTest"))) == 4
+    assert len(os.listdir(config_path.joinpath("managertest"))) == 4
 
 
 def test_fallback_settings_save_load() -> None:
