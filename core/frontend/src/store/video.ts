@@ -126,7 +126,7 @@ class VideoStore extends VuexModule {
       params: {
         all: true,
       },
-      timeout: 1000,
+      timeout: 5000,
     })
       .then(() => {
         message_manager.emitMessage(MessageLevel.Success, 'Stream configuration set to factory default')
