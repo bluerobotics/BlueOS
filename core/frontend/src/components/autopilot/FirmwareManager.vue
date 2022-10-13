@@ -235,7 +235,7 @@ export default Vue.extend({
   },
   computed: {
     firmware_selector_label(): string {
-      return this.loading_firmware_options ? 'Fetching available firmwares...' : 'Firmware'
+      return this.loading_firmware_options ? 'Fetching available firmware...' : 'Firmware'
     },
     loading_firmware_options(): boolean {
       return this.cloud_firmware_options_status === CloudFirmwareOptionsStatus.Fetching
