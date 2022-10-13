@@ -1,13 +1,13 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
+import Autopilot from '../views/Autopilot.vue'
 import AvailableServicesView from '../views/AvailableServicesView.vue'
 import BridgesView from '../views/BridgesView.vue'
 import Endpoint from '../views/EndpointView.vue'
 import ExtensionManagerView from '../views/ExtensionManagerView.vue'
 import ExtensionView from '../views/ExtensionView.vue'
 import FileBrowserView from '../views/FileBrowserView.vue'
-import GeneralAutopilot from '../views/GeneralAutopilot.vue'
 import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
 import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
@@ -28,9 +28,9 @@ const routes: Array<RouteConfig> = [
     component: Main,
   },
   {
-    path: '/vehicle/general',
-    name: 'GeneralAutopilot',
-    component: GeneralAutopilot,
+    path: '/vehicle/autopilot',
+    name: 'Autopilot',
+    component: Autopilot,
   },
   {
     path: '/vehicle/pings',

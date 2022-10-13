@@ -110,7 +110,7 @@ import back_axios from '@/utils/api'
 const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
-  name: 'GeneralAutopilot',
+  name: 'Autopilot',
   components: {
     BoardChangeDialog,
     FirmwareManager,
