@@ -21,9 +21,9 @@ class Manager:
         assert project_name, "project_name should be not empty"
         assert issubclass(settings_type, BaseSettings), "settings_type should use BaseSettings as subclass"
 
-        self.project_name = project_name
+        self.project_name = project_name.lower()
         self.config_folder = (
-            config_folder.joinpath(project_name)
+            config_folder.joinpath(self.project_name)
             if config_folder
             else pathlib.Path(appdirs.user_config_dir(self.project_name))
         )
