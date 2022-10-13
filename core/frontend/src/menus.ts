@@ -9,11 +9,11 @@ const menus = [
     icon: 'mdi-submarine',
     submenus: [
       {
-        title: 'General',
+        title: 'Autopilot',
         icon: 'mdi-image-filter-center-focus-strong',
-        route: '/vehicle/general',
+        route: '/vehicle/autopilot',
         advanced: false,
-        text: `General Autopilot settings. Allows you to start/stop Ardupilot (if using Navigator or SITL), or update
+        text: `Autopilot settings. Allows you to start/stop Ardupilot (if using Navigator or SITL), or update
         the firmware of your flight controller.`,
       },
       {
