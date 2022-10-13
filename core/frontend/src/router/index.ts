@@ -28,22 +28,22 @@ const routes: Array<RouteConfig> = [
     component: Main,
   },
   {
-    path: '/autopilot/general',
+    path: '/vehicle/general',
     name: 'GeneralAutopilot',
     component: GeneralAutopilot,
   },
   {
-    path: '/autopilot/pings',
+    path: '/vehicle/pings',
     name: 'Pings',
     component: Pings,
   },
   {
-    path: '/autopilot/logs',
+    path: '/vehicle/logs',
     name: 'LogManager',
     component: LogView,
   },
   {
-    path: '/autopilot/endpoints',
+    path: '/vehicle/endpoints',
     name: 'Endpoints',
     component: Endpoint,
   },
@@ -63,7 +63,7 @@ const routes: Array<RouteConfig> = [
     component: VersionChooser,
   },
   {
-    path: '/autopilot/video-manager',
+    path: '/vehicle/video-manager',
     name: 'VideoManager',
     component: VideoManagerView,
   },
