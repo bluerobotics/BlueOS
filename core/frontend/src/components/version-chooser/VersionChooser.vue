@@ -95,30 +95,10 @@
         />
       </v-card>
     </v-col>
-    <v-dialog
-      v-model="show_pull_output"
-      width="auto"
-    >
-      <v-card>
-        <v-card-title class="text-h5 grey lighten-2 black--text">
-          Pulling new version
-        </v-card-title>
-
-        <v-card-text>
-          <p
-            style="white-space: pre; font-family:monospace;"
-          >
-            {{ pull_output }}
-          </p>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions>
-          <v-spacer />
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <pull-progress
+      :progress="pull_output"
+      :show="show_pull_output"
+    />
     <v-card
       v-if="settings.is_pirate_mode"
       max-width="900"
@@ -181,10 +161,12 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import PullProgress from '@/components/utils/PullProgress.vue'
 import settings from '@/libs/settings'
 import { Dictionary } from '@/types/common'
 import { Version, VersionsQuery, VersionType } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
+import PullTracker from '@/utils/pull_tracker'
 // Version Chooser Utils
 import * as VCU from '@/utils/version_chooser'
 
@@ -196,6 +178,8 @@ export default Vue.extend({
   components: {
     SpinningLogo,
     VersionCard,
+    PullProgress,
+
   },
   data() {
     return {
@@ -381,11 +365,12 @@ export default Vue.extend({
       this.pull_output = 'Fetching remote image...'
       this.show_pull_output = true
       const [repository, tag] = fullname.split(':')
-      const layer_status: Dictionary<string> = {}
-      const layers: string[] = []
-      const layer_progress: Dictionary<string> = {}
-      let overall_status = ''
-      let left_over_data = ''
+      const tracker = new PullTracker(() => {
+        setTimeout(() => {
+          this.show_pull_output = false
+          this.setVersion(fullname)
+        }, 1000)
+      })
 
       await back_axios({
         url: '/version-chooser/v1.0/version/pull/',
@@ -395,53 +380,8 @@ export default Vue.extend({
           tag,
         },
         onDownloadProgress: (progressEvent) => {
-          // dataChunk contains the data that have been obtained so far (the whole data so far)..
-          // The received data is descbribed at
-          // https://docker-py.readthedocs.io/en/stable/api.html#docker.api.image.ImageApiMixin.pull
-          const dataChunk = progressEvent.currentTarget.response
-          // As the data consists of multiple jsons, the following like is a hack to split them
-          const dataList = (left_over_data + dataChunk.replaceAll('}{', '}\n\n{')).split('\n\n')
-          left_over_data = ''
-
-          for (const line of dataList) {
-            try {
-              const data = JSON.parse(line)
-              if ('id' in data) {
-                const { id } = data
-                if (!layers.includes(id)) {
-                  layers.push(id)
-                }
-                if ('progress' in data) {
-                  layer_progress[id] = data.progress
-                }
-                if ('status' in data) {
-                  layer_status[id] = data.status
-                }
-              } else {
-                overall_status = data.status
-                // Axios returns the promise too early (before the pull is done)
-                // so we check the overall docker status instead
-                if (overall_status.includes('Downloaded newer image for')) {
-                  setTimeout(() => {
-                    this.show_pull_output = false
-                    this.setVersion(fullname)
-                  }, 1000)
-                }
-                if (overall_status.includes('Image is up to date')) {
-                  setTimeout(() => { this.setVersion(fullname) }, 1000)
-                }
-              }
-            } catch (error) {
-              left_over_data = line
-            }
-          }
-          this.pull_output = ''
-          layers.forEach((image) => {
-            this.pull_output = `${this.pull_output}[${image}] ${layer_status[image]}  ${layer_progress[image] || ''}\n`
-          })
-          this.pull_output = `${this.pull_output}${overall_status}\n`
-          // Force it to true again in case the user tried to close the dialog
-          this.show_pull_output = true
+          tracker.digestNewData(progressEvent)
+          this.pull_output = tracker.pull_output
         },
       }).then(() => { this.waitForBackendToRestart(true) })
     },
