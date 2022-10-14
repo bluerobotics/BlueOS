@@ -10,7 +10,6 @@
       <v-list-item-avatar
         tile
         size="50"
-        color="grey"
       >
         <v-img :src="extension.extension_logo" />
       </v-list-item-avatar>
