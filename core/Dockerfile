@@ -1,5 +1,5 @@
 # Build frontend
-FROM node:16-buster-slim AS frontendBuilder
+FROM --platform=$BUILDPLATFORM node:16-buster-slim AS frontendBuilder
 
 ARG VUE_APP_GIT_DESCRIBE
 RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
