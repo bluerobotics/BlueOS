@@ -17,7 +17,6 @@ from exceptions import (
     FirmwareDownloadFail,
     InvalidManifest,
     ManifestUnavailable,
-    MoreThanOneCandidate,
     NoCandidate,
     NoVersionAvailable,
 )
@@ -208,7 +207,7 @@ class FirmwareDownloader:
             )
 
         if len(items) != 1:
-            raise MoreThanOneCandidate(f"Found a number of candidates different of one ({len(items)}): {items}.")
+            logger.warning(f"Found a number of candidates different of one ({len(items)}): {items}.")
 
         item = items[0]
         logger.debug(f"Downloading following firmware: {item}")
