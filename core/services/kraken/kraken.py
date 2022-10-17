@@ -1,6 +1,7 @@
 import asyncio
+import json
 import re
-from typing import Any, List, Optional, cast
+from typing import Any, AsyncGenerator, List, Optional, cast
 
 import aiodocker
 import aiohttp
@@ -68,7 +69,7 @@ class Kraken:
     async def get_configured_extensions(self) -> List[Extension]:
         return cast(List[Extension], self.settings.extensions)
 
-    async def install_extension(self, extension: Any) -> None:
+    async def install_extension(self, extension: Any) -> AsyncGenerator[bytes, None]:
         if any(extension.name == installed_extension.name for installed_extension in self.settings.extensions):
             # already installed
             return
@@ -81,6 +82,10 @@ class Kraken:
         )
         self.settings.extensions.append(new_extension)
         self.manager.save()
+        async for line in self.client.images.pull(
+            f"{extension.name}:{extension.tag}", repo=extension.name, tag=extension.tag, stream=True
+        ):
+            yield json.dumps(line).encode("utf-8")
 
     async def kill(self, container_name: str) -> None:
         logger.info(f"Killing {container_name}")

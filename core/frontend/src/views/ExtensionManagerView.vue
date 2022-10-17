@@ -4,6 +4,10 @@
       v-model="show_dialog"
       width="80%"
     >
+      <pull-progress
+        :progress="pull_output"
+        :show="show_pull_output"
+      />
       <extension-modal
         :extension="selected_extension"
         :installed="installedVersion()"
@@ -99,9 +103,11 @@ import Vue from 'vue'
 
 import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
 import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
+import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import PullTracker from '@/utils/pull_tracker'
 
 import { ExtensionData, InstalledExtensionData } from '../types/kraken'
 
@@ -114,6 +120,7 @@ export default Vue.extend({
   components: {
     ExtensionCard,
     ExtensionModal,
+    PullProgress,
   },
   data() {
     return {
@@ -123,6 +130,8 @@ export default Vue.extend({
       selected_extension: null as (null | ExtensionData),
       manifest: [] as ExtensionData[],
       dockers_fetch_done: false,
+      show_pull_output: false,
+      pull_output: '',
     }
   },
   mounted() {
@@ -162,13 +171,28 @@ export default Vue.extend({
       this.selected_extension = extension
     },
     async install(tag: string) {
-      await axios.post(`${API_URL}/extension/install`, {
-        identifier: this.selected_extension?.identifier,
-        name: this.selected_extension?.docker,
-        tag,
-        enabled: true,
-        permissions: JSON.stringify(this.selected_extension?.versions[tag].permissions),
+      this.show_dialog = false
+      this.show_pull_output = true
+      const tracker = new PullTracker(() => {
+        setTimeout(() => {
+          this.show_pull_output = false
+        }, 1000)
+      })
 
+      await back_axios({
+        url: `${API_URL}/extension/install`,
+        method: 'POST',
+        data: {
+          identifier: this.selected_extension?.identifier,
+          name: this.selected_extension?.docker,
+          tag,
+          enabled: true,
+          permissions: JSON.stringify(this.selected_extension?.versions[tag].permissions),
+        },
+        onDownloadProgress: (progressEvent) => {
+          tracker.digestNewData(progressEvent)
+          this.pull_output = tracker.pull_output
+        },
       })
         .then(() => {
           this.show_dialog = false
