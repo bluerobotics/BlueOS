@@ -16,7 +16,7 @@ FROM bluerobotics/blueos-base:v0.0.7 as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
-# Companion-docker base image
+# BlueOS-docker base image
 FROM bluerobotics/blueos-base:v0.0.7
 
 # Install necessary tools
