@@ -9,18 +9,44 @@
       </v-card-title>
 
       <v-card-text>
-        <p
-          style="white-space: pre; font-family:monospace;"
+        <v-progress-linear
+          :buffer-value="download"
+          :value="extraction"
+          stream
+          class="mt-5 mb-5"
+          color="blue"
+          height="20"
         >
-          {{ progress }}
-        </p>
+          <template #default>
+            <strong
+              v-if="download > 0 && download < 100"
+            >
+              Downloading: {{ download.toFixed(1) }}%
+            </strong>
+            <strong
+              v-if="extraction > 0.1 && extraction < 100"
+              class="ml-5"
+            >
+              Extracting: {{ extraction.toFixed(1) }}%
+            </strong>
+          </template>
+        </v-progress-linear>
+        {{ statustext }}
+        <v-expansion-panels>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              Details
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <p
+                style="white-space: pre; font-family:monospace;"
+              >
+                {{ progress }}
+              </p>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
       </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
@@ -37,6 +63,18 @@ export default Vue.extend({
     },
     show: {
       type: Boolean,
+      required: true,
+    },
+    download: {
+      type: Number,
+      required: true,
+    },
+    extraction: {
+      type: Number,
+      required: true,
+    },
+    statustext: {
+      type: String,
       required: true,
     },
   },

@@ -98,6 +98,9 @@
     <pull-progress
       :progress="pull_output"
       :show="show_pull_output"
+      :download="download_percentage"
+      :extraction="extraction_percentage"
+      :statustext="status_text"
     />
     <v-card
       v-if="settings.is_pirate_mode"
@@ -195,6 +198,9 @@ export default Vue.extend({
       latest_beta: undefined as (undefined | string),
       disable_upload_controls: false,
       upload_percentage: 0,
+      download_percentage: 0,
+      extraction_percentage: 0,
+      status_text: '',
       current_version: null as (null | Version),
       loading_images: false,
       waiting: false,
@@ -382,6 +388,10 @@ export default Vue.extend({
         onDownloadProgress: (progressEvent) => {
           tracker.digestNewData(progressEvent)
           this.pull_output = tracker.pull_output
+          this.download_percentage = tracker.download_percentage
+          this.extraction_percentage = tracker.extraction_percentage
+          this.status_text = tracker.overall_status
+          this.show_pull_output = true
         },
       }).then(() => { this.waitForBackendToRestart(true) })
     },
