@@ -31,7 +31,7 @@
           >
             <v-col>
               <v-btn
-                v-tooltip="'Shuts down the companion computer'"
+                v-tooltip="'Shuts down the onboard computer'"
                 class="mr-2"
                 :disabled="non_default_status"
                 @click="poweroff"
@@ -47,7 +47,7 @@
             </v-col>
             <v-col>
               <v-btn
-                v-tooltip="'Fully restarts the companion computer'"
+                v-tooltip="'Fully restarts the onboard computer'"
                 class="mr-2"
                 :disabled="non_default_status"
                 @click="reboot"
@@ -63,7 +63,7 @@
             </v-col>
             <v-col>
               <v-btn
-                v-tooltip="'Restarts the core container alone, should be enough in most cases'"
+                v-tooltip="'Restarts the core alone, should be enough in most cases'"
                 class="mr-2"
                 :disabled="non_default_status"
                 @click="restartContainer"
