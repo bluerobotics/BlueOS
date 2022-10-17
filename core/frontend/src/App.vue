@@ -286,8 +286,8 @@ export default Vue.extend({
           header: {
             title: 'Welcome to BlueOS!',
           },
-          content: `We are happy to have you navigating with us! Follow this quick tour guide to get familiar with
-          your brand-new companion system.`,
+          content: `We are happy to have you navigating with us! Follow this quick tour to get familiar with your
+          brand-new onboard system.`,
           params: {
             enableScrolling: false,
           },
