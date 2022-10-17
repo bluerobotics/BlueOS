@@ -7,7 +7,7 @@ from typing import Any
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
@@ -69,7 +69,7 @@ async def get_installed_extensions() -> Any:
 @app.post("/extension/install", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
 async def install_extension(extension: Extension) -> Any:
-    return await kraken.install_extension(extension)
+    return StreamingResponse(kraken.install_extension(extension))
 
 
 @app.post("/extension/uninstall", status_code=status.HTTP_201_CREATED)
