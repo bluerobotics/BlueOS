@@ -13,6 +13,7 @@
           :buffer-value="download"
           :value="extraction"
           stream
+          persistent
           class="mt-5 mb-5"
           color="blue"
           height="20"
