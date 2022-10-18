@@ -32,8 +32,7 @@
             </strong>
           </template>
         </v-progress-linear>
-        {{ statustext }}
-        <v-expansion-panels>
+        <v-expansion-panels flat>
           <v-expansion-panel>
             <v-expansion-panel-header>
               Details
@@ -43,6 +42,7 @@
                 style="white-space: pre; font-family:monospace;"
               >
                 {{ progress }}
+                {{ statustext }}
               </p>
             </v-expansion-panel-content>
           </v-expansion-panel>
