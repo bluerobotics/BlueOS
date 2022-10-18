@@ -1,13 +1,16 @@
 <template>
   <v-container fluid>
+    <pull-progress
+      :progress="pull_output"
+      :show="show_pull_output"
+      :download="download_percentage"
+      :extraction="extraction_percentage"
+      :statustext="status_text"
+    />
     <v-dialog
       v-model="show_dialog"
       width="80%"
     >
-      <pull-progress
-        :progress="pull_output"
-        :show="show_pull_output"
-      />
       <extension-modal
         :extension="selected_extension"
         :installed="installedVersion()"
@@ -132,6 +135,9 @@ export default Vue.extend({
       dockers_fetch_done: false,
       show_pull_output: false,
       pull_output: '',
+      download_percentage: 0,
+      extraction_percentage: 0,
+      status_text: '',
     }
   },
   mounted() {
@@ -192,14 +198,23 @@ export default Vue.extend({
         onDownloadProgress: (progressEvent) => {
           tracker.digestNewData(progressEvent)
           this.pull_output = tracker.pull_output
+          this.download_percentage = tracker.download_percentage
+          this.extraction_percentage = tracker.extraction_percentage
+          this.status_text = tracker.overall_status
         },
       })
         .then(() => {
-          this.show_dialog = false
           this.fetchInstalledExtensions()
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
+        })
+        .finally(() => {
+          this.show_dialog = false
+          this.pull_output = ''
+          this.download_percentage = 0
+          this.extraction_percentage = 0
+          this.status_text = ''
         })
     },
     async uninstall(extension: ExtensionData) {
