@@ -30,6 +30,7 @@ class ServiceMetadata(BaseModel):
     company: str
     version: str
     webpage: str
+    route: Optional[str]
     api: str
 
 
