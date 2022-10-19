@@ -113,5 +113,11 @@ class Kraken:
         containers: List[DockerContainer] = await self.client.containers.list(filter='{"status": ["running"]}')  # type: ignore
         return containers
 
+    async def load_logs(self, container_name: str) -> List[str]:
+        containers = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
+        if not containers:
+            raise Exception(f"Containern not found: {container_name}")
+        return cast(List[str], await containers[0].log(stdout=True, stderr=True))
+
     async def stop(self) -> None:
         self.should_run = False
