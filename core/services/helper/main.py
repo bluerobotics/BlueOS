@@ -31,6 +31,7 @@ class ServiceMetadata(BaseModel):
     version: str
     webpage: str
     route: Optional[str]
+    new_page: Optional[bool]
     api: str
 
 
