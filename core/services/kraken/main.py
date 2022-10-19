@@ -2,7 +2,7 @@
 import argparse
 import asyncio
 import logging
-from typing import Any
+from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
@@ -91,6 +91,12 @@ async def list_containers() -> Any:
         }
         for container in containers
     ]
+
+
+@app.get("/log", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def log_containers(container_name: str) -> List[str]:
+    return await kraken.load_logs(container_name)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
