@@ -21,11 +21,11 @@
       v-model="tab"
       fixed-tabs
     >
-      <v-tab>Installed</v-tab>
       <v-tab>Store</v-tab>
+      <v-tab>Installed</v-tab>
     </v-tabs>
     <div
-      v-if="tab === 1"
+      v-if="tab === 0"
       class="d-flex pa-5"
     >
       <v-row dense>
@@ -51,7 +51,7 @@
     </div>
     <v-row>
       <v-col
-        v-if="tab === 0"
+        v-if="tab === 1"
         class="pa-5"
       >
         <v-row
