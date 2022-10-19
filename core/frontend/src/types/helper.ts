@@ -6,6 +6,7 @@ export interface ServiceMetadata {
     version: string
     webpage: string
     api: string
+    route?: string
 }
 
 export interface Service {
