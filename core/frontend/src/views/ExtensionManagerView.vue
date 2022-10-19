@@ -67,6 +67,9 @@
                 {{ extension.name.replace('/', '') }}: <span style="color: grey;"> {{ extension.tag }}</span>
               </v-card-title>
               <v-card-text>
+                {{ getStatus(extension) }}
+              </v-card-text>
+              <v-card-text>
                 Permissions:
                 <pre> {{ extension.permissions }} </pre>
               </v-card-text>
@@ -112,7 +115,7 @@ import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
 
-import { ExtensionData, InstalledExtensionData } from '../types/kraken'
+import { ExtensionData, InstalledExtensionData, RunningContainer } from '../types/kraken'
 
 const API_URL = '/kraken/v1.0'
 
@@ -131,6 +134,7 @@ export default Vue.extend({
       show_dialog: false,
       installed_extensions: [] as InstalledExtensionData[],
       selected_extension: null as (null | ExtensionData),
+      running_containers: [] as RunningContainer[],
       manifest: [] as ExtensionData[],
       dockers_fetch_done: false,
       show_pull_output: false,
@@ -143,8 +147,15 @@ export default Vue.extend({
   mounted() {
     this.fetchManifest()
     this.fetchInstalledExtensions()
+    this.fetchRunningContainers()
   },
   methods: {
+    getStatus(extension: InstalledExtensionData): string {
+      return this.running_containers.filter(
+        (container) => container.image === `${extension.name}:${extension.tag}`,
+      )
+        .first()?.status ?? 'N/A'
+    },
     async fetchManifest(): Promise<void> {
       await back_axios({
         method: 'get',
@@ -236,6 +247,19 @@ export default Vue.extend({
         return undefined
       }
       return this.installed_extensions.find((extension) => extension.name === extension_name)?.tag
+    },
+    async fetchRunningContainers(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${API_URL}/list_containers`,
+        timeout: 30000,
+      })
+        .then((response) => {
+          this.running_containers = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
+        })
     },
   },
 })

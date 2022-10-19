@@ -39,4 +39,11 @@ export interface InstalledExtensionData {
     docker: string
     tag: string
     permissions: string
+    status: string
+}
+export interface RunningContainer {
+    name: string
+    image: string
+    imageId: string
+    status: string
 }
