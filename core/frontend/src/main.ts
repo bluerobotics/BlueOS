@@ -1,6 +1,7 @@
 import './cosmos'
 
 import Vue from 'vue'
+import JsonViewer from 'vue-json-viewer'
 import VueTooltipDirective from 'vue-tooltip-directive'
 import VueTour from 'vue-tour'
 
@@ -18,6 +19,7 @@ Vue.use(VueTooltipDirective, {
   component: DefaultTooltip,
 })
 Vue.use(VueTour)
+Vue.use(JsonViewer)
 
 new Vue({
   router,
