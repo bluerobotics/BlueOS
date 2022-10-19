@@ -7,6 +7,7 @@ export interface ServiceMetadata {
     webpage: string
     api: string
     route?: string
+    new_page?: boolean
 }
 
 export interface Service {
