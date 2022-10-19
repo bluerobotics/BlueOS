@@ -17,6 +17,18 @@
         @clicked="install"
       />
     </v-dialog>
+    <v-dialog
+      v-model="show_log"
+      width="80%"
+    >
+      <v-card>
+        <v-card-text>
+          <pre class="logs">
+            {{ log_output }}
+          </pre>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
     <v-tabs
       v-model="tab"
       fixed-tabs
@@ -86,6 +98,9 @@
                 <v-btn @click="uninstall(extension)">
                   Uninstall
                 </v-btn>
+                <v-btn @click="showLogs(extension)">
+                  View Logs
+                </v-btn>
               </v-card-actions>
             </v-card>
           </v-col>
@@ -151,6 +166,8 @@ export default Vue.extend({
       download_percentage: 0,
       extraction_percentage: 0,
       status_text: '',
+      log_output: null as null | string,
+      show_log: false,
     }
   },
   mounted() {
@@ -164,6 +181,12 @@ export default Vue.extend({
         (container) => container.image === `${extension.name}:${extension.tag}`,
       )
         .first()?.status ?? 'N/A'
+    },
+    getContainerName(extension: InstalledExtensionData): string | null {
+      return this.running_containers.filter(
+        (container) => container.image === `${extension.name}:${extension.tag}`,
+      )
+        .first()?.name ?? null
     },
     async fetchManifest(): Promise<void> {
       await back_axios({
@@ -190,6 +213,23 @@ export default Vue.extend({
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_INSTALLED_FETCH_FAIL', error)
+        })
+    },
+    async showLogs(extension: InstalledExtensionData): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${API_URL}/log`,
+        params: {
+          container_name: this.getContainerName(extension),
+        },
+        timeout: 30000,
+      })
+        .then((response) => {
+          this.log_output = response.data.join('')
+          this.show_log = true
+        })
+        .catch((error) => {
+          notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', error)
         })
     },
     showModal(extension: ExtensionData) {
@@ -277,5 +317,16 @@ export default Vue.extend({
 <style>
 .jv-code {
   padding: 0px !important;
+}
+
+div.readme h1 {
+  margin: 5px;
+}
+
+pre.logs {
+  color:white;
+  background: black;
+  padding: 15px;
+  overflow-x: scroll;
 }
 </style>
