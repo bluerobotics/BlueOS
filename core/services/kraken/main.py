@@ -83,7 +83,12 @@ async def uninstall_extension(extension_name: str) -> Any:
 async def list_containers() -> Any:
     containers = await kraken.list_containers()
     return [
-        {"name": container["Names"][0], "image": container["Image"], "imageId": container["ImageID"]}
+        {
+            "name": container["Names"][0],
+            "image": container["Image"],
+            "imageId": container["ImageID"],
+            "status": container["Status"],
+        }
         for container in containers
     ]
 
