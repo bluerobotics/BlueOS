@@ -69,10 +69,19 @@
               <v-card-text>
                 {{ getStatus(extension) }}
               </v-card-text>
-              <v-card-text>
-                Permissions:
-                <pre> {{ extension.permissions }} </pre>
-              </v-card-text>
+              <v-expansion-panels flat>
+                <v-expansion-panel>
+                  <v-expansion-panel-header>
+                    Permissions
+                  </v-expansion-panel-header>
+                  <v-expansion-panel-content>
+                    <json-viewer
+                      :value="JSON.parse(extension.permissions)"
+                      :expand-depth="5"
+                    />
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
+              </v-expansion-panels>
               <v-card-actions>
                 <v-btn @click="uninstall(extension)">
                   Uninstall
@@ -266,7 +275,7 @@ export default Vue.extend({
 </script>
 
 <style>
-  div.readme h1 {
-    margin: 5px;
-  }
+.jv-code {
+  padding: 0px !important;
+}
 </style>
