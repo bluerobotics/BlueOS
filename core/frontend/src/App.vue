@@ -97,6 +97,7 @@
                 <v-list-item
                   v-if="!submenu.advanced || (submenu.advanced && settings.is_pirate_mode)"
                   :key="j"
+                  :target="submenu?.new_page ? '_blank' : '_self'"
                   :to="submenu.route"
                   :href="menu.extension ? submenu.route : undefined"
                 >
@@ -251,6 +252,7 @@ export default Vue.extend({
               ? `${address}${service.metadata.icon}`
               : service.metadata?.icon ?? 'mdi-puzzle',
             route: service.metadata?.route ?? address,
+            new_page: service.metadata?.new_page ?? undefined,
             advanced: false,
             text: service.metadata?.description ?? 'Service text',
           }
