@@ -33,8 +33,18 @@
       v-model="tab"
       fixed-tabs
     >
-      <v-tab>Store</v-tab>
-      <v-tab>Installed</v-tab>
+      <v-tab>
+        <v-icon class="mr-5">
+          mdi-store-search
+        </v-icon>
+        Store
+      </v-tab>
+      <v-tab>
+        <v-icon class="mr-5">
+          mdi-bookshelf
+        </v-icon>
+        Installed
+      </v-tab>
     </v-tabs>
     <div
       v-if="tab === 0"
