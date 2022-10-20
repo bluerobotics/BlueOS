@@ -176,17 +176,16 @@ export default Vue.extend({
     this.fetchRunningContainers()
   },
   methods: {
-    getStatus(extension: InstalledExtensionData): string {
+    getContainer(extension: InstalledExtensionData): RunningContainer[] | undefined {
       return this.running_containers.filter(
         (container) => container.image === `${extension.name}:${extension.tag}`,
       )
-        .first()?.status ?? 'N/A'
+    },
+    getStatus(extension: InstalledExtensionData): string {
+      return this.getContainer(extension)?.first()?.status ?? 'N/A'
     },
     getContainerName(extension: InstalledExtensionData): string | null {
-      return this.running_containers.filter(
-        (container) => container.image === `${extension.name}:${extension.tag}`,
-      )
-        .first()?.name ?? null
+      return this.getContainer(extension)?.first()?.name ?? null
     },
     async fetchManifest(): Promise<void> {
       await back_axios({
