@@ -6,6 +6,7 @@ VERSION="${VERSION:-master}"
 GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
+CMDLINE_FILE=/boot/cmdline.txt
 
 # Download, compile, and install spi0 mosi-only device tree overlay for
 # neopixel LED on navigator board
@@ -64,7 +65,14 @@ done
 
 # Remove any console serial configuration
 echo "- Configure serial."
-sudo sed -e 's/console=serial[0-9],[0-9]*\ //' -i /boot/cmdline.txt
+sudo sed -e 's/console=serial[0-9],[0-9]*\ //' -i $CMDLINE_FILE
+
+# Set cgroup, necessary for docker access to memory information
+echo "- Enable cgroup with memory and cpu"
+grep -q cgroup $CMDLINE_FILE || (
+    truncate --size -1 $CMDLINE_FILE
+    echo " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory" >> $CMDLINE_FILE
+)
 
 # Update raspberry pi firmware
 # this is required to avoid 'i2c transfer timed out' kernel errors
