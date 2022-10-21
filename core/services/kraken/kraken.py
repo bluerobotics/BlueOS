@@ -1,7 +1,7 @@
 import asyncio
 import json
 import re
-from typing import Any, AsyncGenerator, List, Optional, cast
+from typing import Any, AsyncGenerator, Dict, List, Optional, cast
 
 import aiodocker
 import aiohttp
@@ -133,6 +133,12 @@ class Kraken:
         if not containers:
             raise Exception(f"Container not found: {container_name}")
         return cast(List[str], await containers[0].log(stdout=True, stderr=True))
+
+    async def load_stats(self, container_name: str) -> Dict[str, Any]:
+        containers = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
+        if not containers:
+            raise Exception(f"Container not found: {container_name}")
+        return cast(List[Dict[str, Any]], await containers[0].stats(stream=False))[0]
 
     async def stop(self) -> None:
         self.should_run = False
