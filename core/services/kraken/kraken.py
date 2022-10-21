@@ -9,6 +9,7 @@ from aiodocker.docker import DockerContainer
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
+from exceptions import ContainerDoesNotExist
 from settings import Extension, SettingsV1
 
 REPO_URL = "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json"
@@ -93,6 +94,17 @@ class Kraken:
         if container:
             await container[0].kill()
 
+    async def remove(self, container_name: str) -> None:
+        logger.info(f"Removing container {container_name}")
+        container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
+        if not container:
+            raise ContainerDoesNotExist(f"Unable remove {container_name}. container not found")
+        image = container[0]["Image"]
+        await self.kill(container_name)
+        await container[0].delete()
+        logger.info(f"Removing {container_name}")
+        await self.client.images.delete(image, force=False, noprune=False)
+
     async def uninstall_extension(self, extension_name: str) -> None:
         regex = re.compile("[^a-zA-Z0-9]")
         expected_container_name = "extension-" + regex.sub("", f"{extension_name}")
@@ -102,8 +114,8 @@ class Kraken:
             if extension.container_name().startswith(expected_container_name)
         ]
         logger.info(f"uninstalling: {extension}")
-        if extension:
-            await self.kill(extension[0].container_name())
+        container_name = extension[0].container_name()
+        await self.remove(container_name)
         self.settings.extensions = [
             extension for extension in self.settings.extensions if extension.name != extension_name
         ]
