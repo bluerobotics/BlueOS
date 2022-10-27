@@ -8,8 +8,8 @@ RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
     && exit 1 || exit 0
 
 COPY frontend /home/pi/frontend
-RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend install --network-timeout=300000
-RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend build --skip-plugins @vue/cli-plugin-eslint
+RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend install --network-timeout=300000 --ignore-engines
+RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend build --skip-plugins @vue/cli-plugin-eslint --ignore-engines
 
 # Download binaries
 FROM bluerobotics/blueos-base:v0.0.7 as downloadBinaries
