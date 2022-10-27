@@ -71,17 +71,17 @@ jobs:
       - name: Yarn install
         uses: borales/actions-yarn@v3.0.0
         with:
-          cmd: --cwd ./core/frontend install --frozen-lockfile
+          cmd: --cwd ./core/frontend install --frozen-lockfile --ignore-engines
 
       - name: Yarn lint
         uses: borales/actions-yarn@v3.0.0
         with:
-          cmd: --cwd ./core/frontend lint
+          cmd: --cwd ./core/frontend lint --ignore-engines
 
       - name: Yarn build
         uses: borales/actions-yarn@v3.0.0
         with:
-          cmd: --cwd ./core/frontend build
+          cmd: --cwd ./core/frontend build --ignore-engines
 
 
   deploy-docker-images:
