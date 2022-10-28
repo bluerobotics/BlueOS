@@ -13,12 +13,17 @@
             class="mx-auto height-limited"
             max-height="700px"
           >
+            <v-text-field
+              v-model="message_filter"
+              class="ma-2"
+              label="Message"
+            />
             <v-list shaped>
               <v-list-item-group
                 v-model="selected_message_types"
                 multiple
               >
-                <template v-for="(item, i) in message_types">
+                <template v-for="(item, i) in filtered_messages">
                   <v-list-item
                     :key="i"
                     :value="item"
@@ -158,9 +163,17 @@ export default Vue.extend({
       messages_in_view: [] as any[],
       selected_message_types: [],
       detailed_message: null as (null | any),
+      message_filter: '',
     }
   },
   computed: {
+    filtered_messages(): string[] {
+      try {
+        return this.message_types.filter((name: string) => name.match(this.message_filter.trim()))
+      } catch {
+        return this.message_types
+      }
+    },
   },
   mounted() {
     this.setupWs()
