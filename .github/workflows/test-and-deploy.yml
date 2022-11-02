@@ -67,6 +67,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Yarn install
         uses: borales/actions-yarn@v4
@@ -98,6 +100,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0 #Number of commits to fetch. 0 indicates all history for all branches and tags.
+          submodules: recursive
 
       - name: Prepare
         id: prepare
@@ -221,6 +224,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
