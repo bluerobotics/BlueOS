@@ -166,10 +166,15 @@ sed -i '$ a noipv4ll' /etc/dhcpcd.conf
 # Do necessary changes if running in a Raspiberry
 command -v raspi-config && (
     echo "Running in a Raspiberry."
-    raspi-config nonint get_legacy 1> /dev/null && (
-        echo "Enabling legacy camera support."
-        raspi-config nonint do_legacy 0
-    )
+    if [ $(lsb_release -sc) == "bullseye" ];
+    then
+        raspi-config nonint get_legacy 1> /dev/null && (
+            echo "Enabling legacy camera support."
+            raspi-config nonint do_legacy 0
+        )
+    else
+        echo "Not on bullseye - no need to enable legacy camera support"
+    fi
 )
 
 echo "Downloading bootstrap"
