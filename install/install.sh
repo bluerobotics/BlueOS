@@ -8,6 +8,7 @@ ROOT="$REMOTE/$VERSION"
 
 # Additional options
 DO_BOARD_CONFIG=1 # default to do the board config
+RUNNING_IN_CI=0 # default to not running CI mode/docker-in-docker
 
 usage_help()
 {
