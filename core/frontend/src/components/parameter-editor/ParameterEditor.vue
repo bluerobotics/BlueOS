@@ -27,11 +27,20 @@
         {{ printParam(item) }}
       </template>
     </v-data-table>
-    <spinning-logo
-      v-else
-      :subtitle="`Loading parameters: ${params.length ?? 'loading'}`"
-      size="30%"
-    />
+    <div v-else>
+      <spinning-logo size="30%" />
+      <v-progress-linear
+        :value="params_percentage"
+        stream
+        class="mt-5 mb-5"
+        color="blue"
+        height="20"
+      >
+        <template #default>
+          <strong> Loading parameters: {{ params.length ?? 'loading' }} </strong>
+        </template>
+      </v-progress-linear>
+    </div>
     <v-dialog
       v-model="edit_dialog"
       max-width="500px"
@@ -163,6 +172,9 @@ export default Vue.extend({
   computed: {
     params() {
       return autopilot_data.parameters
+    },
+    params_percentage() {
+      return 100 * (autopilot_data.parameters.length / autopilot_data.parameters_total)
     },
     finished_loading() {
       return autopilot_data.finished_loading
