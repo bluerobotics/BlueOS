@@ -134,11 +134,38 @@ class Kraken:
             raise Exception(f"Container not found: {container_name}")
         return cast(List[str], await containers[0].log(stdout=True, stderr=True))
 
-    async def load_stats(self, container_name: str) -> Dict[str, Any]:
-        containers = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
-        if not containers:
-            raise Exception(f"Container not found: {container_name}")
-        return cast(List[Dict[str, Any]], await containers[0].stats(stream=False))[0]
+    async def load_stats(self) -> Dict[str, Any]:
+        containers = await self.client.containers.list()  # type: ignore
+        container_stats = [(await container.stats(stream=False))[0] for container in containers]
+        result = {}
+        for stats in container_stats:
+            # Based over: https://github.com/docker/cli/blob/v20.10.20/cli/command/container/stats_helpers.go
+            cpu_percent = 0
+
+            previous_cpu = stats["precpu_stats"]["cpu_usage"]["total_usage"]
+            previous_system_cpu = stats["precpu_stats"]["system_cpu_usage"]
+
+            cpu_total = stats["cpu_stats"]["cpu_usage"]["total_usage"]
+            cpu_delta = cpu_total - previous_cpu
+
+            cpu_system = stats["cpu_stats"]["system_cpu_usage"]
+            system_delta = cpu_system - previous_system_cpu
+
+            if system_delta > 0.0:
+                cpu_percent = (cpu_delta / system_delta) * 100.0
+
+            try:
+                memory_usage = 100 * stats["memory_stats"]["usage"] / stats["memory_stats"]["limit"]
+            except KeyError:
+                memory_usage = "N/A"
+
+            name = stats["name"].replace("/", "")
+
+            result[name] = {
+                "cpu": cpu_percent,
+                "memory": memory_usage,
+            }
+        return result
 
     async def stop(self) -> None:
         self.should_run = False
