@@ -101,28 +101,8 @@ async def log_containers(container_name: str) -> List[str]:
 
 @app.get("/stats", status_code=status.HTTP_200_OK)
 @version(1, 0)
-async def load_stats(container_name: str) -> Any:
-    stats = await kraken.load_stats(container_name)
-
-    # Based over: https://github.com/docker/cli/blob/v20.10.20/cli/command/container/stats_helpers.go
-    cpu_percent = 0
-
-    previous_cpu = stats["precpu_stats"]["cpu_usage"]["total_usage"]
-    previous_system_cpu = stats["precpu_stats"]["system_cpu_usage"]
-
-    cpu_total = stats["cpu_stats"]["cpu_usage"]["total_usage"]
-    cpu_delta = cpu_total - previous_cpu
-
-    cpu_system = stats["cpu_stats"]["system_cpu_usage"]
-    system_delta = cpu_system - previous_system_cpu
-
-    if system_delta > 0.0:
-        cpu_percent = (cpu_delta / system_delta) * 100.0
-
-    return {
-        "cpu": cpu_percent,
-        "memory": 100 * stats["memory_stats"]["usage"] / stats["memory_stats"]["limit"],
-    }
+async def load_stats() -> Any:
+    return await kraken.load_stats()
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
