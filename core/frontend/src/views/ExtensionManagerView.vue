@@ -74,22 +74,60 @@
     <v-row>
       <v-col
         v-if="tab === 1"
-        class="pa-5"
+        class="pa-6"
       >
         <v-row
-          v-for="extension in installed_extensions"
-          :key="extension.name"
           dense
         >
           <v-col
-            class="pa-2"
+            v-for="extension in installed_extensions"
+            :key="extension.name"
+            class="pa-2 col-6"
           >
             <v-card>
-              <v-card-title>
-                {{ extension.name.replace('/', '') }}: <span style="color: grey;"> {{ extension.tag }}</span>
+              <v-card-title class="pb-0 ">
+                {{ extension.name.split('/')[1] }} <span class="ml-3" style="color: grey;"> {{ extension.tag }}</span>
               </v-card-title>
-              <v-card-text>
-                {{ getStatus(extension) }}
+              <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.name }}</span>
+              <v-card-text width="50%">
+                <v-simple-table>
+                  <template #default>
+                    <tbody>
+                      <tr>
+                        <td>Status</td>
+                        <td>{{ getStatus(extension) }}</td>
+                      </tr>
+                      <tr>
+                        <td>Memory usage</td>
+                        <td>
+                          <v-progress-linear
+                            :value="getMemoryUsage(extension)"
+                            color="green"
+                            height="25"
+                          >
+                            <template #default="{ value }">
+                              <strong>{{ value.toFixed(1) }}%</strong>
+                            </template>
+                          </v-progress-linear>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>CPU usage</td>
+                        <td>
+                          <v-progress-linear
+                            :value="getCpuUsage(extension)"
+                            color="green"
+                            height="25"
+                          >
+                            <template #default="{ value }">
+                              <strong>{{ value.toFixed(1) }}%</strong>
+                            </template>
+                          </v-progress-linear>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
               </v-card-text>
               <v-expansion-panels
                 v-if="settings.is_pirate_mode"
@@ -182,6 +220,8 @@ export default Vue.extend({
       status_text: '',
       log_output: null as null | string,
       show_log: false,
+      metrics: {} as any,
+      metrics_interval: 0,
       settings,
     }
   },
@@ -189,12 +229,45 @@ export default Vue.extend({
     this.fetchManifest()
     this.fetchInstalledExtensions()
     this.fetchRunningContainers()
+    this.fetchMetrics()
+    this.metrics_interval = setInterval(this.fetchMetrics, 30000)
+  },
+  destroyed() {
+    clearInterval(this.metrics_interval)
   },
   methods: {
     getContainer(extension: InstalledExtensionData): RunningContainer[] | undefined {
       return this.running_containers.filter(
         (container) => container.image === `${extension.name}:${extension.tag}`,
       )
+    },
+    async fetchMetrics(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${API_URL}/stats`,
+        timeout: 20000,
+      })
+        .then((response) => {
+          this.metrics = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
+        })
+    },
+    getCpuUsage(extension: InstalledExtensionData): number {
+      const name = this.getContainerName(extension)?.replace('/', '')
+      if (!name) {
+        return NaN
+      }
+
+      return this.metrics[name]?.cpu
+    },
+    getMemoryUsage(extension: InstalledExtensionData): string {
+      const name = this.getContainerName(extension)?.replace('/', '')
+      if (!name) {
+        return 'N/A'
+      }
+      return this.metrics[name]?.memory
     },
     getStatus(extension: InstalledExtensionData): string {
       return this.getContainer(extension)?.first()?.status ?? 'N/A'
