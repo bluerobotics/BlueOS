@@ -65,6 +65,8 @@ async def test_get_version() -> None:
     with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
 
         response = await chooser.get_version()
+        if response.text is None:
+            raise RuntimeError("text should be not None")
         result = json.loads(response.text)
         assert result["repository"] == "bluerobotics/blueos-core"
         assert result["tag"] == "master"
@@ -159,6 +161,8 @@ async def test_get_available_versions_dockerhub_unavailable(
     client_mock.configure_mock(**attrs)
     chooser = VersionChooser(client_mock)
     result = await chooser.get_available_versions("bluerobotics/blueos-core")
+    if result.text is None:
+        raise RuntimeError("text should be not None")
     data = json.loads(result.text)
     assert "local" in data
     assert "remote" in data
@@ -175,6 +179,8 @@ async def test_get_available_versions() -> None:
 
     chooser = VersionChooser(client_mock)
     result = await chooser.get_available_versions("bluerobotics/blueos-core")
+    if result.text is None:
+        raise RuntimeError("text should be not None")
     data = json.loads(result.text)
     assert "local" in data
     assert "remote" in data
