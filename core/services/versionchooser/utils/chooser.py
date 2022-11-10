@@ -4,14 +4,14 @@ import pathlib
 import sys
 from dataclasses import asdict
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import aiodocker
 import appdirs
 import docker
 from aiohttp import web
 
-from utils.dockerhub import TagFetcher, TagMetadata
+from utils.dockerhub import TagFetcher
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
 
@@ -226,7 +226,7 @@ class VersionChooser:
         Returns:
             web.Response: json described in the openapi file
         """
-        output: Dict[str, Optional[Union[str, List[TagMetadata]]]] = {"local": [], "remote": [], "error": None}
+        output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]] = {"local": [], "remote": [], "error": None}
         for image in await self.client.images.list():
             if not image["RepoTags"]:
                 continue
