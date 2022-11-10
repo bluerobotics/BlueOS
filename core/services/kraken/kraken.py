@@ -44,7 +44,10 @@ class Kraken:
         config = extension.settings()
         config["Image"] = extension.fullname()
         logger.info(f"Starting extension '{extension.fullname()}'")
-        await self.client.images.pull(extension.fullname())
+        try:
+            await self.client.images.pull(extension.fullname())
+        except aiodocker.exceptions.DockerError:  # raised if we are offline
+            logger.info("unable to pull a new image, attempting to continue with a local one")
         container = await self.client.containers.create_or_replace(name=extension.container_name(), config=config)  # type: ignore
         await container.start()
 
