@@ -91,7 +91,10 @@
               <v-card-text>
                 {{ getStatus(extension) }}
               </v-card-text>
-              <v-expansion-panels flat>
+              <v-expansion-panels
+                v-if="settings.is_pirate_mode"
+                flat
+              >
                 <v-expansion-panel>
                   <v-expansion-panel-header>
                     Permissions
@@ -145,6 +148,7 @@ import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
 import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
+import settings from '@/libs/settings'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
@@ -178,6 +182,7 @@ export default Vue.extend({
       status_text: '',
       log_output: null as null | string,
       show_log: false,
+      settings,
     }
   },
   mounted() {
