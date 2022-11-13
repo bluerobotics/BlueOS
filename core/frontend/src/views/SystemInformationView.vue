@@ -66,7 +66,7 @@ export default Vue.extend({
         { title: 'System Monitor', icon: 'mdi-speedometer', value: 'system_condition' },
         { title: 'Network', icon: 'mdi-ip-network-outline', value: 'network' },
         {
-          title: 'Kernel', icon: 'mdi-text-subject', value: 'kernel', is_pirate: true,
+          title: 'Kernel', icon: 'mdi-text-long', value: 'kernel', is_pirate: true,
         },
         { title: 'About', icon: 'mdi-information', value: 'about' },
       ] as Item[],
