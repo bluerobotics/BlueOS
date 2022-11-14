@@ -155,7 +155,7 @@
     >
       <spinning-logo
         size="100%"
-        subtitle="Waiting for updates..."
+        subtitle="Switching to new core..."
       />
     </v-overlay>
   </div>
