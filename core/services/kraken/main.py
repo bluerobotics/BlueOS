@@ -6,7 +6,7 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
-from fastapi import FastAPI, status
+from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -18,10 +18,15 @@ from kraken import Kraken
 
 class Extension(BaseModel):
     name: str
+    docker: str
     tag: str
     permissions: str
     enabled: bool
     identifier: str
+    user_permissions: str
+
+    def is_valid(self) -> bool:
+        return all([self.name, self.docker, self.tag, any([self.permissions, self.user_permissions]), self.identifier])
 
 
 SERVICE_NAME = "kraken"
@@ -58,9 +63,11 @@ async def get_installed_extensions() -> Any:
         Extension(
             identifier=extension.identifier,
             name=extension.name,
+            docker=extension.docker,
             tag=extension.tag,
             permissions=extension.permissions,
             enabled=extension.enabled,
+            user_permissions=extension.user_permissions
         )
         for extension in extensions
     ]
@@ -69,13 +76,18 @@ async def get_installed_extensions() -> Any:
 @app.post("/extension/install", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
 async def install_extension(extension: Extension) -> Any:
+    if not extension.is_valid():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid extension description",
+        )
     return StreamingResponse(kraken.install_extension(extension))
 
 
 @app.post("/extension/uninstall", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
-async def uninstall_extension(extension_name: str) -> Any:
-    return await kraken.uninstall_extension(extension_name)
+async def uninstall_extension(extension_identifier: str) -> Any:
+    return await kraken.uninstall_extension(extension_identifier)
 
 
 @app.get("/list_containers", status_code=status.HTTP_200_OK)

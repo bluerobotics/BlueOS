@@ -1,0 +1,184 @@
+<template>
+  <v-dialog
+    v-if="new_extension"
+    width="500"
+    :value="Boolean(extension)"
+    persistent
+    @input="showDialog"
+    @click:outside="closeDialog"
+  >
+    <v-card>
+      <v-card-title>
+        Create/Change Extension
+      </v-card-title>
+
+      <v-card-text class="d-flex flex-column">
+        <v-form
+          ref="form"
+          lazy-validation
+        >
+          <v-text-field
+            v-model="new_extension.identifier"
+            label="Extemnsion Identifier"
+            :rules="[validate_identifier]"
+          />
+
+          <v-text-field
+            v-model="new_extension.name"
+            label="Extension Name"
+            :rules="[validate_name]"
+          />
+
+          <v-text-field
+            v-model="new_extension.docker"
+            label="Docker image"
+            :rules="[validate_dockerhub]"
+          />
+
+          <v-text-field
+            v-model="new_extension.tag"
+            label="Docker tag"
+            :rules="[validate_tag]"
+          />
+
+          <v-textarea
+            v-if="new_extension.permissions"
+            v-model="new_extension.permissions"
+            label="Original Permissions"
+            :readonly="true"
+            :rules="[validate_permissions]"
+          />
+
+          <v-textarea
+            v-model="new_extension.user_permissions"
+            label="Custom Permissions (These replace regular permissions)"
+            :rules="[validate_permissions]"
+          />
+
+          <v-btn
+            color="primary"
+            class="mr-4"
+            @click="saveExtension"
+          >
+            Create
+          </v-btn>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+</template>
+
+<script lang="ts">
+import Vue, { PropType } from 'vue'
+
+import Notifier from '@/libs/notifier'
+import { kraken_service } from '@/types/frontend_services'
+import { InstalledExtensionData } from '@/types/kraken'
+import { VForm } from '@/types/vuetify'
+import back_axios from '@/utils/api'
+
+const notifier = new Notifier(kraken_service)
+
+export default Vue.extend({
+  name: 'ExtensionCreationDialog',
+  model: {
+    prop: 'extension',
+    event: 'change',
+  },
+  props: {
+    extension: {
+      type: Object as PropType<InstalledExtensionData | null>,
+      default: null,
+    },
+  },
+
+  data() {
+    return {
+      new_extension: this.extension,
+    }
+  },
+  computed: {
+    form(): VForm {
+      return this.$refs.form as VForm
+    },
+  },
+  watch: {
+    new_extension() {
+      this.$emit('input', this.new_extension)
+    },
+    extension() {
+      this.new_extension = this.extension
+    },
+  },
+  methods: {
+    closeDialog() {
+      this.new_extension = null
+    },
+    validate_identifier(input: string): (true | string) {
+      // Identifiers should be two words separated by a period
+      // They can contain lower and uppercase characters, but cannot begin with a number
+      const name_validator = '[A-Za-z][A-Za-z0-9]+'
+      const regex = RegExp(`^${name_validator}\\.${name_validator}`)
+      if (regex.test(input)) {
+        return true
+      }
+      return 'This field must container two words separated by a period. Numbers are allowed if not the first character'
+    },
+    validate_dockerhub(input: string): (true | string) {
+      // A tag name must be valid ASCII and may contain lowercase and uppercase letters, digits,
+      // underscores, periods and dashes. A tag name may not start with a period or a dash and
+      // may contain a maximum of 128 characters.
+      // regex based on https://ktomk.github.io/pipelines/doc/DOCKER-NAME-TAG.html#grammar
+      const regex = /[a-zA-Z0-9.-]\/[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}/
+      if (regex.test(input)) {
+        return true
+      }
+      return 'This field must container two words separated by a forward slash'
+      + 'Numbers are allowed if not the first character. e.g example/docker1'
+    },
+    validate_name(input: string): (true | string) {
+      if (input.trim().length === 0) {
+        return 'This field must not be empty'
+      }
+      if (input.length > 128) {
+        return 'This field should be not longer than 128 characters'
+      }
+      return true
+    },
+    validate_permissions(input: string): (true | string) {
+      try {
+        JSON.parse(input)
+        return true
+      } catch {
+        return 'This field is not a valid JSON format'
+      }
+    },
+    validate_tag(input: string) {
+      if (input.includes(' ')) {
+        return 'Whitespaces are not allowed'
+      }
+      if (input.startsWith('-') || input.startsWith('.')) {
+        return 'Tag name must not start with a period or a dash'
+      }
+      if (input.length > 127) {
+        return 'tag name must be shorter than 128 characters'
+      }
+      const re = /[^A-Za-z0-9\-_.]/
+      if (re.test(input)) {
+        return 'Only letters, numbers, dash, and underscore are allowed'
+      }
+      return true
+    },
+    async saveExtension(): Promise<void> {
+      if (this.form.validate() === true) {
+        this.$emit('extensionChange', this.new_extension)
+      }
+    },
+    showDialog(state: boolean) {
+      if (this.form.validate() === true) {
+        this.$emit('change', state)
+      }
+    },
+  },
+})
+</script>
