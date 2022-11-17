@@ -39,7 +39,8 @@ export interface InstalledExtensionData {
     docker: string
     tag: string
     permissions: string
-    status: string
+    user_permissions: string
+    status?: string
 }
 export interface RunningContainer {
     name: string

@@ -1,12 +1,13 @@
 import asyncio
 import json
-import re
 from typing import Any, AsyncGenerator, Dict, List, Optional, cast
 
 import aiodocker
 import aiohttp
 from aiodocker.docker import DockerContainer
 from commonwealth.settings.manager import Manager
+from commonwealth.utils.apis import StackedHTTPException
+from fastapi import status
 from loguru import logger
 
 from exceptions import ContainerDoesNotExist
@@ -74,22 +75,33 @@ class Kraken:
         return cast(List[Extension], self.settings.extensions)
 
     async def install_extension(self, extension: Any) -> AsyncGenerator[bytes, None]:
-        if any(extension.name == installed_extension.name for installed_extension in self.settings.extensions):
-            # already installed
-            return
+        # Remove older entry if it exists
+        self.settings.extensions = [
+            old_extension for old_extension in self.settings.extensions if old_extension.identifier != extension.identifier
+        ]
+        try:
+            await self.remove(extension.identifier, False)
+        except Exception as e:
+            # this will fail if the container is not installed, we don't mind it
+            logger.info(e)
         new_extension = Extension(
             identifier=extension.identifier,
             name=extension.name,
+            docker=extension.docker,
             tag=extension.tag,
             permissions=extension.permissions,
             enabled=extension.enabled,
+            user_permissions=extension.user_permissions,
         )
         self.settings.extensions.append(new_extension)
         self.manager.save()
-        async for line in self.client.images.pull(
-            f"{extension.name}:{extension.tag}", repo=extension.name, tag=extension.tag, stream=True
-        ):
-            yield json.dumps(line).encode("utf-8")
+        try:
+            async for line in self.client.images.pull(
+                f"{extension.docker}:{extension.tag}", repo=extension.docker, tag=extension.tag, stream=True
+            ):
+                yield json.dumps(line).encode("utf-8")
+        except Exception as error:
+            raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
 
     async def kill(self, container_name: str) -> None:
         logger.info(f"Killing {container_name}")
@@ -108,19 +120,18 @@ class Kraken:
         logger.info(f"Removing {container_name}")
         await self.client.images.delete(image, force=False, noprune=False)
 
-    async def uninstall_extension(self, extension_name: str) -> None:
-        regex = re.compile("[^a-zA-Z0-9]")
-        expected_container_name = "extension-" + regex.sub("", f"{extension_name}")
+    async def uninstall_extension(self, extension_identifier: str) -> None:
         extension = [
-            extension
-            for extension in self.settings.extensions
-            if extension.container_name().startswith(expected_container_name)
+            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
         ]
         logger.info(f"uninstalling: {extension}")
         container_name = extension[0].container_name()
-        await self.remove(container_name)
+        try:
+            await self.remove(container_name)
+        except Exception as e:
+            logger.error(f"Unable to remove container {e}")
         self.settings.extensions = [
-            extension for extension in self.settings.extensions if extension.name != extension_name
+            extension for extension in self.settings.extensions if extension.identifier != extension_identifier
         ]
         self.manager.save()
 

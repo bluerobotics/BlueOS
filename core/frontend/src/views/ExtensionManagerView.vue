@@ -14,7 +14,7 @@
       <extension-modal
         :extension="selected_extension"
         :installed="installedVersion()"
-        @clicked="install"
+        @clicked="installFromSelected"
       />
     </v-dialog>
     <v-dialog
@@ -81,17 +81,17 @@
         >
           <v-col
             v-for="extension in installed_extensions"
-            :key="extension.name"
+            :key="extension.docker"
             class="pa-2 col-6"
           >
             <v-card>
               <v-card-title class="pb-0 ">
-                {{ extension.name.split('/')[1] }} <span
+                {{ extension.docker.split('/')[1] }} <span
                   class="ml-3"
                   style="color: grey;"
                 > {{ extension.tag }}</span>
               </v-card-title>
-              <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.name }}</span>
+              <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.docker }}</span>
               <v-card-text width="50%">
                 <v-simple-table>
                   <template #default>
@@ -109,7 +109,7 @@
                             height="25"
                           >
                             <template #default="{ value }">
-                              <strong>{{ value.toFixed(1) }}%</strong>
+                              <strong>{{ value.toFixed ? `${value.toFixed(1)} %`: 'N/A' }}</strong>
                             </template>
                           </v-progress-linear>
                         </td>
@@ -123,7 +123,7 @@
                             height="25"
                           >
                             <template #default="{ value }">
-                              <strong>{{ value.toFixed(1) }}%</strong>
+                              <strong>{{ value.toFixed ? `${value.toFixed(1)} %`: 'N/A' }}</strong>
                             </template>
                           </v-progress-linear>
                         </td>
@@ -142,18 +142,42 @@
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <json-viewer
-                      :value="JSON.parse(extension.permissions)"
+                      :value="JSON.parse(extension.permissions ?? '{}')"
                       :expand-depth="5"
                     />
                   </v-expansion-panel-content>
                 </v-expansion-panel>
               </v-expansion-panels>
+
+              <v-expansion-panels
+                v-if="settings.is_pirate_mode && extension.user_permissions"
+                flat
+              >
+                <v-expansion-panel>
+                  <v-expansion-panel-header>
+                    User Custom Permissions
+                  </v-expansion-panel-header>
+                  <v-expansion-panel-content>
+                    <json-viewer
+                      :value="JSON.parse(extension.user_permissions ?? '{}')"
+                      :expand-depth="5"
+                    />
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
+              </v-expansion-panels>
+
               <v-card-actions>
                 <v-btn @click="uninstall(extension)">
                   Uninstall
                 </v-btn>
                 <v-btn @click="showLogs(extension)">
                   View Logs
+                </v-btn>
+                <v-btn
+                  v-if="settings.is_pirate_mode"
+                  @click="openEditDialog(extension)"
+                >
+                  Edit
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -176,6 +200,26 @@
             Fetching Extensions
           </p>
         </v-container>
+        <v-fab-transition>
+          <v-btn
+            :key="'create_button'"
+            color="primary"
+            fab
+            large
+            dark
+            fixed
+            bottom
+            right
+            class="v-btn--example"
+            @click="openCreationDialog"
+          >
+            <v-icon>mdi-plus</v-icon>
+          </v-btn>
+        </v-fab-transition>
+        <creation-dialog
+          :extension="edited_extension"
+          @extensionChange="createOrUpdateExtension"
+        />
       </v-col>
     </v-row>
   </v-container>
@@ -186,6 +230,7 @@ import axios from 'axios'
 import Vue from 'vue'
 
 import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
+import CreationDialog from '@/components/kraken/ExtensionCreationDialog.vue'
 import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
@@ -206,6 +251,7 @@ export default Vue.extend({
     ExtensionCard,
     ExtensionModal,
     PullProgress,
+    CreationDialog,
   },
   data() {
     return {
@@ -226,6 +272,7 @@ export default Vue.extend({
       metrics: {} as any,
       metrics_interval: 0,
       settings,
+      edited_extension: null as null | InstalledExtensionData,
     }
   },
   mounted() {
@@ -239,6 +286,36 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
   },
   methods: {
+    async createOrUpdateExtension(): Promise<void> {
+      if (!this.edited_extension) {
+        // TODO: error
+        return
+      }
+      await this.install(
+        this.edited_extension.identifier,
+        this.edited_extension.name,
+        this.edited_extension.docker,
+        this.edited_extension.tag,
+        true,
+        this.edited_extension?.permissions ?? '',
+        this.edited_extension?.user_permissions ?? '',
+      )
+      this.show_dialog = false
+      this.edited_extension = null
+    },
+    openEditDialog(extension: InstalledExtensionData): void {
+      this.edited_extension = extension
+    },
+    openCreationDialog() : void {
+      this.edited_extension = {
+        identifier: 'yourorganization.yourextension',
+        name: '',
+        docker: '',
+        tag: '',
+        permissions: '{}',
+        user_permissions: '{}',
+      }
+    },
     getContainer(extension: InstalledExtensionData): RunningContainer[] | undefined {
       return this.running_containers.filter(
         (container) => container.image === `${extension.name}:${extension.tag}`,
@@ -326,7 +403,15 @@ export default Vue.extend({
       this.show_dialog = true
       this.selected_extension = extension
     },
-    async install(tag: string) {
+    async install(
+      identifier: string,
+      name: string,
+      docker: string,
+      tag: string,
+      enabled: boolean,
+      permissions: string,
+      user_permissions: string,
+    ) {
       this.show_dialog = false
       this.show_pull_output = true
       const tracker = new PullTracker(() => {
@@ -339,11 +424,13 @@ export default Vue.extend({
         url: `${API_URL}/extension/install`,
         method: 'POST',
         data: {
-          identifier: this.selected_extension?.identifier,
-          name: this.selected_extension?.docker,
+          identifier,
+          name,
+          docker,
           tag,
-          enabled: true,
-          permissions: JSON.stringify(this.selected_extension?.versions[tag].permissions),
+          enabled,
+          permissions,
+          user_permissions,
         },
         onDownloadProgress: (progressEvent) => {
           tracker.digestNewData(progressEvent)
@@ -360,6 +447,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
+          this.show_pull_output = false
           this.show_dialog = false
           this.pull_output = ''
           this.download_percentage = 0
@@ -367,10 +455,24 @@ export default Vue.extend({
           this.status_text = ''
         })
     },
+    async installFromSelected(tag: string) {
+      if (!this.selected_extension) {
+        return
+      }
+      await this.install(
+        this.selected_extension?.identifier,
+        this.selected_extension?.name,
+        this.selected_extension?.docker,
+        tag,
+        true,
+        JSON.stringify(this.selected_extension?.versions[tag].permissions),
+        '',
+      )
+    },
     async uninstall(extension: ExtensionData) {
       await axios.post(`${API_URL}/extension/uninstall`, null, {
         params: {
-          extension_name: extension.name,
+          extension_identifier: extension.identifier,
         },
       })
         .then(() => {
@@ -381,11 +483,11 @@ export default Vue.extend({
         })
     },
     installedVersion(): string | undefined {
-      const extension_name = this.selected_extension?.docker
-      if (!extension_name) {
+      const extension_docker = this.selected_extension?.docker
+      if (!extension_docker) {
         return undefined
       }
-      return this.installed_extensions.find((extension) => extension.name === extension_name)?.tag
+      return this.installed_extensions.find((extension) => extension.docker === extension_docker)?.tag
     },
     async fetchRunningContainers(): Promise<void> {
       await back_axios({

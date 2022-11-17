@@ -9,19 +9,23 @@ from pykson import BooleanField, JsonObject, ObjectListField, StringField
 class Extension(JsonObject):
     identifier = StringField()
     name = StringField()
+    docker = StringField()
     tag = StringField()
     permissions = StringField()
     enabled = BooleanField()
+    user_permissions = StringField()
 
     def settings(self) -> Any:
+        if self.user_permissions:
+            return json.loads(self.user_permissions)
         return json.loads(self.permissions)
 
     def fullname(self) -> str:
-        return f"{self.name}:{self.tag}"
+        return f"{self.docker}:{self.tag}"
 
     def container_name(self) -> str:
         regex = re.compile("[^a-zA-Z0-9]")
-        return "extension-" + regex.sub("", f"{self.name}{self.tag}")
+        return "extension-" + regex.sub("", f"{self.docker}{self.tag}")
 
 
 class SettingsV1(settings.BaseSettings):
