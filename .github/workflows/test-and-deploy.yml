@@ -224,9 +224,11 @@ jobs:
       matrix:
         platforms: ["linux/arm/v7"]
     steps:
-    
+      - name: Install git
+        run: sudo apt install -y git
+
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: recursive
 
