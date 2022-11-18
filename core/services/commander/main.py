@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 import logging
 import shutil
-import subprocess
 import time
 from enum import Enum
 from pathlib import Path
@@ -10,6 +9,7 @@ from typing import Any
 import appdirs
 import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.commands import run_command
 from commonwealth.utils.logs import InterceptHandler, get_new_log_path
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
@@ -36,28 +36,6 @@ class ShutdownType(str, Enum):
 
     REBOOT = "reboot"
     POWEROFF = "poweroff"
-
-
-def run_command(command: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
-    user = "pi"
-    password = "raspberry"
-
-    return subprocess.run(
-        [
-            "sshpass",
-            "-p",
-            password,
-            "ssh",
-            "-o",
-            "StrictHostKeyChecking=no",
-            f"{user}@localhost",
-            command,
-        ],
-        check=check,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
 
 
 def check_what_i_am_doing(i_know_what_i_am_doing: bool = False) -> None:
