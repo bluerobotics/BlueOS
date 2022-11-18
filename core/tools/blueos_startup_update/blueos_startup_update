@@ -27,6 +27,7 @@ DELTA_JSON = {
 }
 
 import collections
+from commonwealth.utils.commands import run_command
 
 # Copyright 2016-2022 Paul Durivage
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,12 +39,7 @@ def dict_merge(dct, merge_dct):
         else:
             dct[k] = merge_dct[k]
 
-def main():
-    current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
-    match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
-    tag, commit_number, commit_hash = match['tag'], match['commit_number'], match['commit_hash']
-    print(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
-
+def update_startup() -> None:
     startup_path = os.path.join(appdirs.user_config_dir('bootstrap'), 'startup.json')
     config = {}
     with open(startup_path, mode="r", encoding="utf-8") as startup_file:
@@ -60,6 +56,26 @@ def main():
         print("Startup definition changed, system will restart.")
         time.sleep(10)
         sys.exit(1)
+
+
+def update_cgroups() -> None:
+    # add cgroups options to cmdline if they are not there already,
+    command = '''sudo sh -c '\
+    grep -q cgroup /boot/cmdline.txt || (\
+        truncate --size -1 /boot/cmdline.txt;\
+        echo " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory" >> /boot/cmdline.txt;\
+    )' '''
+    run_command(command, False)
+
+
+def main() -> None:
+    current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
+    match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
+    tag, commit_number, commit_hash = match['tag'], match['commit_number'], match['commit_hash']
+    print(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
+    # TODO: parse tag as semver and check before applying patches
+    update_startup()
+    update_cgroups()
 
 if __name__ == "__main__":
     main()
