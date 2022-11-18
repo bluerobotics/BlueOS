@@ -224,12 +224,12 @@ jobs:
       matrix:
         platforms: ["linux/arm/v7"]
     steps:
+    
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
-      - name: Update submodules
-        run: |
-          git submodule update --init --recursive
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
