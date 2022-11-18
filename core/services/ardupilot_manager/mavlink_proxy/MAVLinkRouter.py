@@ -65,7 +65,7 @@ class MAVLinkRouter(AbstractRouter):
             return f"{self.binary()} \
                 --tcp-endpoint {master_endpoint.place}:{master_endpoint.argument} {endpoints}"
 
-        return f"{self.binary()} {master_endpoint.place}:{master_endpoint.argument} {endpoints}"
+        return f"{self.binary()} {master_endpoint.place}:{master_endpoint.argument} {endpoints} -l {self.logdir()}"
 
     @staticmethod
     def name() -> str:
