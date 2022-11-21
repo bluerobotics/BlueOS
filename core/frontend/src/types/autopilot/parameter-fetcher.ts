@@ -17,6 +17,10 @@ export default class ParameterFetcher {
 
   watchdog_last_count = 0
 
+  last_store_update = performance.now()
+
+  min_update_interval_ms = 300
+
   constructor() {
     this.setupWs()
   }
@@ -36,9 +40,14 @@ export default class ParameterFetcher {
     if (!this.store) {
       return
     }
-    this.store.setParameters(this.parameter_table.parameters())
-    this.store.setLoadedParametersCount(this.loaded_params_count)
-    this.store.setTotalParametersCount(this.total_params_count ?? 0)
+    const enough_time_passed = performance.now() - this.last_store_update > this.min_update_interval_ms
+    const all_parameters_loaded = this.loaded_params_count === this.total_params_count
+    if (enough_time_passed || all_parameters_loaded) {
+      this.store.setParameters(this.parameter_table.parameters())
+      this.store.setLoadedParametersCount(this.loaded_params_count)
+      this.store.setTotalParametersCount(this.total_params_count ?? 0)
+      this.last_store_update = performance.now()
+    }
   }
 
   requestParamsWatchdog(): void {
