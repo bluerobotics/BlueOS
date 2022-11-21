@@ -86,7 +86,10 @@
           >
             <v-card>
               <v-card-title class="pb-0 ">
-                {{ extension.name.split('/')[1] }} <span class="ml-3" style="color: grey;"> {{ extension.tag }}</span>
+                {{ extension.name.split('/')[1] }} <span
+                  class="ml-3"
+                  style="color: grey;"
+                > {{ extension.tag }}</span>
               </v-card-title>
               <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.name }}</span>
               <v-card-text width="50%">
