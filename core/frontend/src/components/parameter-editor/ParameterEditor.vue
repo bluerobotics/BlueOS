@@ -303,6 +303,10 @@ export default Vue.extend({
         && re.test(value)
     },
     printParam(param: Parameter): string {
+      if ((param.bitmask || param.options) && param.value === 0) {
+        return 'None'
+      }
+
       if (param.options && param.value in param.options) {
         // TODO: fix this so it doesnt show text for values such as 2.5 (rounding down to 2)
         return param.options[param.value]
