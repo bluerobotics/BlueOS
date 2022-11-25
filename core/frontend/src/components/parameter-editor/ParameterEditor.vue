@@ -309,10 +309,29 @@ export default Vue.extend({
         return 'None'
       }
 
-      if (param.options && param.value in param.options) {
-        // TODO: fix this so it doesnt show text for values such as 2.5 (rounding down to 2)
-        return param.options[param.value]
+      // Bitmask can have options for default values, so this needs to go first
+      // E.g: Option: 830 = default, bitmask = ATTITUDE_MED, GPS, PM, CTUN..
+      // TODO: fix this so it doesnt show text for values such as 2.5 (rounding down to 2)
+      const option_value = param.options?.[param.value]
+      if (option_value) {
+        return option_value
       }
+
+      if (param.bitmask) {
+        const bitmask_result = []
+        // We check up to 64 bits to make sure that we are going to cover all possible bits
+        // Including the ones not listed in the bitmask
+        for (let v = 0; v < 64; v += 1) {
+          // eslint-disable-next-line no-bitwise
+          const bitmask_value = 1 << v
+          // eslint-disable-next-line no-bitwise
+          if (param.value & bitmask_value) {
+            bitmask_result.push(param.bitmask?.[v] ?? `UNKNOWN (Bit ${v + 1})`)
+          }
+        }
+        return bitmask_result.join(', ')
+      }
+
       try {
         return param.value.toFixed(param.paramType.type.includes('INT') ? 0 : 2)
       } catch {
