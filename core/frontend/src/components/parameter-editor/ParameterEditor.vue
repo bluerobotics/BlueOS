@@ -5,9 +5,11 @@
   >
     <v-data-table
       v-if="finished_loading"
-      :headers="[{ text: 'Name', value: 'name' },
-                 { text: 'Description', value: 'description' },
-                 { text: 'Value', value: 'value' }]"
+      :headers="[
+        { text: 'Name', value: 'name' },
+        { text: 'Description', value: 'description' },
+        { text: 'Value', value: 'value', width: '20px' },
+      ]"
       :items="params"
       item-key="name"
       class="elevation-1"
