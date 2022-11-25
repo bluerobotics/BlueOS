@@ -65,4 +65,11 @@ module.exports = {
     'vue/valid-v-slot': ['error', { allowModifiers: true }],
     'no-await-in-loop': 'off',
   },
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.json', '.jsx', '.ts', '.tsx'],
+      },
+    },
+  },
 }
