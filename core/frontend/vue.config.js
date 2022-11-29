@@ -36,6 +36,15 @@ module.exports = {
       },
       '^/kraken': {
         target: SERVER_ADDRESS,
+        selfHandleResponse: true,
+        onProxyRes: (proxyRes, request, response) => {
+          proxyRes.on('data', (data) => {
+            response.write(data);
+          });
+          proxyRes.on('end', () => {
+            response.end();
+          });
+        }
       },
       '^/nmea-injector': {
         target: SERVER_ADDRESS,
@@ -63,6 +72,15 @@ module.exports = {
       },
       '^/version-chooser': {
         target: SERVER_ADDRESS,
+        selfHandleResponse: true,
+        onProxyRes: (proxyRes, request, response) => {
+          proxyRes.on('data', (data) => {
+            response.write(data);
+          });
+          proxyRes.on('end', () => {
+            response.end();
+          });
+        }
       },
       '^/wifi-manager': {
         target: SERVER_ADDRESS,
