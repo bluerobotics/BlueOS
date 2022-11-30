@@ -67,7 +67,7 @@ async def get_installed_extensions() -> Any:
             tag=extension.tag,
             permissions=extension.permissions,
             enabled=extension.enabled,
-            user_permissions=extension.user_permissions
+            user_permissions=extension.user_permissions,
         )
         for extension in extensions
     ]
@@ -88,6 +88,24 @@ async def install_extension(extension: Extension) -> Any:
 @version(1, 0)
 async def uninstall_extension(extension_identifier: str) -> Any:
     return await kraken.uninstall_extension(extension_identifier)
+
+
+@app.post("/extension/enable", status_code=status.HTTP_201_CREATED)
+@version(1, 0)
+async def enable_extension(extension_identifier: str) -> Any:
+    return await kraken.enable_extension(extension_identifier)
+
+
+@app.post("/extension/disable", status_code=status.HTTP_201_CREATED)
+@version(1, 0)
+async def disable_extension(extension_identifier: str) -> Any:
+    return await kraken.disable_extension(extension_identifier)
+
+
+@app.post("/extension/restart", status_code=status.HTTP_201_CREATED)
+@version(1, 0)
+async def restart_extension(extension_identifier: str) -> Any:
+    return await kraken.restart_extension(extension_identifier)
 
 
 @app.get("/list_containers", status_code=status.HTTP_200_OK)

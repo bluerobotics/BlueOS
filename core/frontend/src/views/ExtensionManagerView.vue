@@ -179,6 +179,25 @@
                 >
                   Edit
                 </v-btn>
+                <v-btn
+                  v-if="extension.enabled"
+                  @click="disable(extension)"
+                >
+                  Disable
+                </v-btn>
+                <v-btn
+                  v-if="!extension.enabled"
+                  @click="enableAndStart(extension)"
+                >
+                  Enable and start
+                </v-btn>
+
+                <v-btn
+                  v-if="extension.enabled"
+                  @click="restart(extension)"
+                >
+                  Restart
+                </v-btn>
               </v-card-actions>
             </v-card>
           </v-col>
@@ -278,7 +297,6 @@ export default Vue.extend({
   mounted() {
     this.fetchManifest()
     this.fetchInstalledExtensions()
-    this.fetchRunningContainers()
     this.fetchMetrics()
     this.metrics_interval = setInterval(this.fetchMetrics, 30000)
   },
@@ -318,7 +336,7 @@ export default Vue.extend({
     },
     getContainer(extension: InstalledExtensionData): RunningContainer[] | undefined {
       return this.running_containers.filter(
-        (container) => container.image === `${extension.name}:${extension.tag}`,
+        (container) => container.image === `${extension.docker}:${extension.tag}`,
       )
     },
     async fetchMetrics(): Promise<void> {
@@ -332,6 +350,17 @@ export default Vue.extend({
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
+        })
+      await back_axios({
+        method: 'get',
+        url: `${API_URL}/list_containers`,
+        timeout: 30000,
+      })
+        .then((response) => {
+          this.running_containers = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
         })
     },
     getCpuUsage(extension: InstalledExtensionData): number {
@@ -489,18 +518,62 @@ export default Vue.extend({
       }
       return this.installed_extensions.find((extension) => extension.docker === extension_docker)?.tag
     },
-    async fetchRunningContainers(): Promise<void> {
+    async disable(extension: ExtensionData) {
+      // TODO: spinner
       await back_axios({
-        method: 'get',
-        url: `${API_URL}/list_containers`,
-        timeout: 30000,
+        url: `${API_URL}/extension/disable`,
+        method: 'POST',
+        params: {
+          extension_identifier: extension.identifier,
+        },
+        timeout: 2000,
       })
         .then((response) => {
           this.running_containers = response.data
         })
         .catch((error) => {
-          notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
+          notifier.pushBackError('EXTENSION_DISABLE_FAIL', error)
         })
+      this.fetchInstalledExtensions()
+      this.fetchMetrics()
+    },
+    async enableAndStart(extension: ExtensionData) {
+      // TODO: spinner
+      await back_axios({
+        url: `${API_URL}/extension/enable`,
+        method: 'POST',
+        params: {
+          extension_identifier: extension.identifier,
+        },
+        timeout: 2000,
+      })
+        .then((response) => {
+          this.running_containers = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('EXTENSION_ENABLE_FAIL', error)
+        })
+      this.fetchInstalledExtensions()
+      this.fetchMetrics()
+    },
+    async restart(extension: ExtensionData) {
+      // TODO: spinner
+      await back_axios({
+        url: `${API_URL}/extension/restart`,
+        method: 'POST',
+        params: {
+          extension_identifier: extension.identifier,
+        },
+        timeout: 2000,
+      })
+        .then((response) => {
+          this.running_containers = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('EXTENSION_RESTART_FAIL', error)
+        })
+      this.fetchInstalledExtensions()
+      this.fetchMetrics()
     },
   },
 })
