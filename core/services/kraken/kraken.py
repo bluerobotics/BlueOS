@@ -56,6 +56,8 @@ class Kraken:
         extension_name = extension.container_name()
         # Names is a list of of lists like ["[['/blueos-core'], ..."]
         # We assume which container has only one tag, and remove '/' using the [1:] slicing
+        if not extension.enabled:
+            return
         if not any(container["Names"][0][1:] == extension_name for container in self.running_containers):
             await self.start_extension(extension)
 
@@ -77,7 +79,9 @@ class Kraken:
     async def install_extension(self, extension: Any) -> AsyncGenerator[bytes, None]:
         # Remove older entry if it exists
         self.settings.extensions = [
-            old_extension for old_extension in self.settings.extensions if old_extension.identifier != extension.identifier
+            old_extension
+            for old_extension in self.settings.extensions
+            if old_extension.identifier != extension.identifier
         ]
         try:
             await self.remove(extension.identifier, False)
@@ -103,37 +107,83 @@ class Kraken:
         except Exception as error:
             raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
 
+    def container_from_identifier(self, extension_identifier: str) -> str:
+        extension = [
+            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
+        ]
+        if not extension:
+            raise Exception(f"could not find container for {extension_identifier}, is It running?")
+        return str(extension[0].container_name())
+
     async def kill(self, container_name: str) -> None:
         logger.info(f"Killing {container_name}")
         container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
         if container:
             await container[0].kill()
 
-    async def remove(self, container_name: str) -> None:
-        logger.info(f"Removing container {container_name}")
+    async def remove(self, extension_identifier: str, delete: bool = True) -> None:
+        logger.info(f"Removing extension {extension_identifier}")
+        container_name = self.container_from_identifier(extension_identifier)
         container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
         if not container:
             raise ContainerDoesNotExist(f"Unable remove {container_name}. container not found")
         image = container[0]["Image"]
         await self.kill(container_name)
         await container[0].delete()
-        logger.info(f"Removing {container_name}")
-        await self.client.images.delete(image, force=False, noprune=False)
+        if delete:
+            logger.info(f"Removing {image}")
+            await self.client.images.delete(image, force=False, noprune=False)
 
     async def uninstall_extension(self, extension_identifier: str) -> None:
-        extension = [
-            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
-        ]
-        logger.info(f"uninstalling: {extension}")
-        container_name = extension[0].container_name()
         try:
-            await self.remove(container_name)
+            await self.remove(extension_identifier)
         except Exception as e:
             logger.error(f"Unable to remove container {e}")
         self.settings.extensions = [
             extension for extension in self.settings.extensions if extension.identifier != extension_identifier
         ]
         self.manager.save()
+
+    async def disable_extension(self, extension_identifier: str) -> None:
+        current_extension_list = [
+            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
+        ]
+        if not current_extension_list:
+            raise Exception(f"Extension not found: {extension_identifier}")
+
+        current_extension = current_extension_list[0]
+        logger.info(f"disabling: {extension_identifier}")
+
+        # replace extension with a copy of it, but disabled
+        current_extension.enabled = False
+        self.settings.extensions = [
+            extension for extension in self.settings.extensions if extension.identifier != extension_identifier
+        ]
+        self.settings.extensions.append(current_extension)
+        logger.info(f"{current_extension}")
+        await self.remove(extension_identifier, False)
+        self.manager.save()
+
+    async def enable_extension(self, extension_identifier: str) -> None:
+        current_extension_list = [
+            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
+        ]
+        if not current_extension_list:
+            raise Exception(f"Extension not found: {extension_identifier}")
+
+        current_extension = current_extension_list[0]
+        logger.info(f"enabling: {extension_identifier}")
+
+        # replace extension with a copy of it, but disabled
+        current_extension.enabled = True
+        self.settings.extensions = [
+            extension for extension in self.settings.extensions if extension.identifier != extension_identifier
+        ]
+        self.settings.extensions.append(current_extension)
+        self.manager.save()
+
+    async def restart_extension(self, extension_identifier: str) -> None:
+        await self.remove(extension_identifier, False)
 
     async def list_containers(self) -> List[DockerContainer]:
         containers: List[DockerContainer] = await self.client.containers.list(filter='{"status": ["running"]}')  # type: ignore
