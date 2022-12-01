@@ -2,7 +2,7 @@
 const { PRIMARY } = require('./src/assets/colors/default')
 
 process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
-const SERVER_ADDRESS = 'http://blueos.local/'
+const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? 'http://blueos.local/'
 
 module.exports = {
   devServer: {
