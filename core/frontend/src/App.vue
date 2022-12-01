@@ -275,11 +275,7 @@ export default Vue.extend({
         ],
       }
 
-      const full_menu = { ...this.menus }
-      if (settings.is_pirate_mode) {
-        Object.assign(full_menu, { extensions })
-      }
-      return full_menu
+      return { ...this.menus, extensions }
     },
     steps() {
       return [
