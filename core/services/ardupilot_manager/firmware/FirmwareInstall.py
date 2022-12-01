@@ -19,6 +19,7 @@ def get_board_id(platform: Platform) -> int:
     ardupilot_board_ids = {
         Platform.Pixhawk1: 9,
         Platform.Pixhawk4: 50,
+        Platform.Pixhawk6X: 53,
         Platform.CubeOrange: 140,
     }
     return ardupilot_board_ids.get(platform, -1)
