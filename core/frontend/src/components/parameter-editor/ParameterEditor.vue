@@ -196,7 +196,12 @@ export default Vue.extend({
     },
   },
   methods: {
-    isInRange(input: number): boolean | string {
+    isInRange(input: number | string): boolean | string {
+      // The input value is an empty string when the field is empty
+      if (typeof input === 'string' && input?.trim().length === 0) {
+        return 'This should be a number between min and max'
+      }
+
       if (!this.edited_param?.range) {
         return true
       }
