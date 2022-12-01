@@ -94,6 +94,7 @@
                     v-model.number="new_value"
                     label="Value"
                     type="number"
+                    :step="edited_param.increment ?? 1"
                     :rules="forcing_input ? [] : [isInRange, isValidType]"
                   />
 
