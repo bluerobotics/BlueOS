@@ -335,7 +335,7 @@ export default Vue.extend({
       }
     },
     getContainer(extension: InstalledExtensionData): RunningContainer[] | undefined {
-      return this.running_containers.filter(
+      return this.running_containers?.filter(
         (container) => container.image === `${extension.docker}:${extension.tag}`,
       )
     },
@@ -357,7 +357,7 @@ export default Vue.extend({
         timeout: 30000,
       })
         .then((response) => {
-          this.running_containers = response.data
+          this.running_containers = response.data ?? []
         })
         .catch((error) => {
           notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
