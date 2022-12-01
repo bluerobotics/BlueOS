@@ -59,7 +59,7 @@ async def fetch_manifest() -> Any:
 @version(1, 0)
 async def get_installed_extensions() -> Any:
     extensions = await kraken.get_configured_extensions()
-    return [
+    extensions_list = [
         Extension(
             identifier=extension.identifier,
             name=extension.name,
@@ -71,6 +71,8 @@ async def get_installed_extensions() -> Any:
         )
         for extension in extensions
     ]
+    extensions_list.sort(key=lambda extension: extension.name)
+    return extensions_list
 
 
 @app.post("/extension/install", status_code=status.HTTP_201_CREATED)
