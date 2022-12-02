@@ -80,9 +80,6 @@ export default class ParameterFetcher {
 
   setupWs(): void {
     this.listener.setCallback((receivedMessage) => {
-      if (receivedMessage.count > 0) {
-        this.parameter_table.setCount(receivedMessage.count)
-      }
       const param_name = receivedMessage.message.param_id.join('').replace(/\0/g, '')
       const { param_index, param_value, param_type } = receivedMessage.message
       // We need this due to mismatches between js 64-bit floats and REAL32 in MAVLink
