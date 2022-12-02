@@ -4,12 +4,12 @@
     class="mx-auto my-6"
   >
     <v-data-table
-      v-if="finished_loading"
       :headers="[
         { text: 'Name', value: 'name' },
         { text: 'Description', value: 'description' },
         { text: 'Value', value: 'value', width: '20px' },
       ]"
+      :loading="!finished_loading"
       :items="params"
       item-key="name"
       class="elevation-1"
@@ -18,6 +18,29 @@
       :sort-by="'name'"
       @click:row="editParam"
     >
+      <v-progress-linear
+        slot="progress"
+        color="blue"
+        height="20"
+        :value="params_percentage"
+      >
+        <template #default>
+          <strong
+            v-if="!finished_loading && params_percentage > 99.9"
+          >
+            Waiting for metadata.. </strong>
+          <strong
+            v-if="params_percentage == 0"
+            class="ml-5"
+          > Waiting for parameters.. </strong>
+          <strong
+            v-if="params_percentage > 0 && params_percentage < 100"
+            class="ml-5"
+          >
+            {{ params_percentage.toFixed(1) }}% ({{ loaded_parameters }} / {{ total_parameters }})
+          </strong>
+        </template>
+      </v-progress-linear>
       <template #top>
         <v-text-field
           v-model="search"
@@ -29,20 +52,6 @@
         {{ printParam(item) }}
       </template>
     </v-data-table>
-    <div v-else>
-      <spinning-logo size="30%" />
-      <v-progress-linear
-        :value="params_percentage"
-        stream
-        class="mt-5 mb-5"
-        color="blue"
-        height="20"
-      >
-        <template #default>
-          <strong> Loading parameters: {{ params.length ?? 'loading' }} </strong>
-        </template>
-      </v-progress-linear>
-    </div>
     <v-dialog
       v-model="edit_dialog"
       max-width="500px"
@@ -152,15 +161,10 @@ import { parameters_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
 
-import SpinningLogo from '../common/SpinningLogo.vue'
-
 const notifier = new Notifier(parameters_service)
 
 export default Vue.extend({
   name: 'ParameterEditor',
-  components: {
-    SpinningLogo,
-  },
   data() {
     return {
       search: '',
@@ -178,6 +182,12 @@ export default Vue.extend({
     },
     params_percentage() {
       return 100 * (autopilot_data.parameters.length / autopilot_data.parameters_total)
+    },
+    loaded_parameters() {
+      return autopilot_data.parameters.length
+    },
+    total_parameters() {
+      return autopilot_data.parameters_total
     },
     finished_loading() {
       return autopilot_data.finished_loading
