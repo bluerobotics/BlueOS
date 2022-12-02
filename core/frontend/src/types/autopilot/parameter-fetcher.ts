@@ -104,7 +104,7 @@ export default class ParameterFetcher {
         if (receivedMessage.message.param_count) {
           this.total_params_count = receivedMessage.message.param_count
         }
-        this.loaded_params_count += 1
+        this.loaded_params_count = this.parameter_table.size()
       }
       this.updateStore()
     }).setFrequency(0)
