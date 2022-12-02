@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@mdi/font": "^6.9.96",
+    "@types/file-saver": "^2.0.5",
     "@types/lodash": "^4.14.175",
     "@types/marked": "^4.0.7",
     "@types/semver": "^7.3.9",
@@ -27,6 +28,7 @@
     "babel-loader": "^8.2.5",
     "core-js": "^3.25.5",
     "date-fns": "^2.23.0",
+    "file-saver": "^2.0.5",
     "javascript-time-ago": "^2.3.11",
     "lodash": "^4.17.21",
     "marked": "^4.1.1",
