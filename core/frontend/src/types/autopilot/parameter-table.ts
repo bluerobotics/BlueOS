@@ -105,4 +105,8 @@ export default class ParametersTable {
     parameters(): Parameter[] {
       return Object.values(this.parametersDict)
     }
+
+    size(): number {
+      return this.parameters().length
+    }
 }
