@@ -37,11 +37,11 @@ export default class ParameterFetcher {
   }
 
   updateStore(): void {
-    if (!this.store) {
+    if (!this.store || this.total_params_count === null) {
       return
     }
     const enough_time_passed = performance.now() - this.last_store_update > this.min_update_interval_ms
-    const all_parameters_loaded = this.loaded_params_count === this.total_params_count
+    const all_parameters_loaded = this.loaded_params_count >= this.total_params_count
     if (enough_time_passed || all_parameters_loaded) {
       this.store.setParameters(this.parameter_table.parameters())
       this.store.setLoadedParametersCount(this.loaded_params_count)
@@ -51,7 +51,9 @@ export default class ParameterFetcher {
   }
 
   requestParamsWatchdog(): void {
-    if (this.loaded_params_count > 0 && this.loaded_params_count === this.total_params_count) {
+    if (this.total_params_count !== null
+      && this.loaded_params_count > 0
+      && this.loaded_params_count >= this.total_params_count) {
       return
     }
     if (this.loaded_params_count > this.watchdog_last_count) {
