@@ -37,6 +37,8 @@ interface MetadataFile {
 export default class ParametersTable {
     parametersDict: {[key: number] : Parameter} = {}
 
+    metadata_loaded = false
+
     metadata = {} as Dictionary<Metadata>
 
     constructor() {
@@ -73,6 +75,15 @@ export default class ParametersTable {
           this.metadata[name] = parameter
         }
       }
+
+      this.updateParameters()
+      this.metadata_loaded = true
+    }
+
+    updateParameters(): void {
+      for (const parameter of Object.values(this.parametersDict)) {
+        this.addParam(parameter)
+      }
     }
 
     addParam(param: Parameter): void {
@@ -108,5 +119,9 @@ export default class ParametersTable {
 
     size(): number {
       return this.parameters().length
+    }
+
+    loaded(): boolean {
+      return this.metadata_loaded
     }
 }
