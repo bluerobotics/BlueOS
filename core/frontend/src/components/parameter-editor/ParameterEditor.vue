@@ -56,15 +56,19 @@
           <v-container
             v-if="edited_param"
           >
-            <v-row v-if="edited_param.range">
-              Max: {{ edited_param.range.high }}
-              Min: {{ edited_param.range.low }}
-            </v-row>
             <v-row v-if="edited_param.rebootRequired">
               Reboot Required
             </v-row>
             <v-row>
               {{ edited_param.description }}
+            </v-row>
+            <v-row
+              v-if="edited_param.range"
+              class="pt-6"
+            >
+              Min: {{ edited_param.range.low }}
+              Max: {{ edited_param.range.high }}
+              Increment: {{ edited_param.increment ?? 0.01 }}
             </v-row>
             <v-row>
               <v-col
