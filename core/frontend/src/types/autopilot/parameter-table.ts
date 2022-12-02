@@ -37,8 +37,6 @@ interface MetadataFile {
 export default class ParametersTable {
     parametersDict: {[key: number] : Parameter} = {}
 
-    count = 0
-
     metadata = {} as Dictionary<Metadata>
 
     constructor() {
@@ -47,7 +45,6 @@ export default class ParametersTable {
 
     reset(): void {
       this.parametersDict = {}
-      this.count = 0
     }
 
     fetchMetadata(): void {
@@ -103,10 +100,6 @@ export default class ParametersTable {
         return
       }
       this.parametersDict[parseInt(index[0], 10)].value = param_value
-    }
-
-    setCount(count: number): void {
-      this.count = count
     }
 
     parameters(): Parameter[] {
