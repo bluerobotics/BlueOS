@@ -43,6 +43,7 @@ export default class ParameterFetcher {
     const enough_time_passed = performance.now() - this.last_store_update > this.min_update_interval_ms
     const all_parameters_loaded = this.loaded_params_count >= this.total_params_count
     if (enough_time_passed || all_parameters_loaded) {
+      this.store.setMetadataLoaded(this.parameter_table.loaded())
       this.store.setParameters(this.parameter_table.parameters())
       this.store.setLoadedParametersCount(this.loaded_params_count)
       this.store.setTotalParametersCount(this.total_params_count ?? 0)
@@ -108,6 +109,15 @@ export default class ParameterFetcher {
       }
       this.updateStore()
     }).setFrequency(0)
-    setInterval(() => { this.requestParamsWatchdog() }, 2000)
+    setInterval(() => {
+      this.requestParamsWatchdog()
+
+      // Check if store is done, otherwise try to update it
+      // The parameter metadata may not be completed or
+      // others edge cases
+      if (this.store?.finished_loading !== true) {
+        this.updateStore()
+      }
+    }, 2000)
   }
 }
