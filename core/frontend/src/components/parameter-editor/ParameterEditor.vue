@@ -28,6 +28,11 @@
       <template #item.value="{ item }">
         {{ printParam(item) }}
       </template>
+      <template #footer.prepend>
+        <v-btn icon :disabled="!finished_loading" class="mr-5" @click="saveParametersToFile()">
+          <v-icon>mdi-tray-arrow-down</v-icon>
+        </v-btn>
+      </template>
     </v-data-table>
     <div v-else>
       <spinning-logo size="30%" />
@@ -141,6 +146,8 @@
 </template>
 
 <script lang="ts">
+import { format } from 'date-fns'
+import { saveAs } from 'file-saver'
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -345,6 +352,49 @@ export default Vue.extend({
       } catch {
         return 'N/A'
       }
+    },
+    saveParametersToFile() {
+      let parameter_name_max_size = 0
+
+      // Sort parameters alphabetically
+      // We take advantage of sort to also calculate the parameter name maximum size
+      const parameters = Object.values(autopilot_data.parameters).sort((first, second) => {
+        parameter_name_max_size = Math.max(parameter_name_max_size, first.name.length)
+        parameter_name_max_size = Math.max(parameter_name_max_size, second.name.length)
+
+        if (first.name < second.name) {
+          return -1
+        }
+        if (first.name > second.name) {
+          return 1
+        }
+        return 0
+      })
+
+      let content = ''
+
+      const vehicle = autopilot.vehicle_type ?? 'vehicle'
+      const platform = autopilot.current_board?.platform ?? 'platform'
+      const version = autopilot.firmware_info?.version ?? 'version'
+      const type = autopilot.firmware_info?.type ?? 'None'
+      const date = format(new Date(), 'yyyyMMdd-HHmmss')
+
+      content += `# Date: ${new Date()}\n`
+      content += `# Vehicle: ${vehicle}\n`
+      content += `# Platform: ${platform}\n`
+      content += `# Version: ${version}-${type}\n\n`
+      content += '# Parameters\n'
+
+      const file_name = `${vehicle}-${version}-${type}-${date}`
+
+      for (const param of parameters) {
+        // Calculate space between name and value to make it pretty
+        const space = Array(parameter_name_max_size - param.name.length + 2).join(' ')
+        content += `${param.name}${space}${param.value}\n`
+      }
+
+      const file = new File([content], `${file_name}.txt`, { type: 'text/plain' })
+      saveAs(file)
     },
   },
 })
