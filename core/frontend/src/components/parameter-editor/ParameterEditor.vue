@@ -32,6 +32,14 @@
         <v-btn icon :disabled="!finished_loading" class="mr-5" @click="saveParametersToFile()">
           <v-icon>mdi-tray-arrow-down</v-icon>
         </v-btn>
+        <v-btn
+          icon
+          :disabled="!finished_loading"
+          class="mr-5"
+          @click="load_param_dialog = true"
+        >
+          <v-icon>mdi-tray-arrow-up</v-icon>
+        </v-btn>
       </template>
     </v-data-table>
     <div v-else>
@@ -146,6 +154,56 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog
+      v-model="load_param_dialog"
+      max-width="500px"
+    >
+      <v-card>
+        <v-card-title>
+          <span class="text-h5">Load parameter file</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-container>
+            <v-row>
+              <v-file-input
+                accept=".txt"
+                class="mr-2"
+                show-size
+                label="Parameter file"
+                @change="setParameterFile"
+              />
+            </v-row>
+            <!--v-row>
+              <v-col cols="6" sm="6" md="6">
+                <v-form ref="form">
+                  <v-checkbox v-if="show_advanced_checkbox" v-model="forcing_input" dense :label="'Force'" />
+                  <v-checkbox v-if="show_custom_checkbox" v-model="custom_input" dense :label="'Custom'" />
+                </v-form>
+              </v-col>
+            </v-row-->
+          </v-container>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="load_param_dialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="blue darken-1"
+            text
+            @click="applyParameterFile"
+          >
+            Save and Reboot
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -179,6 +237,8 @@ export default Vue.extend({
       edit_dialog: false,
       edited_bitmask: [] as number[],
       forcing_input: false,
+      load_param_dialog: false,
+      loaded_parameter: [] as {name: string, value: number, type: undefined | ParamType}[],
       custom_input: false,
       new_value: 0,
     }
@@ -381,6 +441,25 @@ export default Vue.extend({
 
       const file = new File([content], `${file_name}.txt`, { type: 'text/plain' })
       saveAs(file)
+    },
+    async setParameterFile(file: (File | null)): Promise<void> {
+      const content = await file?.text()
+      const lines = content?.split(/\r?\n/)
+      const new_parameters = lines
+        ?.map((line) => line.trim())
+        ?.filter((line) => line[0] !== '#' && line.length !== 0)
+        ?.map((line) => {
+          const [name, value] = line.split(/ {1,}/)
+          const type = autopilot_data.parameters.find((param) => param.name === name)?.paramType.type
+          return { name, value: parseFloat(value), type }
+        })
+      this.loaded_parameter = new_parameters ?? []
+    },
+    applyParameterFile(): void {
+      for (const param of this.loaded_parameter) {
+        mavlink2rest.setParam(param.name, param.value, param.type)
+      }
+      this.load_param_dialog = false
     },
   },
 })
