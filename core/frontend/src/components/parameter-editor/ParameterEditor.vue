@@ -139,7 +139,7 @@
           <v-btn
             color="blue darken-1"
             text
-            @click="saveParam(edited_param.rebootRequired)"
+            @click="saveEditedParam()"
           >
             {{ edited_param?.rebootRequired ? "Save and Reboot" : "Save" }}
           </v-btn>
@@ -259,7 +259,7 @@ export default Vue.extend({
         }
       }
     },
-    async saveParam(reboot: boolean) {
+    async saveEditedParam() {
       if (!this.forcing_input && !this.form?.validate()) {
         return
       }
@@ -297,7 +297,7 @@ export default Vue.extend({
           },
         },
       })
-      if (reboot) {
+      if (this.edited_param.rebootRequired) {
         await this.restart_autopilot()
         autopilot_data.reset()
       }
