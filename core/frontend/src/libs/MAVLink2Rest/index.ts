@@ -134,6 +134,37 @@ class Mavlink2RestManager {
   }
 
   /**
+   * Abstraction over PARAM_SET message
+   * @param {string} name Parameter name
+   * @param {number} value Desired parameter value
+   * @param {string} type Valid mavlink parameter type based on mavlink2rest
+   */
+  setParam(name: string, value: number, type?: string): void {
+    const param_name = [...name]
+    while (param_name.length < 16) {
+      param_name.push('\0')
+    }
+
+    this.sendMessage({
+      header: {
+        system_id: 255,
+        component_id: 0,
+        sequence: 0,
+      },
+      message: {
+        type: 'PARAM_SET',
+        param_value: value,
+        target_system: 0,
+        target_component: 0,
+        param_id: param_name,
+        param_type: {
+          type: type ?? 'MAV_PARAM_TYPE_UINT8',
+        },
+      },
+    })
+  }
+
+  /**
    * Create endpoint based in MAVLink message name
    * @param  {string} endpoint
    * @returns Endpoint
