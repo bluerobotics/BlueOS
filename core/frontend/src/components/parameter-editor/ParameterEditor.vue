@@ -276,27 +276,9 @@ export default Vue.extend({
       } else {
         value = this.new_value
       }
-      const param_id = [...this.edited_param.name]
-      while (param_id.length < 16) {
-        param_id.push('\0')
-      }
-      mavlink2rest.sendMessage({
-        header: {
-          system_id: 255,
-          component_id: 0,
-          sequence: 0,
-        },
-        message: {
-          type: 'PARAM_SET',
-          param_value: value,
-          target_system: 0,
-          target_component: 0,
-          param_id,
-          param_type: {
-            type: this.edited_param.paramType.type,
-          },
-        },
-      })
+
+      mavlink2rest.setParam(this.edited_param.name, value, this.edited_param.paramType.type)
+
       if (this.edited_param.rebootRequired) {
         await this.restart_autopilot()
         autopilot_data.reset()
