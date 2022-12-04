@@ -23,6 +23,8 @@ class Mavlink2RestManager {
 
   baseUrlCandidates: Array<string>
 
+  private socket: WebSocket | undefined = undefined
+
   private static instance: Mavlink2RestManager;
 
   private constructor() {
@@ -72,6 +74,23 @@ class Mavlink2RestManager {
     Object.entries(this.endpoints).forEach(([name, endpoint]) => {
       endpoint.updateUrl(`${url}?filter=${name}`)
     })
+
+    this.socket = this.createSocket(`${url}?filter=THIS_SHOULD_ONLY_SEND`)
+  }
+
+  /**
+   * Create websocket for internal use
+   * @param  {string} url
+   * @returns WebSocket
+   */
+  createSocket(url: string): WebSocket {
+    const socket = new WebSocket(url)
+    socket.onclose = () => {
+      setTimeout(() => {
+        this.socket = this.createSocket(url)
+      }, 5000)
+    }
+    return socket
   }
 
   /**
@@ -83,6 +102,19 @@ class Mavlink2RestManager {
     const endpoint = this.endpoints[endpointName] || this.createEndpoint(endpointName)
     this.endpoints[endpointName] = endpoint
     return endpoint.addListener()
+  }
+
+  /**
+   * Sends a mesage using mavlink2rest with websocket
+   * @param  {string} message data
+   *
+   */
+  sendMessageViaWebsocket(message: any): void {
+    try {
+      this.socket?.send(JSON.stringify(message))
+    } catch (error) {
+      console.log(`Failed to parse message: ${error}`)
+    }
   }
 
   /**
