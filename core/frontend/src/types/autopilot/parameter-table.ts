@@ -88,7 +88,7 @@ export default class ParametersTable {
 
     addParam(param: Parameter): void {
       if (param.name in this.metadata) {
-        param.description = this.metadata[param.name].Description ?? ''
+        param.description = this.metadata[param.name].Description?.toTitle() ?? ''
         param.shortDescription = this.metadata[param.name].DisplayName
         const {
           Values, Bitmask, ReadOnly, Increment, RebootRequired, Range,
