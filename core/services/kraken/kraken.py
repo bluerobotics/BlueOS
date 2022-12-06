@@ -53,6 +53,16 @@ class Kraken:
         await container.start()
 
     async def check(self, extension: Extension) -> None:
+        if not extension.enabled:
+            return
+        if not extension.is_valid():
+            logger.warning(f"{extension.identifier} is invalid, removing it")
+            try:
+                await self.uninstall_extension(extension.identifier)
+            except ContainerDoesNotExist:
+                logger.warning(f"container for extension {extension.identifier} was not up?")
+            return
+
         extension_name = extension.container_name()
         # Names is a list of of lists like ["[['/blueos-core'], ..."]
         # We assume which container has only one tag, and remove '/' using the [1:] slicing
@@ -138,7 +148,7 @@ class Kraken:
         try:
             await self.remove(extension_identifier)
         except Exception as e:
-            logger.error(f"Unable to remove container {e}")
+            logger.warning(f"Unable to remove container {e}")
         self.settings.extensions = [
             extension for extension in self.settings.extensions if extension.identifier != extension_identifier
         ]

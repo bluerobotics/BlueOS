@@ -20,6 +20,11 @@ class Extension(JsonObject):
             return json.loads(self.user_permissions)
         return json.loads(self.permissions)
 
+    def is_valid(self) -> bool:
+        if not self.docker:
+            return False
+        return True
+
     def fullname(self) -> str:
         return f"{self.docker}:{self.tag}"
 
