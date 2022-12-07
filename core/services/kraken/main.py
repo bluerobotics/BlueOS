@@ -89,7 +89,7 @@ async def install_extension(extension: Extension) -> Any:
 @app.post("/extension/uninstall", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
 async def uninstall_extension(extension_identifier: str) -> Any:
-    return await kraken.uninstall_extension(extension_identifier)
+    return await kraken.uninstall_extension_from_identifier(extension_identifier)
 
 
 @app.post("/extension/enable", status_code=status.HTTP_201_CREATED)

@@ -10,7 +10,7 @@ from commonwealth.utils.apis import StackedHTTPException
 from fastapi import status
 from loguru import logger
 
-from exceptions import ContainerDoesNotExist
+from exceptions import ContainerDoesNotExist, ExtensionNotFound
 from settings import Extension, SettingsV1
 
 REPO_URL = "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json"
@@ -58,7 +58,7 @@ class Kraken:
         if not extension.is_valid():
             logger.warning(f"{extension.identifier} is invalid, removing it")
             try:
-                await self.uninstall_extension(extension.identifier)
+                await self.uninstall_extension(extension)
             except ContainerDoesNotExist:
                 logger.warning(f"container for extension {extension.identifier} was not up?")
             return
@@ -117,13 +117,19 @@ class Kraken:
         except Exception as error:
             raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
 
-    def container_from_identifier(self, extension_identifier: str) -> str:
-        extension = [
-            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
+    async def extension_from_identifier(self, identifier: str) -> Optional[Extension]:
+        extensions: List[Extension] = [
+            extension for extension in self.settings.extensions if extension.identifier == identifier
         ]
+        if extensions:
+            return extensions[0]
+        return None
+
+    async def container_from_identifier(self, extension_identifier: str) -> str:
+        extension = await self.extension_from_identifier(extension_identifier)
         if not extension:
             raise Exception(f"could not find container for {extension_identifier}, is It running?")
-        return str(extension[0].container_name())
+        return str(extension.container_name())
 
     async def kill(self, container_name: str) -> None:
         logger.info(f"Killing {container_name}")
@@ -133,7 +139,7 @@ class Kraken:
 
     async def remove(self, extension_identifier: str, delete: bool = True) -> None:
         logger.info(f"Removing extension {extension_identifier}")
-        container_name = self.container_from_identifier(extension_identifier)
+        container_name = await self.container_from_identifier(extension_identifier)
         container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
         if not container:
             raise ContainerDoesNotExist(f"Unable remove {container_name}. container not found")
@@ -144,52 +150,56 @@ class Kraken:
             logger.info(f"Removing {image}")
             await self.client.images.delete(image, force=False, noprune=False)
 
-    async def uninstall_extension(self, extension_identifier: str) -> None:
+    async def uninstall_extension_from_identifier(self, identifier: str) -> None:
+        extension = await self.extension_from_identifier(identifier)
+        if extension:
+            await self.uninstall_extension(extension)
+        raise ExtensionNotFound(f"Could not find extension with identifier '{identifier}'")
+
+    async def uninstall_extension(self, extension: Extension) -> None:
         try:
-            await self.remove(extension_identifier)
+            await self.remove(extension.identifier)
+            return
         except Exception as e:
             logger.warning(f"Unable to remove container {e}")
         self.settings.extensions = [
-            extension for extension in self.settings.extensions if extension.identifier != extension_identifier
+            old_extension
+            for old_extension in self.settings.extensions
+            if old_extension.identifier != extension.identifier
         ]
         self.manager.save()
 
     async def disable_extension(self, extension_identifier: str) -> None:
-        current_extension_list = [
-            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
-        ]
-        if not current_extension_list:
+        extension = await self.extension_from_identifier(extension_identifier)
+        if not extension:
             raise Exception(f"Extension not found: {extension_identifier}")
 
-        current_extension = current_extension_list[0]
         logger.info(f"disabling: {extension_identifier}")
 
-        # replace extension with a copy of it, but disabled
-        current_extension.enabled = False
+        extension.enabled = False
         self.settings.extensions = [
-            extension for extension in self.settings.extensions if extension.identifier != extension_identifier
+            installed_extension
+            for installed_extension in self.settings.extensions
+            if installed_extension.identifier != extension_identifier
         ]
-        self.settings.extensions.append(current_extension)
-        logger.info(f"{current_extension}")
+        self.settings.extensions.append(extension)
         await self.remove(extension_identifier, False)
         self.manager.save()
 
     async def enable_extension(self, extension_identifier: str) -> None:
-        current_extension_list = [
-            extension for extension in self.settings.extensions if extension.identifier == extension_identifier
-        ]
-        if not current_extension_list:
-            raise Exception(f"Extension not found: {extension_identifier}")
+        extension = await self.extension_from_identifier(extension_identifier)
+        if not extension:
+            raise ExtensionNotFound(f"Extension not found: {extension_identifier}")
 
-        current_extension = current_extension_list[0]
         logger.info(f"enabling: {extension_identifier}")
 
-        # replace extension with a copy of it, but disabled
-        current_extension.enabled = True
+        extension.enabled = True
         self.settings.extensions = [
-            extension for extension in self.settings.extensions if extension.identifier != extension_identifier
+            installed_extension
+            for installed_extension in self.settings.extensions
+            if installed_extension.identifier != extension_identifier
         ]
-        self.settings.extensions.append(current_extension)
+        self.settings.extensions.append(extension)
         self.manager.save()
 
     async def restart_extension(self, extension_identifier: str) -> None:
