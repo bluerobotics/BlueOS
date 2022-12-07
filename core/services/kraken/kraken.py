@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 from typing import Any, AsyncGenerator, Dict, List, Optional, cast
 
 import aiodocker
@@ -162,6 +163,19 @@ class Kraken:
             return
         except Exception as e:
             logger.warning(f"Unable to remove container {e}")
+
+        # TODO: remove this  section sometime in 2023
+        # This is here to cope with a change between betas.
+        # we had name mistakenly taking the docker name
+        logger.warning("attempting to find container with old beta nomenclature")
+        regex = re.compile("[^a-zA-Z0-9]")
+        container_name = "extension-" + regex.sub("", f"{extension.name}{extension.tag}")
+        container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
+        if container:
+            await self.kill(container_name)
+            await container[0].delete()
+        # end of section to delete
+
         self.settings.extensions = [
             old_extension
             for old_extension in self.settings.extensions
