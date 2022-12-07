@@ -177,7 +177,7 @@ class Mavlink2RestManager {
       param_name.push('\0')
     }
 
-    this.sendMessage({
+    this.sendMessageViaWebsocket({
       header: {
         system_id: 255,
         component_id: 0,
