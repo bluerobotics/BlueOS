@@ -108,10 +108,10 @@
                             color="green"
                             height="25"
                           >
-                            <template #default="{ value }">
+                            <template #default>
                               <strong v-if="getMemoryUsage(extension).toFixed">
-                                {{`${(value*total_memory).toFixed(1)} MB`}}
-                                {{`/ ${(getMemoryLimit(extension)*0.01*total_memory*1024).toFixed(0)} MB` }}
+                                {{ prettifySize(getMemoryUsage(extension)*total_memory*0.01) }} /
+                                {{ prettifySize(getMemoryLimit(extension)*total_memory*0.01) }}
                               </strong>
                               <strong v-else>
                                 N/A
@@ -269,6 +269,7 @@ import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { prettifySize } from '@/utils/helper_functions'
 import PullTracker from '@/utils/pull_tracker'
 
 import { ExtensionData, InstalledExtensionData, RunningContainer } from '../types/kraken'
@@ -312,9 +313,9 @@ export default Vue.extend({
       return system_information.system?.cpu?.length ?? 4
     },
     total_memory(): number | undefined {
-      // Total system memory in GB
+      // Total system memory in kB
       const total_kb = system_information.system?.memory?.ram?.total_kB
-      return total_kb ? total_kb / 1024 / 1024 : undefined
+      return total_kb ?? undefined
     },
   },
   mounted() {
@@ -327,6 +328,9 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
   },
   methods: {
+    prettifySize(size_kb: number) {
+      return prettifySize(size_kb)
+    },
     async createOrUpdateExtension(): Promise<void> {
       if (!this.edited_extension) {
         // TODO: error
@@ -405,7 +409,7 @@ export default Vue.extend({
       // Memory limit as a percentage of total system RAM
       const permissions_str = extension.user_permissions ? extension.user_permissions : extension.permissions
       const permissions = JSON.parse(permissions_str)
-      const limit = permissions.HostConfig?.Memory / 1024 / 1024 / 1024 ?? undefined
+      const limit = permissions.HostConfig?.Memory / 1024 ?? undefined
       if (this.total_memory && limit) {
         return limit / this.total_memory / 0.01
       }
