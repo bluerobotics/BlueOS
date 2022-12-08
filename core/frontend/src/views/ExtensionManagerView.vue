@@ -104,12 +104,18 @@
                         <td>Memory usage</td>
                         <td>
                           <v-progress-linear
-                            :value="getMemoryUsage(extension)"
+                            :value="getMemoryUsage(extension)/getMemoryLimit(extension)/0.01"
                             color="green"
                             height="25"
                           >
                             <template #default="{ value }">
-                              <strong>{{ value.toFixed ? `${value.toFixed(1)} %`: 'N/A' }}</strong>
+                              <strong v-if="getMemoryUsage(extension).toFixed">
+                                {{`${(value*total_memory).toFixed(1)} MB`}}
+                                {{`/ ${(getMemoryLimit(extension)*0.01*total_memory*1024).toFixed(0)} MB` }}
+                              </strong>
+                              <strong v-else>
+                                N/A
+                              </strong>
                             </template>
                           </v-progress-linear>
                         </td>
@@ -122,9 +128,9 @@
                             color="green"
                             height="25"
                           >
-                            <template #default="{ value }">
-                              <strong>
-                      {{ value.toFixed ? `${getCpuUsage(extension).toFixed(1)}% / ${getCpuLimit(extension)}%`: 'N/A' }}
+                            <template #default>
+                              <strong v-if="!isNaN(getCpuUsage(extension))">
+                                {{ `${getCpuUsage(extension).toFixed(1)}% / ${getCpuLimit(extension)}%` }}
                                 {{ `(${(getCpuLimit(extension) * cpus * 0.01).toFixed(1)} cores) `}}
                               </strong>
                               <strong v-else>
@@ -305,6 +311,11 @@ export default Vue.extend({
     cpus(): number {
       return system_information.system?.cpu?.length ?? 4
     },
+    total_memory(): number | undefined {
+      // Total system memory in GB
+      const total_kb = system_information.system?.memory?.ram?.total_kB
+      return total_kb ? total_kb / 1024 / 1024 : undefined
+    },
   },
   mounted() {
     this.fetchManifest()
@@ -389,6 +400,16 @@ export default Vue.extend({
         return 'N/A'
       }
       return this.metrics[name]?.memory
+    },
+    getMemoryLimit(extension: InstalledExtensionData): number | undefined {
+      // Memory limit as a percentage of total system RAM
+      const permissions_str = extension.user_permissions ? extension.user_permissions : extension.permissions
+      const permissions = JSON.parse(permissions_str)
+      const limit = permissions.HostConfig?.Memory / 1024 / 1024 / 1024 ?? undefined
+      if (this.total_memory && limit) {
+        return limit / this.total_memory / 0.01
+      }
+      return 100
     },
     getCpuLimit(extension: InstalledExtensionData): number {
       // returns cpu cap in percentage of total cpu power
