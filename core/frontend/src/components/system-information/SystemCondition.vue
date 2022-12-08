@@ -18,6 +18,7 @@ import Vue from 'vue'
 import SystemConditionCard from '@/components/system-information/SystemConditionCard.vue'
 import system_information, { FetchType } from '@/store/system-information'
 import { Disk } from '@/types/system-information/system'
+import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'SystemCondition',
@@ -52,18 +53,13 @@ export default Vue.extend({
     memory(): Record<string, unknown> {
       const memory = system_information.system?.memory
 
-      const used_ram_memory = memory
-        ? memory.ram.used_kB / 2 ** 20 : 0
-      const total_ram_memory = memory
-        ? memory.ram.total_kB / 2 ** 20 : 0
+      const used_ram_memory = memory?.ram?.used_kB ?? 0
+      const total_ram_memory = memory?.ram?.total_kB ?? 0
+      const used_swap_memory = memory?.swap?.used_kB ?? 0
+      const total_swap_memory = memory?.swap?.total_kB ?? 0
 
-      const used_swap_memory = memory
-        ? memory.swap.used_kB / 2 ** 20 : 0
-      const total_swap_memory = memory
-        ? memory.swap.total_kB / 2 ** 20 : 0
-
-      const memory_text = `RAM: ${used_ram_memory.toFixed(3)}GB/${total_ram_memory.toFixed(3)}GB`
-        + `<br/>SWAP: ${used_swap_memory.toFixed(3)}GB/${total_swap_memory.toFixed(3)}GB`
+      const memory_text = `RAM: ${prettifySize(used_ram_memory)}/${prettifySize(total_ram_memory)}`
+        + `<br/>SWAP: ${prettifySize(used_swap_memory)}/${prettifySize(total_swap_memory)}`
 
       return {
         name: 'Memory',
