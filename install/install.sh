@@ -73,9 +73,9 @@ ARCHITECTURE="$(uname -m)"
 # Check if the script is running as root
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
 
-echo "Checking if network and remote are available."
+echo "Checking if network and remote are available: $ROOT"
 curl -fsSL --silent $ROOT/install/install.sh 1> /dev/null || (
-    echo "Remote is not available: ${ROOT}"
+    echo "Remote is not available or install.sh does not exist: ${ROOT}"
     exit 1
 )
 
