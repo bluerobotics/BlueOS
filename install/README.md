@@ -16,8 +16,6 @@ To use a different remote or version, you can se the following environment varia
 Remember that to do that, you need to set the environment variables as root:
 ```sh
 sudo su
-export VERSION=example-version
-export REMOTE=https://raw.githubusercontent.com/patrickelectric/blueos-docker
-# You can also change the install URL to use a different source for the install script
-curl -fsSL https://raw.githubusercontent.com/patrickelectric/blueos-docker/example-version/install/install.sh | bash
+# You can also change the install URL to use a different source for files
+curl -fsSL https://raw.githubusercontent.com/patrickelectric/blueos-docker/example-version/install/install.sh | export REMOTE=https://raw.githubusercontent.com/patrickelectric/blueos-docker export VERSION=example-version bash
 ```
