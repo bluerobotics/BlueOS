@@ -128,6 +128,7 @@
                     label="Value"
                     type="number"
                     :step="edited_param.increment ?? 0.01"
+                    :suffix="edited_param.units"
                     :rules="forcing_input ? [] : [isInRange, isValidType]"
                   />
 
