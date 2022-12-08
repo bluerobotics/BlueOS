@@ -52,7 +52,12 @@
         {{ printParam(item) }}
       </template>
       <template #footer.prepend>
-        <v-btn icon :disabled="!finished_loading" class="mr-5" @click="saveParametersToFile()">
+        <v-btn
+          icon
+          :disabled="!finished_loading"
+          class="mr-5"
+          @click="saveParametersToFile()"
+        >
           <v-icon>mdi-tray-arrow-down</v-icon>
         </v-btn>
         <v-btn
