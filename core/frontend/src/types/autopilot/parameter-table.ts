@@ -26,6 +26,7 @@ interface Metadata {
   Bitmask?: {[key:number] : string}
   Values?: {[key:number] : string}
   User?: string
+  Units?: string
 }
 
 interface MetadataCategory {
@@ -90,6 +91,7 @@ export default class ParametersTable {
       if (param.name in this.metadata) {
         param.description = this.metadata[param.name].Description?.toTitle() ?? ''
         param.shortDescription = this.metadata[param.name].DisplayName
+        param.units = this.metadata[param.name].Units
         const {
           Values, Bitmask, ReadOnly, Increment, RebootRequired, Range,
         } = this.metadata[param.name]

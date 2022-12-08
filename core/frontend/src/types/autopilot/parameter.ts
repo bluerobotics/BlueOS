@@ -35,4 +35,6 @@ export default interface Parameter {
     increment?: number
 
     paramType: { type: ParamType }
+
+    units?: string
 }
