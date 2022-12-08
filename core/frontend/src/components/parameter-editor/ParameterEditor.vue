@@ -7,7 +7,7 @@
       :headers="[
         { text: 'Name', value: 'name' },
         { text: 'Description', value: 'description' },
-        { text: 'Value', value: 'value', width: '20px' },
+        { text: 'Value', value: 'value', width: '150px' },
       ]"
       :loading="!finished_loading"
       :items="params"
@@ -49,7 +49,7 @@
         />
       </template>
       <template #item.value="{ item }">
-        {{ printParam(item) }}
+        {{ printParam(item) }} {{ item.units ? `[${item.units}]` : '' }}
       </template>
       <template #footer.prepend>
         <v-btn
