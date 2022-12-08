@@ -377,7 +377,7 @@ export default Vue.extend({
         && re.test(value)
     },
     printParam(param: Parameter): string {
-      if ((param.bitmask || param.options === undefined) && param.value === 0) {
+      if ((param.bitmask || param.options !== undefined) && param.value === 0) {
         return 'None'
       }
 
