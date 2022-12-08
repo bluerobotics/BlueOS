@@ -70,8 +70,8 @@ sudo sed -e 's/console=serial[0-9],[0-9]*\ //' -i $CMDLINE_FILE
 # Set cgroup, necessary for docker access to memory information
 echo "- Enable cgroup with memory and cpu"
 grep -q cgroup $CMDLINE_FILE || (
-    truncate --size -1 $CMDLINE_FILE
-    echo " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory" >> $CMDLINE_FILE
+    # Append cgroups on the first line
+    sed -i '1 s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory/' $CMDLINE_FILE
 )
 
 # Update raspberry pi firmware
