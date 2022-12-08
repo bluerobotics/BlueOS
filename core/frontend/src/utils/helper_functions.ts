@@ -63,3 +63,18 @@ export function convertGitDescribeToUrl(git_describe: string): string {
   const hash = git_describe.slice(git_describe.length - 7)
   return `${project_url}/tree/${hash}`
 }
+
+export function prettifySize(size_kb: number): string {
+  if (Number.isNaN(size_kb)) {
+    return 'N/A'
+  }
+  if (size_kb < 1024) {
+    return `${size_kb.toFixed(1)} KB`
+  }
+  const size_mb = size_kb / 1024
+  if (size_mb < 1024) {
+    return `${size_mb.toFixed(1)} MB`
+  }
+  const size_gb = size_mb / 1024
+  return `${size_gb.toFixed(1)} GB`
+}
