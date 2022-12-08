@@ -23,10 +23,10 @@ setuptools.setup(
         "appdirs == 1.4.4",
         "loguru == 0.5.3",
         "starlette == 0.13.6",
-        "pykson == 1.0.1",
+        "pykson == 1.0.2",
     ],
     dependency_links=[
         # Waiting for PRs to get merged in pykson
-        "https://github.com/patrickelectric/pykson/tarball/1.0.1#egg=pykson-1.0.1"
+        "https://github.com/patrickelectric/pykson/tarball/1.0.2#egg=pykson-1.0.2"
     ],
 )
