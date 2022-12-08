@@ -118,12 +118,18 @@
                         <td>CPU usage</td>
                         <td>
                           <v-progress-linear
-                            :value="getCpuUsage(extension)"
+                            :value="getCpuUsage(extension) / getCpuLimit(extension) / 0.01"
                             color="green"
                             height="25"
                           >
                             <template #default="{ value }">
-                              <strong>{{ value.toFixed ? `${value.toFixed(1)} %`: 'N/A' }}</strong>
+                              <strong>
+                      {{ value.toFixed ? `${getCpuUsage(extension).toFixed(1)}% / ${getCpuLimit(extension)}%`: 'N/A' }}
+                                {{ `(${(getCpuLimit(extension) * cpus * 0.01).toFixed(1)} cores) `}}
+                              </strong>
+                              <strong v-else>
+                                N/A
+                              </strong>
                             </template>
                           </v-progress-linear>
                         </td>
@@ -254,6 +260,7 @@ import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import system_information from '@/store/system-information'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
@@ -293,6 +300,11 @@ export default Vue.extend({
       settings,
       edited_extension: null as null | InstalledExtensionData,
     }
+  },
+  computed: {
+    cpus(): number {
+      return system_information.system?.cpu?.length ?? 4
+    },
   },
   mounted() {
     this.fetchManifest()
@@ -377,6 +389,17 @@ export default Vue.extend({
         return 'N/A'
       }
       return this.metrics[name]?.memory
+    },
+    getCpuLimit(extension: InstalledExtensionData): number {
+      // returns cpu cap in percentage of total cpu power
+      const permissions_str = extension.user_permissions ? extension.user_permissions : extension.permissions
+      const permissions = JSON.parse(permissions_str)
+      const period = permissions.HostConfig?.CpuPeriod
+      const quota = permissions.HostConfig?.CpuQuota
+      if (quota && period) {
+        return quota / (period * this.cpus * 0.01)
+      }
+      return 100
     },
     getStatus(extension: InstalledExtensionData): string {
       return this.getContainer(extension)?.first()?.status ?? 'N/A'
