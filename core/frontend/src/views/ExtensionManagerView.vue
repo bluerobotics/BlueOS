@@ -104,7 +104,7 @@
                         <td>Memory usage</td>
                         <td>
                           <v-progress-linear
-                            :value="getMemoryUsage(extension)/getMemoryLimit(extension)/0.01"
+                            :value="getMemoryUsage(extension) / getMemoryLimit(extension) / 0.01"
                             color="green"
                             height="25"
                           >

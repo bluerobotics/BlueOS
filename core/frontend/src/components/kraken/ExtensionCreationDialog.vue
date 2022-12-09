@@ -51,7 +51,7 @@
 
           <v-textarea
             v-model="new_extension.user_permissions"
-            label="Custom Permissions (These replace regular permissions)"
+            label="Custom Permissions (these replace regular permissions)"
             :rules="[validate_permissions]"
           />
 
@@ -122,7 +122,7 @@ export default Vue.extend({
       if (regex.test(input)) {
         return true
       }
-      return 'This field must container two words separated by a period. Numbers are allowed if not the first character'
+      return 'This field must contain two words separated by a period. Numbers are allowed after the first character.'
     },
     validate_dockerhub(input: string): (true | string) {
       // A tag name must be valid ASCII and may contain lowercase and uppercase letters, digits,
@@ -133,15 +133,15 @@ export default Vue.extend({
       if (regex.test(input)) {
         return true
       }
-      return 'This field must container two words separated by a forward slash'
-      + 'Numbers are allowed if not the first character. e.g example/docker1'
+      return 'This field must contain two words separated by a forward slash. '
+      + 'Numbers are allowed after the first character. e.g example/docker1'
     },
     validate_name(input: string): (true | string) {
       if (input.trim().length === 0) {
-        return 'This field must not be empty'
+        return 'This field must not be empty.'
       }
       if (input.length > 128) {
-        return 'This field should be not longer than 128 characters'
+        return 'This entry must fit within 128 characters.'
       }
       return true
     },
@@ -150,22 +150,22 @@ export default Vue.extend({
         JSON.parse(input)
         return true
       } catch {
-        return 'This field is not a valid JSON format'
+        return 'This entry must be in valid JSON format.'
       }
     },
     validate_tag(input: string) {
       if (input.includes(' ')) {
-        return 'Whitespaces are not allowed'
+        return 'Tag name must not include spaces.'
       }
       if (input.startsWith('-') || input.startsWith('.')) {
-        return 'Tag name must not start with a period or a dash'
+        return 'Tag name must not start with a period or a dash.'
       }
       if (input.length > 127) {
-        return 'tag name must be shorter than 128 characters'
+        return 'Tag name must be shorter than 128 characters.'
       }
       const re = /[^A-Za-z0-9\-_.]/
       if (re.test(input)) {
-        return 'Only letters, numbers, dash, and underscore are allowed'
+        return 'Only letters, numbers, dashes, periods, and underscores are allowed.'
       }
       return true
     },

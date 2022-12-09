@@ -45,11 +45,11 @@ class Kraken:
     async def start_extension(self, extension: Extension) -> None:
         config = extension.settings()
         config["Image"] = extension.fullname()
-        logger.info(f"Starting extension '{extension.fullname()}'")
+        logger.info(f"Starting extension '{extension.fullname()}'.")
         try:
             await self.client.images.pull(extension.fullname())
         except aiodocker.exceptions.DockerError:  # raised if we are offline
-            logger.info("unable to pull a new image, attempting to continue with a local one")
+            logger.info("Unable to pull a new image, attempting to continue with a local one.")
         container = await self.client.containers.create_or_replace(name=extension.container_name(), config=config)  # type: ignore
         await container.start()
 
@@ -57,11 +57,11 @@ class Kraken:
         if not extension.enabled:
             return
         if not extension.is_valid():
-            logger.warning(f"{extension.identifier} is invalid, removing it")
+            logger.warning(f"{extension.identifier} is invalid, removing it.")
             try:
                 await self.uninstall_extension(extension)
             except ContainerDoesNotExist:
-                logger.warning(f"container for extension {extension.identifier} was not up?")
+                logger.warning(f"Container for extension {extension.identifier} was not up?")
             return
 
         extension_name = extension.container_name()
@@ -129,7 +129,7 @@ class Kraken:
     async def container_from_identifier(self, extension_identifier: str) -> str:
         extension = await self.extension_from_identifier(extension_identifier)
         if not extension:
-            raise Exception(f"could not find container for {extension_identifier}, is It running?")
+            raise Exception(f"Could not find container for {extension_identifier}, is it running?")
         return str(extension.container_name())
 
     async def kill(self, container_name: str) -> None:
@@ -143,7 +143,7 @@ class Kraken:
         container_name = await self.container_from_identifier(extension_identifier)
         container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
         if not container:
-            raise ContainerDoesNotExist(f"Unable remove {container_name}. container not found")
+            raise ContainerDoesNotExist(f"Unable remove {container_name}. Container not found.")
         image = container[0]["Image"]
         await self.kill(container_name)
         await container[0].delete()
@@ -155,7 +155,7 @@ class Kraken:
         extension = await self.extension_from_identifier(identifier)
         if extension:
             await self.uninstall_extension(extension)
-        raise ExtensionNotFound(f"Could not find extension with identifier '{identifier}'")
+        raise ExtensionNotFound(f"Could not find extension with identifier '{identifier}'.")
 
     async def uninstall_extension(self, extension: Extension) -> None:
         try:
@@ -167,7 +167,7 @@ class Kraken:
         # TODO: remove this  section sometime in 2023
         # This is here to cope with a change between betas.
         # we had name mistakenly taking the docker name
-        logger.warning("attempting to find container with old beta nomenclature")
+        logger.warning("Attempting to find container with old beta nomenclature.")
         regex = re.compile("[^a-zA-Z0-9]")
         container_name = "extension-" + regex.sub("", f"{extension.name}{extension.tag}")
         container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
@@ -188,7 +188,7 @@ class Kraken:
         if not extension:
             raise Exception(f"Extension not found: {extension_identifier}")
 
-        logger.info(f"disabling: {extension_identifier}")
+        logger.info(f"Disabling: {extension_identifier}")
 
         extension.enabled = False
         self.settings.extensions = [
@@ -205,7 +205,7 @@ class Kraken:
         if not extension:
             raise ExtensionNotFound(f"Extension not found: {extension_identifier}")
 
-        logger.info(f"enabling: {extension_identifier}")
+        logger.info(f"Enabling: {extension_identifier}")
 
         extension.enabled = True
         self.settings.extensions = [
