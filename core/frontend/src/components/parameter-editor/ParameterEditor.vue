@@ -410,6 +410,12 @@ export default Vue.extend({
       }
 
       try {
+        if (Math.abs(param.value) > 1e4) {
+          return param.value.toExponential()
+        }
+        if (Math.abs(param.value) < 0.01 && param.value !== 0) {
+          return param.value.toExponential()
+        }
         return param.value.toFixed(param.paramType.type.includes('INT') ? 0 : 2)
       } catch {
         return 'N/A'
