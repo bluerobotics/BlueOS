@@ -69,7 +69,7 @@ export function prettifySize(size_kb: number): string {
     return 'N/A'
   }
   if (size_kb < 1024) {
-    return `${size_kb.toFixed(1)} KB`
+    return `${size_kb.toFixed(1)} kB`
   }
   const size_mb = size_kb / 1024
   if (size_mb < 1024) {
