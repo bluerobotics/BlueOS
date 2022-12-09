@@ -10,13 +10,13 @@
         { text: 'Value', value: 'value', width: '150px' },
       ]"
       :loading="!finished_loading"
-      :items="params"
-      item-key="name"
+      :items="search != '' ? fuse.search(search) : params_no_input"
+      item-key="item.name"
       class="elevation-1"
       :search="search"
-      :custom-filter="filterOnlyCapsText"
       :sort-by="'name'"
-      @click:row="editParam"
+      :custom-filter="() => true"
+      @click:row="(value) => editParam(value.item)"
     >
       <v-progress-linear
         slot="progress"
@@ -48,8 +48,14 @@
           class="mx-4"
         />
       </template>
+      <template #item.name="{ item }">
+        <div v-html='printMark(item, "name")' />
+      </template>
+      <template #item.description="{ item }">
+        <div v-html='printMark(item, "description")' />
+      </template>
       <template #item.value="{ item }">
-        {{ printParam(item) }} {{ item.units ? `[${item.units}]` : '' }}
+        {{ printParam(item.item) }} {{ item.item.units ? `[${item.item.units}]` : '' }}
       </template>
       <template #footer.prepend>
         <v-btn
@@ -225,6 +231,7 @@
 <script lang="ts">
 import { format } from 'date-fns'
 import { saveAs } from 'file-saver'
+import Fuse from 'fuse.js'
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -254,8 +261,30 @@ export default Vue.extend({
     }
   },
   computed: {
-    params() {
+    fuse() {
+      return new Fuse(autopilot_data.parameters, {
+        keys: ['name', 'description'],
+        includeScore: true,
+        includeMatches: true,
+        shouldSort: true,
+        threshold: 0.3,
+        minMatchCharLength: 2,
+      })
+    },
+    params_no_input() {
       return autopilot_data.parameters
+        .sort((a, b) => {
+          if (a.name > b.name) {
+            return 1
+          }
+          if (b.name > a.name) {
+            return -1
+          }
+          return 0
+        })
+        .map((param) => ({
+          item: param,
+        }))
     },
     params_percentage() {
       return 100 * (autopilot_data.parameters.length / autopilot_data.parameters_total)
@@ -403,12 +432,19 @@ export default Vue.extend({
           autopilot.setRestarting(false)
         })
     },
-    filterOnlyCapsText(value: string, search: string) {
-      const re = new RegExp(search, 'i')
-      return value != null
-        && search != null
-        && typeof value === 'string'
-        && re.test(value)
+    printMark(item: any, key: string): string {
+      const name = item.item[key]
+      const indices_array = item?.matches?.find((i: any) => i.key === key)?.indices ?? []
+
+      let indices = indices_array?.[0]
+      for (const index of indices_array) {
+        if (indices[1] - indices[0] < index[1] - index[0]) {
+          indices = index
+        }
+      }
+
+      const matche = indices ? name.substring(indices[0], indices[1] + 1) : ''
+      return indices ? name.replace(matche, `<mark>${matche}</mark>`) : name
     },
     printParam(param: Parameter): string {
       if ((param.bitmask || param.options !== undefined) && param.value === 0) {
