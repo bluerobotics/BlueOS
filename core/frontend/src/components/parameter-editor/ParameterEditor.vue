@@ -278,6 +278,35 @@ export default Vue.extend({
       return entries.map(([value, name]) => ({ text: name, value: parseFloat(value), disabled: false }))
     },
   },
+  watch: {
+    edit_dialog(): void {
+      if (!this.edit_dialog) {
+        this.forcing_input = false
+        this.custom_input = false
+      }
+
+      // Select force input if value is outside of range initially
+      this.forcing_input = typeof this.isInRange(this.new_value) === 'string'
+
+      // Select custom input if value is outside of possible options
+      this.custom_input = !Object.keys(this.edited_param?.options ?? [])
+        .map((value) => parseFloat(value))
+        .includes(this.new_value)
+    },
+    new_value(): void {
+      // Remove forcing_input once option is inside valid range
+      if (this.forcing_input && typeof this.isInRange(this.new_value) === 'boolean') {
+        this.forcing_input = false
+      }
+
+      // Remove custom once value is known
+      if (this.custom_input) {
+        this.custom_input = !Object.keys(this.edited_param?.options ?? [])
+          .map((value) => parseFloat(value))
+          .includes(this.new_value)
+      }
+    },
+  },
   methods: {
     isInRange(input: number | string): boolean | string {
       // The input value is an empty string when the field is empty
