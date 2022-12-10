@@ -273,7 +273,7 @@ export default Vue.extend({
       return this.$refs.form as VForm
     },
     show_advanced_checkbox(): boolean {
-      return typeof this.isInRange(this.edited_param?.value ?? 0) === 'string'
+      return typeof this.isInRange(this.new_value ?? 0) === 'string'
     },
     show_custom_checkbox(): boolean {
       return !!(this.edited_param?.options || this.edited_param?.bitmask)
