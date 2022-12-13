@@ -65,6 +65,9 @@
             </v-list-item>
           </v-list>
         </v-col>
+        <v-col>
+          <Graph style="width: 100%" :data='series' />
+        </v-col>
         <div
           class="transition-swing pa-6"
           align="center"
@@ -100,6 +103,7 @@
 import { differenceInMilliseconds } from 'date-fns'
 import Vue from 'vue'
 
+import Graph, { Data as GraphData } from '@/components/speedtest/Graph.vue'
 import Notifier from '@/libs/notifier'
 import { network_speed_test_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -121,6 +125,7 @@ interface NetworkTestResult {
 export default Vue.extend({
   name: 'NetworkTestView',
   components: {
+    Graph,
   },
   data() {
     return {
@@ -134,6 +139,7 @@ export default Vue.extend({
       websocket: undefined as WebSocket | undefined,
       upload_buffer: new ArrayBuffer(100 * 2 ** 20), // Generate 100MB buffer only once
       interval: 0,
+      series: { upload: [], download: [] } as GraphData,
     }
   },
   computed: {
@@ -170,6 +176,8 @@ export default Vue.extend({
       }, 200)
     },
     start(): void {
+      // eslint-disable-next-line
+      this.series = Object.assign({}, {upload: [], download: []})
       this.updateState(State.DownloadSpeed)
     },
     clearSpeed(): void {
@@ -242,6 +250,10 @@ export default Vue.extend({
           const alpha_factor = 0.7
           this.upload_speed = (this.upload_speed ?? 0) * (1 - alpha_factor) + alpha_factor * speed_Mb
           const percentage = 100 * (progress_event.loaded / progress_event.total)
+          this.series.upload.push({ x: percentage, y: this.upload_speed })
+          // Force vue update
+          // eslint-disable-next-line
+          this.series = Object.assign({}, this.series)
           console.debug(
             `network-test: Upload: ${speed_Mb.toFixed(2)}Mbps ${percentage.toFixed(2)}% ${seconds.toFixed(2)}s`,
           )
@@ -275,6 +287,10 @@ export default Vue.extend({
           const alpha_factor = 0.7
           this.download_speed = (this.download_speed ?? 0) * (1 - alpha_factor) + alpha_factor * speed_Mb
           const percentage = 100 * (progress_event.loaded / progress_event.total)
+          this.series.download.push({ x: percentage, y: this.download_speed })
+          // Force vue update
+          // eslint-disable-next-line
+          this.series = Object.assign({}, this.series)
           console.debug(
             `network-test: Download: ${speed_Mb.toFixed(2)}Mbps ${percentage.toFixed(2)}% ${seconds.toFixed(2)}s`,
           )
