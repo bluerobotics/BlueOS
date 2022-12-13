@@ -49,10 +49,10 @@
         />
       </template>
       <template #item.name="{ item }">
-        <div v-html='printMark(item, "name")' />
+        <div v-html="printMark(item, 'name')" />
       </template>
       <template #item.description="{ item }">
-        <div v-html='printMark(item, "description")' />
+        <div v-html="printMark(item, 'description')" />
       </template>
       <template #item.value="{ item }">
         {{ printParam(item.item) }} {{ item.item.units ? `[${item.item.units}]` : '' }}
