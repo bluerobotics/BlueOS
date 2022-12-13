@@ -1,6 +1,7 @@
 import './cosmos'
 
 import Vue from 'vue'
+import VueApexCharts from 'vue-apexcharts'
 import JsonViewer from 'vue-json-viewer'
 import VueTooltipDirective from 'vue-tooltip-directive'
 import VueTour from 'vue-tour'
@@ -18,8 +19,11 @@ require('vue-tour/dist/vue-tour.css')
 Vue.use(VueTooltipDirective, {
   component: DefaultTooltip,
 })
+Vue.use(VueApexCharts)
 Vue.use(VueTour)
 Vue.use(JsonViewer)
+
+Vue.component('Apexchart', VueApexCharts)
 
 new Vue({
   router,
