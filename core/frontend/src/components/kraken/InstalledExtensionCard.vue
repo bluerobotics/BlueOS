@@ -1,0 +1,210 @@
+<template>
+  <v-card>
+    <v-card-title class="pb-0 ">
+      {{ extension.docker.split('/')[1] }} <span
+        class="ml-3"
+        style="color: grey;"
+      > {{ extension.tag }}</span>
+    </v-card-title>
+    <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.docker }}</span>
+    <v-card-text width="50%">
+      <v-simple-table>
+        <template #default>
+          <tbody>
+            <tr>
+              <td>Status</td>
+              <td>{{ getStatus() }}</td>
+            </tr>
+            <tr>
+              <td>Memory usage</td>
+              <td>
+                <v-progress-linear
+                  :value="getMemoryUsage()"
+                  color="green"
+                  height="25"
+                >
+                  <template #default>
+                    <strong v-if="getMemoryUsage()?.toFixed">
+                      {{ prettifySize(getMemoryUsage() * getMemoryLimit() * 100) }} /
+                      {{ prettifySize(getMemoryLimit() * total_memory * 0.01) }}
+                    </strong>
+                    <strong v-else>
+                      N/A
+                    </strong>
+                  </template>
+                </v-progress-linear>
+              </td>
+            </tr>
+            <tr>
+              <td>CPU usage</td>
+              <td>
+                <v-progress-linear
+                  :value="getCpuUsage() / getCpuLimit() / 0.01"
+                  color="green"
+                  height="25"
+                >
+                  <template #default>
+                    <strong v-if="!isNaN(getCpuUsage())">
+                      {{ `${getCpuUsage().toFixed(1)}% / ${getCpuLimit()}%` }}
+                      {{ `(${(getCpuLimit() * cpus * 0.01).toFixed(1)} cores) ` }}
+                    </strong>
+                    <strong v-else>
+                      N/A
+                    </strong>
+                  </template>
+                </v-progress-linear>
+              </td>
+            </tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+    </v-card-text>
+    <v-expansion-panels
+      v-if="settings.is_pirate_mode"
+      flat
+    >
+      <v-expansion-panel>
+        <v-expansion-panel-header>
+          Permissions
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <json-viewer
+            :value="JSON.parse(extension.permissions ?? '{}')"
+            :expand-depth="5"
+          />
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
+
+    <v-expansion-panels
+      v-if="settings.is_pirate_mode && extension.user_permissions"
+      flat
+    >
+      <v-expansion-panel>
+        <v-expansion-panel-header>
+          User Custom Permissions
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <json-viewer
+            :value="JSON.parse(extension.user_permissions ?? '{}')"
+            :expand-depth="5"
+          />
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
+
+    <v-card-actions>
+      <v-btn @click="$emit('uninstall', extension)">
+        Uninstall
+      </v-btn>
+      <v-btn @click="$emit('showlogs', extension)">
+        View Logs
+      </v-btn>
+      <v-btn
+        v-if="settings.is_pirate_mode"
+        @click="$emit('edit', extension)"
+      >
+        Edit
+      </v-btn>
+      <v-btn
+        v-if="extension.enabled"
+        @click="$emit('disable', extension)"
+      >
+        Disable
+      </v-btn>
+      <v-btn
+        v-if="!extension.enabled"
+        @click="$emit('enable', extension)"
+      >
+        Enable and start
+      </v-btn>
+
+      <v-btn
+        v-if="extension.enabled"
+        @click="$emit('restart', extension)"
+      >
+        Restart
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</template>
+
+<script lang="ts">
+import Vue, { PropType } from 'vue'
+
+import settings from '@/libs/settings'
+import system_information from '@/store/system-information'
+import { InstalledExtensionData } from '@/types/kraken'
+import { prettifySize } from '@/utils/helper_functions'
+
+export default Vue.extend({
+  name: 'InstalledExtensionCard',
+  props: {
+    extension: {
+      type: Object as PropType<InstalledExtensionData>,
+      required: true,
+    },
+    metrics: {
+      type: Object as PropType<any>,
+      required: true,
+    },
+    container: {
+      type: Object as PropType<any>,
+      required: false,
+      default: () => null,
+    },
+  },
+  data() {
+    return {
+      settings,
+    }
+  },
+  computed: {
+    cpus(): number {
+      return system_information.system?.cpu?.length ?? 4
+    },
+    total_memory(): number | undefined {
+      // Total system memory in kB
+      const total_kb = system_information.system?.memory?.ram?.total_kB
+      return total_kb ?? undefined
+    },
+  },
+  methods: {
+    prettifySize(size_kb: number) {
+      return prettifySize(size_kb)
+    },
+    getCpuUsage(): number {
+      return this.metrics?.cpu
+    },
+    getMemoryUsage(): string {
+      return this.metrics?.memory
+    },
+    getMemoryLimit(): number | undefined {
+      // Memory limit as a percentage of total system RAM
+      const permissions_str = this.extension.user_permissions
+        ? this.extension.user_permissions : this.extension.permissions
+      const permissions = JSON.parse(permissions_str)
+      const limit = permissions.HostConfig?.Memory / 1024 ?? undefined
+      if (this.total_memory && limit) {
+        return limit / this.total_memory / 0.01
+      }
+      return 100
+    },
+    getCpuLimit(): number {
+      // returns cpu cap in percentage of total cpu power
+      const permissions_str = this.extension.user_permissions
+        ? this.extension.user_permissions : this.extension.permissions
+      const permissions = JSON.parse(permissions_str)
+      const period = permissions.HostConfig?.CpuPeriod
+      const quota = permissions.HostConfig?.CpuQuota
+      if (quota && period) {
+        return quota / (period * this.cpus * 0.01)
+      }
+      return 100
+    },
+    getStatus(): string {
+      return this.container?.status ?? 'N/A'
+    },
+  },
+})
+</script>

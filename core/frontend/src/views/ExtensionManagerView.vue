@@ -84,134 +84,17 @@
             :key="extension.docker"
             class="pa-2 col-6"
           >
-            <v-card>
-              <v-card-title class="pb-0 ">
-                {{ extension.docker.split('/')[1] }} <span
-                  class="ml-3"
-                  style="color: grey;"
-                > {{ extension.tag }}</span>
-              </v-card-title>
-              <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.docker }}</span>
-              <v-card-text width="50%">
-                <v-simple-table>
-                  <template #default>
-                    <tbody>
-                      <tr>
-                        <td>Status</td>
-                        <td>{{ getStatus(extension) }}</td>
-                      </tr>
-                      <tr>
-                        <td>Memory usage</td>
-                        <td>
-                          <v-progress-linear
-                            :value="getMemoryUsage(extension) / getMemoryLimit(extension) / 0.01"
-                            color="green"
-                            height="25"
-                          >
-                            <template #default>
-                              <strong v-if="getMemoryUsage(extension).toFixed">
-                                {{ prettifySize(getMemoryUsage(extension)*total_memory*0.01) }} /
-                                {{ prettifySize(getMemoryLimit(extension)*total_memory*0.01) }}
-                              </strong>
-                              <strong v-else>
-                                N/A
-                              </strong>
-                            </template>
-                          </v-progress-linear>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>CPU usage</td>
-                        <td>
-                          <v-progress-linear
-                            :value="getCpuUsage(extension) / getCpuLimit(extension) / 0.01"
-                            color="green"
-                            height="25"
-                          >
-                            <template #default>
-                              <strong v-if="!isNaN(getCpuUsage(extension))">
-                                {{ `${getCpuUsage(extension).toFixed(1)}% / ${getCpuLimit(extension)}%` }}
-                                {{ `(${(getCpuLimit(extension) * cpus * 0.01).toFixed(1)} cores) `}}
-                              </strong>
-                              <strong v-else>
-                                N/A
-                              </strong>
-                            </template>
-                          </v-progress-linear>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </template>
-                </v-simple-table>
-              </v-card-text>
-              <v-expansion-panels
-                v-if="settings.is_pirate_mode"
-                flat
-              >
-                <v-expansion-panel>
-                  <v-expansion-panel-header>
-                    Permissions
-                  </v-expansion-panel-header>
-                  <v-expansion-panel-content>
-                    <json-viewer
-                      :value="JSON.parse(extension.permissions ?? '{}')"
-                      :expand-depth="5"
-                    />
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-              </v-expansion-panels>
-
-              <v-expansion-panels
-                v-if="settings.is_pirate_mode && extension.user_permissions"
-                flat
-              >
-                <v-expansion-panel>
-                  <v-expansion-panel-header>
-                    User Custom Permissions
-                  </v-expansion-panel-header>
-                  <v-expansion-panel-content>
-                    <json-viewer
-                      :value="JSON.parse(extension.user_permissions ?? '{}')"
-                      :expand-depth="5"
-                    />
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-              </v-expansion-panels>
-
-              <v-card-actions>
-                <v-btn @click="uninstall(extension)">
-                  Uninstall
-                </v-btn>
-                <v-btn @click="showLogs(extension)">
-                  View Logs
-                </v-btn>
-                <v-btn
-                  v-if="settings.is_pirate_mode"
-                  @click="openEditDialog(extension)"
-                >
-                  Edit
-                </v-btn>
-                <v-btn
-                  v-if="extension.enabled"
-                  @click="disable(extension)"
-                >
-                  Disable
-                </v-btn>
-                <v-btn
-                  v-if="!extension.enabled"
-                  @click="enableAndStart(extension)"
-                >
-                  Enable and start
-                </v-btn>
-
-                <v-btn
-                  v-if="extension.enabled"
-                  @click="restart(extension)"
-                >
-                  Restart
-                </v-btn>
-              </v-card-actions>
-            </v-card>
+            <installed-extension-card
+              :extension="extension"
+              :metrics="metricsFor(extension)"
+              :container="getContainer(extension)"
+              @edit="openEditDialog"
+              @showlogs="showLogs(extension)"
+              @uninstall="uninstall(extension)"
+              @disable="disable(extension)"
+              @enable="enableAndStart(extension)"
+              @restart="restart(extension)"
+            />
           </v-col>
         </v-row>
         <v-container
@@ -263,13 +146,11 @@ import Vue from 'vue'
 import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
 import CreationDialog from '@/components/kraken/ExtensionCreationDialog.vue'
 import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
+import InstalledExtensionCard from '@/components/kraken/InstalledExtensionCard.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
-import settings from '@/libs/settings'
-import system_information from '@/store/system-information'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
-import { prettifySize } from '@/utils/helper_functions'
 import PullTracker from '@/utils/pull_tracker'
 
 import { ExtensionData, InstalledExtensionData, RunningContainer } from '../types/kraken'
@@ -282,6 +163,7 @@ export default Vue.extend({
   name: 'ExtensionManagerView',
   components: {
     ExtensionCard,
+    InstalledExtensionCard,
     ExtensionModal,
     PullProgress,
     CreationDialog,
@@ -304,19 +186,8 @@ export default Vue.extend({
       show_log: false,
       metrics: {} as any,
       metrics_interval: 0,
-      settings,
       edited_extension: null as null | InstalledExtensionData,
     }
-  },
-  computed: {
-    cpus(): number {
-      return system_information.system?.cpu?.length ?? 4
-    },
-    total_memory(): number | undefined {
-      // Total system memory in kB
-      const total_kb = system_information.system?.memory?.ram?.total_kB
-      return total_kb ?? undefined
-    },
   },
   mounted() {
     this.fetchManifest()
@@ -328,8 +199,9 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
   },
   methods: {
-    prettifySize(size_kb: number) {
-      return prettifySize(size_kb)
+    metricsFor(extension: InstalledExtensionData): any {
+      const name = this.getContainerName(extension)?.replace('/', '')
+      return name ? this.metrics[name] : {}
     },
     async createOrUpdateExtension(): Promise<void> {
       if (!this.edited_extension) {
@@ -361,10 +233,10 @@ export default Vue.extend({
         user_permissions: '{}',
       }
     },
-    getContainer(extension: InstalledExtensionData): RunningContainer[] | undefined {
+    getContainer(extension: InstalledExtensionData): RunningContainer | undefined {
       return this.running_containers?.filter(
         (container) => container.image === `${extension.docker}:${extension.tag}`,
-      )
+      ).first()
     },
     async fetchMetrics(): Promise<void> {
       await back_axios({
@@ -390,47 +262,8 @@ export default Vue.extend({
           notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
         })
     },
-    getCpuUsage(extension: InstalledExtensionData): number {
-      const name = this.getContainerName(extension)?.replace('/', '')
-      if (!name) {
-        return NaN
-      }
-
-      return this.metrics[name]?.cpu
-    },
-    getMemoryUsage(extension: InstalledExtensionData): string {
-      const name = this.getContainerName(extension)?.replace('/', '')
-      if (!name) {
-        return 'N/A'
-      }
-      return this.metrics[name]?.memory
-    },
-    getMemoryLimit(extension: InstalledExtensionData): number | undefined {
-      // Memory limit as a percentage of total system RAM
-      const permissions_str = extension.user_permissions ? extension.user_permissions : extension.permissions
-      const permissions = JSON.parse(permissions_str)
-      const limit = permissions.HostConfig?.Memory / 1024 ?? undefined
-      if (this.total_memory && limit) {
-        return limit / this.total_memory / 0.01
-      }
-      return 100
-    },
-    getCpuLimit(extension: InstalledExtensionData): number {
-      // returns cpu cap in percentage of total cpu power
-      const permissions_str = extension.user_permissions ? extension.user_permissions : extension.permissions
-      const permissions = JSON.parse(permissions_str)
-      const period = permissions.HostConfig?.CpuPeriod
-      const quota = permissions.HostConfig?.CpuQuota
-      if (quota && period) {
-        return quota / (period * this.cpus * 0.01)
-      }
-      return 100
-    },
-    getStatus(extension: InstalledExtensionData): string {
-      return this.getContainer(extension)?.first()?.status ?? 'N/A'
-    },
     getContainerName(extension: InstalledExtensionData): string | null {
-      return this.getContainer(extension)?.first()?.name ?? null
+      return this.getContainer(extension)?.name ?? null
     },
     async fetchManifest(): Promise<void> {
       await back_axios({
