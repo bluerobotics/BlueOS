@@ -88,6 +88,8 @@
               :extension="extension"
               :metrics="metricsFor(extension)"
               :container="getContainer(extension)"
+              :versions="remoteVersions(extension)"
+              :extension-data="remoteVersions(extension)"
               @edit="openEditDialog"
               @showlogs="showLogs(extension)"
               @uninstall="uninstall(extension)"
@@ -455,6 +457,11 @@ export default Vue.extend({
         })
       this.fetchInstalledExtensions()
       this.fetchMetrics()
+    },
+    remoteVersions(extension: InstalledExtensionData): ExtensionData | undefined {
+      return this.manifest.filter(
+        (remoteExtension: ExtensionData) => remoteExtension.identifier === extension.identifier,
+      ).first()
     },
   },
 })
