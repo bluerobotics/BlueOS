@@ -1,10 +1,17 @@
 <template>
   <v-card>
-    <v-card-title class="pb-0 ">
+    <v-card-title class="pb-0">
       {{ extension.docker.split('/')[1] }} <span
         class="ml-3"
         style="color: grey;"
       > {{ extension.tag }}</span>
+      <v-btn
+        v-if="update_available"
+        color="primary"
+        class="ml-auto"
+      >
+        Update to {{ update_available }}
+      </v-btn>
     </v-card-title>
     <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.docker }}</span>
     <v-card-text width="50%">
@@ -130,11 +137,12 @@
 </template>
 
 <script lang="ts">
+import stable from 'semver-stable'
 import Vue, { PropType } from 'vue'
 
 import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
-import { InstalledExtensionData } from '@/types/kraken'
+import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
@@ -153,6 +161,11 @@ export default Vue.extend({
       required: false,
       default: () => null,
     },
+    extensionData: {
+      type: Object as PropType<ExtensionData>,
+      required: false,
+      default: () => undefined as ExtensionData | undefined,
+    },
   },
   data() {
     return {
@@ -167,6 +180,11 @@ export default Vue.extend({
       // Total system memory in kB
       const total_kb = system_information.system?.memory?.ram?.total_kB
       return total_kb ?? undefined
+    },
+    update_available() : false | string {
+      const versions: string[] = Object.keys(this.extensionData?.versions ?? {})
+      const lastest_stable = stable.max(versions)
+      return this.extension.tag === lastest_stable ? false : lastest_stable
     },
   },
   methods: {
