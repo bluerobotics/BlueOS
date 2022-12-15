@@ -447,7 +447,10 @@ export default Vue.extend({
       return indices ? name.replace(matche, `<mark>${matche}</mark>`) : name
     },
     printParam(param: Parameter): string {
-      if ((param.bitmask || param.options !== undefined) && param.value === 0) {
+      // Check if there are options but zero does not cover it
+      // Or if it's a bitmask, where no flags is 'None'
+      const option_zero_does_not_exist = param.options !== undefined && param.options?.[0] === undefined
+      if ((param.bitmask || option_zero_does_not_exist) && param.value === 0) {
         return 'None'
       }
 
