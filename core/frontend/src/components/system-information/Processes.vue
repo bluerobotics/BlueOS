@@ -102,7 +102,7 @@ export default Vue.extend({
     clearInterval(this.timer)
   },
   methods: {
-    filterName(value: any, search: string, item: any) {
+    filterName(value: any, search: string, _item: any) {
       if (search == null || search === '') {
         return true
       }
