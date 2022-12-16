@@ -106,7 +106,7 @@ export default class ParametersTable {
     }
 
     updateParam(param_name: string, param_value: number): void {
-      const index = Object.entries(this.parametersDict).find(([key, value]) => value.name === param_name)
+      const index = Object.entries(this.parametersDict).find(([_key, value]) => value.name === param_name)
       if (!index) {
         const message = `unable to update param in store: ${param_name}. Parameter not known.`
         notifier.pushError('PARAM_SET_FAIL', message)
