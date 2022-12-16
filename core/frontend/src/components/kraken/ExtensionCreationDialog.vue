@@ -43,7 +43,7 @@
 
           <v-textarea
             v-if="new_extension.permissions"
-            v-model="new_extension.permissions"
+            v-model="formatted_permissions"
             label="Original Settings"
             :readonly="true"
             :rules="[validate_permissions]"
@@ -95,6 +95,9 @@ export default Vue.extend({
   computed: {
     form(): VForm {
       return this.$refs.form as VForm
+    },
+    formatted_permissions() {
+      return JSON.stringify(JSON.parse(this.new_extension?.permissions ?? '{}'), null, 2)
     },
   },
   watch: {
