@@ -110,5 +110,8 @@ module.exports = {
         options.compiler = require('vue-template-babel-compiler')
         return options
       })
+      config.resolve.set('fallback', {
+        util: require.resolve('util/'),
+    })
   }
 }
