@@ -203,14 +203,13 @@ class Kraken:
 
     async def uninstall_extension_from_identifier(self, identifier: str) -> None:
         extension = await self.extension_from_identifier(identifier)
-        if extension:
-            await self.uninstall_extension(extension)
-        raise ExtensionNotFound(f"Could not find extension with identifier '{identifier}'.")
+        if not extension:
+            raise ExtensionNotFound(f"Could not find extension with identifier '{identifier}'.")
+        await self.uninstall_extension(extension)
 
     async def uninstall_extension(self, extension: Extension) -> None:
         try:
             await self.remove(extension.identifier)
-            return
         except Exception as e:
             logger.warning(f"Unable to remove container {e}")
 
