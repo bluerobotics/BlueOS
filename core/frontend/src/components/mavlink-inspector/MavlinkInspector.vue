@@ -83,19 +83,17 @@
         cols="12"
         sm="2"
       >
-        <v-sheet
-          rounded="lg"
-          min-height="268"
+        <v-card
+          v-if="detailed_message"
+          outlined
+          width="100%"
         >
-          <v-card v-if="detailed_message">
-            <p
-              v-for="(item, name, index) in detailed_message"
-              :key="index"
-            >
-              {{ name }}: {{ item }}
-            </p>
-          </v-card>
-        </v-sheet>
+          <v-card-text
+            style="overflow: auto;"
+          >
+            <pre> {{ detailed_message }} </pre>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
