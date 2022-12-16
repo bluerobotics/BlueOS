@@ -44,14 +44,14 @@
           <v-textarea
             v-if="new_extension.permissions"
             v-model="new_extension.permissions"
-            label="Original Permissions"
+            label="Original Settings"
             :readonly="true"
             :rules="[validate_permissions]"
           />
 
           <v-textarea
             v-model="new_extension.user_permissions"
-            label="Custom Permissions (these replace regular permissions)"
+            label="Custom settings (these replace regular settings)"
             :rules="[validate_permissions]"
           />
 
