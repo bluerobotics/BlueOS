@@ -169,7 +169,9 @@ export default Vue.extend({
   computed: {
     filtered_messages(): string[] {
       try {
-        return this.message_types.filter((name: string) => name.match(this.message_filter.trim()))
+        return this.message_types.filter(
+          (name: string) => name.toLowerCase().includes(this.message_filter.toLowerCase().trim()),
+        )
       } catch {
         return this.message_types
       }
