@@ -92,19 +92,19 @@ async def uninstall_extension(extension_identifier: str) -> Any:
     return await kraken.uninstall_extension_from_identifier(extension_identifier)
 
 
-@app.post("/extension/enable", status_code=status.HTTP_201_CREATED)
+@app.post("/extension/enable", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def enable_extension(extension_identifier: str) -> Any:
     return await kraken.enable_extension(extension_identifier)
 
 
-@app.post("/extension/disable", status_code=status.HTTP_201_CREATED)
+@app.post("/extension/disable", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def disable_extension(extension_identifier: str) -> Any:
     return await kraken.disable_extension(extension_identifier)
 
 
-@app.post("/extension/restart", status_code=status.HTTP_201_CREATED)
+@app.post("/extension/restart", status_code=status.HTTP_202_ACCEPTED)
 @version(1, 0)
 async def restart_extension(extension_identifier: str) -> Any:
     return await kraken.restart_extension(extension_identifier)
