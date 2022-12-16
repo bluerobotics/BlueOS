@@ -1,7 +1,5 @@
-import Vue from 'vue'
-import { Module as Mod } from 'vuex'
 import {
-  Action, getModule, Module, Mutation, VuexModule,
+  getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'
