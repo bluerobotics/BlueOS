@@ -86,7 +86,13 @@ async def install_extension(extension: Extension) -> Any:
     return StreamingResponse(kraken.install_extension(extension))
 
 
-@app.post("/extension/uninstall", status_code=status.HTTP_201_CREATED)
+@app.post("/extension/update_to_version", status_code=status.HTTP_201_CREATED)
+@version(1, 0)
+async def update_extension(extension_identifier: str, new_version: str) -> Any:
+    return StreamingResponse(kraken.update_extension_to_version(extension_identifier, new_version))
+
+
+@app.post("/extension/uninstall", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def uninstall_extension(extension_identifier: str) -> Any:
     return await kraken.uninstall_extension_from_identifier(extension_identifier)
