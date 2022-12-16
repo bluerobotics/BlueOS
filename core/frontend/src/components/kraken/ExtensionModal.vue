@@ -45,20 +45,20 @@
 
               <v-col class="text-center">
                 <v-btn
-                  v-if="installed !== selected_version"
-                  class="mt-3"
-                  color="primary"
-                  @click="$emit('clicked', selected_version)"
-                >
-                  Install
-                </v-btn>
-                <v-btn
-                  v-if="installed === selected_version"
+                  v-if="installed"
                   class="mt-3"
                   disabled
                   color="primary"
                 >
                   Installed
+                </v-btn>
+                <v-btn
+                  v-else
+                  class="mt-3"
+                  color="primary"
+                  @click="$emit('clicked', selected_version)"
+                >
+                  Install
                 </v-btn>
               </v-col>
             </v-row>
