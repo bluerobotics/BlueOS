@@ -83,7 +83,7 @@
               v-if="permissions"
               class="ma-2"
             >
-              Permissions:
+              Settings:
             </h3>
             <v-card
               v-if="permissions"

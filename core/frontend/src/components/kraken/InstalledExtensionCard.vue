@@ -73,7 +73,7 @@
     >
       <v-expansion-panel>
         <v-expansion-panel-header>
-          Permissions
+          Settings
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
@@ -90,7 +90,7 @@
     >
       <v-expansion-panel>
         <v-expansion-panel-header>
-          User Custom Permissions
+          User Custom Settings
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
