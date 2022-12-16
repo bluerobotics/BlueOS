@@ -40,6 +40,9 @@
           :sort-by.sync="sortBy"
           :sort-desc.sync="sortDesc"
         >
+          <template #item.size="{ item }">
+            {{ printSize(item.size) }}
+          </template>
           <template #item.actions="{ item }">
             <v-icon @click="replay_log(item)">
               mdi-play
@@ -66,6 +69,7 @@ import Vue from 'vue'
 
 import filebrowser from '@/libs/filebrowser'
 import { FilebrowserFile } from '@/types/filebrowser'
+import { prettifySize } from '@/utils/helper_functions'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 
@@ -88,7 +92,7 @@ export default Vue.extend({
           sortable: false,
           value: 'name',
         },
-        { text: 'Size (MB)', value: 'size' },
+        { text: 'Size', value: 'size' },
         { text: 'Type', value: 'extension' },
         { text: 'Modified', value: 'modified' },
         {
@@ -108,7 +112,6 @@ export default Vue.extend({
       return this.available_logs.map((log) => ({
         ...log,
         modified: format(new Date(log.modified), 'yyyy-MM-dd HH:mm:ss'),
-        size: log.size / 1e6,
       }))
     },
   },
@@ -143,6 +146,9 @@ export default Vue.extend({
     },
     downloadLogs(logs: FilebrowserFile[]): void {
       filebrowser.downloadFiles(logs)
+    },
+    printSize(size_bytes: number): string {
+      return prettifySize(size_bytes / 1024)
     },
     async removeLogs(): Promise<void> {
       if (this.selected_logs.isEmpty()) return
