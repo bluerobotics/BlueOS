@@ -9,6 +9,7 @@
         v-if="update_available"
         color="primary"
         class="ml-auto"
+        @click="$emit('update', extension, update_available)"
       >
         Update to {{ update_available }}
       </v-btn>

@@ -96,6 +96,7 @@
               @disable="disable(extension)"
               @enable="enableAndStart(extension)"
               @restart="restart(extension)"
+              @update="update"
             />
           </v-col>
         </v-row>
@@ -201,7 +202,45 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
   },
   methods: {
-    metricsFor(extension: InstalledExtensionData): any {
+    async update(extension: InstalledExtensionData, version: string) {
+      this.show_pull_output = true
+      const tracker = new PullTracker(() => {
+        setTimeout(() => {
+          this.show_pull_output = false
+        }, 1000)
+      })
+      await back_axios({
+        url: `${API_URL}/extension/update_to_version`,
+        method: 'POST',
+        params: {
+          extension_identifier: extension.identifier,
+          version,
+        },
+        timeout: 20000,
+        onDownloadProgress: (progressEvent) => {
+          tracker.digestNewData(progressEvent)
+          this.pull_output = tracker.pull_output
+          this.download_percentage = tracker.download_percentage
+          this.extraction_percentage = tracker.extraction_percentage
+          this.status_text = tracker.overall_status
+        },
+      })
+        .then(() => {
+          this.fetchInstalledExtensions()
+        })
+        .catch((error) => {
+          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
+        })
+        .finally(() => {
+          this.show_pull_output = false
+          this.show_dialog = false
+          this.pull_output = ''
+          this.download_percentage = 0
+          this.extraction_percentage = 0
+          this.status_text = ''
+        })
+    },
+    metricsFor(extension: InstalledExtensionData): { cpu: number, memory: number} | Record<string, never> {
       const name = this.getContainerName(extension)?.replace('/', '')
       return name ? this.metrics[name] : {}
     },
