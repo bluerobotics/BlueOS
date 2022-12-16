@@ -512,10 +512,6 @@ export default Vue.extend({
   padding: 0px !important;
 }
 
-div.readme h1 {
-  margin: 5px;
-}
-
 pre.logs {
   color:white;
   background: black;

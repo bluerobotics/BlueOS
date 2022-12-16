@@ -198,3 +198,32 @@ export default Vue.extend({
   },
 })
 </script>
+<style>
+div.readme {
+  line-height: 200%;
+}
+div.readme p {
+  margin-top: 10px;
+  margin-left: 20px;
+}
+div.readme pre {
+  margin-left: 20px;
+}
+div.readme h1 {
+  margin-bottom: 20px;
+}
+
+div.readme h2 {
+  margin-bottom: 10px;
+  margin-left: 10px;
+}
+
+div.readme h3 {
+  margin-bottom: 10px;
+  margin-left: 20px;
+}
+
+div.readme ul {
+  margin-left: 20px;
+}
+</style>
