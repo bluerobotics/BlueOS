@@ -206,6 +206,22 @@ import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
 import menus from './menus'
 
+/**
+ * Menu interface to populate UI
+ */
+interface Menu {
+  title: string,
+  icon: string,
+  text?: string, // Option description
+
+  advanced?: boolean, // The option will only be enable in pirate mode
+  beta?: boolean, // Used on menus that are in development
+  extension?: boolean, // True if is an extension
+  new_page?: string, // The address will open in a new page
+  route?: string, // The option routes to a different address
+  submenus?: Menu[], // Menus that the main option provide
+}
+
 export default Vue.extend({
   name: 'App',
 
@@ -241,7 +257,7 @@ export default Vue.extend({
     toolbar_height(): number {
       return settings.is_pirate_mode && this.backend_offline ? 66 : 56
     },
-    computed_menu(): any {
+    computed_menu(): Menu[] {
       const submenus = services_scanner.services
         .filter((service) : boolean => service.metadata !== null)
         .map((service) => {
@@ -258,7 +274,7 @@ export default Vue.extend({
           }
         })
 
-      const extensions = {
+      const extensions: Menu = {
         title: 'Extensions',
         icon: 'mdi-puzzle',
         extension: true,
@@ -272,10 +288,10 @@ export default Vue.extend({
             text: 'Manage BlueOS extensions',
           },
           ...submenus,
-        ],
+        ] as Menu[],
       }
 
-      return { ...this.menus, extensions }
+      return [...this.menus, extensions]
     },
     steps() {
       return [
