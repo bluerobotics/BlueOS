@@ -57,6 +57,16 @@ module.exports = {
     '@typescript-eslint/no-useless-constructor': ['error'],
     '@typescript-eslint/no-shadow': ['error'],
     '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true }],
+    // Need to disable base rule to apply pattern of unused variables
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      },
+    ],
     'vue/no-unused-properties': ['error', {
       groups: ['props', 'data', 'computed', 'methods', 'setup'],
       deepData: true,
