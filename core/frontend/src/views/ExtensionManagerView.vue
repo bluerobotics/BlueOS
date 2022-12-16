@@ -152,6 +152,7 @@ import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
 import InstalledExtensionCard from '@/components/kraken/InstalledExtensionCard.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
+import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
@@ -187,7 +188,7 @@ export default Vue.extend({
       status_text: '',
       log_output: null as null | string,
       show_log: false,
-      metrics: {} as any,
+      metrics: {} as Dictionary<{ cpu: number, memory: number}>,
       metrics_interval: 0,
       edited_extension: null as null | InstalledExtensionData,
     }

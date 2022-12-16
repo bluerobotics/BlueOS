@@ -71,13 +71,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import Notifier from '@/libs/notifier'
-import { kraken_service } from '@/types/frontend_services'
 import { InstalledExtensionData } from '@/types/kraken'
 import { VForm } from '@/types/vuetify'
-import back_axios from '@/utils/api'
-
-const notifier = new Notifier(kraken_service)
 
 export default Vue.extend({
   name: 'ExtensionCreationDialog',
