@@ -24,6 +24,7 @@ class Kraken:
         self.running_containers: List[DockerContainer] = []
         self.should_run = True
         self._client: Optional[aiodocker.Docker] = None
+        self.manifest_cache: List[Dict[str, Any]] = []
 
     @property
     def client(self) -> aiodocker.Docker:
@@ -82,6 +83,7 @@ class Kraken:
                 if resp.status != 200:
                     print(f"Error status {resp.status}")
                     raise Exception(f"Could not fetch manifest file: reponse status : {resp.status}")
+                self.manifest_cache = await resp.json()
                 return await resp.json(content_type=None)
 
     async def get_configured_extensions(self) -> List[Extension]:
@@ -150,6 +152,54 @@ class Kraken:
         if delete:
             logger.info(f"Removing {image}")
             await self.client.images.delete(image, force=False, noprune=False)
+
+    async def update_extension_to_version(self, identifier: str, version: str) -> AsyncGenerator[bytes, None]:
+        extension = await self.extension_from_identifier(identifier)
+        if not extension:
+            raise Exception(f"Extension with identifier {identifier} not found!")
+        # TODO: plug dependency-checking in here
+        version_manifests = [entry for entry in self.manifest_cache if entry["identifier"] == identifier]
+        if not version_manifests:
+            raise Exception(f"identifier not found in manifest: {identifier}")
+        manifest = version_manifests[0]
+        if version not in manifest["versions"]:
+            raise Exception(f"version not found in manifest: {version}")
+        await self.uninstall_extension_from_identifier(identifier)
+        version_data = manifest["versions"][version]
+
+        new_extension = Extension(
+            identifier=identifier,
+            name=extension.name,
+            docker=extension.docker,
+            tag=version_data["tag"],
+            permissions=json.dumps(version_data["permissions"]),
+            enabled=True,
+            # TODO: handle user permissions on updates
+            user_permissions="{}",
+        )
+
+        # Remove older entry if it exists
+        self.settings.extensions = [
+            old_extension
+            for old_extension in self.settings.extensions
+            if old_extension.identifier != extension.identifier
+        ]
+        self.settings.extensions.append(new_extension)
+        self.manager.save()
+
+        try:
+            await self.remove(extension.identifier, False)
+        except Exception as e:
+            # this will fail if the container is not installed, we don't mind it
+            logger.info(e)
+
+        try:
+            async for line in self.client.images.pull(
+                f"{extension.docker}:{extension.tag}", repo=extension.docker, tag=extension.tag, stream=True
+            ):
+                yield json.dumps(line).encode("utf-8")
+        except Exception as error:
+            raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
 
     async def uninstall_extension_from_identifier(self, identifier: str) -> None:
         extension = await self.extension_from_identifier(identifier)
