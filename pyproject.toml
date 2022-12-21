@@ -64,6 +64,7 @@ ignore = [
 
 [tool.pylint]
     [tool.pylint.master]
+    load-plugins = "pylint_pydantic"
     enable = "all"
     disable = [
         "attribute-defined-outside-init",
