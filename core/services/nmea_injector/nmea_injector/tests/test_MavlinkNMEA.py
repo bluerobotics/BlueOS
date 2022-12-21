@@ -28,6 +28,8 @@ class TestMavlinkNMEA:
         sim.gps.num_sats = NUM_SATS
     ZDA_TEST_MSG = "$GPZDA,172809.456,12,07,1996,00,00*57"
     GNS_TEST_MSG = f"$GNGNS,014035.00,{LAT_DMS},N,{LON_DMS},E,RR,{NUM_SATS},{HDOP},25.63,11.24,,U,*18"
+    HDT_TEST_MSG = pynmea2.parse(f"$GPHDT,85.7,T*0F")
+    EXPECTED_YAW = 85.7
 
     supported_nmea_sentences = [pynmea2.parse(msg) for msg in list(sim.get_output(1)) + [GNS_TEST_MSG]]
     unsupported_nmea_sentences = [pynmea2.parse(msg) for msg in [ZDA_TEST_MSG]]
@@ -74,3 +76,10 @@ class TestMavlinkNMEA:
         for sentence in [msg for msg in self.supported_nmea_sentences if msg.sentence_type in types_support_alt]:
             mavlink_data = parse_mavlink_from_sentence(sentence)
             assert mavlink_data.alt == self.ALTITUDE
+
+    def test_yaw(self) -> None:
+        """Tests if 'yaw' field is working correctly for all sentence types that support it."""
+        types_support_yaw = ["HDT"]
+        for sentence in [self.HDT_TEST_MSG]:
+            mavlink_data = parse_mavlink_from_sentence(sentence)
+            assert mavlink_data.yaw == self.EXPECTED_YAW

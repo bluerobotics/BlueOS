@@ -69,9 +69,17 @@ class MavlinkGpsInput(BaseModel):
 def parse_mavlink_from_sentence(msg: pynmea2.NMEASentence) -> MavlinkGpsInput:
     data: Dict[str, Any] = {}
 
-    supported_sentence_types = ["GGA", "RMC", "GLL", "GNS"]
+    supported_sentence_types = ["GGA", "RMC", "GLL", "GNS", "HDT"]
     if msg.sentence_type not in supported_sentence_types:
         raise UnsupportedSentenceType(f"Supported types are {supported_sentence_types}. Received {msg.sentence_type}")
+
+    if msg.sentence_type == "HDT":
+        yaw = int(msg.heading * 100)
+        yaw = yaw + 36000 if yaw <= 0 else yaw
+        data["yaw"] = yaw
+        # return early as we don't have lat/lon information
+        # except we can't create a MavlinkGpsInput object without lat/lon... or can we? :thinking:
+        return MavlinkGpsInput(**data)
 
     # Convert NMEA lat/long data from "float degrees" to "int degrees ^7"
     data["lat"] = int(msg.latitude * 1e7)
