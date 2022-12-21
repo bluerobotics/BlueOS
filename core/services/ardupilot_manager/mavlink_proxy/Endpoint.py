@@ -33,6 +33,7 @@ class Endpoint:
             EndpointType.TCPServer,
             EndpointType.TCPClient,
         ]:
+            # pylint: disable-next=too-many-function-args
             if not (validators.domain(place) or validators.ipv4(place) or validators.ipv6(place)):
                 raise ValueError(f"Invalid network address: {place}")
             if argument not in range(1, 65536):
