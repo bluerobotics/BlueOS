@@ -27,6 +27,7 @@ from typedefs import (
     FlightControllerFlags,
     Platform,
     PlatformType,
+    Serial,
     SITLFrame,
     Vehicle,
 )
@@ -109,6 +110,41 @@ class ArduPilotManager(metaclass=Singleton):
                     return False
         return False
 
+    def update_serials(self, serials: List[Serial]) -> None:
+        self.configuration["serials"] = [vars(serial) for serial in serials]
+        self.settings.save(self.configuration)
+
+    def get_serials(self) -> List[Serial]:
+        # The mapping of serial ports works as in the following table:
+        #
+        # |    ArduSub   |       Navigator         |
+        # | -C = Serial1 | Serial1 => /dev/ttyS0   |
+        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 |
+        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 |
+        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
+        #
+        # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
+
+        if "serials" not in self.configuration:
+            return [
+                Serial(port="C", endpoint="/dev/ttyS0"),
+                Serial(port="B", endpoint="/dev/ttyAMA1"),
+                Serial(port="E", endpoint="/dev/ttyAMA2"),
+                Serial(port="F", endpoint="/dev/ttyAMA3"),
+            ]
+        serials = []
+        for entry in self.configuration["serials"]:
+            try:
+                serials.append(Serial(port=entry["port"], endpoint=entry["endpoint"]))
+            except Exception as e:
+                logger.error(f"Entry is invalid! {entry['port']}:{entry['endpoint']}")
+                logger.error(e)
+        return serials
+
+    def get_serial_cmdlines(self) -> str:
+        cmdlines = [f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()]
+        return " ".join(cmdlines)
+
     def start_navigator(self, board: FlightController) -> None:
         self._current_board = board
         if not self.firmware_manager.is_firmware_installed(self._current_board):
@@ -146,10 +182,7 @@ class ArduPilotManager(metaclass=Singleton):
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
-            f" -C /dev/ttyS0"
-            f" -B /dev/ttyAMA1"
-            f" -E /dev/ttyAMA2"
-            f" -F /dev/ttyAMA3"
+            f" {self.get_serial_cmdlines()}"
         )
 
         if self.firmware_has_debug_symbols(firmware_path):

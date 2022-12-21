@@ -26,7 +26,7 @@ from exceptions import InvalidFirmwareFile
 from flight_controller_detector.Detector import Detector as BoardDetector
 from mavlink_proxy.Endpoint import Endpoint
 from settings import SERVICE_NAME
-from typedefs import Firmware, FlightController, SITLFrame, Vehicle
+from typedefs import Firmware, FlightController, Serial, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
@@ -94,6 +94,18 @@ def remove_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
 @version(1, 0)
 def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
     autopilot.update_endpoints(endpoints)
+
+
+@app.put("/serials", status_code=status.HTTP_200_OK)
+@version(1, 0)
+def update_serials(serials: List[Serial] = Body(...)) -> Any:
+    autopilot.update_serials(serials)
+
+
+@app.get("/serials", response_model=List[Serial])
+@version(1, 0)
+def get_serials() -> Any:
+    return autopilot.get_serials()
 
 
 @app.get("/firmware_info", response_model=FirmwareInfo, summary="Get version and type of current firmware.")
