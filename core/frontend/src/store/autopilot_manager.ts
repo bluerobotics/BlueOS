@@ -3,7 +3,9 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { AutopilotEndpoint, FirmwareInfo, FlightController } from '@/types/autopilot'
+import {
+  AutopilotEndpoint, FirmwareInfo, FlightController, SerialEndpoint,
+} from '@/types/autopilot'
 
 @Module({
   dynamic: true,
@@ -29,6 +31,13 @@ class AutopilotManagerStore extends VuexModule {
   updating_boards = true
 
   restarting = false
+
+  autopilot_serials: SerialEndpoint[] = []
+
+  @Mutation
+  setAutopilotSerialConfigurations(serials: SerialEndpoint[]): void {
+    this.autopilot_serials = serials
+  }
 
   @Mutation
   setRestarting(restarting: boolean): void {

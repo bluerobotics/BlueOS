@@ -7,6 +7,22 @@ import back_axios from '@/utils/api'
 
 const notifier = new Notifier(autopilot_service)
 
+export async function fetchAutopilotSerialConfiguration(): Promise<void> {
+  await back_axios({
+    method: 'get',
+    url: `${autopilot.API_URL}/serials`,
+    timeout: 10000,
+  })
+    .then((response) => {
+      const available_endpoints = response.data
+      autopilot.setAutopilotSerialConfigurations(available_endpoints)
+    })
+    .catch((error) => {
+      autopilot.setAutopilotSerialConfigurations([])
+      notifier.pushBackError('AUTOPILOT_ENDPOINT_FETCH_FAIL', error)
+    })
+}
+
 export async function fetchAvailableEndpoints(): Promise<void> {
   try {
     const response = await back_axios({
