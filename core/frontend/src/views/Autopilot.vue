@@ -42,6 +42,16 @@
             </v-expansion-panel-content>
           </v-expansion-panel>
         </v-expansion-panels>
+        <v-expansion-panels v-if="settings.is_pirate_mode && isLinuxFlightController">
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              Serial Port Configuration
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <autopilot-serial-configuration />
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
       </v-card-text>
       <v-card-actions class="d-flex justify-end align-center flex-wrap">
         <v-spacer />
@@ -98,6 +108,7 @@ import Vue from 'vue'
 import {
   fetchAvailableBoards, fetchCurrentBoard, fetchFirmwareInfo, fetchVehicleType,
 } from '@/components/autopilot/AutopilotManagerUpdater'
+import AutopilotSerialConfiguration from '@/components/autopilot/AutopilotSerialConfiguration.vue'
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
 import Notifier from '@/libs/notifier'
@@ -115,6 +126,7 @@ export default Vue.extend({
   components: {
     BoardChangeDialog,
     FirmwareManager,
+    AutopilotSerialConfiguration,
   },
   data() {
     return {
@@ -136,6 +148,14 @@ export default Vue.extend({
         'Firmware version': version,
         'Vehicle type': this.vehicle_type ?? 'Unknown',
       }
+    },
+    isLinuxFlightController(): boolean {
+      // this is setup this way so we can include other linux boards in the list in the future
+      const boardname = this.current_board?.name
+      if (!boardname) {
+        return false
+      }
+      return ['Navigator', 'SITL'].includes(boardname)
     },
     current_board(): FlightController | null {
       return autopilot.current_board

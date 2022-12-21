@@ -74,3 +74,8 @@ export interface FirmwareInfo {
   version: SemVer
   type: FirmwareType
 }
+
+export interface SerialEndpoint {
+  port: string
+  endpoint: string
+}
