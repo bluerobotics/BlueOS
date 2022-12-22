@@ -3,11 +3,10 @@
     <template #activator="{ on, attrs }">
       <v-icon
         v-if="board_connector !== null"
-        class="ml-4"
         v-bind="attrs"
         v-on="on"
       >
-        mdi-information
+        mdi-eye
       </v-icon>
     </template>
     <img
