@@ -6,3 +6,4 @@ env/
 build/
 *.egg-info
 dist/
+node_modules
