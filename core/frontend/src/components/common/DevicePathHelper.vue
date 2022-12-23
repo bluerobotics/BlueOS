@@ -1,20 +1,31 @@
 <template>
-  <v-tooltip>
-    <template #activator="{ on, attrs }">
-      <v-icon
-        v-if="board_connector !== null"
-        v-bind="attrs"
-        v-on="on"
-      >
-        mdi-eye
-      </v-icon>
+  <div v-if="board_connector">
+    <template v-if="inline">
+      <div :style="`max-height: ${height}; display: block; position: relative`">
+        <img
+          :src="board_image"
+          :style="`height: ${height};`"
+        >
+        <div :class="circle_class" />
+      </div>
     </template>
-    <img
-      :src="board_image"
-      style="max-height:500px;"
-    >
-    <div :class="circle_class" />
-  </v-tooltip>
+    <v-tooltip v-else>
+      <template #activator="{ on, attrs }">
+        <v-icon
+          v-if="board_connector !== null"
+          v-bind="attrs"
+          v-on="on"
+        >
+          mdi-eye
+        </v-icon>
+      </template>
+      <img
+        :src="board_image"
+        :style="`max-height: ${height};`"
+      >
+      <div :class="circle_class" />
+    </v-tooltip>
+  </div>
 </template>
 
 <script lang="ts">
@@ -54,6 +65,16 @@ export default Vue.extend({
     device: {
       type: String,
       required: true,
+    },
+    inline: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    height: {
+      type: String,
+      required: false,
+      default: '500px',
     },
   },
   computed: {
@@ -108,14 +129,19 @@ export default Vue.extend({
 .circle {
   position: absolute;
   top:0%;
-  width: 160px; height: 80px;
-  border-radius: 40px;
+  width: 32%; height: 16%;
+  border-radius: 20px;
   border: 5px solid red;
-  left: 160px;
+  left: 32%;
 }
 
 .serial4 {
     left: 50%;
+    top: 52%;
+}
+
+.serial5 {
+    left: 18%;
     top: 52%;
 }
 
@@ -132,25 +158,25 @@ export default Vue.extend({
 .usb-bottom-left-pi4 {
     left: 11%;
     top: 44%;
-    width: 190px; height: 105px;
+    width: 25%; height: 23%;
 }
 
 .usb-bottom-right-pi4 {
     left: 37%;
     top: 44%;
-    width: 190px; height: 105px;
+    width: 25%; height: 23%;
 }
 
 .usb-top-right-pi4 {
     left: 37%;
     top: 20%;
-    width: 190px; height: 105px;
+    width: 25%; height: 23%;
 }
 
 .usb-top-left-pi4 {
     left: 11%;
     top: 20%;
-    width: 190px; height: 105px;
+    width: 25%; height: 23%;
 }
 
 .usb-top-right-pi3 {
