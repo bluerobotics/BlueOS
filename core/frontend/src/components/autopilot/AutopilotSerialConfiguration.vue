@@ -17,6 +17,7 @@
           :key="JSON.stringify(data.item)"
           v-bind="data.attrs"
           :input-value="data.selected"
+          style="height: 150px; position: relative;"
           @click:close="data.parent.selectItem(data.item)"
         >
           <device-path-helper
@@ -27,9 +28,6 @@
           />
           {{ data.item }}
         </v-chip>
-        <device-path-helper
-          :device="data.item"
-        />
       </template>
       <template #selection="{ attrs, item, parent }">
         <v-chip
