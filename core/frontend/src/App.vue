@@ -143,7 +143,7 @@
         <span
           class="build_info"
         >
-          Version:
+          BlueOS Version:
           <a
             target="_blank"
             rel="noopener noreferrer"
@@ -156,6 +156,19 @@
           id="current-version"
           class="build_info"
         >Build: {{ build_date }}</span>
+        <span
+          class="build_info"
+        >
+          By
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://bluerobotics.com"
+            style="text-decoration:none;"
+          >
+            Blue Robotics
+          </a>
+        </span>
       </v-container>
     </v-navigation-drawer>
 
