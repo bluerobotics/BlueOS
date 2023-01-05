@@ -14,6 +14,7 @@ const vuetify = new Vuetify({
     iconfont: 'mdi',
   },
   theme: {
+    options: { customProperties: true },
     themes: {
       light: {
         // Default colors used by BlueOS
