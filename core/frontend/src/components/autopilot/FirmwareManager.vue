@@ -23,7 +23,7 @@
               @click="toggle"
             >
               <v-icon class="mr-2">
-                mdi-cloud
+                mdi-cloud-arrow-down
               </v-icon>
               <div>Retrieve from Cloud</div>
             </v-btn>
