@@ -174,6 +174,7 @@
 
     <v-main>
       <router-view />
+      <div id="tour-center-hook" />
     </v-main>
     <services-scanner />
     <autopilot-manager-updater />
@@ -188,7 +189,6 @@
       :steps="steps"
       :callbacks="tourCallbacks"
     />
-    <div id="tour-center-hook" />
   </v-app>
 </template>
 
