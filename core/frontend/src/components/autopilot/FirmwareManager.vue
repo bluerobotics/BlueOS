@@ -141,7 +141,9 @@
       color="primary"
       @click="installFirmware"
     >
-      <v-icon>mdi-content-save</v-icon>
+      <v-icon class="mr-2">
+        mdi-content-save
+      </v-icon>
       <div>Install firmware</div>
     </v-btn>
 
