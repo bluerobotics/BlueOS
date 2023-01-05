@@ -25,7 +25,7 @@
               <v-icon class="mr-2">
                 mdi-cloud
               </v-icon>
-              <div>Choose from repository</div>
+              <div>Retrieve from Cloud</div>
             </v-btn>
           </v-item>
           <v-item
@@ -43,7 +43,7 @@
               <v-icon class="mr-2">
                 mdi-paperclip
               </v-icon>
-              <div>Upload custom file</div>
+              <div>Upload firmware file</div>
             </v-btn>
           </v-item>
           <v-item
@@ -61,7 +61,7 @@
               <v-icon class="mr-2">
                 mdi-file-restore
               </v-icon>
-              <div>Restore default</div>
+              <div>Restore default firmware</div>
             </v-btn>
           </v-item>
         </v-item-group>
