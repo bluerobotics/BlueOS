@@ -10,22 +10,19 @@
       <v-card-text>
         <span v-if="board_undefined">No board running</span>
         <div v-else>
-          <span class="font-weight-bold">Board name: </span>
-          <span>{{ current_board.name }}</span>
-          <br>
-          <span class="font-weight-bold">Manufacturer: </span>
-          <span>{{ current_board.manufacturer }}</span>
-          <br>
-          <span class="font-weight-bold">Mavlink platform: </span>
-          <span>{{ current_board.platform }}</span>
-          <br>
-          <span class="font-weight-bold">Firmware version: </span>
-          <span v-if="firmware_info === null">Unknown</span>
-          <span v-else>{{ firmware_info.version }} ({{ firmware_info.type }})</span>
-          <br>
-          <span class="font-weight-bold">Vehicle type: </span>
-          <span>{{ vehicle_type }}</span>
-          <br>
+          <v-row
+            v-for="(value, name) in autopilot_info"
+            :key="name"
+            class="ma-0"
+            no-gutters
+          >
+            <v-col class="text-right ma-0 font-weight-bold">
+              {{ name }}:
+            </v-col>
+            <v-col class="text-left ml-1">
+              {{ value }}
+            </v-col>
+          </v-row>
           <span
             v-if="current_board.path"
             class="font-weight-bold"
@@ -122,6 +119,20 @@ export default Vue.extend({
     }
   },
   computed: {
+    autopilot_info(): Record<string, string> {
+      let version = 'Unknown'
+      if (this.firmware_info) {
+        version = `${this.firmware_info.version} (${this.firmware_info.type})`
+      }
+
+      return {
+        'Board name': this.current_board?.name ?? 'Unknown',
+        Manufacturer: this.current_board?.manufacturer ?? 'Unknown',
+        'Mavlink platform': this.current_board?.platform ?? 'Unknown',
+        'Firmware version': version,
+        'Vehicle type': this.vehicle_type ?? 'Unknown',
+      }
+    },
     current_board(): FlightController | null {
       return autopilot.current_board
     },
