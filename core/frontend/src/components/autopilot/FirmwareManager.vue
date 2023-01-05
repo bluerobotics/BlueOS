@@ -41,7 +41,7 @@
               @click="toggle"
             >
               <v-icon class="mr-2">
-                mdi-paperclip
+                mdi-upload
               </v-icon>
               <div>Upload firmware file</div>
             </v-btn>
