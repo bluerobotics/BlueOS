@@ -17,7 +17,7 @@ const menus = [
         the firmware of your flight controller.`,
       },
       {
-        title: 'Pings',
+        title: 'Ping Sonar Devices',
         icon: 'mdi-radar',
         route: '/vehicle/pings',
         advanced: false,
