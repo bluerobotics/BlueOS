@@ -55,6 +55,7 @@ module.exports = {
     'simple-import-sort/imports': 'error',
     'sort-imports': 'off',
     '@typescript-eslint/no-useless-constructor': ['error'],
+    '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-shadow': ['error'],
     '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true }],
     // Need to disable base rule to apply pattern of unused variables
