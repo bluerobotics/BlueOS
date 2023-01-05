@@ -1,6 +1,8 @@
 /* eslint-disable */
 const { PRIMARY } = require('./src/assets/colors/default')
+const { name } = require('./package.json')
 
+process.env.PROJECT_NAME = name
 process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
 const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? 'http://blueos.local/'
 
