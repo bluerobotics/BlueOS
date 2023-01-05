@@ -45,8 +45,13 @@
     >
       <v-container
         elevation="0"
-        class="d-flex justify-center"
+        class="d-flex justify-center align-center"
       >
+        <div
+          class="text-h4 pr-2 blueos_logo"
+        >
+          Blue<strong>OS</strong>
+        </div>
         <v-img
           alt="Blue Robotics Logo"
           class="shrink mr-2"
@@ -485,6 +490,10 @@ span.build_info {
   font-size: 70%;
   margin-left: 30px;
   display: block;
+}
+
+div.blueos_logo {
+  color: #208dbf;
 }
 
 #tour-center-hook {
