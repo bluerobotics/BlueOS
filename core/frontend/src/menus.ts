@@ -1,6 +1,6 @@
 const menus = [
   {
-    title: 'Main',
+    title: 'Dashboard',
     icon: 'mdi-home',
     route: '/',
   },
