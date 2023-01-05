@@ -13,7 +13,7 @@ const menus = [
         icon: 'mdi-image-filter-center-focus-strong',
         route: '/vehicle/autopilot',
         advanced: false,
-        text: `Autopilot settings. Allows you to start/stop Ardupilot (if using Navigator or SITL), or update
+        text: `Autopilot settings. Allows you to start/stop ArduPilot (if using Navigator or SITL), or update
         the firmware of your flight controller.`,
       },
       {
@@ -88,7 +88,7 @@ const menus = [
         icon: 'mdi-map-marker',
         route: '/tools/nmea-injector',
         advanced: true,
-        text: 'Used for forwarding UDP NMEA streams into Ardupilot.',
+        text: 'Used for forwarding UDP NMEA streams into ArduPilot.',
       },
       {
         title: 'System Information',
@@ -109,7 +109,7 @@ const menus = [
         icon: 'mdi-console',
         route: '/tools/web-terminal',
         advanced: true,
-        text: 'A web-based console. Used mainly for debugging and developlment.',
+        text: 'A web-based console. Used mainly for debugging and development.',
       },
       {
         title: 'MAVLink Inspector',
