@@ -141,7 +141,7 @@
       color="primary"
       @click="installFirmware"
     >
-      <v-icon>mdi-paperclip</v-icon>
+      <v-icon>mdi-content-save</v-icon>
       <div>Install firmware</div>
     </v-btn>
 
