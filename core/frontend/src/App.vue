@@ -426,6 +426,14 @@ export default Vue.extend({
     $route() {
       // In an update process the page may not be the 'Main' page, check tour when page changes
       this.checkTour()
+      // Env may not exist when running it with `yarn serve`
+      const project_name = process.env.PROJECT_NAME ?? 'BlueOS'
+      if (this.$route.name === this.$router.options.routes!.first()!.name) {
+        document.title = project_name
+        return
+      }
+
+      document.title = `${this.$route.name} - ${project_name}`
     },
   },
 
