@@ -544,4 +544,21 @@ div.pirate-marker.v-icon {
     font-size: 10px;
 }
 
+.v-navigation-drawer__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.v-navigation-drawer__content::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 1px grey;
+}
+
+.v-navigation-drawer__content::-webkit-scrollbar-thumb {
+  background: var(--v-primary-darken3);
+  transition: visibility 2s;
+}
+
+.v-navigation-drawer__content::-webkit-scrollbar-thumb:hover {
+  background: var(--v-primary-base);
+}
+
 </style>
