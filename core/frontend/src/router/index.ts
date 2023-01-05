@@ -40,7 +40,7 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/vehicle/logs',
-    name: 'LogManager',
+    name: 'Log Browser',
     component: LogView,
   },
   {
@@ -50,7 +50,7 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/tools/file-browser',
-    name: 'FileBrowser',
+    name: 'File Browser',
     component: FileBrowserView,
   },
   {
@@ -60,12 +60,12 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/tools/version-chooser',
-    name: 'VersionChooser',
+    name: 'Version Chooser',
     component: VersionChooser,
   },
   {
     path: '/vehicle/video-manager',
-    name: 'VideoManager',
+    name: 'Video Manager',
     component: VideoManagerView,
   },
   {
@@ -75,7 +75,7 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/tools/nmea-injector',
-    name: 'NMEAInjector',
+    name: 'NMEA Injector',
     component: NMEAInjectorView,
   },
   {
@@ -85,17 +85,17 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/tools/system-information',
-    name: 'SystemInformation',
+    name: 'System Information',
     component: SystemInformationView,
   },
   {
     path: '/tools/mavlink-inspector',
-    name: 'MavlinkInspector',
+    name: 'Mavlink Inspector',
     component: MavlinkInspectorView,
   },
   {
     path: '/tools/network-test',
-    name: 'NetworkTest',
+    name: 'Network Test',
     component: NetworkTestView,
   },
   {
@@ -110,7 +110,7 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/vehicle/parameters',
-    name: 'ParameterEditor',
+    name: 'Parameter Editor',
     component: ParameterEditorView,
   },
 ]
