@@ -329,10 +329,11 @@ export default Vue.extend({
           },
         },
         {
-          target: '#current-version',
+          target: '#button-to-vehicle',
           content: 'This is the main BlueOS menu. Here you can access all the running services and system utilities.',
           params: {
             enableScrolling: false,
+            placement: 'right',
           },
           before: () => {
             // It's necessary to control the drawer tour event otherwise the internal state control will close it
