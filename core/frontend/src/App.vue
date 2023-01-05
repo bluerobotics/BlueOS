@@ -186,7 +186,7 @@
     <alerter />
     <v-tour
       name="welcomeTour"
-      :steps="steps"
+      :steps="steps.filter((step) => step?.filter_wifi_connected !== wifi_connected)"
       :callbacks="tourCallbacks"
     />
   </v-app>
@@ -197,6 +197,7 @@ import Vue from 'vue'
 
 import settings from '@/libs/settings'
 import services_scanner from '@/store/servicesScanner'
+import wifi from '@/store/wifi'
 import { convertGitDescribeToUrl } from '@/utils/helper_functions'
 import updateTime from '@/utils/update_time'
 
@@ -267,6 +268,9 @@ export default Vue.extend({
     tourCallbacks: {}, // we are setting this up in mounted otherwise "this" can be undefined
   }),
   computed: {
+    wifi_connected(): boolean {
+      return wifi.current_network != null
+    },
     toolbar_height(): number {
       return settings.is_pirate_mode && this.backend_offline ? 66 : 56
     },
@@ -323,6 +327,7 @@ export default Vue.extend({
           target: '#tour-center-hook',
           content: `As stated on our welcome card, one of the first things you should do on your first use of BlueOS
           is to connect it to the internet.`,
+          filter_wifi_connected: true,
           params: {
             enableScrolling: false,
           },
@@ -330,6 +335,7 @@ export default Vue.extend({
         {
           target: '#wifi-tray-menu-button',
           content: 'You can do it by connecting to a wifi network...',
+          filter_wifi_connected: true,
           params: {
             enableScrolling: false,
           },
@@ -337,6 +343,7 @@ export default Vue.extend({
         {
           target: '#ethernet-tray-menu-button',
           content: '...or by connecting to a cable internet (usually from/to a router).',
+          filter_wifi_connected: true,
           params: {
             enableScrolling: false,
           },
