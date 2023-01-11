@@ -37,6 +37,7 @@
 
     <template #item.cpu_usage="{ item }">
       <v-chip
+        style="height: 25px"
         :color="getCpuColor(item.cpu_usage)"
         dark
       >
