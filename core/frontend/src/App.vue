@@ -19,14 +19,6 @@
         <v-spacer />
         <span class="d-flex flex-column align-center">
           <backend-status-checker @statusChange="changeBackendStatus" />
-          <span
-            v-if="settings.is_pirate_mode"
-            class="black--text font-weight-bold"
-          >
-            <v-icon color="black">mdi-skull-crossbones</v-icon>
-            Pirate Mode
-            <v-icon color="black">mdi-skull-crossbones</v-icon>
-          </span>
         </span>
         <v-spacer />
         <beacon-tray-menu />
