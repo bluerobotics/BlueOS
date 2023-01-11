@@ -177,7 +177,6 @@
       <div id="tour-center-hook" />
     </v-main>
     <services-scanner />
-    <autopilot-manager-updater />
     <ethernet-updater />
     <wifi-updater />
     <mavlink-updater />
@@ -207,7 +206,6 @@ import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
-import AutopilotManagerUpdater from './components/autopilot/AutopilotManagerUpdater.vue'
 import BeaconTrayMenu from './components/beacon/BeaconTrayMenu.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
@@ -247,7 +245,6 @@ export default Vue.extend({
     'wifi-updater': WifiUpdater,
     'ethernet-tray-menu': EthernetTrayMenu,
     'ethernet-updater': EthernetUpdater,
-    'autopilot-manager-updater': AutopilotManagerUpdater,
     'health-tray-menu': HealthTrayMenu,
     'mavlink-updater': MavlinkUpdater,
     'nmea-injector-updater': NMEAInjectorUpdater,

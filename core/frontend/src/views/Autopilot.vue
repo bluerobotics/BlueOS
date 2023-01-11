@@ -95,6 +95,9 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import {
+  fetchAvailableBoards, fetchCurrentBoard, fetchFirmwareInfo, fetchVehicleType,
+} from '@/components/autopilot/AutopilotManagerUpdater'
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
 import Notifier from '@/libs/notifier'
@@ -103,6 +106,7 @@ import autopilot from '@/store/autopilot_manager'
 import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(autopilot_service)
 
@@ -148,6 +152,18 @@ export default Vue.extend({
     restarting(): boolean {
       return autopilot.restarting
     },
+  },
+  mounted() {
+    callPeriodically(fetchAvailableBoards, 5000)
+    callPeriodically(fetchCurrentBoard, 5000)
+    callPeriodically(fetchFirmwareInfo, 5000)
+    callPeriodically(fetchVehicleType, 5000)
+  },
+  beforeDestroy() {
+    stopCallingPeriodically(fetchAvailableBoards)
+    stopCallingPeriodically(fetchCurrentBoard)
+    stopCallingPeriodically(fetchFirmwareInfo)
+    stopCallingPeriodically(fetchVehicleType)
   },
   methods: {
     async start_autopilot(): Promise<void> {
