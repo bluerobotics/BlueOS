@@ -34,7 +34,9 @@
 import Vue from 'vue'
 
 import ping from '@/store/ping'
+import system_information from '@/store/system-information'
 import { PingDevice, PingType } from '@/types/ping'
+import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import PingCard from '../components/ping/ping1d.vue'
 import Ping360Card from '../components/ping/ping360.vue'
@@ -52,6 +54,10 @@ export default Vue.extend({
   },
   mounted() {
     ping.registerObject(this)
+    callPeriodically(system_information.fetchSerial, 5000)
+  },
+  beforeDestroy() {
+    stopCallingPeriodically(system_information.fetchSerial)
   },
 })
 </script>
