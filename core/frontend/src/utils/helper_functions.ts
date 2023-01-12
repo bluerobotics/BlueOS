@@ -19,7 +19,7 @@ export async function callPeriodically(
   let current_count = periodic_tasks_counter.get(func) ?? 0
   if (!automated_call) {
     current_count += 1
-    periodic_tasks_counter.set(func, current_count + 1)
+    periodic_tasks_counter.set(func, current_count)
   }
   if (current_count <= 0) {
     periodic_tasks_counter.set(func, 0)
