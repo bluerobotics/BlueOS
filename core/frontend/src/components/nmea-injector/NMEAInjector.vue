@@ -34,7 +34,7 @@
       class="text-center"
     >
       <p class="text-h6">
-        No NMEA sockets available.
+        No NMEA sockets available. You can add a connection by clicking the + symbol in the corner.
       </p>
     </v-container>
 
