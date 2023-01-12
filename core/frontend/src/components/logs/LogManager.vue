@@ -8,12 +8,14 @@
         Autopilot logs
         <v-spacer />
         <v-btn
+          v-tooltip="'Fetch available logs'"
           icon
           @click="fetchAvailableLogs"
         >
           <v-icon>mdi-update</v-icon>
         </v-btn>
         <v-btn
+          v-tooltip="'Download selected logs'"
           icon
           color="success"
           :disabled="disable_batch_operations"
@@ -22,6 +24,7 @@
           <v-icon>mdi-download-multiple</v-icon>
         </v-btn>
         <v-btn
+          v-tooltip="'Delete selected logs'"
           icon
           color="error"
           :disabled="disable_batch_operations"
