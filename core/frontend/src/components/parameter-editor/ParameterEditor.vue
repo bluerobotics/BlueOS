@@ -15,6 +15,7 @@
       class="elevation-1"
       :search="search"
       :sort-by="'name'"
+      disable-sort="true"
       :custom-filter="() => true"
       @click:row="(value) => editParam(value.item)"
     >
