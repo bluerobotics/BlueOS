@@ -28,7 +28,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Download speed'"
+                  v-tooltip="'Download speed from vehicle'"
                 >
                   mdi-download
                 </v-icon>
@@ -41,7 +41,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Upload speed'"
+                  v-tooltip="'Upload speed to vehicle'"
                 >
                   mdi-upload
                 </v-icon>
