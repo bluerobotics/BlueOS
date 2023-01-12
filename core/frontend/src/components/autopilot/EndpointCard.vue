@@ -1,10 +1,13 @@
 <template>
   <v-card
-    width="320px"
+    width="80%"
     height="130px"
-    class="d-flex align-center justify-center mx-4 px-2"
+    class="d-flex justify-space-between align-center justify-center"
   >
-    <div class="d-flex flex-column align-center justify-center px-3 py-1">
+    <div
+      class="align-center justify-center ml-5"
+      style="width: 20%;"
+    >
       <p class="text-h6 text-center ma-0">
         {{ endpoint.name }}
       </p>
@@ -37,7 +40,7 @@
     </div>
     <div
       width="62px"
-      class="d-flex flex-column justify-center elevation-0 pa-1"
+      class="d-flex flex-column justify-center elevation-0 pa-1 mr-5"
     >
       <v-icon
         v-tooltip="persistency.tooltip"

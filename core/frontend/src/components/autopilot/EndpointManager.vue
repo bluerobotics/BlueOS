@@ -1,8 +1,9 @@
 <template>
-  <div class="endpoints-manager">
+  <div class="endpoints-manager d-flex flex-column align-center">
     <div
       v-if="are_endpoints_available && !updating_endpoints"
-      class="d-flex flex-column align-center"
+      class="d-flex flex-column align-center justify-center ma-0 pa-0"
+      style="width: 80%;"
     >
       <template v-for="(endpoint, index) in available_endpoints">
         <v-divider
@@ -116,7 +117,7 @@ export default Vue.extend({
 
 <style scoped>
 .endpoints-manager {
-  margin-top: 20px;
+  width: 80%;
   margin-bottom: 100px;
 }
 </style>
