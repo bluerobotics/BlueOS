@@ -34,7 +34,7 @@
       class="text-center"
     >
       <p class="text-h6">
-        No bridges available.
+        No bridges available. You can add a serial to UDP bridge by clicking the + symbol in the corner.
       </p>
     </v-container>
 
