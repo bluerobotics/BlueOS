@@ -4,6 +4,19 @@
     elevation="0"
     class="mx-auto my-6 injectors-list"
   >
+  <v-card
+    class="mx-auto my-6"
+    width="500"
+    elevation="1"
+  >
+  <v-card-text>
+      <div class="text--primary">
+        The NMEA Injector receives NMEA via UDP or TCP and transforms it
+        into MAVLink data that is forwarded to the autopilot.
+        It currently supports the sentences GPGGA, GPRMC, GPGLL, and GPGNS.
+      </div>
+    </v-card-text>
+  </v-card>
     <v-list
       v-if="are_nmea_sockets_available && !updating_nmea_sockets"
       style="background-color: transparent"
