@@ -166,6 +166,7 @@
             Cancel
           </v-btn>
           <v-btn
+            :disabled="paramValueNotChanged"
             color="primary"
             @click="saveEditedParam()"
           >
@@ -308,6 +309,15 @@ export default Vue.extend({
       const entries = Object.entries(this.edited_param?.options ?? [])
       return entries.map(([value, name]) => ({ text: name, value: parseFloat(value), disabled: false }))
     },
+    editedBitmaskValue(): number {
+      return this.edited_bitmask.reduce((accumulator, current) => accumulator + current, 0)
+    },
+    paramValueNotChanged(): boolean {
+      // Check if value is different
+      return this.new_value === this.edited_param?.value
+        // Check if bitmask value, if valid, is different from current value
+        && (this.edited_param?.bitmask === undefined || this.editedBitmaskValue === this.edited_param?.value)
+    },
   },
   watch: {
     edit_dialog(): void {
@@ -399,7 +409,7 @@ export default Vue.extend({
         return
       }
       if (!this.custom_input && this.edited_param.bitmask !== undefined) {
-        this.new_value = this.edited_bitmask.reduce((accumulator, current) => accumulator + current, 0)
+        this.new_value = this.editedBitmaskValue
       }
       let value = 0
       if (typeof this.new_value === 'string') {
