@@ -19,8 +19,7 @@
             :items="available_socket_kinds"
             label="Socket kind"
             :rules="[validate_required_field]"
-            no-data-text="No serial ports available"
-            :loading="updating_serial_ports"
+            no-data-text="No Socket type chosen"
           />
 
           <v-text-field
