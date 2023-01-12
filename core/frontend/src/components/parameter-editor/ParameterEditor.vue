@@ -81,6 +81,16 @@
           </v-icon>
           <div>Load</div>
         </v-btn>
+        <v-btn
+          v-if="need_vehicle_reboot"
+          v-tooltip="'A parameter that requires a vehicle reboot was changed'"
+          :disabled="!finished_loading"
+          color="warning"
+          class="mr-5"
+          @click="rebootVehicle()"
+        >
+          <div>Reboot vehicle</div>
+        </v-btn>
       </template>
     </v-data-table>
     <v-dialog
@@ -271,6 +281,7 @@ export default Vue.extend({
       loaded_parameter: [] as {name: string, value: number, type: undefined | ParamType}[],
       custom_input: false,
       new_value: 0,
+      need_vehicle_reboot: false,
     }
   },
   computed: {
@@ -436,9 +447,14 @@ export default Vue.extend({
       mavlink2rest.setParam(this.edited_param.name, value, this.edited_param.paramType.type)
 
       if (reboot) {
-        await this.restart_autopilot()
-        autopilot_data.reset()
+        await this.rebootVehicle()
+      } else if (this.edited_param.rebootRequired) {
+        this.need_vehicle_reboot = true
       }
+    },
+    async rebootVehicle(): Promise<void> {
+      await this.restart_autopilot()
+      autopilot_data.reset()
     },
     async restart_autopilot(): Promise<void> {
       autopilot.setRestarting(true)
