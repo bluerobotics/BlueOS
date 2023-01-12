@@ -78,7 +78,6 @@ setuptools.setup(
         "starlette == 0.13.6",
         "fastapi == 0.63.0",
         "uvicorn == 0.13.4",
-        "python-magic == 0.4.25",
         "python-multipart == 0.0.5",
         "validators == 0.18.2",
         "fastapi-versioning == 0.9.1",

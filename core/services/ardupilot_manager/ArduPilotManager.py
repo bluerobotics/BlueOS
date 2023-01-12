@@ -4,10 +4,10 @@ import subprocess
 from copy import deepcopy
 from typing import Any, List, Optional, Set
 
-import magic
 import psutil
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
 from commonwealth.utils.Singleton import Singleton
+from elftools.elf.elffile import ELFFile
 from loguru import logger
 
 from exceptions import (
@@ -97,7 +97,17 @@ class ArduPilotManager(metaclass=Singleton):
 
     @staticmethod
     def firmware_has_debug_symbols(firmware_path: pathlib.Path) -> bool:
-        return "with debug_info" in magic.from_file(firmware_path)
+        with open(firmware_path, "rb") as f:
+            elffile = ELFFile(f)
+
+            for section in elffile.iter_sections():
+                if section.name.startswith(".debug_line"):
+                    # 100k is Empirical data. non-debug binaries seem to have around 700 entries here,
+                    # while debug ones have 28 million entries
+                    if section.header.sh_size > 100000:
+                        return True
+                    return False
+        return False
 
     def start_navigator(self, board: FlightController) -> None:
         self._current_board = board
