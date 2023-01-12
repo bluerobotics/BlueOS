@@ -24,7 +24,7 @@
           <v-select
             v-model="selected_encode"
             :items="available_encodes"
-            label="Encode"
+            label="Encoding"
             required
           />
           <v-select
