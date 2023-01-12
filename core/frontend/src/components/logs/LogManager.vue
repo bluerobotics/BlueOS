@@ -47,12 +47,21 @@
             {{ printSize(item.size) }}
           </template>
           <template #item.actions="{ item }">
-            <v-icon @click="replay_log(item)">
-              mdi-play
-            </v-icon>
-            <v-icon @click="downloadLogs([item])">
-              mdi-download
-            </v-icon>
+            <v-btn
+              v-tooltip="'Open log in UAV Log Viewer'"
+              icon
+              color="green"
+              @click="replay_log(item)"
+            >
+              <v-icon>mdi-play</v-icon>
+            </v-btn>
+            <v-btn
+              v-tooltip="'Download log'"
+              icon
+              @click="downloadLogs([item])"
+            >
+              <v-icon>mdi-download</v-icon>
+            </v-btn>
           </template>
         </v-data-table>
       </v-card-text>
