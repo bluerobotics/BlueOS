@@ -59,20 +59,26 @@
       </template>
       <template #footer.prepend>
         <v-btn
-          icon
           :disabled="!finished_loading"
+          color="primary"
           class="mr-5"
           @click="saveParametersToFile()"
         >
-          <v-icon>mdi-tray-arrow-down</v-icon>
+          <v-icon class="mr-2">
+            mdi-tray-arrow-down
+          </v-icon>
+          <div>Save</div>
         </v-btn>
         <v-btn
-          icon
           :disabled="!finished_loading"
           class="mr-5"
+          color="primary"
           @click="load_param_dialog = true"
         >
-          <v-icon>mdi-tray-arrow-up</v-icon>
+          <v-icon class="mr-2">
+            mdi-tray-arrow-up
+          </v-icon>
+          <div>Load</div>
         </v-btn>
       </template>
     </v-data-table>
