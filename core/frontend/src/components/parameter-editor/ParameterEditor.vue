@@ -384,7 +384,7 @@ export default Vue.extend({
         return
       }
       // eslint-disable-next-line no-bitwise
-      for (let v = 0; v < param.value; v += 1) {
+      for (let v = 0; 1 << v < param.value; v += 1) {
         // eslint-disable-next-line no-bitwise
         const bitmask_value = 1 << v
         // eslint-disable-next-line no-bitwise
