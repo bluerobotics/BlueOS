@@ -9,7 +9,7 @@
         Stream creation
       </v-card-title>
 
-      <v-card-text class="d-flex flex-column">
+      <v-card-text class="d-flex flex-column pb-0">
         <v-form
           ref="form"
           lazy-validation
@@ -107,16 +107,27 @@
             Be aware that "Fake source" streams consume a lot of computing power. If you just need it for connection
             tests we recommend you to use small resolutions and low framerates.
           </p>
-
-          <v-btn
-            color="primary"
-            class="mr-4"
-            @click="createStream"
-          >
-            {{ finishButtonText }}
-          </v-btn>
         </v-form>
       </v-card-text>
+      <v-card-actions
+        class="pt-1"
+      >
+        <v-btn
+          color="primary"
+          @click="showDialog(false)"
+        >
+          Cancel
+        </v-btn>
+
+        <v-spacer />
+
+        <v-btn
+          color="primary"
+          @click="createStream"
+        >
+          {{ finishButtonText }}
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
