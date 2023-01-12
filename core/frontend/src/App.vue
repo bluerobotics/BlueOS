@@ -114,6 +114,26 @@
                       :src="submenu.icon"
                       width="24"
                     />
+                    <v-theme-provider
+                      v-if="submenu.advanced && settings.is_pirate_mode"
+                      dark
+                    >
+                      <div
+                        v-tooltip="'This is an advanced feature'"
+                        class="pirate-marker ma-0"
+                      >
+                        <v-avatar
+                          class="ma-0"
+                          color="error"
+                          size="15"
+                        >
+                          <v-icon
+                            size="15"
+                            v-text="'mdi-skull-crossbones'"
+                          />
+                        </v-avatar>
+                      </div>
+                    </v-theme-provider>
                   </v-list-item-icon>
                   <v-list-item-title
                     v-text="submenu.title"
@@ -495,7 +515,7 @@ export default Vue.extend({
 })
 </script>
 
-<style>
+<style scoped>
 html {
   overflow-y: auto
 }
@@ -514,6 +534,19 @@ span.build_info {
   position: absolute;
   top: 20%;
   left: 50%;
+}
+
+div.pirate-marker {
+  position: relative;
+  top: -10px;
+  right: 7px;
+  width: 15px;
+  height: 15px;
+  opacity: 0.7;
+}
+
+div.pirate-marker.v-icon {
+    font-size: 10px;
 }
 
 </style>
