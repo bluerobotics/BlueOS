@@ -42,6 +42,12 @@
             @change="updateControlsValues([control])"
           />
           <div class="d-flex">
+            <v-btn
+              color="primary"
+              @click="showDialog(false)"
+            >
+              Close
+            </v-btn>
             <v-spacer />
             <v-btn
               color="primary"
