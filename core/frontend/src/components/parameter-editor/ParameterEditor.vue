@@ -169,7 +169,16 @@
             color="primary"
             @click="saveEditedParam()"
           >
-            {{ edited_param?.rebootRequired ? "Save and Reboot" : "Save" }}
+            Save
+          </v-btn>
+          <v-btn
+            v-if="edited_param?.rebootRequired === true"
+            v-tooltip="'Reboot required for parameter to take effect'"
+            :disabled="paramValueNotChanged"
+            color="warning"
+            @click="saveEditedParam(true)"
+          >
+            Save and Reboot
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -399,7 +408,7 @@ export default Vue.extend({
         }
       }
     },
-    async saveEditedParam() {
+    async saveEditedParam(reboot = false) {
       if (!this.forcing_input && !this.form?.validate()) {
         return
       }
@@ -419,7 +428,7 @@ export default Vue.extend({
 
       mavlink2rest.setParam(this.edited_param.name, value, this.edited_param.paramType.type)
 
-      if (this.edited_param.rebootRequired) {
+      if (reboot) {
         await this.restart_autopilot()
         autopilot_data.reset()
       }
