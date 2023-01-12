@@ -160,15 +160,13 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            color="blue darken-1"
-            text
+            color="primary"
             @click="edit_dialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
-            color="blue darken-1"
-            text
+            color="primary"
             @click="saveEditedParam()"
           >
             {{ edited_param?.rebootRequired ? "Save and Reboot" : "Save" }}
@@ -210,15 +208,13 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            color="blue darken-1"
-            text
+            color="primary"
             @click="load_param_dialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
-            color="blue darken-1"
-            text
+            color="primary"
             @click="applyParameterFile"
           >
             Save and Reboot
