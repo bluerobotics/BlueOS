@@ -68,6 +68,7 @@ import bridget from '@/store/bridget'
 import system_information from '@/store/system-information'
 import { BridgeWithSerialInfo } from '@/types/bridges'
 import { SerialPortInfo } from '@/types/system-information/serial'
+import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import BridgeCard from './BridgeCard.vue'
@@ -103,7 +104,11 @@ export default Vue.extend({
     },
   },
   mounted() {
+    callPeriodically(system_information.fetchSerial, 5000)
     bridget.registerObject(this)
+  },
+  beforeDestroy() {
+    stopCallingPeriodically(system_information.fetchSerial)
   },
   methods: {
     openCreationDialog(): void {

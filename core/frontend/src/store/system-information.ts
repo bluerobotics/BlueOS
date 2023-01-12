@@ -254,7 +254,6 @@ const system_information: SystemInformationStore = getModule(SystemInformationSt
 
 system_information.fetchSystem()
 callPeriodically(system_information.fetchPlatform, 5000)
-callPeriodically(system_information.fetchSerial, 5000)
 
 // It appears that the store is incompatible with websockets or callbacks.
 // Right now the only way to have it working is to have the websocket definition outside the store
