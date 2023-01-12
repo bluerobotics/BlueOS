@@ -123,7 +123,7 @@ export default Vue.extend({
 })
 </script>
 
-<style>
+<style scoped>
 
 div.pirate-marker {
   position: absolute;
