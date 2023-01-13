@@ -272,6 +272,12 @@ export default Vue.extend({
       return this.stream_name.replace(/[^a-z0-9]/gi, '_').toLowerCase()
     },
   },
+  mounted() {
+    // Set default address if stream has no endpoints
+    if (this.stream_endpoints[0].isEmpty()) {
+      this.set_default_address_for_stream(0, StreamType.UDP)
+    }
+  },
   methods: {
     validate_required_field(input: string | null): (true | string) {
       return input !== null && isNotEmpty(input) ? true : 'Required field.'
