@@ -9,6 +9,7 @@
       :items="available_ports"
       :label="`${port_map[port]}`"
       :rules="[isValidEndpoint]"
+      :loading="current_serial_ports.isEmpty()"
       outlined
       dense
     >
@@ -96,7 +97,7 @@ export default Vue.extend({
         H: 'Serial 7',
         I: 'Serial 8',
       },
-      ports: {} as Dictionary<string>,
+      ports: {} as Dictionary<string | undefined>,
     }
   },
   computed: {
@@ -119,26 +120,27 @@ export default Vue.extend({
   watch: {
     current_serial_ports: {
       handler(new_ports: SerialEndpoint[]) {
-        for (const port of new_ports) {
-          if (this.ports[port.port] === '') {
-            this.ports[port.port] = port.endpoint ?? ''
-          }
-        }
+        this.update_ports(new_ports)
       },
     },
   },
   mounted() {
-    for (const port of Object.keys(this.port_map)) {
-      this.ports[port] = ''
-    }
     callPeriodically(fetchAutopilotSerialConfiguration, 10000)
     callPeriodically(system_information.fetchSerial, 10000)
+    this.update_ports(this.current_serial_ports)
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchAutopilotSerialConfiguration)
     stopCallingPeriodically(system_information.fetchSerial)
   },
   methods: {
+    update_ports(new_ports: SerialEndpoint[]) {
+      for (const port of new_ports) {
+        if (this.ports[port.port] === undefined) {
+          this.ports[port.port] = port.endpoint ?? ''
+        }
+      }
+    },
     async save(): Promise<void> {
       await back_axios({
         method: 'put',
