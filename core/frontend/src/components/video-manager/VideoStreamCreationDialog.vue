@@ -169,7 +169,7 @@ export default Vue.extend({
       required: false,
       default() {
         return {
-          name: '',
+          name: `Stream ${this.device.source}`,
           encode: null,
           dimensions: null,
           interval: null,
