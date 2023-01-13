@@ -60,6 +60,7 @@
       </template>
       <template #footer.prepend>
         <v-btn
+          v-tooltip="'Save all parameters to file'"
           :disabled="!finished_loading"
           color="primary"
           class="mr-5"
@@ -71,6 +72,7 @@
           <div>Save</div>
         </v-btn>
         <v-btn
+          v-tooltip="'Load parameters from file'"
           :disabled="!finished_loading"
           class="mr-5"
           color="primary"
