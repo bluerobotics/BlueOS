@@ -4,19 +4,23 @@
     elevation="0"
     class="mx-auto my-6 injectors-list"
   >
-  <v-card
-    class="mx-auto my-6"
-    width="500"
-    elevation="1"
-  >
-  <v-card-text>
-      <div class="text--primary">
-        The NMEA Injector receives NMEA via UDP or TCP and transforms it
-        into MAVLink data that is forwarded to the autopilot.
-        It currently supports the sentences GPGGA, GPRMC, GPGLL, and GPGNS.
-      </div>
-    </v-card-text>
-  </v-card>
+    <v-card
+      class="mx-auto my-6"
+      width="500"
+      elevation="1"
+    >
+      <v-card-text>
+        <div class="text--primary">
+          The NMEA Injector receives NMEA via UDP or TCP and transforms it
+          into MAVLink data that is forwarded to the autopilot.
+          It currently supports the sentences
+          <span v-html="createLink('GPGGA')"/>,
+          <span v-html="createLink('GPRMC')"/>,
+          <span v-html="createLink('GPGLL')"/>, and
+          <a href="https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GNS.html">GPGNSS</a>
+        </div>
+      </v-card-text>
+    </v-card>
     <v-list
       v-if="are_nmea_sockets_available && !updating_nmea_sockets"
       style="background-color: transparent"
@@ -118,6 +122,9 @@ export default Vue.extend({
   methods: {
     openCreationDialog(): void {
       this.show_creation_dialog = true
+    },
+    createLink(sentence: string): string {
+      return `<a href="http://aprs.gids.nl/nmea/#${sentence.toLowerCase().substring(2)}">${sentence}</a>`
     },
   },
 })
