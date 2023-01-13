@@ -23,13 +23,6 @@
               {{ value }}
             </v-col>
           </v-row>
-          <span
-            v-if="current_board.path"
-            class="font-weight-bold"
-          >
-            Path:
-          </span>
-          <span>{{ current_board.path }}</span>
           <br>
         </div>
         <v-expansion-panels>
@@ -129,13 +122,19 @@ export default Vue.extend({
         version = `${this.firmware_info.version} (${this.firmware_info.type})`
       }
 
-      return {
+      const record: Record<string, string> = {
         'Board name': this.current_board?.name ?? 'Unknown',
         Manufacturer: this.current_board?.manufacturer ?? 'Unknown',
         'Mavlink platform': this.current_board?.platform ?? 'Unknown',
         'Firmware version': version,
         'Vehicle type': this.vehicle_type ?? 'Unknown',
       }
+
+      if (this.current_board?.path) {
+        record.Path = this.current_board.path
+      }
+
+      return record
     },
     current_board(): FlightController | null {
       return autopilot.current_board
