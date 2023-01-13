@@ -41,7 +41,7 @@
             :disabled="!isActive(control)"
             @change="updateControlsValues([control])"
           />
-          <div class="d-flex">
+          <div class="d-flex mt-5">
             <v-btn
               color="primary"
               @click="showDialog(false)"
