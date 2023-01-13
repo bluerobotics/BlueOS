@@ -1,6 +1,8 @@
 import asyncio
+import os
 import pathlib
 import subprocess
+import time
 from copy import deepcopy
 from typing import Any, List, Optional, Set
 
@@ -57,6 +59,22 @@ class ArduPilotManager(metaclass=Singleton):
         self.vehicle_manager = VehicleManager()
 
         self.should_be_running = False
+        self.remove_old_logs()
+
+    def remove_old_logs(self) -> None:
+        firmware_log_files = list((self.settings.firmware_folder / "logs").iterdir())
+        router_log_files = list(self.settings.log_path.iterdir())
+
+        def need_to_remove_file(file: pathlib.Path) -> bool:
+            now = time.time()
+            week_old = now - 7 * 24 * 60 * 60
+            return file.stat().st_size == 0 and file.stat().st_mtime < week_old
+
+        # Get all files with zero bytes and more than 7 days older
+        files = [file for file in firmware_log_files + router_log_files if need_to_remove_file(file)]
+        for file in files:
+            logger.debug(f"Removing invalid log file: {file}")
+            os.remove(file)
 
     async def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot when it's not running but was supposed to."""
