@@ -17,7 +17,7 @@
           <v-text-field
             v-model="stream_name"
             :counter="100"
-            label="Stream name"
+            label="Stream nickname"
             :rules="[validate_required_field]"
           />
 
