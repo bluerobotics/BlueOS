@@ -54,21 +54,6 @@
             </v-icon>
             With Blue Robotics discuss
           </v-btn>
-
-          <v-btn
-            v-if="settings.is_pirate_mode"
-            class="ma-2"
-            block
-            @click="openSlack()"
-          >
-            <v-icon
-              left
-              size="24"
-            >
-              mdi-slack
-            </v-icon>
-            With Blue Robotics slack
-          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -78,13 +63,10 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import settings from '@/libs/settings'
-
 export default Vue.extend({
   name: 'PowerMenu',
   data() {
     return {
-      settings,
       show_dialog: false,
     }
   },
@@ -112,9 +94,6 @@ export default Vue.extend({
       Object.entries(parameters).forEach(([name, value]) => url.searchParams.set(name, value.toString()))
 
       return url.href
-    },
-    openSlack(): void {
-      window.open('https://bluerobotics.slack.com/archives/blue-os', '_blank')
     },
   },
 })
