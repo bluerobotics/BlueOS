@@ -5,6 +5,7 @@
       :key="i"
       class="mx-auto my-6"
       :title="item.name"
+      :icon="item.icon"
       :value="item.value"
       :text="item.text"
       :time="item.time"
@@ -45,6 +46,7 @@ export default Vue.extend({
 
       return {
         name: `CPU ${cpu_brand}`,
+        icon: 'mdi-memory',
         value: `${cpu_usage.toFixed(1)}%`,
         text: cpu_text,
         time: '1 minute ago',
@@ -63,6 +65,7 @@ export default Vue.extend({
 
       return {
         name: 'Memory',
+        icon: 'mdi-note-text',
         // eslint-disable-next-line
           value: `${((100 * used_ram_memory) / total_ram_memory).toFixed(1)}%`,
         text: memory_text,
@@ -94,6 +97,7 @@ export default Vue.extend({
 
       return {
         name: 'Disk',
+        icon: 'mdi-sd',
         // eslint-disable-next-line
           value: `${((100 * used_disk_space) / total_disk_space).toFixed(1)}%`,
         text: disk_text,
@@ -115,6 +119,7 @@ export default Vue.extend({
 
       return {
         name: 'Temperature',
+        icon: 'mdi-thermometer',
         value: `${main_temperature}ºC`,
         text: temperature_text,
         time: '1 minute ago',

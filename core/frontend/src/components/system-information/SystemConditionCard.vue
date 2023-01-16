@@ -6,11 +6,17 @@
       elevation="12"
       max-width="calc(100% - 10px)"
     >
-      <div
-        class="transition-swing text-h4 pa-3 white--text"
-        align="center"
-        v-text="value"
-      />
+      <v-row class="ma-5 d-flex justify-center">
+        <v-icon>
+          {{ icon }}
+        </v-icon>
+
+        <div
+          class="transition-swing text-h4 pa-3 white--text"
+          align="center"
+          v-text="value"
+        />
+      </v-row>
     </v-sheet>
 
     <v-card-text class="pt-0">
@@ -38,6 +44,10 @@ export default {
   name: 'SystemConditionCard',
   props: {
     title: {
+      type: String,
+      required: true,
+    },
+    icon: {
       type: String,
       required: true,
     },
