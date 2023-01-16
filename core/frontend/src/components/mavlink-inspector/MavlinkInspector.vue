@@ -16,7 +16,7 @@
             <v-text-field
               v-model="message_filter"
               class="ma-2"
-              label="Message"
+              label="Search"
             />
             <v-list shaped>
               <v-list-item-group
