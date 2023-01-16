@@ -113,8 +113,8 @@ export default Vue.extend({
       required: false,
       default() {
         return {
-          name: '',
-          owner: '',
+          name: 'My endpoint',
+          owner: 'User',
           connection_type: EndpointType.udpin,
           place: '0.0.0.0',
           argument: 14550,
