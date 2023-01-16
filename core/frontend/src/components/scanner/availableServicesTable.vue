@@ -19,6 +19,7 @@
         <td>
           <a
             :href="createWebpageUrl(service.port)"
+            target="_blank"
           >
             {{ createWebpageUrl(service.port) }}
           </a>
@@ -27,6 +28,7 @@
           <a
             text
             :href="createWebpageUrl(service.port, service.documentation_url)"
+            target="_blank"
           >
             {{ createWebpageUrl(service.port, service.documentation_url) }}
           </a>
@@ -42,6 +44,7 @@
             <a
               text
               :href="createWebpageUrl(service.port, version)"
+              target="_blank"
             >
               {{ version }}
             </a>
