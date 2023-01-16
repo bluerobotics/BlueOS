@@ -33,6 +33,8 @@
             :counter="3"
             label="Mavlink component ID"
             :rules="[validate_required_field, is_component_id]"
+            :append-icon="'mdi-information-outline'"
+            @click:append="openMavlinkComponentIDInfo"
           />
 
           <v-btn
@@ -138,6 +140,9 @@ export default Vue.extend({
           notifier.pushBackError('NMEA_SOCKET_CREATE_FAIL', error)
         })
       return true
+    },
+    openMavlinkComponentIDInfo(): void {
+      window.open('https://mavlink.io/en/messages/common.html#MAV_COMPONENT', '_blank')
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
