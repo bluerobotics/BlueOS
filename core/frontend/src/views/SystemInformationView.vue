@@ -62,8 +62,8 @@ export default Vue.extend({
     return {
       settings,
       items: [
-        { title: 'Processes', icon: 'mdi-view-dashboard', value: 'process' },
         { title: 'System Monitor', icon: 'mdi-speedometer', value: 'system_condition' },
+        { title: 'Processes', icon: 'mdi-view-dashboard', value: 'process' },
         { title: 'Network', icon: 'mdi-ip-network-outline', value: 'network' },
         {
           title: 'Kernel', icon: 'mdi-text-long', value: 'kernel', is_pirate: true,
