@@ -2,7 +2,7 @@
   <v-container
     class="d-flex justify-center fluid"
   >
-    <v-card>
+    <v-card max-width="390px">
       <v-card-title class="justify-center">
         Local Network Speed and Latency Test
       </v-card-title>
