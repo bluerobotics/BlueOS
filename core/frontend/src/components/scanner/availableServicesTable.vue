@@ -1,61 +1,75 @@
 <template>
-  <v-simple-table class="helper-table">
-    <thead>
-      <tr>
-        <th>Port</th>
-        <th>Service Name</th>
-        <th>Webpage</th>
-        <th>API Documentation</th>
-        <th>Versions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr
-        v-for="service in availableServices"
-        :key="service.port"
-      >
-        <td>{{ service.port }}</td>
-        <td>{{ service.title }}</td>
-        <td>
-          <a
-            :href="createWebpageUrl(service.port)"
-            target="_blank"
-          >
-            {{ createWebpageUrl(service.port) }}
-          </a>
-        </td>
-        <td v-if="service.documentation_url">
-          <a
-            text
-            :href="createWebpageUrl(service.port, service.documentation_url)"
-            target="_blank"
-          >
-            {{ createWebpageUrl(service.port, service.documentation_url) }}
-          </a>
-        </td>
-        <td v-else>
-          No API documentation
-        </td>
-        <td v-if="!service.versions.isEmpty()">
-          <div
-            v-for="version in service.versions"
-            :key="service.port + '-' + version"
-          >
+  <v-col>
+    <v-alert
+      border="top"
+      colored-border
+      type="info"
+      elevation="2"
+    >
+      Shows all available services running on BlueOS, including the service port,
+      name, webpage, REST API endpoint, and swagger documentation per version.
+
+      API endpoint links provide direct manual access to the APIs, and can be used
+      to test how a service responds to a given request.
+    </v-alert>
+    <v-simple-table class="helper-table">
+      <thead>
+        <tr>
+          <th>Port</th>
+          <th>Service Name</th>
+          <th>Webpage</th>
+          <th>API Documentation</th>
+          <th>Versions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="service in availableServices"
+          :key="service.port"
+        >
+          <td>{{ service.port }}</td>
+          <td>{{ service.title }}</td>
+          <td>
             <a
-              text
-              :href="createWebpageUrl(service.port, version)"
+              :href="createWebpageUrl(service.port)"
               target="_blank"
             >
-              {{ version }}
+              {{ createWebpageUrl(service.port) }}
             </a>
-          </div>
-        </td>
-        <td v-else>
-          No versions
-        </td>
-      </tr>
-    </tbody>
-  </v-simple-table>
+          </td>
+          <td v-if="service.documentation_url">
+            <a
+              text
+              :href="createWebpageUrl(service.port, service.documentation_url)"
+              target="_blank"
+            >
+              {{ createWebpageUrl(service.port, service.documentation_url) }}
+            </a>
+          </td>
+          <td v-else>
+            No API documentation
+          </td>
+          <td v-if="!service.versions.isEmpty()">
+            <div
+              v-for="version in service.versions"
+              :key="service.port + '-' + version"
+            >
+              <a
+                text
+                :href="createWebpageUrl(service.port, version)"
+                target="_blank"
+              >
+                {{ version }}
+              </a>
+            </div>
+          </td>
+          <td v-else>
+            No versions
+          </td>
+        </tr>
+      </tbody>
+    </v-simple-table>
+  </v-col>
 </template>
 
 <script lang="ts">
@@ -92,7 +106,7 @@ export default Vue.extend({
 
 <style scoped>
 .helper-table {
-    max-width: 80%;
+    max-width: 100%;
     margin: auto;
 }
 </style>
