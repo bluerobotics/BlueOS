@@ -66,7 +66,10 @@
           </v-list>
         </v-col>
         <v-col>
-          <Graph style="width: 100%" :data='series' />
+          <Graph
+            style="width: 100%"
+            :data="series"
+          />
         </v-col>
         <div
           class="transition-swing pa-6"
