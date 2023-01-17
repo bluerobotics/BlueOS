@@ -53,6 +53,14 @@
                         Info: {{ item.udev_properties["ID_VENDOR"] }} / {{ item.udev_properties["ID_MODEL"] }}
                       </v-list-item-subtitle>
                     </div>
+                    <device-path-helper
+                      v-if="item.name.startsWith('/dev')"
+                      class="mr-5"
+                      inline
+                      :height="'150px'"
+                      :width="'150px'"
+                      :device="item.name"
+                    />
                   </v-list-item-content>
                 </v-list-item>
               </v-list>
@@ -107,6 +115,7 @@
 import { formatDistanceToNow } from 'date-fns'
 import Vue from 'vue'
 
+import DevicePathHelper from '@/components/common/DevicePathHelper.vue'
 import Notifier from '@/libs/notifier'
 import bridget from '@/store/bridget'
 import system_information from '@/store/system-information'
@@ -128,6 +137,9 @@ const notifier = new Notifier(bridget_service)
 
 export default Vue.extend({
   name: 'BridgeCreationDialog',
+  components: {
+    DevicePathHelper,
+  },
   model: {
     prop: 'show',
     event: 'change',
