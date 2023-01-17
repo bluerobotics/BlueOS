@@ -23,6 +23,7 @@
         <v-spacer />
         <beacon-tray-menu />
         <health-tray-menu />
+        <pirate-mode-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
         <notification-tray-button />
@@ -214,6 +215,7 @@ import updateTime from '@/utils/update_time'
 import Alerter from './components/app/Alerter.vue'
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
+import PiradeModeTrayMenu from './components/app/PirateModeTrayMenu.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
@@ -250,6 +252,7 @@ export default Vue.extend({
   components: {
     'beacon-tray-menu': BeaconTrayMenu,
     'notification-tray-button': NotificationTrayButton,
+    'pirate-mode-tray-menu': PiradeModeTrayMenu,
     'services-scanner': ServicesScanner,
     'wifi-tray-menu': WifiTrayMenu,
     'wifi-updater': WifiUpdater,
