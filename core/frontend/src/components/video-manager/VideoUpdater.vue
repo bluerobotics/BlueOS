@@ -6,13 +6,17 @@
 import Vue from 'vue'
 
 import video from '@/store/video'
-import { callPeriodically } from '@/utils/helper_functions'
+import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'VideoUpdater',
   mounted() {
     callPeriodically(video.fetchDevices, 5000)
     callPeriodically(video.fetchStreams, 5000)
+  },
+  beforeDestroy() {
+    stopCallingPeriodically(video.fetchDevices)
+    stopCallingPeriodically(video.fetchStreams)
   },
 })
 </script>
