@@ -331,8 +331,7 @@ export default Vue.extend({
         },
         {
           target: '#tour-center-hook',
-          content: `As stated on our welcome card, one of the first things you should do on your first use of BlueOS
-          is to connect it to the internet.`,
+          content: 'Connect BlueOS to the internet to enable online functionalities.',
           filter_wifi_connected: true,
           params: {
             enableScrolling: false,
