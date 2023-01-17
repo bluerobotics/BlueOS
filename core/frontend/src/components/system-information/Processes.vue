@@ -19,6 +19,7 @@
         clearable
         label="Search"
         class="mx-4"
+        prepend-inner-icon="mdi-magnify"
       />
       <v-row
         dense
