@@ -1,7 +1,7 @@
 <template>
   <div v-if="board_connector">
     <template v-if="inline">
-      <div :style="`max-height: ${height}; display: block; position: relative`">
+      <div :style="`height: ${height}; width:${height}; display: block; position: relative`">
         <img
           :src="board_image"
           :style="`height: ${height};`"
@@ -19,11 +19,13 @@
           mdi-eye
         </v-icon>
       </template>
-      <img
-        :src="board_image"
-        :style="`max-height: ${height};`"
-      >
-      <div :class="circle_class" />
+      <div :style="`height: ${height}; width:${height}; display: block; position: relative`">
+        <img
+          :src="board_image"
+          :style="`height: ${height}`"
+        >
+        <div :class="circle_class" />
+      </div>
     </v-tooltip>
   </div>
 </template>
@@ -128,55 +130,53 @@ export default Vue.extend({
 
 .circle {
   position: absolute;
-  top:0%;
   width: 32%; height: 16%;
   border-radius: 20px;
   border: 5px solid red;
-  left: 32%;
 }
 
 .serial4 {
-    left: 50%;
+    left: 45%;
     top: 52%;
 }
 
 .serial5 {
-    left: 18%;
+    left: 13%;
     top: 52%;
 }
 
 .serial1 {
-    left: 50%;
+    left: 45%;
     top: 23%;
 }
 
 .serial3 {
-    left: 50%;
+    left: 45%;
     top: 38%;
 }
 
 .usb-bottom-left-pi4 {
     left: 11%;
     top: 44%;
-    width: 25%; height: 23%;
+    width: 57%; height: 23%;
 }
 
 .usb-bottom-right-pi4 {
-    left: 37%;
+    left: 61%;
     top: 44%;
-    width: 25%; height: 23%;
+    width: 57%; height: 23%;
 }
 
 .usb-top-right-pi4 {
-    left: 37%;
+    left: 61%;
     top: 20%;
-    width: 25%; height: 23%;
+    width: 57%; height: 23%;
 }
 
 .usb-top-left-pi4 {
     left: 11%;
     top: 20%;
-    width: 25%; height: 23%;
+    width: 57%; height: 23%;
 }
 
 .usb-top-right-pi3 {
