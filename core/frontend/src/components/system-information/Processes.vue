@@ -16,6 +16,7 @@
     <template #top>
       <v-text-field
         v-model="search"
+        clearable
         label="Search"
         class="mx-4"
       />
