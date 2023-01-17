@@ -69,13 +69,24 @@
             label="Start endpoint already enabled"
           />
 
-          <v-btn
-            color="primary"
-            class="mr-4"
-            @click="createEditEndpoint"
-          >
-            {{ edit ? 'Update endpoint' : 'Create endpoint' }}
-          </v-btn>
+          <v-row class="mt-2">
+            <v-btn
+              color="primary"
+              class="ml-3"
+              @click="showDialog(false)"
+            >
+              Cancel
+            </v-btn>
+
+            <v-spacer />
+
+            <v-btn
+              color="primary mr-3"
+              @click="createEditEndpoint"
+            >
+              {{ edit ? 'Update endpoint' : 'Create endpoint' }}
+            </v-btn>
+          </v-row>
         </v-form>
       </v-card-text>
     </v-card>
