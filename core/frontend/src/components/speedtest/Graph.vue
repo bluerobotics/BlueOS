@@ -30,6 +30,9 @@ export default Vue.extend({
           animations: {
             enabled: false,
           },
+          toolbar: {
+            show: false,
+          },
         },
         theme: {
           mode: settingsStore.is_dark_theme ? 'dark' : 'light',
