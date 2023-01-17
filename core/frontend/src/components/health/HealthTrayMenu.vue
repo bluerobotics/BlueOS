@@ -46,13 +46,6 @@
           mdi-lightning-bolt
         </v-icon>
         <v-icon
-          v-if="settings.is_pirate_mode"
-          class="px-1"
-          title="Pirate mode is enabled!"
-        >
-          mdi-skull-crossbones
-        </v-icon>
-        <v-icon
           v-if="heartbeat_age() < time_limit_heartbeat"
           class="px-1"
           :color="`rgba(255,255,255,${0.4 + (1000-heartbeat_age())/1000}`"
@@ -101,7 +94,6 @@
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
-import settings from '@/libs/settings'
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
 import { RaspberryEventType } from '@/types/system-information/platform'
@@ -113,7 +105,6 @@ export default Vue.extend({
     return {
       time_limit_heartbeat: 3000,
       last_heartbeat_date: new Date(),
-      settings,
     }
   },
   computed: {
