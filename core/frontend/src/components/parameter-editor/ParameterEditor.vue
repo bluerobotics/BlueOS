@@ -47,6 +47,7 @@
           v-model="search"
           label="Search"
           class="mx-4"
+          clearable
         />
       </template>
       <template #item.name="{ item }">
