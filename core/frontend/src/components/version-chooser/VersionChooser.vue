@@ -85,7 +85,7 @@
           subtitle="Loading remote images..."
         />
         <version-card
-          v-for="image in available_versions['remote']"
+          v-for="image in paginatedComponents"
           :key="image.sha"
           :image="image"
           :remote="true"
@@ -93,6 +93,13 @@
           :show-pull-button="!imageIsAvailableLocally(image.sha)"
           @pull-and-apply="pullAndSetVersion"
         />
+        <v-card-actions class="justify-center">
+          <v-pagination
+            v-if="totalPages > 1"
+            v-model="page"
+            :length="totalPages"
+          />
+        </v-card-actions>
       </v-card>
     </v-col>
     <pull-progress
@@ -189,6 +196,7 @@ export default Vue.extend({
       settings,
       pull_output: '',
       show_pull_output: false,
+      page: 1,
       available_versions: {
         local: [],
         remote: [],
@@ -209,6 +217,12 @@ export default Vue.extend({
     }
   },
   computed: {
+    paginatedComponents(): Version[] {
+      return this.available_versions.remote.slice((this.page - 1) * 10, this.page * 10)
+    },
+    totalPages(): number {
+      return Math.ceil(this.available_versions.remote.length / 10)
+    },
   },
   mounted() {
     this.loadCurrentVersion()
