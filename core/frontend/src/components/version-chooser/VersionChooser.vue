@@ -9,6 +9,17 @@
         max-width="900"
         class="mx-auto my-12 pa-4"
       >
+        <v-alert
+          border="top"
+          colored-border
+          type="info"
+          elevation="2"
+        >
+          Turn on Pirate mode to view all available BlueOS versions, including previous installs
+          stored onboard, as well as past and current stable, beta, and development releases
+          downloadable from Blue Robotics.
+        </v-alert>
+
         <h2>Current Version</h2>
         <version-card
           v-if="current_version"
