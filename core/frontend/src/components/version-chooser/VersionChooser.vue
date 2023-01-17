@@ -169,6 +169,7 @@
 </template>
 
 <script lang="ts">
+import { gt as sem_ver_greater, SemVer } from 'semver'
 import Vue from 'vue'
 
 import PullProgress from '@/components/utils/PullProgress.vue'
@@ -315,7 +316,8 @@ export default Vue.extend({
       if (!this.current_version) {
         return ''
       }
-      if (this.latest_stable !== undefined && this.latest_stable !== this.current_version.tag) {
+      if (this.latest_stable !== undefined
+        && sem_ver_greater(new SemVer(this.latest_stable), new SemVer(this.current_version.tag))) {
         return this.latest_stable
       }
       return ''
