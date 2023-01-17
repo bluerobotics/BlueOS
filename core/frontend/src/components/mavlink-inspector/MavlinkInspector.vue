@@ -17,6 +17,7 @@
               class="ma-2"
               label="Search"
               clearable
+              prepend-inner-icon="mdi-magnify"
             />
             <v-list shaped>
               <v-list-item-group
