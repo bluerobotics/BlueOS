@@ -48,6 +48,7 @@
           label="Search"
           class="mx-4"
           clearable
+          prepend-inner-icon="mdi-magnify"
         />
       </template>
       <template #item.name="{ item }">
