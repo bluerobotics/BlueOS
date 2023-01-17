@@ -2,8 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col
-        cols="12"
-        sm="2"
+        sm="3"
       >
         <v-sheet
           rounded="lg"
@@ -50,11 +49,10 @@
       </v-col>
 
       <v-col
-        cols="12"
-        sm="8"
+        sm="6"
+        height="700px"
       >
         <v-sheet
-          min-height="70vh"
           rounded="lg"
         >
           <v-card>
@@ -80,8 +78,7 @@
       </v-col>
 
       <v-col
-        cols="12"
-        sm="2"
+        sm="3"
       >
         <v-card
           v-if="detailed_message"
