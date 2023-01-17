@@ -10,6 +10,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import settingsStore from '@/store/settings'
+
 type Point = { x: number, y: number }
 export type Data = { upload: Point[], download: Point[] }
 
@@ -28,6 +30,9 @@ export default Vue.extend({
           animations: {
             enabled: false,
           },
+        },
+        theme: {
+          mode: settingsStore.is_dark_theme ? 'dark' : 'light',
         },
         animate: false,
         xaxis: {
