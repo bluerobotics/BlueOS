@@ -78,16 +78,27 @@
             label="UDP port"
             :rules="[validate_required_field, is_socket_port]"
           />
-
-          <v-btn
-            color="primary"
-            class="mr-4"
-            @click="createBridge"
-          >
-            Create
-          </v-btn>
         </v-form>
       </v-card-text>
+      <v-card-actions
+        class="pt-1"
+      >
+        <v-btn
+          color="primary"
+          @click="showDialog(false)"
+        >
+          Cancel
+        </v-btn>
+
+        <v-spacer />
+
+        <v-btn
+          color="primary"
+          @click="createBridge"
+        >
+          Create
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
