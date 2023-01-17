@@ -16,6 +16,7 @@
               v-model="message_filter"
               class="ma-2"
               label="Search"
+              clearable
             />
             <v-list shaped>
               <v-list-item-group
