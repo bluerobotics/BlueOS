@@ -36,16 +36,27 @@
             :append-icon="'mdi-information-outline'"
             @click:append="openMavlinkComponentIDInfo"
           />
-
-          <v-btn
-            color="primary"
-            class="mr-4"
-            @click="createNMEASocket"
-          >
-            Create
-          </v-btn>
         </v-form>
       </v-card-text>
+      <v-card-actions
+        class="pt-1"
+      >
+        <v-btn
+          color="primary"
+          @click="showDialog(false)"
+        >
+          Cancel
+        </v-btn>
+
+        <v-spacer />
+
+        <v-btn
+          color="primary"
+          @click="createNMEASocket"
+        >
+          Create
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
