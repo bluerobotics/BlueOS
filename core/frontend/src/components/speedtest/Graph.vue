@@ -28,6 +28,9 @@ export default Vue.extend({
           animations: {
             enabled: false,
           },
+          toolbar: {
+            show: false,
+          },
         },
         animate: false,
         xaxis: {
