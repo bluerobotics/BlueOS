@@ -323,8 +323,9 @@ export default Vue.extend({
           header: {
             title: 'Welcome to BlueOS!',
           },
-          content: `We are happy to have you navigating with us! Follow this quick tour to get familiar with your
-          brand-new onboard system.`,
+          content: `We are happy to have you navigating with us! BlueOS provides the
+          necessary tools to configure your vehicle, check the system status and more.
+          Follow this quick tour to get familiar with your brand new onboard system.`,
           params: {
             enableScrolling: false,
           },
