@@ -1,13 +1,12 @@
 <template>
   <div v-if="board_connector">
     <template v-if="inline">
-      <div :style="`height: ${height}; width:${height}; display: block; position: relative`">
-        <img
-          :src="board_image"
-          :style="`height: ${height};`"
-        >
-        <div :class="circle_class" />
-      </div>
+      <object
+        :class="inline_name"
+        type="image/svg+xml"
+        :data="board_image"
+        :style="`height: ${height}`"
+      />
     </template>
     <v-tooltip v-else>
       <template #activator="{ on, attrs }">
@@ -19,23 +18,23 @@
           mdi-eye
         </v-icon>
       </template>
-      <div :style="`height: ${height}; width:${height}; display: block; position: relative`">
-        <img
-          :src="board_image"
-          :style="`height: ${height}`"
-        >
-        <div :class="circle_class" />
-      </div>
+      <object
+        :class="svgName"
+        type="image/svg+xml"
+        :data="board_image"
+        :style="`height: ${height}`"
+      />
     </v-tooltip>
   </div>
 </template>
 
 <script lang="ts">
+import { v4 as uuid } from 'uuid'
 import Vue from 'vue'
 
-import navigator_image from '@/assets/img/devicePathHelper/navigator.jpg'
-import raspberry_pi3_image from '@/assets/img/devicePathHelper/rpi3b.jpg'
-import raspberry_pi4_image from '@/assets/img/devicePathHelper/rpi4b.png'
+import navigator_image from '@/assets/img/devicePathHelper/navigator.svg'
+import raspberry_pi3_image from '@/assets/img/devicePathHelper/rpi3b.svg'
+import raspberry_pi4_image from '@/assets/img/devicePathHelper/rpi4b.svg'
 import system_information from '@/store/system-information'
 import { Dictionary } from '@/types/common'
 
@@ -51,14 +50,16 @@ const connector_map: Dictionary<string> = {
   '/dev/ttyAMA1': 'serial3',
   '/dev/ttyAMA2': 'serial4',
   '/dev/ttyAMA3': 'serial5',
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.3:1.0-port0': 'usb-top-left-pi4',
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.0-port0': 'usb-bottom-left-pi4',
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0-port0': 'usb-top-right-pi4',
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0-port0': 'usb-bottom-right-pi4',
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.5:1.0-port0': 'usb-bottom-right-pi3',
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.4:1.0-port0': 'usb-top-right-pi3',
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1.0-port0': 'usb-bottom-left-pi3',
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0-port0': 'usb-top-left-pi3',
+  // Pi4
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.3:1.0-port0': 'top-left',
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.0-port0': 'bottom-left',
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0-port0': 'top-right',
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0-port0': 'bottom-right',
+  // Pi3
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.5:1.0-port0': 'bottom-right',
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.4:1.0-port0': 'top-right',
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1.0-port0': 'bottom-left',
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0-port0': 'top-left',
 }
 
 export default Vue.extend({
@@ -79,7 +80,14 @@ export default Vue.extend({
       default: '500px',
     },
   },
+  data: () => ({
+    imgObject: null as Document | null | undefined,
+    svgName: `device-path-helper-img-${uuid()}`,
+  }),
   computed: {
+    inline_name(): string {
+      return `${this.svgName}-inline`
+    },
     serial_port_path(): string {
       /* returns the by-path path for the serial port if available */
       return system_information.serial?.ports?.find((a) => a.name === this.device)?.by_path ?? this.device as string
@@ -110,97 +118,45 @@ export default Vue.extend({
           return ''
       }
     },
-    board_connector() : string | null {
-      const serial_port_path = this.serial_port_path as string
-      try {
-        return connector_map[serial_port_path]
-      } catch (error) {
-        console.error(error)
-      }
-      return null
+    board_connector() : string | undefined {
+      const connector = connector_map[this.serial_port_path]
+      this.setSvgConnector(connector)
+      return connector
     },
-    circle_class() : string {
-      return this.board_connector ? `circle ${this.board_connector}` : ''
+  },
+  mounted() {
+    // Wait for svg element to be loaded to set object
+    let id = 0
+    const name = `.${this.svgName}${this.inline ? '-inline' : ''}`
+    id = setInterval(() => {
+      const element = document?.querySelector(name) as HTMLEmbedElement | null
+      if (element) {
+        this.imgObject = element?.getSVGDocument()
+        element!.onload = () => {
+          this.imgObject = element?.getSVGDocument()
+          const connector = this.board_connector
+          if (connector !== undefined) {
+            this.setSvgConnector(connector)
+          }
+        }
+        this.updateImgObjectFromElement(element)
+        clearInterval(id)
+      }
+    }, 500)
+  },
+  methods: {
+    updateImgObjectFromElement(element: HTMLEmbedElement) {
+      this.imgObject = element?.getSVGDocument()
+      const connector = this.board_connector
+      if (connector !== undefined) {
+        this.setSvgConnector(connector)
+      }
+    },
+    setSvgConnector(connector: string) {
+      this.imgObject
+        ?.getElementById(connector)
+        ?.setAttribute('visibility', 'visible')
     },
   },
 })
 </script>
-
-<style scoped>
-
-.circle {
-  position: absolute;
-  width: 32%; height: 16%;
-  border-radius: 20px;
-  border: 5px solid red;
-}
-
-.serial4 {
-    left: 45%;
-    top: 52%;
-}
-
-.serial5 {
-    left: 13%;
-    top: 52%;
-}
-
-.serial1 {
-    left: 45%;
-    top: 23%;
-}
-
-.serial3 {
-    left: 45%;
-    top: 38%;
-}
-
-.usb-bottom-left-pi4 {
-    left: 11%;
-    top: 44%;
-    width: 57%; height: 23%;
-}
-
-.usb-bottom-right-pi4 {
-    left: 61%;
-    top: 44%;
-    width: 57%; height: 23%;
-}
-
-.usb-top-right-pi4 {
-    left: 61%;
-    top: 20%;
-    width: 57%; height: 23%;
-}
-
-.usb-top-left-pi4 {
-    left: 11%;
-    top: 20%;
-    width: 57%; height: 23%;
-}
-
-.usb-top-right-pi3 {
-    left: 67%;
-    top: 0%;
-    width: 150px; height: 70px;
-}
-
-.usb-top-left-pi3 {
-    left: 37%;
-    top: 0%;
-    width: 150px; height: 70px;
-}
-
-.usb-bottom-left-pi3 {
-    left: 37%;
-    top: 43%;
-    width: 150px; height: 70px;
-}
-
-.usb-bottom-right-pi3 {
-    left: 67%;
-    top: 43%;
-    width: 150px; height: 70px;
-}
-
-</style>
