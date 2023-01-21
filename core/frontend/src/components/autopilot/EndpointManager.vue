@@ -66,8 +66,10 @@ import autopilot from '@/store/autopilot_manager'
 import { AutopilotEndpoint } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import { fetchAvailableEndpoints } from './AutopilotManagerUpdater'
 import EndpointCard from './EndpointCard.vue'
 import CreationDialog from './EndpointCreationDialog.vue'
 
@@ -95,6 +97,12 @@ export default Vue.extend({
     are_endpoints_available(): boolean {
       return !this.available_endpoints.isEmpty()
     },
+  },
+  mounted() {
+    callPeriodically(fetchAvailableEndpoints, 5000)
+  },
+  beforeDestroy() {
+    stopCallingPeriodically(fetchAvailableEndpoints)
   },
   methods: {
     openCreationDialog(): void {
