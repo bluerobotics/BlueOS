@@ -28,23 +28,17 @@
         </v-btn>
       </div>
       <div>
-        <v-avatar
+        <video-thumbnail
           v-if="$vuetify.breakpoint.smAndUp"
-          height="150"
-          width="230"
-          tile
-        >
-          <v-img
-            contain
-            src="../../assets/img/wip-video.svg"
-          />
-        </v-avatar>
+          height="auto"
+          width="280"
+          :source="device.source"
+          :register="are_video_streams_available"
+        />
       </div>
     </div>
     <v-card flat>
-      <v-container
-        v-if="are_video_streams_available && !updating_streams"
-      >
+      <v-container v-if="are_video_streams_available && !updating_streams">
         <v-row>
           <v-col
             v-for="(stream, i) in device_streams"
@@ -86,6 +80,7 @@ import { CreatedStream, Device, StreamStatus } from '@/types/video'
 import VideoControlsDialog from './VideoControlsDialog.vue'
 import VideoStream from './VideoStream.vue'
 import VideoStreamCreationDialog from './VideoStreamCreationDialog.vue'
+import VideoThumbnail from './VideoThumbnail.vue'
 
 export default Vue.extend({
   name: 'VideoDevice',
@@ -93,6 +88,7 @@ export default Vue.extend({
     VideoControlsDialog,
     VideoStreamCreationDialog,
     VideoStream,
+    VideoThumbnail,
     SpinningLogo,
   },
   props: {
@@ -115,7 +111,8 @@ export default Vue.extend({
       return this.video_streams.filter((stream) => {
         if ('Gst' in stream.video_and_stream.video_source) {
           return stream.video_and_stream.video_source.Gst.source.Fake === this.device.source
-        } if ('Local' in stream.video_and_stream.video_source) {
+        }
+        if ('Local' in stream.video_and_stream.video_source) {
           return stream.video_and_stream.video_source.Local.device_path === this.device.source
         }
         return false
@@ -135,6 +132,7 @@ export default Vue.extend({
     openStreamCreationDialog(): void {
       this.show_stream_creation_dialog = true
     },
+
     async createNewStream(stream: CreatedStream): Promise<void> {
       await video.createStream(stream)
     },
