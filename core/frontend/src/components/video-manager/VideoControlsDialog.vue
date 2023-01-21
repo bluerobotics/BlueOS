@@ -1,66 +1,83 @@
 <template>
   <v-dialog
-    width="500"
+    width="750px"
     :value="show"
+    scrollable
     @input="showDialog"
   >
-    <v-card>
-      <v-card-title>
-        Video configuration
-      </v-card-title>
-
-      <v-card-text class="d-flex flex-column">
-        <v-container v-if="are_controllers_available">
-          <v-slider
-            v-for="control in slider_controls"
-            :key="control.id"
-            v-model="control.configuration.Slider.value"
-            :min="control.configuration.Slider.min"
-            :max="control.configuration.Slider.max"
-            :step="control.configuration.Slider.step"
-            :label="control.name"
-            :disabled="!isActive(control)"
-            @change="updateControlsValues([control])"
+    <v-card
+      min-width="750px"
+      height="fit-content"
+    >
+      <v-card-title> Video configuration </v-card-title>
+      <v-layout
+        row
+        no-gutters
+      >
+        <v-col cols="7">
+          <v-card-text>
+            <v-container v-if="are_controllers_available">
+              <v-slider
+                v-for="control in slider_controls"
+                :key="control.id"
+                v-model="control.configuration.Slider.value"
+                :min="control.configuration.Slider.min"
+                :max="control.configuration.Slider.max"
+                :step="control.configuration.Slider.step"
+                :label="control.name"
+                :disabled="!isActive(control)"
+                @change="updateControlsValues([control])"
+              />
+              <v-select
+                v-for="control in menu_controls"
+                :key="control.id"
+                v-model="control.configuration.Menu.value"
+                :items="control.configuration.Menu.options"
+                item-text="name"
+                item-value="value"
+                :label="control.name"
+                :disabled="!isActive(control)"
+                @change="updateControlsValues([control])"
+              />
+              <v-checkbox
+                v-for="control in bool_controls"
+                :key="control.id"
+                v-model="control.configuration.Bool.value"
+                :label="control.name"
+                :disabled="!isActive(control)"
+                @change="updateControlsValues([control])"
+              />
+              <div class="d-flex mt-5">
+                <v-btn
+                  color="primary"
+                  @click="showDialog(false)"
+                >
+                  Close
+                </v-btn>
+                <v-spacer />
+                <v-btn
+                  color="primary"
+                  @click="restoreDefaultValues"
+                >
+                  Restore defaults
+                </v-btn>
+              </div>
+            </v-container>
+            <v-container v-else>
+              No controllers available for this device.
+            </v-container>
+          </v-card-text>
+        </v-col>
+        <v-col cols="4">
+          <video-thumbnail
+            v-if="$vuetify.breakpoint.smAndUp && are_controllers_available"
+            height="auto"
+            width="280"
+            :source="device.source"
+            style="position: sticky; top: 100px"
           />
-          <v-select
-            v-for="control in menu_controls"
-            :key="control.id"
-            v-model="control.configuration.Menu.value"
-            :items="control.configuration.Menu.options"
-            item-text="name"
-            item-value="value"
-            :label="control.name"
-            :disabled="!isActive(control)"
-            @change="updateControlsValues([control])"
-          />
-          <v-checkbox
-            v-for="control in bool_controls"
-            :key="control.id"
-            v-model="control.configuration.Bool.value"
-            :label="control.name"
-            :disabled="!isActive(control)"
-            @change="updateControlsValues([control])"
-          />
-          <div class="d-flex mt-5">
-            <v-btn
-              color="primary"
-              @click="showDialog(false)"
-            >
-              Close
-            </v-btn>
-            <v-spacer />
-            <v-btn
-              color="primary"
-              @click="restoreDefaultValues"
-            >
-              Restore defaults
-            </v-btn>
-          </div>
-        </v-container>
-        <v-container v-else>
-          No controllers available for this device.
-        </v-container>
-      </v-card-text>
+        </v-col>
+      </v-layout>
     </v-card>
   </v-dialog>
 </template>
@@ -76,10 +93,15 @@ import {
 } from '@/types/video'
 import back_axios from '@/utils/api'
 
+import VideoThumbnail from './VideoThumbnail.vue'
+
 const notifier = new Notifier(video_manager_service)
 
 export default Vue.extend({
   name: 'VideoControlsDialog',
+  components: {
+    VideoThumbnail,
+  },
   model: {
     prop: 'show',
     event: 'change',
@@ -147,11 +169,10 @@ export default Vue.extend({
             v4l_id: control.id,
             value,
           },
+        }).catch((error) => {
+          const message = `Could not update value on ${control.name} control: ${error}.`
+          notifier.pushError('CONTROL_VALUE_UPDATE_FAIL', message)
         })
-          .catch((error) => {
-            const message = `Could not update value on ${control.name} control: ${error}.`
-            notifier.pushError('CONTROL_VALUE_UPDATE_FAIL', message)
-          })
       }
 
       video.fetchDevices()
