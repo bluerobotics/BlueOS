@@ -8,7 +8,10 @@
         :style="`height: ${height}`"
       />
     </template>
-    <v-tooltip v-else>
+    <v-tooltip
+      v-else
+      top
+    >
       <template #activator="{ on, attrs }">
         <v-icon
           v-if="board_connector !== null"
