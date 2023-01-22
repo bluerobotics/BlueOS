@@ -97,6 +97,7 @@
         />
         <version-card
           v-for="image in paginatedComponents"
+          v-else
           :key="image.sha"
           :image="image"
           :remote="true"
@@ -104,7 +105,10 @@
           :show-pull-button="!imageIsAvailableLocally(image.sha)"
           @pull-and-apply="pullAndSetVersion"
         />
-        <v-card-actions class="justify-center">
+        <v-card-actions
+          v-if="!loading_images"
+          class="justify-center"
+        >
           <v-pagination
             v-if="totalPages > 1"
             v-model="page"
