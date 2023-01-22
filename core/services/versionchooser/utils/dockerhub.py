@@ -73,12 +73,11 @@ class TagFetcher:
             "Accept": "application/vnd.docker.distribution.manifest.v2+json",
         }
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}", headers=header
-            ) as resp:
+            url = f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}"
+            async with session.get(url, headers=header) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
-                    raise Exception("Failed getting sha from DockerHub!")
+                    raise Exception(f"Failed getting sha from DockerHub at {url} : {resp.status} : {await resp.text()}")
                 data = await resp.json(content_type=None)
                 return str(data["config"]["digest"])
 
@@ -115,6 +114,6 @@ class TagFetcher:
                                     tag.sha = await self.fetch_sha(tag)
                                 except Exception as new_error:
                                     if str(new_error) not in errors:
-                                        errors.append(str(new_error))
+                                        errors.append(str(f"Error fetching sha for {tag}: {new_error}"))
                             valid_images.append(tag)
                 return "\n".join(errors), valid_images
