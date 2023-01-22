@@ -70,7 +70,7 @@ class TagFetcher:
         """Fetches the digest sha from a tag. This returns the image id displayed by 'docker image ls'"""
         header = {
             "Authorization": f"Bearer {self.last_token}",
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json",
+            "Accept": "application/vnd.docker.distribution.manifest.v2+json,application/vnd.oci.image.manifest.v1+json",
         }
         async with aiohttp.ClientSession() as session:
             url = f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}"
