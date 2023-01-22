@@ -66,7 +66,7 @@ class TagFetcher:
                     raise Exception("Could not get auth token")
                 return str((await resp.json(content_type=None))["token"])
 
-    async def fetch_sha(self, metadata: TagMetadata) -> str:
+    async def fetch_sha(self, metadata: TagMetadata) -> Optional[str]:
         """Fetches the digest sha from a tag. This returns the image id displayed by 'docker image ls'"""
         header = {
             "Authorization": f"Bearer {self.last_token}",
@@ -76,10 +76,13 @@ class TagFetcher:
             async with session.get(
                 f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}", headers=header
             ) as resp:
-                if resp.status != 200:
-                    warn(f"Error status {resp.status}")
-                    raise Exception("Failed getting sha from DockerHub!")
                 data = await resp.json(content_type=None)
+                if resp.status != 200:
+                    warn(f"Error status {resp.status} {data}")
+                    # Sha only exist locally
+                    if len(data["errors"]) == 1 and data["errors"][0]["code"] == "MANIFEST_UNKNOWN":
+                        return None
+                    raise Exception("Failed getting sha from DockerHub!")
                 return str(data["config"]["digest"])
 
     async def fetch_remote_tags(self, repository: str, local_images: List[str]) -> Tuple[str, List[TagMetadata]]:
