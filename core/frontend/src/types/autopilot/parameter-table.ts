@@ -3,6 +3,7 @@ import { isNumber } from 'lodash'
 import * as arducopter_metadata from '@/ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.json'
 import * as ardurover_metadata from '@/ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.json'
 import * as ardusub_metadata from '@/ArduPilot-Parameter-Repository/Sub-4.1/apm.pdef.json'
+import { fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
 import { Dictionary } from '@/types/common'
@@ -53,6 +54,7 @@ export default class ParametersTable {
     fetchMetadata(): void {
       if (autopilot.vehicle_type === null) {
         // Check again later if we have a vehicle type identified
+        fetchVehicleType()
         setTimeout(() => { this.fetchMetadata() }, 1000)
         return
       }
