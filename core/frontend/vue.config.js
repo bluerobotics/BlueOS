@@ -112,6 +112,12 @@ module.exports = {
         options.compiler = require('vue-template-babel-compiler')
         return options
       })
+      .end()
+      .end()
+      // Add 'glb' to image support. it is a 3d image after all...
+      .rule('images')
+      .test(/\.(png|jpe?g|gif|webp|avif|glb)(\?.*)?$/)
+      .end()
       config.resolve.set('fallback', {
         util: require.resolve('util/'),
     })
