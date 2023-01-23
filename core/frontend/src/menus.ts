@@ -17,6 +17,13 @@ const menus = [
         the firmware of your flight controller.`,
       },
       {
+        title: 'Vehicle Setup',
+        icon: 'mdi-cog-outline',
+        route: '/vehicle/setup',
+        advanced: false,
+        text: 'Vehicle and Peripherals setup. Includes sensor calibrations and Motors/Peripherals mapping',
+      },
+      {
         title: 'Ping Sonar Devices',
         icon: 'mdi-radar',
         route: '/vehicle/pings',

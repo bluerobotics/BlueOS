@@ -17,6 +17,7 @@ import ParameterEditorView from '../views/ParameterEditorView.vue'
 import Pings from '../views/Pings.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
+import VehicleSetupView from '../views/VehicleSetupView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
 import VideoManagerView from '../views/VideoManagerView.vue'
 
@@ -32,6 +33,11 @@ const routes: Array<RouteConfig> = [
     path: '/vehicle/autopilot',
     name: 'Autopilot',
     component: Autopilot,
+  },
+  {
+    path: '/vehicle/Setup',
+    name: 'Vehicle Setup',
+    component: VehicleSetupView,
   },
   {
     path: '/vehicle/pings',
