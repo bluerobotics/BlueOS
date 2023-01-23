@@ -132,7 +132,11 @@ class Mavlink2RestManager {
       console.warn(`Requested invalid message rate for ${message}: ${rate}`)
       return
     }
-
+    if (!Object.keys(messageId).includes(message)) {
+      console.warn(
+        `Requesting for an unmapped message (${message})! Please add it to mavlink2rest/MessageID.ts`,
+      )
+    }
     const payload = {
       header: {
         system_id: 255,
