@@ -14,9 +14,18 @@
           The NMEA Injector receives NMEA via UDP or TCP and transforms it
           into MAVLink data that is forwarded to the autopilot.
           It currently supports the sentences
-          <span target="_blank" v-html="createLink('GPGGA')" />,
-          <span target="_blank" v-html="createLink('GPRMC')" />,
-          <span target="_blank" v-html="createLink('GPGLL')" />, and
+          <span
+            target="_blank"
+            v-html="createLink('GPGGA')"
+          />,
+          <span
+            target="_blank"
+            v-html="createLink('GPRMC')"
+          />,
+          <span
+            target="_blank"
+            v-html="createLink('GPGLL')"
+          />, and
           <a
             target="_blank"
             href="https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GNS.html"
