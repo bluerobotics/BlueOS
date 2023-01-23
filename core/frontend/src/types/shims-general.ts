@@ -13,6 +13,11 @@ declare module '*.png' {
   export default value
 }
 
+declare module '*.glb' {
+  const value: string
+  export default value
+}
+
 declare module 'vue-tooltip-directive'
 
 declare module '@/assets/colors/default'
