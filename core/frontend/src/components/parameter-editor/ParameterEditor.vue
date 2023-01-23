@@ -268,7 +268,7 @@ import mavlink2rest from '@/libs/MAVLink2Rest'
 import Notifier from '@/libs/notifier'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import Parameter, { ParamType } from '@/types/autopilot/parameter'
+import Parameter, { ParamType, printParam } from '@/types/autopilot/parameter'
 import { parameters_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
@@ -491,49 +491,7 @@ export default Vue.extend({
       const matche = indices ? name.substring(indices[0], indices[1] + 1) : ''
       return indices ? name.replace(matche, `<mark>${matche}</mark>`) : name
     },
-    printParam(param: Parameter): string {
-      // Check if there are options but zero does not cover it
-      // Or if it's a bitmask, where no flags is 'None'
-      const option_zero_does_not_exist = param.options !== undefined && param.options?.[0] === undefined
-      if ((param.bitmask || option_zero_does_not_exist) && param.value === 0) {
-        return 'None'
-      }
-
-      // Bitmask can have options for default values, so this needs to go first
-      // E.g: Option: 830 = default, bitmask = ATTITUDE_MED, GPS, PM, CTUN..
-      // TODO: fix this so it doesnt show text for values such as 2.5 (rounding down to 2)
-      const option_value = param.options?.[param.value]
-      if (option_value) {
-        return option_value
-      }
-
-      if (param.bitmask) {
-        const bitmask_result = []
-        // We check up to 64 bits to make sure that we are going to cover all possible bits
-        // Including the ones not listed in the bitmask
-        for (let v = 0; v < 64; v += 1) {
-          // eslint-disable-next-line no-bitwise
-          const bitmask_value = 1 << v
-          // eslint-disable-next-line no-bitwise
-          if (param.value & bitmask_value) {
-            bitmask_result.push(param.bitmask?.[v] ?? `UNKNOWN (Bit ${v + 1})`)
-          }
-        }
-        return bitmask_result.join(', ')
-      }
-
-      try {
-        if (Math.abs(param.value) > 1e4) {
-          return param.value.toExponential()
-        }
-        if (Math.abs(param.value) < 0.01 && param.value !== 0) {
-          return param.value.toExponential()
-        }
-        return param.value.toFixed(param.paramType.type.includes('INT') ? 0 : 2)
-      } catch {
-        return 'N/A'
-      }
-    },
+    printParam,
     saveParametersToFile() {
       let parameter_name_max_size = 0
 
