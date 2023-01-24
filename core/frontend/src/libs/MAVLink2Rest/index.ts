@@ -7,13 +7,7 @@ import { Dictionary } from '@/types/common'
 
 import Endpoint from './Endpoint'
 import Listener from './Listener'
-
-// Maps message names to message IDs
-// TODO: should we get this generated somehow?
-const messageId: Dictionary<number> = {
-  HEARTBEAT: 0,
-  SYS_STATUS: 1,
-}
+import messageId from './MessageID'
 
 class Mavlink2RestManager {
   baseUrl: string;
