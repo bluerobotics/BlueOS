@@ -38,3 +38,21 @@ export default interface Parameter {
 
     units?: string
 }
+
+export declare interface Array<T = Parameter> {
+    get(this: Parameter[], matcher: string | object): Parameter[] | undefined;
+}
+
+// eslint-disable-next-line
+Object.defineProperty(Array.prototype, 'get', {
+  // eslint-disable-next-line
+  value: function(this: Parameter[], matcher: string | object): Parameter[] | undefined {
+    let tester: RegExp
+    if (typeof matcher === 'string') {
+      tester = new RegExp(matcher)
+    } else {
+      tester = matcher as RegExp
+    }
+    return this.filter((param: Parameter) => tester.test(param.name))
+  },
+})
