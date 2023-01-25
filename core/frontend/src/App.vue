@@ -38,15 +38,20 @@
     >
       <v-container
         elevation="0"
-        class="d-flex justify-center"
+        class="d-flex justify-center align-center"
       >
         <v-img
           alt="Blue Robotics Logo"
           class="shrink mr-2"
           contain
-          src="./assets/img/logo.svg"
+          src="./assets/img/blueos-logo.svg"
           width="60"
         />
+        <div
+          class="text-h4 pr-2 mariner_blue--text"
+        >
+          BlueOS
+        </div>
       </v-container>
 
       <v-container
