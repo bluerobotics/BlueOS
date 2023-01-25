@@ -28,6 +28,17 @@ class AutopilotStore extends VuexModule {
 
   metadata_loaded = false
 
+  get parameter() {
+    return (name: string): Parameter | undefined => this.parameters.find((parameter) => parameter.name === name)
+  }
+
+  get parameterRegex() {
+    return (pattern: string): Parameter[] => {
+      const tester = new RegExp(pattern)
+      return this.parameters.filter((parameter) => tester.test(parameter.name))
+    }
+  }
+
   @Mutation
   reset(): void {
     this.parameters = []
