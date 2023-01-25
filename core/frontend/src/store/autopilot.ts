@@ -39,6 +39,12 @@ class AutopilotStore extends VuexModule {
     }
   }
 
+  get parameterFilter() {
+    return (user_filter: (param: Parameter) => boolean) => this.parameters.filter(
+      (param: Parameter) => user_filter(param),
+    )
+  }
+
   @Mutation
   reset(): void {
     this.parameters = []
