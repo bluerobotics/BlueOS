@@ -549,6 +549,14 @@ div.pirate-marker.v-icon {
     font-size: 10px;
 }
 
+.v-list-item {
+  padding: 0 4px;
+}
+
+.v-application--is-ltr .v-list--dense.v-list--nav .v-list-group--no-action > .v-list-group__items > .v-list-item {
+  padding-left: 32px;
+}
+
 .v-navigation-drawer__content::-webkit-scrollbar {
   width: 8px;
 }
