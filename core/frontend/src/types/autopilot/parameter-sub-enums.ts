@@ -85,6 +85,17 @@ export enum BTN_FUNCTION {
     RELAY_4_MOMENTARY = 107,
 }
 
+export enum FRAME_CONFIG {
+    BLUEROV1 = 0,
+    VECTORED = 1,
+    VECTORED_6DOF = 2,
+    VECTORED_6DOF_90 = 3,
+    SIMPLEROV_3 = 4,
+    SIMPLEROV_4 = 5,
+    SIMPLEROV_5 = 6,
+    CUSTOM = 7,
+}
+
 export enum SERVO_FUNCTION {
     DISABLED = 0,
     RCPASSTHRU = 1,
