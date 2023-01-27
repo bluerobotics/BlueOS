@@ -94,7 +94,7 @@ jobs:
       matrix:
         docker: [bootstrap, core]
         project: [blueos]
-        platforms: ["linux/arm/v7"]
+        platforms: ["linux/arm/v7,linux/arm64/v8"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -121,7 +121,7 @@ jobs:
 
           echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "buildx_args=--platform ${{ matrix.platforms }} \
+          echo "buildx_args=\
             --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long) \
             --build-arg VUE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
             --cache-from 'type=local,src=/tmp/.buildx-cache' \
@@ -157,6 +157,7 @@ jobs:
           done
           docker buildx build \
             --output "type=image,push=false" \
+            --platform ${{ matrix.platforms }} \
             ${{ steps.prepare.outputs.buildx_args }}
 
       - name: Check core size
@@ -182,6 +183,7 @@ jobs:
         run: |
           docker buildx build \
             --output "type=image,push=true" \
+            --platform ${{ matrix.platforms }} \
             ${{ steps.prepare.outputs.buildx_args }}
 
       - name: Inspect image
@@ -197,14 +199,33 @@ jobs:
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
           docker buildx build \
             ${{ steps.prepare.outputs.buildx_args }} \
+            --platform "linux/arm64/v8"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}.tar" \
 
-      - name: Upload artifact
+      - name: Upload artifact arm64-v8
         uses: actions/upload-artifact@v3
         if: success() && matrix.docker == 'core'
         with:
-          name: BlueOS-core-docker-image.zip
+          name: BlueOS-core-docker-image-arm64-v8.zip
+          path: '*.tar'
+
+      - name: Create image artifact
+        if: success() && matrix.docker == 'core'
+        run: |
+          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
+          GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
+          docker buildx build \
+            ${{ steps.prepare.outputs.buildx_args }} \
+            --platform "linux/arm/v7"  \
+            --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}.tar" \
+
+      - name: Upload artifact arm-v7
+        uses: actions/upload-artifact@v3
+        if: success() && matrix.docker == 'core'
+        with:
+          name: BlueOS-core-docker-image-arm-v7.zip
           path: '*.tar'
 
       - name: Upload docker image for release
