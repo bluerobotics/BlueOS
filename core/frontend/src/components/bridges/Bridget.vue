@@ -18,7 +18,7 @@
           :key="index"
           class="pa-0"
         >
-          <bridge-card :bridge_serial_info="info" />
+          <bridge-card :bridge-serial-info="info" />
         </v-list-item>
       </template>
     </v-list>
