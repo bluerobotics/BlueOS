@@ -14,6 +14,8 @@
           The NMEA Injector receives NMEA via UDP or TCP and transforms it
           into MAVLink data that is forwarded to the autopilot.
           It currently supports the sentences
+          <!-- suppressing vue-no-html rule, as we create this html ourselves -->
+          <!-- eslint-disable -->
           <span
             target="_blank"
             v-html="createLink('GPGGA')"
@@ -26,6 +28,7 @@
             target="_blank"
             v-html="createLink('GPGLL')"
           />, and
+          <!-- eslint-enable -->
           <a
             target="_blank"
             href="https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GNS.html"

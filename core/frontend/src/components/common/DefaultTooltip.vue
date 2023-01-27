@@ -16,7 +16,8 @@ import Vue from 'vue'
 export default Vue.extend({
   name: 'DefaultTooltip',
   props: {
-    activator: { required: true }, // eslint-disable
+    // eslint-disable-next-line
+    activator: { required: true },
     content: { type: String, required: true },
     position: { type: String, required: false, default: 'bottom' },
   },

@@ -51,12 +51,15 @@
           prepend-inner-icon="mdi-magnify"
         />
       </template>
+      <!-- suprresing no-vue-html -->
+      <!-- eslint-disable -->
       <template #item.name="{ item }">
         <div v-html="printMark(item, 'name')" />
       </template>
       <template #item.description="{ item }">
         <div v-html="printMark(item, 'description')" />
       </template>
+       <!-- eslint-enable -->
       <template #item.value="{ item }">
         {{ printParam(item.item) }} {{ item.item.units ? `[${item.item.units}]` : '' }}
       </template>
