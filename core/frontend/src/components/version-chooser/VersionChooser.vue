@@ -189,7 +189,6 @@ import Vue from 'vue'
 
 import PullProgress from '@/components/utils/PullProgress.vue'
 import settings from '@/libs/settings'
-import { Dictionary } from '@/types/common'
 import { Version, VersionsQuery, VersionType } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'

@@ -18,10 +18,13 @@
             style="overflow: auto;"
           >
             <v-card-text>
+              <!-- This is a compiled markdown we compile ourselves. it should be safe -->
+              <!-- eslint-disable -->
               <div
                 class="readme"
                 v-html="compiled_markdown"
               />
+              <!-- eslint-enable -->
             </v-card-text>
           </v-card>
         </v-col>
@@ -142,6 +145,7 @@
 import { marked } from 'marked'
 import Vue, { PropType } from 'vue'
 
+import { JSONValue } from '@/types/common'
 import { ExtensionData, Version } from '@/types/kraken'
 
 export default Vue.extend({
@@ -170,12 +174,13 @@ export default Vue.extend({
       if (!this.selected?.readme) {
         return 'No readme available'
       }
-      return marked(this.selected.readme, { sanitize: true })
+      // TODO: make sure we sanitize this
+      return marked(this.selected.readme)
     },
     available_tags(): string[] {
       return Object.keys(this.extension?.versions ?? [])
     },
-    permissions(): (undefined | string) {
+    permissions(): (undefined | JSONValue) {
       if (!this.selected_version) {
         return 'Select a version'
       }

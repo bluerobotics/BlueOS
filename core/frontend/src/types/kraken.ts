@@ -1,4 +1,4 @@
-import { Dictionary } from '@/types/common'
+import { Dictionary, JSONValue } from '@/types/common'
 
 export interface Author {
     name: string
@@ -12,7 +12,7 @@ export interface Company {
 }
 
 export interface Version {
-    permissions: any
+    permissions: JSONValue
     requirements: string | null
     tag: string
     authors?: Author[]
