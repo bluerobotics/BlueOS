@@ -127,12 +127,20 @@ export default function decode(device: string, devid: number): deviceId {
   let decodedDevname = 'UNKNOWN'
 
   if (device.startsWith('COMPASS')) {
-    if (devtype === 1) {
-      decodedDevname = 'UAVCAN'
-    } else if (devtype === 1) {
-      decodedDevname = 'EAHRS'
-    } else {
-      decodedDevname = compassTypes[devtype] || 'UNKNOWN'
+    // When compass uses UAVCAN, the devtype is sensor_id + 1
+    // So we ignore it to avoid showing up the wrong device name
+    switch (bus) {
+      // When compass uses UAVCAN, the devtype is sensor_id + 1
+      // So we ignore it to avoid showing up the wrong device name
+      case 3:
+        decodedDevname = 'UAVCAN'
+        break
+      // eAHRS is the only one that uses SERIAL
+      case 6:
+        decodedDevname = 'eAHRS'
+        break
+      default:
+        decodedDevname = compassTypes[devtype] || 'UNKNOWN'
     }
   }
   if (device.startsWith('INS')) {
