@@ -145,13 +145,11 @@ export default Vue.extend({
     },
     lights1_are_present() {
       const servo_params = autopilot_data.parameterRegex('^SERVO(\\d+)_FUNCTION$')
-      const lights1 = servo_params.filter((parameter) => parameter.value === SERVO_FUNCTION.RCIN8)
-      return lights1.first() !== undefined
+      return servo_params.some((parameter) => parameter.value === SERVO_FUNCTION.RCIN8)
     },
     lights2_are_present() {
       const servo_params = autopilot_data.parameterRegex('^SERVO(\\d+)_FUNCTION$')
-      const lights2 = servo_params.filter((parameter) => parameter.value === SERVO_FUNCTION.RCIN9)
-      return lights2.first() !== undefined
+      return servo_params.some((parameter) => parameter.value === SERVO_FUNCTION.RCIN9)
     },
     viewer() {
       return document.getElementById('modelviewer') as ModelViewerElement

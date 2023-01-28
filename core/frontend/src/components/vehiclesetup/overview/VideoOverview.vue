@@ -63,7 +63,7 @@ export default Vue.extend({
 
     devices() {
       function has_supported_encode(device: Device): boolean {
-        return !device.formats.filter((format: Format) => format.encode === VideoEncodeType.H264).isEmpty()
+        return !device.formats.some((format: Format) => format.encode === VideoEncodeType.H264)
       }
       const devices = video.available_devices
       const valid_devices = devices.filter(
