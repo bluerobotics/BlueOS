@@ -44,14 +44,9 @@
           alt="Blue Robotics Logo"
           class="shrink mr-2"
           contain
-          src="./assets/img/blueos-logo.svg"
-          width="60"
+          :src="blueos_logo"
+          width="70%"
         />
-        <div
-          class="text-h4 pr-2 mariner_blue--text"
-        >
-          BlueOS
-        </div>
       </v-container>
 
       <v-container
@@ -211,6 +206,8 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
+import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import settings from '@/libs/settings'
 import services_scanner from '@/store/servicesScanner'
 import wifi from '@/store/wifi'
@@ -454,6 +451,9 @@ export default Vue.extend({
     },
     app_bar_color(): string {
       return this.backend_offline ? 'grey darken-1' : 'primary'
+    },
+    blueos_logo(): string {
+      return settings.is_dark_theme ? blueos_white : blueos_blue
     },
   },
 
