@@ -33,10 +33,7 @@ export default Vue.extend({
   name: 'LeakInfo',
   computed: {
     leak_params(): Parameter[] {
-      const leak_params = autopilot_data.parameterFilter(
-        (param) => param.name.includes('LEAK'),
-      )
-      return leak_params
+      return autopilot_data.parameterRegex('.*LEAK.*')
     },
     failsafe(): Parameter | undefined {
       return autopilot_data.parameter('FS_LEAK_ENABLE')
