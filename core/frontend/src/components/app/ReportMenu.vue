@@ -19,7 +19,7 @@
     >
       <v-card>
         <v-card-title class="align-center">
-          Bug report / Feature Request
+          Bug report / Feature request
         </v-card-title>
 
         <v-divider />
@@ -52,7 +52,7 @@
             >
               $si-discourse
             </v-icon>
-            With Blue Robotics discuss
+            On Blue Robotics forum
           </v-btn>
         </v-card-actions>
       </v-card>
