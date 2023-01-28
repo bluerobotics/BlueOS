@@ -19,7 +19,7 @@
       </v-btn>
       <v-btn
         v-if="hotspot_status"
-        v-tooltip="'WiFi QR Code'"
+        v-tooltip="'Hotspot QR code'"
         icon
         color="primary"
         hide-details="auto"
