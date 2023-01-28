@@ -124,7 +124,8 @@ export default function decode(device: string, devid: number): deviceId {
   const bus = devid >> 3 & 0x1F
   const address = devid >> 8 & 0xFF
   const devtype = devid >> 16
-  let decodedDevname
+  let decodedDevname = 'UNKNOWN'
+
   if (device.startsWith('COMPASS')) {
     if (devtype === 1) {
       decodedDevname = 'UAVCAN'
