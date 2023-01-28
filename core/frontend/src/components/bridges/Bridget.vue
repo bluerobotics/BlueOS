@@ -94,9 +94,9 @@ export default Vue.extend({
       const system_serial_ports: SerialPortInfo[] | undefined = system_information.serial?.ports
       return bridget.available_bridges.map((bridge) => ({
         bridge,
-        serial_info: system_serial_ports?.filter(
+        serial_info: system_serial_ports?.find(
           (serial_info) => (serial_info.by_path ?? serial_info.name) === bridge.serial_path,
-        )?.first(),
+        ),
       }))
     },
     are_bridges_available(): boolean {
