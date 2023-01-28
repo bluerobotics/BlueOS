@@ -59,9 +59,9 @@ export function printParam(param?: Parameter): string {
     return option_value
   }
   // if options is a float...
-  const float_option = Object.entries(param.options ?? {}).filter(
+  const float_option = Object.entries(param.options ?? {}).find(
     ([key, _name]) => parseFloat(key) === param.value,
-  ).first()
+  )
   if (float_option) {
     return float_option[1]
   }
