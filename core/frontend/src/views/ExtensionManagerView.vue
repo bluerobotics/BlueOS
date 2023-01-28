@@ -276,9 +276,9 @@ export default Vue.extend({
       }
     },
     getContainer(extension: InstalledExtensionData): RunningContainer | undefined {
-      return this.running_containers?.filter(
+      return this.running_containers?.find(
         (container) => container.image === `${extension.docker}:${extension.tag}`,
-      ).first()
+      )
     },
     async fetchMetrics(): Promise<void> {
       await back_axios({
@@ -499,9 +499,9 @@ export default Vue.extend({
       this.fetchMetrics()
     },
     remoteVersions(extension: InstalledExtensionData): ExtensionData | undefined {
-      return this.manifest.filter(
+      return this.manifest.find(
         (remoteExtension: ExtensionData) => remoteExtension.identifier === extension.identifier,
-      ).first()
+      )
     },
   },
 })
