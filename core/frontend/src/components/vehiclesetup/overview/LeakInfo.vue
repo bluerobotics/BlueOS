@@ -47,8 +47,8 @@ export default Vue.extend({
       for (let i = 1; i <= size; i += 1) {
         leaks.push({
           order: i,
-          pin: this.leak_params.filter((params) => params.name.endsWith(`${i}_PIN`)).first(),
-          logic: this.leak_params.filter((params) => params.name.endsWith(`${i}_LOGIC`)).first(),
+          pin: this.leak_params.find((params) => params.name.endsWith(`${i}_PIN`)),
+          logic: this.leak_params.find((params) => params.name.endsWith(`${i}_LOGIC`)),
         })
       }
       return leaks
