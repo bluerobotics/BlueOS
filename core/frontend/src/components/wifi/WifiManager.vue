@@ -18,6 +18,7 @@
         <v-icon>{{ hotspot_status ? 'mdi-access-point' : 'mdi-access-point-off' }}</v-icon>
       </v-btn>
       <v-btn
+        v-if="hotspot_status"
         v-tooltip="'WiFi QR Code'"
         icon
         color="primary"
