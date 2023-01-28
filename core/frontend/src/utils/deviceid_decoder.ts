@@ -13,11 +13,11 @@ const busTypes = {
 
 const compassTypes = {
   0x01: 'HMC5883_OLD',
-  0x07: 'HMC5883',
   0x02: 'LSM303D',
   0x04: 'AK8963 ',
   0x05: 'BMM150 ',
   0x06: 'LSM9DS1',
+  0x07: 'HMC5883',
   0x08: 'LIS3MDL',
   0x09: 'AK09916',
   0x0A: 'IST8310',
