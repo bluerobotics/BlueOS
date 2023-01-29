@@ -35,13 +35,14 @@ export default Vue.extend({
       return autopilot.vehicle_type
     },
     current_viewer(): string {
-      if (this.vehicle_type === 'Submarine') {
-        return 'Sub'
+      switch (this.vehicle_type) {
+        case 'Submarine':
+          return 'Sub'
+        case 'Surface Boat':
+          return 'Rover'
+        default:
+          return ''
       }
-      if (this.vehicle_type === 'Surface Boat') {
-        return 'Rover'
-      }
-      return ''
     },
   },
   methods: {
