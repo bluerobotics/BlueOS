@@ -72,6 +72,9 @@ module.exports = {
       '^/terminal': {
         target: SERVER_ADDRESS,
       },
+      '^/userdata': {
+        target: SERVER_ADDRESS,
+      },
       '^/version-chooser': {
         target: SERVER_ADDRESS,
         selfHandleResponse: true,

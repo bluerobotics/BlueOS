@@ -29,6 +29,10 @@
             "/var/logs/blueos": {
                 "bind": "/var/logs/blueos",
                 "mode": "rw"
+            },
+            "/usr/blueos/userdata": {
+                "bind": "/usr/blueos/userdata",
+                "mode": "rw"
             }
         },
         "privileged": true
