@@ -13,6 +13,7 @@ const busTypes = {
 } as Dictionary<string>
 
 const compassTypes = {
+  0x00: 'UNKNOWN',
   0x01: 'HMC5883_OLD',
   0x02: 'LSM303D',
   0x04: 'AK8963 ',
@@ -36,6 +37,7 @@ const compassTypes = {
 } as Dictionary<string>
 
 const imuTypes = {
+  0x00: 'UNKNOWN',
   0x09: 'BMI160',
   0x10: 'L3G4200D',
   0x11: 'ACC_LSM303D',
@@ -72,6 +74,7 @@ const imuTypes = {
 } as Dictionary<string>
 
 const baroTypes = {
+  0x00: 'UNKNOWN',
   0x01: 'SITL',
   0x02: 'BMP085',
   0x03: 'BMP280',
@@ -95,6 +98,7 @@ const baroTypes = {
 } as Dictionary<string>
 
 const airspeedTypes = {
+  0x00: 'UNKNOWN',
   0x01: 'AIRSPEED_SITL',
   0x02: 'AIRSPEED_MS4525',
   0x03: 'AIRSPEED_MS5525',
