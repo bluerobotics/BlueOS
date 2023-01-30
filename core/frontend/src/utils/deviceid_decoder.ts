@@ -9,6 +9,7 @@ const busTypes = {
   4: 'SITL',
   5: 'MSP',
   6: 'SERIAL',
+  7: 'QSPI',
 } as Dictionary<string>
 
 const compassTypes = {
