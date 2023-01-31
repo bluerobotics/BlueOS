@@ -33,18 +33,18 @@ const menus = [
               + ' currently only supported for Navigator boards.',
       },
       {
-        title: 'Network Test',
-        icon: 'mdi-speedometer',
-        route: '/tools/network-test',
-        show: true,
-        text: 'Test link speed between topside computer and your vehicle.',
-      },
-      {
         title: 'MAVLink Inspector',
         icon: 'mdi-chart-areaspline',
         route: '/tools/mavlink-inspector',
         advanced: true,
         text: 'View detailed MAVLink traffic coming from your vehicle.',
+      },
+      {
+        title: 'Network Test',
+        icon: 'mdi-speedometer',
+        route: '/tools/network-test',
+        show: true,
+        text: 'Test link speed between topside computer and your vehicle.',
       },
       {
         title: 'System Information',
