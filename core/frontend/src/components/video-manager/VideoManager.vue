@@ -123,7 +123,7 @@ export default Vue.extend({
           return true
         }
 
-        return !device.formats.some((format: Format) => format.encode === VideoEncodeType.H264)
+        return device.formats.some((format: Format) => format.encode === VideoEncodeType.H264)
       }
 
       function should_show(device: Device): boolean {
