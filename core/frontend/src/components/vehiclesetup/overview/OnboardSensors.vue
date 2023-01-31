@@ -148,6 +148,8 @@ export default Vue.extend({
       )
       if (offset_params.includes(undefined) || diagonal_params.includes(undefined)) {
         notifier.pushError('PARAM_MISSING', 'Unable to find Compass parameters')
+        // Todo: add an ERROR state for returing
+        return false
       }
 
       const scale_param_name = `COMPASS_SCALE${compass_number}`
