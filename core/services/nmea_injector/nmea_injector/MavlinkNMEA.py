@@ -47,7 +47,7 @@ class MavlinkGpsInput(BaseModel):
     type: str = "GPS_INPUT"
     time_usec: Optional[int] = 0
     gps_id: Optional[int] = 0
-    ignore_flags: Optional[Mavlink2RestBitEnum] = Mavlink2RestBitEnum(bits=(nmea_ignore_flags.value))
+    ignore_flags: Optional[Mavlink2RestBitEnum] = Mavlink2RestBitEnum(bits=nmea_ignore_flags.value)
     time_week_ms: Optional[int] = 0
     time_week: Optional[int] = 0
     fix_type: Optional[int] = GPS_FIX_TYPE.GPS_FIX_TYPE_3D_FIX.value
