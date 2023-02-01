@@ -21,7 +21,7 @@ const menus = [
         icon: 'mdi-file-tree',
         route: '/tools/file-browser',
         advanced: true,
-        text: 'Browse all the files in BlueOS, useful for fetching logs,'
+        text: 'Browse all the files in BlueOS. Useful for fetching logs,'
               + ' tweaking configurations, and development.',
       },
       {
@@ -71,14 +71,14 @@ const menus = [
         icon: 'mdi-image-filter-center-focus-strong',
         route: '/vehicle/autopilot',
         advanced: false,
-        text: `Autopilot settings. Allows you to start/stop ArduPilot (if using Navigator or SITL), or update
-        the firmware of your flight controller.`,
+        text: 'Update flight controller firmware, select the active autopilot,'
+              + ' and start/stop ArduPilot (if using Navigator or SITL).',
       },
       {
         title: 'Autopilot Parameters',
         icon: 'mdi-table-settings',
         route: '/vehicle/parameters',
-        text: 'Allow changing vehicle parameters.',
+        text: 'View and modify vehicle parameters.',
       },
       {
         title: 'BlueOS Version',
@@ -93,7 +93,7 @@ const menus = [
         route: '/vehicle/endpoints',
         advanced: true,
         text: 'Manage MAVLink endpoints for internal/external systems. Use this if you need to connect additional'
-              + ' MAVLink systems to your vehicle',
+              + ' MAVLink systems to your vehicle.',
       },
       {
         title: 'NMEA Injector',
@@ -107,8 +107,8 @@ const menus = [
         icon: 'mdi-radar',
         route: '/vehicle/pings',
         advanced: false,
-        text: 'Ping devices discovery and management. This allows you to see all detected Ping devices connected to '
-              + 'either your Onboard Computer or its local network.',
+        text: 'Manage detected Ping family sonar devices, connected to either your Onboard Computer'
+              + ' or its local network.',
       },
       {
         title: 'Serial Bridges',
@@ -116,14 +116,14 @@ const menus = [
         route: '/tools/bridges',
         advanced: true,
         text: 'Allows creating UDP/TCP to Serial bridges, used for communication to serial'
-              + ' devices from your topside computer.',
+              + ' devices from your Control Station Computer.',
       },
       {
         title: 'Vehicle Setup',
         icon: 'mdi-cog-outline',
         route: '/vehicle/setup',
         advanced: false,
-        text: 'Vehicle and Peripherals setup. Includes sensor calibrations and Motors/Peripherals mapping',
+        text: 'Vehicle and Peripherals setup. Includes sensor calibrations and Motors/Peripherals mapping.',
       },
       {
         title: 'Video Streams',
