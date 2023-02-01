@@ -67,7 +67,7 @@ const menus = [
     icon: 'mdi-cogs',
     submenus: [
       {
-        title: 'Autopilot',
+        title: 'Autopilot Firmware',
         icon: 'mdi-image-filter-center-focus-strong',
         route: '/vehicle/autopilot',
         advanced: false,
@@ -75,15 +75,20 @@ const menus = [
         the firmware of your flight controller.`,
       },
       {
-        title: 'Bridges',
-        icon: 'mdi-bridge',
-        route: '/tools/bridges',
-        advanced: true,
-        text: 'Allows creating UDP/TCP to Serial bridges, used for communication to serial'
-              + ' devices from your topside computer.',
+        title: 'Autopilot Parameters',
+        icon: 'mdi-table-settings',
+        route: '/vehicle/parameters',
+        text: 'Allow changing vehicle parameters.',
       },
       {
-        title: 'Endpoints',
+        title: 'BlueOS Version',
+        icon: 'mdi-cellphone-arrow-down',
+        route: '/tools/version-chooser',
+        advanced: false,
+        text: 'Manage BlueOS versions and update to the latest available.',
+      },
+      {
+        title: 'MAVLink Endpoints',
         icon: 'mdi-arrow-decision',
         route: '/vehicle/endpoints',
         advanced: true,
@@ -98,18 +103,20 @@ const menus = [
         text: 'Used for forwarding UDP NMEA streams into ArduPilot.',
       },
       {
-        title: 'Parameters',
-        icon: 'mdi-table-settings',
-        route: '/vehicle/parameters',
-        text: 'Allow changing vehicle parameters.',
-      },
-      {
         title: 'Ping Sonar Devices',
         icon: 'mdi-radar',
         route: '/vehicle/pings',
         advanced: false,
         text: 'Ping devices discovery and management. This allows you to see all detected Ping devices connected to '
               + 'either your Onboard Computer or its local network.',
+      },
+      {
+        title: 'Serial Bridges',
+        icon: 'mdi-bridge',
+        route: '/tools/bridges',
+        advanced: true,
+        text: 'Allows creating UDP/TCP to Serial bridges, used for communication to serial'
+              + ' devices from your topside computer.',
       },
       {
         title: 'Vehicle Setup',
@@ -119,14 +126,7 @@ const menus = [
         text: 'Vehicle and Peripherals setup. Includes sensor calibrations and Motors/Peripherals mapping',
       },
       {
-        title: 'Version Chooser',
-        icon: 'mdi-cellphone-arrow-down',
-        route: '/tools/version-chooser',
-        advanced: false,
-        text: 'Manage BlueOS versions and update to the latest available.',
-      },
-      {
-        title: 'Video',
+        title: 'Video Streams',
         icon: 'mdi-video-vintage',
         route: '/vehicle/video-manager',
         advanced: false,
