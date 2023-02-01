@@ -134,8 +134,10 @@
           </v-btn>
         </v-fab-transition>
         <creation-dialog
+          v-if="edited_extension"
           :extension="edited_extension"
           @extensionChange="createOrUpdateExtension"
+          @closed="clearEditedExtension"
         />
       </v-col>
     </v-row>
@@ -203,6 +205,9 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
   },
   methods: {
+    clearEditedExtension() {
+      this.edited_extension = null
+    },
     async update(extension: InstalledExtensionData, version: string) {
       this.show_pull_output = true
       const tracker = new PullTracker(() => {
