@@ -327,7 +327,7 @@ export default Vue.extend({
       return ''
     },
     newStableAvailable() {
-      if (!this.current_version) {
+      if (!this.current_version || !VCU.isSemVer(this.current_version.tag)) {
         return ''
       }
       if (this.latest_stable !== undefined
