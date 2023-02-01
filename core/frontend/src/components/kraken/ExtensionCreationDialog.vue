@@ -1,6 +1,6 @@
 <template>
   <v-dialog
-    v-if="new_extension"
+    v-if="extension"
     width="500"
     :value="Boolean(extension)"
     persistent
@@ -111,6 +111,7 @@ export default Vue.extend({
   methods: {
     closeDialog() {
       this.new_extension = null
+      this.$emit('closed')
     },
     validate_identifier(input: string): (true | string) {
       // Identifiers should be two words separated by a period
