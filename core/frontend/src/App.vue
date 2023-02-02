@@ -94,7 +94,7 @@
                   :to="submenu.route"
                   :href="menu.extension ? submenu.route : undefined"
                 >
-                  <v-list-item-icon>
+                  <v-list-item-icon style="min-width:28px;">
                     <v-icon
                       v-if="!submenu.icon.startsWith('http')"
                       class="mr-0"
