@@ -38,6 +38,7 @@ export interface InstalledExtensionData {
     name: string
     docker: string
     tag: string
+    enabled: boolean
     permissions: string
     user_permissions: string
     status?: string
