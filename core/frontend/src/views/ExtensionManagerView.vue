@@ -270,6 +270,7 @@ export default Vue.extend({
         identifier: 'yourorganization.yourextension',
         name: '',
         docker: '',
+        enabled: true,
         tag: '',
         permissions: '{}',
         user_permissions: '{}',
