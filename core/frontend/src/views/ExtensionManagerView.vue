@@ -422,7 +422,7 @@ export default Vue.extend({
         '',
       )
     },
-    async uninstall(extension: ExtensionData) {
+    async uninstall(extension: InstalledExtensionData) {
       await axios.post(`${API_URL}/extension/uninstall`, null, {
         params: {
           extension_identifier: extension.identifier,
@@ -442,7 +442,7 @@ export default Vue.extend({
       }
       return this.installed_extensions.find((extension) => extension.docker === extension_docker)?.tag
     },
-    async disable(extension: ExtensionData) {
+    async disable(extension: InstalledExtensionData) {
       // TODO: spinner
       await back_axios({
         url: `${API_URL}/extension/disable`,
@@ -461,7 +461,7 @@ export default Vue.extend({
       this.fetchInstalledExtensions()
       this.fetchMetrics()
     },
-    async enableAndStart(extension: ExtensionData) {
+    async enableAndStart(extension: InstalledExtensionData) {
       // TODO: spinner
       await back_axios({
         url: `${API_URL}/extension/enable`,
@@ -480,7 +480,7 @@ export default Vue.extend({
       this.fetchInstalledExtensions()
       this.fetchMetrics()
     },
-    async restart(extension: ExtensionData) {
+    async restart(extension: InstalledExtensionData) {
       // TODO: spinner
       await back_axios({
         url: `${API_URL}/extension/restart`,
