@@ -124,6 +124,14 @@ async def get_vehicle_type() -> Any:
     return await autopilot.vehicle_manager.get_vehicle_type()
 
 
+@app.get("/firmware_vehicle_type", response_model=str, summary="Get firmware vehicle type.")
+@version(1, 0)
+async def get_firmware_vehicle_type() -> Any:
+    if not autopilot.current_board:
+        raise RuntimeError("Cannot fetch vehicle type info as there's no board running.")
+    return await autopilot.vehicle_manager.get_firmware_vehicle_type()
+
+
 @app.get(
     "/available_firmwares",
     response_model=List[Firmware],
