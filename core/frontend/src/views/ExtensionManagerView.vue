@@ -86,6 +86,7 @@
           >
             <installed-extension-card
               :extension="extension"
+              :loading="extension.loading"
               :metrics="metricsFor(extension)"
               :container="getContainer(extension)"
               :versions="remoteVersions(extension)"
@@ -339,6 +340,7 @@ export default Vue.extend({
         })
     },
     async showLogs(extension: InstalledExtensionData): Promise<void> {
+      this.setLoading(extension, true)
       await back_axios({
         method: 'get',
         url: `${API_URL}/log`,
@@ -354,6 +356,7 @@ export default Vue.extend({
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', error)
         })
+      this.setLoading(extension, false)
     },
     showModal(extension: ExtensionData) {
       this.show_dialog = true
@@ -426,6 +429,7 @@ export default Vue.extend({
       )
     },
     async uninstall(extension: InstalledExtensionData) {
+      this.setLoading(extension, true)
       await axios.post(`${API_URL}/extension/uninstall`, null, {
         params: {
           extension_identifier: extension.identifier,
@@ -437,16 +441,21 @@ export default Vue.extend({
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_UNINSTALL_FAIL', error)
         })
+      this.setLoading(extension, false)
     },
     installedVersion(): string | undefined {
-      const extension_docker = this.selected_extension?.docker
-      if (!extension_docker) {
+      const extension_identifier = this.selected_extension?.identifier
+      if (!extension_identifier) {
         return undefined
       }
-      return this.installed_extensions.find((extension) => extension.docker === extension_docker)?.tag
+      return this.installed_extensions[extension_identifier]?.tag
     },
     async disable(extension: InstalledExtensionData) {
-      // TODO: spinner
+      this.setLoading(extension, true)
+      delete this.metrics[this.getContainerName(extension)?.replace('/', '') ?? '']
+      this.running_containers = this.running_containers.filter(
+        (container) => container.name !== this.getContainerName(extension),
+      )
       await back_axios({
         url: `${API_URL}/extension/disable`,
         method: 'POST',
@@ -455,17 +464,15 @@ export default Vue.extend({
         },
         timeout: 2000,
       })
-        .then((response) => {
-          this.running_containers = response.data
-        })
         .catch((error) => {
           notifier.pushBackError('EXTENSION_DISABLE_FAIL', error)
         })
       this.fetchInstalledExtensions()
+      this.setLoading(extension, false)
       this.fetchMetrics()
     },
     async enableAndStart(extension: InstalledExtensionData) {
-      // TODO: spinner
+      this.setLoading(extension, true)
       await back_axios({
         url: `${API_URL}/extension/enable`,
         method: 'POST',
@@ -474,17 +481,15 @@ export default Vue.extend({
         },
         timeout: 2000,
       })
-        .then((response) => {
-          this.running_containers = response.data
-        })
         .catch((error) => {
           notifier.pushBackError('EXTENSION_ENABLE_FAIL', error)
         })
       this.fetchInstalledExtensions()
+      this.setLoading(extension, false)
       this.fetchMetrics()
     },
     async restart(extension: InstalledExtensionData) {
-      // TODO: spinner
+      this.setLoading(extension, true)
       await back_axios({
         url: `${API_URL}/extension/restart`,
         method: 'POST',
@@ -500,12 +505,17 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSION_RESTART_FAIL', error)
         })
       this.fetchInstalledExtensions()
+      this.setLoading(extension, false)
       this.fetchMetrics()
     },
     remoteVersions(extension: InstalledExtensionData): ExtensionData | undefined {
       return this.manifest.find(
         (remoteExtension: ExtensionData) => remoteExtension.identifier === extension.identifier,
       )
+    },
+    setLoading(extension: InstalledExtensionData, loading: boolean) {
+      this.installed_extensions[extension.identifier].loading = loading
+      Vue.set(this.installed_extensions, extension.identifier, this.installed_extensions[extension.identifier])
     },
   },
 })
