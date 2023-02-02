@@ -93,3 +93,17 @@ export async function fetchVehicleType(): Promise<void> {
     notifier.pushBackError('AUTOPILOT_VEHICLE_TYPE_FETCH_FAIL', error)
   }
 }
+
+export async function fetchFirmwareVehicleType(): Promise<void> {
+  try {
+    const response: AxiosResponse = await back_axios({
+      method: 'get',
+      url: `${autopilot.API_URL}/firmware_vehicle_type`,
+      timeout: 10000,
+    })
+    autopilot.setFirmwareVehicleType(response.data)
+  } catch (error) {
+    autopilot.setFirmwareVehicleType(null)
+    notifier.pushBackError('AUTOPILOT_FIRMWARE_VEHICLE_TYPE_FETCH_FAIL', error)
+  }
+}
