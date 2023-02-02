@@ -48,7 +48,9 @@ export default Vue.extend({
       return autopilot.current_board?.name ?? null
     },
     firmware() {
-      return `${autopilot.firmware_info?.version} (${autopilot.firmware_info?.type.toLocaleLowerCase()})`
+      const { firmware_info } = autopilot
+      return `${autopilot.firmware_vehicle_type}`
+        + ` ${firmware_info?.version} (${firmware_info?.type.toLocaleLowerCase()})`
     },
     model() {
       return system_information.platform?.raspberry?.model ?? 'Unknown'
