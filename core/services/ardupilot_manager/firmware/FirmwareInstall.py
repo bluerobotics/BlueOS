@@ -87,8 +87,8 @@ class FirmwareInstaller:
         try:
             firm_decoder = Decoder()
             firm_decoder.process(firmware_path)
-            firm_board = firm_decoder.fwversion.board_type
-            firm_sub_board = firm_decoder.fwversion.board_subtype
+            firm_board = BoardType(firm_decoder.fwversion.board_type)
+            firm_sub_board = BoardSubType(firm_decoder.fwversion.board_subtype)
             current_decoder_platform = get_correspondent_decoder_platform(platform)
             if current_decoder_platform not in [firm_board, firm_sub_board]:
                 raise InvalidFirmwareFile(
