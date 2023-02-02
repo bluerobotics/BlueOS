@@ -70,6 +70,10 @@ class VehicleManager:
         heartbeat_message = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
         return MavlinkVehicleType[heartbeat_message["message"]["mavtype"]["type"]]  # type: ignore
 
+    async def get_firmware_vehicle_type(self) -> str:
+        vehicle_type = await self.get_vehicle_type()
+        return vehicle_type.mavlink_firmware_type()
+
     async def reboot_vehicle(self) -> None:
         message = self.command_long_message("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", [1.0])
         await self.mavlink2rest.send_mavlink_message(message)
