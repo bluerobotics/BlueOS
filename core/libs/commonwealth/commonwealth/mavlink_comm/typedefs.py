@@ -66,6 +66,50 @@ class MavlinkVehicleType(str, Enum):
     MAV_TYPE_GPS = "Gps"
     MAV_TYPE_WINCH = "Winch"
 
+    def mavlink_firmware_type(self) -> str:
+        plane_options = [
+            self.MAV_TYPE_FIXED_WING,
+            self.MAV_TYPE_VTOL_DUOROTOR,
+            self.MAV_TYPE_VTOL_QUADROTOR,
+            self.MAV_TYPE_VTOL_TILTROTOR,
+            self.MAV_TYPE_VTOL_FIXEDROTOR,
+            self.MAV_TYPE_VTOL_TAILSITTER,
+            self.MAV_TYPE_VTOL_RESERVED4,
+            self.MAV_TYPE_VTOL_RESERVED5,
+        ]
+
+        copter_options = [
+            self.MAV_TYPE_QUADROTOR,
+            self.MAV_TYPE_COAXIAL,
+            self.MAV_TYPE_HELICOPTER,
+            self.MAV_TYPE_HEXAROTOR,
+            self.MAV_TYPE_OCTOROTOR,
+            self.MAV_TYPE_TRICOPTER,
+        ]
+
+        rover_options = [
+            self.MAV_TYPE_GROUND_ROVER,
+            self.MAV_TYPE_SURFACE_BOAT,
+        ]
+
+        sub_options = [
+            self.MAV_TYPE_SUBMARINE,
+        ]
+
+        if self in plane_options:
+            return "ArduPlane"
+
+        if self in copter_options:
+            return "ArduCopter"
+
+        if self in rover_options:
+            return "ArduRover"
+
+        if self in sub_options:
+            return "ArduSub"
+
+        return "Unknown"
+
 
 class FirmwareInfo(BaseModel):
     version: str
