@@ -549,6 +549,11 @@ div.pirate-marker.v-icon {
     font-size: 10px;
 }
 
+/* Align home side menu item */
+.v-list--nav .v-list-item {
+  padding: 0 8px;
+}
+
 .v-list-item {
   padding: 0 4px;
 }
