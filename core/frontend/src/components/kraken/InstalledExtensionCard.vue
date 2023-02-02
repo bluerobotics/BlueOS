@@ -25,9 +25,9 @@
           <tbody>
             <tr>
               <td>Status</td>
-              <td>{{ getStatus() }}</td>
+              <td>{{ extension.enabled ? getStatus() : "Disabled" }}</td>
             </tr>
-            <tr>
+            <tr v-if="extension.enabled">
               <td>Memory usage</td>
               <td>
                 <v-progress-linear
@@ -47,7 +47,7 @@
                 </v-progress-linear>
               </td>
             </tr>
-            <tr>
+            <tr v-if="extension.enabled">
               <td>CPU usage</td>
               <td>
                 <v-progress-linear
