@@ -17,6 +17,7 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
 SERVICE_NAME = "commander"
+LOG_FOLDER_PATH = "/var/logs/blueos"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 logger.add(get_new_log_path(SERVICE_NAME))
@@ -44,6 +45,22 @@ def check_what_i_am_doing(i_know_what_i_am_doing: bool = False) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Developer, you don't know what you are doing, command aborted.",
         )
+
+
+def delete_everything(path: Path) -> None:
+    if path.is_file():
+        path.unlink()
+        return
+
+    for item in path.glob("*"):
+        try:
+            if item.is_file():
+                item.unlink()
+            if item.is_dir():
+                # Delete folder and its contents
+                shutil.rmtree(item)
+        except Exception as exception:
+            logger.warning(f"Failed to delete: {item}, {exception}")
 
 
 @app.post("/command/host", status_code=status.HTTP_200_OK)
@@ -125,17 +142,14 @@ async def raspi_config_camera_legacy_set(enable: bool = True) -> Any:
 @version(1, 0)
 async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
     check_what_i_am_doing(i_know_what_i_am_doing)
+    delete_everything(Path(appdirs.user_config_dir()))
 
-    user_config_dir = Path(appdirs.user_config_dir())
-    for item in user_config_dir.glob("*"):
-        try:
-            if item.is_file():
-                item.unlink()
-            if item.is_dir():
-                # Delete folder and its contents
-                shutil.rmtree(item)
-        except Exception as exception:
-            logger.warning(f"Failed to delete: {item}, {exception}")
+
+@app.post("/services/remove_log", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def remove_log_services(i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    delete_everything(Path(LOG_FOLDER_PATH))
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
