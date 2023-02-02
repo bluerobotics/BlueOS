@@ -82,7 +82,7 @@ class Kraken:
             async with session.get(REPO_URL) as resp:
                 if resp.status != 200:
                     print(f"Error status {resp.status}")
-                    raise Exception(f"Could not fetch manifest file: reponse status : {resp.status}")
+                    raise Exception(f"Could not fetch manifest file: response status : {resp.status}")
                 self.manifest_cache = await resp.json()
                 return await resp.json(content_type=None)
 
