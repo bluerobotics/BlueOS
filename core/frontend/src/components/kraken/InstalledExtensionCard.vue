@@ -1,8 +1,11 @@
 <template>
   <v-card>
-    <template v-if="extension.loading">
-      <v-overlay absolute />
-      <SpinningLogo size="30%" style="position: absolute"/>
+    <template v-if="loading || extension.enabled && !container">
+      <v-overlay absolute>
+        <SpinningLogo
+          size="30%"
+        />
+      </v-overlay>
     </template>
     <v-card-title class="pb-0">
       {{ extension.docker.split('/')[1] }} <span
@@ -159,6 +162,11 @@ export default Vue.extend({
     extension: {
       type: Object as PropType<InstalledExtensionData>,
       required: true,
+    },
+    loading: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
     metrics: {
       type: Object as PropType<{cpu: number, memory: string}>,
