@@ -82,7 +82,7 @@ class Kraken:
             async with session.get(REPO_URL) as resp:
                 if resp.status != 200:
                     print(f"Error status {resp.status}")
-                    raise Exception(f"Could not fetch manifest file: response status : {resp.status}")
+                    raise RuntimeError(f"Could not fetch manifest file: response status : {resp.status}")
                 self.manifest_cache = await resp.json()
                 return await resp.json(content_type=None)
 
@@ -131,7 +131,7 @@ class Kraken:
     async def container_from_identifier(self, extension_identifier: str) -> str:
         extension = await self.extension_from_identifier(extension_identifier)
         if not extension:
-            raise Exception(f"Could not find container for {extension_identifier}, is it running?")
+            raise RuntimeError(f"Could not find container for {extension_identifier}, is it running?")
         return str(extension.container_name())
 
     async def kill(self, container_name: str) -> None:
@@ -156,14 +156,14 @@ class Kraken:
     async def update_extension_to_version(self, identifier: str, version: str) -> AsyncGenerator[bytes, None]:
         extension = await self.extension_from_identifier(identifier)
         if not extension:
-            raise Exception(f"Extension with identifier {identifier} not found!")
+            raise RuntimeError(f"Extension with identifier {identifier} not found!")
         # TODO: plug dependency-checking in here
         version_manifests = [entry for entry in self.manifest_cache if entry["identifier"] == identifier]
         if not version_manifests:
-            raise Exception(f"identifier not found in manifest: {identifier}")
+            raise RuntimeError(f"identifier not found in manifest: {identifier}")
         manifest = version_manifests[0]
         if version not in manifest["versions"]:
-            raise Exception(f"version not found in manifest: {version}")
+            raise RuntimeError(f"version not found in manifest: {version}")
         await self.uninstall_extension_from_identifier(identifier)
         version_data = manifest["versions"][version]
 
@@ -235,7 +235,7 @@ class Kraken:
     async def disable_extension(self, extension_identifier: str) -> None:
         extension = await self.extension_from_identifier(extension_identifier)
         if not extension:
-            raise Exception(f"Extension not found: {extension_identifier}")
+            raise RuntimeError(f"Extension not found: {extension_identifier}")
 
         logger.info(f"Disabling: {extension_identifier}")
 
@@ -275,7 +275,7 @@ class Kraken:
     async def load_logs(self, container_name: str) -> List[str]:
         containers = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
         if not containers:
-            raise Exception(f"Container not found: {container_name}")
+            raise RuntimeError(f"Container not found: {container_name}")
         return cast(List[str], await containers[0].log(stdout=True, stderr=True))
 
     async def load_stats(self) -> Dict[str, Any]:
