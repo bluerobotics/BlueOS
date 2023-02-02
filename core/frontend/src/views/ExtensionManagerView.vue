@@ -101,7 +101,7 @@
           </v-col>
         </v-row>
         <v-container
-          v-if="installed_extensions.length === 0"
+          v-if="Object.keys(installed_extensions).isEmpty()"
           class="text-center"
         >
           <p
@@ -178,7 +178,7 @@ export default Vue.extend({
     return {
       tab: 0,
       show_dialog: false,
-      installed_extensions: [] as InstalledExtensionData[],
+      installed_extensions: {} as Dictionary<InstalledExtensionData>,
       selected_extension: null as (null | ExtensionData),
       running_containers: [] as RunningContainer[],
       manifest: [] as ExtensionData[],
@@ -333,7 +333,10 @@ export default Vue.extend({
         timeout: 30000,
       })
         .then((response) => {
-          this.installed_extensions = response.data
+          this.installed_extensions = {}
+          for (const extension of response.data) {
+            this.installed_extensions[extension.identifier] = extension
+          }
           this.dockers_fetch_done = true
         })
         .catch((error) => {
