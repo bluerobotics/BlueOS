@@ -42,6 +42,7 @@ export interface InstalledExtensionData {
     permissions: string
     user_permissions: string
     status?: string
+    loading?: boolean
 }
 export interface RunningContainer {
     name: string
