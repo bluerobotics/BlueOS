@@ -1,5 +1,9 @@
 <template>
   <v-card>
+    <template v-if="extension.loading">
+      <v-overlay absolute />
+      <SpinningLogo size="30%" style="position: absolute"/>
+    </template>
     <v-card-title class="pb-0">
       {{ extension.docker.split('/')[1] }} <span
         class="ml-3"
@@ -146,8 +150,11 @@ import system_information from '@/store/system-information'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 import { prettifySize } from '@/utils/helper_functions'
 
+import SpinningLogo from '../common/SpinningLogo.vue'
+
 export default Vue.extend({
   name: 'InstalledExtensionCard',
+  components: { SpinningLogo },
   props: {
     extension: {
       type: Object as PropType<InstalledExtensionData>,
