@@ -42,10 +42,10 @@ ruff "$repository_path"
 echo "Running pylint.."
 pylint $(git ls-files '*.py')
 
-echo "Running mypy.."
-git ls-files '*.py' | xargs --max-lines=1 mypy --no-incremental
-
 echo "Running pytest.."
 pytest --cov="$repository_path" --cov-report html
+
+echo "Running mypy.."
+git ls-files '*.py' | xargs --max-lines=1 mypy --no-incremental
 
 exit 0
