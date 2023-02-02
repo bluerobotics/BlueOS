@@ -94,7 +94,10 @@ class FirmwareInstaller:
             current_decoder_platform = get_correspondent_decoder_platform(platform)
             if current_decoder_platform not in [firm_board, firm_sub_board]:
                 raise InvalidFirmwareFile(
-                    f"Firmware's platform ({current_decoder_platform}) does not match system's ({platform})."
+                    (
+                        f"Firmware's platform ({current_decoder_platform}) does not match system's ({platform}),"
+                        f"for board ({firm_board}) or sub board ({firm_sub_board})."
+                    )
                 )
         except Exception as error:
             raise InvalidFirmwareFile("Given firmware is not a supported version.") from error
