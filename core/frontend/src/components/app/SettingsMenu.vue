@@ -24,8 +24,9 @@
 
         <v-divider />
 
-        <v-card-actions class="d-flex flex-column justify-space-around align-center">
+        <v-card-actions class="flex-column d-flex justify-space-around mb-6">
           <v-btn
+            class="ma-2"
             @click="reset_settings"
           >
             <v-icon left>
@@ -33,6 +34,17 @@
             </v-icon>
             Reset Settings
           </v-btn>
+
+          <v-btn
+            class="ma-2"
+            @click="remove_service_log_files"
+          >
+            <v-icon left>
+              mdi-trash-can
+            </v-icon>
+            Remove Services Log Files
+          </v-btn>
+
           <v-switch
             v-model="settings.is_dark_theme"
             label="Dark mode"
@@ -91,6 +103,20 @@ export default Vue.extend({
         .catch((error) => {
           notifier.pushBackError('RESET_SETTINGS_FAIL', error)
         })
+    },
+    async remove_service_log_files(): Promise<void> {
+      await back_axios({
+        url: `${API_URL}/services/remove_log`,
+        method: 'post',
+        params: {
+          i_know_what_i_am_doing: true,
+        },
+        timeout: 2000,
+      })
+        .catch((error) => {
+          notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
+        })
+      this.showDialog(false)
     },
     showDialog(state: boolean): void {
       this.show_dialog = state
