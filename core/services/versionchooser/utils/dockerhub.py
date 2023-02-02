@@ -18,7 +18,7 @@ def get_current_arch() -> str:
     machine = platform.machine()
     arch = arch_map.get(machine, None)
     if not arch:
-        raise Exception(f"Unknown architecture! {machine}")
+        raise RuntimeError(f"Unknown architecture! {machine}")
     return arch
 
 
@@ -63,7 +63,7 @@ class TagFetcher:
             async with session.get(auth_url + "/token", params=payload) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
-                    raise Exception("Could not get auth token")
+                    raise RuntimeError("Could not get auth token")
                 return str((await resp.json(content_type=None))["token"])
 
     async def fetch_sha(self, metadata: TagMetadata) -> str:
@@ -77,7 +77,9 @@ class TagFetcher:
             async with session.get(url, headers=header) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
-                    raise Exception(f"Failed getting sha from DockerHub at {url} : {resp.status} : {await resp.text()}")
+                    raise RuntimeError(
+                        f"Failed getting sha from DockerHub at {url} : {resp.status} : {await resp.text()}"
+                    )
                 data = await resp.json(content_type=None)
                 return str(data["config"]["digest"])
 
@@ -92,7 +94,7 @@ class TagFetcher:
             ) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
-                    raise Exception("Failed getting tags from DockerHub!")
+                    raise RuntimeError("Failed getting tags from DockerHub!")
                 data = await resp.json(content_type=None)
                 tags = data["results"]
 
