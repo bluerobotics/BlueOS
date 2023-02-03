@@ -56,6 +56,7 @@ class Mavlink2RestManager {
             }
           }
         })
+        .catch((reason) => console.log(`invalid URL: ${asHttp} reason: ${reason}`))
     })
   }
 
