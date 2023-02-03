@@ -104,6 +104,11 @@ class Mavlink2RestManager {
    *
    */
   sendMessageViaWebsocket(message: any): void {
+    if (!this.socket) {
+      this.socket = this.createSocket(this.baseUrl)
+      this.socket.onopen = () => this.sendMessageViaWebsocket(message)
+      return
+    }
     try {
       this.socket?.send(JSON.stringify(message))
     } catch (error) {
