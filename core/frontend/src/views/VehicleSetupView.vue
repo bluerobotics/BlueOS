@@ -35,7 +35,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import { fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
+import { fetchFirmwareVehicleType, fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
 import PwmSetup from '@/components/vehiclesetup/PwmSetup.vue'
 import setupOverview from '@/components/vehiclesetup/SetupOverview.vue'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
@@ -53,9 +53,11 @@ export default Vue.extend({
   },
   mounted() {
     callPeriodically(fetchVehicleType, 10000)
+    callPeriodically(fetchFirmwareVehicleType, 10000)
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchVehicleType)
+    stopCallingPeriodically(fetchFirmwareVehicleType)
   },
 })
 </script>
