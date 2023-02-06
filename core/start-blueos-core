@@ -12,6 +12,9 @@ MAV_SYSTEM_ID=1
 ## We use the last ID for the onboard computer component reserved address for our usage
 MAV_COMPONENT_ID_ONBOARD_COMPUTER4=194
 
+# Enable Rust backtrace for all programs
+RUST_BACKTRACE=1
+
 # Update docker binds, if we need to restart, exit!
 blueos_startup_update
 
