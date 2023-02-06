@@ -44,11 +44,6 @@
             </v-icon>
             Remove Services Log Files
           </v-btn>
-
-          <v-switch
-            v-model="settings.is_dark_theme"
-            label="Dark mode"
-          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -70,7 +65,6 @@
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
-import settings from '@/libs/settings'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -84,7 +78,6 @@ export default Vue.extend({
     return {
       show_dialog: false,
       show_reset_dialog: false,
-      settings,
     }
   },
   methods: {
