@@ -211,6 +211,16 @@ jobs:
           name: BlueOS-core-docker-image.zip
           path: '*.tar'
 
+      - name: Upload docker image for release
+        uses: svenstaro/upload-release-action@v2
+        if: startsWith(github.ref, 'refs/tags/') && success() && matrix.docker == 'core'
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: BlueOS-core-*.tar
+          tag: ${{ github.ref }}
+          overwrite: true
+          prerelease: true
+          file_glob: true
 
   deploy-raspberry-image:
     needs: deploy-docker-images
