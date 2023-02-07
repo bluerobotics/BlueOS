@@ -16,6 +16,7 @@ export default Vue.extend({
   components: {
     Sub: () => import('./SubViewer.vue'),
     Rover: () => import('./RoverViewer.vue'),
+    None: () => import('./NoneViewer.vue'),
     // TODO: implement a generic viewer for other vehicles
   },
   props: {
@@ -41,7 +42,7 @@ export default Vue.extend({
         case 'Surface Boat':
           return 'Rover'
         default:
-          return ''
+          return 'None'
       }
     },
   },
