@@ -69,17 +69,17 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Yarn install
-        uses: borales/actions-yarn@v3.0.0
+        uses: borales/actions-yarn@v4
         with:
           cmd: --cwd ./core/frontend install --frozen-lockfile --ignore-engines
 
       - name: Yarn lint
-        uses: borales/actions-yarn@v3.0.0
+        uses: borales/actions-yarn@v4
         with:
           cmd: --cwd ./core/frontend lint --ignore-engines
 
       - name: Yarn build
-        uses: borales/actions-yarn@v3.0.0
+        uses: borales/actions-yarn@v4
         with:
           cmd: --cwd ./core/frontend build --ignore-engines
 
