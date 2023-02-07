@@ -57,7 +57,7 @@ jobs:
         ./.hooks/pre-push
 
     - name: Upload coverage
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: coverage
         path: htmlcov
@@ -205,7 +205,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-${GIT_HASH_SHORT}.tar" \
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image.zip
@@ -256,7 +256,7 @@ jobs:
           zip BlueOS-raspberry.zip deploy/pimod/blueos.img
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           # We use the .img to avoid a zip of a zip
           name: BlueOS-raspberry.zip
