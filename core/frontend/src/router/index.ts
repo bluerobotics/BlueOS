@@ -13,6 +13,7 @@ import Main from '../views/MainView.vue'
 import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
 import NetworkTestView from '../views/NetworkTestView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
+import PageNotFound from '../views/PageNotFound.vue'
 import ParameterEditorView from '../views/ParameterEditorView.vue'
 import Pings from '../views/Pings.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
@@ -118,6 +119,11 @@ const routes: Array<RouteConfig> = [
     path: '/vehicle/parameters',
     name: 'Parameter Editor',
     component: ParameterEditorView,
+  },
+  {
+    path: '*',
+    name: '404',
+    component: PageNotFound,
   },
 ]
 
