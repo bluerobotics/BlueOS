@@ -123,15 +123,15 @@ jobs:
           # Add temporary tag for the new project name
           TAGS="$TAGS --tag ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.new_project }}-${{ matrix.docker }}:${VERSION}"
 
-          echo ::set-output name=docker_image::${DOCKER_IMAGE}
-          echo ::set-output name=version::${VERSION}
-          echo ::set-output name=buildx_args::--platform ${{ matrix.platforms }} \
+          echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "buildx_args=--platform ${{ matrix.platforms }} \
             --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long) \
             --build-arg VUE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
-            --cache-from "type=local,src=/tmp/.buildx-cache" \
-            --cache-to "type=local,dest=/tmp/.buildx-cache" \
+            --cache-from 'type=local,src=/tmp/.buildx-cache' \
+            --cache-to 'type=local,dest=/tmp/.buildx-cache' \
             ${TAGS} \
-            --file ${{ matrix.docker }}/Dockerfile ./${{ matrix.docker }}
+            --file ${{ matrix.docker }}/Dockerfile ./${{ matrix.docker }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
