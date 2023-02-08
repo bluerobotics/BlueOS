@@ -111,6 +111,7 @@ import Vue, { PropType } from 'vue'
 
 import Notifier from '@/libs/notifier'
 import wifi from '@/store/wifi'
+import { getErrorMessage } from '@/types/common'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, NetworkCredentials } from '@/types/wifi'
 import back_axios from '@/utils/api'
@@ -211,9 +212,9 @@ export default Vue.extend({
         wifi.setNetworkStatus(null)
         this.password = ''
         this.force_password = false
-      } catch (error: any) {
+      } catch (error) {
         this.connection_status = ConnectionStatus.Failed
-        let message = error.response?.data?.detail ?? error.message
+        let message = getErrorMessage(error)
         message = message.concat('\n', 'Please check if the password is correct.')
         notifier.pushError('WIFI_CONNECT_FAIL', message, true)
       }
