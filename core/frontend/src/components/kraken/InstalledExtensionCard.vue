@@ -154,18 +154,18 @@ export default Vue.extend({
       required: true,
     },
     metrics: {
-      type: Object as PropType<any>,
+      type: Object as PropType<{cpu: number, memory: string}>,
       required: true,
     },
     container: {
-      type: Object as PropType<any>,
+      type: Object as PropType<{status: string}>,
       required: false,
-      default: () => null,
+      default: undefined as {status: string} | undefined,
     },
     extensionData: {
       type: Object as PropType<ExtensionData>,
       required: false,
-      default: () => undefined as ExtensionData | undefined,
+      default: undefined as ExtensionData | undefined,
     },
   },
   data() {
