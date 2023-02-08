@@ -23,6 +23,7 @@
       <div class="text-h6 font-weight-light mb-2">
         {{ title }}
       </div>
+      <!-- eslint-disable vue/no-v-html -->
       <div
         class="subheading font-weight-light grey--text"
         v-html="text"
