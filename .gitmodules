@@ -1,0 +1,3 @@
+[submodule "core/frontend/src/libs/MAVLink2Rest/mavlink2rest-ts"]
+	path = core/frontend/src/libs/MAVLink2Rest/mavlink2rest-ts
+	url = https://github.com/patrickelectric/mavlink2rest-ts.git
