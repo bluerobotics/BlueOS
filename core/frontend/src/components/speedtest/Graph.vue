@@ -71,10 +71,11 @@ export default Vue.extend({
     },
   },
   methods: {
-    updateSeries(series: Data) {
+    async updateSeries(series: Data) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const chart = this.$refs.chart as any
-      chart.series[0].data = series.download
-      chart.series[1].data = series.upload
+      chart.series[0].data = series.download as unknown
+      chart.series[1].data = series.upload as unknown
       chart.updateSeries([
         {
           data: series.download,
