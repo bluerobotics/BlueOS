@@ -105,12 +105,12 @@ export default Vue.extend({
     clearInterval(this.timer)
   },
   methods: {
-    filterName(value: any, search: string, _item: any) {
+    filterName(value: number | string | Array<string>, search: string, _item: unknown) {
       if (search == null || search === '') {
         return true
       }
 
-      let our_value = value
+      let our_value: number | string | Array<string> = value
       if (typeof our_value === 'number') {
         our_value = value.toString()
       }
