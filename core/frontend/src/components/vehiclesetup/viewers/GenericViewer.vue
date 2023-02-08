@@ -100,6 +100,7 @@ export default Vue.extend({
       model_override_path: '' as string | undefined,
       annotations: {} as Dictionary<HotspotConfiguration>,
       override_annotations: {} as Dictionary<HotspotConfiguration>,
+      default_alphas: {} as Dictionary<number>,
     }
   },
   computed: {
@@ -310,9 +311,14 @@ export default Vue.extend({
       const materials = (this.$refs.modelviewer as ModelViewerElement).model?.materials ?? []
       const affected_materials = materials.filter((material) => material.name.toLowerCase().includes(lower_text))
       for (const material of affected_materials) {
-        material.setAlphaMode(new_color < 1.0 ? 'BLEND' : 'OPAQUE')
+        // store default alphas and do not allow going above it.
+        if (!(material.name in this.default_alphas)) {
+          // eslint-disable-next-line prefer-destructuring
+          this.default_alphas[material.name] = material.pbrMetallicRoughness.baseColorFactor[3]
+        }
         const color = material.pbrMetallicRoughness.baseColorFactor
-        color[3] = new_color
+        color[3] = Math.min(new_color, this.default_alphas[material.name])
+        material.setAlphaMode(color[3] < 1.0 ? 'BLEND' : 'OPAQUE')
         material.pbrMetallicRoughness.setBaseColorFactor(color)
       }
     },
