@@ -36,7 +36,7 @@
               </td>
               <td>{{ imu.busType }} {{ imu.bus }}</td>
               <td>{{ `0x${imu.address}` }}</td>
-              <td>{{ imu_is_calibrated(imu) ? 'Calibrated' : 'Needs Calibration' }}</td>
+              <td>{{ imu_is_calibrated[imu.param] ? 'Calibrated' : 'Needs Calibration' }}</td>
             </tr>
             <tr
               v-for="compass in compasses"
@@ -46,7 +46,7 @@
               <td>Compass</td>
               <td>{{ compass.busType }} {{ compass.bus }}</td>
               <td>{{ `0x${compass.address}` }}</td>
-              <td>{{ compass_is_calibrated(compass) ? 'Calibrated' : 'Needs Calibration' }}</td>
+              <td>{{ compass_is_calibrated[compass.param] ? 'Calibrated' : 'Needs Calibration' }}</td>
             </tr>
             <tr
               v-for="baro in baros"
@@ -54,11 +54,11 @@
             >
               <td><b>{{ baro.deviceName ?? 'UNKNOWN' }}</b></td>
               <td v-tooltip="'Used to estimate altitude/depth'">
-                {{ get_pressure_type(baro) }} Pressure
+                {{ get_pressure_type[baro.param] }} Pressure
               </td>
               <td>{{ baro.busType }} {{ baro.bus }}</td>
               <td>{{ `0x${baro.address}` }}</td>
-              <td>{{ baro_status(baro) }}</td>
+              <td>{{ baro_status[baro.param] }}</td>
             </tr>
           </tbody>
         </template>
@@ -70,16 +70,13 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import Notifier from '@/libs/notifier'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
 import { printParam } from '@/types/autopilot/parameter'
-import { parameters_service } from '@/types/frontend_services'
+import { Dictionary } from '@/types/common'
 import decode, { deviceId } from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
-
-const notifier = new Notifier(parameters_service)
 
 export default Vue.extend({
   name: 'OnboardSensors',
@@ -99,6 +96,96 @@ export default Vue.extend({
         .filter((param) => param.value !== 0)
         .map((parameter) => decode(parameter.name, parameter.value))
     },
+    compass_is_calibrated(): Dictionary<boolean> {
+      const results = {} as Dictionary<boolean>
+      for (const compass of this.compasses) {
+        const compass_number = compass.param.split('COMPASS_DEV_ID')[1]
+        const offset_params_names = [
+          `COMPASS_OFS${compass_number}_X`,
+          `COMPASS_OFS${compass_number}_Y`,
+          `COMPASS_OFS${compass_number}_Z`,
+        ]
+        const diagonal_params_names = [
+          `COMPASS_ODI${compass_number}_X`,
+          `COMPASS_ODI${compass_number}_Y`,
+          `COMPASS_ODI${compass_number}_Z`,
+        ]
+
+        const offset_params = offset_params_names.map(
+          (name) => autopilot_data.parameter(name),
+        )
+        const diagonal_params = diagonal_params_names.map(
+          (name) => autopilot_data.parameter(name),
+        )
+        if (offset_params.includes(undefined) || diagonal_params.includes(undefined)) {
+          results[compass.param] = false
+          continue
+        }
+        const scale_param_name = `COMPASS_SCALE${compass_number}`
+        const scale_param = autopilot_data.parameter(scale_param_name)
+        const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
+        const is_at_default_diagonals = diagonal_params.every((param) => param?.value === 0.0)
+        results[compass.param] = offset_params.isEmpty() || diagonal_params.isEmpty()
+          || !is_at_default_offsets || !is_at_default_diagonals || scale_param?.value !== 0.0
+      }
+      return results
+    },
+    imu_is_calibrated(): Dictionary<boolean> {
+      const results = {} as Dictionary<boolean>
+      for (const imu of this.imus) {
+        const param_radix = imu.param.split('_ID')[0]
+        const offset_params_names = [`${param_radix}OFFS_X`, `${param_radix}OFFS_Y`, `${param_radix}OFFS_Z`]
+        const scale_params_names = [`${param_radix}SCAL_X`, `${param_radix}SCAL_Y`, `${param_radix}SCAL_Z`]
+        const offset_params = offset_params_names.map(
+          (name) => autopilot_data.parameter(name),
+        )
+        const scale_params = scale_params_names.map(
+          (name) => autopilot_data.parameter(name),
+        )
+        const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
+        const is_at_default_scale = scale_params.every((param) => param?.value === 1.0)
+        results[imu.param] = offset_params.isEmpty() || scale_params.isEmpty()
+        || !is_at_default_offsets || !is_at_default_scale
+      }
+      return results
+    },
+    is_water_baro(): Dictionary<boolean> {
+      const results = {} as Dictionary<boolean>
+      for (const compass of this.compasses) {
+        if (['MS5837', 'MS5611', 'KELLERLD'].includes(compass.deviceName ?? '--')
+        && autopilot.vehicle_type === 'Submarine') {
+          results[compass.param] = true
+        }
+        results[compass.param] = false
+      }
+      return results
+    },
+    baro_status(): Dictionary<string> {
+      const results = {} as Dictionary<string>
+      for (const baro of this.baros) {
+        const radix = baro.param.replace('_DEVID', '')
+        const number = parseInt(radix.replace('BARO', ''), 10)
+        if (this.is_water_baro[baro.param]) {
+          const value = mavlink_store_get(mavlink, 'VFR_HUD.messageData.message.alt') as number
+          results[baro.param] = `${value ? value.toFixed(2) : '--'} m`
+        }
+        const msg = number === 1 ? 'SCALED_PRESSURE' : `SCALED_PRESSURE${number}`
+        const value = mavlink_store_get(mavlink, `${msg}.messageData.message.press_abs`) as number
+        results[baro.param] = `${value ? value.toFixed(2) : '--'} hPa`
+      }
+      return results
+    },
+    get_pressure_type(): Dictionary<string> {
+      const results = {} as Dictionary<string>
+      for (const barometer of this.baros) {
+        if (!this.is_water_baro[barometer.param]) {
+          results[barometer.param] = 'Barometric'
+        }
+        const spec_gravity_param = autopilot_data.parameter('BARO_SPEC_GRAV')
+        results[barometer.param] = printParam(spec_gravity_param)
+      }
+      return results
+    },
   },
   mounted() {
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE', refreshRate: 1 })
@@ -106,78 +193,7 @@ export default Vue.extend({
     mavlink.setMessageRefreshRate({ messageName: 'VFR_HUD', refreshRate: 1 })
   },
   methods: {
-    imu_is_calibrated(imu: deviceId) {
-      const param_radix = imu.param.split('_ID')[0]
-      const offset_params_names = [`${param_radix}OFFS_X`, `${param_radix}OFFS_Y`, `${param_radix}OFFS_Z`]
-      const scale_params_names = [`${param_radix}SCAL_X`, `${param_radix}SCAL_Y`, `${param_radix}SCAL_Z`]
-      const offset_params = offset_params_names.map(
-        (name) => autopilot_data.parameter(name),
-      )
-      const scale_params = scale_params_names.map(
-        (name) => autopilot_data.parameter(name),
-      )
-      const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
-      const is_at_default_scale = scale_params.every((param) => param?.value === 1.0)
-      return offset_params.isEmpty() || scale_params.isEmpty() || !is_at_default_offsets || !is_at_default_scale
-    },
-    is_water_baro(baro: deviceId) {
-      if (['MS5837', 'MS5611', 'KELLERLD'].includes(baro?.deviceName ?? '--')
-      && autopilot.vehicle_type === 'Submarine') {
-        return true
-      }
-      return false
-    },
-    compass_is_calibrated(imu: deviceId) {
-      const compass_number = imu.param.split('COMPASS_DEV_ID')[1]
-      const offset_params_names = [
-        `COMPASS_OFS${compass_number}_X`,
-        `COMPASS_OFS${compass_number}_Y`,
-        `COMPASS_OFS${compass_number}_Z`,
-      ]
-      const diagonal_params_names = [
-        `COMPASS_ODI${compass_number}_X`,
-        `COMPASS_ODI${compass_number}_Y`,
-        `COMPASS_ODI${compass_number}_Z`,
-      ]
 
-      const offset_params = offset_params_names.map(
-        (name) => autopilot_data.parameter(name),
-      )
-      const diagonal_params = diagonal_params_names.map(
-        (name) => autopilot_data.parameter(name),
-      )
-      if (offset_params.includes(undefined) || diagonal_params.includes(undefined)) {
-        notifier.pushError('PARAM_MISSING', 'Unable to find Compass parameters')
-        // Todo: add an ERROR state for returing
-        return false
-      }
-
-      const scale_param_name = `COMPASS_SCALE${compass_number}`
-      const scale_param = autopilot_data.parameter(scale_param_name)
-      const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
-      const is_at_default_diagonals = diagonal_params.every((param) => param?.value === 0.0)
-      return offset_params.isEmpty() || diagonal_params.isEmpty()
-        || !is_at_default_offsets || !is_at_default_diagonals || scale_param?.value !== 0.0
-    },
-    baro_status(baro: deviceId) {
-      const radix = baro.param.replace('_DEVID', '')
-      const number = parseInt(radix.replace('BARO', ''), 10)
-      if (this.is_water_baro(baro)) {
-        const value = mavlink_store_get(mavlink, 'VFR_HUD.messageData.message.alt') as number
-        return `${value ? value.toFixed(2) : '--'} m`
-      }
-      const msg = number === 1 ? 'SCALED_PRESSURE' : `SCALED_PRESSURE${number}`
-      const value = mavlink_store_get(mavlink, `${msg}.messageData.message.press_abs`) as number
-      return `${value ? value.toFixed(2) : '--'} hPa`
-    },
-    get_pressure_type(baro: deviceId) {
-      if (!this.is_water_baro(baro)) {
-        return 'Barometric'
-      }
-      const spec_gravity_param = autopilot_data.parameter('BARO_SPEC_GRAV')
-
-      return `${printParam(spec_gravity_param)}`
-    },
   },
 })
 </script>
