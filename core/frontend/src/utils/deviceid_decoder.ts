@@ -115,6 +115,7 @@ function toHex(value: number): string {
 
 export interface deviceId {
     param: string
+    paramValue: number
     deviceName?: string
     busType: string
     bus: number
@@ -162,5 +163,6 @@ export default function decode(device: string, devid: number): deviceId {
     bus,
     address: toHex(address),
     devtype,
+    paramValue: devid,
   }
 }
