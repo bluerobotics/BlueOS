@@ -119,6 +119,7 @@ class BridgetStore extends VuexModule {
   }
 
   @Action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async registerObject(object: any): Promise<void> {
     this.registerListener()
     const ref = new WeakRef(object)

@@ -106,6 +106,7 @@ class BeaconStore extends VuexModule {
   }
 
   @Action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async registerBeaconListener(object: any): Promise<void> {
     this.addListener()
     const ref = new WeakRef(object)
