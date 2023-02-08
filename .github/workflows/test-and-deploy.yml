@@ -79,7 +79,7 @@ jobs:
       - name: Yarn lint
         uses: borales/actions-yarn@v4
         with:
-          cmd: --cwd ./core/frontend lint --ignore-engines --max-warnings=36
+          cmd: --cwd ./core/frontend lint --ignore-engines --max-warnings=22
 
       - name: Yarn build
         uses: borales/actions-yarn@v4
