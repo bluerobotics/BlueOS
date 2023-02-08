@@ -101,11 +101,12 @@
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import { Message } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest'
 import { Dictionary } from '@/types/common'
 import prettify from '@/utils/mavlink_prettifier'
 
 class MAVLinkMessageTable {
-  tables: Dictionary<Array<Dictionary<any>>> = {}
+  tables: Dictionary<Array<Message>> = {}
 
   messageTypes: string[] = []
 
@@ -115,7 +116,7 @@ class MAVLinkMessageTable {
     this.tables = {}
   }
 
-  add(mavlink_message: Dictionary<any>): void {
+  add(mavlink_message: Message): void {
     const message_timed = mavlink_message
     message_timed.timestamp = new Date()
     const { message } = mavlink_message
@@ -133,8 +134,8 @@ class MAVLinkMessageTable {
     return Object.keys(this.tables).sort()
   }
 
-  get(types: string[]): any[] {
-    let result: any[] = []
+  get(types: string[]): Message[] {
+    let result: Message[] = []
     for (const type of types) {
       result = [...result, ...this.tables[type]]
     }
@@ -147,7 +148,7 @@ export default Vue.extend({
   components: {
   },
   filters: {
-    prettyPrint(mavlink_message: any) {
+    prettyPrint(mavlink_message: Message) {
       return prettify(mavlink_message.message)
     },
   },
@@ -157,9 +158,9 @@ export default Vue.extend({
       message_table: new MAVLinkMessageTable(),
       message_type_interval: 0,
       messages_in_view_interval: 0,
-      messages_in_view: [] as any[],
+      messages_in_view: [] as Message[],
       selected_message_types: [],
-      detailed_message: null as (null | any),
+      detailed_message: null as (null | Message),
       message_filter: '',
     }
   },
@@ -185,7 +186,7 @@ export default Vue.extend({
     update_messages_in_view() {
       this.messages_in_view = this.message_table.get(this.selected_message_types)
     },
-    showDetailed(message: any) {
+    showDetailed(message: Message) {
       this.detailed_message = message
     },
     setupWs() {
