@@ -43,7 +43,9 @@
               :key="compass.param"
             >
               <td><b>{{ compass.deviceName ?? 'UNKNOWN' }}</b></td>
-              <td>Compass</td>
+              <td>
+                {{ compass_description[compass.param] }}
+              </td>
               <td>{{ compass.busType }} {{ compass.bus }}</td>
               <td>{{ `0x${compass.address}` }}</td>
               <td>{{ compass_is_calibrated[compass.param] ? 'Calibrated' : 'Needs Calibration' }}</td>
@@ -95,6 +97,40 @@ export default Vue.extend({
       return autopilot_data.parameterRegex('^BARO.*_DEVID')
         .filter((param) => param.value !== 0)
         .map((parameter) => decode(parameter.name, parameter.value))
+    },
+    compass_description(): Dictionary<string> {
+      const results = {} as Dictionary<string>
+      for (const compass of this.compasses) {
+        // First we check the priority for this device
+        let priority = 'Unused'
+        let number_in_parameter = 0
+        for (const param of autopilot_data.parameterRegex('^COMPASS_PRIO.*_ID')) {
+          if (param.value === compass.paramValue) {
+            const number_in_parameter_as_string = param.name.match(/\d+/g)?.[0] ?? '1'
+            number_in_parameter = parseInt(number_in_parameter_as_string, 10)
+            switch (number_in_parameter) {
+              case 1:
+                priority = '1st'
+                break
+              case 2:
+                priority = '2nd'
+                break
+              case 3:
+                priority = '3rd'
+                break
+              default:
+                priority = 'Unused'
+            }
+          }
+        }
+        // Then we check if it is internal or external
+        const extern_param_name = number_in_parameter === 1
+          ? 'COMPASS_EXTERNAL' : `COMPASS_EXTERN${number_in_parameter}`
+        const external = autopilot_data.parameter(extern_param_name)?.value === 1 ?? false
+        const external_string = external ? 'external' : 'internal'
+        results[compass.param] = `${priority} Compass (${external_string})`
+      }
+      return results
     },
     compass_is_calibrated(): Dictionary<boolean> {
       const results = {} as Dictionary<boolean>
