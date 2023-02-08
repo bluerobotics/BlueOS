@@ -1,6 +1,6 @@
 import message_manager, { MessageLevel } from '@/libs/message-manager'
 import notifications from '@/store/notifications'
-import { Service } from '@/types/common'
+import { GenericError, getErrorMessage, Service } from '@/types/common'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
 import { backend_offline_error } from '@/utils/api'
 
@@ -38,9 +38,9 @@ class Notifier {
     this.push(NotificationLevel.Critical, type, message)
   }
 
-  pushBackError(type: string, error: any, alert = false): void {
+  pushBackError(type: string, error: GenericError, alert = false): void {
     if (error === backend_offline_error) { return }
-    const message = error.response?.data?.detail ?? error.message
+    const message = getErrorMessage(error)
     this.pushError(type, message, alert)
   }
 }
