@@ -1,5 +1,30 @@
 /** Represents a BlueOS service, with the necessary information to identify it on the system */
 
+type PythonServiceError = {response: {data: {detail: string}}}
+export type GenericError = Error | PythonServiceError | unknown
+
+function isPythonError(error: GenericError): error is PythonServiceError {
+  // eslint-disable-next-line no-extra-parens
+  return (error as PythonServiceError).response !== undefined
+}
+
+function isError(error: GenericError): error is Error {
+  // eslint-disable-next-line no-extra-parens
+  return (error as Error).message !== undefined
+}
+
+export function getErrorMessage(error: GenericError): string {
+  if (isPythonError(error)) {
+    return error.response.data.detail
+  }
+
+  if (isError(error)) {
+    return error.message
+  }
+
+  return 'Unknown error'
+}
+
 export type JSONValue =
     | string
     | number
