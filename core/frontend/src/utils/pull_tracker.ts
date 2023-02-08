@@ -77,7 +77,7 @@ class PullTracker {
       this.extraction_percentage = extraction_current / extraction_total / 0.01
     }
 
-    digestNewData(progressEvent: any): void {
+    digestNewData(progressEvent: {currentTarget: { response: string}}): void {
       // dataChunk contains the data that have been obtained so far (the whole data so far)..
       // The received data is descbribed at
       // https://docker-py.readthedocs.io/en/stable/api.html#docker.api.image.ImageApiMixin.pull
