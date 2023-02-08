@@ -477,9 +477,9 @@ export default Vue.extend({
           autopilot.setRestarting(false)
         })
     },
-    printMark(item: any, key: string): string {
+    printMark(item: Fuse.FuseResult<Record<string, string>>, key: string): string {
       const name = item.item[key]
-      const indices_array = item?.matches?.find((i: any) => i.key === key)?.indices ?? []
+      const indices_array = item?.matches?.find((i: Fuse.FuseResultMatch) => i.key === key)?.indices ?? []
 
       let indices = indices_array?.[0]
       for (const index of indices_array) {
