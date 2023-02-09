@@ -20,6 +20,7 @@ module.exports = {
   ],
   rules: {
     camelcase: 'off',
+    indent: ['error', 2],
     'func-style': ['error', 'declaration'],
     'import/extensions': 'off',
     'import/order': 'off',
