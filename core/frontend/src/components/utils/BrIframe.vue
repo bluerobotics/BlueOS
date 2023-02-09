@@ -25,7 +25,7 @@ import Vue from 'vue'
 import SpinningLogo from '../common/SpinningLogo.vue'
 
 export default Vue.extend({
-  name: 'Iframe',
+  name: 'BrIframe',
   components: {
     SpinningLogo,
   },
