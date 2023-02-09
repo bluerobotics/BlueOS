@@ -13,6 +13,7 @@
         v-for="(item, index) in Object.values(displayedAnnotations)"
         :key="'annotation' + index"
         :slot="`hotspot-${index}`"
+        type="button"
         class="Hotspot"
         :data-position="item.position"
         :data-normal="item.normal"
