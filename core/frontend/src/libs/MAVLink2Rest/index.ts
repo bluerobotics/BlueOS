@@ -56,6 +56,11 @@ class Mavlink2RestManager {
             }
           }
         })
+        .finally(() => {
+          if (this.socket === undefined) {
+            this.setBaseUrl(this.baseUrl)
+          }
+        })
     })
   }
 
