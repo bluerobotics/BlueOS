@@ -74,3 +74,11 @@ export enum SocketKind {
   UDP = 'UDP',
   TCP = 'TCP',
 }
+
+export interface Indexed {
+  index: number
+}
+
+export interface Keyed {
+  key: string
+}
