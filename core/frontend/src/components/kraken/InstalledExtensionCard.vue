@@ -218,9 +218,10 @@ export default Vue.extend({
       const permissions_str = this.extension.user_permissions
         ? this.extension.user_permissions : this.extension.permissions
       const permissions = JSON.parse(permissions_str)
-      const limit = permissions.HostConfig?.Memory / 1024 ?? undefined
-      if (this.total_memory && limit) {
-        return limit / this.total_memory / 0.01
+      const memory = permissions.HostConfig?.Memory
+      if (this.total_memory && memory) {
+        const limit_kB = memory / 1024
+        return limit_kB / this.total_memory / 0.01
       }
       return 100
     },
