@@ -10,7 +10,7 @@ import Listener from './Listener'
 import messageId from './MessageID'
 
 class Mavlink2RestManager {
-  baseUrl: string;
+  baseUrl: string
 
   // Dictionary mapping endpoints to websocket
   endpoints: Dictionary<Endpoint> = {}
@@ -19,7 +19,7 @@ class Mavlink2RestManager {
 
   private socket: WebSocket | undefined = undefined
 
-  private static instance: Mavlink2RestManager;
+  private static instance: Mavlink2RestManager
 
   private constructor() {
     this.baseUrl = `${Mavlink2RestManager.getWebsocketPrefix()}://${window.location.host}/mavlink2rest/ws/mavlink`

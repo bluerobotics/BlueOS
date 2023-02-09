@@ -11,7 +11,7 @@
     >
       <template v-for="(info, index) in available_bridges">
         <v-divider
-          v-if="index!==0"
+          v-if="index !== 0"
           :key="`divider-${index}`"
         />
         <v-list-item

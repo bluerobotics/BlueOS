@@ -227,11 +227,13 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.viewer.addEventListener('load',
+    this.viewer.addEventListener(
+      'load',
       () => {
         this.hideIrrelevantParts()
         this.forceRefreshAnnotations()
-      })
+      },
+    )
   },
   methods: {
     redraw() {

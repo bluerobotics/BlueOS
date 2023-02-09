@@ -113,9 +113,7 @@ export default Vue.extend({
       const params = autopilot_data.parameterRegex('^SERVO(\\d+)_FUNCTION$')
       // Sort parameters using the servo number instead of alphabetically
       const sorted = params.sort(
-        (a: Parameter, b: Parameter) => a.name.localeCompare(
-          b.name, undefined, { numeric: true, sensitivity: 'base' },
-        ),
+        (a: Parameter, b: Parameter) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }),
       )
       return sorted
     },

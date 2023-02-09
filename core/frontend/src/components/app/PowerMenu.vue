@@ -74,7 +74,7 @@
                 >
                   mdi-folder-refresh
                 </v-icon>
-                {{ settings.is_pirate_mode? "Restart Core container" : "Soft restart" }}
+                {{ settings.is_pirate_mode ? "Restart Core container" : "Soft restart" }}
               </v-btn>
             </v-col>
           </v-col>

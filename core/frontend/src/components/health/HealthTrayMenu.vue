@@ -90,7 +90,7 @@
           <v-icon
             v-if="heartbeat_age() < time_limit_heartbeat"
             class="px-1"
-            :color="`rgba(255,255,255,${0.4 + (1000-heartbeat_age())/1000}`"
+            :color="`rgba(255,255,255,${0.4 + (1000 - heartbeat_age()) / 1000}`"
             title="MAVLink heartbeats arriving as expected"
           >
             mdi-heart-pulse

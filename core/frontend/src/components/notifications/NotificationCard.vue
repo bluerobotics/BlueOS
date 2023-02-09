@@ -1,6 +1,6 @@
 <template>
   <v-lazy
-    :options="{threshold: .5}"
+    :options="{ threshold: .5 }"
     transition="slide-x-transition"
   >
     <v-card

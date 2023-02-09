@@ -14,7 +14,9 @@ const periodic_tasks_counter: Map<() => Promise<void>, number> = new Map()
  * @param interval - Time in milliseconds to wait after the previous request is done
 * */
 export async function callPeriodically(
-  func: () => Promise<void>, interval: number, automated_call?: boolean,
+  func: () => Promise<void>,
+  interval: number,
+  automated_call?: boolean,
 ): Promise<void> {
   let current_count = periodic_tasks_counter.get(func) ?? 0
   if (!automated_call) {

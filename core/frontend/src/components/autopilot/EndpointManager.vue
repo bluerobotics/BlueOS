@@ -7,7 +7,7 @@
     >
       <template v-for="(endpoint, index) in available_endpoints">
         <v-divider
-          v-if="index!==0"
+          v-if="index !== 0"
           :key="index"
           width="80%"
           class="my-4"

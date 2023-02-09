@@ -4,11 +4,11 @@
 import Listener from './Listener'
 
 export default class Endpoint {
-  socket: WebSocket;
+  socket: WebSocket
 
-  listeners: Array<Listener> = [];
+  listeners: Array<Listener> = []
 
-  latestData: any = null;
+  latestData: any = null
 
   constructor(url: string) {
     this.socket = this.createSocket(url)

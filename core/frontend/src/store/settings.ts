@@ -13,22 +13,22 @@ import { castString } from '@/utils/helper_functions'
 })
 
 class SettingsStore extends VuexModule {
-    // Variable for version control of the settings structure
-    settings_version = 1
+  // Variable for version control of the settings structure
+  settings_version = 1
 
-    is_dark_theme: boolean = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  is_dark_theme: boolean = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
 
-    is_pirate_mode = false
+  is_pirate_mode = false
 
-    last_version_update_notification_time = 0 // Start in 1970: https://www.youtube.com/watch?v=wwcKs5K1oWg
+  last_version_update_notification_time = 0 // Start in 1970: https://www.youtube.com/watch?v=wwcKs5K1oWg
 
-    tour_version = 0
+  tour_version = 0
 
     @Mutation
-    setDarkTheme(value: boolean): void {
-      this.is_dark_theme = value
-      SettingsStore.save()
-    }
+  setDarkTheme(value: boolean): void {
+    this.is_dark_theme = value
+    SettingsStore.save()
+  }
 
     @Mutation
     setPirateMode(value: boolean): void {

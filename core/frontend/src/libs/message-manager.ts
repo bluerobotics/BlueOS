@@ -3,7 +3,7 @@ import { NotificationLevel as MessageLevel } from '@/types/notifications'
 // Singleton library for message emitter
 
 class MessageManager {
-  private static instance: MessageManager;
+  private static instance: MessageManager
 
   callbacks: ((level: MessageLevel, message: string) => void)[] = [
     (message, level) => {

@@ -12,7 +12,7 @@
         v-for="(device, index) in video_devices"
       >
         <v-divider
-          v-if="index!==0"
+          v-if="index !== 0"
           :key="index"
         />
         <video-device
