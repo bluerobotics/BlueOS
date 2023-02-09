@@ -10,6 +10,7 @@
     />
     <iframe
       v-show="iframe_loaded"
+      :title="`iframe-${source}`"
       :src="source"
       height="100%"
       width="100%"
