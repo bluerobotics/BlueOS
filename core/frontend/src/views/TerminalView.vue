@@ -1,5 +1,5 @@
 <template>
-  <Iframe
+  <BrIframe
     :source="service_path"
   />
 </template>
@@ -7,12 +7,12 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import Iframe from '@/components/utils/iframe.vue'
+import BrIframe from '@/components/utils/BrIframe.vue'
 
 export default Vue.extend({
   name: 'TerminalView',
   components: {
-    Iframe,
+    BrIframe,
   },
   data() {
     return {
