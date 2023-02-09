@@ -96,7 +96,7 @@ import { Network } from '@/types/wifi'
 import menus, { menuItem } from '../menus'
 
 export default Vue.extend({
-  name: 'Main',
+  name: 'MainView',
   data: () => ({
     menus,
     settings,
