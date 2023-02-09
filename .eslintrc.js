@@ -15,12 +15,13 @@ module.exports = {
   },
   plugins: [
     'html',
+    'import',
     'simple-import-sort',
     'vue',
   ],
   rules: {
     camelcase: 'off',
-    indent: ['error', 2],
+    indent: ['error', 2, { SwitchCase: 1 }],
     'func-style': ['error', 'declaration'],
     'import/extensions': 'off',
     'import/order': 'off',
@@ -52,6 +53,7 @@ module.exports = {
     ],
     'no-param-reassign': 'off',
     'no-shadow': 'off',
+    'no-use-before-define': 'off',
     'no-useless-constructor': 'off',
     semi: ['error', 'never'],
     'simple-import-sort/exports': 'error',
@@ -71,18 +73,32 @@ module.exports = {
         caughtErrorsIgnorePattern: '^_',
       },
     ],
+    // Disable to avoid conflicts with eslint max-len
+    'vue/max-len': 'off',
+    'vue/multi-word-component-names': 'off',
     'vue/no-unused-properties': ['error', {
       groups: ['props', 'data', 'computed', 'methods', 'setup'],
       deepData: true,
       ignorePublicMembers: false,
     }],
+    // We don't care about `noopener noreferrer`
+    'vue/no-template-target-blank': 'off',
+    'vue/no-v-text-v-html-on-component': 'off',
     'vue/valid-v-slot': ['error', { allowModifiers: true }],
+    // Disable accessibility checks
+    'vuejs-accessibility/alt-text': 'off',
+    'vuejs-accessibility/anchor-has-content': 'off',
+    'vuejs-accessibility/mouse-events-have-key-events': 'off',
     'no-await-in-loop': 'off',
   },
   settings: {
     'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: './tsconfig.json',
+      },
       node: {
-        extensions: ['.js', '.json', '.jsx', '.ts', '.tsx'],
+        extensions: ['.js', '.json', '.jsx', '.ts', '.tsx', '.vue'],
       },
     },
   },
