@@ -14,7 +14,7 @@ import autopilot from '@/store/autopilot_manager'
 export default Vue.extend({
   name: 'VehicleViewer',
   components: {
-    Sub: () => import('./SubViewer.vue'),
+    Submarine: () => import('./SubViewer.vue'),
     Rover: () => import('./RoverViewer.vue'),
     None: () => import('./NoneViewer.vue'),
     // TODO: implement a generic viewer for other vehicles
@@ -38,7 +38,7 @@ export default Vue.extend({
     current_viewer(): string {
       switch (this.vehicle_type) {
         case 'Submarine':
-          return 'Sub'
+          return 'Submarine'
         case 'Surface Boat':
           return 'Rover'
         default:
