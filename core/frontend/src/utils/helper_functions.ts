@@ -2,7 +2,8 @@
 /**
  * @param interval - Time in milliseconds to wait after the previous request is done
 * */
-export function sleep(interval: number): Promise<void> {
+export function sleep(interval: number): Promise<number> {
+  // eslint-disable-next-line no-promise-executor-return
   return new Promise((resolve) => setTimeout(resolve, interval))
 }
 
