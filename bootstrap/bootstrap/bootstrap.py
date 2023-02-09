@@ -65,7 +65,7 @@ class Bootstrapper:
                 for key in necessary_keys:
                     assert key in config["core"], f"missing key in json file: {key}"
 
-        except (FileNotFoundError, AssertionError) as error:
+        except Exception as error:
             print(f"unable to read startup.json file ({error}), reverting to defaults...")
             # Copy defaults over and read again
             Bootstrapper.overwrite_config_file_with_defaults()
