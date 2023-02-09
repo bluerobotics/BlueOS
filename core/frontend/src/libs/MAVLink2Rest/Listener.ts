@@ -4,6 +4,7 @@
 import type Endpoint from './Endpoint'
 
 export default class Listener {
+  // eslint-disable-next-line class-methods-use-this
   callback: (msg: any) => void = () => { console.log('Listener not assigned a callback') }
 
   parent: Endpoint
