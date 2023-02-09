@@ -89,6 +89,9 @@ class Mavlink2RestManager {
         this.socket = this.createSocket(url)
       }, 5000)
     }
+    socket.onerror = (event: Event) => {
+      console.debug(`M2R Websocket got an error: ${event.type}`)
+    }
     return socket
   }
 
