@@ -15,10 +15,9 @@
         v-on="on"
       >
         <v-icon
-          v-tooltip="is_connected_to_wifi ?
-            'Connected through a wireless connection, expect degraded performance'
-            :
-            'Connected through a wired connection'"
+          v-tooltip="is_connected_to_wifi
+            ? 'Connected through a wireless connection, expect degraded performance'
+            : 'Connected through a wired connection'"
           class="px-1 white-shadow"
           :color="is_connected_to_wifi ? 'yellow' : 'white'"
         >

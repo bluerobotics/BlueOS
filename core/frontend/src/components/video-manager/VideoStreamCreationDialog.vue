@@ -61,7 +61,7 @@
               @change="validateForm"
             />
             <v-btn
-              v-if="stream_endpoints.length>1"
+              v-if="stream_endpoints.length > 1"
               color="fail"
               rounded
               small
@@ -71,7 +71,7 @@
               <v-icon>mdi-close-thick</v-icon>
             </v-btn>
             <v-btn
-              v-if="(index+1)===stream_endpoints.length"
+              v-if="(index + 1) === stream_endpoints.length"
               color="primary"
               rounded
               small

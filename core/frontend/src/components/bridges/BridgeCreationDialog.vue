@@ -25,7 +25,7 @@
             :item-value="(item) => item.by_path ? item.by_path : item.name"
             dense
           >
-            <template #item="{item}">
+            <template #item="{ item }">
               <v-list
                 fluid
                 max-width="400"

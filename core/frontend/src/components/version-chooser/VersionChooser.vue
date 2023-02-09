@@ -27,8 +27,8 @@
           :current="true"
           :last-modified="current_version.last_modified"
           :loading="loading_images"
-          :up-to-date="!loading_images &&
-            !newStableAvailable() && !newBetaAvailable() && !updateIsAvailable(current_version)"
+          :up-to-date="!loading_images
+            && !newStableAvailable() && !newBetaAvailable() && !updateIsAvailable(current_version)"
           :new-stable-available="newStableAvailable()"
           :new-beta-available="runningBeta() ? newBetaAvailable() : ''"
           :update-available="updateIsAvailable(current_version)"

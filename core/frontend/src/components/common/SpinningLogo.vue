@@ -1,7 +1,7 @@
 <template>
   <v-container class="d-flex flex-column align-center justify-space-between">
     <v-img
-      :aspect-ratio="1/1"
+      :aspect-ratio="1 / 1"
       class="lds-dual-ring"
       :width="size"
       src="../../assets/img/blue-robotics-logo.svg"

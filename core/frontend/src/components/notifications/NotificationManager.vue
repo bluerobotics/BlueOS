@@ -18,7 +18,7 @@
         :nudge-x="400"
         offset-y
       >
-        <template #activator="{on, attrs}">
+        <template #activator="{ on, attrs }">
           <v-btn
             icon
             v-bind="attrs"
@@ -48,7 +48,7 @@
           v-if="notifications_to_show.length != 0"
         >
           <notification-card
-            v-for="{notification, count} in notifications_to_show"
+            v-for="{ notification, count } in notifications_to_show"
             :key="JSON.stringify(notification)"
             :notification="notification"
             :count="count"

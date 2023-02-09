@@ -31,7 +31,9 @@
     </v-row>
     <v-row>
       <v-col
-        v-for="({ icon, title, text, route, advanced}, i) in apps"
+        v-for="({
+          icon, title, text, route, advanced,
+        }, i) in apps"
         :key="i"
         cols="12"
         md="3"

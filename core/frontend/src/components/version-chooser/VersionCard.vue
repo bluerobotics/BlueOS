@@ -6,8 +6,8 @@
     <div class="d-flex">
       <v-list-item-avatar>
         <v-icon :class="current ? 'green' : 'grey'">
-          {{ remote? 'mdi-earth' : '' }}
-          {{ current? 'mdi-checkbox-blank-circle' : 'mdi-checkbox-blank-circle-outline' }}
+          {{ remote ? 'mdi-earth' : '' }}
+          {{ current ? 'mdi-checkbox-blank-circle' : 'mdi-checkbox-blank-circle-outline' }}
         </v-icon>
       </v-list-item-avatar>
 
@@ -19,7 +19,7 @@
         <p
           v-if="settings.is_pirate_mode"
           class="text-caption text--secondary ma-0"
-          v-text="`${image.sha? shortSha(image.sha) : 'N/A'} - ${asTimeAgo(image.last_modified)}`"
+          v-text="`${image.sha ? shortSha(image.sha) : 'N/A'} - ${asTimeAgo(image.last_modified)}`"
         />
         <p
           v-else
@@ -61,7 +61,7 @@
         v-if="newStableAvailable"
         color="primary"
         class="mx-2 my-1"
-        @click="$emit('pull-and-apply',`${image.repository}:${newStableAvailable}`)"
+        @click="$emit('pull-and-apply', `${image.repository}:${newStableAvailable}`)"
         v-text="`Upgrade to ${newStableAvailable}`"
       />
       <v-btn
@@ -69,7 +69,7 @@
         color="primary"
         class="mx-2 my-1 scroll-container"
         width="195"
-        @click="$emit('pull-and-apply',`${image.repository}:${image.tag}`)"
+        @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
       >
         <div class="scroll-text">
           Update to latest {{ image.tag }}
@@ -79,7 +79,7 @@
         v-if="newBetaAvailable"
         color="primary"
         class="mx-2 my-1"
-        @click="$emit('pull-and-apply',`${image.repository}:${newBetaAvailable}`)"
+        @click="$emit('pull-and-apply', `${image.repository}:${newBetaAvailable}`)"
         v-text="`Upgrade to ${newBetaAvailable}`"
       />
       <v-btn
@@ -93,7 +93,7 @@
         v-if="!current && !remote"
         color="primary"
         class="mx-2 my-1"
-        @click="$emit('apply',`${image.repository}:${image.tag}`)"
+        @click="$emit('apply', `${image.repository}:${image.tag}`)"
         v-text="'Apply'"
       />
       <v-btn

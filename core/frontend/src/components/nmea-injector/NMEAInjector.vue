@@ -45,7 +45,7 @@
     >
       <template v-for="(nmea_socket, index) in available_nmea_sockets">
         <v-divider
-          v-if="index!==0"
+          v-if="index !== 0"
           :key="index"
         />
         <v-list-item

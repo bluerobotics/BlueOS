@@ -37,95 +37,95 @@ interface MetadataFile {
     [key: string]: MetadataCategory;
 }
 export default class ParametersTable {
-    parametersDict: {[key: number] : Parameter} = {}
+  parametersDict: {[key: number] : Parameter} = {}
 
-    metadata_loaded = false
+  metadata_loaded = false
 
-    metadata = {} as Dictionary<Metadata>
+  metadata = {} as Dictionary<Metadata>
 
-    constructor() {
-      this.fetchMetadata()
+  constructor() {
+    this.fetchMetadata()
+  }
+
+  reset(): void {
+    this.parametersDict = {}
+  }
+
+  fetchMetadata(): void {
+    if (autopilot.vehicle_type === null) {
+      // Check again later if we have a vehicle type identified
+      fetchVehicleType()
+      setTimeout(() => { this.fetchMetadata() }, 1000)
+      return
     }
-
-    reset(): void {
-      this.parametersDict = {}
-    }
-
-    fetchMetadata(): void {
-      if (autopilot.vehicle_type === null) {
-        // Check again later if we have a vehicle type identified
-        fetchVehicleType()
-        setTimeout(() => { this.fetchMetadata() }, 1000)
-        return
-      }
-      // default to submarine
-      let metadata : MetadataFile = ardusub_metadata
-      // This is to avoid importing a 40 lines enum from mavlink and adding a switch case with 40 cases
-      if (autopilot.vehicle_type.toLowerCase().includes('copter')
+    // default to submarine
+    let metadata : MetadataFile = ardusub_metadata
+    // This is to avoid importing a 40 lines enum from mavlink and adding a switch case with 40 cases
+    if (autopilot.vehicle_type.toLowerCase().includes('copter')
       || autopilot.vehicle_type.toLowerCase().includes('rotor')) {
-        metadata = arducopter_metadata
-      } else if (autopilot.vehicle_type.toLowerCase().includes('rover')
+      metadata = arducopter_metadata
+    } else if (autopilot.vehicle_type.toLowerCase().includes('rover')
       || autopilot.vehicle_type.toLowerCase().includes('boat')) {
-        metadata = ardurover_metadata
-      }
+      metadata = ardurover_metadata
+    }
 
-      for (const category of Object.values(metadata)) {
-        for (const [name, parameter] of Object.entries(category)) {
-          if (isNumber(parameter)) { // ignore "json" entry
-            console.log(`ignoring ${name} : ${parameter}`)
-            continue
-          }
-          this.metadata[name] = parameter
+    for (const category of Object.values(metadata)) {
+      for (const [name, parameter] of Object.entries(category)) {
+        if (isNumber(parameter)) { // ignore "json" entry
+          console.log(`ignoring ${name} : ${parameter}`)
+          continue
         }
-      }
-
-      this.updateParameters()
-      this.metadata_loaded = true
-    }
-
-    updateParameters(): void {
-      for (const parameter of Object.values(this.parametersDict)) {
-        this.addParam(parameter)
+        this.metadata[name] = parameter
       }
     }
 
-    addParam(param: Parameter): void {
-      if (param.name in this.metadata) {
-        param.description = this.metadata[param.name].Description?.toTitle() ?? ''
-        param.shortDescription = this.metadata[param.name].DisplayName
-        param.units = this.metadata[param.name].Units
-        const {
-          Values, Bitmask, ReadOnly, Increment, RebootRequired, Range,
-        } = this.metadata[param.name]
-        param.options = Values
-        param.bitmask = Bitmask
-        param.readonly = ReadOnly === 'True'
-        param.increment = Increment ? parseFloat(Increment) : undefined
-        param.rebootRequired = RebootRequired === 'True'
-        param.range = Range ? { high: parseFloat(Range.high), low: parseFloat(Range.low) } : undefined
-      }
-      this.parametersDict[param.id] = param
-    }
+    this.updateParameters()
+    this.metadata_loaded = true
+  }
 
-    updateParam(param_name: string, param_value: number): void {
-      const index = Object.entries(this.parametersDict).find(([_key, value]) => value.name === param_name)
-      if (!index) {
-        const message = `unable to update param in store: ${param_name}. Parameter not known.`
-        notifier.pushError('PARAM_SET_FAIL', message)
-        return
-      }
-      this.parametersDict[parseInt(index[0], 10)].value = param_value
+  updateParameters(): void {
+    for (const parameter of Object.values(this.parametersDict)) {
+      this.addParam(parameter)
     }
+  }
 
-    parameters(): Parameter[] {
-      return Object.values(this.parametersDict)
+  addParam(param: Parameter): void {
+    if (param.name in this.metadata) {
+      param.description = this.metadata[param.name].Description?.toTitle() ?? ''
+      param.shortDescription = this.metadata[param.name].DisplayName
+      param.units = this.metadata[param.name].Units
+      const {
+        Values, Bitmask, ReadOnly, Increment, RebootRequired, Range,
+      } = this.metadata[param.name]
+      param.options = Values
+      param.bitmask = Bitmask
+      param.readonly = ReadOnly === 'True'
+      param.increment = Increment ? parseFloat(Increment) : undefined
+      param.rebootRequired = RebootRequired === 'True'
+      param.range = Range ? { high: parseFloat(Range.high), low: parseFloat(Range.low) } : undefined
     }
+    this.parametersDict[param.id] = param
+  }
 
-    size(): number {
-      return this.parameters().length
+  updateParam(param_name: string, param_value: number): void {
+    const index = Object.entries(this.parametersDict).find(([_key, value]) => value.name === param_name)
+    if (!index) {
+      const message = `unable to update param in store: ${param_name}. Parameter not known.`
+      notifier.pushError('PARAM_SET_FAIL', message)
+      return
     }
+    this.parametersDict[parseInt(index[0], 10)].value = param_value
+  }
 
-    loaded(): boolean {
-      return this.metadata_loaded
-    }
+  parameters(): Parameter[] {
+    return Object.values(this.parametersDict)
+  }
+
+  size(): number {
+    return this.parameters().length
+  }
+
+  loaded(): boolean {
+    return this.metadata_loaded
+  }
 }

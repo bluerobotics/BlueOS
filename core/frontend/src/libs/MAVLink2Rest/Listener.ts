@@ -4,13 +4,13 @@
 import type Endpoint from './Endpoint'
 
 export default class Listener {
-  callback: (msg: any) => void = () => { console.log('Listener not assigned a callback') };
+  callback: (msg: any) => void = () => { console.log('Listener not assigned a callback') }
 
-  parent: Endpoint;
+  parent: Endpoint
 
   frequency = 1
 
-  interval = -1;
+  interval = -1
 
   constructor(parent: Endpoint) {
     this.parent = parent

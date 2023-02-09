@@ -11,7 +11,7 @@
       >
         <v-app-bar-nav-icon
           id="hamburguer-menu-button"
-          :style="{visibility: drawer ? 'hidden' : 'visible'}"
+          :style="{ visibility: drawer ? 'hidden' : 'visible' }"
           color="white"
           @click="drawer = true"
         />

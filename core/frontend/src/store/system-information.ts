@@ -45,15 +45,15 @@ const notifier = new Notifier(system_information_service)
 class SystemInformationStore extends VuexModule {
   API_URL = '/system-information'
 
-  kernel_message: KernelMessage[] = [];
+  kernel_message: KernelMessage[] = []
 
-  netstat: Netstat | null = null;
+  netstat: Netstat | null = null
 
-  platform: Platform | null = null;
+  platform: Platform | null = null
 
-  socket: WebSocket | null = null;
+  socket: WebSocket | null = null
 
-  system: System | null = null;
+  system: System | null = null
 
   serial: Serial | null = null
 

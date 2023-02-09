@@ -20,7 +20,7 @@
           <td>MAVLink Distances</td><td>
             <v-switch
               v-model="user_desired_mavlink_driver_state"
-              :loading="switch_loading()? 'warning' : false"
+              :loading="switch_loading() ? 'warning' : false"
               @change="update_mavlink_driver()"
             />
           </td>

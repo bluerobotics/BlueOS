@@ -6,7 +6,7 @@
     nudge-bottom="30"
   >
     <template
-      #activator="{on, attrs}"
+      #activator="{ on, attrs }"
     >
       <v-card
         id="notifications-tray-menu-button"

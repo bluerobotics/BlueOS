@@ -25,7 +25,7 @@
                   >
                     {{ item.sequence_number }}
                     [{{ item.facility }}]
-                    ({{ (item.timestamp_from_system_start_ns/1e9).toFixed(6) }}):
+                    ({{ (item.timestamp_from_system_start_ns / 1e9).toFixed(6) }}):
                     {{ item.message }}
                   </v-list-item-title>
                 </v-list-item>
