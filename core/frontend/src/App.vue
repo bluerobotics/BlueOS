@@ -24,6 +24,7 @@
         <beacon-tray-menu />
         <health-tray-menu />
         <theme-tray-menu />
+        <vehicle-reboot-required-tray-menu />
         <pirate-mode-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
@@ -223,6 +224,7 @@ import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
 import ThemeTrayMenu from './components/app/ThemeTrayMenu.vue'
+import VehicleRebootRequiredTrayMenu from './components/app/VehicleRebootRequiredTrayMenu.vue'
 import BeaconTrayMenu from './components/beacon/BeaconTrayMenu.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
@@ -271,6 +273,7 @@ export default Vue.extend({
     'backend-status-checker': BackendStatusChecker,
     Alerter,
     'new-version-notificator': NewVersionNotificator,
+    VehicleRebootRequiredTrayMenu,
   },
 
   data: () => ({
