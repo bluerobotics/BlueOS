@@ -73,7 +73,7 @@ const API_URL = '/commander/v1.0'
 const notifier = new Notifier(commander_service)
 
 export default Vue.extend({
-  name: 'PowerMenu',
+  name: 'SettingsMenu',
   data() {
     return {
       show_dialog: false,
