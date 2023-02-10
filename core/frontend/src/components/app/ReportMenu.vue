@@ -64,7 +64,7 @@
 import Vue from 'vue'
 
 export default Vue.extend({
-  name: 'PowerMenu',
+  name: 'ReportMenu',
   data() {
     return {
       show_dialog: false,
