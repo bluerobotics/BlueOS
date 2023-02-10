@@ -86,7 +86,7 @@ import back_axios from '@/utils/api'
 const API_URL = '/commander/v1.0'
 
 export default Vue.extend({
-  name: 'PowerMenu',
+  name: 'ReportMenu',
   data() {
     return {
       settings,
