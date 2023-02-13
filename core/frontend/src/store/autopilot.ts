@@ -28,6 +28,8 @@ class AutopilotStore extends VuexModule {
 
   metadata_loaded = false
 
+  reboot_required = false
+
   get parameter() {
     return (name: string): Parameter | undefined => this.parameters.find((parameter) => parameter.name === name)
   }
@@ -70,6 +72,11 @@ class AutopilotStore extends VuexModule {
   setLoadedParametersCount(count: number): void {
     this.parameters_loaded = count
     this.finished_loading = this.parameters_loaded >= this.parameters_total && this.metadata_loaded
+  }
+
+  @Mutation
+  setRebootRequired(required: boolean): void {
+    this.reboot_required = required
   }
 
   @Mutation
