@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 import logging
+import os
 import shutil
 import time
 from enum import Enum
@@ -150,6 +151,12 @@ async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
 async def remove_log_services(i_know_what_i_am_doing: bool = False) -> Any:
     check_what_i_am_doing(i_know_what_i_am_doing)
     delete_everything(Path(LOG_FOLDER_PATH))
+
+
+@app.get("/environment_variables", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def environment_variables() -> Any:
+    return os.environ
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
