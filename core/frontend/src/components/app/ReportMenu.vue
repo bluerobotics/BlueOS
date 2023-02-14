@@ -13,7 +13,7 @@
       <v-icon>mdi-bug</v-icon>
     </v-btn>
     <v-dialog
-      width="340"
+      width="fit-content"
       :value="show_dialog"
       @input="showDialog"
     >
@@ -24,37 +24,37 @@
 
         <v-divider />
 
-        <v-card-actions
-          class="flex-column"
-        >
-          <v-btn
-            class="ma-2"
-            block
-            @click="openGitHub()"
-          >
-            <v-icon
-              left
-              size="24"
+        <v-container class="pa-2">
+          <v-card-actions class="flex-column">
+            <v-btn
+              v-tooltip="'Track changes, contribute, and get notified when fixed'"
+              class="ma-2"
+              @click="openGitHub()"
             >
-              mdi-github
-            </v-icon>
-            With GitHub
-          </v-btn>
+              <v-icon
+                left
+                size="20"
+              >
+                mdi-github
+              </v-icon>
+              With GitHub
+            </v-btn>
 
-          <v-btn
-            class="ma-2"
-            block
-            @click="openDiscuss()"
-          >
-            <v-icon
-              left
-              size="24"
+            <v-btn
+              v-tooltip="'Discuss ideas with the community'"
+              class="ma-2"
+              @click="openDiscuss()"
             >
-              $si-discourse
-            </v-icon>
-            On Blue Robotics forum
-          </v-btn>
-        </v-card-actions>
+              <v-icon
+                left
+                size="16"
+              >
+                $si-discourse
+              </v-icon>
+              On Blue Robotics forum
+            </v-btn>
+          </v-card-actions>
+        </v-container>
       </v-card>
     </v-dialog>
   </v-container>

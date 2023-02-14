@@ -13,7 +13,7 @@
       <v-icon>mdi-power-settings</v-icon>
     </v-btn>
     <v-dialog
-      width="400px"
+      width="fit-content"
       :value="show_dialog"
       @input="showDialog"
     >
@@ -24,60 +24,51 @@
 
         <v-divider />
 
-        <v-container class="pa-8">
-          <v-col
-            align="center"
-            justify="center"
-          >
-            <v-col>
-              <v-btn
-                v-tooltip="'Shuts down the onboard computer'"
-                class="mr-2"
-                :disabled="non_default_status"
-                @click="poweroff"
+        <v-container class="pa-2">
+          <v-card-actions class="flex-column">
+            <v-btn
+              v-tooltip="'Shuts down the onboard computer'"
+              class="ma-2"
+              :disabled="non_default_status"
+              @click="poweroff"
+            >
+              <v-icon
+                left
+                color="red"
               >
-                <v-icon
-                  left
-                  color="red"
-                >
-                  mdi-power-standby
-                </v-icon>
-                Power off
-              </v-btn>
-            </v-col>
-            <v-col>
-              <v-btn
-                v-tooltip="'Fully restarts the onboard computer'"
-                class="mr-2"
-                :disabled="non_default_status"
-                @click="reboot"
+                mdi-power-standby
+              </v-icon>
+              Power off
+            </v-btn>
+            <v-btn
+              v-tooltip="'Fully restarts the onboard computer'"
+              class="ma-2"
+              :disabled="non_default_status"
+              @click="reboot"
+            >
+              <v-icon
+                left
+                color="orange"
               >
-                <v-icon
-                  left
-                  color="orange"
-                >
-                  mdi-restart-alert
-                </v-icon>
-                Reboot
-              </v-btn>
-            </v-col>
-            <v-col>
-              <v-btn
-                v-tooltip="'Restarts the core alone, should be enough in most cases'"
-                class="mr-2"
-                :disabled="non_default_status"
-                @click="restartContainer"
+                mdi-restart-alert
+              </v-icon>
+              Reboot
+            </v-btn>
+            <v-btn
+              v-tooltip="'Restarts the core alone, should be enough in most cases'"
+              class="ma-2"
+              :disabled="non_default_status"
+              @click="restartContainer"
+            >
+              <v-icon
+                left
+                color="orange"
               >
-                <v-icon
-                  left
-                  color="orange"
-                >
-                  mdi-folder-refresh
-                </v-icon>
-                {{ settings.is_pirate_mode ? "Restart Core container" : "Soft restart" }}
-              </v-btn>
-            </v-col>
-          </v-col>
+                mdi-folder-refresh
+              </v-icon>
+              {{ settings.is_pirate_mode ? "Restart Core container" : "Soft restart" }}
+            </v-btn>
+          </v-card-actions>
         </v-container>
         <v-container v-if="non_default_status">
           <p class="text-md-center">
