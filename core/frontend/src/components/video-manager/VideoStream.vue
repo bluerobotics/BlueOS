@@ -42,6 +42,15 @@
               <td>{{ source_path }}</td>
             </tr>
           </tbody>
+          <v-btn
+            v-if="isSDPFileAvailable"
+            class="ma-6 elevation-1"
+            small
+            @click="downloadSDPFile"
+          >
+            <v-icon>mdi-download</v-icon>
+            SDP
+          </v-btn>
         </template>
       </v-simple-table>
     </v-container>
@@ -132,6 +141,9 @@ export default Vue.extend({
       }
       return 'Source unavailable'
     },
+    isSDPFileAvailable(): boolean {
+      return this.stream.video_and_stream.stream_information.endpoints.first()?.startsWith('udp://') ?? false
+    },
   },
   methods: {
     openStreamEditDialog(): void {
@@ -143,6 +155,9 @@ export default Vue.extend({
     },
     async deleteStream(): Promise<void> {
       video.deleteStream(this.stream)
+    },
+    async downloadSDPFile(): Promise<void> {
+      await video.fetchSDP(this.stream)
     },
   },
 })
