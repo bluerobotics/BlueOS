@@ -13,7 +13,7 @@
       <v-icon>mdi-cog</v-icon>
     </v-btn>
     <v-dialog
-      width="320"
+      width="fit-content"
       :value="show_dialog"
       @input="showDialog"
     >
@@ -24,27 +24,31 @@
 
         <v-divider />
 
-        <v-card-actions class="flex-column d-flex justify-space-around mb-6">
-          <v-btn
-            class="ma-2"
-            @click="reset_settings"
-          >
-            <v-icon left>
-              mdi-cog-refresh
-            </v-icon>
-            Reset Settings
-          </v-btn>
+        <v-container class="pa-2">
+          <v-card-actions class="flex-column">
+            <v-btn
+              v-tooltip="'Restores BlueOS services to default configurations'"
+              class="ma-2"
+              @click="reset_settings"
+            >
+              <v-icon left>
+                mdi-cog-refresh
+              </v-icon>
+              Reset Settings
+            </v-btn>
 
-          <v-btn
-            class="ma-2"
-            @click="remove_service_log_files"
-          >
-            <v-icon left>
-              mdi-trash-can
-            </v-icon>
-            Remove Services Log Files
-          </v-btn>
-        </v-card-actions>
+            <v-btn
+              v-tooltip="'Frees up space on the SD card'"
+              class="ma-2"
+              @click="remove_service_log_files"
+            >
+              <v-icon left>
+                mdi-trash-can
+              </v-icon>
+              Remove Services Log Files
+            </v-btn>
+          </v-card-actions>
+        </v-container>
       </v-card>
     </v-dialog>
     <v-dialog
