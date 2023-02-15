@@ -159,10 +159,8 @@ export default Vue.extend({
         return edited_bitmask
       }
 
-      // eslint-disable-next-line no-bitwise
-      for (let v = 0; 1 << v < this.param.value; v += 1) {
-        // eslint-disable-next-line no-bitwise
-        const bitmask_value = 1 << v
+      for (let v = 0; 2 ** v <= this.param.value; v += 1) {
+        const bitmask_value = 2 ** v
         // eslint-disable-next-line no-bitwise
         if (bitmask_value & this.param.value) {
           edited_bitmask.push(bitmask_value)
