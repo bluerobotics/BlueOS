@@ -19,6 +19,7 @@ module.exports = {
     'simple-import-sort',
     'vue',
   ],
+  ignorePatterns: ['**/src/libs/MAVLink2Rest/mavlink2rest-ts/**'],
   rules: {
     camelcase: 'off',
     indent: ['error', 2, { SwitchCase: 1 }],
