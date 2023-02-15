@@ -66,8 +66,10 @@
                 <tr
                   v-for="item in servo_function_parameters"
                   :key="item.name"
+                  style="cursor: pointer;"
                   @mouseover="highlight = stringToUserFriendlyText(printParam(item))"
                   @mouseleave="highlight = null"
+                  @click="showParamEdit(item)"
                 >
                   <td>{{ item.name }}</td>
                   <td>{{ stringToUserFriendlyText(printParam(item)) }}</td>
@@ -78,12 +80,17 @@
         </v-card>
       </v-col>
     </v-row>
+    <parameter-editor-dialog
+      v-model="edit_param_dialog"
+      :param="param"
+    />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
+import ParameterEditorDialog from '@/components/parameter-editor/ParameterEditorDialog.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
@@ -102,11 +109,14 @@ const param_value_map = {
 export default Vue.extend({
   name: 'PwmSetup',
   components: {
+    ParameterEditorDialog,
     VehicleViewer,
   },
   data() {
     return {
       highlight: null as string | null,
+      edit_param_dialog: false,
+      param: undefined as Parameter | undefined,
     }
   },
   computed: {
@@ -128,6 +138,10 @@ export default Vue.extend({
     },
   },
   methods: {
+    showParamEdit(param: Parameter) {
+      this.param = param
+      this.edit_param_dialog = true
+    },
     stringToUserFriendlyText(text: string) {
       return param_value_map?.[this.vehicle_type ?? '']?.[text] ?? text
     },
