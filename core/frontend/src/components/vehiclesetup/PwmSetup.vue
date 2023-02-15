@@ -24,12 +24,12 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="motnumber of available_motors"
-                  :key="'mot' + motnumber"
-                  @mouseover="highlight = `Motor${motnumber}`"
+                  v-for="motor of available_motors"
+                  :key="'mot' + motor.name"
+                  @mouseover="highlight = printParam(motor)"
                   @mouseleave="highlight = null"
                 >
-                  <td>Motor{{ motnumber }}</td>
+                  <td>{{ printParam(motor) }}</td>
                   <td>
                     <v-slider
                       hide-details
@@ -88,6 +88,7 @@ import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
+import { SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary } from '@/types/common'
 
 const param_value_map = {
@@ -120,9 +121,10 @@ export default Vue.extend({
     vehicle_type() {
       return autopilot.vehicle_type
     },
-    available_motors() {
-      // TODO: per-frame motor count, maybe dynamic?
-      return [...Array(9).keys()].splice(1)
+    available_motors(): Parameter[] {
+      return this.servo_function_parameters.filter(
+        (parameter) => parameter.value >= SERVO_FUNCTION.MOTOR1 && parameter.value <= SERVO_FUNCTION.MOTOR8,
+      )
     },
   },
   methods: {
