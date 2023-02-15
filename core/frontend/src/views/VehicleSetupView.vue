@@ -16,14 +16,6 @@
         </v-icon>
         PWM Outputs
       </v-tab>
-      <v-tab
-        disabled
-      >
-        <v-icon class="mr-5">
-          mdi-bookshelf
-        </v-icon>
-        Sensors
-      </v-tab>
     </v-tabs>
     <pwm-setup
       v-if="tab === 1"
