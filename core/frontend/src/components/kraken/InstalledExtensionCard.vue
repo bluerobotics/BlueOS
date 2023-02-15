@@ -145,6 +145,7 @@
 </template>
 
 <script lang="ts">
+import semver from 'semver'
 import stable from 'semver-stable'
 import Vue, { PropType } from 'vue'
 
@@ -200,6 +201,9 @@ export default Vue.extend({
     update_available() : false | string {
       const versions: string[] = Object.keys(this.extensionData?.versions ?? {})
       const lastest_stable = stable.max(versions)
+      if (semver.gt(this.extension.tag, lastest_stable)) {
+        return false
+      }
       return this.extension.tag === lastest_stable ? false : lastest_stable
     },
   },
