@@ -11,7 +11,9 @@
 
       <v-card-text>
         <v-container v-if="param">
-          <v-row v-if="param.rebootRequired"> Reboot Required </v-row>
+          <v-row v-if="param.rebootRequired">
+            Reboot Required
+          </v-row>
           <v-row>
             {{ param.description }}
           </v-row>
@@ -48,8 +50,8 @@
                 />
                 <v-text-field
                   v-if="
-                    custom_input ||
-                      (param
+                    custom_input
+                      || (param
                         && !param.options
                         && !param.bitmask
                       )
