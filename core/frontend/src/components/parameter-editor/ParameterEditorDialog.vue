@@ -60,6 +60,7 @@
                   :step="param.increment ?? 0.01"
                   :suffix="param.units"
                   :rules="forcing_input ? [] : [isInRange, isValidType]"
+                  @blur="update_variables"
                 />
 
                 <v-checkbox
@@ -186,9 +187,6 @@ export default Vue.extend({
     },
   },
   watch: {
-    new_value(): void {
-      this.update_variables()
-    },
     show(): void {
       this.new_value = this.param.value
 
