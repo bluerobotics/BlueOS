@@ -17,6 +17,7 @@
       :sort-by="'name'"
       disable-sort
       :custom-filter="() => true"
+      :item-class="(value) => value.item?.readonly ? undefined : 'hand-cursor'"
       @click:row="(value) => editParam(value.item)"
     >
       <v-progress-linear
@@ -303,5 +304,9 @@ export default Vue.extend({
 <style>
 div.v-messages {
   min-height: 1px;
+}
+
+.hand-cursor {
+  cursor: pointer;
 }
 </style>
