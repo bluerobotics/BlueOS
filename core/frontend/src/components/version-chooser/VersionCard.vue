@@ -52,7 +52,7 @@
       >
         Running
       </v-alert>
-      <div v-if="loading || deleting">
+      <div v-if="working">
         <spinning-logo
           size="30px"
         />
@@ -69,6 +69,7 @@
         color="primary"
         class="mx-2 my-1 scroll-container"
         width="195"
+        :disabled="working"
         @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
       >
         <div class="scroll-text">
@@ -79,6 +80,7 @@
         v-if="newBetaAvailable"
         color="primary"
         class="mx-2 my-1"
+        :disabled="working"
         @click="$emit('pull-and-apply', `${image.repository}:${newBetaAvailable}`)"
         v-text="`Upgrade to ${newBetaAvailable}`"
       />
@@ -86,6 +88,7 @@
         v-if="!current && !remote && imageCanBeDeleted()"
         color="error"
         class="mx-2 my-1"
+        :disabled="working"
         @click="$emit('delete', `${image.repository}:${image.tag}`)"
         v-text="'Delete'"
       />
@@ -93,6 +96,7 @@
         v-if="!current && !remote"
         color="primary"
         class="mx-2 my-1"
+        :disabled="working"
         @click="$emit('apply', `${image.repository}:${image.tag}`)"
         v-text="'Apply'"
       />
@@ -100,6 +104,7 @@
         v-if="showPullButton"
         color="primary"
         class="mx-2 my-1"
+        :disabled="working"
         @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
         v-text="'Download and Apply'"
       />
@@ -172,6 +177,11 @@ export default Vue.extend({
     return {
       settings,
     }
+  },
+  computed: {
+    working(): boolean {
+      return this.loading || this.deleting
+    },
   },
   methods: {
     asTimeAgo(value: string) {
