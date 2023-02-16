@@ -189,6 +189,9 @@ export default Vue.extend({
     },
   },
   watch: {
+    new_value(): void {
+      this.isFormValid()
+    },
     show(): void {
       this.new_value = this.param.value
 
