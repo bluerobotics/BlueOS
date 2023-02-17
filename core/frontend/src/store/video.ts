@@ -1,4 +1,3 @@
-import { saveAs } from 'file-saver'
 import {
   Action, getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
@@ -8,7 +7,7 @@ import Notifier from '@/libs/notifier'
 import store from '@/store'
 import { video_manager_service } from '@/types/frontend_services'
 import {
-  CreatedStream, Device, StreamStatus, VideoSourceGst, VideoSourceLocal,
+  CreatedStream, Device, StreamStatus,
 } from '@/types/video'
 import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
@@ -170,28 +169,6 @@ class VideoStore extends VuexModule {
           this.thumbnails.delete(source)
         }
       }))
-  }
-
-  @Action
-  async fetchSDP(stream: StreamStatus): Promise<void> {
-    const { video_source } = stream.video_and_stream
-    // eslint-disable-next-line no-extra-parens
-    const source = (<VideoSourceLocal>video_source).Local.device_path || (<VideoSourceGst>video_source).Gst.source.Fake
-
-    back_axios({
-      method: 'get',
-      url: `${this.API_URL}/sdp?source=${encodeURIComponent(source)}`,
-      timeout: 10000,
-      responseType: 'text',
-    })
-      .then((response) => {
-        if (response.status === 200) {
-          saveAs(new Blob([response.data], { type: 'application/sdp' }), `${stream.video_and_stream.name}.sdp`)
-        }
-      })
-      .catch((error) => {
-        console.error(`Failed downloading SDP file for source ${source}. Reason: ${error}`)
-      })
   }
 
   @Action

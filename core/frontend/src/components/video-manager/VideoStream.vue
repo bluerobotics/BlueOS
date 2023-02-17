@@ -51,12 +51,14 @@
 </template>
 
 <script lang="ts">
+import { saveAs } from 'file-saver'
 import Vue, { PropType } from 'vue'
 
 import video from '@/store/video'
 import {
   CreatedStream, Device, StreamPrototype, StreamStatus,
 } from '@/types/video'
+import back_axios from '@/utils/api'
 import { video_dimension_framerate_text } from '@/utils/video'
 
 import VideoStreamCreationDialog from './VideoStreamCreationDialog.vue'
@@ -111,6 +113,9 @@ export default Vue.extend({
     isSDPFileAvailable(): boolean {
       return this.stream.video_and_stream.stream_information.endpoints.first()?.startsWith('udp://') ?? false
     },
+    sDPFileURL(): string {
+      return `${window.location.origin}${video.API_URL}/sdp?source=${encodeURIComponent(this.source_path)}`
+    },
   },
   methods: {
     openStreamEditDialog(): void {
@@ -124,7 +129,22 @@ export default Vue.extend({
       video.deleteStream(this.stream)
     },
     async downloadSDPFile(): Promise<void> {
-      await video.fetchSDP(this.stream)
+      const url = this.sDPFileURL
+      back_axios({
+        method: 'get',
+        url,
+        timeout: 10000,
+        responseType: 'text',
+      })
+        .then((response) => {
+          if (response.status === 200) {
+            saveAs(new Blob([response.data], { type: 'application/sdp' }), `${this.device.name}.sdp`)
+          }
+        })
+        .catch((error) => {
+          console.error(`Failed downloading SDP file for url ${URL}. Reason: ${error}`)
+        })
+    },
     },
   },
 })
