@@ -85,10 +85,15 @@ export default Vue.extend({
   name: 'GenericViewer',
   components: { SpinningLogo },
   props: {
-    highlight: {
-      type: String,
+    transparent: {
+      type: Boolean,
       required: false,
-      default: null,
+      default: false,
+    },
+    highlight: {
+      type: Array<string>,
+      required: false,
+      default: [],
     },
     autorotate: {
       type: Boolean,
@@ -179,7 +184,9 @@ export default Vue.extend({
         index += 1
       }
       if (this.highlight) {
-        return keyed_indexed_annotations.filter((annotation) => annotation.key.startsWith(this.highlight))
+        return keyed_indexed_annotations.filter(
+          (annotation) => this.highlight.some((highlight) => annotation.key.startsWith(highlight)),
+        )
       }
       return keyed_indexed_annotations
     },
@@ -228,8 +235,14 @@ export default Vue.extend({
         this.forceRefreshAnnotations()
         return
       }
-      this.setAlphas(0.05)
-      this.makeOpaque(this.highlight)
+      if (this.transparent) {
+        this.setAlphas(0.05)
+        for (const part of this.highlight) {
+          this.makeOpaque(part)
+        }
+      } else {
+        this.setAlphas(1)
+      }
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
     },
@@ -262,6 +275,15 @@ export default Vue.extend({
     // eslint-disable-next-line no-extra-parens
     (this.$refs.modelviewer as ModelViewerElement)?.addEventListener('load', () => {
       this.redraw()
+      if (this.transparent) {
+        this.setAlphas(0.05)
+        for (const part of this.highlight) {
+          this.makeOpaque(part)
+        }
+      } else {
+        this.setAlphas(1)
+      }
+      this.hideIrrelevantParts()
     })
     this.model_override_path = await this.checkModelOverrides()
     this.override_annotations = await this.loadAnottationsOverride()

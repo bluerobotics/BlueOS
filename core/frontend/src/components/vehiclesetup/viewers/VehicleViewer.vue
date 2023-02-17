@@ -3,6 +3,7 @@
     :highlight="highlight"
     :noannotations="noannotations"
     :autorotate="autorotate"
+    :transparent="transparent"
   />
 </template>
 
@@ -17,10 +18,15 @@ export default Vue.extend({
     GenericViewer,
   },
   props: {
-    highlight: {
-      type: String,
+    transparent: {
+      type: Boolean,
       required: false,
-      default: null,
+      default: false,
+    },
+    highlight: {
+      type: Array<string>,
+      required: false,
+      default: [],
     },
     autorotate: {
       type: Boolean,
