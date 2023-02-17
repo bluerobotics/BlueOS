@@ -213,6 +213,7 @@ import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import settings from '@/libs/settings'
 import services_scanner from '@/store/servicesScanner'
 import wifi from '@/store/wifi'
+import { Service } from '@/types/helper'
 import { convertGitDescribeToUrl } from '@/utils/helper_functions'
 import updateTime from '@/utils/update_time'
 
@@ -293,9 +294,9 @@ export default Vue.extend({
     },
     computed_menu(): Menu[] {
       const submenus = services_scanner.services
-        .filter((service) : boolean => service.metadata !== null)
-        .map((service) => {
-          const address = `/extensions/${service.port}`
+        .filter((service: Service) : boolean => service.metadata !== null)
+        .map((service: Service) => {
+          const address = this.createExtensionAddress(service)
           return {
             title: service.metadata?.name ?? 'Service name',
             icon: service.metadata?.icon?.startsWith('/')
@@ -490,6 +491,14 @@ export default Vue.extend({
       if (window.location.host.includes('companion.local')) {
         window.location.replace('http://blueos.local')
       }
+    },
+    createExtensionAddress(service: Service): string {
+      if (service?.metadata?.new_page !== true) {
+        return `/extensions/${service.port}`
+      }
+
+      // The `//` force href to be used as absolute path and not as relative
+      return `//${window.location.hostname}:${service.port}`
     },
     setupCallbacks(): void {
       this.tourCallbacks = {
