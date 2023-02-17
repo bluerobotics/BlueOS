@@ -1,6 +1,9 @@
 <template>
   <v-card style="max-width: 93%; margin: auto">
-    <v-container class="d-flex align-center elevation-0 py-6 px-4" :class="{ 'flex-column': $vuetify.breakpoint.xs }">
+    <v-container
+      class="d-flex align-center justify-space-around elevation-0 py-6 px-4"
+      :class="{ 'flex-column': $vuetify.breakpoint.xs }"
+    >
       <div class="d-flex flex-column justify-space-between" :class="{ 'align-center': $vuetify.breakpoint.xs }">
         <p class="text-h6 text-no-wrap ma-0">
           {{ stream.video_and_stream.name }}
@@ -12,39 +15,43 @@
           Status: {{ stream.running ? 'running' : 'Not running' }}
         </p>
       </div>
-      <v-simple-table dense class="text-center" style="margin: auto">
-        <template #default>
-          <tbody>
-            <tr>
-              <td>{{ stream.video_and_stream.stream_information.configuration.encode }}</td>
-            </tr>
-            <tr v-for="(endpoint, index) in stream.video_and_stream.stream_information.endpoints" :key="index">
-              <td>
-                {{ endpoint }}
-              </td>
-            </tr>
-            <tr>
-              <td>{{ source_path }}</td>
-            </tr>
-          </tbody>
-          <div v-if="isSDPFileAvailable" class="ma-2 justify-space-between">
-            SDP file:
-            <v-btn v-tooltip="'Download to file'" class="ma-1 elevation-1" small @click="downloadSDPFile">
-              <v-icon>mdi-download</v-icon>
-            </v-btn>
-            <v-btn v-tooltip="'Copy to clipboard'" class="ma-1 elevation-1" small @click="copySDPFileURL">
-              <v-icon>mdi-content-copy</v-icon>
-            </v-btn>
-          </div>
-        </template>
-      </v-simple-table>
+      <div class="d-flex ma-6 flex-column" :class="{ 'align-right': $vuetify.breakpoint.xs }">
+        <v-simple-table dense class="text-center" style="margin: auto">
+          <template #default>
+            <tbody>
+              <tr>
+                <td>{{ stream.video_and_stream.stream_information.configuration.encode }}</td>
+              </tr>
+              <tr v-for="(endpoint, index) in stream.video_and_stream.stream_information.endpoints" :key="index">
+                <td>
+                  {{ endpoint }}
+                </td>
+              </tr>
+              <tr>
+                <td>{{ source_path }}</td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+        <div v-if="isSDPFileAvailable" class="ma-2 justify-space-between">
+          SDP file:
+          <v-btn v-tooltip="'Download to file'" class="ma-1 elevation-1" small @click="downloadSDPFile">
+            <v-icon>mdi-download</v-icon>
+          </v-btn>
+          <v-btn v-tooltip="'Copy to clipboard'" class="ma-1 elevation-1" small @click="copySDPFileURL">
+            <v-icon>mdi-content-copy</v-icon>
+          </v-btn>
+        </div>
+      </div>
     </v-container>
-    <v-btn class="stream-edit-btn elevation-1" color="primary" dark fab small @click="openStreamEditDialog">
-      <v-icon>mdi-pencil</v-icon>
-    </v-btn>
-    <v-btn class="stream-remove-btn elevation-1" color="error" dark fab small @click="deleteStream">
-      <v-icon>mdi-delete</v-icon>
-    </v-btn>
+    <div style="align-content: space-between">
+      <v-btn class="stream-edit-btn elevation-1" color="primary" dark fab small @click="openStreamEditDialog">
+        <v-icon>mdi-pencil</v-icon>
+      </v-btn>
+      <v-btn class="stream-remove-btn elevation-1" color="error" dark fab small @click="deleteStream">
+        <v-icon>mdi-delete</v-icon>
+      </v-btn>
+    </div>
     <video-stream-creation-dialog
       v-model="show_stream_edit_dialog"
       :device="device"
