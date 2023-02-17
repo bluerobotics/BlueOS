@@ -27,10 +27,15 @@
               <td>{{ source_path }}</td>
             </tr>
           </tbody>
-          <v-btn v-if="isSDPFileAvailable" class="ma-6 elevation-1" small @click="downloadSDPFile">
-            <v-icon>mdi-download</v-icon>
-            SDP
-          </v-btn>
+          <div v-if="isSDPFileAvailable" class="ma-2 justify-space-between">
+            SDP file:
+            <v-btn v-tooltip="'Download to file'" class="ma-1 elevation-1" small @click="downloadSDPFile">
+              <v-icon>mdi-download</v-icon>
+            </v-btn>
+            <v-btn v-tooltip="'Copy to clipboard'" class="ma-1 elevation-1" small @click="copySDPFileURL">
+              <v-icon>mdi-content-copy</v-icon>
+            </v-btn>
+          </div>
         </template>
       </v-simple-table>
     </v-container>
@@ -145,6 +150,12 @@ export default Vue.extend({
           console.error(`Failed downloading SDP file for url ${URL}. Reason: ${error}`)
         })
     },
+    async copySDPFileURL(): Promise<void> {
+      try {
+        await navigator.clipboard.writeText(this.sDPFileURL)
+      } catch (error) {
+        console.error(`Failed to copy URL to clipboard. Reason: ${error}`)
+      }
     },
   },
 })
