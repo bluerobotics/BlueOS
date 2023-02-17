@@ -1,15 +1,7 @@
 <template>
-  <v-card
-    style="max-width: 93%; margin: auto;"
-  >
-    <v-container
-      class="d-flex align-center elevation-0 py-6 px-4"
-      :class="{ 'flex-column': $vuetify.breakpoint.xs }"
-    >
-      <div
-        class="d-flex flex-column justify-space-between"
-        :class="{ 'align-center': $vuetify.breakpoint.xs }"
-      >
+  <v-card style="max-width: 93%; margin: auto">
+    <v-container class="d-flex align-center elevation-0 py-6 px-4" :class="{ 'flex-column': $vuetify.breakpoint.xs }">
+      <div class="d-flex flex-column justify-space-between" :class="{ 'align-center': $vuetify.breakpoint.xs }">
         <p class="text-h6 text-no-wrap ma-0">
           {{ stream.video_and_stream.name }}
         </p>
@@ -20,20 +12,13 @@
           Status: {{ stream.running ? 'running' : 'Not running' }}
         </p>
       </div>
-      <v-simple-table
-        dense
-        class="text-center"
-        style="margin: auto;"
-      >
+      <v-simple-table dense class="text-center" style="margin: auto">
         <template #default>
           <tbody>
             <tr>
               <td>{{ stream.video_and_stream.stream_information.configuration.encode }}</td>
             </tr>
-            <tr
-              v-for="(endpoint, index) in stream.video_and_stream.stream_information.endpoints"
-              :key="index"
-            >
+            <tr v-for="(endpoint, index) in stream.video_and_stream.stream_information.endpoints" :key="index">
               <td>
                 {{ endpoint }}
               </td>
@@ -42,36 +27,17 @@
               <td>{{ source_path }}</td>
             </tr>
           </tbody>
-          <v-btn
-            v-if="isSDPFileAvailable"
-            class="ma-6 elevation-1"
-            small
-            @click="downloadSDPFile"
-          >
+          <v-btn v-if="isSDPFileAvailable" class="ma-6 elevation-1" small @click="downloadSDPFile">
             <v-icon>mdi-download</v-icon>
             SDP
           </v-btn>
         </template>
       </v-simple-table>
     </v-container>
-    <v-btn
-      class="stream-edit-btn elevation-1"
-      color="primary"
-      dark
-      fab
-      small
-      @click="openStreamEditDialog"
-    >
+    <v-btn class="stream-edit-btn elevation-1" color="primary" dark fab small @click="openStreamEditDialog">
       <v-icon>mdi-pencil</v-icon>
     </v-btn>
-    <v-btn
-      class="stream-remove-btn elevation-1"
-      color="error"
-      dark
-      fab
-      small
-      @click="deleteStream"
-    >
+    <v-btn class="stream-remove-btn elevation-1" color="error" dark fab small @click="deleteStream">
       <v-icon>mdi-delete</v-icon>
     </v-btn>
     <video-stream-creation-dialog
@@ -136,7 +102,8 @@ export default Vue.extend({
     source_path(): string {
       if ('Gst' in this.stream.video_and_stream.video_source) {
         return this.stream.video_and_stream.video_source.Gst.source.Fake
-      } if ('Local' in this.stream.video_and_stream.video_source) {
+      }
+      if ('Local' in this.stream.video_and_stream.video_source) {
         return this.stream.video_and_stream.video_source.Local.device_path
       }
       return 'Source unavailable'
