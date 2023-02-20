@@ -24,9 +24,7 @@
           <tbody>
             <tr>
               <td>FW</td><td>
-                {{ device.firmware_version_major }}.
-                {{ device.firmware_version_minor }}.
-                {{ device.firmware_version_patch }}
+                {{ format_version(device) }}
               </td>
             </tr>
             <tr><td>ID</td><td>{{ device.device_id }}</td></tr>
@@ -55,7 +53,7 @@
 import Vue, { PropType } from 'vue'
 
 import DevicePathHelper from '@/components/common/DevicePathHelper.vue'
-import { PingDevice } from '@/types/ping'
+import { formatVersion, PingDevice } from '@/types/ping'
 
 export default Vue.extend({
   name: 'Ping360Card',
@@ -76,6 +74,9 @@ export default Vue.extend({
   computed: {
   },
   methods: {
+    format_version(device: PingDevice): string {
+      return formatVersion(device)
+    },
     is_ethernet() {
       return this.device.ethernet_discovery_info !== null
     },
