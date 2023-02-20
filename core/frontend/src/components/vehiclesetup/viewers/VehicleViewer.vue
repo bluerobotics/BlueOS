@@ -2,6 +2,7 @@
   <generic-viewer
     :highlight="highlight"
     :noannotations="noannotations"
+    :autorotate="autorotate"
   />
 </template>
 
@@ -20,6 +21,10 @@ export default Vue.extend({
       type: String,
       required: false,
       default: null,
+    },
+    autorotate: {
+      type: Boolean,
+      required: true,
     },
     noannotations: {
       type: Boolean,
