@@ -42,6 +42,12 @@
                     :value="2 ** value"
                   />
                 </template>
+                <v-autocomplete
+                  v-else-if="!custom_input && Object.entries(param?.options).length > 10"
+                  v-model.number="new_value"
+                  :items="as_select_tems"
+                  variant="solo"
+                />
                 <v-select
                   v-else-if="!custom_input && param?.options"
                   v-model.number="new_value"
