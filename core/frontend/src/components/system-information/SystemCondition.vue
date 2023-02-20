@@ -86,14 +86,16 @@ export default Vue.extend({
       const [used_disk_space, total_disk_space] = get_space_disk(main_disk)
 
       const disk_text = disks
-        ? disks?.map(
-          (disk): string => {
-            const [used_disk_space_local, total_disk_space_local] = get_space_disk(disk)
-            return `${disk.name} '${disk.mount_point}'<br/>`
-          + `&emsp;&emsp;${used_disk_space_local.toFixed(3)}GB/${total_disk_space_local.toFixed(0)}GB`
-          + ` (${disk.filesystem_type})`
-          },
-        ).join('<br/>') : 'Loading..'
+        ? disks
+          ?.filter((disk) => disk.name !== '/dev/root') // Filter out docker binds
+          ?.map(
+            (disk): string => {
+              const [used_disk_space_local, total_disk_space_local] = get_space_disk(disk)
+              return `${disk.name} '${disk.mount_point}'<br/>`
+            + `&emsp;&emsp;${used_disk_space_local.toFixed(3)}GB/${total_disk_space_local.toFixed(0)}GB`
+            + ` (${disk.filesystem_type})`
+            },
+          ).join('<br/>') : 'Loading..'
 
       return {
         name: 'Disk',
