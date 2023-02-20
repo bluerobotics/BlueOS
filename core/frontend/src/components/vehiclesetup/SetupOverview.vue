@@ -9,6 +9,7 @@
           <vehicle-viewer
             :highlight="highlight"
             noannotations
+            :autorotate="true"
           />
         </v-card>
       </v-col>
@@ -16,7 +17,7 @@
         cols="12"
         sm="5"
       >
-        <vehicle-info />
+        <vehicle-info :autorotate="true" />
         <onboard-sensors />
       </v-col>
     </v-row>

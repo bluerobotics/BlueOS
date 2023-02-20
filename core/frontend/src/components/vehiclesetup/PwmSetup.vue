@@ -6,7 +6,7 @@
         sm="8"
       >
         <v-card>
-          <vehicle-viewer :highlight="highlight" />
+          <vehicle-viewer :highlight="highlight" :autorotate="false" />
         </v-card>
         <v-card class="mt-3">
           <v-simple-table

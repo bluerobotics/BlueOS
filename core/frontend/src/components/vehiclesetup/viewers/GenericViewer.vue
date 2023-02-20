@@ -4,9 +4,10 @@
       v-if="model_path"
       ref="modelviewer"
       :src="model_override_path || model_path"
-      auto-rotate
+      :auto-rotate="autorotate"
       camera-controls
       shadow-intensity="0.3"
+      interaction-prompt="none"
     >
       <button
         v-for="annotation in filtered_annotations"
@@ -88,6 +89,10 @@ export default Vue.extend({
       type: String,
       required: false,
       default: null,
+    },
+    autorotate: {
+      type: Boolean,
+      required: true,
     },
     noannotations: {
       type: Boolean,
