@@ -216,7 +216,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') && success() && matrix.docker == 'core'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: BlueOS-core-*.tar
+          file: '*.tar'
           tag: ${{ github.ref }}
           overwrite: true
           prerelease: true
