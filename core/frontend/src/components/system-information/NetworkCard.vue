@@ -22,6 +22,7 @@
         <v-col
           v-for="(ip, i) in network.ips"
           :key="i"
+          :style="ip.includes('::') ? 'cursor: pointer; filter:blur(0.5em)' : ''"
           class="pa-0 text-h6 text-center"
         >
           {{ ip }}
