@@ -20,3 +20,7 @@ export interface PingDevice {
   driver_status: DriverStatus,
   ethernet_discovery_info: string
 }
+
+export function formatVersion(device: PingDevice): string {
+  return `${device.firmware_version_major}.${device.firmware_version_minor}.${device.firmware_version_patch}`
+}
