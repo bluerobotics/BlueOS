@@ -13,19 +13,18 @@
       <v-icon>mdi-cog</v-icon>
     </v-btn>
     <v-dialog
+      class="pa-2"
       width="fit-content"
       :value="show_dialog"
       @input="showDialog"
     >
-      <v-card>
-        <v-card-title class="align-center">
-          Settings
-        </v-card-title>
+      <v-card class="mx-auto pa-2 flex-column">
+        <v-card>
+          <v-card-title class="align-center">
+            Settings
+          </v-card-title>
 
-        <v-divider />
-
-        <v-container class="pa-2">
-          <v-card-actions class="flex-column">
+          <v-container class="pa-2 align-center">
             <v-btn
               v-tooltip="'Restores BlueOS services to default configurations'"
               class="ma-2"
@@ -36,7 +35,15 @@
               </v-icon>
               Reset Settings
             </v-btn>
+          </v-container>
 
+          <v-divider />
+
+          <v-card-title class="align-center">
+            System Log Files ({{ log_folder_size }})
+          </v-card-title>
+
+          <v-card-actions class="flex-row">
             <v-btn
               v-tooltip="'Download log for all services in BlueOS'"
               class="ma-2"
@@ -45,21 +52,22 @@
               <v-icon left>
                 mdi-folder-download
               </v-icon>
-              Download Services Log Files
+              Download
             </v-btn>
 
             <v-btn
               v-tooltip="'Frees up space on the SD card'"
               class="ma-2"
+              :disabled="disable_remove"
               @click="remove_service_log_files"
             >
               <v-icon left>
                 mdi-trash-can
               </v-icon>
-              Remove Services Log Files
+              Remove
             </v-btn>
           </v-card-actions>
-        </v-container>
+        </v-card>
       </v-card>
     </v-dialog>
     <v-dialog
@@ -83,6 +91,7 @@ import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { prettifySize } from '@/utils/helper_functions'
 
 const API_URL = '/commander/v1.0'
 
@@ -92,14 +101,35 @@ export default Vue.extend({
   name: 'SettingsMenu',
   data() {
     return {
+      disable_remove: true,
+      log_folder_size: null as null | string,
       show_dialog: false,
       show_reset_dialog: false,
     }
+  },
+  async mounted() {
+    await this.get_log_folder_size()
   },
   methods: {
     async download_service_log_files(): Promise<void> {
       const folder = await filebrowser.fetchFolder('system_logs')
       await filebrowser.downloadFolder(folder)
+    },
+    async get_log_folder_size(): Promise<void> {
+      await back_axios({
+        url: `${API_URL}/services/check_log_folder_size`,
+        method: 'get',
+        timeout: 4000,
+      })
+        .then((response) => {
+          const folder_data_bytes = response.data
+          const one_hundred_MB = 100 * 2 ** 20
+          this.disable_remove = folder_data_bytes < one_hundred_MB
+          this.log_folder_size = prettifySize(folder_data_bytes / 1024)
+        })
+        .catch((error) => {
+          notifier.pushBackError('GET_SERVICES_LOG_SIZE', error)
+        })
     },
     async reset_settings(): Promise<void> {
       await back_axios({
@@ -126,6 +156,9 @@ export default Vue.extend({
         },
         timeout: 2000,
       })
+        .then(() => {
+          this.get_log_folder_size()
+        })
         .catch((error) => {
           notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
         })
