@@ -55,7 +55,7 @@
           v-for="image in available_versions['local']"
           :key="image.sha"
           :image="image"
-          :current="image.tag === current_version.tag"
+          :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
           :update-available="updateIsAvailable(image)"
           :deleting="deleting.endsWith(image.tag)"
           @delete="deleteVersion"
