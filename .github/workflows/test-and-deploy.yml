@@ -198,7 +198,7 @@ jobs:
           docker buildx build \
             ${{ steps.prepare.outputs.buildx_args }} \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-${GIT_HASH_SHORT}.tar" \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}.tar" \
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
