@@ -38,6 +38,17 @@
             </v-btn>
 
             <v-btn
+              v-tooltip="'Download log for all services in BlueOS'"
+              class="ma-2"
+              @click="download_service_log_files"
+            >
+              <v-icon left>
+                mdi-folder-download
+              </v-icon>
+              Download Services Log Files
+            </v-btn>
+
+            <v-btn
               v-tooltip="'Frees up space on the SD card'"
               class="ma-2"
               @click="remove_service_log_files"
@@ -68,6 +79,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -85,6 +97,10 @@ export default Vue.extend({
     }
   },
   methods: {
+    async download_service_log_files(): Promise<void> {
+      const folder = await filebrowser.fetchFolder('system_logs')
+      await filebrowser.downloadFolder(folder)
+    },
     async reset_settings(): Promise<void> {
       await back_axios({
         url: `${API_URL}/settings/reset`,
