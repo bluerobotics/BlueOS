@@ -128,6 +128,15 @@ class Filebrowser {
     }
     window.open(url)
   }
+
+  /* Download folder */
+  /**
+   * @param folder - FilebrowserFolder
+  * */
+  async downloadFolder(folder: FilebrowserFolder): Promise<void> {
+    const url = `${filebrowser_url}/raw/${folder.path}/?algo=zip&auth=${await this.filebrowserToken()}`
+    window.open(url)
+  }
 }
 
 const filebrowser = new Filebrowser()
