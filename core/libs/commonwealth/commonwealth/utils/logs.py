@@ -1,11 +1,23 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import LogRecord
 from pathlib import Path
 from types import FrameType
-from typing import Optional, Union
+from typing import Any, Optional, TextIO, Union
 
 from loguru import logger
+
+
+class LogRotator:
+    def __init__(self, period_seconds: int):
+        self._last_time = datetime.now(timezone.utc)
+        self._period_seconds = period_seconds
+
+    def should_rotate(self, message: Any, _file: TextIO) -> bool:
+        if (message.record["time"] - self._last_time).total_seconds() > self._period_seconds:
+            self._last_time = datetime.now(timezone.utc)
+            return True
+        return False
 
 
 class InterceptHandler(logging.Handler):
@@ -45,6 +57,11 @@ def get_new_log_path(service_name: str) -> Path:
     # Returned log path are service-specific and store datetime information
     datetime_now = datetime.now().strftime("%m-%d-%Y_%H:%M:%S")
     return service_log_folder.joinpath(f"logfile_{datetime_now}.log")
+
+
+def init_logger(service_name: str) -> None:
+    rotator = LogRotator(10 * 60)  # Rotate every 10 minutes
+    logger.add(get_new_log_path(service_name), rotation=rotator.should_rotate)
 
 
 def stack_trace_message(error: BaseException) -> str:
