@@ -9,7 +9,7 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -45,7 +45,7 @@ if args.default_config == "bluerov2":
 manager = EthernetManager(default_config)
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
-logger.add(get_new_log_path(SERVICE_NAME))
+init_logger(SERVICE_NAME)
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 

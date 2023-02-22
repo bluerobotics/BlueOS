@@ -14,7 +14,7 @@ from commonwealth.utils.apis import (
     StackedHTTPException,
 )
 from commonwealth.utils.general import is_running_as_root
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, File, UploadFile, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -36,7 +36,7 @@ parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any boa
 args = parser.parse_args()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
-logger.add(get_new_log_path(SERVICE_NAME))
+init_logger(SERVICE_NAME)
 
 
 app = FastAPI(

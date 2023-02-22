@@ -4,7 +4,7 @@ from typing import Any, List
 
 import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -15,7 +15,7 @@ from bridget import BridgeSpec, Bridget
 SERVICE_NAME = "bridget"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
-logger.add(get_new_log_path(SERVICE_NAME))
+init_logger(SERVICE_NAME)
 
 app = FastAPI(
     title="Bridget API",

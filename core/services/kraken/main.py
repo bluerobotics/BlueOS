@@ -5,7 +5,7 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -36,7 +36,7 @@ logging.basicConfig(handlers=[InterceptHandler()], level=0)
 kraken = Kraken()
 
 try:
-    logger.add(get_new_log_path(SERVICE_NAME))
+    init_logger(SERVICE_NAME)
 except Exception as e:
     print(f"unable to set logging path: {e}")
 
@@ -160,7 +160,6 @@ async def root() -> Any:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    logger.add(get_new_log_path(SERVICE_NAME))
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")

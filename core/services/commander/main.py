@@ -11,7 +11,7 @@ import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.general import file_is_open
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -21,7 +21,7 @@ SERVICE_NAME = "commander"
 LOG_FOLDER_PATH = "/var/logs/blueos"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
-logger.add(get_new_log_path(SERVICE_NAME))
+init_logger(SERVICE_NAME)
 
 app = FastAPI(
     title="Commander API",
