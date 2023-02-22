@@ -13,7 +13,7 @@ from commonwealth.utils.apis import (
     PrettyJSONResponse,
     StackedHTTPException,
 )
-from commonwealth.utils.logs import InterceptHandler, get_new_log_path
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -29,7 +29,7 @@ FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 SERVICE_NAME = "wifi-manager"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
-logger.add(get_new_log_path(SERVICE_NAME))
+init_logger(SERVICE_NAME)
 
 logger.info("Starting Wifi Manager.")
 wifi_manager = WifiManager()

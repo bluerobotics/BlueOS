@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 import psutil
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.logs import get_new_log_path
+from commonwealth.utils.logs import init_logger
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -278,7 +278,7 @@ async def root() -> Any:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    logger.add(get_new_log_path(SERVICE_NAME))
+    init_logger(SERVICE_NAME)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")

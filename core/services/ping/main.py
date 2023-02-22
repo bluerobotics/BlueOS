@@ -4,7 +4,7 @@ import asyncio
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.logs import get_new_log_path
+from commonwealth.utils.logs import init_logger
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ping Service for Bluerobotics BlueOS")
     args = parser.parse_args()
 
-    logger.add(get_new_log_path(SERVICE_NAME))
+    init_logger(SERVICE_NAME)
 
     loop = asyncio.new_event_loop()
 
