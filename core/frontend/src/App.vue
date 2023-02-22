@@ -40,15 +40,24 @@
     >
       <v-container
         elevation="0"
-        class="d-flex justify-center align-center"
       >
         <v-img
-          alt="Blue Robotics Logo"
+          alt="Main Logo"
           class="shrink mr-2"
           contain
-          :src="blueos_logo"
-          width="70%"
-        />
+          :src="user_banner ? (is_dark_theme ? user_banner[0] : user_banner[1]) : blueos_logo"
+          width="100%"
+        >
+          <v-img
+            v-if="user_banner !== null"
+            alt="BlueOS Logo"
+            class="shrink"
+            style="position: absolute; right: 0%; bottom: 0%"
+            contain
+            :src="blueos_icon"
+            width="10%"
+          />
+        </v-img>
       </v-container>
 
       <v-container
@@ -206,8 +215,11 @@
 </template>
 
 <script lang="ts">
+import axios from 'axios'
 import Vue from 'vue'
 
+import blueos_icon_blue from '@/assets/img/blueos-icon-blue.svg'
+import blueos_icon_white from '@/assets/img/blueos-icon-white.svg'
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
 import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import settings from '@/libs/settings'
@@ -284,6 +296,7 @@ export default Vue.extend({
     backend_offline: false,
     menus,
     tourCallbacks: {}, // we are setting this up in mounted otherwise "this" can be undefined
+    user_banner: null as null | [string, string],
   }),
   computed: {
     wifi_connected(): boolean {
@@ -462,9 +475,18 @@ export default Vue.extend({
     blueos_logo(): string {
       return settings.is_dark_theme ? blueos_white : blueos_blue
     },
+    blueos_icon(): string {
+      return settings.is_dark_theme ? blueos_icon_white : blueos_icon_blue
+    },
+    is_dark_theme(): boolean {
+      return settings.is_dark_theme
+    },
   },
 
   watch: {
+    async is_dark_theme() {
+      await this.updateUserBanner()
+    },
     $route() {
       // In an update process the page may not be the 'Main' page, check tour when page changes
       this.checkTour()
@@ -483,10 +505,44 @@ export default Vue.extend({
     this.checkAddress()
     this.setupCallbacks()
     this.checkTour()
+    this.updateUserBanner()
     updateTime()
   },
 
   methods: {
+    async updateUserBanner() {
+      if (this.user_banner === null) {
+        this.user_banner = await this.checkForUserBanner()
+      }
+    },
+    async checkForUserBanner(): Promise<[string, string] | null> {
+      const banner = '/userdata/images/banner.svg'
+      const banner_light = '/userdata/images/banner-light.svg'
+      const banner_dark = '/userdata/images/banner-dark.svg'
+
+      try {
+        await axios.head(banner)
+        return [banner, banner]
+      } catch {
+        console.debug('User main banner does not exist')
+      }
+
+      try {
+        await axios.head(banner_light)
+      } catch {
+        console.debug('User main banner does not exist')
+        return null
+      }
+
+      try {
+        await axios.head(banner_dark)
+      } catch {
+        console.debug('User main banner does not exist')
+        return null
+      }
+
+      return [banner_light, banner_dark]
+    },
     checkAddress(): void {
       if (window.location.host.includes('companion.local')) {
         window.location.replace('http://blueos.local')
