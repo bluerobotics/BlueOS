@@ -38,8 +38,8 @@
           <v-btn v-tooltip="'Download to file'" class="ma-1 elevation-1" small @click="downloadSDPFile">
             <v-icon>mdi-download</v-icon>
           </v-btn>
-          <v-btn v-tooltip="'Copy to clipboard'" class="ma-1 elevation-1" small @click="copySDPFileURL">
-            <v-icon>mdi-content-copy</v-icon>
+          <v-btn v-tooltip="'Copy URL to clipboard'" class="ma-1 elevation-1" small @click="copySDPFileURL">
+            <v-icon>mdi-file-link</v-icon>
           </v-btn>
         </div>
       </div>
