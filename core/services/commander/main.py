@@ -139,6 +139,24 @@ async def raspi_config_camera_legacy_set(enable: bool = True) -> Any:
     return output
 
 
+@app.get("/raspi/vcgencmd", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def vcgencmd(i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    output_vl085_firmware_version = await command_host("sudo vcgencmd otp_dump", True)
+    logger.debug(f"VL085 firmware version command: {output_vl085_firmware_version}")
+    output_bootloader_version = await command_host("sudo vcgencmd bootloader_version", True)
+    logger.debug(f"Bootloader version command output: {output_bootloader_version}")
+    output_raspberry_firmware_version = await command_host("sudo vcgencmd version", True)
+    logger.debug(f"RPI firmware version command output: {output_raspberry_firmware_version}")
+
+    return {
+        "vl085": output_vl085_firmware_version,
+        "bootloader": output_bootloader_version,
+        "firmware": output_raspberry_firmware_version,
+    }
+
+
 @app.post("/settings/reset", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
