@@ -36,6 +36,7 @@ SERVICES=(
     'nmea_injector',"$SERVICES_PATH/nmea_injector/nmea_injector/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
     'video',"mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --verbose"
+    'major_tom',"$SERVICES_PATH/major_tom/main.py"
     'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
     'linux2rest',"linux2rest"
     'filebrowser',"filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"

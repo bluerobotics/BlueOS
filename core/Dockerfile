@@ -72,5 +72,8 @@ RUN ln -s /usr/blueos/userdata /shortcuts/userdata
 RUN ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
 RUN ln -s / /shortcuts/system_root
 
+# TODO before merging: move this to the base image
+RUN apt install usbutils -y
+
 # Start
 CMD /bin/bash -i /usr/bin/start-blueos-core && sleep infinity

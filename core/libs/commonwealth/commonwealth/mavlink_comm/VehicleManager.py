@@ -70,6 +70,12 @@ class VehicleManager:
         heartbeat_message = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
         return MavlinkVehicleType[heartbeat_message["message"]["mavtype"]["type"]]  # type: ignore
 
+    async def get_vehicle_base_mode(self) -> int:
+        """Returns vehicles base_mode field from Heartbeat"""
+        heartbeat_message = await self.mavlink2rest.get_mavlink_message(MavlinkMessageId.HEARTBEAT.name)
+        base_mode: int = heartbeat_message["message"]["base_mode"]["bits"]
+        return base_mode
+
     async def get_firmware_vehicle_type(self) -> str:
         vehicle_type = await self.get_vehicle_type()
         return vehicle_type.mavlink_firmware_type()
