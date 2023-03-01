@@ -26,6 +26,7 @@
         <system-condition v-else-if="page.value === 'system_condition'" />
         <network v-else-if="page.value === 'network'" />
         <kernel v-else-if="page.value === 'kernel'" />
+        <firmware v-else-if="page.value === 'firmware'" />
         <about-this-system v-else-if="page.value === 'about'" />
       </v-tab-item>
     </v-tabs-items>
@@ -36,6 +37,7 @@
 import Vue from 'vue'
 
 import AboutThisSystem from '@/components/system-information/AboutThisSystem.vue'
+import Firmware from '@/components/system-information/Firmware.vue'
 import Kernel from '@/components/system-information/Kernel.vue'
 import Network from '@/components/system-information/Network.vue'
 import Processes from '@/components/system-information/Processes.vue'
@@ -53,6 +55,7 @@ export default Vue.extend({
   name: 'SystemInformationView',
   components: {
     AboutThisSystem,
+    Firmware,
     Kernel,
     Network,
     Processes,
@@ -67,6 +70,9 @@ export default Vue.extend({
         { title: 'Network', icon: 'mdi-ip-network-outline', value: 'network' },
         {
           title: 'Kernel', icon: 'mdi-text-long', value: 'kernel', is_pirate: true,
+        },
+        {
+          title: 'Firmware', icon: 'mdi-raspberry-pi', value: 'firmware', is_pirate: true,
         },
         { title: 'About', icon: 'mdi-information', value: 'about' },
       ] as Item[],
