@@ -1,6 +1,13 @@
 import os
+import subprocess
+from pathlib import Path
 
 from loguru import logger
+
+
+def file_is_open(path: Path) -> bool:
+    result = subprocess.run(["lsof", path.resolve()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    return result.returncode == 0
 
 
 def is_running_as_root() -> bool:
