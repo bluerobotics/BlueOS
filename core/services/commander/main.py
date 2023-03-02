@@ -157,6 +157,13 @@ async def vcgencmd(i_know_what_i_am_doing: bool = False) -> Any:
     }
 
 
+@app.get("/raspi/eeprom_update", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def eeprom_update(i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    return await command_host("sudo rpi-eeprom-update", True)
+
+
 @app.post("/settings/reset", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
