@@ -5,6 +5,22 @@ from pathlib import Path
 from loguru import logger
 
 
+def delete_everything(path: Path) -> None:
+    if path.is_file() and not file_is_open(path):
+        path.unlink()
+        return
+
+    for item in path.glob("*"):
+        try:
+            if item.is_file() and not file_is_open(item):
+                item.unlink()
+            if item.is_dir() and not item.is_symlink():
+                # Delete folder contents
+                delete_everything(item)
+        except Exception as exception:
+            logger.warning(f"Failed to delete: {item}, {exception}")
+
+
 def file_is_open(path: Path) -> bool:
     result = subprocess.run(["lsof", path.resolve()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     return result.returncode == 0
