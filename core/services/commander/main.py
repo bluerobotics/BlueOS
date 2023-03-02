@@ -10,7 +10,7 @@ import appdirs
 import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.commands import run_command
-from commonwealth.utils.general import file_is_open
+from commonwealth.utils.general import delete_everything
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse
@@ -46,22 +46,6 @@ def check_what_i_am_doing(i_know_what_i_am_doing: bool = False) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Developer, you don't know what you are doing, command aborted.",
         )
-
-
-def delete_everything(path: Path) -> None:
-    if path.is_file() and not file_is_open(path):
-        path.unlink()
-        return
-
-    for item in path.glob("*"):
-        try:
-            if item.is_file() and not file_is_open(item):
-                item.unlink()
-            if item.is_dir() and not item.is_symlink():
-                # Delete folder contents
-                delete_everything(item)
-        except Exception as exception:
-            logger.warning(f"Failed to delete: {item}, {exception}")
 
 
 @app.post("/command/host", status_code=status.HTTP_200_OK)
