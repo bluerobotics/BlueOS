@@ -93,10 +93,11 @@ rfkill unblock all
 
 # Get the number of free blocks and the block size in bytes, and calculate the value in GB
 echo "Checking for available space."
-AVAILABLE_SPACE_GB=$(($(stat -f / --format="%a*%S/1024**3")))
-NECESSARY_SPACE_GB=1
-(( AVAILABLE_SPACE_GB < NECESSARY_SPACE_GB )) && (
-    echo "Not enough free space to install blueos, at least ${NECESSARY_SPACE_GB}GB required"
+
+AVAILABLE_SPACE_MB=$(($(stat -f / --format="%a*%S/1024**2")))
+NECESSARY_SPACE_MB=1024
+(( AVAILABLE_SPACE_MB < NECESSARY_SPACE_MB )) && (
+    echo "Not enough free space to install blueos, at least ${NECESSARY_SPACE_MB}MB required"
     exit 1
 )
 
