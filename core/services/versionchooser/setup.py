@@ -48,7 +48,7 @@ setup(
         "aiodocker == 0.21.0",
         "jsonschema == 3.2.0",
         "pyrsistent == 0.16.0",
-        "connexion[swagger-ui, aiohttp] @ https://github.com/zalando/connexion.git@jsonschema-4.0.0",
+        "connexion[swagger-ui, aiohttp] == 2.14.2",
         "appdirs == 1.4.4",
         "pytest-asyncio == 0.14.0",
         "asyncmock == 0.4.2",
