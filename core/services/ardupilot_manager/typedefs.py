@@ -5,7 +5,7 @@ from pathlib import Path
 from platform import machine
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, HttpUrl, validator
+from pydantic import BaseModel, validator
 
 
 class SITLFrame(str, Enum):
@@ -73,7 +73,7 @@ class Firmware(BaseModel):
     """Simplified representation of a firmware, as available on Ardupilot's manifest."""
 
     name: str
-    url: HttpUrl
+    url: str
 
 
 class Vehicle(str, Enum):
