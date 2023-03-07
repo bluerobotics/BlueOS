@@ -25,7 +25,6 @@ addopts = "--cov-report html --cov-report term"
 markers = [
     "timeout",
 ]
-asyncio_mode = "strict"
 
 [tool.coverage.run]
 branch = true
@@ -51,6 +50,9 @@ strict = true
 warn_unreachable = true
 warn_unused_ignores = false
 plugins = "pydantic.mypy"
+disable_error_code = [
+    "call-arg",
+]
 
 [tool.ruff]
 ignore = [

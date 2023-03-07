@@ -180,7 +180,12 @@ class ArduPilotManager(metaclass=Singleton):
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
-            "Master", self.settings.app_name, EndpointType.UDPServer, "127.0.0.1", 8852, protected=True
+            name="Master",
+            owner=self.settings.app_name,
+            connection_type=EndpointType.UDPServer,
+            place="127.0.0.1",
+            argument=8852,
+            protected=True,
         )
 
         # Run ardupilot inside while loop to avoid exiting after reboot command
@@ -226,7 +231,14 @@ class ArduPilotManager(metaclass=Singleton):
             raise ValueError(f"Could not find device path for board {board.name}.")
         self._current_board = board
         self.start_mavlink_manager(
-            Endpoint("Master", self.settings.app_name, EndpointType.Serial, board.path, 115200, protected=True)
+            Endpoint(
+                name="Master",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.Serial,
+                place=board.path,
+                argument=115200,
+                protected=True,
+            )
         )
 
     def start_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
@@ -243,7 +255,12 @@ class ArduPilotManager(metaclass=Singleton):
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
-            "Master", self.settings.app_name, EndpointType.TCPServer, "127.0.0.1", 5760, protected=True
+            name="Master",
+            owner=self.settings.app_name,
+            connection_type=EndpointType.TCPServer,
+            place="127.0.0.1",
+            argument=5760,
+            protected=True,
         )
         # pylint: disable=consider-using-with
         self.ardupilot_subprocess = subprocess.Popen(
@@ -267,48 +284,48 @@ class ArduPilotManager(metaclass=Singleton):
     def start_mavlink_manager(self, device: Endpoint) -> None:
         default_endpoints = [
             Endpoint(
-                "GCS Server Link",
-                self.settings.app_name,
-                EndpointType.UDPServer,
-                "0.0.0.0",
-                14550,
+                name="GCS Server Link",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPServer,
+                place="0.0.0.0",
+                argument=14550,
                 persistent=True,
                 enabled=False,
             ),
             Endpoint(
-                "GCS Client Link",
-                self.settings.app_name,
-                EndpointType.UDPClient,
-                "192.168.2.1",
-                14550,
+                name="GCS Client Link",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPClient,
+                place="192.168.2.1",
+                argument=14550,
                 persistent=True,
                 enabled=True,
             ),
             Endpoint(
-                "MAVLink2Rest",
-                self.settings.app_name,
-                EndpointType.UDPClient,
-                "127.0.0.1",
-                14000,
+                name="MAVLink2Rest",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPClient,
+                place="127.0.0.1",
+                argument=14000,
                 persistent=True,
                 protected=True,
             ),
             Endpoint(
-                "Internal Link",
-                self.settings.app_name,
-                EndpointType.TCPServer,
-                "127.0.0.1",
-                5777,
+                name="Internal Link",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.TCPServer,
+                place="127.0.0.1",
+                argument=5777,
                 persistent=True,
                 protected=True,
                 overwrite_settings=True,
             ),
             Endpoint(
-                "Ping360 Heading",
-                self.settings.app_name,
-                EndpointType.UDPServer,
-                "0.0.0.0",
-                14660,
+                name="Ping360 Heading",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPServer,
+                place="0.0.0.0",
+                argument=14660,
                 persistent=True,
                 protected=True,
             ),

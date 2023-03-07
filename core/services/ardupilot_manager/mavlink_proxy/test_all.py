@@ -25,27 +25,89 @@ serial_port_name = os.ttyname(slave_port)
 @pytest.fixture
 def valid_output_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("Test endpoint 1", "pytest", EndpointType.UDPServer, "0.0.0.0", 14551),
-        Endpoint("Test endpoint 2", "pytest", EndpointType.UDPClient, "0.0.0.0", 14552),
-        Endpoint("Test endpoint 3", "pytest", EndpointType.TCPServer, "0.0.0.0", 14553),
-        Endpoint("Test endpoint 4", "pytest", EndpointType.TCPClient, "0.0.0.0", 14554),
-        Endpoint("Test endpoint 5", "pytest", EndpointType.Serial, serial_port_name, 57600),
+        Endpoint(
+            name="Test endpoint 1",
+            owner="pytest",
+            connection_type=EndpointType.UDPServer,
+            place="0.0.0.0",
+            argument=14551,
+        ),
+        Endpoint(
+            name="Test endpoint 2",
+            owner="pytest",
+            connection_type=EndpointType.UDPClient,
+            place="0.0.0.0",
+            argument=14552,
+        ),
+        Endpoint(
+            name="Test endpoint 3",
+            owner="pytest",
+            connection_type=EndpointType.TCPServer,
+            place="0.0.0.0",
+            argument=14553,
+        ),
+        Endpoint(
+            name="Test endpoint 4",
+            owner="pytest",
+            connection_type=EndpointType.TCPClient,
+            place="0.0.0.0",
+            argument=14554,
+        ),
+        Endpoint(
+            name="Test endpoint 5",
+            owner="pytest",
+            connection_type=EndpointType.Serial,
+            place=serial_port_name,
+            argument=57600,
+        ),
     }
 
 
 @pytest.fixture
 def valid_master_endpoints() -> Set[Endpoint]:
     return {
-        Endpoint("Master endpoint 1", "pytest", EndpointType.UDPServer, "0.0.0.0", 14550),
-        Endpoint("Master endpoint 2", "pytest", EndpointType.UDPClient, "0.0.0.0", 14550),
-        Endpoint("Master endpoint 3", "pytest", EndpointType.TCPServer, "0.0.0.0", 14550),
-        Endpoint("Master endpoint 4", "pytest", EndpointType.TCPClient, "0.0.0.0", 14550),
-        Endpoint("Master endpoint 5", "pytest", EndpointType.Serial, serial_port_name, 115200),
+        Endpoint(
+            name="Master endpoint 1",
+            owner="pytest",
+            connection_type=EndpointType.UDPServer,
+            place="0.0.0.0",
+            argument=14550,
+        ),
+        Endpoint(
+            name="Master endpoint 2",
+            owner="pytest",
+            connection_type=EndpointType.UDPClient,
+            place="0.0.0.0",
+            argument=14550,
+        ),
+        Endpoint(
+            name="Master endpoint 3",
+            owner="pytest",
+            connection_type=EndpointType.TCPServer,
+            place="0.0.0.0",
+            argument=14550,
+        ),
+        Endpoint(
+            name="Master endpoint 4",
+            owner="pytest",
+            connection_type=EndpointType.TCPClient,
+            place="0.0.0.0",
+            argument=14550,
+        ),
+        Endpoint(
+            name="Master endpoint 5",
+            owner="pytest",
+            connection_type=EndpointType.Serial,
+            place=serial_port_name,
+            argument=115200,
+        ),
     }
 
 
 def test_endpoint() -> None:
-    endpoint = Endpoint("Test endpoint", "pytest", EndpointType.UDPClient, "0.0.0.0", 14550)
+    endpoint = Endpoint(
+        name="Test endpoint", owner="pytest", connection_type=EndpointType.UDPClient, place="0.0.0.0", argument=14550
+    )
     assert endpoint.name == "Test endpoint", "Name does not match."
     assert endpoint.owner == "pytest", "Owner does not match."
     assert endpoint.persistent is False, "Persistent does not match."

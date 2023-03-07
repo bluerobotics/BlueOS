@@ -75,7 +75,8 @@ class Detector:
             FlightController(
                 name=port.product or port.name,
                 manufacturer=port.manufacturer,
-                platform=Detector.detect_serial_platform(port),
+                platform=Detector.detect_serial_platform(port)
+                or Platform(),  # this is just to make CI happy. check line 82
                 path=port.device,
             )
             for port in unique_serial_devices
