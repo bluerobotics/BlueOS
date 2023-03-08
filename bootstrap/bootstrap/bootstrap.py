@@ -167,7 +167,7 @@ class Bootstrapper:
         if not self.image_is_available_locally(image_name, image_version):
             try:
                 self.pull(component_name)
-            except docker.errors.ImageNotFound:
+            except docker.errors.NotFound:
                 warn("Image not found, reverting to default...")
                 self.overwrite_config_file_with_defaults()
                 return False
