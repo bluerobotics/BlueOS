@@ -90,8 +90,8 @@ class FirmwareInstaller:
             firm_board = firm_decoder.fwversion.board_type
             firm_sub_board = firm_decoder.fwversion.board_subtype
             current_decoder_platform = get_correspondent_decoder_platform(platform)
-            if not current_decoder_platform in [firm_board, firm_sub_board]:
-                InvalidFirmwareFile(
+            if current_decoder_platform not in [firm_board, firm_sub_board]:
+                raise InvalidFirmwareFile(
                     f"Firmware's platform ({current_decoder_platform}) does not match system's ({platform})."
                 )
         except Exception as error:
