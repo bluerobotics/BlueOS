@@ -291,7 +291,7 @@ export default Vue.extend({
             reject(new Error('backend took to long to come back'))
             clearInterval(interval)
           },
-          20000,
+          60000,
         )
         interval = setInterval(() => {
           this.backendIsOnline().then((backend_online) => {
