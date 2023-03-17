@@ -10,7 +10,7 @@
         { text: 'Value', value: 'value', width: '150px' },
       ]"
       :loading="!finished_loading"
-      :items="search != '' ? fuse.search(search) : params_no_input"
+      :items="search && search != '' ? fuse.search(search) : params_no_input"
       item-key="item.name"
       class="elevation-1"
       :search="search"
