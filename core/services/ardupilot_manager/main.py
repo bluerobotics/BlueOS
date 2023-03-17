@@ -16,6 +16,7 @@ from commonwealth.utils.apis import (
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, File, UploadFile, status
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -147,7 +148,10 @@ def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) 
 async def install_firmware_from_url(url: str, board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, target_board(board_name))
+        return StreamingResponse(
+            autopilot.install_firmware_from_url(url, target_board(board_name)),
+            headers={"Content-Type": "application/text/plain"},
+        )
     finally:
         await autopilot.start_ardupilot()
 
@@ -160,11 +164,14 @@ async def install_firmware_from_file(binary: UploadFile = File(...), board_name:
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_file(custom_firmware, target_board(board_name))
-        os.remove(custom_firmware)
+        return StreamingResponse(
+            autopilot.install_firmware_from_file(custom_firmware, target_board(board_name)),
+            headers={"Content-Type": "application/text/plain"},
+        )
     except InvalidFirmwareFile as error:
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
     finally:
+        os.remove(custom_firmware)
         binary.file.close()
         await autopilot.start_ardupilot()
 
@@ -211,7 +218,10 @@ async def stop() -> Any:
 async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware(target_board(board_name))
+        return StreamingResponse(
+            autopilot.restore_default_firmware(target_board(board_name)),
+            headers={"Content-Type": "application/text/plain"},
+        )
     finally:
         await autopilot.start_ardupilot()
 
