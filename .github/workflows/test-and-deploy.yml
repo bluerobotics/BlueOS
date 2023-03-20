@@ -238,6 +238,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Remove dangling docker containers and cache objects
+        run: |
+          docker system prune --force
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
