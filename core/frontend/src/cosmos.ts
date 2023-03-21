@@ -8,6 +8,7 @@ declare global {
 
     interface String {
       isEmpty(): boolean;
+      splitOnce(separator: string): [string, string] | undefined
       toTitle(): string;
   }
 }
@@ -25,6 +26,17 @@ Array.prototype.isEmpty = function<T> (this: T[]): boolean {
 // eslint-disable-next-line
 String.prototype.isEmpty = function (this: String): boolean {
   return this.length === 0
+}
+
+// eslint-disable-next-line
+String.prototype.splitOnce = function (this: string, separator: string): [string, string] | undefined {
+  const index = this.indexOf(separator)
+  if (index === -1) {
+    return undefined
+  }
+  const first = this.substring(0, index)
+  const second = this.substring(index + separator.length)
+  return [first, second]
 }
 
 // eslint-disable-next-line
