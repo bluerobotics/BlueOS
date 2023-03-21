@@ -43,6 +43,12 @@ export function printParam(param?: Parameter): string {
   if (param === undefined) {
     return 'Unknown'
   }
+
+  // Show device id as an hexadecimal value
+  if (param?.name.includes('_DEV_ID') || param?.name.includes('_DEVID')) {
+    return `0x${param.value.toString(16).padStart(8, '0')}`
+  }
+
   // Check if there are options but zero does not cover it
   // Or if it's a bitmask, where no flags is 'None'
   const option_zero_does_not_exist = param.options !== undefined && param.options?.[0] === undefined
