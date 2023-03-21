@@ -221,7 +221,7 @@ export default Vue.extend({
         method: 'POST',
         params: {
           extension_identifier: extension.identifier,
-          version,
+          new_version: version,
         },
         timeout: 20000,
         onDownloadProgress: (progressEvent) => {
