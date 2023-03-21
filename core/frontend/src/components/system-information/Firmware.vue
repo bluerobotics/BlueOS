@@ -128,11 +128,12 @@ export default Vue.extend({
       const latest = []
 
       for (const line of lines) {
-        if (!line.includes(':')) {
+        const result = line.splitOnce(':')
+        if (result === undefined) {
           continue
         }
 
-        let [key, value] = line.split(':')
+        let [key, value] = result
         key = key.trim()
         value = value.trim()
 
