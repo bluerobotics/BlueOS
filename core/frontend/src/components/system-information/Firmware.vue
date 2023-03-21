@@ -61,6 +61,7 @@
 </template>
 
 <script lang="ts">
+import { formatRFC7231 } from 'date-fns'
 import Vue from 'vue'
 
 import back_axios from '@/utils/api'
@@ -97,9 +98,10 @@ export default Vue.extend({
       return this.cleanUpString(this.vcgencmd?.firmware?.stdout)
     },
     raspiberry_firmware_data(): string | undefined {
-      return this.raspiberry_firmware
+      const data = this.raspiberry_firmware
         ?.split('\n')
         ?.[0]
+      return this.formatDate(data)
     },
     raspberry_firmware_version(): string | undefined {
       return this.raspiberry_firmware
@@ -150,8 +152,8 @@ export default Vue.extend({
       }
 
       return {
-        latest_bootloader: latest?.[0],
-        current_bootloader: current?.[0],
+        latest_bootloader: this.formatDate(latest?.[0]),
+        current_bootloader: this.formatDate(current?.[0]),
         latest_vl085: latest?.[1],
         current_vl085: current?.[1],
       }
@@ -166,6 +168,13 @@ export default Vue.extend({
         return text
       }
       return text.slice(1, -1).replace(/\\n/g, '\n').trim().trim()
+    },
+    formatDate(date_value: string | undefined): string | undefined {
+      if (date_value === undefined) {
+        return undefined
+      }
+
+      return formatRFC7231(Date.parse(date_value)) ?? date_value
     },
     formatError(output: ReturnStruct | undefined): string | undefined {
       const return_code = output?.return_code
