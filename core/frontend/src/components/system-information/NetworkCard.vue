@@ -22,8 +22,9 @@
         <v-col
           v-for="(ip, i) in network.ips"
           :key="i"
-          :style="ip.includes('::') ? 'cursor: pointer; filter:blur(0.5em)' : ''"
           class="pa-0 text-h6 text-center"
+          :style="ip.includes('::') && !show_ipv6 ? 'cursor: pointer; filter:blur(0.5em)' : ''"
+          @click="show_ipv6 = true"
         >
           {{ ip }}
         </v-col>
@@ -121,6 +122,7 @@ export default {
   data() {
     return {
       show_mac: false,
+      show_ipv6: false,
     }
   },
 }
