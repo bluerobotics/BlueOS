@@ -82,4 +82,4 @@ fi
 # Force update of bootloader and VL085 firmware on the first boot
 echo "- Force update of VL085 and bootloader on first boot."
 SYSTEMD_EEPROM_UPDATE_FILE="/lib/systemd/system/rpi-eeprom-update.service"
-sudo sed -i 's|rpi-eeprom-update -s -a|rpi-eeprom-update -a -d|g' $SYSTEMD_EEPROM_UPDATE_FILE
+sudo sed -i '/^ExecStart=\/usr\/bin\/rpi-eeprom-update -s -a$/c\ExecStart=/bin/bash -c "/usr/bin/rpi-eeprom-update -a -d | (grep \\\"reboot to apply\\\" && echo \\\"Rebooting..\\\" && reboot || exit 0)"' $SYSTEMD_EEPROM_UPDATE_FILE
