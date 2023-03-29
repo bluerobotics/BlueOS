@@ -22,7 +22,7 @@ setuptools.setup(
         "fastapi-versioning == 0.9.1",
         "loguru == 0.5.3",
         "pynmea2 == 1.18.0",
-        "starlette == 0.13.6",
+        "starlette == 0.22.0",
         "uvicorn == 0.13.4",
         "validators == 0.18.2",
         "pytest-mock==3.10.0",

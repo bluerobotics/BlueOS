@@ -22,7 +22,7 @@ setup(
         "fastapi-versioning == 0.9.1",
         "loguru == 0.5.3",
         "pyserial == 3.5",
-        "starlette == 0.13.6",
+        "starlette == 0.22.0",
         "uvicorn == 0.13.4",
     ],
 )
