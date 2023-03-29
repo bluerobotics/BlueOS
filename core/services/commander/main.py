@@ -12,8 +12,9 @@ from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.general import delete_everything
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import FastAPI, HTTPException, status
+from fastapi import HTTPException, status
 from fastapi.responses import HTMLResponse
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
@@ -23,7 +24,7 @@ LOG_FOLDER_PATH = "/var/logs/blueos"
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-app = FastAPI(
+app = FastAPIOffline(
     title="Commander API",
     description="Commander is a BlueOS service responsible to abstract simple commands to the frontend.",
 )

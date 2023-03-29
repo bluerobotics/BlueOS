@@ -5,8 +5,9 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import init_logger
-from fastapi import FastAPI, status
+from fastapi import status
 from fastapi.responses import HTMLResponse
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -18,7 +19,7 @@ from typedefs import PingDeviceDescriptorModel
 
 SERVICE_NAME = "ping"
 
-app = FastAPI(
+app = FastAPIOffline(
     title="Ping Manager API",
     description="Ping Manager is responsible for managing Ping devices connected to BlueOS.",
     default_response_class=PrettyJSONResponse,

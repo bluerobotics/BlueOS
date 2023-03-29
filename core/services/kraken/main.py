@@ -6,8 +6,9 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import FastAPI, HTTPException, status
+from fastapi import HTTPException, status
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
@@ -41,7 +42,7 @@ except Exception as e:
     print(f"unable to set logging path: {e}")
 
 
-app = FastAPI(
+app = FastAPIOffline(
     title="Kraken API",
     description="Kraken is the BlueOS service responsible for installing and managing thirdy-party extensions.",
 )

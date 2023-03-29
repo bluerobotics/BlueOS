@@ -77,6 +77,7 @@ setuptools.setup(
         "smbus2 == 0.3.0",
         "starlette == 0.13.6",
         "fastapi == 0.63.0",
+        "fastapi-offline == 1.5.2",
         "uvicorn == 0.13.4",
         "python-multipart == 0.0.5",
         "validators == 0.18.2",

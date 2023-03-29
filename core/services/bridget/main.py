@@ -5,8 +5,9 @@ from typing import Any, List
 import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import FastAPI, status
+from fastapi import status
 from fastapi.responses import HTMLResponse
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
@@ -17,7 +18,7 @@ SERVICE_NAME = "bridget"
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-app = FastAPI(
+app = FastAPIOffline(
     title="Bridget API",
     description="Bridget is a BlueOS service responsible for managing 'bridges' links.",
     default_response_class=PrettyJSONResponse,

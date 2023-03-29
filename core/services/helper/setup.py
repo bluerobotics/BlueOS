@@ -67,6 +67,7 @@ setup(
         "beautifulsoup4 == 4.9.3",
         "commonwealth == 0.1.0",
         "fastapi == 0.63.0",
+        "fastapi-offline == 1.5.2",
         "fastapi-versioning == 0.9.1",
         "psutil == 5.7.2",
         "requests == 2.25.1",

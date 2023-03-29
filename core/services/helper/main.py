@@ -10,8 +10,8 @@ import uvicorn
 from bs4 import BeautifulSoup
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
-from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from pydantic import BaseModel
 
@@ -117,7 +117,7 @@ class Helper:
         return [service for service in services if service.valid]
 
 
-fast_api_app = FastAPI(
+fast_api_app = FastAPIOffline(
     title="Helper API",
     description="Everybody's helper to find web services that are running in BlueOS.",
     default_response_class=PrettyJSONResponse,

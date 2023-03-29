@@ -11,8 +11,9 @@ import psutil
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import init_logger
-from fastapi import FastAPI, Request
+from fastapi import Request
 from fastapi.responses import HTMLResponse
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -234,7 +235,7 @@ class Beacon:
         await asyncio.gather(*[runner.unregister_services() for runner in self.runners.values()])
 
 
-app = FastAPI(
+app = FastAPIOffline(
     title="Beacon API",
     description="Beacon is responsible for publishing mDNS domains.",
     default_response_class=PrettyJSONResponse,
