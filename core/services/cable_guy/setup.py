@@ -68,7 +68,7 @@ setuptools.setup(
         "psutil == 5.7.2",
         "pyroute2 == 0.5.13",
         "starlette == 0.13.6",
-        "fastapi == 0.63.0",
+        "fastapi == 0.89.1",
         "fastapi-offline == 1.5.2",
         "uvicorn == 0.13.4",
         "aiofiles == 0.6.0",

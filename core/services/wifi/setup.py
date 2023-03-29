@@ -43,7 +43,7 @@ setuptools.setup(
     license="MIT",
     install_requires=[
         "starlette == 0.13.6",
-        "fastapi == 0.63.0",
+        "fastapi == 0.89.1",
         "fastapi-offline == 1.5.2",
         "uvicorn == 0.13.4",
         "aiofiles == 0.6.0",
