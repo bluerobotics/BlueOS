@@ -240,18 +240,20 @@ export default Vue.extend({
 
       // Sort parameters alphabetically
       // We take advantage of sort to also calculate the parameter name maximum size
-      const parameters = Object.values(autopilot_data.parameters).sort((first, second) => {
-        parameter_name_max_size = Math.max(parameter_name_max_size, first.name.length)
-        parameter_name_max_size = Math.max(parameter_name_max_size, second.name.length)
+      const parameters = Object.values(autopilot_data.parameters)
+        .filter((parameter: Parameter) => !parameter.readonly)
+        .sort((first, second) => {
+          parameter_name_max_size = Math.max(parameter_name_max_size, first.name.length)
+          parameter_name_max_size = Math.max(parameter_name_max_size, second.name.length)
 
-        if (first.name < second.name) {
-          return -1
-        }
-        if (first.name > second.name) {
-          return 1
-        }
-        return 0
-      })
+          if (first.name < second.name) {
+            return -1
+          }
+          if (first.name > second.name) {
+            return 1
+          }
+          return 0
+        })
 
       let content = ''
 
