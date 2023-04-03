@@ -207,7 +207,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: success() && matrix.docker == 'core'
         with:
-          name: BlueOS-core-docker-image-arm64-v8.zip
+          name: BlueOS-core-docker-image-arm64-v8
           path: '*.tar'
 
       - name: Create image artifact
@@ -225,7 +225,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: success() && matrix.docker == 'core'
         with:
-          name: BlueOS-core-docker-image-arm-v7.zip
+          name: BlueOS-core-docker-image-arm-v7
           path: '*.tar'
 
       - name: Upload docker image for release
