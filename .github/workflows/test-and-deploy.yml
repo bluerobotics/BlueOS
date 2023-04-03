@@ -201,14 +201,14 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }} \
             --platform "linux/arm64/v8"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}.tar" \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
 
       - name: Upload artifact arm64-v8
         uses: actions/upload-artifact@v3
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm64-v8
-          path: '*.tar'
+          path: '*arm64-v8.tar'
 
       - name: Create image artifact
         if: success() && matrix.docker == 'core'
@@ -219,14 +219,14 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }} \
             --platform "linux/arm/v7"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}.tar" \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
 
       - name: Upload artifact arm-v7
         uses: actions/upload-artifact@v3
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm-v7
-          path: '*.tar'
+          path: '*arm-v7.tar'
 
       - name: Upload docker image for release
         uses: svenstaro/upload-release-action@v2
