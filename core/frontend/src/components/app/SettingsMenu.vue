@@ -119,7 +119,7 @@ export default Vue.extend({
       await back_axios({
         url: `${API_URL}/services/check_log_folder_size`,
         method: 'get',
-        timeout: 4000,
+        timeout: 30000,
       })
         .then((response) => {
           const folder_data_bytes = response.data
