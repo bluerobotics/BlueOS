@@ -23,9 +23,9 @@
     >
       <v-card>
         <v-card-text>
-          <pre class="logs">
-            {{ log_output }}
-          </pre>
+          <!-- eslint-disable -->
+          <pre class="logs" v-html="log_output" />
+          <!-- eslint-enable -->
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -146,6 +146,7 @@
 </template>
 
 <script lang="ts">
+import AnsiUp from 'ansi_up'
 import axios from 'axios'
 import Vue from 'vue'
 
@@ -355,7 +356,8 @@ export default Vue.extend({
         timeout: 30000,
       })
         .then((response) => {
-          this.log_output = response.data.join('')
+          const ansi = new AnsiUp()
+          this.log_output = ansi.ansi_to_html(response.data.join(''))
           this.show_log = true
         })
         .catch((error) => {
