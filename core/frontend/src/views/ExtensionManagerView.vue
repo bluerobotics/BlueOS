@@ -67,7 +67,7 @@
         class="text-center"
       >
         <p class="text-h6">
-          No Extensions available.
+          No Extensions available. Make sure the vehicle has internet access and try again.
         </p>
       </v-container>
     </div>
@@ -322,6 +322,10 @@ export default Vue.extend({
         timeout: 3000,
       })
         .then((response) => {
+          if ('detail' in response.data) {
+            notifier.pushBackError('EXTENSIONS_MANIFEST_FETCH_FAIL', new Error(response.data.detail))
+            return
+          }
           this.manifest = response.data
         })
         .catch((error) => {
