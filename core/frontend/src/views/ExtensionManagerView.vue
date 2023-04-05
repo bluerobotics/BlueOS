@@ -223,7 +223,7 @@ export default Vue.extend({
           extension_identifier: extension.identifier,
           new_version: version,
         },
-        timeout: 20000,
+        timeout: 120000,
         onDownloadProgress: (progressEvent) => {
           tracker.digestNewData(progressEvent)
           this.pull_output = tracker.pull_output
