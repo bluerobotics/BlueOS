@@ -48,7 +48,7 @@
 
               <v-col class="text-center">
                 <v-btn
-                  v-if="installed"
+                  v-if="installed === selected_version"
                   class="mt-3"
                   disabled
                   color="primary"
