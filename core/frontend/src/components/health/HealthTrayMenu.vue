@@ -137,6 +137,7 @@
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import { MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
 import { RaspberryEventType } from '@/types/system-information/platform'
@@ -205,7 +206,7 @@ export default Vue.extend({
   },
   mounted() {
     mavlink2rest.startListening('HEARTBEAT').setCallback((message) => {
-      if (message?.header.system_id !== 1 || message?.header.component_id !== 1) {
+      if (!this.is_vehicle(message?.message.mavtype.type) || message?.header.component_id !== 1) {
         return
       }
 
@@ -215,6 +216,28 @@ export default Vue.extend({
   methods: {
     heartbeat_age(): number {
       return new Date().valueOf() - this.last_heartbeat_date.getTime()
+    },
+    is_vehicle(type: string) {
+      return [
+        MavType.MAV_TYPE_FIXED_WING,
+        MavType.MAV_TYPE_VTOL_DUOROTOR,
+        MavType.MAV_TYPE_VTOL_QUADROTOR,
+        MavType.MAV_TYPE_VTOL_TILTROTOR,
+        MavType.MAV_TYPE_VTOL_RESERVED4,
+        MavType.MAV_TYPE_VTOL_RESERVED5,
+        MavType.MAV_TYPE_QUADROTOR,
+        MavType.MAV_TYPE_COAXIAL,
+        MavType.MAV_TYPE_HELICOPTER,
+        MavType.MAV_TYPE_HEXAROTOR,
+        MavType.MAV_TYPE_OCTOROTOR,
+        MavType.MAV_TYPE_TRICOPTER,
+        MavType.MAV_TYPE_GROUND_ROVER,
+        MavType.MAV_TYPE_SURFACE_BOAT,
+        MavType.MAV_TYPE_SUBMARINE,
+        // The next two ones are not defined?
+        'MAV_TYPE_VTOL_FIXEDROTOR',
+        'MAV_TYPE_VTOL_TAILSITTER',
+      ].includes(type)
     },
   },
 })

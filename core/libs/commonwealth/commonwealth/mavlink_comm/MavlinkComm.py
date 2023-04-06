@@ -87,8 +87,8 @@ class MavlinkMessenger:
             for component in vehicle["components"].values():
                 if "HEARTBEAT" in component["messages"]:
                     message = component["messages"]["HEARTBEAT"]
-                    # we are looking for vehicles, not GCSs
-                    if not MavlinkVehicleType(message["mavtype"]["type"]).is_actually_vehicle():
+                    # we are looking for vehicles, not GCSs or other components
+                    if not MavlinkVehicleType(message["mavtype"]["type"]).is_actually_a_vehicle():
                         continue
                     last_update_str = message["status"]["time"]["last_update"]
                     # drop sub-microsecond precision as it is not supported by datetime.fromisoformat
