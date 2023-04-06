@@ -110,6 +110,9 @@ class MavlinkVehicleType(str, Enum):
 
         return "Unknown"
 
+    def is_actually_a_vehicle(self) -> bool:
+        return self.mavlink_firmware_type() in ["ArduPlane", "ArduCopter", "ArduRover", "ArduSub"]
+
 
 class FirmwareInfo(BaseModel):
     version: str

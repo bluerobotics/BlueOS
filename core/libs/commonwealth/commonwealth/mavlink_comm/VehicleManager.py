@@ -23,6 +23,7 @@ class VehicleManager:
         self.confirmation = 0
 
     def set_target_system(self, target_system: int) -> None:
+        logger.info(f"setting target system to: {target_system}")
         self.target_system = target_system
 
     def set_target_component(self, target_component: int) -> None:
@@ -56,15 +57,19 @@ class VehicleManager:
             "MAV_CMD_REQUEST_MESSAGE", [MavlinkMessageId.AUTOPILOT_VERSION.value]
         )
         await self.mavlink2rest.send_mavlink_message(request_message)
-        autopilot_version = await self.mavlink2rest.get_mavlink_message(MavlinkMessageId.AUTOPILOT_VERSION.name)
-        flight_sw_version_raw = autopilot_version["message"]["flight_sw_version"]
+        try:
+            autopilot_version = await self.mavlink2rest.get_mavlink_message(MavlinkMessageId.AUTOPILOT_VERSION.name)
+            flight_sw_version_raw = autopilot_version["message"]["flight_sw_version"]
+            major, minor, patch, version_type_raw = flight_sw_version_raw.to_bytes(4, byteorder="big")
+            firmware_version = f"{major}.{minor}.{patch}"
+            version_type = FirmwareVersionType.from_value(version_type_raw)
+            return FirmwareInfo(version=firmware_version, type=version_type)
 
-        major, minor, patch, version_type_raw = flight_sw_version_raw.to_bytes(4, byteorder="big")
-
-        firmware_version = f"{major}.{minor}.{patch}"
-        version_type = FirmwareVersionType.from_value(version_type_raw)
-
-        return FirmwareInfo(version=firmware_version, type=version_type)
+        except Exception as error:
+            logger.error(f"Failed to request autopilot version. {error}")
+            logger.info("trying to get a new system id")
+            self.set_target_system(await self.mavlink2rest.get_most_recent_vehicle_id())
+            raise ValueError("Failed to get autopilot version.") from Exception
 
     async def get_vehicle_type(self) -> MavlinkVehicleType:
         heartbeat_message = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
