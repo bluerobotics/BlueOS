@@ -19,7 +19,7 @@ from uvicorn import Config, Server
 from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
-from settings import ServiceTypes, SettingsV3
+from settings import ServiceTypes, SettingsV4
 from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
@@ -73,10 +73,12 @@ class AsyncRunner:
 
 
 class Beacon:
+    DEFAULT_HOSTNAME = "blueos"
+
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
         try:
-            self.manager = Manager(SERVICE_NAME, SettingsV3)
+            self.manager = Manager(SERVICE_NAME, SettingsV4)
         except Exception as e:
             logger.warning(f"failed to load configuration file ({e}), loading defaults")
             self.load_default_settings()
@@ -93,8 +95,8 @@ class Beacon:
         current_folder = pathlib.Path(__file__).parent.resolve()
         default_settings_file = current_folder / "default-settings.json"
         logger.debug("loading settings from ", default_settings_file)
-        self.manager = Manager(SERVICE_NAME, SettingsV3, load=False)
-        self.manager.settings = self.manager.load_from_file(SettingsV3, default_settings_file)
+        self.manager = Manager(SERVICE_NAME, SettingsV4, load=False)
+        self.manager.settings = self.manager.load_from_file(SettingsV4, default_settings_file)
         self.manager.save()
 
     def load_service_types(self) -> Dict[str, ServiceTypes]:
@@ -110,12 +112,25 @@ class Beacon:
         self.manager.settings.default.domain_names = [hostname]
         for interface in self.manager.settings.interfaces:
             if interface.name.startswith("eth"):
-                interface.domain_names = [hostname, "blueos"]  # let's keep blueos just in case
+                interface.domain_names = [hostname, self.DEFAULT_HOSTNAME]  # let's keep our default just in case
             elif interface.name.startswith("wlan"):
                 interface.domain_names = [f"{hostname}-wifi"]
             elif interface.name.startswith("uap"):
                 interface.domain_names = [f"{hostname}-hostspot"]
         self.manager.save()
+
+    def get_hostname(self) -> str:
+        try:
+            return self.manager.settings.default.domain_names[0] or self.DEFAULT_HOSTNAME
+        except Exception:
+            return self.DEFAULT_HOSTNAME
+
+    def set_vehicle_name(self, name: str) -> None:
+        self.manager.settings.vehicle_name = name
+        self.manager.save()
+
+    def get_vehicle_name(self) -> str:
+        return self.manager.settings.vehicle_name or "BlueROV2"
 
     def create_async_service_infos(
         self, interface: str, service_name: str, domain_name: str, ip: str
@@ -258,10 +273,30 @@ beacon = Beacon()
 def get_services() -> Any:
     return list(itertools.chain.from_iterable([runner.get_services() for runner in beacon.runners.values()]))
 
-@app.post("/hostname", response_model=List[MdnsEntry], summary="Set the hostname for mDNS.")
+
+@app.post("/hostname", summary="Set the hostname for mDNS.")
 @version(1, 0)
 def set_hostname(hostname: str) -> Any:
     return beacon.set_hostname(hostname)
+
+
+@app.get("/hostname", summary="Get hostname for mDNS.")
+@version(1, 0)
+def get_hostname() -> Any:
+    return beacon.get_hostname()
+
+
+@app.post("/vehicle_name", summary="Set the vehicle name")
+@version(1, 0)
+def set_vehicle_name(name: str) -> Any:
+    return beacon.set_vehicle_name(name)
+
+
+@app.get("/vehicle_name", response_model=str, summary="Get the vehicle name")
+@version(1, 0)
+def get_vehicle_name() -> Any:
+    return beacon.get_vehicle_name()
+
 
 @app.get("/ip", response_model=IpInfo, summary="Ip Information")
 @version(1, 0)
