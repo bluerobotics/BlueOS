@@ -106,6 +106,17 @@ class Beacon:
             services[service.name] = service
         return services
 
+    def set_hostname(self, hostname: str) -> None:
+        self.manager.settings.default.domain_names = [hostname]
+        for interface in self.manager.settings.interfaces:
+            if interface.name.startswith("eth"):
+                interface.domain_names = [hostname, "blueos"]  # let's keep blueos just in case
+            elif interface.name.startswith("wlan"):
+                interface.domain_names = [f"{hostname}-wifi"]
+            elif interface.name.startswith("uap"):
+                interface.domain_names = [f"{hostname}-hostspot"]
+        self.manager.save()
+
     def create_async_service_infos(
         self, interface: str, service_name: str, domain_name: str, ip: str
     ) -> AsyncServiceInfo:
@@ -247,6 +258,10 @@ beacon = Beacon()
 def get_services() -> Any:
     return list(itertools.chain.from_iterable([runner.get_services() for runner in beacon.runners.values()]))
 
+@app.post("/hostname", response_model=List[MdnsEntry], summary="Set the hostname for mDNS.")
+@version(1, 0)
+def set_hostname(hostname: str) -> Any:
+    return beacon.set_hostname(hostname)
 
 @app.get("/ip", response_model=IpInfo, summary="Ip Information")
 @version(1, 0)
