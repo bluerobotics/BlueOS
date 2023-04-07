@@ -24,6 +24,7 @@ mkdir -p /var/run/wpa_supplicant/
 # Install services
 SERVICES=(
     ardupilot_manager
+    bag_of_holding
     beacon
     bridget
     cable_guy
