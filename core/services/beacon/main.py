@@ -34,8 +34,6 @@ class AsyncRunner:
         self.interface_name = interface_name
 
     def add_services(self, service: AsyncServiceInfo) -> None:
-        logger.info("Adding services:")
-        logger.info(service)
         self.services.append(service)
 
     def get_services(self) -> List[MdnsEntry]:
