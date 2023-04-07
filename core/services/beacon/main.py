@@ -236,7 +236,6 @@ class Beacon:
                     self.runners[runner_name] = runner
                     await runner.register_services()
 
-            self.manager.save()
             await asyncio.sleep(10)
 
     async def stop(self) -> None:
