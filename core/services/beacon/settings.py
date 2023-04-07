@@ -178,3 +178,21 @@ class SettingsV3(SettingsV2):
             logger.error(f"unable to update SettingsV2 to SettingsV3: {e}")
 
         data["VERSION"] = SettingsV3.VERSION
+
+
+class SettingsV4(SettingsV3):
+    VERSION = 4
+    vehicle_name = StringField()
+
+    def __init__(self, *args: str, **kwargs: int) -> None:
+        super().__init__(*args, **kwargs)
+        self.VERSION = SettingsV4.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV4.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV4.VERSION:
+            super().migrate(data)
+
+        data["VERSION"] = SettingsV4.VERSION
