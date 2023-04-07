@@ -50,6 +50,13 @@
           width="70%"
         />
       </v-container>
+      <v-divider />
+      <v-container
+        elevation="0"
+        class="d-flex justify-center align-center"
+      >
+        <vehicle-banner />
+      </v-container>
 
       <v-container
         class="pa-1"
@@ -227,6 +234,7 @@ import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
 import ThemeTrayMenu from './components/app/ThemeTrayMenu.vue'
+import VehicleBanner from './components/app/VehicleBanner.vue'
 import VehicleRebootRequiredTrayMenu from './components/app/VehicleRebootRequiredTrayMenu.vue'
 import BeaconTrayMenu from './components/beacon/BeaconTrayMenu.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
@@ -275,6 +283,7 @@ export default Vue.extend({
     'report-menu': ReportMenu,
     'backend-status-checker': BackendStatusChecker,
     Alerter,
+    'vehicle-banner': VehicleBanner,
     'new-version-notificator': NewVersionNotificator,
     VehicleRebootRequiredTrayMenu,
     Wizard,
