@@ -213,6 +213,7 @@ class Beacon:
         while True:
             # re-load settings in case something changed
             self.manager.load()
+            self.settings = self.manager.settings
             self.service_types = self.load_service_types()
 
             default_runners = self.create_default_runners()
