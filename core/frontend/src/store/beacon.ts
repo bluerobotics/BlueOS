@@ -35,7 +35,7 @@ class BeaconStore extends VuexModule {
 
   hostname: undefined | string = undefined
 
-  vehicle_name: undefined | string = undefined
+  vehicle_name = ''
 
   // eslint-disable-next-line
   @Mutation
@@ -193,7 +193,7 @@ class BeaconStore extends VuexModule {
         })
     }
 
-    if (this.vehicle_name === undefined) {
+    if (this.vehicle_name === '') {
       back_axios({
         method: 'get',
         url: `${this.API_URL}/vehicle_name`,
@@ -208,8 +208,8 @@ class BeaconStore extends VuexModule {
         })
     }
 
-    if (this.hostname !== undefined && this.vehicle_name !== undefined) {
-      prefetched_names = false
+    if (this.hostname !== undefined && this.vehicle_name !== '') {
+      prefetched_names = true
     }
   }
 
