@@ -6,13 +6,13 @@
     >
       <v-tab>
         <v-icon class="mr-5">
-          mdi-bookshelf
+          mdi-view-dashboard-variant-outline
         </v-icon>
         Overview
       </v-tab>
       <v-tab>
         <v-icon class="mr-5">
-          mdi-bookshelf
+          mdi-fan
         </v-icon>
         PWM Outputs
       </v-tab>
