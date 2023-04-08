@@ -138,6 +138,7 @@ import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
 import { RaspberryEventType } from '@/types/system-information/platform'
@@ -209,7 +210,7 @@ export default Vue.extend({
       if (!this.is_vehicle(message?.message.mavtype.type) || message?.header.component_id !== 1) {
         return
       }
-
+      autopilot_data.setSystemId(message?.header.system_id)
       this.last_heartbeat_date = new Date()
     }).setFrequency(0)
   },
