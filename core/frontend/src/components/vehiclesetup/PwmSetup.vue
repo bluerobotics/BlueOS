@@ -91,11 +91,14 @@
                   <th class="text-left">
                     Value
                   </th>
+                  <th class="text-left">
+                    Output
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="item in servo_function_parameters"
+                  v-for="(item, index) in servo_function_parameters"
                   :key="item.name"
                   style="cursor: pointer;"
                   @mouseover="highlight = [stringToUserFriendlyText(printParam(item))]"
@@ -104,6 +107,7 @@
                 >
                   <td>{{ item.name }}</td>
                   <td>{{ stringToUserFriendlyText(printParam(item)) }}</td>
+                  <td>{{ servo_output[index] }}</td>
                 </tr>
               </tbody>
             </template>
@@ -195,6 +199,16 @@ export default Vue.extend({
         new_data[motor_name] = value
       }
       return new_data
+    },
+    servo_output(): number[] {
+      const output = Array(16)
+        .fill(0)
+      const data = mavlink_store_get(mavlink, 'SERVO_OUTPUT_RAW.messageData.message') as Dictionary<number> | undefined
+      if (!data) {
+        return output
+      }
+      return output
+        .map((_, i) => data[`servo${i + 1}_raw`])
     },
   },
   mounted() {
