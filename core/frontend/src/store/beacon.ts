@@ -7,13 +7,14 @@ import Notifier from '@/libs/notifier'
 import store from '@/store'
 import { Domain } from '@/types/beacon'
 import { beacon_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
+import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(beacon_service)
 
 let prefetched_domains = false
 let prefetched_ips = false
+let prefetched_names = false
 
 @Module({
   dynamic: true,
@@ -31,6 +32,22 @@ class BeaconStore extends VuexModule {
   client_ip_address = ''
 
   nginx_ip_address = ''
+
+  hostname: undefined | string = undefined
+
+  vehicle_name: undefined | string = undefined
+
+  // eslint-disable-next-line
+  @Mutation
+  private _setHostname(hostname: string): void {
+    this.hostname = hostname
+  }
+
+  // eslint-disable-next-line
+  @Mutation
+  private _setVehicleName(vehicle_name: string): void {
+    this.vehicle_name = vehicle_name
+  }
 
   @Mutation
   setAvailableDomains(domains: Domain[]): void {
@@ -59,6 +76,56 @@ class BeaconStore extends VuexModule {
       return
     }
     this.listeners_count -= 1
+  }
+
+  @Action
+  async setHostname(hostname: string): Promise<boolean> {
+    return back_axios({
+      method: 'post',
+      url: `${this.API_URL}/hostname`,
+      timeout: 5000,
+      params: {
+        hostname: `${hostname}`,
+      },
+    })
+      .then(() => {
+        // eslint-disable-next-line
+        this._setHostname(hostname)
+        return true
+      })
+      .catch((error) => {
+        if (error === backend_offline_error) {
+          return false
+        }
+        const message = `Could not set hostname: ${error.message ?? error.response?.data}.`
+        notifier.pushError('BEACON_SET_HOSTNAME_FAIL', message, true)
+        return false
+      })
+  }
+
+  @Action
+  async setVehicleName(vehicle_name: string): Promise<boolean> {
+    return back_axios({
+      method: 'post',
+      url: `${this.API_URL}/vehicle_name`,
+      timeout: 5000,
+      params: {
+        name: vehicle_name,
+      },
+    })
+      .then(() => {
+        // eslint-disable-next-line
+        this._setVehicleName(vehicle_name)
+        return true
+      })
+      .catch((error) => {
+        if (error === backend_offline_error) {
+          return false
+        }
+        const message = `Could not set vehicle name: ${error.response?.data ?? error.message}.`
+        notifier.pushError('BEACON_SET_VEHICLE_NAME_FAIL', message, true)
+        return false
+      })
   }
 
   @Action
@@ -106,6 +173,47 @@ class BeaconStore extends VuexModule {
   }
 
   @Action
+  async fetchVehicleAndHostname(): Promise<void> {
+    if (prefetched_names && !this.listeners_count) {
+      return
+    }
+
+    if (this.hostname === undefined) {
+      back_axios({
+        method: 'get',
+        url: `${this.API_URL}/hostname`,
+        timeout: 5000,
+      })
+        .then((response) => {
+          // eslint-disable-next-line
+          this._setHostname(response.data)
+        })
+        .catch((error) => {
+          notifier.pushBackError('BEACON_HOSTNAME_FETCH_FAIL', error)
+        })
+    }
+
+    if (this.vehicle_name === undefined) {
+      back_axios({
+        method: 'get',
+        url: `${this.API_URL}/vehicle_name`,
+        timeout: 5000,
+      })
+        .then((response) => {
+          // eslint-disable-next-line
+          this._setVehicleName(response.data)
+        })
+        .catch((error) => {
+          notifier.pushBackError('BEACON_VEHICLE_NAME_FETCH_FAIL', error)
+        })
+    }
+
+    if (this.hostname !== undefined && this.vehicle_name !== undefined) {
+      prefetched_names = false
+    }
+  }
+
+  @Action
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async registerBeaconListener(object: any): Promise<void> {
     this.addListener()
@@ -126,4 +234,5 @@ export { BeaconStore }
 const beacon: BeaconStore = getModule(BeaconStore)
 callPeriodically(beacon.fetchAvailableDomains, 5000)
 callPeriodically(beacon.fetchIpInfo, 5000)
+callPeriodically(beacon.fetchVehicleAndHostname, 5000)
 export default beacon
