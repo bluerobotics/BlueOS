@@ -215,9 +215,9 @@ class Beacon:
 
             for runner_name, runner in all_runners.items():
                 if runner_name not in self.runners:
-                    self.runners[runner_name] = runner
                     try:
                         await runner.register_services()
+                        self.runners[runner_name] = runner
                     except Exception as e:
                         logger.warning(e)
                 elif self.runners[runner_name] != runner:
