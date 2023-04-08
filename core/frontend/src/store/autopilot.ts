@@ -30,6 +30,8 @@ class AutopilotStore extends VuexModule {
 
   reboot_required = false
 
+  system_id = 1
+
   get parameter() {
     return (name: string): Parameter | undefined => this.parameters.find((parameter) => parameter.name === name)
   }
@@ -60,6 +62,11 @@ class AutopilotStore extends VuexModule {
   @Mutation
   setParameters(parameters: Parameter[]): void {
     this.parameters = parameters
+  }
+
+  @Mutation
+  setSystemId(id: number): void {
+    this.system_id = id
   }
 
   @Mutation
