@@ -15,6 +15,9 @@ module.exports = {
       '^/ardupilot-manager': {
         target: SERVER_ADDRESS,
       },
+      '^/bag': {
+        target: SERVER_ADDRESS,
+      },
       '^/beacon': {
         target: SERVER_ADDRESS,
       },
