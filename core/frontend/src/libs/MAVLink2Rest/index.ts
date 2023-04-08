@@ -3,6 +3,7 @@
 
 import axios from 'axios'
 
+import autopilot_data from '@/store/autopilot'
 import { Dictionary } from '@/types/common'
 
 import Endpoint from './Endpoint'
@@ -163,7 +164,7 @@ class Mavlink2RestManager {
         command: {
           type: 'MAV_CMD_SET_MESSAGE_INTERVAL',
         },
-        target_system: 0,
+        target_system: autopilot_data.system_id,
         target_component: 0,
         confirmation: 0,
       },
@@ -192,7 +193,7 @@ class Mavlink2RestManager {
       message: {
         type: 'PARAM_SET',
         param_value: value,
-        target_system: 0,
+        target_system: autopilot_data.system_id,
         target_component: 0,
         param_id: param_name,
         param_type: {
