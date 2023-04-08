@@ -196,6 +196,7 @@
     <wifi-updater />
     <mavlink-updater />
     <new-version-notificator />
+    <Wizard />
     <alerter />
     <v-tour
       name="welcomeTour"
@@ -210,6 +211,7 @@ import Vue from 'vue'
 
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
 import blueos_white from '@/assets/img/blueos-logo-white.svg'
+import Wizard from '@/components/wizard/Wizard.vue'
 import settings from '@/libs/settings'
 import services_scanner from '@/store/servicesScanner'
 import wifi from '@/store/wifi'
@@ -275,6 +277,7 @@ export default Vue.extend({
     Alerter,
     'new-version-notificator': NewVersionNotificator,
     VehicleRebootRequiredTrayMenu,
+    Wizard,
   },
 
   data: () => ({
