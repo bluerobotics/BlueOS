@@ -15,7 +15,7 @@
             <template #default>
               <thead>
                 <tr>
-                  <th class="text-left">
+                  <th class="text-left subtitle-1 font-weight-bold">
                     Motor Test
                   </th>
                   <th>
@@ -23,24 +23,28 @@
                       v-model="desired_armed_state"
                       :loading="desired_armed_state !== is_armed ? 'warning' : null"
                       class="mx-1 flex-grow-0"
-                      color="red-darken-3"
                       :label="`${is_armed ? 'Armed' : 'Disarmed'}`"
-                      hide-details
+                      :color="`${is_armed ? 'error' : 'success'}`"
                       @change="desired_armed_state ? arm() : disarm()"
                     />
                   </th>
                   <th />
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="align-center">
                 <tr
                   v-for="motor of available_motors"
                   :key="'mot' + motor"
+                  width="100%"
+                  height="65"
+                  class="ma-0 pa-0"
                   @mouseover="highlight = [`Motor${motor}`]"
                   @mouseleave="highlight = default_highlight"
                 >
-                  <td>{{ `Motor ${motor}` }}</td>
-                  <td>
+                  <td width="20%">
+                    {{ `Motor ${motor}` }}
+                  </td>
+                  <td width="80%">
                     <v-slider
                       v-model="motor_targets[motor]"
                       class="align-center"
