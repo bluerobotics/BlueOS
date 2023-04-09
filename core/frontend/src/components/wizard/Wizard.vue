@@ -297,6 +297,13 @@ export default Vue.extend({
           message: undefined,
           done: false,
         },
+        {
+          title: 'Disable smart Wi-Fi hotspot',
+          summary: 'Disable hotspot to be turned on if there is no Wi-Fi network available',
+          promise: this.disableSmartWifiHotspot(),
+          message: undefined,
+          done: false,
+        },
       ]
     },
     async setupConfiguration() {
@@ -340,6 +347,16 @@ export default Vue.extend({
       })
         .then(() => undefined)
         .catch((error) => `Failed to disable wifi hotspot: ${error.message ?? error.response?.data}.`)
+    },
+    async disableSmartWifiHotspot(): Promise<ConfigurationStatus> {
+      return back_axios({
+        method: 'post',
+        url: `${wifi.API_URL}/smart_hotspot`,
+        params: { enable: false },
+        timeout: 10000,
+      })
+        .then(() => undefined)
+        .catch((error) => `Failed to disable smart wifi hotspot: ${error.message ?? error.response?.data}.`)
     },
   },
 })
