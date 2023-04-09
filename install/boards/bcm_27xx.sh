@@ -26,6 +26,7 @@ for STRING in \
     "dtparam=spi=" \
     "dtoverlay=spi" \
     "gpio=" \
+    "dwc2" \
     ; do \
     sudo sed -i "/$STRING/d" /boot/config.txt
 done
@@ -44,6 +45,7 @@ for STRING in \
     "dtoverlay=spi1-3cs" \
     "gpio=11,24,25=op,pu,dh" \
     "gpio=37=op,pd,dl" \
+    "dtoverlay=dwc2" \
     ; do \
     echo "$STRING" | sudo tee -a /boot/config.txt
 done
@@ -72,6 +74,12 @@ echo "- Enable cgroup with memory and cpu"
 grep -q cgroup $CMDLINE_FILE || (
     # Append cgroups on the first line
     sed -i '1 s/$/ cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory/' $CMDLINE_FILE
+)
+
+echo "- Enable USB OTG as ethernet adapter"
+grep -q dwc2 $CMDLINE_FILE || (
+    # Append cgroups on the first line
+    sed -i '1 s/$/ modules-load=dwc2,g_ether/' $CMDLINE_FILE
 )
 
 # Update raspberry pi firmware
