@@ -103,16 +103,22 @@ import '@google/model-viewer/dist/model-viewer'
 import Vue from 'vue'
 
 import beacon from '@/store/beacon'
+import wifi from '@/store/wifi'
 import back_axios, { backend_offline_error } from '@/utils/api'
 
 const API_URL = '/bag/v1.0'
-const WIZARD_VERSION = 1
+const WIZARD_VERSION = 2
 
 const models = require.context(
   '/src/assets/vehicles/models/',
   true,
   /\.(glb|json)$/,
 )
+
+enum VehicleType {
+  Sub,
+  Boat,
+}
 
 export default Vue.extend({
   name: 'Wizard',
@@ -127,6 +133,7 @@ export default Vue.extend({
       step_number: 1,
       sub_model: models('./bluerov.glb'),
       vehicle_name: 'blueos',
+      vehicle_type: VehicleType.Sub,
       wait_configuration: false,
     }
   },
@@ -152,40 +159,66 @@ export default Vue.extend({
   },
   methods: {
     setupBoat() {
+      this.vehicle_type = VehicleType.Boat
       this.vehicle_name = 'BlueBoat'
       this.step_number += 1
     },
     async setupConfiguration() {
       this.wait_configuration = true
-      if (await beacon.setHostname(this.mdns_name) && await beacon.setVehicleName(this.vehicle_name)) {
-        back_axios({
-          method: 'post',
-          url: `${API_URL}/set/wizard`,
-          timeout: 5000,
-          data: {
-            version: WIZARD_VERSION,
-          },
-        })
-          .then(() => {
-            this.wait_configuration = false
-            this.step_number = 3
-            this.is_ok = true
-          })
-          .catch((error) => {
-            this.configuration_failed = true
-            this.wait_configuration = false
-            this.error_message = 'Configuration done, but failed to set wizard version: '
-              + `${error.message ?? error.response?.data}.`
-          })
 
+      if (this.vehicle_type === VehicleType.Boat) {
+        if (!await this.disableWifiHotspot()) {
+          return
+        }
+      }
+
+      if (await beacon.setHostname(this.mdns_name) && await beacon.setVehicleName(this.vehicle_name)) {
+        await this.setWizardVersion()
         return
       }
       this.configuration_failed = true
       this.wait_configuration = false
     },
     setupROV() {
+      this.vehicle_type = VehicleType.Sub
       this.vehicle_name = 'BlueROV'
       this.step_number += 1
+    },
+    async setWizardVersion(): Promise<void> {
+      return back_axios({
+        method: 'post',
+        url: `${API_URL}/set/wizard`,
+        timeout: 5000,
+        data: {
+          version: WIZARD_VERSION,
+        },
+      })
+        .then(() => {
+          this.wait_configuration = false
+          this.step_number = 3
+          this.is_ok = true
+        })
+        .catch((error) => {
+          this.configuration_failed = true
+          this.wait_configuration = false
+          this.error_message = 'Configuration done, but failed to set wizard version: '
+            + `${error.message ?? error.response?.data}.`
+        })
+    },
+    async disableWifiHotspot(): Promise<boolean> {
+      return back_axios({
+        method: 'post',
+        url: `${wifi.API_URL}/hotspot`,
+        params: { enable: false },
+        timeout: 20000,
+      })
+        .then(() => true)
+        .catch((error) => {
+          this.configuration_failed = true
+          this.wait_configuration = false
+          this.error_message = `Failed to disable wifi hotspot: ${error.message ?? error.response?.data}.`
+          return false
+        })
     },
   },
 })
