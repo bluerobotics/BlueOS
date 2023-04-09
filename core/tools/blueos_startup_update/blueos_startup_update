@@ -89,6 +89,10 @@ def update_dwc2() -> None:
     )' '''
     print(run_command(command, False))
 
+def ensure_nginx_permissions() -> None:
+    # ensure nginx can read the userdata directory
+    command = "sudo chown -R www-data:www-data /usr/blueos/userdata"
+    print(run_command(command, False))
 
 def main() -> None:
     current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
@@ -99,6 +103,7 @@ def main() -> None:
     update_startup()
     update_cgroups()
     update_dwc2()
+    ensure_nginx_permissions()
 
 if __name__ == "__main__":
     main()
