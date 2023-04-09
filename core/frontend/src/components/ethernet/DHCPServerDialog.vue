@@ -26,7 +26,7 @@
         </v-btn>
       </v-card-text>
 
-      <v-card-text v-if="Enabling">
+      <v-card-text v-if="enabling_dhcp">
         Enabling DHCP server, please wait...
         <v-progress-linear
           indeterminate
@@ -110,6 +110,10 @@ export default Vue.extend({
           return 'info'
       }
     },
+    enabling_dhcp(): boolean {
+      return this.creation_status === ServerCreationStatus.Enabling
+    }
+    ,
   },
   watch: {
     show(val: boolean): void {
