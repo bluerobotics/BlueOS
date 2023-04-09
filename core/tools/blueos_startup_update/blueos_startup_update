@@ -73,6 +73,23 @@ def update_cgroups() -> None:
     print(run_command(command, False))
 
 
+def update_dwc2() -> None:
+    print("Running dwc2 update..")
+    # Enable USB OTG as ethernet adapter
+    command = '''sudo sh -c '\
+    grep -q modules-load=dwc2 /boot/cmdline.txt || (
+        truncate --size -1 /boot/cmdline.txt;\
+        echo " modules-load=dwc2,g_ether" >> /boot/cmdline.txt;\
+    )' '''
+    print(run_command(command, False))
+
+    command = '''sudo sh -c '\
+    grep -q "dtoverlay=dwc2" /boot/config.txt || (
+        echo "dtoverlay=dwc2" | sudo tee -a /boot/config.txt
+    )' '''
+    print(run_command(command, False))
+
+
 def main() -> None:
     current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
     match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
@@ -81,6 +98,7 @@ def main() -> None:
     # TODO: parse tag as semver and check before applying patches
     update_startup()
     update_cgroups()
+    update_dwc2()
 
 if __name__ == "__main__":
     main()
