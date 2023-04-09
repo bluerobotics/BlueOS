@@ -97,8 +97,10 @@
   </v-dialog>
 </template>
 
-<script>
+<script lang="ts">
 import '@google/model-viewer/dist/model-viewer'
+
+import Vue from 'vue'
 
 import beacon from '@/store/beacon'
 import back_axios, { backend_offline_error } from '@/utils/api'
@@ -112,7 +114,7 @@ const models = require.context(
   /\.(glb|json)$/,
 )
 
-export default {
+export default Vue.extend({
   name: 'Wizard',
   data() {
     return {
@@ -186,7 +188,7 @@ export default {
       this.step_number += 1
     },
   },
-}
+})
 </script>
 
 <style scoped>
