@@ -30,6 +30,7 @@
           <v-stepper-content step="1">
             <div class="d-flex justify-space-between">
               <model-viewer
+                v-tooltip="'ROV Setup'"
                 :src="sub_model"
                 :auto-rotate="false"
                 camera-orbit="45deg 75deg 1.5m"
@@ -40,6 +41,7 @@
               />
 
               <model-viewer
+                v-tooltip="'Boat Setup'"
                 :src="boat_model"
                 :auto-rotate="false"
                 camera-orbit="-45deg 75deg 2.5m"
