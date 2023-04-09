@@ -16,12 +16,18 @@
           <v-divider />
 
           <v-stepper-step :complete="step_number > 2" step="2">
-            Configuration
+            Customize
           </v-stepper-step>
 
           <v-divider />
 
-          <v-stepper-step step="3" :complete="is_ok">
+          <v-stepper-step :complete="step_number > 3" step="3">
+            Apply
+          </v-stepper-step>
+
+          <v-divider />
+
+          <v-stepper-step :complete="step_number > 3" step="4">
             Done
           </v-stepper-step>
         </v-stepper-header>
@@ -83,6 +89,42 @@
           </v-stepper-content>
 
           <v-stepper-content step="3">
+            <v-stepper vertical>
+              <v-stepper-step
+                v-for="(config, index) in configurations"
+                :key="index"
+                :step="index + 1"
+                :color="getStepColor(config)"
+                :complete-icon="getStepIcon(config)"
+                :complete="true"
+                active
+                class="step-label"
+              >
+                {{ config.title }}
+                <small v-if="config.summary">{{ config.summary }}</small>
+                <small v-if="config.message" :color="getStepColor(config)">Error: {{ config.message }}</small>
+              </v-stepper-step>
+            </v-stepper>
+            <v-row class="pa-5 pt-10  d-flex flex-column align-center">
+              <v-btn
+                v-if="apply_failed"
+                color="warning"
+                :loading="wait_configuration"
+                @click="applyConfigurations()"
+              >
+                Retry
+              </v-btn>
+              <v-btn
+                v-else-if="apply_done"
+                color="primary"
+                @click="nextStep()"
+              >
+                Continue
+              </v-btn>
+            </v-row>
+          </v-stepper-content>
+
+          <v-stepper-content step="4">
             <v-alert :value="true" type="success">
               Your vehicle is ready to use!
             </v-alert>
@@ -109,7 +151,7 @@ import wifi from '@/store/wifi'
 import back_axios, { backend_offline_error } from '@/utils/api'
 
 const API_URL = '/bag/v1.0'
-const WIZARD_VERSION = 2
+const WIZARD_VERSION = 3
 
 const models = require.context(
   '/src/assets/vehicles/models/',
@@ -122,6 +164,22 @@ enum VehicleType {
   Boat,
 }
 
+enum ApplyStatus {
+  Waiting,
+  Done,
+  Failed,
+}
+
+type ConfigurationStatus = string | undefined
+
+interface Configuration {
+  title: string,
+  summary: string | undefined,
+  promise: Promise<ConfigurationStatus>
+  message: undefined | string
+  done: boolean
+}
+
 export default Vue.extend({
   name: 'Wizard',
   data() {
@@ -129,7 +187,7 @@ export default Vue.extend({
       boat_model: models('./boat/UNDEFINED.glb'),
       configuration_failed: false,
       error_message: 'The operation failed!',
-      is_ok: false,
+      apply_status: ApplyStatus.Waiting,
       mdns_name: 'blueos',
       should_open: false,
       step_number: 1,
@@ -137,7 +195,19 @@ export default Vue.extend({
       vehicle_name: 'blueos',
       vehicle_type: VehicleType.Sub,
       wait_configuration: false,
+      // Final configuration
+      configurations: [] as Configuration[],
+      // Vehicle configuration
+      setup_configurations: [] as Configuration[],
     }
+  },
+  computed: {
+    apply_done(): boolean {
+      return this.apply_status === ApplyStatus.Done
+    },
+    apply_failed(): boolean {
+      return this.apply_status === ApplyStatus.Failed
+    },
   },
   mounted() {
     back_axios({
@@ -155,38 +225,92 @@ export default Vue.extend({
         if (error === backend_offline_error) {
           return
         }
-
         this.should_open = true
       })
   },
   methods: {
+    nextStep() {
+      this.step_number += 1
+    },
+    getStepIcon(config: Configuration) {
+      if (config.done) {
+        return 'mdi-check'
+      }
+      if (config.message === undefined) {
+        return 'mdi-loading'
+      }
+      return 'mdi-alert'
+    },
+    getStepColor(config: Configuration) {
+      if (config.done) {
+        return 'success'
+      }
+      if (config.message === undefined) {
+        return 'yellow'
+      }
+      return 'error'
+    },
+    async applyConfigurations() {
+      this.configurations = [
+        {
+          title: 'Set custom vehicle name',
+          summary: `Set vehicle name for the user: ${this.vehicle_name}`,
+          promise: this.setHostname(),
+          message: undefined,
+          done: false,
+        },
+        {
+          title: 'Set vehicle hostname',
+          summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
+          promise: this.setVehicleName(),
+          message: undefined,
+          done: false,
+        },
+        ...this.setup_configurations,
+        {
+          title: 'Update wizard version',
+          summary: 'Disable wizard for this version'
+            + ' it may show again if vehicle configuration updates in future versions',
+          promise: this.setWizardVersion(),
+          message: undefined,
+          done: false,
+        },
+      ]
+
+      this.apply_status = ApplyStatus.Waiting
+      this.apply_status = await Promise.all(this.configurations.map(async (config) => {
+        if (!config.done) {
+          config.message = await config.promise
+          config.done = config.message === undefined
+        }
+        return config
+      })).then((configs) => configs.every((config) => config.done)) ? ApplyStatus.Done : ApplyStatus.Failed
+    },
     setupBoat() {
       this.vehicle_type = VehicleType.Boat
       this.vehicle_name = 'BlueBoat'
       this.step_number += 1
+
+      this.setup_configurations = [
+        {
+          title: 'Disable Wi-Fi hotspot',
+          summary: 'Wi-Fi hotspot need to be disable to not interfere with onboard radio',
+          promise: this.disableWifiHotspot(),
+          message: undefined,
+          done: false,
+        },
+      ]
     },
     async setupConfiguration() {
-      this.wait_configuration = true
-
-      if (this.vehicle_type === VehicleType.Boat) {
-        if (!await this.disableWifiHotspot()) {
-          return
-        }
-      }
-
-      if (await beacon.setHostname(this.mdns_name) && await beacon.setVehicleName(this.vehicle_name)) {
-        await this.setWizardVersion()
-        return
-      }
-      this.configuration_failed = true
-      this.wait_configuration = false
+      this.step_number += 1
+      this.applyConfigurations()
     },
     setupROV() {
       this.vehicle_type = VehicleType.Sub
       this.vehicle_name = 'BlueROV'
       this.step_number += 1
     },
-    async setWizardVersion(): Promise<void> {
+    async setWizardVersion(): Promise<ConfigurationStatus> {
       return back_axios({
         method: 'post',
         url: `${API_URL}/set/wizard`,
@@ -195,32 +319,29 @@ export default Vue.extend({
           version: WIZARD_VERSION,
         },
       })
-        .then(() => {
-          this.wait_configuration = false
-          this.step_number = 3
-          this.is_ok = true
-        })
-        .catch((error) => {
-          this.configuration_failed = true
-          this.wait_configuration = false
-          this.error_message = 'Configuration done, but failed to set wizard version: '
-            + `${error.message ?? error.response?.data}.`
-        })
+        .then(() => undefined)
+        .catch((error) => 'Configuration done, but failed to set wizard version: '
+          + `${error.message ?? error.response?.data}.`)
     },
-    async disableWifiHotspot(): Promise<boolean> {
+    async setHostname(): Promise<ConfigurationStatus> {
+      return beacon.setHostname(this.mdns_name)
+        .then(() => undefined)
+        .catch(() => 'Failed to set vehicle hostname for mDNS')
+    },
+    async setVehicleName(): Promise<ConfigurationStatus> {
+      return beacon.setVehicleName(this.vehicle_name)
+        .then(() => undefined)
+        .catch(() => 'Failed to set custom vehicle name')
+    },
+    async disableWifiHotspot(): Promise<ConfigurationStatus> {
       return back_axios({
         method: 'post',
         url: `${wifi.API_URL}/hotspot`,
         params: { enable: false },
         timeout: 20000,
       })
-        .then(() => true)
-        .catch((error) => {
-          this.configuration_failed = true
-          this.wait_configuration = false
-          this.error_message = `Failed to disable wifi hotspot: ${error.message ?? error.response?.data}.`
-          return false
-        })
+        .then(() => undefined)
+        .catch((error) => `Failed to disable wifi hotspot: ${error.message ?? error.response?.data}.`)
     },
   },
 })
@@ -240,5 +361,9 @@ export default Vue.extend({
 .model-button:hover {
   background-color: #00000040;
   color: #fff;
+}
+
+.step-label {
+  text-shadow: 0px 0px 0px !important;
 }
 </style>
