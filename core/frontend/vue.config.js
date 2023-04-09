@@ -39,6 +39,9 @@ module.exports = {
       '^/helper': {
         target: SERVER_ADDRESS,
       },
+      '^/upload': {
+        target: SERVER_ADDRESS,
+      },
       '^/kraken': {
         target: SERVER_ADDRESS,
         selfHandleResponse: true,
