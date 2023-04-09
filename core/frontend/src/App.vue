@@ -596,5 +596,21 @@ div.pirate-marker.v-icon {
 .v-navigation-drawer__content::-webkit-scrollbar-thumb:hover {
   background: var(--v-primary-base);
 }
+</style>
 
+<style>
+/* Global style */
+/* mdi-loading icon is being used ? Of course you want to rotate it! */
+.mdi-loading {
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 </style>
