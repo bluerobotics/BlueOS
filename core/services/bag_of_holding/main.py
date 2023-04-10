@@ -55,6 +55,7 @@ def write_db(data: Dict[str, Any]) -> None:
 @app.post("/set/{path}")
 @version(1, 0)
 async def write_data(path: str, payload: dict[str, Any] = Body(...)) -> JSONResponse:
+    logger.debug(f"Write path: {path}, {json.dumps(payload)}")
     current_data = read_db()
     dpath.new(current_data, path, payload, separator=".")
     write_db(current_data)
@@ -64,6 +65,7 @@ async def write_data(path: str, payload: dict[str, Any] = Body(...)) -> JSONResp
 @app.get("/get/{path}")
 @version(1, 0)
 async def read_data(path: str) -> JSONResponse:
+    logger.debug(f"Get path: {path}")
     current_data = read_db()
     try:
         result = dpath.get(current_data, path, separator=".")
