@@ -125,3 +125,10 @@ export const parameters_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const bag_of_holders_service: Service = {
+  name: 'Bag Of Holders',
+  description: 'Service to manage json database for the vehicle',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
