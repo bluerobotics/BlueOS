@@ -146,11 +146,11 @@ import '@google/model-viewer/dist/model-viewer'
 
 import Vue from 'vue'
 
+import bag from '@/store/bag'
 import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios from '@/utils/api'
 
-const API_URL = '/bag/v1.0'
 const WIZARD_VERSION = 3
 
 const models = require.context(
@@ -209,24 +209,11 @@ export default Vue.extend({
       return this.apply_status === ApplyStatus.Failed
     },
   },
-  mounted() {
-    back_axios({
-      method: 'get',
-      url: `${API_URL}/get/wizard`,
-      timeout: 10000,
-    })
-      .then((response) => {
-        const wizard = response.data
-        if (wizard?.version !== WIZARD_VERSION) {
-          this.should_open = true
-        }
-      })
-      .catch((error) => {
-        if (error === backend_offline_error) {
-          return
-        }
-        this.should_open = true
-      })
+  async mounted() {
+    const wizard = await bag.getData('wizard')
+    if (wizard?.version !== WIZARD_VERSION) {
+      this.should_open = true
+    }
   },
   methods: {
     nextStep() {
@@ -318,17 +305,12 @@ export default Vue.extend({
       this.step_number += 1
     },
     async setWizardVersion(): Promise<ConfigurationStatus> {
-      return back_axios({
-        method: 'post',
-        url: `${API_URL}/set/wizard`,
-        timeout: 5000,
-        data: {
-          version: WIZARD_VERSION,
-        },
-      })
-        .then(() => undefined)
-        .catch((error) => 'Configuration done, but failed to set wizard version: '
-          + `${error.message ?? error.response?.data}.`)
+      const failed = 'Configuration done, but failed to set wizard version.'
+      const payload = { version: WIZARD_VERSION }
+      return bag.setData('wizard', payload)
+        // eslint-disable-next-line no-confusing-arrow
+        .then((result) => result ? undefined : failed)
+        .catch(() => failed)
     },
     async setHostname(): Promise<ConfigurationStatus> {
       return beacon.setHostname(this.mdns_name)
