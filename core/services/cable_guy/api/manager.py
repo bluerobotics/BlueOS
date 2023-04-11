@@ -46,16 +46,17 @@ class EthernetManager:
 
     result: List[EthernetInterface] = []
 
-    def __init__(self, default_config: EthernetInterface) -> None:
+    def __init__(self, default_configs: List[EthernetInterface]) -> None:
         self.settings = settings.Settings()
 
         self._dhcp_servers: List[DHCPServerManager] = []
 
         # Load settings and do the initial configuration
         if not self.settings.load():
-            logger.error(f"Failed to load previous settings. Using default configuration: {default_config}")
+            logger.error(f"Failed to load previous settings. Using default configuration: {default_configs}")
             try:
-                self.set_configuration(default_config)
+                for config in default_configs:
+                    self.set_configuration(config)
             except Exception as error:
                 logger.error(f"Failed loading default configuration. {error}")
             return
