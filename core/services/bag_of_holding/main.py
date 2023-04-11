@@ -15,7 +15,7 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
 
-SERVICE_NAME = "bag_of_holding"
+SERVICE_NAME = "bag-of-holding"
 FILE_PATH = Path(appdirs.user_config_dir("bag of holding", "db.json"))
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
