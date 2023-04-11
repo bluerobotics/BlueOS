@@ -18,6 +18,24 @@ class BagOfHoldersStore {
     return BagOfHoldersStore.instance
   }
 
+  async overwrite(payload: Record<string, unknown>): Promise<boolean> {
+    return back_axios({
+      method: 'post',
+      url: `${this.API_URL}/overwrite`,
+      timeout: 5000,
+      data: payload,
+    })
+      .then(() => true)
+      .catch((error) => {
+        if (error === backend_offline_error) {
+          return false
+        }
+        const message = `Could not overwrite database: ${error.message ?? error.response?.data}.`
+        notifier.pushError('BAG_OF_HOLDERS_SET_DATA_FAIL', message, true)
+        return false
+      })
+  }
+
   async setData(path: string, payload: Record<string, unknown> | undefined = undefined): Promise<boolean> {
     return back_axios({
       method: 'post',
