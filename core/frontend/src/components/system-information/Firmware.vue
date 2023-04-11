@@ -64,13 +64,8 @@
 import { formatRFC7231 } from 'date-fns'
 import Vue from 'vue'
 
-import back_axios from '@/utils/api'
-
-interface ReturnStruct {
-  stdout: string
-  stderr: string
-  return_code: number
-}
+import commander from '@/store/commander'
+import { ReturnStruct } from '@/types/commander'
 
 interface EepromUpdateStruct {
   latest_bootloader: string | undefined
@@ -184,47 +179,8 @@ export default Vue.extend({
       return this.cleanUpString(output?.stdout)
     },
     async getData(): Promise<void> {
-      const vcgencmd = back_axios({
-        url: '/commander/v1.0/raspi/vcgencmd',
-        method: 'get',
-        params: {
-          i_know_what_i_am_doing: true,
-        },
-        timeout: 20000,
-      })
-        .then((response) => {
-          this.vcgencmd = response.data
-        })
-        .catch((error) => {
-          // Connection lost/timeout, normal when we are turning off/rebooting
-          if (error.code === 'ECONNABORTED') {
-            return
-          }
-
-          console.warn('Failed to fetch vcgencmd info:')
-          console.warn(error)
-        })
-
-      const eeprom = back_axios({
-        url: '/commander/v1.0/raspi/eeprom_update',
-        method: 'get',
-        params: {
-          i_know_what_i_am_doing: true,
-        },
-        timeout: 20000,
-      })
-        .then((response) => {
-          this.eeprom_update = response.data
-        })
-        .catch((error) => {
-          // Connection lost/timeout, normal when we are turning off/rebooting
-          if (error.code === 'ECONNABORTED') {
-            return
-          }
-
-          console.warn('Failed to fetch eeprom info:')
-          console.warn(error)
-        })
+      const vcgencmd = await commander.getVcgencmd()
+      const eeprom = await commander.updateRaspiEEPROM()
 
       Promise.all([vcgencmd, eeprom])
     },
