@@ -17,6 +17,13 @@ const menus = [
               + ' respective API documentations.',
       },
       {
+        title: 'Bag Editor',
+        icon: 'mdi-code-json',
+        route: '/tools/bag-editor',
+        advanced: true,
+        text: 'Editor for Bag Of Holders service.',
+      },
+      {
         title: 'File Browser',
         icon: 'mdi-file-tree',
         route: '/tools/file-browser',
