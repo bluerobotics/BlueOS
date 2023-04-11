@@ -211,7 +211,7 @@ export default Vue.extend({
   },
   async mounted() {
     const wizard = await bag.getData('wizard')
-    if (wizard?.version !== WIZARD_VERSION) {
+    if (wizard !== undefined && wizard?.version !== WIZARD_VERSION) {
       this.should_open = true
     }
   },
