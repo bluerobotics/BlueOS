@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes'
 import {
   Action, getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
@@ -163,7 +164,7 @@ class VideoStore extends VuexModule {
         if (old_thumbnail_source !== undefined) {
           URL.revokeObjectURL(old_thumbnail_source)
         }
-        if (error?.response?.status === 503) {
+        if (error?.response?.status === StatusCodes.SERVICE_UNAVAILABLE) {
           this.thumbnails.set(source, { source: undefined, status: error.response.status })
         } else {
           this.thumbnails.delete(source)
