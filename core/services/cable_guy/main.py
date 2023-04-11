@@ -38,11 +38,12 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.default_config == "bluerov2":
-    default_config = EthernetInterface(
-        name="eth0", addresses=[InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Unmanaged)]
-    )
+    default_configs = [
+        EthernetInterface(name="eth0", addresses=[InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Unmanaged)]),
+        EthernetInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
+    ]
 
-manager = EthernetManager(default_config)
+manager = EthernetManager(default_configs)
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
