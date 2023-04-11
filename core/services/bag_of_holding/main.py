@@ -17,7 +17,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 SERVICE_NAME = "bag-of-holding"
-FILE_PATH = Path(appdirs.user_config_dir("bag of holding", "db.json"))
+FILE_PATH = Path(appdirs.user_config_dir(SERVICE_NAME, "db.json"))
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
