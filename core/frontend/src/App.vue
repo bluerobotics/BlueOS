@@ -622,4 +622,8 @@ div.pirate-marker.v-icon {
     transform: rotate(360deg);
   }
 }
+
+html {
+  overflow: hidden
+}
 </style>
