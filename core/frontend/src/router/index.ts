@@ -3,6 +3,7 @@ import VueRouter, { RouteConfig } from 'vue-router'
 
 import Autopilot from '../views/Autopilot.vue'
 import AvailableServicesView from '../views/AvailableServicesView.vue'
+import BagEditorView from '../views/BagEditorView.vue'
 import BridgesView from '../views/BridgesView.vue'
 import Endpoint from '../views/EndpointView.vue'
 import ExtensionManagerView from '../views/ExtensionManagerView.vue'
@@ -104,6 +105,11 @@ const routes: Array<RouteConfig> = [
     path: '/tools/network-test',
     name: 'Network Test',
     component: NetworkTestView,
+  },
+  {
+    path: '/tools/bag-editor',
+    name: 'Bag editor',
+    component: BagEditorView,
   },
   {
     path: '/extensions/:port',
