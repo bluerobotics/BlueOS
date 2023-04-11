@@ -37,6 +37,7 @@
     "fuse.js": "^6.6.2",
     "http-status-codes": "^2.2.0",
     "javascript-time-ago": "^2.3.11",
+    "jsoneditor": "^9.10.0",
     "lodash": "^4.17.21",
     "marked": "^4.1.1",
     "register-service-worker": "^1.7.1",
