@@ -88,10 +88,10 @@ import Vue from 'vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import commander from '@/store/commander'
 import video from '@/store/video'
 import { commander_service } from '@/types/frontend_services'
 import { Device, Format, VideoEncodeType } from '@/types/video'
-import back_axios from '@/utils/api'
 
 import VideoDevice from './VideoDevice.vue'
 import VideoDiagnosticHelper from './VideoDiagnosticHelper.vue'
@@ -144,42 +144,13 @@ export default Vue.extend({
   },
   methods: {
     async updateCameraLegacy(): Promise<void> {
-      await back_axios({
-        url: '/commander/v1.0/raspi_config/camera_legacy',
-        method: 'get',
-        timeout: 3000,
-      })
-        .then((response) => {
-          this.legacy_mode = response.data?.enabled
-        })
-        .catch((error) => {
-          // Connection lost/timeout, normal when we are turning off/rebooting
-          if (error.code === 'ECONNABORTED') {
-            return
-          }
-
-          notifier.pushBackError('GET_CAMERA_LEGACY_FAILED', error, true)
-        })
+      this.legacy_mode = await commander.getRaspiCameraLegacy() === true
     },
     async setCameraLegacy(enable: boolean): Promise<void> {
-      await back_axios({
-        url: '/commander/v1.0/raspi_config/camera_legacy',
-        method: 'post',
-        params: {
-          enable,
-        },
-        timeout: 3000,
-      })
+      await commander.setRaspiCameraLegacy(enable)
         .then(() => {
           const message = 'Reboot is required for this action to take effect.'
           notifier.pushInfo('DO_CAMERA_LEGACY_REBOOT_REQUIRED', message, true)
-        })
-        .catch((error) => {
-          // Connection lost/timeout, normal when we are turning off/rebooting
-          if (error.code === 'ECONNABORTED') {
-            return
-          }
-          notifier.pushBackError('SET_CAMERA_LEGACY_FAILED', error, true)
         })
     },
     async toggleLegacyMode(): Promise<void> {
