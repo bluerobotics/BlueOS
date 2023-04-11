@@ -85,7 +85,8 @@ export function convertGitDescribeToUrl(git_describe: string): string {
   }
 
   // Show git source files page for commit
-  const hash = git_describe.slice(git_describe.length - 7)
+  // It follows: `-gHASH`, where there is no fixed size for HASH size
+  const hash = /-g([0-9a-f]+)$/.exec(git_describe)?.[1]
   return `${project_url}/tree/${hash}`
 }
 
