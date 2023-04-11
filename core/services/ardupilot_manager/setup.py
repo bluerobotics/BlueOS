@@ -37,7 +37,6 @@ static_files = [
     ),
     StaticFile(static_folder, "mif/metro.woff", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.woff"),
     StaticFile(static_folder, "mif/metro.ttf", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.ttf"),
-    StaticFile(defaults_folder, "ardupilot_navigator", "https://firmware.ardupilot.org/Sub/beta/navigator/ardusub"),
     StaticFile(
         defaults_folder,
         "ardupilot_navigator",
