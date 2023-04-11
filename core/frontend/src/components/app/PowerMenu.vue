@@ -87,22 +87,12 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
-import { commander_service } from '@/types/frontend_services'
+import commander from '@/store/commander'
+import { ShutdownType } from '@/types/commander'
 import back_axios from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
-
-const API_URL = '/commander/v1.0'
-
-const notifier = new Notifier(commander_service)
-
-// Used to communicate with REST API
-enum ShutdownType {
-  Reboot = 'reboot',
-  PowerOff = 'poweroff',
-}
 
 /// Used for internal status control
 enum Status {
@@ -147,7 +137,7 @@ export default Vue.extend({
   methods: {
     async reboot(): Promise<void> {
       this.service_status = Status.Rebooting
-      this.shutdown(ShutdownType.Reboot)
+      commander.shutdown(ShutdownType.Reboot)
       // Let wait a bit before starting to check
       setTimeout(this.waitForBackendToBeOnline, 15000)
     },
@@ -160,26 +150,8 @@ export default Vue.extend({
     },
     async poweroff(): Promise<void> {
       this.service_status = Status.PoweringOff
-      this.shutdown(ShutdownType.PowerOff)
+      commander.shutdown(ShutdownType.PowerOff)
       this.waitForShutdown()
-    },
-    async shutdown(shutdown_type: ShutdownType): Promise<void> {
-      await back_axios({
-        url: `${API_URL}/shutdown`,
-        method: 'post',
-        params: {
-          shutdown_type: `${shutdown_type}`,
-          i_know_what_i_am_doing: true,
-        },
-        timeout: 2000,
-      })
-        .catch((error) => {
-          // Connection lost/timeout, normal when we are turnning off/rebooting
-          if (error.code === 'ECONNABORTED') {
-            return
-          }
-          notifier.pushBackError('SHUTDOWN_FAIL', error)
-        })
     },
     showDialog(state: boolean): void {
       this.show_dialog = state
