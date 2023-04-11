@@ -1,3 +1,5 @@
+import { StatusCodes } from 'http-status-codes'
+
 import Notifier from '@/libs/notifier'
 import { bag_of_holders_service } from '@/types/frontend_services'
 import back_axios, { backend_offline_error } from '@/utils/api'
@@ -34,7 +36,11 @@ class BagOfHoldersStore {
       })
   }
 
-  async getData(path: string): Promise<Record<string, unknown> | undefined> {
+  /**
+   * null is used when the bath don't exist on the system
+   * undefined is returned when there is no communication with backend
+   */
+  async getData(path: string): Promise<Record<string, unknown> | null | undefined> {
     return back_axios({
       method: 'get',
       url: `${this.API_URL}/get/${path}`,
@@ -42,6 +48,10 @@ class BagOfHoldersStore {
     })
       .then((response) => response.data)
       .catch((error) => {
+        if (error?.response?.status === StatusCodes.BAD_REQUEST) {
+          return null
+        }
+
         if (error === backend_offline_error) {
           return undefined
         }
