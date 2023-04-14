@@ -10,6 +10,8 @@ RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
 COPY frontend /home/pi/frontend
 RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend install --network-timeout=300000 --ignore-engines
 RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend build --skip-plugins @vue/cli-plugin-eslint --ignore-engines
+# Copy some static files not consumed by webpack
+COPY frontend/src/assets/vehicles /home/pi/frontend/dist/vehicles
 
 # Download binaries
 FROM bluerobotics/blueos-base:v0.0.8 as downloadBinaries
