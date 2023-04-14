@@ -151,7 +151,7 @@ import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
 import back_axios from '@/utils/api'
 
-const WIZARD_VERSION = 3
+const WIZARD_VERSION = 4
 
 const models = require.context(
   '/src/assets/vehicles/models/',
@@ -194,6 +194,7 @@ export default Vue.extend({
       sub_model: models('./bluerov.glb'),
       vehicle_name: 'blueos',
       vehicle_type: VehicleType.Sub,
+      vehicle_image: null as string | null,
       wait_configuration: false,
       // Final configuration
       configurations: [] as Configuration[],
@@ -253,6 +254,13 @@ export default Vue.extend({
           message: undefined,
           done: false,
         },
+        {
+          title: 'Set vehicle image',
+          summary: 'Set image to be used for vehicle thumbnail',
+          promise: this.setVehicleImage(),
+          message: undefined,
+          done: false,
+        },
         ...this.setup_configurations,
         {
           title: 'Update wizard version',
@@ -276,6 +284,7 @@ export default Vue.extend({
     setupBoat() {
       this.vehicle_type = VehicleType.Boat
       this.vehicle_name = 'BlueBoat'
+      this.vehicle_image = '/vehicles/images/bb120.png'
       this.step_number += 1
 
       this.setup_configurations = [
@@ -302,6 +311,7 @@ export default Vue.extend({
     setupROV() {
       this.vehicle_type = VehicleType.Sub
       this.vehicle_name = 'BlueROV'
+      this.vehicle_image = '/vehicles/images/bluerov2.png'
       this.step_number += 1
     },
     async setWizardVersion(): Promise<ConfigurationStatus> {
@@ -316,6 +326,14 @@ export default Vue.extend({
       return beacon.setHostname(this.mdns_name)
         .then(() => undefined)
         .catch(() => 'Failed to set vehicle hostname for mDNS')
+    },
+    async setVehicleImage(): Promise<ConfigurationStatus> {
+      const failed = 'Failed to set vehicle Image.'
+      const payload = { url: this.vehicle_image }
+      return bag.setData('vehicle.image_path', payload)
+        // eslint-disable-next-line no-confusing-arrow
+        .then((result) => result ? undefined : failed)
+        .catch(() => failed)
     },
     async setVehicleName(): Promise<ConfigurationStatus> {
       return beacon.setVehicleName(this.vehicle_name)
