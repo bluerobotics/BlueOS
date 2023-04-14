@@ -81,6 +81,9 @@ module.exports = {
       '^/userdata': {
         target: SERVER_ADDRESS,
       },
+      '^/vehicles': {
+        target: SERVER_ADDRESS,
+      },
       '^/version-chooser': {
         target: SERVER_ADDRESS,
         selfHandleResponse: true,
