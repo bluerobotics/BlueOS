@@ -11,7 +11,7 @@
         tile
         size="50"
       >
-        <v-img :src="extension.extension_logo" />
+        <v-img contain :src="extension.extension_logo" />
       </v-list-item-avatar>
       <v-list-item-content>
         <v-list-item-title
