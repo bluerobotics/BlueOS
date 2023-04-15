@@ -10,6 +10,13 @@
       />
       <p id="vehicle-name" class="pa-4">
         {{ vehicle_name }}
+        <span
+          v-if="system_id !== 1"
+          :title="`System ID: ${system_id}`"
+          class="subtitle-1 text--secondary"
+        >
+          ({{ system_id }})
+        </span>
         <v-btn
           class="mx-2 edit-icon"
           fab
@@ -59,6 +66,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import ardupilot_data from '@/store/autopilot'
 import bag from '@/store/bag'
 import beacon from '@/store/beacon'
 
@@ -84,6 +92,9 @@ export default Vue.extend({
     },
     mdns_hostname() {
       return beacon.hostname || 'blueos'
+    },
+    system_id() {
+      return ardupilot_data.system_id
     },
   },
   mounted() {
