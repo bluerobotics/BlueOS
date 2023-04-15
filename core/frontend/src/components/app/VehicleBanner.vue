@@ -97,6 +97,15 @@ export default Vue.extend({
       return ardupilot_data.system_id
     },
   },
+  watch: {
+    vehicle_name() {
+      this.update_title()
+      this.vehicle_name_input = this.vehicle_name || 'My Vehicle'
+    },
+    system_id() {
+      this.update_title()
+    },
+  },
   mounted() {
     beacon.registerBeaconListener(this)
     this.load_vehicle_image()
@@ -110,6 +119,10 @@ export default Vue.extend({
     },
     async load_company_logo() {
       this.logo_image = (await bag.getData('vehicle.logo_image_path'))?.url as string
+    },
+    update_title() {
+      const sysid = this.system_id !== 1 ? `(${this.system_id}) ` : ''
+      document.title = `${sysid}${this.vehicle_name} - BlueOS`
     },
     save() {
       this.save_name()
