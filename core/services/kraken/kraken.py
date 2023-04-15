@@ -175,7 +175,7 @@ class Kraken:
             permissions=json.dumps(version_data["permissions"]),
             enabled=True,
             # TODO: handle user permissions on updates
-            user_permissions="{}",
+            user_permissions="",
         )
 
         # Remove older entry if it exists
