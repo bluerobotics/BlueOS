@@ -11,8 +11,8 @@ from typedefs import FlightController, FlightControllerFlags, Platform
 
 class Detector:
     @staticmethod
-    def detect_navigator() -> Optional[FlightController]:
-        """Returns Navigator board if connected.
+    def detect_linux_board() -> Optional[FlightController]:
+        """Returns Linux board if connected.
         Check for connection using the sensors on the I²C and SPI buses.
 
         Returns:
@@ -38,11 +38,11 @@ class Detector:
             except Exception:
                 return False
 
-        logger.debug("Trying to detect Navigator board.")
+        logger.debug("Trying to detect Linux board.")
         if is_navigator_r5_connected():
             logger.debug("Navigator R5 detected.")
             return FlightController(name="Navigator", manufacturer="Blue Robotics", platform=Platform.Navigator)
-        logger.debug("No Navigator board detected.")
+        logger.debug("No Linux board detected.")
         return None
 
     @staticmethod
@@ -106,9 +106,9 @@ class Detector:
         if not is_running_as_root():
             return available
 
-        navigator = cls.detect_navigator()
-        if navigator:
-            available.append(navigator)
+        linux_board = cls.detect_linux_board()
+        if linux_board:
+            available.append(linux_board)
 
         available.extend(cls().detect_serial_flight_controllers())
 
