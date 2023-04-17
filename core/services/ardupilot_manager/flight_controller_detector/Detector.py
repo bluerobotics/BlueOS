@@ -38,10 +38,22 @@ class Detector:
             except Exception:
                 return False
 
+        def is_argonot_r1_connected() -> bool:
+            try:
+                bus = SMBus(1)
+                swap_multiplexer_address = 0x77
+                bus.read_byte_data(swap_multiplexer_address, 0)
+                return True
+            except Exception:
+                return False
+
         logger.debug("Trying to detect Linux board.")
         if is_navigator_r5_connected():
             logger.debug("Navigator R5 detected.")
             return FlightController(name="Navigator", manufacturer="Blue Robotics", platform=Platform.Navigator)
+        if is_argonot_r1_connected():
+            logger.debug("Argonot R1 detected.")
+            return FlightController(name="Argonot", manufacturer="SymbyTech", platform=Platform.Argonot)
         logger.debug("No Linux board detected.")
         return None
 
