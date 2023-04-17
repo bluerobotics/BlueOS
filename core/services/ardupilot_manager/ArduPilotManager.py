@@ -166,7 +166,7 @@ class ArduPilotManager(metaclass=Singleton):
         cmdlines = [f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()]
         return " ".join(cmdlines)
 
-    def start_navigator(self, board: FlightController) -> None:
+    def start_linux_board(self, board: FlightController) -> None:
         self._current_board = board
         if not self.firmware_manager.is_firmware_installed(self._current_board):
             if board.platform == Platform.Navigator:
@@ -459,8 +459,8 @@ class ArduPilotManager(metaclass=Singleton):
             flight_controller = self.get_board_to_be_used(available_boards)
             logger.info(f"Using {flight_controller.name} flight-controller.")
 
-            if flight_controller.platform == Platform.Navigator:
-                self.start_navigator(flight_controller)
+            if flight_controller.platform.type == PlatformType.Linux:
+                self.start_linux_board(flight_controller)
             elif flight_controller.platform.type == PlatformType.Serial:
                 self.start_serial(flight_controller)
             elif flight_controller.platform == Platform.SITL:
