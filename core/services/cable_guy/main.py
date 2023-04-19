@@ -10,8 +10,9 @@ from typing import Any, List
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import Body, FastAPI
+from fastapi import Body
 from fastapi.staticfiles import StaticFiles
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -50,7 +51,7 @@ init_logger(SERVICE_NAME)
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
-app = FastAPI(
+app = FastAPIOffline(
     title="Cable Guy API",
     description="Cable Guy is responsible for managing internet interfaces on BlueOS.",
     default_response_class=PrettyJSONResponse,

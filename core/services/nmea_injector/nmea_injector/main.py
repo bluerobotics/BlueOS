@@ -6,8 +6,9 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import FastAPI, status
+from fastapi import status
 from fastapi.responses import HTMLResponse
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -26,7 +27,7 @@ logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 
-app = FastAPI(
+app = FastAPIOffline(
     title="NMEA Injector API",
     description="NMEA Injector is a service responsible for injecting external NMEA data on the Mavlink stream.",
     default_response_class=PrettyJSONResponse,

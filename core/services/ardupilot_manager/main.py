@@ -15,8 +15,9 @@ from commonwealth.utils.apis import (
 )
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import Body, FastAPI, File, UploadFile, status
+from fastapi import Body, File, UploadFile, status
 from fastapi.staticfiles import StaticFiles
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -39,7 +40,7 @@ logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 
-app = FastAPI(
+app = FastAPIOffline(
     title="ArduPilot Manager API",
     description="ArduPilot Manager is responsible for managing ArduPilot devices connected to BlueOS.",
     default_response_class=PrettyJSONResponse,

@@ -14,8 +14,9 @@ from commonwealth.utils.apis import (
     StackedHTTPException,
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import FastAPI, HTTPException, status
+from fastapi import HTTPException, status
 from fastapi.staticfiles import StaticFiles
+from fastapi_offline import FastAPIOffline
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from tabulate import tabulate
@@ -35,7 +36,7 @@ logger.info("Starting Wifi Manager.")
 wifi_manager = WifiManager()
 
 
-app = FastAPI(
+app = FastAPIOffline(
     title="WiFi Manager API",
     description="WiFi Manager is responsible for managing WiFi connections on BlueOS.",
     default_response_class=PrettyJSONResponse,
