@@ -94,6 +94,17 @@ def ensure_nginx_permissions() -> None:
     command = "sudo chown -R www-data:www-data /usr/blueos/userdata"
     print(run_command(command, False))
 
+def ensure_user_data_structure_is_in_place() -> None:
+    # ensures we have all base folders in userdata
+    commands = [
+        "sudo mkdir -p /usr/blueos/userdata/images/vehicle",
+        "sudo mkdir -p /usr/blueos/userdata/images/logo",
+        "sudo mkdir -p /usr/blueos/userdata/styles",
+    ]
+    for command in commands:
+        print(run_command(command, False))
+
+
 def main() -> None:
     current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
     match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
@@ -103,6 +114,7 @@ def main() -> None:
     update_startup()
     update_cgroups()
     update_dwc2()
+    ensure_user_data_structure_is_in_place()
     ensure_nginx_permissions()
 
 if __name__ == "__main__":
