@@ -55,7 +55,7 @@ class BagOfHoldersStore {
         if (error === backend_offline_error) {
           return undefined
         }
-        const message = `Could not get data: ${error.response?.data ?? error.message}.`
+        const message = `Could not get (${path}) data: ${error.response?.data ?? error.message}.`
         notifier.pushError('BAG_OF_HOLDERS_GET_DATA_FAIL', message, true)
         return undefined
       })
