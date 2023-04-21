@@ -1,7 +1,8 @@
 <template>
-  <div id="imgdiv">
+  <div id="imgdiv" class="d-flex align-center">
     <v-img
       id="main"
+      class="shrink"
       contain
       :src="image !== null ? image : defaultImage"
       @click="openDialog()"
