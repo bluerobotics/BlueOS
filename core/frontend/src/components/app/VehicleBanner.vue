@@ -1,14 +1,15 @@
 <template>
-  <div>
-    <div id="vehicle-banner" class="d-flex align-center justify-space-between mb-6">
+  <div class="flex pa-1 pr-3 pl-3">
+    <v-row id="vehicle-banner" class="align-center">
       <image-picker
+        size="35px"
         directory="/userdata/images/vehicle"
         readonly-directory="/vehicles/images"
         :default-image="require('@/assets/vehicles/images/unknown.svg')"
         :image="vehicle_image"
         @image-selected="save_vehicle_image"
       />
-      <p id="vehicle-name" class="pa-4">
+      <p id="vehicle-name" class="pa-0 pl-5 primary--text font-italic" style="max-width: 120px;">
         {{ vehicle_name }}
         <span
           v-if="system_id !== 1"
@@ -29,13 +30,15 @@
           </v-icon>
         </v-btn>
       </p>
+      <v-spacer />
       <image-picker
+        size="35px"
         directory="/userdata/images/logo"
         :default-image="require('@/assets/img/blue-robotics-logo.svg')"
         :image="logo_image"
         @image-selected="save_logo"
       />
-    </div>
+    </v-row>
     <v-dialog v-if="dialog" v-model="dialog" max-width="500px">
       <v-card>
         <v-card-title>Edit Vehicle Details</v-card-title>
@@ -161,6 +164,8 @@ export default Vue.extend({
   #vehicle-banner {
     margin-bottom: 0 !important;
     margin-top: 3px;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
   }
 
   #vehicle-name {
