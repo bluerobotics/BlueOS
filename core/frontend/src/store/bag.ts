@@ -18,12 +18,12 @@ class BagOfHoldersStore {
     return BagOfHoldersStore.instance
   }
 
-  async setData(path: string, payload: Record<string, unknown>): Promise<boolean> {
+  async setData(path: string, payload: Record<string, unknown> | undefined = undefined): Promise<boolean> {
     return back_axios({
       method: 'post',
       url: `${this.API_URL}/set/${path}`,
       timeout: 5000,
-      data: payload,
+      data: payload ?? {},
     })
       .then(() => true)
       .catch((error) => {
