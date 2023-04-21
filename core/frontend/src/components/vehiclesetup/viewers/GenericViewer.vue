@@ -2,6 +2,7 @@
   <div>
     <model-viewer
       v-if="model_path"
+      id="modelviewer"
       ref="modelviewer"
       :src="model_override_path || model_path"
       :auto-rotate="autorotate"
@@ -30,6 +31,19 @@
       >
         <div class="update-bar" />
       </div>
+
+      <v-btn
+        id="image-download-btn"
+        class="mt-6 mb-1"
+        elevation="1"
+        fab
+        x-small
+        @click="download"
+      >
+        <v-icon>
+          mdi-camera
+        </v-icon>
+      </v-btn>
     </model-viewer>
     <div v-else class="d-flex flex-column align-center">
       <SpinningLogo v-if="!model_path" size="40%" />
@@ -57,6 +71,8 @@ import '@google/model-viewer/dist/model-viewer'
 import { ModelViewerElement } from '@google/model-viewer/lib/model-viewer'
 import { HotspotConfiguration } from '@google/model-viewer/lib/three-components/Hotspot'
 import axios from 'axios'
+import { saveAs } from 'file-saver'
+import Image from 'image-js'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -290,6 +306,42 @@ export default Vue.extend({
     this.reloadAnnotations()
   },
   methods: {
+    async download() {
+      const viewer = this.$refs.modelviewer as ModelViewerElement
+      const mimeType = 'image/png'
+      const blob = await viewer.toBlob({ mimeType, idealAspect: true })
+      const image = await Image.load(new Uint8Array(await blob.arrayBuffer()))
+
+      // Find the bounding box of the non-zero pixels in the mask
+      let xMin = image.width
+      let yMin = image.height
+      let xMax = 0
+      let yMax = 0
+
+      for (let y = 0; y < image.height; y += 1) {
+        for (let x = 0; x < image.width; x += 1) {
+          const pixel = image.getPixelXY(x, y)
+          if (pixel[0] > 0) {
+            xMin = Math.min(xMin, x)
+            yMin = Math.min(yMin, y)
+            xMax = Math.max(xMax, x)
+            yMax = Math.max(yMax, y)
+          }
+        }
+      }
+
+      // Crop the image to the bounding box
+      const cropped_image = image.crop({
+        x: xMin,
+        y: yMin,
+        width: xMax - xMin + 1,
+        height: yMax - yMin + 1,
+      })
+
+      // Save the image
+      const file = new File([await cropped_image.toBlob(mimeType)], 'viewer.png', { type: mimeType })
+      saveAs(file)
+    },
     async reloadAnnotations() {
       const json = await models(`./${this.vehicle_folder}/${this.frame_name}.json`)
       if (json) {
@@ -439,5 +491,16 @@ model-viewer {
     position: relative;
     transition: opacity 0.3s ease 0s;
     width: 24px;
+}
+
+#image-download-btn {
+    display: none;
+    position: absolute;
+    right: 15px;
+    bottom: 0;
+}
+
+#modelviewer:hover #image-download-btn {
+    display: inline-flex !important;
 }
 </style>
