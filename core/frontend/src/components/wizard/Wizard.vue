@@ -130,7 +130,7 @@
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
-              <v-btn color="primary" @click="should_open = false">
+              <v-btn color="primary" @click="close">
                 Close
               </v-btn>
             </v-row>
@@ -217,6 +217,10 @@ export default Vue.extend({
     }
   },
   methods: {
+    close() {
+      this.should_open = false
+      setTimeout(() => { window.location.reload() }, 500)
+    },
     nextStep() {
       this.step_number += 1
     },
