@@ -271,7 +271,7 @@ export default Vue.extend({
   }
 
   #imgdiv {
-    position:relative;
+    position: relative;
   }
 
   .drop-zone {
