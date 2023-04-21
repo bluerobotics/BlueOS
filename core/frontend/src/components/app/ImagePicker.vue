@@ -2,6 +2,8 @@
   <div id="imgdiv" class="d-flex align-center">
     <v-img
       id="main"
+      :height="size"
+      :width="size"
       class="shrink"
       contain
       :src="image !== null ? image : defaultImage"
@@ -117,6 +119,10 @@ export default Vue.extend({
     SpinningLogo,
   },
   props: {
+    size: {
+      type: String,
+      default: '50',
+    },
     directory: {
       type: String,
       default: '/userdata/images/',
@@ -248,8 +254,6 @@ export default Vue.extend({
 <style scoped>
   #main {
     display: inline-flex;
-    height: 50px;
-    width: 50px;
     margin: 0px;
     object-fit: contain;
     position: relative;
