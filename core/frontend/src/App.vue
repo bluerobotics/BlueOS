@@ -53,7 +53,7 @@
       <v-divider />
       <v-container
         elevation="0"
-        class="d-flex justify-center align-center"
+        class="d-flex justify-center align-center pa-0"
       >
         <vehicle-banner />
       </v-container>
