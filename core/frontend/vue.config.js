@@ -1,10 +1,20 @@
 /* eslint-disable */
 const { name } = require('./package.json')
 const { PRIMARY } = require('./src/assets/colors/default')
+const { StatusCodes } = require('http-status-codes')
+const http = require('http')
 
 process.env.PROJECT_NAME = name
 process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
-const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? 'http://blueos.local/'
+const DEFAULT_ADDRESS = 'http://blueos.local/'
+const SEARCHABLE_MDNS_ADDRESS = [
+  DEFAULT_ADDRESS,
+  'http://blueos-avahi.local/',
+  'http://blueos-wifi.local/',
+  'http://blueos-hotspot.local/',
+]
+
+const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? getBlueOSReachableAddress() ?? DEFAULT_ADDRESS
 
 module.exports = {
   devServer: {
@@ -134,4 +144,39 @@ module.exports = {
         util: require.resolve('util/'),
     })
   }
+}
+
+async function checkUrlReachable(url) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(url, (res) => {
+      if (res.statusCode >= StatusCodes.OK && res.statusCode < StatusCodes.BAD_REQUEST) {
+        resolve({ reachable: true, statusCode: res.statusCode });
+      } else {
+        resolve({ reachable: false, statusCode: res.statusCode });
+      }
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.end();
+  });
+}
+
+async function getBlueOSReachableAddress() {
+  const promises = SEARCHABLE_MDNS_ADDRESS.map((url) => checkUrlReachable(url));
+  const results = await Promise.allSettled(promises);
+
+  const address = results
+    .map((result, index) => result?.value?.reachable === true ? SEARCHABLE_MDNS_ADDRESS[index] : undefined)
+    .filter((address) => address !== undefined)
+    ?.[0]
+
+  if (address) {
+    // The new line is necessary to show the value while running yarn
+    console.log(`Found BlueOS on: ${address}\n`)
+  }
+
+  return address
 }
