@@ -624,6 +624,6 @@ div.pirate-marker.v-icon {
 }
 
 html {
-  overflow: hidden
+  overflow: auto
 }
 </style>
