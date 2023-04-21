@@ -1,6 +1,6 @@
 /* eslint-disable */
-const { PRIMARY } = require('./src/assets/colors/default')
 const { name } = require('./package.json')
+const { PRIMARY } = require('./src/assets/colors/default')
 
 process.env.PROJECT_NAME = name
 process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
