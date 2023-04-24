@@ -141,7 +141,7 @@
     >
       <h2>Manual upload</h2>
       Use this to upload a .tar docker image. These can be download from
-      <a href="https://github.com/bluerobotics/BlueOS-docker/actions/workflows/deploy.yml">Github's CI</a>
+      <a href="https://github.com/bluerobotics/BlueOS-docker/actions/workflows/test-and-deploy.yml">Github's CI</a>
       or generated locally using "docker save"
       <v-file-input
         v-if="!disable_upload_controls"
