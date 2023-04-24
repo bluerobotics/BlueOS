@@ -15,6 +15,7 @@ from loguru import logger
 from exceptions import (
     ArdupilotProcessKillFail,
     EndpointAlreadyExists,
+    NoDefaultFirmwareAvailable,
     NoPreferredBoardSet,
 )
 from firmware.FirmwareManagement import FirmwareManager
@@ -173,6 +174,10 @@ class ArduPilotManager(metaclass=Singleton):
                 self.firmware_manager.install_firmware_from_file(
                     pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator"),
                     board,
+                )
+            else:
+                raise NoDefaultFirmwareAvailable(
+                    f"No firmware installed for '{board.platform}' and no default firmware available. Please install the firmware manually."
                 )
 
         firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
