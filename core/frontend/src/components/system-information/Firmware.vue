@@ -56,6 +56,27 @@
           </div>
         </div>
       </v-card-text>
+
+      <div
+        class="d-flex flex-column align-center"
+      >
+        <v-btn
+          v-if="update_available"
+          elevated
+          color="primary"
+          class="ml-3"
+          :loading="waiting_for_update"
+          @click="doRaspiEEPROMUpdate"
+        >
+          Update
+        </v-btn>
+        <v-alert
+          v-if="raspberry_eeprom_reboot_pending"
+          type="success"
+        >
+          Changes applied, please do a <b>system reboot</b>.
+        </v-alert>
+      </div>
     </v-card>
   </v-sheet>
 </template>
@@ -79,7 +100,9 @@ export default Vue.extend({
   data() {
     return {
       eeprom_update: undefined as undefined | ReturnStruct,
+      do_eeprom_update: undefined as undefined | ReturnStruct,
       vcgencmd: undefined as undefined | Record<string, ReturnStruct>,
+      waiting_for_update: false,
     }
   },
   computed: {
@@ -88,6 +111,12 @@ export default Vue.extend({
     },
     vl085_update_available(): boolean {
       return this.raspberry_eeprom_data.current_vl085 !== this.raspberry_eeprom_data.latest_vl085
+    },
+    update_available(): boolean {
+      if (this.raspberry_eeprom_reboot_pending) {
+        return false
+      }
+      return this.bootloader_update_available || this.vl085_update_available
     },
     loading_vcgencmd(): boolean {
       return this.vcgencmd === undefined
@@ -159,6 +188,10 @@ export default Vue.extend({
         current_vl085: current?.[1],
       }
     },
+    raspberry_eeprom_reboot_pending(): boolean {
+      const lines = this.cleanUpString(this.do_eeprom_update?.stdout)?.split('\n') ?? []
+      return lines.some((line) => line.includes('reboot to apply'))
+    },
   },
   async mounted() {
     await this.getData()
@@ -169,6 +202,11 @@ export default Vue.extend({
         return text
       }
       return text.slice(1, -1).replace(/\\n/g, '\n').trim().trim()
+    },
+    async doRaspiEEPROMUpdate() {
+      this.waiting_for_update = true
+      this.do_eeprom_update = await commander.doRaspiEEPROMUpdate()
+      this.waiting_for_update = false
     },
     formatDate(date_value: string | undefined): string | undefined {
       if (date_value === undefined) {
