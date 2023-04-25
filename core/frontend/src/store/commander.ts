@@ -179,6 +179,26 @@ class CommanderStore {
         return undefined
       })
   }
+
+  async doRaspiEEPROMUpdate(): Promise<ReturnStruct | undefined> {
+    return back_axios({
+      method: 'post',
+      url: `${this.API_URL}/raspi/eeprom_update`,
+      timeout: 60000,
+      params: {
+        i_know_what_i_am_doing: true,
+      },
+    })
+      .then((response) => response.data)
+      .catch((error) => {
+        if (error === backend_offline_error) {
+          return undefined
+        }
+        const message = `Could not update Raspi EEPROM: ${error.response?.data ?? error.message}.`
+        notifier.pushError('COMMANDER_UPDATE_RASPI_EEPROM_FAIL', message, true)
+        return undefined
+      })
+  }
 }
 
 const Commander = CommanderStore.getInstance()
