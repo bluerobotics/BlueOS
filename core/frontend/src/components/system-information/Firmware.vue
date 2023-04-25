@@ -179,10 +179,10 @@ export default Vue.extend({
       return this.cleanUpString(output?.stdout)
     },
     async getData(): Promise<void> {
-      const vcgencmd = await commander.getVcgencmd()
-      const eeprom = await commander.updateRaspiEEPROM()
-
-      Promise.all([vcgencmd, eeprom])
+      await Promise.all([
+        commander.getVcgencmd().then((vcgencmd) => { this.vcgencmd = vcgencmd }),
+        commander.updateRaspiEEPROM().then((eeprom_update) => { this.eeprom_update = eeprom_update }),
+      ])
     },
   },
 })
