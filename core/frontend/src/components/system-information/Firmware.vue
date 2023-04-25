@@ -33,7 +33,7 @@
         <div v-if="eeprom_update">
           <div class="d-flex justify-space-between">
             <span><b>From:</b> {{ raspberry_eeprom_data.current_bootloader }} </span>
-            <span v-if="raspberry_eeprom_data.current_bootloader !== raspberry_eeprom_data.latest_bootloader">
+            <span v-if="bootloader_update_available">
               <b>Latest:</b> {{ raspberry_eeprom_data.latest_bootloader }}
             </span>
             <span v-else>
@@ -47,7 +47,7 @@
         <div v-if="eeprom_update">
           <div class="d-flex justify-space-between mb-3">
             <span><b>VL085 Firmware (USB Controller):</b> {{ raspberry_eeprom_data.current_vl085 }} </span>
-            <span v-if="raspberry_eeprom_data.current_vl085 !== raspberry_eeprom_data.latest_vl085">
+            <span v-if="vl085_update_available">
               <b>Latest:</b> {{ raspberry_eeprom_data.latest_vl085 }}
             </span>
             <span v-else>
@@ -83,6 +83,12 @@ export default Vue.extend({
     }
   },
   computed: {
+    bootloader_update_available(): boolean {
+      return this.raspberry_eeprom_data.current_bootloader !== this.raspberry_eeprom_data.latest_bootloader
+    },
+    vl085_update_available(): boolean {
+      return this.raspberry_eeprom_data.current_vl085 !== this.raspberry_eeprom_data.latest_vl085
+    },
     loading_vcgencmd(): boolean {
       return this.vcgencmd === undefined
     },
