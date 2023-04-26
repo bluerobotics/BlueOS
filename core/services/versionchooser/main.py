@@ -39,6 +39,10 @@ async def delete_version(request: web.Request) -> Any:
     return await versionChooser.delete_version(repository, tag)
 
 
+async def get_available_local_versions() -> Any:
+    return await versionChooser.get_available_local_versions()
+
+
 async def get_available_versions(repository: str, image: str) -> Any:
     return await versionChooser.get_available_versions(f"{repository}/{image}")
 
