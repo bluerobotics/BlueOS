@@ -216,17 +216,7 @@ class VersionChooser:
             logging.warning(f"Error deleting image: {e}")
             return web.Response(status=500, text=f"Unable do delete image: {e}")
 
-    async def get_available_versions(self, repository: str) -> web.Response:
-        """Returns versions available locally and in the remote
-
-        Args:
-            repository (str): repository name (such as bluerobotics/blueos-core)
-            tag (str): tag (such as "master" or "latest")
-
-        Returns:
-            web.Response: json described in the openapi file
-        """
-        output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]] = {"local": [], "remote": [], "error": None}
+    async def set_local_versions(self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]]) -> None:
         for image in await self.client.images.list():
             if not image["RepoTags"]:
                 continue
@@ -243,6 +233,10 @@ class VersionChooser:
                         "sha": image["Id"],
                     }
                 )
+
+    async def set_remote_versions(
+        self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]], repository: str
+    ) -> None:
         try:
             assert isinstance(output["local"], list)
             output["error"], online_tags = await TagFetcher().fetch_remote_tags(
@@ -255,6 +249,24 @@ class VersionChooser:
         assert isinstance(output["remote"], list)
         output["remote"].extend([asdict(tag) for tag in online_tags])
 
+    async def get_available_local_versions(self) -> web.Response:
+        output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]] = {"local": [], "error": None}
+        await self.set_local_versions(output)
+        return web.json_response(output)
+
+    async def get_available_versions(self, repository: str) -> web.Response:
+        """Returns versions available locally and in the remote
+
+        Args:
+            repository (str): repository name (such as bluerobotics/blueos-core)
+            tag (str): tag (such as "master" or "latest")
+
+        Returns:
+            web.Response: json described in the openapi file
+        """
+        output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]] = {"local": [], "remote": [], "error": None}
+        await self.set_local_versions(output)
+        await self.set_remote_versions(output, repository)
         return web.json_response(output)
 
     async def restart(self) -> web.Response:
