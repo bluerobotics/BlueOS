@@ -69,6 +69,26 @@ paths:
                   type: string
                   example: master
 
+  /version/available/local:
+    get:
+      operationId: main.get_available_local_versions
+      summary: Returns available local versions
+      responses:
+        '200':
+          description: A list of versions available locally
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  local:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+                  error:
+                    type: string
+                    example: "Unable to fetch sha."
+
   /version/available/{repository}/{image}:
     get:
       operationId: main.get_available_versions
