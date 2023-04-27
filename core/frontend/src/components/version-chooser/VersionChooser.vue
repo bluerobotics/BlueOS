@@ -52,7 +52,7 @@
       >
         <h2>Local Versions</h2>
         <version-card
-          v-for="image in available_versions['local']"
+          v-for="image in local_versions.result.local"
           :key="image.sha"
           :image="image"
           :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
@@ -63,7 +63,7 @@
           @pull-and-apply="pullAndSetVersion"
         />
         <spinning-logo
-          v-if="loading_images"
+          v-if="local_versions.loading"
           size="15%"
           subtitle="Loading local images..."
         />
@@ -75,7 +75,7 @@
       >
         <h2>Remote Versions</h2>
         <v-form
-          @submit.prevent="loadAvailableversions()"
+          @submit.prevent="loadVersions()"
         >
           <v-text-field
             v-model="selected_image"
@@ -189,7 +189,9 @@ import Vue from 'vue'
 
 import PullProgress from '@/components/utils/PullProgress.vue'
 import settings from '@/libs/settings'
-import { Version, VersionsQuery, VersionType } from '@/types/version-chooser'
+import {
+  LocalVersionsQuery, Version, VersionsQuery, VersionType,
+} from '@/types/version-chooser'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
 // Version Chooser Utils
@@ -212,6 +214,13 @@ export default Vue.extend({
       pull_output: '',
       show_pull_output: false,
       page: 1,
+      local_versions: {
+        result: {
+          local: [],
+          error: null,
+        } as LocalVersionsQuery,
+        loading: false,
+      },
       available_versions: {
         local: [],
         remote: [],
@@ -336,7 +345,24 @@ export default Vue.extend({
       }
       return ''
     },
-    async loadAvailableversions() {
+    async loadLocalVersions() {
+      this.local_versions.loading = true
+      this.local_versions.result.local = []
+      this.local_versions.result.error = null
+
+      await VCU.loadLocalVersions()
+        .then((versions_query) => {
+          this.local_versions.loading = false
+          this.local_versions.result = versions_query
+        })
+        .catch((error) => {
+          this.local_versions.result = {
+            local: [],
+            error: `Failed to communicate with backend: ${error}`,
+          }
+        })
+    },
+    async loadAvailableVersions() {
       this.loading_images = true
       this.available_versions.error = null
 
@@ -358,12 +384,18 @@ export default Vue.extend({
           }
         })
     },
+    async loadVersions() {
+      Promise.all([
+        this.loadLocalVersions(),
+        this.loadAvailableVersions(),
+      ])
+    },
     async loadCurrentVersion() {
       await VCU.loadCurrentVersion()
         .then((image) => {
           this.current_version = image
           this.selected_image = image.repository
-          this.loadAvailableversions()
+          this.loadVersions()
         })
     },
     updateIsAvailable(image: Version) {
@@ -391,7 +423,7 @@ export default Vue.extend({
         }).finally(() => {
           this.disable_upload_controls = false
           this.upload_percentage = 0
-          setTimeout(() => { this.loadAvailableversions() }, 1000)
+          setTimeout(() => { this.loadVersions() }, 1000)
         })
       }
     },
@@ -452,7 +484,7 @@ export default Vue.extend({
           tag,
         },
       }).then(() => {
-        // Remove this image in the frontend, as calling loadAvailableversions()
+        // Remove this image in the frontend, as calling loadVersions()
         // takes a longer time to fetch all images
         this.available_versions.local = this.available_versions.local.filter(
           (element) => element.repository !== repository || element.tag !== tag,
