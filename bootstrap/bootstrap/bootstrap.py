@@ -213,7 +213,7 @@ class Bootstrapper:
                     return True
             except Exception as e:
                 print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
-                if time.time() - self.core_last_response_time > 60:
+                if time.time() - self.core_last_response_time > 180:
                     print("Reseting startup.json...")
                     self.overwrite_config_file_with_defaults()
                     return False
