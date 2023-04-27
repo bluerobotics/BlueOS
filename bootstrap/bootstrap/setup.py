@@ -9,6 +9,7 @@ setup(
     license="MIT",
     install_requires=[
         "docker == 5.0.0",
+        "loguru == 0.5.3",
         "requests == 2.26.0",
         "six == 1.15.0",
     ],
