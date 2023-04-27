@@ -212,7 +212,13 @@ export default Vue.extend({
   },
   async mounted() {
     const wizard = await bag.getData('wizard')
-    if (wizard === undefined || wizard?.version !== WIZARD_VERSION) {
+
+    // Failed to communicate with the bag service
+    if (wizard === undefined) {
+      return
+    }
+
+    if (wizard?.version !== WIZARD_VERSION) {
       this.should_open = true
     }
   },
