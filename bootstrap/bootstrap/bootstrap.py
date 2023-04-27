@@ -1,15 +1,23 @@
 import curses
 import json
+import logging
 import os
 import pathlib
 import shutil
 import sys
 import time
 from typing import Any, Dict
-from warnings import warn
 
 import docker
 import requests
+from loguru import logger
+
+from bootstrap.logs import InterceptHandler, init_logger
+
+SERVICE_NAME = "Bootstrap"
+
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
+init_logger(SERVICE_NAME)
 
 
 class Bootstrapper:
@@ -22,6 +30,7 @@ class Bootstrapper:
     core_last_response_time = time.time()
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
+        logger.info("Service started")
         self.client: docker.DockerClient = client
         if low_level_api is None:
             self.low_level_api = docker.APIClient(base_url="unix://var/run/docker.sock")
@@ -30,7 +39,7 @@ class Bootstrapper:
 
     @staticmethod
     def overwrite_config_file_with_defaults() -> None:
-        """Overwrites the config file with the default configuration"""
+        logger.warning("Overwriting the config file with the default configuration")
         try:
             os.makedirs(pathlib.Path(Bootstrapper.DOCKER_CONFIG_FILE_PATH).parent, exist_ok=True)
         except Exception as exception:
@@ -66,7 +75,7 @@ class Bootstrapper:
                     assert key in config["core"], f"missing key in json file: {key}"
 
         except Exception as error:
-            print(f"unable to read startup.json file ({error}), reverting to defaults...")
+            logger.warning(f"Unable to read startup.json file ({error}), reverting to defaults...")
             # Copy defaults over and read again
             Bootstrapper.overwrite_config_file_with_defaults()
             with open(Bootstrapper.DEFAULT_FILE_PATH, encoding="utf-8") as config_file:
@@ -85,6 +94,8 @@ class Bootstrapper:
             component_name (str): name of one of our components in startup.json, such as
             "core", "ttyd", or "bootstrap"
         """
+
+        logger.info(f"Pulling image: {component_name}")
 
         image = self.config[component_name]
         image_name = image["image"]
@@ -135,7 +146,7 @@ class Bootstrapper:
             curses.echo()
             curses.nocbreak()
             curses.endwin()
-        print("Done")
+        logger.info("Done pulling image")
 
     def image_is_available_locally(self, image_name: str, tag: str) -> bool:
         """Checks if the image is already available locally"""
@@ -168,11 +179,11 @@ class Bootstrapper:
             try:
                 self.pull(component_name)
             except docker.errors.NotFound:
-                warn("Image not found, reverting to default...")
+                logger.warning("Image not found, reverting to default...")
                 self.overwrite_config_file_with_defaults()
                 return False
             except docker.errors.APIError as error:
-                warn(f"Error trying to pull an update image: {error}")
+                logger.warning(f"Error trying to pull an update image: {error}")
                 return False
 
         print(f"Starting {image_name}")
@@ -186,7 +197,7 @@ class Bootstrapper:
                 detach=True,
             )
         except docker.errors.APIError as error:
-            warn(f"Error trying to start image: {error}, reverting to default...")
+            logger.warning(f"Error trying to start image: {error}, reverting to default...")
             self.overwrite_config_file_with_defaults()
             return False
 
@@ -214,35 +225,36 @@ class Bootstrapper:
             except Exception as e:
                 print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
                 if time.time() - self.core_last_response_time > 180:
-                    print("Reseting startup.json...")
+                    logger.info("Reseting startup.json...")
                     self.overwrite_config_file_with_defaults()
                     return False
         return True
 
     def remove(self, container: str) -> None:
         """Deletes the chosen container if it exists (needed for updating the running image)"""
+        logger.info(f"Deleting blueos-{container}")
         try:
             old_container = self.client.containers.get(f"blueos-{container}")
             old_container.stop()
             old_container.remove()
         except docker.errors.NotFound:
-            # This exception is raised if the container does not exist
-            pass
+            logger.warning(f"{container} container does not exist")
 
     def run(self) -> None:
-        """Runs the bootstrapper"""
+        logger.info("Starting bootstrap main loop")
         while True:
             time.sleep(1)
+            logger.debug("Spinning..")
             for image in self.read_config_file():
                 if self.is_running(image):
-                    print(f"{image} is already running, waiting for it to stop...")
                     continue
                 try:
+                    logger.warning(f"{image} is not running, going to try to start/restart it...")
                     self.remove(image)
                     if self.start(image):
-                        print("Done")
+                        logger.info(f"Started {image}")
                 except Exception as error:
-                    warn(f"error: {type(error)}: {error}, retrying...")
+                    logger.warning(f"error: {type(error)}: {error}, retrying...")
             # This is required for the tests, we need to "finish" somehow
             if "pytest" in sys.modules:
                 return
