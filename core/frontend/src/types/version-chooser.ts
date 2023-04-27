@@ -11,6 +11,11 @@ export interface VersionsQuery {
   error: (string | null),
 }
 
+export interface LocalVersionsQuery {
+  local: Version[],
+  error: (string | null),
+}
+
 export enum VersionType {
   Custom = 'custom',
   Master = 'master',
