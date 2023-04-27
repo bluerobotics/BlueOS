@@ -1,6 +1,8 @@
 import { gt as sem_ver_greater, SemVer } from 'semver'
 
-import { Version, VersionsQuery, VersionType } from '@/types/version-chooser'
+import {
+  LocalVersionsQuery, Version, VersionsQuery, VersionType,
+} from '@/types/version-chooser'
 import back_axios from '@/utils/api'
 
 const API_URL = '/version-chooser/v1.0/version'
@@ -64,14 +66,14 @@ function sortVersions(versions: Version[]): Version[] {
   )
 }
 
+function compareVersions(a: Version, b: Version): number {
+  return Date.parse(b.last_modified) - Date.parse(a.last_modified)
+}
+
 function sortImages(versions_query: VersionsQuery): VersionsQuery {
   return {
-    local: versions_query.local.sort(
-      (a: Version, b: Version) => Date.parse(b.last_modified) - Date.parse(a.last_modified),
-    ),
-    remote: versions_query.remote.sort(
-      (a: Version, b: Version) => Date.parse(b.last_modified) - Date.parse(a.last_modified),
-    ),
+    local: versions_query.local.sort(compareVersions),
+    remote: versions_query.remote.sort(compareVersions),
     error: versions_query.error,
   }
 }
@@ -122,6 +124,17 @@ function getLatestVersion(versions_query: VersionsQuery, current_version: Versio
   }
 }
 
+async function loadLocalVersions(): Promise<LocalVersionsQuery> {
+  return back_axios({
+    method: 'get',
+    url: `${API_URL}/available/local`,
+  }).then((response) => {
+    const available_versions = response.data as LocalVersionsQuery
+    available_versions.local = available_versions.local.sort(compareVersions)
+    return available_versions
+  })
+}
+
 async function loadAvailableVersions(remote_image_name?: string): Promise<VersionsQuery> {
   remote_image_name = remote_image_name ?? DEFAULT_REMOTE_IMAGE
   return back_axios({
@@ -150,6 +163,7 @@ export {
   isSemVer,
   loadAvailableVersions,
   loadCurrentVersion,
+  loadLocalVersions,
   sortImages,
   sortVersions,
 }
