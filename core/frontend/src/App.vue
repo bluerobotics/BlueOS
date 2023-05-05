@@ -1,12 +1,12 @@
 <template>
-  <v-app>
+  <v-app :class="app_style">
     <v-card
       flat
     >
       <v-app-bar
         app
         rounded="0"
-        :color="app_bar_color"
+        :class="app_bar_style"
         :height="toolbar_height"
       >
         <v-app-bar-nav-icon
@@ -298,6 +298,12 @@ export default Vue.extend({
     tourCallbacks: {}, // we are setting this up in mounted otherwise "this" can be undefined
   }),
   computed: {
+    app_style(): string {
+      return settings.is_dark_theme ? 'dark-background' : 'light-background'
+    },
+    app_bar_style(): string {
+      return settings.is_dark_theme ? 'dark-background-glass' : 'light-background-glass'
+    },
     wifi_connected(): boolean {
       return wifi.current_network != null
     },
@@ -468,9 +474,6 @@ export default Vue.extend({
     build_date(): string {
       return process.env.VUE_APP_BUILD_DATE
     },
-    app_bar_color(): string {
-      return this.backend_offline ? 'grey darken-1' : 'primary'
-    },
     blueos_logo(): string {
       return settings.is_dark_theme ? blueos_white : blueos_blue
     },
@@ -608,6 +611,38 @@ div.pirate-marker.v-icon {
 </style>
 
 <style>
+.light-background {
+  background-color: var(--v-br_blue-base) !important;
+  background-image: linear-gradient(160deg, var(--v-br_blue-base) 0%, var(--v-mariner_blue-base) 100%) !important;
+}
+
+.dark-background {
+  background-color: var(--v-mariner_blue-base) !important;
+  background-image: linear-gradient(160deg, var(--v-mariner_blue-base) 0%, var(--v-blue_whale-base) 100%) !important;
+}
+
+.light-background-glass {
+  /*
+    It's not possible for us to get the color as variables and set a transparency on it,
+    so we use the colors directly
+  */
+  background-color: #2699D055 !important;
+  background-image: linear-gradient(160deg, #2699D088 0%, #135DA388 100%) !important;
+  backdrop-filter: blur(4.5px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.dark-background-glass {
+  /*
+    It's not possible for us to get the color as variables and set a transparency on it,
+    so we use the colors directly
+  */
+  background-color: #135DA355 !important;
+  background-image: linear-gradient(160deg, #135DA388 0%, #012F4688 100%) !important;
+  backdrop-filter: blur(4.5px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
 /* Global style */
 /* mdi-loading icon is being used ? Of course you want to rotate it! */
 .mdi-loading {
