@@ -40,7 +40,7 @@
         class="mt-10"
       >
         <v-card
-          class="py-3 px-3"
+          class="py-3 px-3 rounded-xl"
           style="min-height: 100%"
           :href="route"
         >
@@ -126,6 +126,10 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+
+.rounded-card {
+  border-radius:50px;
+}
 
 div.pirate-marker {
   position: absolute;
