@@ -36,7 +36,7 @@
                   <v-checkbox
                     v-for="(key, value) in param?.bitmask"
                     :key="value"
-                    v-model="edited_bitmask"
+                    v-model="selected_bitflags"
                     dense
                     :label="key"
                     :value="2 ** value"
@@ -154,6 +154,7 @@ export default Vue.extend({
       // Form can't be computed correctly, so we save it's state under data
       is_form_valid: false,
       new_value: 0,
+      selected_bitflags: [],
     }
   },
   computed: {
@@ -161,25 +162,8 @@ export default Vue.extend({
       const entries = Object.entries(this.param?.options ?? [])
       return entries.map(([value, name]) => ({ text: name, value: parseFloat(value), disabled: false }))
     },
-    edited_bitmask(): number[] {
-      const edited_bitmask = [] as number[]
-
-      if (this.param.readonly || this.param.bitmask === undefined) {
-        return edited_bitmask
-      }
-
-      for (let v = 0; 2 ** v <= this.param.value; v += 1) {
-        const bitmask_value = 2 ** v
-        // eslint-disable-next-line no-bitwise
-        if (bitmask_value & this.param.value) {
-          edited_bitmask.push(bitmask_value)
-        }
-      }
-
-      return edited_bitmask
-    },
     edited_bitmask_value(): number {
-      return this.edited_bitmask.reduce((accumulator, current) => accumulator + current, 0)
+      return this.selected_bitflags.reduce((accumulator, current) => accumulator + current, 0)
     },
     param_value_not_changed(): boolean {
       // Check if value is different
@@ -197,6 +181,9 @@ export default Vue.extend({
   watch: {
     new_value(): void {
       this.isFormValid()
+    },
+    edited_bitmask_value(): void {
+      this.new_value = this.edited_bitmask_value
     },
     show(): void {
       this.new_value = this.param.value
