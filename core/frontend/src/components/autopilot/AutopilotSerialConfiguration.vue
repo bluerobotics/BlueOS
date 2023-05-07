@@ -169,7 +169,7 @@ export default Vue.extend({
       const regex1 = /(tcpclient|udpclient|tcpin|udpin):(?<ip>[^:]+):(?<port>\d+)$/
       if (regex1.test(input)) {
         const match = regex1.exec(input)
-        const ip = match?.groups?.ip1 ?? ''
+        const ip = match?.groups?.ip ?? ''
         const port = parseInt(match?.groups?.port ?? '-1', 10)
         if (!isIpAddress(ip)) {
           return 'IP is invalid'
