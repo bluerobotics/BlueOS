@@ -1,3 +1,5 @@
+import { isIP } from 'is-ip'
+
 import { Baudrate } from '@/types/common'
 
 export function isSocketPort(port: number, public_range = true): boolean {
@@ -22,8 +24,7 @@ export function isBaudrate(baudrate: number): boolean {
 }
 
 export function isIpAddress(ip: string): boolean {
-  const ip_pattern = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
-  return ip_pattern.test(ip)
+  return isIP(ip)
 }
 
 export function isUdpAddress(address: string): boolean {
