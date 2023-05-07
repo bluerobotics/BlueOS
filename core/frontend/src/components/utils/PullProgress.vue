@@ -4,7 +4,9 @@
     width="auto"
     persistent
   >
-    <v-card>
+    <v-card
+      min-width="450"
+    >
       <v-card-title class="text-h5 grey lighten-2 black--text">
         Pulling new version
       </v-card-title>
