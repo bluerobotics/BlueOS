@@ -6,6 +6,10 @@ from serial.tools.list_ports_linux import SysFS
 
 
 class Baudrate(IntEnum):
+    b1200 = 1200
+    b1800 = 1800
+    b2400 = 2400
+    b4800 = 4800
     b9600 = 9600
     b19200 = 19200
     b38400 = 38400
