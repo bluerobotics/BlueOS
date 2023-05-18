@@ -94,20 +94,31 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
         logger.info("Network is not known.")
         is_new_network = True
 
-    if credentials.password == "" and network_id is None:
+    is_secure = False
+    try:
+        available_networks = await wifi_manager.get_wifi_available()
+        scanned_network = next(filter(lambda network: network.ssid == credentials.ssid, available_networks))
+        flags_for_passwords = ["WPA", "WEP", "WSN"]
+        for candidate in flags_for_passwords:
+            if candidate in scanned_network.flags:
+                is_secure = True
+                break
+    except StopIteration:
+        logger.info("Could not find wifi network around.")
+
+    if credentials.password == "" and network_id is None and is_secure:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No password received and network not found among saved ones.",
         )
 
     try:
-        if credentials.password != "":
-            if network_id:
-                logger.info("Removing old entry for known network.")
-                await wifi_manager.remove_network(network_id)
-            else:
-                logger.info("Saving new network entry.")
-            network_id = await wifi_manager.add_network(credentials, hidden)
+        if network_id:
+            logger.info("Removing old entry for known network.")
+            await wifi_manager.remove_network(network_id)
+        else:
+            logger.info("Saving new network entry.")
+        network_id = await wifi_manager.add_network(credentials, hidden)
 
         logger.info("Performing network connection.")
         if network_id is None:
