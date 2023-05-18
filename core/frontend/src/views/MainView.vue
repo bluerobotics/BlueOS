@@ -139,7 +139,7 @@ div.pirate-marker {
 }
 
 div.pirate-marker.v-icon {
-    font-size: 10px;
+  font-size: 10px;
 }
 
 .text-clamp {
