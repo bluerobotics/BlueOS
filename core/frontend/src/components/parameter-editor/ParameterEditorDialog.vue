@@ -154,7 +154,7 @@ export default Vue.extend({
       // Form can't be computed correctly, so we save it's state under data
       is_form_valid: false,
       new_value: 0,
-      selected_bitflags: [],
+      selected_bitflags: [] as number[],
     }
   },
   computed: {
@@ -180,6 +180,7 @@ export default Vue.extend({
   },
   watch: {
     new_value(): void {
+      this.updateSelectedFlags()
       this.isFormValid()
     },
     edited_bitmask_value(): void {
@@ -230,6 +231,17 @@ export default Vue.extend({
         }
       }
       return true
+    },
+    updateSelectedFlags(): void {
+      const output = []
+      for (let v = 0; v < 64; v += 1) {
+        const bitmask_value = 2 ** v
+        // eslint-disable-next-line no-bitwise
+        if (this.new_value & bitmask_value) {
+          output.push(bitmask_value)
+        }
+      }
+      this.selected_bitflags = output
     },
     async rebootVehicle(): Promise<void> {
       await this.restart_autopilot()
