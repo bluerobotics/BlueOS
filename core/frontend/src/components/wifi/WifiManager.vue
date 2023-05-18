@@ -74,7 +74,7 @@
           <v-card-text
             v-else
             flat
-            class="text-body-1"
+            class="text-body-1 text-center"
           >
             No wifi networks available :(
           </v-card-text>
