@@ -35,13 +35,12 @@
           icon, title, text, route, advanced,
         }, i) in apps"
         :key="i"
-        cols="12"
+        cols="6"
         md="3"
-        class="mt-10"
       >
         <v-card
-          class="py-3 px-3 rounded-xl"
-          style="min-height: 100%"
+          class="mb-3 px-3 rounded-xl"
+          style="height: 200px"
           :href="route"
         >
           <v-theme-provider dark>
@@ -82,7 +81,7 @@
             </div>
           </v-theme-provider>
           <v-card-text
-            class="subtitle-1 text-justify-start"
+            class="subtitle-1 text-justify-start text-clamp pt-0 pb-0"
             v-text="text"
           />
         </v-card>
@@ -141,6 +140,13 @@ div.pirate-marker {
 
 div.pirate-marker.v-icon {
     font-size: 10px;
+}
+
+.text-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 </style>
