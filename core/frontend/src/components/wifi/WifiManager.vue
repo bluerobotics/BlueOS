@@ -47,11 +47,24 @@
         @click="openDisconnectionDialog"
       />
 
-      <v-sheet>
-        <div v-if="connectable_networks !== null">
-          <div v-if="!connectable_networks.isEmpty()">
+      <v-sheet
+        max-height="600"
+        class="overflow-y-auto"
+      >
+        <div v-if="filtered_networks !== null">
+          <v-text-field
+            v-if="show_search"
+            v-model="ssid_filter"
+            append-icon="mdi-magnify"
+            label="Search"
+            single-line
+            hide-details
+            clearable
+            class="ml-7 mr-7"
+          />
+          <div v-if="!filtered_networks.isEmpty()">
             <network-card
-              v-for="(network, key) in connectable_networks"
+              v-for="(network, key) in filtered_networks"
               :key="key"
               class="available-network"
               :network="network"
@@ -150,6 +163,7 @@ export default Vue.extend({
       show_settings_menu: false,
       show_qr_code_dialog: false,
       wifi_qr_code_img: '',
+      ssid_filter: undefined as string | undefined,
     }
   },
   computed: {
@@ -159,11 +173,27 @@ export default Vue.extend({
     current_network(): Network | null {
       return wifi.current_network
     },
-    connectable_networks(): Network[] | null {
+    connectable_networks(): Network[] | undefined {
       return uniqBy(wifi.connectable_networks, 'ssid')
+    },
+    filtered_networks(): Network[] | undefined {
+      // eslint-disable-next-line eqeqeq
+      if (this.ssid_filter == undefined || this.ssid_filter.trim() === '') {
+        return this.connectable_networks ?? undefined
+      }
+      const filter = this.ssid_filter
+      return this.connectable_networks?.filter(
+        (network) => network.ssid.toLowerCase().includes(filter.toLowerCase()),
+      )
     },
     hotspot_status(): boolean | null {
       return wifi.hotspot_status
+    },
+    show_search(): boolean {
+      if (!this.connectable_networks) {
+        return false
+      }
+      return this.connectable_networks.length > 12
     },
   },
   watch: {
