@@ -54,7 +54,7 @@
 
           <v-row>
             <v-card
-              v-if="!show_password_input_box"
+              v-if="!show_password_input_box && is_secure"
               elevation="0"
               @click="toggleForcePassword()"
             >
@@ -174,6 +174,9 @@ export default Vue.extend({
         return false
       }
       return true
+    },
+    is_secure(): boolean {
+      return this.network.locked
     },
     connecting(): boolean {
       return this.connection_status === ConnectionStatus.Connecting
