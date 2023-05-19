@@ -48,7 +48,7 @@
               class="py-3 px-3 d-flex justify-space-between flex-nowrap"
             >
               <v-card-title
-                class="text-subtitle-1 font-weight-bold"
+                class="text-subtitle-2 font-weight-bold"
                 v-text="title"
               />
               <div>
