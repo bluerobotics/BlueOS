@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+import asyncio
 import http
+from enum import Enum
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
+import aiohttp
 import psutil
 import requests
 import uvicorn
@@ -20,6 +23,19 @@ DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
 API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
+
+
+class Website(str, Enum):
+    ArduPilot = "http://firmware.ardupilot.org"
+    AWS = "http://amazon.com"
+    Cloudflare = "http://1.1.1.1/"
+    GitHub = "http://github.com"
+
+
+class WebsiteStatus(BaseModel):
+    site: Website
+    online: bool
+    error: Optional[str] = None
 
 
 class ServiceMetadata(BaseModel):
@@ -45,6 +61,7 @@ class ServiceInfo(BaseModel):
 
 class Helper:
     LOCALSERVER_CANDIDATES = ["0.0.0.0", "::"]
+    AIOTIMEOUT = aiohttp.ClientTimeout(total=10)
 
     @staticmethod
     @temporary_cache(timeout_seconds=60)  # a temporary cache helps us deal with changes in metadata
@@ -116,6 +133,22 @@ class Helper:
         services = (Helper.detect_service(port) for port in ports if port != PORT)
         return [service for service in services if service.valid]
 
+    @staticmethod
+    async def check_website(site: Website) -> WebsiteStatus:
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(site.value, timeout=Helper.AIOTIMEOUT) as response:
+                    await response.text()
+                    return WebsiteStatus(site=site, online=True)
+            except Exception as exception:
+                return WebsiteStatus(site=site, online=False, error=str(exception))
+
+    @staticmethod
+    async def check_internet_access() -> Dict[str, WebsiteStatus]:
+        tasks = [Helper.check_website(site) for site in Website]
+        status_list = await asyncio.gather(*tasks)
+        return {status.site.name: status for status in status_list}
+
 
 fast_api_app = FastAPI(
     title="Helper API",
@@ -134,6 +167,16 @@ fast_api_app.router.route_class = GenericErrorHandlingRoute
 def web_services() -> Any:
     """REST API endpoint to retrieve web services running."""
     return Helper.scan_ports()
+
+
+@fast_api_app.get(
+    "/check_internet_access",
+    response_model=Dict[str, WebsiteStatus],
+    summary="Used to check if some websites are available or if there is internet access.",
+)
+@version(1, 0)
+async def check_internet_access() -> Any:
+    return await Helper.check_internet_access()
 
 
 app = VersionedFastAPI(
