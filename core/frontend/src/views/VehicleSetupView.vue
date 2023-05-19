@@ -1,26 +1,29 @@
 <template>
   <v-container fluid>
     <v-tabs
-      v-model="tab"
-      fixed-tabs
+      v-model="page_selected"
+      centered
+      icons-and-text
+      show-arrows
     >
-      <v-tab>
-        <v-icon class="mr-5">
-          mdi-view-dashboard-variant-outline
-        </v-icon>
-        Overview
-      </v-tab>
-      <v-tab>
-        <v-icon class="mr-5">
-          mdi-fan
-        </v-icon>
-        PWM Outputs
+      <v-tabs-slider />
+      <v-tab
+        v-for="page in pages"
+        :key="page.value"
+      >
+        {{ page.title }}
+        <v-icon>{{ page.icon }}</v-icon>
       </v-tab>
     </v-tabs>
-    <pwm-setup
-      v-if="tab === 1"
-    />
-    <setup-overview v-if="tab === 0" />
+    <v-tabs-items v-model="page_selected">
+      <v-tab-item
+        v-for="page in pages"
+        :key="page.value"
+      >
+        <pwm-setup v-if="page.value === 'overview'" />
+        <setup-overview v-else-if="page.value === 'pwm_outputs'" />
+      </v-tab-item>
+    </v-tabs-items>
   </v-container>
 </template>
 
@@ -32,6 +35,12 @@ import PwmSetup from '@/components/vehiclesetup/PwmSetup.vue'
 import setupOverview from '@/components/vehiclesetup/SetupOverview.vue'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
+export interface Item {
+  title: string,
+  icon: string,
+  value: string,
+}
+
 export default Vue.extend({
   name: 'VehicleSetupView',
   components: {
@@ -40,7 +49,11 @@ export default Vue.extend({
   },
   data() {
     return {
-      tab: 0,
+      page_selected: null as string | null,
+      pages: [
+        { title: 'Overview', icon: 'mdi-view-dashboard-variant-outline', value: 'overview' },
+        { title: 'PWM Outputs', icon: 'mdi-fan', value: 'pwm_outputs' },
+      ] as Item[],
     }
   },
   mounted() {
