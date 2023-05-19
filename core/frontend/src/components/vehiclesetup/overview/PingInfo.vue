@@ -1,5 +1,8 @@
 <template>
-  <v-card class="ma-2 pa-2 pinginfo">
+  <v-card
+    v-if="pings.length"
+    class="ma-2 pa-2 pinginfo"
+  >
     <v-card-title class="justify-center">
       Ping Sensors
     </v-card-title>
