@@ -94,7 +94,7 @@ jobs:
       matrix:
         docker: [bootstrap, core]
         project: [blueos]
-        platforms: ["linux/arm/v7,linux/arm64/v8"]
+        platforms: ["linux/arm/v7,linux/arm64/v8,linux/amd64"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -227,6 +227,24 @@ jobs:
         with:
           name: BlueOS-core-docker-image-arm-v7
           path: '*arm-v7.tar'
+
+      - name: Create image artifact
+        if: success() && matrix.docker == 'core'
+        run: |
+          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
+          GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
+          docker buildx build \
+            ${{ steps.prepare.outputs.buildx_args }} \
+            --platform "linux/amd64"  \
+            --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
+
+      - name: Upload artifact amd64
+        uses: actions/upload-artifact@v3
+        if: success() && matrix.docker == 'core'
+        with:
+          name: BlueOS-core-docker-image-amd64
+          path: '*amd64.tar'
 
       - name: Upload docker image for release
         uses: svenstaro/upload-release-action@v2
