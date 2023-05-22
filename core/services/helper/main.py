@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+import machineid
 import psutil
 import requests
 import uvicorn
@@ -28,6 +29,7 @@ HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 class Website(str, Enum):
     ArduPilot = "http://firmware.ardupilot.org"
     AWS = "http://amazon.com"
+    BlueOS = f"http://blueos.cloud/ping?{machineid.hashed_id()}"
     Cloudflare = "http://1.1.1.1/"
     GitHub = "http://github.com"
 
@@ -177,6 +179,16 @@ def web_services() -> Any:
 @version(1, 0)
 async def check_internet_access() -> Any:
     return await Helper.check_internet_access()
+
+
+@fast_api_app.on_event("startup")
+async def startup_event() -> None:
+    async def periodic() -> None:
+        while True:
+            await asyncio.sleep(60)
+            await Helper.check_internet_access()
+
+    asyncio.create_task(periodic())
 
 
 app = VersionedFastAPI(

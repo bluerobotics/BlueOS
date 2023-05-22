@@ -68,6 +68,7 @@ setup(
         "commonwealth == 0.1.0",
         "fastapi == 0.63.0",
         "fastapi-versioning == 0.9.1",
+        "py-machineid == 0.3",
         "psutil == 5.7.2",
         "requests == 2.25.1",
         "starlette == 0.13.6",
