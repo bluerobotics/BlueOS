@@ -150,11 +150,55 @@
               v-else
               :to="menu.route"
             >
-              <v-list-item-icon>
-                <v-icon v-text="menu.icon" />
-              </v-list-item-icon>
-
-              <v-list-item-title v-text="menu.title" />
+              <template #default>
+                <v-list-item-icon style="min-width:28px;">
+                  <v-icon
+                    v-if="!menu.icon.startsWith('http')"
+                    class="mr-0"
+                    v-text="menu.icon"
+                  />
+                  <v-img
+                    v-else
+                    class="shrink mr-0"
+                    contain
+                    :src="menu.icon"
+                    width="24"
+                  />
+                  <v-theme-provider
+                    v-if="menu.advanced && settings.is_pirate_mode"
+                    dark
+                  >
+                    <div
+                      v-tooltip="'This is an advanced feature'"
+                      class="pirate-marker ma-0"
+                    >
+                      <v-avatar
+                        class="ma-0"
+                        color="error"
+                        size="15"
+                      >
+                        <v-icon
+                          size="15"
+                          v-text="'mdi-skull-crossbones'"
+                        />
+                      </v-avatar>
+                    </div>
+                  </v-theme-provider>
+                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ menu.title }}
+                  <v-chip
+                    v-if="menu.beta"
+                    class="ma-2 pl-2 pr-2"
+                    color="red"
+                    pill
+                    x-small
+                    text-color="white"
+                  >
+                    Alpha
+                  </v-chip>
+                </v-list-item-title>
+              </template>
             </v-list-item>
           </v-list-item-group>
         </v-list>
@@ -346,7 +390,7 @@ export default Vue.extend({
         ] as Menu[],
       }
 
-      return [...this.menus, extensions]
+      return [...this.menus.filter((menu) => !menu.advanced || settings.is_pirate_mode), extensions]
     },
     steps() {
       return [
