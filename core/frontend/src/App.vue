@@ -184,6 +184,26 @@
                       </v-avatar>
                     </div>
                   </v-theme-provider>
+                  <v-theme-provider
+                    v-if="menu.extension"
+                    dark
+                  >
+                    <div
+                      v-tooltip="'This is an installed extensions'"
+                      class="extension-marker ma-0"
+                    >
+                      <v-avatar
+                        class="ma-0"
+                        color="success"
+                        size="15"
+                      >
+                        <v-icon
+                          size="12"
+                          v-text="'mdi-puzzle'"
+                        />
+                      </v-avatar>
+                    </div>
+                  </v-theme-provider>
                 </v-list-item-icon>
                 <v-list-item-title>
                   {{ menu.title }}
@@ -613,6 +633,15 @@ span.build_info {
   position: absolute;
   top: 20%;
   left: 50%;
+}
+
+div.extension-marker {
+  position: relative;
+  top: -10px;
+  right: 7px;
+  width: 15px;
+  height: 15px;
+  opacity: 0.7;
 }
 
 div.pirate-marker {
