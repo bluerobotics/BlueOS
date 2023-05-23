@@ -41,6 +41,8 @@
       <v-container
         elevation="0"
         class="d-flex justify-center align-center"
+        style="cursor: pointer"
+        @click="goHome"
       >
         <v-img
           alt="Blue Robotics Logo"
@@ -540,6 +542,9 @@ export default Vue.extend({
     },
     changeBackendStatus(backend_offline: boolean): void {
       this.backend_offline = backend_offline
+    },
+    goHome(): void {
+      this.$router.push('/')
     },
   },
 })
