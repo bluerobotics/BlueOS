@@ -360,8 +360,8 @@ export default Vue.extend({
     toolbar_height(): number {
       return settings.is_pirate_mode && this.backend_offline ? 66 : 56
     },
-    computed_menu(): Menu[] {
-      const submenus = services_scanner.services
+    computed_menu(): menuItem[] {
+      const foundExtensions = services_scanner.services
         .filter((service: Service) : boolean => service.metadata !== null)
         .map((service: Service) => {
           const address = this.createExtensionAddress(service)
@@ -374,27 +374,25 @@ export default Vue.extend({
             new_page: service.metadata?.new_page ?? undefined,
             advanced: false,
             text: service.metadata?.description ?? 'Service text',
+            extension: true,
           }
         })
 
-      const extensions: Menu = {
-        title: 'Extensions',
-        icon: 'mdi-puzzle',
-        extension: true,
-        beta: true,
-        submenus: [
-          {
-            title: 'Extensions Manager',
-            icon: 'mdi-puzzle',
-            route: '/tools/extensions-manager',
-            advanced: false,
-            text: 'Manage BlueOS extensions',
-          },
-          ...submenus,
-        ] as Menu[],
-      }
+      const filteredDefaultMenu = this.menus.filter((menu) => !menu.advanced || settings.is_pirate_mode)
 
-      return [...this.menus.filter((menu) => !menu.advanced || settings.is_pirate_mode), extensions]
+      const extensions: menuItem[] = [
+        {
+          title: 'Extensions',
+          icon: 'mdi-puzzle',
+          route: '/tools/extensions-manager',
+          advanced: false,
+          text: 'Manage BlueOS extensions',
+          beta: true,
+        },
+        ...foundExtensions,
+      ] as menuItem[]
+
+      return [...filteredDefaultMenu, ...extensions].sort((a, b) => a.title.localeCompare(b.title))
     },
     steps() {
       return [
