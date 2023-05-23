@@ -127,13 +127,16 @@ const menus = [
 ] as menuItem[]
 
 export interface menuItem {
-  title: string
-  icon: string
-  route?: string
-  submenus?: menuItem[]
-  advanced?: boolean
-  text?: string
-  beta?: boolean
+  title: string,
+  icon: string,
+  text?: string, // Option description
+
+  advanced?: boolean, // The option will only be enable in pirate mode
+  beta?: boolean, // Used on menus that are in development
+  extension?: boolean, // True if is an extension
+  new_page?: string, // The address will open in a new page
+  route?: string, // The option routes to a different address
+  submenus?: menuItem[], // Menus that the main option provide
 }
 
 export default menus

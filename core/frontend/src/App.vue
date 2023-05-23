@@ -311,23 +311,7 @@ import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
-import menus from './menus'
-
-/**
- * Menu interface to populate UI
- */
-interface Menu {
-  title: string,
-  icon: string,
-  text?: string, // Option description
-
-  advanced?: boolean, // The option will only be enable in pirate mode
-  beta?: boolean, // Used on menus that are in development
-  extension?: boolean, // True if is an extension
-  new_page?: string, // The address will open in a new page
-  route?: string, // The option routes to a different address
-  submenus?: Menu[], // Menus that the main option provide
-}
+import menus, { menuItem } from './menus'
 
 export default Vue.extend({
   name: 'App',
