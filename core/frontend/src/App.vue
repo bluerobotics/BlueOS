@@ -660,6 +660,11 @@ div.pirate-marker.v-icon {
 </style>
 
 <style>
+.v-list-group__header__append-icon {
+  margin-left: 0px !important;
+  min-width: 24px !important;
+}
+
 .light-background {
   background-color: var(--v-br_blue-base) !important;
   background-image: linear-gradient(160deg, var(--v-br_blue-base) 0%, var(--v-mariner_blue-base) 100%) !important;
