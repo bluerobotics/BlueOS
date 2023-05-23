@@ -20,8 +20,8 @@
         v-for="page in pages"
         :key="page.value"
       >
-        <pwm-setup v-if="page.value === 'overview'" />
-        <setup-overview v-else-if="page.value === 'pwm_outputs'" />
+        <pwm-setup v-if="page.value === 'pwm_outputs'" />
+        <setup-overview v-else-if="page.value === 'overview'" />
       </v-tab-item>
     </v-tabs-items>
   </v-container>
