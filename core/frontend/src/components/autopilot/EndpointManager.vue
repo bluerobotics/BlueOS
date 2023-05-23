@@ -76,7 +76,7 @@ import CreationDialog from './EndpointCreationDialog.vue'
 const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
-  name: 'WifiManager',
+  name: 'EndpointManager',
   components: {
     EndpointCard,
     SpinningLogo,
