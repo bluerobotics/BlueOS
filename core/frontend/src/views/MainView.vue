@@ -109,7 +109,12 @@ export default Vue.extend({
     apps() {
       const items: menuItem[] = []
       for (const item of this.menus) {
-        for (const subitem of item.submenus || []) {
+        if (item?.route && (!item.advanced || this.settings.is_pirate_mode)) {
+          items.push(item)
+          continue
+        }
+
+        for (const subitem of item?.submenus || []) {
           if (!subitem.advanced || this.settings.is_pirate_mode) {
             items.push(subitem)
           }
