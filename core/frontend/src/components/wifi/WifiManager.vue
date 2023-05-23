@@ -4,7 +4,10 @@
     width="500"
     max-height="80vh"
   >
-    <v-app-bar elevate-on-scroll>
+    <v-app-bar
+      v-if="showTopBar"
+      elevate-on-scroll
+    >
       <v-toolbar-title>Wifi</v-toolbar-title>
       <v-spacer />
       <v-btn
@@ -153,6 +156,12 @@ export default Vue.extend({
     ConnectionDialog,
     DisconnectionDialog,
     WifiSettingsDialog,
+  },
+  props: {
+    showTopBar: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
