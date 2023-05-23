@@ -22,7 +22,7 @@
           <v-divider />
 
           <v-stepper-step :complete="step_number > 3" step="3">
-            Apply
+            Configure
           </v-stepper-step>
 
           <v-divider />
@@ -89,23 +89,14 @@
           </v-stepper-content>
 
           <v-stepper-content step="3">
-            <v-stepper vertical>
-              <v-stepper-step
-                v-for="(config, index) in configurations"
-                :key="index"
-                :step="index + 1"
-                :color="getStepColor(config)"
-                :complete-icon="getStepIcon(config)"
-                :complete="true"
-                active
-                class="step-label"
-              >
-                {{ config.title }}
-                <small v-if="config.summary">{{ config.summary }}</small>
-                <small v-if="config.message" :color="getStepColor(config)">Error: {{ config.message }}</small>
-              </v-stepper-step>
-            </v-stepper>
-            <v-row class="pa-5 pt-10  d-flex flex-column align-center">
+            <div class="d-flex flex-column align-center">
+              <component
+                :is="current_page"
+                v-bind="current_page_bind"
+                @next="handleNextVehicleConfiguration"
+              />
+            </div>
+            <v-row class="pa-5 pt-10 flex-row justify-space-around align-center grow">
               <v-btn
                 v-if="apply_failed"
                 color="warning"
@@ -115,7 +106,13 @@
                 Retry
               </v-btn>
               <v-btn
-                v-else-if="apply_done"
+                color="error"
+                @click="cancel()"
+              >
+                Cancel
+              </v-btn>
+              <v-btn
+                v-if="apply_done"
                 color="primary"
                 @click="nextStep()"
               >
@@ -135,6 +132,17 @@
               </v-btn>
             </v-row>
           </v-stepper-content>
+          <v-stepper-content step="100">
+            <v-alert :value="true" type="error">
+              Configuration was aborted.
+            </v-alert>
+            <v-row class="pa-5">
+              <v-spacer />
+              <v-btn color="primary" @click="close">
+                Close
+              </v-btn>
+            </v-row>
+          </v-stepper-content>
         </v-stepper-items>
       </v-stepper>
     </v-card>
@@ -146,10 +154,15 @@ import '@google/model-viewer/dist/model-viewer'
 
 import Vue from 'vue'
 
+import { availableFirmwares, installFirmwareFromUrl } from '@/components/autopilot/AutopilotManagerUpdater'
 import bag from '@/store/bag'
 import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
+import { Firmware, Vehicle } from '@/types/autopilot'
 import back_axios from '@/utils/api'
+
+import ActionStepper, { Configuration, ConfigurationStatus } from './ActionStepper.vue'
+import RequireInternet from './RequireInternet.vue'
 
 const WIZARD_VERSION = 4
 
@@ -170,14 +183,12 @@ enum ApplyStatus {
   Failed,
 }
 
-type ConfigurationStatus = string | undefined
-
-interface Configuration {
-  title: string,
-  summary: string | undefined,
-  promise: Promise<ConfigurationStatus>
-  message: undefined | string
-  done: boolean
+// There is no type that could serve for generic binds and generic vue components
+interface VehicleConfigurationPage {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  page: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  binds: any,
 }
 
 export default Vue.extend({
@@ -200,6 +211,9 @@ export default Vue.extend({
       configurations: [] as Configuration[],
       // Vehicle configuration
       setup_configurations: [] as Configuration[],
+      // Vehicle configuration page logic
+      vehicle_configuration_pages: [] as VehicleConfigurationPage[],
+      configuration_page_index: 0,
     }
   },
   computed: {
@@ -208,6 +222,23 @@ export default Vue.extend({
     },
     apply_failed(): boolean {
       return this.apply_status === ApplyStatus.Failed
+    },
+    configuration_pages(): VehicleConfigurationPage[] {
+      return [
+        ...this.vehicle_configuration_pages,
+        {
+          page: ActionStepper,
+          binds: {
+            configurations: this.configurations,
+          },
+        },
+      ]
+    },
+    current_page(): unknown {
+      return this.configuration_pages[this.configuration_page_index].page
+    },
+    current_page_bind(): unknown {
+      return this.configuration_pages[this.configuration_page_index].binds
     },
   },
   async mounted() {
@@ -227,26 +258,17 @@ export default Vue.extend({
       this.should_open = false
       setTimeout(() => { window.location.reload() }, 500)
     },
+    cancel() {
+      this.step_number = 100
+    },
     nextStep() {
       this.step_number += 1
     },
-    getStepIcon(config: Configuration) {
-      if (config.done) {
-        return 'mdi-check'
+    handleNextVehicleConfiguration() {
+      this.configuration_page_index += 1
+      if (this.configuration_page_index >= this.vehicle_configuration_pages.length) {
+        this.applyConfigurations()
       }
-      if (config.message === undefined) {
-        return 'mdi-loading'
-      }
-      return 'mdi-alert'
-    },
-    getStepColor(config: Configuration) {
-      if (config.done) {
-        return 'success'
-      }
-      if (config.message === undefined) {
-        return 'yellow'
-      }
-      return 'error'
     },
     async applyConfigurations() {
       this.configurations = [
@@ -297,7 +319,21 @@ export default Vue.extend({
       this.vehicle_image = '/vehicles/images/bb120.png'
       this.step_number += 1
 
+      this.vehicle_configuration_pages = [
+        {
+          page: RequireInternet,
+          binds: {},
+        },
+      ]
+
       this.setup_configurations = [
+        {
+          title: 'Install stable boat firmware',
+          summary: 'Download and install a desirable stable firmware on the vehicle',
+          promise: this.installLatestStableFirmware(Vehicle.Rover),
+          message: undefined,
+          done: false,
+        },
         {
           title: 'Disable Wi-Fi hotspot',
           summary: 'Wi-Fi hotspot need to be disable to not interfere with onboard radio',
@@ -316,13 +352,29 @@ export default Vue.extend({
     },
     async setupConfiguration() {
       this.step_number += 1
-      this.applyConfigurations()
     },
     setupROV() {
       this.vehicle_type = VehicleType.Sub
       this.vehicle_name = 'BlueROV'
       this.vehicle_image = '/vehicles/images/bluerov2.png'
       this.step_number += 1
+
+      this.vehicle_configuration_pages = [
+        {
+          page: RequireInternet,
+          binds: {},
+        },
+      ]
+
+      this.setup_configurations = [
+        {
+          title: 'Install stable sub firmware',
+          summary: 'Download and install a desirable stable firmware on the vehicle',
+          promise: this.installLatestStableFirmware(Vehicle.Sub),
+          message: undefined,
+          done: false,
+        },
+      ]
     },
     async setWizardVersion(): Promise<ConfigurationStatus> {
       const failed = 'Configuration done, but failed to set wizard version.'
@@ -369,6 +421,19 @@ export default Vue.extend({
       })
         .then(() => undefined)
         .catch((error) => `Failed to disable smart wifi hotspot: ${error.message ?? error.response?.data}.`)
+    },
+    async installLatestStableFirmware(vehicle: Vehicle): Promise<ConfigurationStatus> {
+      return availableFirmwares(vehicle)
+        .then((firmwares: Firmware[]) => {
+          const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+          if (found === undefined) {
+            return `Failed to find a stable version for vehicle (${vehicle})`
+          }
+          return installFirmwareFromUrl(found.url)
+            .then(() => undefined)
+            .catch((error) => `Failed to install firmware: ${error.message ?? error.response?.data}.`)
+        })
+        .catch((error) => `Failed to install stable firmware: ${error.message ?? error.response?.data}.`)
     },
   },
 })
