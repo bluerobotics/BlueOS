@@ -11,6 +11,13 @@ export interface Company {
     about: string
 }
 
+export enum ExtensionType {
+    DEVICE_INTEGRATION = 'device-integration',
+    EXAMPLE = 'example',
+    OTHER = 'other',
+    THEME = 'theme',
+}
+
 export interface Version {
     permissions: JSONValue
     requirements: string | null
@@ -21,6 +28,8 @@ export interface Version {
     readme?: string
     website: string
     company?: Company
+    type: ExtensionType,
+    filter_tags: string[],
 }
 
 export interface ExtensionData {
