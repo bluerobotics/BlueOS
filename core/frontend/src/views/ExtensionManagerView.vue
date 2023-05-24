@@ -46,15 +46,43 @@
         Installed
       </v-tab>
     </v-tabs>
-    <div
+    <v-card
       v-if="tab === 0"
       class="d-flex pa-5"
     >
+      <v-card min-width="200px">
+        <v-list>
+          <v-list-subheader class="pa-3 font-weight-bold">
+            Provider
+          </v-list-subheader>
+          <v-checkbox
+            v-for="(name, index) in providers"
+            :key="index"
+            v-model="selected_companies"
+            :label="name"
+            :value="name"
+            class="pa-0 pl-3 ma-0"
+          />
+          <v-divider class="ma-3" />
+          <v-list-subheader class="pa-3 font-weight-bold">
+            Type
+          </v-list-subheader>
+          <v-checkbox
+            v-for="(name, index) in tags"
+            :key="index"
+            v-model="selected_tags"
+            :label="name"
+            :value="name"
+            class="pa-0 pl-3 ma-0"
+          />
+        </v-list>
+      </v-card>
       <v-row dense>
         <v-col
-          v-for="extension in manifest"
+          v-for="extension in filteredManifest"
           :key="extension.website + extension.name"
           class="pa-2"
+          cols="3"
         >
           <extension-card
             :extension="extension"
@@ -70,7 +98,7 @@
           No Extensions available. Make sure the vehicle has internet access and try again.
         </p>
       </v-container>
-    </div>
+    </v-card>
     <v-row>
       <v-col
         v-if="tab === 1"
@@ -161,7 +189,9 @@ import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
 
-import { ExtensionData, InstalledExtensionData, RunningContainer } from '../types/kraken'
+import {
+  ExtensionData, InstalledExtensionData, RunningContainer, Version,
+} from '../types/kraken'
 
 const API_URL = '/kraken/v1.0'
 
@@ -182,6 +212,8 @@ export default Vue.extend({
       show_dialog: false,
       installed_extensions: {} as Dictionary<InstalledExtensionData>,
       selected_extension: null as (null | ExtensionData),
+      selected_companies: [] as string[],
+      selected_tags: [] as string[],
       running_containers: [] as RunningContainer[],
       manifest: [] as ExtensionData[],
       dockers_fetch_done: false,
@@ -197,6 +229,41 @@ export default Vue.extend({
       edited_extension: null as null | InstalledExtensionData,
     }
   },
+  computed: {
+    providers(): string[] {
+      const authors = this.manifest
+        .map((extension) => this.newestVersion(extension.versions)?.company?.name ?? 'unknown').sort() as string[]
+      return [...new Set(authors)]
+    },
+    tags(): string[] {
+      const authors = this.manifest
+        .map((extension) => this.newestVersion(extension.versions)?.type ?? 'unknown')
+        .sort() as string[]
+      return [...new Set(authors)]
+    },
+    filteredManifest(): ExtensionData[] {
+      if (this.selected_companies.isEmpty() && this.selected_tags.isEmpty()) {
+        return this.manifest
+      }
+
+      let { manifest } = this
+
+      if (!this.selected_companies.isEmpty()) {
+        manifest = manifest.filter((extension) => this.newestVersion(extension.versions)?.company?.name !== undefined)
+          .filter((extension) => this.selected_companies
+            .includes(this.newestVersion(extension.versions)?.company?.name ?? ''))
+      }
+
+      if (this.selected_tags.isEmpty()) {
+        return manifest
+      }
+
+      return manifest
+        .filter((extension) => this.newestVersion(extension.versions)?.type !== undefined)
+        .filter((extension) => this.selected_tags
+          .includes(this.newestVersion(extension.versions)?.type ?? ''))
+    },
+  },
   mounted() {
     this.fetchManifest()
     this.fetchInstalledExtensions()
@@ -207,6 +274,9 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
   },
   methods: {
+    newestVersion(versions: Dictionary<Version>): Version | undefined {
+      return Object.values(versions)?.[0] as Version | undefined
+    },
     clearEditedExtension() {
       this.edited_extension = null
     },
