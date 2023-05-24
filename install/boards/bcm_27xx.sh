@@ -7,6 +7,7 @@ GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 CMDLINE_FILE=/boot/cmdline.txt
+alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
 
 # Download, compile, and install spi0 mosi-only device tree overlay for
 # neopixel LED on navigator board
