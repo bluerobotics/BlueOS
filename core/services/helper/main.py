@@ -2,6 +2,7 @@
 
 import asyncio
 import http
+import logging
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -10,20 +11,25 @@ import aiohttp
 import machineid
 import psutil
 import requests
-import uvicorn
 from bs4 import BeautifulSoup
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from pydantic import BaseModel
+from uvicorn import Config, Server
 
 PORT = 81
 DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
 API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
+
+
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
+init_logger("Helper")
 
 
 class Website(str, Enum):
@@ -181,14 +187,10 @@ async def check_internet_access() -> Any:
     return await Helper.check_internet_access()
 
 
-@fast_api_app.on_event("startup")
-async def startup_event() -> None:
-    async def periodic() -> None:
-        while True:
-            await asyncio.sleep(60)
-            await Helper.check_internet_access()
-
-    asyncio.create_task(periodic())
+async def periodic() -> None:
+    while True:
+        await asyncio.sleep(60)
+        await Helper.check_internet_access()
 
 
 app = VersionedFastAPI(
@@ -201,4 +203,11 @@ app = VersionedFastAPI(
 app.mount("/", StaticFiles(directory=str(HTML_FOLDER), html=True))
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    loop = asyncio.new_event_loop()
+
+    # Running uvicorn with log disabled so loguru can handle it
+    config = Config(app=app, loop=loop, host="0.0.0.0", port=81, log_config=None)
+    server = Server(config)
+
+    loop.create_task(periodic())
+    loop.run_until_complete(server.serve())
