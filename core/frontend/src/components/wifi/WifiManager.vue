@@ -180,6 +180,7 @@ export default Vue.extend({
       return wifi.network_status
     },
     current_network(): Network | null {
+      this.$emit('current-network', wifi.current_network)
       return wifi.current_network
     },
     connectable_networks(): Network[] | undefined {
