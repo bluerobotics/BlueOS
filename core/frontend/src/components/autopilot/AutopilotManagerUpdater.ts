@@ -2,6 +2,7 @@ import { AxiosResponse } from 'axios'
 
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
+import { Firmware, Vehicle } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -106,4 +107,39 @@ export async function fetchFirmwareVehicleType(): Promise<void> {
     autopilot.setFirmwareVehicleType(null)
     notifier.pushBackError('AUTOPILOT_FIRMWARE_VEHICLE_TYPE_FETCH_FAIL', error)
   }
+}
+
+export async function availableFirmwares(vehicleType: Vehicle): Promise<Firmware[]> {
+  return back_axios({
+    method: 'get',
+    url: `${autopilot.API_URL}/available_firmwares`,
+    timeout: 30000,
+    params: {
+      vehicle: vehicleType,
+    },
+  })
+    .then((response) => response.data)
+    .catch((error) => {
+      const message = `Failed to fetch available firmwares for vehicle (${vehicleType}): ${error.message}`
+      notifier.pushError('AUTOPILOT_FIRMWARE_AVAILABLES_FAIL', message)
+      throw new Error(error)
+    })
+}
+
+export async function installFirmwareFromUrl(url: URL): Promise<void> {
+  return back_axios({
+    method: 'post',
+    url: `${autopilot.API_URL}/install_firmware_from_url`,
+    timeout: 30000,
+    params: {
+      // eslint-disable-next-line object-shorthand
+      url: url,
+    },
+  })
+    .then((response) => response.data)
+    .catch((error) => {
+      const message = `Failed to fetch available firmwares for vehicle (${url}): ${error.message}`
+      notifier.pushError('AUTOPILOT_FIRMWARE_AVAILABLES_FAIL', message)
+      throw new Error(error)
+    })
 }
