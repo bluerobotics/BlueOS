@@ -24,6 +24,8 @@ class SettingsStore extends VuexModule {
 
   tour_version = 0
 
+  user_top_widgets = [] as string[]
+
     @Mutation
   setDarkTheme(value: boolean): void {
     this.is_dark_theme = value
@@ -45,6 +47,12 @@ class SettingsStore extends VuexModule {
     @Mutation
     setTourVersion(value: number): void {
       this.tour_version = value
+      SettingsStore.save()
+    }
+
+    @Mutation
+    setTopWidgets(widgets: string[]): void {
+      this.user_top_widgets = widgets
       SettingsStore.save()
     }
 
