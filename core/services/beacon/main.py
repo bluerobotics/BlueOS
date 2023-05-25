@@ -183,7 +183,7 @@ class Beacon:
                     runner_name = f"{domain}-{interface_name}-{count}"
                     try:
                         runner = AsyncRunner(IPVersion.V4Only, interface=ip, interface_name=interface_name)
-                        logger.info(f"Created runner {runner_name}")
+                        logger.info(f"Created runner {runner_name} for {ip}")
                     except Exception as e:
                         logger.warning(f"Error creating {runner_name}: {e}, skipping this interface")
                         continue
