@@ -24,6 +24,16 @@ class Settings {
   }
 
   // eslint-disable-next-line
+  get user_top_widgets(): string[] {
+    return settingsStore.user_top_widgets || []
+  }
+
+  // eslint-disable-next-line
+  set user_top_widgets(widgets: string[]) {
+    settingsStore.setTopWidgets(widgets)
+  }
+
+  // eslint-disable-next-line
   get last_version_update_notification_time(): Date {
     const time = settingsStore.last_version_update_notification_time
     return time ? new Date(time) : new Date(0)
