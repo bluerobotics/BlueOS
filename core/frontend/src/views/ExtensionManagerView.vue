@@ -52,9 +52,9 @@
     >
       <v-card min-width="200px">
         <v-list>
-          <v-list-subheader class="pa-3 font-weight-bold">
+          <v-list-item-subtitle class="pa-3 font-weight-bold">
             Provider
-          </v-list-subheader>
+          </v-list-item-subtitle>
           <v-checkbox
             v-for="(name, index) in providers"
             :key="index"
@@ -64,9 +64,9 @@
             class="pa-0 pl-3 ma-0"
           />
           <v-divider class="ma-3" />
-          <v-list-subheader class="pa-3 font-weight-bold">
+          <v-list-item-subtitle class="pa-3 font-weight-bold">
             Type
-          </v-list-subheader>
+          </v-list-item-subtitle>
           <v-checkbox
             v-for="(name, index) in tags"
             :key="index"

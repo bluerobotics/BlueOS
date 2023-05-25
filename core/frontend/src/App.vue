@@ -7,9 +7,9 @@
       :style="context_menu_style"
     >
       <v-list>
-        <v-list-subheader class="pa-3 font-weight-bold">
+        <v-list-item-subtitle class="ml-2 mb-2 font-weight-bold">
           Widgets
-        </v-list-subheader>
+        </v-list-item-subtitle>
         <v-checkbox
           v-for="(name, index) in topWidgetsName"
           :key="index"
