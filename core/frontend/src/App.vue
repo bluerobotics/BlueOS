@@ -1,6 +1,26 @@
 <template>
   <v-app :class="app_style">
     <v-card
+      id="context-menu"
+      ref="contextMenu"
+      :class="context_menu_class"
+      :style="context_menu_style"
+    >
+      <v-list>
+        <v-list-subheader class="pa-3 font-weight-bold">
+          Widgets
+        </v-list-subheader>
+        <v-checkbox
+          v-for="(name, index) in topWidgetsName"
+          :key="index"
+          v-model="selected_widgets"
+          :label="name"
+          :value="name"
+          class="pa-0 pl-3 ma-0"
+        />
+      </v-list>
+    </v-card>
+    <v-card
       flat
     >
       <v-app-bar
@@ -8,6 +28,7 @@
         rounded="0"
         :class="app_bar_style"
         :height="toolbar_height"
+        @contextmenu.prevent="navBarHandler($event)"
       >
         <v-app-bar-nav-icon
           id="hamburguer-menu-button"
@@ -15,7 +36,16 @@
           color="white"
           @click="drawer = true"
         />
-
+        <Draggable v-model="selected_widgets" class="d-flex align-center justify-center">
+          <component
+            :is="getWidget(widget_name)"
+            v-for="(widget_name, i) in selected_widgets"
+            :key="i"
+            class="mr-2"
+            ripple
+            disabled
+          />
+        </draggable>
         <v-spacer />
         <span class="d-flex flex-column align-center">
           <backend-status-checker @statusChange="changeBackendStatus" />
@@ -312,6 +342,8 @@ import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
 import menus, { menuItem } from './menus'
+import Cpu from './widgets/Cpu.vue'
+import Disk from './widgets/Disk.vue'
 
 export default Vue.extend({
   name: 'App',
@@ -346,8 +378,30 @@ export default Vue.extend({
     backend_offline: false,
     menus,
     tourCallbacks: {}, // we are setting this up in mounted otherwise "this" can be undefined
+    context_menu_position: [0, 0],
+    context_menu_visible: false,
+    widgets: [
+      {
+        component: Cpu,
+        name: 'CPU',
+      },
+      {
+        component: Disk,
+        name: 'Disk',
+      },
+    ],
+    selected_widgets: settings.user_top_widgets,
   }),
   computed: {
+    topWidgetsName(): string[] {
+      return this.widgets.map((item) => item.name)
+    },
+    context_menu_class(): string {
+      return this.context_menu_visible ? 'visible' : ''
+    },
+    context_menu_style(): string {
+      return `left: ${this.context_menu_position[0]}px; top: ${this.context_menu_position[1]}px;`
+    },
     app_style(): string {
       return settings.is_dark_theme ? 'dark-background' : 'light-background'
     },
@@ -540,6 +594,9 @@ export default Vue.extend({
 
       document.title = `${this.$route.name} - ${project_name}`
     },
+    selected_widgets() {
+      settings.user_top_widgets = this.selected_widgets
+    },
   },
 
   mounted() {
@@ -547,9 +604,24 @@ export default Vue.extend({
     this.setupCallbacks()
     this.checkTour()
     updateTime()
-  },
 
+    const body = document.querySelector('body')
+    body?.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement
+      if (target.offsetParent !== this.$refs.contextMenu) {
+        this.context_menu_visible = false
+      }
+    })
+  },
   methods: {
+    getWidget(name: string) {
+      return this.widgets.filter((widget) => widget.name === name)?.[0]?.component
+    },
+    navBarHandler(event: Event) {
+      const { clientX: mouseX, clientY: mouseY } = event as MouseEvent
+      this.context_menu_position = [mouseX, mouseY]
+      this.context_menu_visible = true
+    },
     checkAddress(): void {
       if (window.location.host.includes('companion.local')) {
         window.location.replace('http://blueos.local')
@@ -667,6 +739,20 @@ div.pirate-marker.v-icon {
 
 .v-navigation-drawer__content::-webkit-scrollbar-thumb:hover {
   background: var(--v-primary-base);
+}
+
+#context-menu {
+  position: fixed;
+  z-index: 10000;
+  width: 150px;
+  border-radius: 5px;
+  transform: scale(0);
+  transform-origin: top left;
+}
+
+#context-menu.visible {
+  transform: scale(1);
+  transition: transform 200ms ease-in-out;
 }
 </style>
 
