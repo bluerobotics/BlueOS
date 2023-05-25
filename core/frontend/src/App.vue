@@ -179,6 +179,8 @@
             <v-list-item
               v-else
               :to="menu.route"
+              :target="menu.new_page ? '_blank' : '_self'"
+              :href="menu.extension ? menu.route : undefined"
             >
               <template #default>
                 <v-list-item-icon style="min-width:28px;">
