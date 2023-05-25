@@ -93,7 +93,7 @@ class SettingsStore extends VuexModule {
      */
     static saveVariable<T>(name: string, value: T): void {
       // eslint-disable-next-line
-      window.localStorage.setItem(SettingsStore.settingsName(name), value as any)
+      window.localStorage.setItem(SettingsStore.settingsName(name), JSON.stringify(value))
     }
 
     /**
