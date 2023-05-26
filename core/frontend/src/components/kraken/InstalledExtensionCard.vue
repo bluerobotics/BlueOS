@@ -8,7 +8,7 @@
       </v-overlay>
     </template>
     <v-card-title class="pb-0">
-      {{ extension.docker.split('/')[1] }} <span
+      {{ extension.docker.split('/').pop() }} <span
         class="ml-3"
         style="color: grey;"
       > {{ extension.tag }}</span>
