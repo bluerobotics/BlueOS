@@ -1,4 +1,5 @@
 import { AxiosResponse } from 'axios'
+import { SemVer } from 'semver'
 
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
@@ -74,6 +75,8 @@ export async function fetchFirmwareInfo(): Promise<void> {
       url: `${autopilot.API_URL}/firmware_info`,
       timeout: 10000,
     })
+    // Version comes out as a string, let's turn it into a SemVer object
+    response.data.version = new SemVer(response.data.version)
     autopilot.setFirmwareInfo(response.data)
   } catch (error) {
     autopilot.setFirmwareInfo(null)
