@@ -76,7 +76,7 @@
           </template>
         </v-progress-linear>
       </v-card-text>
-      <v-card-text v-else-if="writing">
+      <v-card-text v-else-if="write_finished">
         <v-alert
           type="success"
         >
@@ -152,6 +152,9 @@ export default Vue.extend({
     },
     user_selected_params_length(): number {
       return Object.keys(this.user_selected_params).length
+    },
+    write_finished(): boolean {
+      return this.user_selected_params_length === 0
     },
   },
   watch: {
