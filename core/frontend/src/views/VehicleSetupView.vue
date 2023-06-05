@@ -22,6 +22,7 @@
       >
         <pwm-setup v-if="page.value === 'pwm_outputs'" />
         <setup-overview v-else-if="page.value === 'overview'" />
+        <configure v-else-if="page.value === 'configure'" />
       </v-tab-item>
     </v-tabs-items>
   </v-container>
@@ -31,6 +32,7 @@
 import Vue from 'vue'
 
 import { fetchFirmwareVehicleType, fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
+import Configure from '@/components/vehiclesetup/Configure.vue'
 import PwmSetup from '@/components/vehiclesetup/PwmSetup.vue'
 import setupOverview from '@/components/vehiclesetup/SetupOverview.vue'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
@@ -46,6 +48,7 @@ export default Vue.extend({
   components: {
     PwmSetup,
     setupOverview,
+    Configure,
   },
   data() {
     return {
@@ -53,6 +56,7 @@ export default Vue.extend({
       pages: [
         { title: 'Overview', icon: 'mdi-view-dashboard-variant-outline', value: 'overview' },
         { title: 'PWM Outputs', icon: 'mdi-fan', value: 'pwm_outputs' },
+        { title: 'Configure', icon: 'mdi-cog', value: 'configure' },
       ] as Item[],
     }
   },
