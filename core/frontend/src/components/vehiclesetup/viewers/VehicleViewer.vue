@@ -26,7 +26,7 @@ export default Vue.extend({
     highlight: {
       type: Array<string>,
       required: false,
-      default: [],
+      default: () => [],
     },
     autorotate: {
       type: Boolean,
