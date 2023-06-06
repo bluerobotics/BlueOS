@@ -7,14 +7,7 @@ const http = require('http')
 process.env.PROJECT_NAME = name
 process.env.VUE_APP_BUILD_DATE = new Date().toLocaleString()
 const DEFAULT_ADDRESS = 'http://blueos.local/'
-const SEARCHABLE_MDNS_ADDRESS = [
-  DEFAULT_ADDRESS,
-  'http://blueos-avahi.local/',
-  'http://blueos-wifi.local/',
-  'http://blueos-hotspot.local/',
-]
-
-const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? getBlueOSReachableAddress() ?? DEFAULT_ADDRESS
+const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? DEFAULT_ADDRESS
 
 module.exports = {
   devServer: {
