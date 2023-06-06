@@ -129,7 +129,7 @@ export async function availableFirmwares(vehicleType: Vehicle): Promise<Firmware
     })
 }
 
-export async function installFirmwareFromUrl(url: URL): Promise<void> {
+export async function installFirmwareFromUrl(url: URL, make_default: boolean | undefined): Promise<void> {
   return back_axios({
     method: 'post',
     url: `${autopilot.API_URL}/install_firmware_from_url`,
@@ -137,6 +137,7 @@ export async function installFirmwareFromUrl(url: URL): Promise<void> {
     params: {
       // eslint-disable-next-line object-shorthand
       url: url,
+      make_default: make_default ?? false,
     },
   })
     .then((response) => response.data)

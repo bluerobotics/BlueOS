@@ -429,7 +429,7 @@ export default Vue.extend({
           if (found === undefined) {
             return `Failed to find a stable version for vehicle (${vehicle})`
           }
-          return installFirmwareFromUrl(found.url)
+          return installFirmwareFromUrl(found.url, true)
             .then(() => undefined)
             .catch((error) => `Failed to install firmware: ${error.message ?? error.response?.data}.`)
         })
