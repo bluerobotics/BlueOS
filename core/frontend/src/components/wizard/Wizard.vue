@@ -57,6 +57,21 @@
                 @click="setupBoat"
               />
             </div>
+            <v-row class="pa-5">
+              <v-btn
+                color="warning"
+                @click="cancel"
+              >
+                Ask me later
+              </v-btn>
+              <v-spacer />
+              <v-btn
+                color="error"
+                @click="setWizardVersion(); cancel()"
+              >
+                Don't show again
+              </v-btn>
+            </v-row>
           </v-stepper-content>
 
           <v-stepper-content step="2">
@@ -138,7 +153,7 @@
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
-              <v-btn color="primary" @click="close">
+              <v-btn color="primary" @click="should_open = false">
                 Close
               </v-btn>
             </v-row>
