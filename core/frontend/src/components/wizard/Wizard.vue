@@ -27,7 +27,7 @@
 
           <v-divider />
 
-          <v-stepper-step :complete="step_number > 3" step="4">
+          <v-stepper-step :complete="step_number > 4" step="4">
             Done
           </v-stepper-step>
         </v-stepper-header>
@@ -86,7 +86,11 @@
               <v-text-field v-model="vehicle_name" label="Vehicle Name" />
               <v-text-field v-model="mdns_name" label="MDNS Name" />
             </div>
-
+            <DefaultParamLoader
+              v-if="is_param_loading_supported"
+              v-model="params"
+              :vehicle="vehicle_type"
+            />
             <v-alert :value="configuration_failed" type="error">
               {{ error_message }}
             </v-alert>
@@ -123,7 +127,7 @@
                 v-if="apply_failed"
                 color="warning"
                 :loading="wait_configuration"
-                @click="applyConfigurations()"
+                @click="retry()"
               >
                 Retry
               </v-btn>
@@ -155,8 +159,8 @@
             </v-row>
           </v-stepper-content>
           <v-stepper-content step="100">
-            <v-alert :value="true" type="error">
-              Configuration was aborted.
+            <v-alert :value="true" type="warning">
+              Configuration was aborted by user.
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
@@ -181,9 +185,11 @@ import bag from '@/store/bag'
 import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
 import { Firmware, Vehicle } from '@/types/autopilot'
+import { Dictionary } from '@/types/common'
 import back_axios from '@/utils/api'
 
 import ActionStepper, { Configuration, ConfigurationStatus } from './ActionStepper.vue'
+import DefaultParamLoader from './DefaultParamLoader.vue'
 import RequireInternet from './RequireInternet.vue'
 
 const WIZARD_VERSION = 4
@@ -193,11 +199,6 @@ const models = require.context(
   true,
   /\.(glb|json)$/,
 )
-
-enum VehicleType {
-  Sub,
-  Boat,
-}
 
 enum ApplyStatus {
   Waiting,
@@ -215,6 +216,9 @@ interface VehicleConfigurationPage {
 
 export default Vue.extend({
   name: 'Wizard',
+  components: {
+    DefaultParamLoader,
+  },
   data() {
     return {
       boat_model: models('./boat/UNDEFINED.glb'),
@@ -226,9 +230,10 @@ export default Vue.extend({
       step_number: 1,
       sub_model: models('./bluerov.glb'),
       vehicle_name: 'blueos',
-      vehicle_type: VehicleType.Sub,
+      vehicle_type: Vehicle.Sub,
       vehicle_image: null as string | null,
       wait_configuration: false,
+      params: {} as Dictionary<number>,
       // Final configuration
       configurations: [] as Configuration[],
       // Vehicle configuration
@@ -262,6 +267,9 @@ export default Vue.extend({
     current_page_bind(): unknown {
       return this.configuration_pages[this.configuration_page_index].binds
     },
+    is_param_loading_supported(): boolean {
+      return [Vehicle.Sub, Vehicle.Rover].includes(this.vehicle_type)
+    },
   },
 
   watch: {
@@ -284,6 +292,15 @@ export default Vue.extend({
     }
   },
   methods: {
+    retry() {
+      for (const config of this.configurations) {
+        if (!config.done && config.message) {
+          config.message = undefined
+          config.done = false
+        }
+      }
+      this.applyConfigurations()
+    },
     close() {
       this.should_open = false
       setTimeout(() => { window.location.reload() }, 500)
@@ -296,30 +313,27 @@ export default Vue.extend({
     },
     handleNextVehicleConfiguration() {
       this.configuration_page_index += 1
-      if (this.configuration_page_index >= this.vehicle_configuration_pages.length) {
-        this.applyConfigurations()
-      }
     },
     async applyConfigurations() {
       this.configurations = [
         {
           title: 'Set custom vehicle name',
           summary: `Set vehicle name for the user: ${this.vehicle_name}`,
-          promise: this.setHostname(),
+          promise: () => this.setHostname(),
           message: undefined,
           done: false,
         },
         {
           title: 'Set vehicle hostname',
           summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
-          promise: this.setVehicleName(),
+          promise: () => this.setVehicleName(),
           message: undefined,
           done: false,
         },
         {
           title: 'Set vehicle image',
           summary: 'Set image to be used for vehicle thumbnail',
-          promise: this.setVehicleImage(),
+          promise: () => this.setVehicleImage(),
           message: undefined,
           done: false,
         },
@@ -329,14 +343,15 @@ export default Vue.extend({
       this.apply_status = ApplyStatus.Waiting
       this.apply_status = await Promise.all(this.configurations.map(async (config) => {
         if (!config.done) {
-          config.message = await config.promise
+          config.message = await config.promise()
           config.done = config.message === undefined
         }
         return config
       })).then((configs) => configs.every((config) => config.done)) ? ApplyStatus.Done : ApplyStatus.Failed
     },
     setupBoat() {
-      this.vehicle_type = VehicleType.Boat
+      this.params = {}
+      this.vehicle_type = Vehicle.Rover
       this.vehicle_name = 'BlueBoat'
       this.vehicle_image = '/vehicles/images/bb120.png'
       this.step_number += 1
@@ -352,28 +367,30 @@ export default Vue.extend({
         {
           title: 'Install stable boat firmware',
           summary: 'Download and install a desirable stable firmware on the vehicle',
-          promise: this.installLatestStableFirmware(Vehicle.Rover),
+          promise: () => this.installLatestStableFirmware(Vehicle.Rover),
           message: undefined,
           done: false,
         },
         {
           title: 'Disable Wi-Fi hotspot',
           summary: 'Wi-Fi hotspot need to be disable to not interfere with onboard radio',
-          promise: this.disableWifiHotspot(),
+          promise: () => this.disableWifiHotspot(),
           message: undefined,
           done: false,
         },
         {
           title: 'Disable smart Wi-Fi hotspot',
           summary: 'Disable hotspot to be turned on if there is no Wi-Fi network available',
-          promise: this.disableSmartWifiHotspot(),
+          promise: () => this.disableSmartWifiHotspot(),
           message: undefined,
           done: false,
         },
       ]
     },
     setupOther() {
+      this.params = {}
       this.step_number += 1
+      this.vehicle_type = Vehicle.Other
       this.vehicle_configuration_pages = [
         {
           page: RequireInternet,
@@ -383,9 +400,13 @@ export default Vue.extend({
     },
     async setupConfiguration() {
       this.step_number += 1
+      if (this.step_number >= this.vehicle_configuration_pages.length) {
+        this.applyConfigurations()
+      }
     },
     setupROV() {
-      this.vehicle_type = VehicleType.Sub
+      this.params = {}
+      this.vehicle_type = Vehicle.Sub
       this.vehicle_name = 'BlueROV'
       this.vehicle_image = '/vehicles/images/bluerov2.png'
       this.step_number += 1
@@ -401,7 +422,7 @@ export default Vue.extend({
         {
           title: 'Install stable sub firmware',
           summary: 'Download and install a desirable stable firmware on the vehicle',
-          promise: this.installLatestStableFirmware(Vehicle.Sub),
+          promise: () => this.installLatestStableFirmware(Vehicle.Sub),
           message: undefined,
           done: false,
         },
@@ -460,7 +481,7 @@ export default Vue.extend({
           if (found === undefined) {
             return `Failed to find a stable version for vehicle (${vehicle})`
           }
-          return installFirmwareFromUrl(found.url, true)
+          return installFirmwareFromUrl(found.url, true, this.params)
             .then(() => undefined)
             .catch((error) => `Failed to install firmware: ${error.message ?? error.response?.data}.`)
         })

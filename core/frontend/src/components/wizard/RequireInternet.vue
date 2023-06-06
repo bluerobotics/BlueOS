@@ -52,7 +52,7 @@ export default Vue.extend({
   computed: {
     status(): string {
       if (this.connected) {
-        return 'Waiting for internet'
+        return 'Internet is available'
       }
 
       return 'Please connect to a wifi network with internet'

@@ -25,7 +25,7 @@ export type ConfigurationStatus = string | undefined
 export interface Configuration {
   title: string,
   summary: string | undefined,
-  promise: Promise<ConfigurationStatus>
+  promise: () => Promise<ConfigurationStatus>
   message: undefined | string
   done: boolean
 }
