@@ -56,6 +56,13 @@
                 class="model-button ma-2"
                 @click="setupBoat"
               />
+              <v-icon
+                v-tooltip="'Other Vehicle Setup'"
+                class="model-button ma-2 other-button"
+                @click="setupOther"
+              >
+                mdi-ufo-outline
+              </v-icon>
             </div>
             <v-row class="pa-5">
               <v-btn
@@ -365,6 +372,15 @@ export default Vue.extend({
         },
       ]
     },
+    setupOther() {
+      this.step_number += 1
+      this.vehicle_configuration_pages = [
+        {
+          page: RequireInternet,
+          binds: {},
+        },
+      ]
+    },
     async setupConfiguration() {
       this.step_number += 1
     },
@@ -473,4 +489,10 @@ export default Vue.extend({
 .step-label {
   text-shadow: 0px 0px 0px !important;
 }
+.other-button {
+  width: 300px;
+  height: 150px;
+  font-size: 100px;
+}
+
 </style>
