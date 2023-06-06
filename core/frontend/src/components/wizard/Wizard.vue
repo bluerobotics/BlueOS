@@ -241,6 +241,14 @@ export default Vue.extend({
       return this.configuration_pages[this.configuration_page_index].binds
     },
   },
+
+  watch: {
+    apply_done(new_value: boolean) {
+      if (new_value) {
+        this.setWizardVersion()
+      }
+    },
+  },
   async mounted() {
     const wizard = await bag.getData('wizard')
 
@@ -294,14 +302,6 @@ export default Vue.extend({
           done: false,
         },
         ...this.setup_configurations,
-        {
-          title: 'Update wizard version',
-          summary: 'Disable wizard for this version'
-            + ' it may show again if vehicle configuration updates in future versions',
-          promise: this.setWizardVersion(),
-          message: undefined,
-          done: false,
-        },
       ]
 
       this.apply_status = ApplyStatus.Waiting
