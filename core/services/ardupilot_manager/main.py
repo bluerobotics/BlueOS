@@ -144,10 +144,10 @@ def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) 
 
 @app.post("/install_firmware_from_url", summary="Install firmware for given URL.")
 @version(1, 0)
-async def install_firmware_from_url(url: str, board_name: Optional[str] = None) -> Any:
+async def install_firmware_from_url(url: str, board_name: Optional[str] = None, make_default: bool = False) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, target_board(board_name))
+        autopilot.install_firmware_from_url(url, target_board(board_name), make_default)
     finally:
         await autopilot.start_ardupilot()
 

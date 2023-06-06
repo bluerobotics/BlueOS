@@ -1,4 +1,5 @@
 import pathlib
+import shutil
 from typing import List
 
 from loguru import logger
@@ -22,9 +23,12 @@ from typedefs import (
 
 
 class FirmwareManager:
-    def __init__(self, firmware_folder: pathlib.Path, defaults_folder: pathlib.Path) -> None:
+    def __init__(
+        self, firmware_folder: pathlib.Path, defaults_folder: pathlib.Path, user_defaults_folder: pathlib.Path
+    ) -> None:
         self.firmware_folder = firmware_folder
         self.defaults_folder = defaults_folder
+        self.user_defaults_folder = user_defaults_folder
         self.firmware_download = FirmwareDownloader()
         self.firmware_installer = FirmwareInstaller()
 
@@ -38,12 +42,20 @@ class FirmwareManager:
         a valid Ardupilot binary for Linux boards."""
         return pathlib.Path.joinpath(self.firmware_folder, self.firmware_name(platform))
 
+    def default_user_firmware_path(self, platform: Platform) -> pathlib.Path:
+        """Get path of user-defined default firmware for given platform."""
+        return pathlib.Path.joinpath(self.user_defaults_folder, self.firmware_name(platform) + "_default")
+
     def default_firmware_path(self, platform: Platform) -> pathlib.Path:
         """Get path of default firmware for given platform."""
+        if self.default_user_firmware_path(platform).is_file():
+            return self.default_user_firmware_path(platform)
         return pathlib.Path.joinpath(self.defaults_folder, self.firmware_name(platform))
 
     def is_default_firmware_available(self, platform: Platform) -> bool:
-        return pathlib.Path.is_file(self.default_firmware_path(platform))
+        return pathlib.Path.is_file(self.default_firmware_path(platform)) or pathlib.Path.is_file(
+            self.default_user_firmware_path(platform)
+        )
 
     def is_firmware_installed(self, board: FlightController) -> bool:
         """Check if firmware for given platform is installed."""
@@ -84,8 +96,10 @@ class FirmwareManager:
         except Exception as error:
             raise FirmwareInstallFail("Could not install firmware.") from error
 
-    def install_firmware_from_url(self, url: str, board: FlightController) -> None:
+    def install_firmware_from_url(self, url: str, board: FlightController, makeDefault: bool = False) -> None:
         temporary_file = self.firmware_download._download(url.strip())
+        if makeDefault:
+            shutil.copy(temporary_file, self.default_user_firmware_path(board.platform))
         self.install_firmware_from_file(temporary_file, board)
 
     def install_firmware_from_params(self, vehicle: Vehicle, board: FlightController, version: str = "") -> None:
