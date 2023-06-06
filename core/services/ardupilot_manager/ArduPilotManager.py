@@ -56,7 +56,9 @@ class ArduPilotManager(metaclass=Singleton):
         self.configuration = deepcopy(self.settings.content)
         self._load_endpoints()
         self.ardupilot_subprocess: Optional[Any] = None
-        self.firmware_manager = FirmwareManager(self.settings.firmware_folder, self.settings.defaults_folder)
+        self.firmware_manager = FirmwareManager(
+            self.settings.firmware_folder, self.settings.defaults_folder, self.settings.user_firmware_folder
+        )
         self.vehicle_manager = VehicleManager()
 
         self.should_be_running = False
@@ -535,8 +537,8 @@ class ArduPilotManager(metaclass=Singleton):
     def install_firmware_from_file(self, firmware_path: pathlib.Path, board: FlightController) -> None:
         self.firmware_manager.install_firmware_from_file(firmware_path, board)
 
-    def install_firmware_from_url(self, url: str, board: FlightController) -> None:
-        self.firmware_manager.install_firmware_from_url(url, board)
+    def install_firmware_from_url(self, url: str, board: FlightController, make_default: bool = False) -> None:
+        self.firmware_manager.install_firmware_from_url(url, board, make_default)
 
     def restore_default_firmware(self, board: FlightController) -> None:
         self.firmware_manager.restore_default_firmware(board)
