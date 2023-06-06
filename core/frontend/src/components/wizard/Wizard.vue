@@ -87,7 +87,6 @@
               <v-text-field v-model="mdns_name" label="MDNS Name" />
             </div>
             <DefaultParamLoader
-              v-if="is_param_loading_supported"
               v-model="params"
               :vehicle="vehicle_type"
             />
@@ -127,15 +126,9 @@
                 v-if="apply_failed"
                 color="warning"
                 :loading="wait_configuration"
-                @click="retry()"
+                @click="applyConfigurations()"
               >
                 Retry
-              </v-btn>
-              <v-btn
-                color="error"
-                @click="cancel()"
-              >
-                Cancel
               </v-btn>
               <v-btn
                 v-if="apply_done"
@@ -159,8 +152,8 @@
             </v-row>
           </v-stepper-content>
           <v-stepper-content step="100">
-            <v-alert :value="true" type="warning">
-              Configuration was aborted by user.
+            <v-alert :value="true" type="error">
+              Configuration was aborted.
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
@@ -252,6 +245,10 @@ export default Vue.extend({
     },
     configuration_pages(): VehicleConfigurationPage[] {
       return [
+        {
+          page: RequireInternet,
+          binds: {},
+        },
         ...this.vehicle_configuration_pages,
         {
           page: ActionStepper,
@@ -266,9 +263,6 @@ export default Vue.extend({
     },
     current_page_bind(): unknown {
       return this.configuration_pages[this.configuration_page_index].binds
-    },
-    is_param_loading_supported(): boolean {
-      return [Vehicle.Sub, Vehicle.Rover].includes(this.vehicle_type)
     },
   },
 
@@ -292,15 +286,6 @@ export default Vue.extend({
     }
   },
   methods: {
-    retry() {
-      for (const config of this.configurations) {
-        if (!config.done && config.message) {
-          config.message = undefined
-          config.done = false
-        }
-      }
-      this.applyConfigurations()
-    },
     close() {
       this.should_open = false
       setTimeout(() => { window.location.reload() }, 500)
@@ -350,17 +335,12 @@ export default Vue.extend({
       })).then((configs) => configs.every((config) => config.done)) ? ApplyStatus.Done : ApplyStatus.Failed
     },
     setupBoat() {
-      this.params = {}
       this.vehicle_type = Vehicle.Rover
       this.vehicle_name = 'BlueBoat'
       this.vehicle_image = '/vehicles/images/bb120.png'
       this.step_number += 1
 
       this.vehicle_configuration_pages = [
-        {
-          page: RequireInternet,
-          binds: {},
-        },
       ]
 
       this.setup_configurations = [
@@ -388,34 +368,23 @@ export default Vue.extend({
       ]
     },
     setupOther() {
-      this.params = {}
       this.step_number += 1
-      this.vehicle_type = Vehicle.Other
       this.vehicle_configuration_pages = [
-        {
-          page: RequireInternet,
-          binds: {},
-        },
       ]
     },
     async setupConfiguration() {
       this.step_number += 1
-      if (this.step_number >= this.vehicle_configuration_pages.length) {
+      if (this.step_number >= 3 && this.configuration_page_index >= this.vehicle_configuration_pages.length) {
         this.applyConfigurations()
       }
     },
     setupROV() {
-      this.params = {}
       this.vehicle_type = Vehicle.Sub
       this.vehicle_name = 'BlueROV'
       this.vehicle_image = '/vehicles/images/bluerov2.png'
       this.step_number += 1
 
       this.vehicle_configuration_pages = [
-        {
-          page: RequireInternet,
-          binds: {},
-        },
       ]
 
       this.setup_configurations = [
@@ -485,7 +454,7 @@ export default Vue.extend({
             .then(() => undefined)
             .catch((error) => `Failed to install firmware: ${error.message ?? error.response?.data}.`)
         })
-        .catch((error) => `Failed to install stable firmware: ${error.message ?? error.response?.data}.`)
+        .catch((error) => `Failed to fetch available firmware: ${error.message ?? error.response?.data}.`)
     },
   },
 })
