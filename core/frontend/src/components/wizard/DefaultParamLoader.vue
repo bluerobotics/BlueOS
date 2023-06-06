@@ -1,20 +1,29 @@
 <template>
   <div class="d-flex flex-column align-center ma-5" style="width: 100%; height: 100%;">
     <v-select
-      v-model="selectedParamSetName"
+      v-model="selected_param_set_name"
       :items="filtered_param_sets_names"
       item-text="sanitized"
       item-value="full"
+      :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
       :loading="is_loading"
-      :label="parameters_label"
-      :disabled="isLoading || hasError || !version"
-      style="min-width: 70%;"
-      @change="setParamSet(filtered_param_sets[selectedParamSetName])"
+      :disabled="is_loading_paramsets || has_error || filtered_param_sets_names.length === 0"
+      style="min-width: 60%;"
+      @change="setParamSet(filtered_param_sets[selected_param_set_name])"
     />
+    <p v-if="is_loading_paramsets">
+      Loading parameters...
+    </p>
+    <p v-else-if="has_error">
+      Unable to load parameters.
+    </p>
+    <p v-else-if="(Object.keys(filtered_param_sets).length === 0)">
+      No parameters available for this setup
+    </p>
     <v-virtual-scroll
-      v-if="valueItems.length > 0"
+      v-if="value_items.length > 0"
       class="flex-grow"
-      :items="valueItems"
+      :items="value_items"
       height="200"
       item-height="20"
       style="min-width: 50%;"
@@ -58,25 +67,12 @@ export default Vue.extend({
   data: () => ({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
     version: undefined as (undefined | SemVer),
-    selectedParamSet: {},
-    selectedParamSetName: '' as string,
-    isLoading: true,
-    hasError: false,
-    fetching_error: undefined as (undefined | string),
+    selected_param_set: {},
+    selected_param_set_name: '' as string,
+    is_loading_paramsets: true,
+    has_error: false,
   }),
   computed: {
-    parameters_label(): string {
-      if (this.isLoading) {
-        return 'Loading...'
-      }
-      if (this.fetching_error) {
-        return 'Unable to fetch Firmware version'
-      }
-      return `Parameter Sets (${this.board} - ${this.vehicle} - ${this.version || '...'})`
-    },
-    is_loading() {
-      return this.isLoading || this.hasError
-    },
     filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
       const fw_patch = `${this.vehicle}/${this.version}/${this.board}`
       const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}`
@@ -97,29 +93,28 @@ export default Vue.extend({
           break
         }
       }
-      return {
-        ...fw_params,
-        'No default parameters': {}, // Always include the "No default parameters" option
-      }
+      return fw_params
     },
     filtered_param_sets_names(): {full: string, sanitized: string}[] {
       return Object.keys(this.filtered_param_sets ?? {}).map((full) => ({
         full,
+        // e.g. "ArduSub/BlueROV2/4.0.3/BlueROV2.params" -> "BlueROV2"
         sanitized: full.split('/').pop()?.split('.')[0] || '',
       }))
     },
     board(): string | undefined {
       return autopilot.current_board?.name
     },
-    valueItems(): { key: string, value: number }[] {
+    value_items(): { key: string, value: number }[] {
       return Object.entries(this.value ?? {}).map(([key, value]) => ({ key, value }))
+    },
+    is_loading(): boolean {
+      return this.is_loading_paramsets || !this.board || !this.version
     },
   },
 
   watch: {
     vehicle() {
-      this.version = undefined
-      this.fetching_error = undefined
       this.updateLatestFirmwareVersion().then((version: string) => {
         this.version = new SemVer(version.split('-')[1])
       })
@@ -127,9 +122,9 @@ export default Vue.extend({
   },
   mounted() {
     this.loadParamSets().catch(() => {
-      this.hasError = true
+      this.has_error = true
     }).finally(() => {
-      this.isLoading = false
+      this.is_loading_paramsets = false
     })
     callPeriodically(fetchCurrentBoard, 10000)
     this.updateLatestFirmwareVersion().then((version: string) => {
@@ -148,13 +143,10 @@ export default Vue.extend({
             return `Failed to find a stable version for vehicle (${this.vehicle})`
           }
           return found.name
-        }).catch((error) => {
-          this.fetching_error = error
-          return 'unable to detect latest firmware version'
         })
     },
     setParamSet(paramSet: Dictionary<number>) {
-      this.selectedParamSet = paramSet
+      this.selected_param_set = paramSet
       this.$emit('input', paramSet)
     },
     async loadParamSets() {
@@ -165,7 +157,7 @@ export default Vue.extend({
         const paramSets = await response.json()
         this.all_param_sets = paramSets
       } catch (error) {
-        this.hasError = true
+        this.has_error = true
         throw error
       }
     },
