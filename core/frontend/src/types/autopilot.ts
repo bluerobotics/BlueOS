@@ -10,6 +10,7 @@ export enum Vehicle {
     Rover = 'Rover',
     Plane = 'Plane',
     Copter = 'Copter',
+    Other = 'Other',
 }
 
 export enum Platform {

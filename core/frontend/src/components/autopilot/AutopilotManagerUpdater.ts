@@ -4,6 +4,7 @@ import { SemVer } from 'semver'
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
+import { Dictionary } from '@/types/common'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -129,7 +130,11 @@ export async function availableFirmwares(vehicleType: Vehicle): Promise<Firmware
     })
 }
 
-export async function installFirmwareFromUrl(url: URL, make_default: boolean | undefined): Promise<void> {
+export async function installFirmwareFromUrl(
+  url: URL,
+  make_default: boolean | undefined,
+  default_params?: Dictionary<number>,
+): Promise<void> {
   return back_axios({
     method: 'post',
     url: `${autopilot.API_URL}/install_firmware_from_url`,
@@ -138,6 +143,9 @@ export async function installFirmwareFromUrl(url: URL, make_default: boolean | u
       // eslint-disable-next-line object-shorthand
       url: url,
       make_default: make_default ?? false,
+    },
+    data: {
+      params: default_params ?? {},
     },
   })
     .then((response) => response.data)
