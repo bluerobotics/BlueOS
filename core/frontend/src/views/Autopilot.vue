@@ -106,6 +106,7 @@ import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
@@ -214,6 +215,7 @@ export default Vue.extend({
         })
     },
     async restart_autopilot(): Promise<void> {
+      autopilot_data.reset()
       autopilot.setRestarting(true)
       await back_axios({
         method: 'post',
