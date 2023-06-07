@@ -189,6 +189,7 @@ import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, FlightController, Vehicle } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
@@ -322,6 +323,7 @@ export default Vue.extend({
     },
     async installFirmware(): Promise<void> {
       this.install_status = InstallStatus.Installing
+      autopilot_data.reset()
       const axios_request_config: AxiosRequestConfig = {
         method: 'post',
         timeout: 180000,
