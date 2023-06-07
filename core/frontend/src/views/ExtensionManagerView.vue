@@ -77,18 +77,17 @@
           />
         </v-list>
       </v-card>
-      <v-row dense>
-        <v-col
+      <v-row
+        dense
+        class="d-flex justify-space-between"
+      >
+        <extension-card
           v-for="extension in filteredManifest"
-          :key="extension.website + extension.name"
-          class="pa-2"
-          cols="3"
-        >
-          <extension-card
-            :extension="extension"
-            @clicked="showModal(extension)"
-          />
-        </v-col>
+          :key="extension.identifier + extension.name"
+          :extension="extension"
+          class="ma-2"
+          @clicked="showModal(extension)"
+        />
       </v-row>
       <v-container
         v-if="manifest.length === 0"
