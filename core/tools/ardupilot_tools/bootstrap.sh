@@ -27,3 +27,12 @@ COMMIT_HASH=b839ddcc00f4cb89d89aaa8cf0cb03298d2f00b4
 LOCAL_PATH_DECODER="${USER_SITE_PACKAGES}/ardupilot_fw_decoder.py"
 REMOTE_URL_DECODER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/firmware_version_decoder.py"
 wget "$REMOTE_URL_DECODER" -O "$LOCAL_PATH_DECODER"
+
+
+### Ardupilot's apj_tool is used to embed params into apj files
+COMMIT_HASH=b839ddcc00f4cb89d89aaa8cf0cb03298d2f00b4
+LOCAL_PATH_APJ_TOOL="/usr/bin/apj_tool.py"
+REMOTE_URL_APJ_TOOL="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/apj_tool.py"
+
+$SUDO wget "$REMOTE_URL_APJ_TOOL" -O "$LOCAL_PATH_APJ_TOOL"
+$SUDO chmod +x "$LOCAL_PATH_APJ_TOOL"

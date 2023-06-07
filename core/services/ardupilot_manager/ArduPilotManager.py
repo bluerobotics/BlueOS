@@ -28,6 +28,7 @@ from typedefs import (
     Firmware,
     FlightController,
     FlightControllerFlags,
+    Parameters,
     Platform,
     PlatformType,
     Serial,
@@ -169,6 +170,13 @@ class ArduPilotManager(metaclass=Singleton):
         cmdlines = [f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()]
         return " ".join(cmdlines)
 
+    def get_default_params_cmdline(self, platform: Platform) -> str:
+        # check if file exists and return it's path as --defaults parameter
+        default_params_path = self.firmware_manager.default_user_params_path(platform)
+        if default_params_path.is_file():
+            return f"--defaults {default_params_path}"
+        return ""
+
     def start_linux_board(self, board: FlightController) -> None:
         self._current_board = board
         if not self.firmware_manager.is_firmware_installed(self._current_board):
@@ -216,6 +224,7 @@ class ArduPilotManager(metaclass=Singleton):
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
             f" {self.get_serial_cmdlines()}"
+            f" {self.get_default_params_cmdline(board.platform)}"
         )
 
         if self.firmware_has_debug_symbols(firmware_path):
@@ -534,11 +543,19 @@ class ArduPilotManager(metaclass=Singleton):
     def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
         return self.firmware_manager.get_available_firmwares(vehicle, platform)
 
-    def install_firmware_from_file(self, firmware_path: pathlib.Path, board: FlightController) -> None:
-        self.firmware_manager.install_firmware_from_file(firmware_path, board)
+    def install_firmware_from_file(
+        self, firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
+    ) -> None:
+        self.firmware_manager.install_firmware_from_file(firmware_path, board, default_parameters)
 
-    def install_firmware_from_url(self, url: str, board: FlightController, make_default: bool = False) -> None:
-        self.firmware_manager.install_firmware_from_url(url, board, make_default)
+    def install_firmware_from_url(
+        self,
+        url: str,
+        board: FlightController,
+        make_default: bool = False,
+        default_parameters: Optional[Parameters] = None,
+    ) -> None:
+        self.firmware_manager.install_firmware_from_url(url, board, make_default, default_parameters)
 
     def restore_default_firmware(self, board: FlightController) -> None:
         self.firmware_manager.restore_default_firmware(board)
