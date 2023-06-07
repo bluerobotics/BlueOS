@@ -9,6 +9,8 @@ import store from '@/store'
 import { Dictionary } from '@/types/common'
 import { MavlinkMessage } from '@/types/mavlink'
 
+import autopilot_data from './autopilot'
+
 interface messsageRefreshRate {
   messageName: string
   refreshRate: number
@@ -32,7 +34,7 @@ class MavlinkStore extends VuexModule {
       console.warn(`Invalid request rate requested for message ${messageName}@${refreshRate}Hz`)
     }
 
-    mavlink2rest.requestMessageRate(messageName, refreshRate)
+    mavlink2rest.requestMessageRate(messageName, refreshRate, autopilot_data.system_id)
     // Remove any listener that has a lower frequency than requested
     if (messageName in this.message_listeners) {
       const currentRate = this.message_listeners[messageName].frequency

@@ -233,7 +233,7 @@ export default Vue.extend({
       }
     },
     writeParam(name: string, value: number) {
-      mavlink2rest.setParam(name, value)
+      mavlink2rest.setParam(name, value, autopilot_data.system_id)
     },
     filterParamsByReadOnly(params: Dictionary<number>): Dictionary<number> {
       return Object.fromEntries(

@@ -295,7 +295,7 @@ export default Vue.extend({
     },
     applyParameterFile(): void {
       for (const param of this.loaded_parameter) {
-        mavlink2rest.setParam(param.name, param.value, param.type)
+        mavlink2rest.setParam(param.name, param.value, autopilot_data.system_id, param.type)
       }
       this.load_param_dialog = false
     },
