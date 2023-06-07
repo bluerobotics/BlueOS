@@ -3,7 +3,6 @@
 
 import axios from 'axios'
 
-import autopilot_data from '@/store/autopilot'
 import { Dictionary } from '@/types/common'
 
 import Endpoint from './Endpoint'
@@ -136,7 +135,7 @@ class Mavlink2RestManager {
    * @param  {string} message name
    * @returns Listener
    */
-  requestMessageRate(message: string, rate:number): void {
+  requestMessageRate(message: string, rate:number, system_id: number): void {
     if (rate < 0) {
       console.warn(`Requested invalid message rate for ${message}: ${rate}`)
       return
@@ -164,7 +163,7 @@ class Mavlink2RestManager {
         command: {
           type: 'MAV_CMD_SET_MESSAGE_INTERVAL',
         },
-        target_system: autopilot_data.system_id,
+        target_system: system_id,
         target_component: 0,
         confirmation: 0,
       },
@@ -178,7 +177,7 @@ class Mavlink2RestManager {
    * @param {number} value Desired parameter value
    * @param {string} type Valid mavlink parameter type based on mavlink2rest
    */
-  setParam(name: string, value: number, type?: string): void {
+  setParam(name: string, value: number, sysid: number, type?: string): void {
     const param_name = [...name]
     while (param_name.length < 16) {
       param_name.push('\0')
@@ -193,7 +192,7 @@ class Mavlink2RestManager {
       message: {
         type: 'PARAM_SET',
         param_value: value,
-        target_system: autopilot_data.system_id,
+        target_system: sysid,
         target_component: 0,
         param_id: param_name,
         param_type: {

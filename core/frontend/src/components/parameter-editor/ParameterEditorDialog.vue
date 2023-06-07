@@ -287,7 +287,7 @@ export default Vue.extend({
         value = this.new_value
       }
 
-      mavlink2rest.setParam(this.param.name, value, this.param.paramType.type)
+      mavlink2rest.setParam(this.param.name, value, autopilot_data.system_id, this.param.paramType.type)
 
       if (reboot) {
         await this.rebootVehicle()
