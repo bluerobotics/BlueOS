@@ -3,7 +3,7 @@ import re
 from enum import Enum, auto
 from pathlib import Path
 from platform import machine
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, validator
 
@@ -131,6 +131,10 @@ class FlightControllerFlags(str, Enum):
     """Flags for the Flight-controller class."""
 
     is_bootloader = "is_bootloader"
+
+
+class Parameters(BaseModel):
+    params: Dict[str, float]
 
 
 class FlightController(BaseModel):

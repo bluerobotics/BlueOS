@@ -26,7 +26,7 @@ from exceptions import InvalidFirmwareFile
 from flight_controller_detector.Detector import Detector as BoardDetector
 from mavlink_proxy.Endpoint import Endpoint
 from settings import SERVICE_NAME
-from typedefs import Firmware, FlightController, Serial, SITLFrame, Vehicle
+from typedefs import Firmware, FlightController, Parameters, Serial, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
@@ -144,23 +144,32 @@ def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) 
 
 @app.post("/install_firmware_from_url", summary="Install firmware for given URL.")
 @version(1, 0)
-async def install_firmware_from_url(url: str, board_name: Optional[str] = None, make_default: bool = False) -> Any:
+async def install_firmware_from_url(
+    url: str,
+    board_name: Optional[str] = None,
+    make_default: bool = False,
+    parameters: Optional[Parameters] = None,
+) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, target_board(board_name), make_default)
+        autopilot.install_firmware_from_url(url, target_board(board_name), make_default, parameters)
     finally:
         await autopilot.start_ardupilot()
 
 
 @app.post("/install_firmware_from_file", summary="Install firmware from user file.")
 @version(1, 0)
-async def install_firmware_from_file(binary: UploadFile = File(...), board_name: Optional[str] = None) -> Any:
+async def install_firmware_from_file(
+    binary: UploadFile = File(...),
+    board_name: Optional[str] = None,
+    parameters: Optional[Parameters] = None,
+) -> Any:
     try:
         custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_file(custom_firmware, target_board(board_name))
+        autopilot.install_firmware_from_file(custom_firmware, target_board(board_name), parameters)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error

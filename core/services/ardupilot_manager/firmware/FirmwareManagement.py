@@ -1,6 +1,9 @@
 import pathlib
 import shutil
-from typing import List
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import List, Optional
 
 from loguru import logger
 
@@ -16,6 +19,7 @@ from typedefs import (
     Firmware,
     FirmwareFormat,
     FlightController,
+    Parameters,
     Platform,
     PlatformType,
     Vehicle,
@@ -45,6 +49,10 @@ class FirmwareManager:
     def default_user_firmware_path(self, platform: Platform) -> pathlib.Path:
         """Get path of user-defined default firmware for given platform."""
         return pathlib.Path.joinpath(self.user_defaults_folder, self.firmware_name(platform) + "_default")
+
+    def default_user_params_path(self, platform: Platform) -> pathlib.Path:
+        """Get path of user-defined default firmware for given platform."""
+        return pathlib.Path.joinpath(self.user_defaults_folder, self.firmware_name(platform) + "params.params")
 
     def default_firmware_path(self, platform: Platform) -> pathlib.Path:
         """Get path of default firmware for given platform."""
@@ -86,7 +94,14 @@ class FirmwareManager:
             raise NoVersionAvailable(f"Failed do get any valid URL for vehicle {vehicle}.")
         return firmwares
 
-    def install_firmware_from_file(self, new_firmware_path: pathlib.Path, board: FlightController) -> None:
+    def install_firmware_from_file(
+        self, new_firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
+    ) -> None:
+        if default_parameters is not None:
+            if board.platform.type == PlatformType.Serial:
+                self.embed_params_into_apj(new_firmware_path, default_parameters)
+            else:
+                self.save_params_to_default_linux_path(board.platform, default_parameters)
         try:
             if board.type == PlatformType.Serial:
                 self.firmware_installer.install_firmware(new_firmware_path, board)
@@ -96,11 +111,52 @@ class FirmwareManager:
         except Exception as error:
             raise FirmwareInstallFail("Could not install firmware.") from error
 
-    def install_firmware_from_url(self, url: str, board: FlightController, makeDefault: bool = False) -> None:
+    def embed_params_into_apj(self, firmware_path: Path, default_parameters: Parameters) -> None:
+        # create a temporary file
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp:
+            # write each parameter to the file
+            for param, value in default_parameters.params.items():
+                temp.write(f"{param}={value}\n")
+            # make sure all data is written to the file
+            temp.flush()
+            # construct the command as a list of strings
+            command = ["apj_tool.py", str(firmware_path), "--set-file", temp.name]
+            # use subprocess.run to execute the command
+            result = subprocess.run(command, capture_output=True, text=True, check=False)
+            # check for errors
+            if result.returncode != 0:
+                logger.error(f"Error setting parameters: {result.stderr}")
+
+        # clean up the temporary file
+        Path(temp.name).unlink()
+
+    def save_params_to_default_linux_path(self, platform: Platform, default_parameters: Optional[Parameters]) -> None:
+        # write the params to the default params file as csv format
+        if default_parameters:
+            with open(self.default_user_params_path(platform), "w", encoding="utf-8") as f:
+                for key in default_parameters.params.keys():
+                    f.write(f"{key},{default_parameters.params[key]}\n")
+        else:
+            # if no params are provided, delete the file if it exists
+            if self.default_user_params_path(platform).is_file():
+                self.default_user_params_path(platform).unlink()
+
+    def install_firmware_from_url(
+        self,
+        url: str,
+        board: FlightController,
+        makeDefault: bool = False,
+        default_parameters: Optional[Parameters] = None,
+    ) -> None:
         temporary_file = self.firmware_download._download(url.strip())
+        if default_parameters is not None:
+            if board.platform.type == PlatformType.Serial:
+                self.embed_params_into_apj(temporary_file, default_parameters)
+            else:
+                self.save_params_to_default_linux_path(board.platform, default_parameters)
         if makeDefault:
             shutil.copy(temporary_file, self.default_user_firmware_path(board.platform))
-        self.install_firmware_from_file(temporary_file, board)
+        self.install_firmware_from_file(temporary_file, board, default_parameters)
 
     def install_firmware_from_params(self, vehicle: Vehicle, board: FlightController, version: str = "") -> None:
         url = self.firmware_download.get_download_url(vehicle, board.platform, version)
