@@ -26,7 +26,7 @@ const menus = [
     icon: 'mdi-code-json',
     route: '/tools/bag-editor',
     advanced: true,
-    text: 'Editor for Bag Of Holders service.',
+    text: 'Editor for Bag Of Holding service.',
   },
   {
     title: 'BlueOS Version',
