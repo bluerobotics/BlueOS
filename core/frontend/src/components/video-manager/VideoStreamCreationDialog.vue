@@ -25,21 +25,21 @@
             v-model="selected_encode"
             :items="available_encodes"
             label="Encoding"
-            required
+            :rules="[validate_required_field]"
           />
           <v-select
             v-model="selected_size"
             :items="available_sizes"
             :label="size_selector_label"
             :disabled="!selected_format"
-            required
+            :rules="[validate_not_null]"
           />
           <v-select
             v-model="selected_interval"
             :items="available_framerates"
             :label="framerate_selector_label"
             :disabled="!selected_size"
-            required
+            :rules="[validate_not_null]"
           />
 
           <div
@@ -282,6 +282,10 @@ export default Vue.extend({
     validate_required_field(input: string | null): (true | string) {
       return input !== null && isNotEmpty(input) ? true : 'Required field.'
     },
+    validate_not_null(input: string | null): (true | string) {
+      return input !== null ? true : 'Required field.'
+    },
+
     is_valid_schema(input: string): (true | string) {
       return isUdpAddress(input) || isRtspAddress(input) ? true : 'Invalid UDP/RTSP stream endpoint.'
     },
