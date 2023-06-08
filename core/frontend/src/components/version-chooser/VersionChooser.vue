@@ -53,7 +53,7 @@
         <h2>Local Versions</h2>
         <version-card
           v-for="image in local_versions.result.local"
-          :key="image.sha"
+          :key="`${image.sha}-local`"
           :image="image"
           :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
           :update-available="updateIsAvailable(image)"
