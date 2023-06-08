@@ -486,7 +486,7 @@ export default Vue.extend({
       }).then(() => {
         // Remove this image in the frontend, as calling loadVersions()
         // takes a longer time to fetch all images
-        this.available_versions.local = this.available_versions.local.filter(
+        this.local_versions.result.local = this.local_versions.result.local.filter(
           (element) => element.repository !== repository || element.tag !== tag,
         )
       })
