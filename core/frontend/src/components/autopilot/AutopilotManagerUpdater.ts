@@ -138,7 +138,7 @@ export async function installFirmwareFromUrl(
   return back_axios({
     method: 'post',
     url: `${autopilot.API_URL}/install_firmware_from_url`,
-    timeout: 30000,
+    timeout: 120000,
     params: {
       // eslint-disable-next-line object-shorthand
       url: url,
