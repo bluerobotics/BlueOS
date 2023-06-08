@@ -34,19 +34,19 @@
               <tbody class="align-center">
                 <tr
                   v-for="motor of available_motors"
-                  :key="'mot' + motor"
+                  :key="'mot' + motor.servo"
                   width="100%"
                   height="65"
                   class="ma-0 pa-0"
-                  @mouseover="highlight = [`Motor${motor}`]"
+                  @mouseover="highlight = [`Motor${motor.servo}`]"
                   @mouseleave="highlight = default_highlight"
                 >
                   <td width="20%">
-                    {{ `Motor ${motor}` }}
+                    {{ motor.name }}
                   </td>
                   <td width="80%">
                     <v-slider
-                      v-model="motor_targets[motor]"
+                      v-model="motor_targets[motor.target]"
                       class="align-center"
                       :min="1000"
                       :max="2000"
@@ -67,10 +67,10 @@
                       />
                       <div
                         class="pwm-bar"
-                        :style="styleForMotorBar(motor_outputs[motor])"
+                        :style="styleForMotorBar(motor_outputs[motor.servo])"
                       />
                       <div class="pwm-bar-content">
-                        <strong>{{ (motor_outputs[motor] - 1500) / 10 }}%</strong>
+                        <strong>{{ (motor_outputs[motor.servo] - 1500) / 10 }}%</strong>
                       </div>
                     </div>
                   </td>
@@ -137,9 +137,24 @@ import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
+import { SERVO_FUNCTION as ROVER_FUNCTIONS } from '@/types/autopilot/parameter-rover-enums'
 import { SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary } from '@/types/common'
 import mavlink_store_get from '@/utils/mavlink'
+
+interface MotorTestTarget {
+  name: string
+  servo: number // target and servo differ in rover
+  target: number
+}
+
+const rover_function_map = {
+  70: 1, // ROVER_FUNCTIONS.THROTTLE
+  26: 2, // ROVER_FUNCTIONS.GRODUNDSTEERING
+  73: 3, // ROVER_FUNCTIONS.THROTTLELEFT
+  74: 4, // ROVER_FUNCTIONS.THROTTLERIGHT
+  89: 5, // ROVER_FUNCTIONS.MAINSAIL
+} as Dictionary<number>
 
 const param_value_map = {
   Submarine: {
@@ -177,13 +192,51 @@ export default Vue.extend({
       )
       return sorted
     },
-    vehicle_type() {
+    vehicle_type(): string|null {
       return autopilot.vehicle_type
     },
-    available_motors(): number[] {
+    is_rover(): boolean {
+      return autopilot.firmware_vehicle_type === 'ArduRover'
+    },
+    available_sub_motors(): MotorTestTarget[] {
       return this.servo_function_parameters.filter(
         (parameter) => parameter.value >= SERVO_FUNCTION.MOTOR1 && parameter.value <= SERVO_FUNCTION.MOTOR8,
-      ).map((parameter) => parseInt(/\d+/g.exec(printParam(parameter))?.[0] ?? '0', 10))
+      ).map((parameter) => {
+        const number = parseInt(/\d+/g.exec(parameter.name)?.[0] ?? '0', 10)
+        const name = param_value_map.Submarine[parameter.name] ?? `Motor ${number}`
+        const target = number - 1
+        return {
+          name,
+          servo: number,
+          target,
+        }
+      })
+    },
+    available_motors(): MotorTestTarget[] {
+      if (this.is_rover) {
+        return this.available_rover_motors
+      }
+      return this.available_sub_motors
+    },
+    available_rover_motors(): MotorTestTarget[] {
+      return this.servo_function_parameters.filter(
+        (parameter) => [
+          ROVER_FUNCTIONS.THROTTLE,
+          ROVER_FUNCTIONS.THROTTLELEFT,
+          ROVER_FUNCTIONS.THROTTLERIGHT,
+          ROVER_FUNCTIONS.MAINSAIL,
+          ROVER_FUNCTIONS.GROUNDSTEERING,
+        ].includes(parameter.value),
+      ).map((parameter) => {
+        const name = printParam(parameter)
+        const servo = parseInt(/\d+/g.exec(parameter.name)?.[0] ?? '0', 10)
+        const target = rover_function_map[parameter.value] ?? 0
+        return {
+          name,
+          servo,
+          target,
+        }
+      })
     },
     is_armed(): boolean {
       // This should be a getter at mavlink store. but that wasn't reactive
@@ -242,7 +295,7 @@ export default Vue.extend({
     printParam,
     zero_motors() {
       for (const motor of this.available_motors) {
-        this.motor_targets[motor] = 1500
+        this.motor_targets[motor.target] = 1500
       }
     },
     async write_motors() {
@@ -312,7 +365,8 @@ export default Vue.extend({
           },
           message: {
             type: 'COMMAND_LONG',
-            param1: motorId - 1,
+            // Rover and Sub have different starting numbers for motors
+            param1: motorId, // MOTOR_TEST_ORDER
             param2: 1, // MOTOR_TEST_THROTTLE_PWM
             param3: output,
             param4: 1, // Seconds running the motor
