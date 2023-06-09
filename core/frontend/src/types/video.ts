@@ -100,11 +100,11 @@ export enum VideoCaptureType {
 }
 
 export interface CaptureConfiguration {
-  type: VideoCaptureType
-  encode: VideoEncodeType
-  height: number
-  width: number
-  frame_interval: FrameInterval
+  type?: VideoCaptureType
+  encode?: VideoEncodeType
+  height?: number
+  width?: number
+  frame_interval?: FrameInterval
 }
 
 export interface ExtendedConfiguration {
@@ -172,9 +172,9 @@ export interface VideoDimensions {
 
 export interface StreamPrototype {
   name: string
-  encode: VideoEncodeType | null
-  dimensions: VideoDimensions | null
-  interval: FrameInterval | null
+  encode?: VideoEncodeType
+  dimensions?: VideoDimensions
+  interval?: FrameInterval
   endpoints: string[]
   thermal: boolean
 }
