@@ -25,20 +25,21 @@
             v-model="selected_encode"
             :items="available_encodes"
             label="Encoding"
+            :disabled="is_redirect_source"
             :rules="[validate_required_field]"
           />
           <v-select
             v-model="selected_size"
             :items="available_sizes"
             :label="size_selector_label"
-            :disabled="!selected_format"
+            :disabled="!selected_format || is_redirect_source"
             :rules="[validate_not_null]"
           />
           <v-select
             v-model="selected_interval"
             :items="available_framerates"
             :label="framerate_selector_label"
-            :disabled="!selected_size"
+            :disabled="!selected_size || is_redirect_source"
             :rules="[validate_not_null]"
           />
 

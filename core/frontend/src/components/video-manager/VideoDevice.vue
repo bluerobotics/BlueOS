@@ -75,7 +75,9 @@ import Vue, { PropType } from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import video from '@/store/video'
-import { CreatedStream, Device, StreamStatus } from '@/types/video'
+import {
+  CreatedStream, Device, StreamStatus, VideoSourceRedirect,
+} from '@/types/video'
 
 import VideoControlsDialog from './VideoControlsDialog.vue'
 import VideoStream from './VideoStream.vue'
@@ -114,6 +116,11 @@ export default Vue.extend({
         }
         if ('Local' in stream.video_and_stream.video_source) {
           return stream.video_and_stream.video_source.Local.device_path === this.device.source
+        }
+        if ('Redirect' in stream.video_and_stream.video_source) {
+          // eslint-disable-next-line no-extra-parens
+          return (stream.video_and_stream.video_source.Redirect as VideoSourceRedirect)
+            .source.Redirect === this.device.source
         }
         return false
       })
