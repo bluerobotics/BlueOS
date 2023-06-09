@@ -170,9 +170,9 @@ export default Vue.extend({
       default() {
         return {
           name: `Stream ${this.device.source}`,
-          encode: null,
-          dimensions: null,
-          interval: null,
+          encode: undefined,
+          dimensions: undefined,
+          interval: undefined,
           endpoints: [''],
           thermal: false,
         }
@@ -200,11 +200,17 @@ export default Vue.extend({
     form(): VForm {
       return this.$refs.form as VForm
     },
+    format_required(): boolean {
+      return !this.is_redirect_source
+    },
+    is_redirect_source(): boolean {
+      return this.device.name === 'Redirect source'
+    },
     created_stream(): (CreatedStream | null) {
-      if (this.selected_encode === null
+      if (this.format_required && (this.selected_encode === null
         || this.selected_size === null
         || this.selected_interval === null
-        || this.stream_name === '') {
+        || this.stream_name === '')) {
         return null
       }
       return {
@@ -213,10 +219,10 @@ export default Vue.extend({
         stream_information: {
           endpoints: this.stream_endpoints,
           configuration: {
-            type: VideoCaptureType.Video,
+            type: this.device.source === 'Redirect' ? VideoCaptureType.Redirect : VideoCaptureType.Video,
             encode: this.selected_encode,
-            height: this.selected_size.height,
-            width: this.selected_size.width,
+            height: this.selected_size?.height,
+            width: this.selected_size?.width,
             frame_interval: this.selected_interval,
           },
           extended_configuration: {
@@ -280,9 +286,15 @@ export default Vue.extend({
   },
   methods: {
     validate_required_field(input: string | null): (true | string) {
+      if (!this.format_required) {
+        return true
+      }
       return input !== null && isNotEmpty(input) ? true : 'Required field.'
     },
     validate_not_null(input: string | null): (true | string) {
+      if (!this.format_required) {
+        return true
+      }
       return input !== null ? true : 'Required field.'
     },
 

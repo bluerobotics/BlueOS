@@ -97,13 +97,18 @@ export default Vue.extend({
   },
   computed: {
     stream_prototype(): StreamPrototype {
+      let dimensions
+      if (this.stream.video_and_stream.stream_information.configuration.width
+        && this.stream.video_and_stream.stream_information.configuration.height) {
+        dimensions = {
+          width: this.stream.video_and_stream.stream_information.configuration.width,
+          height: this.stream.video_and_stream.stream_information.configuration.height,
+        }
+      }
       return {
         name: this.stream.video_and_stream.name,
         encode: this.stream.video_and_stream.stream_information.configuration.encode,
-        dimensions: {
-          width: this.stream.video_and_stream.stream_information.configuration.width,
-          height: this.stream.video_and_stream.stream_information.configuration.height,
-        },
+        dimensions,
         interval: this.stream.video_and_stream.stream_information.configuration.frame_interval,
         endpoints: this.stream.video_and_stream.stream_information.endpoints,
         thermal: this.stream.video_and_stream.stream_information?.extended_configuration?.thermal ?? false,
