@@ -117,7 +117,7 @@ export async function availableFirmwares(vehicleType: Vehicle): Promise<Firmware
   return back_axios({
     method: 'get',
     url: `${autopilot.API_URL}/available_firmwares`,
-    timeout: 30000,
+    timeout: 60000,
     params: {
       vehicle: vehicleType,
     },
