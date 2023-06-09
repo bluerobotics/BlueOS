@@ -8,9 +8,9 @@ ARTIFACT_PREFIX="mavlink-camera-manager"
 VERSION=t3.11.6
 
 # By default we install armv7
-REMOTE_BINARY_URL="https://github.com/bluerobotics/mavlink-camera-manager/releases/download/${VERSION}/${ARTIFACT_PREFIX}-armv7.zip"
+REMOTE_BINARY_URL="https://github.com/mavlink/mavlink-camera-manager/releases/download/${VERSION}/${ARTIFACT_PREFIX}-armv7.zip"
 if [[ "$(uname -m)" == "x86_64"* ]]; then
-    REMOTE_BINARY_URL="https://github.com/bluerobotics/mavlink-camera-manager/releases/download/${VERSION}/${ARTIFACT_PREFIX}-linux-desktop.zip"
+    REMOTE_BINARY_URL="https://github.com/mavlink/mavlink-camera-manager/releases/download/${VERSION}/${ARTIFACT_PREFIX}-linux-desktop.zip"
 fi
 
 # Download and install the camera manager under user binary folder with the correct permissions
