@@ -277,7 +277,7 @@ export default Vue.extend({
         content += `${param.name}${space}${param.value}\n`
       }
 
-      const file = new File([content], `${file_name}.txt`, { type: 'text/plain' })
+      const file = new File([content], `${file_name}.params`, { type: 'text/plain' })
       saveAs(file)
     },
     async setParameterFile(file: (File | null)): Promise<void> {
