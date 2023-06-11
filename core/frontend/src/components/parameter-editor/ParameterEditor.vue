@@ -108,7 +108,7 @@
           <v-container>
             <v-row>
               <v-file-input
-                accept=".txt"
+                accept=".params,.parm,.param"
                 class="mr-2"
                 show-size
                 label="Parameter file"
