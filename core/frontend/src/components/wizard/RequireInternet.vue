@@ -1,26 +1,24 @@
 <template>
   <div>
-    <v-card
-      color="primary"
-      dark
-      class="mb-5"
-    >
-      <v-card-text
-        class="d-flex flex-column align-center subtitle font-weight-medium"
-      >
-        {{ status }}
-        <v-progress-linear
-          v-if="connected"
-          indeterminate
-          color="white"
-          class="mb-0"
-        />
-      </v-card-text>
+    <v-card elevation="0">
+      <v-stepper vertical>
+        <v-stepper-step
+          step="1"
+          :color="icon_color"
+          :complete-icon="icon"
+          :complete="true"
+          active
+          class="step-label"
+        >
+          {{ text }}
+        </v-stepper-step>
+      </v-stepper>
+      <WifiManager
+        v-if="!is_online && !checking"
+        :show-top-bar="false"
+        @current-network="(net) => connected = net != null"
+      />
     </v-card>
-    <WifiManager
-      :show-top-bar="false"
-      @current-network="(net) => connected = net != null"
-    />
   </div>
 </template>
 
@@ -46,16 +44,38 @@ export default Vue.extend({
   data() {
     return {
       connected: false,
+      checking: true,
+      re_checking: false,
       is_online: false,
+      timeout: 0,
     }
   },
   computed: {
-    status(): string {
-      if (this.connected) {
-        return 'Internet is available'
+    icon_color() {
+      if (this.checking || this.re_checking) {
+        return 'warning'
       }
-
-      return 'Please connect to a wifi network with internet'
+      return this.is_online ? 'success' : 'error'
+    },
+    icon() {
+      if (this.checking || this.re_checking) {
+        return 'mdi-loading mdi-spin'
+      }
+      return this.is_online ? 'mdi-check' : 'mdi-close'
+    },
+    text() {
+      if (this.checking) {
+        return 'Checking Internet Connection...'
+      }
+      return this.is_online ? 'Internet Connection Established' : 'No Internet Connection, please connect to a network'
+    },
+  },
+  watch: {
+    connected() {
+      if (this.connected) {
+        this.checking = true
+        this.checkInternet()
+      }
     },
   },
   async mounted() {
@@ -63,6 +83,7 @@ export default Vue.extend({
   },
   methods: {
     checkInternet() {
+      this.re_checking = true
       back_axios({
         method: 'get',
         url: '/helper/latest/check_internet_access',
@@ -74,9 +95,8 @@ export default Vue.extend({
           this.is_online = !Object.values(data)
             .filter((item) => item.online)
             .isEmpty()
-          if (this.is_online) {
-            this.$emit('next')
-          }
+          this.checking = false
+          this.re_checking = false
         })
         .catch((error) => {
           if (error === backend_offline_error) { return }
@@ -84,7 +104,14 @@ export default Vue.extend({
         })
         .finally(() => {
           if (!this.is_online) {
-            this.checkInternet()
+            this.timeout = setTimeout(() => {
+              this.checkInternet()
+            }, 1000)
+          } else {
+            clearInterval(this.timeout)
+            this.timeout = setTimeout(() => {
+              this.$emit('next')
+            }, 1000)
           }
         })
     },
