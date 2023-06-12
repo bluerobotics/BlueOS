@@ -37,6 +37,12 @@
         />
       </div>
     </div>
+    <v-container>
+      <p v-if="is_redirect_source">
+        Redirect sources can be used to redirect the video stream from another device. This is useful to publish
+        external streams, such as RTSP from IP cameras, via MAVLink so GCSs can easily find them.
+      </p>
+    </v-container>
     <v-card flat>
       <v-container v-if="are_video_streams_available && !updating_streams">
         <v-row>
@@ -130,6 +136,9 @@ export default Vue.extend({
     },
     updating_streams(): boolean {
       return video.updating_streams
+    },
+    is_redirect_source(): boolean {
+      return this.device.source === 'Redirect'
     },
   },
   methods: {
