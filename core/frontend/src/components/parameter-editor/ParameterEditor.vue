@@ -278,22 +278,37 @@ export default Vue.extend({
     async setParameterFile(file: (File | null)): Promise<void> {
       const content = await file?.text()
       const lines = content?.split(/\r?\n/)
-      const new_parameters = lines
-        ?.map((line) => line.trim())
-        ?.filter((line) => line[0] !== '#' && line.length !== 0)
-        ?.map((line) => {
-          const [name, value] = line.split(/ {1,}/)
-          const type = autopilot_data.parameters.find((param) => param.name === name)?.paramType.type
-          return { name, value: parseFloat(value), type }
-        })
-      this.loaded_parameter = new_parameters ?? []
+
+      // Regular expressions for the three different formats.
+      const format1 = /^\S+\s+\S+\s+(\S+)\s+(\S+)/ // 1   1   NAME   value
+      const format2 = /^([^,]+)\s*,\s*([^,]+)/ // NAME,   value
+      const format3 = /^(\S+)\s+(\S+)/ // NAME   value
+
+      const new_parameters: { [key: string]: number } = {}
+
+      lines?.forEach((line) => {
+        line = line.trim()
+
+        if (line[0] === '#' || line.length === 0) {
+          return
+        }
+
+        let match
+        // Test each format until one matches.
+        match = line.match(format1)
+        if (!match) match = line.match(format2)
+        if (!match) match = line.match(format3)
+
+        if (match) {
+          const name = match[1].trim()
+          const value = parseFloat(match[2])
+          new_parameters[name] = value
+        }
+      })
+
+      this.loaded_parameter = new_parameters
     },
-    applyParameterFile(): void {
-      for (const param of this.loaded_parameter) {
-        mavlink2rest.setParam(param.name, param.value, autopilot_data.system_id, param.type)
-      }
-      this.load_param_dialog = false
-    },
+
   },
 })
 </script>
