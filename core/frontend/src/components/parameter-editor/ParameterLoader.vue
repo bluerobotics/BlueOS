@@ -76,7 +76,7 @@
           </template>
         </v-progress-linear>
       </v-card-text>
-      <v-card-text v-else-if="write_finished">
+      <v-card-text v-else-if="write_finished && initial_size > 0">
         <v-alert
           type="success"
         >
