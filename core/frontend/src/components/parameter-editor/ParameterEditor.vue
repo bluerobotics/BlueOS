@@ -128,18 +128,11 @@
 
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            color="primary"
-            @click="load_param_dialog = false"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            color="primary"
-            @click="applyParameterFile"
-          >
-            Save and Reboot
-          </v-btn>
+          <parameter-loader
+            v-if="loaded_parameters"
+            :parameters="loaded_parameter"
+            @done="loaded_parameter = {}; load_param_dialog = false"
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -152,17 +145,19 @@ import { saveAs } from 'file-saver'
 import Fuse from 'fuse.js'
 import Vue from 'vue'
 
-import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import Parameter, { ParamType, printParam } from '@/types/autopilot/parameter'
+import Parameter, { printParam } from '@/types/autopilot/parameter'
+import { Dictionary } from '@/types/common'
 
 import ParameterEditorDialog from './ParameterEditorDialog.vue'
+import ParameterLoader from './ParameterLoader.vue'
 
 export default Vue.extend({
   name: 'ParameterEditor',
   components: {
     ParameterEditorDialog,
+    ParameterLoader,
   },
   data() {
     return {
@@ -170,7 +165,7 @@ export default Vue.extend({
       edited_param: undefined as (undefined | Parameter),
       edit_dialog: false,
       load_param_dialog: false,
-      loaded_parameter: [] as {name: string, value: number, type: undefined | ParamType}[],
+      loaded_parameter: {} as Dictionary<number>,
     }
   },
   computed: {
