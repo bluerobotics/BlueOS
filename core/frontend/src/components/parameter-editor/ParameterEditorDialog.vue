@@ -31,7 +31,10 @@
               sm="6"
               md="6"
             >
-              <v-form ref="form">
+              <v-form
+                ref="form"
+                @submit.prevent="saveEditedParam(false)"
+              >
                 <template v-if="!custom_input && param.bitmask">
                   <v-checkbox
                     v-for="(key, value) in param?.bitmask"
