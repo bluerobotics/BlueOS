@@ -72,6 +72,7 @@
                   :suffix="param.units"
                   :rules="forcing_input ? [] : [isInRange, isValidType]"
                   @blur="update_variables"
+                  @keyup="isFormValid()"
                 />
 
                 <v-checkbox
