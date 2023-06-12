@@ -153,7 +153,9 @@ export default Vue.extend({
       }
 
       return video.available_devices
-        .filter((device) => has_supported_encode(device) || has_active_stream(device))
+        .filter(
+          (device) => has_supported_encode(device) || has_active_stream(device) || this.is_redirect_source(device),
+        )
         .filter(should_show)
         .sort((a: Device, b: Device) => a.name.localeCompare(b.name))
     },
@@ -177,6 +179,9 @@ export default Vue.extend({
     },
     async toggleLegacyMode(): Promise<void> {
       await this.setCameraLegacy(this.legacy_mode)
+    },
+    is_redirect_source(device: Device): boolean {
+      return device.source === 'Redirect'
     },
     openSettingsDialog(): void {
       this.show_settings_dialog = true
