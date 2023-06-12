@@ -4,14 +4,10 @@ import * as arducopter_metadata from '@/ArduPilot-Parameter-Repository/Copter-4.
 import * as ardurover_metadata from '@/ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.json'
 import * as ardusub_metadata from '@/ArduPilot-Parameter-Repository/Sub-4.1/apm.pdef.json'
 import { fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
-import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
 import { Dictionary } from '@/types/common'
 
-import { parameters_service } from '../frontend_services'
 import Parameter from './parameter'
-
-const notifier = new Notifier(parameters_service)
 
 // Parameter metadata as in the JSON files
 interface Metadata {
@@ -110,8 +106,9 @@ export default class ParametersTable {
   updateParam(param_name: string, param_value: number): void {
     const index = Object.entries(this.parametersDict).find(([_key, value]) => value.name === param_name)
     if (!index) {
-      const message = `unable to update param in store: ${param_name}. Parameter not known.`
-      notifier.pushError('PARAM_SET_FAIL', message)
+      // This is benign and will happen if we receive a parameter update before the parameters table
+      // is fully populated. We can safely ignore it.
+      console.info(`Unable to update param in store: ${param_name}. Parameter not yet loaded into ParametersTable.`)
       return
     }
     this.parametersDict[parseInt(index[0], 10)].value = param_value
