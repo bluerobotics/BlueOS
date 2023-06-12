@@ -236,6 +236,10 @@ export default Vue.extend({
       return true
     },
     updateSelectedFlags(): void {
+      if (this.new_value < 0) {
+        // No bitmask checking for negative values
+        return
+      }
       const output = []
       for (let v = 0; v < 64; v += 1) {
         const bitmask_value = 2 ** v
