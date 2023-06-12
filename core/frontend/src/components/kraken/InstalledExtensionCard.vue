@@ -1,12 +1,5 @@
 <template>
   <v-card>
-    <template v-if="loading || extension.enabled && !container">
-      <v-overlay absolute>
-        <SpinningLogo
-          size="30%"
-        />
-      </v-overlay>
-    </template>
     <v-card-title class="pb-0">
       {{ extension.docker.split('/').pop() }} <span
         class="ml-3"
@@ -39,7 +32,11 @@
                   height="25"
                 >
                   <template #default>
-                    <strong v-if="getMemoryUsage()?.toFixed">
+                    <SpinningLogo
+                      v-if="loading || extension.enabled && !container"
+                      size="20px"
+                    />
+                    <strong v-else-if="getMemoryUsage()?.toFixed">
                       {{ prettifySize(getMemoryUsage() * getMemoryLimit() * 100) }} /
                       {{ prettifySize(getMemoryLimit() * total_memory * 0.01) }}
                     </strong>
@@ -59,7 +56,11 @@
                   height="25"
                 >
                   <template #default>
-                    <strong v-if="!isNaN(getCpuUsage())">
+                    <SpinningLogo
+                      v-if="loading || extension.enabled && !container"
+                      size="20px"
+                    />
+                    <strong v-else-if="!isNaN(getCpuUsage())">
                       {{ `${getCpuUsage().toFixed(1)}% / ${getCpuLimit()}%` }}
                       {{ `(${(getCpuLimit() * cpus * 0.01).toFixed(1)} cores) ` }}
                     </strong>
