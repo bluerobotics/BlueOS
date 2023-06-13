@@ -228,6 +228,8 @@ export default Vue.extend({
         url: `${wifi.API_URL}/remove`,
         timeout: 10000,
         params: { ssid: this.network.ssid },
+      }).then(() => {
+        this.$emit('forget', this.network)
       })
         .catch((error) => {
           notifier.pushBackError('WIFI_FORGET_FAIL', error)
