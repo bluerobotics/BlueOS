@@ -40,6 +40,25 @@ class WifiStore extends VuexModule {
   }
 
   @Mutation
+  forgettNetwork(network: Network): void {
+    // remove network from saved_networks
+    if (this.saved_networks !== null) {
+      this.saved_networks = this.saved_networks.filter(
+        (saved_network: SavedNetwork) => saved_network.ssid !== network.ssid,
+      )
+    }
+    // find network in available_networks and set saved to false
+    if (this.available_networks !== null) {
+      const available_networks = this.available_networks.find(
+        (available_network: Network) => available_network.ssid === network.ssid,
+      )
+      if (available_networks) {
+        available_networks.saved = false
+      }
+    }
+  }
+
+  @Mutation
   setSavedNetworks(saved_networks: SavedNetwork[] | null): void {
     this.saved_networks = saved_networks
   }

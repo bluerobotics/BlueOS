@@ -95,6 +95,7 @@
       v-if="selected_network"
       v-model="show_connection_dialog"
       :network="selected_network"
+      @forget="forgetNetwork"
     />
 
     <disconnection-dialog
@@ -212,6 +213,9 @@ export default Vue.extend({
     },
   },
   methods: {
+    forgetNetwork(network: Network): void {
+      wifi.forgettNetwork(network)
+    },
     openConnectionDialog(network: Network): void {
       this.selected_network = network
       this.show_connection_dialog = true
