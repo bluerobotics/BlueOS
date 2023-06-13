@@ -130,13 +130,6 @@
               >
                 Retry
               </v-btn>
-              <v-btn
-                v-if="apply_done"
-                color="primary"
-                @click="nextStep()"
-              >
-                Continue
-              </v-btn>
             </v-row>
           </v-stepper-content>
 
@@ -144,16 +137,10 @@
             <v-alert :value="true" type="success">
               Your vehicle is ready to use!
             </v-alert>
-            <v-row class="pa-5">
-              <v-spacer />
-              <v-btn color="primary" @click="close">
-                Close
-              </v-btn>
-            </v-row>
           </v-stepper-content>
           <v-stepper-content step="100">
-            <v-alert :value="true" type="error">
-              Configuration was aborted.
+            <v-alert :value="true" type="warning">
+              Configuration was skipped.
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
@@ -270,7 +257,15 @@ export default Vue.extend({
     apply_done(new_value: boolean) {
       if (new_value) {
         this.setWizardVersion()
+        setTimeout(() => { this.nextStep() }, 2000)
       }
+    },
+    step_number: {
+      handler(new_value: number) {
+        if (new_value === 4) {
+          this.delayed_close()
+        }
+      },
     },
   },
   async mounted() {
@@ -286,6 +281,9 @@ export default Vue.extend({
     }
   },
   methods: {
+    delayed_close() {
+      setTimeout(() => { this.close() }, 3000)
+    },
     close() {
       this.should_open = false
       setTimeout(() => { window.location.reload() }, 500)
