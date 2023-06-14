@@ -34,18 +34,43 @@
 
         <v-stepper-items>
           <v-stepper-content step="0">
-            <RequireInternet @next="nextStep()" />
+            <v-card class="ma-2 pa-5">
+              <div class="welcome" style="display: flex; justify-content: center; align-items: center; width: 100%;">
+                Welcome to BlueOS!
+              </div>
+              Welcome to BlueOS!
+              In this setup wizard we will guide you through the initial configuration of your vehicle.
+              including setting up the vehicle name, hostname, and <b>firmware</b>.
+              If your vehicle is already set up, you can skip this wizard.
+            </v-card>
+            <v-row class="pa-5 justify-space-between">
+              <v-btn
+                color="primary"
+                @click="nextStep()"
+              >
+                Start
+              </v-btn>
+              <v-btn
+                color="warning darken"
+                @click="setWizardVersion(); cancel()"
+              >
+                Skip Wizard
+              </v-btn>
+            </v-row>
+          </v-stepper-content>
+          <v-stepper-content step="1">
+            <RequireInternet v-if="step_number === 1" @next="nextStep()" />
             <v-row class="pa-5">
               <v-btn
 
                 color="warning"
                 @click="cancel()"
               >
-                Try again later
+                Cancel wizard
               </v-btn>
             </v-row>
           </v-stepper-content>
-          <v-stepper-content step="1">
+          <v-stepper-content step="2">
             <div class="d-flex justify-space-between">
               <model-viewer
                 v-tooltip="'ROV Setup'"
@@ -93,7 +118,7 @@
             </v-row>
           </v-stepper-content>
 
-          <v-stepper-content step="2">
+          <v-stepper-content step="3">
             <div class="d-flex flex-column align-center">
               <v-text-field v-model="vehicle_name" label="Vehicle Name" />
               <v-text-field v-model="mdns_name" label="MDNS Name" />
@@ -125,7 +150,7 @@
             </v-row>
           </v-stepper-content>
 
-          <v-stepper-content step="3">
+          <v-stepper-content step="4">
             <div class="d-flex flex-column align-center">
               <component
                 :is="current_page"
@@ -145,7 +170,7 @@
             </v-row>
           </v-stepper-content>
 
-          <v-stepper-content step="4">
+          <v-stepper-content step="5">
             <v-alert :value="true" type="success">
               Your vehicle is ready to use!
             </v-alert>
@@ -271,7 +296,7 @@ export default Vue.extend({
     },
     step_number: {
       handler(new_value: number) {
-        if (new_value === 4) {
+        if (new_value === 5) {
           this.delayed_close()
         }
       },
@@ -493,4 +518,9 @@ export default Vue.extend({
   font-size: 100px;
 }
 
+.welcome {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
 </style>
