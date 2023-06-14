@@ -23,6 +23,7 @@ class Bootstrapper:
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
         self.client: docker.DockerClient = client
+        self.core_last_response_time = time.time()
         if low_level_api is None:
             self.low_level_api = docker.APIClient(base_url="unix://var/run/docker.sock")
         else:
@@ -153,8 +154,6 @@ class Bootstrapper:
         """
         image_version = "stable"
 
-        if component_name == "core":
-            self.core_last_response_time = time.time()
         self.config = Bootstrapper.read_config_file()
 
         image = self.config[component_name]
