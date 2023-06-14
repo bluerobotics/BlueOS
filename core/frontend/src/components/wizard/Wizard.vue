@@ -378,6 +378,7 @@ export default Vue.extend({
       this.step_number += 1
       this.vehicle_configuration_pages = [
       ]
+      this.vehicle_type = Vehicle.Other
     },
     async setupConfiguration() {
       this.step_number += 1
