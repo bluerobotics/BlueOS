@@ -235,7 +235,6 @@ class Bootstrapper:
                 if time.time() - self.core_last_response_time > 300:
                     print("Core has not responded in 5 minutes, resetting to factory...")
                     self.overwrite_config_file_with_defaults()
-                    continue
                 try:
                     self.remove(image)
                     if self.start(image):
