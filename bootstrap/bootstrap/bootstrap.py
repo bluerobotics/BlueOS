@@ -231,7 +231,6 @@ class Bootstrapper:
             time.sleep(1)
             for image in self.read_config_file():
                 if self.is_running(image):
-                    print(f"{image} is already running, waiting for it to stop...")
                     continue
                 # reset core to default if it's hasn't responded in 3 minutes
                 if time.time() - self.core_last_response_time > 180:
