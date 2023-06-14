@@ -232,9 +232,9 @@ class Bootstrapper:
             for image in self.read_config_file():
                 if self.is_running(image):
                     continue
-                # reset core to default if it's hasn't responded in 3 minutes
-                if time.time() - self.core_last_response_time > 180:
-                    print("Core has not responded in 3 minutes, resetting to factory...")
+                # reset core to default if it's hasn't responded in 5 minutes
+                if time.time() - self.core_last_response_time > 300:
+                    print("Core has not responded in 5 minutes, resetting to factory...")
                     self.overwrite_config_file_with_defaults()
                     continue
                 try:
