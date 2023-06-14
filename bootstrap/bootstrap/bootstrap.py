@@ -213,10 +213,6 @@ class Bootstrapper:
                     return True
             except Exception as e:
                 print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
-                if time.time() - self.core_last_response_time > 180:
-                    print("Reseting startup.json...")
-                    self.overwrite_config_file_with_defaults()
-                    return False
         return True
 
     def remove(self, container: str) -> None:
@@ -236,6 +232,11 @@ class Bootstrapper:
             for image in self.read_config_file():
                 if self.is_running(image):
                     print(f"{image} is already running, waiting for it to stop...")
+                    continue
+                # reset core to default if it's hasn't responded in 3 minutes
+                if time.time() - self.core_last_response_time > 180:
+                    print("Core has not responded in 3 minutes, resetting to factory...")
+                    self.overwrite_config_file_with_defaults()
                     continue
                 try:
                     self.remove(image)
