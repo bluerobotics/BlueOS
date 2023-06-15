@@ -6,6 +6,7 @@ import json
 import re
 import sys
 import time
+from typing import Tuple, List
 
 DELTA_JSON = {
     'core': {
@@ -29,6 +30,10 @@ DELTA_JSON = {
         }
     }
 }
+
+# To prevent deletion of user configuration lines in config.txt, users can include an inline comment immediately after each configuration line using the specified word.
+# However, it is important to note that conflicting configurations can happen, potentially impacting the kernel's loading process or causing harm to BlueOS.
+CONFIG_USER_PROTECTION_WORD = 'custom'
 
 import collections
 from commonwealth.utils.commands import run_command
@@ -60,6 +65,142 @@ def update_startup() -> bool:
 
         # Patch applied and system needs to be restarted for it to take effect
         return True
+
+def boot_config_get_or_append_session(config_content: List[str], session_name: str) -> Tuple[int, int]:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    session_match_pattern = r'^\[' + session_name + r'\].*$'
+    session_start_line_number = next(
+        (
+            i
+            for (i, line) in enumerate(config_content)
+            if re.match(session_match_pattern, line, regex_flags)
+        ),
+        None
+    )
+    if session_start_line_number is None:
+        config_content.append(f'\n[{session_name}]')
+        session_start_line_number = len(config_content)
+
+    any_session_match_pattern = r'^\[.*\].*$'
+    session_end_line_number = next(
+        (
+            (i + session_start_line_number + 1)
+            for (i,line) in enumerate(config_content[session_start_line_number + 1:])
+            if line == '' or re.match(any_session_match_pattern, line, regex_flags)
+        ),
+        None
+    )
+    if session_end_line_number is None:
+        session_end_line_number = len(config_content)
+
+    return (session_start_line_number, session_end_line_number)
+
+def boot_config_add_configuration_at_session(config_content: List[str], config: str, session_name: str) -> None:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    (session_start, session_end) = boot_config_get_or_append_session(config_content, session_name)
+
+    session_content = config_content[session_start:session_end]
+    config_already_exists = any([
+        session_content for session_content in session_content if re.match(config, session_content, regex_flags)])
+    if not config_already_exists:
+        config_content.insert(session_start + 1, config)
+
+def boot_config_filter_conflicting_configuration_at_session(config_content: List[str], config_pattern_match: str, config: str, session_name: str) -> List[str]:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    (session_start, session_end) = boot_config_get_or_append_session(config_content, session_name)
+
+    return [
+        line
+        for (i,line) in enumerate(config_content)
+        if (
+            # If it's not protected
+            re.match(f'^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$', line, regex_flags)
+            # Then remove the conflicting configuration...
+            or not (re.match(config_pattern_match, line, regex_flags)
+                # ...except...
+                and not (
+                    # ...if it's the correct one....
+                    re.match(f'^{config}.*$', line, regex_flags)
+                    # ...and lives inside the correct session.
+                    and (session_start < i < session_end)
+                )
+            )
+        )
+    ]
+
+def load_file(file_name) -> str:
+    command = f'cat "{file_name}"'
+    output = run_command(command, False)
+    print(output)
+    return output.stdout
+
+def save_file(file_name: str, file_content: str, backup_identifier: str) -> None:
+    command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
+    print(run_command(command, False))
+
+    command = f'echo "{file_content}" | sudo tee "{file_name}"'
+    print(run_command(command, False))
+
+
+def boot_cmdfile_add_modules(cmdline_content: List[str], config_key: str, desired_config: List[str]):
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    # Get each configs line indexes, if any
+    config_indexes = [
+        i
+        for i,line in enumerate(cmdline_content)
+        if re.match(f'^{config_key}=.*', line, regex_flags)
+    ]
+
+    # Combine all config lines into a single one, starting from desired configs
+    configs = set(desired_config)
+    first_config_line = None
+    for config_index in config_indexes:
+        config_line = cmdline_content[config_index].split(f'{config_key}=')[-1].split(',')
+
+        configs = configs.union(config_line)
+
+        if first_config_line is None:
+            first_config_line = config_index
+        else:
+            cmdline_content.remove(cmdline_content[config_index])
+
+    # Replace the first configs line with the combined, append if none
+    if first_config_line:
+        cmdline_content[first_config_line] = f'{config_key}=' + ','.join(configs)
+    else:
+        config_line = f'{config_key}=' + ','.join(configs)
+        cmdline_content.append(config_line)
+
+def boot_cmdfile_add_config(cmdline_content: List[str], config_key: str, config_value: str):
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    # Get each configs line indexes, if any
+    config_indexes = [
+        i
+        for i,line in enumerate(cmdline_content)
+        if re.match(f'^{config_key}={config_value}(,.*)*$', line, regex_flags)
+    ]
+
+    found = False
+    config_line = f'{config_key}={config_value}'
+    for config_index in config_indexes:
+        if not found:
+            if config_value == cmdline_content[config_index].split(f'{config_key}=')[-1]:
+                found = True
+                continue
+
+            cmdline_content[config_index] = config_line
+            found = True
+        else:
+            cmdline_content.remove(cmdline_content[config_index])
+
+    if not found:
+        config_line = f'{config_key}={config_value}'
+        cmdline_content.append(config_line)
 
 def update_cgroups() -> bool:
     print("Running cgroup update..")
