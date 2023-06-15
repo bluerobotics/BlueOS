@@ -72,15 +72,48 @@ def update_cgroups() -> None:
     print(run_command(command, False))
 
 
-def update_dwc2() -> None:
+def update_dwc2() -> bool:
     print("Running dwc2 update..")
-    # Enable USB OTG as ethernet adapter
-    command = '''sudo sh -c '\
-    grep -q modules-load=dwc2 /boot/cmdline.txt || (
-        truncate --size -1 /boot/cmdline.txt;\
-        echo " modules-load=dwc2,g_ether" >> /boot/cmdline.txt;\
-    )' '''
-    print(run_command(command, False))
+
+    # Retrieve the config file
+    config_file = '/boot/config.txt'
+    config_content = load_file(config_file).splitlines()
+    unpatched_config_content = config_content.copy()
+
+    # Add dwc2 overlay in pi4 section if it doesn't exist
+    dwc2_overlay_config = 'dtoverlay=dwc2,dr_mode=otg'
+    pi4_session_name = 'pi4'
+    boot_config_add_configuration_at_session(config_content, dwc2_overlay_config, pi4_session_name)
+
+    # Remove any unprotected and conflicting dwc2 overlay configuration
+    dwc2_overlay_match_pattern = '^[#]*dtoverlay=dwc2.*$'
+    config_content = boot_config_filter_conflicting_configuration_at_session(config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, pi4_session_name)
+
+    # Save if needed, with backup
+    backup_identifier = 'before_update_dwc2'
+    if unpatched_config_content != config_content:
+        config_content_str = '\n'.join(config_content)
+        save_file(config_file, config_content_str, backup_identifier)
+
+    # Retrieve the cmdline file
+    cmdline_file = '/boot/cmdline.txt'
+    cmdline_content = load_file(cmdline_file).replace('\n','').split(' ')
+    unpatched_cmdline_content = cmdline_content.copy()
+
+    # Add the dwc2 module configuration to enable USB OTG as ethernet adapter
+    boot_cmdfile_add_modules(cmdline_content, 'modules-load', ['dwc2', 'g_ether'])
+
+    # Don't need to apply if the content is the same, restart if the above part requires
+    if unpatched_cmdline_content == cmdline_content:
+        return unpatched_config_content != config_content
+
+    # Make a backup file before modifying the original one
+    cmdline_content_str = ' '.join(cmdline_content)
+    save_file(cmdline_file, cmdline_content_str, backup_identifier)
+
+    # Patch applied and system needs to be restarted for it to take effect
+    return True
+
 
     command = '''sudo sh -c '\
     grep -q "dtoverlay=dwc2" /boot/config.txt || (
