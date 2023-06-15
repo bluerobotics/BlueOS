@@ -132,12 +132,52 @@ def update_dwc2() -> bool:
     # Patch applied and system needs to be restarted for it to take effect
     return True
 
+def update_navigator_overlays() -> bool:
+    print("Running Nagivator overlays update..")
 
-    command = '''sudo sh -c '\
-    grep -q "dtoverlay=dwc2" /boot/config.txt || (
-        echo "dtoverlay=dwc2" | sudo tee -a /boot/config.txt
-    )' '''
-    print(run_command(command, False))
+    # Retrieve the config file
+    config_file = '/boot/config.txt'
+    config_content = load_file(config_file).splitlines()
+    unpatched_config_content = config_content.copy()
+
+    navigator_configs_with_match_patterns = [
+        ('enable_uart=1', '^enable_uart=.*'),
+        ('dtoverlay=uart1', '^dtoverlay=uart1.*'),
+        ('dtoverlay=uart3', '^dtoverlay=uart3.*'),
+        ('dtoverlay=uart4', '^dtoverlay=uart4.*'),
+        ('dtoverlay=uart5', '^dtoverlay=uart5.*'),
+        ('dtparam=i2c_vc=on', '^dtparam=i2c_vc=.*'),
+        ('dtoverlay=i2c1', '^dtoverlay=i2c1.*'),
+        ('dtparam=i2c_arm_baudrate=1000000', '^dtparam=i2c_arm_baudrate.*'),
+        ('dtoverlay=i2c4,pins_6_7,baudrate=1000000', '^dtoverlay=i2c4.*'),
+        ('dtoverlay=i2c6,pins_22_23,baudrate=400000', '^dtoverlay=i2c6.*'),
+        ('dtparam=spi=on', '^dtparam=spi=.*'),
+        ('dtoverlay=spi0-led', '^dtoverlay=spi0.*'),
+        ('dtoverlay=spi1-3cs', '^dtoverlay=spi1.*'),
+        ('gpio=11,24,25=op,pu,dh', '^gpio=.*((11|24|25),?)+.*'),
+        ('gpio=37=op,pd,dl', '^gpio=.*37.*'),
+    ]
+    navigator_configs_with_match_patterns.reverse()
+
+    pi4_session_name = 'pi4'
+    for (config, config_match_pattern) in navigator_configs_with_match_patterns:
+        # Add each navigator configuration to pi4 session
+        boot_config_add_configuration_at_session(config_content, config, pi4_session_name)
+
+        # Remove any unprotected and conflicting configuration of peripherals
+        config_content = boot_config_filter_conflicting_configuration_at_session(config_content, config_match_pattern, config, pi4_session_name)
+
+    # Don't need to apply or restart if the content is the same
+    if unpatched_config_content == config_content:
+        return False
+
+    # Save if needed, with backup
+    backup_identifier = 'before_update_navigator_overlays'
+    config_content_str = '\n'.join(config_content)
+    save_file(config_file, config_content_str, backup_identifier)
+
+    # Patch applied and system needs to be restarted for it to take effect
+    return True
 
 def ensure_nginx_permissions() -> bool:
     # ensure nginx can read the userdata directory
@@ -172,6 +212,7 @@ def main() -> int:
         update_startup,
         update_cgroups,
         update_dwc2,
+        update_navigator_overlays,
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
     ]
