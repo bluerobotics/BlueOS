@@ -61,16 +61,34 @@ def update_startup() -> bool:
         # Patch applied and system needs to be restarted for it to take effect
         return True
 
-def update_cgroups() -> None:
+def update_cgroups() -> bool:
     print("Running cgroup update..")
-    # add cgroups options to cmdline if they are not there already,
-    command = '''sudo sh -c '\
-    grep -q cgroup /boot/cmdline.txt || (\
-        truncate --size -1 /boot/cmdline.txt;\
-        echo " cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory" >> /boot/cmdline.txt;\
-    )' '''
-    print(run_command(command, False))
 
+    # Retrieve the cmdline file
+    cmdline_file = '/boot/cmdline.txt'
+    cmdline_content = load_file(cmdline_file).replace('\n','').split(' ')
+    unpatched_cmdline_content = cmdline_content.copy()
+
+    # Add the dwc2 module configuration to enable USB OTG as ethernet adapter
+    cgroups = [
+        ('cgroup_enable', 'cpuset'),
+        ('cgroup_memory', '1'),
+        ('cgroup_enable', 'memory'),
+    ]
+    for (config_key, config_value) in cgroups:
+        boot_cmdfile_add_config(cmdline_content, config_key, config_value)
+
+    # Don't need to apply or restart if the content is the same
+    if unpatched_cmdline_content == cmdline_content:
+        return False
+
+    # Make a backup file before modifying the original one
+    cmdline_content_str = ' '.join(cmdline_content)
+    backup_identifier = 'before_update_cgroups'
+    save_file(cmdline_file, cmdline_content_str, backup_identifier)
+
+    # Patch applied and system needs to be restarted for it to take effect
+    return True
 
 def update_dwc2() -> bool:
     print("Running dwc2 update..")
