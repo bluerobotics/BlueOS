@@ -364,7 +364,7 @@ def main() -> int:
     if patches_requiring_restart:
         print("The system will restart in 10 seconds because the following applied patches required restart:", patches_requiring_restart)
         time.sleep(10)
-        sys.exit(1)
+        run_command('sudo reboot', False)
 
     return 0
 
