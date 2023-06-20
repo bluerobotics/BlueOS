@@ -38,7 +38,8 @@ for STRING in \
     "dtoverlay=uart4" \
     "dtoverlay=uart5" \
     "dtparam=i2c_vc=on" \
-    "dtoverlay=i2c1,baudrate=1000000" \
+    "dtoverlay=i2c1" \
+    "dtparam=i2c_arm_baudrate=1000000" \
     "dtoverlay=i2c4,pins_6_7,baudrate=1000000" \
     "dtoverlay=i2c6,pins_22_23,baudrate=400000" \
     "dtparam=spi=on" \
