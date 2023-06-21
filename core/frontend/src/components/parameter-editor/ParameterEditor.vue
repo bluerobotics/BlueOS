@@ -108,6 +108,7 @@
           <v-container>
             <v-row>
               <v-file-input
+                v-model="parameter_file"
                 accept=".params,.parm,.param"
                 class="mr-2"
                 show-size
@@ -166,6 +167,7 @@ export default Vue.extend({
       edit_dialog: false,
       load_param_dialog: false,
       loaded_parameter: {} as Dictionary<number>,
+      parameter_file: undefined,
     }
   },
   computed: {
@@ -205,6 +207,13 @@ export default Vue.extend({
     },
     finished_loading() {
       return autopilot_data.finished_loading
+    },
+  },
+  watch: {
+    load_param_dialog() {
+      if (!this.load_param_dialog) {
+        this.parameter_file = undefined
+      }
     },
   },
   methods: {
