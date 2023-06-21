@@ -13,7 +13,7 @@ import system_information from '@/store/system-information'
 import { Disk } from '@/types/system-information/system'
 
 export default Vue.extend({
-  name: 'HealthTrayMenu',
+  name: 'DiskWidget',
   computed: {
     main_disk(): undefined | Disk {
       const disks = system_information.system?.disk
