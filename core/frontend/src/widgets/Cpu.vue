@@ -12,7 +12,7 @@ import Vue from 'vue'
 import system_information from '@/store/system-information'
 
 export default Vue.extend({
-  name: 'HealthTrayMenu',
+  name: 'CpuWidget',
   computed: {
     cpu_usage(): string {
       const cpus = system_information.system?.cpu
