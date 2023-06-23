@@ -30,7 +30,7 @@ class InterfaceInfo(BaseModel):
     number_of_disconnections: int
 
 
-class EthernetInterface(BaseModel):
+class NetworkInterface(BaseModel):
     name: str
     addresses: List[InterfaceAddress]
     info: Optional[InterfaceInfo]
@@ -44,9 +44,9 @@ class EthernetManager:
     # IP abstraction interface
     ipr = IPRoute()
 
-    result: List[EthernetInterface] = []
+    result: List[NetworkInterface] = []
 
-    def __init__(self, default_configs: List[EthernetInterface]) -> None:
+    def __init__(self, default_configs: List[NetworkInterface]) -> None:
         self.settings = settings.Settings()
 
         self._dhcp_servers: List[DHCPServerManager] = []
@@ -65,7 +65,7 @@ class EthernetManager:
         for item in self.settings.root["content"]:
             logger.info(f"Loading following configuration: {item}.")
             try:
-                self.set_configuration(EthernetInterface(**item))
+                self.set_configuration(NetworkInterface(**item))
             except Exception as error:
                 logger.error(f"Failed loading saved configuration. {error}")
 
@@ -83,11 +83,11 @@ class EthernetManager:
         result = [interface.dict(exclude={"info"}) for interface in self.result]
         self.settings.save(result)
 
-    def set_configuration(self, interface: EthernetInterface) -> None:
+    def set_configuration(self, interface: NetworkInterface) -> None:
         """Modify hardware based in the configuration
 
         Args:
-            interface: EthernetInterface
+            interface: NetworkInterface
         """
         interfaces = self.get_ethernet_interfaces()
         logger.debug(f"Found following ethernet interfaces: {interfaces}.")
@@ -148,11 +148,11 @@ class EthernetManager:
 
         return True
 
-    def validate_interface_data(self, interface: EthernetInterface) -> bool:
+    def validate_interface_data(self, interface: NetworkInterface) -> bool:
         """Check if interface configuration is valid
 
         Args:
-            interface: EthernetInterface instance
+            interface: NetworkInterface instance
 
         Returns:
             bool: True if valid, False if not
@@ -160,7 +160,7 @@ class EthernetManager:
         return self.is_valid_interface_name(interface.name)
 
     @staticmethod
-    def _is_server_address_present(interface: EthernetInterface) -> bool:
+    def _is_server_address_present(interface: NetworkInterface) -> bool:
         return any(address.mode == AddressMode.Server for address in interface.addresses)
 
     @staticmethod
@@ -274,17 +274,17 @@ class EthernetManager:
         except Exception as error:
             raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
 
-    def get_interface_by_name(self, name: str) -> EthernetInterface:
+    def get_interface_by_name(self, name: str) -> NetworkInterface:
         for interface in self.get_ethernet_interfaces():
             if interface.name == name:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
 
-    def get_ethernet_interfaces(self) -> List[EthernetInterface]:
+    def get_ethernet_interfaces(self) -> List[NetworkInterface]:
         """Get ethernet interfaces information
 
         Returns:
-            List of EthernetInterface instances available
+            List of NetworkInterface instances available
         """
         result = []
         for interface, addresses in psutil.net_if_addrs().items():
@@ -316,7 +316,7 @@ class EthernetManager:
                 valid_addresses.append(InterfaceAddress(ip=ip, mode=mode))
 
             info = self.get_interface_info(interface)
-            interface_data = EthernetInterface(name=interface, addresses=valid_addresses, info=info)
+            interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info)
             # Check if it's valid and add to the result
             if self.validate_interface_data(interface_data):
                 result += [interface_data]
