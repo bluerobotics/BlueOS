@@ -72,7 +72,7 @@ class EthernetManager:
     def save(self) -> None:
         """Save actual configuration"""
         try:
-            self.get_interfaces()
+            self.get_ethernet_interfaces()
         except Exception as exception:
             logger.error(f"Failed to fetch actual configuration, going to use the previous info: {exception}")
 
@@ -89,7 +89,7 @@ class EthernetManager:
         Args:
             interface: EthernetInterface
         """
-        interfaces = self.get_interfaces()
+        interfaces = self.get_ethernet_interfaces()
         logger.debug(f"Found following ethernet interfaces: {interfaces}.")
         valid_names = [interface.name for interface in interfaces]
 
@@ -275,13 +275,13 @@ class EthernetManager:
             raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
 
     def get_interface_by_name(self, name: str) -> EthernetInterface:
-        for interface in self.get_interfaces():
+        for interface in self.get_ethernet_interfaces():
             if interface.name == name:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
 
-    def get_interfaces(self) -> List[EthernetInterface]:
-        """Get interfaces information
+    def get_ethernet_interfaces(self) -> List[EthernetInterface]:
+        """Get ethernet interfaces information
 
         Returns:
             List of EthernetInterface instances available

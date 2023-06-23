@@ -64,7 +64,7 @@ app.router.route_class = GenericErrorHandlingRoute
 @temporary_cache(timeout_seconds=10)
 def retrieve_interfaces() -> Any:
     """REST API endpoint to retrieve the configured ethernet interfaces."""
-    return manager.get_interfaces()
+    return manager.get_ethernet_interfaces()
 
 
 @app.post("/ethernet", response_model=EthernetInterface, summary="Configure a ethernet interface.")
