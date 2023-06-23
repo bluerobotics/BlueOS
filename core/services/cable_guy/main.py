@@ -18,9 +18,10 @@ from uvicorn import Config, Server
 
 from api.manager import (
     AddressMode,
-    EthernetInterface,
     EthernetManager,
     InterfaceAddress,
+    NetworkInterface,
+    NetworkInterfaceMetricApi,
 )
 
 SERVICE_NAME = "cable-guy"
@@ -39,8 +40,8 @@ args = parser.parse_args()
 
 if args.default_config == "bluerov2":
     default_configs = [
-        EthernetInterface(name="eth0", addresses=[InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Unmanaged)]),
-        EthernetInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
+        NetworkInterface(name="eth0", addresses=[InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Unmanaged)]),
+        NetworkInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
     ]
 
 manager = EthernetManager(default_configs)
@@ -59,7 +60,7 @@ app = FastAPI(
 app.router.route_class = GenericErrorHandlingRoute
 
 
-@app.get("/ethernet", response_model=List[EthernetInterface], summary="Retrieve ethernet interfaces.")
+@app.get("/ethernet", response_model=List[NetworkInterface], summary="Retrieve ethernet interfaces.")
 @version(1, 0)
 @temporary_cache(timeout_seconds=10)
 def retrieve_interfaces() -> Any:
@@ -67,9 +68,9 @@ def retrieve_interfaces() -> Any:
     return manager.get_ethernet_interfaces()
 
 
-@app.post("/ethernet", response_model=EthernetInterface, summary="Configure a ethernet interface.")
+@app.post("/ethernet", response_model=NetworkInterface, summary="Configure a ethernet interface.")
 @version(1, 0)
-def configure_interface(interface: EthernetInterface = Body(...)) -> Any:
+def configure_interface(interface: NetworkInterface = Body(...)) -> Any:
     """REST API endpoint to configure a new ethernet interface or modify an existing one."""
     manager.set_configuration(interface)
     manager.save()
