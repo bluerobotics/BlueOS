@@ -112,6 +112,8 @@ export default Vue.extend({
         interval: this.stream.video_and_stream.stream_information.configuration.frame_interval,
         endpoints: this.stream.video_and_stream.stream_information.endpoints,
         thermal: this.stream.video_and_stream.stream_information?.extended_configuration?.thermal ?? false,
+        disable_mavlink:
+          this.stream.video_and_stream.stream_information?.extended_configuration?.disable_mavlink ?? false,
       }
     },
     settings_summary(): string {

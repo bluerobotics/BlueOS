@@ -95,6 +95,10 @@
                   v-model="is_thermal"
                   label="Thermal camera"
                 />
+                <v-checkbox
+                  v-model="is_disable_mavlink"
+                  label="Disable Mavlink"
+                />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -176,6 +180,7 @@ export default Vue.extend({
           interval: undefined,
           endpoints: [''],
           thermal: false,
+          disable_mavlink: false,
         }
       },
     },
@@ -193,6 +198,7 @@ export default Vue.extend({
       selected_interval: this.stream.interval,
       stream_endpoints: this.stream.endpoints,
       is_thermal: this.stream.thermal,
+      is_disable_mavlink: this.stream.disable_mavlink,
       settings,
       StreamType,
     }
@@ -228,6 +234,7 @@ export default Vue.extend({
           },
           extended_configuration: {
             thermal: this.is_thermal,
+            disable_mavlink: this.is_disable_mavlink,
           },
         },
       }
