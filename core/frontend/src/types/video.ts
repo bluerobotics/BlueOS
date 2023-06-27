@@ -108,7 +108,8 @@ export interface CaptureConfiguration {
 }
 
 export interface ExtendedConfiguration {
-  thermal: boolean,
+  thermal: boolean
+  disable_mavlink: boolean
 }
 
 export interface StreamInformation {
@@ -184,4 +185,5 @@ export interface StreamPrototype {
   interval?: FrameInterval
   endpoints: string[]
   thermal: boolean
+  disable_mavlink: boolean
 }
