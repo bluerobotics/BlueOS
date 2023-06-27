@@ -120,7 +120,7 @@
                     x-small
                     text-color="white"
                   >
-                    Alpha
+                    Beta
                   </v-chip>
                 </v-list-item-title>
               </template>
@@ -247,7 +247,7 @@
                     x-small
                     text-color="white"
                   >
-                    Alpha
+                    Beta
                   </v-chip>
                 </v-list-item-title>
               </template>
