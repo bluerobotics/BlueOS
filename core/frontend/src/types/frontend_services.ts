@@ -132,3 +132,10 @@ export const bag_of_holders_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const helper_service: Service = {
+  name: 'Helper service',
+  description: 'Simple helper service for the frontend and simple features',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
