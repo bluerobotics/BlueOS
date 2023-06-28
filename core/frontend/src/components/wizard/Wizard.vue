@@ -45,16 +45,16 @@
             </v-card>
             <v-row class="pa-5 justify-space-between">
               <v-btn
-                color="primary"
-                @click="nextStep()"
-              >
-                Start
-              </v-btn>
-              <v-btn
                 color="warning darken"
                 @click="setWizardVersion(); cancel()"
               >
                 Skip Wizard
+              </v-btn>
+              <v-btn
+                color="primary"
+                @click="nextStep()"
+              >
+                Start
               </v-btn>
             </v-row>
           </v-stepper-content>
