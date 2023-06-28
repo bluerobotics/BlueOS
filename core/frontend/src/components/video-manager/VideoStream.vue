@@ -165,11 +165,52 @@ export default Vue.extend({
         })
     },
     async copySDPFileURL(): Promise<void> {
-      try {
-        await navigator.clipboard.writeText(this.sDPFileURL)
-      } catch (error) {
-        console.error(`Failed to copy URL to clipboard. Reason: ${error}`)
+      const try_fallback_clipboard_copy_method = (): void => {
+        // If we don't have the permission, fallback to the old hacky way of creating an input,
+        // copying the text from it, and destroy it even before it renders.
+        const temporaryInputElement = document.createElement('input')
+        temporaryInputElement.value = this.sDPFileURL
+        document.body.appendChild(temporaryInputElement)
+
+        try {
+          temporaryInputElement.select()
+          document.execCommand('copy')
+        } catch (error) {
+          console.error(`Failed to copy URL to clipboard. Reason: ${error}`)
+        } finally {
+          document.body.removeChild(temporaryInputElement)
+        }
       }
+
+      const clipboard_copy_api = (): void => {
+        navigator.clipboard.writeText(this.sDPFileURL).catch((error) => {
+          console.error(`Failed to copy URL to clipboard using Clipboard API. Reason: ${error}`)
+          try_fallback_clipboard_copy_method()
+        })
+      }
+
+      navigator.permissions
+        .query({ name: 'clipboard-write' as PermissionName })
+        .then((permissionStatus) => {
+          if (permissionStatus.state === 'granted') {
+            clipboard_copy_api()
+          } else if (permissionStatus.state === 'prompt') {
+            // The user will be prompted to grant the permission.
+            permissionStatus.onchange = () => {
+              if (permissionStatus.state === 'granted') {
+                clipboard_copy_api()
+              } else {
+                try_fallback_clipboard_copy_method()
+              }
+            }
+          } else {
+            try_fallback_clipboard_copy_method()
+          }
+        })
+        .catch((error) => {
+          console.error('Error while requesting clipboard-write permission:', error)
+          try_fallback_clipboard_copy_method()
+        })
     },
   },
 })
