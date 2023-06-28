@@ -125,18 +125,20 @@ class EthernetManager:
                     result += [value]
         return result
 
-    def is_valid_interface_name(self, interface_name: str) -> bool:
+    def is_valid_interface_name(self, interface_name: str, filter_wifi: bool = False) -> bool:
         """Check if an interface name is valid
 
         Args:
             interface_name (str): Network interface name
+            filter_wifi (boolean, optional): Enable wifi interface filtering
 
         Returns:
             bool: True if valid, False if not
         """
         blacklist = ["lo", "ham.*", "docker.*", "veth.*"]
-        wifi_interfaces = self._get_wifi_interfaces()
-        blacklist += wifi_interfaces
+        if filter_wifi:
+            wifi_interfaces = self._get_wifi_interfaces()
+            blacklist += wifi_interfaces
 
         if not interface_name:
             logger.error("Interface name cannot be blank or null.")
@@ -148,16 +150,17 @@ class EthernetManager:
 
         return True
 
-    def validate_interface_data(self, interface: NetworkInterface) -> bool:
+    def validate_interface_data(self, interface: NetworkInterface, filter_wifi: bool = False) -> bool:
         """Check if interface configuration is valid
 
         Args:
             interface: NetworkInterface instance
+            filter_wifi (boolean, optional): Enable wifi interface filtering
 
         Returns:
             bool: True if valid, False if not
         """
-        return self.is_valid_interface_name(interface.name)
+        return self.is_valid_interface_name(interface.name, filter_wifi)
 
     @staticmethod
     def _is_server_address_present(interface: NetworkInterface) -> bool:
@@ -280,8 +283,11 @@ class EthernetManager:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
 
-    def get_ethernet_interfaces(self) -> List[NetworkInterface]:
-        """Get ethernet interfaces information
+    def get_interfaces(self, filter_wifi: bool = False) -> List[NetworkInterface]:
+        """Get interfaces information
+
+        Args:
+            filter_wifi (boolean, optional): Enable wifi interface filtering
 
         Returns:
             List of NetworkInterface instances available
@@ -291,7 +297,7 @@ class EthernetManager:
             # We don't care about virtual ethernet interfaces
             ## Virtual interfaces are created by programs such as docker
             ## and they are an abstraction of real interfaces, the ones that we want to configure.
-            if not self.is_valid_interface_name(interface):
+            if not self.is_valid_interface_name(interface, filter_wifi):
                 continue
 
             valid_addresses = []
@@ -318,11 +324,19 @@ class EthernetManager:
             info = self.get_interface_info(interface)
             interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info)
             # Check if it's valid and add to the result
-            if self.validate_interface_data(interface_data):
+            if self.validate_interface_data(interface_data, filter_wifi):
                 result += [interface_data]
 
         self.result = result
         return result
+
+    def get_ethernet_interfaces(self) -> List[NetworkInterface]:
+        """Get ethernet interfaces information
+
+        Returns:
+            List of NetworkInterface instances available
+        """
+        return self.get_interfaces(filter_wifi=True)
 
     def get_interface_ndb(self, interface_name: str) -> Any:
         """Get interface NDB information for interface
