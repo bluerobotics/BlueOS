@@ -36,7 +36,7 @@
           color="white"
           @click="drawer = true"
         />
-        <Draggable v-model="selected_widgets" class="d-flex align-center justify-center">
+        <draggable v-model="selected_widgets" class="d-flex align-center justify-center">
           <component
             :is="getWidget(widget_name)"
             v-for="(widget_name, i) in selected_widgets"
