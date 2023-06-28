@@ -53,6 +53,7 @@
         <v-spacer />
         <beacon-tray-menu />
         <health-tray-menu />
+        <internet-tray-menu />
         <theme-tray-menu />
         <vehicle-reboot-required-tray-menu />
         <pirate-mode-tray-menu />
@@ -326,6 +327,7 @@ import updateTime from '@/utils/update_time'
 
 import Alerter from './components/app/Alerter.vue'
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
+import InternetTrayMenu from './components/app/InternetTrayMenu.vue'
 import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
 import PiradeModeTrayMenu from './components/app/PirateModeTrayMenu.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
@@ -352,6 +354,7 @@ export default Vue.extend({
 
   components: {
     'beacon-tray-menu': BeaconTrayMenu,
+    'internet-tray-menu': InternetTrayMenu,
     'notification-tray-button': NotificationTrayButton,
     'pirate-mode-tray-menu': PiradeModeTrayMenu,
     'theme-tray-menu': ThemeTrayMenu,
