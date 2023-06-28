@@ -90,14 +90,11 @@ class Kraken:
         return cast(List[Extension], self.settings.extensions)
 
     async def install_extension(self, extension: Any) -> AsyncGenerator[bytes, None]:
-        # Remove older entry if it exists
-        self.settings.extensions = [
-            old_extension
-            for old_extension in self.settings.extensions
-            if old_extension.identifier != extension.identifier
-        ]
         try:
-            await self.remove(extension.identifier, False)
+            # Remove older entry if it exists
+            installed_extension = await self.extension_from_identifier(extension.identifier)
+            if installed_extension is not None:
+                await self.uninstall_extension(installed_extension)
         except Exception as e:
             # this will fail if the container is not installed, we don't mind it
             logger.info(e)
