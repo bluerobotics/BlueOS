@@ -67,6 +67,25 @@
               Remove
             </v-btn>
           </v-card-actions>
+
+          <v-divider />
+
+          <v-card-title class="align-center">
+            Enable Wizard Configuration
+          </v-card-title>
+
+          <v-card-actions class="flex-row">
+            <v-btn
+              v-tooltip="'Enable Wizard'"
+              class="ma-2"
+              @click="enable_wizard"
+            >
+              <v-icon left>
+                mdi-wizard-hat
+              </v-icon>
+              Enable
+            </v-btn>
+          </v-card-actions>
         </v-card>
       </v-card>
     </v-dialog>
@@ -89,6 +108,7 @@ import Vue from 'vue'
 
 import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
+import bag from '@/store/bag'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { prettifySize } from '@/utils/helper_functions'
@@ -161,6 +181,20 @@ export default Vue.extend({
         })
         .catch((error) => {
           notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
+        })
+      this.showDialog(false)
+    },
+    async enable_wizard(): Promise<void> {
+      const payload = { version: 0 }
+      await bag.setData('wizard', payload)
+        .then((result) => {
+          if (result) {
+            this.$router.push('/')
+            window.location.reload()
+          }
+        })
+        .catch(() => {
+          notifier.pushBackError('ENABLE_WIZARD', 'Failed to enable wizard')
         })
       this.showDialog(false)
     },
