@@ -3,6 +3,7 @@
 import asyncio
 import http
 import logging
+import os
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -25,6 +26,7 @@ PORT = 81
 DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
 API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
 
+BLUEOS_VERSION = os.environ.get("GIT_DESCRIBE_TAGS", "null")
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
 
@@ -35,7 +37,7 @@ init_logger("Helper")
 class Website(str, Enum):
     ArduPilot = "http://firmware.ardupilot.org"
     AWS = "http://amazon.com"
-    BlueOS = f"http://blueos.cloud/ping?{machineid.hashed_id()}"
+    BlueOS = f"http://blueos.cloud/ping?id={machineid.hashed_id()}&version={BLUEOS_VERSION}"
     Cloudflare = "http://1.1.1.1/"
     GitHub = "http://github.com"
 
