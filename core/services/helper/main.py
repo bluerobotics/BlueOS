@@ -7,11 +7,13 @@ import json
 import logging
 import re
 import socket
+import subprocess
 from concurrent import futures
 from datetime import datetime
 from enum import Enum
 from functools import cache
 from io import BytesIO
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
 from uuid import UUID
@@ -428,7 +430,7 @@ class Helper:
 
         # Update our known services cache
         Helper.KNOWN_SERVICES.update(services)
-
+        Helper.update_nginx(services)
         return [service for service in Helper.KNOWN_SERVICES if service.valid]
 
     @staticmethod
@@ -452,6 +454,23 @@ class Helper:
         return website_status
 
     @staticmethod
+    def reload_nginx() -> None:
+        with open("/var/run/nginx.pid", "r", encoding="utf-8") as f:
+            pid = int(f.readline())
+            # kill -HUP is the right way of doing a graceful reload in Nginx
+            subprocess.run(["kill", "-HUP", f"{pid}"], check=False)
+
+    @staticmethod
+    def update_nginx(services: Set[ServiceInfo]) -> None:
+        changed = 0
+        for service in services:
+            if service.metadata:
+                if Helper.setup_nginx_route(service.metadata, service.port):
+                    changed += 1
+        if changed:
+            Helper.reload_nginx()
+
+    @staticmethod
     @temporary_cache(timeout_seconds=5)
     def check_internet_access() -> Dict[str, WebsiteStatus]:
         # 10 concurrent executors is fine here because its a very short/light task
@@ -460,6 +479,33 @@ class Helper:
             status_list = [task.result() for task in futures.as_completed(tasks)]
 
         return {status.site.name: status for status in status_list}
+
+    @staticmethod
+    def setup_nginx_route(metadata: ServiceMetadata, port: int) -> bool:
+        name = metadata.sanitized_name
+        text = f"""
+        location /extensionv2/{name} {{
+        rewrite ^/extensionv2/{name}(/|$)(.*)$ /$2 break;
+        proxy_pass http://localhost:{port};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        }}
+        """
+        filename = f"/home/pi/tools/nginx/extensions/{name}.conf"
+        Path.mkdir(Path("/home/pi/tools/nginx/extensions/"), parents=True, exist_ok=True)
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                if f.read() == text:
+                    return False
+        except Exception as e:
+            logging.info(f"file '{filename}' not found ({e}):, a new one will be created")
+        with open(filename, "w", encoding="utf-8") as f:
+            logging.info(f"updating nginx route for {name}")
+            f.write(text)
+            logging.info(f"file updated: {filename}")
+        return True
 
 
 fast_api_app = FastAPI(
