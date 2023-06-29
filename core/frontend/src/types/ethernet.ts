@@ -12,6 +12,7 @@ export interface InterfaceAddress {
 export interface InterfaceInfo {
     connected: boolean,
     number_of_disconnections: number,
+    priority: number,
 }
 
 export interface EthernetInterface {
