@@ -1,4 +1,5 @@
 import re
+import subprocess
 import time
 from enum import Enum
 from socket import AddressFamily
@@ -413,6 +414,71 @@ class EthernetManager:
                 return metric
 
         return None
+
+    def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+        """Set interfaces priority.
+
+        Args:
+            interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics.
+        """
+        if not interfaces:
+            logger.info("Cant change network priority from empty list.")
+            return
+
+        highest_metric = 1
+        for interface in self.get_interfaces_priority():
+            highest_metric = max(highest_metric, interface.priority)
+
+        # If there is a single interface without metric, make it the highest priority
+        if len(interfaces) == 1 and interfaces[0].priority is None:
+            interface = self.get_interface_priority(interfaces[0].name)
+            original_priority = interface and interface.priority or 0
+            for interface in self.get_interfaces_priority():
+                highest_metric = max(highest_metric, original_priority)
+            if original_priority == highest_metric:
+                logger.info(f"Interface {interfaces[0].name} already has highest priority: {highest_metric}")
+                return
+            interfaces[0].priority = highest_metric + 10
+
+        # Ensure a high value for metric
+        if highest_metric <= len(interfaces):
+            highest_metric = 400
+
+        if all(interface.priority is not None for interface in interfaces):
+            for interface in interfaces:
+                EthernetManager.set_interface_priority(interface.name, interface.priority)
+            return
+
+        # Calculate metric automatically in the case where no metric is provided
+        if all(interface.priority is None for interface in interfaces):
+            network_step = int(highest_metric / len(interfaces))
+            times = 0
+            for interface in interfaces:
+                EthernetManager.set_interface_priority(interface.name, highest_metric - network_step * times)
+                times += 1
+            return
+
+        raise RuntimeError("There is no support for interfaces with and without metric on the same list")
+
+    @staticmethod
+    def set_interface_priority(name: str, priority: int) -> None:
+        """Set interface priority
+
+        Args:
+            name (str): Interface name
+            priority (int): Priority
+        """
+
+        # Change the priority for all routes that are using this interface
+        # There is no pretty way of doing it with pyroute2
+        result = subprocess.run(
+            ["ifmetric", name, str(priority)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to change network priority {name}")
 
     def get_interface_info(self, interface_name: str) -> InterfaceInfo:
         """Get interface info field

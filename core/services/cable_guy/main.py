@@ -85,6 +85,13 @@ def retrieve_interfaces() -> Any:
     return manager.get_interfaces()
 
 
+@app.post("/set_interfaces_priority", summary="Set interface priority")
+@version(1, 0)
+def set_interfaces_priority(interfaces: List[NetworkInterfaceMetricApi]) -> Any:
+    """REST API endpoint to set the interface priority."""
+    return manager.set_interfaces_priority(interfaces)
+
+
 @app.post("/address", summary="Add IP address to interface.")
 @version(1, 0)
 def add_address(interface_name: str, ip_address: str) -> Any:
