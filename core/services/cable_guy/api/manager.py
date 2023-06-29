@@ -2,9 +2,10 @@ import re
 import time
 from enum import Enum
 from socket import AddressFamily
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import psutil
+from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pydantic import BaseModel
@@ -28,12 +29,24 @@ class InterfaceAddress(BaseModel):
 class InterfaceInfo(BaseModel):
     connected: bool
     number_of_disconnections: int
+    priority: int
 
 
 class NetworkInterface(BaseModel):
     name: str
     addresses: List[InterfaceAddress]
     info: Optional[InterfaceInfo]
+
+
+class NetworkInterfaceMetric(BaseModel):
+    name: str
+    index: int
+    priority: int
+
+
+class NetworkInterfaceMetricApi(BaseModel):
+    name: str
+    priority: Optional[int]
 
 
 class EthernetManager:
@@ -349,6 +362,58 @@ class EthernetManager:
         """
         return self.ndb.interfaces.dump().filter(ifname=interface_name)[0]
 
+    @temporary_cache(timeout_seconds=5)
+    def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
+        """Get the priority metrics for all network interfaces.
+
+        Returns:
+            List[NetworkInterfaceMetric]: A list of priority metrics for each interface.
+        """
+
+        interfaces = self.ipr.get_links()
+        # I hope that you are not here to move this code to IPv6.
+        # If that is the case, you'll need to figure out a way to handle
+        # priorities between interfaces, between IP categories.
+        # GLHF
+        routes = self.ipr.get_routes(family=AddressFamily.AF_INET)
+
+        # Generate a dict of index to network name.
+        # And a second list between the network index and metric,
+        # keep in mind that a single interface can have multiple routes
+        name_dict = {iface["index"]: iface.get_attr("IFLA_IFNAME") for iface in interfaces}
+        metric_index_list = [
+            {"metric": route.get_attr("RTA_PRIORITY", 0), "index": route.get_attr("RTA_OIF")} for route in routes
+        ]
+
+        # Keep the highest metric per interface in a dict of index to metric
+        metric_dict: Dict[int, int] = {}
+        for d in metric_index_list:
+            if d["index"] in metric_dict:
+                metric_dict[d["index"]] = max(metric_dict[d["index"]], d["metric"])
+            else:
+                metric_dict[d["index"]] = d["metric"]
+
+        return [
+            NetworkInterfaceMetric(index=index, name=name, priority=metric_dict.get(index) or 0)
+            for index, name in name_dict.items()
+        ]
+
+    def get_interface_priority(self, interface_name: str) -> Optional[NetworkInterfaceMetric]:
+        """Get the priority metric for a network interface.
+
+        Args:
+            interface_name (str): The name of the network interface.
+
+        Returns:
+            Optional[NetworkInterfaceMetric]: The priority metric for the interface, or None if no metric found.
+        """
+        metric: NetworkInterfaceMetric
+        for metric in self.get_interfaces_priority():
+            if interface_name == metric.name:
+                return metric
+
+        return None
+
     def get_interface_info(self, interface_name: str) -> InterfaceInfo:
         """Get interface info field
 
@@ -358,8 +423,14 @@ class EthernetManager:
         Returns:
             InterfaceInfo object
         """
+        metric = self.get_interface_priority(interface_name)
+        priority = metric.priority if metric else 0
         interface = self.get_interface_ndb(interface_name)
-        return InterfaceInfo(connected=interface.carrier != 0, number_of_disconnections=interface.carrier_down_count)
+        return InterfaceInfo(
+            connected=interface.carrier != 0,
+            number_of_disconnections=interface.carrier_down_count,
+            priority=priority,
+        )
 
     def _is_ip_on_interface(self, interface_name: str, ip_address: str) -> bool:
         interface = self.get_interface_by_name(interface_name)
