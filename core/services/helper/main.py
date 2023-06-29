@@ -4,6 +4,8 @@ import asyncio
 import http
 import logging
 import os
+import re
+import subprocess
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -58,6 +60,7 @@ class ServiceMetadata(BaseModel):
     route: Optional[str]
     new_page: Optional[bool]
     api: str
+    sanitized_name: Optional[str]
 
 
 class ServiceInfo(BaseModel):
@@ -97,6 +100,7 @@ class Helper:
             with requests.get(f"http://127.0.0.1:{port}/register_service", timeout=0.2) as response:
                 if response.status_code == http.HTTPStatus.OK:
                     info.metadata = ServiceMetadata.parse_obj(response.json())
+                    info.metadata.sanitized_name = re.sub(r"[^a-z0-9]", "", info.metadata.name.lower())
         except Exception:
             # This should be avoided by the first try block, but better safe than sorry
             pass
@@ -140,8 +144,26 @@ class Helper:
         # And check if there is a webpage available that is not us
         # Use it as a set to remove duplicated ports
         ports = set(connection.laddr.port for connection in connections)
-        services = (Helper.detect_service(port) for port in ports if port != PORT)
+        services = [Helper.detect_service(port) for port in ports if port != PORT]
+        Helper.update_nginx(services)
         return [service for service in services if service.valid]
+
+    @staticmethod
+    def reload_nginx() -> None:
+        with open("/var/run/nginx.pid", "r", encoding="utf-8") as f:
+            pid = int(f.readline())
+            # kill -HUP is the right way of doing a graceful reload in Nginx
+            subprocess.run(["kill", "-HUP", f"{pid}"], check=False)
+
+    @staticmethod
+    def update_nginx(services: List[ServiceInfo]) -> None:
+        changed = 0
+        for service in services:
+            if service.metadata:
+                if Helper.setup_nginx_route(service.metadata, service.port):
+                    changed += 1
+        if changed:
+            Helper.reload_nginx()
 
     @staticmethod
     async def check_website(site: Website) -> WebsiteStatus:
@@ -158,6 +180,34 @@ class Helper:
         tasks = [Helper.check_website(site) for site in Website]
         status_list = await asyncio.gather(*tasks)
         return {status.site.name: status for status in status_list}
+
+    @staticmethod
+    def setup_nginx_route(metadata: ServiceMetadata, port: int) -> bool:
+        name = metadata.sanitized_name
+        text = f"""
+        location /extension/{name} {{
+        rewrite ^/extension/{name}$ /extension/{name}/ redirect;
+        rewrite ^/extension/{name}/(.*)$ /$1 break;
+        proxy_pass http://localhost:{port};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        }}
+        """
+        filename = f"/home/pi/tools/nginx/extensions/{name}.conf"
+        Path.mkdir(Path("/home/pi/tools/nginx/extensions/"), parents=True, exist_ok=True)
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                if f.read() == text:
+                    return False
+        except Exception as e:
+            logging.info(f"file '{filename}' not found ({e}):, a new one will be created")
+        with open(filename, "w", encoding="utf-8") as f:
+            logging.info(f"updating nginx route for {name}")
+            f.write(text)
+            logging.info(f"file updated: {filename}")
+        return True
 
 
 fast_api_app = FastAPI(
