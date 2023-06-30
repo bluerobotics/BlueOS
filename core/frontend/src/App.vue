@@ -630,12 +630,8 @@ export default Vue.extend({
       }
     },
     createExtensionAddress(service: Service): string {
-      if (service?.metadata?.new_page !== true) {
-        return `/extensions/${service.port}`
-      }
-
-      // The `//` force href to be used as absolute path and not as relative
-      return `//${window.location.hostname}:${service.port}`
+      const sanitized_name = service?.metadata?.sanitized_name
+      return `/extension/${sanitized_name}` ?? `/extensions/${service.port}`
     },
     setupCallbacks(): void {
       this.tourCallbacks = {

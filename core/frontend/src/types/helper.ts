@@ -8,6 +8,7 @@ export interface ServiceMetadata {
     api: string
     route?: string
     new_page?: boolean
+    sanitized_name: string
 }
 
 export interface Service {
