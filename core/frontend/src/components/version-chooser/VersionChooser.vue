@@ -300,7 +300,7 @@ export default Vue.extend({
             reject(new Error('backend took to long to come back'))
             clearInterval(interval)
           },
-          60000,
+          120000,
         )
         interval = setInterval(() => {
           this.backendIsOnline().then((backend_online) => {
@@ -316,10 +316,16 @@ export default Vue.extend({
 
     async waitForBackendToRestart(reload: boolean) {
       this.waiting = true
-      await this.waitForBackendToGoOffline()
-      await this.waitForBackendToGoOnline()
-      if (reload) {
-        window.location.reload()
+      try {
+        await this.waitForBackendToGoOffline()
+        await this.waitForBackendToGoOnline()
+      } catch (e) {
+        console.log('Backend took too long to restart')
+      } finally {
+        if (reload) {
+          this.waiting = false
+          window.location.reload()
+        }
       }
     },
 
