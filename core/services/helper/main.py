@@ -4,6 +4,7 @@ import asyncio
 import http
 import logging
 import os
+import re
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -58,6 +59,7 @@ class ServiceMetadata(BaseModel):
     route: Optional[str]
     new_page: Optional[bool]
     api: str
+    sanitized_name: Optional[str]
 
 
 class ServiceInfo(BaseModel):
@@ -97,6 +99,7 @@ class Helper:
             with requests.get(f"http://127.0.0.1:{port}/register_service", timeout=0.2) as response:
                 if response.status_code == http.HTTPStatus.OK:
                     info.metadata = ServiceMetadata.parse_obj(response.json())
+                    info.metadata.sanitized_name = re.sub(r"[^a-z0-9]", "", info.metadata.name.lower())
         except Exception:
             # This should be avoided by the first try block, but better safe than sorry
             pass
@@ -140,7 +143,7 @@ class Helper:
         # And check if there is a webpage available that is not us
         # Use it as a set to remove duplicated ports
         ports = set(connection.laddr.port for connection in connections)
-        services = (Helper.detect_service(port) for port in ports if port != PORT)
+        services = [Helper.detect_service(port) for port in ports if port != PORT]
         return [service for service in services if service.valid]
 
     @staticmethod
