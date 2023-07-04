@@ -361,6 +361,7 @@ export default Vue.extend({
 
       this.apply_status = ApplyStatus.Waiting
       this.apply_status = await Promise.all(this.configurations.map(async (config) => {
+        config.message = undefined
         if (!config.done) {
           config.message = await config.promise()
           config.done = config.message === undefined
