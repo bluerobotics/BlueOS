@@ -332,30 +332,32 @@ export default Vue.extend({
       this.configuration_page_index += 1
     },
     async applyConfigurations() {
-      this.configurations = [
-        {
-          title: 'Set custom vehicle name',
-          summary: `Set vehicle name for the user: ${this.vehicle_name}`,
-          promise: () => this.setHostname(),
-          message: undefined,
-          done: false,
-        },
-        {
-          title: 'Set vehicle hostname',
-          summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
-          promise: () => this.setVehicleName(),
-          message: undefined,
-          done: false,
-        },
-        {
-          title: 'Set vehicle image',
-          summary: 'Set image to be used for vehicle thumbnail',
-          promise: () => this.setVehicleImage(),
-          message: undefined,
-          done: false,
-        },
-        ...this.setup_configurations,
-      ]
+      if (this.configurations.isEmpty()) {
+        this.configurations = [
+          {
+            title: 'Set custom vehicle name',
+            summary: `Set vehicle name for the user: ${this.vehicle_name}`,
+            promise: () => this.setHostname(),
+            message: undefined,
+            done: false,
+          },
+          {
+            title: 'Set vehicle hostname',
+            summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
+            promise: () => this.setVehicleName(),
+            message: undefined,
+            done: false,
+          },
+          {
+            title: 'Set vehicle image',
+            summary: 'Set image to be used for vehicle thumbnail',
+            promise: () => this.setVehicleImage(),
+            message: undefined,
+            done: false,
+          },
+          ...this.setup_configurations,
+        ]
+      }
 
       this.apply_status = ApplyStatus.Waiting
       this.apply_status = await Promise.all(this.configurations.map(async (config) => {
