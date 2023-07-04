@@ -32,7 +32,7 @@ import { Dictionary } from 'vue-router/types/router'
 import parameterloader from '@/components/parameter-editor/ParameterLoader.vue'
 import autopilot from '@/store/autopilot_manager'
 
-const REPOSITORY_URL = 'https://williangalvani.github.io/Blueos-Parameter-Repository/params_v1.json'
+const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
 export default Vue.extend({
   name: 'ParamSets',
@@ -84,8 +84,6 @@ export default Vue.extend({
   },
   methods: {
     async loadParamSets() {
-      // fetch json file from https://williangalvani.github.io/Blueos-Parameter-Repository/params.json
-      // and parse it into a dictionary
       const response = await fetch(REPOSITORY_URL)
       const paramSets = await response.json()
       this.all_param_sets = paramSets
