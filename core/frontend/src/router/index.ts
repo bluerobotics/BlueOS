@@ -117,6 +117,11 @@ const routes: Array<RouteConfig> = [
     component: ExtensionView,
   },
   {
+    path: '/extension/:name',
+    name: 'Named Extensions',
+    component: ExtensionView,
+  },
+  {
     path: '/tools/extensions-manager',
     name: 'Extension Manager',
     component: ExtensionManagerView,

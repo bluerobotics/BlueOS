@@ -1,5 +1,5 @@
 <template>
-  <v-app :class="app_style">
+  <v-app v-if="!full_page_requested" :class="app_style">
     <v-card
       id="context-menu"
       ref="contextMenu"
@@ -309,6 +309,10 @@
       :callbacks="tourCallbacks"
     />
   </v-app>
+  <div v-else>
+    <services-scanner />
+    <router-view />
+  </div>
 </template>
 
 <script lang="ts">
@@ -415,6 +419,9 @@ export default Vue.extend({
     },
     toolbar_height(): number {
       return settings.is_pirate_mode && this.backend_offline ? 66 : 56
+    },
+    full_page_requested(): boolean {
+      return this.$router.currentRoute.query.full_page === 'true'
     },
     computed_menu(): menuItem[] {
       const foundExtensions = services_scanner.services
@@ -630,12 +637,11 @@ export default Vue.extend({
       }
     },
     createExtensionAddress(service: Service): string {
-      if (service?.metadata?.new_page !== true) {
-        return `/extensions/${service.port}`
+      let address = `/extension/${service?.metadata?.sanitized_name}`
+      if (service?.metadata?.new_page) {
+        address += '?full_page=true'
       }
-
-      // The `//` force href to be used as absolute path and not as relative
-      return `//${window.location.hostname}:${service.port}`
+      return address
     },
     setupCallbacks(): void {
       this.tourCallbacks = {
