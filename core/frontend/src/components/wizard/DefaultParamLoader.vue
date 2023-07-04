@@ -50,7 +50,7 @@ import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functi
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'
 
-const REPOSITORY_URL = 'https://williangalvani.github.io/Blueos-Parameter-Repository/params_v1.json'
+const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
 export default Vue.extend({
   name: 'DefaultParamLoader',
@@ -151,8 +151,6 @@ export default Vue.extend({
     },
     async loadParamSets() {
       try {
-        // fetch json file from https://williangalvani.github.io/Blueos-Parameter-Repository/params.json
-        // and parse it into a dictionary
         const response = await fetch(REPOSITORY_URL)
         const paramSets = await response.json()
         this.all_param_sets = paramSets
