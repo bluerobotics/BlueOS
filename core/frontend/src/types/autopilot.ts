@@ -13,6 +13,14 @@ export enum Vehicle {
     Other = 'Other',
 }
 
+export enum FirmwareVehicleType {
+  ArduSub = 'ArduSub',
+  ArduRover = 'ArduRover',
+  ArduPlane = 'ArduPlane',
+  ArduCopter = 'ArduCopter',
+  Other = 'Unknown',
+}
+
 export enum Platform {
   Pixhawk1 = 'Pixhawk1',
   Pixhawk4 = 'Pixhawk4',
