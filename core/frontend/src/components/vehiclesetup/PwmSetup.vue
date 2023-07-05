@@ -21,9 +21,10 @@
                   <th>
                     <v-switch
                       v-model="desired_armed_state"
-                      :loading="desired_armed_state !== is_armed ? 'warning' : null"
+                      :loading="desired_armed_state !== (is_armed) ? 'warning' : null"
+                      :disabled="!is_manual"
                       class="mx-1 flex-grow-0"
-                      :label="`${is_armed ? 'Armed' : 'Disarmed'}`"
+                      :label="arm_disarm_switch_label"
                       :color="`${is_armed ? 'error' : 'success'}`"
                       @change="desired_armed_state ? arm() : disarm()"
                     />
@@ -54,7 +55,7 @@
                       thumb-label
                       color="primary"
                       track-color="primary"
-                      :disabled="!is_armed"
+                      :disabled="!is_armed || !is_manual"
                       @mouseup="restart_motor_zeroer()"
                       @mousedown="pause_motor_zeroer()"
                     />
@@ -267,6 +268,13 @@ export default Vue.extend({
       }
 
       return false
+    },
+    arm_disarm_switch_label(): string {
+      let label = `${this.is_armed ? 'Armed' : 'Disarmed'}`
+      if (!this.is_manual) {
+        label += ' - Vehicle needs to be in Manual Mode'
+      }
+      return label
     },
     motor_outputs() : {[key: number]: number} {
       const data = mavlink_store_get(mavlink, 'SERVO_OUTPUT_RAW.messageData.message') as Dictionary<number>
