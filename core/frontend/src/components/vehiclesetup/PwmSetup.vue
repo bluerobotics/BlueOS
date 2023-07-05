@@ -20,13 +20,13 @@
                   </th>
                   <th>
                     <v-switch
-                      v-model="desired_armed_state"
+                      v-model="is_armed"
                       :loading="desired_armed_state !== (is_armed) ? 'warning' : null"
                       :disabled="!is_manual"
                       class="mx-1 flex-grow-0"
                       :label="arm_disarm_switch_label"
                       :color="`${is_armed ? 'error' : 'success'}`"
-                      @change="desired_armed_state ? arm() : disarm()"
+                      @change="arm_disarm_switch_change"
                     />
                   </th>
                   <th />
@@ -300,6 +300,12 @@ export default Vue.extend({
         .map((_, i) => data[`servo${i + 1}_raw`])
     },
   },
+  watch: {
+    is_armed() {
+      // To reflect changed made from other sources like from GCSs
+      this.desired_armed_state = this.is_armed
+    },
+  },
   mounted() {
     this.motor_zeroer_interval = setInterval(this.zero_motors, 300)
     this.motor_writer_interval = setInterval(this.write_motors, 100)
@@ -359,6 +365,11 @@ export default Vue.extend({
         this.desired_armed_state = this.is_armed
         console.warn('Disarming failed!')
       }, 5000)
+    },
+    arm_disarm_switch_change(): void {
+      this.desired_armed_state = !this.is_armed
+      // eslint-disable-next-line no-unused-expressions
+      this.is_armed ? this.disarm() : this.arm()
     },
     armDisarm(arm: boolean, force: boolean): void {
       mavlink2rest.sendMessage(
