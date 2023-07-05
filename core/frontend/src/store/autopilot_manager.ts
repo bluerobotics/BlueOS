@@ -4,7 +4,8 @@ import {
 
 import store from '@/store'
 import {
-  AutopilotEndpoint, FirmwareInfo, FlightController, SerialEndpoint,
+  AutopilotEndpoint, FirmwareInfo, FirmwareVehicleType,
+  FlightController, SerialEndpoint,
 } from '@/types/autopilot'
 
 @Module({
@@ -26,7 +27,7 @@ class AutopilotManagerStore extends VuexModule {
 
   vehicle_type: string | null = null
 
-  firmware_vehicle_type: string | null = null
+  firmware_vehicle_type: FirmwareVehicleType | null = null
 
   updating_endpoints = true
 
@@ -67,7 +68,7 @@ class AutopilotManagerStore extends VuexModule {
   }
 
   @Mutation
-  setFirmwareVehicleType(firmware_vehicle_type: string | null): void {
+  setFirmwareVehicleType(firmware_vehicle_type: FirmwareVehicleType | null): void {
     this.firmware_vehicle_type = firmware_vehicle_type
   }
 
