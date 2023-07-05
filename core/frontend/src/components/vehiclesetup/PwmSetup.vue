@@ -199,6 +199,9 @@ export default Vue.extend({
     is_rover(): boolean {
       return autopilot.firmware_vehicle_type === FirmwareVehicleType.ArduRover
     },
+    is_sub(): boolean {
+      return autopilot.firmware_vehicle_type === FirmwareVehicleType.ArduSub
+    },
     available_sub_motors(): MotorTestTarget[] {
       return this.servo_function_parameters.filter(
         (parameter) => parameter.value >= SERVO_FUNCTION.MOTOR1 && parameter.value <= SERVO_FUNCTION.MOTOR8,
