@@ -136,6 +136,7 @@ import { MavCmd, MavModeFlag } from '@/libs/MAVLink2Rest/mavlink2rest-ts/message
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
+import { FirmwareVehicleType } from '@/types/autopilot'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
 import { SERVO_FUNCTION as ROVER_FUNCTIONS } from '@/types/autopilot/parameter-rover-enums'
 import { SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
@@ -196,7 +197,7 @@ export default Vue.extend({
       return autopilot.vehicle_type
     },
     is_rover(): boolean {
-      return autopilot.firmware_vehicle_type === 'ArduRover'
+      return autopilot.firmware_vehicle_type === FirmwareVehicleType.ArduRover
     },
     available_sub_motors(): MotorTestTarget[] {
       return this.servo_function_parameters.filter(
