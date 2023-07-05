@@ -5,6 +5,7 @@ import http
 import logging
 import os
 import re
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -21,6 +22,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from pydantic import BaseModel
+from speedtest import Speedtest
 from uvicorn import Config, Server
 
 PORT = 81
@@ -29,10 +31,17 @@ API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
 
 BLUEOS_VERSION = os.environ.get("GIT_DESCRIBE_TAGS", "null")
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
+SPEED_TEST: Optional[Speedtest] = None
 
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger("Helper")
+
+try:
+    SPEED_TEST = Speedtest(secure=True)
+except Exception:
+    # When starting, the system may not be connected to the internet
+    pass
 
 
 class Website(str, Enum):
@@ -69,6 +78,45 @@ class ServiceInfo(BaseModel):
     versions: List[str]
     port: int
     metadata: Optional[ServiceMetadata]
+
+
+class SpeedtestServer(BaseModel):
+    url: str
+    lat: str
+    lon: str
+    name: str
+    country: str
+    cc: str
+    sponsor: str
+    id: str
+    host: str
+    d: float
+    latency: float
+
+
+class SpeedtestClient(BaseModel):
+    ip: str
+    lat: str
+    lon: str
+    isp: str
+    isprating: str
+    rating: str
+    ispdlavg: str
+    ispulavg: str
+    loggedin: str
+    country: str
+
+
+class SpeedTestResult(BaseModel):
+    download: float
+    upload: float
+    ping: float
+    server: SpeedtestServer
+    timestamp: datetime
+    bytes_sent: int
+    bytes_received: int
+    share: Optional[str] = None
+    client: SpeedtestClient
 
 
 class Helper:
@@ -190,6 +238,59 @@ def web_services() -> Any:
 @version(1, 0)
 async def check_internet_access() -> Any:
     return await Helper.check_internet_access()
+
+
+@fast_api_app.get(
+    "/internet_best_server",
+    response_model=SpeedTestResult,
+    summary="Check internet best server for test from BlueOS.",
+)
+@version(1, 0)
+async def internet_best_server() -> Any:
+    # Since we are finding a new server, clear previous results
+    # pylint: disable=global-statement
+    global SPEED_TEST
+    SPEED_TEST = Speedtest(secure=True)
+    SPEED_TEST.get_best_server()
+    return SPEED_TEST.results.dict()
+
+
+@fast_api_app.get(
+    "/internet_download_speed",
+    response_model=SpeedTestResult,
+    summary="Check internet download speed test from BlueOS.",
+)
+@version(1, 0)
+async def internet_download_speed() -> Any:
+    if not SPEED_TEST:
+        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+    SPEED_TEST.download()
+    return SPEED_TEST.results.dict()
+
+
+@fast_api_app.get(
+    "/internet_upload_speed",
+    response_model=SpeedTestResult,
+    summary="Check internet upload speed test from BlueOS.",
+)
+@version(1, 0)
+async def internet_upload_speed() -> Any:
+    if not SPEED_TEST:
+        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+    SPEED_TEST.upload()
+    return SPEED_TEST.results.dict()
+
+
+@fast_api_app.get(
+    "/internet_test_previous_result",
+    response_model=SpeedTestResult,
+    summary="Return previous result of internet speed test.",
+)
+@version(1, 0)
+async def internet_test_previous_result() -> Any:
+    if not SPEED_TEST:
+        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+    return SPEED_TEST.results.dict()
 
 
 async def periodic() -> None:
