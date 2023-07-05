@@ -249,6 +249,24 @@ export default Vue.extend({
       const heartbeat = mavlink_store_get(mavlink, 'HEARTBEAT.messageData.message') as Message.Heartbeat
       return Boolean(heartbeat.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED)
     },
+    is_manual(): boolean {
+      const heartbeat = mavlink_store_get(mavlink, 'HEARTBEAT.messageData.message') as Message.Heartbeat
+
+      // Legacy manual mode
+      if (!(heartbeat.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)) {
+        return Boolean(heartbeat.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)
+      }
+
+      if (this.is_rover) {
+        const rover_custom_mode_manual = 0
+        return Boolean(heartbeat.custom_mode === rover_custom_mode_manual)
+      }
+      if (this.is_sub) {
+        const sub_custom_mode_manual = 19
+        return Boolean(heartbeat.custom_mode === sub_custom_mode_manual)
+      }
+
+      return false
     },
     motor_outputs() : {[key: number]: number} {
       const data = mavlink_store_get(mavlink, 'SERVO_OUTPUT_RAW.messageData.message') as Dictionary<number>
