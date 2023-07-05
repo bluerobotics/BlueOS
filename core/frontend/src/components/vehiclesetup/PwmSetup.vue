@@ -132,7 +132,10 @@ import Vue from 'vue'
 import ParameterEditorDialog from '@/components/parameter-editor/ParameterEditorDialog.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
-import { MavCmd, MavModeFlag } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import {
+  MavCmd, MavModeFlag,
+} from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import { Message } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
@@ -243,10 +246,9 @@ export default Vue.extend({
       })
     },
     is_armed(): boolean {
-      // This should be a getter at mavlink store. but that wasn't reactive
-      const mode = mavlink_store_get(mavlink, 'HEARTBEAT.messageData.message.base_mode.bits') as number
-      const armed_flag = MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED as number
-      return (mode & armed_flag) === armed_flag
+      const heartbeat = mavlink_store_get(mavlink, 'HEARTBEAT.messageData.message') as Message.Heartbeat
+      return Boolean(heartbeat.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED)
+    },
     },
     motor_outputs() : {[key: number]: number} {
       const data = mavlink_store_get(mavlink, 'SERVO_OUTPUT_RAW.messageData.message') as Dictionary<number>
