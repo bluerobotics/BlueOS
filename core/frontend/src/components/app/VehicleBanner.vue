@@ -94,7 +94,7 @@ export default Vue.extend({
       return beacon.vehicle_name
     },
     mdns_hostname() {
-      return beacon.hostname || 'blueos'
+      return beacon.hostname
     },
     system_id() {
       return ardupilot_data.system_id
@@ -115,7 +115,7 @@ export default Vue.extend({
   mounted() {
     beacon.registerBeaconListener(this)
     this.load_vehicle_image()
-    this.vehicle_name_input = this.vehicle_name || 'My Vehicle'
+    this.vehicle_name_input = this.vehicle_name
     this.mdns_hostname_input = this.mdns_hostname
     this.load_company_logo()
   },
