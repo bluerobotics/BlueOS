@@ -103,6 +103,7 @@ export default Vue.extend({
   watch: {
     vehicle_name() {
       this.update_title()
+      this.vehicle_name_input = this.vehicle_name
     },
     mdns_hostname() {
       this.mdns_hostname_input = this.mdns_hostname
