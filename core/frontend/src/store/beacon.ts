@@ -33,7 +33,7 @@ class BeaconStore extends VuexModule {
 
   nginx_ip_address = ''
 
-  hostname: undefined | string = undefined
+  hostname = ''
 
   vehicle_name = ''
 
@@ -187,7 +187,7 @@ class BeaconStore extends VuexModule {
       return
     }
 
-    if (this.hostname === undefined) {
+    if (this.hostname === '') {
       back_axios({
         method: 'get',
         url: `${this.API_URL}/hostname`,
