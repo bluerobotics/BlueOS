@@ -80,6 +80,15 @@ class BeaconStore extends VuexModule {
 
   @Action
   async setHostname(hostname: string): Promise<boolean> {
+    hostname = hostname.trim().toLowerCase()
+    const regex = /^[a-zA-Z0-9-]+$/
+    if (!regex.test(hostname)) {
+      const message = 'Could not set hostname: invalid string, '
+        + 'it should contain only alpha-numeric and \'-\' characters.'
+      notifier.pushError('BEACON_SET_HOSTNAME_FAIL', message, true)
+      return false
+    }
+
     return back_axios({
       method: 'post',
       url: `${this.API_URL}/hostname`,
