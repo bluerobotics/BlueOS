@@ -1,5 +1,6 @@
 <template>
   <BrIframe
+    v-if="detected_port"
     :source="service_path"
     :class="fullpage ? 'fullpage' : ''"
   />
@@ -16,6 +17,11 @@ export default Vue.extend({
   components: {
     BrIframe,
   },
+  data() {
+    return {
+      detected_port: undefined as number | undefined,
+    }
+  },
   computed: {
     fullpage(): boolean {
       return this.$route.query.full_page === 'true'
@@ -26,7 +32,14 @@ export default Vue.extend({
       )[0]?.port ?? 80
     },
     service_path(): string {
-      return `${window.location.protocol}//${window.location.hostname}:${this.port}`
+      return `${window.location.protocol}//${window.location.hostname}:${this.detected_port}`
+    },
+  },
+  watch: {
+    port(new_value) {
+      if (new_value !== undefined) {
+        this.detected_port = new_value
+      }
     },
   },
 })
