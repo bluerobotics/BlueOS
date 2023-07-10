@@ -10,10 +10,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import aiohttp
+import httpx
 import machineid
 import psutil
-import requests
 from bs4 import BeautifulSoup
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
@@ -121,15 +120,52 @@ class SpeedTestResult(BaseModel):
 
 class Helper:
     LOCALSERVER_CANDIDATES = ["0.0.0.0", "::"]
-    AIOTIMEOUT = aiohttp.ClientTimeout(total=10)
+
+    BLUEOS_PORTS = [
+        PORT,  # Helper
+        2748,  # NMEA Injector
+        6020,  # MAVLink Camera Manager
+        6030,  # System Information
+        6040,  # MAVLink2Rest
+        7777,  # File Browser
+        8000,  # ArduPilot Manager
+        8081,  # Version Chooser
+        8088,  # ttyd
+        9000,  # Wifi Manager
+        9002,  # Cerulean DVL
+        9090,  # Cable-guy
+        9100,  # Commander
+        9101,  # Bag Of Holding
+        9110,  # Ping Service
+        9111,  # Beacon Service
+        9120,  # Pardal
+        9134,  # Kraken
+        27353,  # Bridget
+    ]
+
+    SKIP_PORTS = [
+        22,  # SSH
+        80,  # BlueOS
+        6021,  # MAVLink Camera Manager's WebRTC signaller
+        8554,  # MAVLink Camera Manager's RTSP server
+        5777,  # ardupilot-manager's MAVLink TCP Server
+        5555,  # DGB server
+        2770,  # NGIX
+    ]
+
+    FOUND_BLUEOS_SERVICES: Dict[int, ServiceInfo] = {}
 
     @staticmethod
     @temporary_cache(timeout_seconds=60)  # a temporary cache helps us deal with changes in metadata
-    def detect_service(port: int) -> ServiceInfo:
+    def detect_service(port: int) -> ServiceInfo:  # pylint: disable=too-many-branches
+        if port in Helper.FOUND_BLUEOS_SERVICES:
+            return Helper.FOUND_BLUEOS_SERVICES[port]
+
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
 
         try:
-            with requests.get(f"http://127.0.0.1:{port}/", timeout=0.2) as response:
+            with httpx.Client(verify=False) as client:
+                response = client.get(f"http://127.0.0.1:{port}/", timeout=0.2)
                 info.valid = True
                 soup = BeautifulSoup(response.text, features="html.parser")
                 title_element = soup.find("title")
@@ -144,7 +180,8 @@ class Helper:
 
         # Check for service description metadata
         try:
-            with requests.get(f"http://127.0.0.1:{port}/register_service", timeout=0.2) as response:
+            with httpx.Client(verify=False) as client:
+                response = client.get(f"http://127.0.0.1:{port}/register_service", timeout=0.2)
                 if response.status_code == http.HTTPStatus.OK:
                     info.metadata = ServiceMetadata.parse_obj(response.json())
                     info.metadata.sanitized_name = re.sub(r"[^a-z0-9]", "", info.metadata.name.lower())
@@ -154,21 +191,24 @@ class Helper:
 
         for documentation_path in DOCS_CANDIDATE_URLS:
             try:
-                with requests.get(f"http://127.0.0.1:{port}{documentation_path}", timeout=0.2) as response:
+                with httpx.Client(verify=False) as client:
+                    response = client.get(f"http://127.0.0.1:{port}{documentation_path}", timeout=0.2)
                     if response.status_code != http.HTTPStatus.OK:
                         continue
                     info.documentation_url = documentation_path
 
                 # Get main openapi json description file
                 for api_path in API_CANDIDATE_URLS:
-                    with requests.get(f"http://127.0.0.1:{port}{api_path}", timeout=0.2) as response:
+                    with httpx.Client(verify=False) as client:
+                        response = client.get(f"http://127.0.0.1:{port}{api_path}", timeout=0.2)
                         if response.status_code != http.HTTPStatus.OK:
                             continue
                         api = response.json()
                         # Check all available versions
                         ## The ones that provide a swagger-ui
                         for path in api["paths"].keys():
-                            with requests.get(f"http://127.0.0.1:{port}{path}", timeout=0.2) as response:
+                            with httpx.Client(verify=False) as client:
+                                response = client.get(f"http://127.0.0.1:{port}{path}", timeout=0.2)
                                 if "swagger-ui" in response.text:
                                     info.versions += [path]
                 break
@@ -176,6 +216,10 @@ class Helper:
             except Exception:
                 # This should be avoided by the first try block, but better safe than sorry
                 break
+
+        if info.valid:
+            Helper.FOUND_BLUEOS_SERVICES[port] = info
+
         return info
 
     @staticmethod
@@ -191,16 +235,16 @@ class Helper:
         # And check if there is a webpage available that is not us
         # Use it as a set to remove duplicated ports
         ports = set(connection.laddr.port for connection in connections)
-        services = [Helper.detect_service(port) for port in ports if port != PORT]
+        services = [Helper.detect_service(port) for port in ports if port not in Helper.SKIP_PORTS]
         return [service for service in services if service.valid]
 
     @staticmethod
     async def check_website(site: Website) -> WebsiteStatus:
-        async with aiohttp.ClientSession() as session:
+        async with httpx.AsyncClient(verify=False) as client:
             try:
-                async with session.get(site.value, timeout=Helper.AIOTIMEOUT) as response:
-                    await response.text()
-                    return WebsiteStatus(site=site, online=True)
+                response = await client.get(site.value, timeout=Helper.AIOTIMEOUT)
+                await response.aread()
+                return WebsiteStatus(site=site, online=True)
             except Exception as exception:
                 return WebsiteStatus(site=site, online=False, error=str(exception))
 
