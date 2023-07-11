@@ -11,12 +11,11 @@ from concurrent import futures
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
 
 import machineid
 import psutil
-import requests
 from bs4 import BeautifulSoup
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
@@ -151,6 +150,44 @@ class Helper:
     DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
     API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
     PORT = 81
+    BLUEOS_SYSTEM_SERVICES_PORTS = {
+        PORT,  # Helper
+        2748,  # NMEA Injector
+        6020,  # MAVLink Camera Manager
+        6030,  # System Information
+        6040,  # MAVLink2Rest
+        7777,  # File Browser
+        8000,  # ArduPilot Manager
+        8081,  # Version Chooser
+        8088,  # ttyd
+        9000,  # Wifi Manager
+        9002,  # Cerulean DVL
+        9090,  # Cable-guy
+        9100,  # Commander
+        9101,  # Bag Of Holding
+        9110,  # Ping Service
+        9111,  # Beacon Service
+        9120,  # Pardal
+        9134,  # Kraken
+        27353,  # Bridget
+    }
+    SKIP_PORTS: Set[int] = {
+        22,  # SSH
+        80,  # BlueOS
+        6021,  # Mavlink Camera Manager's WebRTC signaller
+        8554,  # Mavlink Camera Manager's RTSP server
+        5777,  # ardupilot-manager's Mavlink TCP Server
+        5555,  # DGB server
+        2770,  # NGINX
+    }
+    KNOWN_SERVICES: Set[ServiceInfo] = set()
+    # Whether we should or not keep a BlueOS system service when it's TCP port is not alive.
+    # If 'False', when a service dies, it is not returned as an available service
+    KEEP_BLUEOS_SERVICES_ALIVE = False
+    # Wether or not we should rescan periodically all services
+    PERIODICALLY_RESCAN_ALL_SERVICES = False
+    # Wether or not we should rescan periodically just the 3rdparty services (extensions)
+    PERIODICALLY_RESCAN_3RDPARTY_SERVICES = True
 
     @staticmethod
     # pylint: disable=too-many-arguments
@@ -224,58 +261,95 @@ class Helper:
         return request_response
 
     @staticmethod
-    @temporary_cache(timeout_seconds=60)  # a temporary cache helps us deal with changes in metadata
+    # pylint: disable=too-many-branches
     def detect_service(port: int) -> ServiceInfo:
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
 
-        try:
-            with requests.get(f"http://127.0.0.1:{port}/", timeout=0.2) as response:
-                info.valid = True
-                soup = BeautifulSoup(response.text, features="html.parser")
-                title_element = soup.find("title")
-                info.title = title_element.text if title_element else "Unknown"
-        except Exception:
-            # The server is not available, any error code will be handle by the 'with' block
-            pass
-
-        # If not valid web server, documentation will not be available
-        if not info.valid:
+        response = Helper.simple_http_request(
+            "127.0.0.1", port=port, path="/", timeout=1.0, method="GET", follow_redirects=10
+        )
+        log_msg = f"Detecting service at port {port}"
+        if response.status != http.client.OK:
+            # If not valid web server, documentation will not be available
+            logging.debug(f"{log_msg}: Invalid")
             return info
 
-        # Check for service description metadata
+        info.valid = True
         try:
-            with requests.get(f"http://127.0.0.1:{port}/register_service", timeout=0.2) as response:
-                if response.status_code == http.HTTPStatus.OK:
-                    info.metadata = ServiceMetadata.parse_obj(response.json())
-                    info.metadata.sanitized_name = re.sub(r"[^a-z0-9]", "", info.metadata.name.lower())
-        except Exception:
-            # This should be avoided by the first try block, but better safe than sorry
-            pass
+            soup = BeautifulSoup(response.decoded_data, features="html.parser")
+            title_element = soup.find("title")
+            info.title = title_element.text if title_element else "Unknown"
+        except Exception as e:
+            logging.warning(f"Failed parsing the service title: {e}")
 
-        for documentation_path in DOCS_CANDIDATE_URLS:
+        # Try to get the metadata from the service
+        response = Helper.simple_http_request(
+            "127.0.0.1",
+            port=port,
+            path="/register_service",
+            timeout=1.0,
+            method="GET",
+            try_json=True,
+            follow_redirects=10,
+        )
+        response_as_json = response.as_json
+        if response.status == http.client.OK and response_as_json is not None and isinstance(response_as_json, dict):
             try:
-                with requests.get(f"http://127.0.0.1:{port}{documentation_path}", timeout=0.2) as response:
-                    if response.status_code != http.HTTPStatus.OK:
-                        continue
-                    info.documentation_url = documentation_path
+                info.metadata = ServiceMetadata.parse_obj(response_as_json)
+                info.metadata.sanitized_name = re.sub(r"[^a-z0-9]", "", info.metadata.name.lower())
+            except Exception as e:
+                logging.warning(f"Failed parsing the received JSON as ServiceMetadata object: {e}")
+        else:
+            logging.debug(f"No metadata received from {info.title} (port {port})")
 
-                # Get main openapi json description file
-                for api_path in API_CANDIDATE_URLS:
-                    with requests.get(f"http://127.0.0.1:{port}{api_path}", timeout=0.2) as response:
-                        if response.status_code != http.HTTPStatus.OK:
-                            continue
-                        api = response.json()
-                        # Check all available versions
-                        ## The ones that provide a swagger-ui
-                        for path in api["paths"].keys():
-                            with requests.get(f"http://127.0.0.1:{port}{path}", timeout=0.2) as response:
-                                if "swagger-ui" in response.text:
-                                    info.versions += [path]
-                break
+        # Try to get the documentation links
+        for documentation_path in Helper.DOCS_CANDIDATE_URLS:
+            # Skip until we find a valid documentation path
+            response = Helper.simple_http_request(
+                "127.0.0.1", port=port, path=documentation_path, timeout=1.0, method="GET", follow_redirects=10
+            )
+            if response.status != http.client.OK:
+                continue
+            info.documentation_url = documentation_path
 
-            except Exception:
-                # This should be avoided by the first try block, but better safe than sorry
-                break
+            # Get main openapi json description file
+            for api_path in Helper.API_CANDIDATE_URLS:
+                response = Helper.simple_http_request(
+                    "127.0.0.1", port=port, path=api_path, timeout=1.0, method="GET", try_json=True, follow_redirects=10
+                )
+
+                # Skip until we find the expected data. The expected data is like:
+                # {
+                #     "paths": {
+                #         "v1.0.0": ...,
+                #         "v2.0.0": ...,
+                #     }
+                # }
+                response_as_json = response.as_json
+                if (
+                    response.status != http.client.OK
+                    or response_as_json is None
+                    or not isinstance(response_as_json, dict)
+                ):
+                    continue
+                version_paths = response_as_json.get("paths", {}).keys()
+
+                # Check all available versions for the ones that provide a swagger-ui
+                for version_path in version_paths:
+                    response = Helper.simple_http_request(
+                        "127.0.0.1", port=port, path=str(version_path), timeout=1.0, method="GET", follow_redirects=10
+                    )
+                    if (
+                        response.status == http.client.OK
+                        and response.decoded_data is not None
+                        and "swagger-ui" in response.decoded_data
+                    ):
+                        info.versions += [version_path]
+
+            # Since we have at least found one info.documentation_path, we finish here
+            break
+
+        logging.debug(f"{log_msg}: Valid.")
         return info
 
     @staticmethod
