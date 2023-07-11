@@ -25,10 +25,6 @@ from pydantic import BaseModel
 from speedtest import Speedtest
 from uvicorn import Config, Server
 
-PORT = 81
-DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
-API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
-
 BLUEOS_VERSION = os.environ.get("GIT_DESCRIBE_TAGS", "null")
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 SPEED_TEST: Optional[Speedtest] = None
@@ -121,6 +117,9 @@ class SpeedTestResult(BaseModel):
 
 class Helper:
     LOCALSERVER_CANDIDATES = ["0.0.0.0", "::"]
+    DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
+    API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
+    PORT = 81
     AIOTIMEOUT = aiohttp.ClientTimeout(total=10)
 
     @staticmethod
