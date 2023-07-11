@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlparse
 
-import aiohttp
 import machineid
 import psutil
 import requests
@@ -44,12 +43,32 @@ except Exception:
     pass
 
 
-class Website(str, Enum):
-    ArduPilot = "http://firmware.ardupilot.org"
-    AWS = "http://amazon.com"
-    BlueOS = f"http://blueos.cloud/ping?id={machineid.hashed_id()}&version={BLUEOS_VERSION}"
-    Cloudflare = "http://1.1.1.1/"
-    GitHub = "http://github.com"
+class Website(Enum):
+    ArduPilot = {
+        "hostname": "firmware.ardupilot.org",
+        "path": "/",
+        "port": 80,
+    }
+    AWS = {
+        "hostname": "amazon.com",
+        "path": "/",
+        "port": 80,
+    }
+    BlueOS = {
+        "hostname": "blueos.cloud",
+        "path": f"/ping?id={machineid.hashed_id()}&version={BLUEOS_VERSION}",
+        "port": 80,
+    }
+    Cloudflare = {
+        "hostname": "1.1.1.1",
+        "path": "/",
+        "port": 80,
+    }
+    GitHub = {
+        "hostname": "github.com",
+        "path": "/",
+        "port": 80,
+    }
 
 
 class WebsiteStatus(BaseModel):
@@ -132,7 +151,6 @@ class Helper:
     DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
     API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
     PORT = 81
-    AIOTIMEOUT = aiohttp.ClientTimeout(total=10)
 
     @staticmethod
     # pylint: disable=too-many-arguments
@@ -277,19 +295,31 @@ class Helper:
         return [service for service in services if service.valid]
 
     @staticmethod
-    async def check_website(site: Website) -> WebsiteStatus:
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(site.value, timeout=Helper.AIOTIMEOUT) as response:
-                    await response.text()
-                    return WebsiteStatus(site=site, online=True)
-            except Exception as exception:
-                return WebsiteStatus(site=site, online=False, error=str(exception))
+    def check_website(site: Website) -> WebsiteStatus:
+        hostname = str(site.value["hostname"])
+        port = int(str(site.value["port"]))
+        path = str(site.value["path"])
+
+        response = Helper.simple_http_request(hostname, port=port, path=path, timeout=10, method="GET")
+        website_status = WebsiteStatus(site=site, online=False)
+
+        log_msg = f"Running check_website for '{hostname}:{port}'"
+        if response.error is None:
+            logging.debug(f"{log_msg}: Online.")
+            website_status.online = True
+        else:
+            logging.warning(f"{log_msg}: Offline: {website_status.error}.")
+            website_status.error = response.error
+
+        return website_status
 
     @staticmethod
-    async def check_internet_access() -> Dict[str, WebsiteStatus]:
-        tasks = [Helper.check_website(site) for site in Website]
-        status_list = await asyncio.gather(*tasks)
+    def check_internet_access() -> Dict[str, WebsiteStatus]:
+        # 10 concurrent executors is fine here because its a very short/light task
+        with futures.ThreadPoolExecutor(max_workers=10) as executor:
+            tasks = [executor.submit(Helper.check_website, site) for site in Website]
+            status_list = [task.result() for task in futures.as_completed(tasks)]
+
         return {status.site.name: status for status in status_list}
 
 
@@ -318,8 +348,8 @@ def web_services() -> Any:
     summary="Used to check if some websites are available or if there is internet access.",
 )
 @version(1, 0)
-async def check_internet_access() -> Any:
-    return await Helper.check_internet_access()
+def check_internet_access() -> Any:
+    return Helper.check_internet_access()
 
 
 @fast_api_app.get(
