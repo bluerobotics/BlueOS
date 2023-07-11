@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 
 import asyncio
-import http
+import http.client
+import json
 import logging
 import os
 import re
+import socket
+from concurrent import futures
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urlparse
 
 import aiohttp
 import machineid
@@ -115,12 +119,91 @@ class SpeedTestResult(BaseModel):
     client: SpeedtestClient
 
 
+class SimpleHttpResponse(BaseModel):
+    status: Optional[int]
+    decoded_data: Optional[str]
+    as_json: Optional[Union[List[Any], Dict[Any, Any]]]
+    error: Optional[str]
+    timeout: bool
+
+
 class Helper:
     LOCALSERVER_CANDIDATES = ["0.0.0.0", "::"]
     DOCS_CANDIDATE_URLS = ["/docs", "/v1.0/ui/"]
     API_CANDIDATE_URLS = ["/docs.json", "/openapi.json", "/swagger.json"]
     PORT = 81
     AIOTIMEOUT = aiohttp.ClientTimeout(total=10)
+
+    @staticmethod
+    # pylint: disable=too-many-arguments
+    def simple_http_request(
+        host: str,
+        port: int = http.client.HTTP_PORT,
+        path: str = "/",
+        timeout: Optional[float] = None,
+        method: str = "GET",
+        try_json: bool = False,
+        follow_redirects: int = 0,
+    ) -> SimpleHttpResponse:
+        """This function is a simple wrappper around http.client to make convenient requests and get the answer
+        knowing that it will never raise"""
+
+        conn = None
+        request_response = SimpleHttpResponse(status=None, decoded_data=None, as_json=None, timeout=False, error=None)
+
+        # Prepare the header for json request
+        headers = {}
+        if try_json:
+            headers["Accept"] = "application/json"
+
+        try:
+            # Make the connection and the request
+            conn = http.client.HTTPConnection(host, port, timeout=timeout)
+            conn.request(method, path, headers=headers)
+            response = conn.getresponse()
+
+            # Follow redirects if required
+            location_header = response.getheader("location")
+            if follow_redirects > 0 and location_header is not None:
+                url = urlparse(location_header)
+                return Helper.simple_http_request(
+                    host=url.hostname or host,
+                    port=url.port or port,
+                    path=url.path or path,  # note: ignoring params, query and fragment
+                    timeout=timeout,
+                    method=method,
+                    try_json=try_json,
+                    follow_redirects=follow_redirects - 1,
+                )
+
+            # Decode the data
+            request_response.status = response.status
+            if response.status == http.client.OK:
+                encoding = response.headers.get_content_charset() or "utf-8"
+                request_response.decoded_data = response.read().decode(encoding)
+
+                # Interpret it as json
+                if try_json:
+                    request_response.as_json = json.loads(request_response.decoded_data)
+
+        except socket.timeout as e:
+            logging.warning(e)
+            request_response.timeout = True
+            request_response.error = str(e)
+
+        except (http.client.HTTPException, socket.error, json.JSONDecodeError) as e:
+            logging.warning(e)
+            request_response.error = str(e)
+
+        except Exception as e:
+            logging.error(e, exc_info=True)
+            request_response.error = str(e)
+
+        finally:
+            if conn:
+                conn.close()
+
+        return request_response
 
     @staticmethod
     @temporary_cache(timeout_seconds=60)  # a temporary cache helps us deal with changes in metadata
