@@ -508,7 +508,16 @@ async def internet_test_previous_result() -> Any:
 async def periodic() -> None:
     while True:
         await asyncio.sleep(60)
-        await Helper.check_internet_access()
+        Helper.check_internet_access()
+
+        # Clear the known ports cache and re-scan it
+        if Helper.PERIODICALLY_RESCAN_ALL_SERVICES:
+            Helper.KNOWN_SERVICES.clear()
+        # To get changes in the metadata of extensions, we clear the cache for them to force a rescan
+        elif Helper.PERIODICALLY_RESCAN_3RDPARTY_SERVICES:
+            Helper.KNOWN_SERVICES = {
+                service for service in Helper.KNOWN_SERVICES if service.port in Helper.BLUEOS_SYSTEM_SERVICES_PORTS
+            }
 
 
 app = VersionedFastAPI(
