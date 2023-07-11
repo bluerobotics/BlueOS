@@ -269,6 +269,7 @@ class Helper:
         return request_response
 
     @staticmethod
+    @temporary_cache(timeout_seconds=1)  # a temporary cache helps us deal with changes in metadata
     # pylint: disable=too-many-branches
     def detect_service(port: int) -> ServiceInfo:
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
@@ -361,7 +362,7 @@ class Helper:
         return info
 
     @staticmethod
-    @temporary_cache(timeout_seconds=10)
+    @temporary_cache(timeout_seconds=3)
     def scan_ports() -> List[ServiceInfo]:
         # Get TCP ports that are listen and can be accessed by external users (like server in 0.0.0.0, as described by the LOCALSERVER_CANDIDATES)
         ports = {
@@ -395,6 +396,7 @@ class Helper:
         return [service for service in Helper.KNOWN_SERVICES if service.valid]
 
     @staticmethod
+    @temporary_cache(timeout_seconds=1)
     def check_website(site: Website) -> WebsiteStatus:
         hostname = str(site.value["hostname"])
         port = int(str(site.value["port"]))
@@ -414,6 +416,7 @@ class Helper:
         return website_status
 
     @staticmethod
+    @temporary_cache(timeout_seconds=5)
     def check_internet_access() -> Dict[str, WebsiteStatus]:
         # 10 concurrent executors is fine here because its a very short/light task
         with futures.ThreadPoolExecutor(max_workers=10) as executor:
