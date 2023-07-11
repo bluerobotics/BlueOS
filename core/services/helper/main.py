@@ -97,6 +97,14 @@ class ServiceInfo(BaseModel):
     port: int
     metadata: Optional[ServiceMetadata]
 
+    def __hash__(self) -> int:
+        return hash(self.port)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, ServiceInfo):
+            return self.port == other.port
+        return False
+
 
 class SpeedtestServer(BaseModel):
     url: str
