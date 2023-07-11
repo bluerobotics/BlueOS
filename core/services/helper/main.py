@@ -363,18 +363,36 @@ class Helper:
     @staticmethod
     @temporary_cache(timeout_seconds=10)
     def scan_ports() -> List[ServiceInfo]:
-        # Filter for TCP ports that are listen and can be accessed by external users (server in 0.0.0.0)
-        connections = (
-            connection
+        # Get TCP ports that are listen and can be accessed by external users (like server in 0.0.0.0, as described by the LOCALSERVER_CANDIDATES)
+        ports = {
+            connection.laddr.port
             for connection in psutil.net_connections("tcp")
             if connection.status == psutil.CONN_LISTEN and connection.laddr.ip in Helper.LOCALSERVER_CANDIDATES
-        )
+        }
 
-        # And check if there is a webpage available that is not us
-        # Use it as a set to remove duplicated ports
-        ports = set(connection.laddr.port for connection in connections)
-        services = [Helper.detect_service(port) for port in ports if port != PORT]
-        return [service for service in services if service.valid]
+        # If a known service is not within the detected ports, we remove it from the known services
+        if Helper.KEEP_BLUEOS_SERVICES_ALIVE:
+            Helper.KNOWN_SERVICES = {
+                service
+                for service in Helper.KNOWN_SERVICES
+                if service.port in ports or service.port in Helper.BLUEOS_SYSTEM_SERVICES_PORTS
+            }
+        else:
+            Helper.KNOWN_SERVICES = {service for service in Helper.KNOWN_SERVICES if service.port in ports}
+
+        # Filter out ports we want to skip, as well as the ports from services we already know, assuming the services don't change,
+        known_ports = {service.port for service in Helper.KNOWN_SERVICES}
+        ports.difference_update(Helper.SKIP_PORTS, known_ports)
+
+        # The detect_services run several of requests sequentially, so we are capping the ammount of executors to lower the peaks on the CPU usage
+        with futures.ThreadPoolExecutor(max_workers=2) as executor:
+            tasks = [executor.submit(Helper.detect_service, port) for port in ports]
+            services = {task.result() for task in futures.as_completed(tasks)}
+
+        # Update our known services cache
+        Helper.KNOWN_SERVICES.update(services)
+
+        return [service for service in Helper.KNOWN_SERVICES if service.valid]
 
     @staticmethod
     def check_website(site: Website) -> WebsiteStatus:
