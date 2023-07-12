@@ -32,15 +32,18 @@ echo "Running isort.."
 # Run isort for each python project
 dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only --diff "{}"
 
+# This will only get the python files track by git, not including submodules
+python_files=$(git ls-files '*.py')
+
 echo "Running black.."
-black --check --diff "$repository_path"
+black --check --diff $python_files
 
 # Faster than pylint to check for issues
 echo "Running ruff.."
-ruff "$repository_path"
+ruff $python_files
 
 echo "Running pylint.."
-pylint $(git ls-files '*.py')
+pylint $python_files
 
 echo "Running pytest.."
 pytest --cov="$repository_path" --cov-report html
