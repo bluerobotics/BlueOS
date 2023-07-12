@@ -19,7 +19,7 @@
     >
       <v-card>
         <v-card-title class="align-center">
-          Shut Down
+          Power
         </v-card-title>
 
         <v-divider />
