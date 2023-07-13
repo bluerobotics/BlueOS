@@ -27,6 +27,7 @@ class VersionChooser:
     def __init__(self, client: aiodocker.Docker):
         self.client = client
         self.cleanup()
+        self.bootstrap_name = "blueos-bootstrap"
 
     @staticmethod
     def cleanup() -> None:
@@ -135,6 +136,74 @@ class VersionChooser:
         await response.write_eof()
         # TODO: restore pruning
         return response
+
+    async def get_bootstrap_version(self) -> str:
+        """Get the current bootstrap container image version.
+
+        Retrieves the bootstrap container and returns the image version
+        from the container configuration.
+
+        Returns:
+            str: The image version string for the bootstrap container.
+        """
+        bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
+        return str(bootstrap["Config"]["Image"])
+
+    async def set_bootstrap_version(self, tag: str) -> web.StreamResponse:
+        """Set the bootstrap container to a new version.
+
+        Stops the current bootstrap container, renames it to a backup,
+        creates a new bootstrap container with the provided image tag,
+        starts the new container, and returns a response.
+
+        Args:
+            tag (str): The image tag for the new bootstrap container.
+
+        Returns:
+            web.StreamResponse: Response indicating success.
+        """
+
+        bootstrap = None
+        logging.info(f"Setting new bootstrap version: {tag}")
+        try:
+            bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
+            logging.info("Got bootstrap..")
+        except Exception as error:
+            logging.critical("Warning: %s: %s", type(error), error)
+
+        backup_name = "bootstrap-backup"
+        try:
+            backup = None
+            backup = await self.client.containers.get(backup_name)  # type: ignore
+            logging.info(f"Got {backup_name}, going to delete and create a new one..")
+            await backup.delete(force=False, noprune=False)  # type: ignore
+        except Exception as error:
+            logging.critical("warning: %s: %s", type(error), error)
+
+        if bootstrap:
+            logging.info(f"Setting current {await self.get_bootstrap_version()} as {backup_name}")
+            await bootstrap.rename(backup_name)
+            logging.info(f"Stop {self.bootstrap_name}")
+            await bootstrap.stop()
+
+        HOME = "/root"
+        bootstrap_config = {
+            "Image": f"bluerobotics/blueos-bootstrap:{tag}",
+            "HostConfig": {
+                "RestartPolicy": {"Name": "unless-stopped"},
+                "NetworkMode": "host",
+                "Binds": [
+                    f"{HOME}/.config/blueos/bootstrap:/root/.config/bootstrap",
+                    "/var/run/docker.sock:/var/run/docker.sock",
+                ],
+            },
+            "Env": [f"BLUEOS_CONFIG_PATH={HOME}/.config/blueos"],
+        }
+
+        container = await self.client.containers.create(bootstrap_config, name=self.bootstrap_name)  # type: ignore
+        await container.start()
+        logging.info(f"Bootstrap updated to {bootstrap_config['Image']}")
+        return web.Response(status=200, text=f"Bootstrap update to {tag}")
 
     async def set_version(self, image: str, tag: str) -> web.StreamResponse:
         """Sets the current version.
