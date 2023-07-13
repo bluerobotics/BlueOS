@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
+import logging
 from typing import Any
 
 import aiodocker
 import connexion
 from aiohttp import web
+from commonwealth.utils.logs import InterceptHandler, init_logger
+from loguru import logger
 
 from utils.chooser import STATIC_FOLDER, VersionChooser
+
+SERVICE_NAME = "version-chooser"
+
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
+init_logger(SERVICE_NAME)
+
+logger.info("Starting Version Chooser")
 
 versionChooser = VersionChooser(aiodocker.Docker())
 

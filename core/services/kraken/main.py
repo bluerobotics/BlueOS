@@ -32,14 +32,9 @@ class Extension(BaseModel):
 SERVICE_NAME = "kraken"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+init_logger(SERVICE_NAME)
 
 kraken = Kraken()
-
-try:
-    init_logger(SERVICE_NAME)
-except Exception as e:
-    print(f"unable to set logging path: {e}")
-
 
 app = FastAPI(
     title="Kraken API",
@@ -159,14 +154,12 @@ async def root() -> Any:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
     if args.debug:
-        logging.getLogger("kraken").setLevel(logging.DEBUG)
+        logging.getLogger(SERVICE_NAME).setLevel(logging.DEBUG)
 
     logger.info("Releasing the Kraken service.")
 

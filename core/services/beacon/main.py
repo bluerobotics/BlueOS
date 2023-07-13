@@ -258,6 +258,9 @@ class Beacon:
         await asyncio.gather(*[runner.unregister_services() for runner in self.runners.values()])
 
 
+logging.basicConfig(level=logging.DEBUG)
+init_logger(SERVICE_NAME)
+
 app = FastAPI(
     title="Beacon API",
     description="Beacon is responsible for publishing mDNS domains.",
@@ -325,9 +328,6 @@ async def root() -> Any:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    init_logger(SERVICE_NAME)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()

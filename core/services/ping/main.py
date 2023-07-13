@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
+import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.logs import init_logger
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -17,6 +18,9 @@ from portwatcher import PortWatcher
 from typedefs import PingDeviceDescriptorModel
 
 SERVICE_NAME = "ping"
+
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
+init_logger(SERVICE_NAME)
 
 app = FastAPI(
     title="Ping Manager API",
@@ -75,8 +79,6 @@ async def sensor_manager() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ping Service for Bluerobotics BlueOS")
     args = parser.parse_args()
-
-    init_logger(SERVICE_NAME)
 
     loop = asyncio.new_event_loop()
 
