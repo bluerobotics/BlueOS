@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import glob
+import logging
 import os
 import pathlib
 import time
@@ -10,7 +11,10 @@ import zipfile
 from typing import List
 
 from commonwealth.utils.general import delete_everything
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
+
+SERVICE_NAME = "log-zipper"
 
 
 def zip_files(files: List[str], output_path: str) -> None:
@@ -33,6 +37,9 @@ def main() -> None:
     parser.add_argument("-p", "--period", type=int, default=600, help="Interval in seconds to scan the directory")
     parser.add_argument("-a", "--max-age-minutes", type=int, default=10, help="Maximum age for files in minutes")
     args = parser.parse_args()
+
+    logging.basicConfig(handlers=[InterceptHandler()], level=0)
+    init_logger(SERVICE_NAME)
 
     # Enforce path parameter
     if not glob.has_magic(args.path) and not os.path.isdir(args.path):

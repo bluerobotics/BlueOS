@@ -38,7 +38,6 @@ args = parser.parse_args()
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-
 app = FastAPI(
     title="ArduPilot Manager API",
     description="ArduPilot Manager is responsible for managing ArduPilot devices connected to BlueOS.",

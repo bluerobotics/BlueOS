@@ -23,17 +23,24 @@ from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
+from loguru import logger
 from pydantic import BaseModel
 from speedtest import Speedtest
 from uvicorn import Config, Server
 
+SERVICE_NAME = "helper"
 BLUEOS_VERSION = os.environ.get("GIT_DESCRIBE_TAGS", "null")
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 SPEED_TEST: Optional[Speedtest] = None
 
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
-init_logger("Helper")
+try:
+    init_logger(SERVICE_NAME)
+except Exception as logger_e:
+    print(f"Error: unable to set logger path: {logger_e}")
+
+logger.info("Starting Helper")
 
 try:
     SPEED_TEST = Speedtest(secure=True)
@@ -250,16 +257,16 @@ class Helper:
                     request_response.as_json = json.loads(request_response.decoded_data)
 
         except socket.timeout as e:
-            logging.warning(e)
+            logger.warning(e)
             request_response.timeout = True
             request_response.error = str(e)
 
         except (http.client.HTTPException, socket.error, json.JSONDecodeError) as e:
-            logging.warning(e)
+            logger.warning(e)
             request_response.error = str(e)
 
         except Exception as e:
-            logging.error(e, exc_info=True)
+            logger.exception(e)
             request_response.error = str(e)
 
         finally:
@@ -279,7 +286,7 @@ class Helper:
         log_msg = f"Detecting service at port {port}"
         if response.status != http.client.OK:
             # If not valid web server, documentation will not be available
-            logging.debug(f"{log_msg}: Invalid")
+            logger.debug(f"{log_msg}: Invalid")
             return info
 
         info.valid = True
@@ -288,7 +295,7 @@ class Helper:
             title_element = soup.find("title")
             info.title = title_element.text if title_element else "Unknown"
         except Exception as e:
-            logging.warning(f"Failed parsing the service title: {e}")
+            logger.warning(f"Failed parsing the service title: {e}")
 
         # Try to get the metadata from the service
         response = Helper.simple_http_request(
@@ -306,9 +313,9 @@ class Helper:
                 info.metadata = ServiceMetadata.parse_obj(response_as_json)
                 info.metadata.sanitized_name = re.sub(r"[^a-z0-9]", "", info.metadata.name.lower())
             except Exception as e:
-                logging.warning(f"Failed parsing the received JSON as ServiceMetadata object: {e}")
+                logger.warning(f"Failed parsing the received JSON as ServiceMetadata object: {e}")
         else:
-            logging.debug(f"No metadata received from {info.title} (port {port})")
+            logger.debug(f"No metadata received from {info.title} (port {port})")
 
         # Try to get the documentation links
         for documentation_path in Helper.DOCS_CANDIDATE_URLS:
@@ -357,7 +364,7 @@ class Helper:
             # Since we have at least found one info.documentation_path, we finish here
             break
 
-        logging.debug(f"{log_msg}: Valid.")
+        logger.debug(f"{log_msg}: Valid.")
         return info
 
     @staticmethod
@@ -406,10 +413,10 @@ class Helper:
 
         log_msg = f"Running check_website for '{hostname}:{port}'"
         if response.error is None:
-            logging.debug(f"{log_msg}: Online.")
+            logger.debug(f"{log_msg}: Online.")
             website_status.online = True
         else:
-            logging.warning(f"{log_msg}: Offline: {website_status.error}.")
+            logger.warning(f"{log_msg}: Offline: {website_status.error}.")
             website_status.error = response.error
 
         return website_status

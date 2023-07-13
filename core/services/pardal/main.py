@@ -1,15 +1,26 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
 import os
 from functools import cache
+
 import aiohttp
 from aiohttp import web
+from commonwealth.utils.logs import InterceptHandler, init_logger
+from loguru import logger
+
+SERVICE_NAME = "pardal"
 
 parser = argparse.ArgumentParser(description="Pardal, web service to help with speed and latency tests")
 parser.add_argument("-p", "--port", help="Port to run web server", action="store_true", default=9120)
 
 args = parser.parse_args()
+
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
+init_logger(SERVICE_NAME)
+
+logger.info("Starting Pardal")
 
 
 @cache

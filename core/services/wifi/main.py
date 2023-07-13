@@ -195,7 +195,6 @@ app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 
 if __name__ == "__main__":
-
     if os.geteuid() != 0:
         logger.error("You need root privileges to run this script.\nPlease try again using **sudo**. Exiting.")
         sys.exit(1)

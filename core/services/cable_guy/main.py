@@ -44,10 +44,10 @@ if args.default_config == "bluerov2":
         NetworkInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
     ]
 
-manager = EthernetManager(default_configs)
-
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+
+manager = EthernetManager(default_configs)
 
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
