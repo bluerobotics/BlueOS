@@ -76,6 +76,54 @@
           Update to latest {{ image.tag }}
         </div>
       </v-btn>
+      <v-dialog
+        v-model="bootstrapDialog"
+        width="500"
+      >
+        <template #activator="{ on, attrs }">
+          <v-btn
+            v-if="showBootstrapUpdate"
+            color="warning"
+            class="mx-2 my-1"
+            :disabled="working"
+            dark
+            v-bind="attrs"
+            v-on="on"
+          >
+            Update Bootstrap
+          </v-btn>
+        </template>
+
+        <v-card>
+          <v-card-title
+            class="text-h5 red--text grey lighten-2"
+          >
+            Danger Zone
+          </v-card-title>
+
+          <v-card-text class="text-h6 ma-6">
+            Updating bootstrap is a <b>dangerous operation</b>, only do that when required and necessary.
+          </v-card-text>
+
+          <v-divider />
+
+          <v-card-actions>
+            <v-btn
+              color="primary"
+              @click="bootstrapDialog = false"
+            >
+              Abort
+            </v-btn>
+            <v-spacer />
+            <v-btn
+              color="warning"
+              @click="updateBootstrap"
+            >
+              I accept the risks
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <v-btn
         v-if="newBetaAvailable"
         color="primary"
@@ -136,6 +184,10 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
+    bootstrapVersion: {
+      type: String as PropType<string | undefined>,
+      default: undefined,
+    },
     upToDate: {
       type: Boolean,
       default: false,
@@ -175,12 +227,23 @@ export default Vue.extend({
   },
   data() {
     return {
+      bootstrapDialog: false,
       settings,
     }
   },
   computed: {
     working(): boolean {
       return this.loading || this.deleting
+    },
+    isFromBR(): boolean {
+      return this.image.repository === 'bluerobotics/blueos-core'
+    },
+    showBootstrapUpdate(): boolean {
+      if (!this.bootstrapVersion) {
+        return false
+      }
+      return this.settings.is_pirate_mode && this.current && !this.updateAvailable && this.isFromBR
+        && this.bootstrapVersion !== `${this.image.repository.split('/')[0]}/blueos-bootstrap:${this.image.tag}`
     },
   },
   methods: {
@@ -195,6 +258,10 @@ export default Vue.extend({
     },
     imageCanBeDeleted() {
       return (this.image.tag !== 'factory' || this.image.repository !== DEFAULT_REMOTE_IMAGE) && !this.deleting
+    },
+    updateBootstrap() {
+      this.bootstrapDialog = false
+      this.$emit('update-bootstrap', `bluerobotics/blueos-bootstrap:${this.image.tag}`)
     },
   },
 })

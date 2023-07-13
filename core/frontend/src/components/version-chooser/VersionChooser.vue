@@ -56,11 +56,13 @@
           :key="`${image.sha}-local`"
           :image="image"
           :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
+          :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(image)"
           :deleting="deleting.endsWith(image.tag)"
           @delete="deleteVersion"
           @apply="setVersion"
           @pull-and-apply="pullAndSetVersion"
+          @update-bootstrap="updateBootstrap"
         />
         <spinning-logo
           v-if="local_versions.loading"
@@ -211,6 +213,7 @@ export default Vue.extend({
   data() {
     return {
       settings,
+      bootstrap_version: undefined as (undefined | string),
       pull_output: '',
       show_pull_output: false,
       page: 1,
@@ -397,6 +400,7 @@ export default Vue.extend({
       ])
     },
     async loadCurrentVersion() {
+      this.bootstrap_version = await VCU.loadBootstrapCurrentVersion()
       await VCU.loadCurrentVersion()
         .then((image) => {
           this.current_version = image
@@ -433,7 +437,7 @@ export default Vue.extend({
         })
       }
     },
-    async pullAndSetVersion(args: string | string[]) {
+    async pullAndSetVersion(args: string | string[], wait = true) {
       const fullname: string = Array.isArray(args) ? args[0] : args
       // This streams the output of docker pull
       this.pull_output = 'Fetching remote image...'
@@ -461,7 +465,49 @@ export default Vue.extend({
           this.status_text = tracker.overall_status
           this.show_pull_output = true
         },
-      }).then(() => { this.waitForBackendToRestart(true) })
+      }).then(() => { this.waitForBackendToRestart(wait) })
+    },
+    async pullVersion(image: string) {
+      // This streams the output of docker pull
+      this.pull_output = 'Fetching remote image...'
+      this.show_pull_output = true
+      const [repository, tag] = image.split(':')
+      const tracker = new PullTracker(() => {
+        setTimeout(() => {
+          this.show_pull_output = false
+        }, 1000)
+      })
+
+      return back_axios({
+        url: '/version-chooser/v1.0/version/pull/',
+        method: 'POST',
+        data: {
+          repository,
+          tag,
+        },
+        onDownloadProgress: (progressEvent) => {
+          tracker.digestNewData(progressEvent)
+          this.pull_output = tracker.pull_output
+          this.download_percentage = tracker.download_percentage
+          this.extraction_percentage = tracker.extraction_percentage
+          this.status_text = tracker.overall_status
+          this.show_pull_output = true
+        },
+      })
+    },
+    async updateBootstrap(image: string) {
+      const [_, tag] = image.split(':')
+      await this.pullVersion(image)
+        .then(() => { this.setBootstrapVersion(tag) })
+    },
+    async setBootstrapVersion(version: string) {
+      await back_axios({
+        method: 'post',
+        url: '/version-chooser/v1.0/bootstrap/current',
+        data: {
+          tag: version,
+        },
+      })
     },
     async setVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
