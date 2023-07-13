@@ -270,7 +270,6 @@ class Helper:
 
     @staticmethod
     @temporary_cache(timeout_seconds=1)  # a temporary cache helps us deal with changes in metadata
-    # pylint: disable=too-many-branches
     def detect_service(port: int) -> ServiceInfo:
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
 
