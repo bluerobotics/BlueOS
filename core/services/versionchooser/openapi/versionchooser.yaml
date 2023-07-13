@@ -36,6 +36,31 @@ paths:
                   type: string
                   example: master
 
+  /bootstrap/current:
+    get:
+      operationId: main.get_bootstrap_version
+      summary: Return the current running version of BlueOS-bootstrap
+      responses:
+        '200':
+          description: The current running version of BlueOS-bootstrap
+    post:
+      operationId: main.set_bootstrap_version
+      summary: Sets the current version of BlueOS-bootstrap to a new tag
+      responses:
+        '200':
+          description: Successfully set a new version
+        '400':
+          description: Attempted to set an unavailable version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                  example: master
+
   /version/restart:
     post:
       operationId: main.restart
