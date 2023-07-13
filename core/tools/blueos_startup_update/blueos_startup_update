@@ -156,12 +156,11 @@ def boot_cmdfile_add_modules(cmdline_content: List[str], config_key: str, desire
     ]
 
     # Combine all config lines into a single one, starting from desired configs
-    configs = set(desired_config)
     first_config_line = None
     for config_index in config_indexes:
         config_line = cmdline_content[config_index].split(f'{config_key}=')[-1].split(',')
 
-        configs = configs.union(config_line)
+        desired_config.extend([config for config in config_line if config not in desired_config])
 
         if first_config_line is None:
             first_config_line = config_index
@@ -170,9 +169,9 @@ def boot_cmdfile_add_modules(cmdline_content: List[str], config_key: str, desire
 
     # Replace the first configs line with the combined, append if none
     if first_config_line:
-        cmdline_content[first_config_line] = f'{config_key}=' + ','.join(configs)
+        cmdline_content[first_config_line] = f'{config_key}=' + ','.join(desired_config)
     else:
-        config_line = f'{config_key}=' + ','.join(configs)
+        config_line = f'{config_key}=' + ','.join(desired_config)
         cmdline_content.append(config_line)
 
 def boot_cmdfile_add_config(cmdline_content: List[str], config_key: str, config_value: str):
