@@ -210,8 +210,10 @@ class Bootstrapper:
                 if "core" in response.json()["repository"]:
                     self.core_last_response_time = time.time()
                     return True
+                return False
             except Exception as e:
                 print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
+                return False
         return True
 
     def remove(self, container: str) -> None:
