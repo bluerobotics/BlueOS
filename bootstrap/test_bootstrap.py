@@ -218,3 +218,12 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper.run()
         self.mock_response.json.return_value = {"repository": ["core"]}
         assert bootstrapper.is_running("core")
+
+    @pytest.mark.timeout(10)
+    def test_bootstrap_start_invalid_json(self) -> None:
+        self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents="biscoito")
+        bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
+        bootstrapper.run()
+        self.mock_response.json.return_value = {"repository": ["core"]}
+        assert bootstrapper.is_running("core")
