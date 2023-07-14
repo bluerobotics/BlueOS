@@ -2,6 +2,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Generator, List
+from unittest.mock import MagicMock, patch
 
 import pytest
 from docker.errors import NotFound
@@ -134,6 +135,14 @@ class FakeLowLevelAPI:
 class BootstrapperTests(TestCase):  # type: ignore
     def setUp(self) -> None:
         self.setUpPyfakefs()
+        self.setupRequestsMock()
+
+    def setupRequestsMock(self) -> None:
+        # Create a mock response object
+        self.mock_response = MagicMock()
+        # Patch the requests.get function to return the mock response
+        self.requests_mock = patch("requests.get", return_value=self.mock_response)
+        self.mock_get = self.requests_mock.start()
 
     @pytest.mark.timeout(10)
     def test_start_core(self) -> None:
@@ -148,6 +157,8 @@ class BootstrapperTests(TestCase):  # type: ignore
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start("core")
+        self.mock_response.json.return_value = {"repository": ["core"]}
+        # we don't check if ttyd is running with requests, so no mock is required
         bootstrapper.start("ttyd")
         assert bootstrapper.is_running("core")
         assert bootstrapper.is_running("ttyd")
@@ -159,24 +170,33 @@ class BootstrapperTests(TestCase):  # type: ignore
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start("core")
-
-    @staticmethod
-    @pytest.mark.timeout(10)
-    def test_is_running() -> None:
-        fake_client = FakeClient()
-        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
-        assert bootstrapper.is_running("core") is False
-        fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
-        fake_client.set_active_dockers([fake_core])
+        self.mock_response.json.return_value = {"repository": ["core"]}
         assert bootstrapper.is_running("core")
 
-    @staticmethod
     @pytest.mark.timeout(10)
-    def test_remove_core() -> None:
+    def test_is_running(self) -> None:
+        fake_client = FakeClient()
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
+
+        fake_client.set_active_dockers([])
+        assert bootstrapper.is_running("core") is False
+
+        fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
+        fake_client.set_active_dockers([fake_core])
+
+        self.mock_response.json.return_value = {"repository": []}
+        assert bootstrapper.is_running("core") is False
+
+        self.mock_response.json.return_value = {"repository": ["core"]}
+        assert bootstrapper.is_running("core") is True
+
+    @pytest.mark.timeout(10)
+    def test_remove_core(self) -> None:
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
         fake_client.set_active_dockers([fake_core])
+        self.mock_response.json.return_value = {"repository": ["core"]}
         assert bootstrapper.is_running("core") is True
         bootstrapper.remove("core")
         assert bootstrapper.is_running("core") is False
@@ -187,7 +207,8 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
         assert bootstrapper.is_running("core") is False
         bootstrapper.run()
-        assert bootstrapper.is_running("core")
+        self.mock_response.json.return_value = {"repository": ["core"]}
+        assert bootstrapper.is_running("core") is True
 
     @pytest.mark.timeout(10)
     def test_bootstrap_start_bad_json(self) -> None:
@@ -195,4 +216,5 @@ class BootstrapperTests(TestCase):  # type: ignore
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=json.dumps({"potato": "bread"}))
         bootstrapper = Bootstrapper(FakeClient(), FakeLowLevelAPI())
         bootstrapper.run()
+        self.mock_response.json.return_value = {"repository": ["core"]}
         assert bootstrapper.is_running("core")
