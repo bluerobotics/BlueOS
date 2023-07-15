@@ -29,7 +29,7 @@
       width="fit-content"
       max-width="80%"
     >
-      <network-interface-priority-menu
+      <network-interface-menu
         v-if="show_menu"
         @close="show_menu = false"
       />
@@ -43,12 +43,12 @@ import Vue from 'vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 
-import NetworkInterfacePriorityMenu from './NetworkInterfacePriorityMenu.vue'
+import NetworkInterfaceMenu from './NetworkInterfaceMenu.vue'
 
 export default Vue.extend({
   name: 'InternetTrayMenu',
   components: {
-    NetworkInterfacePriorityMenu,
+    NetworkInterfaceMenu,
   },
   data: () => ({
     helper,
