@@ -16,6 +16,7 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
 
+from api.dns import DnsData
 from api.manager import (
     AddressMode,
     EthernetManager,
@@ -130,6 +131,20 @@ def trigger_dynamic_ip_acquisition(interface_name: str) -> Any:
     """REST API endpoint to trigger interface to receive a new dynamic IP."""
     manager.trigger_dynamic_ip_acquisition(interface_name)
     manager.save()
+
+
+@app.get("/host_dns", summary="Retrieve host DNS configuration.")
+@version(1, 0)
+def retrieve_host_dns() -> Any:
+    """REST API endpoint to retrieve the host DNS configuration."""
+    return manager.dns.retrieve_host_nameservers()
+
+
+@app.post("/host_dns", summary="Update host DNS configuration.")
+@version(1, 0)
+def update_host_dns(dns_data: DnsData) -> Any:
+    """REST API endpoint to update the host DNS configuration."""
+    manager.dns.update_host_nameservers(dns_data)
 
 
 app = VersionedFastAPI(
