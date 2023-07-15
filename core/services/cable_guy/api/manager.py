@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 
-from api import settings
+from api import dns, settings
 
 
 class AddressMode(str, Enum):
@@ -57,6 +57,8 @@ class EthernetManager:
     iw = IW()
     # IP abstraction interface
     ipr = IPRoute()
+    # DNS abstraction
+    dns = dns.Dns()
 
     result: List[NetworkInterface] = []
 
