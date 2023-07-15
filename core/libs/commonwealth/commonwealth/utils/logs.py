@@ -61,7 +61,10 @@ def get_new_log_path(service_name: str) -> Path:
 
 def init_logger(service_name: str) -> None:
     rotator = LogRotator(10 * 60)  # Rotate every 10 minutes
-    logger.add(get_new_log_path(service_name), rotation=rotator.should_rotate)
+    try:
+        logger.add(get_new_log_path(service_name), rotation=rotator.should_rotate)
+    except Exception as e:
+        print(f"Error: unable to set logging path: {e}")
 
 
 def stack_trace_message(error: BaseException) -> str:
