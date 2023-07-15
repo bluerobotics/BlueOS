@@ -1,9 +1,6 @@
 <template>
   <v-card class="pa-2 mx-auto" max-width="350">
     <v-list>
-      <v-card-title class="pt-2">
-        Change network interface priority
-      </v-card-title>
       <v-card-subtitle class="text-md-center" max-width="30">
         Move network interfaces over
         to change network access priority
