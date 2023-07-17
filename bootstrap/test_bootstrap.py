@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Generator, List
 from unittest.mock import MagicMock, patch
-
+import time
 import pytest
 from docker.errors import NotFound
 from pyfakefs.fake_filesystem_unittest import TestCase
@@ -48,25 +48,38 @@ SAMPLE_JSON = """{
 class FakeContainer:
     """Mocks a single Container from Docker-py"""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, raise_if_stopped: bool = False) -> None:
         self.name: str = name
         self.client: Any
+        self.raise_if_stopped = raise_if_stopped
+        self.created_time = time.time()
+        print(f"created container {self.name} at {self.created_time}")
+
+    def age(self) -> float:
+        return time.time() - self.created_time
 
     def set_client(self, client: Any) -> None:
         self.client = client
 
     def remove(self) -> None:
+        if self.raise_if_stopped:
+            raise RuntimeError("Container cannot be stopped")
+        print(f"removing container {self.name}")
         self.client.containers.remove(self.name)
 
     def stop(self) -> None:
         pass
 
+    def __repr__(self) -> str:
+        return self.name
+
 
 class FakeContainers:
     """Mocks "Containers" class from docker-py"""
 
-    def __init__(self, containers: List[FakeContainer]):
+    def __init__(self, containers: List[FakeContainer], client: "FakeClient"):
         self.containers: Dict[str, FakeContainer] = {container.name: container for container in containers}
+        self.client = client
 
     def get(self, container: str) -> FakeContainer:
         result = self.containers.get(container, None)
@@ -81,6 +94,7 @@ class FakeContainers:
     # pylint: disable=unused-argument
     def run(self, image: str, name: str = "", **kargs: Dict[str, Any]) -> None:
         self.containers[name] = FakeContainer(name)
+        self.containers[name].set_client(self.client)
 
     def list(self) -> List[FakeContainer]:
         return list(self.containers.values())
@@ -106,13 +120,13 @@ class FakeClient:
     """Mocks a docker-py client for testing purposes"""
 
     def __init__(self) -> None:
-        self.containers = FakeContainers([])
+        self.containers = FakeContainers([], self)
         self.images = FakeImages()
 
     def set_active_dockers(self, containers: List[FakeContainer]) -> None:
         for container in containers:
             container.set_client(self)
-        self.containers = FakeContainers(containers)
+        self.containers = FakeContainers(containers, self)
 
 
 class FakeLowLevelAPI:
@@ -233,3 +247,30 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper.run()
         self.mock_response.json.return_value = {"repository": ["core"]}
         assert bootstrapper.is_running("core")
+
+    @pytest.mark.timeout(10)
+    def test_bootstrap_core_timeout(self) -> None:
+        start_time = time.time()
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
+        self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
+        fake_client = FakeClient()
+        fake_client.set_active_dockers([FakeContainer(Bootstrapper.CORE_CONTAINER_NAME, raise_if_stopped=True)])
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
+        bootstrapper.run()
+        self.mock_response.json.return_value = {"repository": ["core"]}
+        assert bootstrapper.is_running("core") is True
+        # now make it stop responing to requests
+        # first just remove core from the output
+        self.mock_response.json.return_value = {"repository": []}
+        print("this should NOT timeout")
+        bootstrapper.run()
+
+        print("this SHOULD timeout")
+        # mock time so it passes faster
+        fake_client.set_active_dockers([FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)])
+        mock_time = patch("time.time", return_value=start_time + 1000)
+        mock_time.start()
+        # this should timeout AND restart core
+        bootstrapper.run()
+        assert fake_client.containers.get("blueos-core").age() == 0
+        mock_time.stop()
