@@ -190,7 +190,7 @@ class Bootstrapper:
             self.overwrite_config_file_with_defaults()
             return False
 
-        print("Core started")
+        print(f"{component_name} started")
         return True
 
     def is_running(self, component: str) -> bool:
