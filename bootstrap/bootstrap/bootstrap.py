@@ -176,6 +176,8 @@ class Bootstrapper:
                 return False
 
         print(f"Starting {image_name}")
+        # Remove image if name already exist
+        self.remove(component_name)
         try:
             self.client.containers.run(
                 f"{image_name}:{image_version}",
@@ -202,20 +204,21 @@ class Bootstrapper:
         Returns:
             bool: True if the chosen container is running
         """
-        if not any(container.name.endswith(component) for container in self.client.containers.list()):
-            return False
+        return any(container.name.endswith(component) for container in self.client.containers.list())
 
-        if component == "core":
-            try:
-                response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10)
-                if "core" in response.json()["repository"]:
-                    self.core_last_response_time = time.time()
-                    return True
-                return False
-            except Exception as e:
-                print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
-                return False
-        return True
+    def is_version_chooser_online(self) -> bool:
+        """Check if the version chooser service is online.
+
+        Returns:
+            bool: True if version chooser is online, False otherwise.
+        """
+        try:
+            response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10)
+            if Bootstrapper.SETTINGS_NAME_CORE in response.json()["repository"]:
+                return True
+        except Exception as e:
+            print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
+        return False
 
     def remove(self, container: str) -> None:
         """Deletes the chosen container if it exists (needed for updating the running image)"""
@@ -229,21 +232,39 @@ class Bootstrapper:
 
     def run(self) -> None:
         """Runs the bootstrapper"""
+        print("Starting main loop")
         while True:
-            time.sleep(1)
+            time.sleep(5)
             for image in self.read_config_file():
-                if self.is_running(image):
+                # Start image if it's not running
+                if not self.is_running(image):
+                    try:
+                        if self.start(image):
+                            print(f"{image} is not running, starting..")
+                    except Exception as error:
+                        warn(f"error: {type(error)}: {error}, retrying...")
+
+                if image != Bootstrapper.SETTINGS_NAME_CORE:
                     continue
-                # reset core to default if it's hasn't responded in 5 minutes
-                if time.time() - self.core_last_response_time > 300:
-                    print("Core has not responded in 5 minutes, resetting to factory...")
-                    self.overwrite_config_file_with_defaults()
+
+                if self.is_version_chooser_online():
+                    self.core_last_response_time = time.time()
+                    continue
+
+                # Check if version chooser failed start before timeout
+                if time.time() - self.core_last_response_time < 300:
+                    continue
+
+                # Version choose failed, time to restarted core
+                self.core_last_response_time = time.time()
+                print("Core has not responded in 5 minutes, resetting to factory...")
+                self.overwrite_config_file_with_defaults()
                 try:
-                    self.remove(image)
                     if self.start(image):
-                        print("Done")
+                        print("Restarted core..")
                 except Exception as error:
                     warn(f"error: {type(error)}: {error}, retrying...")
+
             # This is required for the tests, we need to "finish" somehow
             if "pytest" in sys.modules:
                 return
