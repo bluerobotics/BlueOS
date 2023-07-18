@@ -48,14 +48,18 @@ SAMPLE_JSON = """{
 class FakeContainer:
     """Mocks a single Container from Docker-py"""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, raise_if_stopped: bool = False) -> None:
         self.name: str = name
         self.client: Any
+        self.raise_if_stopped = raise_if_stopped
 
     def set_client(self, client: Any) -> None:
         self.client = client
 
     def remove(self) -> None:
+        if self.raise_if_stopped:
+            raise RuntimeError("Container cannot be stopped")
+        print(f"removing container {self.name}")
         self.client.containers.remove(self.name)
 
     def stop(self) -> None:
