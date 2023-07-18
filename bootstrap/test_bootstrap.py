@@ -70,6 +70,9 @@ class FakeContainer:
     def stop(self) -> None:
         pass
 
+    def __repr__(self) -> str:
+        return self.name
+
 
 class FakeContainers:
     """Mocks "Containers" class from docker-py"""
