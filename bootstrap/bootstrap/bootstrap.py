@@ -19,6 +19,7 @@ class Bootstrapper:
     DOCKER_CONFIG_FILE_PATH = DOCKER_CONFIG_PATH.joinpath("bootstrap/startup.json")
     HOST_CONFIG_PATH = os.environ.get("BLUEOS_CONFIG_PATH", "/tmp/blueos/.config")
     CORE_CONTAINER_NAME = "blueos-core"
+    SETTINGS_NAME_CORE = "core"
     core_last_response_time = time.time()
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
@@ -61,10 +62,10 @@ class Bootstrapper:
         try:
             with open(Bootstrapper.DOCKER_CONFIG_FILE_PATH, encoding="utf-8") as config_file:
                 config = json.load(config_file)
-                assert "core" in config, "missing core entry in startup.json"
+                assert Bootstrapper.SETTINGS_NAME_CORE in config, "missing core entry in startup.json"
                 necessary_keys = ["image", "tag", "binds", "privileged", "network"]
                 for key in necessary_keys:
-                    assert key in config["core"], f"missing key in json file: {key}"
+                    assert key in config[Bootstrapper.SETTINGS_NAME_CORE], f"missing key in json file: {key}"
 
         except Exception as error:
             print(f"unable to read startup.json file ({error}), reverting to defaults...")
@@ -73,7 +74,7 @@ class Bootstrapper:
             with open(Bootstrapper.DEFAULT_FILE_PATH, encoding="utf-8") as config_file:
                 config = json.load(config_file)
 
-        config["core"]["binds"][str(Bootstrapper.HOST_CONFIG_PATH)] = {
+        config[Bootstrapper.SETTINGS_NAME_CORE]["binds"][str(Bootstrapper.HOST_CONFIG_PATH)] = {
             "bind": str(Bootstrapper.DOCKER_CONFIG_PATH),
             "mode": "rw",
         }
