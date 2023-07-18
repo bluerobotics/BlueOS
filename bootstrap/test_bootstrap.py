@@ -183,12 +183,18 @@ class BootstrapperTests(TestCase):  # type: ignore
 
         fake_core = FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)
         fake_client.set_active_dockers([fake_core])
+        assert bootstrapper.is_running("core") is True
+
+    @pytest.mark.timeout(10)
+    def test_is_version_chooser_online(self) -> None:
+        fake_client = FakeClient()
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
 
         self.mock_response.json.return_value = {"repository": []}
-        assert bootstrapper.is_running("core") is False
+        assert bootstrapper.is_version_chooser_online() is False
 
         self.mock_response.json.return_value = {"repository": ["core"]}
-        assert bootstrapper.is_running("core") is True
+        assert bootstrapper.is_version_chooser_online() is True
 
     @pytest.mark.timeout(10)
     def test_remove_core(self) -> None:
