@@ -247,3 +247,35 @@ class BootstrapperTests(TestCase):  # type: ignore
         bootstrapper.run()
         self.mock_response.json.return_value = {"repository": ["core"]}
         assert bootstrapper.is_running("core")
+
+    @pytest.mark.timeout(50)
+    def test_bootstrap_core_timeout(self) -> None:
+        start_time = time.time()
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
+        self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
+        fake_client = FakeClient()
+        fake_client.set_active_dockers([FakeContainer(Bootstrapper.CORE_CONTAINER_NAME, raise_if_stopped=True)])
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
+        bootstrapper.run()
+        self.mock_response.json.return_value = {"repository": ["core"]}
+        assert bootstrapper.is_running("core") is True
+        # now make it stop responding to requests
+        # first just remove core from the output
+        self.mock_response.json.return_value = {"repository": []}
+
+        # This should NOT timeout. An exeption will be raise by the container if it stops
+        bootstrapper.run()
+
+        # This SHOULD timeout
+        # mock time so it passes faster
+        # this new FakeContainer will not throw when it stops
+        fake_client.set_active_dockers([FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)])
+        mock_time = patch("time.time", return_value=start_time + 1000)
+        mock_time.start()
+        # this should timeout AND restart core
+        bootstrapper.run()
+        # if the timeout worked, the container age will be zero
+        assert fake_client.containers.get("blueos-core").age() == 0
+        # check if the age is what we expected, just in case
+        assert fake_client.containers.get("blueos-core").created_time == start_time + 1000
+        mock_time.stop()
