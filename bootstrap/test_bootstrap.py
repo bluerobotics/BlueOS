@@ -77,8 +77,9 @@ class FakeContainer:
 class FakeContainers:
     """Mocks "Containers" class from docker-py"""
 
-    def __init__(self, containers: List[FakeContainer]):
+    def __init__(self, containers: List[FakeContainer], client: "FakeClient"):
         self.containers: Dict[str, FakeContainer] = {container.name: container for container in containers}
+        self.client = client
 
     def get(self, container: str) -> FakeContainer:
         result = self.containers.get(container, None)
@@ -93,6 +94,7 @@ class FakeContainers:
     # pylint: disable=unused-argument
     def run(self, image: str, name: str = "", **kargs: Dict[str, Any]) -> None:
         self.containers[name] = FakeContainer(name)
+        self.containers[name].set_client(self.client)
 
     def list(self) -> List[FakeContainer]:
         return list(self.containers.values())
@@ -118,13 +120,13 @@ class FakeClient:
     """Mocks a docker-py client for testing purposes"""
 
     def __init__(self) -> None:
-        self.containers = FakeContainers([])
+        self.containers = FakeContainers([], self)
         self.images = FakeImages()
 
     def set_active_dockers(self, containers: List[FakeContainer]) -> None:
         for container in containers:
             container.set_client(self)
-        self.containers = FakeContainers(containers)
+        self.containers = FakeContainers(containers, self)
 
 
 class FakeLowLevelAPI:
