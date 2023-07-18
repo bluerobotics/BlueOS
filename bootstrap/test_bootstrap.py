@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Generator, List
 from unittest.mock import MagicMock, patch
-
+import time
 import pytest
 from docker.errors import NotFound
 from pyfakefs.fake_filesystem_unittest import TestCase
@@ -52,6 +52,11 @@ class FakeContainer:
         self.name: str = name
         self.client: Any
         self.raise_if_stopped = raise_if_stopped
+        self.created_time = time.time()
+        print(f"created container {self.name} at {self.created_time}")
+
+    def age(self) -> float:
+        return time.time() - self.created_time
 
     def set_client(self, client: Any) -> None:
         self.client = client
