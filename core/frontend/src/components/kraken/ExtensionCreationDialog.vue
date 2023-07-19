@@ -19,7 +19,7 @@
         >
           <v-text-field
             v-model="new_extension.identifier"
-            label="Extemnsion Identifier"
+            label="Extension Identifier"
             :rules="[validate_identifier]"
           />
 
