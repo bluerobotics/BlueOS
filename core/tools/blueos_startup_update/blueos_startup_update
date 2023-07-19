@@ -28,6 +28,10 @@ DELTA_JSON = {
             "/usr/blueos/userdata": {
                 "bind": "/usr/blueos/userdata",
                 "mode": "rw"
+            },
+            "/etc/resolv.conf.host": {
+                "bind": "/etc/resolv.conf.host",
+                "mode": "ro"
             }
         }
     }
@@ -145,6 +149,20 @@ def save_file(file_name: str, file_content: str, backup_identifier: str) -> None
 
     command = f'echo "{file_content}" | sudo tee "{file_name}"'
     print(run_command(command, False))
+
+
+def file_exists(file_name: str) -> bool:
+    command = f'sudo test -e "{file_name}"'
+    output = run_command(command, True)
+    print(output)
+    return output.returncode == 0
+
+
+def create_hard_link(source_file_name: str, destination_file_name: str) -> bool:
+    command = f"ln {source_file_name} {destination_file_name}"
+    output = run_command(command, True)
+    print(output)
+    return output.returncode == 0
 
 
 def boot_cmdfile_add_modules(cmdline_content: List[str], config_key: str, desired_config: List[str]):
@@ -321,6 +339,26 @@ def update_navigator_overlays() -> bool:
     # Patch applied and system needs to be restarted for it to take effect
     return True
 
+
+def create_dns_conf_host_link() -> bool:
+    """ This patch creates a hard link of /etc/resolv.conf as /etc/resolv.conf.host, to be used as
+    a binding with an fixed file-descriptor, which is neccessary for docker bindings if the original
+    file is being replaced by some system service, like is the case when dnsmasq or dhcpcd changes
+    the /etc/resolf.conf file. """
+    original_resolv_conf_file = "/etc/resolv.conf"
+    resolv_conf_file_host_link = "/etc/resolv.conf.host"
+    if file_exists(resolv_conf_file_host_link):
+        return False
+
+    # Creates a static reoslv conf to allow docker binds
+    if not create_hard_link(original_resolv_conf_file, resolv_conf_file_host_link):
+        print("Failed to apply patch")
+        return False
+
+    # Patch applied and system needs to be restarted for it to take effect
+    return True
+
+
 def ensure_nginx_permissions() -> bool:
     # ensure nginx can read the userdata directory
     command = "sudo chown -R www-data:www-data /usr/blueos/userdata"
@@ -357,6 +395,7 @@ def main() -> int:
         update_navigator_overlays,
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
+        create_dns_conf_host_link,
     ]
 
     print("The following patches will be applied if needed:", [patch_to_apply.__name__ for patch_to_apply in patches_to_apply])
