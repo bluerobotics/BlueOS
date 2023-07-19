@@ -32,6 +32,7 @@
     <v-card-actions class="justify-center pa-2">
       <v-btn
         color="success"
+        :disabled="is_loading"
         @click="setHighestInterface()"
       >
         Apply
