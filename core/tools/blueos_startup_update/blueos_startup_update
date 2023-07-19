@@ -8,6 +8,8 @@ import sys
 import time
 from typing import Tuple, List
 
+# Any change made in this DELTA_JSON dict should be also made
+# into /bootstrap/startup.json.default too!
 DELTA_JSON = {
     'core': {
         'binds': {
