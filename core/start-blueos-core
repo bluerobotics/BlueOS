@@ -25,6 +25,36 @@ else
     echo "Error: Docket socket file does not exist!"
 fi
 
+# This is a workaround to make the container's `resolv.conf` synchronized with the host's
+# `resolv.conf`. To do that, we disallow docker from managing the container's DNS nameservers
+# by unmounting the container's `/etc/resolv.conf`, and soft linking it to the binded host's
+# `/etc/resolv.conf`.
+# So for this to work, the container's `/etc/resolv.conf.host` file should be binded (read-only) to
+# the host's `/etc/resolv.conf`, for our system, it's configured in `bootstrap/startup.json.default`,
+# and a patch is added in `core/tools/blueos_startup_update` so systems with older bootstrap
+# versions can also work with it.
+# One detail is that because docker uses `mount` to bind the host's file to the container's file,
+# if the file-descriptor of the file changes, the bind will be lost. To prevent this, the file being
+# binded must be a hard link to the actual `/etc/resolv.conf`, and that hard link file is the one
+# being binded. This hard link is being done in `core/tools/blueos_startup_update` as
+# `/etc/resolv.conf.host`.
+# To briefly understand why it is necessary, when the docker starts a container, it generates
+# the container `/etc/resolv.conf` based on the host's one, or some docker configuration, however,
+# during the container's lifetime, if the host's DNS configuration changes, the container's DNS
+# doesn't follow it, making the container (possibly) unable to resolve DNSs correctly, failing
+# the BlueOS Helper's internet connection check. By syncing the container's resolv.conf with the
+# host's one, we make sure the container's DNS configuration follows the host's changes, thus,
+# ensuring the container is able to resolve DNSs correctly.
+HOST_RESOLV_CONF=/etc/resolv.conf.host
+if [ -f "$HOST_RESOLV_CONF" ]; then
+    echo "Using host's resolv.conf instead of the one from the docker"
+    umount /etc/resolv.conf
+    rm /etc/resolv.conf
+    ln -s $HOST_RESOLV_CONF /etc/resolv.conf
+else
+    echo "Waring: Using dockers's resolv.conf, this may cause DNS issues if the host's network configuration changes."
+fi
+
 SERVICES=(
     'beacon',"$SERVICES_PATH/beacon/main.py"
     'cable_guy',"$SERVICES_PATH/cable_guy/main.py"

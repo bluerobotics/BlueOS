@@ -45,6 +45,10 @@
             "/usr/blueos/userdata": {
                 "bind": "/usr/blueos/userdata",
                 "mode": "rw"
+            },
+            "/etc/resolv.conf.host": {
+                "bind": "/etc/resolv.conf.host",
+                "mode": "ro"
             }
         },
         "privileged": true
