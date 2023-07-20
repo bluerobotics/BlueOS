@@ -5,7 +5,7 @@ import {
 } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
 
-const API_URL = '/version-chooser/v1.0/version'
+const API_URL = '/version-chooser/v1.0'
 const DEFAULT_REMOTE_IMAGE = 'bluerobotics/blueos-core'
 
 function fixVersion(version: string): string | null {
@@ -127,7 +127,7 @@ function getLatestVersion(versions_query: VersionsQuery, current_version: Versio
 async function loadLocalVersions(): Promise<LocalVersionsQuery> {
   return back_axios({
     method: 'get',
-    url: `${API_URL}/available/local`,
+    url: `${API_URL}/version/available/local`,
   }).then((response) => {
     const available_versions = response.data as LocalVersionsQuery
     available_versions.local = available_versions.local.sort(compareVersions)
@@ -139,7 +139,7 @@ async function loadAvailableVersions(remote_image_name?: string): Promise<Versio
   remote_image_name = remote_image_name ?? DEFAULT_REMOTE_IMAGE
   return back_axios({
     method: 'get',
-    url: `${API_URL}/available/${remote_image_name}`,
+    url: `${API_URL}/version/available/${remote_image_name}`,
   }).then((response) => {
     const available_versions = response.data as VersionsQuery
     return sortImages(available_versions)
@@ -149,8 +149,16 @@ async function loadAvailableVersions(remote_image_name?: string): Promise<Versio
 async function loadCurrentVersion(): Promise<Version> {
   return back_axios({
     method: 'get',
-    url: `${API_URL}/current/`,
+    url: `${API_URL}/version/current/`,
   }).then((response) => response.data as Version)
+}
+
+async function loadBootstrapCurrentVersion(): Promise<string> {
+  return back_axios({
+    method: 'get',
+    url: `${API_URL}/bootstrap/current/`,
+    // eslint-disable-next-line no-extra-parens
+  }).then((response) => (typeof response.data === 'object' ? undefined : response.data))
 }
 
 export {
@@ -162,6 +170,7 @@ export {
   getVersionType,
   isSemVer,
   loadAvailableVersions,
+  loadBootstrapCurrentVersion,
   loadCurrentVersion,
   loadLocalVersions,
   sortImages,
