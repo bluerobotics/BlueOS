@@ -160,6 +160,7 @@ class Bootstrapper:
         image = self.config[component_name]
         image_name = image["image"]
         image_version = image["tag"]
+        docker_name = f"{image_name}:{image_version}"
         binds = image["binds"]
         privileged = image["privileged"]
         network = image["network"]
@@ -180,7 +181,7 @@ class Bootstrapper:
         self.remove(component_name)
         try:
             self.client.containers.run(
-                f"{image_name}:{image_version}",
+                docker_name,
                 name=f"blueos-{component_name}",
                 volumes=binds,
                 privileged=privileged,
@@ -192,7 +193,7 @@ class Bootstrapper:
             self.overwrite_config_file_with_defaults()
             return False
 
-        print(f"{component_name} started")
+        print(f"{component_name} ({docker_name}) started")
         return True
 
     def is_running(self, component: str) -> bool:
