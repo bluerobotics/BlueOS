@@ -85,9 +85,16 @@ export default Vue.extend({
       })
         .catch((error) => {
           const message = `Could not increase the priority for interface '${interface_priority}', ${error}.`
-          notifier.pushError('INCREASE_NETWORK_INTERFACE_METRIC', message)
+          notifier.pushError('INCREASE_NETWORK_INTERFACE_METRIC_FAIL', message)
         })
-      this.close()
+        .then(() => {
+          notifier.pushSuccess(
+            'INCREASE_NETWORK_INTERFACE_METRIC_SUCCESS',
+            'Interfaces priorities successfully updated!',
+            true,
+          )
+          this.close()
+        })
     },
     async fetchAvailableInterfaces(): Promise<void> {
       await back_axios({
