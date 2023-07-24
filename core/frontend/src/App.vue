@@ -274,6 +274,12 @@
           </a>
         </span>
         <span
+          v-if="bootstrap_version"
+          class="build_info"
+        >
+          Bootstrap Version: {{ bootstrap_version.split(':')[1] }}
+        </span>
+        <span
           id="current-version"
           class="build_info"
         >Build: {{ build_date }}</span>
@@ -328,6 +334,7 @@ import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
 import { convertGitDescribeToUrl } from '@/utils/helper_functions'
 import updateTime from '@/utils/update_time'
+import * as VCU from '@/utils/version_chooser'
 
 import Alerter from './components/app/Alerter.vue'
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
@@ -400,6 +407,7 @@ export default Vue.extend({
       },
     ],
     selected_widgets: settings.user_top_widgets,
+    bootstrap_version: undefined as string|undefined,
   }),
   computed: {
     topWidgetsName(): string[] {
@@ -611,7 +619,7 @@ export default Vue.extend({
     },
   },
 
-  mounted() {
+  async mounted() {
     this.checkAddress()
     this.setupCallbacks()
     this.checkTour()
@@ -624,6 +632,7 @@ export default Vue.extend({
         this.context_menu_visible = false
       }
     })
+    this.bootstrap_version = await VCU.loadBootstrapCurrentVersion()
   },
   methods: {
     getWidget(name: string) {
