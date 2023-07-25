@@ -75,7 +75,7 @@ SERVICES=(
     'user_terminal',"cat /etc/motd"
     'ttyd',"ttyd -p 8088 /usr/bin/tmux attach -t user_terminal"
     'nginx',"nice --18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
-    'log_zipper',"$SERVICES_PATH/log_zipper/main.py '/shortcuts/system_logs/**/*.log' --max-age-minutes 75"
+    'log_zipper',"$SERVICES_PATH/log_zipper/main.py '/shortcuts/system_logs/**/*.log' --max-age-minutes 60"
     'bag_of_holding',"$SERVICES_PATH/bag_of_holding/main.py"
 )
 
