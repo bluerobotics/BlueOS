@@ -68,7 +68,7 @@ def init_logger(service_name: str) -> None:
 
 
 def stack_trace_message(error: BaseException) -> str:
-    """Get string containing joined messages from all exceptions in stack trace, beggining with the most recent one."""
+    """Get string containing joined messages from all exceptions in stack trace, beginning with the most recent one."""
     message = str(error)
     sub_error = error.__cause__
     while sub_error is not None:

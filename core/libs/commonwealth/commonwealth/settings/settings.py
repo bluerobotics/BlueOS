@@ -44,12 +44,12 @@ class BaseSettings(pykson.JsonObject):
 
     @abc.abstractmethod
     def migrate(self, data: Dict[str, Any]) -> None:
-        """Function used to migrate from previous settings verion
+        """Function used to migrate from previous settings version
 
         Args:
             data (dict): Data from the previous version settings
         """
-        raise RuntimeError("Migrating the setings file does not appears to be possible.")
+        raise RuntimeError("Migrating the settings file does not appears to be possible.")
 
     def load(self, file_path: pathlib.Path) -> None:
         """Load settings from file
