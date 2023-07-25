@@ -30,7 +30,7 @@ class PingDriver:
         last_valid_baud = Baudrate.b115200
 
         if self.ping.port is None:
-            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no useable port")
+            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no usable port")
 
         for baud in Baudrate:
             # Ping1D hangs with a baudrate bigger than 3M, going to ignore it for now
@@ -55,7 +55,7 @@ class PingDriver:
     async def start(self) -> None:
         """Starts the driver"""
         if self.ping.port is None:
-            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no useable port.")
+            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no usable port.")
 
         if self.port is None:
             raise NoUDPPortAssignedToPingDriver("PingDriver attempted to stash with no UDP port.")
