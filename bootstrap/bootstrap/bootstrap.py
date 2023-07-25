@@ -168,7 +168,7 @@ class Bootstrapper:
             try:
                 self.pull(component_name)
             except docker.errors.NotFound:
-                warn("Image not found, reverting to default...")
+                warn(f"Image {image_name}:{image_version} not found, reverting to default...")
                 self.overwrite_config_file_with_defaults()
                 return False
             except docker.errors.APIError as error:
