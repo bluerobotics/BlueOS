@@ -45,15 +45,16 @@ def main() -> None:
     if not glob.has_magic(args.path) and not os.path.isdir(args.path):
         parser.error(f"Invalid path: {args.path}")
 
-    max_age = args.max_age_minutes
+    # We need to transform from minutes to seconds, since this is what time and st_mtime returns
+    max_age_seconds = args.max_age_minutes * 60
 
     while True:
         now = time.time()
-        logger.info(f"Scanning {args.path} for files older than {str(datetime.timedelta(minutes=max_age))}...")
+        logger.info(f"Scanning {args.path} for files older than {str(datetime.timedelta(seconds=max_age_seconds))}...")
 
         # Get the root directories of all files
         files = glob.glob(args.path, recursive=True)
-        files = [file for file in files if os.path.isfile(file) and os.stat(file).st_mtime < now - max_age]
+        files = [file for file in files if os.path.isfile(file) and os.stat(file).st_mtime < now - max_age_seconds]
         root_dirs = list(set(os.path.dirname(file) for file in files))
         root_dirs.sort()
         logger.info(f"Root folders: {root_dirs}")
