@@ -8,7 +8,7 @@
         mdi-information
       </v-icon>
       These nameservers are fetched from and applied to the host resolv configuration (<i>/etc/resolv.conf</i>),
-      which are syncronized with the container's resolv configuration.
+      which are synchronized with the container's resolv configuration.
     </v-card-text>
     <v-form
       ref="host_nameservers_form"
