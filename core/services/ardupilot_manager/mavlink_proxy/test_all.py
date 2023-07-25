@@ -149,7 +149,7 @@ def test_endpoint_validators() -> None:
 
 @pytest.mark.skip(
     reason="MavProxy tests are failling for several endpoint combinations. Since it's not being used \
-    and it's not a priority to support it, they are being temporarly disabled."
+    and it's not a priority to support it, they are being temporarily disabled."
 )
 def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     if not MAVProxy.is_ok():
