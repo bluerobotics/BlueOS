@@ -186,6 +186,8 @@ export default Vue.extend({
     },
     connectable_networks(): Network[] | undefined {
       return uniqBy(wifi.connectable_networks, 'ssid')
+        // Move known networks to the top
+        .sort((a: Network, b: Network) => Number(b.saved) - Number(a.saved))
     },
     filtered_networks(): Network[] | undefined {
       // eslint-disable-next-line eqeqeq
