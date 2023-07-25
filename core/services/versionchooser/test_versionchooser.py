@@ -50,7 +50,7 @@ async def test_get_version() -> None:
 
     Interacts with:
         - docker client (get images)
-        - Settigns file
+        - Settings file
     """
     client_mock = mock.AsyncMock()
     chooser = VersionChooser(client_mock)
