@@ -147,7 +147,15 @@ class FakeLowLevelAPI:
 # The "type: ignore" comment in the next line addresses the fact that TestCase is Any,
 # which mypy disallows subclassing
 class BootstrapperTests(TestCase):  # type: ignore
+    external_defaults = ""
+
+    def load_external_defaults(self) -> str:
+        with open("bootstrap/startup.json.default", encoding="utf-8") as f:
+            return f.read()
+
     def setUp(self) -> None:
+        # we need to store this before we setup the fake filesystem
+        self.external_defaults = self.load_external_defaults()
         self.setUpPyfakefs()
         self.setupRequestsMock()
 
@@ -279,3 +287,8 @@ class BootstrapperTests(TestCase):  # type: ignore
         # check if the age is what we expected, just in case
         assert fake_client.containers.get("blueos-core").created_time == start_time + 1000
         mock_time.stop()
+
+    def test_default_is_valid_json(self) -> None:
+        config = json.loads(self.external_defaults)
+        assert config is not None
+        assert "core" in config
