@@ -30,17 +30,17 @@
                 "bind": "/var/logs/blueos",
                 "mode": "rw"
             },
-            '/run/udev': {
-                'bind': '/run/udev',
-                'mode': 'ro'
+            "/run/udev": {
+                "bind": "/run/udev",
+                "mode": "ro"
             },
-            '/etc/machine-id': {
-                'bind': '/etc/machine-id',
-                'mode': 'ro'
+            "/etc/machine-id": {
+                "bind": "/etc/machine-id",
+                "mode": "ro"
             },
-            '/etc/dhcpcd.conf': {
-                'bind': '/etc/dhcpcd.conf',
-                'mode': 'rw'
+            "/etc/dhcpcd.conf": {
+                "bind": "/etc/dhcpcd.conf",
+                "mode": "rw"
             },
             "/usr/blueos/userdata": {
                 "bind": "/usr/blueos/userdata",
