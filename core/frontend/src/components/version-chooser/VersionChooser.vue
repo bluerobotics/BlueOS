@@ -190,8 +190,11 @@ import { gt as sem_ver_greater, SemVer } from 'semver'
 import Vue from 'vue'
 
 import PullProgress from '@/components/utils/PullProgress.vue'
+import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import { version_chooser_service } from '@/types/frontend_services'
 import {
+  isServerResponse,
   LocalVersionsQuery, Version, VersionsQuery, VersionType,
 } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
@@ -201,6 +204,8 @@ import * as VCU from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import VersionCard from './VersionCard.vue'
+
+const notifier = new Notifier(version_chooser_service)
 
 export default Vue.extend({
   name: 'VersionChooser',
@@ -498,7 +503,10 @@ export default Vue.extend({
     async updateBootstrap(image: string) {
       const [_, tag] = image.split(':')
       await this.pullVersion(image)
-        .then(() => { this.setBootstrapVersion(tag) })
+        .then(() => {
+          this.show_pull_output = false
+          this.setBootstrapVersion(tag)
+        })
     },
     async setBootstrapVersion(version: string) {
       await back_axios({
@@ -507,6 +515,21 @@ export default Vue.extend({
         data: {
           tag: version,
         },
+      }).then((response) => {
+        const { data } = response
+        if (isServerResponse(data) && data.status !== 200) {
+          notifier.pushError(
+            'VERSION_CHOOSER_BOOTSTRAP_SET_FAIL',
+            `The operation failed: ${data.title}, ${data.detail} (${data.status})`,
+            true,
+          )
+          return
+        }
+        notifier.pushSuccess(
+          'VERSION_CHOOSER_BOOTSTRAP_SET_FAIL',
+          `Successfully updated bootstrap version to ${version}`,
+          true,
+        )
       })
     },
     async setVersion(args: string | string[]) {
