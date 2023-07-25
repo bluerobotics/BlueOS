@@ -22,3 +22,16 @@ export enum VersionType {
   Beta = 'beta',
   Stable = 'stable',
 }
+
+// Used to get internal error or status from connexion
+export interface ServerResponse {
+  title: string,
+  status: number,
+  detail: string,
+  type: string,
+}
+
+export function isServerResponse(response: unknown): response is ServerResponse {
+  // eslint-disable-next-line no-extra-parens
+  return (response as ServerResponse).status !== undefined
+}
