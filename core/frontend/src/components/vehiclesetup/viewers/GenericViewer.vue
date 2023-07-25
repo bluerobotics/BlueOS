@@ -245,7 +245,7 @@ export default Vue.extend({
   },
   watch: {
     highlight(highlight: string | null): void {
-      // Deals with changing the highlighed part of the model when the "highlight" prop changes
+      // Deals with changing the highlighted part of the model when the "highlight" prop changes
       if (!highlight) {
         this.redraw()
         this.forceRefreshAnnotations()
