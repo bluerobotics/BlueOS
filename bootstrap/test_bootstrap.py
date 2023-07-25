@@ -263,7 +263,7 @@ class BootstrapperTests(TestCase):  # type: ignore
         # first just remove core from the output
         self.mock_response.json.return_value = {"repository": []}
 
-        # This should NOT timeout. An exeption will be raise by the container if it stops
+        # This should NOT timeout. An exception will be raise by the container if it stops
         bootstrapper.run()
 
         # This SHOULD timeout
