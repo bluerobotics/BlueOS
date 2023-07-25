@@ -253,12 +253,12 @@ class EthernetManager:
         logger.info(f"Setting interface {interface_name} to '{interface_state}' state.")
 
     def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
-        """Trigger external DHCP servers to possibly aquire a dynamic IP by restarting the interface.
+        """Trigger external DHCP servers to possibly acquire a dynamic IP by restarting the interface.
 
         Args:
             interface_name (str): Interface name
         """
-        logger.info(f"Restaring interface {interface_name} to trigger dynamic IP acquisition.")
+        logger.info(f"Restarting interface {interface_name} to trigger dynamic IP acquisition.")
         self.enable_interface(interface_name, False)
         time.sleep(1)
         self.enable_interface(interface_name, True)
