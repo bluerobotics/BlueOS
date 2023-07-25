@@ -1,5 +1,5 @@
 <template>
-  <v-card class="pa-2 mx-auto" max-width="350">
+  <v-card class="pa-2 mx-auto" min-width="100%">
     <v-list>
       <v-card-subtitle class="text-md-center" max-width="30">
         Move network interfaces over
