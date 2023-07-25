@@ -129,7 +129,7 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
             logger.info("Removing new network entry since connection failed.")
             await wifi_manager.remove_network(network_id)
         raise error
-    logger.info(f"Succesfully connected to '{credentials.ssid}'.")
+    logger.info(f"Successfully connected to '{credentials.ssid}'.")
 
 
 @app.post("/remove", summary="Remove saved wifi network.")
@@ -143,7 +143,7 @@ async def remove(ssid: str) -> Any:
     except StopIteration as error:
         logger.info(f"Network '{ssid}' is unknown.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Network '{ssid}' not saved.") from error
-    logger.info(f"Succesfully removed '{ssid}'.")
+    logger.info(f"Successfully removed '{ssid}'.")
 
 
 @app.get("/disconnect", summary="Disconnect from wifi network.")
@@ -151,7 +151,7 @@ async def remove(ssid: str) -> Any:
 async def disconnect() -> Any:
     logger.info("Trying to disconnect from current network.")
     await wifi_manager.disconnect()
-    logger.info("Succesfully disconnected from network.")
+    logger.info("Successfully disconnected from network.")
 
 
 @app.get("/hotspot", summary="Get hotspot state.")
