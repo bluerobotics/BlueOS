@@ -23,7 +23,7 @@
           v-for="(ip, i) in network.ips"
           :key="i"
           class="pa-0 text-h6 text-center"
-          :style="ip.includes('::') && !show_ipv6 ? 'cursor: pointer; filter:blur(0.5em)' : ''"
+          :style="ip.includes(':') && !show_ipv6 ? 'cursor: pointer; filter:blur(0.5em)' : ''"
           @click="show_ipv6 = true"
         >
           {{ ip }}
