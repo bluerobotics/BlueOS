@@ -180,7 +180,7 @@ export default Vue.extend({
       this.retries = 0
       setTimeout(() => {
         // delay this as the dialog is still open when the done event is emitted
-        // which couses the text to change during the close animation
+        // which causes the text to change during the close animation
         this.writing = false
       }, 500)
       this.initial_size = 0
