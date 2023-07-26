@@ -34,7 +34,6 @@ def zip_files(files: List[str], output_path: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Periodically scan a directory and zip files older than one hour")
     parser.add_argument("path", help="Directory path or glob to scan")
-    parser.add_argument("-p", "--period", type=int, default=600, help="Interval in seconds to scan the directory")
     parser.add_argument("-a", "--max-age-minutes", type=int, default=10, help="Maximum age for files in minutes")
     args = parser.parse_args()
 
@@ -45,7 +44,6 @@ def main() -> None:
     if not glob.has_magic(args.path) and not os.path.isdir(args.path):
         parser.error(f"Invalid path: {args.path}")
 
-    period_seconds = args.period
     # We need to transform from minutes to seconds, since this is what time and st_mtime returns
     max_age_seconds = args.max_age_minutes * 60
 
@@ -70,8 +68,14 @@ def main() -> None:
             zip_files(local_files, zipped_file)
             logger.info(f"Created zip archive {zipped_file} with {len(local_files)} files.")
 
-        logger.info(f"Sleeping for {str(datetime.timedelta(seconds=period_seconds))}...")
-        time.sleep(args.period)
+        # There is no reason to sleep in a minor time than max age,
+        # the reason is that if we want to zip files that are older than 60 minutes,
+        # but we scan every 10 minutes and a new file is generated also in 10 minutes,
+        # the result will be just a delay between the creation and the zip of old files,
+        # every 10 minutes. We wait for longer than that to ensure that all files are older than max age.
+        sleep_offset = max_age_seconds + 10
+        logger.info(f"Sleeping for {str(datetime.timedelta(seconds=sleep_offset))}...")
+        time.sleep(sleep_offset)
 
 
 if __name__ == "__main__":
