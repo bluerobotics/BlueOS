@@ -45,6 +45,7 @@ def main() -> None:
     if not glob.has_magic(args.path) and not os.path.isdir(args.path):
         parser.error(f"Invalid path: {args.path}")
 
+    period_seconds = args.period
     # We need to transform from minutes to seconds, since this is what time and st_mtime returns
     max_age_seconds = args.max_age_minutes * 60
 
@@ -69,7 +70,7 @@ def main() -> None:
             zip_files(local_files, zipped_file)
             logger.info(f"Created zip archive {zipped_file} with {len(local_files)} files.")
 
-        logger.info(f"Sleeping for {str(datetime.timedelta(minutes=max_age))}...")
+        logger.info(f"Sleeping for {str(datetime.timedelta(seconds=period_seconds))}...")
         time.sleep(args.period)
 
 
