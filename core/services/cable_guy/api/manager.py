@@ -60,9 +60,16 @@ class EthernetManager:
     # DNS abstraction
     dns = dns.Dns()
 
+    # https://man.archlinux.org/man/dhcpcd.conf.5#metric
+    default_dhcpdc_metric = 1000
+
     result: List[NetworkInterface] = []
 
     def __init__(self, default_configs: List[NetworkInterface]) -> None:
+        self.dhcpcd_conf_path = "/etc/dhcpcd.conf"
+        self.dhcpcd_conf_start_string = "#blueos-interface-priority-start"
+        self.dhcpcd_conf_end_string = "#blueos-interface-priority-end"
+
         self.settings = settings.Settings()
 
         self._dhcp_servers: List[DHCPServerManager] = []
@@ -367,6 +374,18 @@ class EthernetManager:
 
     @temporary_cache(timeout_seconds=5)
     def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
+        """Get priority of network interfaces dhcpcd otherwise fetch from ipr.
+
+        Returns:
+            List[NetworkInterfaceMetric]: List of interface priorities, lower is higher priority
+        """
+        result = self._get_interface_priority_from_dhcpcd()
+        if result:
+            return result
+
+        return self._get_interfaces_priority_from_ipr()
+
+    def _get_interfaces_priority_from_ipr(self) -> List[NetworkInterfaceMetric]:
         """Get the priority metrics for all network interfaces.
 
         Returns:
@@ -396,10 +415,166 @@ class EthernetManager:
             else:
                 metric_dict[d["index"]] = d["metric"]
 
+        # Highest priority wins for ipr but not for dhcpcd, so we sort and reverse the list
+        # Where we change the priorities between highest and low to convert that
+        original_list = sorted(
+            [
+                NetworkInterfaceMetric(index=index, name=name, priority=metric_dict.get(index) or 0)
+                for index, name in name_dict.items()
+            ],
+            key=lambda x: x.priority,
+            reverse=True,
+        )
+
         return [
-            NetworkInterfaceMetric(index=index, name=name, priority=metric_dict.get(index) or 0)
-            for index, name in name_dict.items()
+            NetworkInterfaceMetric(index=item.index, name=item.name, priority=original_list[-(i + 1)].priority)
+            for i, item in enumerate(original_list)
         ]
+
+    def _get_service_dhcpcd_content(self) -> List[str]:
+        """Returns a list of lines from the dhcpcd configuration file that belong to
+        this service.
+        Any exceptions are caught and logged, and an empty list is returned.
+
+        List[str]: Lines that will be used by this service
+        """
+        try:
+            with open(self.dhcpcd_conf_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+                start, end = None, None
+                for i, line in enumerate(lines):
+                    # Get always the first occurrence of 'start' and last of 'end'
+                    if self.dhcpcd_conf_start_string in line and start is None:
+                        start = i
+                    if self.dhcpcd_conf_end_string in line:
+                        end = i
+
+                # Remove everything that is not from us
+                if start is not None and end is not None:
+                    del lines[0 : start + 1]
+                    del lines[end:-1]
+
+                # Clean all lines and remove empty ones
+                lines = [line.strip() for line in lines]
+                lines = [line for line in lines if line]
+                return lines
+        except Exception as exception:
+            logger.warning(f"Failed to read {self.dhcpcd_conf_path}, error: {exception}")
+            return []
+
+    def _get_interface_priority_from_dhcpcd(self) -> List[NetworkInterfaceMetric]:
+        """Parses dhcpcd config file to get network interface priorities.
+        Goes through the dhcpcd config file line by line looking for "interface"
+        and "metric" lines. Extracts the interface name and metric value. The
+        metric is used as the priority, with lower being better.
+
+        List[NetworkInterfaceMetric]: A list of priority metrics for each interface.
+        """
+        lines = self._get_service_dhcpcd_content()
+        result = []
+        current_interface = None
+        current_metric = None
+        for line in lines:
+            if line.startswith("interface"):
+                if current_interface is not None and current_metric is not None:  # type: ignore[unreachable]
+                    # Metric is inverted compared to priority, lowest metric wins
+                    result.append(NetworkInterfaceMetric(index=0, name=current_interface, priority=current_metric))  # type: ignore[unreachable]
+
+                current_interface = line.split()[1]
+                current_metric = None
+
+            elif line.startswith("metric") and current_interface is not None:
+                try:
+                    current_metric = int(line.split()[1])
+                except Exception as exception:
+                    logger.error(
+                        f"Failed to parse {current_interface} metric, error: {exception}, line: {line}, using default metric"
+                    )
+                    current_metric = EthernetManager.default_dhcpdc_metric
+
+        # Add the last entry to the result_list
+        if current_interface is not None and current_metric is not None:
+            result.append(NetworkInterfaceMetric(index=0, name=current_interface, priority=current_metric))
+
+        return result
+
+    def _remove_dhcpcd_configuration(self) -> None:
+        """Removes the network priority configuration added by this service from
+        dhcpcd.conf file.
+        """
+        lines = []
+        with open(self.dhcpcd_conf_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+            start, end = None, None
+            for i, line in enumerate(lines):
+                # Get always the first occurrence of 'start' and last of 'end'
+                if self.dhcpcd_conf_start_string in line and start is None:
+                    start = i
+                if self.dhcpcd_conf_end_string in line:
+                    end = i
+
+            # Remove our part
+            if start is not None and end is not None:
+                logger.info(f"Deleting rage: {start} : {end + 1}")
+                del lines[start : end + 1]
+            else:
+                logger.info(f"There is no network priority configuration in {self.dhcpcd_conf_path}")
+                return
+
+        if not lines:
+            logger.warning(f"{self.dhcpcd_conf_path} appears to be empty.")
+            return
+
+        with open("/etc/dhcpcd.conf", "w", encoding="utf-8") as f:
+            f.writelines(lines)
+
+    def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+        """Sets network interface priority. This is an abstraction function for different
+        implementations.
+
+        Args:
+            interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics.
+                sorted by priority to set, if values are undefined.
+        """
+        self._set_interfaces_priority_to_dhcpcd(interfaces)
+
+    def _set_interfaces_priority_to_dhcpcd(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+        """Sets network interface priority..
+
+        Args:
+            interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics.
+        """
+
+        # Note: With DHCPCD, lower priority wins!
+        self._remove_dhcpcd_configuration()
+
+        # Update interfaces priority if possible
+        if not interfaces:
+            logger.info("Cant change network priority from empty list.")
+            return
+
+        # If there is a single interface without metric, make it the highest priority
+        if len(interfaces) == 1 and interfaces[0].priority is None:
+            interfaces[0].priority = 0
+
+        current_priority = interfaces[0].priority or EthernetManager.default_dhcpdc_metric
+        lines = []
+        lines.append(f"{self.dhcpcd_conf_start_string}\n")
+        for interface in interfaces:
+            # Enforce priority if it's none, otherwise track new priority
+            interface.priority = interface.priority or current_priority
+            current_priority = interface.priority
+
+            lines.append(f"interface {interface.name}\n")
+            lines.append(f"    metric {interface.priority}\n")
+            current_priority += 1000
+            logger.info(f"Set current priority for {interface.name} as {interface.priority}")
+        lines.append(f"{self.dhcpcd_conf_end_string}\n")
+
+        with open("/etc/dhcpcd.conf", "a+", encoding="utf-8") as f:
+            f.writelines(lines)
 
     def get_interface_priority(self, interface_name: str) -> Optional[NetworkInterfaceMetric]:
         """Get the priority metric for a network interface.
@@ -417,8 +592,8 @@ class EthernetManager:
 
         return None
 
-    def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
-        """Set interfaces priority.
+    def _set_interfaces_priority_to_ipr(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+        """Set interfaces priority with ipr.
 
         Args:
             interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics.
