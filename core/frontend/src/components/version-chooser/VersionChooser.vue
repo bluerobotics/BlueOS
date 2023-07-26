@@ -534,6 +534,7 @@ export default Vue.extend({
           `Successfully updated bootstrap version to ${version}`,
           true,
         )
+        window.location.reload()
       })
     },
     async setVersion(args: string | string[]) {
