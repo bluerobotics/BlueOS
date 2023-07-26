@@ -55,6 +55,7 @@
           v-for="image in local_versions.result.local"
           :key="`${image.sha}-local`"
           :image="image"
+          :updating="updating_bootstrap"
           :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
           :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(image)"
@@ -243,6 +244,7 @@ export default Vue.extend({
       status_text: '',
       current_version: null as (null | Version),
       loading_images: false,
+      updating_bootstrap: false,
       waiting: false,
       selected_image: 'bluerobotics/blueos-core',
       deleting: '', // image currently being deleted, if any
@@ -502,11 +504,13 @@ export default Vue.extend({
     },
     async updateBootstrap(image: string) {
       const [_, tag] = image.split(':')
+      this.updating_bootstrap = true
       await this.pullVersion(image)
         .then(() => {
           this.show_pull_output = false
           this.setBootstrapVersion(tag)
         })
+      this.updating_bootstrap = false
     },
     async setBootstrapVersion(version: string) {
       await back_axios({
