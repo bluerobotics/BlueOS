@@ -142,8 +142,14 @@ async def remove(ssid: str) -> Any:
     logger.info(f"Trying to remove network '{ssid}'.")
     try:
         saved_networks = await wifi_manager.get_saved_wifi_network()
-        match_network = next(filter(lambda network: network.ssid == ssid, saved_networks))
-        await wifi_manager.remove_network(match_network.networkid)
+        # Here we get all networks that match the ssid
+        # and get a list where the biggest networkid comes first.
+        # If we remove the lowest numbers first, it'll change the highest values to -1
+        # TODO: We should move the entire wifi framestack to work with bssid
+        match_networks = [network for network in saved_networks if network.ssid == ssid]
+        match_networks = sorted(match_networks, key=lambda network: network.networkid, reverse=True)
+        for match_network in match_networks:
+            await wifi_manager.remove_network(match_network.networkid)
     except StopIteration as error:
         logger.info(f"Network '{ssid}' is unknown.")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Network '{ssid}' not saved.") from error
