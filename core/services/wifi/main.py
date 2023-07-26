@@ -88,8 +88,8 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
     try:
         saved_networks = await wifi_manager.get_saved_wifi_network()
         match_network = next(filter(lambda network: network.ssid == credentials.ssid, saved_networks))
-        logger.info("Network is already known.")
         network_id = match_network.networkid
+        logger.info(f"Network is already known, id={network_id}.")
     except StopIteration:
         logger.info("Network is not known.")
         is_new_network = True
@@ -113,12 +113,16 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
         )
 
     try:
-        if network_id:
-            logger.info("Removing old entry for known network.")
+        # Update known network if password is not necessary anymore
+        if network_id is not None and not is_secure and credentials.password == "":
+            logger.info(f"Removing old entry for known network, id={network_id}.")
             await wifi_manager.remove_network(network_id)
-        else:
-            logger.info("Saving new network entry.")
-        network_id = await wifi_manager.add_network(credentials, hidden)
+            network_id = await wifi_manager.add_network(credentials, hidden)
+            logger.info(f"Network entry updated, id={network_id}.")
+
+        if network_id is None:
+            network_id = await wifi_manager.add_network(credentials, hidden)
+            logger.info(f"Saving new network entry, id={network_id}.")
 
         logger.info("Performing network connection.")
         if network_id is None:
