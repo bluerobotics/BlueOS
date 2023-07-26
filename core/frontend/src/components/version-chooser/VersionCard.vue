@@ -224,6 +224,10 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
+    updating: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -233,7 +237,7 @@ export default Vue.extend({
   },
   computed: {
     working(): boolean {
-      return this.loading || this.deleting
+      return this.loading || this.deleting || this.updating
     },
     isFromBR(): boolean {
       return this.image.repository === 'bluerobotics/blueos-core'
