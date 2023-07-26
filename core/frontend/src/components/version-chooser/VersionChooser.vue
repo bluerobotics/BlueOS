@@ -530,7 +530,7 @@ export default Vue.extend({
           return
         }
         notifier.pushSuccess(
-          'VERSION_CHOOSER_BOOTSTRAP_SET_FAIL',
+          'VERSION_CHOOSER_BOOTSTRAP_SET_SUCCESS',
           `Successfully updated bootstrap version to ${version}`,
           true,
         )
