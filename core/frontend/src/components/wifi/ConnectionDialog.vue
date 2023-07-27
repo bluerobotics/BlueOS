@@ -205,7 +205,7 @@ export default Vue.extend({
         await back_axios({
           method: 'post',
           url: `${wifi.API_URL}/connect`,
-          timeout: 20000,
+          timeout: 50000,
           data: credentials,
           params: { hidden: this.is_hidden },
         })
