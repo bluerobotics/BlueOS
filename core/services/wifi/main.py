@@ -127,7 +127,7 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
         logger.info("Performing network connection.")
         if network_id is None:
             raise ValueError("Missing 'network_id' for network connection.")
-        await wifi_manager.connect_to_network(network_id)
+        await wifi_manager.connect_to_network(network_id, timeout=40)
     except ConnectionError as error:
         if is_new_network and network_id is not None:
             logger.info("Removing new network entry since connection failed.")
