@@ -42,6 +42,11 @@ export default Vue.extend({
       }
     },
   },
+  mounted() {
+    if (this.port !== undefined) {
+      this.detected_port = this.port
+    }
+  },
 })
 </script>
 
