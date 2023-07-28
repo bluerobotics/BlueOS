@@ -116,6 +116,11 @@ export default Vue.extend({
       required: true,
     },
   },
+  data() {
+    return {
+      updating: false,
+    }
+  },
   computed: {
     are_controllers_available(): boolean {
       return !this.device.controls.isEmpty()
@@ -152,6 +157,7 @@ export default Vue.extend({
     async updateControlsValues(controls: Control[]): Promise<void> {
       const totalControls = controls.length
       let completedControls = 0
+      this.updating = true
 
       for (const control of controls) {
         let value = 0
@@ -183,6 +189,7 @@ export default Vue.extend({
           // Only update once all controls have been submitted
           if (completedControls === totalControls) {
             await video.fetchDevices()
+            this.updating = false
           }
         }
       }
@@ -191,7 +198,7 @@ export default Vue.extend({
       this.$emit('change', state)
     },
     isActive(control: Control): boolean {
-      return !(control.state.is_disabled || control.state.is_inactive)
+      return !(control.state.is_disabled || control.state.is_inactive || this.updating)
     },
   },
 })
