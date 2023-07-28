@@ -1,83 +1,103 @@
 <template>
   <v-dialog
-    width="750px"
     :value="show"
-    scrollable
     @input="showDialog"
   >
-    <v-card
-      min-width="750px"
-      height="fit-content"
-    >
-      <v-card-title> Video configuration </v-card-title>
-      <v-layout
-        row
-        no-gutters
-      >
-        <v-col cols="7">
-          <v-card-text>
-            <v-container v-if="are_controllers_available">
-              <v-slider
-                v-for="control in slider_controls"
-                :key="control.id"
-                v-model="control.configuration.Slider.value"
-                :min="control.configuration.Slider.min"
-                :max="control.configuration.Slider.max"
-                :step="control.configuration.Slider.step"
-                :label="control.name"
-                :disabled="!isActive(control)"
-                @change="updateControlsValues([control])"
-              />
-              <v-select
-                v-for="control in menu_controls"
-                :key="control.id"
-                v-model="control.configuration.Menu.value"
-                :items="control.configuration.Menu.options"
-                item-text="name"
-                item-value="value"
-                :label="control.name"
-                :disabled="!isActive(control)"
-                @change="updateControlsValues([control])"
-              />
-              <v-checkbox
-                v-for="control in bool_controls"
-                :key="control.id"
-                v-model="control.configuration.Bool.value"
-                :label="control.name"
-                :disabled="!isActive(control)"
-                @change="updateControlsValues([control])"
-              />
-              <div class="d-flex mt-5">
-                <v-btn
-                  color="primary"
-                  @click="showDialog(false)"
-                >
-                  Close
-                </v-btn>
-                <v-spacer />
-                <v-btn
-                  color="primary"
-                  @click="restoreDefaultValues"
-                >
-                  Restore defaults
-                </v-btn>
-              </div>
-            </v-container>
-            <v-container v-else>
-              No controllers available for this device.
-            </v-container>
-          </v-card-text>
+    <v-card>
+      <v-row>
+        <v-col cols="5">
+          <v-card-title> Video configuration </v-card-title>
         </v-col>
-        <v-col cols="4">
+        <v-col cols="6">
           <video-thumbnail
             v-if="$vuetify.breakpoint.smAndUp && are_controllers_available"
             height="auto"
-            width="280"
+            width="100%"
             :source="device.source"
-            style="position: sticky; top: 100px"
+            class="mt-8"
           />
         </v-col>
-      </v-layout>
+      </v-row>
+      <v-card-text>
+        <v-container v-if="are_controllers_available">
+          <v-container
+            v-for="control in slider_controls"
+            :key="control.id"
+            class="mt-0 pt-0"
+          >
+            <v-slider
+              v-model="control.configuration.Slider.value"
+              :min="control.configuration.Slider.min"
+              :max="control.configuration.Slider.max"
+              :step="control.configuration.Slider.step"
+              :disabled="!isActive(control)"
+              :label="control.name"
+              class="mt-0 pt-0 align-end"
+              hide-details
+              @change="updateControlsValues([control])"
+            >
+              <template #append>
+                <v-text-field
+                  v-model="control.configuration.Slider.value"
+                  class="mt-0 pt-0"
+                  hide-details
+                  single-line
+                  type="number"
+                  :disabled="!isActive(control)"
+                  style="width: 60px"
+                />
+                <v-btn
+                  v-tooltip="'Restore default'"
+                  class="ml-2"
+                  icon
+                  :disabled="!isActive(control)"
+                  @click="control.configuration.Slider.value = control.configuration.Slider.default"
+                >
+                  <v-icon>mdi-restore</v-icon>
+                </v-btn>
+              </template>
+            </v-slider>
+          </v-container>
+          <v-select
+            v-for="control in menu_controls"
+            :key="control.id"
+            v-model="control.configuration.Menu.value"
+            :items="control.configuration.Menu.options"
+            item-text="name"
+            item-value="value"
+            :label="control.name"
+            :disabled="!isActive(control)"
+            @change="updateControlsValues([control])"
+          />
+          <v-checkbox
+            v-for="control in bool_controls"
+            :key="control.id"
+            v-model="control.configuration.Bool.value"
+            :label="control.name"
+            :disabled="!isActive(control)"
+            @change="updateControlsValues([control])"
+          />
+          <div class="d-flex mt-5">
+            <v-btn
+              color="primary"
+              @click="showDialog(false)"
+            >
+              Close
+            </v-btn>
+            <v-spacer />
+            <v-btn
+              v-tooltip="'Restore all camera configurations to default values'"
+              color="warning"
+              @click="restoreDefaultValues"
+            >
+              Restore defaults
+            </v-btn>
+          </div>
+        </v-container>
+        <v-container v-else>
+          No controllers available for this device.
+        </v-container>
+      </v-card-text>
     </v-card>
   </v-dialog>
 </template>
