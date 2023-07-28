@@ -150,7 +150,10 @@ export default Vue.extend({
       await this.updateControlsValues(updated_controls)
     },
     async updateControlsValues(controls: Control[]): Promise<void> {
-      for await (const control of controls) {
+      const totalControls = controls.length
+      let completedControls = 0
+
+      for (const control of controls) {
         let value = 0
         if ('Menu' in control.configuration) {
           value = control.configuration.Menu.value
@@ -160,22 +163,29 @@ export default Vue.extend({
           value = control.configuration.Slider.value
         }
 
-        back_axios({
-          method: 'post',
-          url: `${video.API_URL}/v4l`,
-          timeout: 10000,
-          data: {
-            device: this.device.source,
-            v4l_id: control.id,
-            value,
-          },
-        }).catch((error) => {
+        try {
+          await back_axios({
+            method: 'post',
+            url: `${video.API_URL}/v4l`,
+            timeout: 10000,
+            data: {
+              device: this.device.source,
+              v4l_id: control.id,
+              value,
+            },
+          })
+        } catch (error) {
           const message = `Could not update value on ${control.name} control: ${error}.`
           notifier.pushError('CONTROL_VALUE_UPDATE_FAIL', message)
-        })
-      }
+        } finally {
+          completedControls += 1
 
-      video.fetchDevices()
+          // Only update once all controls have been submitted
+          if (completedControls === totalControls) {
+            await video.fetchDevices()
+          }
+        }
+      }
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
