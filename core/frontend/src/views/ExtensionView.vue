@@ -20,6 +20,7 @@ export default Vue.extend({
   data() {
     return {
       detected_port: undefined as number | undefined,
+      cache_busting_time: Date.now(),
     }
   },
   computed: {
@@ -33,6 +34,7 @@ export default Vue.extend({
     },
     service_path(): string {
       return `${window.location.protocol}//${window.location.hostname}:${this.detected_port}`
+      + `?time=${this.cache_busting_time}`
     },
   },
   watch: {
