@@ -5,7 +5,7 @@
       :class="{ 'flex-column': $vuetify.breakpoint.xs }"
     >
       <div class="d-flex flex-column justify-space-between" :class="{ 'align-center': $vuetify.breakpoint.xs }">
-        <p class="text-h6 text-no-wrap ma-0">
+        <p class="text-h6 ma-0">
           {{ stream.video_and_stream.name }}
         </p>
         <p class="text-subtitle-2 text-no-wrap text--secondary ma-0">
