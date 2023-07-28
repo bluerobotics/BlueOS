@@ -33,7 +33,7 @@
             </tbody>
           </template>
         </v-simple-table>
-        <div v-if="isSDPFileAvailable" class="ma-2 justify-space-between">
+        <div v-if="isSDPFileAvailable" style="min-width: 180px;" class="ma-2 justify-space-between">
           SDP file:
           <v-btn v-tooltip="'Download to file'" class="ma-1 elevation-1" small @click="downloadSDPFile">
             <v-icon>mdi-download</v-icon>
