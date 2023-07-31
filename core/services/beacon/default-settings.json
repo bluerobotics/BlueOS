@@ -9,7 +9,7 @@
     "interfaces": [
       {
         "name": "eth0",
-        "domain_names": ["blueos", "companion"],
+        "domain_names": ["blueos", "blueos-ethernet", "companion"],
         "advertise": ["_mavlink", "_http"],
         "ip": "ips[*]"
       },
