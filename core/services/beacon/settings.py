@@ -41,7 +41,11 @@ class Interface(JsonObject):
 
     def get_ip_strs(self) -> List[str]:
         """
-        get ip as a string. this also translates 'ips[n]' to the n-th ip in that interface
+        returns a list of the interface IPs (IPv4 only) as a list of strings:
+        - if self.ip is "ips[*]", it returns all ips of that interface
+        - if self.ip is "ips[n]", it returns the n-th ip of that interface
+        - if self.ip is a single ipv4 (like "192.168.2.2"), it returns that ip as a string
+        - if self.ip is (mistakenly) an IPv6 or any other non-IPv4 format, it raises an InvalidIpAddress error
         """
         address = str(self.ip)
         # Check for 'ips[n]'
@@ -71,7 +75,7 @@ class Interface(JsonObject):
 
     def get_ips(self) -> List[bytes]:
         """
-        returns the ip as 4 bytes
+        returns a list of the interface IPs (IPv4 only) as a list of 4 bytes
         """
         return [socket.inet_aton(ip) for ip in self.get_ip_strs()]
 
