@@ -71,7 +71,7 @@
                   :step="param.increment ?? 0.01"
                   :suffix="param.units"
                   :rules="forcing_input ? [] : [isInRange, isValidType]"
-                  @blur="update_variables"
+                  @blur="updateVariables"
                   @keyup="isFormValid()"
                 />
 
@@ -102,7 +102,7 @@
           Cancel
         </v-btn>
         <v-btn
-          :disabled="param_value_not_changed || !is_form_valid"
+          :disabled="param_value_not_changed || !forcing_input || !isValidType(new_value)"
           color="primary"
           @click="saveEditedParam()"
         >
@@ -111,7 +111,7 @@
         <v-btn
           v-if="param?.rebootRequired === true"
           v-tooltip="'Reboot required for parameter to take effect'"
-          :disabled="param_value_not_changed || !is_form_valid"
+          :disabled="param_value_not_changed || !forcing_input || !isValidType(new_value)"
           color="warning"
           @click="saveEditedParam(true)"
         >
@@ -187,6 +187,9 @@ export default Vue.extend({
       this.updateSelectedFlags()
       this.isFormValid()
     },
+    forcing_input(): void {
+      this.isFormValid()
+    },
     edited_bitmask_value(): void {
       this.new_value = this.edited_bitmask_value
     },
@@ -197,7 +200,7 @@ export default Vue.extend({
         return
       }
 
-      this.update_variables()
+      this.updateVariablesAtStart()
     },
   },
   methods: {
@@ -299,12 +302,15 @@ export default Vue.extend({
     showDialog(state: boolean) {
       this.$emit('change', state)
     },
-    update_variables(): void {
+    updateVariablesAtStart(): void {
       // Remove forcing_input once option is inside valid range
       if (this.forcing_input && typeof this.isInRange(this.new_value) === 'boolean') {
         this.forcing_input = false
       }
-
+      this.updateVariables()
+      this.isFormValid()
+    },
+    updateVariables(): void {
       // Select custom input if value is outside of possible options
       // Remove custom once value is known
       if (this.custom_input) {
@@ -312,10 +318,6 @@ export default Vue.extend({
           .map((value) => parseFloat(value))
           .includes(this.new_value)
       }
-
-      // Select force input if value is outside of range initially
-      this.forcing_input = typeof this.isInRange(this.new_value) === 'string'
-
       // Update form validation
       this.isFormValid()
     },
