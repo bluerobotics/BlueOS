@@ -195,13 +195,19 @@
 <script lang="ts">
 import '@google/model-viewer/dist/model-viewer'
 
+import { SemVer } from 'semver'
 import Vue from 'vue'
 
-import { availableFirmwares, installFirmwareFromUrl } from '@/components/autopilot/AutopilotManagerUpdater'
+import {
+  availableFirmwares,
+  fetchFirmwareInfo,
+  installFirmwareFromUrl,
+} from '@/components/autopilot/AutopilotManagerUpdater'
+import autopilot from '@/store/autopilot_manager'
 import bag from '@/store/bag'
 import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
-import { Firmware, Vehicle } from '@/types/autopilot'
+import { Firmware, Vehicle, vehicleTypeFromString } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 import back_axios from '@/utils/api'
 
@@ -303,6 +309,7 @@ export default Vue.extend({
     },
   },
   async mounted() {
+    fetchFirmwareInfo()
     const wizard = await bag.getData('wizard')
 
     // Failed to communicate with the bag service
@@ -380,7 +387,7 @@ export default Vue.extend({
 
       this.setup_configurations = [
         {
-          title: 'Install stable boat firmware',
+          title: 'Update boat firmware',
           summary: 'Download and install a desirable stable firmware on the vehicle',
           promise: () => this.installLatestStableFirmware(Vehicle.Rover),
           message: undefined,
@@ -485,6 +492,13 @@ export default Vue.extend({
           const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
           if (found === undefined) {
             return `Failed to find a stable version for vehicle (${vehicle})`
+          }
+          const newVersion = new SemVer(found?.name.replace('STABLE-', '').trim())
+          const currentVersion = autopilot?.firmware_info?.version ?? new SemVer('0.0.0')
+          const vehicleType = vehicleTypeFromString(autopilot?.vehicle_type ?? '')
+          if (vehicleType === vehicle && newVersion <= currentVersion) {
+            // TODO: allow returning strings on success
+            return undefined // 'Firmware is already up to date.'
           }
           return installFirmwareFromUrl(found.url, true, this.params)
             .then(() => undefined)
