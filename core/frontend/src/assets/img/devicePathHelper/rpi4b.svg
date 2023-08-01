@@ -3679,7 +3679,7 @@ E0eVma+2EoifcV2o3zmMHLn6U6yHL/8fJFXSOBSjmwwAAAAASUVORK5CYII=
        id="image56" />
     <rect
        style="fill:#ff0000;fill-opacity:0.282446;stroke:#e80000;stroke-width:5;stroke-dasharray:none;stroke-opacity:1"
-       id="top-right"
+       id="top-left"
        visibility="hidden"
        width="201.73607"
        height="116.6"
@@ -3697,16 +3697,16 @@ E0eVma+2EoifcV2o3zmMHLn6U6yHL/8fJFXSOBSjmwwAAAAASUVORK5CYII=
        inkscape:label="#bottom-left" />
     <rect
        style="fill:#ff0000;fill-opacity:0.282446;stroke:#e80000;stroke-width:5;stroke-dasharray:none;stroke-opacity:1"
-       id="top-left"
+       id="top-right"
        visibility="hidden"
        width="201.73607"
        height="116.6"
        x="255.91817"
        y="45.493935"
-       inkscape:label="#top-left" />
+       inkscape:label="#top-right" />
     <rect
        style="fill:#ff0000;fill-opacity:0.282446;stroke:#e80000;stroke-width:4.82526;stroke-dasharray:none;stroke-opacity:1"
-       id="bottom-right-7"
+       id="bottom-right"
        visibility="hidden"
        width="196.57182"
        height="111.44544"
