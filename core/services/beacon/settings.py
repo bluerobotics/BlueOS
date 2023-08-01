@@ -172,7 +172,7 @@ class SettingsV3(SettingsV2):
         try:
             if not any(interface["name"] == "uap0" for interface in data["interfaces"]):
                 data["interfaces"].append(
-                    Interface(name="uap0", domain_names=["blueos-hotspot"], advertise=["_http"], ip="ips[0]").as_dict()
+                    Interface(name="uap0", domain_names=["blueos-hotspot"], advertise=["_http"], ip="ips[0]")._data
                 )
         except Exception as e:
             logger.error(f"unable to update SettingsV2 to SettingsV3: {e}")
