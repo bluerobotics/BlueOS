@@ -38,6 +38,14 @@ export enum EndpointType {
     serial = 'serial',
 }
 
+export function vehicleTypeFromString(vehicle_type: string): Vehicle {
+  switch (vehicle_type) {
+    case 'Sub': return Vehicle.Sub
+    case 'Surface Boat': return Vehicle.Rover
+    default: return Vehicle.Other
+  }
+}
+
 export function userFriendlyEndpointType(type: EndpointType): string {
   switch (type) {
     case EndpointType.udpin: return 'UDP Server'
