@@ -24,30 +24,6 @@
               <td>{{ extension.enabled ? getStatus() : "Disabled" }}</td>
             </tr>
             <tr v-if="extension.enabled">
-              <td>Memory usage</td>
-              <td>
-                <v-progress-linear
-                  :value="getMemoryUsage()"
-                  color="green"
-                  height="25"
-                >
-                  <template #default>
-                    <SpinningLogo
-                      v-if="loading || extension.enabled && !container"
-                      size="20px"
-                    />
-                    <strong v-else-if="getMemoryUsage()?.toFixed">
-                      {{ prettifySize(getMemoryUsage() * getMemoryLimit() * 100) }} /
-                      {{ prettifySize(getMemoryLimit() * total_memory * 0.01) }}
-                    </strong>
-                    <strong v-else>
-                      N/A
-                    </strong>
-                  </template>
-                </v-progress-linear>
-              </td>
-            </tr>
-            <tr v-if="extension.enabled">
               <td>CPU usage</td>
               <td>
                 <v-progress-linear
@@ -63,6 +39,30 @@
                     <strong v-else-if="!isNaN(getCpuUsage())">
                       {{ `${getCpuUsage().toFixed(1)}% / ${getCpuLimit()}%` }}
                       {{ `(${(getCpuLimit() * cpus * 0.01).toFixed(1)} cores) ` }}
+                    </strong>
+                    <strong v-else>
+                      N/A
+                    </strong>
+                  </template>
+                </v-progress-linear>
+              </td>
+            </tr>
+            <tr v-if="extension.enabled">
+              <td>Memory usage</td>
+              <td>
+                <v-progress-linear
+                  :value="getMemoryUsage()"
+                  color="green"
+                  height="25"
+                >
+                  <template #default>
+                    <SpinningLogo
+                      v-if="loading || extension.enabled && !container"
+                      size="20px"
+                    />
+                    <strong v-else-if="getMemoryUsage()?.toFixed">
+                      {{ prettifySize(getMemoryUsage() * getMemoryLimit() * 100) }} /
+                      {{ prettifySize(getMemoryLimit() * total_memory * 0.01) }}
                     </strong>
                     <strong v-else>
                       N/A
