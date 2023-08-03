@@ -4,19 +4,26 @@
     :source="service_path"
     :class="fullpage ? 'fullpage' : ''"
   />
+  <SpinningLogo v-else-if="detected_port === undefined" />
+  <page-not-found v-else />
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
+import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import BrIframe from '@/components/utils/BrIframe.vue'
 import services_scanner from '@/store/servicesScanner'
 import { Service } from '@/types/helper'
+
+import PageNotFound from './PageNotFound.vue'
 
 export default Vue.extend({
   name: 'ExtensionView',
   components: {
     BrIframe,
+    PageNotFound,
+    SpinningLogo,
   },
   data() {
     return {
@@ -33,8 +40,13 @@ export default Vue.extend({
         (service) => service?.metadata?.sanitized_name === this.$route.params.name,
       )[0] ?? undefined
     },
-    port(): number | undefined {
-      return this.service?.port
+    port(): number | undefined | null {
+      if (services_scanner.services.length === 0) {
+        return undefined
+      }
+      return services_scanner.services.filter(
+        (service) => service?.metadata?.sanitized_name === this.$route.params.name,
+      )[0]?.port ?? null
     },
     service_path(): string {
       return `${window.location.protocol}//${window.location.hostname}:${this.detected_port}`
@@ -55,7 +67,7 @@ export default Vue.extend({
     },
   },
   mounted() {
-    if (this.port !== undefined) {
+    if (this.port !== undefined && this.port !== null) {
       this.detected_port = this.port
     }
   },
