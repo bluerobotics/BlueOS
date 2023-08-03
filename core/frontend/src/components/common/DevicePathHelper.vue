@@ -80,7 +80,7 @@ export default Vue.extend({
     height: {
       type: String,
       required: false,
-      default: '500px',
+      default: '250px',
     },
   },
   data: () => ({
