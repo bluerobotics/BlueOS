@@ -39,7 +39,9 @@
                   width="100%"
                   height="65"
                   class="ma-0 pa-0"
-                  @mouseover="highlight = [`Motor${motor.servo}`]"
+                  @mouseover="highlight = [
+                    stringToUserFriendlyText(printParam(getParam(`SERVO${motor.servo}_FUNCTION`))),
+                  ]"
                   @mouseleave="highlight = default_highlight"
                 >
                   <td width="20%">
@@ -329,6 +331,9 @@ export default Vue.extend({
     },
     stringToUserFriendlyText(text: string) {
       return param_value_map?.[this.vehicle_type ?? '']?.[text] ?? text
+    },
+    getParam(param: string): Parameter | undefined {
+      return autopilot_data.parameter(param)
     },
     printParam,
     zero_motors() {
