@@ -62,8 +62,11 @@ async def find_ping360_ethernet() -> List[str]:
         try:
             data = await loop.sock_recv(server, 2048)
             decoded_message = data.decode("utf8")
+            logger.info(f"Data received: {decoded_message}")
             raw_ip = decoded_message.split("IP Address:- ")[1].strip()
             found.append(remove_zeros(raw_ip))
         except socket.timeout:
             logger.debug(f"timed out waiting for ping360 at ip {ip}")
+        except Exception as e:
+            logger.error(f"Error while probing for ping360 at ip {ip}: {e}")
     return found
