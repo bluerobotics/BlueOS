@@ -33,8 +33,8 @@ export default Vue.extend({
         (service) => service?.metadata?.sanitized_name === this.$route.params.name,
       )[0] ?? undefined
     },
-    port(): number {
-      return this.service?.port ?? 80
+    port(): number | undefined {
+      return this.service?.port
     },
     service_path(): string {
       return `${window.location.protocol}//${window.location.hostname}:${this.detected_port}`
