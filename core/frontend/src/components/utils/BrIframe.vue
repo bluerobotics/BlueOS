@@ -48,3 +48,8 @@ export default Vue.extend({
   },
 })
 </script>
+<style scoped>
+iframe {
+  display: block;
+}
+</style>
