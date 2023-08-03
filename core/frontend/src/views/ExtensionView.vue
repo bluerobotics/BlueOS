@@ -11,6 +11,7 @@ import Vue from 'vue'
 
 import BrIframe from '@/components/utils/BrIframe.vue'
 import services_scanner from '@/store/servicesScanner'
+import { Service } from '@/types/helper'
 
 export default Vue.extend({
   name: 'ExtensionView',
@@ -27,14 +28,20 @@ export default Vue.extend({
     fullpage(): boolean {
       return this.$route.query.full_page === 'true'
     },
-    port(): number {
+    service(): Service | undefined {
       return services_scanner.services.filter(
         (service) => service?.metadata?.sanitized_name === this.$route.params.name,
-      )[0]?.port ?? 80
+      )[0] ?? undefined
+    },
+    port(): number {
+      return this.service?.port ?? 80
     },
     service_path(): string {
       return `${window.location.protocol}//${window.location.hostname}:${this.detected_port}`
       + `?time=${this.cache_busting_time}`
+    },
+    service_name(): string {
+      return this.service?.metadata?.name ?? 'BlueOS Extension'
     },
   },
   watch: {
@@ -42,6 +49,9 @@ export default Vue.extend({
       if (new_value !== undefined) {
         this.detected_port = new_value
       }
+    },
+    service_name(new_value) {
+      document.title = new_value
     },
   },
   mounted() {
