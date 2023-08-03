@@ -53,10 +53,10 @@
         <v-spacer />
         <beacon-tray-menu />
         <health-tray-menu />
-        <internet-tray-menu />
         <theme-tray-menu />
         <vehicle-reboot-required-tray-menu />
         <pirate-mode-tray-menu />
+        <internet-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
         <notification-tray-button />
