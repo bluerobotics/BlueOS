@@ -55,7 +55,7 @@ class Ping1DMavlinkDriver:
             "horizontal_fov": 0.52,
             "vertical_fov": 0.52,
             "quaternion": [0, 0, 0, 0],
-            "signal_quality": confidence,
+            "signal_quality": min(1, confidence),  # 0 means undefined per MAVLink spec
         }
 
     ## Send distance_sensor message to autopilot
