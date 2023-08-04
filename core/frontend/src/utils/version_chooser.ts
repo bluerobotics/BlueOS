@@ -1,5 +1,7 @@
 import { gt as sem_ver_greater, SemVer } from 'semver'
 
+import Notifier from '@/libs/notifier'
+import { version_chooser_service } from '@/types/frontend_services'
 import {
   LocalVersionsQuery, Version, VersionsQuery, VersionType,
 } from '@/types/version-chooser'
@@ -7,6 +9,8 @@ import back_axios from '@/utils/api'
 
 const API_URL = '/version-chooser/v1.0'
 const DEFAULT_REMOTE_IMAGE = 'bluerobotics/blueos-core'
+
+const notifier = new Notifier(version_chooser_service)
 
 function fixVersion(version: string): string | null {
   /** It turned out that our semvers are wrong... oopss
@@ -153,12 +157,20 @@ async function loadCurrentVersion(): Promise<Version> {
   }).then((response) => response.data as Version)
 }
 
-async function loadBootstrapCurrentVersion(): Promise<string> {
+async function loadBootstrapCurrentVersion(): Promise<string | undefined> {
   return back_axios({
     method: 'get',
     url: `${API_URL}/bootstrap/current/`,
     // eslint-disable-next-line no-extra-parens
   }).then((response) => (typeof response.data === 'object' ? undefined : response.data))
+    // The update process may fail and the user may be in bootstrap-backup
+    // This allows us to have the frontend working without crashing
+    // But still visible on the back
+    .catch((error) => {
+      const message = `Failed to fatch bootstrap version: ${error}`
+      notifier.pushWarning('VERSION_CHOOSER_FAILED_BOOTSTRAP_VERSION', message)
+      return undefined
+    })
 }
 
 export {
