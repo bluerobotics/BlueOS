@@ -10,6 +10,7 @@ from typing import List, Optional, Tuple
 from warnings import warn
 
 import aiohttp
+from loguru import logger
 
 
 def get_current_arch() -> str:
@@ -85,7 +86,7 @@ class TagFetcher:
 
     async def fetch_remote_tags(self, repository: str, local_images: List[str]) -> Tuple[str, List[TagMetadata]]:
         """Fetches the tags available for an image in DockerHub"""
-        print("fetching", repository)
+        logger.info("fetching", repository)
         errors = []
         self.last_token = await self._get_token(auth_url="https://auth.docker.io", image_name=repository)
         async with aiohttp.ClientSession() as session:

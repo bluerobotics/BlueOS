@@ -1,5 +1,4 @@
 import json
-import logging
 import pathlib
 import sys
 from dataclasses import asdict
@@ -10,6 +9,7 @@ import aiodocker
 import appdirs
 import docker
 from aiohttp import web
+from loguru import logger
 
 from utils.dockerhub import TagFetcher
 
@@ -19,8 +19,6 @@ current_folder = pathlib.Path(__file__).parent.parent.absolute()
 # Folder for static files (mostly css/js)
 FRONTEND_FOLDER = pathlib.Path.joinpath(current_folder, "frontend")
 STATIC_FOLDER = pathlib.Path.joinpath(FRONTEND_FOLDER, "static")
-
-logging.basicConfig(level=logging.INFO)
 
 
 class VersionChooser:
@@ -51,9 +49,9 @@ class VersionChooser:
                 image = core["image"]
                 return image, tag
             except KeyError as error:
-                logging.warning(f"Invalid version file: {error}")
+                logger.warning(f"Invalid version file: {error}")
             except Exception as e:
-                logging.warning(f"Unable to load settings file: {e}")
+                logger.warning(f"Unable to load settings file: {e}")
         return None
 
     async def get_version(self) -> web.Response:
@@ -97,7 +95,7 @@ class VersionChooser:
             response_list = await self.client.images.import_image(data)
             response = response_list[0]
         except Exception as error:
-            logging.critical("Error: %s: %s", type(error), error)
+            logger.critical("Error: %s: %s", type(error), error)
             return web.Response(status=500, text=f"Error: {type(error)}: {error}")
 
         if "errorDetail" in response:
@@ -164,26 +162,26 @@ class VersionChooser:
         """
 
         bootstrap = None
-        logging.info(f"Setting new bootstrap version: {tag}")
+        logger.info(f"Setting new bootstrap version: {tag}")
         try:
             bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
-            logging.info("Got bootstrap..")
+            logger.info("Got bootstrap..")
         except Exception as error:
-            logging.critical("Warning: %s: %s", type(error), error)
+            logger.critical("Warning: %s: %s", type(error), error)
 
         backup_name = "bootstrap-backup"
         try:
             backup = None
             backup = await self.client.containers.get(backup_name)  # type: ignore
-            logging.info(f"Got {backup_name}, going to delete and create a new one..")
+            logger.info(f"Got {backup_name}, going to delete and create a new one..")
             await backup.delete(force=False, noprune=False)  # type: ignore
         except Exception as error:
-            logging.critical("warning: %s: %s", type(error), error)
+            logger.critical("warning: %s: %s", type(error), error)
 
         if bootstrap:
-            logging.info(f"Setting current {await self.get_bootstrap_version()} as {backup_name}")
+            logger.info(f"Setting current {await self.get_bootstrap_version()} as {backup_name}")
             await bootstrap.rename(backup_name)
-            logging.info(f"Stop {self.bootstrap_name}")
+            logger.info(f"Stop {self.bootstrap_name}")
             await bootstrap.stop()
 
         HOME = "/root"
@@ -202,7 +200,7 @@ class VersionChooser:
 
         container = await self.client.containers.create(bootstrap_config, name=self.bootstrap_name)  # type: ignore
         await container.start()
-        logging.info(f"Bootstrap updated to {bootstrap_config['Image']}")
+        logger.info(f"Bootstrap updated to {bootstrap_config['Image']}")
         return web.Response(status=200, text=f"Bootstrap update to {tag}")
 
     async def set_version(self, image: str, tag: str) -> web.StreamResponse:
@@ -234,7 +232,7 @@ class VersionChooser:
                 startup_file.write(json.dumps(data, indent=2))
                 startup_file.truncate()
 
-                logging.info("Stopping core...")
+                logger.info("Stopping core...")
                 core = await self.client.containers.get("blueos-core")  # type: ignore
                 if core:
                     await core.kill()
@@ -244,7 +242,7 @@ class VersionChooser:
                 return web.Response(status=500, text="Invalid version file")
 
             except Exception as error:
-                logging.critical("Error: %s: %s", type(error), error)
+                logger.critical("Error: %s: %s", type(error), error)
                 return web.Response(status=500, text=f"Error: {type(error)}: {error}")
 
     async def delete_version(self, image: str, tag: str) -> web.StreamResponse:
@@ -269,17 +267,17 @@ class VersionChooser:
         try:
             await self.client.images.get(full_name)
         except Exception as error:
-            logging.warning(f"Image not found: {full_name} ({error})")
+            logger.warning(f"Image not found: {full_name} ({error})")
             return web.Response(status=404, text=f"image '{full_name}' not found ({error})")
 
         # actually attempt to delete it
-        logging.info(f"Deleting image {image}:{tag}...")
+        logger.info(f"Deleting image {image}:{tag}...")
         try:
             await self.client.images.delete(full_name, force=False, noprune=False)
-            logging.info("Image deleted successfully")
+            logger.info("Image deleted successfully")
             return web.Response(status=200)
         except Exception as e:
-            logging.warning(f"Error deleting image: {e}")
+            logger.warning(f"Error deleting image: {e}")
             return web.Response(status=500, text=f"Unable do delete image: {e}")
 
     async def set_local_versions(self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]]) -> None:
@@ -309,7 +307,7 @@ class VersionChooser:
                 repository, [image["tag"] for image in output["local"]]
             )
         except Exception as error:
-            logging.critical(f"error fetching online tags: {error}")
+            logger.critical(f"error fetching online tags: {error}")
             online_tags = []
             output["error"] = f"error fetching online tags: {error}"
         assert isinstance(output["remote"], list)
@@ -340,7 +338,7 @@ class VersionChooser:
         Returns:
             web.Response: always 200
         """
-        logging.info("Stopping core...")
+        logger.info("Stopping core...")
         core = await self.client.containers.get("blueos-core")  # type: ignore
         await core.kill()
         return web.Response(status=200, text="Restarting...")
