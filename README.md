@@ -76,7 +76,7 @@ For a wide array of unmanned vehicles, whether terrestrial, aerial, or marine, B
 
 BlueOS is designed to perform optimally across a wide range of systems. In our latest releases, we officially support the following architectures:
 
-- **amd64:** This is the architecture used by most desktop and laptop computers. A typical example is any modern PC running a 64-bit version of Linux.
+- **amd64:** This is the architecture used by most desktop and laptop computers. A typical example is any modern PC running a 64-bit version of Linux. **Not fully supported.**
 
 - **armv8/arm64:** This is used by more recent, high-performance devices. You can run BlueOS on a Raspberry Pi 4 or in a computer with Apple Silicon.
 
