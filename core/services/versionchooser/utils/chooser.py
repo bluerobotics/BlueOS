@@ -174,7 +174,8 @@ class VersionChooser:
             backup = None
             backup = await self.client.containers.get(backup_name)  # type: ignore
             logger.info(f"Got {backup_name}, going to delete and create a new one..")
-            await backup.delete(force=False, noprune=False)  # type: ignore
+            # We are going to remove backup even if it's running somehow
+            await backup.delete(force=True, noprune=False)  # type: ignore
         except Exception as error:
             logger.critical("warning: %s: %s", type(error), error)
 
