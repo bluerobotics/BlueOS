@@ -28,6 +28,7 @@
         </a>
         .
       </v-alert>
+      <self-health-test />
     </v-row>
     <v-row>
       <v-col
@@ -93,6 +94,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
 import settings from '@/libs/settings'
 import wifi from '@/store/wifi'
 import { Network } from '@/types/wifi'
@@ -101,6 +103,9 @@ import menus, { menuItem } from '../menus'
 
 export default Vue.extend({
   name: 'MainView',
+  components: {
+    SelfHealthTest,
+  },
   data: () => ({
     menus,
     settings,
