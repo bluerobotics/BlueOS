@@ -237,6 +237,8 @@ class VersionChooser:
                 core = await self.client.containers.get("blueos-core")  # type: ignore
                 if core:
                     await core.kill()
+                    result = await core.wait()  # type: ignore
+                    logger.info(f"Response after waiting for core to be killed: {result}")
                 return web.Response(status=200, text=f"Changed to version {image}:{tag}, restarting...")
 
             except KeyError:
