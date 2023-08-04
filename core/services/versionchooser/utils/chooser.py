@@ -184,6 +184,8 @@ class VersionChooser:
             await bootstrap.rename(backup_name)
             logger.info(f"Stop {self.bootstrap_name}")
             await bootstrap.stop()
+            result = await bootstrap.wait()  # type: ignore
+            logger.info(f"Response after waiting for {self.bootstrap_name} to be stopped: {result}")
 
         HOME = "/root"
         bootstrap_config = {
