@@ -381,7 +381,7 @@ def ensure_user_data_structure_is_in_place() -> bool:
     return False
 
 def main() -> int:
-
+    start = time.time()
     current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
     match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
     tag, commit_number, commit_hash = match['tag'], match['commit_number'], match['commit_hash']
@@ -406,6 +406,7 @@ def main() -> int:
         time.sleep(10)
         run_command('sudo reboot', False)
 
+    print(f"All patches applied successfully in { time.time() - start} seconds")
     return 0
 
 if __name__ == "__main__":
