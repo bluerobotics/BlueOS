@@ -32,7 +32,7 @@
       <v-card-text>
         <div v-if="eeprom_update">
           <div class="d-flex justify-space-between">
-            <span><b>From:</b> {{ raspberry_eeprom_data.current_bootloader }} </span>
+            <span><b>Current:</b> {{ raspberry_eeprom_data.current_bootloader }} </span>
             <span v-if="bootloader_update_available">
               <b>Latest:</b> {{ raspberry_eeprom_data.latest_bootloader }}
             </span>
