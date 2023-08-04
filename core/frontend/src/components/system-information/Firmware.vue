@@ -107,7 +107,12 @@ export default Vue.extend({
   },
   computed: {
     bootloader_update_available(): boolean {
-      return this.raspberry_eeprom_data.current_bootloader !== this.raspberry_eeprom_data.latest_bootloader
+      if (this.raspberry_eeprom_data.current_bootloader === undefined
+        || this.raspberry_eeprom_data.latest_bootloader === undefined) {
+        return false
+      }
+      return new Date(this.raspberry_eeprom_data.current_bootloader)
+        < new Date(this.raspberry_eeprom_data.latest_bootloader)
     },
     vl085_update_available(): boolean {
       return this.raspberry_eeprom_data.current_vl085 !== this.raspberry_eeprom_data.latest_vl085
