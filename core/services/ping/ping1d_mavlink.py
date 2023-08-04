@@ -46,7 +46,7 @@ class Ping1DMavlinkDriver:
             "type": "DISTANCE_SENSOR",
             "time_boot_ms": time_boot_ms,
             "min_distance": 20,
-            "max_distance": 5000,
+            "max_distance": 12000,
             "current_distance": int(distance_cm),
             "mavtype": {"type": "MAV_DISTANCE_SENSOR_ULTRASOUND"},
             "id": device_id,
