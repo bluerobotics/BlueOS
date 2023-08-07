@@ -61,7 +61,7 @@ class Website(Enum):
         "port": 80,
     }
     BlueOS = {
-        "hostname": "blueos.cloud",
+        "hostname": "telemetry.blueos.cloud",
         "path": f"/ping?id={machineid.hashed_id()}&version={BLUEOS_VERSION}",
         "port": 80,
     }
