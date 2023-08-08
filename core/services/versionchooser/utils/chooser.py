@@ -196,6 +196,7 @@ class VersionChooser:
                 "Binds": [
                     f"{HOME}/.config/blueos/bootstrap:/root/.config/bootstrap",
                     "/var/run/docker.sock:/var/run/docker.sock",
+                    "/var/logs/blueos:/var/logs/blueos",
                 ],
             },
             "Env": [f"BLUEOS_CONFIG_PATH={HOME}/.config/blueos"],
