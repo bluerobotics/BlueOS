@@ -10,6 +10,7 @@ from warnings import warn
 
 import docker
 import requests
+from loguru import logger
 
 
 class Bootstrapper:
@@ -68,7 +69,7 @@ class Bootstrapper:
                     assert key in config[Bootstrapper.SETTINGS_NAME_CORE], f"missing key in json file: {key}"
 
         except Exception as error:
-            print(f"unable to read startup.json file ({error}), reverting to defaults...")
+            logger.error(f"unable to read startup.json file ({error}), reverting to defaults...")
             # Copy defaults over and read again
             Bootstrapper.overwrite_config_file_with_defaults()
             with open(Bootstrapper.DEFAULT_FILE_PATH, encoding="utf-8") as config_file:
@@ -137,7 +138,7 @@ class Bootstrapper:
             curses.echo()
             curses.nocbreak()
             curses.endwin()
-        print("Done")
+        logger.info("Done")
 
     def image_is_available_locally(self, image_name: str, tag: str) -> bool:
         """Checks if the image is already available locally"""
@@ -176,7 +177,7 @@ class Bootstrapper:
                 warn(f"Error trying to pull an update image: {error}")
                 return False
 
-        print(f"Starting {image_name}")
+        logger.info(f"Starting {image_name}")
         # Remove image if name already exist
         self.remove(component_name)
         try:
@@ -193,7 +194,7 @@ class Bootstrapper:
             self.overwrite_config_file_with_defaults()
             return False
 
-        print(f"{component_name} ({docker_name}) started")
+        logger.info(f"{component_name} ({docker_name}) started")
         return True
 
     def is_running(self, component: str) -> bool:
@@ -218,7 +219,7 @@ class Bootstrapper:
             if Bootstrapper.SETTINGS_NAME_CORE in response.json()["repository"]:
                 return True
         except Exception as e:
-            print(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
+            logger.warning(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
         return False
 
     def remove(self, container: str) -> None:
@@ -233,7 +234,7 @@ class Bootstrapper:
 
     def run(self) -> None:
         """Runs the bootstrapper"""
-        print("Starting main loop")
+        logger.info("Starting main loop")
         while True:
             time.sleep(5)
             for image in self.read_config_file():
@@ -241,9 +242,9 @@ class Bootstrapper:
                 if not self.is_running(image):
                     try:
                         if self.start(image):
-                            print(f"{image} is not running, starting..")
+                            logger.warning(f"{image} is not running, starting..")
                     except Exception as error:
-                        warn(f"error: {type(error)}: {error}, retrying...")
+                        logger.error(f"error: {type(error)}: {error}, retrying...")
 
                 if image != Bootstrapper.SETTINGS_NAME_CORE:
                     continue
@@ -258,13 +259,13 @@ class Bootstrapper:
 
                 # Version choose failed, time to restarted core
                 self.core_last_response_time = time.time()
-                print("Core has not responded in 5 minutes, resetting to factory...")
+                logger.warning("Core has not responded in 5 minutes, resetting to factory...")
                 self.overwrite_config_file_with_defaults()
                 try:
                     if self.start(image):
-                        print("Restarted core..")
+                        logger.info("Restarted core..")
                 except Exception as error:
-                    warn(f"error: {type(error)}: {error}, retrying...")
+                    logger.error(f"error: {type(error)}: {error}, retrying...")
 
             # This is required for the tests, we need to "finish" somehow
             if "pytest" in sys.modules:

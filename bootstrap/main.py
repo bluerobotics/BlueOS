@@ -4,15 +4,19 @@ import os
 import sys
 
 import docker
-
+from loguru import logger
 from bootstrap.bootstrap import Bootstrapper
 
+
 if __name__ == "__main__":
+    logger.add("/var/logs/blueos/services/bootstrap/bootstrap_{time}.log", enqueue=True, rotation="30 minutes")
     if os.environ.get("BLUEOS_CONFIG_PATH", None) is None:
-        print("Please supply the host path for the config files as the BLUEOS_CONFIG_PATH environment variable.")
-        print("Example docker command line:")
-        print(
-            "docker run -it -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.config/blueos:"
+        logger.info("Please supply the host path for the config files as the BLUEOS_CONFIG_PATH environment variable.")
+        logger.info("Example docker command line:")
+        logger.info(
+            "docker run -it -v /var/run/docker.sock:/var/run/docker.sock"
+            " -v $HOME/.config/blueos:"
+            " -v /var/logs/blueos:/var/logs/blueos"
             "/root/.config/blueos -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos"
             "bluerobotics/blueos-bootstrap:master"
         )
