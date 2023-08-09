@@ -7,7 +7,6 @@ set -e
 TOOLS=(
     ardupilot_tools
     filebrowser
-    hotspot
     linux2rest
     logviewer
     mavlink_camera_manager
@@ -20,4 +19,5 @@ parallel --halt now,fail=1 '/home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
 # APT is terrible like pip and don't know how to handle parallel installation
 /home/pi/tools/cable_guy/bootstrap.sh
 /home/pi/tools/dnsmasq/bootstrap.sh
+/home/pi/tools/hotspot/bootstrap.sh
 /home/pi/tools/nginx/bootstrap.sh
