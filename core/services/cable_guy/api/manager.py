@@ -372,7 +372,7 @@ class EthernetManager:
         """
         return self.ndb.interfaces.dump().filter(ifname=interface_name)[0]
 
-    @temporary_cache(timeout_seconds=5)
+    @temporary_cache(timeout_seconds=1)
     def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
         """Get priority of network interfaces dhcpcd otherwise fetch from ipr.
 

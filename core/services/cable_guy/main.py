@@ -80,7 +80,7 @@ def configure_interface(interface: NetworkInterface = Body(...)) -> Any:
 
 @app.get("/interfaces", response_model=List[NetworkInterface], summary="Retrieve all network interfaces.")
 @version(1, 0)
-@temporary_cache(timeout_seconds=10)
+@temporary_cache(timeout_seconds=1)
 def retrieve_interfaces() -> Any:
     """REST API endpoint to retrieve the all network interfaces."""
     return manager.get_interfaces()
