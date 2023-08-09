@@ -95,6 +95,7 @@ export default Vue.extend({
           )
           this.close()
         })
+      await this.fetchAvailableInterfaces()
     },
     async fetchAvailableInterfaces(): Promise<void> {
       await back_axios({
