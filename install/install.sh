@@ -197,6 +197,7 @@ docker create \
     --net=host \
     -v $HOME/.config/blueos/bootstrap:/root/.config/bootstrap \
     -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /var/logs/blueos:/var/logs/blueos \
     -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos \
     $BLUEOS_BOOTSTRAP
 
