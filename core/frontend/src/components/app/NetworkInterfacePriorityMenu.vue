@@ -105,9 +105,9 @@ export default Vue.extend({
         .then((response) => {
           const interfaces = response.data as EthernetInterface[]
           interfaces.sort((a, b) => {
-            if (!a.info) return 1
-            if (!b.info) return -1
-            return b.info.priority - a.info.priority
+            if (!a.info) return -1
+            if (!b.info) return 1
+            return a.info.priority - b.info.priority
           })
           this.interfaces = interfaces
         })
