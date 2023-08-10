@@ -62,7 +62,7 @@ class Website(Enum):
     }
     BlueOS = {
         "hostname": "telemetry.blueos.cloud",
-        "path": f"/ping?id={machineid.hashed_id()}&version={BLUEOS_VERSION}",
+        "path": f"/ping?machine_id={machineid.hashed_id()}&version={BLUEOS_VERSION}",
         "port": 443,
     }
     Cloudflare = {
@@ -218,7 +218,7 @@ class Helper:
         """This function is a simple wrappper around http.client to make convenient requests and get the answer
         knowing that it will never raise"""
 
-        conn = None
+        conn: Optional[Union[http.client.HTTPConnection, http.client.HTTPSConnection]] = None
         request_response = SimpleHttpResponse(status=None, decoded_data=None, as_json=None, timeout=False, error=None)
 
         # Prepare the header for json request
