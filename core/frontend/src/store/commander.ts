@@ -17,7 +17,7 @@ class CommanderStore {
     return CommanderStore.instance
   }
 
-  async commandHost(command: string): Promise<void> {
+  async commandHost(command: string): Promise<undefined | ReturnStruct> {
     return back_axios({
       method: 'post',
       url: `${this.API_URL}/command/host`,
@@ -30,10 +30,11 @@ class CommanderStore {
       .then((response) => response.data)
       .catch((error) => {
         if (error === backend_offline_error) {
-          return
+          return undefined
         }
         const message = `Could not send command to host: ${error.response?.data ?? error.message}.`
         notifier.pushError('COMMANDER_COMMAND_HOST_FAIL', message, true)
+        return undefined
       })
   }
 
