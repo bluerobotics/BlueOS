@@ -380,12 +380,25 @@ def ensure_user_data_structure_is_in_place() -> bool:
     # This patch doesn't require restart to take effect
     return False
 
+def run_command_is_working():
+    output = run_command("uname -a")
+    if output.returncode != 0:
+        print(output)
+        return False
+
+    return True
+
 def main() -> int:
     start = time.time()
     current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
     match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
     tag, commit_number, commit_hash = match['tag'], match['commit_number'], match['commit_hash']
     print(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
+
+    if not run_command_is_working():
+        print("Critical error: Something is wrong with the host computer, run_command is not working.")
+        print("Ignoring host computer configuration for now.")
+        return 0
 
     # TODO: parse tag as semver and check before applying patches
     patches_to_apply = [
