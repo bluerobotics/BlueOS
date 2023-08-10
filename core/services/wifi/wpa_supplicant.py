@@ -63,7 +63,16 @@ class WPASupplicant:
                 self.sock.send(command.encode("utf-8"))
                 data, _ = self.sock.recvfrom(self.BUFFER_SIZE)
             except Exception as error:
-                raise SockCommError("Could not communicate with WPA Supplicant socket.") from error
+                # Oh my, something is wrong!
+                # For now, let us report the error but not without recreating the socket
+                error_message = "Could not communicate with WPA Supplicant socket"
+                try:
+                    logger.warning(f"{error_message}: {error}")
+                    logger.warning("Trying to recover and recreate socket..")
+                    self.run(self.target)
+                except Exception as inner_error:
+                    logger.error(f"Failed to send command and failed to recreate wpa socket: {inner_error}")
+                raise SockCommError(error_message) from error
 
             if b"FAIL-BUSY" in data:
                 logger.info(f"Busy during {command} operation. Trying again...")
