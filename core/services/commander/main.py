@@ -1,7 +1,9 @@
 #! /usr/bin/env python3
 import logging
 import os
+import shlex
 import shutil
+import subprocess
 import time
 from enum import Enum
 from pathlib import Path
@@ -204,7 +206,33 @@ async def root() -> Any:
     return HTMLResponse(content=html_content, status_code=200)
 
 
+def setup_ssh() -> None:
+    # store the key in the docker .config volume
+    key_path = "/root/.config/.ssh/"
+    key_path_as_path = Path(key_path)
+    # authorized_keys is in the pi home directory, we just add our key to it
+    authorized_keys_path = "/home/pi/.ssh/authorized_keys"
+
+    try:
+        key_path_as_path.mkdir(parents=True, exist_ok=True)
+        # check if id_rsa.pub exists, creates a new one if it doesnt
+        if not os.path.exists(key_path_as_path / "id_rsa.pub"):
+            subprocess.run(shlex.split(f"ssh-keygen -t rsa -f {key_path}/id_rsa -q -N ''"), check=True)
+        # add id_rsa.pub to authorized_keys if not there already
+        if not os.path.exists(authorized_keys_path):
+            subprocess.run(shlex.split(f"touch {authorized_keys_path}"), check=True)
+        with open(authorized_keys_path, "r+", encoding="utf-8") as f:
+            with open(key_path_as_path / "id_rsa.pub", encoding="utf-8") as key_file:
+                my_key = key_file.read()
+                if not any(my_key in line for line in f):
+                    f.write(f"\n{my_key}")
+    except Exception as error:
+        logger.error(f"Error setting up ssh: {error}")
+    logger.info("SSH setup done")
+
+
 if __name__ == "__main__":
+    setup_ssh()
     # Register ssh client and remove message from the following commands
     run_command("ls")
 
