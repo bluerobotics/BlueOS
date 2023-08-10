@@ -34,6 +34,10 @@
                 "bind": "/run/udev",
                 "mode": "ro"
             },
+            "/home/pi/.ssh": {
+                "bind": "/home/pi/.ssh",
+                "mode": "rw"
+            },
             "/etc/machine-id": {
                 "bind": "/etc/machine-id",
                 "mode": "ro"
