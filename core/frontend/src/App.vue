@@ -54,6 +54,7 @@
         <beacon-tray-menu />
         <health-tray-menu />
         <theme-tray-menu />
+        <system-checker-tray-menu />
         <vehicle-reboot-required-tray-menu />
         <pirate-mode-tray-menu />
         <internet-tray-menu />
@@ -344,6 +345,7 @@ import PiradeModeTrayMenu from './components/app/PirateModeTrayMenu.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
 import SettingsMenu from './components/app/SettingsMenu.vue'
+import SystemCheckerTrayMenu from './components/app/SystemCheckerTrayMenu.vue'
 import ThemeTrayMenu from './components/app/ThemeTrayMenu.vue'
 import VehicleBanner from './components/app/VehicleBanner.vue'
 import VehicleRebootRequiredTrayMenu from './components/app/VehicleRebootRequiredTrayMenu.vue'
@@ -383,6 +385,7 @@ export default Vue.extend({
     Alerter,
     'vehicle-banner': VehicleBanner,
     'new-version-notificator': NewVersionNotificator,
+    SystemCheckerTrayMenu,
     VehicleRebootRequiredTrayMenu,
     Wizard,
   },
