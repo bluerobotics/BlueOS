@@ -31,6 +31,13 @@
     <v-divider />
     <v-card-actions class="justify-center pa-2">
       <v-btn
+        color="primary"
+        @click="close()"
+      >
+        Cancel
+      </v-btn>
+      <v-spacer />
+      <v-btn
         color="success"
         :disabled="is_loading"
         @click="setHighestInterface()"
