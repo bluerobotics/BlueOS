@@ -76,6 +76,7 @@ export default Vue.extend({
       return `${index}${['st', 'nd', 'rd'][((index + 90) % 100 - 10) % 10 - 1] || 'th'}`
     },
     async setHighestInterface(): Promise<void> {
+      this.is_loading = true
       const interface_priority = this.interfaces.map((inter) => ({ name: inter.name }))
       await back_axios({
         method: 'post',
@@ -96,6 +97,7 @@ export default Vue.extend({
           this.close()
         })
       await this.fetchAvailableInterfaces()
+      this.is_loading = false
     },
     async fetchAvailableInterfaces(): Promise<void> {
       await back_axios({
