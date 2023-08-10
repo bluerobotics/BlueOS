@@ -3,7 +3,7 @@
     <v-list>
       <v-card-subtitle class="text-md-center" max-width="30">
         Move network interfaces over
-        to change network access priority
+        to change network access priority.<br>Applied changes require a <b>system reboot</b>.
       </v-card-subtitle>
       <draggable v-model="interfaces">
         <v-card
