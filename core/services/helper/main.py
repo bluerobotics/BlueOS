@@ -228,7 +228,11 @@ class Helper:
 
         try:
             # Make the connection and the request
-            conn = http.client.HTTPConnection(host, port, timeout=timeout)
+            if port == http.client.HTTPS_PORT:
+                conn = http.client.HTTPSConnection(host, port, timeout=timeout)
+            else:
+                conn = http.client.HTTPConnection(host, port, timeout=timeout)
+
             conn.request(method, path, headers=headers)
             response = conn.getresponse()
 
