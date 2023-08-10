@@ -13,18 +13,18 @@
         elevation="2"
         dismissible
       >
-        You are running "factory" version.
-        This generally means something went wrong and the system reverted to this version
+        This vehicle is running its "factory" version of BlueOS.
+        This generally means something went wrong, and the system reverted to this version
         in order to recover.
         Please file an issue at <a
           href="https://github.com/bluerobotics/BlueOS/issues"
           target="_blank"
         >BlueOS/issues</a>
-        or post at our <a
+        or post on our <a
           href="https://discuss.bluerobotics.com/c/bluerobotics-software/blue-os/85"
           target="_blank"
-        >Discuss</a>
-        Including the <a href="#" @click="downloadLogs()">System logs</a>
+        >forum</a>.
+        Please include the <a href="#" @click="downloadLogs()">System logs</a>
         if possible, and what you were doing when this happened.
       </v-alert>
     </v-row>
