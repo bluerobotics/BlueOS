@@ -55,28 +55,29 @@ else
     echo "Waring: Using dockers's resolv.conf, this may cause DNS issues if the host's network configuration changes."
 fi
 
+# Be sure to have the list sorted for user to access the tmux list easily
 SERVICES=(
-    'beacon',"$SERVICES_PATH/beacon/main.py"
-    'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
-    'kraken',"$SERVICES_PATH/kraken/main.py"
-    'wifi',"$SERVICES_PATH/wifi/main.py --socket wlan0"
     'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
+    'bag_of_holding',"$SERVICES_PATH/bag_of_holding/main.py"
+    'beacon',"$SERVICES_PATH/beacon/main.py"
     'bridget',"$SERVICES_PATH/bridget/main.py"
+    'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
     'commander',"$SERVICES_PATH/commander/main.py"
-    'nmea_injector',"$SERVICES_PATH/nmea_injector/nmea_injector/main.py"
-    'helper',"$SERVICES_PATH/helper/main.py"
-    'video',"mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --verbose"
-    'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
-    'linux2rest',"linux2rest"
     'filebrowser',"filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
-    'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
+    'helper',"$SERVICES_PATH/helper/main.py"
+    'kraken',"$SERVICES_PATH/kraken/main.py"
+    'linux2rest',"linux2rest"
+    'log_zipper',"$SERVICES_PATH/log_zipper/main.py '/shortcuts/system_logs/**/*.log' --max-age-minutes 60"
+    'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
+    'nginx',"nice --18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
+    'nmea_injector',"$SERVICES_PATH/nmea_injector/nmea_injector/main.py"
     'pardal',"$SERVICES_PATH/pardal/main.py"
     'ping',"$SERVICES_PATH/ping/main.py"
-    'user_terminal',"cat /etc/motd"
     'ttyd',"ttyd -p 8088 /usr/bin/tmux attach -t user_terminal"
-    'nginx',"nice --18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
-    'log_zipper',"$SERVICES_PATH/log_zipper/main.py '/shortcuts/system_logs/**/*.log' --max-age-minutes 60"
-    'bag_of_holding',"$SERVICES_PATH/bag_of_holding/main.py"
+    'user_terminal',"cat /etc/motd"
+    'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
+    'video',"mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --verbose"
+    'wifi',"$SERVICES_PATH/wifi/main.py --socket wlan0"
 )
 
 tmux -f /etc/tmux.conf start-server
