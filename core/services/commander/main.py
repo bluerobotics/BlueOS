@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import logging
 import os
+import shutil
 import time
 from enum import Enum
 from pathlib import Path
@@ -159,7 +160,12 @@ async def do_eeprom_update(i_know_what_i_am_doing: bool = False) -> Any:
 @version(1, 0)
 async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
     check_what_i_am_doing(i_know_what_i_am_doing)
+    # Be sure to not delete bootstrap to avoid going back to factory image
+    bootstrap_config_path = "/root/.config/bootstrap/startup.json"
+    temporary_location = "/tmp/bootstrap_startup.json"
+    shutil.copy2(bootstrap_config_path, temporary_location)
     delete_everything(Path(appdirs.user_config_dir()))
+    shutil.copy2(temporary_location, bootstrap_config_path)
 
 
 @app.post("/services/remove_log", status_code=status.HTTP_200_OK)
