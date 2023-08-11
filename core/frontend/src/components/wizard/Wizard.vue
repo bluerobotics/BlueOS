@@ -134,7 +134,6 @@
             <v-row class="pa-5">
               <v-btn
                 color="warning"
-                :loading="wait_configuration"
                 @click="step_number = 1"
               >
                 Return
@@ -142,7 +141,6 @@
               <v-spacer />
               <v-btn
                 color="primary"
-                :loading="wait_configuration"
                 @click="setupConfiguration"
               >
                 Continue
@@ -161,7 +159,6 @@
             <v-row class="pa-5 pt-10 flex-row justify-space-around align-center grow">
               <v-btn
                 :color="retry_count == 0 ? 'success' : 'error'"
-                :loading="wait_configuration"
                 @click="applyConfigurations()"
               >
                 {{ retry_count == 0 ? "Apply" : "Retry" }}
@@ -169,7 +166,6 @@
               <v-btn
                 v-if="allow_abort"
                 color="error"
-                :loading="wait_configuration"
                 @click="abort()"
               >
                 Abort
@@ -274,7 +270,6 @@ export default Vue.extend({
       vehicle_name: 'blueos',
       vehicle_type: Vehicle.Sub,
       vehicle_image: null as string | null,
-      wait_configuration: false,
       // Allow us to check if the user is stuck in retry
       retry_count: 0,
       params: {} as Dictionary<number>,
