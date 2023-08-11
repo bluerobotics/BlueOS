@@ -159,7 +159,7 @@ export default Vue.extend({
       await back_axios({
         method: 'get',
         url: `${ethernet.API_URL}/host_dns`,
-        timeout: 5000,
+        timeout: 15000,
       })
         .then((response) => {
           const { data } = response
@@ -182,7 +182,7 @@ export default Vue.extend({
       await back_axios({
         method: 'post',
         url: `${ethernet.API_URL}/host_dns`,
-        timeout: 10000,
+        timeout: 15000,
         data: {
           nameservers: this.host_nameservers,
           lock: this.is_locked,
