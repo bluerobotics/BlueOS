@@ -2,6 +2,7 @@ import { Dictionary } from '@/types/common'
 
 // Maps message names to message IDs
 const messageId: Dictionary<number> = {
+  HEARTBEAT: 0,
   SYS_STATUS: 1,
   SYSTEM_TIME: 2,
   PING: 4,
