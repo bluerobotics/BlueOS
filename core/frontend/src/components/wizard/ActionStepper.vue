@@ -1,19 +1,25 @@
 <template>
-  <v-stepper vertical>
-    <v-stepper-step
-      v-for="(config, index) in configurations"
-      :key="index"
-      :step="index + 1"
-      :color="getStepColor(config)"
-      :complete-icon="getStepIcon(config)"
-      :complete="true"
-      active
-      class="step-label"
-    >
-      {{ config.title }}
-      <small v-if="config.summary">{{ config.summary }}</small>
-      <small v-if="config.message" :color="getStepColor(config)">Error: {{ config.message }}</small>
-    </v-stepper-step>
+  <v-stepper vertical min-width="100%">
+    <div v-for="(config, index) in configurations" :key="index" class="step-container">
+      <v-stepper-step
+        :key="index"
+        :step="index + 1"
+        :color="getStepColor(config)"
+        :complete-icon="getStepIcon(config)"
+        :complete="true"
+        active
+        class="step-label"
+      >
+        {{ config.title }}
+        <small v-if="config.summary">{{ config.summary }}</small>
+        <small v-if="config.message" :color="getStepColor(config)">Error: {{ config.message }}</small>
+      </v-stepper-step>
+      <v-checkbox
+        :input-value="!config.skip"
+        class="step-checkbox"
+        @change="config.skip = !$event"
+      />
+    </div>
   </v-stepper>
 </template>
 
@@ -28,6 +34,7 @@ export interface Configuration {
   promise: () => Promise<ConfigurationStatus>
   message: undefined | string
   done: boolean
+  skip: boolean
 }
 
 export default Vue.extend({
@@ -40,6 +47,9 @@ export default Vue.extend({
   },
   methods: {
     getStepIcon(config: Configuration) {
+      if (config.skip) {
+        return 'mdi-debug-step-over'
+      }
       if (config.done) {
         return 'mdi-check'
       }
@@ -49,6 +59,9 @@ export default Vue.extend({
       return 'mdi-alert'
     },
     getStepColor(config: Configuration) {
+      if (config.skip) {
+        return 'black'
+      }
       if (config.done) {
         return 'success'
       }
@@ -64,5 +77,14 @@ export default Vue.extend({
 <style scoped>
 .step-label {
   text-shadow: 0px 0px 0px !important;
+}
+
+.step-container {
+  display: flex;
+  align-items: center;
+}
+
+.step-checkbox {
+  margin-left: auto;
 }
 </style>
