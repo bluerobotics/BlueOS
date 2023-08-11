@@ -167,6 +167,14 @@
               >
                 Retry
               </v-btn>
+              <v-btn
+                v-if="allow_abort"
+                color="error"
+                :loading="wait_configuration"
+                @click="abort()"
+              >
+                Abort
+              </v-btn>
             </v-row>
           </v-stepper-content>
 
@@ -178,6 +186,17 @@
           <v-stepper-content step="100">
             <v-alert :value="true" type="warning">
               Configuration was skipped.
+            </v-alert>
+            <v-row class="pa-5">
+              <v-spacer />
+              <v-btn color="primary" @click="should_open = false">
+                Close
+              </v-btn>
+            </v-row>
+          </v-stepper-content>
+          <v-stepper-content step="101">
+            <v-alert :value="true" type="warning">
+              Configuration was aborted, some settings have failed to apply.
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
@@ -257,6 +276,8 @@ export default Vue.extend({
       vehicle_type: Vehicle.Sub,
       vehicle_image: null as string | null,
       wait_configuration: false,
+      // Allow us to check if the user is stuck in retry
+      retry_count: 0,
       params: {} as Dictionary<number>,
       // Final configuration
       configurations: [] as Configuration[],
@@ -268,6 +289,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    allow_abort(): boolean {
+      return this.retry_count > 2
+    },
     apply_done(): boolean {
       return this.apply_status === ApplyStatus.Done
     },
@@ -309,6 +333,8 @@ export default Vue.extend({
     },
   },
   async mounted() {
+    this.retry_count = 0
+
     fetchFirmwareInfo()
     const wizard = await bag.getData('wizard')
 
@@ -332,6 +358,9 @@ export default Vue.extend({
     cancel() {
       this.step_number = 100
     },
+    abort() {
+      this.step_number = 101
+    },
     nextStep() {
       this.step_number += 1
     },
@@ -339,6 +368,7 @@ export default Vue.extend({
       this.configuration_page_index += 1
     },
     async applyConfigurations() {
+      this.retry_count += 1
       if (this.configurations.isEmpty()) {
         this.configurations = [
           {
