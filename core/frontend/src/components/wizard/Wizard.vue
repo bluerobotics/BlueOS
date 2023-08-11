@@ -218,6 +218,9 @@ import {
   fetchFirmwareInfo,
   installFirmwareFromUrl,
 } from '@/components/autopilot/AutopilotManagerUpdater'
+import mavlink2rest from '@/libs/MAVLink2Rest'
+import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import ardupilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import bag from '@/store/bag'
 import beacon from '@/store/beacon'
@@ -225,6 +228,7 @@ import wifi from '@/store/wifi'
 import { Firmware, Vehicle, vehicleTypeFromString } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 import back_axios from '@/utils/api'
+import { sleep } from '@/utils/helper_functions'
 
 import ActionStepper, { Configuration, ConfigurationStatus } from './ActionStepper.vue'
 import DefaultParamLoader from './DefaultParamLoader.vue'
@@ -395,7 +399,6 @@ export default Vue.extend({
       }
     },
     async applyConfigurations() {
-      this.retry_count += 1
       this.apply_status = ApplyStatus.InProgress
       this.apply_status = await Promise.all(this.configurations.map(async (config) => {
         config.message = undefined
@@ -406,6 +409,7 @@ export default Vue.extend({
         return config
       })).then((configs) => configs.every((config) => config.done || config.skip))
         ? ApplyStatus.Done : ApplyStatus.Failed
+      this.retry_count += 1
     },
     setupBoat() {
       this.vehicle_type = Vehicle.Rover
@@ -522,6 +526,41 @@ export default Vue.extend({
         .catch((error) => `Failed to disable smart wifi hotspot: ${error.message ?? error.response?.data}.`)
     },
     async installLatestStableFirmware(vehicle: Vehicle): Promise<ConfigurationStatus> {
+      if (this.retry_count) {
+        console.debug('Going to reboot flight controller on retry.')
+        mavlink2rest.sendMessage(
+          {
+            header: {
+              system_id: 255,
+              component_id: 0,
+              sequence: 0,
+            },
+            message: {
+              type: 'COMMAND_LONG',
+              // 0: Nothing,
+              // 1: Reboot autopilot,
+              // 2: Shutdown autopilot,
+              // 3: Reboot autopilot and keep it in the bootloader until upgraded.
+              param1: 1,
+              param2: 0, // Companion
+              param3: 0, // Component
+              param4: 0, // Component ID for param3
+              param5: 0,
+              param6: 0,
+              param7: 0,
+              command: {
+                type: MavCmd.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+              },
+              target_system: ardupilot_data.system_id,
+              target_component: 1,
+              confirmation: 0,
+            },
+          },
+        )
+        // Wait for 20 seconds for flight controller to reboot
+        await sleep(20000)
+      }
+
       return availableFirmwares(vehicle)
         .then((firmwares: Firmware[]) => {
           const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
