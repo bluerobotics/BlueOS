@@ -2,7 +2,7 @@
   <v-dialog
     v-model="should_open"
     transition="dialog-top-transition"
-    width="600"
+    width="800"
     height="400"
     persistent
   >
@@ -10,24 +10,30 @@
       <v-stepper v-model="step_number">
         <v-stepper-header>
           <v-stepper-step :complete="step_number > 1" step="1">
-            Choose Vehicle
+            Check internet
           </v-stepper-step>
 
           <v-divider />
 
           <v-stepper-step :complete="step_number > 2" step="2">
-            Customize
+            Choose Vehicle
           </v-stepper-step>
 
           <v-divider />
 
           <v-stepper-step :complete="step_number > 3" step="3">
-            Configure
+            Customize
           </v-stepper-step>
 
           <v-divider />
 
           <v-stepper-step :complete="step_number > 4" step="4">
+            Configure
+          </v-stepper-step>
+
+          <v-divider />
+
+          <v-stepper-step :complete="step_number > 5" step="5">
             Apply
           </v-stepper-step>
         </v-stepper-header>
