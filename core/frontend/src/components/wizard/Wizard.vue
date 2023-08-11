@@ -34,7 +34,7 @@
           <v-divider />
 
           <v-stepper-step :complete="step_number > 5" step="5">
-            Apply
+            Done
           </v-stepper-step>
         </v-stepper-header>
 
