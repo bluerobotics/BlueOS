@@ -160,12 +160,11 @@
             </div>
             <v-row class="pa-5 pt-10 flex-row justify-space-around align-center grow">
               <v-btn
-                v-if="apply_failed"
-                color="warning"
+                :color="retry_count == 0 ? 'success' : 'error'"
                 :loading="wait_configuration"
                 @click="applyConfigurations()"
               >
-                Retry
+                {{ retry_count == 0 ? "Apply" : "Retry" }}
               </v-btn>
               <v-btn
                 v-if="allow_abort"
@@ -295,9 +294,6 @@ export default Vue.extend({
     apply_done(): boolean {
       return this.apply_status === ApplyStatus.Done
     },
-    apply_failed(): boolean {
-      return this.apply_status === ApplyStatus.Failed
-    },
     configuration_pages(): VehicleConfigurationPage[] {
       return [
         ...this.vehicle_configuration_pages,
@@ -367,8 +363,7 @@ export default Vue.extend({
     handleNextVehicleConfiguration() {
       this.configuration_page_index += 1
     },
-    async applyConfigurations() {
-      this.retry_count += 1
+    async finalConfigurations() {
       if (this.configurations.isEmpty()) {
         this.configurations = [
           {
@@ -377,6 +372,7 @@ export default Vue.extend({
             promise: () => this.setHostname(),
             message: undefined,
             done: false,
+            skip: false,
           },
           {
             title: 'Set vehicle hostname',
@@ -384,6 +380,7 @@ export default Vue.extend({
             promise: () => this.setVehicleName(),
             message: undefined,
             done: false,
+            skip: false,
           },
           {
             title: 'Set vehicle image',
@@ -391,20 +388,24 @@ export default Vue.extend({
             promise: () => this.setVehicleImage(),
             message: undefined,
             done: false,
+            skip: false,
           },
           ...this.setup_configurations,
         ]
       }
-
+    },
+    async applyConfigurations() {
+      this.retry_count += 1
       this.apply_status = ApplyStatus.Waiting
       this.apply_status = await Promise.all(this.configurations.map(async (config) => {
         config.message = undefined
-        if (!config.done) {
+        if (!config.done || !config.skip) {
           config.message = await config.promise()
           config.done = config.message === undefined
         }
         return config
-      })).then((configs) => configs.every((config) => config.done)) ? ApplyStatus.Done : ApplyStatus.Failed
+      })).then((configs) => configs.every((config) => config.done || config.skip))
+        ? ApplyStatus.Done : ApplyStatus.Failed
     },
     setupBoat() {
       this.vehicle_type = Vehicle.Rover
@@ -422,6 +423,7 @@ export default Vue.extend({
           promise: () => this.installLatestStableFirmware(Vehicle.Rover),
           message: undefined,
           done: false,
+          skip: false,
         },
         {
           title: 'Disable Wi-Fi hotspot',
@@ -429,6 +431,7 @@ export default Vue.extend({
           promise: () => this.disableWifiHotspot(),
           message: undefined,
           done: false,
+          skip: false,
         },
         {
           title: 'Disable smart Wi-Fi hotspot',
@@ -436,6 +439,7 @@ export default Vue.extend({
           promise: () => this.disableSmartWifiHotspot(),
           message: undefined,
           done: false,
+          skip: false,
         },
       ]
     },
@@ -448,7 +452,7 @@ export default Vue.extend({
     async setupConfiguration() {
       this.step_number += 1
       if (this.step_number >= 3 && this.configuration_page_index >= this.vehicle_configuration_pages.length) {
-        this.applyConfigurations()
+        this.finalConfigurations()
       }
     },
     setupROV() {
@@ -467,6 +471,7 @@ export default Vue.extend({
           promise: () => this.installLatestStableFirmware(Vehicle.Sub),
           message: undefined,
           done: false,
+          skip: false,
         },
       ]
     },
