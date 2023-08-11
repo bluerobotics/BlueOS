@@ -159,6 +159,7 @@
               <component
                 :is="current_page"
                 v-bind="current_page_bind"
+                :disabled="apply_in_progress"
                 @next="handleNextVehicleConfiguration"
               />
             </div>
@@ -314,6 +315,7 @@ export default Vue.extend({
           page: ActionStepper,
           binds: {
             configurations: this.configurations,
+            loading: this.apply_in_progress,
           },
         },
       ]
