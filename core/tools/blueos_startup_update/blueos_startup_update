@@ -381,7 +381,7 @@ def ensure_user_data_structure_is_in_place() -> bool:
     return False
 
 def run_command_is_working():
-    output = run_command("uname -a")
+    output = run_command("uname -a", check=False)
     if output.returncode != 0:
         print(output)
         return False
