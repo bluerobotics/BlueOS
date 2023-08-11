@@ -159,6 +159,7 @@
             <v-row class="pa-5 pt-10 flex-row justify-space-around align-center grow">
               <v-btn
                 :color="retry_count == 0 ? 'success' : 'error'"
+                :loading="apply_in_progress"
                 @click="applyConfigurations()"
               >
                 {{ retry_count == 0 ? "Apply" : "Retry" }}
@@ -240,6 +241,7 @@ const models = require.context(
 enum ApplyStatus {
   Waiting,
   Done,
+  InProgress,
   Failed,
 }
 
@@ -288,6 +290,9 @@ export default Vue.extend({
     },
     apply_done(): boolean {
       return this.apply_status === ApplyStatus.Done
+    },
+    apply_in_progress(): boolean {
+      return this.apply_status === ApplyStatus.InProgress
     },
     configuration_pages(): VehicleConfigurationPage[] {
       return [
@@ -391,7 +396,7 @@ export default Vue.extend({
     },
     async applyConfigurations() {
       this.retry_count += 1
-      this.apply_status = ApplyStatus.Waiting
+      this.apply_status = ApplyStatus.InProgress
       this.apply_status = await Promise.all(this.configurations.map(async (config) => {
         config.message = undefined
         if (!config.done || !config.skip) {
