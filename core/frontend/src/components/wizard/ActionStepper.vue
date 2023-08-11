@@ -17,6 +17,7 @@
       <v-checkbox
         :input-value="!config.skip"
         class="step-checkbox"
+        :disabled="loading"
         @change="config.skip = !$event"
       />
     </div>
@@ -43,6 +44,10 @@ export default Vue.extend({
     configurations: {
       type: Array as PropType<Configuration[]>,
       default: () => [],
+    },
+    loading: {
+      type: Boolean,
+      default: false,
     },
   },
   methods: {
