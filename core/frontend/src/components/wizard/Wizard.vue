@@ -28,7 +28,7 @@
           <v-divider />
 
           <v-stepper-step :complete="step_number > 4" step="4">
-            Done
+            Apply
           </v-stepper-step>
         </v-stepper-header>
 
