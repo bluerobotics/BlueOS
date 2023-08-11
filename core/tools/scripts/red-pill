@@ -2,4 +2,4 @@ echo "You took the red pill."
 echo "You stay in Wonderland, and I show you how deep the rabbit hole goes."
 echo "Remember, all I'm offering is the truth. Nothing more."
 echo "Exiting from docker, welcome to the real world."
-sshpass -p raspberry ssh -o StrictHostKeyChecking=no pi@localhost
+ssh -i /root/.config/.ssh/id_rsa -o StrictHostKeyChecking=no pi@localhost
