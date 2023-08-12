@@ -62,7 +62,7 @@ class Website(Enum):
     }
     BlueOS = {
         "hostname": "telemetry.blueos.cloud",
-        "path": f"/ping?machine_id={machineid.hashed_id()}&version={BLUEOS_VERSION}",
+        "path": f"/ping/?machine_id={machineid.hashed_id()}&version={BLUEOS_VERSION}",
         "port": 443,
     }
     Cloudflare = {
