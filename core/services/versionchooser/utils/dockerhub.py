@@ -60,7 +60,7 @@ class TagFetcher:
             "scope": f"repository:{image_name}:pull",
         }
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(conn_timeout=5, read_timeout=30) as session:
             async with session.get(auth_url + "/token", params=payload) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
@@ -73,7 +73,7 @@ class TagFetcher:
             "Authorization": f"Bearer {self.last_token}",
             "Accept": "application/vnd.docker.distribution.manifest.v2+json,application/vnd.oci.image.manifest.v1+json",
         }
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(conn_timeout=5, read_timeout=30) as session:
             url = f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}"
             async with session.get(url, headers=header) as resp:
                 if resp.status != 200:
@@ -89,7 +89,7 @@ class TagFetcher:
         logger.info("fetching", repository)
         errors = []
         self.last_token = await self._get_token(auth_url="https://auth.docker.io", image_name=repository)
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(conn_timeout=5, read_timeout=30) as session:
             async with session.get(
                 f"{self.docker_url}/v2/repositories/{repository}/tags/?page_size=25&page=1&ordering=last_updated"
             ) as resp:
