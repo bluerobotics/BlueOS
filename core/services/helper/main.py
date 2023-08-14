@@ -28,6 +28,8 @@ from pydantic import BaseModel
 from speedtest import Speedtest
 from uvicorn import Config, Server
 
+from nginx_parser import parse_nginx_file
+
 SERVICE_NAME = "helper"
 BLUEOS_VERSION = os.environ.get("GIT_DESCRIBE_TAGS", "null")
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
@@ -102,6 +104,7 @@ class ServiceInfo(BaseModel):
     documentation_url: str
     versions: List[str]
     port: int
+    path: Optional[str]
     metadata: Optional[ServiceMetadata]
 
     def __hash__(self) -> int:
@@ -282,7 +285,8 @@ class Helper:
     @staticmethod
     @temporary_cache(timeout_seconds=1)  # a temporary cache helps us deal with changes in metadata
     def detect_service(port: int) -> ServiceInfo:
-        info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port)
+        path = port_to_service_map.get(port)
+        info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port, path=path)
 
         response = Helper.simple_http_request(
             "127.0.0.1", port=port, path="/", timeout=1.0, method="GET", follow_redirects=10
@@ -541,6 +545,8 @@ app = VersionedFastAPI(
 )
 
 app.mount("/", StaticFiles(directory=str(HTML_FOLDER), html=True))
+
+port_to_service_map: Dict[int, str] = parse_nginx_file("/home/pi/tools/nginx/nginx.conf")
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()

@@ -17,6 +17,7 @@ export interface Service {
     documentation_url: string
     versions: Array<string>
     port: number
+    path?: string
     metadata?: ServiceMetadata
 }
 

@@ -31,10 +31,10 @@
           <td>{{ service.title }}</td>
           <td>
             <a
-              :href="createWebpageUrl(service.port)"
+              :href="service?.path ?? createWebpageUrl(service.port)"
               target="_blank"
             >
-              {{ createWebpageUrl(service.port) }}
+              {{ service?.path ?? createWebpageUrl(service.port) }}
             </a>
           </td>
           <td v-if="service.documentation_url">
