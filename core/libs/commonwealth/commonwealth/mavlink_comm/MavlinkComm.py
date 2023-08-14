@@ -45,7 +45,7 @@ class MavlinkMessenger:
 
     async def get_all_mavlink(self) -> Any:
         request_timeout = 1.0
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(conn_timeout=5, read_timeout=30) as session:
             try:
                 async with session.get(self.m2r_rest_url, timeout=request_timeout) as response:
                     if not response.status == 200:
@@ -63,7 +63,7 @@ class MavlinkMessenger:
             request_url += f"/{message_name.upper()}"
 
         request_timeout = 1.0
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(conn_timeout=5, read_timeout=30) as session:
             try:
                 async with session.get(request_url, timeout=request_timeout) as response:
                     if not response.status == 200:
@@ -134,7 +134,7 @@ class MavlinkMessenger:
         }
 
         request_timeout = 1.0
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(conn_timeout=5, read_timeout=30) as session:
             try:
                 async with session.post(
                     self.m2r_rest_url, data=json.dumps(mavlink2rest_package), timeout=request_timeout
