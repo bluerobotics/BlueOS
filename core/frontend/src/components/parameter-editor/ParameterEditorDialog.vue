@@ -33,13 +33,14 @@
             >
               <v-form
                 ref="form"
+                v-model="is_form_valid"
+                lazy-validation
                 @submit.prevent="saveEditedParam(false)"
               >
                 <template v-if="!custom_input && param.bitmask">
                   <v-checkbox
                     v-for="(key, value) in param?.bitmask"
                     :key="value"
-                    v-model="selected_bitflags"
                     dense
                     :label="key"
                     :value="2 ** value"
@@ -72,7 +73,6 @@
                   :suffix="param.units"
                   :rules="forcing_input ? [] : [isInRange, isValidType]"
                   @blur="updateVariables"
-                  @keyup="isFormValid()"
                 />
 
                 <v-checkbox
@@ -102,7 +102,7 @@
           Cancel
         </v-btn>
         <v-btn
-          :disabled="param_value_not_changed || !forcing_input || !isValidType(new_value)"
+          :disabled="param_value_not_changed || !is_form_valid"
           color="primary"
           @click="saveEditedParam()"
         >
@@ -111,7 +111,7 @@
         <v-btn
           v-if="param?.rebootRequired === true"
           v-tooltip="'Reboot required for parameter to take effect'"
-          :disabled="param_value_not_changed || !forcing_input || !isValidType(new_value)"
+          :disabled="param_value_not_changed || !is_form_valid"
           color="warning"
           @click="saveEditedParam(true)"
         >
@@ -130,7 +130,6 @@ import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import Parameter from '@/types/autopilot/parameter'
 import { parameters_service } from '@/types/frontend_services'
-import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
 
 const notifier = new Notifier(parameters_service)
@@ -185,10 +184,6 @@ export default Vue.extend({
   watch: {
     new_value(): void {
       this.updateSelectedFlags()
-      this.isFormValid()
-    },
-    forcing_input(): void {
-      this.isFormValid()
     },
     edited_bitmask_value(): void {
       this.new_value = this.edited_bitmask_value
@@ -204,16 +199,12 @@ export default Vue.extend({
     },
   },
   methods: {
-    isFormValid(): boolean {
-      const form = this.$refs.form as VForm
-      this.is_form_valid = form?.validate() === true
-      return this.is_form_valid
-    },
     isInRange(input: number | string): boolean | string {
       // The input value is an empty string when the field is empty
       if (typeof input === 'string' && input?.trim().length === 0) {
         return 'This should be a number between min and max'
       }
+      input = Number(input)
 
       if (!this.param?.range) {
         return true
@@ -273,7 +264,7 @@ export default Vue.extend({
         })
     },
     async saveEditedParam(reboot = false) {
-      if (!this.forcing_input && !this.isFormValid()) {
+      if (!this.forcing_input && !this.is_form_valid) {
         return
       }
       this.showDialog(false)
@@ -308,7 +299,6 @@ export default Vue.extend({
         this.forcing_input = false
       }
       this.updateVariables()
-      this.isFormValid()
     },
     updateVariables(): void {
       // Select custom input if value is outside of possible options
@@ -318,8 +308,6 @@ export default Vue.extend({
           .map((value) => parseFloat(value))
           .includes(this.new_value)
       }
-      // Update form validation
-      this.isFormValid()
     },
   },
 })
