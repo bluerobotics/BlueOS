@@ -41,6 +41,7 @@
                   <v-checkbox
                     v-for="(key, value) in param?.bitmask"
                     :key="value"
+                    v-model="selected_bitflags"
                     dense
                     :label="key"
                     :value="2 ** value"
@@ -182,12 +183,6 @@ export default Vue.extend({
     },
   },
   watch: {
-    new_value(): void {
-      this.updateSelectedFlags()
-    },
-    edited_bitmask_value(): void {
-      this.new_value = this.edited_bitmask_value
-    },
     show(): void {
       this.new_value = this.param.value
 
@@ -209,6 +204,11 @@ export default Vue.extend({
       if (!this.param?.range) {
         return true
       }
+
+      if (this.param.bitmask && input < 0) {
+        return 'Value should be greater or equal to 0'
+      }
+
       if (input > this.param.range.high) {
         return `Value should be smaller than ${this.param.range.high}`
       }
@@ -230,16 +230,17 @@ export default Vue.extend({
       }
       return true
     },
-    updateSelectedFlags(): void {
-      if (this.new_value < 0) {
+    updateSelectedFlags(value: number): void {
+      if (value < 0) {
         // No bitmask checking for negative values
         return
       }
+
       const output = []
-      for (let v = 0; v < 64; v += 1) {
-        const bitmask_value = 2 ** v
+      for (let bit = 0; bit < 64; bit += 1) {
+        const bitmask_value = 2 ** bit
         // eslint-disable-next-line no-bitwise
-        if (this.new_value & bitmask_value) {
+        if (value & bitmask_value) {
           output.push(bitmask_value)
         }
       }
@@ -308,6 +309,8 @@ export default Vue.extend({
           .map((value) => parseFloat(value))
           .includes(this.new_value)
       }
+
+      this.updateSelectedFlags(this.new_value)
     },
   },
 })
