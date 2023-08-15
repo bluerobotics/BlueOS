@@ -76,11 +76,11 @@ export function printParam(param?: Parameter): string {
     const bitmask_result = []
     // We check up to 64 bits to make sure that we are going to cover all possible bits
     // Including the ones not listed in the bitmask
-    for (let v = 0; v < 64; v += 1) {
-      const bitmask_value = 2 ** v
+    for (let bit = 0; bit < 64; bit += 1) {
+      const bitmask_value = 2 ** bit
       // eslint-disable-next-line no-bitwise
       if (param.value & bitmask_value) {
-        bitmask_result.push(param.bitmask?.[v] ?? `UNKNOWN (Bit ${v + 1})`)
+        bitmask_result.push(param.bitmask[bit] ?? `UNKNOWN (Bit ${bit})`)
       }
     }
     return bitmask_result.join(', ')
