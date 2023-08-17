@@ -42,7 +42,8 @@ export default Vue.extend({
   computed: {
     frameType() {
       const param = autopilot_data.parameter('FRAME_CONFIG')
-      return param?.options?.[param?.value] ?? null
+      const frame_class_param = autopilot_data.parameter('FRAME_CLASS')
+      return param?.options?.[param?.value] ?? frame_class_param?.options?.[frame_class_param?.value] ?? null
     },
     boardType() {
       return autopilot.current_board?.name ?? null
