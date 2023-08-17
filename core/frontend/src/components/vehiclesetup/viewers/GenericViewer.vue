@@ -139,6 +139,8 @@ export default Vue.extend({
           return 'sub'
         case 'Surface Boat':
           return 'boat'
+        case 'Ground Rover':
+          return 'rover'
         default:
           return ''
       }
@@ -163,6 +165,10 @@ export default Vue.extend({
         case 'Surface Boat':
           // we already know it is a boat, so check only TYPE and ignore CLASS (rover/boat/balancebot)
           result = Object.entries(ROVER_FRAME_TYPE).find((key, value) => value === this.frame_type)?.[1] as string
+          break
+        case 'Ground Rover':
+          // TOOD: check FRAME_TYPE
+          result = 'unknown'
           break
           // TODO: other vehicles
         default:
