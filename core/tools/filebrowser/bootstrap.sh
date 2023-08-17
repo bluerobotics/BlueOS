@@ -4,7 +4,7 @@
 set -e
 
 LOCAL_BINARY_PATH="/usr/bin/filebrowser"
-VERSION=v2.15.0
+VERSION=v2.24.2
 
 # By default we install armv7
 REMOTE_BINARY_URL="https://github.com/filebrowser/filebrowser/releases/download/${VERSION}/linux-armv7-filebrowser.tar.gz"
