@@ -50,6 +50,10 @@
                 "bind": "/usr/blueos/userdata",
                 "mode": "rw"
             },
+            "/usr/blueos/extensions": {
+                "bind": "/usr/blueos/extensions",
+                "mode": "rw"
+            },
             "/etc/resolv.conf.host": {
                 "bind": "/etc/resolv.conf.host",
                 "mode": "ro"
