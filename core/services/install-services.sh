@@ -35,6 +35,7 @@ SERVICES=(
     ping
     versionchooser
     wifi
+    major_tom
 )
 
 # We need to install loguru and appdirs since they may be used inside setup.py
