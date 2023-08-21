@@ -47,8 +47,8 @@ The design, organization, and future releases of BlueOS are aligned with these p
 BlueOS is available in three release types:
 
 - **Stable:** Officially tested and validated versions with long-term support. Recommended for most users.
-- **Beta:** Quick-passed rolling releases with new features, bug fixes, and improvements.
-- **Master:** Rapidly-passed bleeding-edge development releases. These are the very latest features that may not have been tested yet.
+- **Beta:** Fast-paced rolling releases with new features, bug fixes, and improvements.
+- **Master:** Almost daily bleeding-edge development releases. These are the very latest features that may not have been tested yet.
 
 ## Vehicle Support
 
