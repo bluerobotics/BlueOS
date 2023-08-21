@@ -59,7 +59,7 @@ RUN [ ! -d "/root/.config" ]
 ARG GIT_DESCRIBE_TAGS
 RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
     && echo "GIT_DESCRIBE_TAGS argument not provided." \
-    && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long)" \
+    && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long --always)" \
     && exit 1 || exit 0
 
 # Update blueosrc with the necessary environment variables
