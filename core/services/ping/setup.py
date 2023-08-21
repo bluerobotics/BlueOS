@@ -18,11 +18,11 @@ setup(
         "bluerobotics-ping == 0.1.2",
         "bridges == 0.1.0",
         "commonwealth == 0.1.0",
-        "fastapi == 0.63.0",
+        "fastapi == 0.101.1",
         "fastapi-versioning == 0.9.1",
         "loguru == 0.5.3",
         "pyserial == 3.5",
-        "starlette == 0.13.6",
+        "starlette == 0.27.0",
         "uvicorn == 0.13.4",
     ],
 )
