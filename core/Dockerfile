@@ -71,6 +71,7 @@ RUN mkdir -p /shortcuts
 RUN ln -s /root/.config /shortcuts/configs
 RUN ln -s /var/logs/blueos/services /shortcuts/system_logs
 RUN ln -s /usr/blueos/userdata /shortcuts/userdata
+RUN ln -s /usr/blueos/extensions /shortcuts/extensions
 RUN ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
 RUN ln -s / /shortcuts/system_root
 
