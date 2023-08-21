@@ -122,7 +122,7 @@ jobs:
           echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "buildx_args=\
-            --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long) \
+            --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
             --build-arg VUE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
             --cache-from 'type=local,src=/tmp/.buildx-cache' \
             --cache-to 'type=local,dest=/tmp/.buildx-cache' \
