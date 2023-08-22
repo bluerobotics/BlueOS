@@ -50,10 +50,12 @@ class Detector:
         logger.debug("Trying to detect Linux board.")
         if is_navigator_r5_connected():
             logger.debug("Navigator R5 detected.")
-            return FlightController(name="Navigator", manufacturer="Blue Robotics", platform=Platform.Navigator)
+            return FlightController(
+                name="Navigator", manufacturer="Blue Robotics", platform=Platform.Navigator, path=None
+            )
         if is_argonot_r1_connected():
             logger.debug("Argonot R1 detected.")
-            return FlightController(name="Argonot", manufacturer="SymbyTech", platform=Platform.Argonot)
+            return FlightController(name="Argonot", manufacturer="SymbyTech", platform=Platform.Argonot, path=None)
         logger.debug("No Linux board detected.")
         return None
 
@@ -102,7 +104,7 @@ class Detector:
 
     @staticmethod
     def detect_sitl() -> FlightController:
-        return FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL)
+        return FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL, path=None)
 
     @classmethod
     def detect(cls, include_sitl: bool = True) -> List[FlightController]:
