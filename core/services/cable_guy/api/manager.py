@@ -342,7 +342,7 @@ class EthernetManager:
                     mode = AddressMode.Server
                 else:
                     mode = AddressMode.Unmanaged if is_static_ip and valid_ip else AddressMode.Client
-                valid_addresses.append(InterfaceAddress(ip=ip, mode=mode))
+                valid_addresses.append(InterfaceAddress(ip=ip, mode=mode, info=None))
 
             info = self.get_interface_info(interface)
             interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info)
