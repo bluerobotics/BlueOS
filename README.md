@@ -1,20 +1,20 @@
 # BlueOS
 
-[![Test, Build and Deploy Images](https://github.com/bluerobotics/BlueOS-docker/actions/workflows/test-and-deploy.yml/badge.svg)](https://github.com/bluerobotics/BlueOS-docker/actions/workflows/test-and-deploy.yml)
-![Downloads](https://img.shields.io/github/downloads/bluerobotics/blueos-docker/total?label=Downloads)
+[![Test, Build and Deploy Images](https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml/badge.svg)](https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml)
+![Downloads](https://img.shields.io/github/downloads/bluerobotics/blueos/total?label=Downloads)
 
-[![Latest Stable](https://img.shields.io/github/v/release/bluerobotics/blueos-docker.svg?label=Latest%20Stable)
-![Date](https://img.shields.io/github/release-date/bluerobotics/blueos-docker?label=Date)](https://github.com/bluerobotics/blueos-docker/releases/latest)
+[![Latest Stable](https://img.shields.io/github/v/release/bluerobotics/blueos.svg?label=Latest%20Stable)
+![Date](https://img.shields.io/github/release-date/bluerobotics/blueos?label=Date)](https://github.com/bluerobotics/blueos/releases/latest)
 
-[![Latest Beta](https://img.shields.io/github/v/tag/bluerobotics/blueos-docker.svg?label=Latest%20Beta)
-![Date](https://img.shields.io/github/release-date-pre/bluerobotics/blueos-docker?label=Date)](https://github.com/bluerobotics/BlueOS-docker/releases)
+[![Latest Beta](https://img.shields.io/github/v/tag/bluerobotics/blueos.svg?label=Latest%20Beta)
+![Date](https://img.shields.io/github/release-date-pre/bluerobotics/blueos?label=Date)](https://github.com/bluerobotics/BlueOS/releases)
 
 
 [![Docker](https://img.shields.io/docker/v/bluerobotics/blueos-core?label=Docker&style=flat)
 ![Pulls](https://img.shields.io/docker/pulls/bluerobotics/blueos-core?label=Pulls)
 ![Size](https://img.shields.io/docker/image-size/bluerobotics/blueos-core?label=Size)](https://hub.docker.com/r/bluerobotics/blueos-core/tags)
 
-BlueOS is a modular, robust, and efficient platform for managing a vehicle or robot from its onboard computer. It is the evolution of the Companion project that initially aimed to route a vehicle's video stream and communications to the surface computer. Recognizing the need for a more sophisticated and scalable system, BlueOS was created from the ground up, embracing modularity to ensure portability, robust updating, and extensibility.
+BlueOS is a modular, robust, and efficient platform for managing a vehicle or robot from its [onboard computer](https://blueos.cloud/docs/hardware/required/onboard-computer/). It is the evolution of the Companion project, which aimed to route a vehicle's video stream and communications to its [control station computer](https://blueos.cloud/docs/hardware/required/control-computer/). Recognizing the need for a more sophisticated and scalable system, BlueOS was created from the ground up, embracing modularity to ensure portability, robust updating, and extensibility.
 
 <p align="center">
   <a href="doc/dashboard.png">
@@ -24,8 +24,10 @@ BlueOS is a modular, robust, and efficient platform for managing a vehicle or ro
 
 ## Quick Links ⚡
 
-- [Official documentation](https://docs.bluerobotics.com/ardusub-zola/software/onboard/).
-- For custom installations see the [install directory](https://github.com/bluerobotics/BlueOS-docker/blob/master/install).
+- [Official documentation](https://blueos.cloud/docs/blueos)
+- [Development documentation](https://blueos.cloud/docs/blueos/latest/development/)
+- [Registered Extensions](https://docs.bluerobotics.com/BlueOS-Extensions-Repository)
+- [Install directory](https://github.com/bluerobotics/BlueOS/blob/master/install) (for custom installations)
 
 ## Principles and Goals 📖
 
@@ -35,7 +37,7 @@ The development of BlueOS is driven by the following core principles:
 * **Designed to focus on what matters**, improving user access to information and controls with a human-friendly UI and UX
 * **Make complex tasks simpler** and improve ease of use by reusing design patterns from other applications (based on the [material UI guidelines](https://material.io/design/guidelines-overview))
 * **Advanced error handling and detection**, making any problems clear to the user and developers, along with how to fix them
-* **Simplify development**, providing full access to our services API and modular development model
+* **Simplify development**, providing full access to our [services API](https://blueos.cloud/docs/blueos/1.1/development/core/#services) and [modular development model](https://blueos.cloud/docs/blueos/1.1/development/overview/)
 * **Portable and flexible**, you should be able to run on a Raspberry Pi 3/4 or any SBC with Linux operating system, contributions are welcomed
 * **Highly functional with low CPU usage**, the entire system is built to run efficiently
 * **Developed on solid foundations**, critical parts or intensive workforce services are designed using the most advanced languages and features available for stability
@@ -47,39 +49,43 @@ The design, organization, and future releases of BlueOS are aligned with these p
 BlueOS is available in three release types:
 
 - **Stable:** Officially tested and validated versions with long-term support. Recommended for most users.
-- **Beta:** Quick-passed rolling releases with new features, bug fixes, and improvements.
-- **Master:** Rapidly-passed bleeding-edge development releases. These are the very latest features that may not have been tested yet.
+- **Beta:** Lightly tested rolling releases with new features, bug fixes, and improvements.
+- **Master:** Bleeding-edge development releases with almost daily changes. These are the very latest features that may not have been tested yet.
 
-## Vehicle Support
+## Vehicle Support 🛸
 
-BlueOS has been designed with a focus on vehicle and to be platform agnosticism. Our aim is to facilitate broad compatibility across a wide spectrum of applications. Currently, BlueOS officially supports the following vehicle types:
+BlueOS has been designed with a focus on vehicle and platform agnosticism. Our aim is to facilitate broad compatibility across a wide spectrum of applications. Currently, BlueOS officially supports the following vehicle types:
 
 ### **Boats (ArduRover)**
 
-ArduRover is an open-source, unmanned boat platform. Whether you are commanding a leisure boat or a research vessel, BlueOS's compatibility with ArduRover ensures that you can navigate the waters smoothly 🌊.
+ArduRover is an open-source, uncrewed boat platform. Whether you are commanding a leisure boat or a research vessel, BlueOS's compatibility with ArduRover ensures that you can navigate the waters smoothly 🌊.
+
+[BlueBoat](https://bluerobotics.com/store/blueboat/blueboat/) is supported by default.
 
 ![](doc/blueboat.png)
 
 ### **Submarines (ArduSub)**
 
-ArduSub is the go-to control system for remotely operated underwater vehicles (ROVs) 🐟. BlueOS offers seamless integration with ArduSub, enabling efficient management and operation of underwater vehicles. Right now it provides support for BlueROV2 out of the box.
+ArduSub is the go-to control system for remotely operated underwater vehicles (ROVs) 🐟. BlueOS offers seamless integration with ArduSub, enabling efficient management and operation of underwater vehicles. 
+
+[BlueROV2](https://bluerobotics.com/store/rov/bluerov2/) is supported out of the box.
 
 ![](doc/bluerov.png)
 
 ### **Generic (ArduPilot / PX4)**
 
-For a wide array of unmanned vehicles, whether terrestrial, aerial, or marine, BlueOS provides support for the generic ArduPilot and PX4 autopilots. This extends the range of vehicles that can be managed using our system, from drones to autonomous cars and more.
+BlueOS provides generic support for a wide variety of terrestrial, aerial, and marine uncrewed vehicles that use ArduPilot and PX4 autopilots. This extends the range of vehicles that can be managed using our system, from drones to autonomous cars and more.
 
-**Note:** Specific vehicle configuration may be necessary to ensure optimal performance with BlueOS.
+>**Note:** Specific vehicle configuration may be necessary to ensure optimal performance with BlueOS.
 
 ## Supported Architectures 👨🏻‍💻
 
-BlueOS is designed to perform optimally across a wide range of systems. In our latest releases, we officially support the following architectures:
+BlueOS is designed to perform optimally across a wide range of systems. Our latest releases are automatically built for the following architectures:
+
+- **armv7:** This is a common architecture for embedded devices. Covers Raspberry Pi models up to and including the Raspberry Pi 3.
+
+- **armv8/arm64:** This is used by more recent, high-performance devices. You can run BlueOS on a Raspberry Pi 4, or in a computer with Apple Silicon.
 
 - **amd64:** This is the architecture used by most desktop and laptop computers. A typical example is any modern PC running a 64-bit version of Linux. **Not fully supported.**
 
-- **armv8/arm64:** This is used by more recent, high-performance devices. You can run BlueOS on a Raspberry Pi 4 or in a computer with Apple Silicon.
-
-- **armv7:** This is a common architecture for embedded devices. Raspberry Pi models up to and including the Raspberry Pi 3.
-
-Right now we officially support the Raspberry Pi 3 and Raspberry Pi 4, but the system should just work on all listed architectures with the correct docker bind.
+Right now we officially support the Raspberry Pi 3 and 4, but the system should "just work" on all listed architectures with the correct docker binds.
