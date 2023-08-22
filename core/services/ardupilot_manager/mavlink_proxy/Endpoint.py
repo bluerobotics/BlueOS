@@ -24,7 +24,8 @@ class Endpoint:
 
     @model_validator(mode="before")
     @classmethod
-    def is_mavlink_endpoint(cls: Type["Endpoint"], values: Any) -> Any:
+    def is_mavlink_endpoint(cls: Type["Endpoint"], args: Any) -> Any:
+        values = args.kwargs
         connection_type, place, argument = (values.get("connection_type"), values.get("place"), values.get("argument"))
 
         if connection_type in [
