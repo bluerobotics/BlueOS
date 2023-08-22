@@ -55,18 +55,27 @@ else
     echo "Waring: Using dockers's resolv.conf, this may cause DNS issues if the host's network configuration changes."
 fi
 
+# These services have priority because they do the fundamental for the vehicle to work,
+# and by initializing them first we reduce the time users have to wait to control the vehicle.
+# From tests with QGC and Pi3, the reboot time was ~1min42s when not using this strategy,
+# and ~1min30s using this strategy.
+# From that 1min30s, the startup time is about ~25s, and originally, ~37s, meaning that the
+# remaining (~65 seconds) is the docker shutting down, and the Linux booting up.
+PRIORITY_SERVICES=(
+    'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
+    'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
+    'video',"mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --verbose"
+    'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
+)
+
 SERVICES=(
     'beacon',"$SERVICES_PATH/beacon/main.py"
-    'cable_guy',"$SERVICES_PATH/cable_guy/main.py"
     'kraken',"$SERVICES_PATH/kraken/main.py"
     'wifi',"$SERVICES_PATH/wifi/main.py --socket wlan0"
-    'autopilot',"$SERVICES_PATH/ardupilot_manager/main.py"
     'bridget',"$SERVICES_PATH/bridget/main.py"
     'commander',"$SERVICES_PATH/commander/main.py"
     'nmea_injector',"$SERVICES_PATH/nmea_injector/nmea_injector/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
-    'video',"mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --verbose"
-    'mavlink2rest',"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
     'linux2rest',"linux2rest"
     'filebrowser',"filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
@@ -92,7 +101,16 @@ function create_service {
     tmux send-keys -t $SESSION_NAME "$2" C-m
 }
 
-echo "Starting services.."
+echo "Starting high priority services.."
+for TUPLE in "${PRIORITY_SERVICES[@]}"; do
+    IFS=',' read NAME EXECUTABLE <<< ${TUPLE}
+    echo "Service: $NAME: $EXECUTABLE"
+    create_service $NAME "$EXECUTABLE"
+done
+
+sleep 5
+
+echo "Starting other services.."
 for TUPLE in "${SERVICES[@]}"; do
     IFS=',' read NAME EXECUTABLE <<< ${TUPLE}
     echo "Service: $NAME: $EXECUTABLE"
