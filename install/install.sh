@@ -89,8 +89,11 @@ else
     echo "Skipping hardware configuration"
 fi
 
-echo "Checking for blocked wifi and bluetooth."
-rfkill unblock all
+# There are systems where rfkill does not exist, like SBC without wifi/BT
+command -v rfkill && (
+    echo "Checking for blocked wifi and bluetooth."
+    rfkill unblock all
+)
 
 # Get the number of free blocks and the block size in bytes, and calculate the value in GB
 echo "Checking for available space."
