@@ -148,8 +148,12 @@ class VersionChooser:
         Returns:
             str: The image version string for the bootstrap container.
         """
-        bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
-        return str(bootstrap["Config"]["Image"])
+        try:
+            bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
+            return str(bootstrap["Config"]["Image"])
+        except Exception as e:
+            logger.critical(f"unable to read bootstrap version: {e}")
+            return "Unknown"
 
     async def set_bootstrap_version(self, tag: str) -> web.StreamResponse:
         """Set the bootstrap container to a new version.
