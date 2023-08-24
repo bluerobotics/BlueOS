@@ -95,7 +95,7 @@ class VersionChooser:
             response_list = await self.client.images.import_image(data)
             response = response_list[0]
         except Exception as error:
-            logger.critical("Error: %s: %s", type(error), error)
+            logger.critical(f"Error: {type(error)}: {error}")
             return web.Response(status=500, text=f"Error: {type(error)}: {error}")
 
         if "errorDetail" in response:
@@ -167,7 +167,7 @@ class VersionChooser:
             bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
             logger.info("Got bootstrap..")
         except Exception as error:
-            logger.critical("Warning: %s: %s", type(error), error)
+            logger.critical(f"Warning: {type(error)}: {error}")
 
         backup_name = "bootstrap-backup"
         try:
@@ -177,7 +177,7 @@ class VersionChooser:
             # We are going to remove backup even if it's running somehow
             await backup.delete(force=True, noprune=False)  # type: ignore
         except Exception as error:
-            logger.critical("warning: %s: %s", type(error), error)
+            logger.critical(f"Warning: {type(error)}: {error}")
 
         if bootstrap:
             logger.info(f"Setting current {await self.get_bootstrap_version()} as {backup_name}")
@@ -248,7 +248,7 @@ class VersionChooser:
                 return web.Response(status=500, text="Invalid version file")
 
             except Exception as error:
-                logger.critical("Error: %s: %s", type(error), error)
+                logger.critical(f"Error: {type(error)}: {error}")
                 return web.Response(status=500, text=f"Error: {type(error)}: {error}")
 
     async def delete_version(self, image: str, tag: str) -> web.StreamResponse:
