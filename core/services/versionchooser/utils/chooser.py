@@ -129,8 +129,12 @@ class VersionChooser:
         await response.prepare(request)
 
         # Stream every line of the output back to the client
-        async for line in self.client.images.pull(f"{repository}:{tag}", repo=repository, tag=tag, stream=True):
-            await response.write(json.dumps(line).encode("utf-8"))
+        try:
+            async for line in self.client.images.pull(f"{repository}:{tag}", repo=repository, tag=tag, stream=True):
+                await response.write(json.dumps(line).encode("utf-8"))
+        except Exception as e:
+            logger.error(f"pull of {repository}:{tag}  failed: {e}")
+            await response.write(json.dumps({"error": f"error while pulling image: {e}"}).encode("utf-8"))
         await response.write_eof()
         # TODO: restore pruning
         return response
