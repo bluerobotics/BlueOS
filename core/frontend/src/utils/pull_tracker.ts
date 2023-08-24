@@ -89,6 +89,9 @@ class PullTracker {
     for (const line of dataList) {
       try {
         const data = JSON.parse(line)
+        if (!data) {
+          continue
+        }
         if ('id' in data) {
           const { id } = data
           if (!this.layers.includes(id)) {
@@ -100,11 +103,19 @@ class PullTracker {
           if ('status' in data) {
             this.layer_status[id] = data.status
           }
+          if ('errorDetail' in data) {
+            throw new Error(data.errorDetail.message || 'Unknown error during Docker pull.')
+          }
+          if ('error' in data) {
+            throw new Error(data.error || 'Unknown error during Docker pull.')
+          }
           if (data?.progressDetail?.total !== undefined) {
             this.layer_progress_detail[id] = data.progressDetail
           }
         } else {
-          this.overall_status = data.status
+          if ('status' in data) {
+            this.overall_status = data.status
+          }
           // Axios returns the promise too early (before the pull is done)
           // so we check the overall docker status instead
           if (this.overall_status.includes('Downloaded newer image for')) {
@@ -115,7 +126,11 @@ class PullTracker {
           }
         }
       } catch (error) {
-        this.left_over_data = line
+        if (error instanceof SyntaxError) {
+          this.left_over_data = line
+        } else {
+          throw error
+        }
       }
     }
     this.pull_output = ''
