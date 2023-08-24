@@ -166,6 +166,7 @@ import en from 'javascript-time-ago/locale/en.json'
 import Vue, { PropType } from 'vue'
 
 import settings from '@/libs/settings'
+import helper from '@/store/helper'
 import { Dictionary } from '@/types/common'
 import { DEFAULT_REMOTE_IMAGE } from '@/utils/version_chooser'
 
@@ -243,7 +244,7 @@ export default Vue.extend({
       return this.image.repository === 'bluerobotics/blueos-core'
     },
     showBootstrapUpdate(): boolean {
-      if (!this.bootstrapVersion) {
+      if (!this.bootstrapVersion || !helper.has_internet) {
         return false
       }
       return this.settings.is_pirate_mode && this.current && !this.updateAvailable && this.isFromBR
