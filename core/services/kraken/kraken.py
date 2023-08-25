@@ -133,9 +133,10 @@ class Kraken:
 
     async def kill(self, container_name: str) -> None:
         logger.info(f"Killing {container_name}")
-        container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
-        if container:
-            await container[0].kill()
+        containers = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
+        for container in containers:
+            await container.kill()
+            await container.wait()
 
     async def remove(self, extension_identifier: str, delete: bool = True) -> None:
         logger.info(f"Removing extension {extension_identifier}")
