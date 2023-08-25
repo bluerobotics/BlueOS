@@ -54,3 +54,7 @@ if [ ! -f "$LOCAL_PATH_APJ_TOOL" ]; then
 else
     echo "File $LOCAL_PATH_APJ_TOOL already exists. Skipping download."
 fi
+
+# Create the logs folder before ardupilot so we prevent a Filebrowser error if the user opens it
+# before arming the vehicle for the first time.
+$SUDO mkdir -p /root/.config/ardupilot-manager/firmware/logs/
