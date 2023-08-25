@@ -67,7 +67,7 @@ RUN RCFILE_PATH="/etc/blueosrc" \
     && echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
 
 # create some Symlinks to make life easier
-RUN mkdir /shortcuts
+RUN mkdir -p /shortcuts
 RUN ln -s /root/.config /shortcuts/configs
 RUN ln -s /var/logs/blueos/services /shortcuts/system_logs
 RUN ln -s /usr/blueos/userdata /shortcuts/userdata
