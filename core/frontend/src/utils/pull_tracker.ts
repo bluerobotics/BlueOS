@@ -18,14 +18,17 @@ class PullTracker {
 
   private onready: () => void
 
+  private onerror: (error: string) => void
+
   overall_status = ''
 
   download_percentage = 0
 
   extraction_percentage = 0
 
-  constructor(ready_callback: () => void) {
+  constructor(ready_callback: () => void, error_callback: (error: string) => void) {
     this.onready = ready_callback
+    this.onerror = error_callback
   }
 
   updateSimplifiedProgress(): void {
@@ -129,7 +132,7 @@ class PullTracker {
         if (error instanceof SyntaxError) {
           this.left_over_data = line
         } else {
-          throw error
+          this.onerror(`${error}`)
         }
       }
     }
