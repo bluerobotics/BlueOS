@@ -23,6 +23,7 @@ class Kraken:
         self.load_settings()
         self.running_containers: List[DockerContainer] = []
         self.should_run = True
+        self.deleting_in_progress = False
         self._client: Optional[aiodocker.Docker] = None
         self.manifest_cache: List[Dict[str, Any]] = []
 
@@ -35,6 +36,9 @@ class Kraken:
     async def run(self) -> None:
         while self.should_run:
             await asyncio.sleep(5)
+            if self.deleting_in_progress:
+                continue
+
             running_containers: List[DockerContainer] = await self.client.containers.list(  # type: ignore
                 filter='{"status": ["running"]}'
             )
@@ -140,10 +144,12 @@ class Kraken:
             await container.wait()
 
     async def remove(self, extension_identifier: str, delete: bool = True) -> None:
+        self.deleting_in_progress = True
         logger.info(f"Removing extension {extension_identifier}")
         container_name = await self.container_from_identifier(extension_identifier)
         container = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
         if not container:
+            self.deleting_in_progress = False
             raise ContainerDoesNotExist(f"Unable remove {container_name}. Container not found.")
         image = container[0]["Image"]
         await self.kill(container_name)
@@ -151,6 +157,7 @@ class Kraken:
         if delete:
             logger.info(f"Removing {image}")
             await self.client.images.delete(image, force=False, noprune=False)
+        self.deleting_in_progress = False
 
     async def update_extension_to_version(self, identifier: str, version: str) -> AsyncGenerator[bytes, None]:
         extension = await self.extension_from_identifier(identifier)
