@@ -74,5 +74,8 @@ RUN ln -s /usr/blueos/userdata /shortcuts/userdata
 RUN ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
 RUN ln -s / /shortcuts/system_root
 
+# Add alias to prevent user to exit from the terminal (they can still exit by using "\exit")
+RUN echo "alias exit='reset'" > /root/.bashrc
+
 # Start
 CMD /bin/bash -i /usr/bin/start-blueos-core && sleep infinity
