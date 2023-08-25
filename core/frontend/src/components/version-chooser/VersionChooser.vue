@@ -444,62 +444,66 @@ export default Vue.extend({
         })
       }
     },
-    async pullAndSetVersion(args: string | string[], wait = true) {
+    async pullAndSetVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
       // This streams the output of docker pull
       this.pull_output = 'Fetching remote image...'
       this.show_pull_output = true
-      const [repository, tag] = fullname.split(':')
-      const tracker = new PullTracker(() => {
-        setTimeout(() => {
+      await this.pullVersion(fullname)
+        .then(() => {
           this.show_pull_output = false
           this.setVersion(fullname)
-        }, 1000)
-      })
-
-      await back_axios({
-        url: '/version-chooser/v1.0/version/pull/',
-        method: 'POST',
-        data: {
-          repository,
-          tag,
-        },
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-          this.show_pull_output = true
-        },
-      }).then(() => { this.waitForBackendToRestart(wait) })
+        })
+        .catch((error) => {
+          this.show_pull_output = false
+          notifier.pushError(
+            'VERSION_CHOOSER_PULL_FAIL',
+            `The operation failed: ${error}`,
+            true,
+          )
+        })
     },
     async pullVersion(image: string) {
       // This streams the output of docker pull
       this.pull_output = 'Fetching remote image...'
       this.show_pull_output = true
       const [repository, tag] = image.split(':')
-      const tracker = new PullTracker(() => {
-        setTimeout(() => {
-          this.show_pull_output = false
-        }, 1000)
-      })
+      return new Promise<void>((resolve, reject) => {
+        const tracker = new PullTracker(
+          () => {
+            setTimeout(() => {
+              this.show_pull_output = false
+              resolve()
+            }, 1000)
+          },
+          (error) => {
+            this.show_pull_output = false
+            reject(error)
+          },
+        )
 
-      return back_axios({
-        url: '/version-chooser/v1.0/version/pull/',
-        method: 'POST',
-        data: {
-          repository,
-          tag,
-        },
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-          this.show_pull_output = true
-        },
+        back_axios({
+          url: '/version-chooser/v1.0/version/pull/',
+          method: 'POST',
+          data: {
+            repository,
+            tag,
+          },
+          onDownloadProgress: (progressEvent) => {
+            tracker.digestNewData(progressEvent)
+            this.pull_output = tracker.pull_output
+            this.download_percentage = tracker.download_percentage
+            this.extraction_percentage = tracker.extraction_percentage
+            this.status_text = tracker.overall_status
+            this.show_pull_output = true
+          },
+        }).then((response) => {
+          if (response.data.error) {
+            reject(response.data.error)
+          }
+          this.show_pull_output = false
+          resolve()
+        })
       })
     },
     async updateBootstrap(image: string) {
@@ -509,6 +513,14 @@ export default Vue.extend({
         .then(() => {
           this.show_pull_output = false
           this.setBootstrapVersion(tag)
+        })
+        .catch((error) => {
+          this.show_pull_output = false
+          notifier.pushError(
+            'BOOTSTRAP_UPDATE_FAIL',
+            `The operation failed: ${error}`,
+            true,
+          )
         })
       this.updating_bootstrap = false
     },

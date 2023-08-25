@@ -281,11 +281,16 @@ export default Vue.extend({
     },
     async update(extension: InstalledExtensionData, version: string) {
       this.show_pull_output = true
-      const tracker = new PullTracker(() => {
-        setTimeout(() => {
-          this.show_pull_output = false
-        }, 1000)
-      })
+      const tracker = new PullTracker(
+        () => {
+          setTimeout(() => {
+            this.show_pull_output = false
+          }, 1000)
+        },
+        (error) => {
+          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
+        },
+      )
       await back_axios({
         url: `${API_URL}/extension/update_to_version`,
         method: 'POST',
@@ -453,11 +458,17 @@ export default Vue.extend({
     ) {
       this.show_dialog = false
       this.show_pull_output = true
-      const tracker = new PullTracker(() => {
-        setTimeout(() => {
+      const tracker = new PullTracker(
+        () => {
+          setTimeout(() => {
+            this.show_pull_output = false
+          }, 1000)
+        },
+        (error) => {
+          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
           this.show_pull_output = false
-        }, 1000)
-      })
+        },
+      )
 
       await back_axios({
         url: `${API_URL}/extension/install`,
