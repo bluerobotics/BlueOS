@@ -44,6 +44,7 @@ class Kraken:
                 await self.check(extension)
 
     async def start_extension(self, extension: Extension) -> None:
+        logger.info(f"Going to start {extension}.")
         config = extension.settings()
         config["Image"] = extension.fullname()
         logger.info(f"Starting extension '{extension.fullname()}'.")
@@ -264,6 +265,7 @@ class Kraken:
         self.manager.save()
 
     async def restart_extension(self, extension_identifier: str) -> None:
+        logger.info(f"Going to restart {extension_identifier}.")
         await self.remove(extension_identifier, False)
 
     async def list_containers(self) -> List[DockerContainer]:
