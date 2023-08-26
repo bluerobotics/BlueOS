@@ -4,7 +4,7 @@
 set -e
 
 LOCAL_BINARY_PATH="/usr/bin/linux2rest"
-VERSION=v0.4.6
+VERSION=v0.4.8
 
 # By default we install armv7
 REMOTE_BINARY_URL="https://github.com/patrickelectric/linux2rest/releases/download/${VERSION}/linux2rest-armv7"
