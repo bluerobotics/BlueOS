@@ -102,18 +102,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import Notifier from '@/libs/notifier'
+import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import settings from '@/libs/settings'
-import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import commander from '@/store/commander'
 import { ShutdownType } from '@/types/commander'
-import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
-
-const notifier = new Notifier(autopilot_service)
 
 /// Used for internal status control
 enum Status {
@@ -160,19 +156,7 @@ export default Vue.extend({
   },
   methods: {
     async restartAutopilot(): Promise<void> {
-      autopilot_data.reset()
-      autopilot.setRestarting(true)
-      await back_axios({
-        method: 'post',
-        url: `${autopilot.API_URL}/restart`,
-        timeout: 10000,
-      })
-        .catch((error) => {
-          notifier.pushBackError('AUTOPILOT_RESTART_FAIL', error)
-        })
-        .finally(() => {
-          autopilot.setRestarting(false)
-        })
+      await AutopilotManager.restart()
     },
     async reboot(): Promise<void> {
       this.service_status = Status.Rebooting
