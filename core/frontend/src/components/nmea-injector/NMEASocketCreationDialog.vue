@@ -64,17 +64,13 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import Notifier from '@/libs/notifier'
 import nmea_injector from '@/store/nmea-injector'
 import { SocketKind } from '@/types/common'
-import { nmea_injector_service } from '@/types/frontend_services'
+import { NMEASocket } from '@/types/nmea-injector'
 import { VForm } from '@/types/vuetify'
-import back_axios from '@/utils/api'
 import {
   isIntegerString, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
-
-const notifier = new Notifier(nmea_injector_service)
 
 export default Vue.extend({
   name: 'NMEASocketCreationDialog',
@@ -95,7 +91,7 @@ export default Vue.extend({
         kind: SocketKind.UDP,
         port: '27000',
         component_id: '220', // MAV_COMPONENT ID of 220 refers to MAV_COMP_ID_GPS #1, usually used for external GPSs
-      },
+      } as NMEASocket,
     }
   },
   computed: {
@@ -135,20 +131,10 @@ export default Vue.extend({
         return false
       }
 
-      nmea_injector.setUpdatingNMEASockets(true)
       this.showDialog(false)
-
-      await back_axios({
-        method: 'post',
-        url: `${nmea_injector.API_URL}/socks`,
-        timeout: 10000,
-        data: this.nmea_socket,
-      })
+      nmea_injector.createNMEASocket(this.nmea_socket)
         .then(() => {
           this.form.reset()
-        })
-        .catch((error) => {
-          notifier.pushBackError('NMEA_SOCKET_CREATE_FAIL', error)
         })
       return true
     },
