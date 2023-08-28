@@ -75,7 +75,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import services_scanner from '@/store/servicesScanner'
+import helper from '@/store/helper'
 import { Service } from '@/types/helper'
 
 /**
@@ -86,7 +86,7 @@ export default Vue.extend({
   name: 'AvailableServicesTable',
   computed: {
     availableServices() {
-      return services_scanner.services.sort((a: Service, b: Service) => a.title.localeCompare(b.title))
+      return helper.services.sort((a: Service, b: Service) => a.title.localeCompare(b.title))
     },
   },
 
