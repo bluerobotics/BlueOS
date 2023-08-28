@@ -6,7 +6,7 @@ import back_axios from '@/utils/api'
 const notifier = new Notifier(nmea_injector_service)
 
 export default async function fetchAvailableNMEASockets(): Promise<void> {
-  back_axios({
+  await back_axios({
     method: 'get',
     url: `${nmea_injector.API_URL}/socks`,
     timeout: 10000,
