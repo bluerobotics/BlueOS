@@ -67,21 +67,17 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import DevicePathHelper from '@/components/common/DevicePathHelper.vue'
-import Notifier from '@/libs/notifier'
-import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import system_information from '@/store/system-information'
 import { SerialEndpoint } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
-import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 import { isIpAddress } from '@/utils/pattern_validators'
 
 import { fetchAutopilotSerialConfiguration } from './AutopilotManagerUpdater'
-
-const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'AutopilotSerialConfiguration',
@@ -164,19 +160,7 @@ export default Vue.extend({
       await this.restart_autopilot()
     },
     async restart_autopilot(): Promise<void> {
-      autopilot_data.reset()
-      autopilot.setRestarting(true)
-      await back_axios({
-        method: 'post',
-        url: `${autopilot.API_URL}/restart`,
-        timeout: 10000,
-      })
-        .catch((error) => {
-          notifier.pushBackError('AUTOPILOT_RESTART_FAIL', error)
-        })
-        .finally(() => {
-          autopilot.setRestarting(false)
-        })
+      await AutopilotManager.restart()
     },
     isValidEndpoint(input: string | undefined): (true | string) {
       if (!input || input.isEmpty()) {
