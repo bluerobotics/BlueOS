@@ -24,19 +24,6 @@ defaults_folder = autopilot_settings.defaults_folder
 StaticFile = namedtuple("StaticFile", "parent filename url")
 
 static_files = [
-    StaticFile(static_folder, "js/axios.min.js", "https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"),
-    StaticFile(
-        static_folder,
-        "js/polyfill.min.js",
-        "https://polyfill.io/v3/polyfill.min.js?features=es2015,IntersectionObserver",
-    ),
-    StaticFile(static_folder, "js/vue.js", "https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.js"),
-    StaticFile(static_folder, "js/metro.js", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/js/metro.min.js"),
-    StaticFile(
-        static_folder, "css/metro-all.css", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/css/metro-all.css"
-    ),
-    StaticFile(static_folder, "mif/metro.woff", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.woff"),
-    StaticFile(static_folder, "mif/metro.ttf", "https://cdnjs.cloudflare.com/ajax/libs/metro/4.4.3/mif/metro.ttf"),
     StaticFile(
         defaults_folder,
         "ardupilot_navigator",
