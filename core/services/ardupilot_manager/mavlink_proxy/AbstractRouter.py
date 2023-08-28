@@ -114,6 +114,9 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         self.start(self._master_endpoint)
 
     def is_running(self) -> bool:
+        info, error = self._subprocess.communicate()
+        logger.debug(info)
+        logger.error(error)
         return self._subprocess is not None and self._subprocess.poll() is None
 
     def process(self) -> Any:
