@@ -330,7 +330,7 @@ import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
 import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import Wizard from '@/components/wizard/Wizard.vue'
 import settings from '@/libs/settings'
-import services_scanner from '@/store/servicesScanner'
+import helper from '@/store/helper'
 import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
 import { convertGitDescribeToUrl } from '@/utils/helper_functions'
@@ -355,7 +355,6 @@ import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
 import MavlinkUpdater from './components/mavlink/MavlinkUpdater.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
-import ServicesScanner from './components/scanner/servicesScanner.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
 import menus, { menuItem } from './menus'
@@ -371,7 +370,6 @@ export default Vue.extend({
     'notification-tray-button': NotificationTrayButton,
     'pirate-mode-tray-menu': PiradeModeTrayMenu,
     'theme-tray-menu': ThemeTrayMenu,
-    'services-scanner': ServicesScanner,
     'wifi-tray-menu': WifiTrayMenu,
     'wifi-updater': WifiUpdater,
     'ethernet-tray-menu': EthernetTrayMenu,
@@ -438,7 +436,7 @@ export default Vue.extend({
       return this.$router.currentRoute.query.full_page === 'true'
     },
     computed_menu(): menuItem[] {
-      const foundExtensions = services_scanner.services
+      const foundExtensions = helper.services
         .filter((service: Service) : boolean => service.metadata !== null)
         .map((service: Service) => {
           const address = this.createExtensionAddress(service)
