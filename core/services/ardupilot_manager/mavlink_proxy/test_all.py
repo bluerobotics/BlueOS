@@ -15,6 +15,7 @@ sys.path.append(str(pathlib.Path(__file__).absolute().parent.parent))
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
+from mavlink_proxy.MAVP2P import MAVP2P
 from mavlink_proxy.MAVProxy import MAVProxy
 from typedefs import EndpointType
 
@@ -201,6 +202,30 @@ def test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_master_endp
     allowed_master_types = [EndpointType.UDPServer, EndpointType.Serial, EndpointType.TCPServer]
     run_common_routing_tests(
         mavlink_router, allowed_output_types, allowed_master_types, valid_output_endpoints, valid_master_endpoints
+    )
+
+
+def test_mavp2p(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
+    if not MAVP2P.is_ok():
+        warnings.warn("Failed to test MAVP2P service", UserWarning)
+        return
+
+    assert AbstractRouter.get_interface("MAVP2P"), "Failed to find interface MAVP2P"
+
+    mavp2p = MAVP2P()
+    assert mavp2p.name() == "MAVP2P", "Name does not match."
+    assert re.search(r"\d+.\d+.\d+", str(mavp2p.version())) is not None, "Version does not follow pattern."
+
+    allowed_output_types = [
+        EndpointType.UDPServer,
+        EndpointType.UDPClient,
+        EndpointType.TCPServer,
+        EndpointType.TCPClient,
+        EndpointType.Serial,
+    ]
+    allowed_master_types = allowed_output_types
+    run_common_routing_tests(
+        mavp2p, allowed_output_types, allowed_master_types, valid_output_endpoints, valid_master_endpoints
     )
 
 
