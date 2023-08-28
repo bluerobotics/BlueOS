@@ -55,9 +55,10 @@
       <v-btn
         style="margin: auto;"
         color="primary"
-        @click="save"
+        :loading="restarting"
+        @click="saveAndRestart"
       >
-        Save
+        Save and restart
       </v-btn>
     </v-card-actions>
   </v-card>
@@ -67,15 +68,20 @@
 import Vue from 'vue'
 
 import DevicePathHelper from '@/components/common/DevicePathHelper.vue'
+import Notifier from '@/libs/notifier'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import system_information from '@/store/system-information'
 import { SerialEndpoint } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
+import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 import { isIpAddress } from '@/utils/pattern_validators'
 
 import { fetchAutopilotSerialConfiguration } from './AutopilotManagerUpdater'
+
+const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'AutopilotSerialConfiguration',
@@ -101,6 +107,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    restarting(): boolean {
+      return autopilot.restarting
+    },
     current_serial_ports(): SerialEndpoint[] {
       return autopilot.autopilot_serials
     },
@@ -141,7 +150,7 @@ export default Vue.extend({
         }
       }
     },
-    async save(): Promise<void> {
+    async saveAndRestart(): Promise<void> {
       await back_axios({
         method: 'put',
         url: `${autopilot.API_URL}/serials`,
@@ -151,6 +160,22 @@ export default Vue.extend({
         .catch((error) => {
           console.log(error)
           autopilot.setAutopilotSerialConfigurations([])
+        })
+      await this.restart_autopilot()
+    },
+    async restart_autopilot(): Promise<void> {
+      autopilot_data.reset()
+      autopilot.setRestarting(true)
+      await back_axios({
+        method: 'post',
+        url: `${autopilot.API_URL}/restart`,
+        timeout: 10000,
+      })
+        .catch((error) => {
+          notifier.pushBackError('AUTOPILOT_RESTART_FAIL', error)
+        })
+        .finally(() => {
+          autopilot.setRestarting(false)
         })
     },
     isValidEndpoint(input: string | undefined): (true | string) {
