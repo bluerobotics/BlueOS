@@ -3,6 +3,7 @@
 import pathlib
 import ssl
 import sys
+import time
 import urllib.request
 from collections import namedtuple
 from warnings import warn
@@ -37,10 +38,17 @@ static_files = [
 for file in static_files:
     path = pathlib.Path.joinpath(file.parent, file.filename)
     path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        urllib.request.urlretrieve(file.url, path)
-    except Exception as error:
-        warn(f"unable to open url {file.url}, error {error}")
+
+    number_of_attempts = 0
+    while number_of_attempts < 5:
+        number_of_attempts += 1
+        try:
+            urllib.request.urlretrieve(file.url, path)
+            break
+        except Exception as error:
+            warn(f"unable to open url {file.url}, error {error}")
+        time.sleep(5)
+    else:
         sys.exit(1)
 
 
