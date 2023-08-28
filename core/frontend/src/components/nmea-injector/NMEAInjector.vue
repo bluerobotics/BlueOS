@@ -103,7 +103,6 @@ import { NMEASocket } from '@/types/nmea-injector'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
-import fetchAvailableNMEASockets from './NMEAInjectorUpdater'
 import NMEASocketCard from './NMEASocketCard.vue'
 import CreationDialog from './NMEASocketCreationDialog.vue'
 
@@ -131,10 +130,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    callPeriodically(fetchAvailableNMEASockets, 5000)
+    callPeriodically(nmea_injector.fetchAvailableNMEASockets, 5000)
   },
   beforeDestroy() {
-    stopCallingPeriodically(fetchAvailableNMEASockets)
+    stopCallingPeriodically(nmea_injector.fetchAvailableNMEASockets)
   },
   methods: {
     openCreationDialog(): void {
