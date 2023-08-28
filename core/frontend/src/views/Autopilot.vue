@@ -98,6 +98,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import {
   fetchAvailableBoards, fetchCurrentBoard, fetchFirmwareInfo, fetchVehicleType,
 } from '@/components/autopilot/AutopilotManagerUpdater'
@@ -106,7 +107,6 @@ import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
-import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
@@ -215,19 +215,7 @@ export default Vue.extend({
         })
     },
     async restart_autopilot(): Promise<void> {
-      autopilot_data.reset()
-      autopilot.setRestarting(true)
-      await back_axios({
-        method: 'post',
-        url: `${autopilot.API_URL}/restart`,
-        timeout: 10000,
-      })
-        .catch((error) => {
-          notifier.pushBackError('AUTOPILOT_RESTART_FAIL', error)
-        })
-        .finally(() => {
-          autopilot.setRestarting(false)
-        })
+      await AutopilotManager.restart()
     },
     openBoardChangeDialog(): void {
       this.show_board_change_dialog = true
