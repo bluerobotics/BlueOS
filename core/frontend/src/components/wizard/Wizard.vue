@@ -130,6 +130,7 @@
               <v-text-field v-model="mdns_name" label="MDNS Name" />
             </div>
             <DefaultParamLoader
+              ref="param_loader"
               v-model="params"
               :vehicle="vehicle_type"
             />
@@ -147,7 +148,7 @@
               <v-spacer />
               <v-btn
                 color="primary"
-                @click="setupConfiguration"
+                @click="validateParams() && setupConfiguration()"
               >
                 Continue
               </v-btn>
@@ -590,6 +591,9 @@ export default Vue.extend({
             .catch((error) => `Failed to install firmware: ${error.message ?? error.response?.data}.`)
         })
         .catch((error) => `Failed to fetch available firmware: ${error.message ?? error.response?.data}.`)
+    },
+    validateParams(): boolean {
+      return this.$refs.param_loader.validateParams()
     },
   },
 })

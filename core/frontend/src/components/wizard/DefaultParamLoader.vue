@@ -1,16 +1,19 @@
 <template>
   <div class="d-flex flex-column align-center ma-5" style="width: 100%; height: 100%;">
-    <v-select
-      v-model="selected_param_set_name"
-      :items="filtered_param_sets_names"
-      item-text="sanitized"
-      item-value="full"
-      :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
-      :loading="is_loading"
-      :disabled="is_loading_paramsets || has_error || filtered_param_sets_names.length === 0"
-      style="min-width: 60%;"
-      @change="setParamSet(filtered_param_sets[selected_param_set_name])"
-    />
+    <v-form ref="select">
+      <v-select
+        v-model="selected_param_set_name"
+        :items="[...filtered_param_sets_names, 'Do not load default parameters']"
+        item-text="sanitized"
+        item-value="full"
+        :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
+        :loading="is_loading"
+        :disabled="is_loading_paramsets || has_error || filtered_param_sets_names.length === 0"
+        style="min-width: 60%;"
+        :rules="[isNotEmpty]"
+        @change="setParamSet(filtered_param_sets[selected_param_set_name])"
+      />
+    </v-form>
     <p v-if="is_loading_paramsets">
       Loading parameters...
     </p>
@@ -46,6 +49,7 @@ import { Dictionary } from 'vue-router/types/router'
 
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
+import { VForm } from '@/types/vuetify'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'
@@ -135,6 +139,15 @@ export default Vue.extend({
     stopCallingPeriodically(fetchCurrentBoard)
   },
   methods: {
+    // this is used by Wizard.vue, but eslint doesn't detect it
+    // eslint-disable-next-line
+    validateParams(): boolean {
+      const element = this.$refs.select as VForm
+      return element.validate()
+    },
+    isNotEmpty(value: string): boolean {
+      return value !== ''
+    },
     updateLatestFirmwareVersion() {
       return availableFirmwares(this.vehicle as Vehicle)
         .then((firmwares: Firmware[]) => {
