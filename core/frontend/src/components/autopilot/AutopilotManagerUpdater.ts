@@ -2,6 +2,7 @@ import { AxiosResponse } from 'axios'
 import { SemVer } from 'semver'
 
 import Notifier from '@/libs/notifier'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
@@ -153,5 +154,24 @@ export async function installFirmwareFromUrl(
       const message = `Failed to fetch available firmwares for vehicle (${url}): ${error.message}`
       notifier.pushError('AUTOPILOT_FIRMWARE_AVAILABLES_FAIL', message)
       throw new Error(error)
+    })
+}
+
+export async function restart(): Promise<void> {
+  autopilot_data.reset()
+  autopilot.setRestarting(true)
+  return back_axios({
+    method: 'post',
+    url: `${autopilot.API_URL}/restart`,
+    timeout: 10000,
+  })
+    .then((response) => response.data)
+    .catch((error) => {
+      notifier.pushBackError('AUTOPILOT_RESTART_FAIL', error)
+      throw new Error(error)
+    })
+    .finally(() => {
+      autopilot.setRestarting(false)
+      autopilot_data.setRebootRequired(false)
     })
 }
