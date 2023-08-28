@@ -9,6 +9,7 @@
     @input="emitInput"
     @keyup.enter="emitSubmit"
     @click:append="togglePasswordShow"
+    @submit.prevent=""
   />
 </template>
 
