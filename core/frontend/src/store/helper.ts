@@ -6,8 +6,8 @@ import {
 import Notifier from '@/libs/notifier'
 import store from '@/store'
 import { helper_service } from '@/types/frontend_services'
-import { SpeedTestResult } from '@/types/helper'
-import back_axios from '@/utils/api'
+import { Service, SpeedTestResult } from '@/types/helper'
+import back_axios, { backend_offline_error } from '@/utils/api'
 import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(helper_service)
@@ -31,9 +31,16 @@ class PingStore extends VuexModule {
 
   has_internet = false
 
+  services: Service[] = []
+
   @Mutation
   setHasInternet(has_internet: boolean): void {
     this.has_internet = has_internet
+  }
+
+  @Mutation
+  updateFoundServices(services: Service[]): void {
+    this.services = services
   }
 
   @Action
@@ -106,10 +113,40 @@ class PingStore extends VuexModule {
         notifier.pushBackError('INTERNET_RESULT_SPEED_FAIL', error)
       })
   }
+
+  @Action
+  async checkWebServices(): Promise<Service[]> {
+    return back_axios({
+      method: 'get',
+      url: `${this.API_URL}/web_services`,
+      timeout: 10000,
+    })
+      .then((response) => response.data as Service[])
+      .catch((error) => {
+        if (error === backend_offline_error) { throw new Error(error) }
+        const message = `Error scanning for services: ${error}`
+        notifier.pushError('SERVICE_SCAN_FAIL', message)
+        throw new Error(error)
+      })
+  }
+
+  @Action
+  async updateWebServices(): Promise<void> {
+    this.checkWebServices()
+      .then((services: Service[]) => {
+        this.updateFoundServices(services.sort(
+          (first: Service, second: Service) => first.port - second.port,
+        ))
+      })
+      .catch(() => {
+        this.updateFoundServices([])
+      })
+  }
 }
 
 export { PingStore }
 
 const ping: PingStore = getModule(PingStore)
 callPeriodically(ping.checkInternetAccess, 20000)
+callPeriodically(ping.updateWebServices, 5000)
 export default ping
