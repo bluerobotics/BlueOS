@@ -125,15 +125,10 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import mavlink2rest from '@/libs/MAVLink2Rest'
-import Notifier from '@/libs/notifier'
 import autopilot_data from '@/store/autopilot'
-import autopilot from '@/store/autopilot_manager'
 import Parameter from '@/types/autopilot/parameter'
-import { parameters_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
-
-const notifier = new Notifier(parameters_service)
 
 export default Vue.extend({
   name: 'ParameterEditorDialog',
@@ -251,18 +246,7 @@ export default Vue.extend({
       autopilot_data.reset()
     },
     async restart_autopilot(): Promise<void> {
-      autopilot.setRestarting(true)
-      await back_axios({
-        method: 'post',
-        url: `${autopilot.API_URL}/restart`,
-        timeout: 10000,
-      })
-        .catch((error) => {
-          notifier.pushBackError('AUTOPILOT_RESTART_FAIL', error)
-        })
-        .finally(() => {
-          autopilot.setRestarting(false)
-        })
+      await AutopilotManager.restart()
     },
     async saveEditedParam(reboot = false) {
       if (!this.forcing_input && !this.is_form_valid) {
