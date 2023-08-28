@@ -39,13 +39,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import Notifier from '@/libs/notifier'
 import nmea_injector from '@/store/nmea-injector'
-import { nmea_injector_service } from '@/types/frontend_services'
 import { NMEASocket } from '@/types/nmea-injector'
-import back_axios from '@/utils/api'
-
-const notifier = new Notifier(nmea_injector_service)
 
 export default Vue.extend({
   name: 'NMEASocketCard',
@@ -57,16 +52,7 @@ export default Vue.extend({
   },
   methods: {
     async removeNMEASocket(): Promise<void> {
-      nmea_injector.setUpdatingNMEASockets(true)
-      await back_axios({
-        method: 'delete',
-        url: `${nmea_injector.API_URL}/socks`,
-        timeout: 10000,
-        data: this.nmeaSocket,
-      })
-        .catch((error) => {
-          notifier.pushBackError('nmeaSocket_DELETE_FAIL', error)
-        })
+      nmea_injector.removeNMEASocket(this.nmeaSocket)
     },
   },
 })
