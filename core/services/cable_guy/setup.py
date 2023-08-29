@@ -63,16 +63,4 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
-    install_requires=[
-        "appdirs == 1.4.4",
-        "psutil == 5.7.2",
-        "pyroute2 == 0.5.13",
-        "starlette == 0.13.6",
-        "fastapi == 0.63.0",
-        "uvicorn == 0.13.4",
-        "aiofiles == 0.6.0",
-        "fastapi-versioning == 0.9.1",
-        "commonwealth == 0.1.0",
-        "loguru == 0.5.3",
-    ],
 )

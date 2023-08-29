@@ -62,18 +62,4 @@ setup(
     version="0.1.0",
     description="Helper information for development",
     license="MIT",
-    install_requires=[
-        "aiofiles == 0.6.0",
-        "beautifulsoup4 == 4.9.3",
-        "commonwealth == 0.1.0",
-        "fastapi == 0.63.0",
-        "fastapi-versioning == 0.9.1",
-        "loguru == 0.5.3",
-        "psutil == 5.7.2",
-        "py-machineid == 0.3",
-        "requests == 2.25.1",
-        "speedtest-cli == 2.1.3",
-        "starlette == 0.13.6",
-        "uvicorn == 0.13.4",
-    ],
 )

@@ -19,15 +19,4 @@ setuptools.setup(
     license="MIT",
     packages=setuptools.find_packages(),
     python_requires=">=3.9",
-    install_requires=[
-        "aiohttp == 3.7.4",
-        "appdirs == 1.4.4",
-        "loguru == 0.5.3",
-        "starlette == 0.13.6",
-        "pykson == 1.0.2",
-    ],
-    dependency_links=[
-        # Waiting for PRs to get merged in pykson
-        "https://github.com/patrickelectric/pykson/tarball/1.0.2#egg=pykson-1.0.2"
-    ],
 )
