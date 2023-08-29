@@ -24,12 +24,14 @@
 
           <v-text-field
             v-model="nmea_socket.port"
+            type="number"
             :rules="[validate_required_field, is_socket_port]"
             label="Socket port"
           />
 
           <v-text-field
             v-model="nmea_socket.component_id"
+            type="number"
             :counter="3"
             label="Mavlink component ID"
             :rules="[validate_required_field, is_component_id]"
@@ -89,8 +91,8 @@ export default Vue.extend({
     return {
       nmea_socket: {
         kind: SocketKind.UDP,
-        port: '27000',
-        component_id: '220', // MAV_COMPONENT ID of 220 refers to MAV_COMP_ID_GPS #1, usually used for external GPSs
+        port: 27000,
+        component_id: 220, // MAV_COMPONENT ID of 220 refers to MAV_COMP_ID_GPS #1, usually used for external GPSs
       } as NMEASocket,
     }
   },
