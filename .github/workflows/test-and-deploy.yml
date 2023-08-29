@@ -35,6 +35,8 @@ jobs:
         pipenv install poetry && pipenv run poetry install
         echo "installing mavlink-router"
         pipenv run ./core/tools/mavlink_router/bootstrap.sh
+        echo "installing mavp2p"
+        pipenv run ./core/tools/mavp2p/bootstrap.sh
         echo "installing ardupilot_tools"
         pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
         pipenv run python ./core/libs/bridges/setup.py install
