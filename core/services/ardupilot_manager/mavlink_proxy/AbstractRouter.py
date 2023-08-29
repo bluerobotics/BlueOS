@@ -65,7 +65,17 @@ class AbstractRouter(metaclass=abc.ABCMeta):
 
     @staticmethod
     def available_interfaces() -> List[Type["AbstractRouter"]]:
-        return list(filter(lambda subclass: subclass.is_ok, AbstractRouter.__subclasses__()))
+        logger.debug(f"Possible interfaces: {AbstractRouter.possible_interfaces()}")
+
+        def caller(subclass: Type["AbstractRouter"]) -> bool:
+            # It's necessary to call __str__ since it uses static methods
+            # pylint: disable=unnecessary-dunder-call
+            logger.debug(subclass.__str__(subclass))  # type: ignore
+            return subclass.is_ok
+
+        availables = list(filter(caller, AbstractRouter.__subclasses__()))
+        logger.debug(f"Available interfaces: {availables}")
+        return availables
 
     @staticmethod
     def get_interface(name: str) -> Type["AbstractRouter"]:
@@ -154,6 +164,14 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def clear_endpoints(self) -> None:
         """Remove all output endpoints."""
         self._endpoints = set()
+
+    def __str__(self) -> str:
+        return f"""
+{self.__class__.__name__}:
+    name: {self.name()}
+    binary_name: {self.binary_name()}
+    is_ok: {self.is_ok()}
+"""
 
     def __del__(self) -> None:
         self.exit()
