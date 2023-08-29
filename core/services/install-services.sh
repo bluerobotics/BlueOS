@@ -10,12 +10,8 @@ BUILD_PACKAGES=(
 apt update
 apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
 
-# Pre-Build dependencies:
-# For convenience, we build ourselves the .wheel packages for dependencies
-# which have no armv7 wheel in pypi. This saves a lot of build time in docker
-if [[ "$(uname -m)" == "armv7l"* ]]; then
-    pip install https://s3.amazonaws.com/downloads.bluerobotics.com/companion-docker/wheels/aiohttp-3.7.4-cp39-cp39-linux_armv7l.whl
-fi
+# Install all consolidated dependencies
+pip install -r /home/pi/services/requirements.txt
 
 # Wifi service:
 ## Bind path for wpa
@@ -36,9 +32,6 @@ SERVICES=(
     versionchooser
     wifi
 )
-
-# We need to install loguru and appdirs since they may be used inside setup.py
-python -m pip install appdirs==1.4.4 loguru==0.5.3
 
 for SERVICE in "${SERVICES[@]}"; do
     echo "Installing service: $SERVICE"
