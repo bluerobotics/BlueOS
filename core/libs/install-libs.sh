@@ -3,13 +3,6 @@
 # Immediately exit on errors
 set -e
 
-BUILD_PACKAGES=(
-    g++
-)
-
-apt update
-apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
-
 # Pre-Build dependencies:
 # For convenience, we build ourselves the .wheel packages for dependencies
 # which have no armv7 wheel in pypi. This saves a lot of build time in docker
@@ -22,7 +15,3 @@ CURRENT_PATH=$(dirname "$0")
 # Install libraries
 python3 $CURRENT_PATH/bridges/setup.py install
 python3 $CURRENT_PATH/commonwealth/setup.py install
-
-apt -y remove ${BUILD_PACKAGES[*]}
-apt -y autoremove
-apt -y clean
