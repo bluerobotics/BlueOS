@@ -3,23 +3,15 @@ aiofiles==0.6.0
 aiohttp @ https://s3.amazonaws.com/downloads.bluerobotics.com/companion-docker/wheels/aiohttp-3.7.4-cp39-cp39-linux_armv7l.whl
 aiohttp-jinja2==1.4.2
 appdirs==1.4.4
-ardupilot-manager==0.0.1
 async-timeout==3.0.1
 asyncmock==0.4.2
 attrs==23.1.0
-Bag-of-Holding==0.1.0
-Beacon==0.1.0
 beautifulsoup4==4.9.3
 bluerobotics-ping==0.1.2
-bridges==0.1.0
-Bridget==0.1.0
-cable-guy==0.0.1
 certifi==2023.7.22
 chardet==3.0.4
-click==7.1.2
+click==8.1.7
 clickclick==20.10.2
-Commander==0.1.0
-commonwealth==0.1.0
 connexion==2.14.2
 decorator==5.1.1
 docker==5.0.3
@@ -30,7 +22,6 @@ fastapi-versioning==0.9.1
 Flask==2.2.5
 future==0.18.3
 h11==0.14.0
-helper-service==0.1.0
 idna==3.4
 ifaddr==0.2.0
 importlib-metadata==6.8.0
@@ -40,20 +31,17 @@ itsdangerous==2.1.1
 jdatetime==4.1.1
 Jinja2==3.0.3
 jsonschema==3.2.0
-Kraken==0.1.0
 loguru==0.5.3
 MarkupSafe==2.1.3
 mock==5.1.0
 multidict==6.0.4
-nmea-injector==0.0.1
 packaging==20.4
-ping-service==0.2.0
 pluggy==1.3.0
 psutil==5.7.2
 py-machineid==0.3.0
 pydantic==1.10.12
 pyelftools==0.28
-pykson==1.0.2
+pykson @ https://github.com/patrickelectric/pykson/tarball/1.0.2#egg=pykson-1.0.2
 pynmea2==1.18.0
 pyparsing==3.1.1
 pyroute2==0.5.13
@@ -66,7 +54,7 @@ python-dateutil==2.8.2
 python-multipart==0.0.5
 pytz==2023.3
 PyYAML==6.0.1
-requests==2.25.1
+requests==2.31.0
 six==1.16.0
 smbus2==0.3.0
 soupsieve==2.4.1
@@ -78,12 +66,10 @@ tomli==2.0.1
 types-tabulate==0.8.3
 typing_extensions==4.7.1
 urllib3==1.26.16
-uvicorn==0.13.4
+uvicorn==0.23.2
 validators==0.18.2
-versionchooser-service==0.1.0
 websocket-client==1.6.2
 Werkzeug==2.2.3
-wifi-service==0.1.0
 winregistry==1.1.1
 yarl==1.9.2
 zeroconf==0.38.4
