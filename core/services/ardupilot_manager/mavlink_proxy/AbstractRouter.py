@@ -71,7 +71,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
             # It's necessary to call __str__ since it uses static methods
             # pylint: disable=unnecessary-dunder-call
             logger.debug(subclass.__str__(subclass))  # type: ignore
-            return subclass.is_ok
+            return subclass.is_ok()
 
         availables = list(filter(caller, AbstractRouter.__subclasses__()))
         logger.debug(f"Available interfaces: {availables}")
