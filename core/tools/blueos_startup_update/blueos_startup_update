@@ -154,17 +154,16 @@ def save_file(file_name: str, file_content: str, backup_identifier: str) -> None
     command = f'echo "{file_content}" | sudo tee "{file_name}"'
     print(run_command(command, False))
 
-
-def file_exists(file_name: str) -> bool:
-    command = f'sudo test -e "{file_name}"'
-    output = run_command(command, True)
+def hardlink_exists(file_name: str) -> bool:
+    command = f"[ -f '{file_name}' ] && [ $(stat -c '%h' '{file_name}') -gt 1 ]"
+    output = run_command(command, False)
     print(output)
     return output.returncode == 0
 
 
 def create_hard_link(source_file_name: str, destination_file_name: str) -> bool:
-    command = f"ln {source_file_name} {destination_file_name}"
-    output = run_command(command, True)
+    command = f"sudo rm -rf {destination_file_name}; sudo ln {source_file_name} {destination_file_name}"
+    output = run_command(command, False)
     print(output)
     return output.returncode == 0
 
@@ -351,7 +350,7 @@ def create_dns_conf_host_link() -> bool:
     the /etc/resolf.conf file. """
     original_resolv_conf_file = "/etc/resolv.conf"
     resolv_conf_file_host_link = "/etc/resolv.conf.host"
-    if file_exists(resolv_conf_file_host_link):
+    if hardlink_exists(resolv_conf_file_host_link):
         return False
 
     # Creates a static reoslv conf to allow docker binds
