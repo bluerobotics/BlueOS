@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import Any, Callable, Coroutine, Dict, Optional, Set
 from warnings import warn
 
@@ -35,6 +36,26 @@ class PortWatcher:
     def set_port_post_callback(self, callback: Callable[[SysFS], None]) -> None:
         self.port_lost_callback = callback
 
+    def port_is_in_use(self, port: SysFS) -> bool:
+        """Returns true if the port is already in use by another process
+           This implementation is faster than fuser for some reason
+        """
+        for pid in os.listdir('/proc'):
+            if not pid.isdigit():
+                continue
+            fd_dir = f'/proc/{pid}/fd'
+            if not os.path.exists(fd_dir):
+                continue
+            for fd in os.listdir(fd_dir):
+                try:
+                    link = os.readlink(f'{fd_dir}/{fd}')
+                    if link == port.device:
+                        return True
+                except:
+                    pass
+        return False
+
+
     def port_should_be_probed(self, port: SysFS) -> bool:
         """A port should be probed if there hasn't been MAX_ATTEMPTS to probe it yet
         and it is caught by our filters
@@ -42,6 +63,8 @@ class PortWatcher:
         if port in self.known_ports:
             return False
         if self.probe_attempts_counter.get(port, 0) >= MAX_ATTEMPTS:
+            return False
+        if self.port_is_in_use(port):
             return False
         return True
 
