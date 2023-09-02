@@ -138,17 +138,24 @@
                   :href="menu.extension ? submenu.route : undefined"
                 >
                   <v-list-item-icon style="min-width:28px;">
-                    <v-icon
-                      v-if="!submenu.icon.startsWith('http')"
-                      class="mr-0"
-                      v-text="submenu.icon"
-                    />
                     <v-img
-                      v-else
+                      v-if="submenu.icon.startsWith('http')"
                       class="shrink mr-0"
                       contain
                       :src="submenu.icon"
                       width="24"
+                    />
+                    <!-- eslint-disable vue/no-v-html -->
+                    <v-img
+                      v-else-if="submenu.icon.startsWith('<svg')"
+                      width="24"
+                      :class="svg_outside_style"
+                      v-html="submenu.icon"
+                    />
+                    <v-icon
+                      v-else
+                      class="mr-0"
+                      v-text="submenu.icon"
                     />
                     <v-theme-provider
                       v-if="submenu.advanced && settings.is_pirate_mode"
@@ -186,17 +193,24 @@
             >
               <template #default>
                 <v-list-item-icon style="min-width:28px;">
-                  <v-icon
-                    v-if="!menu.icon.startsWith('http')"
-                    class="mr-0"
-                    v-text="menu.icon"
-                  />
                   <v-img
-                    v-else
+                    v-if="menu.icon.startsWith('http')"
                     class="shrink mr-0"
                     contain
                     :src="menu.icon"
                     width="24"
+                  />
+                  <!-- eslint-disable vue/no-v-html -->
+                  <v-img
+                    v-else-if="menu.icon.startsWith('<svg')"
+                    width="24"
+                    :class="svg_outside_style"
+                    v-html="menu.icon"
+                  />
+                  <v-icon
+                    v-else
+                    class="mr-0"
+                    v-text="menu.icon"
                   />
                   <v-theme-provider
                     v-if="menu.advanced && settings.is_pirate_mode"
@@ -434,6 +448,9 @@ export default Vue.extend({
     },
     full_page_requested(): boolean {
       return this.$router.currentRoute.query.full_page === 'true'
+    },
+    svg_outside_style(): string {
+      return `mr-0 ${settings.is_dark_theme ? 'outside-svg-dark' : 'outside-svg-light'}`
     },
     computed_menu(): menuItem[] {
       const foundExtensions = helper.services
@@ -710,6 +727,15 @@ export default Vue.extend({
 </style>
 
 <style scoped>
+
+.outside-svg-dark {
+  filter: invert(100%) brightness(200%);
+}
+
+.outside-svg-light {
+  filter: invert(45%) brightness(100%);
+}
+
 html {
   overflow-y: auto
 }
