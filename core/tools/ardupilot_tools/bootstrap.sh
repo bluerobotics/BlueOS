@@ -36,3 +36,7 @@ REMOTE_URL_APJ_TOOL="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COM
 
 $SUDO wget "$REMOTE_URL_APJ_TOOL" -O "$LOCAL_PATH_APJ_TOOL"
 $SUDO chmod +x "$LOCAL_PATH_APJ_TOOL"
+
+# Create the logs folder before ardupilot so we prevent a Filebrowser error if the user opens it
+# before arming the vehicle for the first time.
+$SUDO mkdir -p /root/.config/ardupilot-manager/firmware/logs/
