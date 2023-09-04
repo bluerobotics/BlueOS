@@ -1,5 +1,6 @@
 from typing import Any, Callable, Coroutine, Optional
 
+import serial
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION, PING1D_FIRMWARE_VERSION
 from loguru import logger
@@ -15,6 +16,14 @@ class PingProber:
         """Attempts to communicate via Ping Protocol at port "port".
         Calls on_ping_found callback when a ping device is found."""
         logger.info(f"Probing {port}")
+        try:
+            with serial.Serial(port.device, 115200, timeout=1, write_timeout=1) as ser:
+                ser.send_break()
+                ser.send_break()
+                ser.send_break()
+                ser.write(b'UUUUUUUUUUU')
+        except serial.SerialException as exception:
+            logger.info(exception)
         detected_device = self.detect_device(port)
         if detected_device:
             await self.ping_found_callback(detected_device)
@@ -73,6 +82,7 @@ class PingProber:
             return None
 
         if not ping.initialize():
+            logger.info(f"Failed to initialize Ping device {port.hwid}")
             return None
 
         device_info = ping.request(COMMON_DEVICE_INFORMATION)

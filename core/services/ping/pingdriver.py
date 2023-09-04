@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+import serial
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate, set_low_latency
 from brping import PingDevice
@@ -50,6 +51,20 @@ class PingDriver:
                 last_valid_baud = baud
             logger.debug(f"Baudrate {baud} is {'valid' if baud==last_valid_baud else 'invalid'}")
         logger.info(f"Highest baudrate detected: {last_valid_baud}")
+        logger.info("checking if we can communicate with the device at this baudrate")
+        for i in range (100):
+            with serial.Serial(self.ping.port.device, last_valid_baud, timeout=0.1, write_timeout=0.1) as ser:
+                ser.send_break()
+                ser.send_break()
+                ser.send_break()
+                ser.write(b'UUUUUUUUUUU')
+            ping.connect_serial(self.ping.port.device, last_valid_baud)
+            device_info = ping.request(COMMON_DEVICE_INFORMATION, timeout=0.1)
+            if device_info is not None:
+                logger.info("We can communicate with the device at this baudrate")
+                return last_valid_baud
+            logger.info(f"Failed to communicate with device at baudrate {last_valid_baud} ({i})")
+            logger.info("Trying again...")
         return last_valid_baud
 
     async def start(self) -> None:
