@@ -15,6 +15,7 @@ export enum ExtensionType {
     DEVICE_INTEGRATION = 'device-integration',
     EXAMPLE = 'example',
     OTHER = 'other',
+    TOOL = 'tool',
     THEME = 'theme',
 }
 
