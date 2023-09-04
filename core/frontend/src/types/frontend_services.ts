@@ -146,3 +146,10 @@ export const version_chooser_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const cloud_service: Service = {
+  name: 'Cloud Service',
+  description: 'Manage talking to BlueOS Cloud',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}

@@ -5,6 +5,7 @@ import Autopilot from '../views/Autopilot.vue'
 import AvailableServicesView from '../views/AvailableServicesView.vue'
 import BagEditorView from '../views/BagEditorView.vue'
 import BridgesView from '../views/BridgesView.vue'
+import CloudView from '../views/CloudView.vue'
 import Endpoint from '../views/EndpointView.vue'
 import ExtensionManagerView from '../views/ExtensionManagerView.vue'
 import ExtensionView from '../views/ExtensionView.vue'
@@ -135,6 +136,11 @@ const routes: Array<RouteConfig> = [
     path: '/vehicle/parameters',
     name: 'Parameter Editor',
     component: ParameterEditorView,
+  },
+  {
+    path: '/cloud/join',
+    name: 'Cloud',
+    component: CloudView,
   },
   {
     path: '*',
