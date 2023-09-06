@@ -212,6 +212,9 @@ sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "Failed 
 echo "Starting network configuration."
 curl -fsSL $ROOT/install/network/avahi.sh | bash
 
+echo "Restarting machine-id."
+rm /etc/machine-id && touch /etc/machine-id
+
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
 echo "- The computer webpage: http://blueos.local"
