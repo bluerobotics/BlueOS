@@ -15,7 +15,7 @@ setup(
     description="Ping service for BlueRobotics' Ping1D and Pìng360",
     license="MIT",
     install_requires=[
-        "bluerobotics-ping == 0.1.2",
+        "bluerobotics-ping == 0.1.5",
         "bridges == 0.1.0",
         "commonwealth == 0.1.0",
         "fastapi == 0.63.0",
