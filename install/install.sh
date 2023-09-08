@@ -214,7 +214,7 @@ curl -fsSL $ROOT/install/network/avahi.sh | bash
 
 # Following https://systemd.io/BUILDING_IMAGES/
 echo "Restarting machine-id."
-rm /etc/machine-id && touch /etc/machine-id
+rm -rf /etc/machine-id /var/lib/dbus/machine-id
 echo "Restarting random-seeds."
 rm -rf /var/lib/systemd/random-seed /loader/random-seed
 
