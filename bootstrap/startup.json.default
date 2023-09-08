@@ -38,6 +38,10 @@
                 "bind": "/home/pi/.ssh",
                 "mode": "rw"
             },
+            "/etc/blueos": {
+                "bind": "/etc/blueos",
+                "mode": "rw"
+            },
             "/etc/machine-id": {
                 "bind": "/etc/machine-id",
                 "mode": "ro"
