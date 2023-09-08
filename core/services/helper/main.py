@@ -19,6 +19,7 @@ import psutil
 from bs4 import BeautifulSoup
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
+from commonwealth.utils.general import local_unique_identifier
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -64,7 +65,9 @@ class Website(Enum):
     }
     BlueOS = {
         "hostname": "telemetry.blueos.cloud",
-        "path": f"/ping/?machine_id={machineid.hashed_id()}&version={BLUEOS_VERSION}",
+        "path": f"/ping/?machine_id={machineid.hashed_id()}"
+        + f"&blueos_id={local_unique_identifier()}"
+        + f"&version={BLUEOS_VERSION}",
         "port": 443,
     }
     Cloudflare = {
