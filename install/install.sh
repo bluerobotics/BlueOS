@@ -215,6 +215,12 @@ curl -fsSL $ROOT/install/network/avahi.sh | bash
 # Following https://systemd.io/BUILDING_IMAGES/
 echo "Restarting machine-id."
 rm -rf /etc/machine-id /var/lib/dbus/machine-id
+# The file needs to exist for docker to bind
+## if /etc/machine-id does not exist, this is a first boot. During early boot, systemd will write "uninitialized\n"
+## to this file and overmount a temporary file which contains the actual machine ID.
+## Later (after first-boot-complete.target has been reached), the real machine ID will be written to disk.
+## If /etc/machine-id contains the string "uninitialized", a boot is also considered the first boot. The same mechanism as above applies.
+echo "uninitialized" > /etc/machine-id
 echo "Restarting random-seeds."
 rm -rf /var/lib/systemd/random-seed /loader/random-seed
 
