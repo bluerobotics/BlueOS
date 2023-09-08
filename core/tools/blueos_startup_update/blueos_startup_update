@@ -17,6 +17,10 @@ DELTA_JSON = {
                 'bind': '/run/udev',
                 'mode': 'ro'
             },
+            '/etc/blueos': {
+                'bind': '/etc/blueos',
+                'mode': 'rw'
+            },
             '/etc/machine-id': {
                 'bind': '/etc/machine-id',
                 'mode': 'ro'
