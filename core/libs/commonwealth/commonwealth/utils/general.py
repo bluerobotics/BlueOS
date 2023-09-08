@@ -1,5 +1,7 @@
 import os
 import subprocess
+import uuid
+from functools import cache
 from pathlib import Path
 
 from loguru import logger
@@ -24,6 +26,37 @@ def delete_everything(path: Path) -> None:
 def file_is_open(path: Path) -> bool:
     result = subprocess.run(["lsof", path.resolve()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     return result.returncode == 0
+
+
+@cache
+def local_unique_identifier() -> str:
+    blueos_uuid_path = "/etc/blueos/uuid"
+
+    # Try to get an uuid4 from BlueOS of previous boots
+    try:
+        with open(blueos_uuid_path, "r", encoding="utf-8") as f:
+            uuid4 = "".join(f.read().split())
+            try:
+                uuid.UUID(uuid4, version=4)
+                return uuid4
+            except ValueError:
+                logger.warning(f"Local BlueOS uuid is not valid: {uuid4}")
+    except Exception as error:
+        logger.warning(f"Could not get BlueOS's uuid. {error}")
+
+    # We failed, going to generate a new BlueOS uuid
+    uuid4 = uuid.uuid4().hex
+    try:
+        with open(blueos_uuid_path, "w+", encoding="utf-8") as f:
+            f.write(uuid4)
+            f.flush()
+        return uuid4
+    except Exception as error:
+        logger.warning(f"Failed to write uuid {uuid4} to {blueos_uuid_path}, {error}")
+
+    # There is something really wrong here and this line should never run
+    # But at least we are going to identify that something is wrong
+    return "00000000000040000000000000000000"
 
 
 def is_running_as_root() -> bool:
