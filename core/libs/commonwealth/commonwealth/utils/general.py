@@ -59,6 +59,27 @@ def local_unique_identifier() -> str:
     return "00000000000040000000000000000000"
 
 
+@cache
+def local_hardware_identifier() -> str:
+    blueos_uuid_path = "/etc/blueos/hardware-uuid"
+
+    # Try to get an uuid from hardware configuration
+    try:
+        with open(blueos_uuid_path, "r", encoding="utf-8") as f:
+            hardware_uuid = "".join(f.read().split())
+            try:
+                uuid.UUID(hardware_uuid)
+                return hardware_uuid
+            except ValueError:
+                logger.warning(f"Local hardware uuid is not valid: {hardware_uuid}")
+    except Exception as error:
+        logger.warning(f"Could not get hardware uuid. {error}")
+
+    # There is something really wrong here and this line should never run
+    # But at least we are going to identify that something is wrong
+    return "00000000000030000000000000000000"
+
+
 def is_running_as_root() -> bool:
     return os.geteuid() == 0
 
