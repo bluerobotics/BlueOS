@@ -32,11 +32,6 @@ jobs:
         sudo ./core/tools/mavlink_router/bootstrap.sh
         ./core/tools/ardupilot_tools/bootstrap.sh
         sudo apt install shellcheck
-        npm install \
-          eslint@7 eslint-plugin-vue eslint-plugin-html @vue/eslint-config-typescript @typescript-eslint/parser \
-          @typescript-eslint/eslint-plugin typescript @vue/eslint-config-airbnb@^5.3.0 @vue/cli-service \
-          eslint-plugin-simple-import-sort \
-          --save-dev
         python -m pip install --upgrade pip
         pip install wheel # wheel need to be installed before mavproxy
         pip install mavproxy
