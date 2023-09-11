@@ -167,7 +167,7 @@ async function loadBootstrapCurrentVersion(): Promise<string | undefined> {
     // This allows us to have the frontend working without crashing
     // But still visible on the back
     .catch((error) => {
-      const message = `Failed to fatch bootstrap version: ${error}`
+      const message = `Failed to fetch bootstrap version: ${error}`
       notifier.pushWarning('VERSION_CHOOSER_FAILED_BOOTSTRAP_VERSION', message)
       return undefined
     })
