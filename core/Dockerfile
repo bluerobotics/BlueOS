@@ -42,6 +42,7 @@ COPY start-blueos-core /usr/bin/start-blueos-core
 COPY --from=downloadBinaries \
     /usr/bin/blueos_startup_update \
     /usr/bin/bridges \
+    /usr/bin/machineid-cli \
     /usr/bin/mavlink2rest \
     /usr/bin/mavlink-routerd \
     /usr/bin/ttyd \
