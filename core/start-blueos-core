@@ -25,6 +25,13 @@ else
     echo "Error: Docket socket file does not exist!"
 fi
 
+# Generate hardware identification uuid
+if [ -e "/etc/blueos" ]; then
+    machineid-cli --key blueos --parts cpu-cores cpuid mac-address > /etc/blueos/hardware-uuid
+else
+    echo "Error: blueos static system configuration folder does not exist!"
+fi
+
 # This is a workaround to make the container's `resolv.conf` synchronized with the host's
 # `resolv.conf`. To do that, we disallow docker from managing the container's DNS nameservers
 # by unmounting the container's `/etc/resolv.conf`, and soft linking it to the binded host's
