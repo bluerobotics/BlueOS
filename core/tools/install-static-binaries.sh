@@ -8,6 +8,7 @@ TOOLS=(
     blueos_startup_update
     bridges
     linux2rest
+    machineid
     mavlink2rest
     mavlink_router
     ttyd
