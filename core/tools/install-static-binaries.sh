@@ -4,6 +4,7 @@
 # Immediately exit on errors
 set -e
 
+# Remember to update Dockerfile to copy from multistage
 TOOLS=(
     blueos_startup_update
     bridges
