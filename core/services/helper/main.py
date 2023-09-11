@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
 
-import machineid
 import psutil
 from bs4 import BeautifulSoup
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
@@ -68,7 +67,7 @@ class Website(Enum):
     }
     BlueOS = {
         "hostname": "telemetry.blueos.cloud",
-        "path": f"/ping/?machine_id={machineid.hashed_id()}"
+        "path": "/ping/?"
         + f"&blueos_id={local_unique_identifier()}"
         + f"&hardware_id={local_hardware_identifier()}"
         + f"&version={BLUEOS_VERSION}",
