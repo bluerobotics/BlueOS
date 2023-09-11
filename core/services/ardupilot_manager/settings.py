@@ -6,6 +6,8 @@ from typing import Any, Dict, Union, cast
 import appdirs
 from loguru import logger
 
+from typedefs import SITLFrame
+
 SERVICE_NAME = "ardupilot-manager"
 
 
@@ -20,6 +22,7 @@ class Settings:
 
     blueos_files_folder = Path.joinpath(Path.home(), "blueos-files")
     defaults_folder = Path.joinpath(blueos_files_folder, "ardupilot-manager/default")
+    sitl_frame = SITLFrame.UNDEFINED
 
     def __init__(self) -> None:
         self.root: Dict[str, Union[int, Dict[str, Any]]] = {"version": 0, "content": {}}

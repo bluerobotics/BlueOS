@@ -45,7 +45,6 @@ class ArduPilotManager(metaclass=Singleton):
         self.mavlink_manager = MavlinkManager()
         self.mavlink_manager.set_logdir(self.settings.log_path)
         self._current_board: Optional[FlightController] = None
-        self._current_sitl_frame: SITLFrame = SITLFrame.UNDEFINED
 
         # Load settings and do the initial configuration
         if self.settings.load():
@@ -64,6 +63,7 @@ class ArduPilotManager(metaclass=Singleton):
 
         self.should_be_running = False
         self.remove_old_logs()
+        self.current_sitl_frame = self.load_sitl_frame()
 
     def remove_old_logs(self) -> None:
         def need_to_remove_file(file: pathlib.Path) -> bool:
@@ -257,10 +257,24 @@ class ArduPilotManager(metaclass=Singleton):
             )
         )
 
-    def start_sitl(self, frame: SITLFrame = SITLFrame.VECTORED) -> None:
+    def set_sitl_frame(self, frame: SITLFrame) -> None:
+        self.current_sitl_frame = frame
+        self.configuration["sitl_frame"] = frame
+        self.settings.save(self.configuration)
+
+    def load_sitl_frame(self) -> SITLFrame:
+        if self.settings.sitl_frame != SITLFrame.UNDEFINED:
+            return self.settings.sitl_frame
+        frame = SITLFrame.VECTORED
+        logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
+        self.set_sitl_frame(frame)
+        return frame
+
+    def start_sitl(self) -> None:
         self._current_board = BoardDetector.detect_sitl()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
             self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self._current_board)
+        frame = self.settings.sitl_frame
         if frame == SITLFrame.UNDEFINED:
             frame = SITLFrame.VECTORED
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
@@ -480,7 +494,7 @@ class ArduPilotManager(metaclass=Singleton):
             elif flight_controller.platform.type == PlatformType.Serial:
                 self.start_serial(flight_controller)
             elif flight_controller.platform == Platform.SITL:
-                self.start_sitl(self.current_sitl_frame)
+                self.start_sitl()
             else:
                 raise RuntimeError(f"Invalid board type: {flight_controller}")
         finally:

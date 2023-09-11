@@ -123,6 +123,12 @@ async def get_vehicle_type() -> Any:
     return await autopilot.vehicle_manager.get_vehicle_type()
 
 
+@app.post("/sitl_frame", summary="Set SITL Frame type.")
+@version(1, 0)
+async def set_sitl_frame(frame: SITLFrame) -> Any:
+    return autopilot.set_sitl_frame(frame)
+
+
 @app.get("/firmware_vehicle_type", response_model=str, summary="Get firmware vehicle type.")
 @version(1, 0)
 async def get_firmware_vehicle_type() -> Any:
