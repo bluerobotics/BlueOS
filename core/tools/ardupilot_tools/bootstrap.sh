@@ -15,9 +15,12 @@ REMOTE_URL_UPLOADER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COM
 # The SUDO alias allow the usage of sudo when such command exists and also ignore if it doesn't
 SUDO="$(command -v sudo || echo '')"
 readonly SUDO
-$SUDO wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
-$SUDO chmod +x "$LOCAL_PATH_UPLOADER"
-
+if [ ! -f "$LOCAL_PATH_UPLOADER" ]; then
+  $SUDO wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
+  $SUDO chmod +x "$LOCAL_PATH_UPLOADER"
+else
+  echo "File $LOCAL_PATH_UPLOADER already exists. Skipping download."
+fi
 ## Download and install necessary modules to user-site folder
 
 # Check if pipenv is installed
@@ -34,13 +37,20 @@ mkdir -p $USER_SITE_PACKAGES
 COMMIT_HASH=b839ddcc00f4cb89d89aaa8cf0cb03298d2f00b4
 LOCAL_PATH_DECODER="${USER_SITE_PACKAGES}/ardupilot_fw_decoder.py" || true
 REMOTE_URL_DECODER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/firmware_version_decoder.py"
-wget "$REMOTE_URL_DECODER" -O "$LOCAL_PATH_DECODER"
+if [ ! -f "$LOCAL_PATH_DECODER" ]; then
+    wget "$REMOTE_URL_DECODER" -O "$LOCAL_PATH_DECODER"
+else
+    echo "File $LOCAL_PATH_DECODER already exists. Skipping download."
+fi
 
 
 ### Ardupilot's apj_tool is used to embed params into apj files
 COMMIT_HASH=b839ddcc00f4cb89d89aaa8cf0cb03298d2f00b4
 LOCAL_PATH_APJ_TOOL="$(python -m site --user-base)/bin/apj_tool.py" || true
 REMOTE_URL_APJ_TOOL="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/apj_tool.py"
-
-$SUDO wget "$REMOTE_URL_APJ_TOOL" -O "$LOCAL_PATH_APJ_TOOL"
-$SUDO chmod +x "$LOCAL_PATH_APJ_TOOL"
+if [ ! -f "$LOCAL_PATH_APJ_TOOL" ]; then
+    $SUDO wget "$REMOTE_URL_APJ_TOOL" -O "$LOCAL_PATH_APJ_TOOL"
+    $SUDO chmod +x "$LOCAL_PATH_APJ_TOOL"
+else
+    echo "File $LOCAL_PATH_APJ_TOOL already exists. Skipping download."
+fi
