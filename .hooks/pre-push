@@ -4,12 +4,14 @@ set -e
 
 isort_extra_args="--check-only --diff"
 black_extra_args="--check --diff"
+fixing="false"
 
 for arg in "$@"; do
   case $arg in
     --fix)
       isort_extra_args=""
       black_extra_args=""
+      fixing="true"
       ;;
     *)
       echo "Unknown argument: $arg"
@@ -53,6 +55,9 @@ python_files=$(git ls-files '*.py')
 
 echo "Running black.."
 black ${black_extra_args} $python_files
+
+# do not run the rest of the script if running for fixing
+[ "$fixing" = true ] && exit 0
 
 # Faster than pylint to check for issues
 echo "Running ruff.."
