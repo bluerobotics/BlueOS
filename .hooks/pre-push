@@ -90,6 +90,6 @@ echo "Running pytest.."
 pipenv run pytest --cov="$repository_path" --cov-report html
 
 echo "Running mypy.."
-git ls-files '*.py' | xargs --max-lines=1 pipenv run mypy --no-incremental
+git ls-files '*setup.py' | parallel 'pipenv run mypy $(dirname {})'
 
 exit 0
