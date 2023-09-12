@@ -30,25 +30,28 @@ git ls-files '*.sh' | xargs --max-lines=1 shellcheck --exclude=SC2005,SC2015,SC2
 
 echo "Running isort.."
 # Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only --diff "{}"
+dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} pipenv run isort --src-path="{}" ${isort_extra_args} "{}"
 
 # This will only get the python files track by git, not including submodules
 python_files=$(git ls-files '*.py')
 
 echo "Running black.."
-black --check --diff $python_files
+pipenv run black ${black_extra_args} $python_files
+
+# do not run the rest of the script if running for fixing
+[ "$fixing" = true ] && exit 0
 
 # Faster than pylint to check for issues
 echo "Running ruff.."
-ruff $python_files
+pipenv run ruff $python_files
 
 echo "Running pylint.."
-pylint $python_files
+pipenv run pylint $python_files
 
 echo "Running pytest.."
-pytest --cov="$repository_path" --cov-report html
+pipenv run pytest --cov="$repository_path" --cov-report html
 
 echo "Running mypy.."
-git ls-files '*.py' | xargs --max-lines=1 mypy --no-incremental
+git ls-files '*.py' | xargs --max-lines=1 pipenv run mypy --no-incremental
 
 exit 0
