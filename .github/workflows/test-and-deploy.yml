@@ -39,6 +39,8 @@ jobs:
         pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
         pipenv run python ./core/libs/bridges/setup.py install
         pipenv run python ./core/libs/commonwealth/setup.py install
+        rm -rf core/libs/bridges/build
+        rm -rf core/libs/commonwealth/build
 
     - name: Run tests
       run: |
