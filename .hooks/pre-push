@@ -14,6 +14,13 @@ command -v shellcheck >/dev/null 2>&1 || {
     exit 1
 }
 
+pipenv install poetry
+pipenv run poetry install
+# download some required files if they are not present
+echo "installing mavlink-router"
+pipenv run ./core/tools/mavlink_router/bootstrap.sh
+echo "installing ardupilot_tools"
+pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
 
 isort_extra_args="--check-only --diff"
 black_extra_args="--check --diff"
