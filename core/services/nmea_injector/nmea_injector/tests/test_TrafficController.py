@@ -65,6 +65,7 @@ async def test_endpoint_communication(mocker: MagicMock) -> None:
 
             if sock_kind == SocketKind.UDP:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 sock.sendto(bytes_to_send, SERVER_ADDR)
 
             if sock_kind == SocketKind.TCP:
