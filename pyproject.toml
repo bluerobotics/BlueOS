@@ -10,6 +10,8 @@ py-modules = []
 
 [tool.poetry.dependencies]
 python = "^3.11"
+pytest-xdist = "^3.3.1"
+toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 black = "==22.3.0"
