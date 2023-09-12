@@ -15,4 +15,4 @@ TOOLS=(
     ttyd
 )
 
-parallel --halt now,fail=1 '/home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
+parallel --halt now,fail=1 'RUNNING_IN_CI=true /home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
