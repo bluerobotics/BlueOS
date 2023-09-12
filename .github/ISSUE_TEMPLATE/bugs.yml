@@ -11,7 +11,7 @@ body:
   - type: textarea
     attributes:
       label: Bug description
-      description: Describe roughly what the bug is.
+      description: Describe roughly what the bug is. For interface issues, please include relevant screenshots or recordings.
       placeholder: |
         Example: "Wifi service stops working"
     validations:
@@ -36,6 +36,13 @@ body:
       description: What is this bug actively stopping you from doing? This is helpful for us to suggest temporary workarounds while the actual issue is being fixed.
       placeholder: |
         Example: "No internet means I can't download new vehicle firmware"
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: System logs, links to relevant forum discussions, etc.
     validations:
       required: false
 
