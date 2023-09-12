@@ -81,5 +81,6 @@ setuptools.setup(
         "pyelftools == 0.28",
         "psutil == 5.7.2",
         "pyserial == 3.5",
+        "pydantic == 1.10.12",
     ],
 )
