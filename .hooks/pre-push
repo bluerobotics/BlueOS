@@ -87,7 +87,7 @@ echo "Running pylint.."
 pipenv run pylint $python_files
 
 echo "Running pytest.."
-pipenv run pytest --cov="$repository_path" --cov-report html
+pipenv run pytest -n 10 --cov="$repository_path" --cov-report html
 
 echo "Running mypy.."
 git ls-files '*setup.py' | parallel 'pipenv run mypy $(dirname {})'
