@@ -2,6 +2,19 @@
 
 set -e
 
+# Check if pipenv is installed
+command -v pipenv >/dev/null 2>&1 || {
+    echo >&2 "pipenv is not installed. Aborting. Please install it and try again."
+    exit 1
+}
+
+# Check if shellcheck is installed
+command -v shellcheck >/dev/null 2>&1 || {
+    echo >&2 "shellcheck is not installed. Aborting. Please install it and try again."
+    exit 1
+}
+
+
 isort_extra_args="--check-only --diff"
 black_extra_args="--check --diff"
 fixing="false"
