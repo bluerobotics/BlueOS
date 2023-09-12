@@ -29,27 +29,20 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo ./core/tools/mavlink_router/bootstrap.sh
-        ./core/tools/ardupilot_tools/bootstrap.sh
         sudo apt install shellcheck
         python -m pip install --upgrade pip
-        pip install wheel # wheel need to be installed before mavproxy
-        pip install mavproxy
-        pip install pyfakefs pytest-cov pytest-timeout pylint pylint-pydantic mypy isort black==22.1.0 asyncmock types-requests \
-          pytest-mock nmeasim geographiclib ruff
-        pip install git+https://github.com/patrickelectric/pykson.git@master_fixes
-        ## Install our own libraries
-        python ./core/libs/bridges/setup.py install
-        python ./core/libs/commonwealth/setup.py install
-        ## We need to install loguru and appdirs since they may be used inside setup.py
-        python -m pip install --user appdirs==1.4.4 loguru==0.5.3
-        find . -type f -name "setup.py" | xargs --max-lines=1 --replace=% python % install --user
-        ## Fix Click version since its being updated to an old version by our packages
-        pip install click==8.0.0
+        pip install pipenv
+        pipenv install poetry && pipenv run poetry install
+        echo "installing mavlink-router"
+        pipenv run ./core/tools/mavlink_router/bootstrap.sh
+        echo "installing ardupilot_tools"
+        pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
+        pipenv run python ./core/libs/bridges/setup.py install
+        pipenv run python ./core/libs/commonwealth/setup.py install
 
     - name: Run tests
       run: |
-        ./.hooks/pre-push
+        .hooks/pre-push
 
     - name: Upload coverage
       uses: actions/upload-artifact@v3
