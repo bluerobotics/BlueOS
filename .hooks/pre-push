@@ -2,6 +2,22 @@
 
 set -e
 
+isort_extra_args="--check-only --diff"
+black_extra_args="--check --diff"
+
+for arg in "$@"; do
+  case $arg in
+    --fix)
+      isort_extra_args=""
+      black_extra_args=""
+      ;;
+    *)
+      echo "Unknown argument: $arg"
+      exit 1
+      ;;
+  esac
+done
+
 echo "Running pre push hook!"
 repository_path=$(git rev-parse --show-toplevel)
 tag_name=$(git tag --points-at=HEAD | head -n 1)
@@ -30,13 +46,13 @@ git ls-files '*.sh' | xargs --max-lines=1 shellcheck --exclude=SC2005,SC2015,SC2
 
 echo "Running isort.."
 # Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" --check-only --diff "{}"
+dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" ${isort_extra_args} "{}"
 
 # This will only get the python files track by git, not including submodules
 python_files=$(git ls-files '*.py')
 
 echo "Running black.."
-black --check --diff $python_files
+black ${black_extra_args} $python_files
 
 # Faster than pylint to check for issues
 echo "Running ruff.."
