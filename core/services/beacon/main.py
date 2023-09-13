@@ -208,7 +208,7 @@ class Beacon:
                     runner = None
                     try:
                         runner = AsyncRunner(IPVersion.V4Only, interface=ip, interface_name=interface_name)
-                        logger.info(f"Created runner for interface {interface.name}, broadcasting on {ip}")
+                        logger.info(f"Created runner for interface {interface.name}, broadcasting {domain} on {ip}")
                     except Exception as e:
                         logger.warning(f"Error creating runner for {interface.name}: {e}, skipping this interface")
                         continue
