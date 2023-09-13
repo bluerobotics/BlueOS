@@ -37,8 +37,8 @@ SERVICES=(
     wifi
 )
 
-# We need to install loguru and appdirs since they may be used inside setup.py
-python -m pip install appdirs==1.4.4 loguru==0.5.3
+# We need to install loguru, appdirs and pydantic since they may be used inside setup.py
+python -m pip install appdirs==1.4.4 loguru==0.5.3 pydantic==1.10.12
 
 for SERVICE in "${SERVICES[@]}"; do
     echo "Installing service: $SERVICE"
