@@ -18,6 +18,7 @@ SERVER_ADDR = (SERVER_HOST, SERVER_PORT)
 
 
 @pytest.mark.asyncio
+@pytest.mark.xdist_group(name="group1")  # this makes sure this two tests run in the same worker
 async def test_endpoint_management_pipeline() -> None:
     for sock_kind in [SocketKind.UDP, SocketKind.TCP]:
         controller = TrafficController()
@@ -41,6 +42,7 @@ async def test_endpoint_management_pipeline() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.xdist_group(name="group1")
 async def test_endpoint_communication(mocker: MagicMock) -> None:
     @mock.create_autospec
     # pylint: disable=unused-argument
