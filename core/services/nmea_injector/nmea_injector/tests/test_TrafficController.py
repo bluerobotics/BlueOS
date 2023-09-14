@@ -1,12 +1,13 @@
 import asyncio
+import json
 import socket
-from typing import Any, Dict
-from unittest import mock
-from unittest.mock import MagicMock
+from typing import Generator, Optional
+from unittest.mock import AsyncMock
 
 import pytest
-from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from nmeasim.simulator import Simulator
+from pyfakefs.fake_filesystem import FakeFilesystem
+from pyfakefs.fake_filesystem_unittest import Patcher
 
 from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
 
@@ -16,9 +17,21 @@ SERVER_PORT = 27000
 COMPONENT_ID = 220
 SERVER_ADDR = (SERVER_HOST, SERVER_PORT)
 
+# pyfakefs fixture
+@pytest.fixture
+def fs() -> Generator[Optional[FakeFilesystem], None, None]:
+    patcher = Patcher()
+    patcher.setUp()
+    yield patcher.fs
+    patcher.tearDown()
+
+
+# pylint: disable=unused-argument
+# pylint: disable=redefined-outer-name
+
 
 @pytest.mark.asyncio
-async def test_endpoint_management_pipeline() -> None:
+async def test_endpoint_management_pipeline(fs: FakeFilesystem) -> None:
     for sock_kind in [SocketKind.UDP, SocketKind.TCP]:
         controller = TrafficController()
         test_sock = NMEASocket(kind=sock_kind, port=SERVER_PORT, component_id=COMPONENT_ID)
@@ -48,16 +61,23 @@ async def test_endpoint_management_pipeline() -> None:
 
 
 @pytest.mark.asyncio
-async def test_endpoint_communication(mocker: MagicMock) -> None:
-    @mock.create_autospec
-    # pylint: disable=unused-argument
-    def mock_send_mavlink_message(self: MavlinkMessenger, message: Dict[str, Any]) -> None:
-        pass
+async def test_endpoint_communication(fs: FakeFilesystem, monkeypatch: pytest.MonkeyPatch) -> None:
+    mock_send_mavlink_message = AsyncMock()
 
-    mocker.patch("nmea_injector.TrafficController.MavlinkMessenger.send_mavlink_message", mock_send_mavlink_message)
+    monkeypatch.setattr(
+        "nmea_injector.TrafficController.MavlinkMessenger.send_mavlink_message", mock_send_mavlink_message
+    )
 
     for sock_kind in [SocketKind.UDP, SocketKind.TCP]:
-        controller = TrafficController()
+        controller: Optional[TrafficController] = None
+        for _ in range(10):
+            try:
+                controller = TrafficController()
+                break
+            except json.decoder.JSONDecodeError:
+                await asyncio.sleep(1)
+        if not controller:
+            raise RuntimeError("Could not create controller.")
         test_sock = NMEASocket(kind=sock_kind, port=SERVER_PORT, component_id=COMPONENT_ID)
         for _ in range(10):
             try:
@@ -66,6 +86,8 @@ async def test_endpoint_communication(mocker: MagicMock) -> None:
             except OSError:
                 # Port already in use, wait
                 await asyncio.sleep(1)
+        if controller.get_socks() != [test_sock]:
+            raise RuntimeError("Could not add sock to controller.")
 
         sim = Simulator()
         with sim.lock:
@@ -78,7 +100,6 @@ async def test_endpoint_communication(mocker: MagicMock) -> None:
 
             if sock_kind == SocketKind.UDP:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 sock.sendto(bytes_to_send, SERVER_ADDR)
 
             if sock_kind == SocketKind.TCP:
@@ -91,5 +112,6 @@ async def test_endpoint_communication(mocker: MagicMock) -> None:
             # Wait to make sure async protocol transfer has been completed
             await asyncio.sleep(0.1)
             original_msg = TrafficController.parse_mavlink_package(raw_sentence)
-            _, forwarded_msg = mock_send_mavlink_message.call_args[0]
+            args, _ = mock_send_mavlink_message.call_args
+            forwarded_msg = args[0]
             assert original_msg == forwarded_msg
