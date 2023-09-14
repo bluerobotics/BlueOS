@@ -19,6 +19,7 @@ from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONRespons
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
     blueos_version,
+    limit_ram_usage,
     local_hardware_identifier,
     local_unique_identifier,
 )
@@ -37,6 +38,7 @@ SERVICE_NAME = "helper"
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 SPEED_TEST: Optional[Speedtest] = None
 
+limit_ram_usage()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 try:
