@@ -5,6 +5,7 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
@@ -15,6 +16,8 @@ from uvicorn import Config, Server
 from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
 
 SERVICE_NAME = "nmea-injector"
+
+limit_ram_usage()
 
 parser = argparse.ArgumentParser(description="NMEA Injector service for Blue Robotics BlueOS")
 parser.add_argument("-u", "--udp", type=int, help="change the default UDP input port")
