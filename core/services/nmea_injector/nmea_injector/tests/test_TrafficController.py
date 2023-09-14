@@ -24,7 +24,14 @@ async def test_endpoint_management_pipeline() -> None:
         controller = TrafficController()
         test_sock = NMEASocket(kind=sock_kind, port=SERVER_PORT, component_id=COMPONENT_ID)
 
-        await controller.add_sock(test_sock)
+        for _ in range(10):
+            try:
+                await controller.add_sock(test_sock)
+                break
+            except OSError:
+                # Port already in use, wait
+                await asyncio.sleep(1)
+
         available_socks = controller.get_socks()
         assert len(available_socks) == 1
         controller._settings_manager.load()
@@ -54,7 +61,13 @@ async def test_endpoint_communication(mocker: MagicMock) -> None:
     for sock_kind in [SocketKind.UDP, SocketKind.TCP]:
         controller = TrafficController()
         test_sock = NMEASocket(kind=sock_kind, port=SERVER_PORT, component_id=COMPONENT_ID)
-        await controller.add_sock(test_sock)
+        for _ in range(10):
+            try:
+                await controller.add_sock(test_sock)
+                break
+            except OSError:
+                # Port already in use, wait
+                await asyncio.sleep(1)
 
         sim = Simulator()
         with sim.lock:
