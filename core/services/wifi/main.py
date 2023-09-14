@@ -13,6 +13,7 @@ from commonwealth.utils.apis import (
     PrettyJSONResponse,
     StackedHTTPException,
 )
+from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
@@ -27,6 +28,8 @@ from WifiManager import WifiManager
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 SERVICE_NAME = "wifi-manager"
+
+limit_ram_usage()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
