@@ -8,6 +8,7 @@ import appdirs
 import dpath
 import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, HTTPException
 from fastapi import Path as FastPath
@@ -18,6 +19,8 @@ from pydantic import BaseModel
 
 SERVICE_NAME = "bag-of-holding"
 FILE_PATH = Path(appdirs.user_config_dir(SERVICE_NAME, "db.json"))
+
+limit_ram_usage()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
