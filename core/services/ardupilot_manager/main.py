@@ -13,7 +13,7 @@ from commonwealth.utils.apis import (
     PrettyJSONResponse,
     StackedHTTPException,
 )
-from commonwealth.utils.general import is_running_as_root
+from commonwealth.utils.general import is_running_as_root, limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, File, UploadFile, status
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +29,8 @@ from settings import SERVICE_NAME
 from typedefs import Firmware, FlightController, Parameters, Serial, SITLFrame, Vehicle
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
+
+limit_ram_usage()
 
 parser = argparse.ArgumentParser(description="ArduPilot Manager service for Blue Robotics BlueOS")
 parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any board", action="store_true")
