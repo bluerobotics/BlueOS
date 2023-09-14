@@ -4,6 +4,7 @@ from typing import Any, List
 
 import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
@@ -13,6 +14,8 @@ from loguru import logger
 from bridget import BridgeSpec, Bridget
 
 SERVICE_NAME = "bridget"
+
+limit_ram_usage()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
