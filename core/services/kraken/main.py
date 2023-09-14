@@ -5,6 +5,7 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -30,6 +31,8 @@ class Extension(BaseModel):
 
 
 SERVICE_NAME = "kraken"
+
+limit_ram_usage()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
