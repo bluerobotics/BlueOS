@@ -5,12 +5,15 @@ from typing import Any
 import aiodocker
 import connexion
 from aiohttp import web
+from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
 from utils.chooser import STATIC_FOLDER, VersionChooser
 
 SERVICE_NAME = "version-chooser"
+
+limit_ram_usage()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
