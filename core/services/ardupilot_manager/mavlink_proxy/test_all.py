@@ -152,7 +152,7 @@ def test_endpoint_validators() -> None:
     reason="MavProxy tests are failling for several endpoint combinations. Since it's not being used \
     and it's not a priority to support it, they are being temporarily disabled."
 )
-def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
+def serial_test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     if not MAVProxy.is_ok():
         warnings.warn("Failed to test mavproxy service", UserWarning)
         return
@@ -182,7 +182,7 @@ def test_mavproxy(valid_output_endpoints: Set[Endpoint], valid_master_endpoints:
     )
 
 
-def test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
+def serial_test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     if not MAVLinkRouter.is_ok():
         warnings.warn("Failed to test MAVLinkRouter service", UserWarning)
         return
@@ -205,7 +205,7 @@ def test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_master_endp
     )
 
 
-def test_mavp2p(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
+def serial_test_mavp2p(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     if not MAVP2P.is_ok():
         warnings.warn("Failed to test MAVP2P service", UserWarning)
         return
@@ -227,6 +227,11 @@ def test_mavp2p(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: S
     run_common_routing_tests(
         mavp2p, allowed_output_types, allowed_master_types, valid_output_endpoints, valid_master_endpoints
     )
+
+
+def test_router(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
+    for router in [serial_test_mavlink_router, serial_test_mavp2p]:
+        router(valid_output_endpoints, valid_master_endpoints)
 
 
 @pytest.mark.timeout(10)
