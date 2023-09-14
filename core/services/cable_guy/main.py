@@ -9,6 +9,7 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
+from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +27,8 @@ from api.manager import (
 )
 
 SERVICE_NAME = "cable-guy"
+
+limit_ram_usage()
 
 parser = argparse.ArgumentParser(description="CableGuy service for Blue Robotics BlueOS")
 parser.add_argument(
