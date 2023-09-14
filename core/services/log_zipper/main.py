@@ -10,11 +10,13 @@ import time
 import zipfile
 from typing import List
 
-from commonwealth.utils.general import delete_everything
+from commonwealth.utils.general import delete_everything, limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
 SERVICE_NAME = "log-zipper"
+
+limit_ram_usage()
 
 
 def zip_files(files: List[str], output_path: str) -> None:
