@@ -66,7 +66,8 @@ RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
 
 # Update blueosrc with the necessary environment variables
 RUN RCFILE_PATH="/etc/blueosrc" \
-    && echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
+    && echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH \
+    && echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
 
 # create some Symlinks to make life easier
 RUN mkdir -p /shortcuts
