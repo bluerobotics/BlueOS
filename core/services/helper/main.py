@@ -4,7 +4,6 @@ import asyncio
 import http.client
 import json
 import logging
-import os
 import re
 import socket
 from concurrent import futures
@@ -19,6 +18,7 @@ from bs4 import BeautifulSoup
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
+    blueos_version,
     local_hardware_identifier,
     local_unique_identifier,
 )
@@ -34,7 +34,6 @@ from uvicorn import Config, Server
 from nginx_parser import parse_nginx_file
 
 SERVICE_NAME = "helper"
-BLUEOS_VERSION = os.environ.get("GIT_DESCRIBE_TAGS", "null")
 HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 SPEED_TEST: Optional[Speedtest] = None
 
@@ -70,7 +69,7 @@ class Website(Enum):
         "path": "/ping/?"
         + f"&blueos_id={local_unique_identifier()}"
         + f"&hardware_id={local_hardware_identifier()}"
-        + f"&version={BLUEOS_VERSION}",
+        + f"&version={blueos_version()}",
         "port": 443,
     }
     Cloudflare = {
