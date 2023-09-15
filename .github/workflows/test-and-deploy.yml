@@ -63,21 +63,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Yarn install
-        uses: borales/actions-yarn@v4
+      - uses: oven-sh/setup-bun@v1
         with:
-          cmd: --cwd ./core/frontend install --frozen-lockfile --ignore-engines
+          bun-version: latest
 
-      - name: Yarn lint
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: --cwd ./core/frontend lint --no-fix --ignore-engines --max-warnings=0
+      - name: Bun install
+        run: bun install --cwd ./core/frontend
 
-      - name: Yarn build
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: --cwd ./core/frontend build --ignore-engines
+      - name: Bun lint
+        run: bun --cwd ./core/frontend lint
 
+      - name: Bun build
+        run: bun run --cwd ./core/frontend build
 
   deploy-docker-images:
     runs-on: ubuntu-latest
