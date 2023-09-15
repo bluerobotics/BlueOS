@@ -2,20 +2,16 @@
   "name": "BlueOS",
   "version": "0.1.0",
   "private": true,
-  "babel": {
-    "presets": [
-      "@vue/cli-plugin-babel/preset"
-    ]
-  },
   "browserslist": [
     "> 1%",
     "last 2 versions",
     "not dead"
   ],
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src"
   },
   "dependencies": {
     "@google/model-viewer": "^3.0.0",
@@ -31,7 +27,6 @@
     "apexcharts": "^3.36.3",
     "axios": "^0.21.1",
     "babel-loader": "^8.2.5",
-    "core-js": "^3.25.5",
     "date-fns": "^2.23.0",
     "file-saver": "^2.0.5",
     "fuse.js": "^6.6.2",
@@ -52,11 +47,11 @@
     "vue": "^2.6.11",
     "vue-apexcharts": "^1.6.2",
     "vue-json-viewer": "2",
-    "vue-router": "^3.2.0",
+    "vue-router": "^3.6.5",
     "vue-tooltip-directive": "^1.0.2",
     "vue-tour": "^2.0.0",
     "vuedraggable": "^2.24.3",
-    "vuetify": "^2.4.0",
+    "vuetify": "2.7.1",
     "vuex": "^3.4.0",
     "vuex-module-decorators": "^1.0.1",
     "webpack": "^5.74.0",
@@ -65,13 +60,7 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
-    "@vue/cli-plugin-babel": "5.0.8",
-    "@vue/cli-plugin-eslint": "~5.0.8",
-    "@vue/cli-plugin-pwa": "~5.0.8",
-    "@vue/cli-plugin-router": "~5.0.8",
-    "@vue/cli-plugin-typescript": "~5.0.8",
-    "@vue/cli-plugin-vuex": "~5.0.8",
-    "@vue/cli-service": "^5.0.8",
+    "@vitejs/plugin-vue": "^1.6.1",
     "@vue/eslint-config-airbnb": "^7.0.0",
     "@vue/eslint-config-typescript": "^11.0.2",
     "eslint": "^8.33.0",
@@ -81,11 +70,13 @@
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-vue": "^9.9.0",
     "sass": "~1.32.0",
-    "sass-loader": "^10.0.0",
     "typescript": "~4.9.5",
+    "vite": "^3",
+    "vite-plugin-pwa": "^0.16.5",
+    "@vitejs/plugin-vue2": "2.2.0",
     "vue-cli-plugin-vuetify": "~2.4.1",
     "vue-template-babel-compiler": "^2.0.0",
-    "vue-template-compiler": "^2.6.11",
-    "vuetify-loader": "^1.7.0"
+    "vuetify-loader": "^1.7.0",
+    "unplugin-vue-components": "^0.25.2"
   }
 }
