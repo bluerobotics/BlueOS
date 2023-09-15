@@ -318,7 +318,6 @@
       <router-view />
       <div id="tour-center-hook" />
     </v-main>
-    <services-scanner />
     <ethernet-updater />
     <wifi-updater />
     <mavlink-updater />
@@ -332,7 +331,6 @@
     />
   </v-app>
   <div v-else>
-    <services-scanner />
     <router-view />
   </div>
 </template>
