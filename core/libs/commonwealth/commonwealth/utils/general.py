@@ -7,6 +7,11 @@ from pathlib import Path
 from loguru import logger
 
 
+@cache
+def blueos_version() -> str:
+    return os.environ.get("GIT_DESCRIBE_TAGS", "null")
+
+
 def delete_everything(path: Path) -> None:
     if path.is_file() and not file_is_open(path):
         path.unlink()
