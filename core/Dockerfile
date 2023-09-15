@@ -1,5 +1,5 @@
 # Build frontend
-FROM --platform=$BUILDPLATFORM node:16-buster-slim AS frontendBuilder
+FROM --platform=$BUILDPLATFORM oven/bun AS frontendBuilder
 
 ARG VUE_APP_GIT_DESCRIBE
 RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
@@ -8,8 +8,8 @@ RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
     && exit 1 || exit 0
 
 COPY frontend /home/pi/frontend
-RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend install --network-timeout=300000 --ignore-engines
-RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi/frontend build --skip-plugins @vue/cli-plugin-eslint --ignore-engines
+RUN bun install --cwd /home/pi/frontend
+RUN bun run --cwd /home/pi/frontend build
 # Copy some static files not consumed by webpack
 COPY frontend/src/assets/vehicles /home/pi/frontend/dist/vehicles
 
