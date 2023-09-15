@@ -91,11 +91,15 @@ import { Dictionary, Indexed, Keyed } from '@/types/common'
 import { PingType } from '@/types/ping'
 import { sleep } from '@/utils/helper_functions'
 
-const models = require.context(
-  '/src/assets/vehicles/models/',
-  true,
-  /\.(glb|json)$/,
-)
+const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
+
+function get_model(vehicle_name: string, frame_name: string): undefined | string {
+  const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
+  if (models[`/public/${release_path}`]) {
+    return `/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
+  }
+  return undefined
+}
 
 export default Vue.extend({
   name: 'GenericViewer',
@@ -177,10 +181,7 @@ export default Vue.extend({
       return result ? `${result}` : undefined
     },
     model_path(): string | undefined {
-      if (this.frame_name !== undefined) {
-        return models(`./${this.vehicle_folder}/${this.frame_name}.glb`)
-      }
-      return undefined
+      return get_model(this.vehicle_folder, this.frame_name)
     },
     filtered_annotations(): (HotspotConfiguration & Indexed & Keyed)[] {
       if (this.noannotations) {
@@ -349,7 +350,7 @@ export default Vue.extend({
       saveAs(file)
     },
     async reloadAnnotations() {
-      const json = await models(`./${this.vehicle_folder}/${this.frame_name}.json`)
+      const json = await models[`./${this.vehicle_folder}/${this.frame_name}.json`]
       if (json) {
         this.annotations = json.annotations ?? {}
       }

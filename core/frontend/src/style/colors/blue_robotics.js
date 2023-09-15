@@ -1,0 +1,6 @@
+export const BR_BLUE = '#2699D0'
+export const MARINER_BLUE = '#135DA3'
+export const BLUE_WHALE = '#012F46'
+export const TETHER_YELLOW = '#FFE01B'
+export const TUNA = '#8C8C8C'
+export const OYSTER = '#403B3B'

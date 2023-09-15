@@ -27,7 +27,7 @@
 <script lang="ts">
 import { SemVer } from 'semver'
 import Vue from 'vue'
-import { Dictionary } from 'vue-router/types/router'
+import { Dictionary } from 'vue-router'
 
 import parameterloader from '@/components/parameter-editor/ParameterLoader.vue'
 import autopilot from '@/store/autopilot_manager'

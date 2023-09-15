@@ -13,13 +13,13 @@
           <v-img
             v-if="ping.ping_type === 'Ping1D'"
             v-tooltip="toText(ping)"
-            src="@/assets/img/ping/Ping1D.gif"
+            :src="require('/assets/img/ping/Ping1D.gif')"
             width="50px"
           />
           <v-img
             v-if="ping.ping_type === 'Ping360'"
             v-tooltip="toText(ping)"
-            src="@/assets/img/ping/Ping360.gif"
+            :src="require('/assets/img/ping/Ping360.gif')"
             width="50px"
           />
         </a>

@@ -4,8 +4,8 @@ import simple_icons from 'simple-icons'
 import Vue from 'vue'
 import Vuetify from 'vuetify/lib/framework'
 
-import * as BR_COLORS from '@/assets/colors/blue_robotics'
-import * as DEFAULT_COLORS from '@/assets/colors/default'
+import * as BR_COLORS from '@/style/colors/blue_robotics'
+import * as DEFAULT_COLORS from '@/style/colors/default'
 
 Vue.use(Vuetify)
 
