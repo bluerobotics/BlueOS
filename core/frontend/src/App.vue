@@ -324,7 +324,7 @@
     <new-version-notificator />
     <Wizard />
     <alerter />
-    <v-tour
+    <VueTour
       name="welcomeTour"
       :steps="steps.filter((step) => step?.filter_wifi_connected !== wifi_connected)"
       :callbacks="tourCallbacks"
@@ -336,10 +336,10 @@
 </template>
 
 <script lang="ts">
+import blueos_blue from 'public/assets/img/blueos-logo-blue.svg'
+import blueos_white from 'public/assets/img/blueos-logo-white.svg'
 import Vue from 'vue'
 
-import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
-import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import Wizard from '@/components/wizard/Wizard.vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
@@ -604,13 +604,13 @@ export default Vue.extend({
       ]
     },
     git_info(): string {
-      return process.env.VUE_APP_GIT_DESCRIBE
+      return process.env.VITE_GIT_DESCRIBE
     },
     git_info_url(): string {
-      return convertGitDescribeToUrl(process.env.VUE_APP_GIT_DESCRIBE)
+      return convertGitDescribeToUrl(process.env.VITE_GIT_DESCRIBE)
     },
     build_date(): string {
-      return process.env.VUE_APP_BUILD_DATE
+      return process.env.VITE_BUILD_DATE
     },
     blueos_logo(): string {
       return settings.is_dark_theme ? blueos_white : blueos_blue
@@ -621,7 +621,7 @@ export default Vue.extend({
     $route() {
       // In an update process the page may not be the 'Main' page, check tour when page changes
       this.checkTour()
-      // Env may not exist when running it with `yarn serve`
+      // Env may not exist when running it with `bun vite`
       const project_name = process.env.PROJECT_NAME ?? 'BlueOS'
       if (this.$route.name === this.$router.options.routes!.first()!.name) {
         document.title = project_name

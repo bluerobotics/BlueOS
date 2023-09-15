@@ -45,7 +45,7 @@ import { isIpAddress } from '@/utils/pattern_validators'
 const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
-  name: 'NetworkCard',
+  name: 'AddressCreationDialog',
   model: {
     prop: 'show',
     event: 'change',

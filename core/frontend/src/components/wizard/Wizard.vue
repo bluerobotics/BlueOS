@@ -247,11 +247,15 @@ import RequireInternet from './RequireInternet.vue'
 
 const WIZARD_VERSION = 4
 
-const models = require.context(
-  '/src/assets/vehicles/models/',
-  true,
-  /\.(glb|json)$/,
-)
+const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
+
+function get_model(vehicle_name: string, frame_name: string): undefined | string {
+  const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
+  if (models[`/public/${release_path}`]) {
+    return `/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
+  }
+  return undefined
+}
 
 enum ApplyStatus {
   Waiting,
@@ -276,14 +280,14 @@ export default Vue.extend({
   },
   data() {
     return {
-      boat_model: models('./boat/UNDEFINED.glb'),
+      boat_model: get_model('boat', 'UNDEFINED'),
       configuration_failed: false,
       error_message: 'The operation failed!',
       apply_status: ApplyStatus.Waiting,
       mdns_name: 'blueos',
       should_open: false,
       step_number: 0,
-      sub_model: models('./bluerov.glb'),
+      sub_model: get_model('sub', 'bluerov'),
       vehicle_name: 'blueos',
       vehicle_type: Vehicle.Sub,
       vehicle_image: null as string | null,

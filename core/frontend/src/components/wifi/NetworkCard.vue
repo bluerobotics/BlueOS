@@ -53,7 +53,7 @@ import { Network } from '@/types/wifi'
 import { wifi_strenght_icon } from '@/utils/wifi'
 
 export default Vue.extend({
-  name: 'NetworkCard',
+  name: 'WifiNetworkCard',
   props: {
     connected: {
       type: Boolean,

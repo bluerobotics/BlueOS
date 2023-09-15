@@ -45,7 +45,7 @@
 <script lang="ts">
 import { SemVer } from 'semver'
 import Vue, { PropType } from 'vue'
-import { Dictionary } from 'vue-router/types/router'
+import { Dictionary } from 'vue-router'
 
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'

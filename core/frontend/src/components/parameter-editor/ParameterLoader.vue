@@ -111,7 +111,7 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { Dictionary } from 'vue-router/types/router'
+import { Dictionary } from 'vue-router'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
