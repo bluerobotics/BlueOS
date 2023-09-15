@@ -10,8 +10,6 @@ RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
 COPY frontend /home/pi/frontend
 RUN bun install --cwd /home/pi/frontend
 RUN bun run --cwd /home/pi/frontend build
-# Copy some static files not consumed by webpack
-COPY frontend/src/assets/vehicles /home/pi/frontend/dist/vehicles
 
 # Download binaries
 FROM bluerobotics/blueos-base:v0.0.10 as downloadBinaries
