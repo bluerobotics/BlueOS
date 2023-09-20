@@ -16,6 +16,7 @@ from commonwealth.utils.apis import (
 from commonwealth.utils.general import is_running_as_root, limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, File, UploadFile, status
+from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -235,6 +236,18 @@ async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
 @version(1, 0)
 def available_boards() -> Any:
     return autopilot.available_boards(True)
+
+
+@app.get("/")
+async def root() -> HTMLResponse:
+    html_content = """
+    <html>
+        <head>
+            <title>ArduPilot Manager</title>
+        </head>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
