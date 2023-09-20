@@ -1,0 +1,21 @@
+name: tests
+on:
+    workflow_dispatch:
+    # pull_request:
+    # push:
+    schedule:
+    # Run every 6 days to keep our caches alive
+    - cron: '0 0 */6 * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Run pimod blueos example
+        uses: Natur40/pimod@master
+        with:
+          pifile: deploy/pimod/blueos.Pifile
