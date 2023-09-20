@@ -9,7 +9,6 @@ import socket
 from concurrent import futures
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
 
@@ -25,7 +24,6 @@ from commonwealth.utils.general import (
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
@@ -35,7 +33,6 @@ from uvicorn import Config, Server
 from nginx_parser import parse_nginx_file
 
 SERVICE_NAME = "helper"
-HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 SPEED_TEST: Optional[Speedtest] = None
 
 limit_ram_usage()
@@ -550,8 +547,6 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
-
-app.mount("/", StaticFiles(directory=str(HTML_FOLDER), html=True))
 
 port_to_service_map: Dict[int, str] = parse_nginx_file("/home/pi/tools/nginx/nginx.conf")
 
