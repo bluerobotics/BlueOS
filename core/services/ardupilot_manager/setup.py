@@ -15,10 +15,6 @@ from settings import Settings
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-current_folder = pathlib.Path(__file__).parent.absolute()
-frontend_folder = pathlib.Path.joinpath(current_folder, "frontend")
-static_folder = pathlib.Path.joinpath(frontend_folder, "static")
-
 autopilot_settings = Settings()
 defaults_folder = autopilot_settings.defaults_folder
 
