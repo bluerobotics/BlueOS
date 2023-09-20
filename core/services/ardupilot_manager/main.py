@@ -16,7 +16,6 @@ from commonwealth.utils.apis import (
 from commonwealth.utils.general import is_running_as_root, limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, File, UploadFile, status
-from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -239,7 +238,6 @@ def available_boards() -> Any:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
-app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 
 if __name__ == "__main__":
