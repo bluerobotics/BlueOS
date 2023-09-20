@@ -11,6 +11,7 @@ from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -144,6 +145,18 @@ def retrieve_host_dns() -> Any:
 def update_host_dns(dns_data: DnsData) -> Any:
     """REST API endpoint to update the host DNS configuration."""
     manager.dns.update_host_nameservers(dns_data)
+
+
+@app.get("/")
+async def root() -> HTMLResponse:
+    html_content = """
+    <html>
+        <head>
+            <title>Cable Guy</title>
+        </head>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 app = VersionedFastAPI(
