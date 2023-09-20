@@ -4,7 +4,6 @@ import asyncio
 import logging
 import os
 import sys
-from pathlib import Path
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
@@ -12,7 +11,6 @@ from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -52,8 +50,6 @@ logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 manager = EthernetManager(default_configs)
-
-HTML_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "html")
 
 app = FastAPI(
     title="Cable Guy API",
@@ -156,7 +152,6 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
-app.mount("/", StaticFiles(directory=str(HTML_FOLDER), html=True))
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
