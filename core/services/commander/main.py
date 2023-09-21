@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 import logging
 import os
-import shlex
 import shutil
 import subprocess
 import time
@@ -210,24 +209,32 @@ async def root() -> Any:
 
 def setup_ssh() -> None:
     # store the key in the docker .config volume
-    key_path = "/root/.config/.ssh/"
-    key_path_as_path = Path(key_path)
-    # authorized_keys is in the pi home directory, we just add our key to it
-    authorized_keys_path = "/home/pi/.ssh/authorized_keys"
+    key_path = Path("/root/.config/.ssh")
+    private_key = key_path / "id_rsa"
+    public_key = private_key.with_suffix(".pub")
+    authorized_keys = Path("/home/pi/.ssh/authorized_keys")
 
     try:
-        key_path_as_path.mkdir(parents=True, exist_ok=True)
+        key_path.mkdir(parents=True, exist_ok=True)
         # check if id_rsa.pub exists, creates a new one if it doesnt
-        if not os.path.exists(key_path_as_path / "id_rsa.pub"):
-            subprocess.run(shlex.split(f"ssh-keygen -t rsa -f {key_path}/id_rsa -q -N ''"), check=True)
+        if not public_key.is_file():
+            subprocess.run(["ssh-keygen", "-t", "rsa", "-f", private_key, "-q", "-N", ""], check=True)
+        public_key_text = public_key.read_text("utf-8")
         # add id_rsa.pub to authorized_keys if not there already
-        if not os.path.exists(authorized_keys_path):
-            subprocess.run(shlex.split(f"touch {authorized_keys_path}"), check=True)
-        with open(authorized_keys_path, "r+", encoding="utf-8") as f:
-            with open(key_path_as_path / "id_rsa.pub", encoding="utf-8") as key_file:
-                my_key = key_file.read()
-                if not any(my_key in line for line in f):
-                    f.write(f"\n{my_key}")
+        try:
+            authorized_keys_text = authorized_keys.read_text("utf-8")
+        except FileNotFoundError:
+            logger.info(f"File does not exist: {authorized_keys}")
+            authorized_keys_text = ""
+
+        if public_key_text not in authorized_keys_text:
+            if not authorized_keys_text.endswith("\n"):
+                authorized_keys_text += "\n"
+            authorized_keys_text += public_key_text
+            authorized_keys.write_text(authorized_keys_text, "utf-8")
+
+        shutil.chown(authorized_keys, "pi", "pi")
+        authorized_keys.chmod(0o600)
     except Exception as error:
         logger.error(f"Error setting up ssh: {error}")
     logger.info("SSH setup done")
