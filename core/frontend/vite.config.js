@@ -103,7 +103,6 @@ export default defineConfig({
       },
       '^/kraken': {
         target: SERVER_ADDRESS,
-        selfHandleResponse: true,
         onProxyRes: (proxyRes, request, response) => {
           proxyRes.on('data', (data) => {
             response.write(data)
