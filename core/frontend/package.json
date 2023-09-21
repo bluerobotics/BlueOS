@@ -71,7 +71,7 @@
     "eslint-plugin-vue": "^9.9.0",
     "sass": "~1.32.0",
     "typescript": "~4.9.5",
-    "vite": "3",
+    "vite": "4.4.9",
     "vite-plugin-pwa": "^0.16.5",
     "workbox-build": "7.0.0",
     "@vitejs/plugin-vue2": "2.2.0",
