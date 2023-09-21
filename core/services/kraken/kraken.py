@@ -5,6 +5,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional, cast
 
 import aiodocker
 import aiohttp
+import psutil
 from aiodocker.docker import DockerContainer
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import StackedHTTPException
@@ -285,11 +286,15 @@ class Kraken:
             raise RuntimeError(f"Container not found: {container_name}")
         return cast(List[str], await containers[0].log(stdout=True, stderr=True))
 
+    # pylint: disable=too-many-locals
     async def load_stats(self) -> Dict[str, Any]:
         containers = await self.client.containers.list()  # type: ignore
-        container_stats = [(await container.stats(stream=False))[0] for container in containers]
+        container_stats = [
+            ((await container.stats(stream=False))[0], (await container.show(size=1))) for container in containers
+        ]
         result = {}
-        for stats in container_stats:
+        total_disk_size = psutil.disk_usage("/").total
+        for (stats, show) in container_stats:
             # Based over: https://github.com/docker/cli/blob/v20.10.20/cli/command/container/stats_helpers.go
             cpu_percent = 0
 
@@ -310,11 +315,17 @@ class Kraken:
             except KeyError:
                 memory_usage = "N/A"
 
+            try:
+                disk_usage = 100 * show["SizeRootFs"] / total_disk_size
+            except KeyError:
+                disk_usage = "N/A"
+
             name = stats["name"].replace("/", "")
 
             result[name] = {
                 "cpu": cpu_percent,
                 "memory": memory_usage,
+                "disk": disk_usage,
             }
         return result
 
