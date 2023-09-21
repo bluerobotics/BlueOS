@@ -67,6 +67,7 @@ export default defineConfig({
     'process.env': {},
   },
   server: {
+    port: 8080,
     proxy: {
       '^/status': {
         target: SERVER_ADDRESS,
