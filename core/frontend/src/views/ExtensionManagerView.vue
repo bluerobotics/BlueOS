@@ -274,7 +274,12 @@ export default Vue.extend({
   },
   methods: {
     newestVersion(versions: Dictionary<Version>): Version | undefined {
-      return Object.values(versions)?.[0] as Version | undefined
+      try {
+        return Object.values(versions)?.[0] as Version | undefined
+      } catch (e) {
+        console.log(`error detecting latest version: ${e}`)
+        return undefined
+      }
     },
     clearEditedExtension() {
       this.edited_extension = null
