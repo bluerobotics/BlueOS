@@ -49,8 +49,8 @@ logger.info("Releasing the Kraken!")
 
 @app.get("/extensions_manifest", status_code=status.HTTP_200_OK)
 @version(1, 0)
-async def fetch_manifest() -> Any:
-    return await kraken.fetch_manifest()
+async def fetch_manifests() -> Any:
+    return await kraken.fetch_manifests()
 
 
 @app.get("/installed_extensions", status_code=status.HTTP_200_OK)
