@@ -71,6 +71,30 @@
                 </v-progress-linear>
               </td>
             </tr>
+            <tr v-if="extension.enabled">
+              <td>Disk usage</td>
+              <td>
+                <v-progress-linear
+                  :value="getDiskUsage()"
+                  color="green"
+                  height="25"
+                >
+                  <template #default>
+                    <SpinningLogo
+                      v-if="loading || extension.enabled && !container"
+                      size="20px"
+                    />
+                    <strong v-else-if="getDiskUsage()?.toFixed">
+                      {{ prettifySize(getDiskUsage() * main_disk_size * 0.01) }} /
+                      {{ prettifySize(main_disk_size) }}
+                    </strong>
+                    <strong v-else>
+                      N/A
+                    </strong>
+                  </template>
+                </v-progress-linear>
+              </td>
+            </tr>
           </tbody>
         </template>
       </v-simple-table>
@@ -153,6 +177,7 @@ import Vue, { PropType } from 'vue'
 import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
+import { Disk } from '@/types/system-information/system'
 import { prettifySize } from '@/utils/helper_functions'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
@@ -199,6 +224,14 @@ export default Vue.extend({
       const total_kb = system_information.system?.memory?.ram?.total_kB
       return total_kb ?? undefined
     },
+    main_disk(): undefined | Disk {
+      const disks = system_information.system?.disk
+      return disks?.find((sensor) => sensor.mount_point === '/')
+    },
+    main_disk_size(): number {
+      const value = this.main_disk?.total_space_B ?? 0
+      return value / 1024 // Move to kB
+    },
     update_available() : false | string {
       if (!this.extensionData) {
         return false
@@ -223,6 +256,9 @@ export default Vue.extend({
     },
     getMemoryUsage(): string {
       return this.metrics?.memory
+    },
+    getDiskUsage(): string {
+      return this.metrics?.disk
     },
     getMemoryLimit(): number | undefined {
       // Memory limit as a percentage of total system RAM
