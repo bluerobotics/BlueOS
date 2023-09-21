@@ -4,7 +4,7 @@
       :aspect-ratio="1 / 1"
       class="lds-dual-ring"
       :width="size"
-      :src="require('/assets/img/blue-robotics-logo.svg')"
+      :src="require('@/assets/img/blue-robotics-logo.svg')"
     />
     <span class="text-subtitle-2">{{ subtitle }}</span>
   </v-container>
