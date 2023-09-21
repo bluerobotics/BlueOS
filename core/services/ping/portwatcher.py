@@ -90,7 +90,7 @@ class PortWatcher:
         """Start watching for plugged/unplugged serial devices in the system."""
         # TODO: try https://pypi.org/project/inotify/
         while True:
-            ports = serial.tools.list_ports.comports()
+            ports = serial.tools.list_ports.comports(hide_subsystems=[])
             ports_description = [f"{port.subsystem}:{port.name}" for port in ports]
             logger.debug(f"Currently detected ports: {ports_description}")
             found_ports = set()
