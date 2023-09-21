@@ -32,9 +32,9 @@
 </template>
 
 <script lang="ts">
-import navigator_image from 'public/assets/img/devicePathHelper/navigator.svg'
-import raspberry_pi3_image from 'public/assets/img/devicePathHelper/rpi3b.svg'
-import raspberry_pi4_image from 'public/assets/img/devicePathHelper/rpi4b.svg'
+import navigator_image from '@/assets/img/devicePathHelper/navigator.svg'
+import raspberry_pi3_image from '@/assets/img/devicePathHelper/rpi3b.svg'
+import raspberry_pi4_image from '@/assets/img/devicePathHelper/rpi4b.svg'
 import { v4 as uuid } from 'uuid'
 import Vue from 'vue'
 

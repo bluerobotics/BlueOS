@@ -5,7 +5,7 @@
         size="35px"
         directory="/userdata/images/vehicle"
         readonly-directory="/vehicles/images"
-        :default-image="require('/assets/vehicles/images/unknown.svg')"
+        :default-image="require('@/assets/vehicles/images/unknown.svg')"
         :image="vehicle_image"
         @image-selected="save_vehicle_image"
       />
@@ -34,7 +34,7 @@
       <image-picker
         size="35px"
         directory="/userdata/images/logo"
-        :default-image="require('/assets/img/blue-robotics-logo.svg')"
+        :default-image="require('@/assets/img/blue-robotics-logo.svg')"
         :image="logo_image"
         @image-selected="save_logo"
       />
