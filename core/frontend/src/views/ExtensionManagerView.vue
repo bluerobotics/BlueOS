@@ -57,7 +57,7 @@
           </v-list-item-subtitle>
           <v-checkbox
             v-for="(name, index) in providers"
-            :key="index"
+            :key="`provider-${index}`"
             v-model="selected_companies"
             :label="name"
             :value="name"
@@ -69,7 +69,7 @@
           </v-list-item-subtitle>
           <v-checkbox
             v-for="(name, index) in tags"
-            :key="index"
+            :key="`tag-${index}`"
             v-model="selected_tags"
             :label="name"
             :value="name"
