@@ -151,7 +151,6 @@ export default defineConfig({
       },
       '^/version-chooser': {
         target: SERVER_ADDRESS,
-        selfHandleResponse: true,
         onProxyRes: (proxyRes, request, response) => {
           proxyRes.on('data', (data) => {
             response.write(data)
