@@ -8,12 +8,13 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.9"
 pytest-xdist = "^3.3.1"
+toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
 isort = "^5.8"
 pylint = "^2.8"
-mypy = "^0.900"
+mypy = "1.4.1"
 pylint-pydantic = "^0.2.4"
 pytest = "7.4.2"
 pytest-cov = "4.1.0"
