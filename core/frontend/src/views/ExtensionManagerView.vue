@@ -344,6 +344,7 @@ export default Vue.extend({
         true,
         this.edited_extension?.permissions ?? '',
         this.edited_extension?.user_permissions ?? '',
+        this.edited_extension?.id,
       )
       this.show_dialog = false
       this.edited_extension = null
@@ -460,6 +461,7 @@ export default Vue.extend({
       enabled: boolean,
       permissions: string,
       user_permissions: string,
+      id?: string,
     ) {
       this.show_dialog = false
       this.show_pull_output = true
@@ -486,6 +488,7 @@ export default Vue.extend({
           enabled,
           permissions,
           user_permissions,
+          id,
         },
         onDownloadProgress: (progressEvent) => {
           tracker.digestNewData(progressEvent)
@@ -510,7 +513,7 @@ export default Vue.extend({
           this.status_text = ''
         })
     },
-    async installFromSelected(tag: string) {
+    async installFromSelected(tag: string, id?: string) {
       if (!this.selected_extension) {
         return
       }
@@ -522,6 +525,7 @@ export default Vue.extend({
         true,
         JSON.stringify(this.selected_extension?.versions[tag].permissions),
         '',
+        id,
       )
     },
     async uninstall(extension: InstalledExtensionData) {

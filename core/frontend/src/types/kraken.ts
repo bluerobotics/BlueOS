@@ -31,6 +31,7 @@ export interface Version {
     company?: Company
     type: ExtensionType,
     filter_tags: string[],
+    id?: string,
 }
 
 export interface ExtensionData {
@@ -53,6 +54,7 @@ export interface InstalledExtensionData {
     user_permissions: string
     status?: string
     loading?: boolean
+    id?: string
 }
 export interface RunningContainer {
     name: string

@@ -59,7 +59,7 @@
                   v-else
                   class="mt-3"
                   color="primary"
-                  @click="$emit('clicked', selected_version)"
+                  @click="$emit('clicked', selected_version, selected_id)"
                 >
                   Install
                 </v-btn>
@@ -164,6 +164,7 @@ export default Vue.extend({
   data() {
     return {
       selected_version: '' as string,
+      selected_id: undefined as string | undefined,
     }
   },
   computed: {
@@ -195,6 +196,8 @@ export default Vue.extend({
     extension() {
       const [first] = Object.keys(this.extension.versions) ?? ''
       this.selected_version = first
+      this.selected_id = this.extension.versions[this.selected_version].id
+      console.log(this.selected_id)
     },
   },
   mounted() {
