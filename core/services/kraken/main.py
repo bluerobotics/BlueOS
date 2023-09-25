@@ -25,7 +25,7 @@ class Extension(BaseModel):
     enabled: bool
     identifier: str
     user_permissions: str
-    uuid: Optional[str] = None
+    id: Optional[str] = None
 
     def is_valid(self) -> bool:
         return all([self.name, self.docker, self.tag, any([self.permissions, self.user_permissions]), self.identifier])
@@ -67,7 +67,7 @@ async def get_installed_extensions() -> Any:
             permissions=extension.permissions,
             enabled=extension.enabled,
             user_permissions=extension.user_permissions,
-            uuid=extension.uuid,
+            id=extension.id,
         )
         for extension in extensions
     ]

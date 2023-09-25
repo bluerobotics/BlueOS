@@ -17,7 +17,7 @@ class Extension(JsonObject):
     permissions = StringField()
     enabled = BooleanField()
     user_permissions = StringField()
-    uuid = StringField(null=True)
+    id = StringField(null=True)
 
     def settings(self) -> Any:
         if self.user_permissions:

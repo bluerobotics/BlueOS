@@ -115,6 +115,7 @@ class Kraken:
         except Exception as e:
             # this will fail if the container is not installed, we don't mind it
             logger.info(e)
+
         new_extension = Extension(
             identifier=extension.identifier,
             name=extension.name,
@@ -123,7 +124,7 @@ class Kraken:
             permissions=extension.permissions,
             enabled=extension.enabled,
             user_permissions=extension.user_permissions,
-            uuid=extension.uuid,
+            id=extension.id,
         )
         self.settings.extensions.append(new_extension)
         self.manager.save()
@@ -195,7 +196,7 @@ class Kraken:
             enabled=True,
             # TODO: handle user permissions on updates
             user_permissions="",
-            uuid=extension.uuid,
+            id=extension.id,
         )
 
         # Remove older entry if it exists
