@@ -2,7 +2,7 @@
 import argparse
 import asyncio
 import logging
-from typing import Any, List
+from typing import Any, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.general import limit_ram_usage
@@ -25,6 +25,7 @@ class Extension(BaseModel):
     enabled: bool
     identifier: str
     user_permissions: str
+    uuid: Optional[str] = None
 
     def is_valid(self) -> bool:
         return all([self.name, self.docker, self.tag, any([self.permissions, self.user_permissions]), self.identifier])
@@ -66,6 +67,7 @@ async def get_installed_extensions() -> Any:
             permissions=extension.permissions,
             enabled=extension.enabled,
             user_permissions=extension.user_permissions,
+            uuid=extension.uuid,
         )
         for extension in extensions
     ]

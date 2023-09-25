@@ -24,7 +24,7 @@ class Kraken:
         self.should_run = True
         self.deleting_in_progress = False
         self._client: Optional[aiodocker.Docker] = None
-        self.manifest_cache: List[Dict[str, Any]] = []
+        self.manifest_cache: Dict[str, Dict[str, Any]] = {}
 
     @property
     def client(self) -> aiodocker.Docker:
@@ -123,6 +123,7 @@ class Kraken:
             permissions=extension.permissions,
             enabled=extension.enabled,
             user_permissions=extension.user_permissions,
+            uuid=extension.uuid,
         )
         self.settings.extensions.append(new_extension)
         self.manager.save()
@@ -194,6 +195,7 @@ class Kraken:
             enabled=True,
             # TODO: handle user permissions on updates
             user_permissions="",
+            uuid=extension.uuid,
         )
 
         # Remove older entry if it exists
