@@ -203,6 +203,9 @@ export default Vue.extend({
       if (!this.extensionData) {
         return false
       }
+      if (!semver.valid(this.extension.tag)) {
+        return false
+      }
       const versions: string[] = Object.keys(this.extensionData?.versions ?? {})
       const lastest_stable = stable.max(versions)
       if (semver.gt(this.extension.tag, lastest_stable)) {
