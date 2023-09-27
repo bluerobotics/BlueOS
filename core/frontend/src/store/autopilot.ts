@@ -2,6 +2,8 @@ import {
   getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
+import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import { Message as M2R } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import store from '@/store'
 import Parameter from '@/types/autopilot/parameter'
 // eslint-disable-next-line import/no-cycle
@@ -29,6 +31,8 @@ class AutopilotStore extends VuexModule {
   metadata_loaded = false
 
   reboot_required = false
+
+  autopilot_type = MavAutopilot.MAV_AUTOPILOT_INVALID
 
   system_id = 1
 
@@ -67,6 +71,11 @@ class AutopilotStore extends VuexModule {
   @Mutation
   setSystemId(id: number): void {
     this.system_id = id
+  }
+
+  @Mutation
+  setAutopilotType(autopilot_type: MavAutopilot): void {
+    this.autopilot_type = autopilot_type
   }
 
   @Mutation
