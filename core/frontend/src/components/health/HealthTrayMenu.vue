@@ -211,6 +211,7 @@ export default Vue.extend({
         return
       }
       autopilot_data.setSystemId(message?.header.system_id)
+      autopilot_data.setAutopilotType(message?.message.autopilot.type)
       this.last_heartbeat_date = new Date()
     }).setFrequency(0)
   },
