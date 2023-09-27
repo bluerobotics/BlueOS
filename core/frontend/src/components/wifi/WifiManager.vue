@@ -42,7 +42,7 @@
     </v-app-bar>
 
     <v-sheet>
-      <network-card
+      <wifi-network-card
         v-if="current_network"
         connected
         :network="current_network"
@@ -66,7 +66,7 @@
             class="ml-7 mr-7"
           />
           <div v-if="!filtered_networks.isEmpty()">
-            <network-card
+            <wifi-network-card
               v-for="(network, key) in filtered_networks"
               :key="key"
               class="available-network"
@@ -144,7 +144,7 @@ import back_axios from '@/utils/api'
 import SpinningLogo from '../common/SpinningLogo.vue'
 import ConnectionDialog from './ConnectionDialog.vue'
 import DisconnectionDialog from './DisconnectionDialog.vue'
-import NetworkCard from './NetworkCard.vue'
+import WifiNetworkCard from './WifiNetworkCard.vue'
 import WifiSettingsDialog from './WifiSettingsDialog.vue'
 
 const notifier = new Notifier(wifi_service)
@@ -152,7 +152,7 @@ const notifier = new Notifier(wifi_service)
 export default Vue.extend({
   name: 'WifiManager',
   components: {
-    NetworkCard,
+    WifiNetworkCard,
     SpinningLogo,
     ConnectionDialog,
     DisconnectionDialog,
