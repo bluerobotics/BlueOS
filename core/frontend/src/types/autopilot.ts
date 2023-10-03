@@ -26,6 +26,7 @@ export enum Platform {
   Pixhawk4 = 'Pixhawk4',
   GenericSerial = 'GenericSerial',
   Navigator = 'navigator',
+  Tummler = 'tummler',
   SITL_X86 = 'SITL_x86_64_linux_gnu',
   SITL_ARM = 'SITL_arm_linux_gnueabihf',
 }
