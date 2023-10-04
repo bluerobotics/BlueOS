@@ -114,7 +114,7 @@ class Beacon:
     def set_hostname(self, hostname: str) -> None:
         self.manager.settings.default.domain_names = [hostname]
         for interface in self.manager.settings.interfaces:
-            if interface.name.startswith("eth"):
+            if interface.name.startswith("eth") or interface.name.startswith("usb"):
                 interface.domain_names = [hostname, self.DEFAULT_HOSTNAME]  # let's keep our default just in case
             elif interface.name.startswith("wlan"):
                 interface.domain_names = [f"{hostname}-wifi"]
