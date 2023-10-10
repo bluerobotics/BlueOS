@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 VERSION="${VERSION:-master}"
-GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-tummler-rov/TummlerOS}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 REMOTE="$REMOTE/$VERSION"
 CONFIGURE_NETWORK_PATH="$REMOTE/install/network"
@@ -15,24 +15,24 @@ systemctl is-active --quiet avahi-daemon || (
     exit 1
 )
 
-echo "Configuring blueos avahi service"
+echo "Configuring tummler avahi service"
 AVAHI_SERVICE_PATH="/etc/avahi/services"
 [ ! -d "${AVAHI_SERVICE_PATH}" ] && (
     echo "Avahi service directory does not exist: ${AVAHI_SERVICE_PATH}"
     exit 1
 )
-curl -fsSL $CONFIGURE_NETWORK_PATH/blueos.service > "${AVAHI_SERVICE_PATH}/blueos.service"
+curl -fsSL $CONFIGURE_NETWORK_PATH/tummler.service > "${AVAHI_SERVICE_PATH}/tummler.service"
 
 AVAHI_DAEMON_CONFIG_PATH="/etc/avahi/avahi-daemon.conf"
-AVAHI_HOST_NAME="blueos-avahi"
+AVAHI_HOST_NAME="tummler-avahi"
 [ ! -d "${AVAHI_DAEMON_CONFIG_PATH}" ] && (
     echo "Avahi daemon config file found, changing avahi host name to: ${AVAHI_HOST_NAME}"
     sed -i "s/#host-name=.*/host-name=${AVAHI_HOST_NAME}/g" ${AVAHI_DAEMON_CONFIG_PATH}
 ) || echo "Avahi daemon config file not found in ${AVAHI_DAEMON_CONFIG_PATH}"
 
-echo "Configure hostname to blueos"
+echo "Configure hostname to tummler"
 OLD_HOSTNAME="$(cat /etc/hostname)"
-NEW_HOSTNAME="blueos"
+NEW_HOSTNAME="tummler"
 # Overwrite with new name
 echo $NEW_HOSTNAME > /etc/hostname
 # Replace current name
