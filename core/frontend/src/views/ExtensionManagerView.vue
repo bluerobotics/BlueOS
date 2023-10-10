@@ -242,7 +242,8 @@ export default Vue.extend({
     },
     filteredManifest(): ExtensionData[] {
       if (this.selected_companies.isEmpty() && this.selected_tags.isEmpty()) {
-        return this.manifest
+        // By default we remove examples if nothing is selected
+        return this.manifest.filter((extension) => this.newestVersion(extension.versions)?.type !== 'example')
       }
 
       let { manifest } = this
