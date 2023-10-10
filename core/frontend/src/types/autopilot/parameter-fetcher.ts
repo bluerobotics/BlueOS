@@ -73,8 +73,8 @@ export default class ParameterFetcher {
         },
         message: {
           type: 'PARAM_REQUEST_LIST',
-          target_system: 0,
-          target_component: 0,
+          target_system: 1,
+          target_component: 1,
         },
       },
     )
