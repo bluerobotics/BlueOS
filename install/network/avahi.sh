@@ -21,7 +21,7 @@ AVAHI_SERVICE_PATH="/etc/avahi/services"
     echo "Avahi service directory does not exist: ${AVAHI_SERVICE_PATH}"
     exit 1
 )
-curl -fsSL $CONFIGURE_NETWORK_PATH/tummler.service > "${AVAHI_SERVICE_PATH}/tummler.service"
+curl -fsSL $CONFIGURE_NETWORK_PATH/blueos.service > "${AVAHI_SERVICE_PATH}/blueos.service"
 
 AVAHI_DAEMON_CONFIG_PATH="/etc/avahi/avahi-daemon.conf"
 AVAHI_HOST_NAME="tummler-avahi"
