@@ -416,7 +416,7 @@ def main() -> int:
         update_startup,
         update_cgroups,
         update_dwc2,
-        update_navigator_overlays,
+        #update_navigator_overlays,
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
         create_dns_conf_host_link,
