@@ -6,7 +6,7 @@ set -e
 ## Download and install necessary tools to user binary folder with the correct permissions
 
 ### Ardupilot's uploader is used to upload firmwares to serial boards
-COMMIT_HASH=53115c73f969ea88243a172c4605ae9e7448a369
+COMMIT_HASH=tummler-board
 LOCAL_PATH_UPLOADER="$(python -m site --user-base)/bin/ardupilot_fw_uploader.py" || true
 mkdir -p "$(python -m site --user-base)/bin"
 REMOTE_URL_UPLOADER="https://raw.githubusercontent.com/Tummler-ROV/ardupilot/${COMMIT_HASH}/Tools/scripts/uploader.py"
@@ -34,7 +34,7 @@ fi
 mkdir -p $USER_SITE_PACKAGES
 
 ### Ardupilot's decoder is used to parse and validate firmware ELF files
-COMMIT_HASH=53115c73f969ea88243a172c4605ae9e7448a369
+COMMIT_HASH=tummler-board
 LOCAL_PATH_DECODER="${USER_SITE_PACKAGES}/ardupilot_fw_decoder.py" || true
 REMOTE_URL_DECODER="https://raw.githubusercontent.com/Tummler-ROV/ardupilot/${COMMIT_HASH}/Tools/scripts/firmware_version_decoder.py"
 if [ ! -f "$LOCAL_PATH_DECODER" ]; then
@@ -45,7 +45,7 @@ fi
 
 
 ### Ardupilot's apj_tool is used to embed params into apj files
-COMMIT_HASH=53115c73f969ea88243a172c4605ae9e7448a369
+COMMIT_HASH=tummler-board
 LOCAL_PATH_APJ_TOOL="$(python -m site --user-base)/bin/apj_tool.py" || true
 REMOTE_URL_APJ_TOOL="https://raw.githubusercontent.com/Tummler-ROV/ardupilot/${COMMIT_HASH}/Tools/scripts/apj_tool.py"
 if [ ! -f "$LOCAL_PATH_APJ_TOOL" ]; then
