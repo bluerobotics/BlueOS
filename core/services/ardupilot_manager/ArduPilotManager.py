@@ -246,13 +246,16 @@ class ArduPilotManager(metaclass=Singleton):
         if not board.path:
             raise ValueError(f"Could not find device path for board {board.name}.")
         self._current_board = board
+        baudrate = 115200
+        if "px4" in board.name.lower():
+            baudrate = 57600
         self.start_mavlink_manager(
             Endpoint(
                 name="Master",
                 owner=self.settings.app_name,
                 connection_type=EndpointType.Serial,
                 place=board.path,
-                argument=115200,
+                argument=baudrate,
                 protected=True,
             )
         )
