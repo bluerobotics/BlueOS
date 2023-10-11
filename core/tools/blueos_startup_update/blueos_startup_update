@@ -37,6 +37,10 @@ DELTA_JSON = {
                 "bind": "/usr/blueos/extensions",
                 "mode": "rw"
             },
+            "/usr/blueos/bin": {
+                "bind": "/usr/blueos/bin",
+                "mode": "rw"
+            },
             "/etc/resolv.conf.host": {
                 "bind": "/etc/resolv.conf.host",
                 "mode": "ro"
