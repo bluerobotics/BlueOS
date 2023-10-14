@@ -1,5 +1,5 @@
 # Build frontend
-FROM --platform=$BUILDPLATFORM oven/bun AS frontendBuilder
+FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontendBuilder
 
 ARG VUE_APP_GIT_DESCRIBE
 RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
