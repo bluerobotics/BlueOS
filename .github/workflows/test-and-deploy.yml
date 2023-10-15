@@ -112,7 +112,7 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "buildx_args=\
             --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
-            --build-arg VUE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
+            --build-arg VITE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
             --cache-from 'type=local,src=/tmp/.buildx-cache' \
             --cache-to 'type=local,dest=/tmp/.buildx-cache' \
             ${TAGS} \
