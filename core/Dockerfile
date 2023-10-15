@@ -1,10 +1,10 @@
 # Build frontend
 FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontendBuilder
 
-ARG VUE_APP_GIT_DESCRIBE
-RUN [ -z "$VUE_APP_GIT_DESCRIBE" ] \
-    && echo "VUE_APP_GIT_DESCRIBE argument not provided." \
-    && echo "Use: --build-arg VUE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)" \
+ARG VITE_APP_GIT_DESCRIBE
+RUN [ -z "$VITE_APP_GIT_DESCRIBE" ] \
+    && echo "VITE_APP_GIT_DESCRIBE argument not provided." \
+    && echo "Use: --build-arg VITE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)" \
     && exit 1 || exit 0
 
 COPY frontend /home/pi/frontend
