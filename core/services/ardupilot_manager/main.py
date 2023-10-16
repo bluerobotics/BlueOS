@@ -30,7 +30,8 @@ from typedefs import Firmware, FlightController, Parameters, Serial, SITLFrame, 
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
 
-limit_ram_usage()
+# We need additional RAM in order to decompress the manifest file
+limit_ram_usage(200)
 
 parser = argparse.ArgumentParser(description="ArduPilot Manager service for Blue Robotics BlueOS")
 parser.add_argument("-s", "--sitl", help="run SITL instead of connecting any board", action="store_true")
