@@ -324,7 +324,7 @@
     <new-version-notificator />
     <Wizard />
     <alerter />
-    <VueTour
+    <VTour
       name="welcomeTour"
       :steps="steps.filter((step) => step?.filter_wifi_connected !== wifi_connected)"
       :callbacks="tourCallbacks"
