@@ -39,10 +39,6 @@ export default defineConfig({
           from: 'vue-router',
           names: ['RouterLink', 'RouterView'],
         },
-        {
-          from: 'vue-tour',
-          names: ['VueTour'],
-        },
       ],
       // Vue version of project.
       version: 2.7,
