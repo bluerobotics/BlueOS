@@ -83,6 +83,7 @@ SERVICES=(
     'commander',"$SERVICES_PATH/commander/main.py"
     'nmea_injector',"nice -19 $SERVICES_PATH/nmea_injector/nmea_injector/main.py"
     'helper',"$SERVICES_PATH/helper/main.py"
+    'iperf3'," iperf3 --server --port 5201"
     'linux2rest',"linux2rest"
     'filebrowser',"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
     'versionchooser',"$SERVICES_PATH/versionchooser/main.py"
