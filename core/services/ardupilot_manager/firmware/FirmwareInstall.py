@@ -25,12 +25,16 @@ def get_board_id(platform: Platform) -> int:
     return ardupilot_board_ids.get(platform, -1)
 
 
-def get_correspondent_elf_arch(platform_arch: str) -> str:
-    correspondent_elf_archs = {
-        "x86_64": "x64",
-        "armv7l": "ARM",
-    }
-    return correspondent_elf_archs.get(platform_arch, "")
+def is_valid_elf_type(elf_arch: str) -> bool:
+    arch_mapping = {"i386": "x86", "x86_64": "x64", "armv7l": "ARM", "aarch64": "AArch64"}
+    system_arch = system_platform.machine()
+    system_arch = arch_mapping.get(system_arch, system_arch)
+
+    if system_arch == elf_arch:
+        return True
+    if system_arch == "AArch64" and elf_arch == "ARM":
+        return True
+    return False
 
 
 def get_correspondent_decoder_platform(current_platform: Platform) -> Union[BoardType, BoardSubType]:
@@ -80,10 +84,9 @@ class FirmwareInstaller:
                 firm_arch = elf_file.get_machine_arch()
             except Exception as error:
                 raise InvalidFirmwareFile("Given file is not a valid ELF.") from error
-        running_arch = system_platform.machine()
-        if firm_arch != get_correspondent_elf_arch(running_arch):
+        if not is_valid_elf_type(firm_arch):
             raise InvalidFirmwareFile(
-                f"Firmware's architecture ({firm_arch}) does not match system's ({running_arch})."
+                f"Firmware's architecture ({firm_arch}) does not match system's ({system_platform.machine()})."
             )
 
         # Check if firmware's platform matches system platform
