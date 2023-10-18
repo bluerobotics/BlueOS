@@ -74,7 +74,7 @@ setuptools.setup(
         "aiofiles == 0.6.0",
         "loguru == 0.5.3",
         "commonwealth == 0.1.0",
-        "pyelftools == 0.28",
+        "pyelftools == 0.30",
         "psutil == 5.7.2",
         "pyserial == 3.5",
         "pydantic == 1.10.12",
