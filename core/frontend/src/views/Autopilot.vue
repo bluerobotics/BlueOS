@@ -112,7 +112,6 @@ import AutopilotSerialConfiguration from '@/components/autopilot/AutopilotSerial
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
 import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import { Message as M2R } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
