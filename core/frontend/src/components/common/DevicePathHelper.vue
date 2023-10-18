@@ -32,12 +32,12 @@
 </template>
 
 <script lang="ts">
-import navigator_image from '@/assets/img/devicePathHelper/navigator.svg'
-import raspberry_pi3_image from '@/assets/img/devicePathHelper/rpi3b.svg'
-import raspberry_pi4_image from '@/assets/img/devicePathHelper/rpi4b.svg'
 import { v4 as uuid } from 'uuid'
 import Vue from 'vue'
 
+import navigator_image from '@/assets/img/devicePathHelper/navigator.svg'
+import raspberry_pi3_image from '@/assets/img/devicePathHelper/rpi3b.svg'
+import raspberry_pi4_image from '@/assets/img/devicePathHelper/rpi4b.svg'
 import system_information from '@/store/system-information'
 import { Dictionary } from '@/types/common'
 
