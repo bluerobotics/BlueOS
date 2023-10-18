@@ -102,7 +102,7 @@
 import Vue from 'vue'
 
 import ArduPilotBanner from '@/assets/img/banners/ArduPilot.svg'
-import OpenPilotBanner  from '@/assets/img/banners/OpenPilot.svg'
+import OpenPilotBanner from '@/assets/img/banners/OpenPilot.svg'
 import PX4Banner from '@/assets/img/banners/PX4.svg'
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import {
