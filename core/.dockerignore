@@ -6,4 +6,5 @@
 **/*.egg-info
 **/node_modules
 **/dist
+!/frontend/src/components/vue-tour/dist
 **/build
