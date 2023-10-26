@@ -20,6 +20,7 @@ class SerialBoardIdentifier(BaseModel):
 identifiers: List[SerialBoardIdentifier] = [
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="Pixhawk1", platform=Platform.Pixhawk1),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v2.x", platform=Platform.Pixhawk1),
+    SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v3.x", platform=Platform.Pixhawk1),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="Pixhawk4", platform=Platform.Pixhawk4),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v5.x", platform=Platform.Pixhawk4),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v6X.x", platform=Platform.Pixhawk6X),
