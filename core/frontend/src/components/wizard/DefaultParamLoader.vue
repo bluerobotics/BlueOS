@@ -8,7 +8,7 @@
         item-value="full"
         :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
         :loading="is_loading"
-        :disabled="is_loading_paramsets || has_error || filtered_param_sets_names.length === 0"
+        :disabled="is_loading_paramsets"
         style="min-width: 60%;"
         :rules="[isNotEmpty]"
         @change="setParamSet(filtered_param_sets[selected_param_set_name])"
