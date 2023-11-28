@@ -15,6 +15,7 @@
       height="100%"
       width="100%"
       frameBorder="0"
+      allowfullscreen
       @load="loadFinished"
     />
   </v-sheet>
