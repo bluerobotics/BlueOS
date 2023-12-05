@@ -280,11 +280,16 @@ class Kraken:
         containers: List[DockerContainer] = await self.client.containers.list(filter='{"status": ["running"]}')  # type: ignore
         return containers
 
-    async def load_logs(self, container_name: str) -> List[str]:
+    async def stream_logs(self, container_name: str, timeout: int = 30) -> AsyncGenerator[str, None]:
         containers = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
         if not containers:
             raise RuntimeError(f"Container not found: {container_name}")
-        return cast(List[str], await containers[0].log(stdout=True, stderr=True))
+
+        start_time = asyncio.get_event_loop().time()
+        async for log_line in containers[0].log(stdout=True, stderr=True, follow=True, stream=True):
+            if asyncio.get_event_loop().time() - start_time > timeout:
+                break
+            yield log_line
 
     # pylint: disable=too-many-locals
     async def load_stats(self) -> Dict[str, Any]:
