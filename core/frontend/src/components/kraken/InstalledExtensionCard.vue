@@ -27,8 +27,9 @@
               <td>CPU usage</td>
               <td>
                 <v-progress-linear
+                  class="progress"
                   :value="getCpuUsage() / getCpuLimit() / 0.01"
-                  color="green"
+                  color="br_blue"
                   height="25"
                 >
                   <template #default>
@@ -51,8 +52,9 @@
               <td>Memory usage</td>
               <td>
                 <v-progress-linear
+                  class="progress"
                   :value="getMemoryUsage()"
-                  color="green"
+                  color="br_blue"
                   height="25"
                 >
                   <template #default>
@@ -75,8 +77,9 @@
               <td>Disk usage</td>
               <td>
                 <v-progress-linear
+                  class="progress"
                   :value="getDiskUsage()"
-                  color="green"
+                  color="br_blue"
                   height="25"
                 >
                   <template #default>
@@ -293,5 +296,9 @@ export default Vue.extend({
 <style scoped>
 .card-actions {
   flex-wrap: wrap;
+}
+.progress {
+  border-radius: 3px;
+  min-width: 150px;
 }
 </style>
