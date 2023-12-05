@@ -2,13 +2,13 @@
 import argparse
 import asyncio
 import logging
-from typing import Any, List
+from typing import Any, Iterable
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
@@ -129,10 +129,10 @@ async def list_containers() -> Any:
     ]
 
 
-@app.get("/log", status_code=status.HTTP_200_OK)
+@app.get("/log", status_code=status.HTTP_200_OK, response_class=PlainTextResponse)
 @version(1, 0)
-async def log_containers(container_name: str) -> List[str]:
-    return await kraken.load_logs(container_name)
+async def log_containers(container_name: str) -> Iterable[bytes]:
+    return StreamingResponse(kraken.stream_logs(container_name))  # type: ignore
 
 
 @app.get("/stats", status_code=status.HTTP_200_OK)
