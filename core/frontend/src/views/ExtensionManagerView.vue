@@ -103,31 +103,26 @@
         v-if="tab === 1"
         class="pa-6"
       >
-        <v-row
-          dense
-        >
-          <v-col
+        <div v-if="tab === 1" class="installed-extensions-container">
+          <installed-extension-card
             v-for="extension in installed_extensions"
             :key="extension.docker"
-            class="pa-2 col-6"
-          >
-            <installed-extension-card
-              :extension="extension"
-              :loading="extension.loading"
-              :metrics="metricsFor(extension)"
-              :container="getContainer(extension)"
-              :versions="remoteVersions(extension)"
-              :extension-data="remoteVersions(extension)"
-              @edit="openEditDialog"
-              @showlogs="showLogs(extension)"
-              @uninstall="uninstall(extension)"
-              @disable="disable(extension)"
-              @enable="enableAndStart(extension)"
-              @restart="restart(extension)"
-              @update="update"
-            />
-          </v-col>
-        </v-row>
+            :extension="extension"
+            :loading="extension.loading"
+            :metrics="metricsFor(extension)"
+            :container="getContainer(extension)"
+            :versions="remoteVersions(extension)"
+            :extension-data="remoteVersions(extension)"
+            class="installed-extension-card"
+            @edit="openEditDialog"
+            @showlogs="showLogs(extension)"
+            @uninstall="uninstall(extension)"
+            @disable="disable(extension)"
+            @enable="enableAndStart(extension)"
+            @restart="restart(extension)"
+            @update="update"
+          />
+        </div>
         <v-container
           v-if="Object.keys(installed_extensions).isEmpty()"
           class="text-center"
@@ -614,6 +609,18 @@ export default Vue.extend({
 </script>
 
 <style>
+.installed-extensions-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.installed-extension-card {
+  margin: 10px;
+  flex: 1 1 400px;
+}
+
 .jv-code {
   padding: 0px !important;
 }
