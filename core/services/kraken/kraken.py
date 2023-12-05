@@ -289,12 +289,22 @@ class Kraken:
     # pylint: disable=too-many-locals
     async def load_stats(self) -> Dict[str, Any]:
         containers = await self.client.containers.list()  # type: ignore
-        container_stats = [
-            ((await container.stats(stream=False))[0], (await container.show(size=1))) for container in containers
-        ]
+
+        # Create separate lists of coroutine objects for stats and show
+        stats_coroutines = [container.stats(stream=False) for container in containers]
+        show_coroutines = [container.show(size=1) for container in containers]
+
+        # Run all stats and show coroutine objects concurrently
+        stats_results = await asyncio.gather(*stats_coroutines)
+        show_results = await asyncio.gather(*show_coroutines)
+
+        # Extract the relevant data from the results
+        container_stats = [result[0] for result in stats_results]
+        container_shows = list(show_results)
+
         result = {}
         total_disk_size = psutil.disk_usage("/").total
-        for (stats, show) in container_stats:
+        for stats, show in zip(container_stats, container_shows):
             # Based over: https://github.com/docker/cli/blob/v20.10.20/cli/command/container/stats_helpers.go
             cpu_percent = 0
 
