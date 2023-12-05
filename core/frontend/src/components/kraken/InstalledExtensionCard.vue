@@ -133,7 +133,7 @@
       </v-expansion-panel>
     </v-expansion-panels>
 
-    <v-card-actions>
+    <v-card-actions class="card-actions">
       <v-btn @click="$emit('uninstall', extension)">
         Uninstall
       </v-btn>
