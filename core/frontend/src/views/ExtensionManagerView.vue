@@ -424,25 +424,41 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALLED_FETCH_FAIL', error)
         })
     },
-    async showLogs(extension: InstalledExtensionData): Promise<void> {
+    async showLogs(extension: InstalledExtensionData) {
       this.setLoading(extension, true)
-      await back_axios({
+      const ansi = new AnsiUp()
+      this.log_output = ''
+
+      back_axios({
         method: 'get',
         url: `${API_URL}/log`,
         params: {
           container_name: this.getContainerName(extension),
         },
+        onDownloadProgress: (progressEvent) => {
+          const chunk = progressEvent.currentTarget.response
+          this.$set(this, 'log_output', this.log_output + ansi.ansi_to_html(chunk))
+          this.show_log = true
+          this.setLoading(extension, false)
+          this.$nextTick(() => {
+            // TODO: find a better way to scroll to bottom
+            const output = document.querySelector(
+              '#app > div.v-dialog__content.v-dialog__content--active > div',
+            ) as HTMLInputElement
+            output.scrollTop = output.scrollHeight
+          })
+        },
         timeout: 30000,
       })
-        .then((response) => {
-          const ansi = new AnsiUp()
-          this.log_output = ansi.ansi_to_html(response.data.join(''))
-          this.show_log = true
+        .then(() => {
+          this.setLoading(extension, false)
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', error)
         })
-      this.setLoading(extension, false)
+        .finally(() => {
+          this.setLoading(extension, false)
+        })
     },
     showModal(extension: ExtensionData) {
       this.show_dialog = true
