@@ -15,7 +15,7 @@
       </v-btn>
     </v-card-title>
     <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.docker }}</span>
-    <v-card-text width="50%">
+    <v-card-text>
       <v-simple-table>
         <template #default>
           <tbody>
@@ -290,3 +290,8 @@ export default Vue.extend({
   },
 })
 </script>
+<style scoped>
+.card-actions {
+  flex-wrap: wrap;
+}
+</style>
