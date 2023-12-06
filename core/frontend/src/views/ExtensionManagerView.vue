@@ -137,7 +137,7 @@
             v-else
             class="text-h6"
           >
-            Fetching Extensions
+            Fetching installed extensions
           </p>
         </v-container>
         <v-fab-transition>
