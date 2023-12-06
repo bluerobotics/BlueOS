@@ -215,6 +215,20 @@ async def start() -> Any:
     logger.debug("Ardupilot successfully started.")
 
 
+@app.post("/preferred_router", summary="Set the preferred MAVLink router.")
+@version(1, 0)
+async def set_preferred_router(router: str) -> Any:
+    logger.debug("Setting preferred Router")
+    autopilot.set_preferred_router(router)
+    logger.debug(f"Preferred Router successfully set to {router}")
+
+
+@app.get("/preferred_router", summary="Retrieve preferred router")
+@version(1, 0)
+def preferred_router() -> Any:
+    return autopilot.load_preferred_router()
+
+
 @app.post("/stop", summary="Stop the autopilot.")
 @version(1, 0)
 async def stop() -> Any:

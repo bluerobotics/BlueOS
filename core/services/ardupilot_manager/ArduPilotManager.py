@@ -42,8 +42,6 @@ class ArduPilotManager(metaclass=Singleton):
     def __init__(self) -> None:
         self.settings = Settings()
         self.settings.create_app_folders()
-        self.mavlink_manager = MavlinkManager()
-        self.mavlink_manager.set_logdir(self.settings.log_path)
         self._current_board: Optional[FlightController] = None
 
         # Load settings and do the initial configuration
@@ -54,6 +52,12 @@ class ArduPilotManager(metaclass=Singleton):
             self.settings.create_settings_file()
 
         self.configuration = deepcopy(self.settings.content)
+        self.mavlink_manager = MavlinkManager(self.load_preferred_router())
+        if not self.load_preferred_router():
+            self.set_preferred_router(self.mavlink_manager.available_interfaces()[0].name())
+            logger.info(f"Setting {self.mavlink_manager.available_interfaces()[0].name()} as preferred router.")
+        self.mavlink_manager.set_logdir(self.settings.log_path)
+
         self._load_endpoints()
         self.ardupilot_subprocess: Optional[Any] = None
         self.firmware_manager = FirmwareManager(
@@ -272,6 +276,18 @@ class ArduPilotManager(metaclass=Singleton):
         logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
         self.set_sitl_frame(frame)
         return frame
+
+    def set_preferred_router(self, router: str) -> None:
+        self.settings.preferred_router = router
+        self.configuration["preferred_router"] = router
+        self.settings.save(self.configuration)
+        self.mavlink_manager.set_preferred_router(router)
+
+    def load_preferred_router(self) -> Optional[str]:
+        try:
+            return self.configuration["preferred_router"]  # type: ignore
+        except KeyError:
+            return None
 
     def start_sitl(self) -> None:
         self._current_board = BoardDetector.detect_sitl()

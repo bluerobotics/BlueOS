@@ -38,10 +38,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--tool",
         dest="tool",
-        type=str,
-        default=interfaces[0].name(),
         choices=[interface.name() for interface in interfaces],
-        help="Selected the desired tool to use, the default will be the first one available.",
+        help="Select the desired tool to use, this will override the one in the settings file."
+        + " The default will be the first one available.",
     )
 
     args = parser.parse_args()
@@ -49,7 +48,11 @@ if __name__ == "__main__":
     tool = AbstractRouter.get_interface(args.tool)()
     logger.info(f"Starting {tool.name()} version {tool.version()}.")
 
-    manager.use(tool)
+    if tool:
+        manager.use(tool)
+    else:
+        logger.warning("No tool selected. Falling back to the first one found")
+        manager.use(interfaces[0]())
     manager.add_endpoints(args.output.split(":"))
 
     logger.info(f"Command: {manager.command_line()}")

@@ -20,7 +20,7 @@ from mavlink_proxy.Endpoint import Endpoint
 
 
 class Manager:
-    def __init__(self) -> None:
+    def __init__(self, preferred_tool: Optional[str] = None) -> None:
         available_interfaces = Manager.available_interfaces()
         if not available_interfaces:
             raise RuntimeError(
@@ -29,7 +29,10 @@ class Manager:
                 f" Supported: {Manager.possible_interfaces()}"
             )
 
-        self.tool = available_interfaces[0]()
+        if preferred_tool:
+            self.tool = AbstractRouter.get_interface(preferred_tool)()
+        else:
+            self.tool = available_interfaces[0]()
         self.should_be_running = False
         self._last_valid_endpoints: Set[Endpoint] = set()
 
@@ -110,9 +113,25 @@ class Manager:
         return self.tool.master_endpoint
 
     def start(self, master_endpoint: Endpoint) -> None:
+        if not self.tool:
+            logger.info("No tool selected. Falling back to the first one found")
+            self.tool = self.available_interfaces()[0]()
         self.should_be_running = True
         self.tool.start(master_endpoint)
         self._last_valid_endpoints = self.endpoints()
+
+    def set_preferred_router(self, router_name: str) -> None:
+        try:
+            endpoints = self.endpoints()
+            master_endpoint = self.master_endpoint
+            self.tool.exit()
+            self.tool = AbstractRouter.get_interface(router_name)()
+            for endpoint in endpoints:
+                self.tool.add_endpoint(endpoint)
+            if master_endpoint:
+                self.tool.start(master_endpoint)
+        except Exception as error:
+            logger.error(f"Failed to set preferred router to {router_name}. {error}")
 
     def stop(self) -> None:
         self.should_be_running = False
