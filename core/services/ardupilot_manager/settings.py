@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import appdirs
 from loguru import logger
@@ -23,6 +23,7 @@ class Settings:
     blueos_files_folder = Path.joinpath(Path.home(), "blueos-files")
     defaults_folder = Path.joinpath(blueos_files_folder, "ardupilot-manager/default")
     sitl_frame = SITLFrame.UNDEFINED
+    preferred_router: Optional[str] = None
 
     def __init__(self) -> None:
         self.root: Dict[str, Union[int, Dict[str, Any]]] = {"version": 0, "content": {}}
