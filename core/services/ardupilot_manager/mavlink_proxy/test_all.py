@@ -199,7 +199,12 @@ def serial_test_mavlink_router(valid_output_endpoints: Set[Endpoint], valid_mast
         EndpointType.TCPServer,
         EndpointType.TCPClient,
     ]
-    allowed_master_types = [EndpointType.UDPServer, EndpointType.Serial, EndpointType.TCPServer]
+    allowed_master_types = [
+        EndpointType.UDPServer,
+        EndpointType.TCPServer,
+        EndpointType.TCPClient,
+        EndpointType.Serial,
+    ]
     run_common_routing_tests(
         mavlink_router, allowed_output_types, allowed_master_types, valid_output_endpoints, valid_master_endpoints
     )
