@@ -98,72 +98,70 @@
         </p>
       </v-container>
     </v-card>
-    <v-row>
-      <v-col
-        v-if="tab === 1"
-        class="pa-6"
-      >
-        <div v-if="tab === 1" class="installed-extensions-container">
-          <installed-extension-card
-            v-for="extension in installed_extensions"
-            :key="extension.docker"
-            :extension="extension"
-            :loading="extension.loading"
-            :metrics="metricsFor(extension)"
-            :container="getContainer(extension)"
-            :versions="remoteVersions(extension)"
-            :extension-data="remoteVersions(extension)"
-            class="installed-extension-card"
-            @edit="openEditDialog"
-            @showlogs="showLogs(extension)"
-            @uninstall="uninstall(extension)"
-            @disable="disable(extension)"
-            @enable="enableAndStart(extension)"
-            @restart="restart(extension)"
-            @update="update"
-          />
-        </div>
-        <v-container
-          v-if="Object.keys(installed_extensions).isEmpty()"
-          class="text-center"
-        >
-          <p
-            v-if="dockers_fetch_done"
-            class="text-h6"
-          >
-            No Extensions installed.
-          </p>
-          <p
-            v-else
-            class="text-h6"
-          >
-            Fetching installed extensions
-          </p>
-        </v-container>
-        <v-fab-transition>
-          <v-btn
-            :key="'create_button'"
-            color="primary"
-            fab
-            large
-            dark
-            fixed
-            bottom
-            right
-            class="v-btn--example"
-            @click="openCreationDialog"
-          >
-            <v-icon>mdi-plus</v-icon>
-          </v-btn>
-        </v-fab-transition>
-        <creation-dialog
-          v-if="edited_extension"
-          :extension="edited_extension"
-          @extensionChange="createOrUpdateExtension"
-          @closed="clearEditedExtension"
+    <v-card
+      v-if="tab === 1"
+      class="d-flex pa-5"
+      text-align="center"
+    >
+      <div v-if="tab === 1" class="installed-extensions-container">
+        <installed-extension-card
+          v-for="extension in installed_extensions"
+          :key="extension.docker"
+          :extension="extension"
+          :loading="extension.loading"
+          :metrics="metricsFor(extension)"
+          :container="getContainer(extension)"
+          :versions="remoteVersions(extension)"
+          :extension-data="remoteVersions(extension)"
+          class="installed-extension-card"
+          @edit="openEditDialog"
+          @showlogs="showLogs(extension)"
+          @uninstall="uninstall(extension)"
+          @disable="disable(extension)"
+          @enable="enableAndStart(extension)"
+          @restart="restart(extension)"
+          @update="update"
         />
-      </v-col>
-    </v-row>
+      </div>
+      <template
+        v-if="Object.keys(installed_extensions).isEmpty()"
+      >
+        <p v-if="dockers_fetch_failed" class="text-h6" style="margin: auto;">
+          Failed to fetch installed extensions. Make sure the vehicle has internet access and try again.
+        </p>
+        <p
+          v-else-if="dockers_fetch_done"
+          class="text-h6"
+        >
+          No Extensions installed.
+        </p>
+        <template v-else>
+          <spinning-logo size="20%" subtitle="Fetching installed extensions" />
+        </template>
+      </template>
+      <v-fab-transition>
+        <v-btn
+          :key="'create_button'"
+          color="primary"
+          fab
+          large
+          dark
+          fixed
+          bottom
+          right
+          class="v-btn--example"
+          @click="openCreationDialog"
+        >
+          <v-icon>mdi-plus</v-icon>
+        </v-btn>
+      </v-fab-transition>
+      <creation-dialog
+        v-if="edited_extension"
+        :extension="edited_extension"
+        @extensionChange="createOrUpdateExtension"
+        @closed="clearEditedExtension"
+      />
+    </v-card>
   </v-container>
 </template>
 
@@ -172,6 +170,7 @@ import AnsiUp from 'ansi_up'
 import axios from 'axios'
 import Vue from 'vue'
 
+import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
 import CreationDialog from '@/components/kraken/ExtensionCreationDialog.vue'
 import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
@@ -199,6 +198,7 @@ export default Vue.extend({
     ExtensionModal,
     PullProgress,
     CreationDialog,
+    SpinningLogo,
   },
   data() {
     return {
@@ -211,6 +211,7 @@ export default Vue.extend({
       running_containers: [] as RunningContainer[],
       manifest: [] as ExtensionData[],
       dockers_fetch_done: false,
+      dockers_fetch_failed: false,
       show_pull_output: false,
       pull_output: '',
       download_percentage: 0,
@@ -413,9 +414,11 @@ export default Vue.extend({
           for (const extension of response.data) {
             this.installed_extensions[extension.identifier] = extension
           }
+          this.dockers_fetch_failed = false
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_INSTALLED_FETCH_FAIL', error)
+          this.dockers_fetch_failed = true
         })
         .finally(() => {
           this.dockers_fetch_done = true
