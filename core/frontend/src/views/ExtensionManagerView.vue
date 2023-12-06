@@ -413,10 +413,12 @@ export default Vue.extend({
           for (const extension of response.data) {
             this.installed_extensions[extension.identifier] = extension
           }
-          this.dockers_fetch_done = true
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_INSTALLED_FETCH_FAIL', error)
+        })
+        .finally(() => {
+          this.dockers_fetch_done = true
         })
     },
     async showLogs(extension: InstalledExtensionData): Promise<void> {
