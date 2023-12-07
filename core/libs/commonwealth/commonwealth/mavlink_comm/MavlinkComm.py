@@ -92,7 +92,7 @@ class MavlinkMessenger:
                         continue
                     last_update_str = message["status"]["time"]["last_update"]
                     # drop sub-microsecond precision as it is not supported by datetime.fromisoformat
-                    last_update_str = re.sub(r"(\.\d{6})\d+", r"\1", last_update_str)
+                    last_update_str = re.sub(r"(\.\d{6})\d+Z?", r"\1", last_update_str)
                     last_update = datetime.fromisoformat(last_update_str)
 
                     if last_update > most_recent_timestamp:
