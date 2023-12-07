@@ -229,6 +229,12 @@ def preferred_router() -> Any:
     return autopilot.load_preferred_router()
 
 
+@app.get("/available_routers", summary="Retrieve preferred router")
+@version(1, 0)
+def available_routers() -> Any:
+    return autopilot.get_available_routers()
+
+
 @app.post("/stop", summary="Stop the autopilot.")
 @version(1, 0)
 async def stop() -> Any:
