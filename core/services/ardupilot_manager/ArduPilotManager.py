@@ -289,6 +289,9 @@ class ArduPilotManager(metaclass=Singleton):
         except KeyError:
             return None
 
+    def get_available_routers(self) -> List[str]:
+        return [router.name() for router in self.mavlink_manager.available_interfaces()]
+
     def start_sitl(self) -> None:
         self._current_board = BoardDetector.detect_sitl()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
