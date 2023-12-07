@@ -1,4 +1,5 @@
 import os
+import platform
 
 import pytest
 
@@ -47,6 +48,9 @@ def test_firmware_download() -> None:
 
     assert firmware_download.download(Vehicle.Sub, Platform.SITL), "Failed to download SITL."
 
+    # skipt these tests for MacOS
+    if platform.system() == "Darwin":
+        pytest.skip("Skipping test for MacOS")
     # It'll fail if running in an arch different of ARM
     if "x86" in os.uname().machine:
         assert firmware_download.download(Vehicle.Sub, Platform.Navigator), "Failed to download navigator binary."
