@@ -1,10 +1,35 @@
 <template>
   <div class="endpoints-manager d-flex flex-column align-center">
     <div
-      v-if="are_endpoints_available && !updating_endpoints"
+      v-if="are_endpoints_available && !updating_endpoints && !updating_router"
       class="d-flex flex-column align-center justify-center ma-0 pa-0"
       style="width: 80%;"
     >
+    <v-divider
+          width="80%"
+          class="my-4"
+        />
+    <v-card class="align-center justify-center pa-6 d-block">
+      <v-card-title class="ma-0 pa-0 d-block">
+        Mavlink Router
+      </v-card-title>
+        <v-card-text>
+          <p>
+            Select the router to use for distributing MAVLink data.
+          </p>
+        <v-radio-group
+          v-model="selected_router"
+          row
+          @change="setCurrentRouter"
+        >
+          <v-radio v-for="router in available_routers" :key="router" :label="router" :value="router"></v-radio>
+        </v-radio-group>
+      </v-card-text>
+    </v-card>
+    <v-divider
+          width="80%"
+          class="my-4"
+        />
       <template v-for="(endpoint, index) in available_endpoints">
         <v-divider
           v-if="index !== 0"
@@ -19,7 +44,7 @@
       </template>
     </div>
 
-    <v-container v-else-if="updating_endpoints">
+    <v-container v-else-if="updating_endpoints || updating_router">
       <spinning-logo
         size="30%"
         subtitle="Fetching available endpoints..."
@@ -85,6 +110,9 @@ export default Vue.extend({
   data() {
     return {
       show_creation_dialog: false,
+      selected_router: '',
+      available_routers: [] as string[],
+      updating_router: false,
     }
   },
   computed: {
@@ -100,6 +128,8 @@ export default Vue.extend({
   },
   mounted() {
     callPeriodically(fetchAvailableEndpoints, 5000)
+    this.fetchAvailableRouters()
+    this.fetchCurrentRouter()
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchAvailableEndpoints)
@@ -107,6 +137,50 @@ export default Vue.extend({
   methods: {
     openCreationDialog(): void {
       this.show_creation_dialog = true
+    },
+    fetchAvailableRouters(): void {
+      back_axios({
+        method: 'get',
+        url: `${autopilot.API_URL}/available_routers`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          this.available_routers = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('AUTOPILOT_ROUTERS_FETCH_FAIL', error, true)
+        })
+    },
+    fetchCurrentRouter(): void {
+      back_axios({
+        method: 'get',
+        url: `${autopilot.API_URL}/preferred_router`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          this.selected_router = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('AUTOPILOT_ROUTERS_FETCH_FAIL', error, true)
+        })
+    },
+    async setCurrentRouter(): Promise<void>  {
+      this.updating_router = true
+      await back_axios({
+        method: 'post',
+        url: `${autopilot.API_URL}/preferred_router`,
+        timeout: 10000,
+        params: {
+          router: this.selected_router,
+        }
+      })
+        .catch((error) => {
+          notifier.pushBackError('AUTOPILOT_ROUTER_SET_FAIL', error, true)
+        })
+        .finally(() => {
+          this.fetchCurrentRouter()
+          this.updating_router = false
+        })
     },
     async createEndpoint(endpoint: AutopilotEndpoint): Promise<void> {
       await back_axios({
