@@ -1,11 +1,12 @@
 import logging
 from typing import Dict, List
 
+import requests
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate
 from commonwealth.settings.manager import Manager
 from pydantic import BaseModel, conint
-from serial.tools.list_ports_linux import SysFS, comports
+from serial.tools.list_ports_linux import SysFS
 
 from settings import BridgeSettingsSpecV1, SettingsV1
 
@@ -48,25 +49,14 @@ class Bridget:
             except Exception as error:
                 logging.exception(f"Could not add bridge '{bridge_settings_spec}'. {error}")
 
-    def is_port_available(self, port: str) -> bool:
-        if port in [bridge.serial_path for bridge in self._bridges]:
-            return False
-        try:
-            with open(port, mode="r", encoding="utf-8"):
-                pass
-            return True
-        except Exception:
-            return False
-
     def available_serial_ports(self) -> List[str]:
-        available_ports = []
-        for port in comports():
-            if not self.is_port_available(port.device):
-                logging.debug(f"Port {port.device} found but not available.")
-                continue
-            available_ports.append(port.device)
-            logging.debug(f"Port {port.device} found and available.")
-        return available_ports
+        try:
+            response = requests.get("http://localhost:6030/serial", timeout=1)
+            data = response.json()
+            return [port["name"] for port in data["ports"] if port["name"] is not None]
+        except requests.RequestException as e:
+            print(f"Error fetching data: {e}")
+            return []
 
     def get_bridges(self) -> List[BridgeSpec]:
         return [spec for spec, bridge in self._bridges.items()]
