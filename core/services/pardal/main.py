@@ -48,10 +48,11 @@ async def get_file(request: web.Request) -> web.Response:
 
 
 async def post_file(request: web.Request) -> web.Response:
-    # pylint: disable=unused-variable
-    data = await request.read()
+    while True:
+        chunk = await request.content.readany()
+        if not chunk:
+            break
     return web.Response(status=200)
-
 
 # pylint: disable=unused-argument
 async def root(request: web.Request) -> web.Response:
