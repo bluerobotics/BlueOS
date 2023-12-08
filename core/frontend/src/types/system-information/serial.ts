@@ -24,6 +24,8 @@ export interface SerialPortInfo {
     by_path_created_ms_ago: number | null
     // Udev information from the device
     udev_properties: JSONValue | null,
+    // Is the port in use? by whom?
+    current_user: string | null,
 }
 
 /** Base structure that provides serial port information */

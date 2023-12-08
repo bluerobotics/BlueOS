@@ -23,6 +23,7 @@
             :loading="updating_serial_ports"
             item-text="name"
             :item-value="(item) => item.by_path ? item.by_path : item.name"
+            :item-disabled="(item) => item.current_user !== null"
             dense
           >
             <template #item="{ item }">
@@ -36,6 +37,16 @@
                   <v-list-item-content dense>
                     <v-list-item-title md-1>
                       Device: {{ item.name }}
+                      <v-chip
+                        v-if="item.current_user"
+                        class="ma-2 pl-2 pr-2"
+                        color="red"
+                        pill
+                        x-small
+                        text-color="white"
+                      >
+                        In use by {{ item.current_user }}
+                      </v-chip>
                     </v-list-item-title>
                     <v-list-item-subtitle class="text-wrap">
                       Path: {{ item.by_path ? item.by_path : item.name }}
@@ -115,8 +126,10 @@
 import { formatDistanceToNow } from 'date-fns'
 import Vue from 'vue'
 
+import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import DevicePathHelper from '@/components/common/DevicePathHelper.vue'
 import Notifier from '@/libs/notifier'
+import autopilot from '@/store/autopilot_manager'
 import bridget from '@/store/bridget'
 import system_information from '@/store/system-information'
 import { Baudrate } from '@/types/common'
@@ -172,17 +185,17 @@ export default Vue.extend({
     },
     available_serial_ports(): SerialPortInfo[] {
       const system_serial_ports: SerialPortInfo[] | undefined = system_information.serial?.ports
-      if (system_serial_ports === undefined || system_serial_ports.isEmpty()) {
-        return bridget.available_serial_ports.map((port) => ({
-          name: port,
-          by_path: port,
-          by_path_created_ms_ago: null,
-          udev_properties: null,
-        }))
+      if (!system_serial_ports) {
+        return []
       }
-
       return system_serial_ports
         .filter((serial_info) => bridget.available_serial_ports.includes(serial_info.name))
+        .map((serial_info) => ({
+          ...serial_info,
+          current_user: autopilot.autopilot_serials.some(
+            (serial) => serial.endpoint === serial_info.name,
+          ) ? 'autopilot' : null,
+        }))
     },
     bridge_mode(): string {
       switch (this.bridge.ip) {
@@ -203,6 +216,9 @@ export default Vue.extend({
     serial_selector_label(): string {
       return this.updating_serial_ports ? 'Fetching available serial ports...' : 'Serial port'
     },
+  },
+  async mounted() {
+    await AutopilotManager.fetchAutopilotSerialConfiguration()
   },
   methods: {
     create_time_ago(ms_time: number): string {
