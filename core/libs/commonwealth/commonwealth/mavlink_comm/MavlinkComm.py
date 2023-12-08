@@ -3,7 +3,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import aiohttp
@@ -80,7 +80,7 @@ class MavlinkMessenger:
 
     async def get_most_recent_vehicle_id(self) -> int:
         json_data = await self.get_all_mavlink()
-        most_recent_timestamp = datetime.min.replace(tzinfo=timezone.utc)
+        most_recent_timestamp = datetime.min
         most_recent_vehicle_id = None
         for vehicle_id, vehicle in json_data["vehicles"].items():
 
