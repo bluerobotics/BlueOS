@@ -20,7 +20,7 @@
         </v-btn>
         <v-btn
           class="my-2"
-          :disabled="are_video_streams_available || updating_streams"
+          :disabled="!is_redirect_source && (are_video_streams_available || updating_streams)"
           @click="openStreamCreationDialog"
         >
           <v-icon>mdi-plus</v-icon>
