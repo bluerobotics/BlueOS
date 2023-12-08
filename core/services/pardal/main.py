@@ -3,7 +3,7 @@
 import argparse
 import logging
 import os
-from functools import cache
+from typing import Generator
 
 import aiohttp
 from aiohttp import web
@@ -26,9 +26,11 @@ init_logger(SERVICE_NAME)
 logger.info("Starting Pardal")
 
 
-@cache
-def generate_random_data(size: int) -> bytes:
-    return os.urandom(size)
+def generate_random_data(size: int, chunk_size: int = 1024 * 1024) -> Generator[bytes, None, None]:
+    remaining_size = size
+    while remaining_size > 0:
+        yield os.urandom(min(chunk_size, remaining_size))
+        remaining_size -= chunk_size
 
 
 async def websocket_echo(request: web.Request) -> web.WebSocketResponse:
@@ -42,9 +44,18 @@ async def websocket_echo(request: web.Request) -> web.WebSocketResponse:
     return websocket
 
 
-async def get_file(request: web.Request) -> web.Response:
+async def get_file(request: web.Request) -> web.StreamResponse:
     size = int(request.rel_url.query.get("size", 100 * (2**20)))  # 100MB by default
-    return web.Response(status=200, body=generate_random_data(size))
+
+    response = web.StreamResponse(status=200)
+    response.headers["Content-Length"] = str(size)
+    await response.prepare(request)
+
+    for data_chunk in generate_random_data(size):
+        await response.write(bytes(data_chunk))
+
+    await response.write_eof()
+    return response
 
 
 async def post_file(request: web.Request) -> web.Response:
@@ -53,6 +64,7 @@ async def post_file(request: web.Request) -> web.Response:
         if not chunk:
             break
     return web.Response(status=200)
+
 
 # pylint: disable=unused-argument
 async def root(request: web.Request) -> web.Response:
