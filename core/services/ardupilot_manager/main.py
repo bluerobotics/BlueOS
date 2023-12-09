@@ -82,20 +82,20 @@ def get_available_endpoints() -> Any:
 
 @app.post("/endpoints", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
-def create_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
-    autopilot.add_new_endpoints(endpoints)
+async def create_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
+    await autopilot.add_new_endpoints(endpoints)
 
 
 @app.delete("/endpoints", status_code=status.HTTP_200_OK)
 @version(1, 0)
-def remove_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
-    autopilot.remove_endpoints(endpoints)
+async def remove_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
+    await autopilot.remove_endpoints(endpoints)
 
 
 @app.put("/endpoints", status_code=status.HTTP_200_OK)
 @version(1, 0)
-def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
-    autopilot.update_endpoints(endpoints)
+async def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
+    await autopilot.update_endpoints(endpoints)
 
 
 @app.put("/serials", status_code=status.HTTP_200_OK)
@@ -219,7 +219,7 @@ async def start() -> Any:
 @version(1, 0)
 async def set_preferred_router(router: str) -> Any:
     logger.debug("Setting preferred Router")
-    autopilot.set_preferred_router(router)
+    await autopilot.set_preferred_router(router)
     logger.debug(f"Preferred Router successfully set to {router}")
 
 
