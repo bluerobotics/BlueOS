@@ -248,25 +248,38 @@ export default Vue.extend({
         }
       })
     },
+    vehicle_id(): number {
+      return autopilot_data.system_id
+    },
     is_armed(): boolean {
-      const heartbeat = mavlink_store_get(mavlink, 'HEARTBEAT.messageData.message') as Message.Heartbeat
-      return Boolean(heartbeat.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED)
+      const heartbeat = mavlink_store_get(
+        mavlink,
+        'HEARTBEAT.messageData.message',
+        this.vehicle_id,
+        1,
+      ) as Message.Heartbeat
+      return Boolean(heartbeat?.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED)
     },
     is_manual(): boolean {
-      const heartbeat = mavlink_store_get(mavlink, 'HEARTBEAT.messageData.message') as Message.Heartbeat
+      const heartbeat = mavlink_store_get(
+        mavlink,
+        'HEARTBEAT.messageData.message',
+        this.vehicle_id,
+        1,
+      ) as Message.Heartbeat
 
       // Legacy manual mode
-      if (!(heartbeat.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)) {
-        return Boolean(heartbeat.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)
+      if (!(heartbeat?.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)) {
+        return Boolean(heartbeat?.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)
       }
 
       if (this.is_rover) {
         const rover_custom_mode_manual = 0
-        return Boolean(heartbeat.custom_mode === rover_custom_mode_manual)
+        return Boolean(heartbeat?.custom_mode === rover_custom_mode_manual)
       }
       if (this.is_sub) {
         const sub_custom_mode_manual = 19
-        return Boolean(heartbeat.custom_mode === sub_custom_mode_manual)
+        return Boolean(heartbeat?.custom_mode === sub_custom_mode_manual)
       }
 
       return false
