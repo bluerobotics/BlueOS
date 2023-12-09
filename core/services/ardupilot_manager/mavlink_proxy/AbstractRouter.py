@@ -1,10 +1,9 @@
 import abc
+import asyncio
 import pathlib
 import shlex
 import shutil
 import tempfile
-import time
-from subprocess import PIPE, Popen
 from typing import Any, List, Optional, Set, Type
 
 from loguru import logger
@@ -23,7 +22,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._endpoints: Set[Endpoint] = set()
         self._master_endpoint: Optional[Endpoint] = None
-        self._subprocess: Optional[Any] = None
+        self._subprocess: Optional[asyncio.subprocess.Process] = None
 
         # Since this methods can fail we need to have the other variables defined
         # to avoid any problem in __del__
@@ -94,37 +93,74 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def master_endpoint(self) -> Optional[Endpoint]:
         return self._master_endpoint
 
-    def start(self, master_endpoint: Endpoint) -> None:
+    async def start(self, master_endpoint: Endpoint) -> None:
         self._master_endpoint = master_endpoint
         command = self.assemble_command(self._master_endpoint)
         logger.debug(f"Calling router using following command: '{command}'.")
-        # pylint: disable=consider-using-with
-        self._subprocess = Popen(shlex.split(command), shell=False, encoding="utf-8", stdout=PIPE, stderr=PIPE)
 
-        # Since the process takes some time to successfully start or fail, we need to wait before checking it's state
-        time.sleep(1)
-        if not self.is_running():
-            exit_code = self._subprocess.returncode
-            info, error = self._subprocess.communicate()
-            logger.debug(info)
-            logger.error(error)
-            raise MavlinkRouterStartFail(f"Failed to initialize Mavlink router ({exit_code}): {error}.")
+        self._subprocess = await asyncio.create_subprocess_exec(
+            *shlex.split(command), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
 
-    def exit(self) -> None:
-        if self.is_running():
-            # `is_running` already infers `_subprocess` is not None
-            self._subprocess.kill()  # type: ignore
+        await asyncio.sleep(1)  # Non-blocking sleep
+        if not await self.is_running():
+            raise MavlinkRouterStartFail("Failed to initialize Mavlink router")
+        await self.start_house_keepers()
+
+    async def exit(self) -> None:
+        if await self.is_running():
+            if self._subprocess is not None:
+                logger.error("terminate")
+                self._subprocess.terminate()
+                await asyncio.sleep(1)  # Non-blocking sleep
+                if await self.is_running():
+                    logger.error("kill")
+                    self._subprocess.kill()
+                    await asyncio.sleep(1)
+                await self._subprocess.wait()  # Wait for the subprocess to terminate
         else:
             logger.debug("Tried to stop router, but it was already not running.")
 
-    def restart(self) -> None:
+    async def start_house_keepers(self) -> None:
+        if self._subprocess is None:
+            return
+        # Ensure that the logging tasks are awaited and executed
+        asyncio.create_task(self._log_stdout())
+        asyncio.create_task(self._log_stderr())
+
+    async def _log_stdout(self) -> None:
+        while self._subprocess is not None:
+            if self._subprocess.stdout:
+                stdout_line = await self._subprocess.stdout.readline()
+                if stdout_line:
+                    logger.debug(f"Router: {stdout_line.decode().strip()}")
+                else:
+                    break  # EOF reached
+            await asyncio.sleep(0.01)
+
+    async def _log_stderr(self) -> None:
+        while self._subprocess is not None:
+            if self._subprocess.stderr:
+                stderr_line = await self._subprocess.stderr.readline()
+                if stderr_line:
+                    logger.debug(f"Router: {stderr_line.decode().strip()}")
+                else:
+                    break  # EOF reached
+            await asyncio.sleep(0.01)
+
+    async def restart(self) -> None:
         if self._master_endpoint is None:
             raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot restart router.")
-        self.exit()
-        self.start(self._master_endpoint)
+        await self.exit()
+        await self.start(self._master_endpoint)
 
-    def is_running(self) -> bool:
-        return self._subprocess is not None and self._subprocess.poll() is None
+    async def is_running(self) -> bool:
+        if not self._subprocess:
+            return False
+
+        # The 'poll' method is not available in asyncio's subprocess,
+        # so we use 'returncode' to check if the process has exited
+        return self._subprocess.returncode is None
 
     def process(self) -> Any:
         assert self._subprocess is not None
@@ -172,6 +208,3 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     binary_name: {self.binary_name()}
     is_ok: {self.is_ok()}
 """
-
-    def __del__(self) -> None:
-        self.exit()
