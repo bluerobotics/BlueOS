@@ -11,7 +11,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
-    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour --fix src"
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src"
   },
   "dependencies": {
     "@google/model-viewer": "^3.0.0",
