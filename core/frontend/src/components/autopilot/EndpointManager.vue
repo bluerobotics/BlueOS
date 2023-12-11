@@ -5,31 +5,31 @@
       class="d-flex flex-column align-center justify-center ma-0 pa-0"
       style="width: 80%;"
     >
-    <v-divider
-          width="80%"
-          class="my-4"
-        />
-    <v-card class="align-center justify-center pa-6 d-block">
-      <v-card-title class="ma-0 pa-0 d-block">
-        Mavlink Router
-      </v-card-title>
+      <v-divider
+        width="80%"
+        class="my-4"
+      />
+      <v-card class="align-center justify-center pa-6 d-block">
+        <v-card-title class="ma-0 pa-0 d-block">
+          Mavlink Router
+        </v-card-title>
         <v-card-text>
           <p>
             Select the router to use for distributing MAVLink data.
           </p>
-        <v-radio-group
-          v-model="selected_router"
-          row
-          @change="setCurrentRouter"
-        >
-          <v-radio v-for="router in available_routers" :key="router" :label="router" :value="router"></v-radio>
-        </v-radio-group>
-      </v-card-text>
-    </v-card>
-    <v-divider
-          width="80%"
-          class="my-4"
-        />
+          <v-radio-group
+            v-model="selected_router"
+            row
+            @change="setCurrentRouter"
+          >
+            <v-radio v-for="router in available_routers" :key="router" :label="router" :value="router" />
+          </v-radio-group>
+        </v-card-text>
+      </v-card>
+      <v-divider
+        width="80%"
+        class="my-4"
+      />
       <template v-for="(endpoint, index) in available_endpoints">
         <v-divider
           v-if="index !== 0"
@@ -164,7 +164,7 @@ export default Vue.extend({
           notifier.pushBackError('AUTOPILOT_ROUTERS_FETCH_FAIL', error, true)
         })
     },
-    async setCurrentRouter(): Promise<void>  {
+    async setCurrentRouter(): Promise<void> {
       this.updating_router = true
       await back_axios({
         method: 'post',
@@ -172,7 +172,7 @@ export default Vue.extend({
         timeout: 10000,
         params: {
           router: this.selected_router,
-        }
+        },
       })
         .catch((error) => {
           notifier.pushBackError('AUTOPILOT_ROUTER_SET_FAIL', error, true)
