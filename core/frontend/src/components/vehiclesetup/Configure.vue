@@ -62,6 +62,8 @@ import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import autopilot from '@/store/autopilot_manager'
 import settings from '@/store/settings'
 
+import SpinningLogo from '../common/SpinningLogo.vue'
+import ArdupilotMavlinkCompassSetup from './configuration/compass/ArdupilotMavlinkCompassSetup.vue'
 import LightsConfigration from './configuration/lights.vue'
 import GripperInfo from './overview/gripper.vue'
 import LeakInfo from './overview/LeakInfo.vue'
@@ -87,6 +89,8 @@ export default Vue.extend({
     LeakInfo,
     ParamSets,
     LightsConfigration,
+    ArdupilotMavlinkCompassSetup,
+    SpinningLogo,
   },
   data() {
     return {
@@ -94,7 +98,7 @@ export default Vue.extend({
       pages: [
         { title: 'Parameters', component: ParamSets },
         { title: 'Accelerometer', component: undefined },
-        { title: 'Compass', component: undefined },
+        { title: 'Compass', component: ArdupilotMavlinkCompassSetup },
         { title: 'Baro', component: undefined },
         { title: 'Gripper', component: undefined },
         { title: 'Lights', component: LightsConfigration, filter: () => autopilot.vehicle_type === 'Submarine' },
