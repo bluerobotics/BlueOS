@@ -25,7 +25,7 @@
                   </th>
                   <th>
                     <v-switch
-                      v-model="is_armed"
+                      v-model="desired_armed_state"
                       :loading="desired_armed_state !== (is_armed) ? 'warning' : null"
                       :disabled="!is_manual"
                       class="mx-1 flex-grow-0"
@@ -415,10 +415,9 @@ export default Vue.extend({
         console.warn('Disarming failed!')
       }, 5000)
     },
-    arm_disarm_switch_change(): void {
-      this.desired_armed_state = !this.is_armed
+    arm_disarm_switch_change(should_arm: boolean): void {
       // eslint-disable-next-line no-unused-expressions
-      this.is_armed ? this.disarm() : this.arm()
+      should_arm ? this.arm() : this.disarm()
     },
     armDisarm(arm: boolean, force: boolean): void {
       mavlink2rest.sendMessage(
