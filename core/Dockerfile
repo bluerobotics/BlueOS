@@ -35,6 +35,7 @@ COPY configuration/motd /etc/motd
 COPY services /home/pi/services
 RUN /home/pi/services/install-services.sh
 COPY start-blueos-core /usr/bin/start-blueos-core
+COPY run-service.sh /usr/bin/run-service
 
 # Copy binaries and necessary folders from downloadBinaries to this stage
 COPY --from=downloadBinaries \
