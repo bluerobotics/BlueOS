@@ -9,6 +9,11 @@
           <vehicle-viewer :highlight="highlight" :transparent="true" :autorotate="false" />
         </v-card>
         <v-card class="mt-3">
+          <v-overlay :value="!has_focus">
+            <div class="text-h4 py-12 px-12">
+              Motor test is disabled when the page is out of focus
+            </div>
+          </v-overlay>
           <v-simple-table
             dense
           >
@@ -188,6 +193,8 @@ export default Vue.extend({
       motor_writer_interval: undefined as undefined | number,
       desired_armed_state: false,
       arming_timeout: undefined as number | undefined,
+      has_focus: true,
+      motors_zeroed: false,
     }
   },
   computed: {
@@ -326,13 +333,29 @@ export default Vue.extend({
     this.motor_writer_interval = setInterval(this.write_motors, 100)
     mavlink.setMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 10 })
     this.desired_armed_state = this.is_armed
+    this.installListeners()
   },
   beforeDestroy() {
     clearInterval(this.motor_zeroer_interval)
     clearInterval(this.motor_writer_interval)
     mavlink.setMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 1 })
+    this.uninstallListeners()
   },
   methods: {
+    focusListener() {
+      this.has_focus = true
+    },
+    blurListener() {
+      this.has_focus = false
+    },
+    installListeners() {
+      window.addEventListener('focus', this.focusListener)
+      window.addEventListener('blur', this.blurListener)
+    },
+    uninstallListeners() {
+      window.removeEventListener('focus', this.focusListener)
+      window.removeEventListener('blur', this.blurListener)
+    },
     styleForMotorBar(value: number): string {
       const percent = (value - 1500) / 10
       const left = percent < 0 ? 50 + percent : 50
@@ -350,16 +373,24 @@ export default Vue.extend({
     },
     printParam,
     zero_motors() {
+      if (!this.has_focus && this.motors_zeroed) {
+        return
+      }
       for (const motor of this.available_motors) {
         this.motor_targets[motor.target] = 1500
       }
+      this.motors_zeroed = true
     },
     async write_motors() {
+      if (!this.has_focus) {
+        return
+      }
       if (this.is_armed && this.desired_armed_state) {
         for (const [motor, value] of Object.entries(this.motor_targets)) {
           this.doMotorTest(parseInt(motor, 10), value)
         }
       }
+      this.motors_zeroed = false
     },
     restart_motor_zeroer() {
       clearInterval(this.motor_zeroer_interval)
