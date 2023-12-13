@@ -12,12 +12,12 @@ RUN bun install --cwd /home/pi/frontend
 RUN bun run --cwd /home/pi/frontend build
 
 # Download binaries
-FROM bluerobotics/blueos-base:v0.0.10 as downloadBinaries
+FROM bluerobotics/blueos-base:v0.1.0 as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
 # BlueOS-docker base image
-FROM bluerobotics/blueos-base:v0.0.10
+FROM bluerobotics/blueos-base:v0.1.0
 
 # Install necessary tools
 COPY tools /home/pi/tools
