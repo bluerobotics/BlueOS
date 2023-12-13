@@ -14,12 +14,12 @@ RUN --mount=type=cache,target=/home/pi/frontend/node_modules yarn --cwd /home/pi
 COPY frontend/src/assets/vehicles /home/pi/frontend/dist/vehicles
 
 # Download binaries
-FROM bluerobotics/blueos-base:v0.0.10 as downloadBinaries
+FROM bluerobotics/blueos-base:v0.1.0 as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
 # BlueOS-docker base image
-FROM bluerobotics/blueos-base:v0.0.10
+FROM bluerobotics/blueos-base:v0.1.0
 
 # Install necessary tools
 COPY tools /home/pi/tools
