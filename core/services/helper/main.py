@@ -35,7 +35,7 @@ from nginx_parser import parse_nginx_file
 SERVICE_NAME = "helper"
 SPEED_TEST: Optional[Speedtest] = None
 
-limit_ram_usage()
+limit_ram_usage(200)
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 try:
