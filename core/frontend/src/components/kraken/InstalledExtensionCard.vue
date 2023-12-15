@@ -204,11 +204,15 @@ export default Vue.extend({
         return false
       }
       const versions: string[] = Object.keys(this.extensionData?.versions ?? {})
-      const lastest_stable = stable.max(versions)
-      if (semver.gt(this.extension.tag, lastest_stable)) {
-        return false
+      const current_version = new semver.SemVer(this.extension.tag)
+      // if is stable (which implies major >= 1), show latest stable
+      if (stable.is(this.extension.tag) && current_version.major > 0) {
+        return stable.max(versions) === this.extension.tag ? false : stable.max(versions)
       }
-      return this.extension.tag === lastest_stable ? false : lastest_stable
+      // show the latest version regardless of stability
+      // eslint-disable-next-line no-extra-parens
+      const latest = versions.reduce((a: string, b: string) => (semver.compare(a, b) > 0 ? a : b))
+      return this.extension.tag === latest ? false : latest
     },
   },
   methods: {
