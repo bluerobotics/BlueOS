@@ -7,6 +7,7 @@ setuptools.setup(
     version="0.1.0",
     description="Manages BlueOS extensions",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "aiodocker == 0.21.0",
         "appdirs == 1.4.4",
