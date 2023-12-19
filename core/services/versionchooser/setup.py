@@ -7,6 +7,7 @@ setup(
     version="0.1.0",
     description="Blue Robotics Ardusub BlueOS Version Chooser",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "aiodocker == 0.21.0",
         "aiohttp == 3.7.4",
