@@ -7,6 +7,7 @@ setuptools.setup(
     version="0.1.0",
     description="Manager for 'bridges' links.",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "bridges == 0.1.0",
         "commonwealth == 0.1.0",
