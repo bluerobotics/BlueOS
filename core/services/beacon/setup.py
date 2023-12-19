@@ -7,6 +7,7 @@ setuptools.setup(
     version="0.1.0",
     description="Mdns service",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "commonwealth == 0.1.0",
         "loguru == 0.5.3",
