@@ -5,6 +5,9 @@ description = "Blue Robotics BlueOS computer project"
 authors = ["Software Department <software@bluerobotics.com>"]
 license = "MIT"
 
+[tool.setuptools]
+py-modules = []
+
 [tool.poetry.dependencies]
 python = "^3.9"
 
