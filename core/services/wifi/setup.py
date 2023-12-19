@@ -41,6 +41,7 @@ setuptools.setup(
     version="0.1.0",
     description="Wifi manager for wpa_supplicant",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "aiofiles == 0.6.0",
         "commonwealth == 0.1.0",
