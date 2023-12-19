@@ -52,11 +52,11 @@ class FakeContainer:
         self.name: str = name
         self.client: Any
         self.raise_if_stopped = raise_if_stopped
-        self.created_time = time.time()
+        self.created_time = time.monotonic()
         print(f"created container {self.name} at {self.created_time}")
 
     def age(self) -> float:
-        return time.time() - self.created_time
+        return time.monotonic() - self.created_time
 
     def set_client(self, client: Any) -> None:
         self.client = client
@@ -258,7 +258,7 @@ class BootstrapperTests(TestCase):  # type: ignore
 
     @pytest.mark.timeout(50)
     def test_bootstrap_core_timeout(self) -> None:
-        start_time = time.time()
+        start_time = time.monotonic()
         self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
         self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=SAMPLE_JSON)
         fake_client = FakeClient()
@@ -278,7 +278,7 @@ class BootstrapperTests(TestCase):  # type: ignore
         # mock time so it passes faster
         # this new FakeContainer will not throw when it stops
         fake_client.set_active_dockers([FakeContainer(Bootstrapper.CORE_CONTAINER_NAME)])
-        mock_time = patch("time.time", return_value=start_time + 1000)
+        mock_time = patch("time.monotonic", return_value=start_time + 1000)
         mock_time.start()
         # this should timeout AND restart core
         bootstrapper.run()
