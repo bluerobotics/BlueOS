@@ -22,11 +22,11 @@ class Bootstrapper:
     CORE_CONTAINER_NAME = "blueos-core"
     BOOTSTRAP_CONTAINER_NAME = "blueos-bootstrap"
     SETTINGS_NAME_CORE = "core"
-    core_last_response_time = time.time()
+    core_last_response_time = time.monotonic()
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
         self.client: docker.DockerClient = client
-        self.core_last_response_time = time.time()
+        self.core_last_response_time = time.monotonic()
         if low_level_api is None:
             self.low_level_api = docker.APIClient(base_url="unix://var/run/docker.sock")
         else:
@@ -230,7 +230,9 @@ class Bootstrapper:
             if Bootstrapper.SETTINGS_NAME_CORE in response.json()["repository"]:
                 return True
         except Exception as e:
-            logger.warning(f"Could not talk to version chooser for {time.time() - self.core_last_response_time}: {e}")
+            logger.warning(
+                f"Could not talk to version chooser for {time.monotonic() - self.core_last_response_time}: {e}"
+            )
         return False
 
     def remove(self, container: str) -> None:
@@ -261,15 +263,15 @@ class Bootstrapper:
                     continue
 
                 if self.is_version_chooser_online():
-                    self.core_last_response_time = time.time()
+                    self.core_last_response_time = time.monotonic()
                     continue
 
                 # Check if version chooser failed start before timeout
-                if time.time() - self.core_last_response_time < 300:
+                if time.monotonic() - self.core_last_response_time < 300:
                     continue
 
                 # Version choose failed, time to restarted core
-                self.core_last_response_time = time.time()
+                self.core_last_response_time = time.monotonic()
                 logger.warning("Core has not responded in 5 minutes, resetting to factory...")
                 self.overwrite_config_file_with_defaults()
                 try:
