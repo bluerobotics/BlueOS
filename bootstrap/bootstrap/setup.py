@@ -7,6 +7,7 @@ setup(
     version="0.0.1",
     description="Blue Robotics Ardusub BlueOS Docker System Bootstrap",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "docker==5.0.0",
         "loguru==0.5.3",
