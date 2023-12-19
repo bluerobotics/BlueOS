@@ -10,11 +10,13 @@ BUILD_PACKAGES=(
 apt update
 apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
 
-# Pre-Build dependencies:
-# For convenience, we build ourselves the .wheel packages for dependencies
-# which have no armv7 wheel in pypi. This saves a lot of build time in docker
-if [[ "$(uname -m)" == "armv7l"* ]]; then
-    pip install https://s3.amazonaws.com/downloads.bluerobotics.com/companion-docker/wheels/aiohttp-3.7.4-cp39-cp39-linux_armv7l.whl
+# Piwheels is a Python package repository providing Arm platform wheels (pre-compiled binary Python packages)
+# specifically for the Raspberry Pi, making pip installations much faster.
+# Packages are natively compiled on Raspberry Pi 3 and 4 hardware
+if [[ "$(uname -m)" == "arm"* ]]; then
+    echo "Configuring pip to use piwheels"
+    echo "[global]" >> /etc/pip.conf
+    echo "extra-index-url=https://www.piwheels.org/simple" >> /etc/pip.conf
 fi
 
 CURRENT_PATH=$(dirname "$0")
