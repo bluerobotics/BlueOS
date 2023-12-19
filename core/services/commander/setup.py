@@ -7,6 +7,7 @@ setuptools.setup(
     version="0.1.0",
     description="Allow the usage of simple commands from the frontend.",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "appdirs == 1.4.4",
         "commonwealth == 0.1.0",
