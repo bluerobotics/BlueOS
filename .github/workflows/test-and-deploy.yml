@@ -133,10 +133,10 @@ jobs:
         id: cache
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
+          key: ${{ runner.os }}-buildx-${{ matrix.docker }}-0-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
-            ${{ runner.os }}-buildx-${{ matrix.docker }}
+            ${{ runner.os }}-buildx-${{ matrix.docker }}-0-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
+            ${{ runner.os }}-buildx-${{ matrix.docker }}-0
 
       - name: Docker Buildx (build)
         run: |
