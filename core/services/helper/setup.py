@@ -62,6 +62,7 @@ setup(
     version="0.1.0",
     description="Helper information for development",
     license="MIT",
+    py_modules=[],
     install_requires=[
         "aiofiles == 0.6.0",
         "beautifulsoup4 == 4.9.3",
