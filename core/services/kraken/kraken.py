@@ -286,9 +286,11 @@ class Kraken:
 
         start_time = asyncio.get_event_loop().time()
         async for log_line in containers[0].log(stdout=True, stderr=True, follow=True, stream=True):
-            if asyncio.get_event_loop().time() - start_time > timeout:
+            elapsed_time = asyncio.get_event_loop().time() - start_time
+            if elapsed_time > timeout:
                 break
             yield log_line
+        logger.info(f"Finished streaming logs for {container_name}")
 
     async def load_stats(self) -> Dict[str, Any]:
         containers = await self.client.containers.list()  # type: ignore
