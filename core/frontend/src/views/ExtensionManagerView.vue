@@ -445,6 +445,9 @@ export default Vue.extend({
             const output = document.querySelector(
               '#app > div.v-dialog__content.v-dialog__content--active > div',
             ) as HTMLInputElement
+            if (!output) {
+              return
+            }
             output.scrollTop = output.scrollHeight
           })
         },
