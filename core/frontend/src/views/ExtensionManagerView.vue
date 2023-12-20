@@ -437,7 +437,7 @@ export default Vue.extend({
         },
         onDownloadProgress: (progressEvent) => {
           const chunk = progressEvent.currentTarget.response
-          this.$set(this, 'log_output', this.log_output + ansi.ansi_to_html(chunk))
+          this.$set(this, 'log_output', ansi.ansi_to_html(chunk))
           this.show_log = true
           this.setLoading(extension, false)
           this.$nextTick(() => {
