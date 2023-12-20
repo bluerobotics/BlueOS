@@ -17,8 +17,10 @@ setuptools.setup(
         "appdirs == 1.4.4",
         "psutil == 5.7.2",
         "pyroute2 == 0.5.13",
-        "starlette == 0.13.6",
-        "fastapi == 0.63.0",
+        "starlette == 0.27.0",
+        "fastapi == 0.105.0",
+        # Enforce anyio fastapi subdependency to avoid conflict with starlette
+        "anyio == 3.7.1",
         "uvicorn == 0.13.4",
         "aiofiles == 0.6.0",
         "fastapi-versioning == 0.9.1",

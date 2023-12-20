@@ -23,7 +23,7 @@ setuptools.setup(
         "aiohttp == 3.7.4",
         "appdirs == 1.4.4",
         "loguru == 0.5.3",
-        "starlette == 0.13.6",
+        "starlette == 0.27.0",
         "pykson == 1.0.2",
     ],
     dependency_links=[
