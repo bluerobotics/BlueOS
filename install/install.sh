@@ -217,6 +217,11 @@ sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "Failed 
 echo "Starting network configuration."
 curl -fsSL $ROOT/install/network/avahi.sh | bash
 
+# Configure BlueOS aliases
+## This configures BlueOS specif bash aliases
+echo "Writing .bashrc settings to load blueos alieses."
+curl -fsSL $ROOT/install/alias/blueos-alias.sh | bash
+
 # Following https://systemd.io/BUILDING_IMAGES/
 echo "Restarting machine-id."
 rm -rf /etc/machine-id /var/lib/dbus/machine-id

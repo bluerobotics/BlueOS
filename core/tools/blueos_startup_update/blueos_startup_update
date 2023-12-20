@@ -354,6 +354,46 @@ def update_navigator_overlays() -> bool:
     # Patch applied and system needs to be restarted for it to take effect
     return True
 
+def install_blueos_bash_aliases() -> bool:
+    print("Installing BlueOS bash aliases...")
+
+    # Define the bash alias contents
+    directory = "~"
+    file_name = ".bashrc"
+    target_string = '''# BlueOS Aliases Starter\nif [ -f ~/.bash_aliases ]; then\n. ~/.bash_aliases_blueos\nfi'''
+    write=True
+    bash_alias=(verify_write_file(directory, file_name, target_string, write))
+
+    # Check if the aliases are already present in ~/.bashrc
+    if bash_alias:
+        print("INFO: BlueOS bash aliases in ~/.bashrc.")
+        return True
+    else:
+        print("WARNING: No BlueOS bash aliases.")
+        return False
+
+def verify_write_file(directory: str, file_name: str, target_string: str, write: bool = False):
+    print("Verifying string on file...")
+    file_path = os.path.join(os.path.expanduser(directory), file_name)
+    try:
+        with open(file_path, 'r') as file:
+            file_contents = file.read()
+            if target_string in file_contents:
+                print(f"The string:\n'{target_string}'\nis already present in {file_name}.")
+                return True
+
+            else:
+                if write:
+                    with open(file_path, 'a') as append_file:
+                        append_file.write("\n" + target_string + "\n")
+                        print(f"Added '{target_string}' to {file_name}.")
+                        return True
+                else:
+                    print(f"Not added, write parameter is False.")
+                    return False
+    except:
+        print(f"File {file_path} not found.")
+        return False
 
 def create_dns_conf_host_link() -> bool:
     """ This patch creates a hard link of /etc/resolv.conf as /etc/resolv.conf.host, to be used as
@@ -421,6 +461,7 @@ def main() -> int:
         update_cgroups,
         update_dwc2,
         update_navigator_overlays,
+        install_blueos_bash_aliases,
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
         create_dns_conf_host_link,

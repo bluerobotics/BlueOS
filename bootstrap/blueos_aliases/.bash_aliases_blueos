@@ -1,0 +1,12 @@
+sudo() {
+    if [[ $1 == "apt-get" && $2 == "upgrade" ]]; then
+        if [[ $3 != "--walk-the-plank" ]]; then
+            echo "WARNING: 'sudo apt-get upgrade' not allowed without --walk-the-plank\nThis method will upgrade the kernel and can break some compatibility"
+            return 1
+        else
+            command sudo apt-get upgrade
+        fi
+    else
+        command sudo "$@"
+    fi
+}
