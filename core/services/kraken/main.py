@@ -132,7 +132,7 @@ async def list_containers() -> Any:
 @app.get("/log", status_code=status.HTTP_200_OK, response_class=PlainTextResponse)
 @version(1, 0)
 async def log_containers(container_name: str) -> Iterable[bytes]:
-    return StreamingResponse(kraken.stream_logs(container_name))  # type: ignore
+    return StreamingResponse(kraken.stream_logs(container_name), media_type="text/plain")  # type: ignore
 
 
 @app.get("/stats", status_code=status.HTTP_200_OK)
