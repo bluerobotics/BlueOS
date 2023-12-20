@@ -20,6 +20,7 @@ class Bootstrapper:
     DOCKER_CONFIG_FILE_PATH = DOCKER_CONFIG_PATH.joinpath("bootstrap/startup.json")
     HOST_CONFIG_PATH = os.environ.get("BLUEOS_CONFIG_PATH", "/tmp/blueos/.config")
     CORE_CONTAINER_NAME = "blueos-core"
+    BOOTSTRAP_CONTAINER_NAME = "blueos-bootstrap"
     SETTINGS_NAME_CORE = "core"
     core_last_response_time = time.monotonic()
 
@@ -80,6 +81,16 @@ class Bootstrapper:
             "mode": "rw",
         }
         return config
+
+    def bootstrap_version(self) -> str:
+        try:
+            return next(
+                str(container.image)
+                for container in self.client.containers.list()
+                if container.name == self.BOOTSTRAP_CONTAINER_NAME
+            )
+        except Exception:
+            return f"Bootstrap does not follow standard name: {self.BOOTSTRAP_CONTAINER_NAME}"
 
     def pull(self, component_name: str) -> None:
         """Pulls an image
@@ -236,7 +247,7 @@ class Bootstrapper:
 
     def run(self) -> None:
         """Runs the bootstrapper"""
-        logger.info("Starting main loop")
+        logger.info(f"Starting bootstrap {self.bootstrap_version()}")
         while True:
             time.sleep(5)
             for image in self.read_config_file():
