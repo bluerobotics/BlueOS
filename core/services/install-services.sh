@@ -7,8 +7,11 @@ BUILD_PACKAGES=(
     g++
 )
 
-apt update
-apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
+# Install build packages if not on armv7, which we have all pre-built wheels for
+if ! { [ "$TARGETARCH" == "arm" ] && [ "$TARGETVARIANT" == "v7" ]; }; then
+    apt update
+    apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
+fi
 
 # Wifi service:
 ## Bind path for wpa
@@ -35,7 +38,7 @@ python -m pip install appdirs==1.4.4 loguru==0.5.3 pydantic==1.10.12
 
 for SERVICE in "${SERVICES[@]}"; do
     echo "Installing service: $SERVICE"
-    cd "/home/pi/services/$SERVICE/" && python3 setup.py install
+    cd "/home/pi/services/$SERVICE/" && pip3 install .
 done
 
 apt -y remove ${BUILD_PACKAGES[*]}

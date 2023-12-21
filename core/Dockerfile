@@ -19,6 +19,15 @@ RUN /home/pi/tools/install-static-binaries.sh
 # BlueOS-docker base image
 FROM bluerobotics/blueos-base:v0.1.0
 
+# Define arguments for target platform
+# These arguments are defined automatically by buildx when using `--platform`
+ARG TARGETARCH
+ARG TARGETVARIANT
+
+# Set these arguments as environment variables
+ENV TARGETARCH=${TARGETARCH}
+ENV TARGETVARIANT=${TARGETVARIANT}
+
 # Install necessary tools
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-system-tools.sh
