@@ -149,7 +149,7 @@ then
     alias docker=dind
 fi
 
-sudo usermod -aG docker pi
+sudo usermod -aG docker $USER
 
 # Stop and remove all docker if NO_CLEAN is not defined
 test $NO_CLEAN || (
@@ -240,6 +240,6 @@ rm -rf /var/lib/systemd/random-seed /loader/random-seed
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
 echo "- The computer webpage: http://blueos-avahi.local"
-echo "- The ssh client: pi@blueos.local"
+echo "- The ssh client: $USER@blueos-avahi.local"
 echo "System will reboot in 10 seconds."
 sleep 10 && reboot
