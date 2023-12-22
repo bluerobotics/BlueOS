@@ -460,7 +460,7 @@ export default Vue.extend({
             icon: service.metadata?.icon?.startsWith('/')
               ? `${address}${service.metadata.icon}`
               : service.metadata?.icon ?? 'mdi-puzzle',
-            route: service.metadata?.route ?? address,
+            route: this.addExtraQuery(service.metadata?.route ?? address, service.metadata?.extra_queries),
             new_page: service.metadata?.new_page ?? undefined,
             advanced: false,
             text: service.metadata?.description ?? 'Service text',
@@ -651,6 +651,14 @@ export default Vue.extend({
     this.bootstrap_version = await VCU.loadBootstrapCurrentVersion()
   },
   methods: {
+    addExtraQuery(url: string, extra_queries?: string) {
+      if (!extra_queries) {
+        return url
+      }
+      // adds additional query parameters to a url
+      const separator = url.includes('?') ? '&' : '?'
+      return url + separator + extra_queries
+    },
     getWidget(name: string) {
       return this.widgets.filter((widget) => widget.name === name)?.[0]?.component
     },

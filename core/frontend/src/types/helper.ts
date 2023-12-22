@@ -9,6 +9,7 @@ export interface ServiceMetadata {
     route?: string
     new_page?: boolean
     sanitized_name?: string
+    extra_query?: string
 }
 
 export interface Service {
