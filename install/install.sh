@@ -105,6 +105,14 @@ NECESSARY_SPACE_MB=1024
     exit 1
 )
 
+# Check iptables
+iptables -v 2>&1 | grep -q "Failed to initialize nft" && (
+    echo "iptables command failed. Be sure to fix it before running again."
+    echo "Note: If you are running ubuntu or debian, maybe the following command will fix the issue:"
+    echo "$ sudo update-alternatives --set iptables /usr/sbin/iptables-legacy"
+    exit 1
+)
+
 # Check for docker and install it if not found
 echo "Checking for docker."
 ## Docker uses VERSION environment variable to set the docker version,
