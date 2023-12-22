@@ -16,7 +16,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      service_path: '/terminal',
+      service_path: '/terminal/',
     }
   },
 })

@@ -16,7 +16,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      service_path: '/file-browser',
+      service_path: '/file-browser/',
     }
   },
 })
