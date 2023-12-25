@@ -84,7 +84,7 @@ class Kraken:
         self.settings = self.manager.settings
 
     async def fetch_manifest(self) -> Any:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(conn_timeout=5, read_timeout=30) as session:
             async with session.get(REPO_URL) as resp:
                 if resp.status != 200:
                     print(f"Error status {resp.status}")
