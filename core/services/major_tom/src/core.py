@@ -10,8 +10,7 @@ import loguru
 import requests
 import speedtest
 from loguru import logger
-
-from src.typedefs import OnlineStatus
+from typedefs import OnlineStatus
 
 
 def formatter(record: "loguru.Record") -> str:
