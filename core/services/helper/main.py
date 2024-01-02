@@ -98,6 +98,7 @@ class ServiceMetadata(BaseModel):
     webpage: str
     route: Optional[str]
     new_page: Optional[bool]
+    extra_query: Optional[str]
     api: str
     sanitized_name: Optional[str]
 
