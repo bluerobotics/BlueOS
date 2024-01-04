@@ -165,9 +165,9 @@ const rover_function_map = {
 
 const param_value_map = {
   Submarine: {
-    RCIN8: 'Lights 1',
-    RCIN9: 'Lights 2',
-    RCIN10: 'Video Switch',
+    RCIN9: 'Lights 1',
+    RCIN10: 'Lights 2',
+    RCIN11: 'Video Switch',
   },
 } as Dictionary<Dictionary<string>>
 
