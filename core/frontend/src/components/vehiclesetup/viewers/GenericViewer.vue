@@ -215,11 +215,11 @@ export default Vue.extend({
     },
     lights1_are_present() {
       const servo_params = autopilot_data.parameterRegex('^SERVO(\\d+)_FUNCTION$')
-      return servo_params.some((parameter) => parameter.value === SUB_SERVO_FUNCTION.RCIN8)
+      return servo_params.some((parameter) => parameter.value === SUB_SERVO_FUNCTION.RCIN9)
     },
     lights2_are_present() {
       const servo_params = autopilot_data.parameterRegex('^SERVO(\\d+)_FUNCTION$')
-      return servo_params.some((parameter) => parameter.value === SUB_SERVO_FUNCTION.RCIN9)
+      return servo_params.some((parameter) => parameter.value === SUB_SERVO_FUNCTION.RCIN10)
     },
     gripper_is_present() {
       const mavlink = autopilot_data.parameter('GRIP_ENABLE')?.value === 1
