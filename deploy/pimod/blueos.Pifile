@@ -20,5 +20,5 @@ RUN bash -c '
 RUN bash -c '
   curl -O https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$VERSION/install/install.sh
   chmod +x install.sh
-  ./install.sh --ci-run
+  USER=pi ./install.sh --ci-run
 '
