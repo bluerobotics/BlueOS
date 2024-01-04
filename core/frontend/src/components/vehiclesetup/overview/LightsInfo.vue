@@ -37,7 +37,7 @@ export default Vue.extend({
     lights() {
       const servo_params = autopilot_data.parameterRegex('SERVO.*_FUNCTION')
       const light_params = servo_params.filter(
-        (parameter) => parameter.value === SERVO_FUNCTION.RCIN8 || parameter.value === SERVO_FUNCTION.RCIN9,
+        (parameter) => parameter.value === SERVO_FUNCTION.RCIN9 || parameter.value === SERVO_FUNCTION.RCIN10,
       )
       return light_params.map((parameter) => parameter.name)
     },
