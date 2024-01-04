@@ -249,6 +249,7 @@ jobs:
   deploy-raspberry-image:
     needs: deploy-docker-images
     if: github.event_name != 'pull_request'
+    timeout-minutes: 120 # Detect if it gets into an infinite loop or some unexpected state
     runs-on: blueos-ci
     # The runner for this job is a Raspberry Pi OS Bullseye.
     # Just install docker (curl -sSL https://get.docker.com/ | sh) and follow the instructions for setting up a new runner in
