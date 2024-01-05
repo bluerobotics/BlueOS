@@ -104,6 +104,13 @@ function create_service {
     local command="$2"  # Store the command as a string
     local memory_limit_mb=$3
 
+    # Check if the service is disabled
+    if [[ $BLUEOS_DISABLE_SERVICES == *"$1"* ]]; then
+        echo "Service $1 is disabled"
+        tmux send-keys -t $SESSION_NAME "echo 'Service $1 is disabled'; sleep infinity" C-m
+        return
+    fi
+
     # Set all necessary environment variables for the new tmux session
     for NAME in $(compgen -v | grep MAV_); do
         VALUE=${!NAME}
