@@ -96,19 +96,6 @@ grep -q dwc2 $CMDLINE_FILE || (
     sed -i '1 s/$/ modules-load=dwc2,g_ether/' $CMDLINE_FILE
 )
 
-# Update raspberry pi firmware
-# this is required to avoid 'i2c transfer timed out' kernel errors
-# on older firmware versions
-if grep -q ID=raspbian < /etc/os-release; then
-    RPI_FIRMWARE_VERSION=1340be4
-    if sudo JUST_CHECK=1 rpi-update $RPI_FIRMWARE_VERSION | grep "Firmware update required"; then
-        echo "- Run rpi update."
-        sudo SKIP_WARNING=1 rpi-update $RPI_FIRMWARE_VERSION
-    else
-        echo "- Firmware is up to date."
-    fi
-fi
-
 # Force update of bootloader and VL085 firmware on the first boot
 echo "- Force update of VL085 and bootloader on first boot."
 SYSTEMD_EEPROM_UPDATE_FILE="/lib/systemd/system/rpi-eeprom-update.service"
