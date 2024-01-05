@@ -249,14 +249,14 @@ jobs:
     needs: deploy-docker-images
     if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
-    runs-on: blueos-ci
-    # The runner for this job is a Raspberry Pi OS Bullseye.
+    runs-on: blueos-ci-64
+    # The runner for this job is a Raspberry Pi OS Bookworm lite 64bit.
     # Just install docker (curl -sSL https://get.docker.com/ | sh) and follow the instructions for setting up a new runner in
     # https://github.com/bluerobotics/BlueOS-docker/settings/actions/runners/new
 
     strategy:
       matrix:
-        platforms: ["linux/arm/v7"]
+        platforms: ["linux/arm64/v8"]
     steps:
       - name: Install git
         run: sudo apt install -y git
