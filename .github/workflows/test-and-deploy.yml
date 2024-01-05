@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      python-version: 3.9 # Our base image has Python 3.9
+      python-version: 3.11 # Our base image has Python 3.11
 
     steps:
     - name: Checkout
