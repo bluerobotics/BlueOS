@@ -102,7 +102,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
             *shlex.split(command), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
 
-        await asyncio.sleep(1)  # Non-blocking sleep
+        await asyncio.sleep(3)  # Non-blocking sleep
         if not await self.is_running():
             raise MavlinkRouterStartFail("Failed to initialize Mavlink router")
         await self.start_house_keepers()
@@ -112,11 +112,11 @@ class AbstractRouter(metaclass=abc.ABCMeta):
             if self._subprocess is not None:
                 logger.error("terminate")
                 self._subprocess.terminate()
-                await asyncio.sleep(1)  # Non-blocking sleep
+                await asyncio.sleep(3)  # Non-blocking sleep
                 if await self.is_running():
                     logger.error("kill")
                     self._subprocess.kill()
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(3)
                 await self._subprocess.wait()  # Wait for the subprocess to terminate
         else:
             logger.debug("Tried to stop router, but it was already not running.")
