@@ -140,7 +140,8 @@ export default Vue.extend({
       // If it fails the folder does not exist, we display a 'No data available' message
       // If it succeeds, it'll populate the array and show the logs to the user
       try {
-        await Promise.all(log_folders.map(async (folder_path) => {
+        // Use allSettled to allow promises to fail in parallel
+        await Promise.allSettled(log_folders.map(async (folder_path) => {
           const folder = await filebrowser.fetchFolder(folder_path)
           Array.prototype.push.apply(new_logs, folder.items)
         }))
