@@ -134,7 +134,7 @@ export default Vue.extend({
     async fetchAvailableLogs(): Promise<void> {
       const new_logs: FilebrowserFile[] = []
 
-      const log_folders = ['/ardupilot_logs/firmware/logs/', '/system_logs/ardupilot-manager/']
+      const log_folders = ['/ardupilot_logs/firmware/logs/', '/ardupilot_logs/logs/']
 
       // We fetch all paths in parallel and wait for everything to finish
       // If it fails the folder does not exist, we display a 'No data available' message
