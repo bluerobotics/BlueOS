@@ -138,6 +138,8 @@ export default defineConfig({
       },
       '^/terminal': {
         target: SERVER_ADDRESS,
+        changeOrigin: true,
+        ws: true,
       },
       '^/userdata': {
         target: SERVER_ADDRESS,
