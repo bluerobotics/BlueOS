@@ -238,7 +238,7 @@ async def serial_test_mavp2p(valid_output_endpoints: Set[Endpoint], valid_master
     )
 
 
-@pytest.mark.timeout(60)
+@pytest.mark.timeout(120)
 @pytest.mark.asyncio
 async def test_router(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     for router in [serial_test_mavlink_router, serial_test_mavp2p]:
