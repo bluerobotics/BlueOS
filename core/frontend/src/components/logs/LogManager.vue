@@ -151,7 +151,10 @@ export default Vue.extend({
       }
 
       this.logs_fetched = true
-      this.available_logs = new_logs.filter((log) => ['.bin', '.tlog'].includes(log.extension.toLowerCase()))
+      // We can have empty log files or really small, we should remove them
+      this.available_logs = new_logs.filter(
+        (log) => ['.bin', '.tlog'].includes(log.extension.toLowerCase()) && log.size > 100,
+      )
     },
     downloadSelectedLogs(): void {
       this.downloadLogs(this.selected_logs)
