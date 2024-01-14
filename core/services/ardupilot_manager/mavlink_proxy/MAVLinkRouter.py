@@ -62,7 +62,7 @@ class MAVLinkRouter(AbstractRouter):
                 f"Master endpoint of type {master_endpoint.connection_type} not supported on MavlinkRouter."
             )
 
-        return f"{self.binary()} {convert_endpoint(master_endpoint)} {endpoints} -l {self.logdir()}"
+        return f"{self.binary()} {convert_endpoint(master_endpoint)} {endpoints} -l {self.logdir()} -L {self.logdir()}"
 
     @staticmethod
     def name() -> str:
