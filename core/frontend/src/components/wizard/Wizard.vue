@@ -168,15 +168,15 @@
               <v-btn
                 :color="retry_count == 0 ? 'success' : 'error'"
                 :loading="apply_in_progress"
-                :disabled="apply_in_progress"
+                :disabled="apply_in_progress || apply_done"
                 @click="applyConfigurations()"
               >
-                {{ retry_count == 0 ? "Apply" : "Retry" }}
+                {{ retry_count == 0 ? "Apply" : apply_done ? "Done" : "Retry" }}
               </v-btn>
               <v-btn
                 v-if="allow_abort"
                 :loading="apply_in_progress"
-                :disabled="apply_in_progress"
+                :disabled="apply_in_progress || apply_done"
                 color="warning"
                 @click="abort()"
               >
