@@ -4,7 +4,7 @@
     :source="service_path"
     :class="fullpage ? 'fullpage' : ''"
   />
-  <SpinningLogo v-else-if="detected_port === undefined" />
+  <SpinningLogo v-else-if="detected_port === undefined" size="15%" />
   <page-not-found v-else />
 </template>
 
