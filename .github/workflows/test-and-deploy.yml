@@ -282,6 +282,23 @@ jobs:
             --workdir=/files \
             --platform ${{ matrix.platforms }} williangalvani/pimod:latest pimod.sh deploy/pimod/blueos.Pifile
 
+      - name: Add /boot additions
+        run: |
+          sudo apt-get update && sudo apt-get install -y parted kpartx
+          # Create mount point if it doesn't exist
+          sudo mkdir -p /mnt/piboot
+          # Map the image file
+          LOOP_DEVICE=$(sudo kpartx -avs deploy/pimod/blueos.img | sed -E 's/.*(loop[0-9]+)p[0-9]+.*/\1/g' | head -1)
+          # Mount the boot partition
+          sudo mount "/dev/mapper/${LOOP_DEVICE}p1" /mnt/piboot
+          # Create ssh and userconf files
+          sudo touch "${MOUNT_POINT}/ssh"
+          echo "pi:$y$j9T$9ZU7FXeU7PVHm49rB5Hbe.$MHZMLJfNfXBFbYgGwg/TNjADIRbna.Epxzd/MrqPJM9" | sudo tee /mnt/piboot/userconf > /dev/null
+          # Unmount and cleanup
+          sudo umount /mnt/piboot
+          sudo kpartx -d deploy/pimod/blueos.img
+          echo "Boot partition updated successfully."
+
       # TODO: add GITHUB_REF_NAME after https://github.com/actions/upload-artifact/issues/231 is fixed
       # name: blueos-${{ env.GITHUB_REF_NAME }}.zip
       - name: Zip image
