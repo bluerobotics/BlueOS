@@ -129,12 +129,16 @@ export default defineConfig({
       },
       '^/network-test': {
         target: SERVER_ADDRESS,
+        changeOrigin: true,
+        ws: true,
       },
       '^/ping': {
         target: SERVER_ADDRESS,
       },
       '^/system-information': {
         target: SERVER_ADDRESS,
+        changeOrigin: true,
+        ws: true,
       },
       '^/terminal': {
         target: SERVER_ADDRESS,
@@ -143,6 +147,7 @@ export default defineConfig({
       },
       '^/userdata': {
         target: SERVER_ADDRESS,
+        changeOrigin: true,
       },
       '^/vehicles': {
         target: SERVER_ADDRESS,
