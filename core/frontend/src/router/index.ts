@@ -118,7 +118,7 @@ const routes: Array<RouteConfig> = [
   },
   {
     path: '/extension/:name/*',
-    name: 'Named Extensions',
+    name: 'Named Extensions (wildcard)',
     component: ExtensionView,
   },
   {
