@@ -11,6 +11,10 @@ const DEFAULT_ADDRESS = 'http://blueos-avahi.local/'
 const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? DEFAULT_ADDRESS
 
 const path = require('path')
+const assert = require('assert');
+
+// TODO: check if it works with https once we have something that does
+assert.ok(SERVER_ADDRESS.startsWith('http://'), 'SERVER_ADDRESS must start with http://');
 
 export default defineConfig({
   plugins: [
