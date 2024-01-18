@@ -64,7 +64,7 @@ class PingDriver:
         # Do a ping connection to set the baudrate
         PingDevice().connect_serial(self.ping.port.device, self.baud)
         set_low_latency(self.ping.port)
-        self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", self.port, automatic_disconnect=False)
+        self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", 0, self.port, automatic_disconnect=False)
 
     def stop(self) -> None:
         """Stops the driver"""
