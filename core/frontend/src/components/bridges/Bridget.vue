@@ -1,6 +1,6 @@
 <template>
   <v-card
-    width="500"
+    width="700"
     elevation="0"
     class="mb-12 pa-6 bridges-list"
   >

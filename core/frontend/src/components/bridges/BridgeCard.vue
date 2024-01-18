@@ -22,8 +22,15 @@
                   {{ get_display_name(bridgeSerialInfo) }}:{{ bridgeSerialInfo.bridge.baud }}
                 </span>
                 <v-icon>mdi-link</v-icon>
-                <span class="text-subtitle-1 ml-2">
-                  {{ bridgeSerialInfo.bridge.ip }}:{{ bridgeSerialInfo.bridge.udp_port }}
+                <span v-if="is_server" class="text-subtitle-1 ml-2">
+                  Server listening at {{ bridgeSerialInfo.bridge.udp_listen_port }}
+                </span>
+                <span v-else class="text-subtitle-1 ml-2">
+                  Sending to {{ bridgeSerialInfo.bridge.ip }}:{{ bridgeSerialInfo.bridge.udp_target_port }}<br>
+                  {{ bridgeSerialInfo.bridge.udp_listen_port
+                    ? 'Receiving at ' + bridgeSerialInfo.bridge.udp_listen_port
+                    : ''
+                  }}
                 </span>
               </v-card-text>
             </v-card>
