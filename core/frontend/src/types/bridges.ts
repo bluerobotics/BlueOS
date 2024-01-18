@@ -5,7 +5,8 @@ export interface Bridge {
   serial_path: string
   baud: Baudrate
   ip: string
-  udp_port: number
+  udp_listen_port: number
+  udp_target_port: number
 }
 
 export interface BridgeWithSerialInfo {
