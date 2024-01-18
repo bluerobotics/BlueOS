@@ -78,6 +78,11 @@ export default Vue.extend({
       required: true,
     },
   },
+  computed: {
+    is_server(): boolean {
+      return this.bridgeSerialInfo.bridge.ip === '0.0.0.0'
+    },
+  },
   methods: {
     get_display_name(bridgeSerialInfo: BridgeWithSerialInfo): string {
       return bridgeSerialInfo.serial_info?.name ?? bridgeSerialInfo.bridge.serial_path
