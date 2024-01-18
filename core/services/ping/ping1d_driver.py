@@ -44,7 +44,7 @@ class Ping1DDriver(PingDriver):
                 assert self.bridge is not None
                 self.bridge.stop()
                 await asyncio.sleep(5)
-                self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", self.port, automatic_disconnect=False)
+                self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", 0, self.port, automatic_disconnect=False)
 
     def save_settings(self) -> None:
         self.manager.load()  # re-load as other sensors could have changed it
