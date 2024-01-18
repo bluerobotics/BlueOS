@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
-from bridget import BridgeSpec, Bridget
+from bridget import BridgeFrontendSpec, Bridget
 
 SERVICE_NAME = "bridget"
 
@@ -36,7 +36,7 @@ def get_serial_ports() -> Any:
     return ports
 
 
-@app.get("/bridges", response_model=List[BridgeSpec])
+@app.get("/bridges", response_model=List[BridgeFrontendSpec])
 @version(1, 0)
 def get_bridges() -> Any:
     bridges = controller.get_bridges()
@@ -46,7 +46,7 @@ def get_bridges() -> Any:
 
 @app.post("/bridges", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
-def add_bridge(bridge: BridgeSpec) -> Any:
+def add_bridge(bridge: BridgeFrontendSpec) -> Any:
     logger.debug(f"Adding bridge '{bridge}'.")
     controller.add_bridge(bridge)
     logger.debug(f"Bridge '{bridge}' added.")
@@ -54,7 +54,7 @@ def add_bridge(bridge: BridgeSpec) -> Any:
 
 @app.delete("/bridges", status_code=status.HTTP_200_OK)
 @version(1, 0)
-def remove_bridge(bridge: BridgeSpec) -> Any:
+def remove_bridge(bridge: BridgeFrontendSpec) -> Any:
     logger.debug(f"Removing bridge '{bridge}'.")
     controller.remove_bridge(bridge)
     logger.debug(f"Bridge '{bridge}' removed.")

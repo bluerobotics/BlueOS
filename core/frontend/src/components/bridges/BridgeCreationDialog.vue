@@ -283,9 +283,6 @@ export default Vue.extend({
       return isFilepath(input) ? true : 'Invalid path.'
     },
     is_socket_port(input: string): (true | string) {
-      if (!isIntegerString(input)) {
-        return 'Please use an integer value.'
-      }
       const int_input = parseInt(input, 10)
       return isSocketPort(int_input) ? true : 'Invalid port.'
     },
