@@ -18,12 +18,19 @@ class Bridge:
         serial_port: SysFS,
         baud: Baudrate,
         ip: str,
-        udp_port: int,
+        udp_target_port: int,
+        udp_listen_port: int,
         automatic_disconnect: bool = True,
     ) -> None:
         bridges = which("bridges")
         automatic_disconnect_clients = "" if automatic_disconnect else "--no-udp-disconnection"
-        command_line = f"{bridges} -u {ip}:{udp_port} -p {serial_port.device}:{baud} {automatic_disconnect_clients}"
+        is_server = ip == "0.0.0.0"
+        port = udp_listen_port if is_server else udp_target_port
+
+        command_line = f"{bridges} -u {ip}:{port} -p {serial_port.device}:{baud} {automatic_disconnect_clients}"
+        if not is_server and udp_listen_port != 0:
+            command_line += f" --listen-port {udp_listen_port}"
+
         logging.info(f"Launching bridge link with command '{command_line}'.")
         # pylint: disable=consider-using-with
         self.process = Popen(shlex.split(command_line), stdout=PIPE, stderr=PIPE)
