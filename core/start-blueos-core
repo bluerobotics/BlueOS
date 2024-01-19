@@ -86,6 +86,9 @@ else
     echo "Waring: Using dockers's resolv.conf, this may cause DNS issues if the host's network configuration changes."
 fi
 
+# fix permissions for logging folders:
+find /var/logs/blueos -type d -exec chmod 777 {} \;
+
 # These services have priority because they do the fundamental for the vehicle to work,
 # and by initializing them first we reduce the time users have to wait to control the vehicle.
 # From tests with QGC and Pi3, the reboot time was ~1min42s when not using this strategy,
