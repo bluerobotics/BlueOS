@@ -20,7 +20,7 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
 SERVICE_NAME = "commander"
-LOG_FOLDER_PATH = "/var/logs/blueos"
+LOG_FOLDER_PATH = os.environ.get("BLUEOS_LOG_FOLDER_PATH", "/var/logs/blueos")
 
 limit_ram_usage()
 
