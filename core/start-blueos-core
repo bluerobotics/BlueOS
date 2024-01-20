@@ -15,6 +15,22 @@ MAV_COMPONENT_ID_ONBOARD_COMPUTER4=194
 # Enable Rust backtrace for all programs
 RUST_BACKTRACE=1
 
+# Set BlueOS log folder
+BLUEOS_LOG_FOLDER_PATH="/var/logs/blueos"
+
+# The system may start with full disk, in this case resulting in an unstable behavior.
+# As an attempt to recover the system, lets delete the log files before current boot
+AVAILABLE_SPACE_MB=$(($(stat -f / --format="%a*%S/1024**2")))
+CRITICAL_SPACE_LIMIT_MB=100
+echo "Available disk space: ${AVAILABLE_SPACE_MB}MB"
+(( AVAILABLE_SPACE_MB < CRITICAL_SPACE_LIMIT_MB )) && (
+    LOG_FOLDER_SIZE=$(($(du -sm ${BLUEOS_LOG_FOLDER_PATH} | awk '{print $1}')))
+    echo "Not enough free space for the system to run, limit is: ${CRITICAL_SPACE_LIMIT_MB}MB"
+    echo "Going to delete the logs folder as an attempt to recover: ${LOG_FOLDER_SIZE}MB"
+    rm -rf "$BLUEOS_LOG_FOLDER_PATH/*"
+    echo "Done!"
+)
+
 # Update docker binds, if we need to restart, exit!
 blueos_startup_update
 
@@ -112,7 +128,7 @@ function create_service {
     fi
 
     # Set all necessary environment variables for the new tmux session
-    for NAME in $(compgen -v | grep MAV_); do
+    for NAME in $(compgen -v | grep -e MAV_ -e BLUEOS_); do
         VALUE=${!NAME}
         tmux setenv -t $SESSION_NAME -g $NAME $VALUE
     done
