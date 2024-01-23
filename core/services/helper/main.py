@@ -511,7 +511,7 @@ async def internet_download_speed() -> Any:
 async def internet_upload_speed() -> Any:
     if not SPEED_TEST:
         raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
-    SPEED_TEST.upload()
+    SPEED_TEST.upload(pre_allocate=False)
     return SPEED_TEST.results.dict()
 
 
