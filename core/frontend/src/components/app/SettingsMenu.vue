@@ -71,12 +71,12 @@
           <v-divider />
 
           <v-card-title class="align-center">
-            Enable Wizard Configuration
+            Run Vehicle Configuration Wizard
           </v-card-title>
 
           <v-card-actions class="flex-row">
             <v-btn
-              v-tooltip="'Enable Wizard'"
+              v-tooltip="'Run Wizard'"
               class="ma-2"
               @click="enable_wizard"
             >
