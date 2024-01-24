@@ -51,6 +51,20 @@
                 >
                   mdi-emoticon-sad-outline
                 </v-icon>
+                <v-icon
+                  v-if="imu_temperature_is_calibrated[imu.param]"
+                  v-tooltip="'Sensor thermometer is calibrated and good to use'"
+                  color="green"
+                >
+                  mdi-thermometer-check
+                </v-icon>
+                <v-icon
+                  v-else
+                  v-tooltip="'Sensor thermometer needs to be calibrated'"
+                  color="red"
+                >
+                  mdi-thermometer-off
+                </v-icon>
               </td>
             </tr>
             <tr
@@ -212,6 +226,20 @@ export default Vue.extend({
         const is_at_default_scale = scale_params.every((param) => param?.value === 1.0)
         results[imu.param] = offset_params.isEmpty() || scale_params.isEmpty()
         || !is_at_default_offsets || !is_at_default_scale
+      }
+      return results
+    },
+    imu_temperature_is_calibrated(): Dictionary<boolean> {
+      const results = {} as Dictionary<boolean>
+      for (const imu of this.imus) {
+        let param_radix = imu.param.split('_ID')[0]
+        // CALTEMP parameters contains ID for the first sensor, _ID does not, so we need to add it
+        if (!/\d$/.test(param_radix)) {
+          param_radix += '1'
+        }
+        const name = `${param_radix}_CALTEMP`
+        const parameter = autopilot_data.parameter(name)
+        results[imu.param] = parameter !== undefined && parameter.value !== -300
       }
       return results
     },
