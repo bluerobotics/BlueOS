@@ -8,7 +8,7 @@
       <v-tabs-slider />
       <v-tab
         v-for="page in pages"
-        :key="page.value"
+        :key="`title-${page.title}`"
       >
         {{ page.title }}
       </v-tab>
@@ -16,9 +16,9 @@
     <v-tabs-items v-model="page_selected">
       <v-tab-item
         v-for="page in pages"
-        :key="page.value"
+        :key="`item-${page.title}`"
       >
-        <param-sets v-if="page.value === 'parameters'" />
+        <component :is="page.component" />
       </v-tab-item>
     </v-tabs-items>
   </v-container>
@@ -32,7 +32,7 @@ import ParamSets from './overview/ParamSets.vue'
 export interface Item {
   title: string,
   icon: string,
-  value: string,
+  component: unknown,
 }
 
 export default Vue.extend({
@@ -44,14 +44,13 @@ export default Vue.extend({
     return {
       page_selected: null as string | null,
       pages: [
-        { title: 'Parameters', value: 'parameters' },
-        { title: 'Accelerometer', value: 'acc' },
-        { title: 'Compass', value: 'compass' },
-        { title: 'Baro', value: 'baro' },
-        { title: 'Gripper', value: 'gripper' },
-        { title: 'Lights', value: 'lights' },
-        { title: 'Camera Mount', value: 'mount' },
-
+        { title: 'Parameters', component: ParamSets },
+        { title: 'Accelerometer', component: undefined },
+        { title: 'Compass', component: undefined },
+        { title: 'Baro', component: undefined },
+        { title: 'Gripper', component: undefined },
+        { title: 'Lights', component: undefined },
+        { title: 'Camera Mount', component: undefined },
       ] as Item[],
     }
   },
