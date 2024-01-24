@@ -6,7 +6,8 @@ VERSION="${VERSION:-master}"
 GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
-CMDLINE_FILE=/boot/cmdline.txt
+CMDLINE_FILE=/boot/firmware/cmdline.txt
+CONFIG_FILE=/boot/firmware/config.txt
 alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
 
 # Download, compile, and install spi0 mosi-only device tree overlay for
@@ -15,7 +16,7 @@ echo "- compile spi0 device tree overlay."
 DTS_PATH="$ROOT/install/overlays"
 DTS_NAME="spi0-led"
 curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME.dts
-dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/$DTS_NAME.dtbo /tmp/$DTS_NAME
+dtc -@ -Hepapr -I dts -O dtb -o /boot/firmware/overlays/$DTS_NAME.dtbo /tmp/$DTS_NAME
 
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
@@ -29,7 +30,7 @@ for STRING in \
     "gpio=" \
     "dwc2" \
     ; do \
-    sudo sed -i "/$STRING/d" /boot/config.txt
+    sudo sed -i "/$STRING/d" $CONFIG_FILE
 done
 for STRING in \
     "enable_uart=1" \
@@ -49,7 +50,7 @@ for STRING in \
     "gpio=37=op,pd,dl" \
     "dtoverlay=dwc2" \
     ; do \
-    echo "$STRING" | sudo tee -a /boot/config.txt
+    echo "$STRING" | sudo tee -a $CONFIG_FILE
 done
 
 # Check for valid modules file to load kernel modules

@@ -170,15 +170,15 @@ echo "Going to install blueos-docker version ${VERSION}."
 echo "Downloading and installing udev rules."
 curl -fsSL $ROOT/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
 
-if [ -f /etc/dhcpcd.conf ]
+if [ -f /etc/dhcp/dhcpd.conf ]
 then
     echo "Disabling automatic Link-local configuration in dhcpd.conf."
     # delete line if it already exists
-    sed -i '/noipv4ll/d' /etc/dhcpcd.conf
+    sed -i '/noipv4ll/d' /etc/dhcp/dhcpd.conf
     # add noipv4ll
-    sed -i '$ a noipv4ll' /etc/dhcpcd.conf
+    sed -i '$ a noipv4ll' /etc/dhcp/dhcpd.conf
 else
-    echo "Not modifying /etc/dhcpcd.conf - file does not exist"
+    echo "Not modifying /etc/dhcp/dhcpd.conf - file does not exist"
 fi
 
 # Do necessary changes if running in a Raspiberry
