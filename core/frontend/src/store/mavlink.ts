@@ -67,9 +67,9 @@ class MavlinkStore extends VuexModule {
       // We should not use `message.messageName` as dictionary key since it's a regex,
       // the best approach is to use the message name as key
       const messageName = (message.messageData.message as any).type
-      Vue.set(this.available_messages, messageName, message)
-      const header = message.messageData.header
+      const { header } = message.messageData
       const identifier = `${header.system_id}_${header.component_id}`
+      Vue.set(this.available_messages, messageName, message)
       // make sure identifier exists
       if (!(identifier in this.available_identified_messages)) {
         Vue.set(this.available_identified_messages, identifier, {})
