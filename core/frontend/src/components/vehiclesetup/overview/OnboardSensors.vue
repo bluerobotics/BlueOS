@@ -224,8 +224,8 @@ export default Vue.extend({
     },
   },
   mounted() {
-    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE', refreshRate: 1 })
-    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE2', refreshRate: 1 })
+    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE$', refreshRate: 1 })
+    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE2$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'VFR_HUD', refreshRate: 1 })
   },
   methods: {
