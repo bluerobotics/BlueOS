@@ -36,7 +36,22 @@
               </td>
               <td>{{ imu.busType }} {{ imu.bus }}</td>
               <td>{{ `0x${imu.address}` }}</td>
-              <td>{{ imu_is_calibrated[imu.param] ? 'Calibrated' : 'Needs Calibration' }}</td>
+              <td>
+                <v-icon
+                  v-if="imu_is_calibrated[imu.param]"
+                  v-tooltip="'Sensor is callibrated and good to use'"
+                  color="green"
+                >
+                  mdi-emoticon-happy-outline
+                </v-icon>
+                <v-icon
+                  v-else
+                  v-tooltip="'Sensor needs to be calibrated'"
+                  color="red"
+                >
+                  mdi-emoticon-sad-outline
+                </v-icon>
+              </td>
             </tr>
             <tr
               v-for="compass in compasses"
@@ -48,7 +63,22 @@
               </td>
               <td>{{ compass.busType }} {{ compass.bus }}</td>
               <td>{{ `0x${compass.address}` }}</td>
-              <td>{{ compass_is_calibrated[compass.param] ? 'Calibrated' : 'Needs Calibration' }}</td>
+              <td>
+                <v-icon
+                  v-if="compass_is_calibrated[compass.param]"
+                  v-tooltip="'Sensor is callibrated and good to use'"
+                  color="green"
+                >
+                  mdi-emoticon-happy-outline
+                </v-icon>
+                <v-icon
+                  v-else
+                  v-tooltip="'Sensor needs to be calibrated'"
+                  color="red"
+                >
+                  mdi-emoticon-sad-outline
+                </v-icon>
+              </td>
             </tr>
             <tr
               v-for="baro in baros"
