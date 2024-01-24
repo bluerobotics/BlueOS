@@ -64,14 +64,17 @@ class MavlinkStore extends VuexModule {
     if (message) {
       // TODO: Check if this is the best possible way to update `available_messages`
       // Reference: https://github.com/bluerobotics/blueos-docker/pull/508#discussion_r718729077
-      Vue.set(this.available_messages, message.messageName, message)
+      // We should not use `message.messageName` as dictionary key since it's a regex,
+      // the best approach is to use the message name as key
+      const messageName = (message.messageData.message as any).type
+      Vue.set(this.available_messages, messageName, message)
       const header = message.messageData.header
       const identifier = `${header.system_id}_${header.component_id}`
       // make sure identifier exists
       if (!(identifier in this.available_identified_messages)) {
         Vue.set(this.available_identified_messages, identifier, {})
       }
-      Vue.set(this.available_identified_messages[identifier], message.messageName, message)
+      Vue.set(this.available_identified_messages[identifier], messageName, message)
     }
   }
 }
