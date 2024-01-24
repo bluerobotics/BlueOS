@@ -56,6 +56,9 @@ const formatters = {
   PARAM_VALUE(message: M2R.ParamValue) {
     return `${message.param_id.join('')}: ${message.param_value}`
   },
+  SCALED_PRESSURE(message: M2R.ScaledPressure) {
+    return `${message.press_abs?.toFixed(2)}hPa at ${message.temperature / 100}c`
+  },
   STATUSTEXT(message: M2R.Statustext): string {
     return `${message.severity.type.replace('MAV_SEVERITY_', '')}: ${message.text.join('')}`
   },
