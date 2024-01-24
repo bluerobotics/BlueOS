@@ -65,7 +65,7 @@ async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
 
 @app.post("/set/{path:path}")
 @version(1, 0)
-async def write_data(path: str = FastPath(..., regex=r"^.*$"), payload: dict[str, Any] = Body(...)) -> JSONResponse:
+async def write_data(path: str = FastPath(..., regex=r"^.*$"), payload: Any = Body(...)) -> JSONResponse:
     logger.debug(f"Write path: {path}, {json.dumps(payload)}")
     current_data = read_db()
     dpath.new(current_data, path, payload)
