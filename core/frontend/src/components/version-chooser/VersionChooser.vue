@@ -82,6 +82,7 @@
         >
           <v-text-field
             v-model="selected_image"
+            name="BlueOS Remote Repository"
             label="Remote repository"
             :append-icon="selected_image != default_repository ? 'mdi-restore' : undefined"
             @click:append="selected_image = default_repository"
