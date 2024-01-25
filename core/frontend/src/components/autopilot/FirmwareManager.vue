@@ -76,10 +76,8 @@
           class="ma-1 pa-0"
           @change="chosen_vehicle = null"
         />
-        <v-form
+        <div
           v-if="upload_type === UploadType.Cloud"
-          ref="form"
-          lazy-validation
         >
           <v-select
             v-model="chosen_vehicle"
@@ -118,7 +116,7 @@
               </p>
             </v-tooltip>
           </div>
-        </v-form>
+        </div>
 
         <v-file-input
           v-if="upload_type === UploadType.File"
