@@ -83,6 +83,8 @@
           <v-text-field
             v-model="selected_image"
             label="Remote repository"
+            :append-icon="selected_image != default_repository ? 'mdi-restore' : undefined"
+            @click:append="selected_image = default_repository"
           />
         </v-form>
         <v-alert
@@ -217,6 +219,7 @@ export default Vue.extend({
 
   },
   data() {
+    const default_repository = 'bluerobotics/blueos-core'
     return {
       settings,
       bootstrap_version: undefined as (undefined | string),
@@ -246,7 +249,8 @@ export default Vue.extend({
       loading_images: false,
       updating_bootstrap: false,
       waiting: false,
-      selected_image: 'bluerobotics/blueos-core',
+      default_repository,
+      selected_image: default_repository,
       deleting: '', // image currently being deleted, if any
     }
   },
