@@ -2,7 +2,7 @@
 
 # Detect and configure hardware for each supported plataform
 VERSION="${VERSION:-master}"
-GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-HavocAI/BlueOS}
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 CONFIGURE_BOARD_PATH="$ROOT/install/boards"
