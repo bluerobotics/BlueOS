@@ -218,7 +218,27 @@ docker create \
     $BLUEOS_BOOTSTRAP
 
 # add docker entry to rc.local
-sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "Failed to add docker start on rc.local, BlueOS will not start on boot!"
+#sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "Failed to add docker start on rc.local, BlueOS will not start on boot!"
+
+# Create a systemd service file
+echo "[Unit]
+Description=Start Docker container blueos-bootstrap at system start
+
+[Service]
+ExecStart=/usr/bin/docker start blueos-bootstrap
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/blueos-bootstrap.service
+
+# Reload systemd to recognize the new service
+systemctl daemon-reload
+
+# Enable the service to start on boot
+systemctl enable blueos-bootstrap.service
+
+# Start the service immediately
+systemctl start blueos-bootstrap.service
+
 
 # Configure network settings
 ## This should be after everything, otherwise network problems can happen
