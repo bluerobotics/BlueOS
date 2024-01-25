@@ -52,8 +52,8 @@
       >
         <h2>Local Versions</h2>
         <version-card
-          v-for="image in local_versions.result.local"
-          :key="`${image.sha}-local`"
+          v-for="(image, index) in local_versions.result.local"
+          :key="`${image.sha}-${index}-local`"
           :image="image"
           :updating="updating_bootstrap"
           :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
@@ -101,9 +101,9 @@
           subtitle="Loading remote images..."
         />
         <version-card
-          v-for="image in paginatedComponents"
+          v-for="(image, index) in paginatedComponents"
           v-else
-          :key="image.sha"
+          :key="`${image.sha}-${index}`"
           :image="image"
           :remote="true"
           :update-available="updateIsAvailable(image)"
