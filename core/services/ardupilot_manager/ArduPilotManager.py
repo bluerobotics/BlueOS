@@ -473,9 +473,19 @@ class ArduPilotManager(metaclass=Singleton):
             try:
                 logger.debug(f"Killing Ardupilot process {process.name()}::{process.pid}.")
                 process.kill()
-                await asyncio.sleep(0.5)
             except Exception as error:
-                raise ArdupilotProcessKillFail(f"Could not kill {process.name()}::{process.pid}.") from error
+                logger.debug(f"Could not kill Ardupilot: {error}")
+
+            try:
+                process.wait(3)
+                continue
+            except Exception as error:
+                logger.debug(f"Ardupilot appears to be running.. going to call pkill: {error}")
+
+            try:
+                subprocess.run(["pkill", "-9", process.pid], check=True)
+            except Exception as error:
+                raise ArdupilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
 
     async def kill_ardupilot(self) -> None:
         self.should_be_running = False
