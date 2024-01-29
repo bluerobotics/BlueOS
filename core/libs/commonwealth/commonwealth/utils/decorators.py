@@ -1,5 +1,6 @@
 import time
 from functools import wraps
+from threading import Lock
 from typing import Any, Callable, Dict
 
 
@@ -31,6 +32,37 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[Callable[[Any], An
             function_return = function(*args)
             cache[args] = function_return
             return function_return
+
+        return wrapper
+
+    return inner_function
+
+
+def single_threaded(callback: Callable[[Any], Any]) -> Callable[[Callable[[Any], Any]], Any]:
+    """
+    Decorator to ensure that a function cannot be called in parallel. If the function is
+    already running, the decorator calls the provided callback function if any and returns its return value.
+
+    Args:
+        callback (Callable[[Any], Any]): Callback to be called when the operation is already in progress.
+
+    Returns:
+        A decorator that wraps the original function.
+    """
+
+    def inner_function(function: Callable[[Any], Any]) -> Callable[[Callable[[Any], Any]], Any]:
+        lock = Lock()
+
+        @wraps(function)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            nonlocal lock
+            # pylint: disable=consider-using-with
+            if not lock.acquire(blocking=False):
+                return await callback(*args, **kwargs)
+            try:
+                return await function(*args, **kwargs)
+            finally:
+                lock.release()
 
         return wrapper
 
