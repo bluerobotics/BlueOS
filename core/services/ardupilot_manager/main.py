@@ -13,9 +13,10 @@ from commonwealth.utils.apis import (
     PrettyJSONResponse,
     StackedHTTPException,
 )
+from commonwealth.utils.decorators import single_threaded
 from commonwealth.utils.general import is_running_as_root, limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import Body, FastAPI, File, UploadFile, status
+from fastapi import Body, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -72,6 +73,15 @@ def target_board(board_name: Optional[str]) -> FlightController:
     if autopilot.current_board is None:
         raise RuntimeError("No board running and no target board set.")
     return autopilot.current_board
+
+
+def raise_lock() -> None:
+    """Raise a 423 HTTP Error status
+
+    Raises:
+        HTTPException: Exception that the operation is already in progress.
+    """
+    raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="Operation already in progress.")
 
 
 @app.get("/endpoints", response_model=List[Dict[str, Any]])
@@ -152,6 +162,7 @@ def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) 
 
 @app.post("/install_firmware_from_url", summary="Install firmware for given URL.")
 @version(1, 0)
+@single_threaded(callback=raise_lock)
 async def install_firmware_from_url(
     url: str,
     board_name: Optional[str] = None,
@@ -167,6 +178,7 @@ async def install_firmware_from_url(
 
 @app.post("/install_firmware_from_file", summary="Install firmware from user file.")
 @version(1, 0)
+@single_threaded(callback=raise_lock)
 async def install_firmware_from_file(
     binary: UploadFile = File(...),
     board_name: Optional[str] = None,
