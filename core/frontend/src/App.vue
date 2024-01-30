@@ -460,7 +460,7 @@ export default Vue.extend({
             icon: service.metadata?.icon?.startsWith('/')
               ? `${address}${service.metadata.icon}`
               : service.metadata?.icon ?? 'mdi-puzzle',
-            route: this.addExtraQuery(service.metadata?.route ?? address, service.metadata?.extra_queries),
+            route: this.addExtraQuery(service.metadata?.route ?? address, service.metadata?.extra_query),
             new_page: service.metadata?.new_page ?? undefined,
             advanced: false,
             text: service.metadata?.description ?? 'Service text',
