@@ -10,6 +10,7 @@ export interface ServiceMetadata {
     new_page?: boolean
     sanitized_name?: string
     extra_query?: string
+    avoid_iframes?: boolean
 }
 
 export interface Service {

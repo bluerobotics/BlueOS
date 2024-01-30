@@ -187,7 +187,7 @@
 
             <v-list-item
               v-else
-              :to="menu.route"
+              :to="menu.new_page ? null : menu.route"
               :target="menu.new_page ? '_blank' : '_self'"
               :href="menu.extension ? menu.route : undefined"
             >
@@ -461,7 +461,7 @@ export default Vue.extend({
               ? `${address}${service.metadata.icon}`
               : service.metadata?.icon ?? 'mdi-puzzle',
             route: this.addExtraQuery(service.metadata?.route ?? address, service.metadata?.extra_query),
-            new_page: service.metadata?.new_page ?? undefined,
+            new_page: service.metadata?.avoid_iframes ?? service.metadata?.new_page,
             advanced: false,
             text: service.metadata?.description ?? 'Service text',
             extension: true,
@@ -673,6 +673,10 @@ export default Vue.extend({
       }
     },
     createExtensionAddress(service: Service): string {
+      if (service.metadata?.avoid_iframes) {
+        const base_url = window.location.origin.split(":").slice(0, 2).join(":")
+        return `${base_url}:${service.port}`
+      }
       let address = `/extension/${service?.metadata?.sanitized_name}`
       if (service?.metadata?.new_page) {
         address += '?full_page=true'
