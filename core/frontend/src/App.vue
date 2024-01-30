@@ -674,7 +674,7 @@ export default Vue.extend({
     },
     createExtensionAddress(service: Service): string {
       if (service.metadata?.avoid_iframes) {
-        const base_url = window.location.origin.split(":").slice(0, 2).join(":")
+        const base_url = window.location.origin.split(':').slice(0, 2).join(':')
         return `${base_url}:${service.port}`
       }
       let address = `/extension/${service?.metadata?.sanitized_name}`

@@ -99,6 +99,7 @@ class ServiceMetadata(BaseModel):
     route: Optional[str]
     new_page: Optional[bool]
     extra_query: Optional[str]
+    avoid_iframes: Optional[bool]
     api: str
     sanitized_name: Optional[str]
 
