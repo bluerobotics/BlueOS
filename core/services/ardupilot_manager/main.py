@@ -176,13 +176,16 @@ async def install_firmware_from_file(
         custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
+        logger.debug("Going to kill ardupilot")
         await autopilot.kill_ardupilot()
+        logger.debug("Installing firmware from file")
         autopilot.install_firmware_from_file(custom_firmware, target_board(board_name), parameters)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
     finally:
         binary.file.close()
+        logger.debug("Starting ardupilot again")
         await autopilot.start_ardupilot()
 
 
