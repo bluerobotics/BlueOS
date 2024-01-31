@@ -10,7 +10,11 @@ import pathlib
 import time
 from typing import List
 
-from commonwealth.utils.general import delete_everything, limit_ram_usage
+from commonwealth.utils.general import (
+    available_disk_space_mb,
+    delete_everything,
+    limit_ram_usage,
+)
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
@@ -33,10 +37,18 @@ def zip_files(files: List[str], output_path: str) -> None:
             logger.debug(f"Error deleting file: {file} - {e}")
 
 
+# pylint: disable=too-many-locals
 def main() -> None:
     parser = argparse.ArgumentParser(description="Periodically scan a directory and zip files older than one hour")
     parser.add_argument("path", help="Directory path or glob to scan")
     parser.add_argument("-a", "--max-age-minutes", type=int, default=10, help="Maximum age for files in minutes")
+    parser.add_argument(
+        "-l",
+        "--free-disk-limit",
+        type=int,
+        default=30,
+        help="Minimum free disk (MB) allowed before starting deleting logs",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
@@ -49,12 +61,29 @@ def main() -> None:
     # We need to transform from minutes to seconds, since this is what time and st_mtime returns
     max_age_seconds = args.max_age_minutes * 60
 
+    zip_extension = "gz"
+
     while True:
         now = time.time()
-        logger.info(f"Scanning {args.path} for files older than {str(datetime.timedelta(seconds=max_age_seconds))}...")
+
+        free_disk_space_mb = int(available_disk_space_mb())
+        not_enough_space = free_disk_space_mb < args.free_disk_limit
 
         # Get the root directories of all files
+        if not_enough_space:
+            logger.warning(
+                f"Available disk space is lower than our limit: {free_disk_space_mb}MB < {args.free_disk_limit}MB"
+            )
+            logger.warning(f"Going to delete all compressed files.. (*.{zip_extension})")
+            files = glob.glob(args.path.replace(".log", ".gz"), recursive=True)
+            pathlib_files = [pathlib.Path(file) for file in files]
+            gz_files = [file for file in pathlib_files if file.is_file() and file.suffix == f".{zip_extension}"]
+            for file in gz_files:
+                logger.warning(f"Deleting {file}: {int(file.stat().st_size / 2**20)} MB")
+                delete_everything(pathlib.Path(file))
+
         files = glob.glob(args.path, recursive=True)
+        logger.info(f"Scanning {args.path} for files older than {str(datetime.timedelta(seconds=max_age_seconds))}...")
         files = [file for file in files if os.path.isfile(file) and os.stat(file).st_mtime < now - max_age_seconds]
         root_dirs = list(set(os.path.dirname(file) for file in files))
         root_dirs.sort()
@@ -66,7 +95,7 @@ def main() -> None:
                 continue
             folder_name = os.path.basename(folder)
             timestamp = time.strftime("%Y%m%d-%H%M%S")
-            zipped_file = f"{folder}/{folder_name}-{timestamp}.gz"
+            zipped_file = f"{folder}/{folder_name}-{timestamp}.{zip_extension}"
             zip_files(local_files, zipped_file)
             logger.info(f"Created zip archive {zipped_file} with {len(local_files)} files.")
 
