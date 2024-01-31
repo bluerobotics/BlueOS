@@ -110,12 +110,15 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     async def exit(self) -> None:
         if await self.is_running():
             if self._subprocess is not None:
-                logger.error("terminate")
+                logger.warning("Terminating process")
                 self._subprocess.terminate()
+                logger.warning("Termination done")
                 await asyncio.sleep(3)  # Non-blocking sleep
+                logger.warning("Checking if it's still running..")
                 if await self.is_running():
-                    logger.error("kill")
+                    logger.warning("Still running, going to kill it")
                     self._subprocess.kill()
+                    logger.warning("Killing done")
                     await asyncio.sleep(3)
                 await self._subprocess.wait()  # Wait for the subprocess to terminate
         else:
