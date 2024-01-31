@@ -94,10 +94,10 @@ pipenv run ruff $python_files
 echo "Running pylint.."
 pipenv run pylint $python_files
 
-echo "Running pytest.."
-pipenv run pytest -n 10 --cov="$repository_path" --cov-report html
-
 echo "Running mypy.."
 git ls-files '*setup.py' | parallel 'pipenv run mypy $(dirname {}) --cache-dir $(dirname {})'
+
+echo "Running pytest.."
+pipenv run pytest -n 10 --cov="$repository_path" --cov-report html
 
 exit 0
