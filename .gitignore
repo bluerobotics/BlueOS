@@ -1,9 +1,16 @@
-*__pycache__
-*.pytest_cache
 .coverage
 htmlcov/
-env/
 build/
 *.egg-info
 dist/
 node_modules
+
+# Avoid local python development
+*__pycache__
+*.pytest_cache
+env/
+Pipfile
+Pipfile.lock
+poetry.lock
+registry/
+
