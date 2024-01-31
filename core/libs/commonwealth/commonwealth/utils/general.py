@@ -5,7 +5,10 @@ import uuid
 from functools import cache
 from pathlib import Path
 
+import psutil
 from loguru import logger
+
+from commonwealth.utils.decorators import temporary_cache
 
 
 @cache
@@ -108,3 +111,9 @@ def device_id() -> str:
         logger.exception(f"Could not get device's machine-id. {error}")
 
     raise ValueError("Could not get device id.")
+
+
+@temporary_cache(timeout_seconds=600)  # type: ignore
+def available_disk_space_mb() -> float:
+    # Make mypy happy
+    return float(psutil.disk_usage("/").free / (2**20))
