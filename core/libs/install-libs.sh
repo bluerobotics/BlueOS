@@ -9,11 +9,10 @@ BUILD_PACKAGES=(
 
 echo "Target architecture: $TARGETARCH"
 echo "Target variant: $TARGETVARIANT"
-# Install build packages if not on armv7 or amd64, which are the only platforms that have pre-built wheels
-if ! { [ "$TARGETARCH" == "arm" ] && [ "$TARGETVARIANT" == "v7" ]; } && [ "$TARGETARCH" != "amd64" ]; then
-    apt update
-    apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
-fi
+
+# psutil requires BUILD_PACKAGES to build to all platforms
+apt update
+apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
 
 # Piwheels is a Python package repository providing Arm platform wheels (pre-compiled binary Python packages)
 # specifically for the Raspberry Pi, making pip installations much faster.
