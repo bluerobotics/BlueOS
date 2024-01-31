@@ -116,6 +116,7 @@ function toHex(value: number): string {
 export interface deviceId {
     param: string
     paramValue: number
+    deviceIdNumber: number
     deviceName?: string
     busType: string
     bus: number
@@ -128,6 +129,9 @@ export default function decode(device: string, devid: number): deviceId {
   const bus = devid >> 3 & 0x1F
   const address = devid >> 8 & 0xFF
   const devtype = devid >> 16
+  // set deviceIdNumber to the last number of the "device" string or 1 if it's not a number
+  const deviceIdNumber = parseInt(device.slice(-1), 10) || 1
+
   let decodedDevname = 'UNKNOWN'
 
   if (device.startsWith('COMPASS')) {
@@ -163,6 +167,7 @@ export default function decode(device: string, devid: number): deviceId {
     bus,
     address: toHex(address),
     devtype,
+    deviceIdNumber,
     paramValue: devid,
   }
 }
