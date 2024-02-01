@@ -75,7 +75,7 @@ def target_board(board_name: Optional[str]) -> FlightController:
     return autopilot.current_board
 
 
-def raise_lock() -> None:
+def raise_lock(*raise_args: str, **kwargs: int) -> None:
     """Raise a 423 HTTP Error status
 
     Raises:
