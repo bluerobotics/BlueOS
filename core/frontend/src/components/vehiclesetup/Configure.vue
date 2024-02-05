@@ -27,6 +27,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import LightsConfigration from './configuration/lights.vue'
 import ParamSets from './overview/ParamSets.vue'
 
 export interface Item {
@@ -39,6 +40,7 @@ export default Vue.extend({
   name: 'Configure',
   components: {
     ParamSets,
+    LightsConfigration,
   },
   data() {
     return {
@@ -49,7 +51,7 @@ export default Vue.extend({
         { title: 'Compass', component: undefined },
         { title: 'Baro', component: undefined },
         { title: 'Gripper', component: undefined },
-        { title: 'Lights', component: undefined },
+        { title: 'Lights', component: LightsConfigration },
         { title: 'Camera Mount', component: undefined },
       ] as Item[],
     }
