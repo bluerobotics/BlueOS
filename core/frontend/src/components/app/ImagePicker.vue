@@ -97,7 +97,7 @@
 
 <script lang="ts">
 import axios from 'axios'
-import Vue from 'vue'
+import Vue, { PropType } from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import back_axios from '@/utils/api'
@@ -128,9 +128,9 @@ export default Vue.extend({
       default: '/userdata/images/',
       required: false,
     },
-    readonlyDirectory: {
-      type: String,
-      default: null,
+    readonlyFiles: {
+      type: Array<string>,
+      default: () => [],
       required: false,
     },
     defaultImage: {
@@ -149,7 +149,6 @@ export default Vue.extend({
       dialog: false,
       selected_index: null as number | null,
       images: [] as string[],
-      readonly_images: [] as string[],
       error: null as string | null,
       loading: true,
       upload_error: null as string | null,
@@ -159,14 +158,13 @@ export default Vue.extend({
     allimages(): ImageUrl[] {
       const images = this.images.map((image: string) => (
         { name: `${this.directory}/${image}`, readonly: false }))
-      const readonly_images = this.readonly_images.map((image: string) => (
-        { name: `${this.readonlyDirectory}/${image}`, readonly: true }))
+      const readonly_images = this.readonlyFiles.map((path: string) => (
+        { name: path, readonly: true }))
       return [...images, ...readonly_images, { name: this.defaultImage, readonly: true }]
     },
   },
   mounted() {
     this.loadImages()
-    this.loadReadonlyImages()
   },
   methods: {
     selectImage(index: number) {
@@ -183,22 +181,6 @@ export default Vue.extend({
         url: this.directory,
       }).then((response) => {
         this.images = response.data.filter(
-          (string: FileEntry) => string.type === 'file',
-        ).map((file: FileEntry) => file.name)
-        this.loading = false
-      }).catch((error) => {
-        this.error = error
-      })
-    },
-    loadReadonlyImages() {
-      if (!this.readonlyDirectory) {
-        return
-      }
-      back_axios({
-        method: 'get',
-        url: this.readonlyDirectory as string,
-      }).then((response) => {
-        this.readonly_images = response.data.filter(
           (string: FileEntry) => string.type === 'file',
         ).map((file: FileEntry) => file.name)
         this.loading = false
