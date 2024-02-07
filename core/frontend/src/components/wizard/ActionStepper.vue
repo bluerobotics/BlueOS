@@ -36,6 +36,7 @@ export interface Configuration {
   message: undefined | string
   done: boolean
   skip: boolean
+  started: boolean
 }
 
 export default Vue.extend({
@@ -59,6 +60,9 @@ export default Vue.extend({
         return 'mdi-check'
       }
       if (config.message === undefined) {
+        if (!config.started) {
+          return 'mdi-arrow-right-bold'
+        }
         return 'mdi-loading'
       }
       return 'mdi-alert'
@@ -71,6 +75,9 @@ export default Vue.extend({
         return 'success'
       }
       if (config.message === undefined) {
+        if (!config.started) {
+          return 'grey'
+        }
         return 'yellow'
       }
       return 'error'

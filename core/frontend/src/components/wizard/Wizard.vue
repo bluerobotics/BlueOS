@@ -427,6 +427,7 @@ export default Vue.extend({
             message: undefined,
             done: false,
             skip: false,
+            started: false,
           },
           {
             title: 'Set vehicle hostname',
@@ -435,6 +436,7 @@ export default Vue.extend({
             message: undefined,
             done: false,
             skip: false,
+            started: false,
           },
           {
             title: 'Set vehicle image',
@@ -443,6 +445,7 @@ export default Vue.extend({
             message: undefined,
             done: false,
             skip: false,
+            started: false,
           },
           ...this.setup_configurations,
         ]
@@ -451,10 +454,12 @@ export default Vue.extend({
     async applyConfigurations() {
       this.apply_status = ApplyStatus.InProgress
       this.apply_status = await Promise.all(this.configurations.map(async (config) => {
+        config.started = true
         config.message = undefined
         if (!config.done && !config.skip) {
           config.message = await config.promise()
           config.done = config.message === undefined
+          config.started = false
         }
         return config
       })).then((configs) => configs.every((config) => config.done || config.skip))
@@ -478,6 +483,7 @@ export default Vue.extend({
           message: undefined,
           done: false,
           skip: false,
+          started: false,
         },
         {
           title: 'Disable Wi-Fi hotspot',
@@ -486,6 +492,7 @@ export default Vue.extend({
           message: undefined,
           done: false,
           skip: false,
+          started: false,
         },
         {
           title: 'Disable smart Wi-Fi hotspot',
@@ -494,6 +501,7 @@ export default Vue.extend({
           message: undefined,
           done: false,
           skip: false,
+          started: false,
         },
       ]
     },
