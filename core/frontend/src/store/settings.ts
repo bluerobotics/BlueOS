@@ -4,6 +4,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
+import beacon from '@/store/beacon'
 import { castString } from '@/utils/helper_functions'
 
 @Module({
@@ -54,6 +55,13 @@ class SettingsStore extends VuexModule {
   setTopWidgets(widgets: string[]): void {
     this.user_top_widgets = widgets
     SettingsStore.save()
+  }
+
+  // Secret mode for developers that know our secret.
+  // It's enabled when the vehicle name is 'Sir Francis Drake', one the most famous pirates,
+  // and the pirate mode toggled to be enabled.
+  get is_dev_mode(): boolean {
+    return beacon.vehicle_name === 'Sir Francis Drake' && this.is_pirate_mode
   }
 
   /**
