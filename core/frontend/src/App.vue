@@ -340,8 +340,6 @@ import tummler_yellow from '@/assets/img/tummler-logo-yellow.svg'
 import tummler_white from '@/assets/img/tummler-logo-white.svg'
 import Vue from 'vue'
 
-import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
-import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import Wizard from '@/components/wizard/Wizard.vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
