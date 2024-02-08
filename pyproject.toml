@@ -2,7 +2,7 @@
 name = "blueos-docker"
 version = "0.0.1"
 description = "Blue Robotics BlueOS computer project"
-authors = ["software@bluerobotics.com"]
+authors = ["Blue Robotics <software@bluerobotics.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
