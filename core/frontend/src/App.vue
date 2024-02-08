@@ -336,6 +336,8 @@
 </template>
 
 <script lang="ts">
+import tummler_yellow from '@/assets/img/tummler-logo-yellow.svg'
+import tummler_white from '@/assets/img/tummler-logo-white.svg'
 import Vue from 'vue'
 
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
@@ -613,7 +615,7 @@ export default Vue.extend({
       return import.meta.env.VITE_BUILD_DATE
     },
     blueos_logo(): string {
-      return settings.is_dark_theme ? blueos_white : blueos_blue
+      return settings.is_dark_theme ? tummler_white : tummler_yellow
     },
   },
 
