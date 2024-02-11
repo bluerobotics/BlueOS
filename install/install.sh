@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Set desired version to be installed
-VERSION="${VERSION:-master}"
+VERSION="${VERSION:-tummler-os-build-2}"
 GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-tummler-rov/tummleros}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
