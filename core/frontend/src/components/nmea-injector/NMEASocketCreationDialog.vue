@@ -111,18 +111,20 @@ export default Vue.extend({
       const string_input = String(input)
       return isNotEmpty(string_input) ? true : 'Required field.'
     },
-    is_socket_port(input: string): (true | string) {
-      if (!isIntegerString(input)) {
+    is_socket_port(input: string | number): (true | string) {
+      const input_as_string = String(input)
+      if (!isIntegerString(input_as_string)) {
         return 'Please use an integer value.'
       }
-      const int_input = parseInt(input, 10)
+      const int_input = parseInt(input_as_string, 10)
       return isSocketPort(int_input) ? true : 'Invalid port.'
     },
-    is_component_id(input: string): (true | string) {
-      if (!isIntegerString(input)) {
+    is_component_id(input: string | number): (true | string) {
+      const input_as_string = String(input)
+      if (!isIntegerString(input_as_string)) {
         return 'Please use an integer value.'
       }
-      const int_input = parseInt(input, 10)
+      const int_input = parseInt(input_as_string, 10)
       // Mavlink MAV_COMPONENT IDs range from 25 to 250: https://mavlink.io/en/messages/minimal.html#MAV_COMPONENT
       const is_in_id_range = int_input >= 25 && int_input <= 250
       return is_in_id_range ? true : 'Please use a valid component ID (check Mavlink documentation for valid IDs).'
