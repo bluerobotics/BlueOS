@@ -108,7 +108,7 @@ SERVICES=(
     'wifi',0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
     # This services are not as important as the others
     'beacon',250,"$SERVICES_PATH/beacon/main.py"
-    'bridget',250,"nice -19 $RUN_AS_REGULAR_USER $SERVICES_PATH/bridget/main.py"
+    'bridget',0,"nice -19 $RUN_AS_REGULAR_USER $SERVICES_PATH/bridget/main.py"
     'commander',250,"$SERVICES_PATH/commander/main.py"
     'nmea_injector',250,"nice -19 $SERVICES_PATH/nmea_injector/nmea_injector/main.py"
     'helper',250,"$SERVICES_PATH/helper/main.py"
@@ -117,7 +117,7 @@ SERVICES=(
     'filebrowser',250,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
     'versionchooser',250,"$SERVICES_PATH/versionchooser/main.py"
     'pardal',250,"nice -19 $SERVICES_PATH/pardal/main.py"
-    'ping',250,"nice -19 $RUN_AS_REGULAR_USER $SERVICES_PATH/ping/main.py"
+    'ping',0,"nice -19 $RUN_AS_REGULAR_USER $SERVICES_PATH/ping/main.py"
     'user_terminal',0,"cat /etc/motd"
     'ttyd',250,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
     'nginx',250,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
