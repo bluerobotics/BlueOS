@@ -7,13 +7,10 @@ from typing import Generator
 
 import aiohttp
 from aiohttp import web
-from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
 SERVICE_NAME = "pardal"
-
-limit_ram_usage()
 
 parser = argparse.ArgumentParser(description="Pardal, web service to help with speed and latency tests")
 parser.add_argument("-p", "--port", help="Port to run web server", action="store_true", default=9120)
