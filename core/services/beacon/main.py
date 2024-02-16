@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional
 import psutil
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.general import limit_ram_usage
 from commonwealth.utils.logs import init_logger
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -24,8 +23,6 @@ from settings import ServiceTypes, SettingsV4
 from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
-
-limit_ram_usage()
 
 
 class AsyncRunner:
