@@ -4,6 +4,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
+import beacon from '@/store/beacon'
 import { castString } from '@/utils/helper_functions'
 
 @Module({
@@ -26,101 +27,108 @@ class SettingsStore extends VuexModule {
 
   user_top_widgets = [] as string[]
 
-    @Mutation
+  @Mutation
   setDarkTheme(value: boolean): void {
     this.is_dark_theme = value
     SettingsStore.save()
   }
 
-    @Mutation
-    setPirateMode(value: boolean): void {
-      this.is_pirate_mode = value
-      SettingsStore.save()
-    }
+  @Mutation
+  setPirateMode(value: boolean): void {
+    this.is_pirate_mode = value
+    SettingsStore.save()
+  }
 
-    @Mutation
-    updateVersionUpdateNotificationTime(): void {
-      this.last_version_update_notification_time = new Date().getTime()
-      SettingsStore.save()
-    }
+  @Mutation
+  updateVersionUpdateNotificationTime(): void {
+    this.last_version_update_notification_time = new Date().getTime()
+    SettingsStore.save()
+  }
 
-    @Mutation
-    setTourVersion(value: number): void {
-      this.tour_version = value
-      SettingsStore.save()
-    }
+  @Mutation
+  setTourVersion(value: number): void {
+    this.tour_version = value
+    SettingsStore.save()
+  }
 
-    @Mutation
-    setTopWidgets(widgets: string[]): void {
-      this.user_top_widgets = widgets
-      SettingsStore.save()
-    }
+  @Mutation
+  setTopWidgets(widgets: string[]): void {
+    this.user_top_widgets = widgets
+    SettingsStore.save()
+  }
 
-    /**
-     * Get name of the settings variable on the system
-     * @param string name
-     * @returns string
-     */
-    private static settingsName(name: string): string {
-      return `bluerobotics-blueos-${name}`
-    }
+  // Secret mode for developers that know our secret.
+  // It's enabled when the vehicle name is 'Sir Francis Drake', one the most famous pirates,
+  // and the pirate mode toggled to be enabled.
+  get is_dev_mode(): boolean {
+    return beacon.vehicle_name === 'Sir Francis Drake' && this.is_pirate_mode
+  }
 
-    /**
-     * Get variable value from settings system
-     * @param string name
-     * @returns T
-     */
-    static loadVariable<T>(name: string): T {
-      const storedVariable = window.localStorage.getItem(SettingsStore.settingsName(name))
-      const castedVariable = storedVariable === null ? null : castString(storedVariable)
-      return castedVariable as T
-    }
+  /**
+   * Get name of the settings variable on the system
+   * @param string name
+   * @returns string
+   */
+  private static settingsName(name: string): string {
+    return `bluerobotics-blueos-${name}`
+  }
 
-    /**
-     * Load all variables from settings system
-     */
-    static load(): void {
-      Object.keys(SettingsStore.state).forEach((name: string) => {
-        const value = SettingsStore.loadVariable(name)
-        Vue.set(SettingsStore.state, name, value)
-      })
-    }
+  /**
+   * Get variable value from settings system
+   * @param string name
+   * @returns T
+   */
+  static loadVariable<T>(name: string): T {
+    const storedVariable = window.localStorage.getItem(SettingsStore.settingsName(name))
+    const castedVariable = storedVariable === null ? null : castString(storedVariable)
+    return castedVariable as T
+  }
 
-    /**
-     * Save a variable on the settings system
-     * @param string name
-     * @param T value
-     */
-    static saveVariable<T>(name: string, value: T): void {
-      // eslint-disable-next-line
-      window.localStorage.setItem(SettingsStore.settingsName(name), JSON.stringify(value))
-    }
+  /**
+   * Load all variables from settings system
+   */
+  static load(): void {
+    Object.keys(SettingsStore.state).forEach((name: string) => {
+      const value = SettingsStore.loadVariable(name)
+      Vue.set(SettingsStore.state, name, value)
+    })
+  }
 
-    /**
-     * Save all variables on the settings sytem
-     */
-    static save(): void {
-      Object.entries(SettingsStore.state).forEach(([name, value]) => {
-        SettingsStore.saveVariable(name, value)
-      })
-    }
+  /**
+   * Save a variable on the settings system
+   * @param string name
+   * @param T value
+   */
+  static saveVariable<T>(name: string, value: T): void {
+    // eslint-disable-next-line
+    window.localStorage.setItem(SettingsStore.settingsName(name), JSON.stringify(value))
+  }
 
-    /**
-     * Start the instance and do the proper connections
-     */
-    static start(): void {
-      window.onstorage = () => {
-        SettingsStore.load()
-      }
+  /**
+   * Save all variables on the settings sytem
+   */
+  static save(): void {
+    Object.entries(SettingsStore.state).forEach(([name, value]) => {
+      SettingsStore.saveVariable(name, value)
+    })
+  }
 
-      const settings_version: number = SettingsStore.loadVariable('settings_version')
-      if (settings_version === null) {
-        SettingsStore.save()
-        return
-      }
-
+  /**
+   * Start the instance and do the proper connections
+   */
+  static start(): void {
+    window.onstorage = () => {
       SettingsStore.load()
     }
+
+    const settings_version: number = SettingsStore.loadVariable('settings_version')
+    if (settings_version === null) {
+      SettingsStore.save()
+      return
+    }
+
+    SettingsStore.load()
+  }
 }
 
 export { SettingsStore }

@@ -104,7 +104,12 @@ class AbstractRouter(metaclass=abc.ABCMeta):
 
         await asyncio.sleep(3)  # Non-blocking sleep
         if not await self.is_running():
-            raise MavlinkRouterStartFail("Failed to initialize Mavlink router")
+            _stdout, _strerr = await self._subprocess.communicate()
+            stdout = _stdout.decode("utf-8") if _stdout else "No stdout."
+            stderr = _strerr.decode("utf-8") if _strerr else "No stderr."
+            output = f"message: stdout: '{stdout}', stderr: '{stderr}'"
+            returncode = self._subprocess.returncode
+            raise MavlinkRouterStartFail(f"Failed to initialize Mavlink router, code: {returncode}, {output}")
         await self.start_house_keepers()
 
     async def exit(self) -> None:
