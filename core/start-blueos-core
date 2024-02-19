@@ -134,6 +134,7 @@ tmux -f /etc/tmux.conf start-server
 function create_service {
     tmux new -d -s "$1" || true
     SESSION_NAME="$1:0"
+    SERVICE_NAME="$1"
     local command="$2"  # Store the command as a string
     local memory_limit_mb=$3
 
@@ -156,8 +157,56 @@ function create_service {
     done
 
     # Use run_service to start the service with the memory limit
-    tmux send-keys -t $SESSION_NAME "run-service '$command' $memory_limit_mb" C-m
+    tmux send-keys -t $SESSION_NAME "run-service '$SERVICE_NAME' '$command' $memory_limit_mb " C-m
 }
+
+ssh_command() {
+  ssh -i /root/.config/.ssh/id_rsa -o StrictHostKeyChecking=no pi@localhost "$1"
+}
+
+prepare_cgroups() {
+  # Prepare cgroups for run-service.sh to use
+  # Get the Docker container's hash by its name
+  FULL_COMMAND="docker ps --no-trunc --filter name=blueos-core --format '{{.ID}}'"
+  CONTAINER_HASH=$(ssh_command "$FULL_COMMAND")
+  # Use the Docker container's hash to generate the path
+  FULL_PATH="system.slice/docker-$CONTAINER_HASH.scope"
+
+  # Remove the starting '0::' from FULL_PATH
+  FULL_PATH=${FULL_PATH#0::}
+  # Remove the leading '/'
+  FULL_PATH=${FULL_PATH#/}
+  echo "Docker cgroups root: $FULL_PATH"
+  # Export the full path
+  export DOCKER_CGROUP=$FULL_PATH
+
+  # populated cgroups cannot be changed, so, in order to enable subtree_control, 
+  # we need to create a new child cgroup andmove all processes of this cgroup to it
+  # (as only empty cgroups can be changed).
+
+  echo "Creating a new child cgroup..."
+  # Create a new child cgroup
+  DOCKER_CGROUP_PATH="/sys/fs/cgroup/$DOCKER_CGROUP"
+  mkdir $DOCKER_CGROUP_PATH/child_cgroup
+
+  echo "Moving all processes of this cgroup to the new child cgroup..."
+  # Move all processes of this cgroup to the new child cgroup
+  for PID in $(cat $DOCKER_CGROUP_PATH/cgroup.procs); do
+    echo $PID > $DOCKER_CGROUP_PATH/child_cgroup/cgroup.procs || echo "Failed to move PID $PID, it may be already dead"
+  done
+  echo "PIDs left in the original cgroup:"
+  if [ $(wc -l < $DOCKER_CGROUP_PATH/cgroup.procs) -eq 0 ]; then
+    echo "all PIDs moved successfully"
+  else
+    echo "some PIDs failed to move:"
+    cat $DOCKER_CGROUP_PATH/cgroup.procs
+  fi
+
+  echo "Enabling subtree_control..."
+  echo "+memory" > $DOCKER_CGROUP_PATH/cgroup.subtree_control && echo "subtree_control enabled"
+}
+
+prepare_cgroups
 
 echo "Starting high priority services.."
 for TUPLE in "${PRIORITY_SERVICES[@]}"; do
