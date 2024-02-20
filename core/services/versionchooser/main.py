@@ -64,7 +64,8 @@ async def get_bootstrap_version() -> Any:
 async def set_bootstrap_version(request: web.Request) -> Any:
     data = await request.json()
     tag = data["tag"]
-    return await versionChooser.set_bootstrap_version(tag)
+    repo = data.get("repo", "bluerobotics/blueos-bootstrap")
+    return await versionChooser.set_bootstrap_version(tag, repo)
 
 
 async def load(request: web.Request) -> Any:
