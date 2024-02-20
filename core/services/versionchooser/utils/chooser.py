@@ -155,7 +155,7 @@ class VersionChooser:
             logger.critical(f"unable to read bootstrap version: {e}")
             return "Unknown"
 
-    async def set_bootstrap_version(self, tag: str) -> web.StreamResponse:
+    async def set_bootstrap_version(self, tag: str, repo: str) -> web.StreamResponse:
         """Set the bootstrap container to a new version.
 
         Stops the current bootstrap container, renames it to a backup,
@@ -197,7 +197,7 @@ class VersionChooser:
 
         HOME = "/root"
         bootstrap_config = {
-            "Image": f"bluerobotics/blueos-bootstrap:{tag}",
+            "Image": f"{repo}:{tag}",
             "HostConfig": {
                 "RestartPolicy": {"Name": "unless-stopped"},
                 "NetworkMode": "host",

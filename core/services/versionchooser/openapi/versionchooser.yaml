@@ -60,6 +60,9 @@ paths:
                 tag:
                   type: string
                   example: master
+                repo:
+                  type: string
+                  example: bluerobotics/blueos-bootstrap
 
   /version/restart:
     post:
