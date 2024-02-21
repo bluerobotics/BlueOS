@@ -122,7 +122,7 @@ function create_service {
 
     # Check if the service is disabled
     if [[ $BLUEOS_DISABLE_SERVICES == *"$1"* ]]; then
-        echo "Service $1 is disabled"
+        echo "Service: $1 is disabled"
         tmux send-keys -t $SESSION_NAME "echo 'Service $1 is disabled'; sleep infinity" C-m
         return
     fi
