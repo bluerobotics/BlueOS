@@ -126,6 +126,7 @@ function create_service {
         tmux send-keys -t $SESSION_NAME "echo 'Service $1 is disabled'; sleep infinity" C-m
         return
     fi
+    echo "Service: $NAME: $EXECUTABLE with memory limit: $memory_limit_mb MB"
 
     # Set all necessary environment variables for the new tmux session
     for NAME in $(compgen -v | grep -e MAV_ -e BLUEOS_); do
@@ -140,7 +141,6 @@ function create_service {
 echo "Starting high priority services.."
 for TUPLE in "${PRIORITY_SERVICES[@]}"; do
     IFS=',' read -r NAME MEMORY_LIMIT_MB EXECUTABLE <<< "$TUPLE"
-    echo "Service: $NAME: $EXECUTABLE with memory limit: $MEMORY_LIMIT_MB MB"
     create_service "$NAME" "$EXECUTABLE" "$MEMORY_LIMIT_MB"
 done
 
@@ -149,7 +149,6 @@ sleep 5
 echo "Starting other services.."
 for TUPLE in "${SERVICES[@]}"; do
     IFS=',' read -r NAME MEMORY_LIMIT_MB EXECUTABLE <<< "$TUPLE"
-    echo "Service: $NAME: $EXECUTABLE with memory limit: $MEMORY_LIMIT_MB MB"
     create_service "$NAME" "$EXECUTABLE" "$MEMORY_LIMIT_MB"
 done
 
