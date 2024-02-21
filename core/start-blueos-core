@@ -31,6 +31,9 @@ echo "Available disk space: ${AVAILABLE_SPACE_MB}MB"
     echo "Done!"
 )
 
+TOTAL_RAM_MB=$(free -m | awk '/Mem:/ {print $2}')
+echo "Total RAM size: ${TOTAL_RAM_MB} MB"
+
 # Update docker binds, if we need to restart, exit!
 blueos_startup_update
 
@@ -119,6 +122,10 @@ function create_service {
     SESSION_NAME="$1:0"
     local command="$2"  # Store the command as a string
     local memory_limit_mb=$3
+
+    if [ -n "${BLUEOS_DISABLE_MEMORY_LIMIT}" ]; then
+        memory_limit_mb=$TOTAL_RAM_MB
+    fi
 
     # Check if the service is disabled
     if [[ $BLUEOS_DISABLE_SERVICES == *"$1"* ]]; then
