@@ -21,7 +21,7 @@ import { Dictionary } from '@/types/common'
 import { deviceId } from '@/utils/deviceid_decoder'
 import { degrees, Vector3 } from '@/utils/math'
 import mavlink_store_get from '@/utils/mavlink'
-import { mag_heading } from '@/utils/mavlink_math'
+import mag_heading from '@/utils/mavlink_math'
 
 function radians(degs: number): number {
   return degs * (Math.PI / 180)

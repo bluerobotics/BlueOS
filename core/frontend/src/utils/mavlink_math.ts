@@ -1,12 +1,12 @@
 // ported from https://github.com/ArduPilot/pymavlink/blob/master/mavextra.py#L60
 
-import { Matrix3, Vector3, degrees } from "./math"
+import { degrees, Matrix3, Vector3 } from './math'
 
-export function mag_heading(RawImu: Vector3, attitude: Vector3, declination: number) {
+export default function mag_heading(RawImu: Vector3, attitude: Vector3, declination: number): number {
   // calculate heading from raw magnetometer
-  let magX = RawImu.x
-  let magY = RawImu.y
-  let magZ = RawImu.z
+  const magX = RawImu.x
+  const magY = RawImu.y
+  const magZ = RawImu.z
 
   // go via a DCM matrix to match the APM calculation
   const dcmMatrix = (new Matrix3()).fromEuler(attitude.x, attitude.y, attitude.z)
@@ -15,7 +15,7 @@ export function mag_heading(RawImu: Vector3, attitude: Vector3, declination: num
   const headX = magX * cosPitchSqr - dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8))
   let heading = degrees(Math.atan2(-headY, headX)) + declination
   while (heading < -180) {
-      heading += 360
+    heading += 360
   }
   return heading
 }
