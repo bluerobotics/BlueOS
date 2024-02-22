@@ -89,3 +89,18 @@ BlueOS is designed to perform optimally across a wide range of systems. Our late
 - **amd64:** This is the architecture used by most desktop and laptop computers. A typical example is any modern PC running a 64-bit version of Linux. **Not fully supported.**
 
 Right now we officially support the Raspberry Pi 3 and 4, but the system should "just work" on all listed architectures with the correct docker binds.
+
+## Deveompment Environment
+
+Docker based development environment is available for via the dev.yml docker compose file. This will start a development environment with all the required services as well as mount all of the needed directories in this repository for development.
+
+```bash
+docker compose -f dev.yml up
+```
+
+when restarting the development environment you may need to remove the volumes to ensure that the development environment is clean.
+
+```bash 
+docker compose -f dev.yml down 
+```
+

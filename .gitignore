@@ -13,4 +13,5 @@ Pipfile
 Pipfile.lock
 poetry.lock
 registry/
+workspace/
 
