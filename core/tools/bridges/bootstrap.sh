@@ -4,7 +4,7 @@
 set -e
 
 LOCAL_BINARY_PATH="/usr/bin/bridges"
-VERSION=0.9.0
+VERSION=0.10.1
 
 # By default we install armv7
 REMOTE_BINARY_URL="https://github.com/patrickelectric/bridges/releases/download/${VERSION}/bridges-armv7-unknown-linux-musleabihf"
