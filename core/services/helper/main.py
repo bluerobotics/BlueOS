@@ -230,8 +230,13 @@ class Helper:
         conn: Optional[Union[http.client.HTTPConnection, http.client.HTTPSConnection]] = None
         request_response = SimpleHttpResponse(status=None, decoded_data=None, as_json=None, timeout=False, error=None)
 
+        # Based on requests library
+        headers = {
+            "User-Agent": "python",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept": "*/*",
+        }
         # Prepare the header for json request
-        headers = {}
         if try_json:
             headers["Accept"] = "application/json"
 
