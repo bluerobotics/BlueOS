@@ -1,0 +1,18 @@
+version: '3.7'
+services:
+  blueos-core:
+    image: bluerobotics/blueos-core:1.2.0-beta.6
+    container_name: blueos-core
+    privileged: true
+    network_mode: host
+    volumes:
+      - ./core/start-blueos-core:/usr/bin/start-blueos-core
+      - ./core/services:/home/pi/services
+      - ./workspace/config:/root/.config
+      - ./workspace/userdata:/usr/blueos/userdata
+      - ./workspace/logs:/var/logs/blueos
+      - /etc/resolv.conf:/etc/resolv.conf
+      - /run/udev:/run/udev
+      - /etc/machine-id:/etc/machine-id
+      - /var/run/docker.sock:/var/run/docker.sock
+    pid: "host"
