@@ -3,7 +3,7 @@
     <v-form ref="select">
       <v-select
         v-model="selected_param_set_name"
-        :items="[...filtered_param_sets_names, 'Do not load default parameters']"
+        :items="[...filtered_param_sets_names, not_load_default_params_option]"
         item-text="sanitized"
         item-value="full"
         :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
@@ -19,6 +19,12 @@
     </p>
     <p v-else-if="has_error">
       Unable to load parameters.
+    </p>
+    <p v-else-if="(!loading_timeout_reached && invalid_board_or_version)">
+      Determining current board and firmware version...
+    </p>
+    <p v-else-if="(loading_timeout_reached && invalid_board_or_version)">
+      Unable to determine current board or firmware version.
     </p>
     <p v-else-if="(Object.keys(filtered_param_sets).length === 0)">
       No parameters available for this setup
@@ -56,6 +62,8 @@ import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotMan
 
 const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
+const MAX_LOADING_TIME_MS = 25000
+
 export default Vue.extend({
   name: 'DefaultParamLoader',
   props: {
@@ -74,6 +82,7 @@ export default Vue.extend({
     selected_param_set: {},
     selected_param_set_name: '' as string,
     is_loading_paramsets: true,
+    loading_timeout_reached: false,
     has_error: false,
   }),
   computed: {
@@ -112,8 +121,14 @@ export default Vue.extend({
     value_items(): { key: string, value: number }[] {
       return Object.entries(this.value ?? {}).map(([key, value]) => ({ key, value }))
     },
+    invalid_board_or_version(): boolean {
+      return !this.board || !this.version
+    },
     is_loading(): boolean {
-      return this.is_loading_paramsets || !this.board || !this.version
+      return (this.is_loading_paramsets || this.invalid_board_or_version) && !this.loading_timeout_reached
+    },
+    not_load_default_params_option(): string {
+      return 'Do not load default parameters'
     },
   },
 
@@ -134,6 +149,7 @@ export default Vue.extend({
     this.updateLatestFirmwareVersion().then((version: string) => {
       this.version = new SemVer(version.split('-')[1])
     })
+    setTimeout(() => { this.onLoadingTimeout() }, MAX_LOADING_TIME_MS)
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchCurrentBoard)
@@ -170,6 +186,15 @@ export default Vue.extend({
       } catch (error) {
         this.has_error = true
         throw error
+      }
+    },
+    onLoadingTimeout() {
+      if (this.is_loading) {
+        this.loading_timeout_reached = true
+
+        if (this.selected_param_set_name === '') {
+          this.selected_param_set_name = this.not_load_default_params_option
+        }
       }
     },
   },
