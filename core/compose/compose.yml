@@ -1,0 +1,50 @@
+version: '3.7'
+services:
+  blueos-core:
+    image: bluerobotics/blueos-core:master
+    container_name: blueos-core
+    privileged: true
+    # This can be used as an alternative to ports binding
+    # Using host as a network mode is only supported for linux
+    # Ref: https://docs.docker.com/network/drivers/host
+    # network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/udev:/run/udev
+      - /etc/resolv.conf:/etc/resolv.conf
+      - /etc/machine-id:/etc/machine-id
+      - ./workspace/userdata:/usr/blueos/userdata
+      - ./workspace/logs:/var/logs/blueos
+      - ./workspace/config:/root/.config
+      - ./workspace/blueos:/etc/blueos
+      # Allow changes made to the repository to be directly reflected in the running container
+      - ../start-blueos-core:/usr/bin/start-blueos-core
+      - ../services:/home/pi/services
+    pid: "host"
+    environment:
+      - BLUEOS_DISABLE_SERVICES=cable_guy,wifi,commander
+      - BLUEOS_DISABLE_MEMORY_LIMIT=true
+    ports:
+      - "80:80"
+      - "81:81"       # Helper
+      - "2748:2748"   # NMEA Injector
+      - "3478:3478"   # MAVLink Camera Manager Stun server
+      - "5173:5173"   # Cockpit development port
+      - "6020:6020"   # MAVLink Camera Manager REST API and interface
+      - "6021:6021"   # MAVLink Camera Manager Signalling server
+      - "6030:6030"   # System Information
+      - "6040:6040"   # MAVLink2Rest
+      - "7777:7777"   # File Browser
+      - "8081:8081"   # Version Chooser
+      - "8088:8088"   # ttyd - Terminal
+      - "8554:8554"   # MAVLink Camera Manager RTSP server
+      - "9000:9000"   # Wifi Manager
+      - "9090:9090"   # Cable-guy
+      - "9100:9100"   # Commander
+      - "9101:9101"   # Bag Of Holding
+      - "9110:9110"   # Ping Service
+      - "9111:9111"   # Beacon Service
+      - "9120:9120"   # Pardal
+      - "9134:9134"   # Kraken
+      - "27353:27353" # Bridget
+      - "49153:49153" # Cockpit

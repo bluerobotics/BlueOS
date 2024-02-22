@@ -13,5 +13,7 @@ Pipfile
 Pipfile.lock
 poetry.lock
 registry/
-workspace/
+
+# Docker compose binds
+core/compose/workspace/
 

@@ -95,12 +95,12 @@ Right now we officially support the Raspberry Pi 3 and 4, but the system should 
 Docker based development environment is available for via the dev.yml docker compose file. This will start a development environment with all the required services as well as mount all of the needed directories in this repository for development.
 
 ```bash
-docker compose -f dev.yml up
+docker compose -f core/compose/compose.yml up
 ```
 
 when restarting the development environment you may need to remove the volumes to ensure that the development environment is clean.
 
 ```bash 
-docker compose -f dev.yml down 
+docker compose -f core/compose/compose.yml down
 ```
 
