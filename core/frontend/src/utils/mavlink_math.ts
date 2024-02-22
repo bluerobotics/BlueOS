@@ -1,19 +1,19 @@
 // ported from https://github.com/ArduPilot/pymavlink/blob/master/mavextra.py#L60
 
-import { degrees, Matrix3, Vector3 } from './math'
+import { glMatrix, vec3, mat3 } from 'gl-matrix'
 
-export default function mag_heading(RawImu: Vector3, attitude: Vector3, declination: number): number {
+export default function mag_heading(RawImu: vec3, attitude: vec3, declination: number): number {
   // calculate heading from raw magnetometer
-  const magX = RawImu.x
-  const magY = RawImu.y
-  const magZ = RawImu.z
+  const magX = RawImu[0]
+  const magY = RawImu[1]
+  const magZ = RawImu[2]
 
   // go via a DCM matrix to match the APM calculation
-  const dcmMatrix = (new Matrix3()).fromEuler(attitude.x, attitude.y, attitude.z)
-  const cosPitchSqr = 1.0 - (dcmMatrix.e(6) * dcmMatrix.e(6))
-  const headY = magY * dcmMatrix.e(8) - magZ * dcmMatrix.e(7)
-  const headX = magX * cosPitchSqr - dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8))
-  let heading = degrees(Math.atan2(-headY, headX)) + declination
+  const dcmMatrix = mat3.fromEuler(mat3.create(), attitude[0], attitude[1], attitude[2])
+  const cosPitchSqr = 1.0 - dcmMatrix[6] * dcmMatrix[6]
+  const headY = magY * dcmMatrix[8] - magZ * dcmMatrix[7]
+  const headX = magX * cosPitchSqr - dcmMatrix[6] * (magY * dcmMatrix[7] + magZ * dcmMatrix[8])
+  let heading = glMatrix.toDegree(Math.atan2(-headY, headX)) + declination
   while (heading < -180) {
     heading += 360
   }

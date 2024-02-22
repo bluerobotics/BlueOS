@@ -11,6 +11,7 @@
 <script lang="ts">
 // based on https://github.com/bluerobotics/cockpit/blob/master/src/components/widgets/Compass.vue
 
+import { glMatrix, vec3 } from 'gl-matrix'
 import gsap from 'gsap'
 import Vue, { PropType } from 'vue'
 
@@ -19,13 +20,8 @@ import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
 import { Dictionary } from '@/types/common'
 import { deviceId } from '@/utils/deviceid_decoder'
-import { degrees, Vector3 } from '@/utils/math'
 import mavlink_store_get from '@/utils/mavlink'
 import mag_heading from '@/utils/mavlink_math'
-
-function radians(degs: number): number {
-  return degs * (Math.PI / 180)
-}
 
 function sequentialArray(length: number): number[] {
   return Array.from({ length }, (_, i) => i)
@@ -69,31 +65,31 @@ export default Vue.extend({
     canvas(): HTMLCanvasElement {
       return this.$refs.canvasRef as HTMLCanvasElement
     },
-    attitude(): Vector3 | null {
+    attitude(): vec3 | null {
       const msg = mavlink_store_get(mavlink, 'ATTITUDE.messageData.message') as Dictionary<number>
-      if (!msg) return new Vector3(0, 0, 0)
-      return new Vector3(msg.roll, msg.pitch, msg.yaw)
+      if (!msg) return vec3.fromValues(0, 0, 0)
+      return vec3.fromValues(msg.roll, msg.pitch, msg.yaw)
     },
-    imu1(): Vector3 | null {
+    imu1(): vec3 | null {
       const msg = mavlink_store_get(mavlink, 'RAW_IMU.messageData.message') as Dictionary<number>
       if (!msg) return null
-      return new Vector3(msg.xmag, msg.ymag, msg.zmag)
+      return vec3.fromValues(msg.xmag, msg.ymag, msg.zmag)
     },
-    imu2(): Vector3 | null {
+    imu2(): vec3 | null {
       const msg = mavlink_store_get(mavlink, 'SCALED_IMU2.messageData.message') as Dictionary<number>
       if (!msg) return null
-      return new Vector3(msg.xmag, msg.ymag, msg.zmag)
+      return vec3.fromValues(msg.xmag, msg.ymag, msg.zmag)
     },
-    imu3(): Vector3 | null {
+    imu3(): vec3 | null {
       const msg = mavlink_store_get(mavlink, 'SCALED_IMU3.messageData.message') as Dictionary<number>
       if (!msg) return null
-      return new Vector3(msg.xmag, msg.ymag, msg.zmag)
+      return vec3.fromValues(msg.xmag, msg.ymag, msg.zmag)
     },
     yaw(): number {
       if (this.attitude === null) {
         return 0
       }
-      return degrees(this.attitude.z)
+      return glMatrix.toDegree(this.attitude[2])
     },
     mag_headings(): (number | null)[] {
       if (!this.attitude) {
@@ -117,7 +113,7 @@ export default Vue.extend({
       return getComputedStyle(document.documentElement).getPropertyValue('--v-primary-base').trim()
     },
     declinationDegs(): number {
-      return degrees(autopilot_data.parameter('COMPASS_DEC')?.value ?? 0)
+      return glMatrix.toDegree(autopilot_data.parameter('COMPASS_DEC')?.value ?? 0)
     },
   },
   mounted() {
@@ -190,12 +186,12 @@ export default Vue.extend({
       )
       ctx.restore()
 
-      ctx.rotate(radians(-90))
+      ctx.rotate(glMatrix.toRadian(-90))
 
       for (const [angleDegrees, angleName] of Object.entries(mainAngles)) {
         ctx.save()
 
-        ctx.rotate(radians(Number(angleDegrees)))
+        ctx.rotate(glMatrix.toRadian(Number(angleDegrees)))
         ctx.beginPath()
         ctx.moveTo(outerIndicatorRadius, 0)
         ctx.lineTo(outerCircleRadius, 0)
@@ -204,7 +200,7 @@ export default Vue.extend({
         ctx.textBaseline = 'bottom'
         ctx.font = `bold ${0.7 * fontSize}px Arial`
         ctx.translate(outerCircleRadius * 1.025, 0)
-        ctx.rotate(radians(90))
+        ctx.rotate(glMatrix.toRadian(90))
         ctx.fillText(angleName, 0, 0)
 
         ctx.stroke()
@@ -216,7 +212,7 @@ export default Vue.extend({
         if (angleDegrees % 9 !== 0) continue
         ctx.save()
         ctx.lineWidth = 0.25 * baseLineWidth
-        ctx.rotate(radians(Number(angleDegrees)))
+        ctx.rotate(glMatrix.toRadian(Number(angleDegrees)))
         ctx.beginPath()
         ctx.moveTo(1.1 * outerIndicatorRadius, 0)
         ctx.lineTo(outerCircleRadius, 0)
@@ -226,7 +222,7 @@ export default Vue.extend({
 
       // Draw outer circle
       ctx.beginPath()
-      ctx.arc(0, 0, outerCircleRadius, 0, radians(360))
+      ctx.arc(0, 0, outerCircleRadius, 0, glMatrix.toRadian(360))
       ctx.stroke()
 
       // Draw central indicator
@@ -236,7 +232,7 @@ export default Vue.extend({
         const color = this.colors[paramValue]
         ctx.save()
         this.renderVariables.yawAngleDegrees[index] = angleDegrees
-        ctx.rotate(radians(angleDegrees))
+        ctx.rotate(glMatrix.toRadian(angleDegrees))
         ctx.beginPath()
         ctx.lineWidth = 1
         ctx.strokeStyle = color
