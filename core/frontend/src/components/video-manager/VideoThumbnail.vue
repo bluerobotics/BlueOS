@@ -5,12 +5,8 @@
       :width="width"
       tile
     >
-      <img
-        v-if="thumbnail?.status === 200"
-        :src="thumbnail?.source"
-      >
       <span
-        v-else-if="not_available"
+        v-if="not_available"
         :style="{ border: '2px dashed' }"
         class="text-caption"
         style="opacity: 30%; padding: 20px"
@@ -21,10 +17,14 @@
         to have one
       </span>
       <spinning-logo
-        v-else
+        v-else-if="fetching"
         size="10%"
         subtitle="Fetching thumbnail..."
       />
+      <img
+        v-else
+        :src="thumbnail?.source"
+      >
     </v-avatar>
   </v-container>
 </template>
@@ -67,10 +67,10 @@ export default Vue.extend({
   },
   computed: {
     not_available(): boolean {
-      if (this.thumbnail?.status === 404) {
-        return true
-      }
-      return this.thumbnail?.source === undefined && this.thumbnail?.status !== 503
+      return this.register === false
+    },
+    fetching(): boolean {
+      return this.thumbnail === undefined
     },
   },
   watch: {
@@ -110,7 +110,10 @@ export default Vue.extend({
   },
   methods: {
     updateThumbnail() {
-      this.thumbnail = video.thumbnails.get(this.source)
+      const result = video.thumbnails.get(this.source)
+      if (result?.status === 200) {
+        this.thumbnail = result
+      }
     },
   },
 })
