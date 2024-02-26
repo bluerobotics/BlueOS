@@ -539,6 +539,7 @@ export default Vue.extend({
           message: undefined,
           done: false,
           skip: false,
+          started: false,
         },
       ]
     },
