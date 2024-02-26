@@ -21,4 +21,5 @@ parallel --halt now,fail=1 '/home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
 /home/pi/tools/dnsmasq/bootstrap.sh
 /home/pi/tools/hotspot/bootstrap.sh
 /home/pi/tools/iperf3/bootstrap.sh
+/home/pi/tools/sudo/bootstrap.sh
 /home/pi/tools/nginx/bootstrap.sh
