@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 from typing import Dict, List
@@ -47,6 +48,7 @@ class Bridget:
 
     def __init__(self) -> None:
         self._bridges: Dict[BridgeFrontendSpec, Bridge] = {}
+        self._bridge_status: Dict[BridgeFrontendSpec, bool] = {}
         self._settings_manager = Manager("bridget", SettingsV2, USERDATA / "settings" / "bridget")
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specsv2:
@@ -92,6 +94,12 @@ class Bridget:
         if bridge is None:
             raise RuntimeError("Bridge doesn't exist.")
         bridge.stop()
+
+    async def do_house_keeping(self) -> None:
+        while True:
+            await asyncio.sleep(5)
+            for _, bridge in self._bridges.items():
+                bridge.commmunicate()
 
     def stop(self) -> None:
         logging.debug("Stopping Bridget and removing all bridges.")
