@@ -88,6 +88,9 @@ fi
 
 # fix permissions for logging folders:
 find /var/logs/blueos -type d -exec chmod 777 {} \;
+mkdir -p /usr/blueos/userdata/settings
+find /usr/blueos -type d -exec chmod 777 {} \;
+find /usr/blueos -type f -exec chmod a+rw {} \;
 
 # These services have priority because they do the fundamental for the vehicle to work,
 # and by initializing them first we reduce the time users have to wait to control the vehicle.
