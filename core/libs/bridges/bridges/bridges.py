@@ -35,7 +35,7 @@ class Bridge:
         automatic_disconnect_clients = "" if automatic_disconnect else "--no-udp-disconnection"
         is_server = ip == "0.0.0.0"
         port = udp_listen_port if is_server else udp_target_port
-
+        self.output: str = ""
         command_line = f"{bridges} -u {ip}:{port} -p {serial_port.device}:{baud} {automatic_disconnect_clients}"
         if not is_server and udp_listen_port != 0:
             command_line += f" --listen-port {udp_listen_port}"
@@ -64,9 +64,12 @@ class Bridge:
         if not self.process:
             self.status = Status.DEAD
             raise RuntimeError("Bridges process doesn't exist.")
-        output = self.process.communicate(command)
-        self.status = Status.RUNNING
-        return output
+        output, error = self.process.communicate()
+        self.output += output.decode("utf-8") + error.decode("utf-8")
+        # Limit the size of self.output to 1000 characterxs
+        if len(self.output) > 1000:
+            self.output = self.output[-1000:]
+        return output, error
 
     def __del__(self) -> None:
         self.stop()
