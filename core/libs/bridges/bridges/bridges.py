@@ -48,5 +48,10 @@ class Bridge:
         if self.process.poll() is None:
             raise RuntimeError("Failed to kill bridges process.")
 
+    def commmunicate(self) -> tuple[bytes, bytes]:
+        if not self.process:
+            raise RuntimeError("Bridges process doesn't exist.")
+        return self.process.communicate(command)
+
     def __del__(self) -> None:
         self.stop()
