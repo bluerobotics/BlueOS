@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from bridges.bridges import Bridge
 from commonwealth.settings.manager import Manager
@@ -11,12 +12,14 @@ from settings import Ping1dSettingsSpecV1, SettingsV1
 
 SERVICE_NAME = "ping"
 
+USERDATA = Path("/usr/blueos/userdata/")
+
 
 class Ping1DDriver(PingDriver):
     def __init__(self, ping: PingDeviceDescriptor, port: int) -> None:
         super().__init__(ping, port)
         # load settings
-        self.manager = Manager(SERVICE_NAME, SettingsV1)
+        self.manager = Manager(SERVICE_NAME, SettingsV1, USERDATA / "settings" / SERVICE_NAME)
         # our settings file is a list for each sensor type.
         # check the list to find our current sensor in it
         connection_info = self.ping.get_hw_or_eth_info()
