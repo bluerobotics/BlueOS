@@ -73,6 +73,7 @@
             v-if="$vuetify.breakpoint.smAndUp && are_controllers_available"
             height="auto"
             width="280"
+            register="true"
             :source="device.source"
             style="position: sticky; top: 100px"
           />
