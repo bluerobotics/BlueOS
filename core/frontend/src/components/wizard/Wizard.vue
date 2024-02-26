@@ -141,7 +141,7 @@
             <v-row class="pa-5">
               <v-btn
                 color="warning"
-                @click="step_number = 1"
+                @click="step_number = Math.max(step_number - 1, 1)"
               >
                 Return
               </v-btn>
