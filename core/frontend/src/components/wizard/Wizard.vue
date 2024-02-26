@@ -651,7 +651,7 @@ export default Vue.extend({
         .catch((error) => `Failed to fetch available firmware: ${error.message ?? error.response?.data}.`)
     },
     validateParams(): boolean {
-      return this.$refs.param_loader.validateParams()
+      return this.$refs.param_loader?.validateParams()
     },
   },
 })
