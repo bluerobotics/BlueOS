@@ -37,7 +37,8 @@ def delete_everything(path: Path) -> None:
 
 
 def file_is_open(path: Path) -> bool:
-    result = subprocess.run(["lsof", path.resolve()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    # The -b (avoid kernel blocks) is used for the function to not block forever
+    result = subprocess.run(["lsof", "-b", path.resolve()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     return result.returncode == 0
 
 
