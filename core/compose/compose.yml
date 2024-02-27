@@ -19,6 +19,7 @@ services:
       - ./workspace/blueos:/etc/blueos
       # Allow changes made to the repository to be directly reflected in the running container
       - ../start-blueos-core:/usr/bin/start-blueos-core
+      - ../tools/blueos_startup_update/blueos_startup_update:/usr/bin/blueos_startup_update
       - ../services:/home/pi/services
     pid: "host"
     environment:
