@@ -73,6 +73,11 @@ def dict_merge(dct, merge_dct):
 def update_startup() -> bool:
     startup_path = os.path.join(appdirs.user_config_dir('bootstrap'), 'startup.json')
     config = {}
+
+    if not os.path.isfile(startup_path):
+        print(f"File: {startup_path}, does not exist, aborting.")
+        return False
+
     with open(startup_path, mode="r", encoding="utf-8") as startup_file:
         config = json.load(startup_file)
         old_config = copy.deepcopy(config)
