@@ -1,16 +1,17 @@
 #! /usr/bin/env python3
+import asyncio
 import logging
 from typing import Any, List
 
-import uvicorn
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from uvicorn import Config, Server
 
-from bridget import BridgeSpec, Bridget
+from bridget import BridgeFrontendSpec, Bridget
 
 SERVICE_NAME = "bridget"
 
@@ -36,7 +37,7 @@ def get_serial_ports() -> Any:
     return ports
 
 
-@app.get("/bridges", response_model=List[BridgeSpec])
+@app.get("/bridges", response_model=List[BridgeFrontendSpec])
 @version(1, 0)
 def get_bridges() -> Any:
     bridges = controller.get_bridges()
@@ -46,7 +47,7 @@ def get_bridges() -> Any:
 
 @app.post("/bridges", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
-def add_bridge(bridge: BridgeSpec) -> Any:
+def add_bridge(bridge: BridgeFrontendSpec) -> Any:
     logger.debug(f"Adding bridge '{bridge}'.")
     controller.add_bridge(bridge)
     logger.debug(f"Bridge '{bridge}' added.")
@@ -54,7 +55,7 @@ def add_bridge(bridge: BridgeSpec) -> Any:
 
 @app.delete("/bridges", status_code=status.HTTP_200_OK)
 @version(1, 0)
-def remove_bridge(bridge: BridgeSpec) -> Any:
+def remove_bridge(bridge: BridgeFrontendSpec) -> Any:
     logger.debug(f"Removing bridge '{bridge}'.")
     controller.remove_bridge(bridge)
     logger.debug(f"Bridge '{bridge}' removed.")
@@ -76,5 +77,11 @@ async def read_items() -> Any:
 
 
 if __name__ == "__main__":
+    loop = asyncio.new_event_loop()
+
     # Running uvicorn with log disabled so loguru can handle it
-    uvicorn.run(app, host="0.0.0.0", port=27353, log_config=None)
+    config = Config(app=app, loop=loop, host="0.0.0.0", port=27353, log_config=None)
+    server = Server(config)
+
+    loop.create_task(controller.do_house_keeping())
+    loop.run_until_complete(server.serve())
