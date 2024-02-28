@@ -166,6 +166,13 @@
             </div>
             <v-row class="pa-5 pt-10 flex-row justify-space-around align-center grow">
               <v-btn
+                color="warning"
+                :disabled="apply_in_progress || apply_done"
+                @click="step_number = Math.max(step_number - 1, 1)"
+              >
+                Return
+              </v-btn>
+              <v-btn
                 :color="retry_count == 0 ? 'success' : 'error'"
                 :loading="apply_in_progress"
                 :disabled="apply_in_progress || apply_done"
@@ -418,38 +425,36 @@ export default Vue.extend({
       this.configuration_page_index += 1
     },
     async finalConfigurations() {
-      if (this.configurations.isEmpty()) {
-        this.configurations = [
-          {
-            title: 'Set custom vehicle name',
-            summary: `Set vehicle name for the user: ${this.vehicle_name}`,
-            promise: () => this.setHostname(),
-            message: undefined,
-            done: false,
-            skip: false,
-            started: false,
-          },
-          {
-            title: 'Set vehicle hostname',
-            summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
-            promise: () => this.setVehicleName(),
-            message: undefined,
-            done: false,
-            skip: false,
-            started: false,
-          },
-          {
-            title: 'Set vehicle image',
-            summary: 'Set image to be used for vehicle thumbnail',
-            promise: () => this.setVehicleImage(),
-            message: undefined,
-            done: false,
-            skip: false,
-            started: false,
-          },
-          ...this.setup_configurations,
-        ]
-      }
+      this.configurations = [
+        {
+          title: 'Set custom vehicle name',
+          summary: `Set vehicle name for the user: ${this.vehicle_name}`,
+          promise: () => this.setHostname(),
+          message: undefined,
+          done: false,
+          skip: false,
+          started: false,
+        },
+        {
+          title: 'Set vehicle hostname',
+          summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
+          promise: () => this.setVehicleName(),
+          message: undefined,
+          done: false,
+          skip: false,
+          started: false,
+        },
+        {
+          title: 'Set vehicle image',
+          summary: 'Set image to be used for vehicle thumbnail',
+          promise: () => this.setVehicleImage(),
+          message: undefined,
+          done: false,
+          skip: false,
+          started: false,
+        },
+        ...this.setup_configurations,
+      ]
     },
     async applyConfigurations() {
       this.apply_status = ApplyStatus.InProgress
