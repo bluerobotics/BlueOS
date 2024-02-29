@@ -73,10 +73,19 @@ export default Vue.extend({
       return beacon.available_domains.filter((entry) => entry.interface_type === InterfaceType.WIRED)
     },
     wireless_interface_domains(): Domain[] {
-      return beacon.available_domains.filter((entry) => entry.interface_type !== InterfaceType.WIRED)
+      return beacon.available_domains.filter(
+        (entry) => entry.interface_type === InterfaceType.WIFI || entry.interface_type === InterfaceType.HOTSPOT,
+      )
     },
     is_connected_to_wifi(): boolean {
-      return this.wireless_interface_domains.some((domain) => domain.ip === beacon.nginx_ip_address)
+      const is_on_wifi = this.wireless_interface_domains.some((domain) => domain.ip === beacon.nginx_ip_address)
+      const is_on_wired = this.wired_interface_domains.some((domain) => domain.ip === beacon.nginx_ip_address)
+
+      if (is_on_wifi && is_on_wired) {
+        console.debug('Unexpected behavior. There are both Wired and Wireless interfaces sharing the same IP address.')
+      }
+
+      return is_on_wifi && !is_on_wired
     },
   },
   mounted() {
