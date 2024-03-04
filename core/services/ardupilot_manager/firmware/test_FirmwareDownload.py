@@ -27,7 +27,8 @@ def test_firmware_download() -> None:
     versions = firmware_download._find_version_item(
         vehicletype="Sub", mav_firmware_version_type="STABLE-4.0.1", platform=Platform.Pixhawk1
     )
-    assert len(versions) == 3, "Failed to find multiple versions."
+    # There are two versions, one for the firmware and one with the bootloader
+    assert len(versions) == 2, "Failed to find multiple versions."
 
     available_versions = firmware_download.get_available_versions(Vehicle.Sub, Platform.Pixhawk1)
     assert len(available_versions) == len(set(available_versions)), "Available versions are not unique."
