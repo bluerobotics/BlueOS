@@ -47,6 +47,11 @@
             v-model="show_creation_dialog"
             :interface-name="adapter.name"
           />
+          <address-deletion-dialog
+            ref="deletionDialog"
+            v-model="show_deletion_dialog"
+            :dialog-type="deletion_dialog_type"
+          />
           <v-btn
             small
             class="ma-2 px-2 py-5 elevation-1"
@@ -85,12 +90,14 @@
 import Vue, { PropType } from 'vue'
 
 import Notifier from '@/libs/notifier'
+import beacon from '@/store/beacon'
 import ethernet from '@/store/ethernet'
 import { AddressMode, EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 import AddressCreationDialog from './AddressCreationDialog.vue'
+import AddressDeletionDialog from './AddressDeletionDialog.vue'
 import DHCPServerDialog from './DHCPServerDialog.vue'
 
 const notifier = new Notifier(ethernet_service)
@@ -99,6 +106,7 @@ export default Vue.extend({
   name: 'InterfaceCard',
   components: {
     AddressCreationDialog,
+    AddressDeletionDialog,
     'dhcp-server-dialog': DHCPServerDialog,
   },
   props: {
@@ -111,7 +119,9 @@ export default Vue.extend({
   data() {
     return {
       show_creation_dialog: false,
+      show_deletion_dialog: false,
       show_dhcp_server_dialog: false,
+      deletion_dialog_type: '',
     }
   },
   computed: {
@@ -127,8 +137,50 @@ export default Vue.extend({
     is_static_ip_present(): boolean {
       return this.adapter.addresses.some((address) => address.mode === AddressMode.unmanaged)
     },
+    is_interface_last_ip_address(): boolean {
+      return this.adapter.addresses.length === 1
+    },
+  },
+  mounted() {
+    beacon.registerBeaconListener(this)
   },
   methods: {
+    async fireConfirmDeletionModal(type: 'last-ip-address' | 'ip-being-used'): Promise<boolean> {
+      const dialog = this.$refs.deletionDialog as InstanceType<typeof AddressDeletionDialog>
+
+      this.deletion_dialog_type = type
+      this.show_deletion_dialog = true
+
+      return new Promise((resolve) => {
+        dialog.resolveCallback = resolve
+      })
+    },
+    /**
+     * Opens a dialog and requests the user to confirm the deletion of the IP address.
+     * @returns {Promise<boolean>} - Resolves to true if no confirmation is needed or
+     * granted and false otherwise.
+     */
+    async confirm_last_interface_ip(): Promise<boolean> {
+      if (this.is_interface_last_ip_address) {
+        return this.fireConfirmDeletionModal('last-ip-address')
+      }
+
+      return true
+    },
+    /**
+     * Opens a dialog and requests the user to confirm the deletion of current used IP address.
+     * @returns {Promise<boolean>} - Resolves to true if no confirmation is needed or
+     * granted and false otherwise.
+     */
+    async confirm_ip_being_used(ip: string): Promise<boolean> {
+      const ip_being_used = ip === beacon.nginx_ip_address
+
+      if (ip_being_used) {
+        return this.fireConfirmDeletionModal('ip-being-used')
+      }
+
+      return true
+    },
     showable_mode_name(mode: AddressMode): string {
       switch (mode) {
         case AddressMode.client: return 'Dynamic IP'
@@ -141,6 +193,13 @@ export default Vue.extend({
       this.show_creation_dialog = true
     },
     async deleteAddress(ip: string): Promise<void> {
+      const confirmed_ip_used = await this.confirm_ip_being_used(ip)
+      const confirmed_last_ip = confirmed_ip_used && await this.confirm_last_interface_ip()
+
+      if (!confirmed_ip_used || !confirmed_last_ip) {
+        return
+      }
+
       ethernet.setUpdatingInterfaces(true)
 
       await back_axios({
