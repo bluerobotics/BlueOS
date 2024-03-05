@@ -3,6 +3,43 @@ import { v4 as uuid } from 'uuid'
 import popups from '@/store/popups'
 import { PopupOptions, PopupResult } from '@/types/popups'
 
+/**
+ * Popup class used to manage launch and close popups
+ *
+ * @example
+ * // Statically firing a simple popup
+ * Popup.fire({
+ *  title: 'Hello, world!',
+ *  message: 'This is a simple popup',
+ * }).then((result) => {
+ *   console.log('Popup result:', result)
+ * })
+ * @example
+ * // Statically firing a popup with a custom id
+ * const customId = 'custom-popup-id-123'
+ * Popup.fire({
+ *   title: 'Custom ID Popup',
+ *   message: 'This popup has a custom identifier.',
+ * }, customId).then((result) => {
+ *   console.log('Popup with custom ID result:', result)
+ * })
+ * // Closing the popup with the custom ID later
+ * Popup.close(customId)
+ *  @example
+ * // Using Popup instance to fire and close
+ * // Creating a new popup instance
+ * const myPopup = new Popup({
+ *   title: 'Instance Popup',
+ *   message: 'This popup is created from an instance.',
+ * })
+ * // Firing the popup
+ * myPopup.fire().then((result) => {
+ *   console.log('Instance popup result:', result)
+ * })
+ * // Closing the popup later
+ * myPopup.close()
+ * @class
+ */
 class Popup {
   /**
    * The id of the popup
