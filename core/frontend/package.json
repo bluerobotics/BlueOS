@@ -49,6 +49,7 @@
     "uuid": "^9.0.0",
     "vue": "^2.6.11",
     "vue-apexcharts": "^1.6.2",
+    "vue-final-modal": "legacy",
     "vue-json-viewer": "2",
     "vue-router": "^3.6.5",
     "vue-tooltip-directive": "^1.0.2",
