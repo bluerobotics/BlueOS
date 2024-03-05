@@ -324,6 +324,7 @@
     <new-version-notificator />
     <Wizard />
     <alerter />
+    <PopupsManager />
     <VTour
       name="welcomeTour"
       :steps="steps.filter((step) => step?.filter_wifi_connected !== wifi_connected)"
@@ -367,6 +368,7 @@ import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
 import MavlinkUpdater from './components/mavlink/MavlinkUpdater.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
+import PopupsManager from './components/popups/PopupsManager.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
 import menus, { menuItem } from './menus'
@@ -398,6 +400,7 @@ export default Vue.extend({
     SystemCheckerTrayMenu,
     VehicleRebootRequiredTrayMenu,
     Wizard,
+    PopupsManager,
   },
 
   data: () => ({
