@@ -147,6 +147,8 @@
         id="file"
         show-size
         accept=".tar"
+        :rules="[isFileInputNotEmpty]"
+        :error-messages="file_input_error"
         label="File input"
       />
       <v-progress-linear
@@ -157,8 +159,8 @@
       <v-btn
         v-if="!disable_upload_controls"
         color="primary"
-        class="mr-2 mb-4"
-        @click="upload()"
+        class="mr-2 mb-4 mt-1"
+        @click="validateInputFileForm() && upload()"
         v-text="'Upload'"
       />
 
@@ -253,6 +255,7 @@ export default Vue.extend({
       default_repository,
       selected_image: default_repository,
       deleting: '', // image currently being deleted, if any
+      file_input_error: '',
     }
   },
   computed: {
@@ -261,6 +264,9 @@ export default Vue.extend({
     },
     totalPages(): number {
       return Math.ceil(this.available_versions.remote.length / 10)
+    },
+    inputFileRequiredMessage(): string {
+      return 'File is required'
     },
   },
   mounted() {
@@ -430,14 +436,14 @@ export default Vue.extend({
       return remote_counterpart.sha !== image.sha && remote_counterpart.sha !== null
     },
     async upload() {
-      this.disable_upload_controls = true
-      const { files } = document.getElementById('file') as HTMLInputElement
-      if (files !== null) {
+      const file = this.getInputFile()
+      if (file) {
+        this.disable_upload_controls = true
         await back_axios({
           method: 'POST',
           url: '/version-chooser/v1.0/version/load/',
           timeout: 15 * 60 * 1000, // Wait for 15min
-          data: files[0],
+          data: file,
           headers: { 'Content-Type': 'undefined' },
           onUploadProgress: (event) => {
             this.upload_percentage = Math.round(100 * (event.loaded / event.total))
@@ -595,6 +601,24 @@ export default Vue.extend({
         return false
       }
       return this.available_versions.local.some((image) => image.sha === sha)
+    },
+    getInputFile(): File | undefined {
+      const { files } = document.getElementById('file') as HTMLInputElement
+
+      return files?.[0]
+    },
+    isFileInputNotEmpty(v: File | null): true | string {
+      this.file_input_error = ''
+      return !!v || this.inputFileRequiredMessage
+    },
+    validateInputFileForm(): boolean {
+      const valid = this.getInputFile() != null
+
+      if (!valid) {
+        this.file_input_error = this.inputFileRequiredMessage
+      }
+
+      return valid
     },
   },
 })
