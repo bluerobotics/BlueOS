@@ -7,6 +7,7 @@ class InterfaceType(str, Enum):
     WIRED = "WIRED"
     WIFI = "WIFI"
     HOTSPOT = "HOTSPOT"
+    USB = "USB"
     UNKNOWN = "UNKNOWN"
 
     @staticmethod
@@ -19,6 +20,8 @@ class InterfaceType(str, Enum):
             return InterfaceType.WIRED
         if name.startswith("eth"):
             return InterfaceType.WIRED
+        if name.startswith("usb"):
+            return InterfaceType.USB
         return InterfaceType.UNKNOWN
 
 
