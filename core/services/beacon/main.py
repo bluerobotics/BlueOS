@@ -117,7 +117,7 @@ class Beacon:
                 case InterfaceType.WIFI:
                     interface.domain_names = [f"{hostname}-wifi"]
                 case InterfaceType.HOTSPOT:
-                    interface.domain_names = [f"{hostname}-hostspot"]
+                    interface.domain_names = [f"{hostname}-hotspot"]
         self.manager.save()
 
     def get_hostname(self) -> str:
