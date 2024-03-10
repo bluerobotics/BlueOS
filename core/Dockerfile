@@ -12,12 +12,12 @@ RUN bun install --cwd /home/pi/frontend
 RUN bun run --cwd /home/pi/frontend build
 
 # Download binaries
-FROM bluerobotics/blueos-base:v0.1.0 as downloadBinaries
+FROM joaoantoniocardoso/blueos-base:update-gstreamer as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
 # BlueOS-docker base image
-FROM bluerobotics/blueos-base:v0.1.0
+FROM joaoantoniocardoso/blueos-base:update-gstreamer
 
 # Define arguments for target platform
 # These arguments are defined automatically by buildx when using `--platform`
