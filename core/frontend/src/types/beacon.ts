@@ -3,6 +3,7 @@ export enum InterfaceType {
   WIFI = 'WIFI',
   HOTSPOT = 'HOTSPOT',
   UNKNOWN = 'UNKNOWN',
+  USB = 'USB',
 }
 export interface Domain {
   ip: string
