@@ -1,18 +1,42 @@
 /**
+ * Used to configure the OneMoreTime instance
+ */
+export interface OneMoreTimeOptions {
+  /**
+   * Represents the value in ms that will be used to delay the next call
+   * Remember that this value is applied after the action is executed, it does
+   * not count the time the action takes to execute
+   * @type {number}
+   */
+  delay?: number
+
+  /**
+   * When some error happens, this value in ms will be delayed to the next call
+   * @type {number}
+   */
+  errorDelay?: number
+
+  /**
+   * If true, the action will be executed immediately after the object is created
+   * @type {boolean}
+   */
+  autostart?: boolean
+}
+
+/**
  * After multiple years and attempts
  * This is a RAII class that takes advantage of the new disposable feature
  * to create a promise that repeats itself until it's disposed
  */
-class OneMoreTime {
+export default class OneMoreTime {
   private isDisposed = false
 
   constructor(
       private readonly action: () => Promise<void>,
-      private readonly timeout = 5000,
-      autostart = true,
+      private readonly options: OneMoreTimeOptions = {}
   ) {
     // One more time
-    if (autostart) {
+    if (options.autostart ?? true) {
       // eslint-disable-next-line no-return-await
       (async () => await this.start())()
     }
@@ -29,12 +53,10 @@ class OneMoreTime {
       console.error('Error in self-calling promise:', error)
       // Oh yeah, alright, don't stop the dancing
       // eslint-disable-next-line no-promise-executor-return
-      await new Promise((resolve) => setTimeout(resolve, this.timeout))
+      await new Promise((resolve) => setTimeout(resolve, this.options.errorDelay))
     }
 
-    // One more time, a celebration
-    // eslint-disable-next-line no-return-await
-    (async () => await this.start())()
+    setTimeout(() => this.start(), this.options.delay)
   }
 
   // Celebrate and dance so free
