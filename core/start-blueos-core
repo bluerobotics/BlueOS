@@ -35,7 +35,9 @@ TOTAL_RAM_MB=$(free -m | awk '/Mem:/ {print $2}')
 echo "Total RAM size: ${TOTAL_RAM_MB} MB"
 
 # Update docker binds, if we need to restart, exit!
-blueos_startup_update
+if [ -z "${BLUEOS_DISABLE_STARTUP_UPDATE}" ]; then
+    blueos_startup_update
+fi
 
 # Set permission of docker unix socket file to be accessible by nginx
 if [ -e "/var/run/docker.sock" ]; then
