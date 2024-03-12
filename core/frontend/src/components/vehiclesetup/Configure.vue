@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-container fluid v-if="is_dev_mode">
+    <v-container v-if="is_dev_mode" fluid>
       <v-tabs
         v-model="page_selected"
         centered
