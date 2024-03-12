@@ -24,6 +24,17 @@ FROM bluerobotics/blueos-base:v0.1.0
 ARG TARGETARCH
 ARG TARGETVARIANT
 
+# Ensure that the git describe exists and also is in valid format as well
+# The format can be invalid if someone is build BlueOS without a tag as reference
+ARG GIT_DESCRIBE_TAGS
+RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
+    && echo "GIT_DESCRIBE_TAGS argument not provided." \
+    && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long --always)" \
+    && exit 1 \
+    || /bin/bash -c "[[ ! $GIT_DESCRIBE_TAGS =~ -[0-9]+-g[a-f0-9]{8}$ ]]" \
+    && echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)" \
+    && exit 1 || exit 0
+
 # Set these arguments as environment variables
 ENV TARGETARCH=${TARGETARCH}
 ENV TARGETVARIANT=${TARGETVARIANT}
@@ -65,12 +76,6 @@ COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 ## since it gets shadowed by the host's `.config` folder.
 ## If the folder tree contains any files during the build step, it means we put it here by mistake.
 RUN [ -z "$(find '/root/.config' -mindepth 1 -type f)" ]
-
-ARG GIT_DESCRIBE_TAGS
-RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
-    && echo "GIT_DESCRIBE_TAGS argument not provided." \
-    && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long --always)" \
-    && exit 1 || exit 0
 
 # Update blueosrc with the necessary environment variables
 RUN RCFILE_PATH="/etc/blueosrc" \
