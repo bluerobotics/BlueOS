@@ -53,7 +53,9 @@ export default Vue.extend({
       return this.has_accessible_rtsp_streams || this.has_accessible_udp_streams
     },
     wireless_interface_domains(): Domain[] {
-      return beacon.available_domains.filter((entry) => entry.interface_type !== InterfaceType.WIRED)
+      return beacon.available_domains.filter(
+        (entry) => entry.interface_type === InterfaceType.WIFI || entry.interface_type === InterfaceType.HOTSPOT,
+      )
     },
     is_connected_to_wifi(): boolean {
       return this.wireless_interface_domains.some((domain) => domain.ip === beacon.nginx_ip_address)
