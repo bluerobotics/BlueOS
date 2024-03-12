@@ -97,7 +97,7 @@
 
 <script lang="ts">
 import axios from 'axios'
-import Vue, { PropType } from 'vue'
+import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import back_axios from '@/utils/api'
