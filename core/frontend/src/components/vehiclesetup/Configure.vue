@@ -63,6 +63,7 @@ import autopilot from '@/store/autopilot_manager'
 import settings from '@/store/settings'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import ArdupilotAccelerometerSetup from './configuration/accelerometer/ArdupilotAccelerometerSetup.vue'
 import ArdupilotMavlinkCompassSetup from './configuration/compass/ArdupilotMavlinkCompassSetup.vue'
 import LightsConfigration from './configuration/lights.vue'
 import BaroCalib from './overview/BaroCalib.vue'
@@ -91,6 +92,7 @@ export default Vue.extend({
     ParamSets,
     LightsConfigration,
     ArdupilotMavlinkCompassSetup,
+    ArdupilotAccelerometerSetup,
     SpinningLogo,
   },
   data() {
@@ -98,7 +100,7 @@ export default Vue.extend({
       page_selected: null as string | null,
       pages: [
         { title: 'Parameters', component: ParamSets },
-        { title: 'Accelerometer', component: undefined },
+        { title: 'Accelerometer', component: ArdupilotAccelerometerSetup },
         { title: 'Compass', component: ArdupilotMavlinkCompassSetup },
         { title: 'Baro', component: BaroCalib },
         { title: 'Gripper', component: undefined },
