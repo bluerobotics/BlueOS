@@ -78,6 +78,11 @@ async def install_extension(extension: Extension) -> Any:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid extension description",
         )
+    if not kraken.has_enough_disk_space():
+        raise HTTPException(
+            status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
+            detail="Not enough disk space to install the extension",
+        )
     return StreamingResponse(kraken.install_extension(extension))
 
 

@@ -346,5 +346,13 @@ class Kraken:
             }
         return result
 
+    def has_enough_disk_space(self, path: str = "/", required_mb: int = 2**10) -> bool:
+        try:
+            free_space = psutil.disk_usage(path).free
+            # Right now only check if there is 1GB of free space as a hardcoded value
+            return bool(free_space > required_mb * 2**20)
+        except FileNotFoundError:
+            return False
+
     async def stop(self) -> None:
         self.should_run = False
