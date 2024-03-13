@@ -18,6 +18,26 @@
         </v-btn>
       </v-card-title>
 
+      <v-card-title
+        v-if="holds_ip_being_used"
+        class="justify-center"
+      >
+        <v-icon
+          color="white"
+          size="45"
+        >
+          mdi-alert-octagon
+        </v-icon>
+      </v-card-title>
+
+      <v-card-subtitle
+        v-if="holds_ip_being_used"
+        class="text-center mt-2 mb-2"
+      >
+        This IP address is currently being used to access BlueOS.
+        Deleting it could prevent you from accessing your vehicle. Are you sure you want to disconnect?
+      </v-card-subtitle>
+
       <v-expand-transition>
         <div v-show="show_more_info">
           <v-card-text>
@@ -58,6 +78,7 @@
 import Vue, { PropType } from 'vue'
 
 import Notifier from '@/libs/notifier'
+import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, WifiStatus } from '@/types/wifi'
@@ -100,6 +121,12 @@ export default Vue.extend({
       }
       return { ...this.network, ...this.status }
     },
+    holds_ip_being_used(): boolean {
+      return this.status?.ip_address === beacon.nginx_ip_address
+    },
+  },
+  mounted() {
+    beacon.registerBeaconListener(this)
   },
   methods: {
     toggleInfoShow(): void {
