@@ -34,7 +34,7 @@
         </v-row>
         <!-- display all parameters in a concise table using virtual scroller -->
         <v-virtual-scroll
-          :items="printable(different_param_set)"
+          :items="parametersFromSet(different_param_set)"
           height="300"
           item-height="30"
           class="virtual-table"
@@ -49,13 +49,46 @@
                 />
               </v-col>
               <v-col class="virtual-table-cell name-cell">
-                {{ item.name }}
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <div v-on="on">
+                      {{ item.name }}
+                    </div>
+                  </template>
+                  <span>
+                    {{ item.current?.description ?? 'No description provided' }}
+                  </span>
+                </v-tooltip>
               </v-col>
               <v-col class="virtual-table-cell">
-                {{ printParam(item.current_value) }}
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <div
+                      class="large-text-cell"
+                      v-on="on"
+                    >
+                      {{ prettyNameFromParameter(item.current) }}
+                    </div>
+                  </template>
+                  <span>
+                    {{ prettyNameFromParameter(item.current) }}
+                  </span>
+                </v-tooltip>
               </v-col>
               <v-col class="virtual-table-cell">
-                {{ printParam(item.value) }}
+                <v-tooltip bottom>
+                  <template #activator="{ on }">
+                    <div
+                      class="large-text-cell"
+                      v-on="on"
+                    >
+                      {{ prettyNameFromParameter(item.new) }}
+                    </div>
+                  </template>
+                  <span>
+                    {{ prettyNameFromParameter(item.new) }}
+                  </span>
+                </v-tooltip>
               </v-col>
             </v-row>
           </template>
@@ -115,6 +148,7 @@ import { Dictionary } from 'vue-router'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
+import Parameter, { printParam } from '@/types/autopilot/parameter'
 
 export default Vue.extend({
   name: 'ParameterLoader',
@@ -192,22 +226,6 @@ export default Vue.extend({
         this.$set(this.param_checkboxes, key, new_value)
       }
     },
-    printParam(value: number) {
-      try {
-        if (Math.abs(value) > 1e4) {
-          return value.toExponential(3)
-        }
-        if (Math.abs(value) < 0.01 && value !== 0) {
-          return value.toExponential(3)
-        }
-        return value.toFixed(2)
-      } catch {
-        return 'N/A'
-      }
-    },
-    printable(paramset: Dictionary<number>) {
-      return this.createPrintableParams(paramset)
-    },
     writeParams() {
       this.writing = true
       this.initial_size = this.user_selected_params_length
@@ -270,12 +288,22 @@ export default Vue.extend({
         this.$set(this.param_checkboxes, name, true)
       }
     },
-    createPrintableParams(paramset: Dictionary<number>) {
-      return Object.entries(paramset).map(([name, value]) => ({
-        name,
-        value,
-        current_value: autopilot_data.parameter(name)?.value,
-      }))
+    parametersFromSet(paramset: Dictionary<number>) {
+      return Object.entries(paramset).map(([name, value]) => {
+        const currentParameter = autopilot_data.parameter(name)
+
+        return {
+          name,
+          current: currentParameter,
+          new: { ...currentParameter, value },
+        }
+      })
+    },
+    prettyNameFromParameter(parameter: Parameter) {
+      const paramValueText = printParam(parameter)
+      const paramUnitsText = parameter?.units ? `[${parameter.units}]` : ''
+
+      return paramValueText + paramUnitsText
     },
   },
 })
@@ -297,10 +325,15 @@ button {
   flex: 1;
   padding: 5px;
   height: 30px;
-  min-width: 100px;
+  min-width: 150px;
 }
 .virtual-table-cell .v-input {
   margin-top: -6px;
+}
+.virtual-table-cell .large-text-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .checkbox-label label {
