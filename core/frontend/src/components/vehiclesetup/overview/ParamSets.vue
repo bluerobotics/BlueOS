@@ -1,37 +1,84 @@
 <template>
-  <v-card class="ma-2 pa-2">
-    <v-card-title class="align-center">
-      Load Default Parameters
-    </v-card-title>
-    <v-card-text>
-      <v-btn
-        v-for="(paramSet, name) in filtered_param_sets"
-        :key="name"
-        color="primary"
-        @click="loadParams(name, paramSet)"
-      >
-        {{ name.split('/').pop() }}
-      </v-btn>
-      <p v-if="(Object.keys(filtered_param_sets).length === 0)">
-        No parameters available for this setup
-      </p>
-    </v-card-text>
-    <parameterloader
-      v-if="selected_paramset"
-      :parameters="selected_paramset"
-      @done="selected_paramset = {}"
-    />
-  </v-card>
+  <v-row>
+    <v-card class="ma-2 pa-2">
+      <v-card-title class="align-center">
+        Reset Parameters to Firmware Defaults
+      </v-card-title>
+      <v-card-text>
+        <p>
+          This will effectively wipe your "eeprom". You will lose all your parameters, vehicle setup, and calibrations.
+          Use this if you don't know which parameters you changed and need a clean start.
+        </p>
+        <v-btn :disabled="wipe_successful" :loading="erasing" color="primary" @click="wipe">
+          Reset All Parameters
+        </v-btn>
+        <v-btn
+          v-if="wipe_successful && !done"
+          color="warning"
+          :loading="rebooting"
+          @click="restartAutopilot"
+        >
+          Reboot Autopilot
+        </v-btn>
+        <v-alert
+          v-if="wipe_successful"
+          dense
+          text
+          type="success"
+        >
+          Parameters reset <b>successful</b>. <span v-if="!done"> Please reboot the vehicle to apply changes. </span>
+        </v-alert>
+      </v-card-text>
+      <parameterloader
+        v-if="selected_paramset"
+        :parameters="selected_paramset"
+        @done="selected_paramset = {}"
+      />
+    </v-card>
+    <v-card class="ma-2 pa-2">
+      <v-card-title class="align-center">
+        Load Recommended Parameter sets
+      </v-card-title>
+      <v-card-text>
+        <p>
+          These are the recommended parameter sets for your vehicle and firmware version. Curated by Blue Robotics
+        </p>
+        <v-btn
+          v-for="(paramSet, name) in filtered_param_sets"
+          :key="name"
+          color="primary"
+          @click="loadParams(name, paramSet)"
+        >
+          {{ name.split('/').pop() }}
+        </v-btn>
+        <p v-if="(Object.keys(filtered_param_sets).length === 0)">
+          No parameters available for this setup
+        </p>
+      </v-card-text>
+      <parameterloader
+        v-if="selected_paramset"
+        :parameters="selected_paramset"
+        @done="selected_paramset = {}"
+      />
+    </v-card>
+  </v-row>
 </template>
 
 <script lang="ts">
 import { SemVer } from 'semver'
 import Vue from 'vue'
-import { Dictionary } from 'vue-router'
 
+import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import parameterloader from '@/components/parameter-editor/ParameterLoader.vue'
+import mavlink2rest from '@/libs/MAVLink2Rest'
+import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import Notifier from '@/libs/notifier'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
+import { Dictionary } from '@/types/common'
+import { frontend_service } from '@/types/frontend_services'
 
+const notifier = new Notifier(frontend_service)
 const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
 export default Vue.extend({
@@ -43,6 +90,10 @@ export default Vue.extend({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
     selected_paramset: {} as Dictionary<number>,
     selected_paramset_name: undefined as (undefined | string),
+    wipe_successful: false,
+    rebooting: false,
+    done: false,
+    erasing: false,
   }),
   computed: {
     board(): string | undefined {
@@ -92,6 +143,65 @@ export default Vue.extend({
       this.selected_paramset_name = name
       this.selected_paramset = paramset
     },
+    async restartAutopilot(): Promise<void> {
+      this.rebooting = true
+      await AutopilotManager.restart()
+      autopilot_data.reset()
+      // reset to initial
+      this.done = true
+      this.rebooting = false
+    },
+    wipe() {
+      this.erasing = true
+      mavlink2rest.sendMessage({
+        header: {
+          system_id: 255,
+          component_id: 1,
+          sequence: 1,
+        },
+        message: {
+          type: 'COMMAND_LONG',
+          param1: 2, // PARAM_RESET_CONFIG_DEFAULT from MAV_CMD_PREFLIGHT_STORAGE
+          param2: 0,
+          param3: 0,
+          param4: 0,
+          param5: 0,
+          param6: 0,
+          param7: 0,
+          command: {
+            type: MavCmd.MAV_CMD_PREFLIGHT_STORAGE,
+          },
+          target_system: autopilot_data.system_id,
+          target_component: 1,
+          confirmation: 1,
+        },
+      })
+      let timeout = 0
+      const ack_listener = mavlink2rest.startListening('COMMAND_ACK').setCallback((message) => {
+        if (message.message.command.type === 'MAV_CMD_PREFLIGHT_STORAGE') {
+          if (message.message.result.type === 'MAV_RESULT_ACCEPTED') {
+            clearTimeout(timeout)
+            this.wipe_successful = true
+            ack_listener.discard()
+            autopilot_data.setRebootRequired(true)
+            this.erasing = false
+            return
+          }
+          this.wipe_successful = false
+          ack_listener.discard()
+          clearTimeout(timeout)
+          this.erasing = false
+          notifier.pushError('PARAM_RESET_FAIL', `Parameters Reset failed: ${message.message.result.type}`, true)
+        }
+      })
+      timeout = setTimeout(() => {
+        ack_listener.discard()
+        this.wipe_successful = false
+        this.erasing = false
+        notifier.pushError('PARAM_RESET_TIMEOUT', 'Parameters Reset timed out', true)
+      }, 2000)
+    },
+
   },
 })
 </script>
