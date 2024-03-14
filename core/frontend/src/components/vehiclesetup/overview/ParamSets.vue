@@ -29,7 +29,7 @@
           Parameters reset <b>successful</b>. <span v-if="!done"> Please reboot the vehicle to apply changes. </span>
         </v-alert>
       </v-card-text>
-      <parameterloader
+      <ParameterLoader
         v-if="selected_paramset"
         :parameters="selected_paramset"
         @done="selected_paramset = {}"
@@ -55,7 +55,7 @@
           No parameters available for this setup
         </p>
       </v-card-text>
-      <parameterloader
+      <ParameterLoader
         v-if="selected_paramset"
         :parameters="selected_paramset"
         @done="selected_paramset = {}"
@@ -69,7 +69,7 @@ import { SemVer } from 'semver'
 import Vue from 'vue'
 
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
-import parameterloader from '@/components/parameter-editor/ParameterLoader.vue'
+import ParameterLoader from '@/components/parameter-editor/ParameterLoader.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import Notifier from '@/libs/notifier'
@@ -84,7 +84,7 @@ const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repositor
 export default Vue.extend({
   name: 'ParamSets',
   components: {
-    parameterloader,
+    ParameterLoader,
   },
   data: () => ({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
