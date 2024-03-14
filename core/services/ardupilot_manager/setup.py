@@ -24,8 +24,7 @@ static_files = [
     StaticFile(
         defaults_folder,
         "ardupilot_navigator",
-        # TODO: use "https://firmware.ardupilot.org/Sub/beta/navigator/ardusub" instead
-        "https://s3.us-west-1.amazonaws.com/ardusub.bluerobotics.com/test-builds/ardusub-410-beta3-navigator-r5",
+        "https://firmware.ardupilot.org/Sub/stable-4.1.2/navigator/ardusub",
     ),
     StaticFile(defaults_folder, "ardupilot_pixhawk1", "https://firmware.ardupilot.org/Sub/latest/Pixhawk1/ardusub.apj"),
     StaticFile(defaults_folder, "ardupilot_pixhawk4", "https://firmware.ardupilot.org/Sub/latest/Pixhawk4/ardusub.apj"),
