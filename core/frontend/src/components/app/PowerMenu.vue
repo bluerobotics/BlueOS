@@ -44,7 +44,7 @@
               v-tooltip="'Restarts the autopilot'"
               class="ma-2"
               :loading="restarting_autopilot"
-              :disabled="restarting_autopilot"
+              :disabled="restarting_autopilot || non_default_status"
               @click="restartAutopilot"
             >
               <v-icon
