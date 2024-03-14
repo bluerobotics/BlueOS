@@ -180,6 +180,7 @@ class Helper:
         6020,  # MAVLink Camera Manager
         6030,  # System Information
         6040,  # MAVLink2Rest
+        6041,  # MAVLink Camera Manager signalling server
         7777,  # File Browser
         8000,  # ArduPilot Manager
         8081,  # Version Chooser
