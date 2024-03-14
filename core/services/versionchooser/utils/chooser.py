@@ -287,7 +287,7 @@ class VersionChooser:
         # actually attempt to delete it
         logger.info(f"Deleting image {image}:{tag}...")
         try:
-            await self.client.images.delete(full_name, force=False, noprune=False)
+            await self.client.images.delete(full_name, force=True, noprune=False)
             logger.info("Image deleted successfully")
             return web.Response(status=200)
         except Exception as e:
