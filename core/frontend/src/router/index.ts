@@ -1,7 +1,7 @@
+import { defineAsyncComponent } from 'vue'
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
-import Autopilot from '../views/Autopilot.vue'
 import AvailableServicesView from '../views/AvailableServicesView.vue'
 import BagEditorView from '../views/BagEditorView.vue'
 import BridgesView from '../views/BridgesView.vue'
@@ -9,17 +9,14 @@ import Endpoint from '../views/EndpointView.vue'
 import ExtensionManagerView from '../views/ExtensionManagerView.vue'
 import ExtensionView from '../views/ExtensionView.vue'
 import FileBrowserView from '../views/FileBrowserView.vue'
-import LogView from '../views/LogView.vue'
 import Main from '../views/MainView.vue'
 import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
 import NetworkTestView from '../views/NetworkTestView.vue'
 import NMEAInjectorView from '../views/NMEAInjectorView.vue'
 import PageNotFound from '../views/PageNotFound.vue'
 import ParameterEditorView from '../views/ParameterEditorView.vue'
-import Pings from '../views/Pings.vue'
 import SystemInformationView from '../views/SystemInformationView.vue'
 import TerminalView from '../views/TerminalView.vue'
-import VehicleSetupView from '../views/VehicleSetupView.vue'
 import VersionChooser from '../views/VersionChooser.vue'
 import VideoManagerView from '../views/VideoManagerView.vue'
 
@@ -34,82 +31,82 @@ const routes: Array<RouteConfig> = [
   {
     path: '/vehicle/autopilot',
     name: 'Autopilot',
-    component: Autopilot,
+    component: defineAsyncComponent(() => import('../views/Autopilot.vue')),
   },
   {
     path: '/vehicle/Setup',
     name: 'Vehicle Setup',
-    component: VehicleSetupView,
+    component: defineAsyncComponent(() => import('../views/VehicleSetupView.vue')),
   },
   {
     path: '/vehicle/pings',
     name: 'Pings',
-    component: Pings,
+    component: defineAsyncComponent(() => import('../views/Pings.vue')),
   },
   {
     path: '/vehicle/logs',
     name: 'Log Browser',
-    component: LogView,
+    component: defineAsyncComponent(() => import('../views/LogView.vue')),
   },
   {
     path: '/vehicle/endpoints',
     name: 'Endpoints',
-    component: Endpoint,
+    component: defineAsyncComponent(() => import('../views/EndpointView.vue')),
   },
   {
     path: '/tools/file-browser',
     name: 'File Browser',
-    component: FileBrowserView,
+    component: defineAsyncComponent(() => import('../views/FileBrowserView.vue')),
   },
   {
     path: '/tools/web-terminal',
     name: 'Terminal',
-    component: TerminalView,
+    component: defineAsyncComponent(() => import('../views/TerminalView.vue')),
   },
   {
     path: '/tools/version-chooser',
     name: 'Version Chooser',
-    component: VersionChooser,
+    component: defineAsyncComponent(() => import('../views/VersionChooser.vue')),
   },
   {
     path: '/vehicle/video-manager',
     name: 'Video Manager',
-    component: VideoManagerView,
+    component: defineAsyncComponent(() => import('../views/VideoManagerView.vue')),
   },
   {
     path: '/tools/bridges',
     name: 'Bridges',
-    component: BridgesView,
+    component: defineAsyncComponent(() => import('../views/BridgesView.vue')),
   },
   {
     path: '/tools/nmea-injector',
     name: 'NMEA Injector',
-    component: NMEAInjectorView,
+    component: defineAsyncComponent(() => import('../views/NMEAInjectorView.vue')),
   },
   {
     path: '/tools/available-services',
     name: 'Available Services',
-    component: AvailableServicesView,
+    component: defineAsyncComponent(() => import('../views/AvailableServicesView.vue')),
   },
   {
     path: '/tools/system-information',
     name: 'System Information',
-    component: SystemInformationView,
+    component: defineAsyncComponent(() => import('../views/SystemInformationView.vue')),
   },
   {
     path: '/tools/mavlink-inspector',
     name: 'Mavlink Inspector',
-    component: MavlinkInspectorView,
+    component: defineAsyncComponent(() => import('../views/MavlinkInspectorView.vue')),
   },
   {
     path: '/tools/network-test',
     name: 'Network Test',
-    component: NetworkTestView,
+    component: defineAsyncComponent(() => import('../views/NetworkTestView.vue')),
   },
   {
     path: '/tools/bag-editor',
     name: 'Bag editor',
-    component: BagEditorView,
+    component: defineAsyncComponent(() => import('../views/BagEditorView.vue')),
   },
   {
     path: '/extensions/:port',
@@ -129,12 +126,12 @@ const routes: Array<RouteConfig> = [
   {
     path: '/tools/extensions-manager',
     name: 'Extension Manager',
-    component: ExtensionManagerView,
+    component: defineAsyncComponent(() => import('../views/ExtensionManagerView.vue')),
   },
   {
     path: '/vehicle/parameters',
     name: 'Parameter Editor',
-    component: ParameterEditorView,
+    component: defineAsyncComponent(() => import('../views/ParameterEditorView.vue')),
   },
   {
     path: '*',
