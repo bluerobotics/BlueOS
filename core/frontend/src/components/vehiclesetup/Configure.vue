@@ -65,6 +65,7 @@ import settings from '@/store/settings'
 import SpinningLogo from '../common/SpinningLogo.vue'
 import ArdupilotMavlinkCompassSetup from './configuration/compass/ArdupilotMavlinkCompassSetup.vue'
 import LightsConfigration from './configuration/lights.vue'
+import BaroCalib from './overview/BaroCalib.vue'
 import GripperInfo from './overview/gripper.vue'
 import LeakInfo from './overview/LeakInfo.vue'
 import LightsInfo from './overview/LightsInfo.vue'
@@ -99,7 +100,7 @@ export default Vue.extend({
         { title: 'Parameters', component: ParamSets },
         { title: 'Accelerometer', component: undefined },
         { title: 'Compass', component: ArdupilotMavlinkCompassSetup },
-        { title: 'Baro', component: undefined },
+        { title: 'Baro', component: BaroCalib },
         { title: 'Gripper', component: undefined },
         { title: 'Lights', component: LightsConfigration, filter: () => autopilot.vehicle_type === 'Submarine' },
         { title: 'Camera Mount', component: undefined },
