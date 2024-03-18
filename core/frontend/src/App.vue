@@ -336,11 +336,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { defineAsyncComponent } from 'vue'
 
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
 import blueos_white from '@/assets/img/blueos-logo-white.svg'
-import Wizard from '@/components/wizard/Wizard.vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import wifi from '@/store/wifi'
@@ -397,7 +396,7 @@ export default Vue.extend({
     'new-version-notificator': NewVersionNotificator,
     SystemCheckerTrayMenu,
     VehicleRebootRequiredTrayMenu,
-    Wizard,
+    Wizard: defineAsyncComponent(() => import('@/components/wizard/Wizard.vue')),
   },
 
   data: () => ({
