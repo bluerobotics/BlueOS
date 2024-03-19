@@ -52,7 +52,7 @@
                   mdi-emoticon-sad-outline
                 </v-icon>
                 <v-icon
-                  v-if="imu_temperature_is_calibrated[imu.param]"
+                  v-if="imu_temperature_is_calibrated[imu.param].calibrated"
                   v-tooltip="'Sensor thermometer is calibrated and good to use'"
                   color="green"
                 >
@@ -123,6 +123,8 @@ import { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
 import decode, { deviceId } from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
+
+import { imu_is_calibrated, imu_temperature_is_calibrated } from '../configuration/common'
 
 export default Vue.extend({
   name: 'OnboardSensors',
@@ -211,37 +213,10 @@ export default Vue.extend({
       return results
     },
     imu_is_calibrated(): Dictionary<boolean> {
-      const results = {} as Dictionary<boolean>
-      for (const imu of this.imus) {
-        const param_radix = imu.param.split('_ID')[0]
-        const offset_params_names = [`${param_radix}OFFS_X`, `${param_radix}OFFS_Y`, `${param_radix}OFFS_Z`]
-        const scale_params_names = [`${param_radix}SCAL_X`, `${param_radix}SCAL_Y`, `${param_radix}SCAL_Z`]
-        const offset_params = offset_params_names.map(
-          (name) => autopilot_data.parameter(name),
-        )
-        const scale_params = scale_params_names.map(
-          (name) => autopilot_data.parameter(name),
-        )
-        const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
-        const is_at_default_scale = scale_params.every((param) => param?.value === 1.0)
-        results[imu.param] = offset_params.isEmpty() || scale_params.isEmpty()
-        || !is_at_default_offsets || !is_at_default_scale
-      }
-      return results
+      return imu_is_calibrated(this.imus, autopilot_data)
     },
-    imu_temperature_is_calibrated(): Dictionary<boolean> {
-      const results = {} as Dictionary<boolean>
-      for (const imu of this.imus) {
-        let param_radix = imu.param.split('_ID')[0]
-        // CALTEMP parameters contains ID for the first sensor, _ID does not, so we need to add it
-        if (!/\d$/.test(param_radix)) {
-          param_radix += '1'
-        }
-        const name = `${param_radix}_CALTEMP`
-        const parameter = autopilot_data.parameter(name)
-        results[imu.param] = parameter !== undefined && parameter.value !== -300
-      }
-      return results
+    imu_temperature_is_calibrated(): Dictionary<{ calibrated: boolean, calibrationTemperature: number }> {
+      return imu_temperature_is_calibrated(this.imus, autopilot_data)
     },
     is_water_baro(): Dictionary<boolean> {
       const results = {} as Dictionary<boolean>
