@@ -164,15 +164,30 @@ class Kraken:
         extension = await self.extension_from_identifier(identifier)
         if not extension:
             raise RuntimeError(f"Extension with identifier {identifier} not found!")
+
         # TODO: plug dependency-checking in here
         version_manifests = [entry for entry in self.manifest_cache if entry["identifier"] == identifier]
         if not version_manifests:
             raise RuntimeError(f"identifier not found in manifest: {identifier}")
         manifest = version_manifests[0]
+
         if version not in manifest["versions"]:
             raise RuntimeError(f"version not found in manifest: {version}")
-        await self.uninstall_extension_from_identifier(identifier)
         version_data = manifest["versions"][version]
+
+        try:
+            async for line in self.client.images.pull(
+                f"{extension.docker}:{extension.tag}", repo=extension.docker, tag=extension.tag, stream=True
+            ):
+                yield json.dumps(line).encode("utf-8")
+        except Exception as error:
+            raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
+
+        try:
+            await self.remove(extension.identifier)
+        except Exception as e:
+            # this will fail if the container is not installed, we don't mind it
+            logger.info(e)
 
         new_extension = Extension(
             identifier=identifier,
@@ -193,20 +208,6 @@ class Kraken:
         ]
         self.settings.extensions.append(new_extension)
         self.manager.save()
-
-        try:
-            await self.remove(extension.identifier, False)
-        except Exception as e:
-            # this will fail if the container is not installed, we don't mind it
-            logger.info(e)
-
-        try:
-            async for line in self.client.images.pull(
-                f"{extension.docker}:{extension.tag}", repo=extension.docker, tag=extension.tag, stream=True
-            ):
-                yield json.dumps(line).encode("utf-8")
-        except Exception as error:
-            raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
 
     async def uninstall_extension_from_identifier(self, identifier: str) -> None:
         extension = await self.extension_from_identifier(identifier)
