@@ -1,8 +1,5 @@
 import { isNumber } from 'lodash'
 
-import * as arducopter_metadata from '@/ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.json'
-import * as ardurover_metadata from '@/ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.json'
-import * as ardusub_metadata from '@/ArduPilot-Parameter-Repository/Sub-4.1/apm.pdef.json'
 import { fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
 import autopilot from '@/store/autopilot_manager'
 import { Dictionary } from '@/types/common'
@@ -47,22 +44,24 @@ export default class ParametersTable {
     this.parametersDict = {}
   }
 
-  fetchMetadata(): void {
+  async fetchMetadata(): Promise<void> {
     if (autopilot.vehicle_type === null) {
       // Check again later if we have a vehicle type identified
       fetchVehicleType()
       setTimeout(() => { this.fetchMetadata() }, 1000)
       return
     }
-    // default to submarine
-    let metadata : MetadataFile = ardusub_metadata
+    let metadata: MetadataFile
+    if (autopilot.vehicle_type === 'Submarine') {
+      metadata = await import('@/ArduPilot-Parameter-Repository/Sub-4.1/apm.pdef.json')
+    }
     // This is to avoid importing a 40 lines enum from mavlink and adding a switch case with 40 cases
-    if (autopilot.vehicle_type.toLowerCase().includes('copter')
+    else if (autopilot.vehicle_type.toLowerCase().includes('copter')
       || autopilot.vehicle_type.toLowerCase().includes('rotor')) {
-      metadata = arducopter_metadata
+      metadata = await import('@/ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.json')
     } else if (autopilot.vehicle_type.toLowerCase().includes('rover')
       || autopilot.vehicle_type.toLowerCase().includes('boat')) {
-      metadata = ardurover_metadata
+      metadata = await import('@/ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.json')
     }
 
     for (const category of Object.values(metadata)) {
