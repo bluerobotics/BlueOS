@@ -3,6 +3,8 @@
 # Immediately exit on errors
 set -e
 
+echo "BlueOS ${GIT_DESCRIBE_TAGS}"
+
 BLUEOS_PATH=/home/pi
 SERVICES_PATH=$BLUEOS_PATH/services
 TOOLS_PATH=$BLUEOS_PATH/tools
