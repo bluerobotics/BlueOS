@@ -95,9 +95,11 @@ PRIORITY_SERVICES=(
 )
 
 SERVICES=(
+    # This services are not prioritized because they are not fundamental for the vehicle to work
+    'kraken',0,"nice -19 $SERVICES_PATH/kraken/main.py"
+    'wifi',0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
+    # This services are not as important as the others
     'beacon',250,"$SERVICES_PATH/beacon/main.py"
-    'kraken',250,"nice -19 $SERVICES_PATH/kraken/main.py"
-    'wifi',250,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
     'bridget',250,"nice -19 $SERVICES_PATH/bridget/main.py"
     'commander',250,"$SERVICES_PATH/commander/main.py"
     'nmea_injector',250,"nice -19 $SERVICES_PATH/nmea_injector/nmea_injector/main.py"
