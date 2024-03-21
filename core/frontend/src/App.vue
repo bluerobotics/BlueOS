@@ -508,7 +508,7 @@ export default Vue.extend({
         },
         {
           target: '#wifi-tray-menu-button',
-          content: 'You can do it by connecting to a wifi network...',
+          content: 'You can do this by connecting to a wifi network...',
           filter_wifi_connected: true,
           params: {
             enableScrolling: false,
@@ -516,7 +516,7 @@ export default Vue.extend({
         },
         {
           target: '#ethernet-tray-menu-button',
-          content: '...or by connecting to a cable internet (usually from/to a router).',
+          content: '..or connecting to a wired Ethernet connection (usually from a router).',
           filter_wifi_connected: true,
           params: {
             enableScrolling: false,
