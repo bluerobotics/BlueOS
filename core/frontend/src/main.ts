@@ -5,6 +5,7 @@ import './components/vue-tour/dist/vue-tour.css'
 
 import Vue from 'vue'
 import VueApexCharts from 'vue-apexcharts'
+import { vfmPlugin } from 'vue-final-modal/lib'
 import JsonViewer from 'vue-json-viewer'
 import VueTooltipDirective from 'vue-tooltip-directive'
 import VueDraggable from 'vuedraggable'
@@ -24,6 +25,7 @@ Vue.use(VueTooltipDirective, {
 Vue.use(VueApexCharts)
 Vue.use(Vuetify)
 Vue.use(JsonViewer)
+Vue.use(vfmPlugin)
 
 Vue.component('Apexchart', VueApexCharts)
 Vue.component('Draggable', VueDraggable)
