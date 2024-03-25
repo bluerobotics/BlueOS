@@ -129,6 +129,10 @@
               <v-text-field v-model="vehicle_name" label="Vehicle Name" />
               <v-text-field v-model="mdns_name" label="MDNS Name" />
             </div>
+            <ScriptLoader
+              v-model="scripts"
+              :vehicle="vehicle_type"
+            />
             <DefaultParamLoader
               ref="param_loader"
               v-model="params"
@@ -269,6 +273,7 @@ import {
   fetchFirmwareInfo,
   installFirmwareFromUrl,
 } from '@/components/autopilot/AutopilotManagerUpdater'
+import filebrowser from '@/libs/filebrowser'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import ardupilot_data from '@/store/autopilot'
@@ -284,10 +289,12 @@ import { sleep } from '@/utils/helper_functions'
 import ActionStepper, { Configuration, ConfigurationStatus } from './ActionStepper.vue'
 import DefaultParamLoader from './DefaultParamLoader.vue'
 import RequireInternet from './RequireInternet.vue'
+import ScriptLoader from './ScriptLoader.vue'
 
 const WIZARD_VERSION = 4
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
+const REPOSITORY_ROOT = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository'
 
 function get_model(vehicle_name: string, frame_name: string): undefined | string {
   const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
@@ -317,10 +324,12 @@ export default Vue.extend({
   components: {
     DefaultParamLoader,
     RequireInternet,
+    ScriptLoader,
   },
   data() {
     return {
       boat_model: get_model('boat', 'UNDEFINED'),
+      scripts: [] as string[],
       configuration_failed: false,
       error_message: 'The operation failed!',
       apply_status: ApplyStatus.Waiting,
@@ -491,6 +500,15 @@ export default Vue.extend({
           started: false,
         },
         {
+          title: 'Install scripts',
+          summary: 'Download and install selected scripts',
+          promise: () => this.installScripts(),
+          message: undefined,
+          done: false,
+          skip: false,
+          started: false,
+        },
+        {
           title: 'Disable Wi-Fi hotspot',
           summary: 'Wi-Fi hotspot need to be disable to not interfere with onboard radio',
           promise: () => this.disableWifiHotspot(),
@@ -650,6 +668,34 @@ export default Vue.extend({
             .catch((error) => `Failed to install firmware: ${error.message ?? error.response?.data}.`)
         })
         .catch((error) => `Failed to fetch available firmware: ${error.message ?? error.response?.data}.`)
+    },
+    async installScripts(): Promise<ConfigurationStatus> {
+      const scripts_folder = 'configs/ardupilot-manager/firmware/scripts/'
+      try {
+        // Use allSettled to allow promises to fail in parallel
+        await Promise.allSettled(
+          this.scripts.map(
+            async (script) => filebrowser.createFile(scripts_folder + script.split('/').last(), true),
+          ),
+        )
+        await Promise.allSettled(
+          this.scripts.map(async (script) => {
+            await filebrowser.writeToFile(
+              scripts_folder + script.split('/').last(),
+              await this.fetchScript(script),
+            )
+          }),
+        )
+        return undefined
+      } catch (e) {
+        const error = `Failed to install scripts ${e}`
+        console.error(error)
+        return error
+      }
+    },
+    async fetchScript(script: string): Promise<string> {
+      const response = await fetch(`${REPOSITORY_ROOT}/scripts/ardupilot/${script}`)
+      return response.text()
     },
     validateParams(): boolean {
       return this.$refs.param_loader?.validateParams()
