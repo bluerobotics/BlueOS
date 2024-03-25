@@ -107,17 +107,17 @@ export default Vue.extend({
       }
     },
     temperature(): Record<string, unknown> {
-      // Temperature data
       const temperature_sensors = system_information.system?.temperature
-      const main_sensor = temperature_sensors?.find((sensor) => sensor.name === 'CPU')
-      const main_temperature = main_sensor ? main_sensor.temperature.toFixed(1) : 'Loading..'
-      const temperature_text = temperature_sensors ? temperature_sensors.map(
+      const main_sensor = temperature_sensors?.find((sensor) => sensor.name.toLowerCase().includes('cpu'))
+      const main_temperature = main_sensor?.temperature.toFixed(1) ?? 'Loading..'
+      console.log(`main_temperature: ${main_temperature}`)
+      const temperature_text = temperature_sensors?.map(
         (sensor) => {
           const critical_temp = sensor.critical_temperature || 0
           return `${sensor.name} ${sensor.temperature.toFixed(1)}ºC`
         + `, Max: ${sensor.maximum_temperature.toFixed(1)}ºC, Crit: ${critical_temp.toFixed(1)}ºC`
         },
-      ).join('<br/>') : 'Loading..'
+      ).join('<br/>') ?? 'Loading..'
 
       return {
         name: 'Temperature',
