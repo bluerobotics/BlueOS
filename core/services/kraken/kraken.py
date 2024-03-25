@@ -14,8 +14,10 @@ from loguru import logger
 
 from exceptions import ContainerDoesNotExist, ExtensionNotFound
 from settings import Extension, SettingsV1
+from manifest import Manifest
+from manifest.models import RepositoryEntry
 
-REPO_URL = "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json"
+
 SERVICE_NAME = "Kraken"
 
 
@@ -26,7 +28,7 @@ class Kraken:
         self.should_run = True
         self.deleting_in_progress = False
         self._client: Optional[aiodocker.Docker] = None
-        self.manifest_cache: List[Dict[str, Any]] = []
+        self.manifest = Manifest.instance()
 
     @property
     def client(self) -> aiodocker.Docker:
@@ -48,6 +50,7 @@ class Kraken:
             for extension in self.settings.extensions:
                 await self.check(extension)
 
+
     async def start_extension(self, extension: Extension) -> None:
         logger.info(f"Going to start {extension}.")
         config = extension.settings()
@@ -59,6 +62,7 @@ class Kraken:
             logger.info("Unable to pull a new image, attempting to continue with a local one.")
         container = await self.client.containers.create_or_replace(name=extension.container_name(), config=config)  # type: ignore
         await container.start()
+
 
     async def check(self, extension: Extension) -> None:
         if not extension.enabled:
@@ -79,21 +83,19 @@ class Kraken:
         if not any(container["Names"][0][1:] == extension_name for container in self.running_containers):
             await self.start_extension(extension)
 
+
     def load_settings(self) -> None:
         self.manager = Manager(SERVICE_NAME, SettingsV1)
         self.settings = self.manager.settings
 
-    async def fetch_manifest(self) -> Any:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(REPO_URL) as resp:
-                if resp.status != 200:
-                    print(f"Error status {resp.status}")
-                    raise RuntimeError(f"Could not fetch manifest file: response status : {resp.status}")
-                self.manifest_cache = await resp.json()
-                return await resp.json(content_type=None)
+
+    async def fetch_manifest(self) -> List[RepositoryEntry]:
+        return await self.manifest.fetch()
+
 
     async def get_configured_extensions(self) -> List[Extension]:
         return cast(List[Extension], self.settings.extensions)
+
 
     async def install_extension(self, extension: Any) -> AsyncGenerator[bytes, None]:
         try:
@@ -123,6 +125,7 @@ class Kraken:
         except Exception as error:
             raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
 
+
     async def extension_from_identifier(self, identifier: str) -> Optional[Extension]:
         extensions: List[Extension] = [
             extension for extension in self.settings.extensions if extension.identifier == identifier
@@ -131,11 +134,13 @@ class Kraken:
             return extensions[0]
         return None
 
+
     async def container_from_identifier(self, extension_identifier: str) -> str:
         extension = await self.extension_from_identifier(extension_identifier)
         if not extension:
             raise RuntimeError(f"Could not find container for {extension_identifier}, is it running?")
         return str(extension.container_name())
+
 
     async def kill(self, container_name: str) -> None:
         logger.info(f"Killing {container_name}")
@@ -143,6 +148,7 @@ class Kraken:
         for container in containers:
             await container.kill()
             await container.wait()
+
 
     async def remove(self, extension_identifier: str, delete: bool = True) -> None:
         self.deleting_in_progress = True
@@ -159,6 +165,7 @@ class Kraken:
             logger.info(f"Removing {image}")
             await self.client.images.delete(image, force=False, noprune=False)
         self.deleting_in_progress = False
+
 
     async def update_extension_to_version(self, identifier: str, version: str) -> AsyncGenerator[bytes, None]:
         extension = await self.extension_from_identifier(identifier)
@@ -209,11 +216,13 @@ class Kraken:
         self.settings.extensions.append(new_extension)
         self.manager.save()
 
+
     async def uninstall_extension_from_identifier(self, identifier: str) -> None:
         extension = await self.extension_from_identifier(identifier)
         if not extension:
             raise ExtensionNotFound(f"Could not find extension with identifier '{identifier}'.")
         await self.uninstall_extension(extension)
+
 
     async def uninstall_extension(self, extension: Extension) -> None:
         try:
@@ -240,6 +249,7 @@ class Kraken:
         ]
         self.manager.save()
 
+
     async def disable_extension(self, extension_identifier: str) -> None:
         extension = await self.extension_from_identifier(extension_identifier)
         if not extension:
@@ -257,6 +267,7 @@ class Kraken:
         await self.remove(extension_identifier, False)
         self.manager.save()
 
+
     async def enable_extension(self, extension_identifier: str) -> None:
         extension = await self.extension_from_identifier(extension_identifier)
         if not extension:
@@ -273,13 +284,16 @@ class Kraken:
         self.settings.extensions.append(extension)
         self.manager.save()
 
+
     async def restart_extension(self, extension_identifier: str) -> None:
         logger.info(f"Going to restart {extension_identifier}.")
         await self.remove(extension_identifier, False)
 
+
     async def list_containers(self) -> List[DockerContainer]:
         containers: List[DockerContainer] = await self.client.containers.list(filter='{"status": ["running"]}')  # type: ignore
         return containers
+
 
     async def stream_logs(self, container_name: str, timeout: int = 30) -> AsyncGenerator[str, None]:
         containers = await self.client.containers.list(filters={"name": {container_name: True}})  # type: ignore
@@ -293,6 +307,7 @@ class Kraken:
                 break
             yield log_line
         logger.info(f"Finished streaming logs for {container_name}")
+
 
     # pylint: disable=too-many-locals
     async def load_stats(self) -> Dict[str, Any]:
@@ -347,6 +362,7 @@ class Kraken:
             }
         return result
 
+
     def has_enough_disk_space(self, path: str = "/", required_mb: int = 2**10) -> bool:
         try:
             free_space = psutil.disk_usage(path).free
@@ -354,6 +370,7 @@ class Kraken:
             return bool(free_space > required_mb * 2**20)
         except FileNotFoundError:
             return False
+
 
     async def stop(self) -> None:
         self.should_run = False
