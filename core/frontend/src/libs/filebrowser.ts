@@ -66,6 +66,42 @@ class Filebrowser {
       })
   }
 
+  async createFolder(folder_path: string): Promise<void> {
+    if (!folder_path.endsWith('/')) {
+      folder_path += '/'
+    }
+    this.createFile(folder_path)
+  }
+
+  async createFile(folder_path: string, override: Boolean = false): Promise<void> {
+    back_axios({
+      method: 'post',
+      url: `${filebrowser_url}/resources${folder_path}?override=${override}`,
+      timeout: 10000,
+      headers: { 'X-Auth': await this.filebrowserToken() },
+    })
+      .catch((error) => {
+        const message = `Could not create folder ${folder_path}: ${error.message}`
+        notifier.pushError('FOLDER_CREATE_FAIL', message)
+        throw new Error(message)
+      })
+  }
+
+  async writeToFile(file: string, content: string): Promise<void> {
+    back_axios({
+      method: 'put',
+      url: `/file-browser/api/resources${file}`,
+      timeout: 10000,
+      headers: { 'X-Auth': await this.filebrowserToken() },
+      data: content,
+    })
+      .catch((error) => {
+        const message = `Could not write to file ${file}: ${error.message}`
+        notifier.pushError('FILE_WRITE_FAIL', message)
+        throw new Error(message)
+      })
+  }
+
   /* Delete a single file. */
   /* Register a notification and throws if delete fails. */
   /**
