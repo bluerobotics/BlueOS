@@ -34,7 +34,7 @@ export default {
   mounted() {
     this.listener = mavlink2rest.startListening('STATUSTEXT').setCallback((receivedMessage) => {
       const text = receivedMessage.message.text.join('')
-      if (this.messages?.[this.messages.length - 1] === text) {
+      if (this.messages?.last() === text) {
         return
       }
       if (new RegExp(this.filter).test(text)) {
