@@ -16,7 +16,7 @@ declare global {
 
 // eslint-disable-next-line
 Array.prototype.first = function<T> (this: T[]): T | undefined {
-  return this.isEmpty() ? undefined : this[0]
+  return this[0]
 }
 
 // eslint-disable-next-line
