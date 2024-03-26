@@ -9,7 +9,7 @@
         :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
         :loading="is_loading"
         :disabled="is_loading_paramsets"
-        style="min-width: 60%;"
+        style="min-width: 330px;"
         :rules="[isNotEmpty]"
         @change="setParamSet(filtered_param_sets[selected_param_set_name])"
       />
