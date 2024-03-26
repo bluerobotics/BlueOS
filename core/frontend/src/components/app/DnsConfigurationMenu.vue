@@ -143,7 +143,7 @@ export default Vue.extend({
           return
         }
 
-        dnsEntries[dnsEntries.length - 1]?.focus()
+        dnsEntries.last()?.focus()
       })
     },
     remove_dns_entry(index: number) {
