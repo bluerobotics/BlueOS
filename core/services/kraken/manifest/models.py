@@ -105,12 +105,12 @@ class Image:
     digest: Optional[str] = None
     compatible: bool = False
 
-    def __post_init__(self):
-        platform = DockerPlatforms.from_machine()
+    def __post_init__(self) -> None:
+        current_platform = DockerPlatforms.from_machine()
 
-        if platform is not None:
+        if current_platform is not None:
             image_machine = self.platform.architecture + (f"/{self.platform.variant}" if self.platform.variant else "")
-            self.compatible = platform == image_machine
+            self.compatible = current_platform == image_machine
 
 
 @dataclasses.dataclass
@@ -129,6 +129,7 @@ class Company:
     email: Optional[str] = None
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
 class ExtensionVersion:
     """
