@@ -19,5 +19,6 @@ setuptools.setup(
         "loguru == 0.5.3",
         "psutil == 5.7.2",
         "uvicorn == 0.13.4",
+        "dataclass-wizard == 0.22.3",
     ],
 )
