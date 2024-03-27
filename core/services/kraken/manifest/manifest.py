@@ -1,6 +1,6 @@
 import dataclasses
 import datetime
-from typing import List, Optional
+from typing import List, Optional, cast
 
 # Extra
 import aiohttp
@@ -60,7 +60,7 @@ class Manifest:
     _instance: Optional["Manifest"] = None
     _cached_manifest: Optional[ManifestContent] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         raise RuntimeError("This class should not be instantiated, use Manifest.instance() instead")
 
     @classmethod
@@ -98,7 +98,7 @@ class Manifest:
 
                 content = {"extensions": await resp.json()}
 
-                return fromdict(ManifestContent, content)
+                return cast(ManifestContent, fromdict(ManifestContent, content))
 
     async def fetch(self) -> List[RepositoryEntry]:
         """
