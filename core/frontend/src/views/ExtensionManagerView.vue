@@ -48,7 +48,7 @@
     </v-tabs>
     <v-card
       v-if="tab === 0"
-      class="d-flex pa-5"
+      class="d-flex pa-5 align-baseline"
     >
       <v-card min-width="200px">
         <v-list>
