@@ -868,6 +868,11 @@ div.pirate-marker.v-icon {
   }
 }
 
+/* Fix v-stepper disappearing when the screen is small*/
+.v-stepper__label {
+  display: block !important;
+}
+
 html {
   overflow: auto
 }
