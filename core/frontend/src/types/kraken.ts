@@ -19,6 +19,19 @@ export enum ExtensionType {
     THEME = 'theme',
 }
 
+export interface ImagePlatform {
+    architecture: string
+    variant?: string
+    os?: string
+}
+
+export interface VersionImage {
+    expanded_size: number
+    platform: ImagePlatform
+    digest: string
+    compatible: boolean
+}
+
 export interface Version {
     permissions: JSONValue
     requirements: string | null
@@ -31,6 +44,7 @@ export interface Version {
     company?: Company
     type: ExtensionType,
     filter_tags: string[],
+    images: VersionImage[]
 }
 
 export interface ExtensionData {
@@ -41,6 +55,7 @@ export interface ExtensionData {
     versions: Dictionary<Version>
     extension_logo?: string
     company_logo: string
+    is_compatible?: boolean
 }
 
 export interface InstalledExtensionData {
