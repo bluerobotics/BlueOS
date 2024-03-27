@@ -14,7 +14,7 @@
       <extension-modal
         :extension="selected_extension"
         :installed="installedVersion()"
-        @clicked="installFromSelected"
+        @clicked="performActionFromModal"
       />
     </v-dialog>
     <v-dialog
@@ -258,7 +258,12 @@ export default Vue.extend({
       return [...new Set(authors)]
     },
     searchFilteredManifest(): ExtensionData[] {
-      return this.manifest.filter((extension) => extension.name.toLowerCase().includes(this.searchQuery.toLowerCase()))
+      // Remove not compatible in case user is not searching by search bar directly
+      const data = this.searchQuery !== ''
+        ? this.manifest
+        : this.manifest.filter((ext) => ext.is_compatible)
+
+      return data.filter((extension) => extension.name.toLowerCase().includes(this.searchQuery.toLowerCase()))
     },
     filteredManifest(): ExtensionData[] {
       let data = this.searchFilteredManifest
@@ -558,6 +563,18 @@ export default Vue.extend({
           this.extraction_percentage = 0
           this.status_text = ''
         })
+    },
+    async performActionFromModal(identifier: string, tag: string, isInstalled: boolean) {
+      if (isInstalled) {
+        const ext = this.installed_extensions[identifier]
+        if (!ext) {
+          return
+        }
+        this.show_dialog = false
+        await this.uninstall(ext)
+      } else {
+        await this.installFromSelected(tag)
+      }
     },
     async installFromSelected(tag: string) {
       if (!this.selected_extension) {
