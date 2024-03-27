@@ -1,6 +1,7 @@
 <template>
   <v-card
     class="mx-auto"
+    height="100"
     width="300"
     outlined
     style="cursor: pointer;"
