@@ -14,7 +14,7 @@
       <extension-modal
         :extension="selected_extension"
         :installed="installedVersion()"
-        @clicked="installFromSelected"
+        @clicked="performActionFromModal"
       />
     </v-dialog>
     <v-dialog
@@ -524,6 +524,18 @@ export default Vue.extend({
           this.extraction_percentage = 0
           this.status_text = ''
         })
+    },
+    async performActionFromModal(identifier: string, tag: string, isInstalled: boolean) {
+      if (isInstalled) {
+        const ext = this.installed_extensions[identifier]
+        if (!ext) {
+          return
+        }
+        this.show_dialog = false
+        await this.uninstall(ext)
+      } else {
+        await this.installFromSelected(tag)
+      }
     },
     async installFromSelected(tag: string) {
       if (!this.selected_extension) {
