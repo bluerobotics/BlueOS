@@ -45,15 +45,22 @@
                   label="Version"
                 />
               </v-col>
-
               <v-col class="text-center">
-                <v-btn
-                  class="mt-3"
-                  color="primary"
-                  @click="$emit('clicked', extension.identifier, selected_version, isInstalled)"
-                >
-                  {{ isInstalled ? 'Uninstall' : 'Install' }}
-                </v-btn>
+                <v-tooltip :disabled="extension.is_compatible" bottom>
+                  <template #activator="{ on, attrs }">
+                    <v-btn
+                      class="mt-3"
+                      :disabled="!extension.is_compatible"
+                      color="primary"
+                      v-bind="attrs"
+                      v-on="on"
+                      @click="$emit('clicked', extension.identifier, selected_version, isInstalled)"
+                    >
+                      {{ isInstalled ? 'Uninstall' : 'Install' }}
+                    </v-btn>
+                  </template>
+                  <span>No versions available for this architecture</span>
+                </v-tooltip>
               </v-col>
             </v-row>
             <h3
@@ -168,8 +175,11 @@ export default Vue.extend({
       // TODO: make sure we sanitize this
       return marked(this.selected.readme)
     },
-    available_tags(): string[] {
-      return Object.keys(this.extension?.versions ?? [])
+    available_tags(): {text: string, disabled: boolean}[] {
+      return Object.keys(this.extension?.versions ?? []).map((tag) => ({
+        text: tag,
+        disabled: this.extension?.versions[tag].images.every((image) => !image.compatible),
+      }))
     },
     permissions(): (undefined | JSONValue) {
       if (!this.selected_version) {
