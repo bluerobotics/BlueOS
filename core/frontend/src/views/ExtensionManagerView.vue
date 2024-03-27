@@ -29,23 +29,41 @@
         </v-card-text>
       </v-card>
     </v-dialog>
-    <v-tabs
-      v-model="tab"
-      fixed-tabs
-    >
-      <v-tab>
-        <v-icon class="mr-5">
-          mdi-store-search
-        </v-icon>
-        Store
-      </v-tab>
-      <v-tab>
-        <v-icon class="mr-5">
-          mdi-bookshelf
-        </v-icon>
-        Installed
-      </v-tab>
-    </v-tabs>
+    <v-toolbar density="compact">
+      <div class="search-container">
+        <v-text-field
+          v-model.trim="searchQuery"
+          dense
+          rounded
+          clearable
+          placeholder="Search Extensions"
+          prepend-inner-icon="mdi-magnify"
+          class="pt-6 shrink expanding-search"
+          :class="{ closed: searchQueryClosed && !searchQuery }"
+          @focus="searchQueryClosed = false"
+          @blur="searchQueryClosed = true"
+        />
+      </div>
+      <v-tabs
+        v-model="tab"
+        fixed-tabs
+        class="tabs-container"
+      >
+        <v-tab>
+          <v-icon class="mr-5">
+            mdi-store-search
+          </v-icon>
+          Store
+        </v-tab>
+        <v-tab>
+          <v-icon class="mr-5">
+            mdi-bookshelf
+          </v-icon>
+          Installed
+        </v-tab>
+      </v-tabs>
+      <v-spacer class="search-container" />
+    </v-toolbar>
     <v-card
       v-if="tab === 0"
       class="d-flex pa-5 align-baseline"
@@ -78,8 +96,10 @@
         </v-list>
       </v-card>
       <v-row
+        v-if="filteredManifest.length > 0"
         dense
-        class="d-flex justify-space-between"
+        class="d-flex"
+        style="place-self: flex-start start; place-content: start space-around;"
       >
         <extension-card
           v-for="extension in filteredManifest"
@@ -95,6 +115,14 @@
       >
         <p class="text-h6">
           No Extensions available. Make sure the vehicle has internet access and try again.
+        </p>
+      </v-container>
+      <v-container
+        v-if="filteredManifest.length === 0"
+        class="text-center"
+      >
+        <p class="text-h6">
+          No results found.
         </p>
       </v-container>
     </v-card>
@@ -168,6 +196,7 @@
 <script lang="ts">
 import AnsiUp from 'ansi_up'
 import axios from 'axios'
+import Fuse from 'fuse.js'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -210,6 +239,7 @@ export default Vue.extend({
       selected_tags: [] as string[],
       running_containers: [] as RunningContainer[],
       manifest: [] as ExtensionData[],
+      manifest_fuse: null as null | Fuse<ExtensionData>,
       dockers_fetch_done: false,
       dockers_fetch_failed: false,
       show_pull_output: false,
@@ -222,6 +252,8 @@ export default Vue.extend({
       metrics: {} as Dictionary<{ cpu: number, memory: number}>,
       metrics_interval: 0,
       edited_extension: null as null | InstalledExtensionData,
+      searchQuery: null as null | string,
+      searchQueryClosed: true,
     }
   },
   computed: {
@@ -236,25 +268,35 @@ export default Vue.extend({
         .sort() as string[]
       return [...new Set(authors)]
     },
+    searchFilteredManifest(): ExtensionData[] {
+      const query = this.searchQuery ?? ''
+
+      // Remove not compatible in case user is not searching by search bar directly
+      const data = query !== ''
+        ? this.manifest_fuse?.search(query).map((result) => result.item) ?? []
+        : this.manifest.filter((ext) => ext.is_compatible)
+
+      return data
+    },
     filteredManifest(): ExtensionData[] {
+      let data = this.searchFilteredManifest
+
       if (this.selected_companies.isEmpty() && this.selected_tags.isEmpty()) {
         // By default we remove examples if nothing is selected
-        return this.manifest.filter((extension) => this.newestVersion(extension.versions)?.type !== 'example')
+        return data.filter((extension) => this.newestVersion(extension.versions)?.type !== 'example')
       }
 
-      let { manifest } = this
-
       if (!this.selected_companies.isEmpty()) {
-        manifest = manifest.filter((extension) => this.newestVersion(extension.versions)?.company?.name !== undefined)
+        data = data.filter((extension) => this.newestVersion(extension.versions)?.company?.name !== undefined)
           .filter((extension) => this.selected_companies
             .includes(this.newestVersion(extension.versions)?.company?.name ?? ''))
       }
 
       if (this.selected_tags.isEmpty()) {
-        return manifest
+        return data
       }
 
-      return manifest
+      return data
         .filter((extension) => this.newestVersion(extension.versions)?.type !== undefined)
         .filter((extension) => this.selected_tags
           .includes(this.newestVersion(extension.versions)?.type ?? ''))
@@ -386,6 +428,13 @@ export default Vue.extend({
     getContainerName(extension: InstalledExtensionData): string | null {
       return this.getContainer(extension)?.name ?? null
     },
+    checkExtensionCompatibility(extension: ExtensionData): boolean {
+      return Object.values(extension.versions).some(
+        (version) => version.images.some(
+          (image) => image.compatible,
+        ),
+      )
+    },
     async fetchManifest(): Promise<void> {
       await back_axios({
         method: 'get',
@@ -397,7 +446,14 @@ export default Vue.extend({
             notifier.pushBackError('EXTENSIONS_MANIFEST_FETCH_FAIL', new Error(response.data.detail))
             return
           }
-          this.manifest = response.data
+          this.manifest = response.data.map((extension: ExtensionData) => ({
+            ...extension,
+            is_compatible: this.checkExtensionCompatibility(extension),
+          }))
+          this.manifest_fuse = new Fuse(this.manifest, {
+            keys: ['identifier', 'name', 'description'],
+            threshold: 0.4,
+          })
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_MANIFEST_FETCH_FAIL', error)
@@ -667,4 +723,22 @@ pre.logs {
   padding: 15px;
   overflow-x: scroll;
 }
+
+.search-container {
+  flex: 1 1 auto;
+  width: 50% !important;
+}
+
+.v-input.expanding-search {
+  transition: max-width 0.2s;
+}
+
+.v-input.expanding-search .v-input__slot {
+  cursor: pointer;
+}
+
+.v-input.expanding-search.closed {
+  max-width: 50px;
+}
+
 </style>
