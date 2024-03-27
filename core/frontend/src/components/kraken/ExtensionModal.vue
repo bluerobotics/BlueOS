@@ -45,23 +45,28 @@
                   label="Version"
                 />
               </v-col>
-
               <v-col class="text-center">
-                <v-btn
-                  v-if="installed === selected_version"
-                  class="mt-3"
-                  disabled
-                  color="primary"
-                >
-                  Installed
-                </v-btn>
+                <v-tooltip v-if="!isCompatible" bottom>
+                  <template #activator="{ on, attrs }">
+                    <v-btn
+                      class="mt-3"
+                      :disabled="!isCompatible"
+                      color="primary"
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      {{ installed === selected_version ? 'Installed' : 'Install' }}
+                    </v-btn>
+                  </template>
+                  <span>No versions available for this architecture</span>
+                </v-tooltip>
                 <v-btn
                   v-else
                   class="mt-3"
                   color="primary"
                   @click="$emit('clicked', selected_version)"
                 >
-                  Install
+                  {{ installed === selected_version ? 'Installed' : 'Install' }}
                 </v-btn>
               </v-col>
             </v-row>
@@ -177,8 +182,11 @@ export default Vue.extend({
       // TODO: make sure we sanitize this
       return marked(this.selected.readme)
     },
-    available_tags(): string[] {
-      return Object.keys(this.extension?.versions ?? [])
+    available_tags(): {text: string, disabled: boolean}[] {
+      return Object.keys(this.extension?.versions ?? []).map((tag) => ({
+        text: tag,
+        disabled: this.extension?.versions[tag].images.every((image) => !image.compatible),
+      }))
     },
     permissions(): (undefined | JSONValue) {
       if (!this.selected_version) {
@@ -189,6 +197,13 @@ export default Vue.extend({
         return versions[this.selected_version].permissions
       }
       return 'No permissions required'
+    },
+    isCompatible(): boolean {
+      return Object.values(this.extension?.versions).some(
+        (version) => version.images.some(
+          (image) => image.compatible,
+        ),
+      )
     },
   },
   watch: {
