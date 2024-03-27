@@ -83,7 +83,13 @@ async def install_extension(extension: Extension) -> Any:
             status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
             detail="Not enough disk space to install the extension",
         )
-    return StreamingResponse(kraken.install_extension(extension))
+    compatible_digest = await kraken.is_compatible_extension(extension.identifier, extension.tag)
+    if not compatible_digest:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Extension is not compatible with the current machine running BlueOS.",
+        )
+    return StreamingResponse(kraken.install_extension(extension, compatible_digest))
 
 
 @app.post("/extension/update_to_version", status_code=status.HTTP_201_CREATED)
