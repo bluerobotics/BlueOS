@@ -43,14 +43,33 @@
                   v-model="selected_version"
                   :items="available_tags"
                   label="Version"
-                />
+                >
+                  <template #item="{ item }">
+                    <v-tooltip :disabled="item.active" bottom>
+                      <template #activator="{ on, attrs }">
+                        <div
+                          style="width: 100%;"
+                          :style="item.active ? '' : 'opacity: 0.5;'"
+                          v-bind="attrs"
+                          v-on="on"
+                        >
+                          <!-- This is your custom item template -->
+                          <v-list-item-content>
+                            <v-list-item-title v-text="item.text" />
+                          </v-list-item-content>
+                        </div>
+                      </template>
+                      <span>This version is not compatible with current machine running BlueOS</span>
+                    </v-tooltip>
+                  </template>
+                </v-select>
               </v-col>
               <v-col class="text-center">
                 <v-tooltip :disabled="extension.is_compatible" bottom>
                   <template #activator="{ on, attrs }">
                     <v-btn
                       class="mt-3"
-                      :disabled="!extension.is_compatible"
+                      :disabled="!extension.is_compatible || !isVersionCompatible"
                       color="primary"
                       v-bind="attrs"
                       v-on="on"
@@ -175,10 +194,10 @@ export default Vue.extend({
       // TODO: make sure we sanitize this
       return marked(this.selected.readme)
     },
-    available_tags(): {text: string, disabled: boolean}[] {
+    available_tags(): {text: string, active: boolean}[] {
       return Object.keys(this.extension?.versions ?? []).map((tag) => ({
         text: tag,
-        disabled: this.extension?.versions[tag].images.every((image) => !image.compatible),
+        active: this.extension?.versions[tag].images.some((image) => image.compatible),
       }))
     },
     permissions(): (undefined | JSONValue) {
@@ -193,6 +212,9 @@ export default Vue.extend({
     },
     isInstalled(): boolean {
       return this.selected_version === this.installed
+    },
+    isVersionCompatible(): boolean {
+      return this.extension.versions[this.selected_version]?.images.some((image) => image.compatible)
     },
   },
   watch: {
