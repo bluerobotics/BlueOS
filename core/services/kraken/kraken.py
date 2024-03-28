@@ -1,21 +1,21 @@
 import asyncio
 import json
 import re
+from manifest import Manifest
 from typing import Any, AsyncGenerator, Dict, List, Optional, cast
 
 import aiodocker
-import aiohttp
 import psutil
 from aiodocker.docker import DockerContainer
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import StackedHTTPException
 from fastapi import status
 from loguru import logger
+from dataclasses import asdict
 
 from exceptions import ContainerDoesNotExist, ExtensionNotFound
 from settings import Extension, SettingsV1
 
-REPO_URL = "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json"
 SERVICE_NAME = "Kraken"
 
 
@@ -26,7 +26,7 @@ class Kraken:
         self.should_run = True
         self.deleting_in_progress = False
         self._client: Optional[aiodocker.Docker] = None
-        self.manifest_cache: List[Dict[str, Any]] = []
+        self.manifest: Manifest = Manifest.instance()
 
     @property
     def client(self) -> aiodocker.Docker:
@@ -79,23 +79,46 @@ class Kraken:
         if not any(container["Names"][0][1:] == extension_name for container in self.running_containers):
             await self.start_extension(extension)
 
+
+    async def is_compatible_extension(self, extension: Extension) -> bool | str:
+        """
+        Check if there is a compatible image for this extension tag, if so returns the
+        image digest, otherwise returns False.
+
+        Args:
+            extension (Extension): Extension to check compatibility for.
+
+        Returns:
+            bool | str: False if not compatible, image digest if compatible.
+        """
+
+        version = await self.manifest.get_extension_version(extension.identifier, extension.tag)
+
+        if not version:
+            return False
+
+        compatible_images = [
+            image for image in version.images if image.compatible
+        ]
+
+        if not compatible_images:
+            return False
+
+        return compatible_images[0].digest
+
     def load_settings(self) -> None:
         self.manager = Manager(SERVICE_NAME, SettingsV1)
         self.settings = self.manager.settings
 
-    async def fetch_manifest(self) -> Any:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(REPO_URL) as resp:
-                if resp.status != 200:
-                    print(f"Error status {resp.status}")
-                    raise RuntimeError(f"Could not fetch manifest file: response status : {resp.status}")
-                self.manifest_cache = await resp.json()
-                return await resp.json(content_type=None)
+    async def fetch_manifest(self) -> List[Dict[str, Any]]:
+        return [
+            asdict(extension) for extension in await self.manifest.fetch()
+        ]
 
     async def get_configured_extensions(self) -> List[Extension]:
         return cast(List[Extension], self.settings.extensions)
 
-    async def install_extension(self, extension: Any) -> AsyncGenerator[bytes, None]:
+    async def install_extension(self, extension: Any, digest: str) -> AsyncGenerator[bytes, None]:
         try:
             # Remove older entry if it exists
             installed_extension = await self.extension_from_identifier(extension.identifier)
@@ -116,9 +139,13 @@ class Kraken:
         self.settings.extensions.append(new_extension)
         self.manager.save()
         try:
-            async for line in self.client.images.pull(
-                f"{extension.docker}:{extension.tag}", repo=extension.docker, tag=extension.tag, stream=True
-            ):
+            tag = f"{extension.docker}:{extension.tag}"
+            if digest:
+                tag += f":{digest}"
+
+            print("Installing image", tag)
+
+            async for line in self.client.images.pull(tag, repo=extension.docker, tag=extension.tag, stream=True):
                 yield json.dumps(line).encode("utf-8")
         except Exception as error:
             raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
@@ -165,14 +192,10 @@ class Kraken:
         if not extension:
             raise RuntimeError(f"Extension with identifier {identifier} not found!")
         # TODO: plug dependency-checking in here
-        version_manifests = [entry for entry in self.manifest_cache if entry["identifier"] == identifier]
-        if not version_manifests:
-            raise RuntimeError(f"identifier not found in manifest: {identifier}")
-        manifest = version_manifests[0]
-        if version not in manifest["versions"]:
-            raise RuntimeError(f"version not found in manifest: {version}")
-        await self.uninstall_extension_from_identifier(identifier)
-        version_data = manifest["versions"][version]
+        version_data = self.manifest.get_extension_version(extension.identifier, version)
+
+        if not version_data:
+            raise RuntimeError(f"Version {version} not found for extension {identifier}.")
 
         new_extension = Extension(
             identifier=identifier,
