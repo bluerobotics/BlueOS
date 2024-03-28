@@ -30,6 +30,7 @@
         >
           {{ status_text }}
         </v-alert>
+        <StatusTextWatcher :style="`display : ${status_type === 'error' ? 'block' : 'none'};`" />
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -44,6 +45,7 @@
 <script lang="ts">
 import { PropType } from 'vue'
 
+import StatusTextWatcher from '@/components/common/StatusTextWatcher.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
@@ -51,6 +53,9 @@ import { deviceId } from '@/utils/deviceid_decoder'
 
 export default {
   name: 'LargeVehicleCompassCalibrator',
+  components: {
+    StatusTextWatcher,
+  },
   props: {
     compasses: {
       type: Array as PropType<deviceId[]>,
