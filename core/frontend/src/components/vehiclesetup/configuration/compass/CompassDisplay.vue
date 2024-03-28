@@ -49,8 +49,8 @@ export default Vue.extend({
       required: true,
     },
     colors: {
-      type: Array as PropType<string[]>,
-      default: () => ['green', 'blue', 'purple'],
+      type: Object as PropType<Dictionary<string>>,
+      default: () => ({} as Dictionary<string>),
     },
   },
   data() {
@@ -171,9 +171,15 @@ export default Vue.extend({
       const verticalOffset = 0.5 * this.renderVariables.yawAngleDegrees.length * 10
       // Iterate over the devices and draw the legend
       for (const [index, device] of this.compasses.slice(0, 3).entries()) {
-        const color = this.colors[device.paramValue]
-        ctx.fillStyle = color
-
+        // check if our device is in the colors dict
+        const paramValue = `${device.paramValue}`
+        if (paramValue in this.colors) {
+          // if it is, set the color to the color in the dict
+          ctx.fillStyle = this.colors[paramValue]
+        } else {
+          // if it is not, set the color to black
+          ctx.fillStyle = 'black'
+        }
         const text = device.deviceName ?? 'Unknown'
         ctx.fillText(text, 0, +verticalOffset + index * 20 - this.renderVariables.yawAngleDegrees.length * 10)
       }
@@ -228,8 +234,8 @@ export default Vue.extend({
       // Draw central indicator
       for (const [index, angleDegrees] of this.headings.entries()) {
         if (angleDegrees === null) continue
-        const paramValue = this.compasses?.[index]?.paramValue ?? this.colors.length
-        const color = this.colors[paramValue]
+        const paramValue = this.compasses?.[index]?.paramValue
+        const color = paramValue ? this.colors[paramValue] : 'black'
         ctx.save()
         this.renderVariables.yawAngleDegrees[index] = angleDegrees
         ctx.rotate(glMatrix.toRadian(angleDegrees))
