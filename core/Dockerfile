@@ -66,10 +66,15 @@ COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 ## If the folder exists during the build step, it means we put it here by mistake.
 RUN [ ! -d "/root/.config" ]
 
+# Ensure that the git describe exists and also is in valid format as well
+# The format can be invalid if someone is build BlueOS without a tag as reference
 ARG GIT_DESCRIBE_TAGS
 RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
     && echo "GIT_DESCRIBE_TAGS argument not provided." \
     && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long --always)" \
+    && exit 1 \
+    || [[ ! $GIT_DESCRIBE_TAGS =~ -[0-9]+-g[a-f0-9]{8}$ ]] \
+    && echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)" \
     && exit 1 || exit 0
 
 # Update blueosrc with the necessary environment variables
