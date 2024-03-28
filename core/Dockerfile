@@ -86,6 +86,7 @@ RUN ln -s /usr/blueos/userdata /shortcuts/userdata
 RUN ln -s /usr/blueos/extensions /shortcuts/extensions
 RUN ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
 RUN ln -s / /shortcuts/system_root
+RUN useradd -m -u 1000 -G dialout blueos
 
 # Start
 CMD /bin/bash -i /usr/bin/start-blueos-core && sleep infinity
