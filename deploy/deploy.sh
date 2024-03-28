@@ -58,7 +58,7 @@ MOUNT_LOCATION=/tmp/blueos_deploy
 mkdir -p $MOUNT_LOCATION
 
 DEV_PART2=$DEV_DISK
-DEV_PART2+=2
+DEV_PART2="${DEV_PART2}2"
 
 echo "unmounting $DEV_DISK"
 umount $DEV_DISK?*
