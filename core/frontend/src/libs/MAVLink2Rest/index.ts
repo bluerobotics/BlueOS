@@ -8,6 +8,8 @@ import { Dictionary } from '@/types/common'
 import Endpoint from './Endpoint'
 import Listener from './Listener'
 import messageId from './MessageID'
+import autopilot_data from '@/store/autopilot'
+import { MAVLinkType, MavCmd } from './mavlink2rest-ts/messages/mavlink2rest-enum'
 
 class Mavlink2RestManager {
   baseUrl: string
@@ -93,6 +95,67 @@ class Mavlink2RestManager {
       console.debug(`M2R Websocket got an error: ${event.type}`)
     }
     return socket
+  }
+
+  /**
+   * Helper for COMMAND_LONG messages
+   * @param command 
+   */
+
+  sendCommandLong(
+    command: MavCmd,
+    param1: number | undefined = undefined,
+    param2: number | undefined = undefined,
+    param3: number | undefined = undefined,
+    param4: number | undefined = undefined,
+    param5: number | undefined = undefined,
+    param6: number | undefined = undefined,
+    param7: number | undefined = undefined
+  ) {
+    mavlink2rest.sendMessage({
+      header: {
+        system_id: 255,
+        component_id: 1,
+        sequence: 1,
+      },
+      message: {
+        type: MAVLinkType.COMMAND_LONG,
+        param1: param1 ?? 0,
+        param2: param2 ?? 0,
+        param3: param3 ?? 0,
+        param4: param4 ?? 0,
+        param5: param5 ?? 0,
+        param6: param6 ?? 0,
+        param7: param7 ?? 0,
+        command: {
+          type: command,
+        },
+        target_system: autopilot_data.system_id,
+        target_component: 1,
+        confirmation: 0,
+      },
+    })
+  }
+
+
+  waitForAck(command: MavCmd, timeout_seconds: number = 3): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const listener = this.startListening(MAVLinkType.COMMAND_ACK).setCallback(
+        (content) => {
+          const { header, message } = content
+          if (header.system_id !== autopilot_data.system_id || header.component_id !== 1) {
+            return
+          }
+          if (message.command.type === command) {
+            resolve(message)
+          }
+        }
+      ).setFrequency(0)
+      setTimeout(() => {
+        listener.discard()
+        reject(new Error(`timed out waiting for answer for ${command}`))
+      }, timeout_seconds*1000)
+    })
   }
 
   /**
