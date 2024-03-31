@@ -48,20 +48,11 @@
 
               <v-col class="text-center">
                 <v-btn
-                  v-if="installed === selected_version"
-                  class="mt-3"
-                  disabled
-                  color="primary"
-                >
-                  Installed
-                </v-btn>
-                <v-btn
-                  v-else
                   class="mt-3"
                   color="primary"
-                  @click="$emit('clicked', selected_version)"
+                  @click="$emit('clicked', extension.identifier, selected_version, isInstalled)"
                 >
-                  Install
+                  {{ isInstalled ? 'Uninstall' : 'Install' }}
                 </v-btn>
               </v-col>
             </v-row>
@@ -189,6 +180,9 @@ export default Vue.extend({
         return versions[this.selected_version].permissions
       }
       return 'No permissions required'
+    },
+    isInstalled(): boolean {
+      return this.selected_version === this.installed
     },
   },
   watch: {
