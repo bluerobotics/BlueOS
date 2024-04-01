@@ -65,7 +65,6 @@ class Detector:
             except Exception:
                 return False
 
-
         logger.debug("Trying to detect Linux board.")
         if is_navigator_r5_connected():
             logger.debug("Navigator R5 detected.")
