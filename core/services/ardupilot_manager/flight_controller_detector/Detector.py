@@ -46,6 +46,7 @@ class Detector:
                 return True
             except Exception:
                 return False
+
         def is_tummler_r1_connected() -> bool:
             try:
                 bus = SMBus(1)
