@@ -46,6 +46,24 @@ class Detector:
                 return True
             except Exception:
                 return False
+        def is_tummler_r1_connected() -> bool:
+            try:
+                bus = SMBus(1)
+                QMC5883L_address = 0x0D
+                bus.read_byte_data(QMC5883L_address, 0)
+
+                # MS5837_address = 0x76
+                # bus.read_byte_data(MS5837_address, 0)
+
+                # STM32_address1 = 0x48
+                # bus.read_byte_data(STM32_address1, 0)
+
+                STM32_address2 = 0x66
+                bus.read_byte_data(STM32_address2, 0)
+                return True
+            except Exception:
+                return False
+
 
         logger.debug("Trying to detect Linux board.")
         if is_navigator_r5_connected():
@@ -54,6 +72,9 @@ class Detector:
         if is_argonot_r1_connected():
             logger.debug("Argonot R1 detected.")
             return FlightController(name="Argonot", manufacturer="SymbyTech", platform=Platform.Argonot)
+        if is_tummler_r1_connected():
+            logger.debug("Tummler Board R1 detected")
+            return FlightController(name="Tummler", manufacturer="Tummler ROV", platform=Platform.Tummler)
         logger.debug("No Linux board detected.")
         return None
 
