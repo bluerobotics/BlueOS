@@ -157,6 +157,11 @@ ssh_command() {
 }
 
 prepare_cgroups() {
+  # skip if ssh is not working
+  if ! ssh_command "echo 'SSH is working'"; then
+    echo "SSH is not working, skipping cgroups preparation"
+    return
+  fi
   # Prepare cgroups for run-service.sh to use
   # Get the Docker container's hash by its name
   FULL_COMMAND="docker ps --no-trunc --filter name=blueos-core --format '{{.ID}}'"
