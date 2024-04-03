@@ -90,7 +90,7 @@ BlueOS is designed to perform optimally across a wide range of systems. Our late
 
 Right now we officially support the Raspberry Pi 3 and 4, but the system should "just work" on all listed architectures with the correct docker binds.
 
-## Deveompment Environment
+## Development Environment
 
 Docker based development environment is available for via the [`core/compose/compose.yml`](core/compose/compose.yml) docker compose file. This will start a development environment with all the required services as well as mount all of the needed directories in this repository for development.
 
