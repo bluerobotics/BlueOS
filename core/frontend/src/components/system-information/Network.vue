@@ -39,7 +39,7 @@ export default Vue.extend({
   },
   computed: {
     networks(): Network[] {
-      return system_information.system?.network ?? []
+      return system_information.system?.network.sort((first, second) => first.name.localeCompare(second.name)) ?? []
     },
   },
   mounted() {
