@@ -237,7 +237,7 @@
                     dark
                   >
                     <div
-                      v-tooltip="'This is an installed extensions'"
+                      v-tooltip="'This is an installed extension'"
                       class="extension-marker ma-0"
                     >
                       <v-avatar
