@@ -118,7 +118,7 @@ export interface deviceId {
     paramValue: number
     deviceIdNumber: number
     deviceName?: string
-    busType: string
+    busType: BUS_TYPE
     bus: number
     address: string
     devtype: number
@@ -137,14 +137,14 @@ export default function decode(device: string, devid: number): deviceId {
   if (device.startsWith('COMPASS')) {
     // When compass uses UAVCAN, the devtype is sensor_id + 1
     // So we ignore it to avoid showing up the wrong device name
-    switch (bus) {
+    switch (busType) {
       // When compass uses UAVCAN, the devtype is sensor_id + 1
       // So we ignore it to avoid showing up the wrong device name
-      case BUS_TYPE.UAVCAN:
+      case BUS_TYPE[BUS_TYPE.UAVCAN]:
         decodedDevname = 'UAVCAN'
         break
       // eAHRS is the only one that uses SERIAL
-      case BUS_TYPE.SERIAL:
+      case BUS_TYPE[BUS_TYPE.SERIAL]:
         decodedDevname = 'eAHRS'
         break
       default:
