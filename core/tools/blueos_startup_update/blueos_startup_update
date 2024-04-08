@@ -438,6 +438,7 @@ def main() -> int:
         print("The system will restart in 10 seconds because the following applied patches required restart:", patches_requiring_restart)
         time.sleep(10)
         run_command('sudo reboot', False)
+        time.sleep(600) # we are already rebooting anyway. but we don't want the other services to come up
 
     print(f"All patches applied successfully in { time.time() - start} seconds")
     return 0
