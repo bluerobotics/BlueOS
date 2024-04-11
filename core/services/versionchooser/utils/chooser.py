@@ -177,6 +177,17 @@ class VersionChooser:
         except Exception as error:
             logger.critical(f"Warning: {type(error)}: {error}")
 
+        new_image_name = f"bluerobotics/blueos-bootstrap:{tag}"
+        try:
+            await self.client.images.inspect(new_image_name)
+        except Exception:
+            error_msg = (
+                f"Trying to update bootstrap to {new_image_name} but this image doesn't exist locally. "
+                + "Please pull this image before trying to update the bootstrap."
+            )
+            logger.critical(error_msg)
+            return web.Response(status=400, text=error_msg)
+
         backup_name = "bootstrap-backup"
         try:
             backup = None
@@ -197,7 +208,7 @@ class VersionChooser:
 
         HOME = "/root"
         bootstrap_config = {
-            "Image": f"bluerobotics/blueos-bootstrap:{tag}",
+            "Image": new_image_name,
             "HostConfig": {
                 "RestartPolicy": {"Name": "unless-stopped"},
                 "NetworkMode": "host",
