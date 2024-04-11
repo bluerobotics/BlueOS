@@ -191,7 +191,7 @@ class VersionChooser:
             logger.info(f"Setting current {await self.get_bootstrap_version()} as {backup_name}")
             await bootstrap.rename(backup_name)
             logger.info(f"Stop {self.bootstrap_name}")
-            await bootstrap.stop()
+            await bootstrap.kill()
             result = await bootstrap.wait()  # type: ignore
             logger.info(f"Response after waiting for {self.bootstrap_name} to be stopped: {result}")
 
