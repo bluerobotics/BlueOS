@@ -5,7 +5,9 @@ from typing import Any
 import aiodocker
 import connexion
 from aiohttp import web
+from commonwealth.utils.decorators import operation_in_progress_global
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from fastapi import HTTPException, status
 from loguru import logger
 
 from utils.chooser import STATIC_FOLDER, VersionChooser
@@ -20,6 +22,15 @@ logger.info("Starting Version Chooser")
 versionChooser = VersionChooser(aiodocker.Docker())
 
 
+def raise_lock(*raise_args: str, **kwargs: int) -> None:
+    """Raise a 423 HTTP Error status
+
+    Raises:
+        HTTPException: An operation is already in progress, please wait.
+    """
+    raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="There is an operation already in progress.")
+
+
 async def index(_request: web.Request) -> Any:
     return versionChooser.index()
 
@@ -28,6 +39,7 @@ async def get_version() -> Any:
     return versionChooser.get_version()
 
 
+@operation_in_progress_global(callback=raise_lock)
 async def pull_version(request: web.Request) -> Any:
     data = await request.json()
     repository = data["repository"]
@@ -35,6 +47,7 @@ async def pull_version(request: web.Request) -> Any:
     return await versionChooser.pull_version(request, repository, tag)
 
 
+@operation_in_progress_global(callback=raise_lock)
 async def set_version(request: web.Request) -> Any:
     data = await request.json()
     tag = data["tag"]
@@ -42,6 +55,7 @@ async def set_version(request: web.Request) -> Any:
     return await versionChooser.set_version(repository, tag)
 
 
+@operation_in_progress_global(callback=raise_lock)
 async def delete_version(request: web.Request) -> Any:
     data = await request.json()
     tag = data["tag"]
@@ -61,17 +75,20 @@ async def get_bootstrap_version() -> Any:
     return await versionChooser.get_bootstrap_version()
 
 
+@operation_in_progress_global(callback=raise_lock)
 async def set_bootstrap_version(request: web.Request) -> Any:
     data = await request.json()
     tag = data["tag"]
     return await versionChooser.set_bootstrap_version(tag)
 
 
+@operation_in_progress_global(callback=raise_lock)
 async def load(request: web.Request) -> Any:
     data = await request.read()
     return await versionChooser.load(data)
 
 
+@operation_in_progress_global(callback=raise_lock)
 async def restart() -> Any:
     return await versionChooser.restart()
 
