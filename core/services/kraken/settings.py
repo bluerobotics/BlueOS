@@ -15,6 +15,17 @@ class Extension(JsonObject):
     enabled = BooleanField()
     user_permissions = StringField()
 
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "identifier": self.identifier,
+            "name": self.name,
+            "docker": self.docker,
+            "tag": self.tag,
+            "permissions": self.permissions,
+            "enabled": self.enabled,
+            "user_permissions": self.user_permissions,
+        }
+
     def settings(self) -> Any:
         if self.user_permissions:
             return json.loads(self.user_permissions)
