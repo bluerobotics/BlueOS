@@ -67,3 +67,34 @@ def single_threaded(callback: Callable[[Any], Any]) -> Callable[[Callable[[Any],
         return wrapper
 
     return inner_function
+
+
+__commonwealth_operation_in_progress_global_lock = Lock()
+
+
+def operation_in_progress_global(callback: Callable[[Any], Any]) -> Callable[[Callable[[Any], Any]], Any]:
+    """
+    Decorator to ensure that a function cannot be called in parallel. If the function is
+    already running, the decorator calls the provided callback function if any and returns its return value.
+
+    Args:
+        callback (Callable[[Any], Any]): Callback to be called when the operation is already in progress.
+
+    Returns:
+        A decorator that wraps the original function.
+    """
+
+    def inner_function(function: Callable[[Any], Any]) -> Callable[[Callable[[Any], Any]], Any]:
+        @wraps(function)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            # pylint: disable=consider-using-with
+            if not __commonwealth_operation_in_progress_global_lock.acquire(blocking=False):
+                return await callback(*args, **kwargs)
+            try:
+                return await function(*args, **kwargs)
+            finally:
+                __commonwealth_operation_in_progress_global_lock.release()
+
+        return wrapper
+
+    return inner_function
