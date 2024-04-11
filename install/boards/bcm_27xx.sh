@@ -7,6 +7,7 @@ GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 CMDLINE_FILE=/boot/cmdline.txt
+CONFIG_FILE=/boot/config.txt
 alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
 
 # Download, compile, and install spi0 mosi-only device tree overlay for
@@ -29,8 +30,19 @@ for STRING in \
     "gpio=" \
     "dwc2" \
     ; do \
-    sudo sed -i "/$STRING/d" /boot/config.txt
+    sudo sed -i "/$STRING/d" $CONFIG_FILE
 done
+
+# add [pi4] if it is not there
+if ! grep -q "\[pi4\]" $CONFIG_FILE; then
+    echo "[pi4]" >> $CONFIG_FILE
+fi
+# find the line number of the [pi4] tag
+
+line_number=$(grep -n "\[pi4\]" $CONFIG_FILE | awk -F ":" '{print $1}')
+echo "Line number of [pi4] tag: $line_number"
+
+
 for STRING in \
     "enable_uart=1" \
     "dtoverlay=uart1" \
@@ -47,9 +59,9 @@ for STRING in \
     "dtoverlay=spi1-3cs" \
     "gpio=11,24,25=op,pu,dh" \
     "gpio=37=op,pd,dl" \
-    "dtoverlay=dwc2" \
+    "dtoverlay=dwc2,dr_mode=otg" \
     ; do \
-    echo "$STRING" | sudo tee -a /boot/config.txt
+    sed -i "$line_number r /dev/stdin" $CONFIG_FILE <<< "$STRING"
 done
 
 # Check for valid modules file to load kernel modules
