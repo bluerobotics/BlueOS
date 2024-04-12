@@ -710,7 +710,9 @@ export default Vue.extend({
       this.backend_offline = backend_offline
     },
     goHome(): void {
-      this.$router.push('/')
+      if (this.$router.currentRoute.path !== '/') {
+        this.$router.push('/')
+      }
     },
   },
 })
