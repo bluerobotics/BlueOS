@@ -1,12 +1,16 @@
 #!/usr/bin/env python
-import appdirs
 import copy
-import os
+import datetime
 import json
+import logging
+import os
 import re
+import subprocess
 import sys
 import time
-from typing import Tuple, List
+from typing import List, Tuple
+
+import appdirs
 
 is_testing_environment = os.getenv("TESTING")
 # Any change made in this DELTA_JSON dict should be also made
@@ -58,14 +62,13 @@ DELTA_JSON = {
 # However, it is important to note that conflicting configurations can happen, potentially impacting the kernel's loading process or causing harm to BlueOS.
 CONFIG_USER_PROTECTION_WORD = 'custom'
 
-import subprocess
-import collections
+
 if not is_testing_environment:
     from commonwealth.utils.commands import run_command
+
 else:
     def run_command(command, check=True):
-        #print("running")
-        print(command)
+        logging.info(command)
         return subprocess.run(
             command,
             check=check,
@@ -74,6 +77,19 @@ else:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+
+# let's do some logging so we know what happened in previous boots...
+now = datetime.datetime.now()
+
+LOG_PATH = "./" if is_testing_environment else "/var/logs/blueos/services/blueos_startup_update"
+
+if not os.path.exists(LOG_PATH):
+    os.makedirs(LOG_PATH)
+
+log_filename = f"{LOG_PATH}/blueos_startup_update_{now.strftime('%Y%m%d_%H%M%S')}.log"
+
+logging.basicConfig(filename=log_filename, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.info('Starting the script')
 
 # Copyright 2016-2022 Paul Durivage
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,13 +103,13 @@ def dict_merge(dct, merge_dct):
 
 def update_startup() -> bool:
     if os.getenv('PYTEST'):
-        print("Testing enviroment dectect, skipping startup.json update")
+        logging.info("Testing enviroment dectect, skipping startup.json update")
         return False
     startup_path = os.path.join(appdirs.user_config_dir('bootstrap'), 'startup.json')
     config = {}
 
     if not os.path.isfile(startup_path):
-        print(f"File: {startup_path}, does not exist, aborting.")
+        logging.info(f"File: {startup_path}, does not exist, aborting.")
         return False
 
     with open(startup_path, mode="r", encoding="utf-8") as startup_file:
@@ -179,27 +195,27 @@ def boot_config_filter_conflicting_configuration_at_session(config_content: List
 def load_file(file_name) -> str:
     command = f'cat "{file_name}"'
     output = run_command(command, False)
-    print(output)
+    logging.info(output)
     return output.stdout
 
 def save_file(file_name: str, file_content: str, backup_identifier: str) -> None:
     command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
-    print(run_command(command, False))
+    logging.info(run_command(command, False))
 
     command = f'echo "{file_content}" | sudo tee "{file_name}"'
-    print(run_command(command, False))
+    logging.info(run_command(command, False))
 
 def hardlink_exists(file_name: str) -> bool:
     command = f"[ -f '{file_name}' ] && [ $(stat -c '%h' '{file_name}') -gt 1 ]"
     output = run_command(command, False)
-    print(output)
+    logging.info(output)
     return output.returncode == 0
 
 
 def create_hard_link(source_file_name: str, destination_file_name: str) -> bool:
     command = f"sudo rm -rf {destination_file_name}; sudo ln {source_file_name} {destination_file_name}"
     output = run_command(command, False)
-    print(output)
+    logging.info(output)
     return output.returncode == 0
 
 
@@ -260,7 +276,7 @@ def boot_cmdfile_add_config(cmdline_content: List[str], config_key: str, config_
         cmdline_content.append(config_line)
 
 def update_cgroups() -> bool:
-    print("Running cgroup update..")
+    logging.info("Running cgroup update..")
 
     # Retrieve the cmdline file
     cmdline_file = os.getenv('CMDLINE_FILE') or '/boot/cmdline.txt'
@@ -289,7 +305,7 @@ def update_cgroups() -> bool:
     return True
 
 def update_dwc2() -> bool:
-    print("Running dwc2 update..")
+    logging.info("Running dwc2 update..")
 
     # Retrieve the config file
     config_file = os.getenv('CONFIG_FILE') or '/boot/config.txt'
@@ -331,7 +347,7 @@ def update_dwc2() -> bool:
     return True
 
 def update_navigator_overlays() -> bool:
-    print("Running Nagivator overlays update..")
+    logging.info("Running Nagivator overlays update..")
 
     # Retrieve the config file
     config_file = os.getenv('CONFIG_FILE') or '/boot/config.txt'
@@ -390,7 +406,7 @@ def create_dns_conf_host_link() -> bool:
 
     # Creates a static reoslv conf to allow docker binds
     if not create_hard_link(original_resolv_conf_file, resolv_conf_file_host_link):
-        print("Failed to apply patch")
+        logging.warning("Failed to apply patch")
         return False
 
     # Patch applied and system needs to be restarted for it to take effect
@@ -400,7 +416,7 @@ def create_dns_conf_host_link() -> bool:
 def ensure_nginx_permissions() -> bool:
     # ensure nginx can read the userdata directory
     command = "sudo chown -R www-data:www-data /usr/blueos/userdata"
-    print(run_command(command, False))
+    logging.info(run_command(command, False))
 
     # This patch doesn't require restart to take effect
     return False
@@ -413,7 +429,7 @@ def ensure_user_data_structure_is_in_place() -> bool:
         "sudo mkdir -p /usr/blueos/userdata/styles",
     ]
     for command in commands:
-        print(run_command(command, False))
+        logging.info(run_command(command, False))
 
     # This patch doesn't require restart to take effect
     return False
@@ -421,7 +437,7 @@ def ensure_user_data_structure_is_in_place() -> bool:
 def run_command_is_working():
     output = run_command("uname -a", check=False)
     if output.returncode != 0:
-        print(output)
+        logging.info(output)
         return False
 
     return True
@@ -431,11 +447,11 @@ def main() -> int:
     current_git_version = os.getenv('GIT_DESCRIBE_TAGS')
     match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
     tag, commit_number, commit_hash = match['tag'], match['commit_number'], match['commit_hash']
-    print(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
+    logging.info(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
 
     if not run_command_is_working():
-        print("Critical error: Something is wrong with the host computer, run_command is not working.")
-        print("Ignoring host computer configuration for now.")
+        logging.info("Critical error: Something is wrong with the host computer, run_command is not working.")
+        logging.info("Ignoring host computer configuration for now.")
         return 0
 
     # TODO: parse tag as semver and check before applying patches
@@ -453,12 +469,15 @@ def main() -> int:
             ensure_user_data_structure_is_in_place,
         ])
 
-    print("The following patches will be applied if needed:", [patch_to_apply.__name__ for patch_to_apply in patches_to_apply])
+    logging.info("The following patches will be applied if needed:")
+    logging.info([patch_to_apply.__name__ for patch_to_apply in patches_to_apply])
 
     patches_requiring_restart = [patch.__name__ for patch in patches_to_apply if patch()]
-    print(f"All patches applied successfully in { time.time() - start} seconds")
+
+    logging.info(f"All patches applied successfully in { time.time() - start} seconds")
     if patches_requiring_restart:
-        print("The system will restart in 10 seconds because the following applied patches required restart:", patches_requiring_restart)
+        logging.warning("The system will now restart in 10 seconds because the following applied patches required restart:")
+        logging.warning(patches_requiring_restart)
         if not is_testing_environment:
             time.sleep(10)
             run_command('sudo reboot', False)
