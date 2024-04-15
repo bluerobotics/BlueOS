@@ -460,7 +460,6 @@ def main() -> int:
         update_startup,
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
-        create_dns_conf_host_link,
         fix_ssh_ownership,
     ]
 
@@ -477,6 +476,8 @@ def main() -> int:
         )
     if host_os == HostOs.Bookworm:
         patches_to_apply.extend([fix_wpa_service])
+    if host_os == HostOs.Bullseye:
+        patches_to_apply.extend([create_dns_conf_host_link])
 
     logger.info("The following patches will be applied if needed:")
     for patch in patches_to_apply:
