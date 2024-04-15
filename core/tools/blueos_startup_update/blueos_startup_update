@@ -13,6 +13,7 @@ from typing import List, Tuple
 import appdirs
 
 is_testing_environment = os.getenv("TESTING")
+SUDO = "" if is_testing_environment else "sudo"
 # Any change made in this DELTA_JSON dict should be also made
 # into /bootstrap/startup.json.default too!
 DELTA_JSON = {
@@ -199,10 +200,10 @@ def load_file(file_name) -> str:
     return output.stdout
 
 def save_file(file_name: str, file_content: str, backup_identifier: str) -> None:
-    command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
+    command = f'{SUDO} cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
     logging.info(run_command(command, False))
 
-    command = f'echo "{file_content}" | sudo tee "{file_name}"'
+    command = f'echo "{file_content}" | {SUDO} tee "{file_name}"'
     logging.info(run_command(command, False))
 
 def hardlink_exists(file_name: str) -> bool:
@@ -213,7 +214,7 @@ def hardlink_exists(file_name: str) -> bool:
 
 
 def create_hard_link(source_file_name: str, destination_file_name: str) -> bool:
-    command = f"sudo rm -rf {destination_file_name}; sudo ln {source_file_name} {destination_file_name}"
+    command = f"{SUDO} rm -rf {destination_file_name}; {SUDO} ln {source_file_name} {destination_file_name}"
     output = run_command(command, False)
     logging.info(output)
     return output.returncode == 0
@@ -415,7 +416,7 @@ def create_dns_conf_host_link() -> bool:
 
 def ensure_nginx_permissions() -> bool:
     # ensure nginx can read the userdata directory
-    command = "sudo chown -R www-data:www-data /usr/blueos/userdata"
+    command = "{SUDO} chown -R www-data:www-data /usr/blueos/userdata"
     logging.info(run_command(command, False))
 
     # This patch doesn't require restart to take effect
@@ -424,9 +425,9 @@ def ensure_nginx_permissions() -> bool:
 def ensure_user_data_structure_is_in_place() -> bool:
     # ensures we have all base folders in userdata
     commands = [
-        "sudo mkdir -p /usr/blueos/userdata/images/vehicle",
-        "sudo mkdir -p /usr/blueos/userdata/images/logo",
-        "sudo mkdir -p /usr/blueos/userdata/styles",
+        "{SUDO} mkdir -p /usr/blueos/userdata/images/vehicle",
+        "{SUDO} mkdir -p /usr/blueos/userdata/images/logo",
+        "{SUDO} mkdir -p /usr/blueos/userdata/styles",
     ]
     for command in commands:
         logging.info(run_command(command, False))
@@ -480,7 +481,7 @@ def main() -> int:
         logging.warning(patches_requiring_restart)
         if not is_testing_environment:
             time.sleep(10)
-            run_command('sudo reboot', False)
+            run_command('{SUDO} reboot', False)
             time.sleep(600)
     return len(patches_requiring_restart)
 
