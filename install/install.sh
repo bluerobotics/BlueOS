@@ -71,6 +71,20 @@ ARCHITECTURE="$(uname -m)"
     exit 1
 )
 
+# Determine OS
+OS=$(lsb_release -is)
+
+if [ "$OS" = "Raspbian" ]; then
+    echo "Running on Raspbian."
+    DHCP_FILE="/etc/dhcpcd.conf"
+elif [ "$OS" = "Ubuntu" ]; then
+    echo "Running on Ubuntu."
+    DHCP_FILE="/etc/dhcp/dhcpd.conf"
+else
+    echo "Unknown OS"
+    exit 1
+fi
+
 # Check if the script is running as root
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
 
@@ -170,15 +184,15 @@ echo "Going to install blueos-docker version ${VERSION}."
 echo "Downloading and installing udev rules."
 curl -fsSL $ROOT/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
 
-if [ -f /etc/dhcpcd.conf ]
+if [ -f $DHCP_FILE ]
 then
     echo "Disabling automatic Link-local configuration in dhcpd.conf."
     # delete line if it already exists
-    sed -i '/noipv4ll/d' /etc/dhcpcd.conf
+    sed -i '/noipv4ll/d' $DHCP_FILE
     # add noipv4ll
-    sed -i '$ a noipv4ll' /etc/dhcpcd.conf
+    sed -i '$ a noipv4ll' $DHCP_FILE
 else
-    echo "Not modifying /etc/dhcpcd.conf - file does not exist"
+    echo "Not modifying $DHCP_FILE - file does not exist"
 fi
 
 # Do necessary changes if running in a Raspiberry
@@ -217,8 +231,24 @@ docker create \
     -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos \
     $BLUEOS_BOOTSTRAP
 
-# add docker entry to rc.local
-sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "Failed to add docker start on rc.local, BlueOS will not start on boot!"
+if [ "$OS" = "Raspbian" ]; then
+    # add docker entry to rc.local
+    sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "Failed to add docker start on rc.local, BlueOS will not start on boot!"
+
+elif [ "$OS" = "Ubuntu" ]; then
+    # Create a systemd service file
+    echo "[Unit]
+    Description=Start Docker container blueos-bootstrap at system start
+
+    [Service]
+    ExecStart=/usr/bin/docker start blueos-bootstrap
+
+    [Install]
+    WantedBy=multi-user.target" > /etc/systemd/system/blueos-bootstrap.service
+
+    systemctl daemon-reload
+    systemctl enable blueos-bootstrap.service
+fi
 
 # Configure network settings
 ## This should be after everything, otherwise network problems can happen
