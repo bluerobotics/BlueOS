@@ -237,6 +237,9 @@ echo "uninitialized" > /etc/machine-id
 echo "Restarting random-seeds."
 rm -rf /var/lib/systemd/random-seed /loader/random-seed
 
+echo "creating dns link"
+sudo ln /etc/resolv.conf /etc/resolv.conf.host
+
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
 echo "- The computer webpage: http://blueos-avahi.local"
