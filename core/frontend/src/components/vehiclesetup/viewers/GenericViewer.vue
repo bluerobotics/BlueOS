@@ -91,12 +91,12 @@ import { Dictionary, Indexed, Keyed } from '@/types/common'
 import { PingType } from '@/types/ping'
 import { sleep } from '@/utils/helper_functions'
 
-const models: Record<string, string> = import.meta.glob('/src/assets/vehicles/models/**', { eager: true })
+const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
 
 function get_model(vehicle_name: string, frame_name: string): undefined | string {
-  const release_path = `/src/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
-  if (models[release_path]) {
-    return release_path
+  const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
+  if (models[`/public/${release_path}`]) {
+    return `/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
   }
   return undefined
 }
@@ -349,8 +349,8 @@ export default Vue.extend({
       const file = new File([await cropped_image.toBlob(mimeType)], 'viewer.png', { type: mimeType })
       saveAs(file)
     },
-    reloadAnnotations() {
-      const json = models[`/src/assets/vehicles/models/${this.vehicle_folder}/${this.frame_name}.json`]
+    async reloadAnnotations() {
+      const json = await models[`./${this.vehicle_folder}/${this.frame_name}.json`]
       if (json) {
         this.annotations = json.annotations ?? {}
       }

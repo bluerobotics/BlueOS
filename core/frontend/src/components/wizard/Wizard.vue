@@ -295,11 +295,14 @@ const WIZARD_VERSION = 4
 
 const REPOSITORY_ROOT = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository'
 
-const models: Record<string, string> = import.meta.glob('/src/assets/vehicles/models/**', { eager: true })
+const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
 
 function get_model(vehicle_name: string, frame_name: string): undefined | string {
-  const release_path = `/src/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
-  return models?.[release_path] ? release_path : undefined
+  const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
+  if (models[`/public/${release_path}`]) {
+    return `/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
+  }
+  return undefined
 }
 
 enum ApplyStatus {
