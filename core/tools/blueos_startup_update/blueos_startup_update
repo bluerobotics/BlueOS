@@ -8,6 +8,7 @@ import sys
 import time
 from typing import Tuple, List
 
+is_testing_environment = os.getenv("TESTING")
 # Any change made in this DELTA_JSON dict should be also made
 # into /bootstrap/startup.json.default too!
 DELTA_JSON = {
@@ -57,8 +58,22 @@ DELTA_JSON = {
 # However, it is important to note that conflicting configurations can happen, potentially impacting the kernel's loading process or causing harm to BlueOS.
 CONFIG_USER_PROTECTION_WORD = 'custom'
 
+import subprocess
 import collections
-from commonwealth.utils.commands import run_command
+if not is_testing_environment:
+    from commonwealth.utils.commands import run_command
+else:
+    def run_command(command, check=True):
+        #print("running")
+        print(command)
+        return subprocess.run(
+            command,
+            check=check,
+            text=True,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
 # Copyright 2016-2022 Paul Durivage
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,6 +86,9 @@ def dict_merge(dct, merge_dct):
             dct[k] = merge_dct[k]
 
 def update_startup() -> bool:
+    if os.getenv('PYTEST'):
+        print("Testing enviroment dectect, skipping startup.json update")
+        return False
     startup_path = os.path.join(appdirs.user_config_dir('bootstrap'), 'startup.json')
     config = {}
 
@@ -245,7 +263,7 @@ def update_cgroups() -> bool:
     print("Running cgroup update..")
 
     # Retrieve the cmdline file
-    cmdline_file = '/boot/cmdline.txt'
+    cmdline_file = os.getenv('CMDLINE_FILE') or '/boot/cmdline.txt'
     cmdline_content = load_file(cmdline_file).replace('\n','').split(' ')
     unpatched_cmdline_content = cmdline_content.copy()
 
@@ -274,7 +292,7 @@ def update_dwc2() -> bool:
     print("Running dwc2 update..")
 
     # Retrieve the config file
-    config_file = '/boot/config.txt'
+    config_file = os.getenv('CONFIG_FILE') or '/boot/config.txt'
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
@@ -294,7 +312,7 @@ def update_dwc2() -> bool:
         save_file(config_file, config_content_str, backup_identifier)
 
     # Retrieve the cmdline file
-    cmdline_file = '/boot/cmdline.txt'
+    cmdline_file = os.getenv('CMDLINE_FILE') or '/boot/cmdline.txt'
     cmdline_content = load_file(cmdline_file).replace('\n','').split(' ')
     unpatched_cmdline_content = cmdline_content.copy()
 
@@ -316,7 +334,7 @@ def update_navigator_overlays() -> bool:
     print("Running Nagivator overlays update..")
 
     # Retrieve the config file
-    config_file = '/boot/config.txt'
+    config_file = os.getenv('CONFIG_FILE') or '/boot/config.txt'
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
@@ -426,22 +444,27 @@ def main() -> int:
         update_cgroups,
         update_dwc2,
         update_navigator_overlays,
-        ensure_user_data_structure_is_in_place,
-        ensure_nginx_permissions,
-        create_dns_conf_host_link,
     ]
+    # only run the next paches on deployment environment
+    if not is_testing_environment:
+        patches_to_apply.extend([
+            create_dns_conf_host_link,
+            ensure_nginx_permissions,
+            ensure_user_data_structure_is_in_place,
+        ])
 
     print("The following patches will be applied if needed:", [patch_to_apply.__name__ for patch_to_apply in patches_to_apply])
 
     patches_requiring_restart = [patch.__name__ for patch in patches_to_apply if patch()]
+    print(f"All patches applied successfully in { time.time() - start} seconds")
     if patches_requiring_restart:
         print("The system will restart in 10 seconds because the following applied patches required restart:", patches_requiring_restart)
-        time.sleep(10)
-        run_command('sudo reboot', False)
-        time.sleep(600) # we are already rebooting anyway. but we don't want the other services to come up
-
-    print(f"All patches applied successfully in { time.time() - start} seconds")
-    return 0
+        if not is_testing_environment:
+            time.sleep(10)
+            run_command('sudo reboot', False)
+            time.sleep(600)
+    return len(patches_requiring_restart)
 
 if __name__ == "__main__":
-    main()
+    # will return with non-zero if any patch requires reboot
+    exit(main())
