@@ -63,8 +63,8 @@ COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 # Asserts
 ## When running, the .config folder in the docker is not accessible,
 ## since it gets shadowed by the host's `.config` folder.
-## If the folder exists during the build step, it means we put it here by mistake.
-RUN [ ! -d "/root/.config" ]
+## If the folder tree contains any files during the build step, it means we put it here by mistake.
+RUN [ -z "$(find '/root/.config' -mindepth 1 -type f)" ]
 
 ARG GIT_DESCRIBE_TAGS
 RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
