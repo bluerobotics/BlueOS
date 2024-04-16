@@ -1,3 +1,4 @@
 from kraken.kraken import Kraken
+from kraken.extension import Extension
 
-__all__ = ["Kraken"]
+__all__ = ["Extension", "Kraken"]

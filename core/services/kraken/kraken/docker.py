@@ -1,21 +1,4 @@
 import aiodocker
-import dataclasses
-
-
-@dataclasses.dataclass
-class DockerContainerUsage:
-    """
-    Represents the usage of a Docker container.
-
-    Attributes:
-        cpu (str): CPU usage.
-        memory (float): Memory usage.
-        disk (int): Disk usage.
-    """
-
-    cpu: str
-    memory: float
-    disk: int
 
 
 class DockerCtx(object):

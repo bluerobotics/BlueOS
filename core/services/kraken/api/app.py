@@ -4,8 +4,9 @@ from os import path
 from fastapi import FastAPI
 from fastapi_versioning import VersionedFastAPI
 from fastapi.staticfiles import StaticFiles
-# Router
-from api.routers import extension_router, kraken_router, container_router
+# Routers
+from api.v1.routers import index_router_v1, extension_router_v1
+from api.v2.routers import index_router_v2, extension_router_v2, container_router_v2
 # TEMP - REMOVE
 from temp.apis import GenericErrorHandlingRoute
 
@@ -19,10 +20,16 @@ app = FastAPI(
 )
 app.router.route_class = GenericErrorHandlingRoute
 
-# Adds the router to the app
-app.include_router(kraken_router)
-app.include_router(extension_router)
-app.include_router(container_router)
+# Adds routers to the app
+
+# API v1
+app.include_router(index_router_v1)
+app.include_router(extension_router_v1)
+
+# API v2
+app.include_router(index_router_v2)
+app.include_router(extension_router_v2)
+app.include_router(container_router_v2)
 
 # Adds API versioning
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)

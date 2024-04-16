@@ -1,25 +1,21 @@
-import json
 import asyncio
+import json
 from typing import AsyncGenerator, List, Optional
-# Package
+
+from commonwealth.settings.manager import Manager
 from config import SERVICE_NAME
 from manifest import Manifest
 from manifest.models import Image
-from kraken.docker import DockerCtx
-# Extra
-from commonwealth.settings.manager import Manager
 from settings import Extension as ExtensionSettings, SettingsV1
+from kraken.docker import DockerCtx
+from kraken.exceptions import ExtensionContainerNotFound, ExtensionNotFound, ExtensionPullFailed
 
-class ExtensionNotFound(Exception):
-    pass
-
-class ExtensionPullFailed(Exception):
-    pass
-
-class ExtensionContainerNotFound(Exception):
-    pass
 
 class Extension:
+    """
+    Extension class to manage extensions.
+    """
+
     def __init__(
         self,
         identifier: str,
@@ -27,6 +23,16 @@ class Extension:
         image: Optional[Image] = None,
         manager: Optional[Manager] = None,
     ) -> None:
+        """
+        Initialize the extension.
+
+        Args:
+            identifier (str): Identifier of the extension.
+            tag (str): Tag of the extension.
+            image (Optional[Image]): If provided will use this image to install and manage the extension.
+            manager (Optional[Manager]): Settings manager instance to use, if not provided will create a new one.
+        """
+
         # Load settings
         self.manager = manager if manager else Manager(SERVICE_NAME, SettingsV1)
         self.settings = self.manager.settings
@@ -39,6 +45,20 @@ class Extension:
 
 
     def fetch_settings(self, identifier: str, tag: Optional[str] = None) -> List[ExtensionSettings] | ExtensionSettings:
+        """
+        Fetch settings for an extension.
+
+        Args:
+            identifier (str): Identifier of the extension.
+            tag (Optional[str]): Tag of the extension, if not provided will return all tags.
+
+        Returns:
+            List[ExtensionSettings] | ExtensionSettings: Settings for the extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in settings.
+        """
+
         extensions: List[ExtensionSettings] = [
             extension
             for extension in self.settings.extensions
@@ -53,6 +73,13 @@ class Extension:
 
 
     def save_settings(self, extension: Optional[ExtensionSettings] = None) -> None:
+        """
+        Save settings.
+
+        Args:
+            extension (Optional[ExtensionSettings]): Extension to save, if not provided will remove current extension.
+        """
+
         self.settings.extensions = [
             other
             for other in self.settings.extensions
@@ -64,6 +91,17 @@ class Extension:
 
 
     async def remove(self, delete: bool = True) -> None:
+        """
+        Remove current extension.
+
+        Args:
+            delete (bool): Delete the image associated with the extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in settings.
+            ExtensionContainerNotFound: If the container is not found.
+        """
+
         ext = self.fetch_settings(self.identifier, self.tag)
 
         container_name = str(ext.container_name())
@@ -83,6 +121,17 @@ class Extension:
 
 
     async def install(self, clear_remaining_tags: bool = True) -> AsyncGenerator[bytes, None]:
+        """
+        Install current extension.
+
+        Args:
+            clear_remaining_tags (bool): Delete all other tags with this identifier after install.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in manifest.
+            ExtensionPullFailed: If the extension fails to pull.
+        """
+
         entry = await self.manifest.get_extension(self.identifier)
         tag = entry.versions.get(self.tag, None)
 
@@ -124,26 +173,95 @@ class Extension:
 
 
     async def update(self) -> None:
+        """
+        Update current extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in manifest.
+            ExtensionPullFailed: If the extension fails to pull.
+        """
+
         return await self.install(True)
 
 
     async def uninstall(self) -> None:
+        """
+        Uninstall current extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in settings.
+            ExtensionContainerNotFound: If the container is not found.
+        """
+
         await self.remove()
         # Remove self from settings
         self.save_settings()
 
 
+    async def start(self) -> None:
+        """
+        Start current extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in settings.
+        """
+
+        ext = self.fetch_settings(self.identifier, self.tag)
+        config = ext.settings()
+
+        img_name = ext.fullname()
+        config["Image"] = img_name
+
+        async with DockerCtx() as client:
+            # Checks if image exists locally, if not tries to pull it
+            try:
+                await client.images.inspect(img_name)
+            except Exception:
+                try:
+                    await client.images.pull(img_name)
+                except Exception as error:
+                    raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
+
+            container = await client.containers.create_or_replace(
+                name=ext.container_name(), config=config
+            )
+            await container.start()
+
+
     async def restart(self) -> None:
+        """
+        Restart current extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in settings.
+            ExtensionContainerNotFound: If the container is not found.
+        """
+
         await self.remove(False)
 
 
     async def enable(self) -> None:
+        """
+        Enable current extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in settings.
+        """
+
         ext = self.fetch_settings(self.identifier, self.tag)
         ext.enabled = True
         self.save_settings(ext)
 
 
     async def disable(self) -> None:
+        """
+        Disable current extension.
+
+        Raises:
+            ExtensionNotFound: If the extension is not found in settings.
+            ExtensionContainerNotFound: If the container is not found.
+        """
+
         ext = self.fetch_settings(self.identifier, self.tag)
 
         await self.remove(False)
@@ -154,6 +272,17 @@ class Extension:
 
     @staticmethod
     async def from_compatible_image(identifier: str, tag: str) -> Optional["Extension"]:
+        """
+        Returns an extension from a compatible image if found.
+
+        Args:
+            identifier (str): Identifier of the extension.
+            tag (str): Tag of the extension.
+
+        Returns:
+            Optional[Extension]: Extension if found otherwise None.
+        """
+
         manifest = Manifest.instance()
 
         version = await manifest.get_extension_version(identifier, tag)
@@ -163,3 +292,47 @@ class Extension:
         compatible_images = [image for image in version.images if image.compatible]
 
         return Extension(identifier, tag, image=compatible_images[0]) if compatible_images else None
+
+
+    @staticmethod
+    async def latest_tag(identifier: str) -> Optional[str]:
+        """
+        Returns the latest tag for an extension.
+
+        Args:
+            identifier (str): Identifier of the extension.
+
+        Returns:
+            str: Latest tag of the extension.
+        """
+
+        manifest = Manifest.instance()
+        extension = await manifest.get_extension(identifier)
+        versions = sorted(extension.versions.keys())
+
+        if "latest" in versions:
+            return "latest"
+
+        return versions.pop() if extension and versions else None
+
+
+    @staticmethod
+    async def latest_installed_tag(identifier: str) -> Optional[str]:
+        """
+        Returns the latest tag for an extension.
+
+        Args:
+            identifier (str): Identifier of the extension.
+
+        Returns:
+            str: Latest tag of the extension.
+        """
+
+        manifest = Manifest.instance()
+        extension = await manifest.get_extension(identifier)
+        versions = sorted(extension.versions.keys())
+
+        if "latest" in versions:
+            return "latest"
+
+        return versions.pop() if extension and versions else None
