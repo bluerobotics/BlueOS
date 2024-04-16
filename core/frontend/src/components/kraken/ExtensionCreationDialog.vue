@@ -124,6 +124,9 @@ export default Vue.extend({
       return 'This field must contain two words separated by a period. Numbers are allowed after the first character.'
     },
     validate_dockerhub(input: string): (true | string) {
+      if (input.includes(':')) {
+        return 'The name must not contain the docker tag'
+      }
       // A tag name must be valid ASCII and may contain lowercase and uppercase letters, digits,
       // underscores, periods and dashes. A tag name may not start with a period or a dash and
       // may contain a maximum of 128 characters.
