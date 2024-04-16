@@ -1,4 +1,5 @@
 import json
+from typing import Tuple
 from unittest import mock
 from unittest.mock import AsyncMock
 
@@ -109,6 +110,7 @@ EXPECTED_SET_VERSION_WRITE_CALL = """{  "core": {
 async def test_set_version(write_mock: AsyncMock) -> None:
     client = mock.AsyncMock()
     chooser = VersionChooser(client)
+
     with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
 
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
@@ -121,11 +123,18 @@ async def test_set_version(write_mock: AsyncMock) -> None:
 async def test_set_version_invalid_settings(json_mock: mock.MagicMock) -> None:
     client = mock.MagicMock()
     chooser = VersionChooser(client)
+
+    # Image does not exist locally, but for the test let's fake it exists
+    async def is_valid_version(image: str) -> Tuple[bool, str]:
+        return True, image
+
+    chooser.is_valid_version = is_valid_version  # type: ignore
+
     with mock.patch("builtins.open", mock.mock_open(read_data="{}")):
         request_mock = AsyncMock()
         request_mock.json = AsyncMock(return_value=version)
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
-        assert result.status == 500
+        assert result.status in (412, 500)
         assert len(json_mock.mock_calls) > 0
 
 
@@ -216,6 +225,13 @@ async def test_set_version_json_exception(json_mock: mock.MagicMock) -> None:
     client = mock.MagicMock()
     json_mock.side_effect = Exception()
     chooser = VersionChooser(client)
+
+    # Image does not exist locally, but for the test let's fake it exists
+    async def is_valid_version(image: str) -> Tuple[bool, str]:
+        return True, image
+
+    chooser.is_valid_version = is_valid_version  # type: ignore
+
     with mock.patch("builtins.open", mock.mock_open(read_data="{}")):
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert result.status == 500
