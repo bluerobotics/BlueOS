@@ -63,9 +63,9 @@ export default Vue.extend({
       gl: null as WebGLRenderingContext | null,
       canvas_gl_program: null as WebGLProgram | null,
       plane_buffer: null as WebGLBuffer | null,
-      plane_a_vertex_loc: 0,
-      u_resolution_loc: null as WebGLUniformLocation | null,
-      u_time_loc: null as WebGLUniformLocation | null,
+      plane_attribute_vertex_location: 0,
+      uniform_resolution_location: null as WebGLUniformLocation | null,
+      uniform_time_location: null as WebGLUniformLocation | null,
       start_time: Date.now(),
     }
   },
@@ -92,7 +92,7 @@ export default Vue.extend({
     clearGLResources(): void {
       const ctx = this.gl as WebGLRenderingContext
 
-      ctx.disableVertexAttribArray(this.plane_a_vertex_loc)
+      ctx.disableVertexAttribArray(this.plane_attribute_vertex_location)
 
       if (this.plane_buffer) {
         ctx.deleteBuffer(this.plane_buffer)
@@ -133,16 +133,16 @@ export default Vue.extend({
         return
       }
 
-      this.u_resolution_loc = ctx.getUniformLocation(this.canvas_gl_program, 'u_resolution')
-      this.u_time_loc = ctx.getUniformLocation(this.canvas_gl_program, 'u_time')
+      this.uniform_resolution_location = ctx.getUniformLocation(this.canvas_gl_program, 'uniform_resolution')
+      this.uniform_time_location = ctx.getUniformLocation(this.canvas_gl_program, 'uniform_time')
 
-      if (!this.u_resolution_loc || !this.u_time_loc) {
+      if (!this.uniform_resolution_location || !this.uniform_time_location) {
         console.log('Unable to get resolution and time uniform locations')
         this.gl_compatible = false
         return
       }
 
-      this.plane_a_vertex_loc = ctx.getAttribLocation(this.canvas_gl_program, 'aVertexPosition')
+      this.plane_attribute_vertex_location = ctx.getAttribLocation(this.canvas_gl_program, 'attribute_vertex_position')
       this.plane_buffer = ctx.createBuffer()
       ctx.bindBuffer(ctx.ARRAY_BUFFER, this.plane_buffer)
       ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(planeVertices), ctx.STATIC_DRAW)
@@ -216,12 +216,12 @@ export default Vue.extend({
 
       ctx.useProgram(this.canvas_gl_program)
 
-      ctx.uniform2f(this.u_resolution_loc, ctx.canvas.width, ctx.canvas.height)
-      ctx.uniform1f(this.u_time_loc, currentTime)
+      ctx.uniform2f(this.uniform_resolution_location, ctx.canvas.width, ctx.canvas.height)
+      ctx.uniform1f(this.uniform_time_location, currentTime)
 
       ctx.bindBuffer(ctx.ARRAY_BUFFER, this.plane_buffer)
-      ctx.vertexAttribPointer(this.plane_a_vertex_loc, 2, ctx.FLOAT, false, 0, 0)
-      ctx.enableVertexAttribArray(this.plane_a_vertex_loc)
+      ctx.vertexAttribPointer(this.plane_attribute_vertex_location, 2, ctx.FLOAT, false, 0, 0)
+      ctx.enableVertexAttribArray(this.plane_attribute_vertex_location)
 
       ctx.drawArrays(ctx.TRIANGLE_STRIP, 0, 4)
 
