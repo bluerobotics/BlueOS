@@ -72,6 +72,8 @@ class Kraken:
                 await self.uninstall_extension(extension)
             except ContainerDoesNotExist:
                 logger.warning(f"Container for extension {extension.identifier} was not up?")
+            except Exception as error:
+                logger.error(f"Unhandled error removing extension: {error}")
             return
 
         extension_name = extension.container_name()
