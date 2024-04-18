@@ -59,7 +59,7 @@
               </v-expansion-panel>
               <v-expansion-panel>
                 <v-expansion-panel-header>
-                  Onboard Calibration (Coming soon)
+                  Onboard Calibration
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                   <p>
@@ -67,6 +67,7 @@
                     It requires you to spin the vehicle around manually multiple times.
                     You need move the vehicle around in all 3 axis.
                   </p>
+                  <full-compass-calibrator :compasses="compasses" />
                 </v-expansion-panel-content>
               </v-expansion-panel>
               <v-expansion-panel>
@@ -208,6 +209,7 @@ import { Dictionary } from '@/types/common'
 import decode, { deviceId } from '@/utils/deviceid_decoder'
 
 import CompassLearn from './CompassLearn.vue'
+import FullCompassCalibrator from './FullCompassCalibrator.vue'
 import LargeVehicleCompassCalibrator from './LargeVehicleCompassCalibrator.vue'
 
 export default Vue.extend({
@@ -223,6 +225,7 @@ export default Vue.extend({
     SpinningLogo,
     VCardText,
     VExpansionPanel,
+    FullCompassCalibrator,
   },
   data() {
     return {
