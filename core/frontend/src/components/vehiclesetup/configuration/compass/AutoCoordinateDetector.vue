@@ -1,5 +1,5 @@
 <template>
-  <v-card-text class="mt-3">
+  <v-card-text class="mt-3 pa-0">
     <v-tooltip bottom>
       <template #activator="{ on }">
         <v-icon dense :color="mavlink_lat ? 'green' : 'orange'" v-on="on">
