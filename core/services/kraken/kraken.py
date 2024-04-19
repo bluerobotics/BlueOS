@@ -137,7 +137,7 @@ class Kraken:
         self.settings.extensions.append(new_extension)
         self.manager.save()
         try:
-            tag = f"{extension.docker}:{extension.tag}" + (f":{digest}" if digest else "")
+            tag = f"{extension.docker}:{extension.tag}" + (f"@{digest}" if digest else "")
 
             async for line in self.client.images.pull(tag, repo=extension.docker, tag=extension.tag, stream=True):
                 yield json.dumps(line).encode("utf-8")
