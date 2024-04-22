@@ -2,6 +2,7 @@
 FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontendBuilder
 
 ARG VITE_APP_GIT_DESCRIBE
+ENV VITE_APP_GIT_DESCRIBE=${VITE_APP_GIT_DESCRIBE:-none/none-0-g00000000}
 RUN [ -z "$VITE_APP_GIT_DESCRIBE" ] \
     && echo "VITE_APP_GIT_DESCRIBE argument not provided." \
     && echo "Use: --build-arg VITE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)" \
@@ -27,6 +28,7 @@ ARG TARGETVARIANT
 # Ensure that the git describe exists and also is in valid format as well
 # The format can be invalid if someone is build BlueOS without a tag as reference
 ARG GIT_DESCRIBE_TAGS
+ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-0-g00000000}
 RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
     && echo "GIT_DESCRIBE_TAGS argument not provided." \
     && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long --always)" \
