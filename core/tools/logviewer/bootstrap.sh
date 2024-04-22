@@ -5,7 +5,7 @@ set -e
 
 DESTINATION_PATH="/home/pi/tools/logviewer"
 
-VERSION=v0.9.9
+VERSION=v1.0.1
 
 REMOTE_URL="https://github.com/Ardupilot/UAVLogViewer/releases/download/${VERSION}/logviewer.tar.gz"
 
