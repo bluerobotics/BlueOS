@@ -84,7 +84,9 @@ async def install_extension(extension: Extension) -> Any:
             detail="Not enough disk space to install the extension",
         )
     compatible_digest = await kraken.is_compatible_extension(extension.identifier, extension.tag)
-    if not compatible_digest:
+    # Throw an exception only if compatible_digest is False, indicating the extension is in the manifest but it is
+    # incompatible. If compatible_digest is None, we are going to trusty that the image is compatible and will work
+    if compatible_digest is False:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Extension is not compatible with the current machine running BlueOS.",
