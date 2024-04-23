@@ -74,9 +74,7 @@ export default Vue.extend({
         { title: 'Accelerometer', component: ArdupilotAccelerometerSetup },
         { title: 'Compass', component: ArdupilotMavlinkCompassSetup },
         { title: 'Baro', component: BaroCalib },
-        { title: 'Gripper', component: undefined },
         { title: 'Lights', component: LightsConfigration, filter: () => autopilot.vehicle_type === 'Submarine' },
-        { title: 'Camera Mount', component: undefined },
       ] as Item[],
     }
   },
