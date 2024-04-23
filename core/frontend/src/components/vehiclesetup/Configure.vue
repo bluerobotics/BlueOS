@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-container v-if="is_dev_mode" fluid>
+    <v-container fluid>
       <v-tabs
         v-model="page_selected"
         centered
@@ -23,34 +23,6 @@
         </v-tab-item>
       </v-tabs-items>
     </v-container>
-    <div v-else>
-      <v-row class="mt-5">
-        <v-col
-          cols="12"
-          sm="7"
-        >
-          <v-card class="pa-5 ma-2">
-            <vehicle-viewer
-              noannotations
-              :autorotate="true"
-            />
-          </v-card>
-        </v-col>
-        <v-col
-          cols="12"
-          sm="5"
-        >
-          <vehicle-info :autorotate="true" />
-          <param-sets />
-        </v-col>
-      </v-row>
-      <v-sheet class="d-flex">
-        <lights-info />
-        <gripper-info />
-        <leak-info />
-        <power-info />
-      </v-sheet>
-    </div>
   </div>
 </template>
 
@@ -60,7 +32,6 @@ import Vue from 'vue'
 import VehicleInfo from '@/components/vehiclesetup/overview/VehicleInfo.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import autopilot from '@/store/autopilot_manager'
-import settings from '@/store/settings'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import ArdupilotAccelerometerSetup from './configuration/accelerometer/ArdupilotAccelerometerSetup.vue'
@@ -113,9 +84,6 @@ export default Vue.extend({
     filtered_pages() {
       // eslint-disable-next-line no-extra-parens
       return this.pages.filter((page) => (page.filter ? page.filter() : true))
-    },
-    is_dev_mode() {
-      return settings.is_dev_mode
     },
   },
 })
