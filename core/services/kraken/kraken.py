@@ -91,13 +91,13 @@ class Kraken:
             extension (Extension): Extension to check compatibility for.
 
         Returns:
-            bool | str: False if not compatible, image digest if compatible.
+            Literal[False] | str | None: None if no found, False if not compatible, image digest if compatible.
         """
 
         version = await self.manifest.get_extension_version(identifier, tag)
 
         if not version:
-            return False
+            return None
 
         compatible_images = [image for image in version.images if image.compatible]
 
@@ -116,7 +116,7 @@ class Kraken:
     async def get_configured_extensions(self) -> List[Extension]:
         return cast(List[Extension], self.settings.extensions)
 
-    async def install_extension(self, extension: Any, digest: str) -> AsyncGenerator[bytes, None]:
+    async def install_extension(self, extension: Any, digest: str | None) -> AsyncGenerator[bytes, None]:
         try:
             # Remove older entry if it exists
             installed_extension = await self.extension_from_identifier(extension.identifier)
