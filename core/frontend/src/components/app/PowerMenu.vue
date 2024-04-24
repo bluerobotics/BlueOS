@@ -27,20 +27,6 @@
         <v-container class="pa-2">
           <v-card-actions class="flex-column">
             <v-btn
-              v-tooltip="'Shuts down the onboard computer'"
-              class="ma-2"
-              :disabled="non_default_status"
-              @click="poweroff"
-            >
-              <v-icon
-                left
-                color="red"
-              >
-                mdi-power-standby
-              </v-icon>
-              Power off
-            </v-btn>
-            <v-btn
               v-tooltip="'Restarts the autopilot'"
               class="ma-2"
               :loading="restarting_autopilot"
@@ -54,6 +40,20 @@
                 mdi-restart
               </v-icon>
               Restart Autopilot
+            </v-btn>
+            <v-btn
+              v-tooltip="'Restarts the core alone, should be enough in most cases'"
+              class="ma-2"
+              :disabled="non_default_status"
+              @click="restartContainer"
+            >
+              <v-icon
+                left
+                color="orange"
+              >
+                mdi-folder-refresh
+              </v-icon>
+              {{ settings.is_pirate_mode ? "Restart Core container" : "Soft restart" }}
             </v-btn>
             <v-btn
               v-tooltip="'Fully restarts the onboard computer'"
@@ -70,18 +70,18 @@
               Reboot
             </v-btn>
             <v-btn
-              v-tooltip="'Restarts the core alone, should be enough in most cases'"
+              v-tooltip="'Shuts down the onboard computer'"
               class="ma-2"
               :disabled="non_default_status"
-              @click="restartContainer"
+              @click="poweroff"
             >
               <v-icon
                 left
-                color="orange"
+                color="red"
               >
-                mdi-folder-refresh
+                mdi-power-standby
               </v-icon>
-              {{ settings.is_pirate_mode ? "Restart Core container" : "Soft restart" }}
+              Power off
             </v-btn>
           </v-card-actions>
         </v-container>
