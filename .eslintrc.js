@@ -31,6 +31,7 @@ module.exports = {
     'no-bitwise': 'off',
     'no-console': 'off',
     'no-continue': 'off',
+    "no-else-return": ["error", { "allowElseIf": false }],
     'no-extra-parens': ['error', 'all'],
     'no-mixed-operators': 'off',
     // modified https://github.com/airbnb/javascript/blob/master/packages/eslint-config-airbnb-base/rules/style.js#L339
