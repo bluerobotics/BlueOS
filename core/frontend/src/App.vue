@@ -60,6 +60,7 @@
         <internet-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
+        <cloud-tray-menu />
         <notification-tray-button />
       </v-app-bar>
     </v-card>
@@ -361,6 +362,7 @@ import ThemeTrayMenu from './components/app/ThemeTrayMenu.vue'
 import VehicleBanner from './components/app/VehicleBanner.vue'
 import VehicleRebootRequiredTrayMenu from './components/app/VehicleRebootRequiredTrayMenu.vue'
 import BeaconTrayMenu from './components/beacon/BeaconTrayMenu.vue'
+import CloudTrayMenu from './components/cloud/CloudTrayMenu.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
@@ -384,6 +386,7 @@ export default Vue.extend({
     'wifi-tray-menu': WifiTrayMenu,
     'wifi-updater': WifiUpdater,
     'ethernet-tray-menu': EthernetTrayMenu,
+    'cloud-tray-menu': CloudTrayMenu,
     'ethernet-updater': EthernetUpdater,
     'health-tray-menu': HealthTrayMenu,
     'mavlink-updater': MavlinkUpdater,
