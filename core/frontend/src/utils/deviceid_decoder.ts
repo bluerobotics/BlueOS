@@ -1,6 +1,6 @@
 // based on https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/decode_devid.py
 
-enum BUS_TYPE {
+export enum BUS_TYPE {
   I2C = 1,
   SPI = 2,
   UAVCAN = 3,
