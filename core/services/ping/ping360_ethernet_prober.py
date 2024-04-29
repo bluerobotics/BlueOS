@@ -5,6 +5,8 @@ from typing import List, Set
 import psutil
 from loguru import logger
 
+from pingutils import PingDeviceDescriptor, PingType
+
 
 def list_ips() -> Set[str]:
     """
@@ -39,9 +41,9 @@ def remove_zeros(ip: str) -> str:
     return new_ip
 
 
-async def find_ping360_ethernet() -> List[str]:
+async def find_ping360_ethernet() -> List[PingDeviceDescriptor]:
     """
-    Return a list of Ping360 IPs found in the connected ethernet interfaces
+    Return a list of Ping360 devices found in the connected ethernet interfaces
     """
     found = []
     loop = asyncio.get_running_loop()
@@ -63,8 +65,27 @@ async def find_ping360_ethernet() -> List[str]:
             data = await loop.sock_recv(server, 2048)
             decoded_message = data.decode("utf8")
             logger.info(f"Data received: {decoded_message}")
-            raw_ip = decoded_message.split("IP Address:- ")[1].strip()
-            found.append(remove_zeros(raw_ip))
+            device_type, _, _, ip_address, *extras = decoded_message.split("\n")
+            formatted_ip = remove_zeros(ip_address.replace("IP Address:-", "").strip())
+            port = "12345"
+            for line in extras:
+                if line.startswith("Port:-"):
+                    port = line[6:].strip()
+
+            found.append(
+                PingDeviceDescriptor(
+                    ping_type=PingType.PING360 if "PING360" in device_type else PingType.UNKNOWN,
+                    device_id=0,
+                    device_model=0,
+                    device_revision=0,
+                    firmware_version_major=0,
+                    firmware_version_minor=0,
+                    firmware_version_patch=0,
+                    ethernet_discovery_info=f"{formatted_ip}:{port}",
+                    port=None,
+                    driver=None,
+                )
+            )
         except socket.timeout:
             logger.debug(f"timed out waiting for ping360 at ip {ip}")
         except Exception as e:
