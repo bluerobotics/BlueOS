@@ -439,7 +439,7 @@ export default Vue.extend({
       await back_axios({
         method: 'get',
         url: `${API_URL}/extensions_manifest`,
-        timeout: 3000,
+        timeout: 15000,
       })
         .then((response) => {
           if ('detail' in response.data) {
