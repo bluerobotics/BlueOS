@@ -2,7 +2,7 @@ import asyncio
 from typing import Any, Dict, List, Set
 
 from loguru import logger
-from serial import Serial
+from serial.tools.list_ports_linux import SysFS
 
 from ping1d_driver import Ping1DDriver
 from ping360_driver import Ping360Driver
@@ -18,9 +18,9 @@ class PingManager:
         self.ping1d_base_port: int = 9090
         self.ping360_base_port: int = 9092
 
-    def stop_driver_at_port(self, port: Serial) -> None:
+    def stop_driver_at_port(self, port: SysFS | str) -> None:
         """Stops the driver instance running for port "port" """
-        ping_at_port = [ping for ping in self.drivers if ping.port == port]
+        ping_at_port = [ping for ping in self.drivers if port in [ping.port, ping.ethernet_discovery_info]]
         if ping_at_port:
             self.drivers[ping_at_port[0]].stop()
             del self.drivers[ping_at_port[0]]
