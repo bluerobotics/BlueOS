@@ -11,6 +11,7 @@ from manifest.models import ExtensionVersion, RepositoryEntry
 
 # Current Extension Manifest host
 REPO_URL = "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json"
+REPO_URL_DEV = "https://raw.githubusercontent.com/bluerobotics/BlueOS-Extensions-Repository/gh-pages-dev/manifest.json"
 
 
 @dataclasses.dataclass
@@ -76,6 +77,18 @@ class Manifest:
             cls._instance = cls.__new__(cls)
         return cls._instance
 
+    async def _fetch_manifest_from_url(self, url: str) -> Optional[ManifestContent]:
+        headers = {"Accept": "application/json"}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    print(f"Error fetching manifest file: response status {resp.status}")
+                    return None
+
+                content = {"extensions": await resp.json(content_type=None)}
+                return cast(ManifestContent, fromdict(ManifestContent, content))
+
     async def _fetch_manifest(self) -> ManifestContent:
         """
         Fetches the manifest from the repository.
@@ -87,18 +100,15 @@ class Manifest:
             RuntimeError: If the manifest could not be fetched.
         """
 
-        headers = {"Accept": "application/json"}
+        dev_manifest = await self._fetch_manifest_from_url(REPO_URL_DEV)
+        if dev_manifest:
+            return dev_manifest
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(REPO_URL, headers=headers) as resp:
-                if resp.status != 200:
-                    error_msg = f"Error fetching manifest file: response status {resp.status}"
-                    print(error_msg)
-                    raise RuntimeError(error_msg)
+        prod_manifest = await self._fetch_manifest_from_url(REPO_URL)
+        if prod_manifest:
+            return prod_manifest
 
-                content = {"extensions": await resp.json()}
-
-                return cast(ManifestContent, fromdict(ManifestContent, content))
+        raise RuntimeError("Could not fetch either the development or production manifest.")
 
     async def fetch(self) -> List[RepositoryEntry]:
         """
