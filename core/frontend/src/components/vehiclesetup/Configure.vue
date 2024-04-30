@@ -41,6 +41,7 @@ import autopilot from '@/store/autopilot_manager'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import ArdupilotAccelerometerSetup from './configuration/accelerometer/ArdupilotAccelerometerSetup.vue'
+import ArdupilotVehicleBodySetup from './configuration/ArdupilotVehicleBodySetup.vue'
 import Camera from './configuration/camera.vue'
 import ArdupilotMavlinkCompassSetup from './configuration/compass/ArdupilotMavlinkCompassSetup.vue'
 import FailsafesConfigration from './configuration/failsafes/Failsafes.vue'
@@ -84,6 +85,7 @@ export default Vue.extend({
     return {
       pages: [
         { title: 'Parameters', value: 'parameters', component: ParamSets },
+        { title: 'Vehicle Body', value: 'vehiclebody', component: ArdupilotVehicleBodySetup },
         { title: 'Gyroscope', value: 'gyroscope', component: GyroCalib },
         { title: 'Accelerometer', value: 'accelerometer', component: ArdupilotAccelerometerSetup },
         { title: 'Compass', value: 'compass', component: ArdupilotMavlinkCompassSetup },
