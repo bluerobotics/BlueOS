@@ -86,7 +86,9 @@ import {
 import { Dictionary, Indexed, Keyed } from '@/types/common'
 import { PingType } from '@/types/ping'
 
-import { checkModelOverrides, frame_name, get_model, vehicle_folder } from './modelHelper'
+import {
+  checkModelOverrides, frame_name, get_model, vehicle_folder,
+} from './modelHelper'
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
 
