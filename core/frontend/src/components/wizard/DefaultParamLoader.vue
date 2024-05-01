@@ -138,36 +138,33 @@ export default Vue.extend({
 
   watch: {
     vehicle() {
-      this.updateLatestFirmwareVersion().then((version: string) => {
-        this.version = new SemVer(version.split('-')[1])
-      })
+      this.setUpParams()
     },
     online() {
       if (this.online) {
-        this.loadParamSets().catch(() => {
-          this.has_error = true
-        }).finally(() => {
-          this.is_loading_paramsets = false
-        })
+        this.setUpParams()
       }
     },
   },
   mounted() {
-    this.loadParamSets().catch(() => {
-      this.has_error = true
-    }).finally(() => {
-      this.is_loading_paramsets = false
-    })
     callPeriodically(fetchCurrentBoard, 10000)
-    this.updateLatestFirmwareVersion().then((version: string) => {
-      this.version = new SemVer(version.split('-')[1])
-    })
+    this.setUpParams()
     setTimeout(() => { this.onLoadingTimeout() }, MAX_LOADING_TIME_MS)
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchCurrentBoard)
   },
   methods: {
+    async setUpParams() {
+      this.loadParamSets().catch(() => {
+        this.has_error = true
+      }).finally(() => {
+        this.is_loading_paramsets = false
+      })
+      this.updateLatestFirmwareVersion().then((version: string) => {
+        this.version = new SemVer(version.split('-')[1])
+      })
+    },
     // this is used by Wizard.vue, but eslint doesn't detect it
     // eslint-disable-next-line
     validateParams(): boolean {
