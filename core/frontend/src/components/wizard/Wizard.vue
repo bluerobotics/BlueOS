@@ -68,7 +68,7 @@
             </v-row>
           </v-stepper-content>
           <v-stepper-content step="1">
-            <RequireInternet v-if="step_number === 1" @next="nextStep()" />
+            <RequireInternet v-if="step_number === 1" @online="is_online = true" @next="nextStep()" />
             <v-row class="pa-5">
               <v-btn
 
@@ -329,6 +329,7 @@ export default Vue.extend({
   },
   data() {
     return {
+      is_online: false,
       boat_model: get_model('boat', 'UNDEFINED'),
       scripts: [] as string[],
       configuration_failed: false,
