@@ -21,17 +21,14 @@
     <p v-if="is_loading_scripts">
       Loading scripts...
     </p>
-    <p v-else-if="has_error">
+    <p v-else-if="has_script_load_error">
       Unable to load scripts.
     </p>
-    <p v-else-if="(!loading_timeout_reached && invalid_board_or_version)">
-      Determining current board and firmware version...
-    </p>
-    <p v-else-if="(loading_timeout_reached && invalid_board_or_version)">
-      Unable to determine current board or firmware version.
+    <p v-else-if="invalid_board">
+      Determining current board...
     </p>
     <p v-else-if="filtered_scripts?.length === 0">
-      No scripts available for this setup
+      No scripts available for this setup.
     </p>
   </div>
 </template>
@@ -49,8 +46,6 @@ import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotMan
 const REPOSITORY_ROOT = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository'
 const REPOSITORY_SCRIPTS_URL = `${REPOSITORY_ROOT}/scripts_v1.json`
 
-const MAX_LOADING_TIME_MS = 25000
-
 export default Vue.extend({
   name: 'ScriptLoader',
   props: {
@@ -65,11 +60,10 @@ export default Vue.extend({
   },
   data: () => ({
     all_scripts: [] as string[],
-    version: undefined as (undefined | SemVer),
     selected_scripts: [] as string[],
-    is_loading_scripts: true,
-    loading_timeout_reached: false,
-    has_error: false,
+    version: undefined as (undefined | SemVer),
+    is_loading_scripts: false,
+    has_script_load_error: false,
   }),
   computed: {
     filtered_scripts(): string[] | undefined {
@@ -86,42 +80,45 @@ export default Vue.extend({
         (name) => name.replace('scripts/ardupilot/', ''),
       )
     },
-
     board(): string | undefined {
       return autopilot.current_board?.name
     },
-    invalid_board_or_version(): boolean {
-      return !this.board || !this.version
+    invalid_board(): boolean {
+      return !this.board
     },
     is_loading(): boolean {
-      return (this.is_loading_scripts || this.invalid_board_or_version) && !this.loading_timeout_reached
+      return this.is_loading_scripts || this.invalid_board
     },
   },
-
   watch: {
     vehicle() {
+      this.version = undefined
       this.setUpScripts()
-    },
-    online() {
-      if (this.online) {
-        this.setUpScripts()
-      }
     },
   },
   mounted() {
     callPeriodically(fetchCurrentBoard, 10000)
-    this.setUpScripts()
-    setTimeout(() => { this.onLoadingTimeout() }, MAX_LOADING_TIME_MS)
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchCurrentBoard)
   },
   methods: {
     async setUpScripts() {
-      this.updateLatestFirmwareVersion().then((version: string) => {
-        this.version = new SemVer(version.split('-')[1])
-      })
-      this.fetchScripts()
+      if (!this.online && this.vehicle !== '') {
+        setTimeout(() => this.setUpScripts(), 1000)
+        return
+      }
+
+      this.is_loading_scripts = true
+      this.has_script_load_error = false
+      try {
+        this.version = await this.fetchLatestFirmwareVersion()
+        this.all_scripts = await this.fetchScripts()
+      } catch (error) {
+        this.has_script_load_error = true
+      } finally {
+        this.is_loading_scripts = false
+      }
     },
     isNotEmpty(value: string): boolean {
       return value !== ''
@@ -129,31 +126,18 @@ export default Vue.extend({
     async fetchScripts() {
       const response = await fetch(REPOSITORY_SCRIPTS_URL)
       const scripts = await response.json()
-      this.all_scripts = scripts
-      this.is_loading_scripts = false
+
+      return scripts
     },
-    updateLatestFirmwareVersion() {
-      return availableFirmwares(this.vehicle as Vehicle)
-        .then((firmwares: Firmware[]) => {
-          const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
-          if (found === undefined) {
-            return `Failed to find a stable version for vehicle (${this.vehicle})`
-          }
-          return found.name
-        })
+    async fetchLatestFirmwareVersion(): Promise<SemVer | undefined> {
+      const firmwares = await availableFirmwares(this.vehicle as Vehicle)
+      const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+
+      return found ? new SemVer(found.name.split('-')[1]) : undefined
     },
     setScriptsList(list: string[]) {
       this.selected_scripts = list
       this.$emit('input', list)
-    },
-    onLoadingTimeout() {
-      if (this.is_loading) {
-        this.loading_timeout_reached = true
-
-        if (!this.selected_scripts) {
-          this.selected_scripts = []
-        }
-      }
     },
   },
 })
