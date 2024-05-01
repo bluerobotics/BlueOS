@@ -75,6 +75,10 @@ export default Vue.extend({
       type: String,
       required: true,
     },
+    online: {
+      type: Boolean,
+      required: true,
+    },
   },
   data: () => ({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
@@ -137,6 +141,15 @@ export default Vue.extend({
       this.updateLatestFirmwareVersion().then((version: string) => {
         this.version = new SemVer(version.split('-')[1])
       })
+    },
+    online() {
+      if (this.online) {
+        this.loadParamSets().catch(() => {
+          this.has_error = true
+        }).finally(() => {
+          this.is_loading_paramsets = false
+        })
+      }
     },
   },
   mounted() {
