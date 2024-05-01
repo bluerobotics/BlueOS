@@ -8,26 +8,23 @@
         item-value="full"
         :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
         :loading="is_loading"
-        :disabled="is_loading_paramsets"
+        :disabled="is_loading_parameters"
         style="min-width: 330px;"
         :rules="[isNotEmpty]"
         @change="setParamSet(filtered_param_sets[selected_param_set_name])"
       />
     </v-form>
-    <p v-if="is_loading_paramsets">
+    <p v-if="is_loading_parameters">
       Loading parameters...
     </p>
-    <p v-else-if="has_error">
+    <p v-else-if="has_parameters_load_error">
       Unable to load parameters.
     </p>
-    <p v-else-if="(!loading_timeout_reached && invalid_board_or_version)">
-      Determining current board and firmware version...
-    </p>
-    <p v-else-if="(loading_timeout_reached && invalid_board_or_version)">
-      Unable to determine current board or firmware version.
+    <p v-else-if="invalid_board">
+      Determining current board...
     </p>
     <p v-else-if="(Object.keys(filtered_param_sets).length === 0)">
-      No parameters available for this setup
+      No parameters available for this setup.
     </p>
     <v-virtual-scroll
       v-if="value_items.length > 0"
@@ -62,8 +59,6 @@ import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotMan
 
 const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
-const MAX_LOADING_TIME_MS = 25000
-
 export default Vue.extend({
   name: 'DefaultParamLoader',
   props: {
@@ -82,12 +77,11 @@ export default Vue.extend({
   },
   data: () => ({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
-    version: undefined as (undefined | SemVer),
     selected_param_set: {},
     selected_param_set_name: '' as string,
-    is_loading_paramsets: true,
-    loading_timeout_reached: false,
-    has_error: false,
+    version: undefined as (undefined | SemVer),
+    is_loading_parameters: false,
+    has_parameters_load_error: false,
   }),
   computed: {
     filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
@@ -125,45 +119,49 @@ export default Vue.extend({
     value_items(): { key: string, value: number }[] {
       return Object.entries(this.value ?? {}).map(([key, value]) => ({ key, value }))
     },
-    invalid_board_or_version(): boolean {
-      return !this.board || !this.version
+    invalid_board(): boolean {
+      return !this.board
     },
     is_loading(): boolean {
-      return (this.is_loading_paramsets || this.invalid_board_or_version) && !this.loading_timeout_reached
+      return this.is_loading_parameters || this.invalid_board
     },
     not_load_default_params_option(): string {
       return 'Do not load default parameters'
     },
   },
-
   watch: {
     vehicle() {
+      this.version = undefined
       this.setUpParams()
-    },
-    online() {
-      if (this.online) {
-        this.setUpParams()
-      }
     },
   },
   mounted() {
     callPeriodically(fetchCurrentBoard, 10000)
-    this.setUpParams()
-    setTimeout(() => { this.onLoadingTimeout() }, MAX_LOADING_TIME_MS)
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchCurrentBoard)
   },
   methods: {
     async setUpParams() {
-      this.loadParamSets().catch(() => {
-        this.has_error = true
-      }).finally(() => {
-        this.is_loading_paramsets = false
-      })
-      this.updateLatestFirmwareVersion().then((version: string) => {
-        this.version = new SemVer(version.split('-')[1])
-      })
+      if (!this.online && this.vehicle !== '') {
+        setTimeout(() => this.setUpParams(), 1000)
+        return
+      }
+
+      this.is_loading_parameters = true
+      this.has_parameters_load_error = false
+      try {
+        this.version = await this.fetchLatestFirmwareVersion()
+        this.all_param_sets = await this.fetchParamSets()
+      } catch (error) {
+        this.has_parameters_load_error = true
+      } finally {
+        this.is_loading_parameters = false
+
+        this.selected_param_set_name = this.filtered_param_sets_names.length > 0
+          ? ''
+          : this.not_load_default_params_option
+      }
     },
     // this is used by Wizard.vue, but eslint doesn't detect it
     // eslint-disable-next-line
@@ -174,38 +172,21 @@ export default Vue.extend({
     isNotEmpty(value: string): boolean {
       return value !== ''
     },
-    updateLatestFirmwareVersion() {
-      return availableFirmwares(this.vehicle as Vehicle)
-        .then((firmwares: Firmware[]) => {
-          const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
-          if (found === undefined) {
-            return `Failed to find a stable version for vehicle (${this.vehicle})`
-          }
-          return found.name
-        })
+    async fetchParamSets() {
+      const response = await fetch(REPOSITORY_URL)
+      const parameters = await response.json()
+
+      return parameters
+    },
+    async fetchLatestFirmwareVersion(): Promise<SemVer | undefined> {
+      const firmwares = await availableFirmwares(this.vehicle as Vehicle)
+      const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+
+      return found ? new SemVer(found.name.split('-')[1]) : undefined
     },
     setParamSet(paramSet: Dictionary<number>) {
       this.selected_param_set = paramSet
       this.$emit('input', paramSet)
-    },
-    async loadParamSets() {
-      try {
-        const response = await fetch(REPOSITORY_URL)
-        const paramSets = await response.json()
-        this.all_param_sets = paramSets
-      } catch (error) {
-        this.has_error = true
-        throw error
-      }
-    },
-    onLoadingTimeout() {
-      if (this.is_loading) {
-        this.loading_timeout_reached = true
-
-        if (this.filtered_param_sets_names.length <= 0 && this.selected_param_set_name === '') {
-          this.selected_param_set_name = this.not_load_default_params_option
-        }
-      }
     },
   },
 })

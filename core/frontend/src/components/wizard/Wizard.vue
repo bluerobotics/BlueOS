@@ -343,7 +343,7 @@ export default Vue.extend({
       step_number: 0,
       sub_model: get_model('sub', 'bluerov'),
       vehicle_name: 'blueos',
-      vehicle_type: Vehicle.Sub,
+      vehicle_type: '' as Vehicle | string,
       vehicle_image: null as string | null,
       // Allow us to check if the user is stuck in retry
       retry_count: 0,
