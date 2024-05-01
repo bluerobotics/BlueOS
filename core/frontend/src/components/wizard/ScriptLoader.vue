@@ -100,28 +100,29 @@ export default Vue.extend({
 
   watch: {
     vehicle() {
-      this.updateLatestFirmwareVersion().then((version: string) => {
-        this.version = new SemVer(version.split('-')[1])
-      })
+      this.setUpScripts()
     },
     online() {
       if (this.online) {
-        this.fetchScripts()
+        this.setUpScripts()
       }
     },
   },
   mounted() {
     callPeriodically(fetchCurrentBoard, 10000)
-    this.updateLatestFirmwareVersion().then((version: string) => {
-      this.version = new SemVer(version.split('-')[1])
-    })
-    this.fetchScripts()
+    this.setUpScripts()
     setTimeout(() => { this.onLoadingTimeout() }, MAX_LOADING_TIME_MS)
   },
   beforeDestroy() {
     stopCallingPeriodically(fetchCurrentBoard)
   },
   methods: {
+    async setUpScripts() {
+      this.updateLatestFirmwareVersion().then((version: string) => {
+        this.version = new SemVer(version.split('-')[1])
+      })
+      this.fetchScripts()
+    },
     isNotEmpty(value: string): boolean {
       return value !== ''
     },
