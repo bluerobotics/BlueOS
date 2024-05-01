@@ -202,7 +202,7 @@ export default Vue.extend({
       if (this.is_loading) {
         this.loading_timeout_reached = true
 
-        if (this.selected_param_set_name === '') {
+        if (this.filtered_param_sets_names.length <= 0 && this.selected_param_set_name === '') {
           this.selected_param_set_name = this.not_load_default_params_option
         }
       }
