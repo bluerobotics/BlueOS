@@ -58,6 +58,10 @@ export default Vue.extend({
       type: String,
       required: true,
     },
+    online: {
+      type: Boolean,
+      required: true,
+    },
   },
   data: () => ({
     all_scripts: [] as string[],
@@ -99,6 +103,11 @@ export default Vue.extend({
       this.updateLatestFirmwareVersion().then((version: string) => {
         this.version = new SemVer(version.split('-')[1])
       })
+    },
+    online() {
+      if (this.online) {
+        this.fetchScripts()
+      }
     },
   },
   mounted() {

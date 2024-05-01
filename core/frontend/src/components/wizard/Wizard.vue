@@ -132,11 +132,13 @@
             <ScriptLoader
               v-model="scripts"
               :vehicle="vehicle_type"
+              :online="is_online"
             />
             <DefaultParamLoader
               ref="param_loader"
               v-model="params"
               :vehicle="vehicle_type"
+              :online="is_online"
             />
             <v-alert :value="configuration_failed" type="error">
               {{ error_message }}
