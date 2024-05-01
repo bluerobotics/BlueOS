@@ -77,6 +77,11 @@ export default Vue.extend({
         this.checkInternet()
       }
     },
+    is_online() {
+      if (this.is_online) {
+        this.$emit('online')
+      }
+    },
   },
   async mounted() {
     this.checkInternet()
