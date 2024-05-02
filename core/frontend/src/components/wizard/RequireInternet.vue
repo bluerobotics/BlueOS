@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div class="d-flex justify-center align-center">
     <v-card elevation="0">
-      <v-stepper vertical>
+      <v-stepper vertical elevation="0">
         <v-stepper-step
           step="1"
           :color="icon_color"
