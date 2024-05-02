@@ -45,7 +45,7 @@
                 Welcome to BlueOS!
               </div>
               Welcome to BlueOS!
-              In this setup wizard we will guide you through the initial configuration of your vehicle.
+              In this setup wizard we will guide you through the initial configuration of your vehicle,
               including setting up the vehicle name, hostname, and <b>firmware</b>.
               If your vehicle is already set up, you can skip this wizard.
             </v-card>
