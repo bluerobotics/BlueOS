@@ -68,8 +68,11 @@
             </v-row>
           </v-stepper-content>
           <v-stepper-content step="1">
-            <RequireInternet v-if="step_number === 1" @online="is_online = true" @next="nextStep()" />
-            <v-row class="pa-5">
+            <RequireInternet
+              v-if="step_number === 1"
+              @next="nextStep()"
+            />
+            <v-row class="pa-5 mt-5">
               <v-btn
 
                 color="warning"
@@ -132,13 +135,11 @@
             <ScriptLoader
               v-model="scripts"
               :vehicle="vehicle_type"
-              :online="is_online"
             />
             <DefaultParamLoader
               ref="param_loader"
               v-model="params"
               :vehicle="vehicle_type"
-              :online="is_online"
             />
             <v-alert :value="configuration_failed" type="error">
               {{ error_message }}
@@ -154,6 +155,7 @@
               <v-spacer />
               <v-btn
                 color="primary"
+                :disabled="!params"
                 @click="validateParams() && setupConfiguration()"
               >
                 Continue
@@ -330,7 +332,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      is_online: false,
       boat_model: get_model('boat', 'UNDEFINED'),
       scripts: [] as string[],
       configuration_failed: false,
@@ -346,7 +347,7 @@ export default Vue.extend({
       vehicle_image: null as string | null,
       // Allow us to check if the user is stuck in retry
       retry_count: 0,
-      params: {} as Dictionary<number>,
+      params: undefined as undefined | Dictionary<number>,
       // Final configuration
       configurations: [] as Configuration[],
       // Vehicle configuration

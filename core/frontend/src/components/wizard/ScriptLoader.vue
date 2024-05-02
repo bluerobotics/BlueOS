@@ -18,11 +18,14 @@
         @change="setScriptsList(selected_scripts)"
       />
     </v-form>
-    <p v-if="is_loading_scripts">
-      Loading scripts...
+    <p v-if="has_script_load_error">
+      Failed to load scripts.
     </p>
-    <p v-else-if="has_script_load_error">
-      Unable to load scripts.
+    <p v-else-if="fetch_retries > 0">
+      Failed to fetch scripts, trying again...
+    </p>
+    <p v-else-if="is_loading_scripts">
+      Loading scripts...
     </p>
     <p v-else-if="invalid_board">
       Determining current board...
@@ -46,6 +49,8 @@ import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotMan
 const REPOSITORY_ROOT = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository'
 const REPOSITORY_SCRIPTS_URL = `${REPOSITORY_ROOT}/scripts_v1.json`
 
+const MAX_FETCH_SCRIPTS_RETRIES = 4
+
 export default Vue.extend({
   name: 'ScriptLoader',
   props: {
@@ -53,15 +58,12 @@ export default Vue.extend({
       type: String,
       required: true,
     },
-    online: {
-      type: Boolean,
-      required: true,
-    },
   },
   data: () => ({
     all_scripts: [] as string[],
     selected_scripts: [] as string[],
     version: undefined as (undefined | SemVer),
+    fetch_retries: 0,
     is_loading_scripts: false,
     has_script_load_error: false,
   }),
@@ -87,11 +89,13 @@ export default Vue.extend({
       return !this.board
     },
     is_loading(): boolean {
-      return this.is_loading_scripts || this.invalid_board
+      return this.is_loading_scripts || this.invalid_board || this.fetch_retries > 0 && !this.has_script_load_error
     },
   },
   watch: {
     vehicle() {
+      this.all_scripts = []
+      this.fetch_retries = 0
       this.version = undefined
       this.setUpScripts()
     },
@@ -104,17 +108,21 @@ export default Vue.extend({
   },
   methods: {
     async setUpScripts() {
-      if (!this.online && this.vehicle !== '') {
-        setTimeout(() => this.setUpScripts(), 1000)
-        return
-      }
-
       this.is_loading_scripts = true
       this.has_script_load_error = false
       try {
         this.version = await this.fetchLatestFirmwareVersion()
         this.all_scripts = await this.fetchScripts()
+
+        this.fetch_retries = 0
       } catch (error) {
+        this.fetch_retries += 1
+
+        if (this.fetch_retries <= MAX_FETCH_SCRIPTS_RETRIES) {
+          setTimeout(() => this.setUpScripts(), 2500)
+          return
+        }
+
         this.has_script_load_error = true
       } finally {
         this.is_loading_scripts = false
