@@ -14,11 +14,14 @@
         @change="setParamSet(filtered_param_sets[selected_param_set_name])"
       />
     </v-form>
-    <p v-if="is_loading_parameters">
-      Loading parameters...
+    <p v-if="has_parameters_load_error">
+      Failed to load parameters.
     </p>
-    <p v-else-if="has_parameters_load_error">
-      Unable to load parameters.
+    <p v-else-if="fetch_retries > 0">
+      Failed to fetch parameters, trying again...
+    </p>
+    <p v-else-if="is_loading_parameters">
+      Loading parameters...
     </p>
     <p v-else-if="invalid_board">
       Determining current board...
@@ -59,6 +62,8 @@ import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotMan
 
 const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
+const MAX_FETCH_PARAMS_RETRIES = 4
+
 export default Vue.extend({
   name: 'DefaultParamLoader',
   props: {
@@ -70,16 +75,13 @@ export default Vue.extend({
       type: String,
       required: true,
     },
-    online: {
-      type: Boolean,
-      required: true,
-    },
   },
   data: () => ({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
     selected_param_set: {},
     selected_param_set_name: '' as string,
     version: undefined as (undefined | SemVer),
+    fetch_retries: 0,
     is_loading_parameters: false,
     has_parameters_load_error: false,
   }),
@@ -104,7 +106,10 @@ export default Vue.extend({
           break
         }
       }
-      return fw_params
+      return {
+        ...fw_params,
+        [this.not_load_default_params_option]: {},
+      }
     },
     filtered_param_sets_names(): {full: string, sanitized: string}[] {
       return Object.keys(this.filtered_param_sets ?? {}).map((full) => ({
@@ -123,7 +128,11 @@ export default Vue.extend({
       return !this.board
     },
     is_loading(): boolean {
-      return this.is_loading_parameters || this.invalid_board
+      return (
+        this.is_loading_parameters
+        || this.invalid_board
+        || this.fetch_retries > 0 && !this.has_parameters_load_error
+      )
     },
     not_load_default_params_option(): string {
       return 'Do not load default parameters'
@@ -131,7 +140,11 @@ export default Vue.extend({
   },
   watch: {
     vehicle() {
+      this.selected_param_set = {}
+      this.selected_param_set_name = ''
+      this.fetch_retries = 0
       this.version = undefined
+
       this.setUpParams()
     },
   },
@@ -143,25 +156,32 @@ export default Vue.extend({
   },
   methods: {
     async setUpParams() {
-      if (!this.online && this.vehicle !== '') {
-        setTimeout(() => this.setUpParams(), 1000)
-        return
-      }
+      this.$emit('input', undefined)
 
       this.is_loading_parameters = true
       this.has_parameters_load_error = false
       try {
         this.version = await this.fetchLatestFirmwareVersion()
         this.all_param_sets = await this.fetchParamSets()
+
+        this.fetch_retries = 0
       } catch (error) {
+        this.fetch_retries += 1
+
+        if (this.fetch_retries <= MAX_FETCH_PARAMS_RETRIES) {
+          setTimeout(() => this.setUpParams(), 2500)
+          return
+        }
+
         this.has_parameters_load_error = true
       } finally {
         this.is_loading_parameters = false
-
-        this.selected_param_set_name = this.filtered_param_sets_names.length > 0
-          ? ''
-          : this.not_load_default_params_option
       }
+
+      this.$emit('input', {})
+      this.selected_param_set_name = this.filtered_param_sets_names.length > 1
+        ? ''
+        : this.not_load_default_params_option
     },
     // this is used by Wizard.vue, but eslint doesn't detect it
     // eslint-disable-next-line
