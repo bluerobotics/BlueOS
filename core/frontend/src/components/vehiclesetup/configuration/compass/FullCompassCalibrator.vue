@@ -190,7 +190,6 @@ export default {
       this.status_text = `Calibration failed: ${reason}`
       this.status_type = 'error'
       this.state = states.FAILED
-      this.cleanup()
     },
     async cancelCalibration() {
       mavlink2rest.sendCommandLong(MavCmd.MAV_CMD_DO_CANCEL_MAG_CAL)
