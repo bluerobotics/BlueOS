@@ -8,6 +8,7 @@ node_modules
 # Avoid local python development
 *__pycache__
 *.pytest_cache
+*__mypycache__
 env/
 Pipfile
 Pipfile.lock
