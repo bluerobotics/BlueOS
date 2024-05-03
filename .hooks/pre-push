@@ -95,7 +95,7 @@ echo "Running pylint.."
 pipenv run pylint $python_files
 
 echo "Running mypy.."
-git ls-files '*setup.py' | parallel 'pipenv run mypy $(dirname {}) --cache-dir $(dirname {})'
+git ls-files '*setup.py' | parallel 'pipenv run mypy $(dirname {}) --cache-dir "$(dirname {})/__mypycache__"'
 
 echo "Running pytest.."
 pipenv run pytest -n 10 --cov="$repository_path" --cov-report html
