@@ -177,6 +177,7 @@
 
 <script lang="ts">
 import { marked } from 'marked'
+import { compare } from 'semver'
 import Vue, { PropType } from 'vue'
 
 import { JSONValue } from '@/types/common'
@@ -212,7 +213,7 @@ export default Vue.extend({
       return marked(this.selected.readme)
     },
     available_tags(): {text: string, active: boolean}[] {
-      return Object.keys(this.extension?.versions ?? []).map((tag) => ({
+      return this.getSortedTags().map((tag) => ({
         text: tag,
         active: this.extension?.versions[tag].images.some((image) => image.compatible),
       }))
@@ -246,13 +247,19 @@ export default Vue.extend({
   },
   watch: {
     extension() {
-      const [first] = Object.keys(this.extension.versions) ?? ''
-      this.selected_version = first
+      this.selected_version = this.getLatestTag()
     },
   },
   mounted() {
-    const [first] = Object.keys(this.extension.versions) ?? ''
-    this.selected_version = first
+    this.selected_version = this.getLatestTag()
+  },
+  methods: {
+    getSortedTags(): string[] {
+      return Object.keys(this.extension.versions).sort((a, b) => compare(b, a))
+    },
+    getLatestTag(): string {
+      return this.getSortedTags()[0] ?? ''
+    },
   },
 })
 </script>
