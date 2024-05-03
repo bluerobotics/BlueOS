@@ -114,7 +114,7 @@
               </v-icon>
             </div>
             <v-row class="pa-5">
-              <v-row class="pl-3 pt-2">
+              <v-row class="pl-3 pt-2 pb-2">
                 <v-btn
                   color="warning darken"
                   class="mr-5"
