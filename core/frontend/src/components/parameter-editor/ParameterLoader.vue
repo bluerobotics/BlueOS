@@ -67,11 +67,11 @@
                       class="large-text-cell"
                       v-on="on"
                     >
-                      {{ prettyNameFromParameter(item.current) }}
+                      {{ printParamWithUnit(item.current) }}
                     </div>
                   </template>
                   <span>
-                    {{ prettyNameFromParameter(item.current) }}
+                    {{ printParamWithUnit(item.current) }}
                   </span>
                 </v-tooltip>
               </v-col>
@@ -82,11 +82,11 @@
                       class="large-text-cell"
                       v-on="on"
                     >
-                      {{ prettyNameFromParameter(item.new) }}
+                      {{ printParamWithUnit(item.new) }}
                     </div>
                   </template>
                   <span>
-                    {{ prettyNameFromParameter(item.new) }}
+                    {{ printParamWithUnit(item.new) }}
                   </span>
                 </v-tooltip>
               </v-col>
@@ -148,7 +148,7 @@ import { Dictionary } from 'vue-router'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
-import Parameter, { printParam } from '@/types/autopilot/parameter'
+import { printParamWithUnit } from '@/types/autopilot/parameter'
 
 export default Vue.extend({
   name: 'ParameterLoader',
@@ -299,12 +299,7 @@ export default Vue.extend({
         }
       })
     },
-    prettyNameFromParameter(parameter: Parameter) {
-      const paramValueText = printParam(parameter)
-      const paramUnitsText = parameter?.units ? `[${parameter.units}]` : ''
-
-      return paramValueText + paramUnitsText
-    },
+    printParamWithUnit,
   },
 })
 </script>

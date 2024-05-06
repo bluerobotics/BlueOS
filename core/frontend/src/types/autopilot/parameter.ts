@@ -98,3 +98,10 @@ export function printParam(param?: Parameter): string {
     return 'N/A'
   }
 }
+
+export function printParamWithUnit(parameter?: Parameter): string {
+  const paramValueText = printParam(parameter)
+  const paramUnitsText = parameter?.units ? ` [${parameter.units}]` : ''
+
+  return paramValueText + paramUnitsText
+}
