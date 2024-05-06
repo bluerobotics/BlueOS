@@ -29,22 +29,58 @@
     <p v-else-if="(Object.keys(filtered_param_sets).length === 0)">
       No parameters available for this setup.
     </p>
-    <v-virtual-scroll
-      v-if="value_items.length > 0"
-      class="flex-grow"
-      :items="value_items"
-      height="200"
-      item-height="20"
-      style="min-width: 50%;"
+    <v-card
+      v-if="Object.keys(value).length !== 0"
     >
-      <template #default="{ item }">
-        <v-list-item>
-          <v-list-item-content>
-            <v-list-item-title>{{ item.key }} {{ item.value }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </template>
-    </v-virtual-scroll>
+      <v-card-text>
+        <v-row class="virtual-table-row">
+          <v-col class="virtual-table-cell name-cell">
+            <strong>Name</strong>
+          </v-col>
+          <v-col class="virtual-table-cell">
+            <strong>Value</strong>
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-virtual-scroll
+        :items="parametersFromSet(value)"
+        height="250"
+        item-height="30"
+        class="virtual-table"
+      >
+        <template #default="{ item }">
+          <v-row class="virtual-table-row">
+            <v-col class="virtual-table-cell name-cell">
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <div v-on="on">
+                    {{ item.name }}
+                  </div>
+                </template>
+                <span>
+                  {{ item.current?.description ?? 'No description provided' }}
+                </span>
+              </v-tooltip>
+            </v-col>
+            <v-col class="virtual-table-cell">
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <div
+                    class="large-text-cell"
+                    v-on="on"
+                  >
+                    {{ printParamWithUnit(item.current) }}
+                  </div>
+                </template>
+                <span>
+                  {{ printParamWithUnit(item.current) }}
+                </span>
+              </v-tooltip>
+            </v-col>
+          </v-row>
+        </template>
+      </v-virtual-scroll>
+    </v-card>
   </div>
 </template>
 
@@ -53,8 +89,10 @@ import { SemVer } from 'semver'
 import Vue, { PropType } from 'vue'
 import { Dictionary } from 'vue-router'
 
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
+import { printParamWithUnit } from '@/types/autopilot/parameter'
 import { VForm } from '@/types/vuetify'
 import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
@@ -120,9 +158,6 @@ export default Vue.extend({
     },
     board(): string | undefined {
       return autopilot.current_board?.name
-    },
-    value_items(): { key: string, value: number }[] {
-      return Object.entries(this.value ?? {}).map(([key, value]) => ({ key, value }))
     },
     invalid_board(): boolean {
       return !this.board
@@ -208,6 +243,49 @@ export default Vue.extend({
       this.selected_param_set = paramSet
       this.$emit('input', paramSet)
     },
+    parametersFromSet(paramset: Dictionary<number>) {
+      return Object.entries(paramset).map(([name]) => {
+        const currentParameter = autopilot_data.parameter(name)
+
+        return {
+          name,
+          current: currentParameter,
+        }
+      })
+    },
+    printParamWithUnit,
   },
 })
 </script>
+<style scoped>
+.virtual-table-row {
+  display: flex;
+  margin: 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: nowrap;
+}
+
+.virtual-table-cell {
+  flex: 1;
+  padding: 5px;
+  height: 30px;
+  min-width: 150px;
+}
+.virtual-table-cell .v-input {
+  margin-top: -6px;
+}
+.virtual-table-cell .large-text-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name-cell {
+  min-width: 200px;
+}
+
+.virtual-table {
+  overflow-x: hidden;
+}
+</style>
