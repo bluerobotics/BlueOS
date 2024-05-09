@@ -20,7 +20,8 @@ command -v parallel >/dev/null 2>&1 || {
     exit 1
 }
 
-pipenv install poetry
+# poetry can rely on pip to uninstall packages sometimes...
+pipenv install poetry pip
 pipenv run poetry install
 # download some required files if they are not present
 echo "installing mavlink-router"
