@@ -12,7 +12,7 @@
             },
             "/sys/": {
                 "bind": "/sys/",
-                "mode": "ro"
+                "mode": "rw"
             },
             "/var/run/wpa_supplicant/wlan0": {
                 "bind": "/var/run/wpa_supplicant/wlan0",
