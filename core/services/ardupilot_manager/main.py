@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+from commonwealth.mavlink_comm.exceptions import FetchUpdatedMessageFail
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
@@ -17,7 +18,7 @@ from commonwealth.utils.decorators import single_threaded
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, File, HTTPException, UploadFile, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -122,7 +123,10 @@ def get_serials() -> Any:
 async def get_firmware_info() -> Any:
     if not autopilot.current_board:
         raise RuntimeError("Cannot fetch firmware info as there's no board running.")
-    return await autopilot.vehicle_manager.get_firmware_info()
+    try:
+        return await autopilot.vehicle_manager.get_firmware_info()
+    except ValueError:
+        return PlainTextResponse("Failed to get autopilot version", status_code=500)
 
 
 @app.get("/vehicle_type", response_model=MavlinkVehicleType, summary="Get mavlink vehicle type.")
@@ -130,7 +134,10 @@ async def get_firmware_info() -> Any:
 async def get_vehicle_type() -> Any:
     if not autopilot.current_board:
         raise RuntimeError("Cannot fetch vehicle type info as there's no board running.")
-    return await autopilot.vehicle_manager.get_vehicle_type()
+    try:
+        return await autopilot.vehicle_manager.get_vehicle_type()
+    except FetchUpdatedMessageFail as error:
+        return PlainTextResponse(f"Timed out fetching message: {error}", status_code=500)
 
 
 @app.post("/sitl_frame", summary="Set SITL Frame type.")
