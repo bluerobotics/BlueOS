@@ -34,6 +34,7 @@ DELTA_JSON = {
             "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
             "/etc/resolv.conf.host": {"bind": "/etc/resolv.conf.host", "mode": "ro"},
             "/home/pi/.ssh": {"bind": "/home/pi/.ssh", "mode": "rw"},
+            "/sys/": {"bind": "/sys/", "mode": "rw"},
         }
     }
 }
