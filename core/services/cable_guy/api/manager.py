@@ -2,6 +2,7 @@ import re
 import subprocess
 import time
 from enum import Enum
+from pathlib import Path
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -91,6 +92,7 @@ class EthernetManager:
                 self.set_configuration(NetworkInterface(**item))
             except Exception as error:
                 logger.error(f"Failed loading saved configuration. {error}")
+        self.dhcp_leases_path = self.settings.settings_path / "leases.txt"
 
     def save(self) -> None:
         """Save actual configuration"""
@@ -131,7 +133,7 @@ class EthernetManager:
             if address.mode == AddressMode.Unmanaged:
                 self.add_static_ip(interface.name, address.ip)
             elif address.mode == AddressMode.Server:
-                self.add_dhcp_server_to_interface(interface.name, address.ip)
+                self.add_dhcp_server_to_interface(interface.name, address.ip, leases_file=self.dhcp_leases_path)
 
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
@@ -656,14 +658,16 @@ class EthernetManager:
         except Exception as error:
             raise RuntimeError("Cannot remove DHCP server from interface.") from error
 
-    def add_dhcp_server_to_interface(self, interface_name: str, ipv4_gateway: str) -> None:
+    def add_dhcp_server_to_interface(
+        self, interface_name: str, ipv4_gateway: str, leases_file: Optional[Path] = None
+    ) -> None:
         if self._is_dhcp_server_running_on_interface(interface_name):
             self.remove_dhcp_server_from_interface(interface_name)
         if self._is_ip_on_interface(interface_name, ipv4_gateway):
             self.remove_ip(interface_name, ipv4_gateway)
         self.add_static_ip(interface_name, ipv4_gateway)
         logger.info(f"Adding DHCP server with gateway '{ipv4_gateway}' to interface '{interface_name}'.")
-        self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway))
+        self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway, leases_file_path=leases_file))
 
     def stop(self) -> None:
         """Perform steps necessary to properly stop the manager."""
