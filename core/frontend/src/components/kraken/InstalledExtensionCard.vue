@@ -251,6 +251,11 @@ export default Vue.extend({
       // show the latest version regardless of stability
       // eslint-disable-next-line no-extra-parens
       const latest = versions.reduce((a: string, b: string) => (semver.compare(a, b) > 0 ? a : b))
+
+      if (semver.compare(this.extension.tag, latest) >= 0) {
+        return false
+      }
+
       return this.extension.tag === latest ? false : latest
     },
   },
