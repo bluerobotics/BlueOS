@@ -7,8 +7,7 @@ from fastapi.staticfiles import StaticFiles
 # Routers
 from api.v1.routers import index_router_v1, extension_router_v1
 from api.v2.routers import index_router_v2, extension_router_v2, container_router_v2
-# TEMP - REMOVE
-from temp.apis import GenericErrorHandlingRoute
+from commonwealth.utils.apis import GenericErrorHandlingRoute
 
 #
 # Main API App

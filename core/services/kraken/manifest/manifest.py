@@ -1,130 +1,96 @@
-import dataclasses
-import datetime
+import uuid
 from typing import List, Optional, cast
 
-# Extra
 import aiohttp
-from dataclass_wizard import fromdict
+from aiocache import cached, Cache
+from pydantic import RootModel
 
-# Models
-from manifest.models import ExtensionVersion, RepositoryEntry
-
-# Current Extension Manifest host
-REPO_URL = "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json"
-REPO_URL_DEV = "https://raw.githubusercontent.com/bluerobotics/BlueOS-Extensions-Repository/gh-pages-dev/manifest.json"
-
-
-@dataclasses.dataclass
-class ManifestContent:
-    """
-    Represents the manifest content with cache control.
-
-    Attributes:
-        extensions (List[RepositoryEntry]): List of extensions in the manifest.
-        issued_at (Optional[int]): Timestamp when the manifest was issued.
-        expires_in (Optional[int]): Time in seconds until the manifest expires.
-    """
-
-    extensions: List[RepositoryEntry]
-    expires_in: int = 3600
-    # pylint: disable=unnecessary-lambda
-    issued_at: int = dataclasses.field(default_factory=lambda: ManifestContent._current_timestamp())
-
-    @classmethod
-    def _current_timestamp(cls) -> int:
-        """
-        Returns the current timestamp as an integer.
-
-        Returns:
-            int: Current timestamp.
-        """
-
-        return int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-
-    @property
-    def is_expired(self) -> bool:
-        """
-        Checks if the manifest is expired.
-
-        Returns:
-            bool: True if the manifest is expired, False otherwise.
-        """
-
-        return (ManifestContent._current_timestamp() - self.issued_at) > self.expires_in
-
+from manifest.models import ManifestRoot, ManifestData
+from commonwealth.settings.manager import Manager
+from config import EXT_PROD_MANIFEST_URL, SERVICE_NAME
+from settings import ManifestSettings, SettingsV1
 
 class Manifest:
-    """
-    Class responsible for fetching and managing the extension manifest.
-    """
+    def __init__(self, settings: ManifestSettings) -> None:
+        self.settings = settings
 
-    _instance: Optional["Manifest"] = None
-    _cached_manifest: Optional[ManifestContent] = None
-
-    def __init__(self) -> None:
-        raise RuntimeError("This class should not be instantiated, use Manifest.instance() instead")
-
-    @classmethod
-    def instance(cls) -> "Manifest":
-        """
-        Returns the instance of the manifest manager.
-
-        Returns:
-            Manifest: Instance of the manifest.
-        """
-
-        if cls._instance is None:
-            cls._instance = cls.__new__(cls)
-        return cls._instance
-
-    async def _fetch_manifest_from_url(self, url: str) -> Optional[ManifestContent]:
+    async def _from_url(self, url: str) -> ManifestRoot:
         headers = {"Accept": "application/json"}
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers) as resp:
                 if resp.status != 200:
-                    print(f"Error fetching manifest file: response status {resp.status}")
-                    return None
+                    error_msg = f"Failed to fetch manifest from {url}, status code: {resp.status}"
+                    raise RuntimeError(error_msg)
 
-                content = {"extensions": await resp.json(content_type=None)}
-                return cast(ManifestContent, fromdict(ManifestContent, content))
+                return ManifestRoot.model_validate(await resp.json(content_type=None))
 
-    async def _fetch_manifest(self) -> ManifestContent:
-        """
-        Fetches the manifest from the repository.
+    @cached(ttl=3600)
+    async def fetch(self) -> ManifestData:
+        data = await self._from_url(self.settings.url)
 
-        Returns:
-            ManifestContent: Manifest content.
+        return ManifestData(
+            identifier=self.settings.identifier,
+            name=self.settings.name,
+            url=self.settings.url,
+            priority=self.settings.priority,
+            data=data.root
+        )
 
-        Raises:
-            RuntimeError: If the manifest could not be fetched.
-        """
 
-        dev_manifest = await self._fetch_manifest_from_url(REPO_URL_DEV)
-        if dev_manifest:
-            return dev_manifest
+class ManifestManager:
+    """
+    Class responsible for fetching and managing the extension manifest.
+    """
 
-        prod_manifest = await self._fetch_manifest_from_url(REPO_URL)
-        if prod_manifest:
-            return prod_manifest
+    _instance: Optional["ManifestManager"] = None
+    _settings: Manager = Manager(SERVICE_NAME, SettingsV1).settings
+    _manifests: List[Manifest] = []
 
-        raise RuntimeError("Could not fetch either the development or production manifest.")
+    def __init__(self) -> None:
+        raise RuntimeError("This class should not be instantiated, use Manifest.instance() instead")
 
-    async def fetch(self) -> List[RepositoryEntry]:
-        """
-        Fetches the manifest from repository or cache if valid.
+    @classmethod
+    def instance(cls) -> "ManifestManager":
+        return cls._instance if cls._instance else cls.__new__(cls)
 
-        Returns:
-            List[RepositoryEntry]: List of extensions in the manifest.
+    def _sorted_settings(self) -> List[ManifestSettings]:
+        manifests = sorted(ManifestManager.settings.manifests, key=lambda x: x.priority, reverse=True)
+        return cast(List[ManifestSettings], manifests)
 
-        Raises:
-            RuntimeError: If the manifest could not be fetched.
-        """
+    async def fetch() -> List[ManifestData]:
+        for source in self._sorted_settings():
+            pass
 
-        if not self._cached_manifest or self._cached_manifest.is_expired:
-            self._cached_manifest = await self._fetch_manifest()
+    async def fetch_by_identifier(self, identifier: str) -> Optional[Manifest]:
+        manifests = await self.fetch()
+        return next(filter(lambda x: x.identifier == identifier, manifests), None)
 
-        return self._cached_manifest.extensions
+    async def add(self, data: ManifestBase) -> str:
+        manifest = ManifestSettings(
+            identifier=str(uuid.uuid4()),
+            name=data.name,
+            url=data.url,
+            priority=data.priority
+        )
+        ManifestManager._settings.manifests.append(manifest)
+        ManifestManager._settings.save()
+        ManifestManager._cache.delete("_manifest_manager_fetch_")
+
+        return manifest.identifier
+
+    async def remove(self, identifier: str) -> None:
+        ManifestManager._settings.manifests = [
+            other
+            for other in ManifestManager._settings.manifests
+            if not (other.identifier == self.identifier and other.tag == self.tag)
+        ]
+        if extension:
+            self.settings.extensions.append(extension)
+        self.manager.save()
+
+    async def update(self, identifier: str, data: ManifestBase) -> None:
+        pass
 
     async def get_extension(self, identifier: str) -> Optional[RepositoryEntry]:
         """

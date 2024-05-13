@@ -7,7 +7,7 @@ from config import SERVICE_NAME
 from manifest import Manifest
 from manifest.models import Image
 from settings import Extension as ExtensionSettings, SettingsV1
-from kraken.docker import DockerCtx
+from app.docker.docker import DockerCtx
 from kraken.exceptions import ExtensionContainerNotFound, ExtensionNotFound, ExtensionPullFailed
 
 

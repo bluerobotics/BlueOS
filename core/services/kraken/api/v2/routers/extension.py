@@ -63,13 +63,6 @@ async def list() -> list[ExtensionModel]:
     ]
 
 
-@extension_router_v2.get("/manifest", status_code=status.HTTP_200_OK)
-@version(2, 0)
-async def manifest() -> Response:
-    # TODO - Change to pydantic models
-    return await Kraken.fetch_manifest()
-
-
 @extension_router_v2.post("/install", status_code=status.HTTP_201_CREATED, response_class=StreamingResponse)
 @version(2, 0)
 async def install(identifier: str, tag: str | None = None) -> StreamingResponse:

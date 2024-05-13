@@ -9,7 +9,9 @@ class CommandLineArgs:
     Represents command-line arguments for the client.
 
     Attributes:
-        debug: bool - Whether to enable debug mode
+        debug (bool): Enable debug mode
+        host (str): Host to server kraken on
+        port (int): Port to server kraken on
     """
 
     debug: bool
@@ -18,13 +20,6 @@ class CommandLineArgs:
 
     @staticmethod
     def from_args() -> "CommandLineArgs":
-        """
-        Parses command-line arguments and returns a CommandLineArgs instance.
-
-        Returns:
-            CommandLineArgs: Instance of CommandLineArgs with the parsed arguments
-        """
-
         parser = argparse.ArgumentParser(
             description = "Kraken Extension manager client."
         )

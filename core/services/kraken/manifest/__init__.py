@@ -1,3 +1,4 @@
-from manifest.manifest import Manifest, ManifestContent
+from manifest.manifest import ManifestManager
+from manifest.models import Manifest
 
-__all__ = ["Manifest", "ManifestContent"]
+__all__ = ["Manifest", "ManifestManager"]

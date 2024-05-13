@@ -3,10 +3,10 @@ import re
 from typing import Any, Dict
 
 from commonwealth.settings import settings
-from pykson import BooleanField, JsonObject, ObjectListField, StringField
+from pykson import BooleanField, JsonObject, ObjectListField, StringField, IntegerField
 
 
-class Extension(JsonObject):
+class ExtensionSettings(JsonObject):
     identifier = StringField()
     name = StringField()
     docker = StringField()
@@ -32,10 +32,16 @@ class Extension(JsonObject):
         regex = re.compile("[^a-zA-Z0-9]")
         return "extension-" + regex.sub("", f"{self.docker}{self.tag}")
 
+class ManifestSettings(JsonObject):
+    identifier = StringField()
+    priority = IntegerField()
+    name = StringField()
+    url = StringField()
 
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
-    extensions = ObjectListField(Extension)
+    extensions = ObjectListField(ExtensionSettings)
+    manifests = ObjectListField(ManifestSettings)
 
     def __init__(self, *args: str, **kwargs: int) -> None:
         super().__init__(*args, **kwargs)

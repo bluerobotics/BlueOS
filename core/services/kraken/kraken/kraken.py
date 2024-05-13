@@ -9,7 +9,7 @@ from loguru import logger
 from commonwealth.settings.manager import Manager
 from config import SERVICE_NAME
 from manifest import Manifest
-from kraken.docker import DockerCtx
+from app.docker.docker import DockerCtx
 from kraken.extension import Extension
 from kraken.exceptions import ExtensionContainerNotFound, ExtensionNotFound
 from kraken.models import ContainerUsageModel
