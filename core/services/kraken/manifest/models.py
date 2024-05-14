@@ -33,6 +33,9 @@ class DockerPlatforms(StrEnum):
             case "x86_64" | "amd64":
                 return DockerPlatforms.AMD64
             case "aarch64" | "arm64":
+                # catch the case of 64 bit kernel with 32bit userland on Pi 5
+                if platform.architecture()[0] == "32bit":
+                    return DockerPlatforms.ARM_V7
                 return DockerPlatforms.ARM64
             case _:
                 return None
