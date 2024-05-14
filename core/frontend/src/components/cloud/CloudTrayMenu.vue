@@ -293,7 +293,9 @@ export default Vue.extend({
 
       this.pull_tracker = new PullTracker(
         () => console.log('Major Tom Install Ready'),
-        () => console.error('Major Tom Install Error'),
+        (error: string) => {
+          this.setOperationError('Failed to install Major Tom.', error)
+        },
       )
 
       try {

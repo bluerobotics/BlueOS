@@ -210,6 +210,7 @@ import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
+import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
   ExtensionData, InstalledExtensionData, RunningContainer, Version,
@@ -492,8 +493,26 @@ export default Vue.extend({
           container_name: this.getContainerName(extension),
         },
         onDownloadProgress: (progressEvent) => {
-          const chunk = progressEvent.currentTarget.response
-          this.$set(this, 'log_output', ansi.ansi_to_html(chunk))
+          const result = aggregateStreamingResponse(
+            parseStreamingResponse(progressEvent.currentTarget.response),
+            (fragment, buffer) => {
+              // If no logs are available kraken will wait till timeout and stop the stream
+              if (fragment.status === 408) {
+                if (!buffer) {
+                  this.$set(this, 'log_output', ansi.ansi_to_html('No Logs available'))
+                }
+              } else {
+                notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', fragment.error)
+              }
+
+              /** Only stops if buffer is empty */
+              return Boolean(buffer)
+            },
+          )
+
+          if (result) {
+            this.$set(this, 'log_output', ansi.ansi_to_html(result))
+          }
           this.show_log = true
           this.setLoading(extension, false)
           this.$nextTick(() => {
@@ -507,7 +526,7 @@ export default Vue.extend({
             output.scrollTop = output.scrollHeight
           })
         },
-        timeout: 30000,
+        timeout: 35000,
       })
         .then(() => {
           this.setLoading(extension, false)
