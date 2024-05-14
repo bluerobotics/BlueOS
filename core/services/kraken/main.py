@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.streaming import streamer, timeout_streamer
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -91,13 +92,13 @@ async def install_extension(extension: Extension) -> Any:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Extension is not compatible with the current machine running BlueOS.",
         )
-    return StreamingResponse(kraken.install_extension(extension, compatible_digest))
+    return StreamingResponse(streamer(kraken.install_extension(extension, compatible_digest)))
 
 
 @app.post("/extension/update_to_version", status_code=status.HTTP_201_CREATED)
 @version(1, 0)
 async def update_extension(extension_identifier: str, new_version: str) -> Any:
-    return StreamingResponse(kraken.update_extension_to_version(extension_identifier, new_version))
+    return StreamingResponse(streamer(kraken.update_extension_to_version(extension_identifier, new_version)))
 
 
 @app.post("/extension/uninstall", status_code=status.HTTP_200_OK)
@@ -142,7 +143,7 @@ async def list_containers() -> Any:
 @app.get("/log", status_code=status.HTTP_200_OK, response_class=PlainTextResponse)
 @version(1, 0)
 async def log_containers(container_name: str) -> Iterable[bytes]:
-    return StreamingResponse(kraken.stream_logs(container_name), media_type="text/plain")  # type: ignore
+    return StreamingResponse(timeout_streamer(kraken.stream_logs(container_name)), media_type="text/plain")  # type: ignore
 
 
 @app.get("/stats", status_code=status.HTTP_200_OK)
