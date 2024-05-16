@@ -371,6 +371,4 @@ class Kraken:
         self.should_run = False
 
 
-# Global Kraken control instance
-
 kraken_instance = Kraken()

@@ -9,6 +9,7 @@ manifest_router_v2 = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
+
 @manifest_router_v2.get("/", status_code=status.HTTP_200_OK)
 async def fetch(_data: bool = True) -> Response:
     """

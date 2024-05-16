@@ -15,6 +15,7 @@ extension_router_v1 = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
+
 @extension_router_v1.post("/install", status_code=status.HTTP_201_CREATED)
 async def install_extension(extension: Extension) -> Any:
     if not extension.is_valid():
