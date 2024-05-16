@@ -14,6 +14,7 @@ index_router_v1 = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
+
 @index_router_v1.get("/extensions_manifest", status_code=status.HTTP_200_OK)
 async def fetch_manifest() -> Any:
     return await kraken_instance.fetch_manifest()
