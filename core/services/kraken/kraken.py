@@ -369,3 +369,8 @@ class Kraken:
 
     async def stop(self) -> None:
         self.should_run = False
+
+
+# Global Kraken control instance
+
+kraken_instance = Kraken()
