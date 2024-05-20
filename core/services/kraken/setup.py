@@ -10,6 +10,7 @@ setuptools.setup(
     py_modules=[],
     install_requires=[
         "aiodocker == 0.21.0",
+        "aiocache == 0.12.2",
         "appdirs == 1.4.4",
         "commonwealth == 0.1.0",
         "fastapi == 0.105.0",

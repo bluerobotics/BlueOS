@@ -3,7 +3,7 @@ import re
 from typing import Any, Dict
 
 from commonwealth.settings import settings
-from pykson import BooleanField, JsonObject, ObjectListField, StringField
+from pykson import BooleanField, IntegerField, JsonObject, ObjectListField, StringField
 
 
 class Extension(JsonObject):
@@ -33,9 +33,19 @@ class Extension(JsonObject):
         return "extension-" + regex.sub("", f"{self.docker}{self.tag}")
 
 
+class ManifestSettings(JsonObject):
+    identifier = StringField()
+    enabled = BooleanField()
+    priority = IntegerField()
+    factory = BooleanField()
+    name = StringField()
+    url = StringField()
+
+
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
     extensions = ObjectListField(Extension)
+    manifests = ObjectListField(ManifestSettings)
 
     def __init__(self, *args: str, **kwargs: int) -> None:
         super().__init__(*args, **kwargs)
