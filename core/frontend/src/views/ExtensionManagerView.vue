@@ -17,6 +17,10 @@
         @clicked="performActionFromModal"
       />
     </v-dialog>
+    <extension-settings
+      v-model="show_settings"
+      @refresh="fetchManifest"
+    />
     <v-dialog
       v-model="show_log"
       width="80%"
@@ -62,7 +66,16 @@
           Installed
         </v-tab>
       </v-tabs>
-      <v-spacer class="search-container" />
+      <v-spacer class="tabs-container-spacer-right" />
+      <v-btn
+        v-tooltip="'Settings'"
+        icon
+        color="gray"
+        hide-details="auto"
+        @click="show_settings = true"
+      >
+        <v-icon>mdi-cog</v-icon>
+      </v-btn>
     </v-toolbar>
     <v-card
       v-if="tab === 0"
@@ -203,7 +216,9 @@ import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
 import CreationDialog from '@/components/kraken/ExtensionCreationDialog.vue'
 import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
+import ExtensionSettings from '@/components/kraken/ExtensionSettings.vue'
 import InstalledExtensionCard from '@/components/kraken/InstalledExtensionCard.vue'
+import kraken from '@/components/kraken/KrakenManager'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
 import { Dictionary } from '@/types/common'
@@ -226,6 +241,7 @@ export default Vue.extend({
     ExtensionCard,
     InstalledExtensionCard,
     ExtensionModal,
+    ExtensionSettings,
     PullProgress,
     CreationDialog,
     SpinningLogo,
@@ -234,6 +250,7 @@ export default Vue.extend({
     return {
       tab: 0,
       show_dialog: false,
+      show_settings: false,
       installed_extensions: {} as Dictionary<InstalledExtensionData>,
       selected_extension: null as (null | ExtensionData),
       selected_companies: [] as string[],
@@ -437,17 +454,9 @@ export default Vue.extend({
       )
     },
     async fetchManifest(): Promise<void> {
-      await back_axios({
-        method: 'get',
-        url: `${API_URL}/extensions_manifest`,
-        timeout: 15000,
-      })
+      kraken.fetchConsolidatedManifests()
         .then((response) => {
-          if ('detail' in response.data) {
-            notifier.pushBackError('EXTENSIONS_MANIFEST_FETCH_FAIL', new Error(response.data.detail))
-            return
-          }
-          this.manifest = response.data.map((extension: ExtensionData) => ({
+          this.manifest = response.map((extension: ExtensionData) => ({
             ...extension,
             is_compatible: this.checkExtensionCompatibility(extension),
           }))
@@ -753,6 +762,11 @@ pre.logs {
 .search-container {
   flex: 1 1 auto;
   width: 50% !important;
+}
+
+.tabs-container-spacer-right {
+  flex: 1 1 auto;
+  width: 30% !important;
 }
 
 .v-input.expanding-search {
