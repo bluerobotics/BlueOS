@@ -2,4 +2,12 @@
 
 SERVICE_NAME = "kraken"
 
-__all__ = ["SERVICE_NAME"]
+DEFAULT_MANIFESTS = [
+    {
+        "identifier": "bluerobotics-production",
+        "name": "BlueOS Extensions Repository",
+        "url": "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json",
+    },
+]
+
+__all__ = ["SERVICE_NAME", "DEFAULT_MANIFESTS"]
