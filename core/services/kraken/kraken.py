@@ -1,7 +1,6 @@
 import asyncio
 import json
 import re
-from dataclasses import asdict
 from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, cast
 
 import aiodocker
@@ -13,7 +12,8 @@ from fastapi import status
 from loguru import logger
 
 from exceptions import ContainerDoesNotExist, ExtensionNotFound
-from manifest import Manifest
+from manifest import ManifestManager
+from manifest.models import RepositoryEntry
 from settings import Extension, SettingsV1
 
 SERVICE_NAME = "Kraken"
@@ -26,7 +26,7 @@ class Kraken:
         self.should_run = True
         self.deleting_in_progress = False
         self._client: Optional[aiodocker.Docker] = None
-        self.manifest: Manifest = Manifest.instance()
+        self.manifest: ManifestManager = ManifestManager.instance()
 
     @property
     def client(self) -> aiodocker.Docker:
@@ -94,7 +94,7 @@ class Kraken:
             Literal[False] | str | None: None if no found, False if not compatible, image digest if compatible.
         """
 
-        version = await self.manifest.get_extension_version(identifier, tag)
+        version = await self.manifest.fetch_extension_version(identifier, tag)
 
         if not version:
             return None
@@ -110,8 +110,8 @@ class Kraken:
         self.manager = Manager(SERVICE_NAME, SettingsV1)
         self.settings = self.manager.settings
 
-    async def fetch_manifest(self) -> List[Dict[str, Any]]:
-        return [asdict(extension) for extension in await self.manifest.fetch()]
+    async def fetch_manifest(self) -> List[RepositoryEntry]:
+        return await self.manifest.fetch_consolidated()
 
     async def get_configured_extensions(self) -> List[Extension]:
         return cast(List[Extension], self.settings.extensions)
@@ -187,7 +187,7 @@ class Kraken:
             raise RuntimeError(f"Extension with identifier {identifier} not found!")
         # TODO: plug dependency-checking in here
 
-        version_data = await self.manifest.get_extension_version(extension.identifier, version)
+        version_data = await self.manifest.fetch_extension_version(extension.identifier, version)
         if not version_data:
             raise RuntimeError(f"Version {version} not found for extension {identifier}.")
 
