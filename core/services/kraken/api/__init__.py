@@ -1,3 +1,4 @@
-from api.app import application
+# pylint: disable=W0406
+from .app import application
 
 __all__ = ["application"]
