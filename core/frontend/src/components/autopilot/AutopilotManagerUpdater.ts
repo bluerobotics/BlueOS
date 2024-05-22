@@ -46,7 +46,7 @@ export async function fetchAvailableBoards(): Promise<void> {
     const response: AxiosResponse = await back_axios({
       method: 'get',
       url: `${autopilot.API_URL}/available_boards`,
-      timeout: 10000,
+      timeout: 30000,
     })
     autopilot.setAvailableBoards(response.data)
   } catch (error) {
@@ -59,7 +59,7 @@ export async function fetchCurrentBoard(): Promise<void> {
   await back_axios({
     method: 'get',
     url: `${autopilot.API_URL}/board`,
-    timeout: 10000,
+    timeout: 30000,
   })
     .then((response) => {
       autopilot.setCurrentBoard(response.data)
@@ -75,7 +75,7 @@ export async function fetchFirmwareInfo(): Promise<void> {
     const response: AxiosResponse = await back_axios({
       method: 'get',
       url: `${autopilot.API_URL}/firmware_info`,
-      timeout: 10000,
+      timeout: 30000,
     })
     // Version comes out as a string, let's turn it into a SemVer object
     response.data.version = new SemVer(response.data.version)
@@ -91,7 +91,7 @@ export async function fetchVehicleType(): Promise<void> {
     const response: AxiosResponse = await back_axios({
       method: 'get',
       url: `${autopilot.API_URL}/vehicle_type`,
-      timeout: 10000,
+      timeout: 30000,
     })
     autopilot.setVehicleType(response.data)
   } catch (error) {

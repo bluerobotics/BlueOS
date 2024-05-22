@@ -301,7 +301,7 @@ export default Vue.extend({
       await back_axios({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
-        timeout: 10000,
+        timeout: 30000,
         params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.name },
       })
         .then((response) => {
