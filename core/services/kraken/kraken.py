@@ -14,7 +14,7 @@ from loguru import logger
 from exceptions import ContainerDoesNotExist, ExtensionNotFound
 from manifest import ManifestManager
 from manifest.models import RepositoryEntry
-from settings import Extension, SettingsV1
+from settings import Extension, SettingsV2
 
 SERVICE_NAME = "Kraken"
 
@@ -107,7 +107,7 @@ class Kraken:
         return compatible_images[0].digest
 
     def load_settings(self) -> None:
-        self.manager = Manager(SERVICE_NAME, SettingsV1)
+        self.manager = Manager(SERVICE_NAME, SettingsV2)
         self.settings = self.manager.settings
 
     async def fetch_manifest(self) -> List[RepositoryEntry]:
