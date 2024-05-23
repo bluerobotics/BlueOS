@@ -5,7 +5,8 @@ from typing import Any, Optional, Type
 import appdirs
 from loguru import logger
 
-from commonwealth.settings.settings import BaseSettings, SettingsFromTheFuture
+from commonwealth.settings.exceptions import SettingsFromTheFuture
+from commonwealth.settings.settings import BaseSettings
 
 
 class Manager:

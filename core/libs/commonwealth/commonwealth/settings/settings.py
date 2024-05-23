@@ -7,21 +7,12 @@ import pykson  # type: ignore
 from loguru import logger
 from pykson import Field, Pykson
 
-
-class BadSettingsFile(ValueError):
-    """Settings file is not valid."""
-
-
-class SettingsFromTheFuture(ValueError):
-    """Settings file version is from a newer version of the service."""
-
-
-class MigrationFail(RuntimeError):
-    """Could not apply migration."""
-
-
-class BadAttributes(BadSettingsFile):
-    """Attributes on settings file are not valid."""
+from commonwealth.settings.exceptions import (
+    BadAttributes,
+    BadSettingsFile,
+    MigrationFail,
+    SettingsFromTheFuture,
+)
 
 
 class BaseSettings(pykson.JsonObject):
@@ -108,3 +99,11 @@ class BaseSettings(pykson.JsonObject):
         logger.debug("Resetting settings")
         new = self.__class__()
         self.__dict__.update(new.__dict__)
+
+
+__all__ = [
+    "BadAttributes",
+    "BadSettingsFile",
+    "MigrationFail",
+    "SettingsFromTheFuture",
+]
