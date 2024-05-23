@@ -45,7 +45,6 @@ class ManifestSettings(JsonObject):
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
     extensions = ObjectListField(Extension)
-    manifests = ObjectListField(ManifestSettings)
 
     def __init__(self, *args: str, **kwargs: int) -> None:
         super().__init__(*args, **kwargs)
@@ -60,3 +59,23 @@ class SettingsV1(settings.BaseSettings):
             super().migrate(data)
 
         data["VERSION"] = SettingsV1.VERSION
+
+
+class SettingsV2(SettingsV1):
+    VERSION = 2
+    manifests = ObjectListField(ManifestSettings)
+
+    def __init__(self, *args: str, **kwargs: int) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.VERSION = SettingsV2.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.VERSION:
+            super().migrate(data)
+
+            data["VERSION"] = SettingsV2.VERSION
+            data["manifests"] = []

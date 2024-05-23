@@ -23,7 +23,7 @@ from manifest.models import (
     RepositoryEntry,
     UpdateManifestSource,
 )
-from settings import ManifestSettings, SettingsV1
+from settings import ManifestSettings, SettingsV2
 
 
 class ManifestManager:
@@ -32,7 +32,7 @@ class ManifestManager:
     """
 
     _instance: Optional["ManifestManager"] = None
-    _manager: Manager = Manager(SERVICE_NAME, SettingsV1)
+    _manager: Manager = Manager(SERVICE_NAME, SettingsV2)
     _settings = _manager.settings
 
     def __init__(self) -> None:
