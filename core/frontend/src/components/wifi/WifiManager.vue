@@ -79,7 +79,8 @@
             flat
             class="text-body-1 text-center"
           >
-            No wifi networks available :(
+            No wifi networks available :( <br>
+            Rescanning...
           </v-card-text>
         </div>
         <div v-else>
