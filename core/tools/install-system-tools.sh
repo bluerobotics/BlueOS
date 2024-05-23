@@ -17,9 +17,5 @@ parallel --halt now,fail=1 '/home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
 
 # Tools that uses apt to do the installation
 # APT is terrible like pip and don't know how to handle parallel installation
-/home/pi/tools/cable_guy/bootstrap.sh
-/home/pi/tools/dnsmasq/bootstrap.sh
-/home/pi/tools/hotspot/bootstrap.sh
-/home/pi/tools/iperf3/bootstrap.sh
-/home/pi/tools/sudo/bootstrap.sh
-/home/pi/tools/nginx/bootstrap.sh
+# This section is empty as all got moved up to our base image, but this is the
+# section where new ones would go if we don't want then in the base image
