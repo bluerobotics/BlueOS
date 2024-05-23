@@ -48,6 +48,10 @@ for arg in "$@"; do
   esac
 done
 
+cd install
+TESTING=true pipenv run ./test.sh
+cd -
+
 echo "Running pre push hook!"
 repository_path=$(git rev-parse --show-toplevel)
 tag_name=$(git tag --points-at=HEAD | head -n 1)
