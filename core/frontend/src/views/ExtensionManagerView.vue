@@ -128,7 +128,7 @@
     </v-card>
     <v-card
       v-if="tab === 1"
-      class="d-flex pa-5"
+      class="main-container d-flex pa-5"
       text-align="center"
     >
       <div v-if="tab === 1" class="installed-extensions-container">
@@ -725,11 +725,17 @@ export default Vue.extend({
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
+
+}
+
+.main-container {
+  background-color: #135DA355 !important;
 }
 
 .installed-extension-card {
   margin: 10px;
   flex: 1 1 400px;
+  max-width: 32%;
 }
 
 .jv-code {
