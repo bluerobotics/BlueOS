@@ -6,7 +6,7 @@ import json
 import re
 import sys
 import time
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from loguru import logger
 from commonwealth.utils.logs import InterceptHandler, init_logger
 import logging
@@ -65,6 +65,9 @@ DELTA_JSON = {
 # However, it is important to note that conflicting configurations can happen, potentially impacting the kernel's loading process or causing harm to BlueOS.
 CONFIG_USER_PROTECTION_WORD = 'custom'
 
+config_file = None
+cmdline_file = None
+
 import collections
 from commonwealth.utils.commands import run_command
 
@@ -77,6 +80,12 @@ def dict_merge(dct, merge_dct):
             dict_merge(dct[k], merge_dct[k])
         else:
             dct[k] = merge_dct[k]
+
+def locate_file(candidates: List[str]) -> Optional[str]:
+    # first match will return
+    command = f"find {' '.join(candidates)} -type f -print -quit"
+    output = run_command(command, False).stdout.strip()
+    return output
 
 def update_startup() -> bool:
     startup_path = os.path.join(appdirs.user_config_dir('bootstrap'), 'startup.json')
@@ -251,9 +260,9 @@ def boot_cmdfile_add_config(cmdline_content: List[str], config_key: str, config_
 
 def update_cgroups() -> bool:
     logger.info("Running cgroup update..")
-
-    # Retrieve the cmdline file
-    cmdline_file = '/boot/cmdline.txt'
+    if cmdline_file is None:
+        logging.warning("cmdline.txt not found. skipping cgroups update")
+        return False
     cmdline_content = load_file(cmdline_file).replace('\n','').split(' ')
     unpatched_cmdline_content = cmdline_content.copy()
 
@@ -281,8 +290,13 @@ def update_cgroups() -> bool:
 def update_dwc2() -> bool:
     logger.info("Running dwc2 update..")
 
-    # Retrieve the config file
-    config_file = '/boot/config.txt'
+    if config_file is None:
+        logging.warning("config.txt not found. skipping dwc2 update")
+        return False
+    if cmdline_file is None:
+        logging.warning("cmdline.txt not found. skipping dwc2 update")
+        return False
+
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
@@ -301,8 +315,6 @@ def update_dwc2() -> bool:
         config_content_str = '\n'.join(config_content)
         save_file(config_file, config_content_str, backup_identifier)
 
-    # Retrieve the cmdline file
-    cmdline_file = '/boot/cmdline.txt'
     cmdline_content = load_file(cmdline_file).replace('\n','').split(' ')
     unpatched_cmdline_content = cmdline_content.copy()
 
@@ -323,8 +335,9 @@ def update_dwc2() -> bool:
 def update_navigator_overlays() -> bool:
     logger.info("Running Nagivator overlays update..")
 
-    # Retrieve the config file
-    config_file = '/boot/config.txt'
+    if config_file is None:
+        logging.warning("config.txt not found. skipping overlays update")
+        return False
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
@@ -421,6 +434,12 @@ def main() -> int:
     match = re.match(r'(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)', current_git_version)
     tag, commit_number, commit_hash = match['tag'], match['commit_number'], match['commit_hash']
     logger.info(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
+    global config_file
+    global cmdline_file
+    config_file = locate_file(["/boot/firmware/config.txt", "/boot/config.txt"])
+    logger.info(f"config.txt found at {config_file}")
+    cmdline_file = locate_file(["/boot/firmware/cmdline.txt", "/boot/cmdline.txt"])
+    logger.info(f"cmdline.txt found at {cmdline_file}")
 
     if not run_command_is_working():
         logger.error("Critical error: Something is wrong with the host computer, run_command is not working.")
