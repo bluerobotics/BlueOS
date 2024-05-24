@@ -200,7 +200,7 @@ class Serial(BaseModel):
             return value
         if re.compile(r"tcp:\d*:wait$").match(value):
             return value
-        matches = re.compile(r"(tcpclient|udpclient|tcpin|udpin):(?P<ip>(\d*\.){3}\d+):(?P<port>\d*)$").match(value)
+        matches = re.compile(r"(tcpclient|udp|tcpin|udpin):(?P<ip>(\d*\.){3}\d+):(?P<port>\d*)$").match(value)
         if matches:
             ipaddress.ip_address(matches.group("ip"))
             if 0 <= int(matches.group("port")) <= 65535:
