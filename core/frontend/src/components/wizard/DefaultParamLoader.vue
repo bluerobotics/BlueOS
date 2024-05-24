@@ -89,12 +89,12 @@ import { SemVer } from 'semver'
 import Vue, { PropType } from 'vue'
 import { Dictionary } from 'vue-router'
 
+import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { printParamWithUnit } from '@/types/autopilot/parameter'
 import { VForm } from '@/types/vuetify'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'
 
@@ -122,6 +122,7 @@ export default Vue.extend({
     fetch_retries: 0,
     is_loading_parameters: false,
     has_parameters_load_error: false,
+    fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
   }),
   computed: {
     filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
@@ -184,10 +185,7 @@ export default Vue.extend({
     },
   },
   mounted() {
-    callPeriodically(fetchCurrentBoard, 10000)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(fetchCurrentBoard)
+    this.fetch_current_board_task.setAction(fetchCurrentBoard)
   },
   methods: {
     async setUpParams() {

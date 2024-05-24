@@ -32,13 +32,19 @@
 import Vue from 'vue'
 
 import { fetchCurrentBoard, fetchFirmwareInfo } from '@/components/autopilot/AutopilotManagerUpdater'
+import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import system_information from '@/store/system-information'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'VehicleInfo',
+  data() {
+    return {
+      fetch_firmware_info_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+    }
+  },
   computed: {
     frameType() {
       const param = autopilot_data.parameter('FRAME_CONFIG')
@@ -58,12 +64,8 @@ export default Vue.extend({
     },
   },
   mounted() {
-    callPeriodically(fetchCurrentBoard, 10000)
-    callPeriodically(fetchFirmwareInfo, 10000)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(fetchCurrentBoard)
-    stopCallingPeriodically(fetchFirmwareInfo)
+    this.fetch_firmware_info_task.setAction(fetchCurrentBoard)
+    this.fetch_current_board_task.setAction(fetchFirmwareInfo)
   },
 })
 </script>
