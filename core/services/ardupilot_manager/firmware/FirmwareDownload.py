@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
 
+from commonwealth.utils.decorators import temporary_cache
 from loguru import logger
 from packaging.version import Version
 
@@ -130,6 +131,7 @@ class FirmwareDownloader:
 
         return found_version_item
 
+    @temporary_cache(timeout_seconds=3600)
     def get_available_versions(self, vehicle: Vehicle, platform: Platform) -> List[str]:
         """Get available firmware versions for the specific plataform and vehicle
 
@@ -153,6 +155,7 @@ class FirmwareDownloader:
 
         return available_versions
 
+    @temporary_cache(timeout_seconds=3600)
     def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> str:
         """Find a specific firmware URL from manifest that matches the arguments.
 
