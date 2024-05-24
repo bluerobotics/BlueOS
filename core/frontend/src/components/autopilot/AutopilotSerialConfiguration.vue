@@ -200,7 +200,7 @@ export default Vue.extend({
       if (input.startsWith('/dev/')) {
         return true
       }
-      return 'unknown format'
+      return 'unknown format. Supported formats are "tcpclient", "udpclient", "tcpin", "udpin", and system device paths'
     },
   },
 })
