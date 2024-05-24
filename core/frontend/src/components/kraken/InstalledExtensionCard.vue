@@ -318,8 +318,8 @@ export default Vue.extend({
 <style scoped>
 .card-actions {
   flex-wrap: wrap;
-  column-gap: 4px;
   justify-content: center;
+  row-gap: 7px;
 }
 .progress {
   border-radius: 3px;

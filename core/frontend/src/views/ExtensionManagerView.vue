@@ -723,9 +723,9 @@ export default Vue.extend({
 .installed-extensions-container {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-start;
-
+  width: 100%;
 }
 
 .main-container {
@@ -734,8 +734,9 @@ export default Vue.extend({
 
 .installed-extension-card {
   margin: 10px;
-  flex: 1 1 400px;
-  max-width: 32%;
+  flex: 1 1 calc(33.333% - 20px);
+  max-width: calc(33.333% - 20px);
+  min-width: 400px;
 }
 
 .jv-code {
