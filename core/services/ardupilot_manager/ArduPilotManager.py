@@ -394,15 +394,15 @@ class ArduPilotManager(metaclass=Singleton):
         await self.mavlink_manager.start(device)
 
     @staticmethod
-    def available_boards(include_bootloaders: bool = False) -> List[FlightController]:
-        all_boards = BoardDetector.detect(True)
+    async def available_boards(include_bootloaders: bool = False) -> List[FlightController]:
+        all_boards = await BoardDetector.detect(True)
         if include_bootloaders:
             return all_boards
         return [board for board in all_boards if FlightControllerFlags.is_bootloader not in board.flags]
 
     async def change_board(self, board: FlightController) -> None:
         logger.info(f"Trying to run with '{board.name}'.")
-        if board not in self.available_boards():
+        if board not in await self.available_boards():
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
         self.set_preferred_board(board)
         await self.kill_ardupilot()
@@ -513,7 +513,7 @@ class ArduPilotManager(metaclass=Singleton):
     async def start_ardupilot(self) -> None:
         await self.setup()
         try:
-            available_boards = self.available_boards()
+            available_boards = await self.available_boards()
             if not available_boards:
                 raise RuntimeError("No boards available.")
             if len(available_boards) > 1:
