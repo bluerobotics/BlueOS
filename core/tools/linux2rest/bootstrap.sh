@@ -4,13 +4,22 @@
 set -e
 
 LOCAL_BINARY_PATH="/usr/bin/linux2rest"
-VERSION=v0.5.5
+VERSION=v0.5.6
+REMOTE_BINARY_URL="https://github.com/patrickelectric/linux2rest/releases/download/${VERSION}"
+ARTIFACT_NAME="linux2rest-aarch64-unknown-linux-gnu"
 
-# By default we install armv7
-REMOTE_BINARY_URL="https://github.com/patrickelectric/linux2rest/releases/download/${VERSION}/linux2rest-armv7"
-if [[ "$(uname -m)" == "x86_64"* ]]; then
-    REMOTE_BINARY_URL="https://github.com/patrickelectric/linux2rest/releases/download/${VERSION}/linux2rest-x86_64"
-fi
+case "$(uname -m)" in
+  x86_64)
+    ARTIFACT_NAME="linux2rest-x86_64-unknown-linux-gnu"
+    ;;
+  armv[6-8]l)
+    ARTIFACT_NAME="linux2rest-armv7-unknown-linux-gnueabihf"
+    ;;
+  *)
+    # By default we use aarch64
+    ;;
+esac
 
-wget "$REMOTE_BINARY_URL" -O "$LOCAL_BINARY_PATH"
+
+wget "$REMOTE_BINARY_URL/$ARTIFACT_NAME" -O "$LOCAL_BINARY_PATH"
 chmod +x "$LOCAL_BINARY_PATH"
