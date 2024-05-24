@@ -180,7 +180,7 @@ def save_file(file_name: str, file_content: str, backup_identifier: str) -> None
     logger.info(run_command(command, False))
 
 def hardlink_exists(file_name: str) -> bool:
-    command = f"[ -f '{file_name}' ] && [ $(stat -c '%h' '{file_name}') -gt 1 ]"
+    command = f"[ -f '{file_name}' ] && [ $(stat -c '%h' '{file_name}') -gt 0 ]"
     output = run_command(command, False)
     logger.info(output)
     return output.returncode == 0
