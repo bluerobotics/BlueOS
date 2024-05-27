@@ -37,9 +37,9 @@ echo "Available disk space: ${AVAILABLE_SPACE_MB}MB"
 TOTAL_RAM_MB=$(free -m | awk '/Mem:/ {print $2}')
 echo "Total RAM size: ${TOTAL_RAM_MB} MB"
 
-# Update docker binds, if we need to restart, exit!
+# Update docker binds and other boot-time settings, restarts if necessary
 if [ -z "${BLUEOS_DISABLE_STARTUP_UPDATE}" ]; then
-    blueos_startup_update
+    blueos_startup_update || true  # We NEVER want to prevent booting
 fi
 
 # Set permission of docker unix socket file to be accessible by nginx
