@@ -22,7 +22,12 @@ from tabulate import tabulate
 from uvicorn import Config, Server
 
 from exceptions import BusyError
-from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials
+from typedefs import (
+    HotspotStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+)
 from WifiManager import WifiManager
 
 FRONTEND_FOLDER = Path.joinpath(Path(__file__).parent.absolute(), "frontend")
@@ -166,8 +171,8 @@ async def disconnect() -> Any:
 
 @app.get("/hotspot", summary="Get hotspot state.")
 @version(1, 0)
-def hotspot_state() -> Any:
-    return wifi_manager.hotspot.is_running()
+def hotspot_state() -> HotspotStatus:
+    return HotspotStatus(supported=wifi_manager.hotspot.supports_hotspot, enabled=wifi_manager.hotspot.is_running())
 
 
 @app.post("/hotspot", summary="Enable/disable hotspot.")

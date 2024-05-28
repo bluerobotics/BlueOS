@@ -45,7 +45,7 @@ class HotspotManager:
         self.ipr = IPRoute()
 
         self._ap_interface_name = ap_interface_name
-        self._supports_hotspot = self.check_hotspot_support()
+        self.supports_hotspot = self.check_hotspot_support()
         try:
             dev_id = device_id()
         except Exception:
@@ -168,7 +168,7 @@ class HotspotManager:
 
     def start(self) -> None:
         logger.info("Starting hotspot.")
-        if not self._supports_hotspot:
+        if not self.supports_hotspot:
             raise RuntimeError("Hotspot not supported on this device.")
         try:
             self._create_temp_config_file()
@@ -204,7 +204,7 @@ class HotspotManager:
         self.start()
 
     def is_running(self) -> bool:
-        if not self._supports_hotspot:
+        if not self.supports_hotspot:
             return False
         return self._subprocess is not None and self._subprocess.poll() is None
 
@@ -248,7 +248,7 @@ class HotspotManager:
             f.write(self.hostapd_config())
 
     def _include_interface_on_dhcpcd(self) -> None:
-        if not self._supports_hotspot:
+        if not self.supports_hotspot:
             return
         with open("/etc/dhcpcd.conf", "r", encoding="utf-8") as f:
             original_lines = f.readlines()
