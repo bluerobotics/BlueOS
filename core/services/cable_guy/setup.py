@@ -19,6 +19,7 @@ setuptools.setup(
         "pyroute2 == 0.5.13",
         "starlette == 0.27.0",
         "fastapi == 0.105.0",
+        "sdbus-networkmanager == 2.0.0",
         # Enforce anyio fastapi subdependency to avoid conflict with starlette
         "anyio == 3.7.1",
         "uvicorn == 0.13.4",

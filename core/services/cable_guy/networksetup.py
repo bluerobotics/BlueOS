@@ -7,12 +7,10 @@ from loguru import logger
 from sdbus_block.networkmanager import (
     NetworkConnectionSettings,
     NetworkDeviceGeneric,
-    NetworkDeviceWireless,
     NetworkManager,
     NetworkManagerSettings,
-    settings,
 )
-from sdbus_block.networkmanager.enums import DeviceType
+from sdbus_block.networkmanager.settings.datatypes import AddressData
 
 from typedefs import NetworkInterfaceMetric, NetworkInterfaceMetricApi
 
@@ -276,10 +274,10 @@ class DHCPCD(AbstractNetworkHandler):
 
 
 class NetworkHandlerDetector:
-    def __iinit__(self):
+    def __iinit__(self) -> None:
         pass
 
-    def getHandler(self):
+    def getHandler(self) -> AbstractNetworkHandler:
         for candidate in AbstractNetworkHandler.__subclasses__():
             if candidate().detect():
                 logger.info(f"Detected network handler: {candidate.__name__}")

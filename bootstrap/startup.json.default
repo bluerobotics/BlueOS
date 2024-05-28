@@ -65,6 +65,10 @@
             "/etc/resolv.conf.host": {
                 "bind": "/etc/resolv.conf.host",
                 "mode": "ro"
+            },
+            "/var/run/dbus": {
+                "bind": "/var/run/dbus",
+                "mode": "rw"
             }
         },
         "privileged": true
