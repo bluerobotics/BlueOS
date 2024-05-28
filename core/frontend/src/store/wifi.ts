@@ -4,7 +4,7 @@ import {
 
 import store from '@/store'
 import {
-  Network, NetworkCredentials, SavedNetwork, WifiStatus,
+  Network, NetworkCredentials, SavedNetwork, WifiStatus, HotspotStatus
 } from '@/types/wifi'
 import { sorted_networks } from '@/utils/wifi'
 
@@ -25,7 +25,7 @@ class WifiStore extends VuexModule {
 
   network_status: WifiStatus | null = null
 
-  hotspot_status: boolean | null = null
+  hotspot_status: HotspotStatus | null = null
 
   smart_hotspot_status: boolean | null = null
 
@@ -71,7 +71,7 @@ class WifiStore extends VuexModule {
   }
 
   @Mutation
-  setHotspotStatus(status: boolean | null): void {
+  setHotspotStatus(status: HotspotStatus | null): void {
     this.hotspot_status = status
   }
 
