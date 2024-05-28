@@ -3,14 +3,25 @@ FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontendBuilder
 
 ARG VITE_APP_GIT_DESCRIBE
 ENV VITE_APP_GIT_DESCRIBE=${VITE_APP_GIT_DESCRIBE:-none/none-0-g00000000}
-RUN [ -z "$VITE_APP_GIT_DESCRIBE" ] \
-    && echo "VITE_APP_GIT_DESCRIBE argument not provided." \
-    && echo "Use: --build-arg VITE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)" \
-    && exit 1 || exit 0
+RUN <<-EOF
+set -e
+
+    if [ -z "$VITE_APP_GIT_DESCRIBE" ]; then
+        echo "VITE_APP_GIT_DESCRIBE argument not provided."
+        echo "Use: --build-arg VITE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)"
+        exit 1
+    fi
+
+EOF
 
 COPY frontend /home/pi/frontend
-RUN bun install --cwd /home/pi/frontend
-RUN bun run --cwd /home/pi/frontend build
+RUN <<-EOF
+set -e
+
+    bun install --cwd /home/pi/frontend
+    bun run --cwd /home/pi/frontend build
+
+EOF
 
 # Download binaries
 FROM bluerobotics/blueos-base:v0.1.2 as downloadBinaries
@@ -29,13 +40,21 @@ ARG TARGETVARIANT
 # The format can be invalid if someone is build BlueOS without a tag as reference
 ARG GIT_DESCRIBE_TAGS
 ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-0-g00000000}
-RUN [ -z "$GIT_DESCRIBE_TAGS" ] \
-    && echo "GIT_DESCRIBE_TAGS argument not provided." \
-    && echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long --always)" \
-    && exit 1 \
-    || /bin/bash -c "[[ ! $GIT_DESCRIBE_TAGS =~ -[0-9]+-g[a-f0-9]{8}$ ]]" \
-    && echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)" \
-    && exit 1 || exit 0
+RUN <<-EOF
+set -e
+
+    if [ -z "$GIT_DESCRIBE_TAGS" ]; then
+        echo "GIT_DESCRIBE_TAGS argument not provided."
+        echo "Use: --build-arg GIT_DESCRIBE_TAGS=\$(git describe --tags --long --always)"
+        exit 1
+    fi
+
+    if [[ ! $GIT_DESCRIBE_TAGS =~ -[0-9]+-g[a-f0-9]{8}$ ]]; then
+        echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)"
+        exit 1
+    fi
+
+EOF
 
 # Set these arguments as environment variables
 ENV TARGETARCH=${TARGETARCH}
@@ -73,27 +92,34 @@ COPY --from=downloadBinaries \
 # Copy frontend built on frontendBuild to this stage
 COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
 
-# Asserts
-## When running, the .config folder in the docker is not accessible,
-## since it gets shadowed by the host's `.config` folder.
-## If the folder tree contains any files during the build step, it means we put it here by mistake.
-RUN [ -z "$(find '/root/.config' -mindepth 1 -type f)" ]
+RUN <<-EOF
+set -e
 
-# Update blueosrc with the necessary environment variables
-RUN RCFILE_PATH="/etc/blueosrc" \
-    && echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH \
-    && echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH \
-    && echo "export PATH=$(python -m site --user-base)/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
+    # Asserts
+    ## When running, the .config folder in the docker is not accessible,
+    ## since it gets shadowed by the host's `.config` folder.
+    ## If the folder tree contains any files during the build step, it means we put it here by mistake.
+    [ -z "$(find '/root/.config' -mindepth 1 -type f)" ]
 
-# create some Symlinks to make life easier
-RUN mkdir -p /shortcuts
-RUN ln -s /root/.config /shortcuts/configs
-RUN ln -s /var/logs/blueos/services /shortcuts/system_logs
-RUN ln -s /usr/blueos/userdata /shortcuts/userdata
-RUN ln -s /usr/blueos/extensions /shortcuts/extensions
-RUN ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
-RUN ln -s / /shortcuts/system_root
-RUN useradd -m -u 1000 -G dialout blueos
+    # Update blueosrc with the necessary environment variables
+    RCFILE_PATH="/etc/blueosrc"
+    echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
+    echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
+    echo "export PATH=$(python -m site --user-base)/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
+
+    # Setup shortcuts
+    mkdir -p /shortcuts
+    ln -s /root/.config /shortcuts/configs
+    ln -s /var/logs/blueos/services /shortcuts/system_logs
+    ln -s /usr/blueos/userdata /shortcuts/userdata
+    ln -s /usr/blueos/extensions /shortcuts/extensions
+    ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
+    ln -s / /shortcuts/system_root
+
+    # Setup user
+    useradd -m -u 1000 -G dialout blueos
+
+EOF
 
 # Start
 CMD /bin/bash -i /usr/bin/start-blueos-core && sleep infinity
