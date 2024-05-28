@@ -189,12 +189,14 @@ class Serial(BaseModel):
     endpoint: str
 
     @validator("port")
+    @classmethod
     def valid_letter(cls: Any, value: str) -> str:
         if value in "BCDEFGH" and len(value) == 1:
             return value
         raise ValueError(f"Invalid serial port: {value}. These must be between B and H. A is reserved.")
 
     @validator("endpoint")
+    @classmethod
     def valid_endpoint(cls: Any, value: str) -> str:
         if Path(value).exists():
             return value
