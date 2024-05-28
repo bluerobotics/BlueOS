@@ -24,12 +24,12 @@ set -e
 EOF
 
 # Download binaries
-FROM bluerobotics/blueos-base:v0.1.2 as downloadBinaries
+FROM bluerobotics/blueos-base:v0.1.3 as downloadBinaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
 # BlueOS-docker base image
-FROM bluerobotics/blueos-base:v0.1.2
+FROM bluerobotics/blueos-base:v0.1.3
 
 # Define arguments for target platform
 # These arguments are defined automatically by buildx when using `--platform`
