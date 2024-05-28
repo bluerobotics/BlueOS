@@ -11,7 +11,7 @@ from typing import Any, Callable, List, Optional
 
 import psutil
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
-from commonwealth.utils.general import device_id
+from commonwealth.utils.general import HostOs, device_id, get_host_os
 from loguru import logger
 from pyroute2 import IW, IPRoute
 
@@ -44,7 +44,7 @@ class HotspotManager:
         self.ipr = IPRoute()
 
         self._ap_interface_name = ap_interface_name
-
+        self._supports_hotspot = self.check_hotspot_support()
         try:
             dev_id = device_id()
         except Exception:
@@ -79,6 +79,10 @@ class HotspotManager:
 
     def binary(self) -> pathlib.Path:
         return self._binary
+
+    def check_hotspot_support(self) -> bool:
+        # Support for Bookworm should arrive with NetworkManager support
+        return bool(get_host_os() == HostOs.Bullseye)
 
     def set_credentials(self, credentials: WifiCredentials) -> None:
         logger.debug(f"Changing hotspot ssid to '{credentials.ssid}' and passphrase to '{credentials.password}'.")
@@ -161,6 +165,8 @@ class HotspotManager:
 
     def start(self) -> None:
         logger.info("Starting hotspot.")
+        if not self._supports_hotspot:
+            raise RuntimeError("Hotspot not supported on this device.")
         try:
             self._create_temp_config_file()
             self._create_virtual_interface()
@@ -195,6 +201,8 @@ class HotspotManager:
         self.start()
 
     def is_running(self) -> bool:
+        if not self._supports_hotspot:
+            return False
         return self._subprocess is not None and self._subprocess.poll() is None
 
     @staticmethod
@@ -237,6 +245,8 @@ class HotspotManager:
             f.write(self.hostapd_config())
 
     def _include_interface_on_dhcpcd(self) -> None:
+        if not self._supports_hotspot:
+            return
         with open("/etc/dhcpcd.conf", "r", encoding="utf-8") as f:
             original_lines = f.readlines()
 
