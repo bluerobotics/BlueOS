@@ -1,5 +1,4 @@
 import os
-import resource
 import subprocess
 import uuid
 from functools import cache
@@ -14,10 +13,6 @@ from commonwealth.utils.decorators import temporary_cache
 @cache
 def blueos_version() -> str:
     return os.environ.get("GIT_DESCRIBE_TAGS", "null")
-
-
-def limit_ram_usage(memory_limit_mb: int = 100) -> None:
-    resource.setrlimit(resource.RLIMIT_AS, (memory_limit_mb * 1024 * 1024, -1))
 
 
 def delete_everything(path: Path) -> None:
