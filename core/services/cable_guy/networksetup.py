@@ -7,12 +7,10 @@ from loguru import logger
 from sdbus_block.networkmanager import (
     NetworkConnectionSettings,
     NetworkDeviceGeneric,
-    NetworkDeviceWireless,
     NetworkManager,
     NetworkManagerSettings,
-    settings,
 )
-from sdbus_block.networkmanager.enums import DeviceType
+from sdbus_block.networkmanager.settings.datatypes import AddressData
 
 from typedefs import NetworkInterfaceMetric, NetworkInterfaceMetricApi
 
@@ -33,6 +31,45 @@ class AbstractNetworkHandler:
 
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         raise NotImplementedError("NetworkManager does not support setting interface priority")
+
+
+class NetworkManager(AbstractNetworkHandler):
+    def detect(self) -> bool:
+        try:
+            all_devices = {path: NetworkDeviceGeneric(path) for path in network_manager.devices}
+            return bool(len(all_devices))
+        except Exception as error:
+            logger.error(f"Failed to detect NetworkManager: {error}")
+            return False
+
+    def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
+        interfaces = []
+        networkmanager_settings = NetworkManagerSettings()
+        for dbus_connection_path in networkmanager_settings.connections:
+            profile = NetworkConnectionSettings(dbus_connection_path).get_profile()
+            if profile.connection.interface_name and profile.ipv4.route_metric:
+                interfaces.append(
+                    NetworkInterfaceMetric(
+                        index=0, name=profile.connection.interface_name, priority=profile.ipv4.route_metric
+                    )
+                )
+        return interfaces
+
+    def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+        metric = interfaces[0].priority or 1000
+        for interface in interfaces:
+            networkmanager_settings = NetworkManagerSettings()
+            for connection_path in networkmanager_settings.connections:
+                settings = NetworkConnectionSettings(connection_path)
+                properties = settings.get_settings()
+                if properties["connection"]["interface-name"][1] != interface.name:
+                    continue
+                properties["ipv4"]["route-metric"] = ("u", metric)
+                metric += 1000
+                logger.info(f"Settting current priority for {interface.name} as {metric}")
+                settings.update(properties)
+                network_manager.activate_connection(connection_path)
+
 
 class DHCPCD(AbstractNetworkHandler):
     dhcpcd_conf_path = "/etc/dhcpcd.conf"
@@ -181,10 +218,10 @@ class DHCPCD(AbstractNetworkHandler):
 
 
 class NetworkHandlerDetector:
-    def __iinit__(self):
+    def __iinit__(self) -> None:
         pass
 
-    def getHandler(self):
+    def getHandler(self) -> AbstractNetworkHandler:
         for candidate in AbstractNetworkHandler.__subclasses__():
             if candidate().detect():
                 logger.info(f"Detected network handler: {candidate.__name__}")
