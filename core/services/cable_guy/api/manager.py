@@ -1,7 +1,6 @@
 import re
 import subprocess
 import time
-from enum import Enum
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -9,45 +8,27 @@ import psutil
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
-from pydantic import BaseModel
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 
 from api import dns, settings
 
+from typedefs import (
+    AddressMode,
+    InterfaceAddress,
+    InterfaceInfo,
+    NetworkInterface,
+    NetworkInterfaceMetric,
+    NetworkInterfaceMetricApi,
+)
 
-class AddressMode(str, Enum):
-    Client = "client"
-    Server = "server"
-    Unmanaged = "unmanaged"
-
-
-class InterfaceAddress(BaseModel):
-    ip: str
-    mode: AddressMode
-
-
-class InterfaceInfo(BaseModel):
-    connected: bool
-    number_of_disconnections: int
-    priority: int
-
-
-class NetworkInterface(BaseModel):
-    name: str
-    addresses: List[InterfaceAddress]
-    info: Optional[InterfaceInfo]
-
-
-class NetworkInterfaceMetric(BaseModel):
-    name: str
-    index: int
-    priority: int
-
-
-class NetworkInterfaceMetricApi(BaseModel):
-    name: str
-    priority: Optional[int]
+__all__ = [
+    "AddressMode",
+    "EthernetManager",
+    "InterfaceAddress",
+    "NetworkInterface",
+    "NetworkInterfaceMetricApi",
+]
 
 
 class EthernetManager:
