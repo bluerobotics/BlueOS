@@ -274,8 +274,8 @@ async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
 
 @app.get("/available_boards", response_model=List[FlightController], summary="Retrieve list of connected boards.")
 @version(1, 0)
-def available_boards() -> Any:
-    return autopilot.available_boards(True)
+async def available_boards() -> Any:
+    return await autopilot.available_boards(True)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
