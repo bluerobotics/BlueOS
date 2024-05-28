@@ -18,7 +18,6 @@ from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONRespons
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
     blueos_version,
-    limit_ram_usage,
     local_hardware_identifier,
     local_unique_identifier,
 )
@@ -34,8 +33,6 @@ from nginx_parser import parse_nginx_file
 
 SERVICE_NAME = "helper"
 SPEED_TEST: Optional[Speedtest] = None
-
-limit_ram_usage(200)
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 try:
