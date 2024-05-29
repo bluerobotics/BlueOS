@@ -32,6 +32,9 @@ class AbstractNetworkHandler:
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         raise NotImplementedError("NetworkManager does not support setting interface priority")
 
+    def enable_dhcp_client(self, interface_name: str) -> None:
+        pass
+
 
 class NetworkManager(AbstractNetworkHandler):
     def detect(self) -> bool:
@@ -41,6 +44,17 @@ class NetworkManager(AbstractNetworkHandler):
         except Exception as error:
             logger.error(f"Failed to detect NetworkManager: {error}")
             return False
+
+    def enable_dhcp_client(self, interface_name: str) -> None:
+        networkmanager_settings = NetworkManagerSettings()
+        for connection_path in networkmanager_settings.connections:
+            settings = NetworkConnectionSettings(connection_path)
+            properties = settings.get_settings()
+            if properties["connection"]["interface-name"][1] != interface_name:
+                continue
+            properties["ipv4"]["method"] = ("s", "auto")
+            settings.update(properties)
+            network_manager.activate_connection(connection_path)
 
     def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
         interfaces = []
