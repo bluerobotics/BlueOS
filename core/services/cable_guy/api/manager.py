@@ -279,6 +279,7 @@ class EthernetManager:
                 self.remove_dhcp_server_from_interface(interface_name)
             interface_index = self._get_interface_index(interface_name)
             self.ipr.addr("del", index=interface_index, address=ip_address, prefixlen=24)
+            self.network_handler.remove_static_ip(interface_name, ip_address)
         except Exception as error:
             raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
 
