@@ -34,7 +34,7 @@ class AbstractNetworkHandler:
 
     def enable_dhcp_client(self, interface_name: str) -> None:
         pass
-      
+
     def add_static_ip(self, interface_name: str, ip: str) -> None:
         pass
 
@@ -42,8 +42,7 @@ class AbstractNetworkHandler:
         pass
 
 
-class NetworkManager(AbstractNetworkHandler):
-  
+class NetworkManagerHandler(AbstractNetworkHandler):
     def detect(self) -> bool:
         try:
             all_devices = {path: NetworkDeviceGeneric(path) for path in network_manager.devices}
@@ -57,48 +56,34 @@ class NetworkManager(AbstractNetworkHandler):
         for connection_path in networkmanager_settings.connections:
             try:
                 settings = NetworkConnectionSettings(connection_path)
-                properties = settings.get_settings()
-                if properties["connection"]["interface-name"][1] != interface_name:
+                data = settings.get_profile()
+                if data.connection.interface_name != interface_name:
                     continue
-                addresses = properties["ipv4"]["addresses"][1]
-                ip_as_int32 = 0
-                for i, octet in enumerate(ip.split(".")):
-                  ip_as_int32 |= int(octet) << ((i) * 8)
-                addresses = [address for address in addresses if address[0] != ip_as_int32]
-                addresses.reverse()  # Reverse the byte order
-                properties["ipv4"]["addresses"] = ("aau", addresses)
-                properties["ipv4"]["method"] = ("s", "auto")
-                settings.update(properties)
+                ips = data.ipv4.address_data
+                data.ipv4.address_data = [addressData for addressData in ips if ip not in addressData.address]
+                settings.update_profile(data)
                 network_manager.activate_connection(connection_path)
             except Exception as e:
                 logger.error(f"Failed to remove static ip {ip} for {interface_name}: {e}")
 
     def add_static_ip(self, interface_name: str, ip: str) -> None:
         networkmanager_settings = NetworkManagerSettings()
-        import time
+
         time.sleep(1)
         for connection_path in networkmanager_settings.connections:
             try:
                 settings = NetworkConnectionSettings(connection_path)
-                properties = settings.get_settings()
-                if properties["connection"]["interface-name"][1] != interface_name:
+                data = settings.get_profile()
+                if data.connection.interface_name != interface_name:
                     continue
-                if any(ip in address for address in properties["ipv4"]["addresses"]):
+                if any(ip in addressData.address for addressData in data.ipv4.address_data):
                     logger.info(f"IP {ip} already exists for {interface_name}")
                     continue
-                addresses = properties["ipv4"]["addresses"][1]
-                ip_as_int32 = 0
-                for i, octet in enumerate(ip.split(".")):
-                  ip_as_int32 |= int(octet) << ((i) * 8)
-                addresses.append([ip_as_int32, 24, 0])
-                addresses.reverse()  # Reverse the byte order
-                properties["ipv4"]["addresses"] = ("aau", addresses)
-                properties["ipv4"]["method"] = ("s", "auto")
-                import pprint
-                pprint.pprint((properties))
-                settings.update(properties)
-                #network_manager.deactivate_connection(connection_path)
+                new_ip = AddressData(address=ip, prefix=24)
+                data.ipv4.address_data.append(new_ip)
+                settings.update_profile(data)
                 network_manager.activate_connection(connection_path)
+                return
             except Exception as e:
                 logger.error(f"Failed to set static ip {ip} for {interface_name}: {e}")
 
