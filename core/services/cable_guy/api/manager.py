@@ -256,6 +256,7 @@ class EthernetManager:
             ip (str): Desired ip address
         """
         logger.info(f"Adding static IP '{ip}' to interface '{interface_name}'.")
+        self.network_handler.add_static_ip(interface_name, ip)
         interface_index = self._get_interface_index(interface_name)
         try:
             self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
