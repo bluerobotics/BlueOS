@@ -4,6 +4,7 @@ from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
 from commonwealth.settings.manager import Manager
+from commonwealth.utils.commands import run_command
 from loguru import logger
 
 from exceptions import FetchError, ParseError
@@ -338,6 +339,9 @@ class WifiManager:
                 continue
 
             is_connected = await self.get_current_network() is not None
+            if is_connected and "ip_address" not in await self.status():
+                # we are connected but have no ip addres? lets try calling dhclient manually
+                run_command("sudo dhclient wlan0", check=False)
 
             if was_connected and not is_connected:
                 self.connection_status = ConnectionStatus.JUST_DISCONNECTED
