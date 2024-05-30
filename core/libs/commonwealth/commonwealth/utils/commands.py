@@ -76,3 +76,68 @@ def run_command(command: str, check: bool = True, log_output: bool = True) -> "s
     if ret.stderr:
         logger.error(f"stderr: {ret.stderr}")
     return ret
+
+
+def upload_file_with_password(
+    source: str, destination: str, check: bool = True
+) -> "subprocess.CompletedProcess['str']":
+    # attempt to upload the file with sshpass
+    # used as a fallback if the ssh key is not found
+    user = "pi"
+    password = "raspberry"
+
+    return subprocess.run(
+        [
+            "sshpass",
+            "-p",
+            password,
+            "scp",
+            source,
+            f"{user}@localhost:{destination}",
+        ],
+        check=check,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def upload_file_with_ssh_key(source: str, destination: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
+    # attempt to upload the file with the ssh key
+    user = "pi"
+    id_file = "/root/.config/.ssh/id_rsa"
+    if not Path(id_file).exists():
+        raise KeyNotFound
+
+    return subprocess.run(
+        [
+            "scp",
+            "-i",
+            id_file,
+            source,
+            f"{user}@localhost:{destination}",
+        ],
+        check=check,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def upload_file(file_content: str, destination: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
+    temp_file_in_container = "/tmp/file_to_upload"
+    temp_file_in_host = "/tmp/uploaded_file"
+    logger.debug(f"uploading to {destination}")
+    with open(temp_file_in_container, "w", encoding="utf-8") as f:
+        f.write(file_content)
+    try:
+        ret = upload_file_with_ssh_key(temp_file_in_container, temp_file_in_host, check)
+    except KeyNotFound:
+        logger.warning("SSH key not found, falling back to password authentication")
+        ret = upload_file_with_password(temp_file_in_container, temp_file_in_host, check)
+    logger.debug(ret)
+    if ret.returncode == 0:
+        run_command(f"sudo mv {temp_file_in_host} {destination}")
+    else:
+        logger.error(f"Failed to upload file: {ret.stderr}")
+    return ret
