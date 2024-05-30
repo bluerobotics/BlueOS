@@ -4,4 +4,4 @@
 set -e
 
 SCRIPTS_PATH=$(dirname "$0")
-cp $PWD/$SCRIPTS_PATH/blueos_startup_update /usr/bin/
+cp $PWD/$SCRIPTS_PATH/blueos_startup_update.py /usr/bin/

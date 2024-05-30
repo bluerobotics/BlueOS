@@ -80,7 +80,7 @@ COPY run-service.sh /usr/bin/run-service
 
 # Copy binaries and necessary folders from downloadBinaries to this stage
 COPY --from=downloadBinaries \
-    /usr/bin/blueos_startup_update \
+    /usr/bin/blueos_startup_update.py \
     /usr/bin/bridges \
     /usr/bin/machineid-cli \
     /usr/bin/mavlink2rest \
