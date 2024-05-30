@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from enum import Enum
 import time
 from typing import List, Optional, Tuple
 
@@ -41,6 +42,37 @@ CONFIG_USER_PROTECTION_WORD = "custom"
 
 config_file = None
 cmdline_file = None
+
+
+class CpuType(str, Enum):
+    PI4 = "Raspberry Pi 4 (BCM2711)"
+    PI5 = "Raspberry Pi 5 (BCM2712)"
+    Other = "Other"
+
+
+class HostOs(str, Enum):
+    Bookworm = "Debian(Raspberry Pi OS?) 12 (Bookworm)"
+    Bullseye = "Debian(Raspberry Pi OS?) 11 (Bullseye)"
+    Other = "Other"
+
+
+def get_cpu_type() -> CpuType:
+    with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
+        for line in f:
+            if "Raspberry Pi 4" in line:
+                return CpuType.PI4
+            if "Raspberry Pi 5" in line:
+                return CpuType.PI5
+    return CpuType.Other
+
+
+def get_host_os() -> HostOs:
+    os_release = load_file("/etc/os-release")
+    if "bookworm" in os_release:
+        return HostOs.Bookworm
+    if "bullseye" in os_release:
+        return HostOs.Bullseye
+    return HostOs.Other
 
 
 # Copyright 2016-2022 Paul Durivage
@@ -433,21 +465,34 @@ def main() -> int:
         logger.error("Ignoring host computer configuration for now.")
         return 0
 
+    host_os = get_host_os()
+    logger.info(f"Host OS: {host_os}")
+    host_cpu = get_cpu_type()
+    logger.info(f"Host CPU: {host_cpu}")
+
     # TODO: parse tag as semver and check before applying patches
     patches_to_apply = [
         update_startup,
-        update_cgroups,
-        update_dwc2,
-        update_navigator_overlays,
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
         create_dns_conf_host_link,
     ]
 
-    logger.info(
-        "The following patches will be applied if needed:",
-        [patch_to_apply.__name__ for patch_to_apply in patches_to_apply],
-    )
+    # this will always be pi4 as pi5 is not supported
+    if host_os == HostOs.Bullseye:
+        patches_to_apply.extend([update_navigator_overlays])
+
+    if host_cpu == CpuType.PI4 or CpuType.PI5:
+        patches_to_apply.extend(
+            [
+                update_cgroups,
+                update_dwc2,
+            ]
+        )
+
+    logger.info("The following patches will be applied if needed:")
+    for patch in patches_to_apply:
+        logger.info(patch.__name__)
 
     patches_requiring_restart = [patch.__name__ for patch in patches_to_apply if patch()]
     if patches_requiring_restart:
