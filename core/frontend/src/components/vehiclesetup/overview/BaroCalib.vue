@@ -1,65 +1,67 @@
 <template>
-  <v-card class="ma-2 pa-2">
-    <v-card-title class="align-center">
-      Calibrate Barometer
-    </v-card-title>
-    <v-card-text>
-      <v-simple-table dense>
-        <template #default>
-          <thead>
-            <tr>
-              <th class="text-left">
-                Sensor
-              </th>
-              <th class="text-left">
-                Type
-              </th>
-              <th class="text-left">
-                Bus
-              </th>
-              <th class="text-left">
-                Address
-              </th>
-              <th class="text-left">
-                Status
-              </th>
-              <th class="text-left">
-                Calibrated at
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="baro in baros"
-              :key="baro.param"
-            >
-              <td><b>{{ baro.deviceName ?? 'UNKNOWN' }}</b></td>
-              <td v-tooltip="'Used to estimate altitude/depth'">
-                {{ get_pressure_type[baro.param] }} Pressure
-              </td>
-              <td>{{ baro.busType }} {{ baro.bus }}</td>
-              <td>{{ `0x${baro.address}` }}</td>
-              <td>{{ baro_status[baro.param] }}</td>
-              <td>{{ baro_ground_pressure[baro.param] }}</td>
-            </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
-    </v-card-text>
-    <v-card-actions class="justify-center pt-4">
-      {{ calibration_status }}
-    </v-card-actions>
-    <v-card-actions class="justify-center pa-2">
-      <v-btn
-        v-tooltip="'Calibrate all barometers to ground level'"
-        color="primary"
-        :disabled="disable_button"
-        @click="calibrate"
-      >
-        Calibrate
-      </v-btn>
-    </v-card-actions>
-  </v-card>
+  <div class="pa-1">
+    <v-card class="ma-2 pa-2">
+      <v-card-title class="align-center">
+        Calibrate Barometer
+      </v-card-title>
+      <v-card-text>
+        <v-simple-table dense>
+          <template #default>
+            <thead>
+              <tr>
+                <th class="text-left">
+                  Sensor
+                </th>
+                <th class="text-left">
+                  Type
+                </th>
+                <th class="text-left">
+                  Bus
+                </th>
+                <th class="text-left">
+                  Address
+                </th>
+                <th class="text-left">
+                  Status
+                </th>
+                <th class="text-left">
+                  Calibrated at
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="baro in baros"
+                :key="baro.param"
+              >
+                <td><b>{{ baro.deviceName ?? 'UNKNOWN' }}</b></td>
+                <td v-tooltip="'Used to estimate altitude/depth'">
+                  {{ get_pressure_type[baro.param] }} Pressure
+                </td>
+                <td>{{ baro.busType }} {{ baro.bus }}</td>
+                <td>{{ `0x${baro.address}` }}</td>
+                <td>{{ baro_status[baro.param] }}</td>
+                <td>{{ baro_ground_pressure[baro.param] }}</td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </v-card-text>
+      <v-card-actions class="justify-center pt-4">
+        {{ calibration_status }}
+      </v-card-actions>
+      <v-card-actions class="justify-center pa-2">
+        <v-btn
+          v-tooltip="'Calibrate all barometers to ground level'"
+          color="primary"
+          :disabled="disable_button"
+          @click="calibrate"
+        >
+          Calibrate
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </div>
 </template>
 
 <script lang="ts">
