@@ -1,6 +1,14 @@
-from fastapi import APIRouter, status
-from fastapi.responses import Response
+from functools import wraps
+from typing import Any, Callable, Tuple
+
+from commonwealth.utils.streaming import timeout_streamer
+from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import StreamingResponse
 from fastapi_versioning import versioned_api_route
+
+from harbor import ContainerManager
+from harbor.exceptions import ContainerNotFound
+from harbor.models import ContainerModel, ContainerUsageModel
 
 container_router_v2 = APIRouter(
     prefix="/container",
@@ -10,49 +18,61 @@ container_router_v2 = APIRouter(
 )
 
 
+def container_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
+    @wraps(endpoint)
+    async def wrapper(*args: Tuple[Any], **kwargs: dict[str, Any]) -> Any:
+        try:
+            return await endpoint(*args, **kwargs)
+        except ContainerNotFound as error:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+
+    return wrapper
+
+
 @container_router_v2.get("/", status_code=status.HTTP_200_OK)
-async def list_container() -> Response:
+@container_to_http_exception
+async def list_container() -> list[ContainerModel]:
     """
     List details all running containers.
     """
-    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    return await ContainerManager.get_running_containers()
 
 
 @container_router_v2.get("/{container_name}/details", status_code=status.HTTP_200_OK)
-async def fetch_container(_container_name: str) -> Response:
+@container_to_http_exception
+async def fetch_container(container_name: str) -> ContainerModel:
     """
     List details of a given container.
     """
-    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
-
-
-@container_router_v2.get("/log", status_code=status.HTTP_200_OK)
-async def list_log() -> Response:
-    """
-    List logs all running containers.
-    """
-    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    return await ContainerManager.get_running_container_by_name(container_name)
 
 
 @container_router_v2.get("/{container_name}/log", status_code=status.HTTP_200_OK)
-async def fetch_log_by_container_name(_container_name: str) -> Response:
+@container_to_http_exception
+async def fetch_log_by_container_name(container_name: str) -> StreamingResponse:
     """
-    Get logs of a given container.
+    Get logs of a given container in a streaming wrapper.
     """
-    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    return StreamingResponse(
+        timeout_streamer(ContainerManager.get_container_log_by_name(container_name)), media_type="text/plain"
+    )
 
 
 @container_router_v2.get("/stats", status_code=status.HTTP_200_OK)
-async def list_stats() -> Response:
+@container_to_http_exception
+async def list_stats() -> dict[str, ContainerUsageModel]:
     """
     List stats of all running containers.
     """
-    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    return await ContainerManager.get_containers_stats()
 
 
 @container_router_v2.get("/{container_name}/stats", status_code=status.HTTP_200_OK)
-async def fetch_stats_by_container_name(_container_name: str) -> Response:
+@container_to_http_exception
+async def fetch_stats_by_container_name(container_name: str) -> ContainerUsageModel:
     """
     List stats of a given running containers.
     """
-    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    return await ContainerManager.get_container_stats_by_name(container_name)
