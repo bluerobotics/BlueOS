@@ -438,6 +438,27 @@ def ensure_user_data_structure_is_in_place() -> bool:
     return False
 
 
+def build_led_overlay():
+    temp_overlay_file_at_host = "/tmp/spi0-led.dts"
+    target_overlay_location_pi4 = "/boot/overlays/spi0-led.dtbo"
+    target_overlay_location_pi5 = "/boot/firmware/overlays/spi0-led.dtbo"
+    overlay_exists = locate_file([target_overlay_location_pi4, target_overlay_location_pi5])
+    if overlay_exists:
+        logger.info(f"spi0-led overlay found at {overlay_exists}")
+        return False
+    with open("/install/overlays/spi0-led.dts", "r", encoding="utf-8") as f:
+        dts = f.read()
+        save_file(temp_overlay_file_at_host, dts, "")
+    command = f"sudo dtc -@ -Hepapr -I dts -O dtb -o {target_overlay_location_pi4} {temp_overlay_file_at_host}"
+    logger.info(run_command(command, False))
+    copy_command = (
+        f"if [ -d /boot/firmware ]; then sudo cp {target_overlay_location_pi4} {target_overlay_location_pi5}; fi"
+    )
+    logger.info(run_command(copy_command, False))
+    # we should be able to load the just-built overlay, no need to restart
+    return False
+
+
 def run_command_is_working():
     output = run_command("uname -a", check=False)
     if output.returncode != 0:
@@ -485,6 +506,7 @@ def main() -> int:
     if host_cpu == CpuType.PI4 or CpuType.PI5:
         patches_to_apply.extend(
             [
+                build_led_overlay,
                 update_cgroups,
                 update_dwc2,
             ]

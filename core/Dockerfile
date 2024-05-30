@@ -64,6 +64,9 @@ ENV TARGETVARIANT=${TARGETVARIANT}
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-system-tools.sh
 
+# Copy overlay source in case we need to build it in runtime
+COPY install/ /install
+
 # Install custom libraries
 COPY libs /home/pi/libs
 RUN /home/pi/libs/install-libs.sh
