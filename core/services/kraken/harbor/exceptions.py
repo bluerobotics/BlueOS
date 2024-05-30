@@ -1,0 +1,2 @@
+class ContainerNotFound(Exception):
+    pass
