@@ -19,7 +19,9 @@
           v-for="page in filtered_pages"
           :key="`item-${page.title}`"
         >
-          <component :is="page.component" />
+          <div class="main-container ">
+            <component :is="page.component" />
+          </div>
         </v-tab-item>
       </v-tabs-items>
     </v-container>
@@ -86,3 +88,8 @@ export default Vue.extend({
   },
 })
 </script>
+<style scoped>
+.main-container {
+  background-color: #135DA3AA !important;
+}
+</style>
