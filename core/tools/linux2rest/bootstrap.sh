@@ -4,7 +4,7 @@
 set -e
 
 LOCAL_BINARY_PATH="/usr/bin/linux2rest"
-VERSION=v0.5.6
+VERSION=v0.5.7
 REMOTE_BINARY_URL="https://github.com/patrickelectric/linux2rest/releases/download/${VERSION}"
 ARTIFACT_NAME="linux2rest-aarch64-unknown-linux-gnu"
 
