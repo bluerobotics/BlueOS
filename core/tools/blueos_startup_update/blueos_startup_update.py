@@ -9,6 +9,7 @@ import time
 from typing import List, Optional, Tuple
 
 import appdirs
+from boot.pi5overlays import load_pi5_overlays_in_runtime
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
@@ -506,6 +507,12 @@ def main() -> int:
             [
                 update_cgroups,
                 update_dwc2,
+            ]
+        )
+    if host_cpu == CpuType.PI5:
+        patches_to_apply.extend(
+            [
+                load_pi5_overlays_in_runtime,
             ]
         )
 
