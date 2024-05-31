@@ -18,6 +18,8 @@ SERVICE_NAME = "blueos_startup_update"
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
+BOOT_LOOP_DETECTOR = "/root/.config/.boot_loop_detector"
+
 # Any change made in this DELTA_JSON dict should be also made
 # into /bootstrap/startup.json.default too!
 DELTA_JSON = {
@@ -445,6 +447,10 @@ def run_command_is_working():
 
 def main() -> int:
     start = time.time()
+    # check if boot_loop_detector exists
+    if os.path.isfile(BOOT_LOOP_DETECTOR):
+        logger.warning("It seems we the startup patches were just applied on the last boot. skipping patches...")
+        return
     current_git_version = os.getenv("GIT_DESCRIBE_TAGS")
     match = re.match(r"(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)", current_git_version)
     tag, commit_number, commit_hash = match["tag"], match["commit_number"], match["commit_hash"]
@@ -496,6 +502,8 @@ def main() -> int:
         logger.warning("The system will restart in 10 seconds because the following applied patches required restart:")
         for patch in patches_requiring_restart:
             logger.info(patch)
+        # pylint: disable-next=consider-using-with,unspecified-encoding
+        open(BOOT_LOOP_DETECTOR, "w").close()
         time.sleep(10)
         run_command("sudo reboot", False)
         time.sleep(600)  # we are already rebooting anyway. but we don't want the other services to come up
@@ -506,3 +514,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     main()
+    os.remove(BOOT_LOOP_DETECTOR)
