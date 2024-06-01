@@ -57,14 +57,22 @@ def run_command_with_ssh_key(command: str, check: bool = True) -> "subprocess.Co
     )
 
 
-def run_command(command: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
+def run_command(command: str, check: bool = True, log_output: bool = True) -> "subprocess.CompletedProcess['str']":
     # runs the given command on the host computer.
     # we first try with the ssh key, which is the default behavior.
     # we need to fallback to sshpass as some systems will try to call this function before the ssh key is generated.
     # this is the case for the first boot of this image after updating.
     # not including the sshpass step causes blueos_startup_update to fail hard. crashing BlueOS as a whole.
     try:
-        return run_command_with_ssh_key(command, check)
+        ret = run_command_with_ssh_key(command, check)
     except Exception as error:
         logger.warning(f"Failed to run command with SSH key. {error}, trying with sshpass:\n{command}")
-        return run_command_with_password(command, check)
+        ret = run_command_with_password(command, check)
+    logger.info(f"Host: '{command}' : returned {ret.returncode}")
+    if not log_output:
+        return ret
+    if ret.stdout:
+        logger.info(f"stdout: {ret.stdout}")
+    if ret.stderr:
+        logger.error(f"stderr: {ret.stderr}")
+    return ret
