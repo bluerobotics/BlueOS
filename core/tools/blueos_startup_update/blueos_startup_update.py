@@ -89,11 +89,11 @@ def dict_merge(dct, merge_dct):
 def locate_file(candidates: List[str]) -> Optional[str]:
     # first match will return
     command = f"find {' '.join(candidates)} -type f -print -quit"
-    output = run_command(command, False).stdout.strip()
-    return output
+    return run_command(command, False, log_output=False).stdout.strip()
 
 
 def update_startup() -> bool:
+    logger.info("Updating startup.json...")
     startup_path = os.path.join(appdirs.user_config_dir("bootstrap"), "startup.json")
     config = {}
 
@@ -186,31 +186,25 @@ def boot_config_filter_conflicting_configuration_at_session(
 
 def load_file(file_name) -> str:
     command = f'cat "{file_name}"'
-    output = run_command(command, False)
-    logger.info(output)
-    return output.stdout
+    return run_command(command, False).stdout
 
 
 def save_file(file_name: str, file_content: str, backup_identifier: str) -> None:
     command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
-    logger.info(run_command(command, False))
+    run_command(command, False)
 
     command = f'echo "{file_content}" | sudo tee "{file_name}"'
-    logger.info(run_command(command, False))
+    run_command(command, False)
 
 
 def hardlink_exists(file_name: str) -> bool:
     command = f"[ -f '{file_name}' ] && [ $(stat -c '%h' '{file_name}') -gt 1 ]"
-    output = run_command(command, False)
-    logger.info(output)
-    return output.returncode == 0
+    return run_command(command, False).returncode == 0
 
 
 def create_hard_link(source_file_name: str, destination_file_name: str) -> bool:
     command = f"sudo rm -rf {destination_file_name}; sudo ln {source_file_name} {destination_file_name}"
-    output = run_command(command, False)
-    logger.info(output)
-    return output.returncode == 0
+    return run_command(command, False).returncode == 0
 
 
 def boot_cmdfile_add_modules(cmdline_content: List[str], config_key: str, desired_config: List[str]):
@@ -401,6 +395,7 @@ def create_dns_conf_host_link() -> bool:
     a binding with an fixed file-descriptor, which is neccessary for docker bindings if the original
     file is being replaced by some system service, like is the case when dnsmasq or dhcpcd changes
     the /etc/resolf.conf file."""
+    logger.info("Creating dns link with host...")
     original_resolv_conf_file = "/etc/resolv.conf"
     resolv_conf_file_host_link = "/etc/resolv.conf.host"
     if hardlink_exists(resolv_conf_file_host_link):
@@ -417,8 +412,9 @@ def create_dns_conf_host_link() -> bool:
 
 def ensure_nginx_permissions() -> bool:
     # ensure nginx can read the userdata directory
+    logger.info("Ensuring nginx permissions...")
     command = "sudo chown -R www-data:www-data /usr/blueos/userdata"
-    logger.info(run_command(command, False))
+    run_command(command, False)
 
     # This patch doesn't require restart to take effect
     return False
@@ -426,13 +422,14 @@ def ensure_nginx_permissions() -> bool:
 
 def ensure_user_data_structure_is_in_place() -> bool:
     # ensures we have all base folders in userdata
+    logger.info("Ensuring userdata structure is in place...")
     commands = [
         "sudo mkdir -p /usr/blueos/userdata/images/vehicle",
         "sudo mkdir -p /usr/blueos/userdata/images/logo",
         "sudo mkdir -p /usr/blueos/userdata/styles",
     ]
     for command in commands:
-        logger.info(run_command(command, False))
+        run_command(command, False)
 
     # This patch doesn't require restart to take effect
     return False
