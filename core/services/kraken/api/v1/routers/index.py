@@ -1,13 +1,15 @@
-from typing import Any
+from typing import Any, List, cast
 
 from commonwealth.utils.streaming import timeout_streamer
 from fastapi import APIRouter, status
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi_versioning import versioned_api_route
 
-from api.v1.models import Extension
+from extension.extension import Extension
+from extension.models import ExtensionSource
 from harbor import ContainerManager
-from kraken import kraken_instance
+from manifest import ManifestManager
+from manifest.models import RepositoryEntry
 
 index_router_v1 = APIRouter(
     tags=["index_v1"],
@@ -15,29 +17,18 @@ index_router_v1 = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
+manifest_manager = ManifestManager.instance()
+
 
 @index_router_v1.get("/extensions_manifest", status_code=status.HTTP_200_OK)
-async def fetch_manifest() -> Any:
-    return await kraken_instance.fetch_manifest()
+async def fetch_manifest() -> list[RepositoryEntry]:
+    return await manifest_manager.fetch_consolidated()
 
 
 @index_router_v1.get("/installed_extensions", status_code=status.HTTP_200_OK)
-async def get_installed_extensions() -> Any:
-    extensions = await kraken_instance.get_configured_extensions()
-    extensions_list = [
-        Extension(
-            identifier=extension.identifier,
-            name=extension.name,
-            docker=extension.docker,
-            tag=extension.tag,
-            permissions=extension.permissions,
-            enabled=extension.enabled,
-            user_permissions=extension.user_permissions,
-        )
-        for extension in extensions
-    ]
-    extensions_list.sort(key=lambda extension: extension.name)
-    return extensions_list
+async def get_installed_extensions() -> list[ExtensionSource]:
+    extensions = cast(List[Extension], await Extension.from_settings())
+    return [ext.source for ext in extensions]
 
 
 @index_router_v1.get("/list_containers", status_code=status.HTTP_200_OK)
@@ -62,5 +53,4 @@ async def root() -> RedirectResponse:
     """
     Root endpoint for the Kraken API V1.
     """
-
     return RedirectResponse(url="/v1.0/docs")
