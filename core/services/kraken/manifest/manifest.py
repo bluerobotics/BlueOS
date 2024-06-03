@@ -4,6 +4,7 @@ from functools import wraps
 from typing import Any, Callable, List, Optional, Set, Tuple, cast
 
 import aiohttp
+import semver
 from aiocache import cached
 from commonwealth.settings.manager import Manager
 
@@ -246,6 +247,29 @@ class ManifestManager:
         # Only fetch enabled sources already sorted by priority
         manifest = await self.fetch_consolidated()
         return next((ext for ext in manifest if ext.identifier == identifier), None)
+
+    async def fetch_latest_extension_version(self, identifier: str, stable: bool) -> Optional[ExtensionVersion]:
+        manifest = await self.fetch_consolidated()
+        ext = next((ext for ext in manifest if ext.identifier == identifier), None)
+
+        if not ext or not ext.versions:
+            return None
+
+        def valid_semver(string: str) -> Optional[semver.VersionInfo]:
+            # We want to allow versions to be prefixed with a 'v'.
+            if string.startswith("v"):
+                string = string[1:]
+            try:
+                return semver.VersionInfo.parse(string)
+            except ValueError:
+                return None
+
+        versions: List[semver.VersionInfo] = sorted([valid_semver(tag) for tag in ext.versions], reverse=True)
+
+        if stable:
+            versions = [v for v in versions if not v.prerelease and not v.patch]
+
+        return ext.versions.get(str(versions[0])) if versions else None
 
     async def fetch_extension_version(self, identifier: str, tag: str) -> Optional[ExtensionVersion]:
         ext = await self.fetch_extension(identifier)
