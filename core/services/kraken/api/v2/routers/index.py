@@ -14,5 +14,4 @@ async def root() -> RedirectResponse:
     """
     Root endpoint for the Kraken API V2.
     """
-
     return RedirectResponse(url="/v2.0/docs")
