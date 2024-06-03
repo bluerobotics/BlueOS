@@ -3,8 +3,10 @@
 # Set desired version to be installed
 VERSION="${VERSION:-master}"
 GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
+DOCKER_USER=${DOCKER_USER:-$(echo $GITHUB_REPOSITORY | cut -d'/' -f1)}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
+
 alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
 
 # Additional options
@@ -196,12 +198,16 @@ command -v raspi-config && (
 )
 
 echo "Downloading bootstrap"
-BLUEOS_BOOTSTRAP="bluerobotics/blueos-bootstrap:$VERSION" # Use current version
-BLUEOS_CORE="bluerobotics/blueos-core:$VERSION" # We don't have a stable tag yet
+BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
+BLUEOS_CORE="$DOCKER_USER/blueos-core:$VERSION" # We don't have a stable tag yet
 BLUEOS_FACTORY="bluerobotics/blueos-core:factory" # used for "factory reset"
 
 docker pull $BLUEOS_BOOTSTRAP
 docker pull $BLUEOS_CORE
+
+# Set up default extensions
+curl -fsSL $ROOT/install/kraken/set_default_extensions.sh | bash
+
 # Use current release version for factory fallback
 docker image tag $BLUEOS_CORE $BLUEOS_FACTORY
 
