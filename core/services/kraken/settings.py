@@ -6,7 +6,7 @@ from commonwealth.settings import settings
 from pykson import BooleanField, IntegerField, JsonObject, ObjectListField, StringField
 
 
-class Extension(JsonObject):
+class ExtensionSettings(JsonObject):
     identifier = StringField()
     name = StringField()
     docker = StringField()
@@ -44,7 +44,7 @@ class ManifestSettings(JsonObject):
 
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
-    extensions = ObjectListField(Extension)
+    extensions = ObjectListField(ExtensionSettings)
 
     def __init__(self, *args: str, **kwargs: int) -> None:
         super().__init__(*args, **kwargs)
