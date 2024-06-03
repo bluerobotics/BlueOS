@@ -9,7 +9,7 @@ import time
 from typing import List, Optional, Tuple
 
 import appdirs
-from commonwealth.utils.commands import run_command
+from commonwealth.utils.commands import run_command, upload_file
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
@@ -191,12 +191,12 @@ def load_file(file_name) -> str:
     return run_command(command, False).stdout
 
 
-def save_file(file_name: str, file_content: str, backup_identifier: str) -> None:
+def save_file(file_name: str, file_content: str, backup_identifier: str, ensure_newline: bool = True) -> None:
+    if ensure_newline and not file_content.endswith("\n"):
+        file_content += "\n"
     command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
     run_command(command, False)
-
-    command = f'echo "{file_content}" | sudo tee "{file_name}"'
-    run_command(command, False)
+    upload_file(file_content, file_name, False)
 
 
 def hardlink_exists(file_name: str) -> bool:
