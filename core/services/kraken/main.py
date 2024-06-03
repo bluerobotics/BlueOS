@@ -6,14 +6,16 @@ from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 from uvicorn import Config, Server
 
-from api import application
 from args import CommandLineArgs
 from config import SERVICE_NAME
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-from kraken import kraken_instance
+from api import application
+from kraken import Kraken
+
+kraken = Kraken()
 
 if __name__ == "__main__":
     args = CommandLineArgs.from_args()
@@ -28,6 +30,6 @@ if __name__ == "__main__":
     config = Config(app=application, loop=loop, host=args.host, port=args.port, log_config=None)
     server = Server(config)
 
-    loop.create_task(kraken_instance.run())
+    loop.create_task(kraken.start())
     loop.run_until_complete(server.serve())
-    loop.run_until_complete(kraken_instance.stop())
+    loop.run_until_complete(kraken.stop())
