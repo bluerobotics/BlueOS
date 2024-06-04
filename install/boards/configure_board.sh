@@ -36,6 +36,8 @@ if [ -f "/proc/device-tree/model" ]; then
     fi
 
 # If the previous file does not exist, we are going to try the old method and do our best
+# BTW: This method is not recommended at all
+# Ref: https://github.com/raspberrypi/documentation/blob/2cf115ef449929a6be865a4418418f85af975e37/documentation/asciidoc/computers/raspberry-pi/revision-codes.adoc
 elif [ -f "/proc/cpuinfo" ]; then
     CPU_INFO="$(cat /proc/cpuinfo)"
     if [[ $CPU_INFO =~ BCM27[0-9]{2} ]]; then
