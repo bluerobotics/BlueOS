@@ -1,9 +1,15 @@
 import json
+from typing import Optional
 
 from pydantic import BaseModel
 
 from manifest.models import ExtensionVersion, RepositoryEntry
 from settings import ExtensionSettings
+
+
+class ExtensionSourceAuth(BaseModel):
+    username: str
+    password: str
 
 
 class ExtensionSource(BaseModel):
@@ -14,6 +20,7 @@ class ExtensionSource(BaseModel):
     enabled: bool
     permissions: str
     user_permissions: str = ""
+    auth: Optional[ExtensionSourceAuth] = None
 
     @staticmethod
     def from_settings(settings: ExtensionSettings) -> "ExtensionSource":
