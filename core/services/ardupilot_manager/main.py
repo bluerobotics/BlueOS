@@ -122,7 +122,9 @@ def get_serials() -> Any:
 @version(1, 0)
 async def get_firmware_info() -> Any:
     if not autopilot.current_board:
-        raise RuntimeError("Cannot fetch firmware info as there's no board running.")
+        message = "No board running, firmware information is unavailable"
+        logger.warning(message)
+        return PlainTextResponse(message, status_code=503)
     try:
         return await autopilot.vehicle_manager.get_firmware_info()
     except ValueError:
@@ -133,7 +135,9 @@ async def get_firmware_info() -> Any:
 @version(1, 0)
 async def get_vehicle_type() -> Any:
     if not autopilot.current_board:
-        raise RuntimeError("Cannot fetch vehicle type info as there's no board running.")
+        message = "No board running, vehicle type is unavailable"
+        logger.warning(message)
+        return PlainTextResponse(message, status_code=503)
     try:
         return await autopilot.vehicle_manager.get_vehicle_type()
     except FetchUpdatedMessageFail as error:
