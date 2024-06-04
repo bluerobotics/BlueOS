@@ -248,7 +248,7 @@ jobs:
 
   deploy-raspberry-image:
     needs: deploy-docker-images
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
     runs-on: blueos-ci
     # The runner for this job is a Raspberry Pi OS Bullseye.
