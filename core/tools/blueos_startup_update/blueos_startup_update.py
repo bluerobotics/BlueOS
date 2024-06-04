@@ -445,6 +445,13 @@ def run_command_is_working():
     return True
 
 
+def fix_ssh_ownership() -> bool:
+    logger.info("Fixing .ssh ownership...")
+    command = "sudo chown -R $USER:$USER $HOME/.ssh"
+    run_command(command, False)
+    return False
+
+
 def main() -> int:
     start = time.time()
     # check if boot_loop_detector exists
@@ -479,6 +486,7 @@ def main() -> int:
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
         create_dns_conf_host_link,
+        fix_ssh_ownership(),
     ]
 
     # this will always be pi4 as pi5 is not supported
