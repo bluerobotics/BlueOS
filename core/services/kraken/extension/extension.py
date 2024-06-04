@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 from typing import AsyncGenerator, Dict, List, Literal, Optional, cast
 
@@ -131,9 +132,16 @@ class Extension:
         try:
             self.lock(self.identifier + self.tag)
 
+            docker_auth: Optional[str] = None
+            if self.source.auth is not None:
+                docker_auth = f"{self.source.auth.username}:{self.source.auth.password}"
+                docker_auth = base64.b64encode(docker_auth.encode("utf-8")).decode("utf-8")
+
             tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
             async with DockerCtx() as client:
-                async for line in client.images.pull(tag, repo=self.source.docker, tag=self.tag, stream=True):
+                async for line in client.images.pull(
+                    tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
+                ):
                     # TODO - Plug Error detection from docker image here
                     yield json.dumps(line).encode("utf-8")
                 # Make sure to add correct tag if a digest was used since docker messes up the tag
