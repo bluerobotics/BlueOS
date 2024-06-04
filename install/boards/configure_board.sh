@@ -28,7 +28,7 @@ if [ -f "/proc/device-tree/model" ]; then
     if [[ $CPU_MODEL =~ Raspberry\ Pi\ [0-3] ]]; then
         echo "Detected BCM28XX via device tree"
         curl -fsSL $CONFIGURE_BOARD_PATH/bcm_28xx.sh | bash
-    elif [[ $CPU_MODEL =~ Raspberry\ Pi\ [4] ]];then
+    elif [[ $CPU_MODEL =~ (Raspberry\ Pi\ [4])|(Raspberry\ Pi\ Compute\ Module\ 4.*) ]]; then
         echo "Detected BCM27XX via device tree"
         curl -fsSL $CONFIGURE_BOARD_PATH/bcm_27xx.sh | bash
     else
