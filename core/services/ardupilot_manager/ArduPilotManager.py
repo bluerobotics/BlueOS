@@ -67,6 +67,11 @@ class ArduPilotManager(metaclass=Singleton):
         )
         self.vehicle_manager = VehicleManager()
 
+        try:
+            await self.vehicle_manager.init_default_stream_rates()
+        except Exception as error:
+            logger.error(f"Could not set default stream rates: {error}")
+
         self.should_be_running = False
         self.remove_old_logs()
         self.current_sitl_frame = self.load_sitl_frame()
