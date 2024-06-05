@@ -7,6 +7,7 @@ from serial.tools.list_ports_linux import SysFS, comports
 from smbus2 import SMBus
 
 from flight_controller_detector.board_identification import identifiers
+from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from typedefs import FlightController, FlightControllerFlags, Platform
 
 
@@ -28,46 +29,7 @@ class Detector:
         Returns:
             Optional[FlightController]: Return FlightController if connected, None otherwise.
         """
-
-        def is_navigator_r5_connected() -> bool:
-            try:
-                bus = SMBus(1)
-                ADS1115_address = 0x48
-                bus.read_byte_data(ADS1115_address, 0)
-
-                AK09915_address = 0x0C
-                bus.read_byte_data(AK09915_address, 0)
-
-                BME280_address = 0x76
-                bus.read_byte_data(BME280_address, 0)
-
-                bus = SMBus(4)
-                PCA9685_address = 0x40
-                bus.read_byte_data(PCA9685_address, 0)
-                return True
-            except Exception as error:
-                logger.warning(f"Navigator not detected: {error}")
-                return False
-
-        def is_argonot_r1_connected() -> bool:
-            try:
-                bus = SMBus(1)
-                swap_multiplexer_address = 0x77
-                bus.read_byte_data(swap_multiplexer_address, 0)
-                return True
-            except Exception as error:
-                logger.warning(f"Argonot not detected: {error}")
-                return False
-
-        logger.debug("Trying to detect Linux board.")
-        if is_navigator_r5_connected():
-            logger.debug("Navigator R5 detected.")
-            return FlightController(name="Navigator", manufacturer="Blue Robotics", platform=Platform.Navigator)
-        if is_argonot_r1_connected():
-            logger.debug("Argonot R1 detected.")
-            return FlightController(name="Argonot", manufacturer="SymbyTech", platform=Platform.Argonot)
-        logger.debug("No Linux board detected.")
-        return None
+        return LinuxFlightController.detect_boards()
 
     @staticmethod
     def is_serial_bootloader(port: SysFS) -> bool:

@@ -157,12 +157,7 @@ class ArduPilotManager(metaclass=Singleton):
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
         if "serials" not in self.configuration:
-            return [
-                Serial(port="C", endpoint="/dev/ttyS0"),
-                Serial(port="B", endpoint="/dev/ttyAMA1"),
-                Serial(port="E", endpoint="/dev/ttyAMA2"),
-                Serial(port="F", endpoint="/dev/ttyAMA3"),
-            ]
+            return self._current_board.get_serials()
         serials = []
         for entry in self.configuration["serials"]:
             try:
@@ -171,10 +166,6 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.error(f"Entry is invalid! {entry['port']}:{entry['endpoint']}")
                 logger.error(e)
         return serials
-
-    def get_serial_cmdlines(self) -> str:
-        cmdlines = [f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()]
-        return " ".join(cmdlines)
 
     def get_default_params_cmdline(self, platform: Platform) -> str:
         # check if file exists and return it's path as --defaults parameter
@@ -185,6 +176,7 @@ class ArduPilotManager(metaclass=Singleton):
 
     async def start_linux_board(self, board: FlightController) -> None:
         self._current_board = board
+        board.setup_board()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
             if board.platform == Platform.Navigator:
                 self.firmware_manager.install_firmware_from_file(
@@ -229,7 +221,7 @@ class ArduPilotManager(metaclass=Singleton):
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
-            f" {self.get_serial_cmdlines()}"
+            f" {self._current_board.get_serial_cmdlines()}"
             f" {self.get_default_params_cmdline(board.platform)}"
         )
 
@@ -402,7 +394,9 @@ class ArduPilotManager(metaclass=Singleton):
 
     async def change_board(self, board: FlightController) -> None:
         logger.info(f"Trying to run with '{board.name}'.")
-        if board not in await self.available_boards():
+        boards = await self.available_boards()
+        if not any(board.name == detectedboard.name for detectedboard in boards):
+            logger.error(f"{board} is not in {boards}")
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
         self.set_preferred_board(board)
         await self.kill_ardupilot()
