@@ -9,7 +9,7 @@ import time
 from typing import List, Optional, Tuple
 
 import appdirs
-from commonwealth.utils.commands import run_command, upload_file
+from commonwealth.utils.commands import run_command, save_file, locate_file
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
@@ -86,12 +86,6 @@ def dict_merge(dct, merge_dct):
             dict_merge(dct[k], merge_dct[k])
         else:
             dct[k] = merge_dct[k]
-
-
-def locate_file(candidates: List[str]) -> Optional[str]:
-    # first match will return
-    command = f"find {' '.join(candidates)} -type f -print -quit"
-    return run_command(command, False, log_output=False).stdout.strip()
 
 
 def update_startup() -> bool:
@@ -189,14 +183,6 @@ def boot_config_filter_conflicting_configuration_at_session(
 def load_file(file_name) -> str:
     command = f'cat "{file_name}"'
     return run_command(command, False).stdout
-
-
-def save_file(file_name: str, file_content: str, backup_identifier: str, ensure_newline: bool = True) -> None:
-    if ensure_newline and not file_content.endswith("\n"):
-        file_content += "\n"
-    command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
-    run_command(command, False)
-    upload_file(file_content, file_name, False)
 
 
 def hardlink_exists(file_name: str) -> bool:
