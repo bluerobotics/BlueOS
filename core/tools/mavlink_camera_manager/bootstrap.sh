@@ -11,6 +11,8 @@ VERSION="t3.13.1"
 REMOTE_BINARY_URL="https://github.com/mavlink/mavlink-camera-manager/releases/download/${VERSION}/${ARTIFACT_PREFIX}-armv7"
 if [[ "$(uname -m)" == "x86_64"* ]]; then
     REMOTE_BINARY_URL="https://github.com/mavlink/mavlink-camera-manager/releases/download/${VERSION}/${ARTIFACT_PREFIX}-linux-desktop"
+elif [[ "$(uname -m)" == "aarch64"* ]]; then
+    REMOTE_BINARY_URL="https://github.com/mavlink/mavlink-camera-manager/releases/download/${VERSION}/${ARTIFACT_PREFIX}-aarch64"
 fi
 
 # Download and install the camera manager under user binary folder with the correct permissions
