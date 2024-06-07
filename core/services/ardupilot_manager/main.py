@@ -145,7 +145,12 @@ async def get_vehicle_type() -> Any:
         logger.warning(message)
         return PlainTextResponse(message, status_code=503)
     try:
-        return await autopilot.vehicle_manager.get_vehicle_type()
+        try:
+            result =  await autopilot.vehicle_manager.get_vehicle_type()
+            if result is None:
+                return PlainTextResponse("Failed to get vehicle type", status_code=500)
+        except Exception as error:
+            return PlainTextResponse("Failed to get vehicle type", status_code=500)
     except FetchUpdatedMessageFail as error:
         return PlainTextResponse(f"Timed out fetching message: {error}", status_code=500)
     except MavlinkMessageReceiveFail as error:

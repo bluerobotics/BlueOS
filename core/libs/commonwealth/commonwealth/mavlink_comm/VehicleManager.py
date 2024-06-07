@@ -100,6 +100,7 @@ class VehicleManager:
         # In case of PX4 we need to send a bunch of heartbeat messages first to open the communication
         logger.info("Trying to open communication with board.")
         for _ in range(20):
+            logger.info("Sending heartbeat.")
             await self.send_heartbeat()
             await asyncio.sleep(0.1)
 
@@ -107,19 +108,12 @@ class VehicleManager:
 
         for stream in DEFAULT_DATA_STREAMS_CONFIG:
             try:
+                logger.info(f"Requesting stream {stream.stream} with interval {stream.interval_us} us.")
                 await self.request_data_stream(stream.stream, stream.interval_us)
             except Exception as error:
                 logger.error(f"Failed to request stream {stream.stream}. error: {error}")
 
-        logger.info("Finished requesting default data streams, requesting autopilot to start logging.")
-
-        try:
-            message = self.command_long_message("MAV_CMD_LOGGING_START", [])
-            await self.mavlink2rest.send_mavlink_message(message)
-        except Exception as error:
-            logger.error(f"Failed to request autopilot to start mavlink logs. error: {error}")
-
-        logger.info("Start logging data requested, awaiting data to send ACK.")
+        logger.info("Finished requesting default data streams")
 
 
     async def request_message(self, message_id: int) -> None:
