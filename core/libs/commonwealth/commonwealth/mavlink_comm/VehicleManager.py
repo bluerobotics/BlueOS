@@ -1,3 +1,4 @@
+import asyncio
 import math
 from typing import Any, Dict, List
 
@@ -64,6 +65,25 @@ class VehicleManager:
             "target_component": self.target_component,
         }
 
+    def command_heartbeat_message(self) -> Dict[str, Any]:
+        return {
+            "type": "HEARTBEAT",
+            "custom_mode": 0,
+            "mavtype": {
+                "type": "MAV_TYPE_GCS"
+            },
+            "autopilot": {
+                "type": "MAV_AUTOPILOT_INVALID"
+            },
+            "base_mode": {
+                "bits": 0
+            },
+            "system_status": {
+                "type": "MAV_STATE_UNINIT"
+            },
+            "mavlink_version": 0,
+        }
+
     async def request_data_stream(self, stream: MavDataStream, interval_us: int = 0, disable: bool = False) -> None:
         # Send old REQUEST_DATA_STREAM
         message = self.command_request_data_stream_message(stream, interval_us, not disable)
@@ -72,7 +92,17 @@ class VehicleManager:
         message = self.command_long_message("MAV_CMD_SET_MESSAGE_INTERVAL", [stream, -1 if disable else interval_us])
         await self.mavlink2rest.send_mavlink_message(message)
 
+    async def send_heartbeat(self) -> None:
+        message = self.command_heartbeat_message()
+        await self.mavlink2rest.send_mavlink_message(message)
+
     async def init_default_stream_rates(self) -> None:
+        # In case of PX4 we need to send a bunch of heartbeat messages first to open the communication
+        logger.info("Trying to open communication with board.")
+        for _ in range(20):
+            await self.send_heartbeat()
+            await asyncio.sleep(0.1)
+
         logger.info("Started requesting default data streams.")
 
         for stream in DEFAULT_DATA_STREAMS_CONFIG:
@@ -80,6 +110,17 @@ class VehicleManager:
                 await self.request_data_stream(stream.stream, stream.interval_us)
             except Exception as error:
                 logger.error(f"Failed to request stream {stream.stream}. error: {error}")
+
+        logger.info("Finished requesting default data streams, requesting autopilot to start logging.")
+
+        try:
+            message = self.command_long_message("MAV_CMD_LOGGING_START", [])
+            await self.mavlink2rest.send_mavlink_message(message)
+        except Exception as error:
+            logger.error(f"Failed to request autopilot to start mavlink logs. error: {error}")
+
+        logger.info("Start logging data requested, awaiting data to send ACK.")
+
 
     async def request_message(self, message_id: int) -> None:
         message = self.command_long_message("MAV_CMD_REQUEST_MESSAGE", [message_id])
