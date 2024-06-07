@@ -11,6 +11,8 @@ VERSION=t0.11.20
 REMOTE_BINARY_URL="https://github.com/mavlink/mavlink2rest/releases/download/${VERSION}/mavlink2rest-armv7-unknown-linux-musleabihf"
 if [[ "$(uname -m)" == "x86_64"* ]]; then
     REMOTE_BINARY_URL="https://github.com/mavlink/mavlink2rest/releases/download/${VERSION}/mavlink2rest-x86_64-unknown-linux-musl"
+elif [[ "$(uname -m)" == "aarch64"* ]]; then
+    REMOTE_BINARY_URL="https://github.com/mavlink/mavlink2rest/releases/download/${VERSION}/mavlink2rest-aarch64-unknown-linux-musl"
 fi
 
 # Download and install mavlink2rest under user binary folder with the correct permissions
