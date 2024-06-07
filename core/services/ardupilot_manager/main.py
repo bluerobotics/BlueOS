@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Set
 from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
     MavlinkMessageSendFail,
+    MavlinkMessageReceiveFail,
 )
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import (
@@ -147,7 +148,8 @@ async def get_vehicle_type() -> Any:
         return await autopilot.vehicle_manager.get_vehicle_type()
     except FetchUpdatedMessageFail as error:
         return PlainTextResponse(f"Timed out fetching message: {error}", status_code=500)
-
+    except MavlinkMessageReceiveFail as error:
+        return PlainTextResponse(f"Failed to get vehicle type: {error}", status_code=500)
 
 @app.post("/sitl_frame", summary="Set SITL Frame type.")
 @version(1, 0)

@@ -150,8 +150,7 @@ class NavigatorPi4(Navigator):
     ]
     all_overlays = [
         # serial ports, checked individually
-        "uart1",
-        "uart3",
+        # serial ports, checked individually  
         "uart4",
         "uart5",
         "i2c6 pins_22_23=true baudrate=400000",
