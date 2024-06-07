@@ -7,7 +7,11 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from commonwealth.mavlink_comm.exceptions import FetchUpdatedMessageFail
+from commonwealth.mavlink_comm.exceptions import (
+    FetchUpdatedMessageFail,
+    MavlinkMessageReceiveFail,
+    MavlinkMessageSendFail,
+)
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
@@ -129,6 +133,8 @@ async def get_firmware_info() -> Any:
         return await autopilot.vehicle_manager.get_firmware_info()
     except ValueError:
         return PlainTextResponse("Failed to get autopilot version", status_code=500)
+    except MavlinkMessageSendFail:
+        return PlainTextResponse("Timed out requesting Firmware Info message", status_code=500)
 
 
 @app.get("/vehicle_type", response_model=MavlinkVehicleType, summary="Get mavlink vehicle type.")
@@ -142,6 +148,8 @@ async def get_vehicle_type() -> Any:
         return await autopilot.vehicle_manager.get_vehicle_type()
     except FetchUpdatedMessageFail as error:
         return PlainTextResponse(f"Timed out fetching message: {error}", status_code=500)
+    except MavlinkMessageReceiveFail as error:
+        return PlainTextResponse(f"Failed to get vehicle type: {error}", status_code=500)
 
 
 @app.post("/sitl_frame", summary="Set SITL Frame type.")
