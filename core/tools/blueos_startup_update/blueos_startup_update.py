@@ -486,7 +486,7 @@ def main() -> int:
         ensure_user_data_structure_is_in_place,
         ensure_nginx_permissions,
         create_dns_conf_host_link,
-        fix_ssh_ownership(),
+        fix_ssh_ownership,
     ]
 
     # this will always be pi4 as pi5 is not supported
