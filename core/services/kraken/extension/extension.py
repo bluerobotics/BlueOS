@@ -8,6 +8,7 @@ from loguru import logger
 
 from config import SERVICE_NAME
 from extension.exceptions import (
+    ExtensionInsufficientStorage,
     ExtensionNotFound,
     ExtensionNotRunning,
     ExtensionPullFailed,
@@ -19,6 +20,7 @@ from harbor.exceptions import ContainerNotFound
 from manifest import ManifestManager
 from manifest.models import ExtensionVersion
 from settings import ExtensionSettings, SettingsV2
+from utils import has_enough_disk_space
 
 
 class Extension:
@@ -303,10 +305,16 @@ class Extension:
         )
 
     @staticmethod
-    def get_compatible_digest(version: ExtensionVersion, identifier: str) -> str:
+    def get_compatible_digest(version: ExtensionVersion, identifier: str, validate_size: bool = True) -> str:
         compatible_images = [image for image in version.images if image.compatible]
 
         if not compatible_images or compatible_images[0].digest is None:
             raise IncompatibleExtension(f"Extension {identifier}:{version.tag} has no compatible images")
+
+        required_size = compatible_images[0].expanded_size
+        if validate_size and not has_enough_disk_space(required_bytes=required_size):
+            raise ExtensionInsufficientStorage(
+                f"Extension {identifier}:{version.tag} requires at least {required_size / 2**20} MB free in storage."
+            )
 
         return compatible_images[0].digest

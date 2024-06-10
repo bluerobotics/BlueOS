@@ -12,3 +12,7 @@ class ExtensionPullFailed(Exception):
 
 class IncompatibleExtension(Exception):
     pass
+
+
+class ExtensionInsufficientStorage(Exception):
+    pass
