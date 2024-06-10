@@ -33,7 +33,11 @@ class Kraken:
 
         for extension in extensions:
             # If we found the identifier in the locked entries we skip the extension since its being pulled
-            if not extension.enabled or (extension.identifier + extension.tag) in Extension.locked_entries:
+            if (
+                not extension.enabled
+                or f"{extension.identifier}{extension.tag}" in Extension.locked_entries
+                or extension.container_name() in Extension.locked_entries
+            ):
                 continue
 
             extension_name = extension.container_name()
