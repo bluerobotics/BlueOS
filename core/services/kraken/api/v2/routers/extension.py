@@ -74,7 +74,7 @@ async def install(body: ExtensionSource) -> StreamingResponse:
     can install incompatible extensions. Make sure to check the extension source before installing it.
     """
     extension = Extension(body)
-    return StreamingResponse(streamer(extension.install()))
+    return StreamingResponse(streamer(extension.install(atomic=True)))
 
 
 @extension_router_v2.post("/{identifier}/install", status_code=status.HTTP_201_CREATED)

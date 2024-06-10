@@ -106,7 +106,7 @@ class Extension:
         finally:
             cls.unlock(container_name)
 
-    async def install(self, clear_remaining_tags: bool = True) -> AsyncGenerator[bytes, None]:
+    async def install(self, clear_remaining_tags: bool = True, atomic: bool = False) -> AsyncGenerator[bytes, None]:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
 
         # First we should make sure no other tag is running
@@ -148,6 +148,9 @@ class Extension:
                 if self.digest:
                     await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
         except Exception as error:
+            # In case of some external installs kraken shouldn't try to install it again so we remove from settings
+            if atomic:
+                await self.uninstall()
             raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
         finally:
             self.unlock(self.identifier + self.tag)
