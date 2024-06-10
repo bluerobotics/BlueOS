@@ -7,7 +7,11 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response, StreamingResponse
 from fastapi_versioning import versioned_api_route
 
-from extension.exceptions import ExtensionNotFound, ExtensionNotRunning
+from extension.exceptions import (
+    ExtensionInsufficientStorage,
+    ExtensionNotFound,
+    ExtensionNotRunning,
+)
 from extension.extension import Extension
 from extension.models import ExtensionSource
 
@@ -28,6 +32,8 @@ def extension_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., A
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
         except ExtensionNotRunning as error:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+        except ExtensionInsufficientStorage as error:
+            raise HTTPException(status_code=status.HTTP_507_INSUFFICIENT_STORAGE, detail=str(error)) from error
         except HTTPException as error:
             raise error
         except Exception as error:
