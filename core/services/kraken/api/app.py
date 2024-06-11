@@ -12,6 +12,7 @@ from api.v2.routers import (
     container_router_v2,
     extension_router_v2,
     index_router_v2,
+    jobs_router_v2,
     manifest_router_v2,
 )
 
@@ -29,6 +30,7 @@ application.include_router(extension_router_v1)
 application.include_router(index_router_v2)
 application.include_router(container_router_v2)
 application.include_router(extension_router_v2)
+application.include_router(jobs_router_v2)
 application.include_router(manifest_router_v2)
 
 application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True)
