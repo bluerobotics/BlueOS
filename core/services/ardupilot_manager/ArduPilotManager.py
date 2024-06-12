@@ -178,6 +178,7 @@ class ArduPilotManager(metaclass=Singleton):
 
     async def start_linux_board(self, board: LinuxFlightController) -> None:
         self._current_board = board
+        board.setup_board()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
             if board.platform == Platform.Navigator:
                 self.firmware_manager.install_firmware_from_file(

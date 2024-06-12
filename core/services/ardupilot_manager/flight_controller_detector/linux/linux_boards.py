@@ -22,6 +22,9 @@ class LinuxFlightController(FlightController):
     def get_serials(self) -> List[Serial]:
         raise NotImplementedError
 
+    def setup_board(self) -> None:
+        raise NotImplementedError
+
     def check_for_i2c_device(self, bus_number: int, address: int) -> bool:
         try:
             bus = SMBus(bus_number)
