@@ -349,7 +349,8 @@ export default Vue.extend({
 
       if (isTokenValid) {
         try {
-          await bag.setData('major_tom', { token: this.token })
+          const tomData = await bag.getData('major_tom')
+          await bag.setData('major_tom', { ...tomData, token: this.token })
 
           await back_axios({
             url: `${KRAKEN_API_URL}/extension/restart`,
