@@ -1,5 +1,6 @@
 import subprocess
 from pathlib import Path
+from typing import List, Optional
 
 from loguru import logger
 
@@ -141,3 +142,17 @@ def upload_file(file_content: str, destination: str, check: bool = True) -> "sub
     else:
         logger.error(f"Failed to upload file: {ret.stderr}")
     return ret
+
+
+def locate_file(candidates: List[str]) -> Optional[str]:
+    # first match will return
+    command = f"find {' '.join(candidates)} -type f -print -quit"
+    return run_command(command, False, log_output=False).stdout.strip()
+
+
+def save_file(file_name: str, file_content: str, backup_identifier: str, ensure_newline: bool = True) -> None:
+    if ensure_newline and not file_content.endswith("\n"):
+        file_content += "\n"
+    command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
+    run_command(command, False)
+    upload_file(file_content, file_name, False)
