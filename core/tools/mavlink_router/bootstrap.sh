@@ -17,6 +17,8 @@ GITHUB_REMOTE="https://github.com/mavlink-router/mavlink-router"
 REMOTE_BINARY_URL="${GITHUB_REMOTE}/releases/download/${VERSION}/mavlink-routerd-glibc-armhf"
 if [[ "$(uname -m)" == "x86_64"* ]]; then
     REMOTE_BINARY_URL="${GITHUB_REMOTE}/releases/download/${VERSION}/mavlink-routerd-glibc-x86_64"
+elif [[ "$(uname -m)" == "aarch64"* ]]; then
+    REMOTE_BINARY_URL="${GITHUB_REMOTE}/releases/download/${VERSION}/mavlink-routerd-glibc-aarch64"
 fi
 if [ -f "$LOCAL_BINARY_PATH" ]; then
     echo "File $LOCAL_BINARY_PATH already exists. Skipping download."
