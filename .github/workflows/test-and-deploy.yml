@@ -29,20 +29,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt install shellcheck
+        sudo apt-get install --no-install-recommends --assume-yes shellcheck parallel
         python -m pip install --upgrade pip
-        pip install pipenv
-        pipenv install poetry && pipenv run poetry install
-        echo "installing mavlink-router"
-        pipenv run ./core/tools/mavlink_router/bootstrap.sh
-        echo "installing mavp2p"
-        pipenv run ./core/tools/mavp2p/bootstrap.sh
-        echo "installing ardupilot_tools"
-        pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
-        pipenv run python ./core/libs/bridges/setup.py install
-        pipenv run python ./core/libs/commonwealth/setup.py install
-        rm -rf core/libs/bridges/build
-        rm -rf core/libs/commonwealth/build
+        pip install poetry
 
     - name: Run tests
       run: |
