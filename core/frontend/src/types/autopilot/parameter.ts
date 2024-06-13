@@ -37,6 +37,8 @@ export default interface Parameter {
     paramType: { type: ParamType }
 
     units?: string
+
+    default?: number
 }
 
 export function printParam(param?: Parameter): string {
