@@ -29,7 +29,7 @@ echo "installing mavlink-router"
 echo "installing mavp2p"
 ./core/tools/mavp2p/bootstrap.sh
 echo "installing ardupilot_tools"
-./core/tools/ardupilot_tools/bootstrap.sh
+NOSUDO=1 ./core/tools/ardupilot_tools/bootstrap.sh
 
 isort_extra_args="--check-only --diff"
 black_extra_args="--check --diff"
