@@ -2,9 +2,9 @@
 
 set -e
 
-# Check if pipenv is installed
-command -v pipenv >/dev/null 2>&1 || {
-    echo >&2 "pipenv is not installed. Aborting. Please install it and try again."
+# Check if poetry is installed
+command -v poetry >/dev/null 2>&1 || {
+    echo >&2 "poetry is not installed. Aborting. Please install it and try again."
     exit 1
 }
 
@@ -20,16 +20,16 @@ command -v parallel >/dev/null 2>&1 || {
     exit 1
 }
 
-# poetry can rely on pip to uninstall packages sometimes...
-pipenv install poetry pip --skip-lock
-pipenv run poetry install
+poetry install
+. "$(poetry env info --path)/bin/activate"
+
 # download some required files if they are not present
 echo "installing mavlink-router"
-pipenv run ./core/tools/mavlink_router/bootstrap.sh
+./core/tools/mavlink_router/bootstrap.sh
 echo "installing mavp2p"
-pipenv run ./core/tools/mavp2p/bootstrap.sh
+./core/tools/mavp2p/bootstrap.sh
 echo "installing ardupilot_tools"
-pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
+./core/tools/ardupilot_tools/bootstrap.sh
 
 isort_extra_args="--check-only --diff"
 black_extra_args="--check --diff"
@@ -77,28 +77,28 @@ git ls-files '*.sh' | xargs -L 1 shellcheck --exclude=SC2005,SC2015,SC2046,SC204
 
 echo "Running isort.."
 # Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} pipenv run isort --src-path="{}" ${isort_extra_args} "{}"
+dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" ${isort_extra_args} "{}"
 
 # This will only get the python files track by git, not including submodules
 python_files=$(git ls-files '*.py')
 
 echo "Running black.."
-pipenv run black ${black_extra_args} $python_files
+black ${black_extra_args} $python_files
 
 # do not run the rest of the script if running for fixing
 [ "$fixing" = true ] && exit 0
 
 # Faster than pylint to check for issues
 echo "Running ruff.."
-pipenv run ruff $python_files
+ruff $python_files
 
 echo "Running pylint.."
-pipenv run pylint $python_files
+pylint $python_files
 
 echo "Running mypy.."
-git ls-files '*setup.py' | parallel 'pipenv run mypy $(dirname {}) --cache-dir "$(dirname {})/__mypycache__"'
+git ls-files '*setup.py' | parallel 'mypy $(dirname {}) --cache-dir "$(dirname {})/__mypycache__"'
 
 echo "Running pytest.."
-pipenv run pytest -n 10 --cov="$repository_path" --cov-report html
+pytest -n 10 --cov="$repository_path" --cov-report html
 
 exit 0
