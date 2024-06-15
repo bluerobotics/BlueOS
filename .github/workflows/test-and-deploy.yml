@@ -193,7 +193,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
 
       - name: Upload artifact arm64-v8
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm64-v8
@@ -211,7 +211,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
 
       - name: Upload artifact arm-v7
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm-v7
@@ -229,7 +229,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
 
       - name: Upload artifact amd64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-amd64
@@ -291,7 +291,7 @@ jobs:
           zip BlueOS-raspberry.zip deploy/pimod/blueos.img
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         timeout-minutes: 120
         with:
           # We use the .img to avoid a zip of a zip
