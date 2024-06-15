@@ -2,6 +2,27 @@
 
 set -e
 
+# Check if the required Python version is available
+PYTHON_VERSION=$(grep -oP 'python\s*=\s*"[^0-9]*\K[0-9]+\.[0-9]+' pyproject.toml)
+command -v "python$PYTHON_VERSION" >/dev/null 2>&1 || {
+    if [ "$(command -v pyenv)" ]; then
+        echo "Pyenv is available, switching local Python version to $PYTHON_VERSION"
+        pyenv install -fs "$PYTHON_VERSION"
+        pyenv local "$PYTHON_VERSION"
+    else
+        cat >&2 <<EOF
+Python $PYTHON_VERSION is not available. Aborting.
+If your Linux distribution doesn't provide it, consider using Pyenv:
+    1. Install Pyenv using your Linux distribution package manager
+    2. Run the following commands:
+        pyenv install $PYTHON_VERSION
+        pyenv local $PYTHON_VERSION
+For more information about pyenv, please visit https://github.com/pyenv/pyenv#readme
+EOF
+    exit 1
+    fi
+}
+
 # Check if poetry is installed
 command -v poetry >/dev/null 2>&1 || {
     echo >&2 "poetry is not installed. Aborting. Please install it and try again."
