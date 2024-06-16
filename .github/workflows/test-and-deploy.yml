@@ -65,29 +65,25 @@ jobs:
       - name: Bun build
         run: bun run --cwd ./core/frontend build
 
-  free-disk-space:
-    runs-on: ubuntu-latest
-    needs: [python-tests, frontend-tests]
-    steps:
-    - name: Free Disk Space (Ubuntu)
-      uses: jlumbroso/free-disk-space@main
-      with:
-        android: true
-        dotnet: true
-        haskell: true
-        large-packages: false
-        docker-images: false
-        swap-storage: true
-
   deploy-docker-images:
     runs-on: ubuntu-latest
-    needs: [free-disk-space]
+    needs: [frontend-tests, python-tests]
     strategy:
       matrix:
         docker: [bootstrap, core]
         project: [blueos]
         platforms: ["linux/arm/v7,linux/arm64/v8,linux/amd64"]
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: false
+          swap-storage: true
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
