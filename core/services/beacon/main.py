@@ -8,6 +8,7 @@ import os
 import pathlib
 import shlex
 import shutil
+import signal
 import socket
 import subprocess
 from typing import Any, Dict, List, Optional
@@ -29,8 +30,8 @@ from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
 
-TLS_CERT_PATH = "/home/pi/tools/nginx/blueos.crt"
-TLS_KEY_PATH = "/home/pi/tools/nginx/blueos.key"
+TLS_CERT_PATH = "/etc/blueos/nginx/blueos.crt"
+TLS_KEY_PATH = "/etc/blueos/nginx/blueos.key"
 
 
 class AsyncRunner:
@@ -204,33 +205,34 @@ class Beacon:
                     TLS_CERT_PATH,
                     "-subj",
                     shlex.quote(f"/CN={self.DEFAULT_HOSTNAME}"),
-                    "-addtext",
+                    "-addext",
                     shlex.quote(f"subjectAltName={','.join(alt_names)}"),
                 ],
-                shell=True,
+                shell=False,
             )
         except subprocess.CalledProcessError as ex:
             raise SystemError("Unable to generate certificates") from ex
 
     def generate_new_nginx_config(
-        self, config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck", use_tls: bool = False
+        self, config_path: str = "/etc/blueos/nginx/nginx.conf.ondeck", use_tls: bool = False
     ) -> None:
         """
         Generates a new nginx config file at the path specified
         """
         # use the templates for simplicity now
+        # also, the templates are in core's tools directory but the live config lives in /etc/blueos/nginx
         # TODO: the user may have changed the config, so we should parse and update as needed
         if use_tls:
             shutil.copy("/home/pi/tools/nginx/nginx_tls.conf.template", config_path, follow_symlinks=False)
         else:
             shutil.copy("/home/pi/tools/nginx/nginx.conf.template", config_path, follow_symlinks=False)
 
-    def nginx_config_is_valid(self, config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck") -> bool:
+    def nginx_config_is_valid(self, config_path: str = "/etc/blueos/nginx/nginx.conf.ondeck") -> bool:
         """
         Returns true if the nginx config file is valid
         """
         try:
-            subprocess.check_call(["nginx", "-t", "-c", config_path], shell=True)
+            subprocess.check_call(["nginx", "-t", "-c", config_path], shell=False)
             return True
         except subprocess.CalledProcessError:
             # got a non-zero return code indicating the config was not valid
@@ -238,8 +240,8 @@ class Beacon:
 
     def nginx_promote_config(
         self,
-        config_path: str = "/home/pi/tools/nginx/nginx.conf",
-        new_config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck",
+        config_path: str = "/etc/blueos/nginx/nginx.conf",
+        new_config_path: str = "/etc/blueos/nginx/nginx.conf.ondeck",
         keep_backup: bool = False,
     ) -> None:
         """
@@ -262,11 +264,12 @@ class Beacon:
         os.unlink(config_path)
         os.rename(new_config_path, config_path)
 
-        # restart nginx
-        try:
-            subprocess.check_call(["systemctl", "restart", "nginx"], shell=True)
-        except subprocess.CalledProcessError as ex:
-            raise SystemError("Unable to restart nginx") from ex
+        # reload nginx config by getting the PID of the master process and sending a SIGHUP
+        if not os.path.exists("/run/nginx.pid"):
+            raise SystemError("No nginx master PID found")
+        with open("/run/nginx.pid", "r", encoding="utf-8") as pidf:
+            nginx_pid = int(pidf.read())
+            os.kill(nginx_pid, signal.SIGHUP)
 
     def create_async_service_infos(
         self, interface: str, service_name: str, domain_name: str, ip: str
