@@ -24,7 +24,7 @@ from uvicorn import Config, Server
 from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
-from settings import ServiceTypes, SettingsV4
+from settings import ServiceTypes, SettingsV5
 from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
@@ -86,7 +86,7 @@ class Beacon:
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
         try:
-            self.manager = Manager(SERVICE_NAME, SettingsV4)
+            self.manager = Manager(SERVICE_NAME, SettingsV5)
         except Exception as e:
             logger.warning(f"failed to load configuration file ({e}), loading defaults")
             self.load_default_settings()
@@ -103,8 +103,8 @@ class Beacon:
         current_folder = pathlib.Path(__file__).parent.resolve()
         default_settings_file = current_folder / "default-settings.json"
         logger.debug("loading settings from ", default_settings_file)
-        self.manager = Manager(SERVICE_NAME, SettingsV4, load=False)
-        self.manager.settings = self.manager.load_from_file(SettingsV4, default_settings_file)
+        self.manager = Manager(SERVICE_NAME, SettingsV5, load=False)
+        self.manager.settings = self.manager.load_from_file(SettingsV5, default_settings_file)
         self.manager.save()
 
     def load_service_types(self) -> Dict[str, ServiceTypes]:
