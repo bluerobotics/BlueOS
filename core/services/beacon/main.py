@@ -207,8 +207,8 @@ class Beacon:
                 ],
                 shell=True,
             )
-        except subprocess.CalledProcessError:
-            raise SystemError("Unable to generate certificates")
+        except subprocess.CalledProcessError as ex:
+            raise SystemError("Unable to generate certificates") from ex
 
     def generate_new_nginx_config(
         self, config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck", use_tls: bool = False
@@ -263,8 +263,8 @@ class Beacon:
         # restart nginx
         try:
             subprocess.check_call(["systemctl", "restart", "nginx"], shell=True)
-        except subprocess.CalledProcessError:
-            raise SystemError("Unable to restart nginx")
+        except subprocess.CalledProcessError as ex:
+            raise SystemError("Unable to restart nginx") from ex
 
     def create_async_service_infos(
         self, interface: str, service_name: str, domain_name: str, ip: str
