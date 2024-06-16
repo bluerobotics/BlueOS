@@ -171,7 +171,7 @@ class Beacon:
             # bounce nginx
             self.nginx_promote_config(keep_backup=True)
 
-    def generate_cert(self) -> bool:
+    def generate_cert(self) -> None:
         """
         Generates the TLS certificate for the current vehicle hostname and stores in persistent storage
         """
@@ -212,7 +212,7 @@ class Beacon:
 
     def generate_new_nginx_config(
         self, config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck", use_tls: bool = False
-    ):
+    ) -> None:
         """
         Generates a new nginx config file at the path specified
         """
@@ -239,7 +239,7 @@ class Beacon:
         config_path: str = "/home/pi/tools/nginx/nginx.conf",
         new_config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck",
         keep_backup: bool = False,
-    ):
+    ) -> None:
         """
         Moves the file at new_config_path to config_path and bounces nginx, optionally keeping a backup of config_path
         """
