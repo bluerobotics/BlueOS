@@ -5,6 +5,11 @@ import itertools
 import logging
 import pathlib
 import socket
+import subprocess
+import os
+import shutil
+import shlex
+import datetime
 from typing import Any, Dict, List, Optional
 
 import psutil
@@ -24,6 +29,7 @@ from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
 
+TLS_CERT_PATH = ""
 
 class AsyncRunner:
     def __init__(self, ip_version: IPVersion, interface: str, interface_name: str) -> None:
@@ -132,7 +138,123 @@ class Beacon:
 
     def get_vehicle_name(self) -> str:
         return self.manager.settings.vehicle_name or "BlueROV2"
+    
+    def get_enable_tls(self) -> bool:
+        # return what's in settings or assume no...this may change in the future
+        return self.manager.settings.enable_tls or False
+    
+    def set_enable_tls(self, enable_tls: bool) -> None:
+        # handle enabling/disabling tls
+        if not enable_tls and self.get_enable_tls():
+            # tls is currently enabled and we need to disable
+            # change nginx config
+            self.generate_new_nginx_config(use_tls=False)
+            # validate config
+            if not self.nginx_config_is_valid():
+                raise SystemError("Unable to validate staged Nginx config")
+            # bounce nginx
+            self.nginx_promote_config(keep_backup=True)
+            # remove old cert
+            os.unlink("/home/pi/tools/nginx/blueos.crt")
+            os.unlink("/home/pi/tools/nginx/blueos.key")
+        elif enable_tls and not self.get_enable_tls():
+            # tls is currently disabled and we need to enable
+            # generate cert
+            self.generate_cert()
+            # change nginx config
+            self.generate_new_nginx_config(use_tls=True)
+            # validate config
+            if not self.nginx_config_is_valid():
+                raise SystemError("Unable to validate staged Nginx config")
+            # bounce nginx
+            self.nginx_promote_config(keep_backup=True)
 
+    def generate_cert(self) -> bool:
+        '''
+        Generates the TLS certificate for the current vehicle hostname and stores in persistent storage
+        '''
+        # get the hostname
+        current_hostname = self.get_hostname()
+        alt_names = []
+        alt_names.append(f"DNS:{current_hostname}")
+        alt_names.append(f"DNS:{current_hostname}-wifi")
+        alt_names.append(f"DNS:{current_hostname}-hotspot")
+        alt_names.append(f"IP:192.168.2.2")
+
+        # shell out to openssl to get the cert
+        try:
+            subprocess.check_call([
+                "openssl", "req", "-x509",
+                "-newkey", "rsa:4096",
+                "-sha256",
+                "-days", "1825",
+                "-nodes",
+                "-keyout", f"/home/pi/tools/nginx/blueos.key",
+                "-out", f"/home/pi/tools/nginx/blueos.crt",
+                "-subj", shlex.quote(f"/CN={self.DEFAULT_HOSTNAME}"),
+                "-addtext", shlex.quote(f"subjectAltName={','.join(alt_names)}")
+                ], shell=True)
+        except subprocess.CalledProcessError:
+            raise SystemError("Unable to generate certificates")
+
+    def generate_new_nginx_config(self,
+                                  config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck",
+                                  use_tls: bool = False):
+        '''
+        Generates a new nginx config file at the path specified
+        '''
+        # use the templates for simplicity now
+        # TODO: the user may have changed the config, so we should parse and update as needed
+        if use_tls:
+            shutil.copy("/home/pi/tools/nginx/nginx_tls.conf.template", config_path, follow_symlinks=False)
+        else:
+            shutil.copy("/home/pi/tools/nginx/nginx.conf.template", config_path, follow_symlinks=False)
+        
+
+    def nginx_config_is_valid(self, config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck") -> bool:
+        '''
+        Returns true if the nginx config file is valid
+        '''
+        try:
+            subprocess.check_call([
+                "nginx", "-t", "-c", config_path
+                ], shell=True)
+            return True
+        except subprocess.CalledProcessError:
+            # got a non-zero return code indicating the config was not valid
+            return False
+        
+    def nginx_promote_config(self,
+                             config_path: str = "/home/pi/tools/nginx/nginx.conf",
+                             new_config_path: str = "/home/pi/tools/nginx/nginx.conf.ondeck",
+                             keep_backup: bool = False):
+        '''
+        Moves the file at new_config_path to config_path and bounces nginx, optionally keeping a backup of config_path
+        '''
+        # do both files exist
+        if not os.path.exists(config_path):
+            raise FileNotFoundError("Old config not found")
+        if not os.path.isfile(new_config_path):
+            raise FileNotFoundError("New config not found")
+        
+        if keep_backup:
+            shutil.copyfile(config_path, 
+                            f"{config_path}_backup_{datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                            follow_symlinks=False)
+
+        # move it
+        os.unlink(config_path)
+        os.rename(new_config_path, config_path)
+        
+        # restart nginx
+        try:
+            subprocess.check_call([
+                "systemctl", "restart", "nginx"
+                ], shell=True)
+        except subprocess.CalledProcessError:
+            raise SystemError("Unable to restart nginx")
+
+    
     def create_async_service_infos(
         self, interface: str, service_name: str, domain_name: str, ip: str
     ) -> AsyncServiceInfo:
@@ -311,6 +433,18 @@ def get_ip(request: Request) -> Any:
     except KeyError:
         # We're not going through Nginx for some reason
         return IpInfo(client_ip=request.scope["client"][0], interface_ip=request.scope["server"][0])
+    
+
+@app.get("/use_tls", summary="Get whether TLS should be enabled")
+@version(1, 0)
+def get_enable_tls() -> bool:
+    return beacon.get_enable_tls()
+
+
+@app.post("/use_tls", summary="Set whether TLS should be enbabled")
+@version(1, 0)
+def set_enable_tls(enable_tls: bool) -> Any:
+    return beacon.set_enable_tls(enable_tls)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
