@@ -4,28 +4,30 @@ version = "0.0.1"
 description = "Blue Robotics BlueOS computer project"
 authors = ["Software Department <software@bluerobotics.com>"]
 license = "MIT"
+package-mode = false
 
 [tool.setuptools]
 py-modules = []
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "~3.11"
 pytest-xdist = "^3.3.1"
 toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
-black = "==22.3.0"
-isort = "^5.8"
-pylint = "^2.8"
+black = "22.3.0"
+isort = "5.8"
+pylint = "3.0"
 mypy = "1.4.1"
-pylint-pydantic = "^0.2.4"
+pylint-pydantic = "0.3.2"
 pytest = "7.4.2"
+coverage = "7.5.1"
 pytest-cov = "4.1.0"
 pydantic = "1.10.12"
-docker = "^6.1.3"
-aiodocker = "^0.21.0"
-aiohttp = "^3.8.5"
-pylint-plugin-utils = "^0.8.2"
+docker = "6.1.3"
+aiodocker = "0.21.0"
+aiohttp = "3.9.5"
+pylint-plugin-utils = "0.8.2"
 pykson = {git = "https://github.com/patrickelectric/pykson.git", rev = "fcab71c1eadd6c6b730ca21a5eecb3bf9c374507"}
 appdirs = "1.4.4"
 loguru = "0.5.3"
@@ -38,8 +40,8 @@ pytest-mock = "3.10.0"
 pytest-timeout = "2.1.0"
 ruff = "0.0.288"
 pyelftools = "0.30"
-types-requests = "^2.31.0.2"
-types-tabulate = "^0.9.0.3"
+types-requests = "2.31.0.2"
+types-tabulate = "0.9.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -114,6 +116,8 @@ ignore = [
         "suppressed-message",
         "too-few-public-methods", # We know what kind of architecture we want
         "too-many-public-methods", # Wrappers will have multiple public methods
+        "use-implicit-booleaness-not-comparison-to-zero",
+        "use-implicit-booleaness-not-comparison-to-string",
         "useless-super-delegation", # Fails to check it properly
         "wildcard-import", # Necessary to locate installed plugins
         "wrong-import-position",

@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex">
+  <div class="main-container">
     <v-card>
       <v-card-title> Lights 1 (RCIN9) </v-card-title>
       <v-card-text>
@@ -146,3 +146,10 @@ export default {
   },
 }
 </script>
+<style scoped>
+.main-container {
+  display: flex;
+  column-gap: 10px;
+  padding: 10px;
+}
+</style>

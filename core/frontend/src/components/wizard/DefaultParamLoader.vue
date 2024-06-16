@@ -8,43 +8,79 @@
         item-value="full"
         :label="`Parameter Sets (${board} - ${vehicle} - ${version})`"
         :loading="is_loading"
-        :disabled="is_loading_paramsets"
+        :disabled="is_loading_parameters"
         style="min-width: 330px;"
         :rules="[isNotEmpty]"
         @change="setParamSet(filtered_param_sets[selected_param_set_name])"
       />
     </v-form>
-    <p v-if="is_loading_paramsets">
+    <p v-if="has_parameters_load_error">
+      Failed to load parameters.
+    </p>
+    <p v-else-if="fetch_retries > 0">
+      Failed to fetch parameters, trying again...
+    </p>
+    <p v-else-if="is_loading_parameters">
       Loading parameters...
     </p>
-    <p v-else-if="has_error">
-      Unable to load parameters.
-    </p>
-    <p v-else-if="(!loading_timeout_reached && invalid_board_or_version)">
-      Determining current board and firmware version...
-    </p>
-    <p v-else-if="(loading_timeout_reached && invalid_board_or_version)">
-      Unable to determine current board or firmware version.
+    <p v-else-if="invalid_board">
+      Determining current board...
     </p>
     <p v-else-if="(Object.keys(filtered_param_sets).length === 0)">
-      No parameters available for this setup
+      No parameters available for this setup.
     </p>
-    <v-virtual-scroll
-      v-if="value_items.length > 0"
-      class="flex-grow"
-      :items="value_items"
-      height="200"
-      item-height="20"
-      style="min-width: 50%;"
+    <v-card
+      v-if="Object.keys(value).length !== 0"
     >
-      <template #default="{ item }">
-        <v-list-item>
-          <v-list-item-content>
-            <v-list-item-title>{{ item.key }} {{ item.value }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </template>
-    </v-virtual-scroll>
+      <v-card-text>
+        <v-row class="virtual-table-row">
+          <v-col class="virtual-table-cell name-cell">
+            <strong>Name</strong>
+          </v-col>
+          <v-col class="virtual-table-cell">
+            <strong>Value</strong>
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-virtual-scroll
+        :items="parametersFromSet(value)"
+        height="250"
+        item-height="30"
+        class="virtual-table"
+      >
+        <template #default="{ item }">
+          <v-row class="virtual-table-row">
+            <v-col class="virtual-table-cell name-cell">
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <div v-on="on">
+                    {{ item.name }}
+                  </div>
+                </template>
+                <span>
+                  {{ item.current?.description ?? 'No description provided' }}
+                </span>
+              </v-tooltip>
+            </v-col>
+            <v-col class="virtual-table-cell">
+              <v-tooltip bottom>
+                <template #activator="{ on }">
+                  <div
+                    class="large-text-cell"
+                    v-on="on"
+                  >
+                    {{ printParamWithUnit(item.current) }}
+                  </div>
+                </template>
+                <span>
+                  {{ printParamWithUnit(item.current) }}
+                </span>
+              </v-tooltip>
+            </v-col>
+          </v-row>
+        </template>
+      </v-virtual-scroll>
+    </v-card>
   </div>
 </template>
 
@@ -53,16 +89,18 @@ import { SemVer } from 'semver'
 import Vue, { PropType } from 'vue'
 import { Dictionary } from 'vue-router'
 
+import { OneMoreTime } from '@/one-more-time'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
+import { printParamWithUnit } from '@/types/autopilot/parameter'
 import { VForm } from '@/types/vuetify'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'
 
 const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
-const MAX_LOADING_TIME_MS = 25000
+const MAX_FETCH_PARAMS_RETRIES = 4
 
 export default Vue.extend({
   name: 'DefaultParamLoader',
@@ -78,12 +116,13 @@ export default Vue.extend({
   },
   data: () => ({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
-    version: undefined as (undefined | SemVer),
     selected_param_set: {},
     selected_param_set_name: '' as string,
-    is_loading_paramsets: true,
-    loading_timeout_reached: false,
-    has_error: false,
+    version: undefined as (undefined | SemVer),
+    fetch_retries: 0,
+    is_loading_parameters: false,
+    has_parameters_load_error: false,
+    fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
   }),
   computed: {
     filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
@@ -106,7 +145,10 @@ export default Vue.extend({
           break
         }
       }
-      return fw_params
+      return {
+        ...fw_params,
+        [this.not_load_default_params_option]: {},
+      }
     },
     filtered_param_sets_names(): {full: string, sanitized: string}[] {
       return Object.keys(this.filtered_param_sets ?? {}).map((full) => ({
@@ -118,43 +160,62 @@ export default Vue.extend({
     board(): string | undefined {
       return autopilot.current_board?.name
     },
-    value_items(): { key: string, value: number }[] {
-      return Object.entries(this.value ?? {}).map(([key, value]) => ({ key, value }))
-    },
-    invalid_board_or_version(): boolean {
-      return !this.board || !this.version
+    invalid_board(): boolean {
+      return !this.board
     },
     is_loading(): boolean {
-      return (this.is_loading_paramsets || this.invalid_board_or_version) && !this.loading_timeout_reached
+      return (
+        this.is_loading_parameters
+        || this.invalid_board
+        || this.fetch_retries > 0 && !this.has_parameters_load_error
+      )
     },
     not_load_default_params_option(): string {
       return 'Do not load default parameters'
     },
   },
-
   watch: {
     vehicle() {
-      this.updateLatestFirmwareVersion().then((version: string) => {
-        this.version = new SemVer(version.split('-')[1])
-      })
+      this.selected_param_set = {}
+      this.selected_param_set_name = ''
+      this.fetch_retries = 0
+      this.version = undefined
+
+      this.setUpParams()
     },
   },
   mounted() {
-    this.loadParamSets().catch(() => {
-      this.has_error = true
-    }).finally(() => {
-      this.is_loading_paramsets = false
-    })
-    callPeriodically(fetchCurrentBoard, 10000)
-    this.updateLatestFirmwareVersion().then((version: string) => {
-      this.version = new SemVer(version.split('-')[1])
-    })
-    setTimeout(() => { this.onLoadingTimeout() }, MAX_LOADING_TIME_MS)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(fetchCurrentBoard)
+    this.fetch_current_board_task.setAction(fetchCurrentBoard)
   },
   methods: {
+    async setUpParams() {
+      this.$emit('input', undefined)
+
+      this.is_loading_parameters = true
+      this.has_parameters_load_error = false
+      try {
+        this.version = await this.fetchLatestFirmwareVersion()
+        this.all_param_sets = await this.fetchParamSets()
+
+        this.fetch_retries = 0
+      } catch (error) {
+        this.fetch_retries += 1
+
+        if (this.fetch_retries <= MAX_FETCH_PARAMS_RETRIES) {
+          setTimeout(() => this.setUpParams(), 2500)
+          return
+        }
+
+        this.has_parameters_load_error = true
+      } finally {
+        this.is_loading_parameters = false
+      }
+
+      this.$emit('input', {})
+      this.selected_param_set_name = this.filtered_param_sets_names.length > 1
+        ? ''
+        : this.not_load_default_params_option
+    },
     // this is used by Wizard.vue, but eslint doesn't detect it
     // eslint-disable-next-line
     validateParams(): boolean {
@@ -164,39 +225,65 @@ export default Vue.extend({
     isNotEmpty(value: string): boolean {
       return value !== ''
     },
-    updateLatestFirmwareVersion() {
-      return availableFirmwares(this.vehicle as Vehicle)
-        .then((firmwares: Firmware[]) => {
-          const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
-          if (found === undefined) {
-            return `Failed to find a stable version for vehicle (${this.vehicle})`
-          }
-          return found.name
-        })
+    async fetchParamSets() {
+      const response = await fetch(REPOSITORY_URL)
+      const parameters = await response.json()
+
+      return parameters
+    },
+    async fetchLatestFirmwareVersion(): Promise<SemVer | undefined> {
+      const firmwares = await availableFirmwares(this.vehicle as Vehicle)
+      const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+
+      return found ? new SemVer(found.name.split('-')[1]) : undefined
     },
     setParamSet(paramSet: Dictionary<number>) {
       this.selected_param_set = paramSet
       this.$emit('input', paramSet)
     },
-    async loadParamSets() {
-      try {
-        const response = await fetch(REPOSITORY_URL)
-        const paramSets = await response.json()
-        this.all_param_sets = paramSets
-      } catch (error) {
-        this.has_error = true
-        throw error
-      }
-    },
-    onLoadingTimeout() {
-      if (this.is_loading) {
-        this.loading_timeout_reached = true
+    parametersFromSet(paramset: Dictionary<number>) {
+      return Object.entries(paramset).map(([name]) => {
+        const currentParameter = autopilot_data.parameter(name)
 
-        if (this.selected_param_set_name === '') {
-          this.selected_param_set_name = this.not_load_default_params_option
+        return {
+          name,
+          current: currentParameter,
         }
-      }
+      })
     },
+    printParamWithUnit,
   },
 })
 </script>
+<style scoped>
+.virtual-table-row {
+  display: flex;
+  margin: 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: nowrap;
+}
+
+.virtual-table-cell {
+  flex: 1;
+  padding: 5px;
+  height: 30px;
+  min-width: 150px;
+}
+.virtual-table-cell .v-input {
+  margin-top: -6px;
+}
+.virtual-table-cell .large-text-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name-cell {
+  min-width: 200px;
+}
+
+.virtual-table {
+  overflow-x: hidden;
+}
+</style>

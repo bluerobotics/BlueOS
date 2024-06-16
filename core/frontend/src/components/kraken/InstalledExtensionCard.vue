@@ -137,26 +137,35 @@
     </v-expansion-panels>
 
     <v-card-actions class="card-actions">
-      <v-btn @click="$emit('uninstall', extension)">
+      <v-btn
+        :style="{ backgroundColor: buttonBgColor }"
+        @click="$emit('uninstall', extension)"
+      >
         Uninstall
       </v-btn>
-      <v-btn @click="$emit('showlogs', extension)">
+      <v-btn
+        :style="{ backgroundColor: buttonBgColor }"
+        @click="$emit('showlogs', extension)"
+      >
         View Logs
       </v-btn>
       <v-btn
         v-if="settings.is_pirate_mode"
+        :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('edit', extension)"
       >
         Edit
       </v-btn>
       <v-btn
         v-if="extension.enabled"
+        :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('disable', extension)"
       >
         Disable
       </v-btn>
       <v-btn
         v-if="!extension.enabled"
+        :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('enable', extension)"
       >
         Enable and start
@@ -164,6 +173,7 @@
 
       <v-btn
         v-if="extension.enabled"
+        :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('restart', extension)"
       >
         Restart
@@ -235,6 +245,9 @@ export default Vue.extend({
       const value = this.main_disk?.total_space_B ?? 0
       return value / 1024 // Move to kB
     },
+    buttonBgColor() {
+      return settings.is_dark_theme ? '#20455e' : '#BDE0F0'
+    },
     update_available() : false | string {
       if (!this.extensionData) {
         return false
@@ -251,6 +264,11 @@ export default Vue.extend({
       // show the latest version regardless of stability
       // eslint-disable-next-line no-extra-parens
       const latest = versions.reduce((a: string, b: string) => (semver.compare(a, b) > 0 ? a : b))
+
+      if (semver.compare(this.extension.tag, latest) >= 0) {
+        return false
+      }
+
       return this.extension.tag === latest ? false : latest
     },
   },
@@ -300,6 +318,8 @@ export default Vue.extend({
 <style scoped>
 .card-actions {
   flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 7px;
 }
 .progress {
   border-radius: 3px;

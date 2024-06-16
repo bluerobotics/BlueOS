@@ -114,12 +114,12 @@ import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
 import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(autopilot_service)
 
@@ -134,6 +134,10 @@ export default Vue.extend({
     return {
       settings,
       show_board_change_dialog: false,
+      fetch_available_boards_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_current_board_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_firmware_info_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_vehicle_type_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
     }
   },
   computed: {
@@ -194,16 +198,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    callPeriodically(fetchAvailableBoards, 5000)
-    callPeriodically(fetchCurrentBoard, 5000)
-    callPeriodically(fetchFirmwareInfo, 5000)
-    callPeriodically(fetchVehicleType, 5000)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(fetchAvailableBoards)
-    stopCallingPeriodically(fetchCurrentBoard)
-    stopCallingPeriodically(fetchFirmwareInfo)
-    stopCallingPeriodically(fetchVehicleType)
+    this.fetch_available_boards_task.setAction(fetchAvailableBoards)
+    this.fetch_current_board_task.setAction(fetchCurrentBoard)
+    this.fetch_firmware_info_task.setAction(fetchFirmwareInfo)
+    this.fetch_vehicle_type_task.setAction(fetchVehicleType)
   },
   methods: {
     async start_autopilot(): Promise<void> {

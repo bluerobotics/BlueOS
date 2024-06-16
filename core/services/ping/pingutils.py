@@ -1,5 +1,5 @@
 import socket
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Optional
 
@@ -42,7 +42,8 @@ class PingDeviceDescriptor:
     firmware_version_patch: int
     port: Optional[SysFS]
     ethernet_discovery_info: Optional[str]
-    driver: Optional["PingDriver"]  # type: ignore
+    # Driver instances should not differentiate devices, so don't compare them
+    driver: Optional["PingDriver"] = field(default=None, compare=False)  # type: ignore
 
     def __post_init__(self) -> None:
         if not (self.port or self.ethernet_discovery_info):

@@ -75,3 +75,16 @@ export interface RunningContainer {
     imageId: string
     status: string
 }
+
+export interface ManifestSource {
+  name: string
+  url: string
+  enabled: boolean
+}
+
+export interface Manifest extends ManifestSource {
+  identifier: string
+  priority: number
+  factory: boolean
+  data?: [ExtensionData]
+}

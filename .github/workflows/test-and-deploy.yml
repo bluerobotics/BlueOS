@@ -20,36 +20,25 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ env.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.python-version }}
 
     - name: Install dependencies
       run: |
-        sudo apt install shellcheck
+        sudo apt-get install --no-install-recommends --assume-yes shellcheck parallel
         python -m pip install --upgrade pip
-        pip install pipenv
-        pipenv install poetry && pipenv run poetry install
-        echo "installing mavlink-router"
-        pipenv run ./core/tools/mavlink_router/bootstrap.sh
-        echo "installing mavp2p"
-        pipenv run ./core/tools/mavp2p/bootstrap.sh
-        echo "installing ardupilot_tools"
-        pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
-        pipenv run python ./core/libs/bridges/setup.py install
-        pipenv run python ./core/libs/commonwealth/setup.py install
-        rm -rf core/libs/bridges/build
-        rm -rf core/libs/commonwealth/build
+        pip install poetry
 
     - name: Run tests
       run: |
         .hooks/pre-push
 
     - name: Upload coverage
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage
         path: htmlcov
@@ -59,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -76,9 +65,23 @@ jobs:
       - name: Bun build
         run: bun run --cwd ./core/frontend build
 
-  deploy-docker-images:
+  free-disk-space:
     runs-on: ubuntu-latest
     needs: [python-tests, frontend-tests]
+    steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: false
+        docker-images: false
+        swap-storage: true
+
+  deploy-docker-images:
+    runs-on: ubuntu-latest
+    needs: [free-disk-space]
     strategy:
       matrix:
         docker: [bootstrap, core]
@@ -86,7 +89,7 @@ jobs:
         platforms: ["linux/arm/v7,linux/arm64/v8,linux/amd64"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 #Number of commits to fetch. 0 indicates all history for all branches and tags.
           submodules: recursive
@@ -129,7 +132,7 @@ jobs:
           version: latest
 
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache
         with:
           path: /tmp/.buildx-cache
@@ -193,7 +196,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
 
       - name: Upload artifact arm64-v8
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm64-v8
@@ -211,7 +214,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
 
       - name: Upload artifact arm-v7
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm-v7
@@ -229,7 +232,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
 
       - name: Upload artifact amd64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-amd64
@@ -248,7 +251,7 @@ jobs:
 
   deploy-raspberry-image:
     needs: deploy-docker-images
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
     runs-on: blueos-ci
     # The runner for this job is a Raspberry Pi OS Bullseye.
@@ -263,7 +266,7 @@ jobs:
         run: sudo apt install -y git
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -291,7 +294,7 @@ jobs:
           zip BlueOS-raspberry.zip deploy/pimod/blueos.img
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         timeout-minutes: 120
         with:
           # We use the .img to avoid a zip of a zip

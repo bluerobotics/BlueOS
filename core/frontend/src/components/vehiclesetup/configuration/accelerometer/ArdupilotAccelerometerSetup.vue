@@ -1,6 +1,6 @@
 <template>
-  <div class="d-flex flex-col justify-center">
-    <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2">
+  <div class="main-container">
+    <v-card v-if="params_finished_loaded" outline class="pa-2">
       <v-simple-table>
         <thead>
           <tr>
@@ -109,8 +109,16 @@ export default Vue.extend({
 })
 </script>
 <style scoped="true">
+.main-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
 td {
   padding-left: 5px !important;
   padding-right: 5px !important;
 }
+
 </style>

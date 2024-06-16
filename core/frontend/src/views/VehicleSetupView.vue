@@ -35,7 +35,7 @@ import { fetchFirmwareVehicleType, fetchVehicleType } from '@/components/autopil
 import Configure from '@/components/vehiclesetup/Configure.vue'
 import PwmSetup from '@/components/vehiclesetup/PwmSetup.vue'
 import setupOverview from '@/components/vehiclesetup/SetupOverview.vue'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
+import { OneMoreTime } from '@/one-more-time'
 
 export interface Item {
   title: string,
@@ -58,15 +58,13 @@ export default Vue.extend({
         { title: 'PWM Outputs', icon: 'mdi-fan', value: 'pwm_outputs' },
         { title: 'Configure', icon: 'mdi-cog', value: 'configure' },
       ] as Item[],
+      fetch_vehicle_type_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      fetch_firmware_vehicle_type_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
     }
   },
   mounted() {
-    callPeriodically(fetchVehicleType, 10000)
-    callPeriodically(fetchFirmwareVehicleType, 10000)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(fetchVehicleType)
-    stopCallingPeriodically(fetchFirmwareVehicleType)
+    this.fetch_vehicle_type_task.setAction(fetchVehicleType)
+    this.fetch_firmware_vehicle_type_task.setAction(fetchFirmwareVehicleType)
   },
 })
 </script>

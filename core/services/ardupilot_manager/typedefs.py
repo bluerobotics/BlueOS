@@ -64,7 +64,7 @@ class SITLFrame(str, Enum):
 def get_sitl_platform_name(machine_arch: str) -> str:
     """Get SITL platform name based on machine architecture."""
 
-    if "arm" not in machine_arch.lower():
+    if "arm" not in machine_arch.lower() and "aarch" not in machine_arch.lower():
         return "SITL_x86_64_linux_gnu"
     return "SITL_arm_linux_gnueabihf"
 
@@ -189,18 +189,20 @@ class Serial(BaseModel):
     endpoint: str
 
     @validator("port")
+    @classmethod
     def valid_letter(cls: Any, value: str) -> str:
         if value in "BCDEFGH" and len(value) == 1:
             return value
         raise ValueError(f"Invalid serial port: {value}. These must be between B and H. A is reserved.")
 
     @validator("endpoint")
+    @classmethod
     def valid_endpoint(cls: Any, value: str) -> str:
         if Path(value).exists():
             return value
         if re.compile(r"tcp:\d*:wait$").match(value):
             return value
-        matches = re.compile(r"(tcpclient|udpclient|tcpin|udpin):(?P<ip>(\d*\.){3}\d+):(?P<port>\d*)$").match(value)
+        matches = re.compile(r"(tcpclient|udp|tcpin|udpin):(?P<ip>(\d*\.){3}\d+):(?P<port>\d*)$").match(value)
         if matches:
             ipaddress.ip_address(matches.group("ip"))
             if 0 <= int(matches.group("port")) <= 65535:

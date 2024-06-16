@@ -106,6 +106,18 @@
               <td>{{ `0x${baro.address}` }}</td>
               <td>{{ baro_status[baro.param] }}</td>
             </tr>
+            <tr
+              v-for="sensor in celsius"
+              :key="sensor.param"
+            >
+              <td><b>{{ sensor.deviceName ?? 'UNKNOWN' }}</b></td>
+              <td v-tooltip="'Used to estimate altitude/depth'">
+                Temperature
+              </td>
+              <td>{{ sensor.busType }} {{ sensor.bus }}</td>
+              <td>{{ `0x${sensor.address}` }}</td>
+              <td>{{ celsius_temperature }} ºC</td>
+            </tr>
           </tbody>
         </template>
       </v-simple-table>
@@ -143,6 +155,27 @@ export default Vue.extend({
       return autopilot_data.parameterRegex('^BARO.*_DEVID')
         .filter((param) => param.value !== 0)
         .map((parameter) => decode(parameter.name, parameter.value))
+    },
+    // DEV_ID params do not exist yet for temperature sensors, so here we detect the incoming message instead
+    celsius_temperature(): number | undefined {
+      return mavlink_store_get(mavlink, 'SCALED_PRESSURE3.messageData.message.temperature') as number / 100.0
+    },
+    celsius(): deviceId[] {
+      if (!this.celsius_temperature) {
+        return []
+      }
+      return [
+        {
+          bus: 1,
+          paramValue: 0,
+          deviceIdNumber: 0,
+          devtype: 0,
+          busType: 'I2C',
+          address: '77',
+          deviceName: 'Celsius',
+          param: '-',
+        },
+      ]
     },
     compass_description(): Dictionary<string> {
       const results = {} as Dictionary<string>
@@ -259,6 +292,7 @@ export default Vue.extend({
   mounted() {
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE2$', refreshRate: 1 })
+    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE3$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'VFR_HUD', refreshRate: 1 })
   },
   methods: {

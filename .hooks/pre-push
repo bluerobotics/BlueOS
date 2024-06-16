@@ -2,9 +2,30 @@
 
 set -e
 
-# Check if pipenv is installed
-command -v pipenv >/dev/null 2>&1 || {
-    echo >&2 "pipenv is not installed. Aborting. Please install it and try again."
+# Check if the required Python version is available
+PYTHON_VERSION=$(grep -oP 'python\s*=\s*"[^0-9]*\K[0-9]+\.[0-9]+' pyproject.toml)
+command -v "python$PYTHON_VERSION" >/dev/null 2>&1 || {
+    if [ "$(command -v pyenv)" ]; then
+        echo "Pyenv is available, switching local Python version to $PYTHON_VERSION"
+        pyenv install -fs "$PYTHON_VERSION"
+        pyenv local "$PYTHON_VERSION"
+    else
+        cat >&2 <<EOF
+Python $PYTHON_VERSION is not available. Aborting.
+If your Linux distribution doesn't provide it, consider using Pyenv:
+    1. Install Pyenv using your Linux distribution package manager
+    2. Run the following commands:
+        pyenv install $PYTHON_VERSION
+        pyenv local $PYTHON_VERSION
+For more information about pyenv, please visit https://github.com/pyenv/pyenv#readme
+EOF
+    exit 1
+    fi
+}
+
+# Check if poetry is installed
+command -v poetry >/dev/null 2>&1 || {
+    echo >&2 "poetry is not installed. Aborting. Please install it and try again."
     exit 1
 }
 
@@ -20,15 +41,16 @@ command -v parallel >/dev/null 2>&1 || {
     exit 1
 }
 
-pipenv install poetry
-pipenv run poetry install
+poetry install
+. "$(poetry env info --path)/bin/activate"
+
 # download some required files if they are not present
 echo "installing mavlink-router"
-pipenv run ./core/tools/mavlink_router/bootstrap.sh
+./core/tools/mavlink_router/bootstrap.sh
 echo "installing mavp2p"
-pipenv run ./core/tools/mavp2p/bootstrap.sh
+./core/tools/mavp2p/bootstrap.sh
 echo "installing ardupilot_tools"
-pipenv run ./core/tools/ardupilot_tools/bootstrap.sh
+NOSUDO=1 ./core/tools/ardupilot_tools/bootstrap.sh
 
 isort_extra_args="--check-only --diff"
 black_extra_args="--check --diff"
@@ -76,28 +98,28 @@ git ls-files '*.sh' | xargs -L 1 shellcheck --exclude=SC2005,SC2015,SC2046,SC204
 
 echo "Running isort.."
 # Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} pipenv run isort --src-path="{}" ${isort_extra_args} "{}"
+dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" ${isort_extra_args} "{}"
 
 # This will only get the python files track by git, not including submodules
 python_files=$(git ls-files '*.py')
 
 echo "Running black.."
-pipenv run black ${black_extra_args} $python_files
+black ${black_extra_args} $python_files
 
 # do not run the rest of the script if running for fixing
 [ "$fixing" = true ] && exit 0
 
 # Faster than pylint to check for issues
 echo "Running ruff.."
-pipenv run ruff $python_files
+ruff $python_files
 
 echo "Running pylint.."
-pipenv run pylint $python_files
+pylint $python_files
 
 echo "Running mypy.."
-git ls-files '*setup.py' | parallel 'pipenv run mypy $(dirname {}) --cache-dir $(dirname {})'
+git ls-files '*setup.py' | parallel 'mypy $(dirname {}) --cache-dir "$(dirname {})/__mypycache__"'
 
 echo "Running pytest.."
-pipenv run pytest -n 10 --cov="$repository_path" --cov-report html
+pytest -n 10 --cov="$repository_path" --cov-report html
 
 exit 0

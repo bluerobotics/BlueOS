@@ -1,6 +1,6 @@
 <template>
-  <v-row>
-    <v-card class="ma-2 pa-2">
+  <v-row class="main-container">
+    <v-card class="card-container">
       <v-card-title class="align-center">
         Reset Parameters to Firmware Defaults
       </v-card-title>
@@ -9,6 +9,8 @@
           This will effectively wipe your "eeprom". You will lose all your parameters, vehicle setup, and calibrations.
           Use this if you don't know which parameters you changed and need a clean start.
         </p>
+      </v-card-text>
+      <v-card-actions>
         <v-btn :disabled="wipe_successful" :loading="erasing" color="primary" @click="wipe">
           Reset All Parameters
         </v-btn>
@@ -28,14 +30,14 @@
         >
           Parameters reset <b>successful</b>. <span v-if="!done"> Please reboot the vehicle to apply changes. </span>
         </v-alert>
-      </v-card-text>
+      </v-card-actions>
       <ParameterLoader
         v-if="selected_paramset"
         :parameters="selected_paramset"
         @done="selected_paramset = {}"
       />
     </v-card>
-    <v-card class="ma-2 pa-2">
+    <v-card class="card-container">
       <v-card-title class="align-center">
         Load Recommended Parameter sets
       </v-card-title>
@@ -43,6 +45,8 @@
         <p>
           These are the recommended parameter sets for your vehicle and firmware version. Curated by Blue Robotics
         </p>
+      </v-card-text>
+      <v-card-actions>
         <v-btn
           v-for="(paramSet, name) in filtered_param_sets"
           :key="name"
@@ -54,12 +58,12 @@
         <p v-if="(Object.keys(filtered_param_sets).length === 0)">
           No parameters available for this setup
         </p>
-      </v-card-text>
-      <ParameterLoader
-        v-if="selected_paramset"
-        :parameters="selected_paramset"
-        @done="selected_paramset = {}"
-      />
+        <ParameterLoader
+          v-if="selected_paramset"
+          :parameters="selected_paramset"
+          @done="selected_paramset = {}"
+        />
+      </v-card-actions>
     </v-card>
   </v-row>
 </template>
@@ -182,6 +186,18 @@ export default Vue.extend({
 <style scoped>
 button {
     margin: 10px;
+}
+
+.main-container {
+  display: flex;
+  padding: 25px;
+  gap: 10px;
+}
+
+.card-container {
+  flex: 1 1 calc(50% - 10px);
+  max-width: calc(50% - 0px);
+  min-width: 600px;
 }
 
 .virtual-table-row {

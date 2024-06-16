@@ -1,4 +1,5 @@
 import { Dictionary } from '@/types/common'
+import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 class PullTracker {
   private layer_status: Dictionary<string> = {}
@@ -80,13 +81,12 @@ class PullTracker {
     this.extraction_percentage = extraction_current / extraction_total / 0.01
   }
 
-  digestNewData(progressEvent: {currentTarget: { response: string}}): void {
+  digestStreamFragment(fragment: string): void {
     // dataChunk contains the data that have been obtained so far (the whole data so far)..
     // The received data is descbribed at
     // https://docker-py.readthedocs.io/en/stable/api.html#docker.api.image.ImageApiMixin.pull
-    const dataChunk = progressEvent?.currentTarget?.response
     // As the data consists of multiple jsons, the following like is a hack to split them
-    const dataList = (this.left_over_data + dataChunk.replaceAll('}{', '}\n\n{')).split('\n\n')
+    const dataList = (this.left_over_data + fragment.replaceAll('}{', '}\n\n{')).split('\n\n')
     this.left_over_data = ''
 
     for (const line of dataList) {
@@ -144,6 +144,29 @@ class PullTracker {
     this.pull_output = `${this.pull_output}${this.overall_status}\n`
 
     this.updateSimplifiedProgress()
+  }
+
+  digestNewData(progressEvent: {currentTarget: { response: string }}, parseFragments = true): void {
+    let buffer = progressEvent?.currentTarget?.response
+
+    if (parseFragments) {
+      const result = aggregateStreamingResponse(
+        parseStreamingResponse(progressEvent?.currentTarget?.response),
+        (fragment) => {
+          this.onerror(fragment.error ?? `Unknown error with status ${fragment.status}`)
+          /** Stops aggregation */
+          return false
+        },
+      )
+
+      if (result === undefined) {
+        return
+      }
+
+      buffer = result
+    }
+
+    this.digestStreamFragment(buffer)
   }
 }
 export default PullTracker

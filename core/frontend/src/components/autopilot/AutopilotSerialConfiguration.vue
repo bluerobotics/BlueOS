@@ -175,7 +175,7 @@ export default Vue.extend({
           }
         }
       }
-      const regex1 = /(tcpclient|udpclient|tcpin|udpin):(?<ip>[^:]+):(?<port>\d+)$/
+      const regex1 = /(tcpclient|udp|tcpin|udpin):(?<ip>[^:]+):(?<port>\d+)$/
       if (regex1.test(input)) {
         const match = regex1.exec(input)
         const ip = match?.groups?.ip ?? ''
@@ -200,7 +200,7 @@ export default Vue.extend({
       if (input.startsWith('/dev/')) {
         return true
       }
-      return 'unknown format'
+      return 'unknown format. Supported formats are "tcpclient", "udp", "tcpin", "udpin", and system device paths'
     },
   },
 })

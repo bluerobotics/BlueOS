@@ -3,10 +3,10 @@ import re
 from typing import Any, Dict
 
 from commonwealth.settings import settings
-from pykson import BooleanField, JsonObject, ObjectListField, StringField
+from pykson import BooleanField, IntegerField, JsonObject, ObjectListField, StringField
 
 
-class Extension(JsonObject):
+class ExtensionSettings(JsonObject):
     identifier = StringField()
     name = StringField()
     docker = StringField()
@@ -33,9 +33,18 @@ class Extension(JsonObject):
         return "extension-" + regex.sub("", f"{self.docker}{self.tag}")
 
 
+class ManifestSettings(JsonObject):
+    identifier = StringField()
+    enabled = BooleanField()
+    priority = IntegerField()
+    factory = BooleanField()
+    name = StringField()
+    url = StringField()
+
+
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
-    extensions = ObjectListField(Extension)
+    extensions = ObjectListField(ExtensionSettings)
 
     def __init__(self, *args: str, **kwargs: int) -> None:
         super().__init__(*args, **kwargs)
@@ -50,3 +59,23 @@ class SettingsV1(settings.BaseSettings):
             super().migrate(data)
 
         data["VERSION"] = SettingsV1.VERSION
+
+
+class SettingsV2(SettingsV1):
+    VERSION = 2
+    manifests = ObjectListField(ManifestSettings)
+
+    def __init__(self, *args: str, **kwargs: int) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.VERSION = SettingsV2.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.VERSION:
+            super().migrate(data)
+
+            data["VERSION"] = SettingsV2.VERSION
+            data["manifests"] = []

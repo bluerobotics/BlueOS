@@ -7,6 +7,11 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+from commonwealth.mavlink_comm.exceptions import (
+    FetchUpdatedMessageFail,
+    MavlinkMessageReceiveFail,
+    MavlinkMessageSendFail,
+)
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
@@ -17,7 +22,7 @@ from commonwealth.utils.decorators import single_threaded
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI, File, HTTPException, UploadFile, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
@@ -52,7 +57,7 @@ if not is_running_as_root():
     raise RuntimeError("ArduPilot manager needs to run with root privilege.")
 
 
-def target_board(board_name: Optional[str]) -> FlightController:
+async def target_board(board_name: Optional[str]) -> FlightController:
     """Returns the board that should be used to perform operations on.
 
     Most of the API routes that have operations related to board management will give the option to perform those
@@ -64,7 +69,7 @@ def target_board(board_name: Optional[str]) -> FlightController:
     """
     if board_name is not None:
         try:
-            return next(board for board in autopilot.available_boards(True) if board.name == board_name)
+            return next(board for board in await autopilot.available_boards(True) if board.name == board_name)
         except StopIteration as error:
             raise ValueError("Chosen board not available.") from error
     if autopilot.current_board is None:
@@ -121,16 +126,30 @@ def get_serials() -> Any:
 @version(1, 0)
 async def get_firmware_info() -> Any:
     if not autopilot.current_board:
-        raise RuntimeError("Cannot fetch firmware info as there's no board running.")
-    return await autopilot.vehicle_manager.get_firmware_info()
+        message = "No board running, firmware information is unavailable"
+        logger.warning(message)
+        return PlainTextResponse(message, status_code=503)
+    try:
+        return await autopilot.vehicle_manager.get_firmware_info()
+    except ValueError:
+        return PlainTextResponse("Failed to get autopilot version", status_code=500)
+    except MavlinkMessageSendFail:
+        return PlainTextResponse("Timed out requesting Firmware Info message", status_code=500)
 
 
 @app.get("/vehicle_type", response_model=MavlinkVehicleType, summary="Get mavlink vehicle type.")
 @version(1, 0)
 async def get_vehicle_type() -> Any:
     if not autopilot.current_board:
-        raise RuntimeError("Cannot fetch vehicle type info as there's no board running.")
-    return await autopilot.vehicle_manager.get_vehicle_type()
+        message = "No board running, vehicle type is unavailable"
+        logger.warning(message)
+        return PlainTextResponse(message, status_code=503)
+    try:
+        return await autopilot.vehicle_manager.get_vehicle_type()
+    except FetchUpdatedMessageFail as error:
+        return PlainTextResponse(f"Timed out fetching message: {error}", status_code=500)
+    except MavlinkMessageReceiveFail as error:
+        return PlainTextResponse(f"Failed to get vehicle type: {error}", status_code=500)
 
 
 @app.post("/sitl_frame", summary="Set SITL Frame type.")
@@ -153,8 +172,8 @@ async def get_firmware_vehicle_type() -> Any:
     summary="Retrieve dictionary of available firmwares versions with their respective URL.",
 )
 @version(1, 0)
-def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) -> Any:
-    return autopilot.get_available_firmwares(vehicle, target_board(board_name).platform)
+async def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) -> Any:
+    return autopilot.get_available_firmwares(vehicle, (await target_board(board_name)).platform)
 
 
 @app.post("/install_firmware_from_url", summary="Install firmware for given URL.")
@@ -168,7 +187,7 @@ async def install_firmware_from_url(
 ) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, target_board(board_name), make_default, parameters)
+        autopilot.install_firmware_from_url(url, await target_board(board_name), make_default, parameters)
     finally:
         await autopilot.start_ardupilot()
 
@@ -188,7 +207,7 @@ async def install_firmware_from_file(
         logger.debug("Going to kill ardupilot")
         await autopilot.kill_ardupilot()
         logger.debug("Installing firmware from file")
-        autopilot.install_firmware_from_file(custom_firmware, target_board(board_name), parameters)
+        autopilot.install_firmware_from_file(custom_firmware, await target_board(board_name), parameters)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
@@ -260,15 +279,15 @@ async def stop() -> Any:
 async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware(target_board(board_name))
+        autopilot.restore_default_firmware(await target_board(board_name))
     finally:
         await autopilot.start_ardupilot()
 
 
 @app.get("/available_boards", response_model=List[FlightController], summary="Retrieve list of connected boards.")
 @version(1, 0)
-def available_boards() -> Any:
-    return autopilot.available_boards(True)
+async def available_boards() -> Any:
+    return await autopilot.available_boards(True)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)

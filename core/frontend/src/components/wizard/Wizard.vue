@@ -45,7 +45,7 @@
                 Welcome to BlueOS!
               </div>
               Welcome to BlueOS!
-              In this setup wizard we will guide you through the initial configuration of your vehicle.
+              In this setup wizard we will guide you through the initial configuration of your vehicle,
               including setting up the vehicle name, hostname, and <b>firmware</b>.
               If your vehicle is already set up, you can skip this wizard.
             </v-card>
@@ -68,8 +68,11 @@
             </v-row>
           </v-stepper-content>
           <v-stepper-content step="1">
-            <RequireInternet v-if="step_number === 1" @next="nextStep()" />
-            <v-row class="pa-5">
+            <RequireInternet
+              v-if="step_number === 1"
+              @next="nextStep()"
+            />
+            <v-row class="pa-5 mt-5">
               <v-btn
 
                 color="warning"
@@ -111,7 +114,7 @@
               </v-icon>
             </div>
             <v-row class="pa-5">
-              <v-row class="pl-3 pt-2">
+              <v-row class="pl-3 pt-2 pb-2">
                 <v-btn
                   color="warning darken"
                   class="mr-5"
@@ -153,6 +156,7 @@
               <v-spacer />
               <v-btn
                 color="primary"
+                :disabled="!params"
                 @click="validateParams() && setupConfiguration()"
               >
                 Continue
@@ -341,13 +345,13 @@ export default Vue.extend({
       step_number: 0,
       sub_model: get_model('sub', 'bluerov'),
       vehicle_name: 'blueos',
-      vehicle_type: Vehicle.Sub,
+      vehicle_type: '' as Vehicle | string,
       vehicle_image: null as string | null,
       // Allow the user to enable TLS on their vehicle
       enable_tls: false,
       // Allow us to check if the user is stuck in retry
       retry_count: 0,
-      params: {} as Dictionary<number>,
+      params: undefined as undefined | Dictionary<number>,
       // Final configuration
       configurations: [] as Configuration[],
       // Vehicle configuration

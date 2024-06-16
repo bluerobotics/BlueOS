@@ -1,5 +1,5 @@
 <template>
-  <v-card-text class="mt-3">
+  <v-card-text class="mt-3 pa-0">
     <v-tooltip bottom>
       <template #activator="{ on }">
         <v-icon dense :color="mavlink_lat ? 'green' : 'orange'" v-on="on">
@@ -10,7 +10,7 @@
     </v-tooltip>
     <b>Vehicle coordinates:</b> {{ mavlink_lat?.toFixed(5) ?? "N/A" }} {{ mavlink_lon?.toFixed(5) ?? "N/A" }}
     <br>
-    <template v-if="!mavlink_lat">
+    <template v-if="!mavlink_lat && supports_setting_position">
       <v-icon dense :color="geoip_lat ? 'green' : 'red'">
         {{ geoip_lat ? "mdi-check-circle" : "mdi-alert-circle" }}
       </v-icon>
@@ -25,7 +25,7 @@
       <b>GeoIP coordinates:</b> {{ geoip_lat ?? "N/A" }} {{ geoip_lon ?? "N/A" }}
       <br>
     </template>
-    <v-card v-if="!mavlink_lat" class="pa-4">
+    <v-card v-if="!mavlink_lat && supports_setting_position" class="pa-4">
       <v-card-text>
         No valid GPS position!
       </v-card-text>
@@ -65,6 +65,9 @@ import { PropType } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
+import autopilot from '@/store/autopilot_manager'
+import { FirmwareVehicleType } from '@/types/autopilot'
+import { sleep } from '@/utils/helper_functions'
 
 export default {
   name: 'AutoCoordinateDetector',
@@ -88,14 +91,28 @@ export default {
       manual_coordinates: false,
       manual_lat: this.inputcoordinates?.lat,
       manual_lon: this.inputcoordinates?.lon,
+      original_ekf_src: undefined as number | undefined,
     }
   },
   computed: {
     coordinates() {
       return this.mavlink_lat && this.mavlink_lon ? { lat: this.mavlink_lat, lon: this.mavlink_lon } : undefined
     },
+    current_ekf_src(): number | undefined {
+      return autopilot_data.parameter('EK3_SRC1_POSXY')?.value
+    },
+    supports_setting_position(): boolean {
+      // So far we can only do this for Sub
+      return autopilot.firmware_vehicle_type === FirmwareVehicleType.ArduSub
+    },
   },
   watch: {
+    current_ekf_src(new_value) {
+      // this is a "rising-edge" detector. only sets the value if it was never set
+      if (new_value !== undefined && this.original_ekf_src === undefined) {
+        this.original_ekf_src = new_value
+      }
+    },
     coordinates: {
       deep: true,
       handler() {
@@ -104,6 +121,7 @@ export default {
     },
   },
   mounted() {
+    this.original_ekf_src = this.current_ekf_src
     mavlink2rest.startListening('GLOBAL_POSITION_INT').setCallback((receivedMessage) => {
       this.mavlink_lat = receivedMessage.message.lat !== 0 ? receivedMessage.message.lat * 1e-7 : undefined
       this.mavlink_lon = receivedMessage.message.lon !== 0 ? receivedMessage.message.lon * 1e-7 : undefined
@@ -112,6 +130,20 @@ export default {
     this.getGeoIp()
   },
   methods: {
+    async waitFor(func: () => boolean, raise = false): Promise<void> {
+      const start = new Date()
+      while (!func()) {
+        await sleep(0.5)
+        if (new Date().getTime() - start.getTime() > 5000) {
+          const message = 'Timed out waiting'
+          if (raise) {
+            throw new Error(message)
+          }
+          console.warn(message)
+          break
+        }
+      }
+    },
     getGeoIp() {
       fetch('http://ip-api.com/json/')
         .then((response) => response.json())
@@ -121,7 +153,15 @@ export default {
         })
         .catch((err) => console.error(err))
     },
-    setOrigin(lat: number, lon:number) {
+    async setOrigin(lat: number, lon:number) {
+      if (this.original_ekf_src === undefined) {
+        console.error('Unable to detect ekf source, aborting')
+        return
+      }
+      mavlink2rest.setParam('EK3_SRC1_POSXY', 0, autopilot_data.system_id)
+      // wait for the param to get set
+
+      await this.waitFor(() => this.current_ekf_src === 0)
       mavlink2rest.sendMessage(
         {
           header: {
@@ -139,6 +179,9 @@ export default {
           },
         },
       )
+      await sleep(0.5)
+      mavlink2rest.setParam('EK3_SRC1_POSXY', this.original_ekf_src, autopilot_data.system_id)
+      await this.waitFor(() => this.current_ekf_src !== this.original_ekf_src)
     },
   },
 }

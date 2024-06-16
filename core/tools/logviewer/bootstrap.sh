@@ -3,17 +3,35 @@
 # Immediately exit on errors
 set -e
 
-DESTINATION_PATH="/home/pi/tools/logviewer"
+VERSION="v1.0.1"
+REPOSITORY_ORG="Ardupilot"
+REPOSITORY_NAME="UAVLogViewer"
+PROJECT_NAME="logviewer"
+REPOSITORY_URL="https://github.com/$REPOSITORY_ORG/$REPOSITORY_NAME"
 
-VERSION=v0.9.9
+echo "Installing project $PROJECT_NAME version $VERSION"
 
-REMOTE_URL="https://github.com/Ardupilot/UAVLogViewer/releases/download/${VERSION}/logviewer.tar.gz"
+# Step 1: Prepare the download URL
 
-# Download uncompress, and move the contents of dist to the target destination
-wget $REMOTE_URL
-tar -zxf logviewer.tar.gz
-mkdir -p $DESTINATION_PATH
-mv dist/* $DESTINATION_PATH
-find $DESTINATION_PATH -name "*.gz" -type f -delete
-rm -r dist
-rm -r logviewer.tar.gz
+ARCH="$(uname -m)"
+ARTIFACT_NAME="$PROJECT_NAME.tar.gz"
+echo "For architecture $ARCH, using build $BUILD_NAME"
+
+REMOTE_URL="$REPOSITORY_URL/releases/download/$VERSION/$ARTIFACT_NAME"
+echo "Remote URL is $REMOTE_URL"
+
+# Step 2: Prepare the installation path
+
+INSTALL_FOLDER="./$PROJECT_NAME"
+mkdir -p "$INSTALL_FOLDER"
+
+echo "Installing to $INSTALL_FOLDER"
+
+# Step 3: Download and install
+
+wget -q "$REMOTE_URL" -O - | tar -zxf - -C "$INSTALL_FOLDER"
+find "$INSTALL_FOLDER/dist" -name "*.gz" -type f -delete
+mv "$INSTALL_FOLDER"/dist/* "$INSTALL_FOLDER"
+rm -rf "$INSTALL_FOLDER/dist"
+
+echo "Finished installing $PROJECT_NAME"

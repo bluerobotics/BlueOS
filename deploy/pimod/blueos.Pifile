@@ -1,6 +1,6 @@
 FROM https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip
 
-PUMP 1800M
+PUMP 2000M
 
 # expand_fs
 INSTALL deploy/expand_fs.sh /usr/bin/expand_fs.sh

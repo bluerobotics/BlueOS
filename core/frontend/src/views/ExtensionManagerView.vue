@@ -17,6 +17,10 @@
         @clicked="performActionFromModal"
       />
     </v-dialog>
+    <extension-settings
+      v-model="show_settings"
+      @refresh="fetchManifest"
+    />
     <v-dialog
       v-model="show_log"
       width="80%"
@@ -62,7 +66,16 @@
           Installed
         </v-tab>
       </v-tabs>
-      <v-spacer class="search-container" />
+      <v-spacer class="tabs-container-spacer-right" />
+      <v-btn
+        v-tooltip="'Settings'"
+        icon
+        color="gray"
+        hide-details="auto"
+        @click="show_settings = true"
+      >
+        <v-icon>mdi-cog</v-icon>
+      </v-btn>
     </v-toolbar>
     <v-card
       v-if="tab === 0"
@@ -128,7 +141,7 @@
     </v-card>
     <v-card
       v-if="tab === 1"
-      class="d-flex pa-5"
+      class="main-container d-flex pa-5"
       text-align="center"
     >
       <div v-if="tab === 1" class="installed-extensions-container">
@@ -203,13 +216,16 @@ import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
 import CreationDialog from '@/components/kraken/ExtensionCreationDialog.vue'
 import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
+import ExtensionSettings from '@/components/kraken/ExtensionSettings.vue'
 import InstalledExtensionCard from '@/components/kraken/InstalledExtensionCard.vue'
+import kraken from '@/components/kraken/KrakenManager'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
 import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
+import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
   ExtensionData, InstalledExtensionData, RunningContainer, Version,
@@ -225,6 +241,7 @@ export default Vue.extend({
     ExtensionCard,
     InstalledExtensionCard,
     ExtensionModal,
+    ExtensionSettings,
     PullProgress,
     CreationDialog,
     SpinningLogo,
@@ -233,6 +250,7 @@ export default Vue.extend({
     return {
       tab: 0,
       show_dialog: false,
+      show_settings: false,
       installed_extensions: {} as Dictionary<InstalledExtensionData>,
       selected_extension: null as (null | ExtensionData),
       selected_companies: [] as string[],
@@ -436,17 +454,9 @@ export default Vue.extend({
       )
     },
     async fetchManifest(): Promise<void> {
-      await back_axios({
-        method: 'get',
-        url: `${API_URL}/extensions_manifest`,
-        timeout: 3000,
-      })
+      kraken.fetchConsolidatedManifests()
         .then((response) => {
-          if ('detail' in response.data) {
-            notifier.pushBackError('EXTENSIONS_MANIFEST_FETCH_FAIL', new Error(response.data.detail))
-            return
-          }
-          this.manifest = response.data.map((extension: ExtensionData) => ({
+          this.manifest = response.map((extension: ExtensionData) => ({
             ...extension,
             is_compatible: this.checkExtensionCompatibility(extension),
           }))
@@ -492,8 +502,26 @@ export default Vue.extend({
           container_name: this.getContainerName(extension),
         },
         onDownloadProgress: (progressEvent) => {
-          const chunk = progressEvent.currentTarget.response
-          this.$set(this, 'log_output', ansi.ansi_to_html(chunk))
+          const result = aggregateStreamingResponse(
+            parseStreamingResponse(progressEvent.currentTarget.response),
+            (fragment, buffer) => {
+              // If no logs are available kraken will wait till timeout and stop the stream
+              if (fragment.status === 408) {
+                if (!buffer) {
+                  this.$set(this, 'log_output', ansi.ansi_to_html('No Logs available'))
+                }
+              } else {
+                notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', fragment.error)
+              }
+
+              /** Only stops if buffer is empty */
+              return Boolean(buffer)
+            },
+          )
+
+          if (result) {
+            this.$set(this, 'log_output', ansi.ansi_to_html(result))
+          }
           this.show_log = true
           this.setLoading(extension, false)
           this.$nextTick(() => {
@@ -507,7 +535,7 @@ export default Vue.extend({
             output.scrollTop = output.scrollHeight
           })
         },
-        timeout: 30000,
+        timeout: 35000,
       })
         .then(() => {
           this.setLoading(extension, false)
@@ -704,13 +732,20 @@ export default Vue.extend({
 .installed-extensions-container {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-start;
+  width: 100%;
+}
+
+.main-container {
+  background-color: #135DA355 !important;
 }
 
 .installed-extension-card {
   margin: 10px;
-  flex: 1 1 400px;
+  flex: 1 1 calc(33.333% - 20px);
+  max-width: calc(33.333% - 20px);
+  min-width: 400px;
 }
 
 .jv-code {
@@ -727,6 +762,11 @@ pre.logs {
 .search-container {
   flex: 1 1 auto;
   width: 50% !important;
+}
+
+.tabs-container-spacer-right {
+  flex: 1 1 auto;
+  width: 30% !important;
 }
 
 .v-input.expanding-search {

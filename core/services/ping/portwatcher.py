@@ -7,7 +7,7 @@ from loguru import logger
 from serial.tools.list_ports_linux import SysFS
 
 from ping360_ethernet_prober import find_ping360_ethernet
-from pingutils import PingDeviceDescriptor, PingType
+from pingutils import PingDeviceDescriptor
 
 MAX_ATTEMPTS = 3
 
@@ -61,8 +61,10 @@ class PortWatcher:
             logger.info(f"Max number of probing attempts reached for {port}. Giving up.")
 
     async def add_ping360(self) -> None:
-        ips_list = await find_ping360_ethernet()
-        ips = set(ips_list)
+        devices_list = await find_ping360_ethernet()
+        # find_ping360_ethernet sets the discovery info, but cast it so mypy doesn't complain
+        ip_devices = {str(device.ethernet_discovery_info): device for device in devices_list}
+        ips = set(ip_devices)
         lost_ips = self.known_ips - ips
         new_ips = ips - self.known_ips
         for ip in lost_ips:
@@ -71,20 +73,7 @@ class PortWatcher:
             self.known_ips.remove(ip)
         for ip in new_ips:
             self.known_ips.add(ip)
-            await self.ethernet_ping_found_callback(
-                PingDeviceDescriptor(
-                    ping_type=PingType.PING360,
-                    device_id=0,
-                    device_model=0,
-                    device_revision=0,  # not available in this message
-                    firmware_version_major=0,
-                    firmware_version_minor=0,
-                    firmware_version_patch=0,
-                    ethernet_discovery_info=f"{ip}:12345",
-                    port=None,
-                    driver=None,
-                )
-            )
+            await self.ethernet_ping_found_callback(ip_devices[ip])
 
     async def start_watching(self) -> None:
         """Start watching for plugged/unplugged serial devices in the system."""

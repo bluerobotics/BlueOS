@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card class="ml-10 mr-10 mt-4">
+    <v-card class="mt-4">
       <v-card-title>
         <h4>Select compasses to calibrate </h4>
       </v-card-title>

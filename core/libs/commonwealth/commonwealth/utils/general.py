@@ -1,5 +1,4 @@
 import os
-import resource
 import subprocess
 import uuid
 from functools import cache
@@ -14,10 +13,6 @@ from commonwealth.utils.decorators import temporary_cache
 @cache
 def blueos_version() -> str:
     return os.environ.get("GIT_DESCRIBE_TAGS", "null")
-
-
-def limit_ram_usage(memory_limit_mb: int = 100) -> None:
-    resource.setrlimit(resource.RLIMIT_AS, (memory_limit_mb * 1024 * 1024, -1))
 
 
 def delete_everything(path: Path) -> None:
@@ -37,8 +32,19 @@ def delete_everything(path: Path) -> None:
 
 
 def file_is_open(path: Path) -> bool:
-    result = subprocess.run(["lsof", path.resolve()], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-    return result.returncode == 0
+    try:
+        kernel_functions_timeout = str(2)
+        result = subprocess.run(
+            ["lsof", "-t", "-n", "-P", "-S", kernel_functions_timeout, path.resolve()],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=5,
+        )
+        return result.returncode == 0
+    except Exception as error:
+        logger.error(f"Failed to check if file {path} is open, {error}")
+        return True
 
 
 @cache
