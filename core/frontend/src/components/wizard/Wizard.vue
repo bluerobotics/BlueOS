@@ -128,7 +128,7 @@
             <div class="d-flex flex-column align-center">
               <v-text-field v-model="vehicle_name" label="Vehicle Name" />
               <v-text-field v-model="mdns_name" label="MDNS Name" />
-              <v-checkbox v-model="enable_tls" label="Enable TLS"/>
+              <v-checkbox v-model="enable_tls" label="Enable TLS" />
             </div>
             <ScriptLoader
               v-model="scripts"

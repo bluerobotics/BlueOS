@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
+import datetime
 import itertools
 import logging
+import os
 import pathlib
+import shlex
+import shutil
 import socket
 import subprocess
-import os
-import shutil
-import shlex
-import datetime
 from typing import Any, Dict, List, Optional
 
 import psutil
