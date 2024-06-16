@@ -142,8 +142,8 @@ class Beacon:
         return self.manager.settings.vehicle_name or "BlueROV2"
 
     def get_enable_tls(self) -> bool:
-        # return what's in settings or assume no...this may change in the future
-        return self.manager.settings.enable_tls or False
+        # TODO: return what's in settings or assume no...this may change in the future
+        return self.manager.settings.use_tls or False
 
     def set_enable_tls(self, enable_tls: bool) -> None:
         # handle enabling/disabling tls
@@ -170,6 +170,8 @@ class Beacon:
                 raise SystemError("Unable to validate staged Nginx config")
             # bounce nginx
             self.nginx_promote_config(keep_backup=True)
+        self.manager.settings.use_tls = enable_tls
+        self.manager.save()
 
     def generate_cert(self) -> None:
         """

@@ -83,7 +83,7 @@ jobs:
       matrix:
         docker: [bootstrap, core]
         project: [blueos]
-        platforms: ["linux/arm/v7,linux/arm64/v8,linux/amd64"]
+        platforms: ["linux/arm64"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
