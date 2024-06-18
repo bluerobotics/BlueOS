@@ -614,7 +614,7 @@ export default Vue.extend({
     async setTLS(): Promise<ConfigurationStatus> {
       return beacon.setTLS(this.enable_tls)
         .then(() => undefined)
-        .catch(() => 'False to change TLS configuration')
+        .catch(() => 'Failed to change TLS configuration')
     },
     async disableWifiHotspot(): Promise<ConfigurationStatus> {
       return back_axios({
