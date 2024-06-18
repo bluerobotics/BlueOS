@@ -6,6 +6,7 @@ import itertools
 import logging
 import os
 import pathlib
+import re
 import shlex
 import shutil
 import signal
@@ -128,6 +129,12 @@ class Beacon:
                 case InterfaceType.HOTSPOT:
                     interface.domain_names = [f"{hostname}-hotspot"]
         self.manager.save()
+        # if the hostname is changed and we have TLS enabled we need to regenerate the cert
+        if self.get_enable_tls():
+            os.unlink(TLS_KEY_PATH)
+            os.unlink(TLS_CERT_PATH)
+            self.generate_cert()
+            self.reload_nginx_config()
 
     def get_hostname(self) -> str:
         try:
@@ -266,6 +273,12 @@ class Beacon:
         os.rename(new_config_path, config_path)
 
         # reload nginx config by getting the PID of the master process and sending a SIGHUP
+        self.reload_nginx_config()
+
+    def reload_nginx_config(self) -> None:
+        """
+        Sends a SIGHUP to the nginx master process to trigger a reload of the running config
+        """
         if not os.path.exists("/run/nginx.pid"):
             raise SystemError("No nginx master PID found")
         with open("/run/nginx.pid", "r", encoding="utf-8") as pidf:
@@ -420,6 +433,10 @@ def get_services() -> Any:
 @app.post("/hostname", summary="Set the hostname for mDNS.")
 @version(1, 0)
 def set_hostname(hostname: str) -> Any:
+    # beacon.ts has a regex to validate hostname format, but we should check here too
+    hostname_regex = re.compile(r"^[a-zA-Z0-9-]+$")
+    if not hostname_regex.match(hostname):
+        raise ValueError("Invalid characters in hostname")
     return beacon.set_hostname(hostname)
 
 
