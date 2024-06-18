@@ -185,6 +185,7 @@ class Beacon:
         alt_names.append(f"DNS:{current_hostname}-wifi")
         alt_names.append(f"DNS:{current_hostname}-hotspot")
         alt_names.append("IP:192.168.2.2")
+        alt_names.append("IP:192.168.3.1")
 
         # shell out to openssl to get the cert
         try:
