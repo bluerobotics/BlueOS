@@ -15,7 +15,7 @@
         <small v-if="config.message" :color="getStepColor(config)">Error: {{ config.message }}</small>
       </v-stepper-step>
       <v-checkbox
-        :input-value="!config.skip"
+        :input-value="!config.skip && !config.done"
         class="step-checkbox"
         :disabled="loading"
         @change="config.skip = !$event"
