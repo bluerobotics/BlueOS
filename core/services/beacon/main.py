@@ -31,8 +31,13 @@ from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
 
-TLS_CERT_PATH = "/etc/blueos/nginx/blueos.crt"
-TLS_KEY_PATH = "/etc/blueos/nginx/blueos.key"
+NGINX_ROOT_PATH = "/etc/blueos/nginx"
+NGINX_PID_PATH = "/run/nginx.pid"  # this is defined in the nginx config
+TLS_CERT_PATH = os.path.join(NGINX_ROOT_PATH, "blueos.crt")
+TLS_KEY_PATH = os.path.join(NGINX_ROOT_PATH, "blueos.key")
+
+BLUEOS_TOOLS_PATH = "/home/pi/tools"
+BLUEOS_TOOLS_NGINX_PATH = os.path.join(BLUEOS_TOOLS_PATH, "nginx")
 
 
 class AsyncRunner:
@@ -222,7 +227,7 @@ class Beacon:
             raise SystemError("Unable to generate certificates") from ex
 
     def generate_new_nginx_config(
-        self, config_path: str = "/etc/blueos/nginx/nginx.conf.ondeck", use_tls: bool = False
+        self, config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf.ondeck"), use_tls: bool = False
     ) -> None:
         """
         Generates a new nginx config file at the path specified
@@ -231,11 +236,15 @@ class Beacon:
         # also, the templates are in core's tools directory but the live config lives in /etc/blueos/nginx
         # TODO: the user may have changed the config, so we should parse and update as needed
         if use_tls:
-            shutil.copy("/home/pi/tools/nginx/nginx_tls.conf.template", config_path, follow_symlinks=False)
+            shutil.copy(
+                os.path.join(BLUEOS_TOOLS_NGINX_PATH, "nginx_tls.conf.template"), config_path, follow_symlinks=False
+            )
         else:
-            shutil.copy("/home/pi/tools/nginx/nginx.conf.template", config_path, follow_symlinks=False)
+            shutil.copy(
+                os.path.join(BLUEOS_TOOLS_NGINX_PATH, "nginx.conf.template"), config_path, follow_symlinks=False
+            )
 
-    def nginx_config_is_valid(self, config_path: str = "/etc/blueos/nginx/nginx.conf.ondeck") -> bool:
+    def nginx_config_is_valid(self, config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf.ondeck")) -> bool:
         """
         Returns true if the nginx config file is valid
         """
@@ -248,8 +257,8 @@ class Beacon:
 
     def nginx_promote_config(
         self,
-        config_path: str = "/etc/blueos/nginx/nginx.conf",
-        new_config_path: str = "/etc/blueos/nginx/nginx.conf.ondeck",
+        config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf"),
+        new_config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf.ondeck"),
         keep_backup: bool = False,
     ) -> None:
         """
@@ -279,9 +288,9 @@ class Beacon:
         """
         Sends a SIGHUP to the nginx master process to trigger a reload of the running config
         """
-        if not os.path.exists("/run/nginx.pid"):
+        if not os.path.exists(NGINX_PID_PATH):
             raise SystemError("No nginx master PID found")
-        with open("/run/nginx.pid", "r", encoding="utf-8") as pidf:
+        with open(NGINX_PID_PATH, "r", encoding="utf-8") as pidf:
             nginx_pid = int(pidf.read())
             os.kill(nginx_pid, signal.SIGHUP)
 
