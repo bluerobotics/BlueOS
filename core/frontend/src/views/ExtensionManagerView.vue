@@ -1,772 +1,93 @@
 <template>
   <v-container fluid>
-    <pull-progress
-      :progress="pull_output"
-      :show="show_pull_output"
-      :download="download_percentage"
-      :extraction="extraction_percentage"
-      :statustext="status_text"
-    />
-    <v-dialog
-      v-model="show_dialog"
-      width="80%"
-    >
-      <extension-modal
-        :extension="selected_extension"
-        :installed="installedVersion()"
-        @clicked="performActionFromModal"
-      />
-    </v-dialog>
-    <extension-settings
-      v-model="show_settings"
-      @refresh="fetchManifest"
-    />
-    <v-dialog
-      v-model="show_log"
-      width="80%"
-    >
-      <v-card>
-        <v-card-text>
-          <!-- eslint-disable -->
-          <pre class="logs" v-html="log_output" />
-          <!-- eslint-enable -->
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-    <v-toolbar density="compact">
-      <div class="search-container">
-        <v-text-field
-          v-model.trim="searchQuery"
-          dense
-          rounded
-          clearable
-          placeholder="Search Extensions"
-          prepend-inner-icon="mdi-magnify"
-          class="pt-6 shrink expanding-search"
-          :class="{ closed: searchQueryClosed && !searchQuery }"
-          @focus="searchQueryClosed = false"
-          @blur="searchQueryClosed = true"
-        />
-      </div>
+    <!-- Progress Pull -->
+    <!-- Extension Detail Modal -->
+    <!-- Settings  Modal-->
+    <!-- Log Modal -->
+    <v-toolbar>
+      <v-spacer />
       <v-tabs
         v-model="tab"
-        fixed-tabs
-        class="tabs-container"
       >
-        <v-tab>
+        <v-tab class="px-5">
           <v-icon class="mr-5">
-            mdi-store-search
+            mdi-package-variant
           </v-icon>
-          Store
+          Inventory
         </v-tab>
-        <v-tab>
+        <v-tab class="px-5">
           <v-icon class="mr-5">
             mdi-bookshelf
           </v-icon>
           Installed
         </v-tab>
       </v-tabs>
-      <v-spacer class="tabs-container-spacer-right" />
+      <v-spacer />
+      <v-text-field
+        v-model.trim="searching_query"
+        dense
+        rounded
+        filled
+        clearable
+        placeholder="Search Extensions"
+        prepend-inner-icon="mdi-magnify"
+        class="pt-6 mt-6 pb-6 shrink expanding-search"
+        :class="{ closed: !is_searching && !searching_query }"
+        @focus="is_searching = true"
+        @blur="is_searching = false"
+      />
       <v-btn
         v-tooltip="'Settings'"
         icon
         color="gray"
         hide-details="auto"
-        @click="show_settings = true"
       >
         <v-icon>mdi-cog</v-icon>
       </v-btn>
-    </v-toolbar>
-    <v-card
-      v-if="tab === 0"
-      class="d-flex pa-5 align-baseline"
-    >
-      <v-card min-width="200px">
-        <v-list>
-          <v-list-item-subtitle class="pa-3 font-weight-bold">
-            Provider
-          </v-list-item-subtitle>
-          <v-checkbox
-            v-for="(name, index) in providers"
-            :key="`provider-${index}`"
-            v-model="selected_companies"
-            :label="name"
-            :value="name"
-            class="pa-0 pl-3 ma-0"
-          />
-          <v-divider class="ma-3" />
-          <v-list-item-subtitle class="pa-3 font-weight-bold">
-            Type
-          </v-list-item-subtitle>
-          <v-checkbox
-            v-for="(name, index) in tags"
-            :key="`tag-${index}`"
-            v-model="selected_tags"
-            :label="name"
-            :value="name"
-            class="pa-0 pl-3 ma-0"
-          />
-        </v-list>
-      </v-card>
-      <v-row
-        v-if="filteredManifest.length > 0"
-        dense
-        class="d-flex"
-        style="place-self: flex-start start; place-content: start space-around;"
-      >
-        <extension-card
-          v-for="extension in filteredManifest"
-          :key="extension.identifier + extension.name"
-          :extension="extension"
-          class="ma-2"
-          @clicked="showModal(extension)"
-        />
-      </v-row>
-      <v-container
-        v-if="manifest.length === 0"
-        class="text-center"
-      >
-        <p class="text-h6">
-          No Extensions available. Make sure the vehicle has internet access and try again.
-        </p>
-      </v-container>
-      <v-container
-        v-if="filteredManifest.length === 0"
-        class="text-center"
-      >
-        <p class="text-h6">
-          No results found.
-        </p>
-      </v-container>
-    </v-card>
-    <v-card
-      v-if="tab === 1"
-      class="main-container d-flex pa-5"
-      text-align="center"
-    >
-      <div v-if="tab === 1" class="installed-extensions-container">
-        <installed-extension-card
-          v-for="extension in installed_extensions"
-          :key="extension.docker"
-          :extension="extension"
-          :loading="extension.loading"
-          :metrics="metricsFor(extension)"
-          :container="getContainer(extension)"
-          :versions="remoteVersions(extension)"
-          :extension-data="remoteVersions(extension)"
-          class="installed-extension-card"
-          @edit="openEditDialog"
-          @showlogs="showLogs(extension)"
-          @uninstall="uninstall(extension)"
-          @disable="disable(extension)"
-          @enable="enableAndStart(extension)"
-          @restart="restart(extension)"
-          @update="update"
-        />
-      </div>
-      <template
-        v-if="Object.keys(installed_extensions).isEmpty()"
-      >
-        <p v-if="dockers_fetch_failed" class="text-h6" style="margin: auto;">
-          Failed to fetch installed extensions. Make sure the vehicle has internet access and try again.
-        </p>
-        <p
-          v-else-if="dockers_fetch_done"
-          class="text-h6"
-        >
-          No Extensions installed.
-        </p>
-        <template v-else>
-          <spinning-logo size="20%" subtitle="Fetching installed extensions" />
-        </template>
+
+      <template #extension>
       </template>
-      <v-fab-transition>
-        <v-btn
-          :key="'create_button'"
-          color="primary"
-          fab
-          large
-          dark
-          fixed
-          bottom
-          right
-          class="v-btn--example"
-          @click="openCreationDialog"
-        >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
-      </v-fab-transition>
-      <creation-dialog
-        v-if="edited_extension"
-        :extension="edited_extension"
-        @extensionChange="createOrUpdateExtension"
-        @closed="clearEditedExtension"
-      />
-    </v-card>
+    </v-toolbar>
+    <!-- Public Store Ext -->
+    <!-- Inventory Ext -->
+    <!-- Installed Ext -->
   </v-container>
 </template>
 
 <script lang="ts">
-import AnsiUp from 'ansi_up'
-import axios from 'axios'
-import Fuse from 'fuse.js'
 import Vue from 'vue'
-
-import SpinningLogo from '@/components/common/SpinningLogo.vue'
-import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
-import CreationDialog from '@/components/kraken/ExtensionCreationDialog.vue'
-import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
-import ExtensionSettings from '@/components/kraken/ExtensionSettings.vue'
-import InstalledExtensionCard from '@/components/kraken/InstalledExtensionCard.vue'
-import kraken from '@/components/kraken/KrakenManager'
-import PullProgress from '@/components/utils/PullProgress.vue'
-import Notifier from '@/libs/notifier'
-import { Dictionary } from '@/types/common'
-import { kraken_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
-import PullTracker from '@/utils/pull_tracker'
-import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
-
-import {
-  ExtensionData, InstalledExtensionData, RunningContainer, Version,
-} from '../types/kraken'
-
-const API_URL = '/kraken/v1.0'
-
-const notifier = new Notifier(kraken_service)
 
 export default Vue.extend({
   name: 'ExtensionManagerView',
   components: {
-    ExtensionCard,
-    InstalledExtensionCard,
-    ExtensionModal,
-    ExtensionSettings,
-    PullProgress,
-    CreationDialog,
-    SpinningLogo,
   },
   data() {
     return {
       tab: 0,
-      show_dialog: false,
-      show_settings: false,
-      installed_extensions: {} as Dictionary<InstalledExtensionData>,
-      selected_extension: null as (null | ExtensionData),
-      selected_companies: [] as string[],
-      selected_tags: [] as string[],
-      running_containers: [] as RunningContainer[],
-      manifest: [] as ExtensionData[],
-      manifest_fuse: null as null | Fuse<ExtensionData>,
-      dockers_fetch_done: false,
-      dockers_fetch_failed: false,
-      show_pull_output: false,
-      pull_output: '',
-      download_percentage: 0,
-      extraction_percentage: 0,
-      status_text: '',
-      log_output: null as null | string,
-      show_log: false,
-      metrics: {} as Dictionary<{ cpu: number, memory: number}>,
-      metrics_interval: 0,
-      edited_extension: null as null | InstalledExtensionData,
-      searchQuery: null as null | string,
-      searchQueryClosed: true,
+      searching_query: '',
+      is_searching: false,
     }
   },
   computed: {
-    providers(): string[] {
-      const authors = this.manifest
-        .map((extension) => this.newestVersion(extension.versions)?.company?.name ?? 'unknown').sort() as string[]
-      return [...new Set(authors)]
-    },
-    tags(): string[] {
-      const authors = this.manifest
-        .map((extension) => this.newestVersion(extension.versions)?.type ?? 'unknown')
-        .sort() as string[]
-      return [...new Set(authors)]
-    },
-    searchFilteredManifest(): ExtensionData[] {
-      const query = this.searchQuery ?? ''
-
-      // Remove not compatible in case user is not searching by search bar directly
-      const data = query !== ''
-        ? this.manifest_fuse?.search(query).map((result) => result.item) ?? []
-        : this.manifest.filter((ext) => ext.is_compatible)
-
-      return data
-    },
-    filteredManifest(): ExtensionData[] {
-      let data = this.searchFilteredManifest
-
-      if (this.selected_companies.isEmpty() && this.selected_tags.isEmpty()) {
-        // By default we remove examples if nothing is selected
-        return data.filter((extension) => this.newestVersion(extension.versions)?.type !== 'example')
-      }
-
-      if (!this.selected_companies.isEmpty()) {
-        data = data.filter((extension) => this.newestVersion(extension.versions)?.company?.name !== undefined)
-          .filter((extension) => this.selected_companies
-            .includes(this.newestVersion(extension.versions)?.company?.name ?? ''))
-      }
-
-      if (this.selected_tags.isEmpty()) {
-        return data
-      }
-
-      return data
-        .filter((extension) => this.newestVersion(extension.versions)?.type !== undefined)
-        .filter((extension) => this.selected_tags
-          .includes(this.newestVersion(extension.versions)?.type ?? ''))
-    },
   },
   mounted() {
     this.fetchManifest()
-    this.fetchInstalledExtensions()
-    this.fetchMetrics()
-    this.metrics_interval = setInterval(this.fetchMetrics, 30000)
   },
   destroyed() {
-    clearInterval(this.metrics_interval)
+    // clearInterval(this.metrics_interval)
   },
   methods: {
-    newestVersion(versions: Dictionary<Version>): Version | undefined {
-      return Object.values(versions)?.[0] as Version | undefined
-    },
-    clearEditedExtension() {
-      this.edited_extension = null
-    },
-    async update(extension: InstalledExtensionData, version: string) {
-      this.show_pull_output = true
-      const tracker = new PullTracker(
-        () => {
-          setTimeout(() => {
-            this.show_pull_output = false
-          }, 1000)
-        },
-        (error) => {
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-        },
-      )
-      await back_axios({
-        url: `${API_URL}/extension/update_to_version`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-          new_version: version,
-        },
-        timeout: 120000,
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-        },
-      })
-        .then(() => {
-          this.fetchInstalledExtensions()
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-        })
-        .finally(() => {
-          this.show_pull_output = false
-          this.show_dialog = false
-          this.pull_output = ''
-          this.download_percentage = 0
-          this.extraction_percentage = 0
-          this.status_text = ''
-        })
-    },
-    metricsFor(extension: InstalledExtensionData): { cpu: number, memory: number} | Record<string, never> {
-      const name = this.getContainerName(extension)?.replace('/', '')
-      return name ? this.metrics[name] : {}
-    },
-    async createOrUpdateExtension(): Promise<void> {
-      if (!this.edited_extension) {
-        // TODO: error
-        return
-      }
-      await this.install(
-        this.edited_extension.identifier,
-        this.edited_extension.name,
-        this.edited_extension.docker,
-        this.edited_extension.tag,
-        true,
-        this.edited_extension?.permissions ?? '',
-        this.edited_extension?.user_permissions ?? '',
-      )
-      this.show_dialog = false
-      this.edited_extension = null
-    },
-    openEditDialog(extension: InstalledExtensionData): void {
-      this.edited_extension = extension
-    },
-    openCreationDialog() : void {
-      this.edited_extension = {
-        identifier: 'yourorganization.yourextension',
-        name: '',
-        docker: '',
-        enabled: true,
-        tag: '',
-        permissions: '{}',
-        user_permissions: '{}',
-      }
-    },
-    getContainer(extension: InstalledExtensionData): RunningContainer | undefined {
-      return this.running_containers?.find(
-        (container) => container.image === `${extension.docker}:${extension.tag}`,
-      )
-    },
-    async fetchMetrics(): Promise<void> {
-      await back_axios({
-        method: 'get',
-        url: `${API_URL}/stats`,
-        timeout: 20000,
-      })
-        .then((response) => {
-          this.metrics = response.data
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
-        })
-      await back_axios({
-        method: 'get',
-        url: `${API_URL}/list_containers`,
-        timeout: 30000,
-      })
-        .then((response) => {
-          this.running_containers = response.data ?? []
-        })
-        .catch((error) => {
-          notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
-        })
-    },
-    getContainerName(extension: InstalledExtensionData): string | null {
-      return this.getContainer(extension)?.name ?? null
-    },
-    checkExtensionCompatibility(extension: ExtensionData): boolean {
-      return Object.values(extension.versions).some(
-        (version) => version.images.some(
-          (image) => image.compatible,
-        ),
-      )
-    },
     async fetchManifest(): Promise<void> {
-      kraken.fetchConsolidatedManifests()
-        .then((response) => {
-          this.manifest = response.map((extension: ExtensionData) => ({
-            ...extension,
-            is_compatible: this.checkExtensionCompatibility(extension),
-          }))
-          this.manifest_fuse = new Fuse(this.manifest, {
-            keys: ['identifier', 'name', 'description'],
-            threshold: 0.4,
-          })
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_MANIFEST_FETCH_FAIL', error)
-        })
-    },
-    async fetchInstalledExtensions(): Promise<void> {
-      await back_axios({
-        method: 'get',
-        url: `${API_URL}/installed_extensions`,
-        timeout: 30000,
-      })
-        .then((response) => {
-          this.installed_extensions = {}
-          for (const extension of response.data) {
-            this.installed_extensions[extension.identifier] = extension
-          }
-          this.dockers_fetch_failed = false
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_INSTALLED_FETCH_FAIL', error)
-          this.dockers_fetch_failed = true
-        })
-        .finally(() => {
-          this.dockers_fetch_done = true
-        })
-    },
-    async showLogs(extension: InstalledExtensionData) {
-      this.setLoading(extension, true)
-      const ansi = new AnsiUp()
-      this.log_output = ''
-
-      back_axios({
-        method: 'get',
-        url: `${API_URL}/log`,
-        params: {
-          container_name: this.getContainerName(extension),
-        },
-        onDownloadProgress: (progressEvent) => {
-          const result = aggregateStreamingResponse(
-            parseStreamingResponse(progressEvent.currentTarget.response),
-            (fragment, buffer) => {
-              // If no logs are available kraken will wait till timeout and stop the stream
-              if (fragment.status === 408) {
-                if (!buffer) {
-                  this.$set(this, 'log_output', ansi.ansi_to_html('No Logs available'))
-                }
-              } else {
-                notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', fragment.error)
-              }
-
-              /** Only stops if buffer is empty */
-              return Boolean(buffer)
-            },
-          )
-
-          if (result) {
-            this.$set(this, 'log_output', ansi.ansi_to_html(result))
-          }
-          this.show_log = true
-          this.setLoading(extension, false)
-          this.$nextTick(() => {
-            // TODO: find a better way to scroll to bottom
-            const output = document.querySelector(
-              '#app > div.v-dialog__content.v-dialog__content--active > div',
-            ) as HTMLInputElement
-            if (!output) {
-              return
-            }
-            output.scrollTop = output.scrollHeight
-          })
-        },
-        timeout: 35000,
-      })
-        .then(() => {
-          this.setLoading(extension, false)
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', error)
-        })
-        .finally(() => {
-          this.setLoading(extension, false)
-        })
-    },
-    showModal(extension: ExtensionData) {
-      this.show_dialog = true
-      this.selected_extension = extension
-    },
-    async install(
-      identifier: string,
-      name: string,
-      docker: string,
-      tag: string,
-      enabled: boolean,
-      permissions: string,
-      user_permissions: string,
-    ) {
-      this.show_dialog = false
-      this.show_pull_output = true
-      const tracker = new PullTracker(
-        () => {
-          setTimeout(() => {
-            this.show_pull_output = false
-          }, 1000)
-        },
-        (error) => {
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-          this.show_pull_output = false
-        },
-      )
-
-      await back_axios({
-        url: `${API_URL}/extension/install`,
-        method: 'POST',
-        data: {
-          identifier,
-          name,
-          docker,
-          tag,
-          enabled,
-          permissions,
-          user_permissions,
-        },
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-        },
-      })
-        .then(() => {
-          this.fetchInstalledExtensions()
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-        })
-        .finally(() => {
-          this.show_pull_output = false
-          this.show_dialog = false
-          this.pull_output = ''
-          this.download_percentage = 0
-          this.extraction_percentage = 0
-          this.status_text = ''
-        })
-    },
-    async performActionFromModal(identifier: string, tag: string, isInstalled: boolean) {
-      if (isInstalled) {
-        const ext = this.installed_extensions[identifier]
-        if (!ext) {
-          return
-        }
-        this.show_dialog = false
-        await this.uninstall(ext)
-      } else {
-        await this.installFromSelected(tag)
-      }
-    },
-    async installFromSelected(tag: string) {
-      if (!this.selected_extension) {
-        return
-      }
-      await this.install(
-        this.selected_extension?.identifier,
-        this.selected_extension?.name,
-        this.selected_extension?.docker,
-        tag,
-        true,
-        JSON.stringify(this.selected_extension?.versions[tag].permissions),
-        '',
-      )
-    },
-    async uninstall(extension: InstalledExtensionData) {
-      this.setLoading(extension, true)
-      await axios.post(`${API_URL}/extension/uninstall`, null, {
-        params: {
-          extension_identifier: extension.identifier,
-        },
-      })
-        .then(() => {
-          this.fetchInstalledExtensions()
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_UNINSTALL_FAIL', error)
-        })
-      this.setLoading(extension, false)
-    },
-    installedVersion(): string | undefined {
-      const extension_identifier = this.selected_extension?.identifier
-      if (!extension_identifier) {
-        return undefined
-      }
-      return this.installed_extensions[extension_identifier]?.tag
-    },
-    async disable(extension: InstalledExtensionData) {
-      this.setLoading(extension, true)
-      delete this.metrics[this.getContainerName(extension)?.replace('/', '') ?? '']
-      this.running_containers = this.running_containers.filter(
-        (container) => container.name !== this.getContainerName(extension),
-      )
-      await back_axios({
-        url: `${API_URL}/extension/disable`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-        },
-        timeout: 2000,
-      })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSION_DISABLE_FAIL', error)
-        })
-      this.fetchInstalledExtensions()
-      this.setLoading(extension, false)
-      this.fetchMetrics()
-    },
-    async enableAndStart(extension: InstalledExtensionData) {
-      this.setLoading(extension, true)
-      await back_axios({
-        url: `${API_URL}/extension/enable`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-        },
-        timeout: 2000,
-      })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSION_ENABLE_FAIL', error)
-        })
-      this.fetchInstalledExtensions()
-      this.setLoading(extension, false)
-      this.fetchMetrics()
-    },
-    async restart(extension: InstalledExtensionData) {
-      this.setLoading(extension, true)
-      await back_axios({
-        url: `${API_URL}/extension/restart`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-        },
-        timeout: 2000,
-      })
-        .then((response) => {
-          this.running_containers = response.data
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSION_RESTART_FAIL', error)
-        })
-      this.fetchInstalledExtensions()
-      this.setLoading(extension, false)
-      this.fetchMetrics()
-    },
-    remoteVersions(extension: InstalledExtensionData): ExtensionData | undefined {
-      return this.manifest.find(
-        (remoteExtension: ExtensionData) => remoteExtension.identifier === extension.identifier,
-      )
-    },
-    setLoading(extension: InstalledExtensionData, loading: boolean) {
-      this.installed_extensions[extension.identifier].loading = loading
-      Vue.set(this.installed_extensions, extension.identifier, this.installed_extensions[extension.identifier])
+      // Pass
     },
   },
 })
 </script>
 
 <style>
-.installed-extensions-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.main-container {
-  background-color: #135DA355 !important;
-}
-
-.installed-extension-card {
-  margin: 10px;
-  flex: 1 1 calc(33.333% - 20px);
-  max-width: calc(33.333% - 20px);
-  min-width: 400px;
-}
-
-.jv-code {
-  padding: 0px !important;
-}
-
-pre.logs {
-  color:white;
-  background: black;
-  padding: 15px;
-  overflow-x: scroll;
-}
-
 .search-container {
   flex: 1 1 auto;
   width: 50% !important;
-}
-
-.tabs-container-spacer-right {
-  flex: 1 1 auto;
-  width: 30% !important;
 }
 
 .v-input.expanding-search {
@@ -778,7 +99,6 @@ pre.logs {
 }
 
 .v-input.expanding-search.closed {
-  max-width: 50px;
+  max-width: 70px;
 }
-
 </style>
