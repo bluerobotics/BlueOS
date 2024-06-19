@@ -17,7 +17,7 @@
       <v-checkbox
         :input-value="!config.skip && !config.done"
         class="step-checkbox"
-        :disabled="loading"
+        :disabled="loading || configurations.every(c => c.done)"
         @change="config.skip = !$event"
       />
     </div>
