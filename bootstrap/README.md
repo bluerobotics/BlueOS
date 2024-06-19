@@ -1,14 +1,19 @@
-Bootstrap is responsible for setting things up for the first run of BlueOS and applying updates.
+# BlueOS-Bootstrap
 
-To build the docker image:
+Bootstrap is responsible for setting things up for the first run of BlueOS and applying docker bind updates.
+
+### Running BlueOS
+If you want to run BlueOS, please check the [install script](../install/README.md) or [docker compose](../README.md).
+
+### Build:
+You can run the following command to build it:
 
 ```bash
 cd bootstrap
 docker build . --tag bluerobotics/bootstrap:master
 ```
 
-
-Usage:
+### Usage:
 
 Everytime it is launched, it will load the startup settings, wait until the core container is not running, and re-create and re-launch it.
 
