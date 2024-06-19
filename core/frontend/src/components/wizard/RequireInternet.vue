@@ -111,7 +111,7 @@ export default Vue.extend({
           if (!this.is_online) {
             this.timeout = setTimeout(() => {
               this.checkInternet()
-            }, 1000)
+            }, 5000)
           } else {
             clearInterval(this.timeout)
             this.timeout = setTimeout(() => {
