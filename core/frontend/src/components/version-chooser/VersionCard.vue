@@ -221,6 +221,10 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
+    enableDelete: {
+      type: Boolean,
+      default: true,
+    },
     deleting: {
       type: Boolean,
       default: false,
@@ -262,7 +266,8 @@ export default Vue.extend({
       return value.replace('sha256:', '').substring(0, 8)
     },
     imageCanBeDeleted() {
-      return (this.image.tag !== 'factory' || this.image.repository !== DEFAULT_REMOTE_IMAGE) && !this.deleting
+      return (this.image.tag !== 'factory' || this.image.repository !== DEFAULT_REMOTE_IMAGE)
+        && !this.deleting && this.enableDelete
     },
     updateBootstrap() {
       this.bootstrapDialog = false
