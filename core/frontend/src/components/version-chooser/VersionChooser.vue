@@ -60,6 +60,7 @@
           :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(image)"
           :deleting="deleting.endsWith(image.tag)"
+          :enable-delete="local_versions.result.local.length > 2"
           @delete="deleteVersion"
           @apply="setVersion"
           @pull-and-apply="pullAndSetVersion"
