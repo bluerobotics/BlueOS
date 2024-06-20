@@ -26,6 +26,8 @@ BlueOS is a modular, robust, and efficient platform for managing a vehicle or ro
 
 - [Official documentation](https://blueos.cloud/docs/blueos)
 - [Development documentation](https://blueos.cloud/docs/blueos/latest/development/)
+- [Contributions](https://blueos.cloud/docs/blueos/latest/development/core/#contributions)
+- [Code of Conduct](./CoC.md)
 - [Registered Extensions](https://docs.bluerobotics.com/BlueOS-Extensions-Repository)
 - [Install directory](https://github.com/bluerobotics/BlueOS/blob/master/install) (for custom installations)
 
