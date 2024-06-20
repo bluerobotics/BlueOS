@@ -53,6 +53,7 @@
         <v-spacer />
         <beacon-tray-menu />
         <health-tray-menu />
+        <gps-tray-menu />
         <theme-tray-menu />
         <system-checker-tray-menu />
         <vehicle-reboot-required-tray-menu />
@@ -365,6 +366,7 @@ import BeaconTrayMenu from './components/beacon/BeaconTrayMenu.vue'
 import CloudTrayMenu from './components/cloud/CloudTrayMenu.vue'
 import EthernetTrayMenu from './components/ethernet/EthernetTrayMenu.vue'
 import EthernetUpdater from './components/ethernet/EthernetUpdater.vue'
+import GpsTrayMenu from './components/health/GpsTrayMenu.vue'
 import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
 import MavlinkUpdater from './components/mavlink/MavlinkUpdater.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
@@ -389,6 +391,7 @@ export default Vue.extend({
     'cloud-tray-menu': CloudTrayMenu,
     'ethernet-updater': EthernetUpdater,
     'health-tray-menu': HealthTrayMenu,
+    'gps-tray-menu': GpsTrayMenu,
     'mavlink-updater': MavlinkUpdater,
     'power-menu': PowerMenu,
     'settings-menu': SettingsMenu,
