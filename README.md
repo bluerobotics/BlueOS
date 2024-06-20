@@ -103,7 +103,6 @@ docker compose -f core/compose/compose.yml up
 
 When restarting the development environment you may need to remove the volumes to ensure that the development environment is clean.
 
-```bash 
+```bash
 docker compose -f core/compose/compose.yml down
 ```
-
