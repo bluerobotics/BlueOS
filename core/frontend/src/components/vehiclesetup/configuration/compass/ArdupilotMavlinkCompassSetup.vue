@@ -68,7 +68,7 @@
                     <p>
                       This does a full calibration of the compasses.
                       It requires you to spin the vehicle around manually multiple times.
-                      You need move the vehicle around in all 3 axis.
+                      You need to move the vehicle around in all 3 axis.
                     </p>
                     <full-compass-calibrator :compasses="compasses" />
                   </v-expansion-panel-content>
