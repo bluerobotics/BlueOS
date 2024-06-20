@@ -92,7 +92,7 @@ class PyksonSettings(pykson.JsonObject):
 
         with open(file_path, "w", encoding="utf-8") as settings_file:
             logger.debug(f"Saving settings on: {file_path}")
-            settings_file.write(Pykson().to_json(self))
+            settings_file.write(json.dumps(json.loads(Pykson().to_json(self)), indent=4))
 
     def reset(self) -> None:
         """Reset internal data to default values"""
