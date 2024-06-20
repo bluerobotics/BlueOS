@@ -16,7 +16,7 @@ echo "Installing project $PROJECT_NAME version $VERSION"
 ARCH="$(uname -m)"
 case "$ARCH" in
   x86_64 | amd64)
-    BUILD_NAME="musl-x86-64"
+    BUILD_NAME="glibc-x86_64"
     ;;
   armv7l | armhf)
     BUILD_NAME="glibc-armhf"
