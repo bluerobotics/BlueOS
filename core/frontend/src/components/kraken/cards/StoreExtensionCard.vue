@@ -1,6 +1,6 @@
 <template>
   <v-card
-    :style="card_dominant_color ? { backgroundColor: card_dominant_color, borderColor: card_dominant_color } : {}"
+    :style="card_dominant_color ? { borderColor: card_dominant_color } : {}"
     outlined
     width="300"
     height="auto"
@@ -14,27 +14,29 @@
       {{ compatible_architectures }}
     </div>
 
-    <v-img
-      ref="extension_logo"
-      contain
-      :src="extension.extension_logo"
-      height="150px"
-      class="mx-3 mt-2"
-      @load="setDominantColor"
-    />
+    <div class="content-wrapper">
+      <v-img
+        ref="extension_logo"
+        contain
+        :src="extension.extension_logo"
+        height="150px"
+        class="mx-3 my-2"
+        @load="setDominantColor"
+      />
 
-    <v-card-subtitle class="px-3 py-2">
-      <div
-        class="extension-name"
-      >
-        {{ extension.name.toUpperCase() }}
-      </div>
-      <div class="extension-description">
-        {{ extension.description }}
-      </div>
-    </v-card-subtitle>
+      <v-card-subtitle class="px-3 py-2">
+        <div
+          class="extension-name"
+        >
+          {{ extension.name.toUpperCase() }}
+        </div>
+        <div class="extension-description">
+          {{ extension.description }}
+        </div>
+      </v-card-subtitle>
 
-    <v-divider />
+      <v-divider />
+    </div>
     <v-card-actions class="px-3 py-2 d-flex justify-space-between align-center">
       <v-avatar size="32">
         <v-img
@@ -115,7 +117,7 @@ export default Vue.extend({
         const colorThief = new ColorThief()
         try {
           const color = colorThief.getColor(img)
-          this.card_dominant_color = `rgb(${color.join(',')}, 0.2)`
+          this.card_dominant_color = `rgb(${color.join(',')})`
         } catch (error) {
           console.error('Unable to extract logo dominant color.', error)
         }
@@ -134,11 +136,18 @@ export default Vue.extend({
   flex-direction: column;
   border-radius: 8px;
   transition: transform 0.3s;
-  cursor: pointer;
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+  cursor: pointer;
 }
 
 .store-extension-card:hover {
@@ -151,6 +160,7 @@ export default Vue.extend({
   height: 2.4em;
   color: white;
   font-size: 12px;
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
   border-radius: 0px 0px 10px 0px !important;
 }
 
