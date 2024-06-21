@@ -1,24 +1,54 @@
 <template>
-  <v-card outlined width="300" height="auto" elevation="2" class="store-extension-card">
-    <v-card-title class="d-flex justify-space-between align-center py-1 px-3">
-      <span class="date-time">MON 12:00 AM</span>
-    </v-card-title>
+  <v-card
+    :style="card_dominant_color ? { backgroundColor: card_dominant_color, borderColor: card_dominant_color } : {}"
+    outlined
+    width="300"
+    height="auto"
+    elevation="2"
+    class="store-extension-card"
+  >
+    <div
+      :style="card_dominant_color ? { backgroundColor: card_dominant_color } : {}"
+      class="pt-1 mb-2 pl-2 pr-3 architectures-list"
+    >
+      {{ compatible_architectures }}
+    </div>
 
-    <v-img contain :src="extension.extension_logo" height="150px" class="mx-3 mt-2" />
+    <v-img
+      ref="extension_logo"
+      contain
+      :src="extension.extension_logo"
+      height="150px"
+      class="mx-3 mt-2"
+      @load="setDominantColor"
+    />
 
     <v-card-subtitle class="px-3 py-2">
-      <div class="event-title">NEW SEASON</div>
-      <div class="event-description">Join the Fireworks Festival</div>
-      <div class="event-details">Attend a party full of prizes in Candy Crush Saga.</div>
+      <div
+        class="extension-name"
+      >
+        {{ extension.name.toUpperCase() }}
+      </div>
+      <div class="extension-description">
+        {{ extension.description }}
+      </div>
     </v-card-subtitle>
 
+    <v-divider />
     <v-card-actions class="px-3 py-2 d-flex justify-space-between align-center">
       <v-avatar size="32">
-        <img src="https://example.com/your-icon-url.png" alt="Candy Crush Saga">
+        <v-img
+          contain
+          :src="extension.company_logo"
+        />
       </v-avatar>
-      <div class="game-info">
-        <div class="game-name">CANDY CRUSH SAGA</div>
-        <div class="event-name">Fireworks Festival</div>
+      <div class="extension-creators">
+        <div class="extension-company">
+          {{ extension_company }}
+        </div>
+        <div class="extension-authors">
+          {{ extension_author }}
+        </div>
       </div>
       <v-btn small color="primary">GET</v-btn>
     </v-card-actions>
@@ -26,9 +56,10 @@
 </template>
 
 <script lang="ts">
+import ColorThief from 'color-thief'
 import Vue, { PropType } from 'vue'
 
-import { ExtensionData } from '@/types/kraken'
+import { ExtensionData, Version } from '@/types/kraken'
 
 export default Vue.extend({
   name: 'StoreExtensionCard',
@@ -38,11 +69,16 @@ export default Vue.extend({
       required: true,
     },
   },
+  data() {
+    return {
+      card_dominant_color: undefined as string | undefined,
+    }
+  },
   computed: {
-    isCompatible(): boolean {
+    is_compatible(): boolean {
       return this.extension.is_compatible ?? true
     },
-    compatibleArchs(): string[] {
+    compatible_architectures(): string {
       const archs = [
         ...new Set(
           Object.values(this.extension.versions)
@@ -51,7 +87,42 @@ export default Vue.extend({
         ),
       ]
 
-      return archs
+      return archs.join(', ')
+    },
+    extension_company(): string {
+      return this.latestVersion()?.company?.name ?? 'Unknown'
+    },
+    extension_author(): string {
+      const authors = this.latestVersion()?.authors ?? []
+
+      if (authors.length === 0) {
+        return 'Unknown'
+      }
+
+      const names = authors.slice(0, 2).map((author) => author.name).join(', ')
+
+      return authors.length > 2 ? `${names} ...` : names
+    },
+  },
+  methods: {
+    setDominantColor() {
+      console.log('Setting dominant color...')
+      // @ts-expect-error - extension_logo is not an HTMLImageElement
+      const img = this.$refs.extension_logo?.image as HTMLImageElement
+      img.crossOrigin = 'Anonymous'
+
+      img.onload = () => {
+        const colorThief = new ColorThief()
+        try {
+          const color = colorThief.getColor(img)
+          this.card_dominant_color = `rgb(${color.join(',')}, 0.2)`
+        } catch (error) {
+          console.error('Unable to extract logo dominant color.', error)
+        }
+      }
+    },
+    latestVersion(): Version | undefined {
+      return Object.values(this.extension.versions)?.[0] ?? undefined
     },
   },
 })
@@ -64,47 +135,46 @@ export default Vue.extend({
   border-radius: 8px;
   transition: transform 0.3s;
   cursor: pointer;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  border: 3px solid transparent;
 }
 
 .store-extension-card:hover {
   transform: translateY(-5px);
 }
 
-.date-time {
+.architectures-list {
   background-color: #4a90e2;
+  width: fit-content;
+  height: 2.4em;
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
   font-size: 12px;
+  border-radius: 0px 0px 10px 0px !important;
 }
 
-.event-title {
-  font-weight: bold;
-  color: #4a90e2;
-  font-size: 14px;
-}
-
-.event-description {
+.extension-name {
   font-weight: bold;
   font-size: 18px;
 }
 
-.event-details {
+.extension-description {
   color: gray;
   font-size: 14px;
 }
 
-.game-info {
+.extension-creators {
   flex-grow: 1;
   margin-left: 8px;
 }
 
-.game-name {
+.extension-company {
   font-weight: bold;
   font-size: 14px;
 }
 
-.event-name {
+.extension-authors {
   color: gray;
   font-size: 12px;
 }
