@@ -2,41 +2,53 @@
   <v-card
     :style="card_dominant_color ? { borderColor: card_dominant_color } : {}"
     outlined
-    width="300"
+    width="400"
     height="auto"
     elevation="2"
+    :class="{ 'disabled-card': !is_compatible }"
     class="store-extension-card"
   >
     <div
-      :style="card_dominant_color ? { backgroundColor: card_dominant_color } : {}"
+      :style="architecture_list_style"
       class="pt-1 mb-2 pl-2 pr-3 architectures-list"
     >
       {{ compatible_architectures }}
     </div>
 
-    <div class="content-wrapper">
-      <v-img
-        ref="extension_logo"
-        contain
-        :src="extension.extension_logo"
-        height="150px"
-        class="mx-3 my-2"
-        @load="setDominantColor"
-      />
-
-      <v-card-subtitle class="px-3 py-2">
+    <v-tooltip bottom :disabled="is_compatible">
+      <template #activator="{ on, attrs }">
         <div
-          class="extension-name"
+          class="content-wrapper"
+          v-bind="attrs"
+          v-on="on"
+          @click="$emit('selected')"
+          @keydown.left="() => {}"
         >
-          {{ extension.name.toUpperCase() }}
-        </div>
-        <div class="extension-description">
-          {{ extension.description }}
-        </div>
-      </v-card-subtitle>
+          <v-img
+            ref="extension_logo"
+            contain
+            :src="extension.extension_logo"
+            height="150px"
+            class="mx-3 my-2"
+            @load="setDominantColor"
+          />
 
-      <v-divider />
-    </div>
+          <v-card-subtitle class="px-3 py-2">
+            <div
+              class="extension-name"
+            >
+              {{ extension.name.toUpperCase() }}
+            </div>
+            <div class="extension-description">
+              {{ extension.description }}
+            </div>
+          </v-card-subtitle>
+
+          <v-divider />
+        </div>
+      </template>
+      <span>This extension is not compatible with current machine architecture running BlueOS.</span>
+    </v-tooltip>
     <v-card-actions class="px-3 py-2 d-flex justify-space-between align-center">
       <v-avatar size="32">
         <v-img
@@ -52,7 +64,21 @@
           {{ extension_author }}
         </div>
       </div>
-      <v-btn small color="primary">GET</v-btn>
+
+      <v-tooltip bottom :disabled="!has_update_available">
+        <template #activator="{ on, attrs }">
+          <v-btn
+            small
+            :color="is_installed ? 'success' : 'primary'"
+            v-bind="attrs"
+            v-on="on"
+            @click="performActionClick"
+          >
+            {{ action_button_text }}
+          </v-btn>
+        </template>
+        <span>Update to <strong style="white-space: nowrap;">{{ update_available_tag }}</strong></span>
+      </v-tooltip>
     </v-card-actions>
   </v-card>
 </template>
@@ -61,7 +87,8 @@
 import ColorThief from 'color-thief'
 import Vue, { PropType } from 'vue'
 
-import { ExtensionData, Version } from '@/types/kraken'
+import { getLatestVersion, isStable, updateAvailableTag } from '@/components/kraken/Utils'
+import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 
 export default Vue.extend({
   name: 'StoreExtensionCard',
@@ -70,15 +97,40 @@ export default Vue.extend({
       type: Object as PropType<ExtensionData>,
       required: true,
     },
+    installed: {
+      type: Array as PropType<InstalledExtensionData[]>,
+      required: true,
+    },
   },
   data() {
     return {
       card_dominant_color: undefined as string | undefined,
+      is_card_dominant_color_light: false,
     }
   },
   computed: {
+    installed_extension(): InstalledExtensionData | undefined {
+      return this.installed.find((installed) => installed.identifier === this.extension.identifier)
+    },
     is_compatible(): boolean {
       return this.extension.is_compatible ?? true
+    },
+    is_installed(): boolean {
+      return this.installed_extension !== undefined
+    },
+    update_available_tag(): undefined | string {
+      if (this.is_installed && this.installed_extension?.tag) {
+        return updateAvailableTag(
+          this.extension.versions,
+          this.installed_extension.tag,
+          !isStable(this.installed_extension.tag),
+        )
+      }
+
+      return undefined
+    },
+    has_update_available(): boolean {
+      return this.update_available_tag !== undefined
     },
     compatible_architectures(): string {
       const archs = [
@@ -91,11 +143,29 @@ export default Vue.extend({
 
       return archs.join(', ')
     },
+    action_button_text(): string {
+      if (!this.is_installed) {
+        return 'GET'
+      }
+
+      return this.has_update_available ? 'UPDATE' : 'INSTALLED'
+    },
+    architecture_list_style(): Record<string, string> {
+      const style: Record<string, string> = {
+        color: this.is_card_dominant_color_light ? 'black' : 'white',
+      }
+
+      if (this.card_dominant_color) {
+        style.backgroundColor = this.card_dominant_color
+      }
+
+      return style
+    },
     extension_company(): string {
-      return this.latestVersion()?.company?.name ?? 'Unknown'
+      return getLatestVersion(this.extension.versions)?.company?.name ?? 'Unknown'
     },
     extension_author(): string {
-      const authors = this.latestVersion()?.authors ?? []
+      const authors = getLatestVersion(this.extension.versions)?.authors ?? []
 
       if (authors.length === 0) {
         return 'Unknown'
@@ -108,7 +178,6 @@ export default Vue.extend({
   },
   methods: {
     setDominantColor() {
-      console.log('Setting dominant color...')
       // @ts-expect-error - extension_logo is not an HTMLImageElement
       const img = this.$refs.extension_logo?.image as HTMLImageElement
       img.crossOrigin = 'Anonymous'
@@ -117,14 +186,26 @@ export default Vue.extend({
         const colorThief = new ColorThief()
         try {
           const color = colorThief.getColor(img)
+
+          this.is_card_dominant_color_light = this.getLuminance(color[0], color[1], color[2]) > 128
           this.card_dominant_color = `rgb(${color.join(',')})`
         } catch (error) {
           console.error('Unable to extract logo dominant color.', error)
         }
       }
     },
-    latestVersion(): Version | undefined {
-      return Object.values(this.extension.versions)?.[0] ?? undefined
+    getLuminance(r: number, g: number, b: number): number {
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+      return lum
+    },
+    performActionClick() {
+      if (this.has_update_available) {
+        this.$emit('update', this.update_available_tag)
+        return
+      }
+
+      this.$emit('selected')
     },
   },
 })
@@ -155,7 +236,6 @@ export default Vue.extend({
 }
 
 .architectures-list {
-  background-color: #4a90e2;
   width: fit-content;
   height: 2.4em;
   color: white;
@@ -206,7 +286,7 @@ export default Vue.extend({
 }
 
 .disabled-card {
-  opacity: 0.5;
+  opacity: 0.7;
   position: relative;
 }
 .disabled-card::before {

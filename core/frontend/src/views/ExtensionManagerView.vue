@@ -1,7 +1,6 @@
 <template>
   <v-container fluid>
     <!-- Progress Pull -->
-    <!-- Extension Detail Modal -->
     <!-- Log Modal -->
     <ExtensionSettingsModal
       v-model="show_settings"

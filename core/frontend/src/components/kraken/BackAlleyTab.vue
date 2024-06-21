@@ -1,5 +1,8 @@
 <template>
   <div>
+    <ExtensionDetailsModal
+      v-model="selected_extension"
+    />
     <v-toolbar height="0" extension-height="70" elevation="0">
       <template #extension>
         <div class="toolbar-extension">
@@ -134,14 +137,16 @@
       <div class="store-tab">
         <div class="grid-container">
           <StoreExtensionCard
-            v-for="extension in filteredManifest"
+            v-for="extension in filtered_manifest"
             :key="extension.identifier + extension.name"
             :extension="extension"
+            :installed="installed_extensions"
+            @selected="selected_extension = extension"
           />
         </div>
       </div>
       <v-container
-        v-if="manifest.length === 0"
+        v-if="filtered_manifest.length === 0"
         class="d-flex flex-column justify-center align-center mt-5"
       >
         <v-card-title class="mb-5">
@@ -157,11 +162,15 @@ import Fuse from 'fuse.js'
 import Vue, { PropType } from 'vue'
 
 import StoreExtensionCard from '@/components/kraken/cards/StoreExtensionCard.vue'
-import { ExtensionData, Version } from '@/types/kraken'
+import KrakenAPI from '@/components/kraken/KrakenManager'
+import ExtensionDetailsModal from '@/components/kraken/modals/ExtensionDetailsModal.vue'
+import { getLatestVersion } from '@/components/kraken/Utils'
+import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 
 export default Vue.extend({
   name: 'BackAlleyTab',
   components: {
+    ExtensionDetailsModal,
     StoreExtensionCard,
   },
   props: {
@@ -175,22 +184,24 @@ export default Vue.extend({
       query: '',
       selected_companies: [] as string[],
       selected_types: [] as string[],
-      manifest_fuse: null as null | Fuse<ExtensionData>,
+      manifest_fuse: undefined as undefined | Fuse<ExtensionData>,
+      selected_extension: undefined as undefined | ExtensionData,
+      installed_extensions: [] as InstalledExtensionData[],
     }
   },
   computed: {
     extension_companies(): string[] {
       const authors = this.manifest
-        .map((extension) => this.newestVersion(extension.versions)?.company?.name ?? 'unknown').sort() as string[]
+        .map((extension) => getLatestVersion(extension.versions)?.company?.name ?? 'unknown').sort() as string[]
       return [...new Set(authors)]
     },
     extension_types(): string[] {
       const authors = this.manifest
-        .map((extension) => this.newestVersion(extension.versions)?.type ?? 'unknown')
+        .map((extension) => getLatestVersion(extension.versions)?.type ?? 'unknown')
         .sort() as string[]
       return [...new Set(authors)]
     },
-    filteredManifest(): ExtensionData[] {
+    filtered_manifest(): ExtensionData[] {
       // Remove not compatible in case user is not searching by search bar directly
       let data = (this.query ?? '') !== ''
         ? this.manifest_fuse?.search(this.query).map((result) => result.item) ?? []
@@ -198,13 +209,13 @@ export default Vue.extend({
 
       // By default we remove examples if nothing is selected
       if (this.selected_companies.isEmpty() && this.selected_types.isEmpty()) {
-        return data.filter((extension) => this.newestVersion(extension.versions)?.type !== 'example')
+        return data.filter((extension) => getLatestVersion(extension.versions)?.type !== 'example')
       }
 
       if (!this.selected_companies.isEmpty()) {
-        data = data.filter((extension) => this.newestVersion(extension.versions)?.company?.name !== undefined)
+        data = data.filter((extension) => getLatestVersion(extension.versions)?.company?.name !== undefined)
           .filter((extension) => this.selected_companies
-            .includes(this.newestVersion(extension.versions)?.company?.name ?? ''))
+            .includes(getLatestVersion(extension.versions)?.company?.name ?? ''))
       }
 
       if (this.selected_types.isEmpty()) {
@@ -212,9 +223,9 @@ export default Vue.extend({
       }
 
       return data
-        .filter((extension) => this.newestVersion(extension.versions)?.type !== undefined)
+        .filter((extension) => getLatestVersion(extension.versions)?.type !== undefined)
         .filter((extension) => this.selected_types
-          .includes(this.newestVersion(extension.versions)?.type ?? ''))
+          .includes(getLatestVersion(extension.versions)?.type ?? ''))
     },
   },
   watch: {
@@ -228,9 +239,16 @@ export default Vue.extend({
       immediate: true,
     },
   },
+  mounted() {
+    this.fetchInstalledExtensions()
+  },
   methods: {
-    newestVersion(versions: Record<string, Version>): Version | undefined {
-      return Object.values(versions)?.[0] as Version | undefined
+    async fetchInstalledExtensions() {
+      try {
+        this.installed_extensions = await KrakenAPI.fetchInstalledExtensions()
+      } catch (error) {
+        console.error('Failed to fetch installed extensions', error)
+      }
     },
   },
 })
@@ -249,6 +267,7 @@ export default Vue.extend({
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 16px;
+  justify-content: center;
 }
 
 .toolbar-extension {
@@ -257,5 +276,13 @@ export default Vue.extend({
   align-items: start;
   width: 100%;
   margin-top: 10px;
+}
+
+@media (max-width: 615px) {
+  .grid-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 }
 </style>

@@ -1,8 +1,27 @@
-import { ExtensionData, Manifest, ManifestSource } from '@/types/kraken'
+import {
+  ExtensionData,
+  InstalledExtensionData,
+  Manifest,
+  ManifestSource,
+} from '@/types/kraken'
 import back_axios from '@/utils/api'
 
 const KRAKEN_BASE_URL = '/kraken'
 const KRAKEN_API_V2_URL = `${KRAKEN_BASE_URL}/v2.0`
+
+/**
+ * List details of all installed extensions.
+ * @returns {Promise<InstalledExtensionData[]>}
+ */
+export async function fetchInstalledExtensions(): Promise<InstalledExtensionData[]> {
+  const response = await back_axios({
+    method: 'get',
+    url: `${KRAKEN_API_V2_URL}/extension/`,
+    timeout: 10000,
+  })
+
+  return response.data as InstalledExtensionData[]
+}
 
 /**
  * List all manifest sources from kraken, uses API v2
@@ -163,6 +182,7 @@ export default {
   fetchManifestSources,
   fetchManifestSource,
   fetchConsolidatedManifests,
+  fetchInstalledExtensions,
   addManifestSource,
   updateManifestSource,
   deleteManifestSource,
