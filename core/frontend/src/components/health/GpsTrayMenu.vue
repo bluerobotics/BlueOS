@@ -28,6 +28,7 @@ export default Vue.extend({
     return {
       time_limit_message: 20000,
       last_message_date: undefined as undefined | Date,
+      gps_detected: false,
       global_position_int: undefined as undefined | GlobalPositionInt,
       gps_raw_int: undefined as undefined | GpsRawInt,
     }
@@ -38,8 +39,11 @@ export default Vue.extend({
         return false
       }
 
-      const is_valid = new Date().valueOf() - this.last_message_date.getTime() < this.time_limit_message
-      return is_valid && (this.gps_raw_int || this.global_position_int)
+      if (this.last_message_date.getTime() + this.time_limit_message < new Date().getTime()) {
+        return false
+      }
+
+      return this.gps_detected
     },
     connection_description(): string {
       switch (this.gps_raw_int?.fix_type?.type) {
@@ -103,6 +107,7 @@ export default Vue.extend({
 
       this.last_message_date = new Date()
       this.gps_raw_int = message?.message as GpsRawInt
+      this.gps_detected = this.gps_raw_int?.fix_type?.type !== GpsFixType.GPS_FIX_TYPE_NO_GPS
     }).setFrequency(0)
   },
 })
