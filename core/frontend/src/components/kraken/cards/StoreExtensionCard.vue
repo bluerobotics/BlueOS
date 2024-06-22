@@ -25,6 +25,7 @@
           @keydown.left="() => {}"
         >
           <v-img
+            v-once
             ref="extension_logo"
             contain
             :src="extension.extension_logo"
@@ -69,6 +70,7 @@
         <template #activator="{ on, attrs }">
           <v-btn
             small
+            class="ml-1"
             :color="is_installed ? 'success' : 'primary'"
             v-bind="attrs"
             v-on="on"

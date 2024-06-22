@@ -3,6 +3,10 @@ import stable from 'semver-stable'
 
 import { Version } from '@/types/kraken'
 
+export function getSortedVersions(versions: Record<string, Version>, reverse = true): Version[] {
+  return Object.values(versions).sort((a, b) => semver.compare(a.tag, b.tag))
+}
+
 export function getLatestVersion(versions: Record<string, Version>, beta = true): Version | undefined {
   const values = Object.values(versions) ?? []
 
@@ -33,6 +37,7 @@ export function updateAvailableTag(
 }
 
 export default {
+  getSortedVersions,
   getLatestVersion,
   isStable,
   updateAvailableTag,

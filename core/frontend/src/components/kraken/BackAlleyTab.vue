@@ -2,6 +2,7 @@
   <div>
     <ExtensionDetailsModal
       v-model="selected_extension"
+      :installed="installed_extensions"
     />
     <v-toolbar height="0" extension-height="70" elevation="0">
       <template #extension>
@@ -265,7 +266,7 @@ export default Vue.extend({
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
   justify-content: center;
 }
@@ -278,7 +279,7 @@ export default Vue.extend({
   margin-top: 10px;
 }
 
-@media (max-width: 615px) {
+@media (max-width: 677px) {
   .grid-container {
     display: flex;
     flex-direction: column;
