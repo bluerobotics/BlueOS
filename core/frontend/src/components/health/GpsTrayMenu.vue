@@ -3,7 +3,7 @@
     <v-badge
       :content="satellites_number"
       :value="satellites_number"
-      :title="connection_description"
+      :title="`${connection_description} (Number of satellites: ${satellites_number})`"
       :color="number_color"
       class="mr-2"
       overlap
