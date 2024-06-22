@@ -1,18 +1,17 @@
 <template>
-  <v-row :v-if="gps_connected" style="display: contents;">
-    <v-badge
-      :content="satellites_number"
-      :value="satellites_number"
-      :title="`${connection_description} (Number of satellites: ${satellites_number})`"
-      :color="number_color"
-      class="mr-2"
-      overlap
-    >
-      <v-icon color="white">
-        {{ satellites_number ? "mdi-crosshairs-gps" : "mdi-crosshairs-question" }}
-      </v-icon>
-    </v-badge>
-  </v-row>
+  <v-badge
+    v-if="gps_connected"
+    :content="satellites_number"
+    :value="satellites_number"
+    :title="`${connection_description} (Number of satellites: ${satellites_number})`"
+    :color="number_color"
+    class="mr-2"
+    overlap
+  >
+    <v-icon color="white">
+      {{ satellites_number ? "mdi-crosshairs-gps" : "mdi-crosshairs-question" }}
+    </v-icon>
+  </v-badge>
 </template>
 
 <script lang="ts">
