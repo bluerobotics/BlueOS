@@ -117,7 +117,10 @@ class Bootstrapper:
 
         # if there is no curses support, like in the testing environment, just dump everything
         if not curses_ui:
-            self.client.images.pull(f"{image_name}:{tag}")
+            try:
+                self.client.images.pull(f"{image_name}:{tag}")
+            except Exception as exception:
+                logger.warning(f"Failed to pull image ({image_name}:{tag}): {exception}")
             return
 
         # if there is ncurses support, proceed with it
@@ -154,8 +157,12 @@ class Bootstrapper:
 
     def image_is_available_locally(self, image_name: str, tag: str) -> bool:
         """Checks if the image is already available locally"""
-        images = self.client.images.list(image_name)
-        return any(f"{image_name}:{tag}" in image.tags for image in images)
+        try:
+            images = self.client.images.list(image_name)
+            return any(f"{image_name}:{tag}" in image.tags for image in images)
+        except Exception as exception:
+            logger.warning(f"Failed to list image ({image_name}): {exception}")
+        return False
 
     def start(self, component_name: str) -> bool:
         """Loads settings and starts the containers. Loads default settings if no settings are found
@@ -218,7 +225,11 @@ class Bootstrapper:
         Returns:
             bool: True if the chosen container is running
         """
-        return any(container.name.endswith(component) for container in self.client.containers.list())
+        try:
+            return any(container.name.endswith(component) for container in self.client.containers.list())
+        except Exception as exception:
+            logger.warning(f"Could not list containers: {exception}")
+        return False
 
     def is_version_chooser_online(self) -> bool:
         """Check if the version chooser service is online.
