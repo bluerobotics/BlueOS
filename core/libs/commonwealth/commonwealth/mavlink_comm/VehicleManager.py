@@ -1,7 +1,10 @@
+import asyncio
+import math
 from typing import Any, Dict, List
 
 from loguru import logger
 
+from commonwealth.mavlink_comm.config import DEFAULT_DATA_STREAMS_CONFIG
 from commonwealth.mavlink_comm.exceptions import VehicleDisarmFail
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.mavlink_comm.typedefs import (
@@ -9,6 +12,7 @@ from commonwealth.mavlink_comm.typedefs import (
     FirmwareVersionType,
     MavlinkMessageId,
     MavlinkVehicleType,
+    MavDataStream,
 )
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
@@ -47,6 +51,70 @@ class VehicleManager:
             "target_component": self.target_component,
             "confirmation": self.confirmation,
         }
+
+    def command_request_data_stream_message(
+        self, stream: MavDataStream, interval_us: int = 0, disable: bool = False
+    ) -> Dict[str, Any]:
+        rate_hz = math.ceil(1e6 / interval_us) if interval_us > 0 else 0
+        return {
+            "type": "REQUEST_DATA_STREAM",
+            "req_stream_id": int(stream.value),
+            "start_stop": 0 if disable else 1,
+            "req_message_rate": rate_hz,
+            "target_system": self.target_system,
+            "target_component": self.target_component,
+        }
+
+    def command_heartbeat_message(self) -> Dict[str, Any]:
+        return {
+            "type": "HEARTBEAT",
+            "custom_mode": 0,
+            "mavtype": {
+                "type": "MAV_TYPE_GCS"
+            },
+            "autopilot": {
+                "type": "MAV_AUTOPILOT_INVALID"
+            },
+            "base_mode": {
+                "bits": 0
+            },
+            "system_status": {
+                "type": "MAV_STATE_UNINIT"
+            },
+            "mavlink_version": 0,
+        }
+
+    async def request_data_stream(self, stream: MavDataStream, interval_us: int = 0, disable: bool = False) -> None:
+        # Send old REQUEST_DATA_STREAM
+        message = self.command_request_data_stream_message(stream, interval_us, not disable)
+        await self.mavlink2rest.send_mavlink_message(message)
+        # Send new MAV_CMD_SET_MESSAGE_INTERVAL if supported by the vehicle will allow precise control
+        message = self.command_long_message("MAV_CMD_SET_MESSAGE_INTERVAL", [stream, -1 if disable else interval_us])
+        await self.mavlink2rest.send_mavlink_message(message)
+
+    async def send_heartbeat(self) -> None:
+        message = self.command_heartbeat_message()
+        await self.mavlink2rest.send_mavlink_message(message)
+
+    async def init_default_stream_rates(self) -> None:
+        # In case of PX4 we need to send a bunch of heartbeat messages first to open the communication
+        logger.info("Trying to open communication with board.")
+        for _ in range(20):
+            logger.info("Sending heartbeat.")
+            await self.send_heartbeat()
+            await asyncio.sleep(0.1)
+
+        logger.info("Started requesting default data streams.")
+
+        for stream in DEFAULT_DATA_STREAMS_CONFIG:
+            try:
+                logger.info(f"Requesting stream {stream.stream} with interval {stream.interval_us} us.")
+                await self.request_data_stream(stream.stream, stream.interval_us)
+            except Exception as error:
+                logger.error(f"Failed to request stream {stream.stream}. error: {error}")
+
+        logger.info("Finished requesting default data streams")
+
 
     async def request_message(self, message_id: int) -> None:
         message = self.command_long_message("MAV_CMD_REQUEST_MESSAGE", [message_id])

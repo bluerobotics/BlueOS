@@ -7,3 +7,6 @@
 [submodule "core/frontend/src/components/vue-tour"]
 	path = core/frontend/src/components/vue-tour
 	url = https://github.com/pulsardev/vue-tour
+[submodule "core/frontend/src/PX4-parameters"]
+	path = core/frontend/src/PX4-parameters
+	url = git@github.com:patrickelectric/PX4-parameters.git
