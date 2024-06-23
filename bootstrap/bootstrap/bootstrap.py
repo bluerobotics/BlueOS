@@ -89,8 +89,8 @@ class Bootstrapper:
                 for container in self.client.containers.list()
                 if container.name == self.BOOTSTRAP_CONTAINER_NAME
             )
-        except Exception:
-            return f"Bootstrap does not follow standard name: {self.BOOTSTRAP_CONTAINER_NAME}"
+        except Exception as exception:
+            return f"Bootstrap does not follow standard name: {self.BOOTSTRAP_CONTAINER_NAME}, {exception}"
 
     def pull(self, component_name: str) -> None:
         """Pulls an image
@@ -111,7 +111,8 @@ class Bootstrapper:
             curses.noecho()
             curses.cbreak()
             curses.curs_set(0)
-        except Exception:
+        except Exception as exception:
+            logger.warning(f"Failed to initialize curses: {exception}")
             curses_ui = False
 
         # if there is no curses support, like in the testing environment, just dump everything
