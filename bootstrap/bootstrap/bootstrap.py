@@ -25,6 +25,7 @@ class Bootstrapper:
     core_last_response_time = time.monotonic()
 
     def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
+        self.version_chooser_is_online = False
         self.client: docker.DockerClient = client
         self.core_last_response_time = time.monotonic()
         if low_level_api is None:
@@ -240,11 +241,15 @@ class Bootstrapper:
         try:
             response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10)
             if Bootstrapper.SETTINGS_NAME_CORE in response.json()["repository"]:
+                if not self.version_chooser_is_online:
+                    self.version_chooser_is_online = True
+                    logger.info("Version chooser is online")
                 return True
         except Exception as e:
             logger.warning(
                 f"Could not talk to version chooser for {time.monotonic() - self.core_last_response_time}: {e}"
             )
+        self.version_chooser_is_online = False
         return False
 
     def remove(self, container: str) -> None:
