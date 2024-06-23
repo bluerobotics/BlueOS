@@ -7,7 +7,7 @@
       :headers="[
         { text: 'Name', value: 'name' },
         { text: 'Description', value: 'description' },
-        { text: 'Value', value: 'value', width: '150px' },
+        { text: 'Value', value: 'value', width: '170px' },
       ]"
       :loading="!finished_loading"
       :items="search && search != '' ? fuse.search(search) : params_no_input"
@@ -62,7 +62,19 @@
       </template>
        <!-- eslint-enable -->
       <template #item.value="{ item }">
-        {{ printParam(item.item) }} {{ item.item.units ? `[${item.item.units}]` : '' }}
+        <div class="value-cell-content">
+          {{ printParam(item.item) }} {{ item.item.units ? `[${item.item.units}]` : '' }}
+          <v-btn
+            v-if="!item.item?.readonly && item.item?.default !== undefined && item.item?.default !== item.item.value"
+            v-tooltip="item.item?.rebootRequired ? 'Reboot required' : undefined"
+            icon
+            :color="item.item?.rebootRequired ? 'warning' : 'primary'"
+            class="value-cell-content-restore"
+            @click.stop="setDefaultParamValue(item.item)"
+          >
+            <v-icon>mdi-backup-restore</v-icon>
+          </v-btn>
+        </div>
       </template>
       <template #footer.prepend>
         <v-btn
@@ -146,6 +158,7 @@ import { saveAs } from 'file-saver'
 import Fuse from 'fuse.js'
 import Vue from 'vue'
 
+import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
@@ -217,6 +230,16 @@ export default Vue.extend({
     },
   },
   methods: {
+    setDefaultParamValue(param: Parameter) {
+      if (param.default === undefined || param.readonly) {
+        return
+      }
+      mavlink2rest.setParam(param.name, param.default, autopilot_data.system_id, param.paramType.type)
+
+      if (param.rebootRequired) {
+        autopilot_data.setRebootRequired(true)
+      }
+    },
     editParam(param: Parameter) {
       if (param.readonly) {
         return
@@ -329,5 +352,15 @@ div.v-messages {
 
 .hand-cursor {
   cursor: pointer;
+}
+
+.value-cell-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.value-cell-content-restore {
+  margin-left: auto;
 }
 </style>
