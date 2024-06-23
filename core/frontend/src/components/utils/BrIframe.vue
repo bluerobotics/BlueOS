@@ -150,12 +150,20 @@ export default Vue.extend({
       this.drawScene()
     },
     setInitialCanvasSize(): void {
+      if (!this.gl_compatible || this.iframe_loaded) {
+        return
+      }
+
       const canvas = this.$refs.webglCanvas as HTMLCanvasElement
 
       canvas.width = this.$el.clientWidth
       canvas.height = this.$el.clientHeight
     },
     resizeCanvas(): void {
+      if (!this.gl_compatible || this.iframe_loaded) {
+        return
+      }
+
       const canvas = this.$refs.webglCanvas as HTMLCanvasElement
 
       canvas.width = this.$el.clientWidth
