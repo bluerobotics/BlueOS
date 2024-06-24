@@ -125,7 +125,7 @@ export interface deviceId {
 }
 
 export default function decode(device: string, devid: number): deviceId {
-  const busType = BUS_TYPE[devid & 0x07]
+  const busType = devid & 0x07 as BUS_TYPE
   const bus = devid >> 3 & 0x1F
   const address = devid >> 8 & 0xFF
   const devtype = devid >> 16
@@ -140,11 +140,11 @@ export default function decode(device: string, devid: number): deviceId {
     switch (busType) {
       // When compass uses UAVCAN, the devtype is sensor_id + 1
       // So we ignore it to avoid showing up the wrong device name
-      case BUS_TYPE[BUS_TYPE.UAVCAN]:
+      case BUS_TYPE.UAVCAN:
         decodedDevname = 'UAVCAN'
         break
       // eAHRS is the only one that uses SERIAL
-      case BUS_TYPE[BUS_TYPE.SERIAL]:
+      case BUS_TYPE.SERIAL:
         decodedDevname = 'eAHRS'
         break
       default:

@@ -34,7 +34,7 @@
               <td v-tooltip="'Inertial Navigation Sensor'">
                 INS
               </td>
-              <td>{{ imu.busType }} {{ imu.bus }}</td>
+              <td>{{ print_bus(imu.busType) }} {{ imu.bus }}</td>
               <td>{{ `0x${imu.address}` }}</td>
               <td>
                 <v-icon
@@ -75,7 +75,7 @@
               <td>
                 {{ compass_description[compass.param] }}
               </td>
-              <td>{{ compass.busType }} {{ compass.bus }}</td>
+              <td>{{ print_bus(compass.busType) }} {{ compass.bus }}</td>
               <td>{{ `0x${compass.address}` }}</td>
               <td>
                 <v-icon
@@ -102,7 +102,7 @@
               <td v-tooltip="'Used to estimate altitude/depth'">
                 {{ get_pressure_type[baro.param] }} Pressure
               </td>
-              <td>{{ baro.busType }} {{ baro.bus }}</td>
+              <td>{{ print_bus(baro.busType) }} {{ baro.bus }}</td>
               <td>{{ `0x${baro.address}` }}</td>
               <td>{{ baro_status[baro.param] }}</td>
             </tr>
@@ -114,7 +114,7 @@
               <td v-tooltip="'Used to estimate altitude/depth'">
                 Temperature
               </td>
-              <td>{{ sensor.busType }} {{ sensor.bus }}</td>
+              <td>{{ print_bus(sensor.busType) }} {{ sensor.bus }}</td>
               <td>{{ `0x${sensor.address}` }}</td>
               <td>{{ celsius_temperature }} ºC</td>
             </tr>
@@ -170,7 +170,7 @@ export default Vue.extend({
           paramValue: 0,
           deviceIdNumber: 0,
           devtype: 0,
-          busType: 'I2C',
+          busType: BUS_TYPE.I2C,
           address: '77',
           deviceName: 'Celsius',
           param: '-',
@@ -302,7 +302,9 @@ export default Vue.extend({
     mavlink.setMessageRefreshRate({ messageName: 'VFR_HUD', refreshRate: 1 })
   },
   methods: {
-
+    print_bus(bus: BUS_TYPE): string {
+      return BUS_TYPE[bus]
+    },
   },
 })
 </script>
