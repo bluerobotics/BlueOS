@@ -11,6 +11,7 @@ from extension.extension import Extension
 from extension.models import ExtensionSource
 from harbor import ContainerManager
 from manifest import ManifestManager
+from manifest.exceptions import ManifestBackendOffline
 from settings import ExtensionSettings, SettingsV2
 
 
@@ -42,22 +43,32 @@ class Kraken:
 
             extension_name = extension.container_name()
             if not any(container.name[1:] == extension_name for container in containers):
+                digest = None
                 try:
                     version = await self.manifest.fetch_extension_version(extension.identifier, extension.tag)
-                    digest = None
                     if version:
-                        digest = Extension.get_compatible_digest(version, extension.identifier)
+                        digest = Extension.get_compatible_digest(version, extension.identifier, False)
                     else:
                         logger.warning(
                             f"Dead extension {extension.identifier}:{extension.tag} is external and likely requires authentication"
                         )
-
-                    await (Extension(ExtensionSource.from_settings(extension), digest)).start()
                 except IncompatibleExtension:
                     logger.warning(f"Dead extension {extension.identifier}:{extension.tag} is not compatible anymore")
-                except Exception as e:
-                    traceback.print_exc()
-                    logger.warning(f"Dead extension {extension.identifier}:{extension.tag} could not be started: {e}")
+                except ManifestBackendOffline:
+                    logger.warning(
+                        f"Could not fetch manifest since the backend is offline, will try to start {extension.identifier}:{extension.tag} anyway"
+                    )
+                except Exception:
+                    logger.warning(
+                        f"Unable to fetch manifest, will try to start {extension.identifier}:{extension.tag} anyway. Error: {traceback.format_exc()}"
+                    )
+
+                try:
+                    await (Extension(ExtensionSource.from_settings(extension), digest)).start()
+                except Exception:
+                    logger.warning(
+                        f"Dead extension {extension.identifier}:{extension.tag} could not be started: {traceback.format_exc()}"
+                    )
 
     async def kill_invalid_extensions(self) -> None:
         extensions: List[ExtensionSettings] = Extension._fetch_settings()
