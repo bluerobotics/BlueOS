@@ -11,13 +11,13 @@
       v-model="show_dialog"
       width="80%"
     >
-      <extension-modal
+      <ExtensionDetailsModal
         :extension="selected_extension"
         :installed="installedVersion()"
         @clicked="performActionFromModal"
       />
     </v-dialog>
-    <extension-settings
+    <ExtensionSettingsModal
       v-model="show_settings"
       @refresh="fetchManifest"
     />
@@ -33,120 +33,59 @@
         </v-card-text>
       </v-card>
     </v-dialog>
-    <v-toolbar density="compact">
-      <div class="search-container">
-        <v-text-field
-          v-model.trim="searchQuery"
-          dense
-          rounded
-          clearable
-          placeholder="Search Extensions"
-          prepend-inner-icon="mdi-magnify"
-          class="pt-6 shrink expanding-search"
-          :class="{ closed: searchQueryClosed && !searchQuery }"
-          @focus="searchQueryClosed = false"
-          @blur="searchQueryClosed = true"
-        />
-      </div>
+    <v-toolbar>
+      <v-spacer />
       <v-tabs
         v-model="tab"
         fixed-tabs
-        class="tabs-container"
       >
-        <v-tab>
-          <v-icon class="mr-5">
-            mdi-store-search
+        <v-tab key="0" href="#0" class="tab-text">
+          <v-icon class="mr-3">
+            {{ settings.is_dev_mode ? 'mdi-incognito' : 'mdi-store-search' }}
           </v-icon>
-          Store
+          {{ settings.is_dev_mode ? 'Back Alley' : 'Store' }}
         </v-tab>
-        <v-tab>
-          <v-icon class="mr-5">
+        <v-tab v-if="settings.is_dev_mode" key="1" href="#1" class="tab-text">
+          <v-icon class="mr-3">
+            mdi-package-variant
+          </v-icon>
+          Bazaar
+        </v-tab>
+        <v-tab key="2" href="#2" class="tab-text">
+          <v-icon class="mr-3">
             mdi-bookshelf
           </v-icon>
           Installed
         </v-tab>
       </v-tabs>
-      <v-spacer class="tabs-container-spacer-right" />
+      <v-spacer />
       <v-btn
         v-tooltip="'Settings'"
         icon
-        color="gray"
         hide-details="auto"
         @click="show_settings = true"
       >
         <v-icon>mdi-cog</v-icon>
       </v-btn>
     </v-toolbar>
+    <BackAlleyTab
+      v-show="is_back_alley_tab"
+      :manifest="manifest"
+      :installed-extensions="installed_extensions"
+      @clicked="showModal"
+      @update="update"
+    />
+    <BazaarTab
+      v-show="is_bazaar_tab"
+    />
     <v-card
-      v-if="tab === 0"
-      class="d-flex pa-5 align-baseline"
-    >
-      <v-card min-width="200px">
-        <v-list>
-          <v-list-item-subtitle class="pa-3 font-weight-bold">
-            Provider
-          </v-list-item-subtitle>
-          <v-checkbox
-            v-for="(name, index) in providers"
-            :key="`provider-${index}`"
-            v-model="selected_companies"
-            :label="name"
-            :value="name"
-            class="pa-0 pl-3 ma-0"
-          />
-          <v-divider class="ma-3" />
-          <v-list-item-subtitle class="pa-3 font-weight-bold">
-            Type
-          </v-list-item-subtitle>
-          <v-checkbox
-            v-for="(name, index) in tags"
-            :key="`tag-${index}`"
-            v-model="selected_tags"
-            :label="name"
-            :value="name"
-            class="pa-0 pl-3 ma-0"
-          />
-        </v-list>
-      </v-card>
-      <v-row
-        v-if="filteredManifest.length > 0"
-        dense
-        class="d-flex"
-        style="place-self: flex-start start; place-content: start space-around;"
-      >
-        <extension-card
-          v-for="extension in filteredManifest"
-          :key="extension.identifier + extension.name"
-          :extension="extension"
-          class="ma-2"
-          @clicked="showModal(extension)"
-        />
-      </v-row>
-      <v-container
-        v-if="manifest.length === 0"
-        class="text-center"
-      >
-        <p class="text-h6">
-          No Extensions available. Make sure the vehicle has internet access and try again.
-        </p>
-      </v-container>
-      <v-container
-        v-if="filteredManifest.length === 0"
-        class="text-center"
-      >
-        <p class="text-h6">
-          No results found.
-        </p>
-      </v-container>
-    </v-card>
-    <v-card
-      v-if="tab === 1"
+      v-if="is_installed_tab"
       class="pa-5"
       text-align="center"
     >
       <div class="installed-extension-card">
         <div class="installed-extensions-container">
-          <installed-extension-card
+          <InstalledExtensionCard
             v-for="extension in installed_extensions"
             :key="extension.docker"
             :extension="extension"
@@ -197,7 +136,7 @@
           <v-icon>mdi-plus</v-icon>
         </v-btn>
       </v-fab-transition>
-      <creation-dialog
+      <ExtensionCreationModal
         v-if="edited_extension"
         :extension="edited_extension"
         @extensionChange="createOrUpdateExtension"
@@ -210,18 +149,19 @@
 <script lang="ts">
 import AnsiUp from 'ansi_up'
 import axios from 'axios'
-import Fuse from 'fuse.js'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
-import ExtensionCard from '@/components/kraken/ExtensionCard.vue'
-import CreationDialog from '@/components/kraken/ExtensionCreationDialog.vue'
-import ExtensionModal from '@/components/kraken/ExtensionModal.vue'
-import ExtensionSettings from '@/components/kraken/ExtensionSettings.vue'
-import InstalledExtensionCard from '@/components/kraken/InstalledExtensionCard.vue'
+import BackAlleyTab from '@/components/kraken/BackAlleyTab.vue'
+import BazaarTab from '@/components/kraken/BazaarTab.vue'
+import InstalledExtensionCard from '@/components/kraken/cards/InstalledExtensionCard.vue'
 import kraken from '@/components/kraken/KrakenManager'
+import ExtensionCreationModal from '@/components/kraken/modals/ExtensionCreationModal.vue'
+import ExtensionDetailsModal from '@/components/kraken/modals/ExtensionDetailsModal.vue'
+import ExtensionSettingsModal from '@/components/kraken/modals/ExtensionSettingsModal.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
+import settings from '@/libs/settings'
 import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -229,7 +169,7 @@ import PullTracker from '@/utils/pull_tracker'
 import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
-  ExtensionData, InstalledExtensionData, RunningContainer, Version,
+  ExtensionData, InstalledExtensionData, RunningContainer,
 } from '../types/kraken'
 
 const API_URL = '/kraken/v1.0'
@@ -239,26 +179,25 @@ const notifier = new Notifier(kraken_service)
 export default Vue.extend({
   name: 'ExtensionManagerView',
   components: {
-    ExtensionCard,
+    BazaarTab,
+    BackAlleyTab,
     InstalledExtensionCard,
-    ExtensionModal,
-    ExtensionSettings,
+    ExtensionDetailsModal,
+    ExtensionSettingsModal,
     PullProgress,
-    CreationDialog,
+    ExtensionCreationModal,
     SpinningLogo,
   },
   data() {
     return {
-      tab: 0,
+      tab: '0',
+      settings,
       show_dialog: false,
       show_settings: false,
       installed_extensions: {} as Dictionary<InstalledExtensionData>,
       selected_extension: null as (null | ExtensionData),
-      selected_companies: [] as string[],
-      selected_tags: [] as string[],
       running_containers: [] as RunningContainer[],
-      manifest: [] as ExtensionData[],
-      manifest_fuse: null as null | Fuse<ExtensionData>,
+      manifest: undefined as undefined | string | ExtensionData[],
       dockers_fetch_done: false,
       dockers_fetch_failed: false,
       show_pull_output: false,
@@ -271,54 +210,24 @@ export default Vue.extend({
       metrics: {} as Dictionary<{ cpu: number, memory: number}>,
       metrics_interval: 0,
       edited_extension: null as null | InstalledExtensionData,
-      searchQuery: null as null | string,
-      searchQueryClosed: true,
     }
   },
   computed: {
-    providers(): string[] {
-      const authors = this.manifest
-        .map((extension) => this.newestVersion(extension.versions)?.company?.name ?? 'unknown').sort() as string[]
-      return [...new Set(authors)]
+    is_back_alley_tab(): boolean {
+      return this.tab === '0'
     },
-    tags(): string[] {
-      const authors = this.manifest
-        .map((extension) => this.newestVersion(extension.versions)?.type ?? 'unknown')
-        .sort() as string[]
-      return [...new Set(authors)]
+    is_bazaar_tab(): boolean {
+      return this.tab === '1'
     },
-    searchFilteredManifest(): ExtensionData[] {
-      const query = this.searchQuery ?? ''
-
-      // Remove not compatible in case user is not searching by search bar directly
-      const data = query !== ''
-        ? this.manifest_fuse?.search(query).map((result) => result.item) ?? []
-        : this.manifest.filter((ext) => ext.is_compatible)
-
-      return data
+    is_installed_tab(): boolean {
+      return this.tab === '2'
     },
-    filteredManifest(): ExtensionData[] {
-      let data = this.searchFilteredManifest
-
-      if (this.selected_companies.isEmpty() && this.selected_tags.isEmpty()) {
-        // By default we remove examples if nothing is selected
-        return data.filter((extension) => this.newestVersion(extension.versions)?.type !== 'example')
+    manifest_as_data(): ExtensionData[] {
+      if (this.manifest === undefined || typeof this.manifest === 'string') {
+        return []
       }
 
-      if (!this.selected_companies.isEmpty()) {
-        data = data.filter((extension) => this.newestVersion(extension.versions)?.company?.name !== undefined)
-          .filter((extension) => this.selected_companies
-            .includes(this.newestVersion(extension.versions)?.company?.name ?? ''))
-      }
-
-      if (this.selected_tags.isEmpty()) {
-        return data
-      }
-
-      return data
-        .filter((extension) => this.newestVersion(extension.versions)?.type !== undefined)
-        .filter((extension) => this.selected_tags
-          .includes(this.newestVersion(extension.versions)?.type ?? ''))
+      return this.manifest as ExtensionData[]
     },
   },
   mounted() {
@@ -331,9 +240,6 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
   },
   methods: {
-    newestVersion(versions: Dictionary<Version>): Version | undefined {
-      return Object.values(versions)?.[0] as Version | undefined
-    },
     clearEditedExtension() {
       this.edited_extension = null
     },
@@ -447,28 +353,14 @@ export default Vue.extend({
     getContainerName(extension: InstalledExtensionData): string | null {
       return this.getContainer(extension)?.name ?? null
     },
-    checkExtensionCompatibility(extension: ExtensionData): boolean {
-      return Object.values(extension.versions).some(
-        (version) => version.images.some(
-          (image) => image.compatible,
-        ),
-      )
-    },
     async fetchManifest(): Promise<void> {
-      kraken.fetchConsolidatedManifests()
-        .then((response) => {
-          this.manifest = response.map((extension: ExtensionData) => ({
-            ...extension,
-            is_compatible: this.checkExtensionCompatibility(extension),
-          }))
-          this.manifest_fuse = new Fuse(this.manifest, {
-            keys: ['identifier', 'name', 'description'],
-            threshold: 0.4,
-          })
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_MANIFEST_FETCH_FAIL', error)
-        })
+      this.manifest = undefined
+
+      try {
+        this.manifest = await kraken.fetchConsolidatedManifests()
+      } catch (error) {
+        this.manifest = String(error)
+      }
     },
     async fetchInstalledExtensions(): Promise<void> {
       await back_axios({
@@ -717,7 +609,7 @@ export default Vue.extend({
       this.fetchMetrics()
     },
     remoteVersions(extension: InstalledExtensionData): ExtensionData | undefined {
-      return this.manifest.find(
+      return this.manifest_as_data.find(
         (remoteExtension: ExtensionData) => remoteExtension.identifier === extension.identifier,
       )
     },
@@ -774,16 +666,7 @@ pre.logs {
   width: 30% !important;
 }
 
-.v-input.expanding-search {
-  transition: max-width 0.2s;
+.tab-text {
+  white-space: nowrap !important;
 }
-
-.v-input.expanding-search .v-input__slot {
-  cursor: pointer;
-}
-
-.v-input.expanding-search.closed {
-  max-width: 50px;
-}
-
 </style>

@@ -3,11 +3,16 @@
     :style="card_dominant_color ? { borderColor: card_dominant_color } : {}"
     outlined
     width="400"
-    height="auto"
+    height="355px"
     elevation="2"
     :class="{ 'disabled-card': !is_compatible }"
     class="store-extension-card"
   >
+    <div
+      :style="img_background_style"
+      class="img-background"
+    />
+
     <div
       :style="architecture_list_style"
       class="pt-1 mb-2 pl-2 pr-3 architectures-list"
@@ -30,11 +35,11 @@
             contain
             :src="extension.extension_logo"
             height="150px"
-            class="mx-3 my-2"
+            class="mt-3 mb-5 my-2 logo-img"
             @load="setDominantColor"
           />
 
-          <v-card-subtitle class="px-3 py-2">
+          <v-card-subtitle class="px-3 py-2 ext-subtitles">
             <div
               class="extension-name"
             >
@@ -45,13 +50,16 @@
             </div>
           </v-card-subtitle>
 
-          <v-divider />
+          <div class="spacer" />
+          <v-divider style="z-index: 4 !important;" />
         </div>
       </template>
       <span>This extension is not compatible with current machine architecture running BlueOS.</span>
     </v-tooltip>
-    <v-card-actions class="px-3 py-2 d-flex justify-space-between align-center">
-      <v-avatar size="32">
+    <div class="bottom-gradient-fade" />
+    <div class="bottom-gradient" />
+    <v-card-actions class="px-3 py-2 d-flex justify-space-between align-center card-actions">
+      <v-avatar size="32" rounded="0">
         <v-img
           contain
           :src="extension.company_logo"
@@ -92,6 +100,13 @@ import Vue, { PropType } from 'vue'
 import { getLatestVersion, isStable, updateAvailableTag } from '@/components/kraken/Utils'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 
+export interface ImgProcessedResult {
+  url: string
+  color: string
+  isLight: boolean
+  isTransparent: boolean
+}
+
 export default Vue.extend({
   name: 'StoreExtensionCard',
   props: {
@@ -103,10 +118,15 @@ export default Vue.extend({
       type: Array as PropType<InstalledExtensionData[]>,
       required: true,
     },
+    imgsProcessed: {
+      type: Object as PropType<Record<string, ImgProcessedResult>>,
+      required: true,
+    },
   },
   data() {
     return {
       card_dominant_color: undefined as string | undefined,
+      is_card_mostly_transparent: false,
       is_card_dominant_color_light: false,
     }
   },
@@ -173,13 +193,36 @@ export default Vue.extend({
         return 'Unknown'
       }
 
-      const names = authors.slice(0, 2).map((author) => author.name).join(', ')
+      const names = authors.map((author) => author.name).join(', ')
 
       return authors.length > 2 ? `${names} ...` : names
     },
+    img_background_style(): Record<string, string> {
+      if (this.card_dominant_color) {
+        if (this.is_card_mostly_transparent) {
+          return {
+            backgroundColor: this.is_card_dominant_color_light ? '#111' : '#EEE',
+          }
+        }
+
+        return {
+          backgroundColor: this.card_dominant_color,
+        }
+      }
+
+      return {}
+    },
   },
   methods: {
-    setDominantColor() {
+    async setDominantColor() {
+      if (this.extension.extension_logo && this.imgsProcessed[this.extension.extension_logo]) {
+        const { color, isLight, isTransparent } = this.imgsProcessed[this.extension.extension_logo]
+        this.card_dominant_color = color
+        this.is_card_dominant_color_light = isLight
+        this.is_card_mostly_transparent = isTransparent
+        return
+      }
+
       // @ts-expect-error - extension_logo is not an HTMLImageElement
       const img = this.$refs.extension_logo?.image as HTMLImageElement
       img.crossOrigin = 'Anonymous'
@@ -189,12 +232,48 @@ export default Vue.extend({
         try {
           const color = colorThief.getColor(img)
 
-          this.is_card_dominant_color_light = this.getLuminance(color[0], color[1], color[2]) > 128
           this.card_dominant_color = `rgb(${color.join(',')})`
+          this.is_card_dominant_color_light = this.getLuminance(color[0], color[1], color[2]) > 128
+          this.is_card_mostly_transparent = this.isImgTransparent(img)
+
+          this.$emit('img-processed', {
+            url: this.extension.extension_logo,
+            color: this.card_dominant_color,
+            isLight: this.is_card_dominant_color_light,
+            isTransparent: this.is_card_mostly_transparent,
+          })
         } catch (error) {
           console.error('Unable to extract logo dominant color.', error)
         }
       }
+    },
+    isImgTransparent(img: HTMLImageElement): boolean {
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      context?.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+      const data = context?.getImageData(0, 0, img.width, img.height)?.data
+
+      if (!data) {
+        return false
+      }
+
+      let transparentPixelCount = 0
+      for (let i = 0; i < data.length; i += 10) {
+        const alpha = data[i + 3]
+        if (alpha === 0) {
+          transparentPixelCount += 1
+        }
+      }
+
+      // If more than 20% of the image is transparent, render against dominant color
+      if (transparentPixelCount / (data.length / 4) > 0.2) {
+        return true
+      }
+
+      return false
     },
     getLuminance(r: number, g: number, b: number): number {
       const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -231,7 +310,63 @@ export default Vue.extend({
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
-  border: 2px solid transparent;
+  border: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.store-extension-card:hover {
+  transform: translateY(-5px);
+}
+
+.img-background {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 75%;
+  z-index: 0;
+  border-radius: 8px !important;
+}
+
+.logo-img {
+  flex-grow: 0;
+  z-index: 0 !important;
+}
+
+.bottom-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 55px;
+  z-index: 3 !important;
+}
+
+.bottom-gradient-fade {
+  position: absolute;
+  bottom: 55px;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  backdrop-filter: blur(10px);
+  z-index: 3 !important;
+}
+
+.theme--light .bottom-gradient {
+  background-color: #FFF;
+}
+
+.theme--light .bottom-gradient-fade {
+  background: linear-gradient(0deg, #FFF 60%, rgba(255, 255, 255, 0.65));
+}
+
+.theme--dark .bottom-gradient {
+  background-color: var(--v-oyster-darken1);
+}
+
+.theme--dark .bottom-gradient-fade {
+  background: linear-gradient(0deg, var(--v-oyster-darken1) 60%, rgba(30, 30, 30, 0.65));
 }
 
 .content-wrapper {
@@ -242,8 +377,16 @@ export default Vue.extend({
   cursor: pointer;
 }
 
-.store-extension-card:hover {
-  transform: translateY(-5px);
+.ext-subtitles {
+  z-index: 4 !important;
+}
+
+.card-actions {
+  z-index: 4 !important;
+}
+
+.spacer {
+  flex-grow: 1;
 }
 
 .architectures-list {
@@ -251,23 +394,37 @@ export default Vue.extend({
   height: 2.4em;
   color: white;
   font-size: 12px;
-  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 0px 0px 10px 0px !important;
+  box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.5);
+  border-radius: 8px 0px 10px 0px !important;
+  z-index: 4 !important;
 }
 
 .extension-name {
   font-weight: bold;
   font-size: 18px;
+  max-height: 1.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
 
 .extension-description {
   color: gray;
   font-size: 14px;
+  max-height: 3.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .extension-creators {
   flex-grow: 1;
   margin-left: 8px;
+  min-width: 0; /* Ensure flexbox doesn't force a minimum width */
 }
 
 .extension-company {
@@ -278,6 +435,10 @@ export default Vue.extend({
 .extension-authors {
   color: gray;
   font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 10px);
 }
 
 .v-card-actions {
