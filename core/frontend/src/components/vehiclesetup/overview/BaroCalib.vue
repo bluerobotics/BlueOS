@@ -68,6 +68,7 @@
 import Vue from 'vue'
 
 import autopilot_data from '@/store/autopilot'
+import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
 import { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
@@ -111,12 +112,22 @@ export default Vue.extend({
       }
       return results
     },
+    external_i2c_bus(): number | undefined {
+      return autopilot_data.parameter('BARO_EXT_BUS')?.value
+    },
     get_pressure_type(): Dictionary<string> {
       const results = {} as Dictionary<string>
-      for (const barometer of this.baros) {
+      for (const baro of this.baros) {
         // BARO_SPEC_GRAV Only exist for underwater vehicles
         const spec_gravity_param = autopilot_data.parameter('BARO_SPEC_GRAV')
-        results[barometer.param] = (spec_gravity_param && printParam(spec_gravity_param)) ?? 'Barometric'
+        const water = ['MS5837', 'MS5611', 'KELLERLD'].includes(baro.deviceName ?? '--')
+        && autopilot.vehicle_type === 'Submarine' && baro.busType === BUS_TYPE.I2C
+        && baro.bus === this.external_i2c_bus
+        if (water) {
+          results[baro.param] = printParam(spec_gravity_param)
+          continue
+        }
+        results[baro.param] = 'Barometric'
       }
       return results
     },
