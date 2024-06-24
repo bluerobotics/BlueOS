@@ -171,7 +171,7 @@ import kraken from '@/components/kraken/KrakenManager'
 import { Manifest, ManifestSource } from '@/types/kraken'
 
 export default Vue.extend({
-  name: 'ExtensionSettings',
+  name: 'ExtensionSettingsModal',
   props: {
     value: {
       type: Boolean,

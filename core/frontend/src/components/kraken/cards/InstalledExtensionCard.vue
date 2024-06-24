@@ -204,13 +204,12 @@ import semver from 'semver'
 import stable from 'semver-stable'
 import Vue, { PropType } from 'vue'
 
+import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 import { Disk } from '@/types/system-information/system'
 import { prettifySize } from '@/utils/helper_functions'
-
-import SpinningLogo from '../common/SpinningLogo.vue'
 
 export default Vue.extend({
   name: 'InstalledExtensionCard',
