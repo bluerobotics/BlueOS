@@ -38,7 +38,7 @@
                 <td v-tooltip="'Used to estimate altitude/depth'">
                   {{ get_pressure_type[baro.param] }} Pressure
                 </td>
-                <td>{{ baro.busType }} {{ baro.bus }}</td>
+                <td>{{ bus_name(baro.busType) }} {{ baro.bus }}</td>
                 <td>{{ `0x${baro.address}` }}</td>
                 <td>{{ baro_status[baro.param] }}</td>
                 <td>{{ baro_ground_pressure[baro.param] }}</td>
@@ -71,7 +71,7 @@ import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
 import { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
-import decode, { deviceId } from '@/utils/deviceid_decoder'
+import decode, { BUS_TYPE, deviceId } from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
 
 import { calibrator, PreflightCalibration } from '../calibration'
@@ -122,6 +122,9 @@ export default Vue.extend({
     },
   },
   methods: {
+    bus_name(bus: number): string {
+      return BUS_TYPE[bus]
+    },
     async calibrate() {
       this.disable_button = true
       this.calibration_status = 'Starting calibration..'
