@@ -48,7 +48,7 @@ export default defineConfig({
       version: 2.7,
     }),
   ],
-  assetsInclude: ['**/*.gif', '**/*.glb', '**/*.png', '**/*.svg'],
+  assetsInclude: ['**/*.gif', '**/*.glb', '**/*.png', '**/*.svg', '**/assets/ArduPilot-Parameter-Repository**.json'],
   resolve: {
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     alias: {

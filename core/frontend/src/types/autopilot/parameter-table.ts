@@ -8,6 +8,9 @@ import { Dictionary } from '@/types/common'
 
 import Parameter from './parameter'
 import { fetchPX4Metadata, PX4ParametersMetadata } from './px4/metadata-fetcher'
+import { fetchFirmwareVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
+import { FirmwareVehicleType } from '@/types/autopilot'
+import axios from 'axios'
 
 // Parameter metadata as in the JSON files
 interface Metadata {
@@ -94,6 +97,37 @@ export default class ParametersTable {
     this.parametersDict = {}
   }
 
+  async fetchArduPilotMetadata(): Promise<MetadataFile | string> {
+    await fetchFirmwareVehicleType() // required to populate autopilot.vehicle_type
+    const jsons = Object.keys(await import.meta.glob('/public/assets/ArduPilot-Parameter-Repository/**/*.json')) as string[]
+    let folder = "Copter"
+    switch (autopilot.firmware_vehicle_type) {
+      case FirmwareVehicleType.ArduSub:
+        folder = 'Sub'
+        break
+      case FirmwareVehicleType.ArduRover:
+        folder = 'Rover'
+        break
+      case FirmwareVehicleType.ArduPlane:
+        folder = 'Plane'
+    }
+    const major = autopilot.firmware_info?.version.major
+    let minor = autopilot.firmware_info?.version.minor ?? 0
+    while (minor >= 0) {
+      // go down one minor version at a time until we find a match
+      const metadata_path = `/assets/ArduPilot-Parameter-Repository/${folder}-${major}.${minor}/apm.pdef.json`
+      if (jsons.includes(`/public${metadata_path}`)) {
+        return await axios.get(metadata_path).then(response => response.data as MetadataFile)
+      }
+      minor -= 1;
+    }
+    // if we didn't find a match, just return the first one. that must be better than nothing, right?
+    const fallback = jsons[0].replace('/public', '')
+    console.warn(`Could not find metadata for ${folder}-${major}.X. Falling back to ${fallback}`)
+    return axios.get(fallback).then(response => response.data as MetadataFile)
+  }
+
+
   async fetchMetadata(): Promise<void> {
     if (autopilot.vehicle_type === null) {
       // Check again later if we have a vehicle type identified
@@ -105,18 +139,7 @@ export default class ParametersTable {
     if (autopilot_data.autopilot_type === MavAutopilot.MAV_AUTOPILOT_PX4) {
       this.metadata = fromPX4toArduPilotParametersMetadata(await fetchPX4Metadata())
     } else {
-      let metadata: MetadataFile
-      if (autopilot.vehicle_type === 'Submarine') {
-        metadata = await import('@/ArduPilot-Parameter-Repository/Sub-4.1/apm.pdef.json')
-      }
-      // This is to avoid importing a 40 lines enum from mavlink and adding a switch case with 40 cases
-      else if (autopilot.vehicle_type.toLowerCase().includes('copter')
-        || autopilot.vehicle_type.toLowerCase().includes('rotor')) {
-        metadata = await import('@/ArduPilot-Parameter-Repository/Copter-4.3/apm.pdef.json')
-      } else if (autopilot.vehicle_type.toLowerCase().includes('rover')
-        || autopilot.vehicle_type.toLowerCase().includes('boat')) {
-        metadata = await import('@/ArduPilot-Parameter-Repository/Rover-4.2/apm.pdef.json')
-      }
+    let metadata = await this.fetchArduPilotMetadata()
 
       for (const category of Object.values(metadata)) {
         for (const [name, parameter] of Object.entries(category)) {
