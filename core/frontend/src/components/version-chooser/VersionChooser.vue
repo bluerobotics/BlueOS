@@ -199,6 +199,7 @@ import Vue from 'vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import helper from '@/store/helper'
 import { version_chooser_service } from '@/types/frontend_services'
 import {
   isServerResponse,
@@ -220,7 +221,6 @@ export default Vue.extend({
     SpinningLogo,
     VersionCard,
     PullProgress,
-
   },
   data() {
     const default_repository = 'bluerobotics/blueos-core'
@@ -268,6 +268,18 @@ export default Vue.extend({
     },
     inputFileRequiredMessage(): string {
       return 'File is required'
+    },
+    has_internet(): boolean {
+      return helper.has_internet
+    },
+  },
+  watch: {
+    has_internet(value: boolean) {
+      if (value) {
+        this.loadAvailableVersions()
+      } else {
+        this.resetToNoInternetAvailable()
+      }
     },
   },
   mounted() {
@@ -391,6 +403,11 @@ export default Vue.extend({
         })
     },
     async loadAvailableVersions() {
+      if (!this.has_internet) {
+        this.resetToNoInternetAvailable()
+        return
+      }
+
       this.loading_images = true
       this.available_versions.error = null
 
@@ -620,6 +637,15 @@ export default Vue.extend({
       }
 
       return valid
+    },
+    resetToNoInternetAvailable() {
+      this.available_versions = {
+        ...this.available_versions,
+        remote: [],
+        error: "No internet connection available, can't fetch remote images",
+      }
+      this.latest_stable = undefined
+      this.latest_beta = undefined
     },
   },
 })
