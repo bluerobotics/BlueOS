@@ -230,38 +230,47 @@ export default Vue.extend({
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
-  border: 2px solid transparent;
+  border: 0px solid transparent;
   position: relative;
-  overflow: hidden;
 }
 
 .store-extension-card:hover {
   transform: translateY(-5px);
 }
 
-.img-background {
+/* .img-background {
   position: absolute;
-  top: -1px;
-  left: -1px;
-  width: calc(100% + 2px);
+  top: -3px;
+  left: -3px;
+  width: calc(100% + 6px);
   height: 90%;
   z-index: 0;
-  border-radius: 0px !important;
+  border-radius: 8px !important;
+} */
+
+.img-background {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 90%;
+  z-index: 0;
+  border-radius: 8px !important;
 }
 
 .background-image {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  top: 10%;
+  left: 25%;
+  width: auto;
+  height: 150px;
   border-radius: 8px;
-  height: auto;
   z-index: 1;
 }
 
 .spacer {
   flex-grow: 1;
-  min-height: 150px;
+  min-height: 200px;
 }
 
 .bottom-gradient {
@@ -271,6 +280,7 @@ export default Vue.extend({
   width: 100%;
   height: 55px;
   background-color: var(--v-oyster-darken1);
+  border-radius: 0px 0px 7px 7px !important;
   z-index: 3 !important;
 }
 .bottom-gradient-fade {
@@ -298,12 +308,15 @@ export default Vue.extend({
 }
 
 .architectures-list {
+  position: absolute;
+  top: -0px;
+  left: -0px;
   width: fit-content;
   height: 2.4em;
   color: white;
   font-size: 12px;
-  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 0px 0px 10px 0px !important;
+  box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.5);
+  border-radius: 8px 0px 10px 0px !important;
   z-index: 4 !important;
 }
 
