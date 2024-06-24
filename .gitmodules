@@ -1,5 +1,5 @@
 [submodule "core/frontend/src/ArduPilot-Parameter-Repository"]
-	path = core/frontend/src/ArduPilot-Parameter-Repository
+	path = core/frontend/public/assets/ArduPilot-Parameter-Repository
 	url = https://github.com/ArduPilot/ParameterRepository
 [submodule "core/frontend/src/libs/MAVLink2Rest/mavlink2rest-ts"]
 	path = core/frontend/src/libs/MAVLink2Rest/mavlink2rest-ts
