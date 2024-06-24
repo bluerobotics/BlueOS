@@ -10,6 +10,7 @@ from commonwealth.settings.manager import Manager
 
 from config import DEFAULT_MANIFESTS, SERVICE_NAME
 from manifest.exceptions import (
+    ManifestBackendOffline,
     ManifestDataFetchFailed,
     ManifestDataParseFailed,
     ManifestInvalidURL,
@@ -85,21 +86,24 @@ class ManifestManager:
 
     @cached(ttl=3600, namespace="manifest")
     async def _fetch_manifest_data(self, url: str) -> List[RepositoryEntry]:
-        async with aiohttp.ClientSession() as session:
-            headers = {"Accept": "application/json"}
-            try:
-                async with session.get(url, headers=headers) as resp:
-                    if resp.status != 200:
-                        raise ManifestDataFetchFailed(
-                            f"Failed to fetch manifest data from {url} with status {resp.status}"
-                        )
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {"Accept": "application/json"}
+                try:
+                    async with session.get(url, headers=headers) as resp:
+                        if resp.status != 200:
+                            raise ManifestDataFetchFailed(
+                                f"Failed to fetch manifest data from {url} with status {resp.status}"
+                            )
 
-                    try:
-                        return ManifestData.parse_obj(await resp.json(content_type=None)).__root__
-                    except Exception as e:
-                        raise ManifestDataParseFailed(f"Failed to parse manifest data from {url}") from e
-            except aiohttp.InvalidURL as e:
-                raise ManifestInvalidURL(f"Invalid URL {url}") from e
+                        try:
+                            return ManifestData.parse_obj(await resp.json(content_type=None)).__root__
+                        except Exception as e:
+                            raise ManifestDataParseFailed(f"Failed to parse manifest data from {url}") from e
+                except aiohttp.InvalidURL as e:
+                    raise ManifestInvalidURL(f"Invalid URL {url}") from e
+        except aiohttp.ClientConnectionError as e:
+            raise ManifestBackendOffline("Unable to fetch manifest, backend is offline") from e
 
     async def _fetch_manifest(self, settings: ManifestSettings, fetch_data: bool = True) -> Manifest:
         manifest = Manifest(

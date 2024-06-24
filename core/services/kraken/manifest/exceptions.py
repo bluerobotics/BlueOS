@@ -16,3 +16,7 @@ class ManifestNotFound(Exception):
 
 class ManifestOperationNotAllowed(Exception):
     pass
+
+
+class ManifestBackendOffline(Exception):
+    pass
