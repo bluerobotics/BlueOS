@@ -179,7 +179,7 @@ import PullTracker from '@/utils/pull_tracker'
 
 const KRAKEN_API_URL = '/kraken/v1.0'
 
-const MAJOR_TOM_CLOUD_URL = 'https://kipulwyil1.execute-api.us-east-1.amazonaws.com/api/blueos/install'
+const MAJOR_TOM_CLOUD_URL = 'https://blueos.cloud/major_tom/install'
 
 const MAJOR_TOM_EXTENSION_IDENTIFIER = 'blueos.major_tom'
 
