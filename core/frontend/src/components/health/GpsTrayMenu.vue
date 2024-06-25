@@ -5,10 +5,15 @@
     :value="satellites_number"
     :title="`${connection_description} (Number of satellites: ${satellites_number})`"
     :color="number_color"
+    :dot="!mouse_hover"
     class="mr-2"
     overlap
   >
-    <v-icon color="white">
+    <v-icon
+      color="white"
+      @mouseover="mouse_hover = true"
+      @mouseleave="mouse_hover = false"
+    >
       mdi-satellite-variant
     </v-icon>
   </v-badge>
@@ -26,6 +31,7 @@ export default Vue.extend({
   name: 'GpsTrayMenu',
   data() {
     return {
+      mouse_hover: false,
       time_limit_message: 20000,
       last_message_date: undefined as undefined | Date,
       gps_detected: false,
