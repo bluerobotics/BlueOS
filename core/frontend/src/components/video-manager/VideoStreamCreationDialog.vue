@@ -49,12 +49,32 @@
             class="d-flex justify-space-between align-center"
           >
             <v-select
-              :items="[StreamType.UDP, StreamType.RTSP]"
-              :value="endpoint.startsWith('rtsp://') ? StreamType.RTSP : StreamType.UDP"
+              :items="availableStreamTypes(endpoint)"
+              :value="selectedStreamType(endpoint)"
               class="mr-10"
               style="width:20%;"
               @change="set_default_address_for_stream(index, $event)"
-            />
+            >
+              <template #item="{ item }">
+                <v-tooltip :disabled="!item.pirate" bottom>
+                  <template #activator="{ on, attrs }">
+                    <div
+                      style="width: 100%;"
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-list-item-content>
+                        <v-list-item-title
+                          :style="item.pirate ? 'color: var(--v-warning-base);' : ''"
+                          v-text="item.text"
+                        />
+                      </v-list-item-content>
+                    </div>
+                  </template>
+                  <span>{{ item.desc }}</span>
+                </v-tooltip>
+              </template>
+            </v-select>
             <v-text-field
               v-model="stream_endpoints[index]"
               label="Stream endpoint"
@@ -147,7 +167,12 @@ import {
   VideoEncodeType,
 } from '@/types/video'
 import { VForm } from '@/types/vuetify'
-import { isNotEmpty, isRtspAddress, isUdpAddress } from '@/utils/pattern_validators'
+import {
+  isNotEmpty,
+  isRtspAddress,
+  isRtspVariantAddress,
+  isUdpAddress,
+} from '@/utils/pattern_validators'
 
 export default Vue.extend({
   name: 'VideoStreamCreationDialog',
@@ -200,7 +225,6 @@ export default Vue.extend({
       is_thermal: this.stream.thermal,
       is_disable_mavlink: this.stream.disable_mavlink,
       settings,
-      StreamType,
     }
   },
   computed: {
@@ -307,7 +331,11 @@ export default Vue.extend({
     },
 
     is_valid_schema(input: string): (true | string) {
-      return isUdpAddress(input) || isRtspAddress(input) ? true : 'Invalid UDP/RTSP stream endpoint.'
+      return isUdpAddress(input)
+        || isRtspAddress(input)
+        || isRtspVariantAddress(input)
+        ? true
+        : 'Invalid UDP/RTSP stream endpoint.'
     },
     is_endpoint_combining_correct(): (true | string) {
       const rtsp_endpoints = this.stream_endpoints.filter(isRtspAddress)
@@ -356,6 +384,40 @@ export default Vue.extend({
     showDialog(state: boolean) {
       this.$emit('visibilityChange', state)
     },
+    selectedStreamType(endpoint: string): StreamType {
+      if (endpoint.startsWith('rtspu://')) return StreamType.RTSPU
+      if (endpoint.startsWith('rtsp://')) return StreamType.RTSP
+      if (endpoint.startsWith('rtspt://')) return StreamType.RTSPT
+      if (endpoint.startsWith('rtsph://')) return StreamType.RTSPH
+      return StreamType.UDP
+    },
+    availableStreamTypes(endpoint: string): {text: StreamType, pirate: boolean, desc?: string}[] {
+      const selected = this.selectedStreamType(endpoint)
+
+      const protocols = [
+        { text: StreamType.RTSP, pirate: false },
+        { text: StreamType.UDP, pirate: false },
+      ]
+
+      const pirateModeProtocols = [
+        { text: StreamType.RTSPU, pirate: true, desc: 'Enables RTSP through UDP and UDP Multicast only' },
+        { text: StreamType.RTSPT, pirate: true, desc: 'Enables RTSP through TCP only' },
+        { text: StreamType.RTSPH, pirate: true, desc: 'Enables RTSP through TCP tunneled via HTTP' },
+      ]
+
+      if (settings.is_pirate_mode) {
+        protocols.push(...pirateModeProtocols)
+      }
+
+      // In case a pirate mode protocol was selected but user changed to normal mode
+      if (!protocols.some((p) => p.text === selected)) {
+        protocols.push(
+          pirateModeProtocols.find((p) => p.text === selected) ?? { text: selected, pirate: false },
+        )
+      }
+
+      return protocols
+    },
     set_default_address_for_stream(index: number, stream_type: StreamType) {
       switch (stream_type) {
         case StreamType.UDP:
@@ -365,13 +427,19 @@ export default Vue.extend({
           }
           break
         case StreamType.RTSP:
-          if (!this.stream_endpoints[index].includes('rtsp://')) {
-            // Vue.set() forces the update of a nested property
-            Vue.set(
-              this.stream_endpoints,
-              index,
-              `rtsp://${this.vehicle_ip_address}:8554/video_${this.sanitized_stream_name}`,
-            )
+        case StreamType.RTSPU:
+        case StreamType.RTSPT:
+        case StreamType.RTSPH:
+          {
+            const rtsp_prefix = StreamType.RTSPU.toLowerCase()
+            if (!this.stream_endpoints[index].includes(`${rtsp_prefix}://`)) {
+              // Vue.set() forces the update of a nested property
+              Vue.set(
+                this.stream_endpoints,
+                index,
+                `${rtsp_prefix}://${this.vehicle_ip_address}:8554/video_${this.sanitized_stream_name}`,
+              )
+            }
           }
           break
         default:
