@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
+import gzip
 import http.client
 import json
 import logging
@@ -9,6 +10,7 @@ import socket
 from concurrent import futures
 from datetime import datetime
 from enum import Enum
+from io import BytesIO
 from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
 
@@ -211,7 +213,7 @@ class Helper:
     PERIODICALLY_RESCAN_3RDPARTY_SERVICES = True
 
     @staticmethod
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
     def simple_http_request(
         host: str,
         port: int = http.client.HTTP_PORT,
@@ -265,7 +267,14 @@ class Helper:
             request_response.status = response.status
             if response.status == http.client.OK:
                 encoding = response.headers.get_content_charset() or "utf-8"
-                request_response.decoded_data = response.read().decode(encoding)
+                if response.getheader("Content-Encoding") == "gzip":
+                    buffer = BytesIO(response.read())
+                    with gzip.GzipFile(fileobj=buffer) as file:
+                        decompressed_data = file.read()
+                else:
+                    decompressed_data = response.read()
+
+                request_response.decoded_data = decompressed_data.decode(encoding)
 
                 # Interpret it as json
                 if try_json:
