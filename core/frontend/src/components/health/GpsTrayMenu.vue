@@ -9,7 +9,7 @@
     overlap
   >
     <v-icon color="white">
-      {{ satellites_number ? "mdi-crosshairs-gps" : "mdi-crosshairs-question" }}
+      mdi-satellite-variant
     </v-icon>
   </v-badge>
 </template>
