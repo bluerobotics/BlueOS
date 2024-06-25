@@ -37,6 +37,10 @@ class VideoStore extends VuexModule {
 
   updating_devices = true
 
+  fetch_streams_error: string | null = null
+
+  fetch_devices_error: string | null = null
+
   thumbnails: Map<string, Thumbnail> = new Map()
 
   private sources_to_request_thumbnail: Set<string> = new Set()
@@ -49,6 +53,16 @@ class VideoStore extends VuexModule {
   @Mutation
   setUpdatingDevices(updating: boolean): void {
     this.updating_devices = updating
+  }
+
+  @Mutation
+  setFetchStreamsError(error: string | null): void {
+    this.fetch_streams_error = error
+  }
+
+  @Mutation
+  setFetchDevicesError(error: string | null): void {
+    this.fetch_devices_error = error
   }
 
   @Mutation
@@ -101,6 +115,8 @@ class VideoStore extends VuexModule {
 
   @Action
   async fetchDevices(): Promise<void> {
+    this.setFetchDevicesError(null)
+
     await back_axios({
       method: 'get',
       url: `${this.API_URL}/v4l`,
@@ -114,13 +130,17 @@ class VideoStore extends VuexModule {
         if (error === backend_offline_error) {
           return
         }
+
         const message = `Could not fetch video devices: ${error.message}`
+        this.setFetchDevicesError(message)
         notifier.pushError('VIDEO_DEVICES_FETCH_FAIL', message)
       })
   }
 
   @Action
   async fetchStreams(): Promise<void> {
+    this.setFetchStreamsError(null)
+
     await back_axios({
       method: 'get',
       url: `${this.API_URL}/streams`,
@@ -135,6 +155,7 @@ class VideoStore extends VuexModule {
           return
         }
         const message = `Could not fetch video streams: ${error.message}`
+        this.setFetchStreamsError(message)
         notifier.pushError('VIDEO_STREAMS_FETCH_FAIL', message)
       })
   }
