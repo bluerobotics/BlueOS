@@ -3,7 +3,7 @@
 # Extensions data fetch, use for Extensions that are synced by some online source
 
 COCKPIT_RELEASE_URL="https://api.github.com/repos/bluerobotics/cockpit/releases/latest"
-MAJOR_TOM_RELEASE_URL="https://kipulwyil1.execute-api.us-east-1.amazonaws.com/api/blueos/install"
+MAJOR_TOM_RELEASE_URL="https://blueos.cloud/major_tom/install"
 
 response=$(curl -fsSL $COCKPIT_RELEASE_URL)
 
