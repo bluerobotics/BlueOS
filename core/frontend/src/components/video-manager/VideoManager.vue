@@ -4,7 +4,7 @@
     class="video-manager"
   >
     <div
-      v-if="are_video_devices_available && !updating_devices"
+      v-if="!has_device_fetch_error && are_video_devices_available && !updating_devices"
       class="videos-list"
     >
       <video-diagnostic-helper />
@@ -22,7 +22,7 @@
       </template>
     </div>
     <spinning-logo
-      v-else-if="updating_devices"
+      v-else-if="!has_device_fetch_error && updating_devices"
       size="30%"
       subtitle="Fetching available video devices..."
     />
@@ -31,7 +31,7 @@
       class="mx-auto my-12 pa-8 text-h6 text-center"
       width="300"
     >
-      No video-devices available.
+      {{ has_device_fetch_error ? fetch_devices_error : 'No video-devices available.' }}
     </v-card>
     <video-updater />
 
@@ -161,6 +161,12 @@ export default Vue.extend({
     },
     updating_devices(): boolean {
       return video.updating_devices
+    },
+    fetch_devices_error(): string | null {
+      return video.fetch_devices_error
+    },
+    has_device_fetch_error(): boolean {
+      return this.fetch_devices_error !== null
     },
   },
   async mounted() {
