@@ -43,6 +43,19 @@ export function isRtspAddress(address: string): boolean {
   }
 }
 
+export function isRtspVariantAddress(address: string): boolean {
+  const allowedVariants = ['rtspu:', 'rtspt:', 'rtsph:']
+
+  try {
+    const { protocol } = new URL(address)
+
+    return allowedVariants.includes(protocol)
+  } catch (error) {
+    return false
+  }
+}
+
+
 export function isFilepath(filepath: string): boolean {
   const filepath_pattern = /^(.+)\/([^/]+)$/
   return filepath_pattern.test(filepath)
