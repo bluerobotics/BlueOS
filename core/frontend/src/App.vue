@@ -61,7 +61,7 @@
         <internet-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
-        <cloud-tray-menu />
+        <cloud-tray-menu v-if="settings.is_dev_mode" />
         <notification-tray-button />
       </v-app-bar>
     </v-card>
@@ -296,10 +296,24 @@
         >
           Bootstrap Version: {{ bootstrap_version.split(':')[1] }}
         </span>
+        <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
         <span
           id="current-version"
           class="build_info"
-        >Build: {{ build_date }}</span>
+          @click="buildDateClick"
+        >
+          Build: {{ build_date }}
+          <v-btn
+            v-if="settings.is_dev_mode"
+            v-tooltip="'Disable dev mode'"
+            icon
+            @click.stop="settings.is_dev_mode = false"
+          >
+            <v-icon color="red">
+              mdi-pill
+            </v-icon>
+          </v-btn>
+        </span>
         <span
           class="build_info"
         >
@@ -426,6 +440,7 @@ export default Vue.extend({
     ],
     selected_widgets: settings.user_top_widgets,
     bootstrap_version: undefined as string|undefined,
+    build_clicks: 0,
   }),
   computed: {
     topWidgetsName(): string[] {
@@ -717,6 +732,12 @@ export default Vue.extend({
     goHome(): void {
       if (this.$router.currentRoute.path !== '/') {
         this.$router.push('/')
+      }
+    },
+    buildDateClick(): void {
+      this.build_clicks = (this.build_clicks + 1) % 10
+      if (this.build_clicks === 0) {
+        settings.is_dev_mode = true
       }
     },
   },
