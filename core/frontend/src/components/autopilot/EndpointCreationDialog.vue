@@ -42,7 +42,7 @@
 
           <v-text-field
             v-model="edited_endpoint.place"
-            :rules="[validate_required_field, is_ip_address_path]"
+            :rules="[validate_required_field, is_ip_address_path, is_useable_ip_address]"
             label="IP/Device"
           />
 
@@ -154,6 +154,17 @@ export default Vue.extend({
     user_ip_address(): string {
       return beacon.client_ip_address
     },
+    available_ips(): string[] {
+      return [...new Set(beacon.available_domains.map((domain) => domain.ip))]
+    },
+    connection_type(): EndpointType {
+      return this.edited_endpoint.connection_type
+    },
+  },
+  watch: {
+    connection_type() {
+      this.form.validate()
+    },
   },
   methods: {
     validate_required_field(input: string): (true | string) {
@@ -161,6 +172,17 @@ export default Vue.extend({
     },
     is_ip_address_path(input: string): (true | string) {
       return isIpAddress(input) || isFilepath(input) ? true : 'Invalid IP/Device-path.'
+    },
+    is_useable_ip_address(input: string): (true | string) {
+      if ([EndpointType.udpin, EndpointType.tcpin].includes(this.edited_endpoint.connection_type)) {
+        if (!['0.0.0.0', ...this.available_ips].includes(input)) {
+          return 'This IP is not available at any of the network interfaces.'
+        }
+      }
+      if ([EndpointType.udpout, EndpointType.tcpout].includes(this.edited_endpoint.connection_type)) {
+        if (input === '0.0.0.0') return '0.0.0.0 as a client is undefined behavior.'
+      }
+      return true
     },
     is_socket_port_baudrate(input: number): (true | string) {
       if (typeof input === 'string') {
