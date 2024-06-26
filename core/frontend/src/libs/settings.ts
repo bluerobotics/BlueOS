@@ -24,6 +24,16 @@ class Settings {
   }
 
   // eslint-disable-next-line
+  get is_dev_mode(): boolean {
+    return settingsStore.is_dev_mode
+  }
+
+  // eslint-disable-next-line
+  set is_dev_mode(value: boolean) {
+    settingsStore.setDevMode(value)
+  }
+
+  // eslint-disable-next-line
   get user_top_widgets(): string[] {
     return settingsStore.user_top_widgets || []
   }
