@@ -156,7 +156,7 @@ export default Vue.extend({
   computed: {
     cpu_temperature(): string {
       const temperature_sensors = system_information.system?.temperature
-      const main_sensor = temperature_sensors?.find((sensor) => sensor.name === 'CPU')
+      const main_sensor = temperature_sensors?.find((sensor) => sensor.name.toLowerCase().includes('cpu'))
       return main_sensor ? main_sensor.temperature.toFixed(1) : 'Loading..'
     },
     cpu_throttled() : boolean {
