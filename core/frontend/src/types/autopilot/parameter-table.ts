@@ -95,6 +95,7 @@ export default class ParametersTable {
 
   reset(): void {
     this.parametersDict = {}
+    this.fetchMetadata()
   }
 
   async fetchArduPilotMetadata(): Promise<MetadataFile | string> {
