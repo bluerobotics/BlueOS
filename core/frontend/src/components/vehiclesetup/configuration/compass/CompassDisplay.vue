@@ -235,7 +235,7 @@ export default Vue.extend({
       for (const [index, angleDegrees] of this.headings.entries()) {
         if (angleDegrees === null) continue
         const paramValue = this.compasses?.[index]?.paramValue
-        const color = paramValue ? this.colors[paramValue] : 'black'
+        const color = paramValue ? this.colors[paramValue] : this.primaryBaseColor
         ctx.save()
         this.renderVariables.yawAngleDegrees[index] = angleDegrees
         ctx.rotate(glMatrix.toRadian(angleDegrees))
