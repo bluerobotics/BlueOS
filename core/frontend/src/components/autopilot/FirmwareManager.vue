@@ -321,7 +321,6 @@ export default Vue.extend({
     },
     async installFirmware(): Promise<void> {
       this.install_status = InstallStatus.Installing
-      autopilot_data.reset()
       const axios_request_config: AxiosRequestConfig = {
         method: 'post',
         timeout: 180000,
@@ -359,6 +358,7 @@ export default Vue.extend({
         .then(() => {
           this.install_status = InstallStatus.Succeeded
           this.install_result_message = 'Successfully installed new firmware'
+          autopilot_data.reset()
         })
         .catch((error) => {
           this.install_status = InstallStatus.Failed
