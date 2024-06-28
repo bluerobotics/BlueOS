@@ -1,22 +1,80 @@
 <template>
-  <v-badge
-    v-if="gps_connected"
-    :content="satellites_number"
-    :value="satellites_number"
-    :title="`${connection_description} (Number of satellites: ${satellites_number})`"
-    :color="number_color"
-    :dot="!mouse_hover"
-    class="mr-2"
-    overlap
+  <v-menu
+    :close-on-content-click="false"
+    nudge-left="275"
+    nudge-bottom="25"
   >
-    <v-icon
-      color="white"
-      @mouseover="mouse_hover = true"
-      @mouseleave="mouse_hover = false"
+    <template
+      #activator="{ on, attrs }"
     >
-      mdi-satellite-variant
-    </v-icon>
-  </v-badge>
+      <v-card
+        elevation="0"
+        color="transparent"
+        v-bind="attrs"
+        v-on="on"
+      >
+        <v-badge
+          v-if="gps_connected"
+          :content="satellites_number"
+          :value="satellites_number"
+          :title="`${connection_description} (Number of satellites: ${satellites_number})`"
+          :color="number_color"
+          :dot="!mouse_hover"
+          v-bind="attrs"
+          class="mr-2"
+          overlap
+          v-on="on"
+        >
+          <v-icon
+            color="white"
+            @mouseover="mouse_hover = true"
+            @mouseleave="mouse_hover = false"
+          >
+            mdi-satellite-variant
+          </v-icon>
+        </v-badge>
+      </v-card>
+    </template>
+    <v-card
+      elevation="1"
+      width="275"
+    >
+      <v-container>
+        <div>
+          <table
+            v-for="(item, index) in values"
+            :key="`${item.name}-${index}`"
+            style="width: 100%"
+          >
+            <tr v-tooltip="item.tooltip">
+              <td>
+                <v-icon
+                  size="large"
+                  v-text="item.icon"
+                />
+                {{ item.name }}:
+              </td>
+              <td class="value">
+                {{ item.value }}
+                <v-btn
+                  v-if="item?.link"
+                  width="18"
+                  class="mr-0 pr-0 ml-1"
+                  icon
+                  :href="item.link"
+                  target="_blank"
+                >
+                  <v-icon size="x-large" color="primary">
+                    {{ item.link_icon }}
+                  </v-icon>
+                </v-btn>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </v-container>
+    </v-card>
+  </v-menu>
 </template>
 
 <script lang="ts">
@@ -40,6 +98,85 @@ export default Vue.extend({
     }
   },
   computed: {
+    values():
+      Array<
+        {
+          name: string,
+          value: string,
+          tooltip?: string,
+          icon: string,
+          link?: string,
+          link_icon?: string
+        }> {
+      if (!this.gps_raw_int) {
+        return []
+      }
+      const values = [
+        {
+          name: 'Position',
+          value: `${this.latitude.toFixed(2)}º / ${this.longitude.toFixed(2)}º`,
+          tooltip: 'Position coordinates',
+          icon: 'mdi-map-marker',
+          link: this.map_link,
+          link_icon: 'mdi-map-search',
+        },
+        {
+          name: 'Altitude',
+          value: `${(this.gps_raw_int.alt / 1000).toFixed(2)} m`,
+          tooltip: 'Altitude estimate',
+          icon: 'mdi-arrow-collapse-up',
+        },
+        {
+          name: 'Satellites',
+          value: `${this.satellites_number}`,
+          tooltip: 'Satellites in view',
+          icon: 'mdi-satellite-variant',
+        },
+        {
+          name: 'Fix',
+          value: `${this.connection_description}`,
+          tooltip: 'Connection type and status',
+          icon: 'mdi-crosshairs-gps',
+        },
+        {
+          name: 'HDOP',
+          value: `${(this.gps_raw_int.eph / 100).toFixed(2)}`,
+          tooltip: 'Horizontal position uncertainty',
+          icon: 'mdi-arrow-left-right',
+        },
+        {
+          name: 'VDOP',
+          value: `${(this.gps_raw_int.epv / 100).toFixed(2)}`,
+          tooltip: 'Vertical position uncertainty',
+          icon: 'mdi-arrow-up-down',
+        },
+        {
+          name: 'PDOP',
+          value: `${(((this.gps_raw_int.epv / 100) ** 2 + (this.gps_raw_int.eph / 100) ** 2) ** 0.5).toFixed(2)}`,
+          tooltip: 'Combined 3D position uncertainty',
+          icon: 'mdi-map-marker-radius',
+        },
+      ]
+
+      if (this.gps_raw_int?.h_acc) {
+        values.push(
+          {
+            name: 'HACC',
+            value: `${(this.gps_raw_int.h_acc / 1000).toFixed(2)} m`,
+            tooltip: 'Horizontal Accuracy',
+            icon: 'mdi-arrow-expand-horizontal',
+          },
+          {
+            name: 'VACC',
+            value: `${(this.gps_raw_int.v_acc / 1000).toFixed(2)} m`,
+            tooltip: 'Vertical Accuracy',
+            icon: 'mdi-arrow-expand-vertical',
+          },
+        )
+      }
+
+      return values
+    },
     gps_connected(): boolean {
       if (this.last_message_date === undefined) {
         return false
@@ -95,6 +232,18 @@ export default Vue.extend({
     satellites_number(): number {
       return this.gps_raw_int?.satellites_visible || 0
     },
+    latitude(): number {
+      return (this.gps_raw_int?.lat ?? 0) / 1E7
+    },
+    longitude(): number {
+      return (this.gps_raw_int?.lon ?? 0) / 1E7
+    },
+    map_link(): string {
+      const zoom = 16
+      const marker = `lat=${this.latitude}&lon=${this.longitude}`
+      const map = `${zoom}/${this.latitude}/${this.longitude}&layers=N`
+      return `https://www.openstreetmap.org/note/new?${marker}#map=${map}`
+    },
   },
   mounted() {
     mavlink2rest.startListening('GLOBAL_POSITION_INT').setCallback((message) => {
@@ -131,5 +280,9 @@ div.number-marker {
 
 div.number-marker.v-icon {
   font-size: 10px;
+}
+
+.value {
+  text-align: right;
 }
 </style>
