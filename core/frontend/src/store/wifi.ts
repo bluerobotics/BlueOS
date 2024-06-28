@@ -27,6 +27,8 @@ class WifiStore extends VuexModule {
 
   hotspot_status: boolean | null = null
 
+  smart_hotspot_status: boolean | null = null
+
   hotspot_credentials: NetworkCredentials | null = null
 
   @Mutation
@@ -71,6 +73,11 @@ class WifiStore extends VuexModule {
   @Mutation
   setHotspotStatus(status: boolean | null): void {
     this.hotspot_status = status
+  }
+
+  @Mutation
+  setSmartHotspotStatus(status: boolean | null): void {
+    this.smart_hotspot_status = status
   }
 
   @Mutation
