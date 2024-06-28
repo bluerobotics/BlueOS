@@ -85,7 +85,7 @@ export default Vue.extend({
     return {
       inputed_ssid: wifi.hotspot_credentials?.ssid || '',
       inputed_password: wifi.hotspot_credentials?.password || '',
-      enable_smart_hotspot: true,
+      enable_smart_hotspot: wifi.smart_hotspot_status || false,
       saving_settings: false,
     }
   },
