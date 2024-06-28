@@ -70,6 +70,18 @@ export default Vue.extend({
           wifi.setHotspotStatus(null)
           notifier.pushBackError('HOTSPOT_STATUS_FETCH_FAIL', error)
         })
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL}/smart_hotspot`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setSmartHotspotStatus(response.data)
+        })
+        .catch((error) => {
+          wifi.setHotspotStatus(null)
+          notifier.pushBackError('SMART_HOTSPOT_STATUS_FETCH_FAIL', error)
+        })
     },
     async fetchHotspotCredentials(): Promise<void> {
       await back_axios({
