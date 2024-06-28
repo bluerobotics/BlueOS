@@ -45,7 +45,12 @@ def read_db() -> Any:
         with open(FILE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        return {}
+        logger.error("Database not found")
+    except json.decoder.JSONDecodeError as exception:
+        logger.error(f"Failed to parse json in database file: {exception}")
+    except Exception as exception:
+        logger.exception(exception)
+    return {}
 
 
 def write_db(data: Dict[str, Any]) -> None:
