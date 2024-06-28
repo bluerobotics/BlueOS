@@ -54,6 +54,10 @@ def read_db() -> Any:
 
 
 def write_db(data: Dict[str, Any]) -> None:
+    # Just to be sure that we'll be able to load it later
+    json_string = json.dumps(data)
+    json.loads(json_string)
+
     with open(FILE_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f)
 
