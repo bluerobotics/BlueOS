@@ -420,3 +420,6 @@ class WifiManager:
     def disable_smart_hotspot(self) -> None:
         self._settings_manager.settings.smart_hotspot_enabled = False
         self._settings_manager.save()
+
+    def is_smart_hotspot_enabled(self) -> bool:
+        return self._settings_manager.settings.smart_hotspot_enabled is True

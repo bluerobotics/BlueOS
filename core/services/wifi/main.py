@@ -188,6 +188,12 @@ def toggle_smart_hotspot(enable: bool) -> Any:
     wifi_manager.disable_smart_hotspot()
 
 
+@app.get("/smart_hotspot", summary="Check if smart-hotspot is enabled.")
+@version(1, 0)
+def check_smart_hotspot() -> Any:
+    return wifi_manager.is_smart_hotspot_enabled()
+
+
 @app.post("/hotspot_credentials", summary="Update hotspot credentials.")
 @version(1, 0)
 def set_hotspot_credentials(credentials: WifiCredentials) -> Any:
