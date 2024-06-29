@@ -25,15 +25,17 @@
                   </th>
                   <th />
                   <th>
-                    <v-switch
-                      v-model="desired_armed_state"
-                      :loading="desired_armed_state !== (is_armed) ? 'warning' : null"
-                      :disabled="!is_manual"
-                      class="mx-1 flex-grow-0"
-                      :label="arm_disarm_switch_label"
-                      :color="`${is_armed ? 'error' : 'success'}`"
-                      @change="arm_disarm_switch_change"
-                    />
+                    <div class="flex-row justify-space-between d-flex">
+                      <v-switch
+                        v-model="desired_armed_state"
+                        :loading="desired_armed_state !== (is_armed) ? 'warning' : null"
+                        :disabled="!is_manual"
+                        class="mx-1 flex-grow-0"
+                        :label="arm_disarm_switch_label"
+                        :color="`${is_armed ? 'error' : 'success'}`"
+                        @change="arm_disarm_switch_change"
+                      />
+                    </div>
                   </th>
                   <th />
                 </tr>
@@ -149,9 +151,8 @@ import Vue from 'vue'
 
 import ParameterEditorDialog from '@/components/parameter-editor/ParameterEditorDialog.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
-import mavlink2rest from '@/libs/MAVLink2Rest'
 import {
-  MavCmd, MavModeFlag,
+  MavModeFlag,
 } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import { Message } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import autopilot_data from '@/store/autopilot'
@@ -162,6 +163,7 @@ import Parameter, { printParam } from '@/types/autopilot/parameter'
 import { SERVO_FUNCTION as ROVER_FUNCTIONS } from '@/types/autopilot/parameter-rover-enums'
 import { SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary } from '@/types/common'
+import { armDisarm, doMotorTest } from '@/utils/ardupilot_mavlink'
 import mavlink_store_get from '@/utils/mavlink'
 
 import ParameterSwitch from '../common/ParameterSwitch.vue'
@@ -431,6 +433,9 @@ export default Vue.extend({
     },
     printParam,
     zero_motors() {
+      if (!this.is_manual) {
+        return
+      }
       if (!this.has_focus && this.motors_zeroed) {
         return
       }
@@ -443,9 +448,9 @@ export default Vue.extend({
       if (!this.has_focus) {
         return
       }
-      if (this.is_armed && this.desired_armed_state) {
+      if (this.is_armed && this.desired_armed_state && this.is_manual) {
         for (const [motor, value] of Object.entries(this.motor_target_with_reversion)) {
-          this.doMotorTest(parseInt(motor, 10), value)
+          doMotorTest(parseInt(motor, 10), value)
         }
       }
       this.motors_zeroed = false
@@ -458,7 +463,7 @@ export default Vue.extend({
       clearInterval(this.motor_zeroer_interval)
     },
     arm() {
-      this.armDisarm(true, true)
+      armDisarm(true, true)
       this.arming_timeout = setTimeout(() => {
         if (this.desired_armed_state === this.is_armed) return
         this.desired_armed_state = this.is_armed
@@ -466,7 +471,7 @@ export default Vue.extend({
       }, 5000)
     },
     disarm() {
-      this.armDisarm(false, true)
+      armDisarm(false, true)
       this.arming_timeout = setTimeout(() => {
         if (this.desired_armed_state === this.is_armed) return
         this.desired_armed_state = this.is_armed
@@ -476,61 +481,6 @@ export default Vue.extend({
     arm_disarm_switch_change(should_arm: boolean): void {
       // eslint-disable-next-line no-unused-expressions
       should_arm ? this.arm() : this.disarm()
-    },
-    armDisarm(arm: boolean, force: boolean): void {
-      mavlink2rest.sendMessage(
-        {
-          header: {
-            system_id: 255,
-            component_id: 0,
-            sequence: 0,
-          },
-          message: {
-            type: 'COMMAND_LONG',
-            param1: arm ? 1 : 0, // 0: Disarm, 1: ARM,
-            param2: force ? 21196 : 0, // force arming/disarming (override preflight checks and disarming in flight)
-            param3: 0,
-            param4: 0,
-            param5: 0,
-            param6: 0,
-            param7: 0,
-            command: {
-              type: MavCmd.MAV_CMD_COMPONENT_ARM_DISARM,
-            },
-            target_system: autopilot_data.system_id,
-            target_component: 1,
-            confirmation: 0,
-          },
-        },
-      )
-    },
-    async doMotorTest(motorId: number, output: number): Promise<void> {
-      mavlink2rest.sendMessageViaWebsocket(
-        {
-          header: {
-            system_id: 255,
-            component_id: 0,
-            sequence: 0,
-          },
-          message: {
-            type: 'COMMAND_LONG',
-            // Rover and Sub have different starting numbers for motors
-            param1: motorId, // MOTOR_TEST_ORDER
-            param2: 1, // MOTOR_TEST_THROTTLE_PWM
-            param3: output,
-            param4: 1, // Seconds running the motor
-            param5: 1, // Number of motors to be tested
-            param6: 2, // Motor numbers are specified as the output as labeled on the board.
-            param7: 0,
-            command: {
-              type: MavCmd.MAV_CMD_DO_MOTOR_TEST,
-            },
-            target_system: autopilot_data.system_id,
-            target_component: 1,
-            confirmation: 0,
-          },
-        },
-      )
     },
   },
 })
