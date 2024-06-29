@@ -35,6 +35,9 @@
                         :color="`${is_armed ? 'error' : 'success'}`"
                         @change="arm_disarm_switch_change"
                       />
+                      <div style="width:50%" class="d-flex justify-center mt-3">
+                        <MotorDetection />
+                      </div>
                     </div>
                   </th>
                   <th />
@@ -150,6 +153,7 @@
 import Vue from 'vue'
 
 import ParameterEditorDialog from '@/components/parameter-editor/ParameterEditorDialog.vue'
+import MotorDetection from '@/components/vehiclesetup/MotorDetection.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import {
   MavModeFlag,
@@ -198,6 +202,7 @@ export default Vue.extend({
     ParameterEditorDialog,
     ParameterSwitch,
     VehicleViewer,
+    MotorDetection,
   },
   data() {
     return {
@@ -209,7 +214,6 @@ export default Vue.extend({
       motor_zeroer_interval: undefined as undefined | number,
       motor_writer_interval: undefined as undefined | number,
       desired_armed_state: false,
-      arming_timeout: undefined as number | undefined,
       has_focus: true,
       motors_zeroed: false,
       // These two change from firmware to firmware...
@@ -463,20 +467,16 @@ export default Vue.extend({
       clearInterval(this.motor_zeroer_interval)
     },
     arm() {
-      armDisarm(true, true)
-      this.arming_timeout = setTimeout(() => {
-        if (this.desired_armed_state === this.is_armed) return
+      armDisarm(true, true).catch(() => {
         this.desired_armed_state = this.is_armed
         console.warn('Arming failed!')
-      }, 5000)
+      })
     },
     disarm() {
-      armDisarm(false, true)
-      this.arming_timeout = setTimeout(() => {
-        if (this.desired_armed_state === this.is_armed) return
+      armDisarm(false, true).catch(() => {
         this.desired_armed_state = this.is_armed
         console.warn('Disarming failed!')
-      }, 5000)
+      })
     },
     arm_disarm_switch_change(should_arm: boolean): void {
       // eslint-disable-next-line no-unused-expressions
