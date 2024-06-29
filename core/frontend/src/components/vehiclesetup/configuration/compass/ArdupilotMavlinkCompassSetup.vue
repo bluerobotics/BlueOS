@@ -1,6 +1,6 @@
 <template>
   <div class="pa-3">
-    <v-card v-if="params_finished_loaded">
+    <v-card>
       <div class="main-container d-flex flex-col">
         <v-card outline class="mr-2 mb-2 flex-shrink-1">
           <div class="compass-container">
@@ -192,7 +192,6 @@
         :param="edited_param"
       />
     </v-card>
-    <spinning-logo v-else size="50%" :subtitle="`${loaded_params}/${total_params} parameters loaded`" />
   </div>
 </template>
 <script lang="ts">
@@ -203,7 +202,6 @@ import {
 } from 'vuetify/lib'
 
 import ParameterSwitch from '@/components/common/ParameterSwitch.vue'
-import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import CompassDisplay from '@/components/vehiclesetup/configuration/compass/CompassDisplay.vue'
 import CompassParams from '@/components/vehiclesetup/configuration/compass/CompassParams.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -226,7 +224,6 @@ export default Vue.extend({
     VTextField,
     LargeVehicleCompassCalibrator,
     ParameterSwitch,
-    SpinningLogo,
     VCardText,
     VExpansionPanel,
     FullCompassCalibrator,
@@ -249,15 +246,6 @@ export default Vue.extend({
         results[compass.paramValue] = this.color_options[index % this.color_options.length]
       }
       return results
-    },
-    params_finished_loaded(): boolean {
-      return autopilot_data.finished_loading
-    },
-    loaded_params(): number {
-      return autopilot_data.parameters_loaded
-    },
-    total_params(): number {
-      return autopilot_data.parameters_total
     },
     compass_autodec(): Parameter | undefined {
       return autopilot_data.parameter('COMPASS_AUTODEC')
