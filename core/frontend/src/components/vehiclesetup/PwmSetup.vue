@@ -35,6 +35,9 @@
                         :color="`${is_armed ? 'error' : 'success'}`"
                         @change="arm_disarm_switch_change"
                       />
+                      <div style="width:50%" class="d-flex justify-center mt-3">
+                        <MotorDetection />
+                      </div>
                     </div>
                   </th>
                   <th />
@@ -150,6 +153,7 @@
 import Vue from 'vue'
 
 import ParameterEditorDialog from '@/components/parameter-editor/ParameterEditorDialog.vue'
+import MotorDetection from '@/components/vehiclesetup/MotorDetection.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import {
   MavModeFlag,
@@ -198,6 +202,7 @@ export default Vue.extend({
     ParameterEditorDialog,
     ParameterSwitch,
     VehicleViewer,
+    MotorDetection,
   },
   data() {
     return {
