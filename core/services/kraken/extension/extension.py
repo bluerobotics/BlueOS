@@ -112,6 +112,7 @@ class Extension:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
 
         # First we should make sure no other tag is running
+        running_ext = None
         try:
             running_ext = await self.from_running(self.identifier)
             if running_ext:
@@ -153,6 +154,8 @@ class Extension:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
             if atomic:
                 await self.uninstall()
+                if running_ext:
+                    await running_ext.enable()
             raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
         finally:
             self.unlock(self.identifier + self.tag)
