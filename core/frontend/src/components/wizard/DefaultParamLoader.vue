@@ -29,8 +29,33 @@
     <p v-else-if="(Object.keys(filtered_param_sets).length === 0)">
       No parameters available for this setup.
     </p>
+    <v-progress-linear
+      v-if="parameters_set_selected && is_loading_autopilot_parameters"
+      slot="progress"
+      color="blue"
+      height="20"
+      :value="autopilot_parameters_loading"
+    >
+      <template #default>
+        <strong
+          v-if="is_loading_autopilot_parameters && autopilot_parameters_loading > 99.9"
+        >
+          Waiting for metadata.. </strong>
+        <strong
+          v-if="autopilot_parameters_loading == 0"
+          class="ml-5"
+        > Waiting for parameters.. </strong>
+        <strong
+          v-if="autopilot_parameters_loading > 0 && autopilot_parameters_loading < 100"
+          class="ml-5"
+        >
+          {{ autopilot_parameters_loading.toFixed(1) }}% (
+          {{ loaded_autopilot_parameters }} / {{ total_autopilot_parameters }})
+        </strong>
+      </template>
+    </v-progress-linear>
     <v-card
-      v-if="Object.keys(value).length !== 0"
+      v-if="parameters_set_selected && !is_loading_autopilot_parameters"
     >
       <v-card-text>
         <v-row class="virtual-table-row">
@@ -172,6 +197,21 @@ export default Vue.extend({
     },
     not_load_default_params_option(): string {
       return 'Do not load default parameters'
+    },
+    parameters_set_selected(): boolean {
+      return Object.keys(this.value).length !== 0
+    },
+    is_loading_autopilot_parameters(): boolean {
+      return !autopilot_data.finished_loading
+    },
+    autopilot_parameters_loading() {
+      return Math.max(100.0 * (autopilot_data.parameters.length / autopilot_data.parameters_total), 100.0)
+    },
+    loaded_autopilot_parameters() {
+      return autopilot_data.parameters.length
+    },
+    total_autopilot_parameters() {
+      return autopilot_data.parameters_total
     },
   },
   watch: {
