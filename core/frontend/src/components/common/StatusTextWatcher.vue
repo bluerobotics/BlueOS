@@ -11,24 +11,18 @@ export default {
   props: {
     filter: {
       type: RegExp,
-      default: '',
+      default: /.*/,
     },
   },
   data() {
     return {
       messages: [] as string[],
       listener: undefined as undefined | Listener,
-      filterRegex: /.*/,
     }
   },
   computed: {
     all_messages(): string {
       return this.messages.join('\n')
-    },
-  },
-  watch: {
-    filter(newFilter) {
-      this.filterRegex = new RegExp(newFilter)
     },
   },
   mounted() {
@@ -39,8 +33,8 @@ export default {
       }
       if (new RegExp(this.filter).test(text)) {
         this.$emit('message', text)
+        this.messages.push(text)
       }
-      this.messages.push(text)
     })
   },
   beforeDestroy() {
