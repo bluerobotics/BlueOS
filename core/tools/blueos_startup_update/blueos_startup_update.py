@@ -35,6 +35,7 @@ DELTA_JSON = {
             "/etc/resolv.conf.host": {"bind": "/etc/resolv.conf.host", "mode": "ro"},
             "/home/pi/.ssh": {"bind": "/home/pi/.ssh", "mode": "rw"},
             "/sys/": {"bind": "/sys/", "mode": "rw"},
+            "/var/run/dbus": {"bind": "/var/run/dbus", "mode": "rw"},
         }
     }
 }
