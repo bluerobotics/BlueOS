@@ -1,6 +1,11 @@
 <template>
-  <div class="main-container">
-    <v-card v-if="params_finished_loaded" outline class="pa-2">
+  <div class="d-flex flex-col justify-center">
+    <OrientationPicker
+      v-if="params_finished_loaded"
+      :component-model="current_board"
+      :parameter="orientation_parameter"
+    />
+    <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2">
       <v-simple-table>
         <thead>
           <tr>
@@ -60,9 +65,16 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import {
+  fetchCurrentBoard,
+} from '@/components/autopilot/AutopilotManagerUpdater'
 // eslint-disable-next-line
 import FullAccelerometerCalibration from '@/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue'
+import OrientationPicker from '@/components/vehiclesetup/OrientationPicker.vue'
+import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
+import autopilot from '@/store/autopilot_manager'
+import Parameter from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
 import decode, { deviceId } from '@/utils/deviceid_decoder'
 
@@ -74,12 +86,20 @@ export default Vue.extend({
   components: {
     FullAccelerometerCalibration,
     QuickAccelerometerCalibration,
+    OrientationPicker,
   },
   data() {
     return {
+      fetch_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
     }
   },
   computed: {
+    current_board(): string | undefined {
+      return autopilot.current_board?.name
+    },
+    orientation_parameter(): Parameter | undefined {
+      return autopilot_data.parameter('AHRS_ORIENTATION')
+    },
     params_finished_loaded(): boolean {
       return autopilot_data.finished_loading
     },
@@ -100,6 +120,9 @@ export default Vue.extend({
     imu_temperature_is_calibrated(): Dictionary<{ calibrated: boolean, calibrationTemperature: number }> {
       return imu_temperature_is_calibrated(this.imus, autopilot_data)
     },
+  },
+  mounted() {
+    this.fetch_board_task.setAction(() => fetchCurrentBoard)
   },
   methods: {
     getCalibrationTemperature(imu: deviceId) {
