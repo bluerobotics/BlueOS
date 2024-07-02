@@ -561,7 +561,7 @@ app = VersionedFastAPI(
     enable_latest=True,
 )
 
-port_to_service_map: Dict[int, str] = parse_nginx_file("/home/pi/tools/nginx/nginx.conf")
+port_to_service_map: Dict[int, str] = parse_nginx_file("/etc/blueos/nginx/nginx.conf")
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()

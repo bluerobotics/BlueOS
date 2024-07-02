@@ -41,8 +41,22 @@ http {
     }
 
     server {
-        listen 80;
-        listen [::]:80;
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+	    server_name _;
+	    return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+
+        server_name _;
+	    ssl_certificate blueos.crt;
+	    ssl_certificate_key blueos.key;
+	    ssl_protocols TLSv1.2 TLSv1.3;
+	    ssl_ciphers HIGH:!aNULL:!MD5;
 
         add_header Access-Control-Allow-Origin *;
 
