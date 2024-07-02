@@ -66,6 +66,9 @@ ENV TARGETVARIANT=${TARGETVARIANT}
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-system-tools.sh
 
+# Copy overlay source in case we need to build it in runtime
+COPY install/ /install
+
 # Install custom libraries
 COPY libs /home/pi/libs
 RUN /home/pi/libs/install-libs.sh
@@ -82,7 +85,6 @@ COPY run-service.sh /usr/bin/run-service
 
 # Copy binaries and necessary folders from downloadBinaries to this stage
 COPY --from=downloadBinaries \
-    /usr/bin/blueos_startup_update.py \
     /usr/bin/bridges \
     /usr/bin/machineid-cli \
     /usr/bin/mavlink2rest \
@@ -118,6 +120,8 @@ set -e
     ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
     ln -s / /shortcuts/system_root
 
+    # install blueos_startup_update.py link
+    ln -s /home/pi/tools/blueos_startup_update/blueos_startup_update.py /usr/bin/blueos_startup_update.py
     # Setup user
     useradd -m -u 1000 -G dialout blueos
 

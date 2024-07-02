@@ -16,9 +16,10 @@ setuptools.setup(
     install_requires=[
         "appdirs == 1.4.4",
         "psutil == 5.7.2",
-        "pyroute2 == 0.5.13",
+        "pyroute2 == 0.7.12",
         "starlette == 0.27.0",
         "fastapi == 0.105.0",
+        "sdbus-networkmanager == 2.0.0",
         # Enforce anyio fastapi subdependency to avoid conflict with starlette
         "anyio == 3.7.1",
         "uvicorn == 0.13.4",
