@@ -75,7 +75,7 @@ import { InstalledExtensionData } from '@/types/kraken'
 import { VForm } from '@/types/vuetify'
 
 export default Vue.extend({
-  name: 'ExtensionCreationDialog',
+  name: 'ExtensionCreationModal',
   model: {
     prop: 'extension',
     event: 'change',
