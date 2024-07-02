@@ -20,9 +20,11 @@
         v-for="page in pages"
         :key="page.value"
       >
-        <pwm-setup v-if="page.value === 'pwm_outputs'" />
-        <setup-overview v-else-if="page.value === 'overview'" />
-        <configure v-else-if="page.value === 'configure'" />
+        <parameter-loading-spinner>
+          <pwm-setup v-if="page.value === 'pwm_outputs'" />
+          <setup-overview v-else-if="page.value === 'overview'" />
+          <configure v-else-if="page.value === 'configure'" />
+        </parameter-loading-spinner>
       </v-tab-item>
     </v-tabs-items>
   </v-container>
@@ -32,6 +34,7 @@
 import Vue from 'vue'
 
 import { fetchFirmwareVehicleType, fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
+import ParameterLoadingSpinner from '@/components/utils/ParameterLoadingSpinner.vue'
 import Configure from '@/components/vehiclesetup/Configure.vue'
 import PwmSetup from '@/components/vehiclesetup/PwmSetup.vue'
 import setupOverview from '@/components/vehiclesetup/SetupOverview.vue'
@@ -49,6 +52,7 @@ export default Vue.extend({
     PwmSetup,
     setupOverview,
     Configure,
+    ParameterLoadingSpinner,
   },
   data() {
     return {
