@@ -1,5 +1,6 @@
 import subprocess
 from pathlib import Path
+from typing import List, Optional
 
 from loguru import logger
 
@@ -124,6 +125,11 @@ def upload_file_with_ssh_key(source: str, destination: str, check: bool = True) 
     )
 
 
+def load_file(file_name: str) -> str:
+    command = f'cat "{file_name}"'
+    return run_command(command, False).stdout
+
+
 def upload_file(file_content: str, destination: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
     temp_file_in_container = "/tmp/file_to_upload"
     temp_file_in_host = "/tmp/uploaded_file"
@@ -141,3 +147,17 @@ def upload_file(file_content: str, destination: str, check: bool = True) -> "sub
     else:
         logger.error(f"Failed to upload file: {ret.stderr}")
     return ret
+
+
+def locate_file(candidates: List[str]) -> Optional[str]:
+    # first match will return
+    command = f"find {' '.join(candidates)} -type f -print -quit"
+    return run_command(command, False, log_output=False).stdout.strip()
+
+
+def save_file(file_name: str, file_content: str, backup_identifier: str, ensure_newline: bool = True) -> None:
+    if ensure_newline and not file_content.endswith("\n"):
+        file_content += "\n"
+    command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
+    run_command(command, False)
+    upload_file(file_content, file_name, False)
