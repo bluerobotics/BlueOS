@@ -141,28 +141,29 @@
     </v-card>
     <v-card
       v-if="tab === 1"
-      class="main-container d-flex pa-5"
+      class="pa-5"
       text-align="center"
     >
-      <div v-if="tab === 1" class="installed-extensions-container">
-        <installed-extension-card
-          v-for="extension in installed_extensions"
-          :key="extension.docker"
-          :extension="extension"
-          :loading="extension.loading"
-          :metrics="metricsFor(extension)"
-          :container="getContainer(extension)"
-          :versions="remoteVersions(extension)"
-          :extension-data="remoteVersions(extension)"
-          class="installed-extension-card"
-          @edit="openEditDialog"
-          @showlogs="showLogs(extension)"
-          @uninstall="uninstall(extension)"
-          @disable="disable(extension)"
-          @enable="enableAndStart(extension)"
-          @restart="restart(extension)"
-          @update="update"
-        />
+      <div class="installed-extension-card">
+        <div class="installed-extensions-container">
+          <installed-extension-card
+            v-for="extension in installed_extensions"
+            :key="extension.docker"
+            :extension="extension"
+            :loading="extension.loading"
+            :metrics="metricsFor(extension)"
+            :container="getContainer(extension)"
+            :versions="remoteVersions(extension)"
+            :extension-data="remoteVersions(extension)"
+            @edit="openEditDialog"
+            @showlogs="showLogs(extension)"
+            @uninstall="uninstall(extension)"
+            @disable="disable(extension)"
+            @enable="enableAndStart(extension)"
+            @restart="restart(extension)"
+            @update="update"
+          />
+        </div>
       </div>
       <template
         v-if="Object.keys(installed_extensions).isEmpty()"
@@ -729,23 +730,27 @@ export default Vue.extend({
 </script>
 
 <style>
-.installed-extensions-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: flex-start;
-  width: 100%;
-}
-
 .main-container {
   background-color: #135DA355 !important;
 }
 
+.installed-extensions-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(445px, 1fr));
+  gap: 15px;
+  justify-content: center;
+}
+
+@media (max-width: 994px) {
+  .installed-extensions-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 .installed-extension-card {
-  margin: 10px;
-  flex: 1 1 calc(33.333% - 20px);
-  max-width: calc(33.333% - 20px);
-  min-width: 400px;
+  padding: 10px;
 }
 
 .jv-code {
