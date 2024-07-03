@@ -1,14 +1,32 @@
 <template>
-  <v-card>
-    <v-card-title class="pb-0">
-      {{ extension.docker.split('/').pop() }} <span
-        class="ml-3"
-        style="color: grey;"
-      > {{ extension.tag }}</span>
+  <v-card class="main-card">
+    <v-card-title class="pb-1 d-flex justify-space-between align-center">
+      <div class="d-flex align-center">
+        <v-avatar
+          v-if="extensionData && extensionData.extension_logo"
+          size="60"
+          class="mr-3"
+          rounded="0"
+        >
+          <v-img
+            :src="extensionData.extension_logo"
+            :alt="extension.name"
+          />
+        </v-avatar>
+        <div>
+          <div>{{ extension.name }}</div>
+          <span
+            class="d-block"
+            style="color: grey;"
+          >
+            {{ extension.tag }}
+          </span>
+        </div>
+      </div>
       <v-btn
         v-if="update_available"
+        class="card-update-button"
         color="primary"
-        class="ml-auto"
         @click="$emit('update', extension, update_available)"
       >
         Update to {{ update_available }}
@@ -135,7 +153,6 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
-
     <v-card-actions class="card-actions">
       <v-btn
         :style="{ backgroundColor: buttonBgColor }"
@@ -316,13 +333,39 @@ export default Vue.extend({
 })
 </script>
 <style scoped>
+.main-card {
+  width: auto;
+}
+
 .card-actions {
   flex-wrap: wrap;
   justify-content: center;
   row-gap: 7px;
+  margin-bottom: 10px;
 }
+
 .progress {
   border-radius: 3px;
   min-width: 150px;
+  max-width: 300px;
+}
+
+.card-update-button {
+  width: 200px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 994px) {
+  .main-card {
+    width: 600px;
+    min-width: 400px;
+  }
+}
+
+@media (max-width: 545px) {
+  .card-update-button {
+    margin-top: 5px;
+    width: 100%;
+  }
 }
 </style>
