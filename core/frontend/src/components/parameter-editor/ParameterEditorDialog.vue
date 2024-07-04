@@ -31,64 +31,13 @@
               sm="6"
               md="6"
             >
-              <v-form
-                ref="form"
-                v-model="is_form_valid"
-                lazy-validation
-                @submit.prevent="saveEditedParam(false)"
-              >
-                <template v-if="!custom_input && param.bitmask">
-                  <v-checkbox
-                    v-for="(key, value) in param?.bitmask"
-                    :key="value"
-                    v-model="selected_bitflags"
-                    dense
-                    :label="key"
-                    :value="2 ** value"
-                  />
-                </template>
-                <v-autocomplete
-                  v-else-if="!custom_input && Object.entries(param?.options ?? []).length > 10"
-                  v-model.number="new_value"
-                  :items="as_select_tems"
-                  variant="solo"
-                />
-                <v-select
-                  v-else-if="!custom_input && param?.options"
-                  v-model.number="new_value"
-                  :items="as_select_tems"
-                  :rules="[() => true]"
-                />
-                <v-text-field
-                  v-if="
-                    custom_input
-                      || (param
-                        && !param.options
-                        && !param.bitmask
-                      )
-                  "
-                  v-model.number="new_value"
-                  label="Value"
-                  type="number"
-                  :step="param.increment ?? 0.01"
-                  :suffix="param.units"
-                  :rules="forcing_input ? [] : [isInRange, isValidType]"
-                  @blur="updateVariables"
-                />
-
-                <v-checkbox
-                  v-if="show_advanced_checkbox"
-                  v-model="forcing_input"
-                  dense
-                  :label="'Force'"
-                />
-                <v-checkbox
-                  v-if="show_custom_checkbox"
-                  v-model="custom_input"
-                  dense
-                  :label="'Custom'"
-                />
-              </v-form>
+              <inline-parameter-editor
+                v-if="param"
+                v-model="new_value"
+                :allow-custom="true"
+                :param="param"
+                @form-valid-change="formValidUpdate"
+              />
             </v-col>
           </v-row>
         </v-container>
@@ -148,98 +97,19 @@ export default Vue.extend({
   },
   data() {
     return {
-      custom_input: false,
-      forcing_input: false,
       // Form can't be computed correctly, so we save it's state under data
       is_form_valid: false,
       new_value: 0,
-      selected_bitflags: [] as number[],
     }
   },
   computed: {
-    as_select_tems() {
-      const entries = Object.entries(this.param?.options ?? [])
-      return entries.map(([value, name]) => ({ text: name, value: parseFloat(value), disabled: false }))
-    },
-    edited_bitmask_value(): number {
-      return this.selected_bitflags.reduce((accumulator, current) => accumulator + current, 0)
-    },
     param_value_not_changed(): boolean {
-      // Check if value is different
       return this.new_value === this.param?.value
-        // Check if bitmask value, if valid, is different from current value
-        && (this.param?.bitmask === undefined || this.edited_bitmask_value === this.param?.value)
-    },
-    show_advanced_checkbox(): boolean {
-      return typeof this.isInRange(this.new_value ?? 0) === 'string'
-    },
-    show_custom_checkbox(): boolean {
-      return !!(this.param?.options || this.param?.bitmask)
-    },
-  },
-  watch: {
-    show(): void {
-      this.new_value = this.param.value
-
-      if (!this.show) {
-        return
-      }
-
-      this.updateVariablesAtStart()
     },
   },
   methods: {
-    isInRange(input: number | string): boolean | string {
-      // The input value is an empty string when the field is empty
-      if (typeof input === 'string' && input?.trim().length === 0) {
-        return 'This should be a number between min and max'
-      }
-      input = Number(input)
-
-      if (!this.param?.range) {
-        return true
-      }
-
-      if (this.param.bitmask && input < 0) {
-        return 'Value should be greater or equal to 0'
-      }
-
-      if (input > this.param.range.high) {
-        return `Value should be smaller than ${this.param.range.high}`
-      }
-      if (input < this.param.range.low) {
-        return `Value should be greater than ${this.param.range.low}`
-      }
-      return true
-    },
-    isValidType(input: number): boolean | string {
-      if (this.param?.paramType.type.includes('UINT')) {
-        if (input < 0) {
-          return 'This parameter must be a positive Integer'
-        }
-      }
-      if (this.param?.paramType.type.includes('INT')) {
-        if (!Number.isInteger(input)) {
-          return 'This parameter must be an Integer'
-        }
-      }
-      return true
-    },
-    updateSelectedFlags(value: number): void {
-      if (value < 0) {
-        // No bitmask checking for negative values
-        return
-      }
-
-      const output = []
-      for (let bit = 0; bit < 64; bit += 1) {
-        const bitmask_value = 2 ** bit
-        // eslint-disable-next-line no-bitwise
-        if (value & bitmask_value) {
-          output.push(bitmask_value)
-        }
-      }
-      this.selected_bitflags = output
+    formValidUpdate(is_valid: boolean) {
+      this.is_form_valid = is_valid
     },
     async rebootVehicle(): Promise<void> {
       await this.restart_autopilot()
@@ -249,24 +119,7 @@ export default Vue.extend({
       await AutopilotManager.restart()
     },
     async saveEditedParam(reboot = false) {
-      if (!this.forcing_input && !this.is_form_valid) {
-        return
-      }
-      this.showDialog(false)
-      if (this.param == null) {
-        return
-      }
-      if (!this.custom_input && this.param.bitmask !== undefined) {
-        this.new_value = this.edited_bitmask_value
-      }
-      let value = 0
-      if (typeof this.new_value === 'string') {
-        value = parseFloat(this.new_value)
-      } else {
-        value = this.new_value
-      }
-
-      mavlink2rest.setParam(this.param.name, value, autopilot_data.system_id, this.param.paramType.type)
+      mavlink2rest.setParam(this.param.name, this.new_value, autopilot_data.system_id, this.param.paramType.type)
 
       if (reboot) {
         await this.rebootVehicle()
@@ -274,27 +127,10 @@ export default Vue.extend({
       } else if (this.param.rebootRequired) {
         autopilot_data.setRebootRequired(true)
       }
+      this.$emit('change', false)
     },
     showDialog(state: boolean) {
       this.$emit('change', state)
-    },
-    updateVariablesAtStart(): void {
-      // Remove forcing_input once option is inside valid range
-      if (this.forcing_input && typeof this.isInRange(this.new_value) === 'boolean') {
-        this.forcing_input = false
-      }
-      this.updateVariables()
-    },
-    updateVariables(): void {
-      // Select custom input if value is outside of possible options
-      // Remove custom once value is known
-      if (this.custom_input) {
-        this.custom_input = !Object.keys(this.param?.options ?? [])
-          .map((value) => parseFloat(value))
-          .includes(this.new_value)
-      }
-
-      this.updateSelectedFlags(this.new_value)
     },
   },
 })
