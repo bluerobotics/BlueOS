@@ -128,42 +128,15 @@ class WifiManager:
 
     async def get_wifi_available(self) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
+        try:
+            await self.wpa.send_command_scan(timeout=30)
+            data = await self.wpa.send_command_scan_results()
+            networks_list = WifiManager.__dict_from_table(data)
+            return [ScannedWifiNetwork(**network) for network in networks_list]
 
-        async def perform_new_scan() -> None:
-            try:
-                # We store the scan task here so that new scan requests that happen in the interval
-                # where this one is running can check when it has finished.
-                # Otherwise, it could happen that a new scan is initiated before the ones waiting know
-                # the previous one has finished, making them stay on the loop unnecessarily.
-                self._scan_task = asyncio.create_task(self.wpa.send_command_scan(timeout=30))
-                await self._scan_task
-                data = await self.wpa.send_command_scan_results()
-                networks_list = WifiManager.__dict_from_table(data)
-                self._updated_scan_results = [ScannedWifiNetwork(**network) for network in networks_list]
-                self._time_last_scan = time.time()
-            except Exception as error:
-                if self._scan_task is not None:
-                    self._scan_task.cancel()
-                self._updated_scan_results = None
-                raise FetchError("Failed to fetch wifi list.") from error
-
-        # Performs a new scan only if more than 30 seconds passed since last scan
-        if time.time() - self._time_last_scan < 30:
-            return self._updated_scan_results or []
-        # Performs a new scan only if it's the first one or the last one is already done
-        # In case there's one running already, wait for it to finish and use its result
-        if self._scan_task is None or self._scan_task.done():
-            await perform_new_scan()
-        else:
-            awaited_scan_task_name = self._scan_task.get_name()
-            while self._scan_task.get_name() == awaited_scan_task_name and not self._scan_task.done():
-                logger.info(f"Waiting for {awaited_scan_task_name} results.")
-                await asyncio.sleep(0.5)
-
-        if self._updated_scan_results is None:
-            raise FetchError("Failed to fetch wifi list.")
-
-        return self._updated_scan_results
+        except Exception as error:
+            logger.error(f"Failed to fetch wifi list: {error}")
+            raise FetchError("Failed to fetch wifi list.") from error
 
     async def get_saved_wifi_network(self) -> List[SavedWifiNetwork]:
         """Get a list of saved wifi networks"""
