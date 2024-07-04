@@ -53,6 +53,9 @@ class WifiManager:
         except Exception:
             logger.exception("Could not load previous hotspot settings.")
 
+        asyncio.run(self.wpa.send_command_autoscan("periodic:10"))
+        asyncio.run(self.wpa.send_command_scan_interval(10))
+
     @staticmethod
     def __decode_escaped(data: bytes) -> str:
         """Decode escaped byte array
