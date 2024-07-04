@@ -56,6 +56,11 @@ export interface ExtensionData {
     extension_logo?: string
     company_logo: string
     is_compatible?: boolean
+    repo_info?: {
+        downloads: number,
+        last_updated?: string,
+        date_registered?: string,
+    }
 }
 
 export interface InstalledExtensionData {
