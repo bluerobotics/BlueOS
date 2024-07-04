@@ -35,6 +35,7 @@ DELTA_JSON = {
             "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
             "/usr/blueos/extensions": {"bind": "/usr/blueos/extensions", "mode": "rw"},
             "/usr/blueos/userdata": {"bind": "/usr/blueos/userdata", "mode": "rw"},
+            "/var/run/wpa_supplicant": {"bind": "/var/run/wpa_supplicant", "mode": "rw"},
         }
     }
 }
