@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import logging
 import os
+import stat
 import sys
 from pathlib import Path
 from typing import Any, List, Optional
@@ -233,10 +234,29 @@ if __name__ == "__main__":
             socket_name = args.socket_name
         else:
             logger.info("Connecting via default socket.")
-            available_sockets = os.listdir(wpa_socket_folder)
+
+            def is_socket(file_path: str) -> bool:
+                try:
+                    mode = os.stat(file_path).st_mode
+                    return stat.S_ISSOCK(mode)
+                except Exception as error:
+                    logger.warning(f"Could not check if '{file_path}' is a socket: {error}")
+                    return False
+
+            # We are going to sort and get the latest file, since this in theory will be an external interface
+            # added by the user
+            entries = os.scandir(wpa_socket_folder)
+            available_sockets = sorted(
+                [
+                    entry.path
+                    for entry in entries
+                    if entry.name.startswith(("wlan", "wifi", "wlp")) and is_socket(entry.path)
+                ]
+            )
             if not available_sockets:
                 raise RuntimeError("No wifi sockets available.")
-            socket_name = available_sockets[0]
+            socket_name = available_sockets[-1]
+            logger.info(f"Going to use {socket_name} file")
         WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
         wifi_manager.connect(WLAN_SOCKET)
     except Exception as socket_connection_error:
