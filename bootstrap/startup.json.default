@@ -14,8 +14,8 @@
                 "bind": "/sys/",
                 "mode": "rw"
             },
-            "/var/run/wpa_supplicant/wlan0": {
-                "bind": "/var/run/wpa_supplicant/wlan0",
+            "/var/run/wpa_supplicant": {
+                "bind": "/var/run/wpa_supplicant",
                 "mode": "rw"
             },
             "/tmp/wpa_playground": {
