@@ -69,11 +69,11 @@
                     class="large-text-cell"
                     v-on="on"
                   >
-                    {{ printParamWithUnit(item.current) }}
+                    {{ item.current ? printParamWithUnit(item.current) : item.value }}
                   </div>
                 </template>
                 <span>
-                  {{ printParamWithUnit(item.current) }}
+                  {{ item.current ? printParamWithUnit(item.current) : item.value }}
                 </span>
               </v-tooltip>
             </v-col>
@@ -248,6 +248,7 @@ export default Vue.extend({
         return {
           name,
           current: currentParameter,
+          value: paramset[name],
         }
       })
     },
