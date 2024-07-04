@@ -78,6 +78,10 @@ class WPASupplicant:
                 logger.info(f"Busy during {command} operation. Trying again...")
                 await asyncio.sleep(0.1)
                 continue
+            if b"CTRL-EVENT-SCAN-STARTED" in data:
+                logger.info(f"Scan started during {command} operation. Waiting for results...")
+                await asyncio.sleep(1)
+                continue
             break
         else:
             raise BusyError(f"{command} operation took more than specified timeout ({timeout}). Cancelling.")
