@@ -93,6 +93,12 @@ class ExtensionVersion(BaseModel):
     permissions: Optional[Dict[str, Any]] = None
 
 
+class RepoInfo(BaseModel):
+    downloads: int
+    last_updated: Optional[str] = None  # utc timestamp
+    date_registered: Optional[str] = None  # utc timestamp
+
+
 class ExtensionMetadata(BaseModel):
     identifier: str
     name: str
@@ -101,6 +107,7 @@ class ExtensionMetadata(BaseModel):
     description: str
     extension_logo: Optional[str] = None
     company_logo: Optional[str] = None
+    repo_info: Optional[RepoInfo] = None
 
 
 class RepositoryEntry(ExtensionMetadata):
