@@ -239,6 +239,33 @@ class WPASupplicant:
         """
         return await self.send_command("DISCONNECT", timeout)
 
+    async def send_command_autoscan(self, parameter: str, timeout: float = 1) -> bytes:
+        """Send message: AUTOSCAN
+
+        Automatic scan
+        This is an optional set of parameters for automatic scanning
+          within an interface in following format:
+        autoscan=<autoscan module name>:<module parameters>
+          autoscan is like bgscan but on disconnected or inactive state.
+          For instance, on exponential module parameters would be <base>:<limit>
+        autoscan=exponential:3:300
+          Which means a delay between scans on a base exponential of 3,
+          up to the limit of 300 seconds (3, 9, 27 ... 300)
+          For periodic module, parameters would be <fixed interval>
+        autoscan=periodic:30
+          So a delay of 30 seconds will be applied between each scan.
+          Note: If sched_scan_plans are configured and supported by the driver,
+          autoscan is ignored.
+        """
+        return await self.send_command(f"AUTOSCAN {parameter}", timeout)
+
+    async def send_command_scan_interval(self, seconds: int, timeout: float = 1) -> bytes:
+        """Send message: SCAN_INTERVAL
+
+        scan interval in seconds.
+        """
+        return await self.send_command(f"SCAN_INTERVAL {seconds}", timeout)
+
     async def send_command_scan(self, timeout: float = 1) -> bytes:
         """Send message: SCAN
 
