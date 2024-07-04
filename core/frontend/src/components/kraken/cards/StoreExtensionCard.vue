@@ -43,7 +43,17 @@
             <div
               class="extension-name"
             >
-              {{ extension.name.toUpperCase() }}
+              {{ extension.name }}
+              <div
+                v-if="extension?.repo_info?.downloads"
+                class="opacity-10 text-subtitle-2"
+              >
+                {{ human_download_count }}
+
+                <v-icon size="x-large">
+                  mdi-download
+                </v-icon>
+              </div>
             </div>
             <div class="extension-description">
               {{ extension.description }}
@@ -95,6 +105,7 @@
 
 <script lang="ts">
 import ColorThief from 'colorthief'
+import numeral from 'numeral'
 import Vue, { PropType } from 'vue'
 
 import { getLatestVersion, isStable, updateAvailableTag } from '@/components/kraken/Utils'
@@ -131,6 +142,24 @@ export default Vue.extend({
     }
   },
   computed: {
+    human_download_count(): string {
+      if (typeof this.extension.repo_info?.downloads !== 'number') {
+        return ''
+      }
+
+      const downloads = this.extension.repo_info?.downloads
+
+      if (downloads < 10) {
+        return downloads.toString()
+      }
+      if (downloads < 100) {
+        return `${Math.floor(downloads / 10) * 10}+`
+      }
+      if (downloads < 1000) {
+        return `${Math.floor(downloads / 100) * 100}+`
+      }
+      return numeral(downloads).format('0.0a').replace('.0', '')
+    },
     installed_extension(): InstalledExtensionData | undefined {
       return this.installed.find((installed) => installed.identifier === this.extension.identifier)
     },
@@ -403,11 +432,10 @@ export default Vue.extend({
   font-weight: bold;
   font-size: 18px;
   max-height: 1.4em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
+  justify-content: space-between;
+  display: flex;
   -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
+  -webkit-box-orient: horizontal;
 }
 
 .extension-description {
