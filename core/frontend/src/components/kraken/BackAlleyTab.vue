@@ -241,7 +241,9 @@ export default Vue.extend({
         return []
       }
 
-      return this.manifest as ExtensionData[]
+      return (this.manifest as ExtensionData[]).sort(
+        (a, b) => (b?.repo_info?.downloads ?? 0) - (a?.repo_info?.downloads ?? 0),
+      )
     },
     extension_companies(): string[] {
       const authors = this.manifest_data
