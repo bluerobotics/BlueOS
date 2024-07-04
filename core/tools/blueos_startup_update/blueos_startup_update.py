@@ -25,16 +25,16 @@ BOOT_LOOP_DETECTOR = "/root/.config/.boot_loop_detector"
 DELTA_JSON = {
     "core": {
         "binds": {
-            "/run/udev": {"bind": "/run/udev", "mode": "ro"},
             "/etc/blueos": {"bind": "/etc/blueos", "mode": "rw"},
-            "/etc/machine-id": {"bind": "/etc/machine-id", "mode": "ro"},
             "/etc/dhcpcd.conf": {"bind": "/etc/dhcpcd.conf", "mode": "rw"},
-            "/usr/blueos/userdata": {"bind": "/usr/blueos/userdata", "mode": "rw"},
-            "/usr/blueos/extensions": {"bind": "/usr/blueos/extensions", "mode": "rw"},
-            "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
+            "/etc/machine-id": {"bind": "/etc/machine-id", "mode": "ro"},
             "/etc/resolv.conf.host": {"bind": "/etc/resolv.conf.host", "mode": "ro"},
             "/home/pi/.ssh": {"bind": "/home/pi/.ssh", "mode": "rw"},
+            "/run/udev": {"bind": "/run/udev", "mode": "ro"},
             "/sys/": {"bind": "/sys/", "mode": "rw"},
+            "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
+            "/usr/blueos/extensions": {"bind": "/usr/blueos/extensions", "mode": "rw"},
+            "/usr/blueos/userdata": {"bind": "/usr/blueos/userdata", "mode": "rw"},
         }
     }
 }
