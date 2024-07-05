@@ -197,6 +197,13 @@ class Extension:
 
         img_name = ext.fullname()
         config["Image"] = img_name
+
+        if "HostConfig" not in config:
+            config["HostConfig"] = {}
+        if "LogConfig" not in config["HostConfig"]:
+            config["HostConfig"]["LogConfig"] = {}
+        config["HostConfig"]["LogConfig"] = {"Type": "json-file", "Config": {"max-size": "20m", "max-file": "3"}}
+
         try:
             async with DockerCtx() as client:
                 # Checks if image exists locally, if not tries to pull it
