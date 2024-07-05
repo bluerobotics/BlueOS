@@ -14,7 +14,7 @@
     </template>
 
     <v-card>
-      <v-card-title class="text-h5 grey lighten-2">
+      <v-card-title class="text-h5 grey lighten-2 black--text">
         Onboard Compass Calibration
       </v-card-title>
       <v-card-text class="pa-10">
