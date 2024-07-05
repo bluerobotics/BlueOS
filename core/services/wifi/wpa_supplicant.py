@@ -82,7 +82,7 @@ class WPASupplicant:
 
             if b"FAIL-BUSY" in data:
                 logger.info(f"Busy during {command} operation. Trying again...")
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(1)
                 continue
             if b"CTRL-EVENT-SCAN-STARTED" in data:
                 logger.info(f"Scan started during {command} operation. Waiting for results...")
