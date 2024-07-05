@@ -208,6 +208,13 @@ class Bootstrapper:
                 privileged=privileged,
                 network=network,
                 detach=True,
+                log_config={
+                    "Type": "json-file",
+                    "Config": {
+                        "max-size": "30m",
+                        "max-file": "3",
+                    },
+                },
             )
         except docker.errors.APIError as error:
             warn(f"Error trying to start image: {error}, reverting to default...")
