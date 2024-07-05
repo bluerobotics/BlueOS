@@ -19,7 +19,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2 black--text">
-        Large Vehicle Compass Calibration
+        Compass Calibration Learning
       </v-card-title>
       <v-card-text>
         A Valid position is required for Compass Learn to estimate the local world magnetic field.
