@@ -22,7 +22,7 @@
         Compass Calibration Learning
       </v-card-title>
       <v-card-text>
-        A Valid position is required for Compass Learn to estimate the local world magnetic field.
+        A valid position is required for Compass Learn to estimate the local world magnetic field.
         <auto-coordinate-detector
           v-model="coordinates"
         />
