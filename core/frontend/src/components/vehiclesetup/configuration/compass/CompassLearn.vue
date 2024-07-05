@@ -18,7 +18,7 @@
     </template>
 
     <v-card>
-      <v-card-title class="text-h5 grey lighten-2">
+      <v-card-title class="text-h5 grey lighten-2 black--text">
         Large Vehicle Compass Calibration
       </v-card-title>
       <v-card-text>
