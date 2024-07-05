@@ -522,5 +522,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    main()
-    os.remove(BOOT_LOOP_DETECTOR)
+    try:
+        main()
+        os.remove(BOOT_LOOP_DETECTOR)
+    except Exception as error:
+        logger.error(f"An error occurred while applying patches: {error}")
