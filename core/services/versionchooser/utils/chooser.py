@@ -230,6 +230,10 @@ class VersionChooser:
                     "/var/run/docker.sock:/var/run/docker.sock",
                     "/var/logs/blueos:/var/logs/blueos",
                 ],
+                "LogConfig": {
+                    "Type": "json-file",
+                    "Config": {"max-size": "30m", "max-file": "3"},
+                },
             },
             "Env": [f"BLUEOS_CONFIG_PATH={HOME}/.config/blueos"],
         }
