@@ -54,7 +54,7 @@
                   <v-expansion-panel-content>
                     <p>
                       This allows automatic "calibration" of compass offsets. You need to have a valid world position.
-                      In order to use this option, click the following button and then driver the vehicle around until
+                      In order to use this option, click the following button and then drive the vehicle around until
                       you see the message <b>"CompassLearn: finished"</b>
                     </p>
                     <compass-learn :compasses="compasses" />
