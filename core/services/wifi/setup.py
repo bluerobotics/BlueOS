@@ -9,6 +9,7 @@ setuptools.setup(
     license="MIT",
     py_modules=[],
     install_requires=[
+        "aiocache == 0.12.2",
         "aiofiles == 0.6.0",
         "commonwealth == 0.1.0",
         "fastapi == 0.105.0",
