@@ -1,0 +1,8 @@
+#!/usr/local/bin/python
+from commonwealth.utils.commands import run_command
+from loguru import logger
+
+if __name__ == "__main__":
+    ret = run_command("sudo journalctl --vacuum-size=100M", False)
+    logger.add("/tmp/journal-vacuum.log")
+    logger.debug(f"Command output: {ret}")
