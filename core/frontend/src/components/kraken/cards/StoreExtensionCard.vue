@@ -191,7 +191,7 @@ export default Vue.extend({
             .flatMap((image) => image.platform.architecture),
         ),
       ]
-
+      archs.sort()
       return archs.join(', ')
     },
     action_button_text(): string {
