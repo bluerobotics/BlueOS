@@ -22,7 +22,7 @@ echo "Remote URL is $REMOTE_URL"
 
 # Step 2: Prepare the installation path
 
-INSTALL_FOLDER="./$PROJECT_NAME"
+INSTALL_FOLDER="/var/www/html/$PROJECT_NAME"
 mkdir -p "$INSTALL_FOLDER"
 
 echo "Installing to $INSTALL_FOLDER"
