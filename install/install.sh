@@ -91,6 +91,9 @@ else
     echo "Skipping hardware configuration"
 fi
 
+echo "Configure journald."
+curl -fsSL "$ROOT/install/configs/journald.conf" -o /etc/systemd/journald.conf
+
 # There are systems where rfkill does not exist, like SBC without wifi/BT
 command -v rfkill && (
     echo "Checking for blocked wifi and bluetooth."
