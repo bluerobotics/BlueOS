@@ -1,5 +1,22 @@
 <template>
-  <v-card class="main-card">
+  <v-card class="main-card d-flex flex-column">
+    <div
+      v-if="loading"
+      class="card-loading-overlay"
+    >
+      <SpinningLogo
+        size="150"
+      />
+    </div>
+    <v-icon
+      v-if="extension.enabled && !container && !loading"
+      v-tooltip="'This extension is enabled but the container is not running.'"
+      class="container-not-up-alert"
+      color="warning"
+      size="35"
+    >
+      mdi-robot-dead
+    </v-icon>
     <v-card-title class="pb-1 d-flex justify-space-between align-center">
       <div class="d-flex align-center">
         <v-avatar
@@ -153,6 +170,9 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
+    <div
+      style="flex-grow: 1;"
+    />
     <v-card-actions class="card-actions">
       <v-btn
         :style="{ backgroundColor: buttonBgColor }"
@@ -174,7 +194,7 @@
         Edit
       </v-btn>
       <v-btn
-        v-if="extension.enabled"
+        v-if="extension.enabled && container"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('disable', extension)"
       >
@@ -189,7 +209,7 @@
       </v-btn>
 
       <v-btn
-        v-if="extension.enabled"
+        v-if="extension.enabled && container"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('restart', extension)"
       >
@@ -366,5 +386,24 @@ export default Vue.extend({
     margin-top: 5px;
     width: 100%;
   }
+}
+
+.card-loading-overlay {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(3px);
+  z-index: 9999 !important;
+}
+
+.container-not-up-alert {
+  position: absolute;
+  right: 13px;
+  top: 13px;
 }
 </style>
