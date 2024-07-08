@@ -24,6 +24,12 @@
         "domain_names": ["blueos-hotspot"],
         "advertise": ["_http"],
         "ip": "ips[0]"
+      },
+      {
+        "name": "usb0",
+        "domain_names": ["blueos", "blueos-otg"],
+        "advertise": ["_http"],
+        "ip": "ips[0]"
       }
     ],
     "advertisement_types": [
