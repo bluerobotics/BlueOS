@@ -48,10 +48,10 @@ i.svg-icon svg {
 }
 
 i.svg-outline-dark path {
-  fill: white;
+  fill: #D1EAF1;
 }
 
 i.svg-outline-light path {
-  fill: black;
+  fill: #002F45;
 }
 </style>
