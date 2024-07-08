@@ -244,7 +244,10 @@ class Extension:
         await self.set_enabled(True)
 
     async def disable(self) -> None:
-        await self.remove(self.settings.container_name(), False)
+        try:
+            await self.remove(self.settings.container_name(), False)
+        except ContainerNotFound:
+            pass
         await self.set_enabled(False)
 
     @classmethod
