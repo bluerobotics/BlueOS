@@ -68,6 +68,19 @@
         <v-icon>mdi-cog</v-icon>
       </v-btn>
     </v-toolbar>
+    <v-dialog
+      v-model="alerter"
+      width="30%"
+      dimissable
+    >
+      <v-alert
+        type="error"
+        variant="tonal"
+        class="mb-0"
+      >
+        {{ alerter_error }}
+      </v-alert>
+    </v-dialog>
     <BackAlleyTab
       v-show="is_back_alley_tab"
       :manifest="manifest"
@@ -80,7 +93,7 @@
     />
     <v-card
       v-if="is_installed_tab"
-      class="pa-5"
+      class="pa-5 main-container"
       text-align="center"
     >
       <div class="installed-extension-card">
@@ -162,6 +175,7 @@ import ExtensionSettingsModal from '@/components/kraken/modals/ExtensionSettings
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
+import { OneMoreTime } from '@/one-more-time'
 import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -191,6 +205,8 @@ export default Vue.extend({
   data() {
     return {
       tab: '0',
+      alerter: false,
+      alerter_error: '',
       settings,
       show_dialog: false,
       show_settings: false,
@@ -210,6 +226,9 @@ export default Vue.extend({
       metrics: {} as Dictionary<{ cpu: number, memory: number}>,
       metrics_interval: 0,
       edited_extension: null as null | InstalledExtensionData,
+      fetch_installed_ext_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      fetch_running_containers_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      fetch_containers_stats_task: new OneMoreTime({ delay: 25000, disposeWith: this }),
     }
   },
   computed: {
@@ -232,9 +251,9 @@ export default Vue.extend({
   },
   mounted() {
     this.fetchManifest()
-    this.fetchInstalledExtensions()
-    this.fetchMetrics()
-    this.metrics_interval = setInterval(this.fetchMetrics, 30000)
+    this.fetch_installed_ext_task.setAction(this.fetchInstalledExtensions)
+    this.fetch_running_containers_task.setAction(this.fetchRunningContainers)
+    this.fetch_containers_stats_task.setAction(this.fetchContainersStats)
   },
   destroyed() {
     clearInterval(this.metrics_interval)
@@ -252,10 +271,12 @@ export default Vue.extend({
           }, 1000)
         },
         (error) => {
+          this.alerter = true
+          this.alerter_error = String(error)
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         },
       )
-      await back_axios({
+      back_axios({
         url: `${API_URL}/extension/update_to_version`,
         method: 'POST',
         params: {
@@ -275,6 +296,8 @@ export default Vue.extend({
           this.fetchInstalledExtensions()
         })
         .catch((error) => {
+          this.alerter = true
+          this.alerter_error = String(error)
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
@@ -288,7 +311,7 @@ export default Vue.extend({
     },
     metricsFor(extension: InstalledExtensionData): { cpu: number, memory: number} | Record<string, never> {
       const name = this.getContainerName(extension)?.replace('/', '')
-      return name ? this.metrics[name] : {}
+      return name ? this.metrics[name] ?? {} : {}
     },
     async createOrUpdateExtension(): Promise<void> {
       if (!this.edited_extension) {
@@ -326,19 +349,8 @@ export default Vue.extend({
         (container) => container.image === `${extension.docker}:${extension.tag}`,
       )
     },
-    async fetchMetrics(): Promise<void> {
-      await back_axios({
-        method: 'get',
-        url: `${API_URL}/stats`,
-        timeout: 20000,
-      })
-        .then((response) => {
-          this.metrics = response.data
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
-        })
-      await back_axios({
+    async fetchRunningContainers(): Promise<void> {
+      back_axios({
         method: 'get',
         url: `${API_URL}/list_containers`,
         timeout: 30000,
@@ -348,6 +360,19 @@ export default Vue.extend({
         })
         .catch((error) => {
           notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
+        })
+    },
+    async fetchContainersStats(): Promise<void> {
+      back_axios({
+        method: 'get',
+        url: `${API_URL}/stats`,
+        timeout: 20000,
+      })
+        .then((response) => {
+          this.metrics = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
         })
     },
     getContainerName(extension: InstalledExtensionData): string | null {
@@ -363,7 +388,7 @@ export default Vue.extend({
       }
     },
     async fetchInstalledExtensions(): Promise<void> {
-      await back_axios({
+      back_axios({
         method: 'get',
         url: `${API_URL}/installed_extensions`,
         timeout: 30000,
@@ -462,12 +487,14 @@ export default Vue.extend({
           }, 1000)
         },
         (error) => {
+          this.alerter = true
+          this.alerter_error = String(error)
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
           this.show_pull_output = false
         },
       )
 
-      await back_axios({
+      back_axios({
         url: `${API_URL}/extension/install`,
         method: 'POST',
         data: {
@@ -491,6 +518,8 @@ export default Vue.extend({
           this.fetchInstalledExtensions()
         })
         .catch((error) => {
+          this.alerter = true
+          this.alerter_error = String(error)
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
@@ -530,7 +559,7 @@ export default Vue.extend({
     },
     async uninstall(extension: InstalledExtensionData) {
       this.setLoading(extension, true)
-      await axios.post(`${API_URL}/extension/uninstall`, null, {
+      axios.post(`${API_URL}/extension/uninstall`, null, {
         params: {
           extension_identifier: extension.identifier,
         },
@@ -541,7 +570,9 @@ export default Vue.extend({
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_UNINSTALL_FAIL', error)
         })
-      this.setLoading(extension, false)
+        .finally(() => {
+          this.setLoading(extension, false)
+        })
     },
     installedVersion(): string | undefined {
       const extension_identifier = this.selected_extension?.identifier
@@ -556,57 +587,60 @@ export default Vue.extend({
       this.running_containers = this.running_containers.filter(
         (container) => container.name !== this.getContainerName(extension),
       )
-      await back_axios({
+      back_axios({
         url: `${API_URL}/extension/disable`,
         method: 'POST',
         params: {
           extension_identifier: extension.identifier,
         },
-        timeout: 2000,
+        timeout: 10000,
       })
         .catch((error) => {
           notifier.pushBackError('EXTENSION_DISABLE_FAIL', error)
         })
-      this.fetchInstalledExtensions()
-      this.setLoading(extension, false)
-      this.fetchMetrics()
+        .finally(() => {
+          this.fetchInstalledExtensions()
+          this.setLoading(extension, false)
+        })
     },
     async enableAndStart(extension: InstalledExtensionData) {
       this.setLoading(extension, true)
-      await back_axios({
+      back_axios({
         url: `${API_URL}/extension/enable`,
         method: 'POST',
         params: {
           extension_identifier: extension.identifier,
         },
-        timeout: 2000,
+        timeout: 10000,
       })
         .catch((error) => {
           notifier.pushBackError('EXTENSION_ENABLE_FAIL', error)
         })
-      this.fetchInstalledExtensions()
-      this.setLoading(extension, false)
-      this.fetchMetrics()
+        .finally(() => {
+          this.fetchInstalledExtensions()
+          this.fetchRunningContainers()
+          this.fetchContainersStats()
+          this.setLoading(extension, false)
+        })
     },
     async restart(extension: InstalledExtensionData) {
       this.setLoading(extension, true)
-      await back_axios({
+      back_axios({
         url: `${API_URL}/extension/restart`,
         method: 'POST',
         params: {
           extension_identifier: extension.identifier,
         },
-        timeout: 2000,
+        timeout: 10000,
       })
-        .then((response) => {
-          this.running_containers = response.data
-        })
         .catch((error) => {
           notifier.pushBackError('EXTENSION_RESTART_FAIL', error)
         })
-      this.fetchInstalledExtensions()
-      this.setLoading(extension, false)
-      this.fetchMetrics()
+        .finally(() => {
+          this.fetchInstalledExtensions()
+          this.fetchRunningContainers()
+          this.setLoading(extension, false)
+        })
     },
     remoteVersions(extension: InstalledExtensionData): ExtensionData | undefined {
       return this.manifest_as_data.find(
@@ -614,8 +648,9 @@ export default Vue.extend({
       )
     },
     setLoading(extension: InstalledExtensionData, loading: boolean) {
-      this.installed_extensions[extension.identifier].loading = loading
-      Vue.set(this.installed_extensions, extension.identifier, this.installed_extensions[extension.identifier])
+      const temp = { ...this.installed_extensions }
+      temp[extension.identifier].loading = loading
+      this.installed_extensions = temp
     },
   },
 })
