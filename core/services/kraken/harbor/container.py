@@ -45,7 +45,7 @@ class ContainerManager:
         )
 
         # Extract the relevant data from the results
-        container_stats = [result[0] for result in stats_results]
+        container_stats = [result[0] for result in stats_results if result]
         container_shows = list(show_results)
 
         total_disk_size = psutil.disk_usage("/").total
