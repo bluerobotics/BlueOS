@@ -309,7 +309,7 @@
             icon
             @click.stop="settings.is_dev_mode = false"
           >
-            <v-icon color="red">
+            <v-icon color="primary">
               mdi-pill
             </v-icon>
           </v-btn>
