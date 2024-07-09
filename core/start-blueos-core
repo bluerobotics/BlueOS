@@ -90,8 +90,8 @@ fi
 # we need 777 in order for other users to be able to alter it
 find /var/logs/blueos -type d -exec chmod a+rw {} \;
 mkdir -p /usr/blueos/userdata/settings
-find /usr/blueos -type d -exec chmod a+rw {} \;
-find /usr/blueos -type f -exec chmod a+rw {} \;
+find /usr/blueos/userdata -type d -exec chmod a+rw {} \;
+find /usr/blueos/userdata -type f -exec chmod a+rw {} \;
 
 # These services have priority because they do the fundamental for the vehicle to work,
 # and by initializing them first we reduce the time users have to wait to control the vehicle.
