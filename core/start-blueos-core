@@ -86,8 +86,7 @@ else
     echo "Waring: Using dockers's resolv.conf, this may cause DNS issues if the host's network configuration changes."
 fi
 
-# fix permissions for logging folders:
-# we need 777 in order for other users to be able to alter it
+# Fix permissions for logging folders to allow other users to alter it
 find /var/logs/blueos -type d -exec chmod a+rw {} \;
 mkdir -p /usr/blueos/userdata/settings
 find /usr/blueos/userdata -type d -exec chmod a+rw {} \;
