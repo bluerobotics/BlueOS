@@ -111,16 +111,12 @@
                 {{ compass.deviceName }} <br />
                 {{ compass_description[compass.param] }}
                 <v-chip
-                  v-if="compass_is_calibrated[compass.param]"
-                  color="green"
+                  :color="compass_calibration_type[compass.param].color"
                   text-color="white"
                   x-small
                   class="calibration-chip"
                 >
-                  Calibrated
-                </v-chip>
-                <v-chip v-else color="red" text-color="white" x-small>
-                  Needs Calibration
+                  {{ compass_calibration_type[compass.param].calibration_short }}
                 </v-chip>
               </div>
             </v-tab>
@@ -142,6 +138,10 @@
               <v-row>
                 <v-col cols="6">
                   <v-card class="pa-5 mt-3">
+                    <v-alert text dense :type="compass_calibration_type[compass.param].alert">
+                      {{ compass_calibration_type[compass.param].description }}
+                    </v-alert>
+                    <p />
                     <h4>Settings</h4>
                     <div v-if="compass_use_param[index]">
                       <parameter-switch
@@ -213,6 +213,22 @@ import decode, { deviceId } from '@/utils/deviceid_decoder'
 import CompassLearn from './CompassLearn.vue'
 import FullCompassCalibrator from './FullCompassCalibrator.vue'
 import LargeVehicleCompassCalibrator from './LargeVehicleCompassCalibrator.vue'
+
+enum CalibrationType {
+  UNKNOWN = 'UNKNOWN',
+  NOT_CALIBRATED = 'NOT_CALIBRATED',
+  QUICK = 'QUICK',
+  FULL_NO_WMM = 'FULL_NO_WMM',
+  FULL = 'FULL',
+}
+
+interface CalibrationState {
+  calibration: CalibrationType
+  color: string
+  alert: string
+  description: string
+  calibration_short: string
+}
 
 export default Vue.extend({
   name: 'MavlinkCompassSetup',
@@ -287,8 +303,8 @@ export default Vue.extend({
       }
       return results
     },
-    compass_is_calibrated(): Dictionary<boolean> {
-      const results = {} as Dictionary<boolean>
+    compass_calibration_type(): Dictionary<CalibrationState> {
+      const results = {} as Dictionary<CalibrationState>
       for (const compass of this.compasses) {
         const compass_number = compass.param.split('COMPASS_DEV_ID')[1]
         const offset_params_names = [
@@ -309,15 +325,64 @@ export default Vue.extend({
           (name) => autopilot_data.parameter(name),
         )
         if (offset_params.includes(undefined) || diagonal_params.includes(undefined)) {
-          results[compass.param] = false
+          results[compass.param] = {
+            calibration: CalibrationType.UNKNOWN,
+            color: 'var(--v-error-darken1)',
+            alert: 'error',
+            description: 'Unable to get calibration status - something went wrong.',
+            calibration_short: 'Unknown',
+          }
           continue
         }
+        const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
+        if (is_at_default_offsets) {
+          results[compass.param] = {
+            calibration: CalibrationType.NOT_CALIBRATED,
+            color: 'var(--v-error-darken1)',
+            alert: 'error',
+            description: 'The compass is not calibrated - please calibrate it.',
+            calibration_short: 'Calibration Needed',
+          }
+
+          continue
+        }
+
+        const is_at_default_diagonals = diagonal_params.every((param) => param?.value === 0.0)
+        if (is_at_default_diagonals) {
+          results[compass.param] = {
+            calibration: CalibrationType.QUICK,
+            color: 'var(--v-warning-darken1)',
+            alert: 'warning',
+            description: 'Quick Calibration is easier for large vehicles, but has worse '
+  + 'performance - consider using log-based calibration afterwards, to refine results.',
+            calibration_short: 'Calibrated (Quick)',
+          }
+          continue
+        }
+
         const scale_param_name = `COMPASS_SCALE${compass_number}`
         const scale_param = autopilot_data.parameter(scale_param_name)
-        const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
-        const is_at_default_diagonals = diagonal_params.every((param) => param?.value === 0.0)
-        results[compass.param] = offset_params.isEmpty() || diagonal_params.isEmpty()
-          || !is_at_default_offsets || !is_at_default_diagonals || scale_param?.value !== 0.0
+        const is_at_default_scale = scale_param?.value === 0.0
+
+        if (is_at_default_scale) {
+          results[compass.param] = {
+            calibration: CalibrationType.FULL_NO_WMM,
+            color: 'var(--v-warning-darken1)',
+            alert: 'warning',
+            description: 'Calibrated, but without a known (detected or specified) global position, '
+            + 'so no corrections were applied from the internal World Magnetic Model (WMM). '
+            + 'Consider retrying with a valid position to improve compass performance.',
+            calibration_short: 'Calibrated (No WMM)',
+          }
+          continue
+        }
+        results[compass.param] = {
+          calibration: CalibrationType.FULL,
+          color: 'var(--v-success-base)',
+          alert: 'success',
+          description: 'Fully calibrated, including corrections from the internal World Magnetic Model (WMM) database.',
+          calibration_short: 'Fully Calibrated',
+        }
       }
       return results
     },
