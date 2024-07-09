@@ -1,5 +1,5 @@
 <template>
-  <v-textarea auto-grow :value="all_messages" readonly />
+  <v-textarea auto-grow :value="all_messages" readonly disabled />
 </template>
 
 <script lang="ts">
