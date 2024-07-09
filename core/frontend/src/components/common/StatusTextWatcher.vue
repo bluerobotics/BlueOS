@@ -35,7 +35,7 @@ export default {
         this.$emit('message', text)
         this.messages.push(text)
       }
-    })
+    }).setFrequency(0)
   },
   beforeDestroy() {
     this.listener?.discard()
