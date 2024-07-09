@@ -42,6 +42,7 @@ import FailsafesConfigration from './configuration/failsafes/Failsafes.vue'
 import LightsConfigration from './configuration/lights.vue'
 import BaroCalib from './overview/BaroCalib.vue'
 import GripperInfo from './overview/gripper.vue'
+import GyroCalib from './overview/GyroCalib.vue'
 import LeakInfo from './overview/LeakInfo.vue'
 import LightsInfo from './overview/LightsInfo.vue'
 import ParamSets from './overview/ParamSets.vue'
@@ -68,12 +69,14 @@ export default Vue.extend({
     ArdupilotMavlinkCompassSetup,
     ArdupilotAccelerometerSetup,
     SpinningLogo,
+    GyroCalib,
   },
   data() {
     return {
       page_selected: null as string | null,
       pages: [
         { title: 'Parameters', component: ParamSets },
+        { title: 'Gyroscope', component: GyroCalib },
         { title: 'Accelerometer', component: ArdupilotAccelerometerSetup },
         { title: 'Compass', component: ArdupilotMavlinkCompassSetup },
         { title: 'Baro', component: BaroCalib },
