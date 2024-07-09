@@ -26,6 +26,7 @@
       v-model.number="internal_new_value"
       dense
       :items="as_select_items"
+      :label="label"
       :indeterminate="waiting_for_param_update"
       @change="updateVariables"
     />
@@ -34,6 +35,7 @@
       v-model.number="internal_new_value"
       dense
       type="number"
+      :label="label"
       :step="param.increment ?? 0.01"
       :suffix="param.units"
       :rules="forcing_input ? [] : [isInRange, isValidType]"
@@ -81,6 +83,10 @@ export default Vue.extend({
     autoSet: {
       type: Boolean,
       default: false,
+    },
+    label: {
+      type: String,
+      default: '',
     },
   },
   data() {
