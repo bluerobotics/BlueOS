@@ -32,11 +32,11 @@
         </v-alert>
         <StatusTextWatcher :style="`display : ${status_type === 'error' ? 'block' : 'none'};`" />
       </v-card-text>
-      <v-card-actions>
-        <v-spacer />
+      <v-card-actions class="justify-center">
         <v-btn color="primary" :disabled="calibrating || !compass_mask" @click="calibrate()">
           Calibrate
         </v-btn>
+        <reboot-button />
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -46,6 +46,7 @@
 import { PropType } from 'vue'
 
 import StatusTextWatcher from '@/components/common/StatusTextWatcher.vue'
+import RebootButton from '@/components/utils/RebootButton.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavCmd, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
@@ -55,6 +56,7 @@ export default {
   name: 'LargeVehicleCompassCalibrator',
   components: {
     StatusTextWatcher,
+    RebootButton,
   },
   props: {
     compasses: {
