@@ -2,6 +2,7 @@
   <v-form
     ref="form"
     v-model="is_form_valid"
+    @submit.prevent="saveEditedParam"
   >
     <template v-if="!custom_input && param?.bitmask">
       <v-checkbox
