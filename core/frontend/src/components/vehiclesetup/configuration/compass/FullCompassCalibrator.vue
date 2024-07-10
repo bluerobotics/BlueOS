@@ -82,8 +82,9 @@
           Calibrate
         </v-btn>
         <v-btn v-if="state === states.DONE" color="primary" @click="dismiss">
-          Ok
+          Dismiss
         </v-btn>
+        <RebootButton />
         <v-btn color="red" :disabled="state !== states.CALIBRATING" @click="cancelCalibration()">
           Cancel
         </v-btn>
@@ -95,6 +96,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import RebootButton from '@/components/utils/RebootButton.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'
 import { MavCmd, MAVLinkType, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
@@ -115,6 +117,7 @@ export default {
   name: 'FullCompassCalibrator',
   components: {
     CalibrationQualityIndicator,
+    RebootButton,
   },
   props: {
     compasses: {
