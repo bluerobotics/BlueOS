@@ -4,6 +4,7 @@ import ardupilot_data from '@/store/autopilot'
 import { AutopilotStore } from '@/store/autopilot'
 
 import ParametersTable from './parameter-table'
+import autopilot from '@/store/autopilot_manager'
 
 export default class ParameterFetcher {
   parameter_table = new ParametersTable()
@@ -58,6 +59,10 @@ export default class ParameterFetcher {
       && this.loaded_params_count >= this.total_params_count) {
       return
     }
+    if (autopilot.restarting) {
+      return
+    }
+
     if (this.loaded_params_count > this.watchdog_last_count) {
       // We received something since the last watchdog update
       this.watchdog_last_count = this.loaded_params_count
