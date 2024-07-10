@@ -48,6 +48,7 @@ import { PropType } from 'vue'
 import StatusTextWatcher from '@/components/common/StatusTextWatcher.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavCmd, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import autopilot_data from '@/store/autopilot'
 import { deviceId } from '@/utils/deviceid_decoder'
 
 export default {
@@ -76,6 +77,7 @@ export default {
       this.status_type = 'success'
       this.status_text = 'Calibration finished'
       this.calibrating = false
+      autopilot_data.setRebootRequired(true)
     },
     calibrationFailed(error: string) {
       this.status_text = `Calibration failed: ${error}`
