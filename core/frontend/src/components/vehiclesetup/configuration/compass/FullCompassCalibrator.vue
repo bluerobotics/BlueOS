@@ -98,6 +98,7 @@ import Vue, { PropType } from 'vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'
 import { MavCmd, MAVLinkType, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import autopilot_data from '@/store/autopilot'
 import { Dictionary } from '@/types/common'
 import { deviceId } from '@/utils/deviceid_decoder'
 
@@ -184,6 +185,7 @@ export default {
       this.status_type = 'success'
       this.status_text = 'Calibration finished'
       this.state = states.DONE
+      autopilot_data.setRebootRequired(true)
       this.cleanup()
     },
     calibrationFailed(reason: string) {
