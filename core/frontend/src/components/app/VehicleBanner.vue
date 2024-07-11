@@ -122,9 +122,15 @@ export default Vue.extend({
   methods: {
     async load_vehicle_image() {
       this.vehicle_image = (await bag.getData('vehicle.image_path'))?.url as string
+      if (!this.vehicle_image.startsWith('/')) {
+        this.vehicle_image = `/${this.vehicle_image}`
+      }
     },
     async load_company_logo() {
       this.logo_image = (await bag.getData('vehicle.logo_image_path'))?.url as string
+      if (!this.logo_image.startsWith('/')) {
+        this.logo_image = `/${this.vehicle_image}`
+      }
     },
     update_title() {
       const sysid = this.system_id !== 1 ? `(${this.system_id}) ` : ''
