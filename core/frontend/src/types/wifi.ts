@@ -7,6 +7,11 @@ export interface Network {
     frequency: number
 }
 
+export interface HotspotStatus {
+    enabled: boolean
+    supported: boolean
+  }
+  
 export interface WifiStatus {
     bssid: string
     freq: number

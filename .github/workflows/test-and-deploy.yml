@@ -249,14 +249,14 @@ jobs:
     needs: deploy-docker-images
     if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
-    runs-on: blueos-ci
-    # The runner for this job is a Raspberry Pi OS Bullseye.
+    runs-on: blueos-ci-64
+    # The runner for this job is a Raspberry Pi OS Bookworm lite 64bit.
     # Just install docker (curl -sSL https://get.docker.com/ | sh) and follow the instructions for setting up a new runner in
     # https://github.com/bluerobotics/BlueOS-docker/settings/actions/runners/new
 
     strategy:
       matrix:
-        platforms: ["linux/arm/v7"]
+        platforms: ["linux/arm64/v8"]
     steps:
       - name: Install git
         run: sudo apt install -y git
@@ -280,6 +280,21 @@ jobs:
             -e VERSION=$GITHUB_REF_NAME \
             --workdir=/files \
             --platform ${{ matrix.platforms }} nature40/pimod:latest pimod.sh deploy/pimod/blueos.Pifile
+
+      - name: Add /boot additions
+        run: |
+          sudo apt-get update && sudo apt-get install -y parted kpartx
+          # Create mount point if it doesn't exist
+          sudo mkdir -p /mnt/piboot
+          # Map the image file
+          LOOP_DEVICE=$(sudo kpartx -avs deploy/pimod/blueos.img | sed -E 's/.*(loop[0-9]+)p[0-9]+.*/\1/g' | head -1)
+          # Mount the boot partition
+          sudo mount "/dev/mapper/${LOOP_DEVICE}p1" /mnt/piboot
+          # Create ssh and userconf files
+          sudo cp install/boards/config.toml /mnt/piboot/custom.toml
+          sudo umount /mnt/piboot
+          sudo kpartx -d deploy/pimod/blueos.img
+          echo "Boot partition updated successfully."
 
       # TODO: add GITHUB_REF_NAME after https://github.com/actions/upload-artifact/issues/231 is fixed
       # name: blueos-${{ env.GITHUB_REF_NAME }}.zip
