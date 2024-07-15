@@ -16,7 +16,7 @@
           <v-menu
             transition="fade-transition"
             offset-y
-            nudge-left="110"
+            nudge-left="134"
             nudge-bottom="10"
             :close-on-content-click="false"
           >
@@ -30,19 +30,19 @@
                 v-bind="attrs"
                 v-on="on"
               >
-                Providers
+                Filters
                 <v-icon right>
                   mdi-chevron-down
                 </v-icon>
               </v-btn>
             </template>
 
-            <v-card elevation="1" width="250">
+            <v-card elevation="1" width="250" style="overflow: hidden;">
               <v-btn
                 class="my-4 ml-6"
                 width="200"
                 rounded
-                @click="selected_companies = []"
+                @click="clearFilters"
               >
                 Clear
                 <v-icon right>
@@ -50,30 +50,116 @@
                 </v-icon>
               </v-btn>
               <v-divider />
-              <v-virtual-scroll
-                :item-height="40"
-                :items="extension_companies"
-                class="my-3"
-                height="400px"
+              <span
+                v-if="extension_companies.length > 0"
               >
-                <template #default="{ item }">
-                  <v-card-text>
+                <v-card-subtitle
+                  class="pt-4 pb-0 filter-category-title"
+                >
+                  COMPANIES
+                </v-card-subtitle>
+                <div
+                  v-if="extension_companies.length <= 8"
+                  class="pt-1"
+                >
+                  <v-card-text
+                    v-for="company in extension_companies"
+                    :key="company"
+                    class="mt-0 pt-1"
+                    style="height: 30px !important;"
+                  >
                     <v-checkbox
-                      v-model="selected_companies"
-                      :label="item"
-                      :value="item"
+                      v-model="filter_by_selected_companies"
+                      :label="company"
+                      :value="company"
                       class="pa-0 pl-3 ma-0"
                     />
                   </v-card-text>
-                </template>
-              </v-virtual-scroll>
-              <v-divider />
+                </div>
+                <v-virtual-scroll
+                  v-else
+                  :items="extension_companies"
+                  item-height="30"
+                  height="240"
+                >
+                  <template #default="{ item }">
+                    <v-card-text class="pt-2">
+                      <v-checkbox
+                        v-model="filter_by_selected_companies"
+                        :label="item"
+                        :value="item"
+                        class="pa-0 pl-3 ma-0"
+                      />
+                    </v-card-text>
+                  </template>
+                </v-virtual-scroll>
+              </span>
+              <span
+                v-if="extension_types.length > 0"
+              >
+                <v-card-subtitle
+                  class="pt-4 pb-0 filter-category-title"
+                >
+                  CATEGORIES
+                </v-card-subtitle>
+                <div
+                  v-if="extension_types.length <= 8"
+                  class="pt-1"
+                >
+                  <v-card-text
+                    v-for="category in extension_types"
+                    :key="category"
+                    class="mt-0 pt-1"
+                    style="height: 30px !important;"
+                  >
+                    <v-checkbox
+                      v-model="filter_by_selected_types"
+                      :label="category"
+                      :value="category"
+                      class="pa-0 pl-3 ma-0"
+                    />
+                  </v-card-text>
+                </div>
+                <v-virtual-scroll
+                  v-else
+                  :items="extension_types"
+                  item-height="30"
+                  height="240"
+                >
+                  <template #default="{ item }">
+                    <v-card-text class="pt-2">
+                      <v-checkbox
+                        v-model="filter_by_selected_types"
+                        :label="item"
+                        :value="item"
+                        class="pa-0 pl-3 ma-0"
+                      />
+                    </v-card-text>
+                  </template>
+                </v-virtual-scroll>
+              </span>
+              <span>
+                <v-card-subtitle class="pt-3 pb-0 filter-category-title">
+                  OTHER
+                </v-card-subtitle>
+                <v-card-text
+                  class="mt-0 pt-1"
+                  style="height: 30px !important;"
+                >
+                  <v-checkbox
+                    v-model="filter_by_installed"
+                    label="Installed"
+                    class="pa-0 pl-3 ma-0"
+                  />
+                </v-card-text>
+              </span>
+              <v-divider class="mt-3" />
             </v-card>
           </v-menu>
           <v-menu
             transition="fade-transition"
             offset-y
-            nudge-left="149"
+            nudge-left="133"
             nudge-bottom="10"
             :close-on-content-click="false"
           >
@@ -87,19 +173,19 @@
                 v-bind="attrs"
                 v-on="on"
               >
-                Types
+                Sort By
                 <v-icon right>
                   mdi-chevron-down
                 </v-icon>
               </v-btn>
             </template>
 
-            <v-card elevation="1" width="250">
+            <v-card elevation="1" width="250" style="overflow: hidden;">
               <v-btn
                 class="my-4 ml-6"
                 width="200"
                 rounded
-                @click="selected_types = []"
+                @click="sort_by = available_sorts[0]"
               >
                 Clear
                 <v-icon right>
@@ -107,24 +193,26 @@
                 </v-icon>
               </v-btn>
               <v-divider />
-              <v-virtual-scroll
-                :item-height="40"
-                :items="extension_types"
-                class="my-3"
-                height="400px"
-              >
-                <template #default="{ item }">
-                  <v-card-text>
-                    <v-checkbox
-                      v-model="selected_types"
-                      :label="item"
-                      :value="item"
+              <span>
+                <v-card-subtitle class="pt-4 pb-0 filter-category-title">
+                  GENERIC
+                </v-card-subtitle>
+                <v-radio-group v-model="sort_by" class="ma-0 pa-0">
+                  <v-card-text
+                    v-for="sort in available_sorts"
+                    :key="sort"
+                    class="mt-0 pt-3"
+                    style="height: 30px !important;"
+                  >
+                    <v-radio
+                      :label="sort"
+                      :value="sort"
                       class="pa-0 pl-3 ma-0"
                     />
                   </v-card-text>
-                </template>
-              </v-virtual-scroll>
-              <v-divider />
+                </v-radio-group>
+              </span>
+              <v-divider class="mt-4" />
             </v-card>
           </v-menu>
         </div>
@@ -190,6 +278,13 @@ import { getLatestVersion } from '@/components/kraken/Utils'
 import helper from '@/store/helper'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 
+enum AvailableSorts {
+  Popularity = 'Popularity',
+  Name = 'Name',
+  DateLaunched = 'Date Launched',
+  LastUpdate = 'Last Update',
+}
+
 export default Vue.extend({
   name: 'BackAlleyTab',
   components: {
@@ -211,8 +306,10 @@ export default Vue.extend({
   data() {
     return {
       query: '',
-      selected_companies: [] as string[],
-      selected_types: [] as string[],
+      filter_by_selected_companies: [] as string[],
+      filter_by_selected_types: [] as string[],
+      filter_by_installed: false,
+      sort_by: AvailableSorts.Popularity as string,
       manifest_fuse: undefined as undefined | Fuse<ExtensionData>,
       imgs_processed: {} as Record<string, ImgProcessedResult>,
     }
@@ -247,12 +344,15 @@ export default Vue.extend({
     },
     extension_companies(): string[] {
       const authors = this.manifest_data
-        .map((extension) => getLatestVersion(extension.versions)?.company?.name ?? 'unknown').sort() as string[]
+        .map((extension) => getLatestVersion(extension.versions)?.company?.name ?? null)
+        .filter((ext) => ext !== null)
+        .sort() as string[]
       return [...new Set(authors)]
     },
     extension_types(): string[] {
       const authors = this.manifest_data
-        .map((extension) => getLatestVersion(extension.versions)?.type ?? 'unknown')
+        .map((extension) => getLatestVersion(extension.versions)?.type ?? null)
+        .filter((ext) => ext !== null)
         .sort() as string[]
       return [...new Set(authors)]
     },
@@ -262,25 +362,50 @@ export default Vue.extend({
         ? this.manifest_fuse?.search(this.query).map((result) => result.item) ?? []
         : this.manifest_data.filter((ext) => ext.is_compatible)
 
+      if (this.sort_by === AvailableSorts.Name) {
+        data = data.sort((a, b) => a.name.localeCompare(b.name))
+      }
+      if (this.sort_by === AvailableSorts.DateLaunched) {
+        data = data
+          .sort((a, b) => new Date(b.repo_info?.date_registered ?? 0)
+            .getTime() - new Date(a.repo_info?.date_registered ?? 0).getTime())
+      }
+      if (this.sort_by === AvailableSorts.LastUpdate) {
+        data = data.sort((a, b) => new Date(b.repo_info?.last_updated ?? 0)
+          .getTime() - new Date(a.repo_info?.last_updated ?? 0).getTime())
+      }
+      if (this.sort_by === AvailableSorts.Popularity) {
+        data = data.sort((a, b) => (b?.repo_info?.downloads ?? 0) - (a?.repo_info?.downloads ?? 0))
+      }
+
+      if (this.filter_by_installed) {
+        data = data.filter((extension) => this.installed_extensions
+          .map((ext) => ext.identifier)
+          .includes(extension.identifier))
+      }
+
       // By default we remove examples if nothing is selected
-      if (this.selected_companies.isEmpty() && this.selected_types.isEmpty()) {
+      if (this.filter_by_selected_companies.isEmpty() && this.filter_by_selected_types.isEmpty()) {
         return data.filter((extension) => getLatestVersion(extension.versions)?.type !== 'example')
       }
 
-      if (!this.selected_companies.isEmpty()) {
+      if (!this.filter_by_selected_companies.isEmpty()) {
         data = data.filter((extension) => getLatestVersion(extension.versions)?.company?.name !== undefined)
-          .filter((extension) => this.selected_companies
+          .filter((extension) => this.filter_by_selected_companies
             .includes(getLatestVersion(extension.versions)?.company?.name ?? ''))
       }
 
-      if (this.selected_types.isEmpty()) {
+      if (this.filter_by_selected_types.isEmpty()) {
         return data
       }
 
       return data
         .filter((extension) => getLatestVersion(extension.versions)?.type !== undefined)
-        .filter((extension) => this.selected_types
+        .filter((extension) => this.filter_by_selected_types
           .includes(getLatestVersion(extension.versions)?.type ?? ''))
+    },
+    available_sorts(): string[] {
+      return Object.values(AvailableSorts)
     },
   },
   watch: {
@@ -300,6 +425,11 @@ export default Vue.extend({
     },
     update(ext: InstalledExtensionData, tag: string) {
       this.$emit('update', ext, tag)
+    },
+    clearFilters() {
+      this.filter_by_selected_companies = []
+      this.filter_by_selected_types = []
+      this.filter_by_installed = false
     },
   },
 })
@@ -335,5 +465,10 @@ export default Vue.extend({
     flex-direction: column;
     align-items: center;
   }
+}
+
+.filter-category-title {
+  font-weight: bold;
+  font-size: 18px;
 }
 </style>
