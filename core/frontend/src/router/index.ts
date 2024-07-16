@@ -54,7 +54,7 @@ const routes: Array<RouteConfig> = [
     component: defineAsyncComponent(() => import('../views/EndpointView.vue')),
   },
   {
-    path: '/tools/file-browser',
+    path: '/tools/file-browser/:path*',
     name: 'File Browser',
     component: defineAsyncComponent(() => import('../views/FileBrowserView.vue')),
   },

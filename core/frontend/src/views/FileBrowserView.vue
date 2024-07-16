@@ -1,6 +1,6 @@
 <template>
   <BrIframe
-    :source="service_path"
+    :source="full_path"
   />
 </template>
 
@@ -18,6 +18,11 @@ export default Vue.extend({
     return {
       service_path: '/file-browser/',
     }
+  },
+  computed: {
+    full_path() {
+      return `${this.service_path}${this.$route.params.path ?? ''}`
+    },
   },
 })
 </script>
