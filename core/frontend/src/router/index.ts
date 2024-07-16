@@ -34,7 +34,7 @@ const routes: Array<RouteConfig> = [
     component: defineAsyncComponent(() => import('../views/Autopilot.vue')),
   },
   {
-    path: '/vehicle/Setup',
+    path: '/vehicle/setup/:tab?/:subtab?',
     name: 'Vehicle Setup',
     component: defineAsyncComponent(() => import('../views/VehicleSetupView.vue')),
   },

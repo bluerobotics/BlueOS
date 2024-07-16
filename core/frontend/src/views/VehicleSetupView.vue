@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-tabs
-      v-model="page_selected"
+      :value="currentTab"
       centered
       icons-and-text
       show-arrows
@@ -10,20 +10,20 @@
       <v-tab
         v-for="page in pages"
         :key="page.value"
+        :to="{ name: 'Vehicle Setup', params: { tab: page.value } }"
       >
         {{ page.title }}
         <v-icon>{{ page.icon }}</v-icon>
       </v-tab>
     </v-tabs>
-    <v-tabs-items v-model="page_selected">
+    <v-tabs-items :value="currentTab">
       <v-tab-item
         v-for="page in pages"
         :key="page.value"
+        :value="page.value"
       >
         <parameter-loading-spinner>
-          <pwm-setup v-if="page.value === 'pwm_outputs'" />
-          <setup-overview v-else-if="page.value === 'overview'" />
-          <configure v-else-if="page.value === 'configure'" />
+          <component :is="page.component" :subtab="$route.params.subtab" />
         </parameter-loading-spinner>
       </v-tab-item>
     </v-tabs-items>
@@ -44,6 +44,7 @@ export interface Item {
   title: string,
   icon: string,
   value: string,
+  component: unknown,
 }
 
 export default Vue.extend({
@@ -56,15 +57,25 @@ export default Vue.extend({
   },
   data() {
     return {
-      page_selected: null as string | null,
       pages: [
-        { title: 'Overview', icon: 'mdi-view-dashboard-variant-outline', value: 'overview' },
-        { title: 'PWM Outputs', icon: 'mdi-fan', value: 'pwm_outputs' },
-        { title: 'Configure', icon: 'mdi-cog', value: 'configure' },
+        {
+          title: 'Overview', icon: 'mdi-view-dashboard-variant-outline', value: 'overview', component: setupOverview,
+        },
+        {
+          title: 'PWM Outputs', icon: 'mdi-fan', value: 'pwm_outputs', component: PwmSetup,
+        },
+        {
+          title: 'Configure', icon: 'mdi-cog', value: 'configure', component: Configure,
+        },
       ] as Item[],
       fetch_vehicle_type_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_firmware_vehicle_type_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
     }
+  },
+  computed: {
+    currentTab(): string {
+      return this.$route.params.tab || 'overview'
+    },
   },
   mounted() {
     this.fetch_vehicle_type_task.setAction(fetchVehicleType)

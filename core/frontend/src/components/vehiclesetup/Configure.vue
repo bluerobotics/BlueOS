@@ -2,7 +2,7 @@
   <div>
     <v-container fluid>
       <v-tabs
-        v-model="page_selected"
+        :value="currentSubtab"
         centered
         show-arrows
       >
@@ -10,16 +10,18 @@
         <v-tab
           v-for="page in filtered_pages"
           :key="`title-${page.title}`"
+          :to="{ name: 'Vehicle Setup', params: { tab: 'configure', subtab: page.value } }"
         >
           {{ page.title }}
         </v-tab>
       </v-tabs>
-      <v-tabs-items v-model="page_selected">
+      <v-tabs-items :value="currentSubtab">
         <v-tab-item
           v-for="page in filtered_pages"
           :key="`item-${page.title}`"
+          :value="page.value"
         >
-          <div class="main-container ">
+          <div class="main-container">
             <component :is="page.component" />
           </div>
         </v-tab-item>
@@ -50,7 +52,7 @@ import PowerInfo from './overview/PowerInfo.vue'
 
 export interface Item {
   title: string,
-  icon: string,
+  value: string,
   component: unknown,
   filter?: () => boolean,
 }
@@ -70,29 +72,38 @@ export default Vue.extend({
     ArdupilotAccelerometerSetup,
     SpinningLogo,
     GyroCalib,
+    BaroCalib,
+    FailsafesConfigration,
   },
   data() {
     return {
-      page_selected: null as string | null,
       pages: [
-        { title: 'Parameters', component: ParamSets },
-        { title: 'Gyroscope', component: GyroCalib },
-        { title: 'Accelerometer', component: ArdupilotAccelerometerSetup },
-        { title: 'Compass', component: ArdupilotMavlinkCompassSetup },
-        { title: 'Baro', component: BaroCalib },
-        { title: 'Lights', component: LightsConfigration, filter: () => autopilot.vehicle_type === 'Submarine' },
-        { title: 'Failsafes', component: FailsafesConfigration },
+        { title: 'Parameters', value: 'parameters', component: ParamSets },
+        { title: 'Gyroscope', value: 'gyroscope', component: GyroCalib },
+        { title: 'Accelerometer', value: 'accelerometer', component: ArdupilotAccelerometerSetup },
+        { title: 'Compass', value: 'compass', component: ArdupilotMavlinkCompassSetup },
+        { title: 'Baro', value: 'baro', component: BaroCalib },
+        {
+          title: 'Lights',
+          value: 'lights',
+          component: LightsConfigration,
+          filter: () => autopilot.vehicle_type === 'Submarine',
+        },
+        { title: 'Failsafes', value: 'failsafes', component: FailsafesConfigration },
       ] as Item[],
     }
   },
   computed: {
     filtered_pages() {
-      // eslint-disable-next-line no-extra-parens
-      return this.pages.filter((page) => (page.filter ? page.filter() : true))
+      return this.pages.filter((page) => page.filter ?? true)
+    },
+    currentSubtab(): string {
+      return this.$route.params.subtab || 'parameters'
     },
   },
 })
 </script>
+
 <style scoped>
 .main-container {
   background-color: #135DA3AA !important;
