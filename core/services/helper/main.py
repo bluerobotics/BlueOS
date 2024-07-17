@@ -311,14 +311,15 @@ class Helper:
         log_msg = f"Detecting service at port {port}"
         if response.status != http.client.OK:
             # If not valid web server, documentation will not be available
-            logger.debug(f"{log_msg}: Invalid")
+            logger.debug(f"{log_msg}: Invalid: {response.status} - {response.decoded_data}")
             return info
 
         info.valid = True
         try:
             soup = BeautifulSoup(response.decoded_data, features="html.parser")
             title_element = soup.find("title")
-            info.title = title_element.text if title_element else "Unknown"
+            info.title = title_element.text.strip() if title_element else "Unknown"
+            log_msg = f"{log_msg}: {info.title}"
         except Exception as e:
             logger.warning(f"Failed parsing the service title: {e}")
 
