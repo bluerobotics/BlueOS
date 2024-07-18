@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import List, Optional
 
 import aiohttp
 from loguru import logger
@@ -10,6 +10,7 @@ from jobs.models import Job
 
 class JobsManager:
     _jobs: List[Job] = []
+    _executing_job: Optional[Job] = None
 
     def __init__(self) -> None:
         self.is_running = True
@@ -36,7 +37,9 @@ class JobsManager:
         while self.is_running:
             await asyncio.sleep(1)
             if self._jobs:
-                await self.execute_job(self._jobs.pop(0))
+                self._executing_job = self._jobs.pop(0)
+                await self.execute_job(self._executing_job)
+                self._executing_job = None
 
     async def stop(self) -> None:
         self.is_running = False
@@ -50,11 +53,11 @@ class JobsManager:
 
     @classmethod
     def get(cls) -> List[Job]:
-        return cls._jobs
+        return ([cls._executing_job] if cls._executing_job else []) + cls._jobs
 
     @classmethod
     def get_by_identifier(cls, identifier: str) -> Job:
-        job = next((job for job in cls._jobs if job.id == identifier), None)
+        job = next((job for job in cls.get() if job.id == identifier), None)
         if job is None:
             raise JobNotFound(f"Job with id {identifier} not found")
         return job
