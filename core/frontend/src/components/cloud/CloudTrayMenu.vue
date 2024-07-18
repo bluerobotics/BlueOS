@@ -1,5 +1,6 @@
 <template>
   <v-menu
+    v-if="is_tray_visible"
     v-model="menu_opened"
     :close-on-content-click="false"
     nudge-left="370"
@@ -173,7 +174,7 @@ import Vue from 'vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import bag from '@/store/bag'
-import { InstalledExtensionData } from '@/types/kraken'
+import { InstalledExtensionData, RunningContainer } from '@/types/kraken'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
 
@@ -208,11 +209,20 @@ export default Vue.extend({
       operation_error_title: null as string | null,
       operation_error_message: null as string | null,
       installed_extensions: {} as Record<string, InstalledExtensionData>,
+      running_containers: [] as RunningContainer[],
+      once_opened: false,
     }
   },
   computed: {
     is_major_tom_installed(): boolean {
       return MAJOR_TOM_EXTENSION_IDENTIFIER in this.installed_extensions
+    },
+    is_major_tom_running(): boolean {
+      const extension = this.installed_extensions[MAJOR_TOM_EXTENSION_IDENTIFIER]
+
+      return this.running_containers.some(
+        (container) => container.image === `${extension?.docker}:${extension?.tag}`,
+      )
     },
     is_token_set(): boolean {
       return this.bag_token !== ''
@@ -223,10 +233,17 @@ export default Vue.extend({
     blueos_cloud_vehicles_url(): string {
       return BLUEOS_CLOUD_VEHICLES_URL
     },
+    is_major_tom_ready(): boolean {
+      return this.is_major_tom_installed && this.is_major_tom_running
+    },
+    is_tray_visible(): boolean {
+      return this.is_major_tom_ready || this.once_opened
+    },
   },
   watch: {
     menu_opened(new_value: boolean) {
       if (new_value) {
+        this.once_opened = true
         this.setUpTrayMenu()
       } else {
         setTimeout(() => {
@@ -236,10 +253,19 @@ export default Vue.extend({
       }
     },
   },
+  async mounted() {
+    await this.setUpTrayMenu()
+  },
   methods: {
     async setUpTrayMenu() {
       await this.fetchExtensions()
       await this.fetchMajorTomBagToken()
+
+      if (!this.once_opened && !this.is_major_tom_ready) {
+        setTimeout(() => {
+          this.setUpTrayMenu()
+        }, 5000)
+      }
     },
     startOperation(message: string): void {
       this.operation_description = message
@@ -269,16 +295,22 @@ export default Vue.extend({
       this.startOperation('Checking if Major Tom is installed...')
 
       try {
-        const response = await back_axios({
+        const installed = await back_axios({
           method: 'get',
           url: `${KRAKEN_API_URL}/installed_extensions`,
-          timeout: 30000,
+          timeout: 10000,
         })
-
         this.installed_extensions = {}
-        for (const extension of response.data) {
+        for (const extension of installed.data) {
           this.installed_extensions[extension.identifier] = extension
         }
+
+        const running = await back_axios({
+          method: 'get',
+          url: `${KRAKEN_API_URL}/list_containers`,
+          timeout: 10000,
+        })
+        this.running_containers = running.data
       } catch (error) {
         this.setOperationError('Failed to determine if Major Tom is installed.', error)
       }

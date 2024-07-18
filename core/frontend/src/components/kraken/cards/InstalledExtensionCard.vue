@@ -175,6 +175,7 @@
     />
     <v-card-actions class="card-actions">
       <v-btn
+        v-if="extension.identifier !== 'blueos.major_tom'"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('uninstall', extension)"
       >
