@@ -10,4 +10,11 @@ DEFAULT_MANIFESTS = [
     },
 ]
 
-__all__ = ["SERVICE_NAME", "DEFAULT_MANIFESTS"]
+DEFAULT_EXTENSIONS = [
+    {
+        "identifier": "blueos.major_tom",
+        "url": "https://blueos.cloud/major_tom/install",
+    },
+]
+
+__all__ = ["SERVICE_NAME", "DEFAULT_MANIFESTS", "DEFAULT_EXTENSIONS"]
