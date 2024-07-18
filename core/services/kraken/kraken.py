@@ -1,15 +1,18 @@
 import asyncio
 import traceback
-from typing import List
+from typing import Any, List
 
+import aiohttp
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
-from config import SERVICE_NAME
+from config import DEFAULT_EXTENSIONS, SERVICE_NAME
 from extension.exceptions import IncompatibleExtension
 from extension.extension import Extension
 from extension.models import ExtensionSource
 from harbor import ContainerManager
+from jobs import JobsManager
+from jobs.models import Job, JobMethod
 from manifest import ManifestManager
 from manifest.exceptions import ManifestBackendOffline
 from settings import ExtensionSettings, SettingsV2
@@ -70,6 +73,40 @@ class Kraken:
                         f"Dead extension {extension.identifier}:{extension.tag} could not be started: {traceback.format_exc()}"
                     )
 
+    async def fetch_default_extension_data(self, url: str) -> Any:
+        async with aiohttp.ClientSession() as session:
+            headers = {"Accept": "application/json"}
+            async with session.get(url, headers=headers) as resp:
+                resp.raise_for_status()
+                return await resp.json()
+
+    def is_install_default_ext_job_created(self, identifier: str) -> bool:
+        try:
+            JobsManager.get_by_identifier(identifier)
+        except Exception:
+            return False
+        return True
+
+    async def setup_default_extensions(self) -> None:
+        extensions: List[ExtensionSettings] = Extension._fetch_settings()
+        for ext in [
+            ext
+            for ext in DEFAULT_EXTENSIONS
+            if not any(ext["identifier"] == extension.identifier for extension in extensions)
+        ]:
+            job_id = f'__default_install_{ext["identifier"]}'
+            if not self.is_install_default_ext_job_created(job_id):
+                data = await self.fetch_default_extension_data(ext["url"])
+                job = Job(
+                    id=job_id,
+                    route="v2.0/extension",
+                    method=JobMethod.POST,
+                    body=data,
+                    retries=1,
+                )
+                JobsManager.add(job)
+                logger.info(f"Created job to install default extension {ext['identifier']}")
+
     async def kill_invalid_extensions(self) -> None:
         extensions: List[ExtensionSettings] = Extension._fetch_settings()
 
@@ -107,6 +144,7 @@ class Kraken:
 
     async def poll(self) -> None:
         await self.init_dead_extensions()
+        await self.setup_default_extensions()
         await self.kill_invalid_extensions()
         await self.kill_dangling_containers()
 
