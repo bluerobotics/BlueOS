@@ -38,7 +38,7 @@ class MAVP2P(AbstractRouter):
 
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *self.endpoints()]])
 
-        return f"{self.binary()} {endpoints} --streamreq-frequency=10"
+        return f"{self.binary()} {endpoints} --streamreq-disable"
 
     @staticmethod
     def name() -> str:
