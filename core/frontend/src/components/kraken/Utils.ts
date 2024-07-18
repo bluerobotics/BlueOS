@@ -3,12 +3,12 @@ import stable from 'semver-stable'
 
 import { Version } from '@/types/kraken'
 
-export function getSortedVersions(versions: Record<string, Version>, reverse = true): Version[] {
+export function getSortedVersions(versions: Record<string, Version>): Version[] {
   return Object.values(versions).sort((a, b) => semver.compare(a.tag, b.tag))
 }
 
 export function getLatestVersion(versions: Record<string, Version>, beta = true): Version | undefined {
-  const values = Object.values(versions) ?? []
+  const values = (Object.values(versions) ?? []).filter((v) => semver.valid(v.tag))
 
   if (values.length === 0) {
     return undefined
@@ -32,6 +32,10 @@ export function updateAvailableTag(
   current: string,
   beta = true,
 ): undefined | string {
+  if (!semver.valid(current)) {
+    return undefined
+  }
+
   const latest = getLatestVersion(versions, beta)
   return latest !== undefined && semver.gt(latest.tag, current) ? latest.tag : undefined
 }
