@@ -9,7 +9,7 @@
   >
     <v-card>
       <v-card-title>
-        Create/Change Extension
+        {{ is_editing ? 'Edit' : 'Create' }} Extension
       </v-card-title>
 
       <v-card-text class="d-flex flex-column">
@@ -20,6 +20,7 @@
           <v-text-field
             v-model="new_extension.identifier"
             label="Extension Identifier"
+            :disabled="is_editing"
             :rules="[validate_identifier]"
           />
 
@@ -32,6 +33,7 @@
           <v-text-field
             v-model="new_extension.docker"
             label="Docker image"
+            :disabled="is_editing"
             :rules="[validate_dockerhub]"
           />
 
@@ -42,17 +44,17 @@
           />
 
           <v-textarea
-            v-if="new_extension.permissions"
             v-model="formatted_permissions"
             label="Original Settings"
-            :readonly="true"
+            :disabled="is_editing"
             :rules="[validate_permissions]"
           />
 
           <v-textarea
+            v-if="is_editing"
             v-model="new_extension.user_permissions"
-            label="Custom settings (these replace regular settings)"
-            :rules="[validate_permissions]"
+            :label="'Custom settings (these replace regular settings)'"
+            :rules="[validate_user_permissions]"
           />
 
           <v-btn
@@ -60,7 +62,7 @@
             class="mr-4"
             @click="saveExtension"
           >
-            Create
+            {{ is_editing ? 'Save' : 'Create' }}
           </v-btn>
         </v-form>
       </v-card-text>
@@ -82,7 +84,7 @@ export default Vue.extend({
   },
   props: {
     extension: {
-      type: Object as PropType<InstalledExtensionData | null>,
+      type: Object as PropType<InstalledExtensionData & { editing: boolean } | null>,
       default: null,
     },
   },
@@ -99,6 +101,9 @@ export default Vue.extend({
     formatted_permissions() {
       return JSON.stringify(JSON.parse(this.new_extension?.permissions ?? '{}'), null, 2)
     },
+    is_editing() {
+      return this.extension?.editing ?? false
+    },
   },
   watch: {
     new_extension() {
@@ -106,6 +111,10 @@ export default Vue.extend({
     },
     extension() {
       this.new_extension = this.extension
+
+      if (this.is_editing && this.new_extension?.permissions) {
+        this.new_extension.user_permissions = this.new_extension.permissions
+      }
     },
   },
   methods: {
@@ -148,6 +157,18 @@ export default Vue.extend({
       return true
     },
     validate_permissions(input: string): (true | string) {
+      try {
+        JSON.parse(input)
+        return true
+      } catch {
+        return 'This entry must be in valid JSON format.'
+      }
+    },
+    validate_user_permissions(input: string): (true | string) {
+      if (input === '') {
+        return true
+      }
+
       try {
         JSON.parse(input)
         return true
