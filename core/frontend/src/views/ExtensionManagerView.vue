@@ -225,7 +225,7 @@ export default Vue.extend({
       show_log: false,
       metrics: {} as Dictionary<{ cpu: number, memory: number}>,
       metrics_interval: 0,
-      edited_extension: null as null | InstalledExtensionData,
+      edited_extension: null as null | InstalledExtensionData & { editing: boolean },
       fetch_installed_ext_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_running_containers_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_containers_stats_task: new OneMoreTime({ delay: 25000, disposeWith: this }),
@@ -331,7 +331,7 @@ export default Vue.extend({
       this.edited_extension = null
     },
     openEditDialog(extension: InstalledExtensionData): void {
-      this.edited_extension = { ...extension }
+      this.edited_extension = { ...extension, editing: true }
     },
     openCreationDialog() : void {
       this.edited_extension = {
@@ -341,7 +341,8 @@ export default Vue.extend({
         enabled: true,
         tag: '',
         permissions: '{}',
-        user_permissions: '{}',
+        user_permissions: '',
+        editing: false,
       }
     },
     getContainer(extension: InstalledExtensionData): RunningContainer | undefined {
