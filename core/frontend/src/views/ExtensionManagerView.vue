@@ -331,7 +331,7 @@ export default Vue.extend({
       this.edited_extension = null
     },
     openEditDialog(extension: InstalledExtensionData): void {
-      this.edited_extension = extension
+      this.edited_extension = { ...extension }
     },
     openCreationDialog() : void {
       this.edited_extension = {
