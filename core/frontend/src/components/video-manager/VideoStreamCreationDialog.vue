@@ -431,7 +431,7 @@ export default Vue.extend({
         case StreamType.RTSPT:
         case StreamType.RTSPH:
           {
-            const rtsp_prefix = StreamType.RTSPU.toLowerCase()
+            const rtsp_prefix = stream_type.toLowerCase()
             if (!this.stream_endpoints[index].includes(`${rtsp_prefix}://`)) {
               // Vue.set() forces the update of a nested property
               Vue.set(
