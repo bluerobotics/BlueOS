@@ -10,9 +10,11 @@ import socket
 from concurrent import futures
 from datetime import datetime
 from enum import Enum
+from functools import cache
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import urlparse
+from uuid import UUID
 
 import psutil
 from bs4 import BeautifulSoup
@@ -24,7 +26,7 @@ from commonwealth.utils.general import (
     local_unique_identifier,
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
@@ -485,6 +487,40 @@ def web_services() -> Any:
 @version(1, 0)
 def check_internet_access() -> Any:
     return Helper.check_internet_access()
+
+
+@fast_api_app.get(
+    "/hardware_id",
+    response_model=str,
+    summary="An UUID that can be used as unique identifier based in the motherboard hardware configuration.",
+)
+@version(1, 0)
+@cache
+def hardware_id() -> Any:
+    try:
+        with open("/etc/blueos/hardware-uuid", "r", encoding="utf-8") as file:
+            content = file.read().strip()
+        uuid_obj = UUID(content, version=4)
+        return str(uuid_obj)
+    except Exception as exception:
+        raise HTTPException(status_code=400, detail="Error: {exception}") from exception
+
+
+@fast_api_app.get(
+    "/software_id",
+    response_model=str,
+    summary="An UUID that can bse used as unique identifier, generated once on BlueOS first boot.",
+)
+@version(1, 0)
+@cache
+def software_id() -> Any:
+    try:
+        with open("/etc/blueos/uuid", "r", encoding="utf-8") as file:
+            content = file.read().strip()
+        uuid_obj = UUID(content, version=4)
+        return str(uuid_obj)
+    except Exception as exception:
+        raise HTTPException(status_code=400, detail="Error: {exception}") from exception
 
 
 @fast_api_app.get(
