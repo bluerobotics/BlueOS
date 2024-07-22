@@ -12,13 +12,15 @@ class FirmwareVersionType(str, Enum):
 
     @staticmethod
     def from_value(firmware_value: int) -> "FirmwareVersionType":
-        return {
-            0: FirmwareVersionType.DEV,
-            64: FirmwareVersionType.ALPHA,
-            128: FirmwareVersionType.BETA,
-            192: FirmwareVersionType.RC,
-            255: FirmwareVersionType.STABLE,
-        }[firmware_value]
+        if firmware_value == 255:
+            return FirmwareVersionType.STABLE
+        if firmware_value >= 192:
+            return FirmwareVersionType.RC
+        if firmware_value >= 128:
+            return FirmwareVersionType.BETA
+        if firmware_value >= 64:
+            return FirmwareVersionType.ALPHA
+        return FirmwareVersionType.DEV
 
 
 class MavlinkVehicleType(str, Enum):
