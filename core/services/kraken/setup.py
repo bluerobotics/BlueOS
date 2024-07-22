@@ -22,5 +22,9 @@ setuptools.setup(
         "psutil == 5.7.2",
         "uvicorn == 0.13.4",
         "dataclass-wizard == 0.22.3",
+        "blueos-extensions-repository == 0.0.1",
+    ],
+    dependency_links=[
+        "https://github.com/JoaoMario109/BlueOS-Extensions-Repository/tarball/0.0.1\#egg\=blueos-extensions-repository"
     ],
 )
