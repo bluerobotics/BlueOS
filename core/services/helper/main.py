@@ -201,6 +201,7 @@ class Helper:
         80,  # BlueOS
         5201,  # Iperf
         6021,  # Mavlink Camera Manager's WebRTC signaller
+        7000,  # Major Tom does not have a public API yet
         8554,  # Mavlink Camera Manager's RTSP server
         5777,  # ardupilot-manager's Mavlink TCP Server
         5555,  # DGB server
