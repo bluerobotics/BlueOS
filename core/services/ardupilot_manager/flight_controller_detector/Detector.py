@@ -32,7 +32,7 @@ class Detector:
         def is_navigator_r5_connected() -> bool:
             try:
                 bus = SMBus(1)
-                ADS1115_address = 0x48
+                ADS1115_address = 0x77
                 bus.read_byte_data(ADS1115_address, 0)
 
                 AK09915_address = 0x0C
@@ -52,7 +52,7 @@ class Detector:
         def is_argonot_r1_connected() -> bool:
             try:
                 bus = SMBus(1)
-                swap_multiplexer_address = 0x77
+                swap_multiplexer_address = 0x48
                 bus.read_byte_data(swap_multiplexer_address, 0)
                 return True
             except Exception as error:
