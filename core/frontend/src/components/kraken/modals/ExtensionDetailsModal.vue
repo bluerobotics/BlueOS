@@ -45,7 +45,28 @@
                   label="Version"
                 >
                   <template #item="{ item }">
-                    <v-tooltip :disabled="item.active" bottom>
+                    <v-tooltip
+                      v-if="item.value === null"
+                      bottom
+                    >
+                      <template #activator="{ on, attrs }">
+                        <div
+                          style="width: 100%; color: var(--v-warning-base);"
+                          v-bind="attrs"
+                          v-on="on"
+                        >
+                          <v-list-item-content>
+                            <v-list-item-title v-text="item.text" />
+                          </v-list-item-content>
+                        </div>
+                      </template>
+                      <span>This allows you to set custom tags that may not be present on official manifest</span>
+                    </v-tooltip>
+                    <v-tooltip
+                      v-else
+                      :disabled="item.active"
+                      bottom
+                    >
                       <template #activator="{ on, attrs }">
                         <div
                           style="width: 100%;"
@@ -180,6 +201,7 @@ import { marked } from 'marked'
 import { compare } from 'semver'
 import Vue, { PropType } from 'vue'
 
+import settings from '@/libs/settings'
 import { JSONValue } from '@/types/common'
 import { ExtensionData, Version } from '@/types/kraken'
 
@@ -198,12 +220,15 @@ export default Vue.extend({
   },
   data() {
     return {
-      selected_version: '' as string,
+      selected_version: '' as string | null | undefined,
     }
   },
   computed: {
     selected(): Version | null {
       return this.selected_version ? this.extension.versions[this.selected_version] : null
+    },
+    is_using_custom_tag(): boolean {
+      return this.selected_version === null
     },
     compiled_markdown(): string {
       if (!this.selected?.readme) {
@@ -212,11 +237,22 @@ export default Vue.extend({
       // TODO: make sure we sanitize this
       return marked(this.selected.readme)
     },
-    available_tags(): {text: string, active: boolean}[] {
-      return this.getSortedTags().map((tag) => ({
+    available_tags(): {text: string, value: string | null, active: boolean}[] {
+      const tags = this.getSortedTags().map((tag) => ({
         text: tag,
+        value: tag as string | null,
         active: this.extension?.versions[tag].images.some((image) => image.compatible),
       }))
+
+      if (settings.is_pirate_mode) {
+        tags.push({
+          text: 'Custom',
+          value: null,
+          active: true,
+        })
+      }
+
+      return tags
     },
     permissions(): (undefined | JSONValue) {
       if (!this.selected_version) {
@@ -232,22 +268,29 @@ export default Vue.extend({
       return this.selected_version === this.installed
     },
     is_version_compatible(): boolean {
-      return this.extension.versions[this.selected_version]?.images.some((image) => image.compatible)
+      if (this.is_using_custom_tag) {
+        return true
+      }
+
+      return this.selected?.images.some((image) => image.compatible) ?? false
     },
     compatible_version_archs(): string[] {
-      const archs = [
+      return this.is_using_custom_tag ? [] : [
         ...new Set(
-          this.extension.versions[this.selected_version]
+          this.selected
             ?.images.map((image) => image.platform.architecture),
         ),
       ]
-
-      return archs
     },
   },
   watch: {
     extension() {
       this.selected_version = this.getLatestTag()
+    },
+    selected_version(value: string) {
+      if (value === null) {
+        return
+      }
     },
   },
   mounted() {
@@ -259,6 +302,9 @@ export default Vue.extend({
     },
     getLatestTag(): string {
       return this.getSortedTags()[0] ?? ''
+    },
+    getAvailableTagsFromDocker(): string[] {
+      return []
     },
   },
 })
