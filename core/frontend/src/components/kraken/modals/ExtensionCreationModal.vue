@@ -98,9 +98,6 @@ export default Vue.extend({
     form(): VForm {
       return this.$refs.form as VForm
     },
-    formatted_permissions() {
-      return JSON.stringify(JSON.parse(this.new_extension?.permissions ?? '{}'), null, 2)
-    },
     is_editing() {
       return this.extension?.editing ?? false
     },
