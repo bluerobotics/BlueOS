@@ -44,7 +44,7 @@
           />
 
           <v-textarea
-            v-model="formatted_permissions"
+            v-model="new_extension.permissions"
             label="Original Settings"
             :disabled="is_editing"
             :rules="[validate_permissions]"
