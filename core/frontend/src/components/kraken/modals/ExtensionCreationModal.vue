@@ -44,6 +44,14 @@
           />
 
           <v-textarea
+            v-if="is_editing"
+            v-model="formatted_permissions"
+            label="Original Settings"
+            :disabled="is_editing"
+            :rules="[validate_permissions]"
+          />
+          <v-textarea
+            v-else
             v-model="new_extension.permissions"
             label="Original Settings"
             :disabled="is_editing"
@@ -97,6 +105,9 @@ export default Vue.extend({
   computed: {
     form(): VForm {
       return this.$refs.form as VForm
+    },
+    formatted_permissions() {
+      return JSON.stringify(JSON.parse(this.new_extension?.permissions ?? '{}'), null, 2)
     },
     is_editing() {
       return this.extension?.editing ?? false
