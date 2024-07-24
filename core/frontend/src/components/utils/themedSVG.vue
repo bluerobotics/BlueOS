@@ -31,6 +31,15 @@ export default Vue.extend({
       return `mr-0 ${settings.is_dark_theme ? 'svg-outline-dark' : 'svg-outline-light'}`
     },
   },
+  watch: {
+    src() {
+      axios.get(this.src).then((response) => {
+        this.image = response.data
+      }).catch((error) => {
+        console.error(error)
+      })
+    },
+  },
   mounted() {
     axios.get(this.src).then((response) => {
       this.image = response.data
