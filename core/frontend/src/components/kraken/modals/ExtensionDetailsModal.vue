@@ -287,8 +287,8 @@ export default Vue.extend({
     extension() {
       this.selected_version = this.getLatestTag()
     },
-    selected_version(value: string) {
-      if (value === null) {
+    is_using_custom_tag(value: string) {
+      if (value) {
         return
       }
     },
