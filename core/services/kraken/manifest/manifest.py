@@ -6,6 +6,8 @@ from typing import Any, Callable, List, Optional, Set, Tuple, cast
 import aiohttp
 import semver
 from aiocache import cached
+from blueos_repository.extension import Extension as RepositoryExtension
+from blueos_repository.extension.models import ExtensionMetadata
 from commonwealth.settings.manager import Manager
 
 from config import DEFAULT_MANIFESTS, SERVICE_NAME
@@ -23,6 +25,7 @@ from manifest.models import (
     ManifestData,
     ManifestSource,
     RepositoryEntry,
+    Tag,
     UpdateManifestSource,
 )
 from settings import ManifestSettings, SettingsV2
@@ -281,3 +284,20 @@ class ManifestManager:
             return None
 
         return ext.versions.get(tag)
+
+    @staticmethod
+    async def fetch_tags_from_docker(docker: str) -> List[Tag]:
+        ext = RepositoryExtension(
+            ExtensionMetadata(
+                identifier=docker,
+                name=docker,
+                docker=docker,
+                website=""
+                description="",
+            )
+        )
+        return (await ext.hub.get_tags()).results
+
+    @staticmethod
+    async def fetch_manifest_from_docker_tag(tag: Tag) -> Manifest:
+        return Manifest(identifier=docker, name=docker, url=docker, priority=0, enabled=True, factory=False)

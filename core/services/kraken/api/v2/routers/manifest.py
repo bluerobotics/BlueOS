@@ -17,6 +17,7 @@ from manifest.models import (
     Manifest,
     ManifestSource,
     RepositoryEntry,
+    Tag,
     UpdateManifestSource,
 )
 
@@ -66,6 +67,22 @@ async def fetch_by_identifier(identifier: str, data: bool = True) -> Manifest:
     return await manifest_manager.fetch_by_identifier(identifier, data)
 
 
+@manifest_router_v2.get("/docker/{docker}/tags", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
+async def fetch_tags_from_docker(docker: str) -> list[Tag]:
+    """
+    Return a list of docker tags for a given repository based on a docker image.
+    """
+    return []
+
+@manifest_router_v2.get("/docker/{docker}/manifest", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
+async def fetch_manifest_from_docker_tag(tag: Tag) -> Manifest:
+    """
+    Return a list of docker tags for a given repository based on a docker image.
+    """
+    return []
+
 @manifest_router_v2.get("/consolidated", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch_consolidated() -> list[RepositoryEntry]:
@@ -74,7 +91,6 @@ async def fetch_consolidated() -> list[RepositoryEntry]:
     repository entry is duplicated, the one with the highest priority will be kept.
     """
     return await manifest_manager.fetch_consolidated()
-
 
 @manifest_router_v2.post("/", status_code=status.HTTP_201_CREATED)
 @manifest_to_http_exception

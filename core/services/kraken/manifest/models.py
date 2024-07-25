@@ -4,6 +4,44 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, validator
 
+# Manifest docker models
+
+class TagImageLayer(BaseModel):
+    size: int
+    instruction: str
+    digest: Optional[str] = None
+
+
+class TagImage(BaseModel):  # pylint: disable=too-many-instance-attributes
+    architecture: str
+    features: str
+    variant: str
+    os: str  # pylint: disable=invalid-name
+    os_features: str
+    size: int
+    status: str
+    digest: Optional[str] = None
+    os_version: Optional[str] = None
+    layers: Optional[List[TagImageLayer]] = None
+    last_pulled: Optional[str] = None
+    last_pushed: Optional[str] = None
+
+
+class Tag(BaseModel):  # pylint: disable=too-many-instance-attributes
+    id: int  # pylint: disable=invalid-name
+    images: List[TagImage]
+    creator: int
+    last_updater: int
+    last_updater_username: str
+    name: str
+    repository: int
+    full_size: int
+    v2: str  # pylint: disable=invalid-name
+    last_updated: Optional[str] = None
+    tag_last_pulled: Optional[str] = None
+    tag_last_pushed: Optional[str] = None
+
+
 # Manifest data source models
 
 
