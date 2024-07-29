@@ -41,7 +41,15 @@
         </div>
       </div>
       <v-btn
-        v-if="update_available"
+        v-if="is_major_tom && major_tom_update_available"
+        class="card-update-button"
+        color="primary"
+        @click="updateMajorTom"
+      >
+        Update to {{ major_tom_data?.tag }}
+      </v-btn>
+      <v-btn
+        v-else-if="update_available"
         class="card-update-button"
         color="primary"
         @click="$emit('update', extension, update_available)"
@@ -175,7 +183,7 @@
     />
     <v-card-actions class="card-actions">
       <v-btn
-        v-if="extension.identifier !== 'blueos.major_tom'"
+        v-if="!is_major_tom"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('uninstall', extension)"
       >
@@ -221,6 +229,7 @@
 </template>
 
 <script lang="ts">
+import axios from 'axios'
 import semver from 'semver'
 import stable from 'semver-stable'
 import Vue, { PropType } from 'vue'
@@ -231,6 +240,9 @@ import system_information from '@/store/system-information'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 import { Disk } from '@/types/system-information/system'
 import { prettifySize } from '@/utils/helper_functions'
+
+const MAJOR_TOM_IDENTIFIER = 'blueos.major_tom'
+const MAJOR_TOM_CLOUD_URL = 'https://blueos.cloud/major_tom/install'
 
 export default Vue.extend({
   name: 'InstalledExtensionCard',
@@ -263,6 +275,7 @@ export default Vue.extend({
   data() {
     return {
       settings,
+      major_tom_data: undefined as undefined | InstalledExtensionData,
     }
   },
   computed: {
@@ -308,6 +321,23 @@ export default Vue.extend({
 
       return this.extension.tag === latest ? false : latest
     },
+    is_major_tom(): boolean {
+      return this.extension.identifier === MAJOR_TOM_IDENTIFIER
+    },
+    major_tom_update_available(): boolean {
+      return this.major_tom_data !== undefined && this.extension.tag !== this.major_tom_data.tag
+    },
+  },
+  async mounted() {
+    if (this.is_major_tom) {
+      try {
+        const data = await axios.get(MAJOR_TOM_CLOUD_URL)
+
+        this.major_tom_data = data.data as InstalledExtensionData
+      } catch (e) {
+        console.error('Failed to check for updates in Major Tom', e)
+      }
+    }
   },
   methods: {
     prettifySize(size_kb: number) {
@@ -348,6 +378,18 @@ export default Vue.extend({
     },
     getStatus(): string {
       return this.container?.status ?? 'N/A'
+    },
+    updateMajorTom() {
+      this.$emit(
+        'install',
+        this.major_tom_data?.identifier,
+        this.major_tom_data?.name,
+        this.major_tom_data?.docker,
+        this.major_tom_data?.tag,
+        this.extension.enabled,
+        this.major_tom_data?.permissions,
+        this.major_tom_data?.user_permissions,
+      )
     },
   },
 })

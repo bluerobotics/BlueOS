@@ -114,6 +114,7 @@
             @enable="enableAndStart(extension)"
             @restart="restart(extension)"
             @update="update"
+            @install="install"
           />
         </div>
       </div>
