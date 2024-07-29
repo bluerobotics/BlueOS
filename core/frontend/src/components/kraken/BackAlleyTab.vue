@@ -233,10 +233,10 @@
             color="red"
             size="100"
           >
-            {{ internet_offline ? 'mdi-ethernet-cable-off' : 'mdi-alert-octagon' }}
+            {{ internet_offline ? 'mdi-web-off' : 'mdi-alert-octagon' }}
           </v-icon>
           <v-card-title class="mb-5">
-            {{ internet_offline ? 'Backend is not connected to the internet.' : 'Failed to fetch extension manifest.' }}
+            {{ internet_offline ? 'Vehicle is not connected to the internet.' : 'Failed to fetch extension manifest.' }}
           </v-card-title>
         </div>
       </v-container>
