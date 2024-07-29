@@ -9,7 +9,7 @@
     />
     <v-dialog
       v-model="show_dialog"
-      width="80%"
+      max-width="800px"
     >
       <ExtensionDetailsModal
         :extension="selected_extension"
