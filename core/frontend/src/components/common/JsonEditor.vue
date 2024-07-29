@@ -43,6 +43,14 @@ export default {
       type: Object,
       required: true,
     },
+    schema: {
+      type: Object,
+      default: () => ({}),
+    },
+    schemaRefs: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   data() {
     return {

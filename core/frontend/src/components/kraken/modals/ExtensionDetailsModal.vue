@@ -11,7 +11,7 @@
         <div class="extension-description">
           {{ extension.description }}
         </div>
-        <div class="extension-description">
+        <div class="extension-architectures">
           <strong>{{ compatible_version_archs.join(', ') }}</strong>
         </div>
       </div>
@@ -100,20 +100,35 @@
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <v-card
-            v-if="permissions"
             outlined
             width="100%"
+            height="300"
           >
             <v-card-text
+              v-if="typeof editing_permissions === 'string'"
               style="overflow: auto;"
             >
-              <pre>{{ permissions }}</pre>
+              <pre>{{ editing_permissions }}</pre>
             </v-card-text>
+            <json-editor
+              v-else
+              v-model="editing_permissions"
+              style="width:100%; height:100%"
+              @save="onEditingPermissionsSave"
+            />
           </v-card>
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
-
+    <v-card-text class="mt-5">
+      <!-- This is a compiled markdown we compile ourselves. it should be safe -->
+      <!-- eslint-disable -->
+      <div
+        class="readme"
+        v-html="compiled_markdown"
+      />
+      <!-- eslint-enable -->
+    </v-card-text>
   </v-card>
 </template>
 
@@ -122,12 +137,16 @@ import { marked } from 'marked'
 import { compare } from 'semver'
 import Vue, { PropType } from 'vue'
 
+import JsonEditor from '@/components/common/JsonEditor.vue'
 import settings from '@/libs/settings'
 import { JSONValue } from '@/types/common'
 import { ExtensionData, Version } from '@/types/kraken'
 
 export default Vue.extend({
   name: 'ExtensionModal',
+  components: {
+    JsonEditor,
+  },
   props: {
     extension: {
       type: Object as PropType<ExtensionData>,
@@ -142,6 +161,7 @@ export default Vue.extend({
   data() {
     return {
       selected_version: '' as string | null | undefined,
+      editing_permissions: '' as string | JSONValue,
     }
   },
   computed: {
@@ -175,16 +195,6 @@ export default Vue.extend({
 
       return tags
     },
-    permissions(): (undefined | JSONValue) {
-      if (!this.selected_version) {
-        return 'Select a version'
-      }
-      const versions = this.extension?.versions
-      if (versions && this.selected_version in versions) {
-        return versions[this.selected_version].permissions
-      }
-      return 'No permissions required'
-    },
     is_installed(): boolean {
       return this.selected_version === this.installed
     },
@@ -207,6 +217,10 @@ export default Vue.extend({
   watch: {
     extension() {
       this.selected_version = this.getLatestTag()
+      this.editing_permissions = this.getVersionPermissions()
+    },
+    selected_version() {
+      this.editing_permissions = this.getVersionPermissions()
     },
   },
   mounted() {
@@ -218,6 +232,21 @@ export default Vue.extend({
     },
     getLatestTag(): string {
       return this.getSortedTags()[0] ?? ''
+    },
+    getVersionPermissions(): string | JSONValue {
+      if (!this.selected_version) {
+        return 'Select a version to view permissions'
+      }
+
+      const versions = this.extension?.versions
+      if (versions && this.selected_version in versions) {
+        return versions[this.selected_version].permissions
+      }
+
+      return 'No permissions required'
+    },
+    onEditingPermissionsSave() {
+      console.log('Permissions saved')
     },
   },
 })
@@ -262,5 +291,16 @@ div.readme ul {
 .extension-description {
   color: gray;
   font-size: 14px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.extension-architectures {
+  color: gray;
+  font-size: 15px;
+  padding-top: 4px;
+  text-transform: uppercase;
 }
 </style>
