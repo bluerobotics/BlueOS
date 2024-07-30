@@ -63,13 +63,19 @@ function defaultValidator(fragment: StreamingResponse): boolean {
  * undefined
  * @param {ConditionalHandlerFn} validator Validator for fragments, decides if the fragment is valid or not by default
  * it checks if the status is greater than 400 or if there is an error
+ * @param {boolean} dropHeartbeats If true, it will drop the heartbeats from the aggregation
  * @returns {string | undefined} Aggregated string or undefined if the aggregation was stopped
  */
 export function aggregateStreamingResponse(
   fragments: StreamingResponse[],
   onInvalid: ConditionalHandlerFn = defaultInvalidHandler,
   validator: ConditionalHandlerFn = defaultValidator,
+  dropHeartbeats = true,
 ): string | undefined {
+  if (dropHeartbeats) {
+    fragments = fragments.filter((fragment) => fragment.fragment !== -1)
+  }
+
   let buffer = ''
   for (const fragment of fragments) {
     if (!validator(fragment, buffer)) {
