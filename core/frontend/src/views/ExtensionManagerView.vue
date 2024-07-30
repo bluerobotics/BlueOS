@@ -532,7 +532,12 @@ export default Vue.extend({
           this.status_text = ''
         })
     },
-    async performActionFromModal(identifier: string, tag: string, isInstalled: boolean) {
+    async performActionFromModal(
+      identifier: string,
+      tag: string,
+      permissions: string | undefined,
+      isInstalled: boolean,
+    ) {
       if (isInstalled) {
         const ext = this.installed_extensions[identifier]
         if (!ext) {
@@ -541,10 +546,10 @@ export default Vue.extend({
         this.show_dialog = false
         await this.uninstall(ext)
       } else {
-        await this.installFromSelected(tag)
+        await this.installFromSelected(tag, permissions)
       }
     },
-    async installFromSelected(tag: string) {
+    async installFromSelected(tag: string, permissions: string | undefined) {
       if (!this.selected_extension) {
         return
       }
@@ -555,7 +560,7 @@ export default Vue.extend({
         tag,
         true,
         JSON.stringify(this.selected_extension?.versions[tag].permissions),
-        '',
+        permissions ?? '',
       )
     },
     async uninstall(extension: InstalledExtensionData) {

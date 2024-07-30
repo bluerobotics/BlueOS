@@ -53,7 +53,7 @@
 
             v-bind="attrs"
             v-on="on"
-            @click="$emit('clicked', extension.identifier, selected_version, is_installed)"
+            @click="performAction"
           >
             {{ is_installed ? 'Uninstall' : 'Install' }}
           </v-btn>
@@ -115,7 +115,22 @@
               v-model="editing_permissions"
               style="width:100%; height:100%"
               @save="onEditingPermissionsSave"
-            />
+            >
+              <template
+                v-if="is_reset_editing_permissions_visible"
+                #controls
+              >
+                <v-btn
+                  v-tooltip="'Reset to default permissions'"
+                  class="editor-control"
+                  icon
+                  color="white"
+                  @click="onResetToDefaultPermissions"
+                >
+                  <v-icon>mdi-restore</v-icon>
+                </v-btn>
+              </template>
+            </json-editor>
           </v-card>
         </v-expansion-panel-content>
       </v-expansion-panel>
@@ -162,6 +177,7 @@ export default Vue.extend({
     return {
       selected_version: '' as string | null | undefined,
       editing_permissions: '' as string | JSONValue,
+      custom_permissions: {} as Record<string, JSONValue>,
     }
   },
   computed: {
@@ -213,11 +229,19 @@ export default Vue.extend({
         ),
       ]
     },
+    is_reset_editing_permissions_visible(): boolean {
+      if (!this.selected_version) {
+        return false
+      }
+
+      return JSON.stringify(this.editing_permissions) !== JSON.stringify(this.selected?.permissions)
+    },
   },
   watch: {
     extension() {
       this.selected_version = this.getLatestTag()
       this.editing_permissions = this.getVersionPermissions()
+      this.custom_permissions = {}
     },
     selected_version() {
       this.editing_permissions = this.getVersionPermissions()
@@ -238,15 +262,36 @@ export default Vue.extend({
         return 'Select a version to view permissions'
       }
 
-      const versions = this.extension?.versions
-      if (versions && this.selected_version in versions) {
-        return versions[this.selected_version].permissions
+      if (this.selected) {
+        return this.custom_permissions[this.selected_version] ?? this.selected.permissions
       }
 
       return 'No permissions required'
     },
-    onEditingPermissionsSave() {
-      console.log('Permissions saved')
+    onEditingPermissionsSave(json: JSONValue) {
+      if (this.selected_version) {
+        this.editing_permissions = json
+        this.custom_permissions[this.selected_version] = json
+      }
+    },
+    onResetToDefaultPermissions() {
+      if (this.selected_version) {
+        delete this.custom_permissions[this.selected_version]
+        this.editing_permissions = this.getVersionPermissions()
+      }
+    },
+    performAction() {
+      if (!this.selected_version) {
+        return
+      }
+
+      this.$emit(
+        'clicked',
+        this.extension.identifier,
+        this.selected_version,
+        JSON.stringify(this.custom_permissions[this.selected_version]),
+        this.is_installed,
+      )
     },
   },
 })
@@ -278,6 +323,11 @@ div.readme h3 {
 
 div.readme ul {
   margin-left: 20px;
+}
+
+.editor-control {
+  margin: 0;
+  opacity: 0.7;
 }
 
 .extension-creators {

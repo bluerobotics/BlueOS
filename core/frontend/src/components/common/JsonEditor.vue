@@ -13,6 +13,7 @@
 
       <v-divider />
 
+      <slot name="controls" />
       <v-btn
         v-tooltip="save_tooltip"
         class="editor-control"
@@ -42,14 +43,6 @@ export default {
     value: {
       type: Object,
       required: true,
-    },
-    schema: {
-      type: Object,
-      default: () => ({}),
-    },
-    schemaRefs: {
-      type: Object,
-      default: () => ({}),
     },
   },
   data() {
