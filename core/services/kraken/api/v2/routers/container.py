@@ -1,7 +1,7 @@
 from functools import wraps
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Optional, Tuple
 
-from commonwealth.utils.streaming import timeout_streamer
+from commonwealth.utils.streaming import streamer, timeout_streamer
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 from fastapi_versioning import versioned_api_route
@@ -51,13 +51,17 @@ async def fetch_container(container_name: str) -> ContainerModel:
 
 @container_router_v2.get("/{container_name}/log", status_code=status.HTTP_200_OK)
 @container_to_http_exception
-async def fetch_log_by_container_name(container_name: str) -> StreamingResponse:
+async def fetch_log_by_container_name(container_name: str, timeout: Optional[int] = None) -> StreamingResponse:
     """
-    Get logs of a given container in a streaming wrapper.
+    Fetch logs of a given container.
+    If timeout is provided, the stream will be closed after no log line is received for the given timeout.
     """
-    return StreamingResponse(
-        timeout_streamer(ContainerManager.get_container_log_by_name(container_name)), media_type="text/plain"
-    )
+    stream = ContainerManager.get_container_log_by_name(container_name)
+
+    if timeout is not None:
+        return StreamingResponse(timeout_streamer(stream, timeout=timeout), media_type="text/plain")
+
+    return StreamingResponse(streamer(stream, heartbeats=0.1), media_type="text/plain")
 
 
 @container_router_v2.get("/stats", status_code=status.HTTP_200_OK)

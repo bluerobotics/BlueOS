@@ -1,6 +1,6 @@
-from typing import Any, List, cast
+from typing import Any, List, Optional, cast
 
-from commonwealth.utils.streaming import timeout_streamer
+from commonwealth.utils.streaming import streamer, timeout_streamer
 from fastapi import APIRouter, status
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi_versioning import versioned_api_route
@@ -37,10 +37,17 @@ async def list_containers() -> Any:
 
 
 @index_router_v1.get("/log", status_code=status.HTTP_200_OK, response_class=PlainTextResponse)
-async def log_containers(container_name: str) -> StreamingResponse:
-    return StreamingResponse(
-        timeout_streamer(ContainerManager.get_container_log_by_name(container_name)), media_type="text/plain"
-    )
+async def log_containers(container_name: str, timeout: Optional[int] = None) -> StreamingResponse:
+    """
+    Fetch logs of a given container.
+    If timeout is provided, the stream will be closed after no log line is received for the given timeout.
+    """
+    stream = ContainerManager.get_container_log_by_name(container_name)
+
+    if timeout is not None:
+        return StreamingResponse(timeout_streamer(stream, timeout=timeout), media_type="text/plain")
+
+    return StreamingResponse(streamer(stream, heartbeats=0.1), media_type="text/plain")
 
 
 @index_router_v1.get("/stats", status_code=status.HTTP_200_OK)
