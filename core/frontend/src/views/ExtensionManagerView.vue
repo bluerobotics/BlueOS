@@ -26,11 +26,25 @@
       width="80%"
     >
       <v-card>
-        <v-card-text>
-          <!-- eslint-disable -->
-          <pre class="logs" v-html="log_output" />
-          <!-- eslint-enable -->
-        </v-card-text>
+        <v-app-bar dense>
+          <v-spacer />
+          <v-toolbar-title>
+            {{ log_info_output }}
+          </v-toolbar-title>
+          <v-spacer />
+          <v-checkbox
+            v-model="follow_logs"
+            label="Follow Logs"
+            hide-details
+          />
+        </v-app-bar>
+        <v-sheet>
+          <v-card-text ref="logContainer" class="scrollable-content">
+            <!-- eslint-disable -->
+            <pre class="logs" v-html="log_output" />
+            <!-- eslint-enable -->
+          </v-card-text>
+        </v-sheet>
       </v-card>
     </v-dialog>
     <v-toolbar>
@@ -161,7 +175,7 @@
 
 <script lang="ts">
 import AnsiUp from 'ansi_up'
-import axios from 'axios'
+import axios, { CancelTokenSource } from 'axios'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -221,8 +235,11 @@ export default Vue.extend({
       download_percentage: 0,
       extraction_percentage: 0,
       status_text: '',
-      log_output: null as null | string,
       show_log: false,
+      follow_logs: true,
+      log_abort_controller: null as null | CancelTokenSource,
+      log_output: null as null | string,
+      log_info_output: null as null | string,
       metrics: {} as Dictionary<{ cpu: number, memory: number}>,
       metrics_interval: 0,
       edited_extension: null as null | InstalledExtensionData & { editing: boolean },
@@ -247,6 +264,26 @@ export default Vue.extend({
       }
 
       return this.manifest as ExtensionData[]
+    },
+  },
+  watch: {
+    show_log: {
+      handler(val) {
+        if (!val) {
+          this.log_abort_controller?.cancel()
+        }
+      },
+      immediate: true,
+    },
+    follow_logs: {
+      handler(val) {
+        if (val) {
+          const logContainer = this.$refs.logContainer as HTMLElement
+          if (logContainer) {
+            logContainer.scrollTop = logContainer.scrollHeight
+          }
+        }
+      },
     },
   },
   mounted() {
@@ -410,61 +447,58 @@ export default Vue.extend({
         })
     },
     async showLogs(extension: InstalledExtensionData) {
-      this.setLoading(extension, true)
-      const ansi = new AnsiUp()
+      this.log_abort_controller = axios.CancelToken.source()
       this.log_output = ''
+      this.log_info_output = `Awaiting logs for ${extension.name}`
+      this.show_log = true
+      let outputBuffer = ''
 
-      back_axios({
-        method: 'get',
-        url: `${API_URL}/log`,
-        params: {
-          container_name: this.getContainerName(extension),
-        },
-        onDownloadProgress: (progressEvent) => {
-          const result = aggregateStreamingResponse(
-            parseStreamingResponse(progressEvent.currentTarget.response),
-            (fragment, buffer) => {
-              // If no logs are available kraken will wait till timeout and stop the stream
-              if (fragment.status === 408) {
-                if (!buffer) {
-                  this.$set(this, 'log_output', ansi.ansi_to_html('No Logs available'))
-                }
-              } else {
-                notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', fragment.error)
+      const containerName = `extension-${(extension.docker + extension.tag).replace(/[^a-zA-Z0-9]/g, '')}`
+      const fetchLogs = (): void => {
+        const ansi = new AnsiUp()
+        let lastDecode = ''
+
+        back_axios({
+          method: 'get',
+          url: `${API_URL}/log`,
+          params: {
+            container_name: containerName,
+          },
+          onDownloadProgress: (progressEvent) => {
+            const result = aggregateStreamingResponse(
+              parseStreamingResponse(progressEvent.currentTarget.response),
+              (_, buffer) => Boolean(buffer),
+            )
+
+            if (result) {
+              lastDecode = ansi.ansi_to_html(result)
+              this.log_info_output = `Logs for ${extension.name}`
+              this.$set(this, 'log_output', outputBuffer + lastDecode)
+            }
+            this.$nextTick(() => {
+              const logContainer = this.$refs.logContainer as HTMLElement
+              if (this.follow_logs && logContainer) {
+                logContainer.scrollTop = logContainer.scrollHeight
               }
-
-              /** Only stops if buffer is empty */
-              return Boolean(buffer)
-            },
-          )
-
-          if (result) {
-            this.$set(this, 'log_output', ansi.ansi_to_html(result))
-          }
-          this.show_log = true
-          this.setLoading(extension, false)
-          this.$nextTick(() => {
-            // TODO: find a better way to scroll to bottom
-            const output = document.querySelector(
-              '#app > div.v-dialog__content.v-dialog__content--active > div',
-            ) as HTMLInputElement
-            if (!output) {
+            })
+          },
+          cancelToken: this.log_abort_controller?.token,
+        })
+          .then(() => {
+            outputBuffer += lastDecode
+            this.log_info_output = `Reconnecting to ${extension.name}`
+            setTimeout(fetchLogs, 500)
+          })
+          .catch((error) => {
+            if (axios.isCancel(error)) {
               return
             }
-            output.scrollTop = output.scrollHeight
+
+            notifier.pushBackError('EXTENSIONS_LOGS_FETCH_FAIL', error)
           })
-        },
-        timeout: 35000,
-      })
-        .then(() => {
-          this.setLoading(extension, false)
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_LOG_FETCH_FAIL', error)
-        })
-        .finally(() => {
-          this.setLoading(extension, false)
-        })
+      }
+
+      fetchLogs()
     },
     showModal(extension: ExtensionData) {
       this.show_dialog = true
@@ -688,7 +722,7 @@ export default Vue.extend({
 pre.logs {
   color:white;
   background: black;
-  padding: 15px;
+  padding: 10px;
   overflow-x: scroll;
 }
 
@@ -704,5 +738,10 @@ pre.logs {
 
 .tab-text {
   white-space: nowrap !important;
+}
+
+.scrollable-content {
+  max-height: calc(80vh - 64px);
+  overflow-y: auto;
 }
 </style>
