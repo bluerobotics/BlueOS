@@ -43,21 +43,46 @@ def streaming_response(fragment: int, data: str | bytes) -> str:
     return response_line(StreamingResponse(fragment=fragment, data=data_encoded, status=status.HTTP_200_OK))
 
 
-async def streamer(gen: AsyncGenerator[str | bytes, None]) -> AsyncGenerator[str, None]:
+async def streamer(gen: AsyncGenerator[str | bytes, None], heartbeats: float = -1.0) -> AsyncGenerator[str, None]:
     """
     Streamer wrapper for async generators and provide a consistent response format
     with error handling. Data is encoded in base64 to avoid any new line jsons conflicts.
     """
 
-    fragment = 0
-    try:
-        async for data in gen:
-            yield streaming_response(fragment, data)
-            fragment += 1
-    except StackedHTTPException as e:
-        yield streaming_stack_exception(fragment, e)
-    except Exception as e:
-        yield streaming_error_exception(fragment, e)
+    async def send_heartbeat(period: float, queue: asyncio.Queue[Optional[str]]) -> None:
+        while True:
+            await asyncio.sleep(period)
+            await queue.put(streaming_response(-1, "heartbeat"))
+
+    queue: asyncio.Queue[Optional[str]] = asyncio.Queue()
+
+    if heartbeats > 0:
+        heartbeat_task = asyncio.create_task(send_heartbeat(heartbeats, queue))
+    else:
+        heartbeat_task = None
+
+    async def generator_wrapper(gen: AsyncGenerator[str | bytes, None], queue: asyncio.Queue[Optional[str]]) -> None:
+        fragment = 0
+        try:
+            async for data in gen:
+                await queue.put(streaming_response(fragment, data))
+                fragment += 1
+        except StackedHTTPException as e:
+            await queue.put(streaming_stack_exception(fragment, e))
+        except Exception as e:
+            await queue.put(streaming_error_exception(fragment, e))
+        finally:
+            if heartbeat_task:
+                heartbeat_task.cancel()
+            await queue.put(None)
+
+    asyncio.create_task(generator_wrapper(gen, queue))
+
+    while True:
+        item = await queue.get()
+        if item is None:
+            break
+        yield item
 
 
 async def _fetch_stream(
