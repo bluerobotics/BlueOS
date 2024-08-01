@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
+from aiocache import cached
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
@@ -56,6 +57,7 @@ async def network_status() -> Any:
 
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
 @version(1, 0)
+@cached(ttl=15, namespace="scan")
 async def scan() -> Any:
     logger.info("Trying to perform network scan.")
     try:

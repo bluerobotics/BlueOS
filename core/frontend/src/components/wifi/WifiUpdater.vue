@@ -20,7 +20,7 @@ export default Vue.extend({
     callPeriodically(this.fetchSavedNetworks, 5000)
     callPeriodically(this.fetchNetworkStatus, 5000)
     callPeriodically(this.fetchHotspotStatus, 10000)
-    callPeriodically(this.fetchAvailableNetworks, 20000)
+    callPeriodically(this.fetchAvailableNetworks, 6000)
     callPeriodically(this.fetchHotspotCredentials, 10000)
   },
   methods: {
@@ -101,7 +101,7 @@ export default Vue.extend({
       await back_axios({
         method: 'get',
         url: `${wifi.API_URL}/scan`,
-        timeout: 20000,
+        timeout: 5000,
       })
         .then((response) => {
           const saved_networks_ssids = wifi.saved_networks?.map((network: SavedNetwork) => network.ssid)

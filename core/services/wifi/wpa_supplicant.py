@@ -4,6 +4,7 @@ import os
 import socket
 import time
 from pathlib import Path
+from threading import Lock
 from typing import Optional, Tuple, Union
 
 from loguru import logger
@@ -17,6 +18,7 @@ class WPASupplicant:
 
     def __init__(self) -> None:
         self.sock: Optional[socket.socket] = None
+        self.lock = Lock()
 
     def __del__(self) -> None:
         if self.sock:
@@ -56,12 +58,15 @@ class WPASupplicant:
             timeout {float} -- Maximum time (in seconds) allowed for receiving an answer before raising a BusyError
         """
         assert self.sock, "No socket assigned to WPA Supplicant"
+        # pylint: disable=consider-using-with
+        self.lock.acquire()
 
         timeout_start = time.time()
         while time.time() - timeout_start < timeout:
             try:
                 self.sock.send(command.encode("utf-8"))
                 data, _ = self.sock.recvfrom(self.BUFFER_SIZE)
+                logger.debug(data)
             except Exception as error:
                 # Oh my, something is wrong!
                 # For now, let us report the error but not without recreating the socket
@@ -72,15 +77,24 @@ class WPASupplicant:
                     self.run(self.target)
                 except Exception as inner_error:
                     logger.error(f"Failed to send command and failed to recreate wpa socket: {inner_error}")
+                self.lock.release()
                 raise SockCommError(error_message) from error
 
             if b"FAIL-BUSY" in data:
                 logger.info(f"Busy during {command} operation. Trying again...")
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(1)
+                continue
+            if b"CTRL-EVENT-SCAN-STARTED" in data:
+                logger.info(f"Scan started during {command} operation. Waiting for results...")
+                await asyncio.sleep(1)
                 continue
             break
         else:
+            self.lock.release()
             raise BusyError(f"{command} operation took more than specified timeout ({timeout}). Cancelling.")
+
+        if self.lock.locked():
+            self.lock.release()
 
         if data == b"FAIL":
             raise WPAOperationFail(f"WPA operation {command} failed.")
@@ -234,6 +248,33 @@ class WPASupplicant:
             command before connecting.
         """
         return await self.send_command("DISCONNECT", timeout)
+
+    async def send_command_autoscan(self, parameter: str, timeout: float = 1) -> bytes:
+        """Send message: AUTOSCAN
+
+        Automatic scan
+        This is an optional set of parameters for automatic scanning
+          within an interface in following format:
+        autoscan=<autoscan module name>:<module parameters>
+          autoscan is like bgscan but on disconnected or inactive state.
+          For instance, on exponential module parameters would be <base>:<limit>
+        autoscan=exponential:3:300
+          Which means a delay between scans on a base exponential of 3,
+          up to the limit of 300 seconds (3, 9, 27 ... 300)
+          For periodic module, parameters would be <fixed interval>
+        autoscan=periodic:30
+          So a delay of 30 seconds will be applied between each scan.
+          Note: If sched_scan_plans are configured and supported by the driver,
+          autoscan is ignored.
+        """
+        return await self.send_command(f"AUTOSCAN {parameter}", timeout)
+
+    async def send_command_scan_interval(self, seconds: int, timeout: float = 1) -> bytes:
+        """Send message: SCAN_INTERVAL
+
+        scan interval in seconds.
+        """
+        return await self.send_command(f"SCAN_INTERVAL {seconds}", timeout)
 
     async def send_command_scan(self, timeout: float = 1) -> bytes:
         """Send message: SCAN
