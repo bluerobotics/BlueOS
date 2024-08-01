@@ -17,5 +17,10 @@ parallel --halt now,fail=1 '/home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
 
 # Tools that uses apt to do the installation
 # APT is terrible like pip and don't know how to handle parallel installation
-# This section is empty as all got moved up to our base image, but this is the
-# section where new ones would go if we don't want then in the base image
+# this is the section where apt stuff gets installed until we move them up to
+# blueos-base
+
+apt update
+apt install -y --no-install-recommends fuse libfuse2
+apt clean
+rm -rf /var/lib/apt/lists/*
