@@ -101,6 +101,15 @@ export class OneMoreTime {
   }
 
   /**
+   * Sets a new delay value to be used in the next call.
+   * @param {number} delay The new delay value in ms.
+   * @returns {void}
+   */
+  setDelay(delay: number): void {
+    this.options.delay = delay
+  }
+
+  /**
    * Begins or resumes the execution of the set action at intervals specified by `delay`.
    */
   async start(): Promise<void> {
