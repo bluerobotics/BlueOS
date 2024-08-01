@@ -303,16 +303,21 @@ class Helper:
 
         return request_response
 
+    # pylint: disable=too-many-arguments,too-many-branches
     @staticmethod
-    @temporary_cache(timeout_seconds=1)  # a temporary cache helps us deal with changes in metadata
-    def detect_service(port: int) -> ServiceInfo:
+    @temporary_cache(timeout_seconds=2)  # a temporary cache helps us deal with changes in metadata
+    def detect_service(port: int, retries: int = 3) -> ServiceInfo:
         path = port_to_service_map.get(port)
         info = ServiceInfo(valid=False, title="Unknown", documentation_url="", versions=[], port=port, path=path)
 
-        response = Helper.simple_http_request(
-            "127.0.0.1", port=port, path="/", timeout=1.0, method="GET", follow_redirects=10
-        )
         log_msg = f"Detecting service at port {port}"
+        for _ in range(retries):
+            response = Helper.simple_http_request(
+                "127.0.0.1", port=port, path="/", timeout=2.0, method="GET", follow_redirects=10
+            )
+            if response.status is not None:
+                break
+
         if response.status != http.client.OK:
             # If not valid web server, documentation will not be available
             logger.debug(f"{log_msg}: Invalid: {response.status} - {response.decoded_data}")
