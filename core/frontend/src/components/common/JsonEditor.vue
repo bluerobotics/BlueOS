@@ -13,6 +13,7 @@
 
       <v-divider />
 
+      <slot name="controls" />
       <v-btn
         v-tooltip="save_tooltip"
         class="editor-control"

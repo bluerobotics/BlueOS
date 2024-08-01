@@ -35,6 +35,8 @@ SERVICES=(
 
 # We need to install loguru, appdirs and pydantic since they may be used inside setup.py
 python -m pip install appdirs==1.4.4 loguru==0.5.3 pydantic==1.10.12
+# Install the BlueOS Extensions Repository
+python -m pip install  https://github.com/JoaoMario109/BlueOS-Extensions-Repository/tarball/0.0.1\#egg\=blueos-extensions-repository
 
 for SERVICE in "${SERVICES[@]}"; do
     echo "Installing service: $SERVICE"
