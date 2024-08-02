@@ -79,7 +79,7 @@ async def restart() -> Any:
 if __name__ == "__main__":
     maximum_number_of_bytes = 2 * (2**30)  # 2 GBs
     app = connexion.AioHttpApp(__name__, specification_dir="openapi/")
-    app.add_api("versionchooser.yaml", arguments={"title": "TummlerOS Version Chooser"}, pass_context_arg_name="request")
+    app.add_api("versionchooser.yaml", arguments={"title": "BlueOS Version Chooser"}, pass_context_arg_name="request")
     app.app._client_max_size = maximum_number_of_bytes
     app.app.router.add_static("/static/", path=str(STATIC_FOLDER))
     app.app.router.add_route("GET", "/", index)
