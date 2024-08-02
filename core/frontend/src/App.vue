@@ -305,10 +305,10 @@
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://bluerobotics.com"
+            href="https://tummler.ir"
             style="text-decoration:none;"
           >
-            Blue Robotics
+            Tummler ROV
           </a>
         </span>
       </v-container>
