@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Set desired version to be installed
+DOCKER_USER="goaschris"  # couldnt work out where to place this var
 VERSION="${VERSION:-master}"
 GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 DOCKER_USER=${DOCKER_USER:-$(echo $GITHUB_REPOSITORY | cut -d'/' -f1)}

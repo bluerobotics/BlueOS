@@ -95,7 +95,7 @@ jobs:
         run: |
           # Deploy image with the name of the branch, if the build is a git tag, replace tag with the tag name.
           # If git tag matches semver, append latest tag to the push.
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
+          DOCKER_IMAGE=${DOCKER_USERNAME:-goaschris}/${{ matrix.project }}-${{ matrix.docker }}
           VERSION=${GITHUB_REF##*/}
 
           if [[ $GITHUB_REF == refs/tags/* ]]; then
@@ -141,7 +141,7 @@ jobs:
         run: |
           # Pull latest version of image to help with build speed
           for platform in $(echo ${{ matrix.platforms }} | tr ',' '\n'); do
-            docker pull --platform ${platform} ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}:master || true
+            docker pull --platform ${platform} ${DOCKER_USERNAME:-goaschris}/${{ matrix.project }}-${{ matrix.docker }}:master || true
           done
           docker buildx build \
             --output "type=image,push=false" \
@@ -153,7 +153,7 @@ jobs:
         run: |
           # Check if the image size is lower than our limit
           docker image list
-          IMAGE_ID=$(docker images -q ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }} | head -n 1)
+          IMAGE_ID=$(docker images -q ${DOCKER_USERNAME:-goaschris}/${{ matrix.project }} | head -n 1)
           LIMIT_SIZE_MB=700
           IMAGE_SIZE_MB=$(( $(docker inspect $IMAGE_ID --format {{.Size}})/(2**20) ))
           echo "Core size is: $IMAGE_SIZE_MB MB"
@@ -183,7 +183,7 @@ jobs:
       - name: Create image artifact
         if: success() && matrix.docker == 'core'
         run: |
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
+          DOCKER_IMAGE=${DOCKER_USERNAME:-goaschris}/${{ matrix.project }}-${{ matrix.docker }}
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
           docker buildx build \
             ${{ steps.prepare.outputs.buildx_args }} \
@@ -201,7 +201,7 @@ jobs:
       - name: Create image artifact
         if: success() && matrix.docker == 'core'
         run: |
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
+          DOCKER_IMAGE=${DOCKER_USERNAME:-goaschris}/${{ matrix.project }}-${{ matrix.docker }}
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
           docker buildx build \
             ${{ steps.prepare.outputs.buildx_args }} \
@@ -219,7 +219,7 @@ jobs:
       - name: Create image artifact
         if: success() && matrix.docker == 'core'
         run: |
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
+          DOCKER_IMAGE=${DOCKER_USERNAME:-goaschris}/${{ matrix.project }}-${{ matrix.docker }}
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
           docker buildx build \
             ${{ steps.prepare.outputs.buildx_args }} \
@@ -247,12 +247,12 @@ jobs:
 
   deploy-raspberry-image:
     needs: deploy-docker-images
-    if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
+    if: github.event_name != 'pull_request' && github.repository_owner == 'MithalAS'
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
-    runs-on: blueos-ci
+    runs-on: pi-blueos
     # The runner for this job is a Raspberry Pi OS Bullseye.
     # Just install docker (curl -sSL https://get.docker.com/ | sh) and follow the instructions for setting up a new runner in
-    # https://github.com/bluerobotics/BlueOS-docker/settings/actions/runners/new
+    # https://github.com/MithalAS/BlueOS/settings/actions/runners/new
 
     strategy:
       matrix:

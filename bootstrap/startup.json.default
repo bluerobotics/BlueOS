@@ -1,7 +1,7 @@
 {
     "core": {
         "tag": "factory",
-        "image": "bluerobotics/blueos-core",
+        "image": "goaschris/blueos-core",
         "enabled": true,
         "webui": false,
         "network": "host",
