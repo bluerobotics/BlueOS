@@ -2,7 +2,7 @@
 
 # Extensions data fetch, use for Extensions that are synced by some online source
 
-COCKPIT_RELEASE_URL="https://api.github.com/repos/bluerobotics/cockpit/releases/latest"
+COCKPIT_RELEASE_URL="https://api.github.com/repos/goasChris/cockpit/releases"
 MAJOR_TOM_RELEASE_URL="https://blueos.cloud/major_tom/install"
 
 response=$(curl -fsSL $COCKPIT_RELEASE_URL)
@@ -35,7 +35,7 @@ echo "Using major tom: $major_tom_docker:$major_tom_tag"
 
 # Images pulling
 
-BLUEROBOTICS_COCKPIT_EXT="bluerobotics/cockpit:$cockpit_tag_name"
+BLUEROBOTICS_COCKPIT_EXT="goaschris/cockpit:$cockpit_tag_name"
 BLUEROBOTICS_MAJOR_TOM_EXT="$major_tom_docker:$major_tom_tag"
 
 docker pull $BLUEROBOTICS_COCKPIT_EXT
@@ -60,10 +60,10 @@ cat > "${SETTINGS_BASE_DIR}/settings-2.json" <<EOF
   "VERSION": 2,
   "extensions": [
     {
-      "docker": "bluerobotics/cockpit",
+      "docker": "goaschris/cockpit",
       "enabled": true,
-      "identifier": "bluerobotics.cockpit",
-      "name": "Cockpit",
+      "identifier": "goaschris.cockpit",
+      "name": "RemoraCockpit",
       "permissions": "{\"ExposedPorts\":{\"8000/tcp\":{}},\"HostConfig\":{\"PortBindings\":{\"8000/tcp\":[{\"HostPort\":\"\"}]}}}",
       "tag": "$cockpit_tag_name",
       "user_permissions": ""
