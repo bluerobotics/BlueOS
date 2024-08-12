@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import './cosmos'
 import '@/style/css/vuetify-global.css'
 import '@/style/css/animations.css'
@@ -9,6 +10,7 @@ import JsonViewer from 'vue-json-viewer'
 import VueTooltipDirective from 'vue-tooltip-directive'
 import VueDraggable from 'vuedraggable'
 import Vuetify from 'vuetify/lib'
+import * as Sentry from "@sentry/vue";
 
 import App from './App.vue'
 import DefaultTooltip from './components/common/DefaultTooltip.vue'
@@ -32,6 +34,28 @@ Vue.component('Draggable', VueDraggable)
 Vue.component('VTour', VTour)
 Vue.component('VStep', VStep)
 Vue.prototype.$tours = {}
+
+const project = 'BlueOS'
+// Avoid logging local development
+const version = import.meta.env.VITE_APP_GIT_DESCRIBE
+const release = `${project}@${version}`
+console.info(`Running: ${release}`)
+if (version) {
+  Sentry.init({
+    Vue,
+    release: release,
+    dsn: "https://d87285a04a74f71aac13445f60506708@o4507696465707008.ingest.us.sentry.io/4507765318615040",
+    integrations: [
+      Sentry.browserTracingIntegration({ router }),
+      Sentry.replayIntegration(),
+    ],
+    tracesSampleRate: 1.0,
+    tracePropagationTargets: [],
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+    transport: Sentry.makeBrowserOfflineTransport(Sentry.makeFetchTransport),
+  })
+}
 
 new Vue({
   router,
