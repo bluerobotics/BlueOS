@@ -195,7 +195,7 @@ class Helper:
     SKIP_PORTS: Set[int] = {
         22,  # SSH
         80,  # BlueOS
-        443, # BlueOS TLS
+        443,  # BlueOS TLS
         6021,  # Mavlink Camera Manager's WebRTC signaller
         8554,  # Mavlink Camera Manager's RTSP server
         5777,  # ardupilot-manager's Mavlink TCP Server
