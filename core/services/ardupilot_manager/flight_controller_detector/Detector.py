@@ -35,7 +35,7 @@ class Detector:
                 ADS1115_address = 0x48
                 bus.read_byte_data(ADS1115_address, 0)
 
-                AK09915_address = 0x0C
+                AK09915_address = 0x0D
                 bus.read_byte_data(AK09915_address, 0)
 
                 BME280_address = 0x76
