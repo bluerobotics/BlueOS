@@ -31,12 +31,13 @@ class Detector:
 
         def is_navigator_r5_connected() -> bool:
             try:
+                bus = SMBus(0)
+                AK09915_address = 0x0C
+                bus.read_byte_data(AK09915_address, 0)
+                
                 bus = SMBus(1)
                 ADS1115_address = 0x48
                 bus.read_byte_data(ADS1115_address, 0)
-
-                AK09915_address = 0x0C
-                bus.read_byte_data(AK09915_address, 0)
 
                 BME280_address = 0x76
                 bus.read_byte_data(BME280_address, 0)
