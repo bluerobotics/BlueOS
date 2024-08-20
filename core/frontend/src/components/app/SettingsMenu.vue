@@ -71,6 +71,37 @@
           <v-divider />
 
           <v-card-title class="align-center">
+            MAVLink Log Files ({{ mavlink_log_folder_size }})
+          </v-card-title>
+
+          <v-card-actions class="flex-row">
+            <v-btn
+              v-tooltip="'Download logs from MAVLink'"
+              class="ma-2"
+              @click="download_mavlink_log_files"
+            >
+              <v-icon left>
+                mdi-folder-download
+              </v-icon>
+              Download
+            </v-btn>
+
+            <v-btn
+              v-tooltip="'Frees up space on the SD card deleting MAVLink logs'"
+              class="ma-2"
+              :disabled="disable_remove_mavlink"
+              @click="remove_mavlink_log_files"
+            >
+              <v-icon left>
+                mdi-trash-can
+              </v-icon>
+              Remove
+            </v-btn>
+          </v-card-actions>
+
+          <v-divider />
+
+          <v-card-title class="align-center">
             Run Vehicle Configuration Wizard
           </v-card-title>
 
@@ -122,17 +153,24 @@ export default Vue.extend({
   data() {
     return {
       disable_remove: true,
+      disable_remove_mavlink: true,
       log_folder_size: null as null | string,
+      mavlink_log_folder_size: null as null | string,
       show_dialog: false,
       show_reset_dialog: false,
     }
   },
   async mounted() {
     await this.get_log_folder_size()
+    await this.get_mavlink_log_folder_size()
   },
   methods: {
     async download_service_log_files(): Promise<void> {
       const folder = await filebrowser.fetchFolder('system_logs')
+      await filebrowser.downloadFolder(folder)
+    },
+    async download_mavlink_log_files(): Promise<void> {
+      const folder = await filebrowser.fetchFolder('ardupilot_logs/logs')
       await filebrowser.downloadFolder(folder)
     },
     async get_log_folder_size(): Promise<void> {
@@ -149,6 +187,22 @@ export default Vue.extend({
         })
         .catch((error) => {
           notifier.pushBackError('GET_SERVICES_LOG_SIZE', error)
+        })
+    },
+    async get_mavlink_log_folder_size(): Promise<void> {
+      await back_axios({
+        url: `${API_URL}/services/check_mavlink_log_folder_size`,
+        method: 'get',
+        timeout: 30000,
+      })
+        .then((response) => {
+          const folder_data_bytes = response.data
+          const one_hundred_MB = 100 * 2 ** 20
+          this.disable_remove_mavlink = folder_data_bytes < one_hundred_MB
+          this.mavlink_log_folder_size = prettifySize(folder_data_bytes / 1024)
+        })
+        .catch((error) => {
+          notifier.pushBackError('GET_MAVLINK_LOG_SIZE', error)
         })
     },
     async reset_settings(): Promise<void> {
@@ -174,13 +228,30 @@ export default Vue.extend({
         params: {
           i_know_what_i_am_doing: true,
         },
-        timeout: 2000,
+        timeout: 5000,
       })
         .then(() => {
           this.get_log_folder_size()
         })
         .catch((error) => {
           notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
+        })
+      this.showDialog(false)
+    },
+    async remove_mavlink_log_files(): Promise<void> {
+      await back_axios({
+        url: `${API_URL}/services/remove_mavlink_log`,
+        method: 'post',
+        params: {
+          i_know_what_i_am_doing: true,
+        },
+        timeout: 5000,
+      })
+        .then(() => {
+          this.get_mavlink_log_folder_size()
+        })
+        .catch((error) => {
+          notifier.pushBackError('REMOVE_MAVLINK_LOG_FAIL', error)
         })
       this.showDialog(false)
     },
