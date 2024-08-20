@@ -21,6 +21,7 @@ from loguru import logger
 
 SERVICE_NAME = "commander"
 LOG_FOLDER_PATH = os.environ.get("BLUEOS_LOG_FOLDER_PATH", "/var/logs/blueos")
+MAVLINK_LOG_FOLDER_PATH = os.environ.get("BLUEOS_MAVLINK_LOG_FOLDER_PATH", "/shortcuts/ardupilot_logs/logs/")
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
@@ -176,10 +177,25 @@ async def remove_log_services(i_know_what_i_am_doing: bool = False) -> Any:
     delete_everything(Path(LOG_FOLDER_PATH))
 
 
+@app.post("/services/remove_mavlink_log", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def remove_mavlink_log_services(i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    delete_everything(Path(MAVLINK_LOG_FOLDER_PATH))
+
+
 @app.get("/services/check_log_folder_size", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def check_log_folder_size() -> Any:
     log_path = Path(LOG_FOLDER_PATH)
+    # Return the total size in bytes
+    return sum(file.stat().st_size for file in log_path.glob("**/*") if file.is_file())
+
+
+@app.get("/services/check_mavlink_log_folder_size", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def check_mavlink_log_folder_size() -> Any:
+    log_path = Path(MAVLINK_LOG_FOLDER_PATH)
     # Return the total size in bytes
     return sum(file.stat().st_size for file in log_path.glob("**/*") if file.is_file())
 
