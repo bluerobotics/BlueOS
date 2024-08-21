@@ -11,6 +11,7 @@ from warnings import warn
 import docker
 import requests
 from loguru import logger
+import urllib3
 
 
 class Bootstrapper:
@@ -248,6 +249,7 @@ class Bootstrapper:
     def run(self) -> None:
         """Runs the bootstrapper"""
         logger.info(f"Starting bootstrap {self.bootstrap_version()}")
+        urllib3.disable_warnings()
         while True:
             time.sleep(5)
             for image in self.read_config_file():
