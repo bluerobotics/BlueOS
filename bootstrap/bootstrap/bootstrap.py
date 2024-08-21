@@ -10,8 +10,8 @@ from warnings import warn
 
 import docker
 import requests
-from loguru import logger
 import urllib3
+from loguru import logger
 
 
 class Bootstrapper:
