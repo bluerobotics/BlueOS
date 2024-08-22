@@ -1,6 +1,7 @@
 import asyncio
 import os
 import pathlib
+import select
 import subprocess
 import time
 from copy import deepcopy
@@ -71,6 +72,26 @@ class ArduPilotManager(metaclass=Singleton):
         self.remove_old_logs()
         self.current_sitl_frame = self.load_sitl_frame()
 
+    def consume_output(self):
+        # logger.debug("Consuming output...")
+        if self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is None:
+            output_streams = [self.ardupilot_subprocess.stdout, self.ardupilot_subprocess.stderr]
+            fd_list = [stream.fileno() for stream in output_streams]
+
+            # Use select to check for available data on the file descriptors
+            ready_fds, _, _ = select.select(fd_list, [], [], 0)
+
+            for fd in ready_fds:
+                # Find the corresponding stream and read the available data
+                for stream in output_streams:
+                    if stream.fileno() == fd:
+                        logger.debug(f"Reading from {stream.name}")
+                        line = os.read(fd, 1024)  # read up to 1024 bytes
+                        if line:
+                            # Process the line of output
+                            logger.info(f"Autopilot: {line}")
+        # logger.debug(f"done")
+
     def remove_old_logs(self) -> None:
         def need_to_remove_file(file: pathlib.Path) -> bool:
             now = time.time()
@@ -92,6 +113,7 @@ class ArduPilotManager(metaclass=Singleton):
     async def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot when it's not running but was supposed to."""
         while True:
+            self.consume_output()
             process_not_running = (
                 self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
             ) or len(self.running_ardupilot_processes()) == 0
@@ -172,15 +194,16 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.error(e)
         return serials
 
-    def get_serial_cmdlines(self) -> str:
-        cmdlines = [f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()]
-        return " ".join(cmdlines)
+    def get_serial_cmdlines(self) -> List[str]:
+        cmdlines = [[f"-{entry.port}", f"{entry.endpoint}"] for entry in self.get_serials()]
+        flattened_array = [element for tup in cmdlines for element in tup]
+        return flattened_array
 
-    def get_default_params_cmdline(self, platform: Platform) -> str:
+    def get_default_params_cmdline(self, platform: Platform) -> List[str]:
         # check if file exists and return it's path as --defaults parameter
         default_params_path = self.firmware_manager.default_user_params_path(platform)
         if default_params_path.is_file():
-            return f"--defaults {default_params_path}"
+            return ["--defaults", f"{default_params_path}"]
         return ""
 
     async def start_linux_board(self, board: FlightController) -> None:
@@ -224,26 +247,31 @@ class ArduPilotManager(metaclass=Singleton):
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
-        command_line = (
-            f"{firmware_path}"
-            f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
-            f" --log-directory {self.settings.firmware_folder}/logs/"
-            f" --storage-directory {self.settings.firmware_folder}/storage/"
-            f" {self.get_serial_cmdlines()}"
-            f" {self.get_default_params_cmdline(board.platform)}"
-        )
+        command_line = [
+            f"{firmware_path}",
+            f"-A",
+            f"udp:{master_endpoint.place}:{master_endpoint.argument}",
+            f"--log-directory",
+            f"{self.settings.firmware_folder}/logs/",
+            f"--storage-directory",
+            f"{self.settings.firmware_folder}/storage/",
+            *self.get_serial_cmdlines(),
+            *self.get_default_params_cmdline(board.platform),
+        ]
 
         if self.firmware_has_debug_symbols(firmware_path):
             logger.info("Debug symbols found, launching with gdb server...")
-            command_line = f"gdbserver 0.0.0.0:5555 {command_line}"
+            command_line = ["gdbserver", "0.0.0.0:5555", *command_line]
 
         logger.info(f"Using command line: '{command_line}'")
         self.ardupilot_subprocess = subprocess.Popen(
             command_line,
-            shell=True,
+            shell=False,
             encoding="utf-8",
             errors="ignore",
             cwd=self.settings.firmware_folder,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
 
         await self.start_mavlink_manager(master_endpoint)
@@ -327,6 +355,8 @@ class ArduPilotManager(metaclass=Singleton):
                 "--home",
                 "-27.563,-48.459,0.0,270.0",
             ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             shell=False,
             encoding="utf-8",
             errors="ignore",
