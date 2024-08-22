@@ -253,7 +253,8 @@ class ArduPilotManager(metaclass=Singleton):
             raise ValueError(f"Could not find device path for board {board.name}.")
         self._current_board = board
         baudrate = 115200
-        if "px4" in board.name.lower():
+        is_px4 = "px4" in board.name.lower()
+        if is_px4:
             baudrate = 57600
         await self.start_mavlink_manager(
             Endpoint(
@@ -265,6 +266,9 @@ class ArduPilotManager(metaclass=Singleton):
                 protected=True,
             )
         )
+        if is_px4:
+            # PX4 needs at least one initial heartbeat to start sending data
+            await self.vehicle_manager.burst_heartbeat()
 
     def set_sitl_frame(self, frame: SITLFrame) -> None:
         self.current_sitl_frame = frame
