@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Dict, List
 
 from loguru import logger
@@ -47,6 +48,23 @@ class VehicleManager:
             "target_component": self.target_component,
             "confirmation": self.confirmation,
         }
+
+    def command_heartbeat_message(self) -> Dict[str, Any]:
+        return {
+            "type": "HEARTBEAT",
+            "custom_mode": 0,
+            "mavtype": {"type": "MAV_TYPE_ONBOARD_CONTROLLER"},
+            "autopilot": {"type": "MAV_AUTOPILOT_INVALID"},
+            "base_mode": {"bits": 0},
+            "system_status": {"type": "MAV_STATE_STANDBY"},
+            "mavlink_version": 3,
+        }
+
+    async def burst_heartbeat(self) -> None:
+        heartbeat_message = self.command_heartbeat_message()
+        for _ in range(5):
+            await self.mavlink2rest.send_mavlink_message(heartbeat_message)
+            await asyncio.sleep(0.1)
 
     async def request_message(self, message_id: int) -> None:
         message = self.command_long_message("MAV_CMD_REQUEST_MESSAGE", [message_id])
