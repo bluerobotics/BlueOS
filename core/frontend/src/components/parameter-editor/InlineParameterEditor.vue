@@ -20,7 +20,9 @@
       v-else-if="!custom_input && Object.entries(param?.options ?? []).length > 10"
       v-model.number="internal_new_value"
       variant="solo"
+      :loading="waiting_for_param_update"
       :items="as_select_items"
+      :label="label"
     />
     <v-select
       v-else-if="!custom_input && param?.options"
@@ -89,6 +91,10 @@ export default Vue.extend({
       type: String,
       default: '',
     },
+    autoRefreshParams: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -140,6 +146,9 @@ export default Vue.extend({
       }
     },
     internal_new_value() {
+      if (this.autoSet) {
+        this.saveEditedParam()
+      }
       this.$emit('change', this.internal_new_value)
     },
     selected_bitflags() {
@@ -240,6 +249,9 @@ export default Vue.extend({
         autopilot_data.setRebootRequired(false)
       }
       mavlink2rest.setParam(this.param.name, value, autopilot_data.system_id, this.param.paramType.type)
+      if (this.autoRefreshParams) {
+        autopilot_data.reset()
+      }
     },
     updateVariables(): void {
       // Select custom input if value is outside of possible options
