@@ -63,4 +63,12 @@ i.svg-outline-dark path {
 i.svg-outline-light path {
   fill: #002F45;
 }
+
+i.svg-outline-dark text {
+  fill: #D1EAF1 !important;
+}
+
+i.svg-outline-light text {
+  fill: #002F45 !important;
+}
 </style>
