@@ -38,7 +38,7 @@ Vue.prototype.$tours = {}
 const project = 'BlueOS'
 // Avoid logging local development
 const version = import.meta.env.VITE_APP_GIT_DESCRIBE
-const release = `${project}@${version}`
+const release = `${project}@${version}`.replace('tags/', '').replace(/\//g, ':')
 console.info(`Running: ${release}`)
 if (version) {
   Sentry.init({
