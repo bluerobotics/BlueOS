@@ -131,7 +131,7 @@ class Beacon:
         self.manager.save()
 
     def get_vehicle_name(self) -> str:
-        return self.manager.settings.vehicle_name or "BlueROV2"
+        return self.manager.settings.vehicle_name or "Atlas ROV"
 
     def create_async_service_infos(
         self, interface: str, service_name: str, domain_name: str, ip: str

@@ -18,7 +18,7 @@ const menus = [
     icon: 'mdi-account-hard-hat',
     route: '/tools/available-services',
     advanced: true,
-    text: 'List all available services found in BlueOS serving http interfaces, and their'
+    text: 'List all available services found in TummlerOS serving http interfaces, and their'
       + ' respective API documentations.',
   },
   {
@@ -29,18 +29,18 @@ const menus = [
     text: 'Editor for Bag Of Holding service.',
   },
   {
-    title: 'BlueOS Version',
+    title: 'TummlerOS Version',
     icon: 'mdi-cellphone-arrow-down',
     route: '/tools/version-chooser',
     advanced: false,
-    text: 'Manage BlueOS versions and update to the latest available.',
+    text: 'Manage TummlerOS versions and update to the latest available.',
   },
   {
     title: 'File Browser',
     icon: 'mdi-file-tree',
     route: '/tools/file-browser',
     advanced: true,
-    text: 'Browse all the files in BlueOS. Useful for fetching logs,'
+    text: 'Browse all the files in TummlerOS. Useful for fetching logs,'
       + ' tweaking configurations, and development.',
   },
   {

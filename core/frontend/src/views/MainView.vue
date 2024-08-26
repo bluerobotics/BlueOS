@@ -13,7 +13,7 @@
         elevation="2"
         dismissible
       >
-        <h3>Welcome to BlueOS!</h3>
+        <h3>Welcome to TummleraOS!</h3>
         Before you start, we highly recommend <a
           href="https://docs.bluerobotics.com/ardusub-zola/software/onboard/BlueOS-1.0/getting-started/#connect-wifi"
           target="_blank"
@@ -24,7 +24,7 @@
           href="https://docs.bluerobotics.com/ardusub-zola/software/onboard/BlueOS-1.0/getting-started/#select-version"
           target="_blank"
         >
-          system update to the latest available BlueOS version
+          system update to the latest available TummlerOS version
         </a>
         .
       </v-alert>
