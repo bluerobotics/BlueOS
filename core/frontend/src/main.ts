@@ -43,8 +43,8 @@ console.info(`Running: ${release}`)
 if (version) {
   Sentry.init({
     Vue,
-    release: release,
-    dsn: "https://d87285a04a74f71aac13445f60506708@o4507696465707008.ingest.us.sentry.io/4507765318615040",
+    release,
+    dsn: 'https://d87285a04a74f71aac13445f60506708@o4507696465707008.ingest.us.sentry.io/4507765318615040',
     integrations: [
       Sentry.browserTracingIntegration({ router }),
       Sentry.replayIntegration(),
