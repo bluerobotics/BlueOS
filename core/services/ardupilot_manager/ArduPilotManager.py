@@ -360,6 +360,7 @@ class ArduPilotManager(metaclass=Singleton):
                 argument=14000,
                 persistent=True,
                 protected=True,
+                overwrite_settings=True,
             ),
             Endpoint(
                 name="Internal Link",
