@@ -26,6 +26,8 @@ const vuetify = new Vuetify({
         info: DEFAULT_COLORS.INFO,
         warning: DEFAULT_COLORS.WARNING,
         critical: DEFAULT_COLORS.CRITICAL,
+        sheet_bg: DEFAULT_COLORS.SHEET_LIGHT_BG,
+        sheet_bg_complement: DEFAULT_COLORS.SHEET_DARK_BG,
 
         // Colors from Blue Robotics color palette
         br_blue: BR_COLORS.BR_BLUE,
@@ -45,6 +47,8 @@ const vuetify = new Vuetify({
         info: DEFAULT_COLORS.INFO,
         warning: DEFAULT_COLORS.WARNING,
         critical: DEFAULT_COLORS.CRITICAL,
+        sheet_bg: DEFAULT_COLORS.SHEET_DARK_BG,
+        sheet_bg_complement: DEFAULT_COLORS.SHEET_LIGHT_BG,
 
         // Colors from Blue Robotics color palette
         br_blue: BR_COLORS.BR_BLUE,
