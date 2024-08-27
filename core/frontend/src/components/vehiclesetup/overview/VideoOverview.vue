@@ -44,17 +44,23 @@
 import Vue from 'vue'
 
 import VideoThumbnail from '@/components/video-manager/VideoThumbnail.vue'
+import { OneMoreTime } from '@/one-more-time'
 import video from '@/store/video'
 import { Dictionary } from '@/types/common'
 import {
   Device, Format, StreamInformation, VideoEncodeType,
 } from '@/types/video'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'VideoOverview',
   components: {
     VideoThumbnail,
+  },
+  data() {
+    return {
+      fetch_devices_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
+      fetch_streams_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
+    }
   },
   computed: {
     streams() {
@@ -95,12 +101,8 @@ export default Vue.extend({
 
   },
   mounted() {
-    callPeriodically(video.fetchDevices, 20000)
-    callPeriodically(video.fetchStreams, 20000)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(video.fetchDevices)
-    stopCallingPeriodically(video.fetchStreams)
+    this.fetch_devices_task.setAction(video.fetchDevices)
+    this.fetch_streams_task.setAction(video.fetchStreams)
   },
 })
 </script>

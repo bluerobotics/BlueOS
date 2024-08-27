@@ -64,11 +64,11 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import { OneMoreTime } from '@/one-more-time'
 import bridget from '@/store/bridget'
 import system_information from '@/store/system-information'
 import { BridgeWithSerialInfo } from '@/types/bridges'
 import { SerialPortInfo } from '@/types/system-information/serial'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import BridgeCard from './BridgeCard.vue'
@@ -84,6 +84,7 @@ export default Vue.extend({
   data() {
     return {
       show_creation_dialog: false,
+      fetch_serial_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
     }
   },
   computed: {
@@ -104,11 +105,8 @@ export default Vue.extend({
     },
   },
   mounted() {
-    callPeriodically(system_information.fetchSerial, 5000)
+    this.fetch_serial_task.setAction(system_information.fetchSerial)
     bridget.registerObject(this)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(system_information.fetchSerial)
   },
   methods: {
     openCreationDialog(): void {

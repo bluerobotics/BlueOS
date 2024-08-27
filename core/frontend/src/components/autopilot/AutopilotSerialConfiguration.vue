@@ -69,12 +69,12 @@ import Vue from 'vue'
 
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import DevicePathHelper from '@/components/common/DevicePathHelper.vue'
+import { OneMoreTime } from '@/one-more-time'
 import autopilot from '@/store/autopilot_manager'
 import system_information from '@/store/system-information'
 import { SerialEndpoint } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 import back_axios from '@/utils/api'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 import { isIpAddress } from '@/utils/pattern_validators'
 
 import { fetchAutopilotSerialConfiguration } from './AutopilotManagerUpdater'
@@ -100,6 +100,8 @@ export default Vue.extend({
         I: 'Serial 8',
       },
       ports: {} as Dictionary<string | undefined>,
+      fetch_autopilot_serial_config_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      fetch_serial_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
     }
   },
   computed: {
@@ -130,13 +132,9 @@ export default Vue.extend({
     },
   },
   mounted() {
-    callPeriodically(fetchAutopilotSerialConfiguration, 10000)
-    callPeriodically(system_information.fetchSerial, 10000)
+    this.fetch_autopilot_serial_config_task.setAction(fetchAutopilotSerialConfiguration)
+    this.fetch_serial_task.setAction(system_information.fetchSerial)
     this.update_ports(this.current_serial_ports)
-  },
-  beforeDestroy() {
-    stopCallingPeriodically(fetchAutopilotSerialConfiguration)
-    stopCallingPeriodically(system_information.fetchSerial)
   },
   methods: {
     update_ports(new_ports: SerialEndpoint[]) {

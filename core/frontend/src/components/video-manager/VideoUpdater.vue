@@ -5,18 +5,20 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import { OneMoreTime } from '@/one-more-time'
 import video from '@/store/video'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'VideoUpdater',
-  mounted() {
-    callPeriodically(video.fetchDevices, 5000)
-    callPeriodically(video.fetchStreams, 5000)
+  data() {
+    return {
+      fetch_devices_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_streams_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+    }
   },
-  beforeDestroy() {
-    stopCallingPeriodically(video.fetchDevices)
-    stopCallingPeriodically(video.fetchStreams)
+  mounted() {
+    this.fetch_devices_task.setAction(video.fetchDevices)
+    this.fetch_streams_task.setAction(video.fetchStreams)
   },
 })
 </script>

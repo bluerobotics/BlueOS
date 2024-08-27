@@ -6,9 +6,9 @@
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import frontend from '@/store/frontend'
 import { frontend_service } from '@/types/frontend_services'
-import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(frontend_service)
 
@@ -16,6 +16,7 @@ export default Vue.extend({
   name: 'BackendStatusChecker',
   data: () => ({
     backend_offline: false,
+    check_backend_status_task: new OneMoreTime({ delay: 3000, disposeWith: this }),
   }),
   computed: {
     status_text(): string {
@@ -23,7 +24,7 @@ export default Vue.extend({
     },
   },
   mounted() {
-    callPeriodically(this.checkBackendStatus, 3000)
+    this.check_backend_status_task.setAction(this.checkBackendStatus)
   },
   methods: {
     async checkBackendStatus(): Promise<void> {
