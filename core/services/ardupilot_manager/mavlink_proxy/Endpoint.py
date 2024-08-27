@@ -67,7 +67,7 @@ class Endpoint:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             raise NotImplementedError
-        return str(self) == str(other)
+        return str(self) == str(other) and self.connection_type == other.connection_type and self.place == other.place
 
 
 VALID_SERIAL_BAUDRATES = [
