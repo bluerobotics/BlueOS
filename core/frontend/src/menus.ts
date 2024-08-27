@@ -137,6 +137,7 @@ export interface menuItem {
   new_page?: string, // The address will open in a new page
   route?: string, // The option routes to a different address
   submenus?: menuItem[], // Menus that the main option provide
+  disabled?: boolean, // The option is disabled
 }
 
 export default menus

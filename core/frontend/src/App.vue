@@ -202,9 +202,10 @@
 
             <v-list-item
               v-else
-              :to="menu.new_page ? null : menu.route"
+              :to="menu.new_page || menu.disabled ? null : menu.route"
               :target="menu.new_page ? '_blank' : '_self'"
-              :href="menu.extension ? menu.route : undefined"
+              :href="menu.extension && !menu.disabled ? menu.route : undefined"
+              :disabled="menu.disabled"
             >
               <template #default>
                 <v-list-item-icon style="min-width:28px;">
@@ -248,7 +249,26 @@
                     </div>
                   </v-theme-provider>
                   <v-theme-provider
-                    v-if="menu.extension"
+                    v-if="menu.disabled"
+                    dark
+                  >
+                    <div
+                      class="extension-marker ma-0"
+                    >
+                      <v-avatar
+                        class="ma-0"
+                        color="error"
+                        size="15"
+                      >
+                        <v-icon
+                          size="12"
+                          v-text="'mdi-cloud-off'"
+                        />
+                      </v-avatar>
+                    </div>
+                  </v-theme-provider>
+                  <v-theme-provider
+                    v-else-if="menu.extension"
                     dark
                   >
                     <div
@@ -457,6 +477,9 @@ export default Vue.extend({
     build_clicks: 0,
   }),
   computed: {
+    isBehindWebProxy(): boolean {
+      return window.location.host.endsWith('.cloud')
+    },
     topWidgetsName(): string[] {
       return this.widgets.map((item) => item.name)
     },
@@ -502,6 +525,7 @@ export default Vue.extend({
             advanced: false,
             text: service.metadata?.description ?? 'Service text',
             extension: true,
+            disabled: this.isBehindWebProxy && !service.metadata?.works_in_relative_paths,
           }
         })
 
@@ -713,6 +737,9 @@ export default Vue.extend({
       if (service.metadata?.avoid_iframes) {
         const base_url = window.location.origin.split(':').slice(0, 2).join(':')
         return `${base_url}:${service.port}`
+      }
+      if (service.metadata?.works_in_relative_paths) {
+        return `/extensionv2/${service.metadata.sanitized_name}/`
       }
       let address = `/extension/${service?.metadata?.sanitized_name}`
       if (service?.metadata?.new_page) {
