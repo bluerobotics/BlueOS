@@ -6,22 +6,31 @@
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { SavedNetwork, WPANetwork } from '@/types/wifi'
 import back_axios, { backend_offline_error } from '@/utils/api'
-import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(wifi_service)
 
 export default Vue.extend({
   name: 'WifiUpdater',
+  data() {
+    return {
+      fetch_saved_networks_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_network_status_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_hotspot_status_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      fetch_available_networks_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
+      fetch_hotspot_credentials_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+    }
+  },
   mounted() {
-    callPeriodically(this.fetchSavedNetworks, 5000)
-    callPeriodically(this.fetchNetworkStatus, 5000)
-    callPeriodically(this.fetchHotspotStatus, 10000)
-    callPeriodically(this.fetchAvailableNetworks, 20000)
-    callPeriodically(this.fetchHotspotCredentials, 10000)
+    this.fetch_saved_networks_task.setAction(this.fetchSavedNetworks)
+    this.fetch_network_status_task.setAction(this.fetchNetworkStatus)
+    this.fetch_hotspot_status_task.setAction(this.fetchHotspotStatus)
+    this.fetch_available_networks_task.setAction(this.fetchAvailableNetworks)
+    this.fetch_hotspot_credentials_task.setAction(this.fetchHotspotCredentials)
   },
   methods: {
     async fetchNetworkStatus(): Promise<void> {
