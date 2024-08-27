@@ -95,6 +95,9 @@ export default defineConfig(({ command, mode }) => {
         '^/docker': {
           target: SERVER_ADDRESS,
         },
+        '^/extensionv2': {
+          target: SERVER_ADDRESS,
+        },
         '^/file-browser': {
           target: SERVER_ADDRESS,
         },

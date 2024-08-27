@@ -105,6 +105,7 @@ class ServiceMetadata(BaseModel):
     avoid_iframes: Optional[bool]
     api: str
     sanitized_name: Optional[str]
+    works_in_relative_paths: Optional[bool]
 
 
 class ServiceInfo(BaseModel):

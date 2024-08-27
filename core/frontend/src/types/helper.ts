@@ -11,6 +11,7 @@ export interface ServiceMetadata {
     sanitized_name?: string
     extra_query?: string
     avoid_iframes?: boolean
+    works_in_relative_paths?: boolean
 }
 
 export interface Service {
