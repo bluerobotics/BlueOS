@@ -41,6 +41,20 @@
             </v-btn>
 
             <v-btn
+              v-tooltip="'Directly send us a feedback'"
+              class="ma-2"
+              @click="openSimpleReport"
+            >
+              <v-icon
+                left
+                size="20"
+              >
+                mdi-message-text
+              </v-icon>
+              With Simple Report
+            </v-btn>
+
+            <v-btn
               v-tooltip="'Discuss ideas with the community'"
               class="ma-2"
               @click="openDiscuss()"
@@ -61,6 +75,7 @@
 </template>
 
 <script lang="ts">
+import * as Sentry from '@sentry/vue'
 import Vue from 'vue'
 
 export default Vue.extend({
@@ -79,6 +94,37 @@ export default Vue.extend({
     },
     openDiscuss(): void {
       window.open(this.discussUrl(), '_blank')
+    },
+    async openSimpleReport(): Promise<void> {
+      // @ts-expect-error - Theme is not defined in the type
+      const { isDark, currentTheme } = this.$vuetify.theme
+
+      const theme = {
+        background: currentTheme.sheet_bg,
+        foreground: currentTheme.sheet_bg_complement,
+        accentBackground: currentTheme.br_blue,
+        accentForeground: currentTheme.sheet_bg,
+        successColor: currentTheme.success,
+        errorColor: currentTheme.error,
+        border: `1.5px solid ${currentTheme.sheet_bg_complement}26`, // 15% opacity
+        interactiveFilter: `brightness(${isDark ? '150' : '95'}%)`,
+      }
+
+      const feedback = Sentry.feedbackIntegration({
+        colorScheme: 'system',
+        showBranding: false,
+        formTitle: 'Send us a simple report',
+        submitButtonLabel: 'Send Report',
+        messagePlaceholder: 'What\'s the bug? What did you expect? What feedback do you have?',
+        themeLight: theme,
+        themeDark: theme,
+      })
+
+      const form = await feedback.createForm()
+      form.appendToDom()
+
+      this.show_dialog = false
+      form.open()
     },
     discussUrl(): string {
       const url = new URL('https://discuss.bluerobotics.com')
