@@ -102,7 +102,7 @@ PRIORITY_SERVICES=(
     'autopilot',0,"nice --19 $SERVICES_PATH/ardupilot_manager/main.py"
     'cable_guy',0,"$SERVICES_PATH/cable_guy/main.py"
     'video',0,"nice --19 mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --mavlink-system-id $MAV_SYSTEM_ID --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --verbose"
-    'mavlink2rest',0,"mavlink2rest --connect=udpin:127.0.0.1:14000 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
+    'mavlink2rest',0,"mavlink2rest --connect=udpout:127.0.0.1:14001 --server 0.0.0.0:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
 )
 
 SERVICES=(
