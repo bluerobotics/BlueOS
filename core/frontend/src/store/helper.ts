@@ -4,11 +4,11 @@ import {
 } from 'vuex-module-decorators'
 
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { helper_service } from '@/types/frontend_services'
 import { Service, SpeedTestResult } from '@/types/helper'
 import back_axios, { backend_offline_error } from '@/utils/api'
-import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(helper_service)
 
@@ -32,6 +32,14 @@ class PingStore extends VuexModule {
   has_internet = false
 
   services: Service[] = []
+
+  checkInternetAccessTask = new OneMoreTime(
+    { delay: 20000 },
+  )
+
+  updateWebServicesTask = new OneMoreTime(
+    { delay: 5000 },
+  )
 
   @Mutation
   setHasInternet(has_internet: boolean): void {
@@ -147,6 +155,8 @@ class PingStore extends VuexModule {
 export { PingStore }
 
 const ping: PingStore = getModule(PingStore)
-callPeriodically(ping.checkInternetAccess, 20000)
-callPeriodically(ping.updateWebServices, 5000)
+
+ping.checkInternetAccessTask.setAction(ping.checkInternetAccess)
+ping.updateWebServicesTask.setAction(ping.updateWebServices)
+
 export default ping
