@@ -4,11 +4,11 @@ import {
 } from 'vuex-module-decorators'
 
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { Domain } from '@/types/beacon'
 import { beacon_service } from '@/types/frontend_services'
 import back_axios, { backend_offline_error } from '@/utils/api'
-import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(beacon_service)
 
@@ -36,6 +36,18 @@ class BeaconStore extends VuexModule {
   hostname = ''
 
   vehicle_name = ''
+
+  fetchAvailableDomainsTask = new OneMoreTime(
+    { delay: 5000 },
+  )
+
+  fetchIpInfoTask = new OneMoreTime(
+    { delay: 5000 },
+  )
+
+  fetchVehicleAndHostnameTask = new OneMoreTime(
+    { delay: 5000 },
+  )
 
   // eslint-disable-next-line
   @Mutation
@@ -241,7 +253,9 @@ class BeaconStore extends VuexModule {
 export { BeaconStore }
 
 const beacon: BeaconStore = getModule(BeaconStore)
-callPeriodically(beacon.fetchAvailableDomains, 5000)
-callPeriodically(beacon.fetchIpInfo, 5000)
-callPeriodically(beacon.fetchVehicleAndHostname, 5000)
+
+beacon.fetchAvailableDomainsTask.setAction(beacon.fetchAvailableDomains)
+beacon.fetchIpInfoTask.setAction(beacon.fetchIpInfo)
+beacon.fetchVehicleAndHostnameTask.setAction(beacon.fetchVehicleAndHostname)
+
 export default beacon

@@ -4,11 +4,11 @@ import {
 } from 'vuex-module-decorators'
 
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { ping_service } from '@/types/frontend_services'
 import { PingDevice } from '@/types/ping'
 import back_axios from '@/utils/api'
-import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(ping_service)
 
@@ -28,6 +28,10 @@ class PingStore extends VuexModule {
   ping_listeners_number = 0
 
   updating_ping_devices = true
+
+  fetchAvailablePingDevicesTask = new OneMoreTime(
+    { delay: 5000 },
+  )
 
   @Mutation
   setAvailablePingDevices(available_ping_devices: PingDevice[]): void {
@@ -89,5 +93,7 @@ class PingStore extends VuexModule {
 export { PingStore }
 
 const ping: PingStore = getModule(PingStore)
-callPeriodically(ping.fetchAvailablePingDevices, 5000)
+
+ping.fetchAvailablePingDevicesTask.setAction(ping.fetchAvailablePingDevices)
+
 export default ping

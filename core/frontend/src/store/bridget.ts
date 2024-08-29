@@ -4,11 +4,11 @@ import {
 } from 'vuex-module-decorators'
 
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { Bridge } from '@/types/bridges'
 import { bridget_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
-import { callPeriodically } from '@/utils/helper_functions'
 
 const notifier = new Notifier(bridget_service)
 
@@ -33,6 +33,14 @@ class BridgetStore extends VuexModule {
   updating_bridges = true
 
   updating_serial_ports = true
+
+  fetchAvailableBridgesTask = new OneMoreTime(
+    { delay: 5000 },
+  )
+
+  fetchAvailableSerialPortsTask = new OneMoreTime(
+    { delay: 5000 },
+  )
 
   @Mutation
   setUpdatingBridges(updating: boolean): void {
@@ -137,6 +145,8 @@ class BridgetStore extends VuexModule {
 export { BridgetStore }
 
 const bridget: BridgetStore = getModule(BridgetStore)
-callPeriodically(bridget.fetchAvailableBridges, 5000)
-callPeriodically(bridget.fetchAvailableSerialPorts, 5000)
+
+bridget.fetchAvailableBridgesTask.setAction(bridget.fetchAvailableBridges)
+bridget.fetchAvailableSerialPortsTask.setAction(bridget.fetchAvailableSerialPorts)
+
 export default bridget

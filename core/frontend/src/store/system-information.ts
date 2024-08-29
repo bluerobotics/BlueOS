@@ -7,6 +7,7 @@ import {
 } from 'vuex-module-decorators'
 
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { system_information_service } from '@/types/frontend_services'
 import { KernelMessage } from '@/types/system-information/kernel'
@@ -17,7 +18,6 @@ import {
   CPU, Disk, Info, Memory, Network, Process, System, Temperature,
 } from '@/types/system-information/system'
 import back_axios, { backend_offline_error } from '@/utils/api'
-import { callPeriodically } from '@/utils/helper_functions'
 
 export enum FetchType {
     KernelType = 'kernel_buffer',
@@ -56,6 +56,10 @@ class SystemInformationStore extends VuexModule {
   system: System | null = null
 
   serial: Serial | null = null
+
+  fetchPlatformTask = new OneMoreTime(
+    { delay: 5000 },
+  )
 
   @Mutation
   appendKernelMessage(kernel_message: [KernelMessage]): void {
@@ -254,7 +258,7 @@ export { SystemInformationStore }
 const system_information: SystemInformationStore = getModule(SystemInformationStore)
 
 system_information.fetchSystem()
-callPeriodically(system_information.fetchPlatform, 5000)
+system_information.fetchPlatformTask.setAction(system_information.fetchPlatform)
 
 // It appears that the store is incompatible with websockets or callbacks.
 // Right now the only way to have it working is to have the websocket definition outside the store
