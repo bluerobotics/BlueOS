@@ -4,12 +4,12 @@ import json
 import logging
 import os
 import re
-from enum import Enum
 import time
 from typing import List, Tuple
 
 import appdirs
 from commonwealth.utils.commands import run_command, save_file, locate_file, load_file
+from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
@@ -46,38 +46,6 @@ CONFIG_USER_PROTECTION_WORD = "custom"
 
 config_file = None
 cmdline_file = None
-
-
-class CpuType(str, Enum):
-    PI4 = "Raspberry Pi 4 (BCM2711)"
-    PI5 = "Raspberry Pi 5 (BCM2712)"
-    Other = "Other"
-
-
-class HostOs(str, Enum):
-    Bookworm = "Debian(Raspberry Pi OS?) 12 (Bookworm)"
-    Bullseye = "Debian(Raspberry Pi OS?) 11 (Bullseye)"
-    Other = "Other"
-
-
-def get_cpu_type() -> CpuType:
-    with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
-        for line in f:
-            if "Raspberry Pi 4" in line:
-                return CpuType.PI4
-            if "Raspberry Pi 5" in line:
-                return CpuType.PI5
-    return CpuType.Other
-
-
-def get_host_os() -> HostOs:
-    os_release = load_file("/etc/os-release")
-    if "bookworm" in os_release:
-        return HostOs.Bookworm
-    if "bullseye" in os_release:
-        return HostOs.Bullseye
-    return HostOs.Other
-
 
 # Copyright 2016-2022 Paul Durivage
 # Licensed under the Apache License, Version 2.0 (the "License");

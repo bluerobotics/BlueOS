@@ -1,18 +1,53 @@
 import os
 import subprocess
 import uuid
+from enum import Enum
 from functools import cache
 from pathlib import Path
 
 import psutil
 from loguru import logger
 
+from commonwealth.utils.commands import load_file
 from commonwealth.utils.decorators import temporary_cache
+
+
+class CpuType(str, Enum):
+    PI4 = "Raspberry Pi 4 (BCM2711)"
+    PI5 = "Raspberry Pi 5 (BCM2712)"
+    Other = "Other"
+
+
+class HostOs(str, Enum):
+    Bookworm = "Debian(Raspberry Pi OS?) 12 (Bookworm)"
+    Bullseye = "Debian(Raspberry Pi OS?) 11 (Bullseye)"
+    Other = "Other"
 
 
 @cache
 def blueos_version() -> str:
     return os.environ.get("GIT_DESCRIBE_TAGS", "null")
+
+
+@cache
+def get_cpu_type() -> CpuType:
+    with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
+        for line in f:
+            if "Raspberry Pi 4" in line:
+                return CpuType.PI4
+            if "Raspberry Pi 5" in line:
+                return CpuType.PI5
+    return CpuType.Other
+
+
+@cache
+def get_host_os() -> HostOs:
+    os_release = load_file("/etc/os-release")
+    if "bookworm" in os_release:
+        return HostOs.Bookworm
+    if "bullseye" in os_release:
+        return HostOs.Bullseye
+    return HostOs.Other
 
 
 def delete_everything(path: Path) -> None:
