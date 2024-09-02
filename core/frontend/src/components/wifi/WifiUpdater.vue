@@ -69,7 +69,7 @@ export default Vue.extend({
     async fetchHotspotStatus(): Promise<void> {
       await back_axios({
         method: 'get',
-        url: `${wifi.API_URL}/hotspot`,
+        url: `${wifi.API_URL}/hotspot_extended_status`,
         timeout: 10000,
       })
         .then((response) => {
