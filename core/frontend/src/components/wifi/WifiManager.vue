@@ -16,6 +16,7 @@
         :color="hotspot_status ? 'success' : 'gray'"
         hide-details="auto"
         :loading="hotspot_status_loading"
+        :disabled="hotspot_supported === false"
         @click="toggleHotspot"
       >
         <v-icon>{{ hotspot_status ? 'mdi-access-point' : 'mdi-access-point-off' }}</v-icon>
@@ -201,7 +202,10 @@ export default Vue.extend({
       )
     },
     hotspot_status(): boolean | null {
-      return wifi.hotspot_status
+      return wifi.hotspot_status?.enabled ?? null
+    },
+    hotspot_supported(): boolean | null {
+      return wifi.hotspot_status?.supported ?? null
     },
     show_search(): boolean {
       if (!this.connectable_networks) {
