@@ -96,10 +96,11 @@ grep -q dwc2 $CMDLINE_FILE || (
     sed -i '1 s/$/ modules-load=dwc2,g_ether/' $CMDLINE_FILE
 )
 
-# Update raspberry pi firmware
+# Update raspberry pi firmware if on bullseye
 # this is required to avoid 'i2c transfer timed out' kernel errors
 # on older firmware versions
-if grep -q ID=raspbian < /etc/os-release; then
+# kernels/firmware from bookworm and higher do not require this
+if grep -q ID=raspbian < /etc/os-release && grep -q VERSION_CODENAME=bullseye < /etc/os-release; then
     RPI_FIRMWARE_VERSION=1340be4
     if sudo JUST_CHECK=1 rpi-update $RPI_FIRMWARE_VERSION | grep "Firmware update required"; then
         echo "- Run rpi update."
