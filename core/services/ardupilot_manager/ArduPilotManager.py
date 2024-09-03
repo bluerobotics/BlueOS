@@ -169,6 +169,9 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.error(e)
         return serials
 
+    def get_serial_cmdline(self) -> str:
+        return " ".join([f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()])
+
     def get_default_params_cmdline(self, platform: Platform) -> str:
         # check if file exists and return it's path as --defaults parameter
         default_params_path = self.firmware_manager.default_user_params_path(platform)
@@ -222,7 +225,7 @@ class ArduPilotManager(metaclass=Singleton):
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
-            f" {self._current_board.get_serial_cmdlines()}"
+            f" {self.get_serial_cmdline()}"
             f" {self.get_default_params_cmdline(board.platform)}"
         )
 
