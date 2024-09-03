@@ -15,10 +15,6 @@ class LinuxFlightController(FlightController):
     def detect(self) -> bool:
         raise NotImplementedError
 
-    def get_serial_cmdlines(self) -> str:
-        cmdlines = [f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()]
-        return " ".join(cmdlines)
-
     def get_serials(self) -> List[Serial]:
         raise NotImplementedError
 
