@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Union, cast
 import appdirs
 from loguru import logger
 
-from typedefs import SITLFrame
+from controller.platform import SITLFrame
 
 SERVICE_NAME = "ardupilot-manager"
 
