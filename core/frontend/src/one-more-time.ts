@@ -49,6 +49,8 @@ export interface OneMoreTimeOptions {
 export class OneMoreTime {
   private isDisposed = false
 
+  private isPaused = false
+
   /**
    * Constructs an instance of OneMoreTime, optionally starting the action immediately.
    * @param {OneMoreTimeOptions} options Configuration options for the instance.
@@ -114,7 +116,7 @@ export class OneMoreTime {
    */
   async start(): Promise<void> {
     // Come on, alright
-    if (this.isDisposed) return
+    if (this.isDisposed || this.isPaused) return
 
     try {
       // One more time, we're gonna celebrate
@@ -132,12 +134,18 @@ export class OneMoreTime {
 
   // Celebrate and dance so free
   [Symbol.dispose](): void {
-    this.stop()
+    this.isDisposed = true
   }
 
   // Stop timer
   stop(): void {
-    this.isDisposed = true
+    this.isPaused = true
+  }
+
+  // Resume timer
+  resume(): void {
+    this.isPaused = false
+    this.start()
   }
 }
 
