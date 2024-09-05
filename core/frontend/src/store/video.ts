@@ -5,13 +5,13 @@ import {
 
 import message_manager, { MessageLevel } from '@/libs/message-manager'
 import Notifier from '@/libs/notifier'
+import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { video_manager_service } from '@/types/frontend_services'
 import {
   CreatedStream, Device, StreamStatus,
 } from '@/types/video'
 import back_axios, { backend_offline_error } from '@/utils/api'
-import { callPeriodically, stopCallingPeriodically } from '@/utils/helper_functions'
 
 export interface Thumbnail {
   source: string | undefined
@@ -44,6 +44,10 @@ class VideoStore extends VuexModule {
   thumbnails: Map<string, Thumbnail> = new Map()
 
   private sources_to_request_thumbnail: Set<string> = new Set()
+
+  fetchThumbnailsTask = new OneMoreTime(
+    { delay: 1000, autostart: false },
+  )
 
   @Mutation
   setUpdatingStreams(updating: boolean): void {
@@ -214,7 +218,7 @@ class VideoStore extends VuexModule {
   @Action
   startGetThumbnailForDevice(source: string): void {
     if (this.sources_to_request_thumbnail.size === 0) {
-      callPeriodically(this.fetchThumbnails, 1000)
+      this.fetchThumbnailsTask.resume()
     }
     this.sources_to_request_thumbnail.add(source)
   }
@@ -228,7 +232,7 @@ class VideoStore extends VuexModule {
     this.sources_to_request_thumbnail.delete(source)
 
     if (this.sources_to_request_thumbnail.size === 0) {
-      stopCallingPeriodically(this.fetchThumbnails)
+      this.fetchThumbnailsTask.stop()
     }
   }
 }
@@ -236,4 +240,7 @@ class VideoStore extends VuexModule {
 export { VideoStore }
 
 const video: VideoStore = getModule(VideoStore)
+
+video.fetchThumbnailsTask.setAction(video.fetchThumbnails)
+
 export default video
