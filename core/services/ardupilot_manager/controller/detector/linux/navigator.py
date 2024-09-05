@@ -2,8 +2,9 @@ from typing import List
 
 from commonwealth.utils.commands import load_file
 
-from flight_controller_detector.linux.linux_boards import LinuxFlightController
-from typedefs import Platform, Serial
+from controller.detector.linux.linux_boards import LinuxFlightController
+from controller.platform import Platform
+from controller.serial import Serial
 
 
 class Navigator(LinuxFlightController):

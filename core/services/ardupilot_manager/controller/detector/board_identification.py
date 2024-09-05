@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from typedefs import Platform
+from controller.platform import Platform
 
 
 class SerialAttr(str, Enum):
