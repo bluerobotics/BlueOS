@@ -132,3 +132,9 @@ class VehicleManager:
         await self.mavlink2rest.send_mavlink_message(disarm_message)
         if await self.is_vehicle_armed():
             raise VehicleDisarmFail("Failed to disarm vehicle. Please try a manual disarm.")
+
+    async def vehicle_is_safe(self) -> bool:
+        """Check if vehicle is safe to arm.
+        This might eventually be enhanced to check for other conditions.
+        """
+        return not await self.is_vehicle_armed()
