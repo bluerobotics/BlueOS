@@ -290,6 +290,16 @@ async def available_boards() -> Any:
     return await autopilot.available_boards(True)
 
 
+@app.get("/safe")
+@version(1, 0)
+async def safe() -> bool:
+    """
+    Checks if the vehicle is in a condition where it is safe to perform dangerous operations on it,
+    Such as firmware flashing, parameter loading, rebooting, networking changes, etc.
+    """
+    return bool(autopilot.vehicle_manager.vehicle_is_safe())
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 
 
