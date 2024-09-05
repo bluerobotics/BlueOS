@@ -7,41 +7,6 @@ export function sleep(interval: number): Promise<number> {
   return new Promise((resolve) => setTimeout(resolve, interval))
 }
 
-const periodic_tasks_counter: Map<() => Promise<void>, number> = new Map()
-
-/* Call a given function periodically for a given interval. */
-/**
- * @param func - Function to be called.
- * @param interval - Time in milliseconds to wait after the previous request is done
-* */
-export async function callPeriodically(
-  func: () => Promise<void>,
-  interval: number,
-  automated_call?: boolean,
-): Promise<void> {
-  let current_count = periodic_tasks_counter.get(func) ?? 0
-  if (!automated_call) {
-    current_count += 1
-    periodic_tasks_counter.set(func, current_count)
-  }
-  if (current_count <= 0) {
-    periodic_tasks_counter.set(func, 0)
-    return
-  }
-  await func()
-  await sleep(interval)
-  callPeriodically(func, interval, true)
-}
-
-/* Stop Callingg a given function periodically. */
-/**
- * @param function_name - Function to be called.
-* */
-export function stopCallingPeriodically(func: () => Promise<void>): void {
-  const current_count = periodic_tasks_counter.get(func) ?? 1
-  periodic_tasks_counter.set(func, current_count - 1)
-}
-
 /* Cast a string into a proper javascript type. */
 /**
  * @param value - String to be cast
