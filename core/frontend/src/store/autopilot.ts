@@ -36,6 +36,8 @@ class AutopilotStore extends VuexModule {
 
   system_id = 1
 
+  verhicle_armed = false
+
   get parameter() {
     return (name: string): Parameter | undefined => this.parameters.find((parameter) => parameter.name === name)
   }
@@ -51,6 +53,11 @@ class AutopilotStore extends VuexModule {
     return (user_filter: (param: Parameter) => boolean) => this.parameters.filter(
       (param: Parameter) => user_filter(param),
     )
+  }
+
+  get is_safe() {
+    // We can potentially check for external things here
+    return !this.verhicle_armed
   }
 
   @Mutation
@@ -99,6 +106,11 @@ class AutopilotStore extends VuexModule {
   setTotalParametersCount(count: number): void {
     this.parameters_total = count
     this.finished_loading = this.parameters_loaded >= this.parameters_total && this.metadata_loaded
+  }
+
+  @Mutation
+  setVehicleArmed(armed: boolean): void {
+    this.verhicle_armed = armed
   }
 }
 
