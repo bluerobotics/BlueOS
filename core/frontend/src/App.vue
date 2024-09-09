@@ -36,6 +36,19 @@
           color="white"
           @click="drawer = true"
         />
+        <v-card
+          v-if="!safe_mode"
+          v-tooltip="'Some functionality is not available while the vehicle is armed'"
+          class="d-flex align-center warning justify-center mr-5"
+          height="40"
+        >
+          <v-icon class="ml-3">
+            mdi-alert-outline
+          </v-icon>
+          <v-card-title>
+            Armed
+          </v-card-title>
+        </v-card>
         <draggable v-model="selected_widgets" class="d-flex align-center justify-center">
           <component
             :is="getWidget(widget_name)"
@@ -387,6 +400,7 @@ import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import WifiUpdater from './components/wifi/WifiUpdater.vue'
 import menus, { menuItem } from './menus'
+import autopilot_data from './store/autopilot'
 import Cpu from './widgets/Cpu.vue'
 import Disk from './widgets/Disk.vue'
 
@@ -457,6 +471,9 @@ export default Vue.extend({
     },
     app_bar_style(): string {
       return settings.is_dark_theme ? 'dark-background-glass' : 'light-background-glass'
+    },
+    safe_mode(): boolean {
+      return autopilot_data.is_safe
     },
     wifi_connected(): boolean {
       return wifi.current_network != null

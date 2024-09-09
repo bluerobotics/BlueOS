@@ -137,7 +137,7 @@
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
-import { MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import { MavModeFlag, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
@@ -212,6 +212,7 @@ export default Vue.extend({
       }
       autopilot_data.setSystemId(message?.header.system_id)
       autopilot_data.setAutopilotType(message?.message.autopilot.type)
+      autopilot_data.setVehicleArmed(Boolean(message?.message.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED))
       this.last_heartbeat_date = new Date()
     }).setFrequency(0)
   },
