@@ -2,6 +2,7 @@
   <v-card
     height="100%"
   >
+    <not-safe-overlay />
     <v-tabs
       v-model="page_selected"
       centered
@@ -46,6 +47,7 @@ export default Vue.extend({
   components: {
     InternetSpeedTest,
     NetworkSpeedTest,
+    NotSafeOverlay,
   },
   data() {
     return {

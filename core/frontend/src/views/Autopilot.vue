@@ -28,6 +28,7 @@
           </v-row>
           <br>
         </div>
+        <not-safe-overlay />
         <v-expansion-panels>
           <v-expansion-panel>
             <v-expansion-panel-header>
@@ -129,6 +130,7 @@ export default Vue.extend({
     BoardChangeDialog,
     FirmwareManager,
     AutopilotSerialConfiguration,
+    NotSafeOverlay,
   },
   data() {
     return {

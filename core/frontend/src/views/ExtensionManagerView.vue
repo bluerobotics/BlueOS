@@ -1,5 +1,6 @@
 <template>
   <v-container fluid>
+    <not-safe-overlay />
     <pull-progress
       :progress="pull_output"
       :show="show_pull_output"
