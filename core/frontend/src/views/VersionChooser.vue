@@ -1,5 +1,6 @@
 <template>
   <v-container>
+    <not-safe-overlay />
     <version-chooser />
   </v-container>
 </template>
@@ -13,6 +14,7 @@ export default Vue.extend({
   name: 'VersionChooserView',
   components: {
     VersionChooser,
+    NotSafeOverlay,
   },
 })
 </script>
