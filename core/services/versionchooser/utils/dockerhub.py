@@ -91,7 +91,7 @@ class TagFetcher:
         self.last_token = await self._get_token(auth_url="https://auth.docker.io", image_name=repository)
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{self.docker_url}/v2/repositories/{repository}/tags/?page_size=25&page=1&ordering=last_updated"
+                f"{self.docker_url}/v2/repositories/{repository}/tags/?page_size=200&page=1&ordering=last_updated"
             ) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
