@@ -424,6 +424,7 @@ import menus, { menuItem } from './menus'
 import autopilot_data from './store/autopilot'
 import Cpu from './widgets/Cpu.vue'
 import Disk from './widgets/Disk.vue'
+import Networking from './widgets/Networking.vue'
 
 export default Vue.extend({
   name: 'App',
@@ -471,6 +472,10 @@ export default Vue.extend({
       {
         component: Disk,
         name: 'Disk',
+      },
+      {
+        component: Networking,
+        name: 'Networking',
       },
     ],
     selected_widgets: settings.user_top_widgets,

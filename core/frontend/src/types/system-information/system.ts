@@ -87,6 +87,7 @@ export interface Network {
      * @param total_received_B - Total number of bytes received
      * @param total_transmitted_B - Total number of bytes transmitted
      * @param transmitted_B - Number of bytes received since last probe
+     * @param last_update - Unix time in seconds
     * */
     description: string,
     errors_on_received: number,
@@ -106,6 +107,9 @@ export interface Network {
     total_received_B: number,
     total_transmitted_B: number,
     transmitted_B: number
+    last_update?: number
+    upload_speed?: number
+    download_speed?: number
 }
 
 /** Base structure that provides disk information for process */
