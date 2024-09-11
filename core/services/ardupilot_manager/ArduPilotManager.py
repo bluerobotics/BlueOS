@@ -272,8 +272,8 @@ class ArduPilotManager(metaclass=Singleton):
         self.settings.save(self.configuration)
 
     def load_sitl_frame(self) -> SITLFrame:
-        if self.settings.sitl_frame != SITLFrame.UNDEFINED:
-            return self.settings.sitl_frame
+        if self.configuration["sitl_frame"] != SITLFrame.UNDEFINED:
+            return SITLFrame(self.configuration["sitl_frame"])
         frame = SITLFrame.VECTORED
         logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
         self.set_sitl_frame(frame)
@@ -298,7 +298,7 @@ class ArduPilotManager(metaclass=Singleton):
         self._current_board = BoardDetector.detect_sitl()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
             self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self._current_board)
-        frame = self.settings.sitl_frame
+        frame = self.load_sitl_frame()
         if frame == SITLFrame.UNDEFINED:
             frame = SITLFrame.VECTORED
             logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
