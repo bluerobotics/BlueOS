@@ -62,6 +62,9 @@ jobs:
       - name: Bun lint
         run: bun --cwd ./core/frontend lint
 
+      - name: Type-checking
+        run: bun --cwd ./core/frontend run type-check
+
       - name: Bun build
         run: bun run --cwd ./core/frontend build
 
