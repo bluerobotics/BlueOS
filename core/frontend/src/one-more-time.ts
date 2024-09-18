@@ -70,7 +70,7 @@ export class OneMoreTime {
       const id = setInterval(() => {
         // Check if object does not exist anymore or if it was destroyed by vue
         // eslint-disable-next-line
-        if (!ref.deref() || ref.deref()._isDestroyed) {
+        if (!ref.deref() || (ref.deref() as any)._isDestroyed) {
           this.stop()
           clearInterval(id)
         }
@@ -131,7 +131,7 @@ export class OneMoreTime {
   }
 
   // Celebrate and dance so free
-  [Symbol.dispose](): void {
+  [(Symbol as any).dispose](): void {
     this.stop()
   }
 
