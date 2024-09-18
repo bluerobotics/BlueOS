@@ -81,10 +81,9 @@ export function getMode(): number {
 }
 
 export async function setMode(mode: number,  tries?: number): Promise<void> {
-  tries = tries || 5
   let current_try = 0
   return new Promise<void>(async (resolve, reject) => {
-    while (getMode() !== mode && current_try < tries) {
+    while (getMode() !== mode && current_try < (tries ?? 5)) {
       current_try += 1
       mavlink2rest.sendCommandLong(
         MavCmd.MAV_CMD_DO_SET_MODE,
