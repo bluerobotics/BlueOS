@@ -180,6 +180,7 @@ import AnsiUp from 'ansi_up'
 import axios, { CancelTokenSource } from 'axios'
 import Vue from 'vue'
 
+import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import BackAlleyTab from '@/components/kraken/BackAlleyTab.vue'
 import BazaarTab from '@/components/kraken/BazaarTab.vue'
@@ -217,6 +218,7 @@ export default Vue.extend({
     PullProgress,
     ExtensionCreationModal,
     SpinningLogo,
+    NotSafeOverlay,
   },
   data() {
     return {
