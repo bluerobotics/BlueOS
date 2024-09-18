@@ -338,7 +338,7 @@ export default Vue.extend({
         return []
       }
 
-      return (this.manifest as ExtensionData[]).sort(
+      return (this.manifest as ExtensionData[]).sort( // eslint-disable-line no-extra-parens
         (a, b) => (b?.repo_info?.downloads ?? 0) - (a?.repo_info?.downloads ?? 0),
       )
     },
