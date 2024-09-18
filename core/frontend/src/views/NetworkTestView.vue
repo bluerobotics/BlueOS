@@ -33,6 +33,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
 import InternetSpeedTest from '@/components/speedtest/InternetSpeedTest.vue'
 import NetworkSpeedTest from '@/components/speedtest/NetworkSpeedTest.vue'
 
