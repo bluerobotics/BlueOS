@@ -184,12 +184,20 @@ async def install_firmware_from_url(
     board_name: Optional[str] = None,
     make_default: bool = False,
     parameters: Optional[Parameters] = None,
+    auto_switch_board: bool = True,
 ) -> Any:
+    board = None
     try:
         await autopilot.kill_ardupilot()
-        autopilot.install_firmware_from_url(url, await target_board(board_name), make_default, parameters)
+        board = await target_board(board_name)
+        autopilot.install_firmware_from_url(url, board, make_default, parameters)
     finally:
         await autopilot.start_ardupilot()
+
+    # In some cases user might install a firmware that implies in a board change but this is not reflected,
+    # so if the board is different from the current one, we change it.
+    if auto_switch_board and board and autopilot.current_board and autopilot.current_board.name != board.name:
+        await autopilot.change_board(board)
 
 
 @app.post("/install_firmware_from_file", summary="Install firmware from user file.")
