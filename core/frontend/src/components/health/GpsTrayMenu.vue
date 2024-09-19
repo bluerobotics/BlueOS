@@ -82,11 +82,21 @@ import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { GpsFixType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import { GlobalPositionInt, GpsRawInt } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
+import {
+  GlobalPositionInt,
+  Gps2Raw,
+  GpsRawInt,
+} from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import autopilot_data from '@/store/autopilot'
 
 export default Vue.extend({
   name: 'GpsTrayMenu',
+  props: {
+    instance: {
+      type: Number,
+      required: true,
+    },
+  },
   data() {
     return {
       mouse_hover: false,
@@ -255,13 +265,14 @@ export default Vue.extend({
       this.global_position_int = message?.message as GlobalPositionInt
     }).setFrequency(0)
 
-    mavlink2rest.startListening('GPS_RAW_INT').setCallback((message) => {
+    const message_name = this.instance === 1 ? 'GPS_RAW_INT' : 'GPS2_RAW'
+    mavlink2rest.startListening(message_name).setCallback((message) => {
       if (message?.header.system_id !== autopilot_data.system_id || message?.header.component_id !== 1) {
         return
       }
 
       this.last_message_date = new Date()
-      this.gps_raw_int = message?.message as GpsRawInt
+      this.gps_raw_int = message?.message as GpsRawInt | Gps2Raw
       this.gps_detected = this.gps_raw_int?.fix_type?.type !== GpsFixType.GPS_FIX_TYPE_NO_GPS
     }).setFrequency(0)
   },

@@ -66,7 +66,8 @@
         <v-spacer />
         <beacon-tray-menu />
         <health-tray-menu />
-        <gps-tray-menu />
+        <gps-tray-menu :instance="1" />
+        <gps-tray-menu :instance="2" />
         <theme-tray-menu />
         <system-checker-tray-menu />
         <vehicle-reboot-required-tray-menu />
