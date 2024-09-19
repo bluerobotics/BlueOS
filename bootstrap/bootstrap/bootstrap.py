@@ -185,6 +185,7 @@ class Bootstrapper:
         binds = image["binds"]
         privileged = image["privileged"]
         network = image["network"]
+        environment = image.get("environment", [])
 
         if not self.image_is_available_locally(image_name, image_version):
             try:
@@ -208,6 +209,7 @@ class Bootstrapper:
                 privileged=privileged,
                 network=network,
                 detach=True,
+                environment=environment,
                 log_config={
                     "Type": "json-file",
                     "Config": {
