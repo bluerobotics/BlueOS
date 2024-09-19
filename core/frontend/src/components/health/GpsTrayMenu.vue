@@ -184,6 +184,16 @@ export default Vue.extend({
           },
         )
       }
+      if (this.gps_raw_int?.yaw !== 0) {
+        values.push(
+          {
+            name: 'Yaw',
+            value: `${(this.gps_raw_int.yaw / 100).toFixed(2)}º`,
+            tooltip: 'Yaw',
+            icon: 'mdi-compass',
+          },
+        )
+      }
 
       return values
     },
