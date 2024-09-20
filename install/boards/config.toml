@@ -1,0 +1,32 @@
+# Raspberry PI OS config.toml
+# This file is used for the initial setup of the system on the first boot, if
+# it's s present in the boot partition of the installation.
+#
+# This file is loaded by firstboot, parsed by init_config and ends up
+# as several calls to imager_custom.
+# The example below has all current fields.
+#
+# References:
+# - https://github.com/RPi-Distro/raspberrypi-sys-mods/blob/master/usr/lib/raspberrypi-sys-mods/firstboot
+# - https://github.com/RPi-Distro/raspberrypi-sys-mods/blob/master/usr/lib/raspberrypi-sys-mods/init_config
+# - https://github.com/RPi-Distro/raspberrypi-sys-mods/blob/master/usr/lib/raspberrypi-sys-mods/imager_custom
+
+# Required:
+config_version = 1
+
+[system]
+hostname = "blueos"
+
+[user]
+# If present, the default "rpi" user gets renamed to this "name"
+name = "pi"
+# The password can be encrypted or plain. To encrypt, we can use "openssl passwd -5 raspberry"
+password = "$5$jN49NV5TpvPOd.dA$cNLchFFnGqbYgyyHpIs5jZwCgAFbTb6QhaxiN8UdjO/"
+password_encrypted = true
+
+[ssh]
+# ssh_import_id = "gh:user" # import public keys from github
+enabled = true
+password_authentication = true
+# We can also seed the ssh public keys configured for the default user:
+# authorized_keys = [ "ssh-rsa ... user@host", ... ]

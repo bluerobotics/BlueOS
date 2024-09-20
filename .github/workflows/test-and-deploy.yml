@@ -249,14 +249,29 @@ jobs:
     needs: deploy-docker-images
     if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
-    runs-on: blueos-ci
-    # The runner for this job is a Raspberry Pi OS Bullseye.
-    # Just install docker (curl -sSL https://get.docker.com/ | sh) and follow the instructions for setting up a new runner in
-    # https://github.com/bluerobotics/BlueOS-docker/settings/actions/runners/new
-
     strategy:
       matrix:
-        platforms: ["linux/arm/v7"]
+        include:
+          - runner: blueos-ci
+            platform: "linux/arm/v7"
+            os: "bookworm"
+            image: "raspios_lite_armhf/images/raspios_lite_armhf-2024-07-04/2024-07-04-raspios-bookworm-armhf-lite.img.xz"
+          - runner: pi4-builder2
+            platform: "linux/arm/v7"
+            os: "bullseye"
+            image: "raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip"
+          - runner: pi5-builder
+            platform: "linux/arm64/v8"
+            os: "bookworm"
+            image: "raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
+
+    runs-on: ${{ matrix.runner }}
+    # The runners for this job are:
+    # - pi4-builders: A Raspberry Pi OS Bullseye (32-bit).
+    # - pi5-builder: A Raspberry Pi OS Bookworm lite 64-bit.
+    # For pi5-ci, install docker (curl -sSL https://get.docker.com/ | sh) and follow the instructions for setting up a new runner in
+    # https://github.com/bluerobotics/BlueOS-docker/settings/actions/runners/new
+
     steps:
       - name: Install git
         run: sudo apt install -y git
@@ -265,7 +280,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
@@ -278,23 +292,39 @@ jobs:
             -e PATH=/pimod:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
             -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
             -e VERSION=$GITHUB_REF_NAME \
+            -e BASE_IMAGE=${{ matrix.image }} \
             --workdir=/files \
-            --platform ${{ matrix.platforms }} nature40/pimod:latest pimod.sh deploy/pimod/blueos.Pifile
+            --platform ${{ matrix.platform }} nature40/pimod:latest pimod.sh deploy/pimod/blueos.Pifile
 
-      # TODO: add GITHUB_REF_NAME after https://github.com/actions/upload-artifact/issues/231 is fixed
-      # name: blueos-${{ env.GITHUB_REF_NAME }}.zip
+      - name: Add /boot additions
+        run: |
+          sudo apt-get update && sudo apt-get install -y parted kpartx
+          # Create mount point if it doesn't exist
+          sudo mkdir -p /mnt/piboot
+          # Map the image file
+          LOOP_DEVICE=$(sudo kpartx -avs deploy/pimod/blueos.img | sed -E 's/.*(loop[0-9]+)p[0-9]+.*/\1/g' | head -1)
+          # Mount the boot partition
+          sudo mount "/dev/mapper/${LOOP_DEVICE}p1" /mnt/piboot
+          # Create ssh and userconf files
+          sudo cp install/boards/config.toml /mnt/piboot/custom.toml
+          sudo umount /mnt/piboot
+          sudo kpartx -d deploy/pimod/blueos.img
+          echo "Boot partition updated successfully."
+
       - name: Zip image
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           sudo apt install zip
-          zip BlueOS-raspberry.zip deploy/pimod/blueos.img
+          zip BlueOS-raspberry-${{ matrix.platform }}-${{ matrix.os }}.zip deploy/pimod/blueos.img
+
+      - name: Sanitize platform name
+        run: echo "SANITIZED_PLATFORM=$(echo ${{ matrix.platform }} | tr '/' '-')" >> $GITHUB_ENV
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         timeout-minutes: 120
         with:
-          # We use the .img to avoid a zip of a zip
-          name: BlueOS-raspberry.zip
+          name: BlueOS-raspberry-${{ env.GITHUB_REF_NAME }}${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}
           path: deploy/pimod/blueos.img
           if-no-files-found: error
           retention-days: 7
@@ -304,7 +334,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: BlueOS-raspberry.zip
+          file: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip
           tag: ${{ github.ref }}
           overwrite: true
           prerelease: true
