@@ -96,9 +96,7 @@ export default Vue.extend({
      * e.g. http://[currenthost]:[newport]/[newpath]
      */
     createWebpageUrl(port: number, path = ''): string {
-      return `${window.location.protocol}//${
-        window.location.host.split(':')[0]
-      }:${port}${path}`
+      return `${window.location.protocol}//${window.location.hostname}:${port}${path}`
     },
   },
 })
