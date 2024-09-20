@@ -34,7 +34,7 @@ class Dnsmasq:
 
         if ipv4_lease_range is None:
             # If no lease-range is defined we offer all available IPs for lease
-            ipv4_lease_range = (list(self.ipv4_network.hosts())[0], list(self.ipv4_network.hosts())[-1])
+            ipv4_lease_range = (list(self.ipv4_network.hosts())[100], list(self.ipv4_network.hosts())[199])
         self._ipv4_lease_range = ipv4_lease_range
 
         self._lease_time = lease_time
