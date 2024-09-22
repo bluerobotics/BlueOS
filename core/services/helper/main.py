@@ -485,9 +485,8 @@ class Helper:
     def setup_nginx_route(metadata: ServiceMetadata, port: int) -> bool:
         name = metadata.sanitized_name
         text = f"""
-        location /extensionv2/{name} {{
-        rewrite ^/extensionv2/{name}(/|$)(.*)$ /$2 break;
-        proxy_pass http://localhost:{port};
+        location /extensionv2/{name}/ {{
+        proxy_pass :{port}/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

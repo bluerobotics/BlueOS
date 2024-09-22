@@ -8,7 +8,7 @@ def parse_nginx_file(filepath: str) -> dict[int, str]:
         location_block_pattern = re.compile(r"location\s+(?P<location>/[\w-]+)\s*{(?P<block_content>[^}]+)}", re.DOTALL)
 
         # Pattern for extracting proxy_pass directive
-        proxy_pass_pattern = re.compile(r"proxy_pass\s+http://[^:]+:(?P<port>\d+);")
+        proxy_pass_pattern = re.compile(r"proxy_pass\s.*:(?P<port>\d+).*;")
         location_blocks = location_block_pattern.finditer(content)
         result = {}
         for match in location_blocks:
