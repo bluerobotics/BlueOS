@@ -262,8 +262,8 @@ export default Vue.extend({
           notifier.pushSuccess('HOTSPOT_STATUS_TOGGLE_SUCCESS', 'Successfully toggled hotspot state.')
         })
         .catch((error) => {
-          wifi.setHotspotStatus(null)
           notifier.pushBackError('HOTSPOT_STATUS_TOGGLE_FAIL', error, true)
+          this.hotspot_status_loading = false
         })
     },
   },
