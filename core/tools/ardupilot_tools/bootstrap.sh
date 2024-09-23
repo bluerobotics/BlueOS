@@ -46,7 +46,7 @@ export PYTHONPATH="$SITE_PACKAGES:$PYTHONPATH"
 mkdir -p "$SITE_PACKAGES"
 
 ### Ardupilot's decoder is used to parse and validate firmware ELF files
-COMMIT_HASH=7b5c1f16c1bbc986244dd83c690801790d6bc680
+COMMIT_HASH=89c2b4828662ece84f48bdf9aa24db688fea36cb
 LOCAL_PATH_DECODER="$SITE_PACKAGES/ardupilot_fw_decoder.py"
 REMOTE_URL_DECODER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/firmware_version_decoder.py"
 if [ ! -f "$LOCAL_PATH_DECODER" ]; then
