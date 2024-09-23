@@ -255,7 +255,7 @@ export default Vue.extend({
       await back_axios({
         method: 'post',
         url: `${wifi.API_URL}/hotspot`,
-        params: { enable: !wifi.hotspot_status },
+        params: { enable: !this.hotspot_status },
         timeout: 20000,
       })
         .then(() => {
