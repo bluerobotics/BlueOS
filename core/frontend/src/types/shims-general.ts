@@ -9,5 +9,3 @@ declare module '*.jpg' {
 declare module '*.png' {
   const value: string
 }
-
-declare module 'vue-tooltip-directive'
