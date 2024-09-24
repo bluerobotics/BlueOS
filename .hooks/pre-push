@@ -41,6 +41,9 @@ command -v parallel >/dev/null 2>&1 || {
     exit 1
 }
 
+nginxVersion=1.22.1
+docker run --rm -v ${PWD}/core/tools/nginx/:/nginx/:ro nginx:$nginxVersion nginx -c /nginx/nginx.conf -t
+
 poetry install
 . "$(poetry env info --path)/bin/activate"
 
