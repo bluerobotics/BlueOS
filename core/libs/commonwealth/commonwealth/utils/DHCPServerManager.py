@@ -10,6 +10,7 @@ from loguru import logger
 
 
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-instance-attributes
 class Dnsmasq:
     def __init__(
         self,
@@ -17,9 +18,11 @@ class Dnsmasq:
         ipv4_gateway: IPv4Address,
         subnet_mask: Optional[IPv4Address] = None,
         ipv4_lease_range: Optional[tuple[IPv4Address, IPv4Address]] = None,
-        lease_time: str = "24h",
+        lease_time: str = "infinite",
+        leases_file_path: Optional[str] = None,
     ) -> None:
         self._subprocess: Optional[Any] = None
+        self._leases_file_path = leases_file_path
 
         if interface not in psutil.net_if_stats():
             raise ValueError(f"Interface '{interface}' not found. Available interfaces are {psutil.net_if_stats()}.")
@@ -76,8 +79,8 @@ class Dnsmasq:
         """List of arguments to be used in the command line call.
         Refer to https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html for details about each argument."""
 
-        return [
-            self.binary(),
+        options: List[str | pathlib.Path] = [
+            self.binary().as_posix(),
             "--no-daemon",
             f"--interface={self._interface}",
             f"--dhcp-range={self._ipv4_lease_range[0]},{self._ipv4_lease_range[1]},{self._subnet_mask},{self._lease_time}",  # fmt: skip
@@ -93,6 +96,12 @@ class Dnsmasq:
             "--port=0",
             "--user=root",
         ]
+        if self._leases_file_path:
+            if pathlib.Path(self._leases_file_path).parent.exists():
+                options.append(f"--dhcp-leasefile={self._leases_file_path}")
+            logger.error(f"Parent folder does not exist: {pathlib.Path(self._leases_file_path).parent}")
+            logger.error("Ignoring option")
+        return options
 
     def start(self) -> None:
         try:
