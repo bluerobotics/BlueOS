@@ -48,7 +48,7 @@ class WifiManager:
             )
             if ssid is not None and password is not None:
                 self.set_hotspot_credentials(WifiCredentials(ssid=ssid, password=password))
-            if self._settings_manager.settings.hotspot_enabled in [True, None]:
+            if self.hotspot.supports_hotspot and self._settings_manager.settings.hotspot_enabled in [True, None]:
                 time.sleep(5)
                 self.enable_hotspot()
         except Exception:
@@ -381,6 +381,9 @@ class WifiManager:
 
     async def start_hotspot_watchdog(self) -> None:
         logger.debug("Starting hotspot watchdog.")
+        if not self.hotspot.supports_hotspot:
+            logger.debug("Hotspot is not supported. Stopping watchdog.")
+            return
         while True:
             await asyncio.sleep(30)
             try:
