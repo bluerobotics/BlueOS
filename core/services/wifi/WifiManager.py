@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 import time
 from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
@@ -313,6 +314,10 @@ class WifiManager:
         except Exception as error:
             raise RuntimeError("Failed to get current network.") from error
 
+    def trigger_dhcp_client(self) -> None:
+        """Trigger dhclient to get an IP address."""
+        subprocess.run(["dhcpcd", "-n", "wlan0"], check=False)
+
     async def auto_reconnect(self, seconds_before_reconnecting: float) -> None:
         """Re-enable all saved networks if disconnected for more than specified time.
         When a connection is made, using the 'select' wpa command, all other saved networks are disabled, to ensure
@@ -338,6 +343,10 @@ class WifiManager:
                 continue
 
             is_connected = await self.get_current_network() is not None
+
+            if is_connected and "ip_address" not in await self.status():
+                # we are connected but have no ip addres? lets ask cable-guy for a new ip
+                self.trigger_dhcp_client()
 
             if was_connected and not is_connected:
                 self.connection_status = ConnectionStatus.JUST_DISCONNECTED
