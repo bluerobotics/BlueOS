@@ -15,7 +15,7 @@ else
   exit 1
 fi
 
-major_tom_install_data=$(curl -fsSL $MAJOR_TOM_RELEASE_URL)
+major_tom_install_data=$(curl -fsSL --connect-timeout 60 --max-time 60 --retry 5 --retry-delay 20 $MAJOR_TOM_RELEASE_URL)
 
 if [[ $major_tom_install_data =~  \"docker\":\ *\"([^\"]+)\" ]]; then
   major_tom_docker="${BASH_REMATCH[1]}"
