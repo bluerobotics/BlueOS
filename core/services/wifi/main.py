@@ -87,7 +87,7 @@ async def saved() -> Any:
 @app.post("/connect", summary="Connect to wifi network.")
 @version(1, 0)
 async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
-    logger.info(f"Trying to connect to '{credentials.ssid}' with password '{credentials.password}'.")
+    logger.info(f"Trying to connect to '{credentials.ssid}'.")
 
     network_id: Optional[int] = None
     is_new_network = False
