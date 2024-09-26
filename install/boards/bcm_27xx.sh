@@ -8,7 +8,7 @@ REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 CMDLINE_FILE=/boot/cmdline.txt
 CONFIG_FILE=/boot/config.txt
-alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
+alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
 
 # Download, compile, and install spi0 mosi-only device tree overlay for
 # neopixel LED on navigator board

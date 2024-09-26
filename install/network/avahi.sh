@@ -5,7 +5,7 @@ GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 REMOTE="$REMOTE/$VERSION"
 CONFIGURE_NETWORK_PATH="$REMOTE/install/network"
-alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
+alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
 
 # Exit if something goes wrong
 set -e
