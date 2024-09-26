@@ -6,7 +6,7 @@ DEFAULT_MANIFESTS = [
     {
         "identifier": "bluerobotics-production",
         "name": "BlueOS Extensions Repository",
-        "url": "https://bluerobotics.github.io/BlueOS-Extensions-Repository/manifest.json",
+        "url": "https://raw.githubusercontent.com/bluerobotics/BlueOS-Extensions-Repository/refs/heads/gh-pages/manifest.json",
     },
 ]
 
