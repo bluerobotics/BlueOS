@@ -1,7 +1,8 @@
 import asyncio
 import base64
 import json
-from typing import AsyncGenerator, Dict, List, Literal, Optional, cast
+import time
+from typing import AsyncGenerator, Dict, List, Literal, Optional, Tuple, cast
 
 from commonwealth.settings.manager import Manager
 from loguru import logger
@@ -31,6 +32,7 @@ class Extension:
     # If an extension is being installed the key will be the extension identifier if is being removed the key is the
     # container name.
     locked_entries: Dict[str, Literal[True]] = {}
+    start_attempts: Dict[str, Tuple[int, int]] = {}
 
     _manager: Manager = Manager(SERVICE_NAME, SettingsV2)
     _settings = _manager.settings
@@ -48,6 +50,10 @@ class Extension:
         return self.source.tag
 
     @property
+    def unique_entry(self) -> str:
+        return f"{self.identifier}{self.tag}"
+
+    @property
     def settings(self) -> ExtensionSettings:
         return cast(ExtensionSettings, self._fetch_settings(self.identifier, self.tag))
 
@@ -58,6 +64,18 @@ class Extension:
     @classmethod
     def unlock(cls, key: str) -> None:
         cls.locked_entries.pop(key, None)
+
+    @classmethod
+    def mark_start_attempt(cls, key: str) -> None:
+        if key not in cls.start_attempts:
+            cls.start_attempts[key] = (0, 0)
+
+        attempts, _ = cls.start_attempts[key]
+        cls.start_attempts[key] = (attempts + 1, int(time.monotonic()))
+
+    @classmethod
+    def reset_start_attempt(cls, key: str) -> None:
+        cls.start_attempts.pop(key, None)
 
     @classmethod
     def _fetch_settings(
@@ -133,7 +151,7 @@ class Extension:
         self._save_settings(new_extension)
 
         try:
-            self.lock(self.identifier + self.tag)
+            self.lock(self.unique_entry)
 
             docker_auth: Optional[str] = None
             if self.source.auth is not None:
@@ -158,7 +176,8 @@ class Extension:
                     await running_ext.enable()
             raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
         finally:
-            self.unlock(self.identifier + self.tag)
+            self.unlock(self.unique_entry)
+            self.reset_start_attempt(self.unique_entry)
 
         logger.info(f"Extension {self.identifier}:{self.tag} installed")
         # Uninstall all other tags in case user wants to clear them
@@ -191,6 +210,9 @@ class Extension:
 
     async def start(self) -> None:
         logger.info(f"Starting extension {self.identifier}:{self.tag}")
+        # Since some exts may keep restarting, we should keep track of attempts to start and avoid flooding
+        # kraken main loop with start attempts
+        self.mark_start_attempt(self.unique_entry)
 
         ext = self.settings
         config = ext.settings()
@@ -212,7 +234,7 @@ class Extension:
                 except Exception:
                     try:
                         logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
-                        self.lock(self.identifier + self.tag)
+                        self.lock(self.unique_entry)
 
                         tag = img_name + (f"@{self.digest}" if self.digest else "")
                         await client.images.pull(tag, repo=self.source.docker, tag=self.tag)
@@ -225,15 +247,17 @@ class Extension:
                 container = await client.containers.create_or_replace(name=ext.container_name(), config=config)  # type: ignore
                 await container.start()
                 logger.info(f"Extension {self.identifier}:{self.tag} started")
+                self.reset_start_attempt(self.unique_entry)
         except Exception as error:
             logger.warning(f"Failed to start extension {self.identifier}:{self.tag}: {error}")
             raise ExtensionPullFailed(f"Failed to start extension {self.identifier}:{self.tag}: {error}") from error
         finally:
-            self.unlock(self.identifier + self.tag)
+            self.unlock(self.unique_entry)
 
     async def restart(self) -> None:
         # Just kill the container and let the orchestrator restart it
         await self.remove(self.settings.container_name(), False)
+        self.reset_start_attempt(self.unique_entry)
 
     async def set_enabled(self, enabled: bool) -> None:
         ext = self.settings
