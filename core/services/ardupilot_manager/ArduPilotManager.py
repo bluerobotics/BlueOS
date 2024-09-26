@@ -186,6 +186,11 @@ class ArduPilotManager(metaclass=Singleton):
                     pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator"),
                     board,
                 )
+            elif board.platform == Platform.Navigator64:
+                self.firmware_manager.install_firmware_from_file(
+                    pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator64"),
+                    board,
+                )
             else:
                 raise NoDefaultFirmwareAvailable(
                     f"No firmware installed for '{board.platform}' and no default firmware available. Please install the firmware manually."
