@@ -121,6 +121,13 @@ set -e
     # Setup user
     useradd -m -u 1000 -G dialout blueos
 
+    # Remove /etc/dhcpcd.conf if it exists inside the docker
+    # This is to prevent an awkward behavior where docker doesnt find the file
+    # on the host system and creates a folder instead, but tries to mount the folder
+    # on top of the existing file inside the docker.
+    # This allows docker to actually create a folder, which we handle in networksetup.py
+    rm -f /etc/dhcpcd.conf
+
 EOF
 
 # Start
