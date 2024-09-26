@@ -1,4 +1,5 @@
-from typing import List
+import platform
+from typing import Any, List
 
 from commonwealth.utils.commands import load_file
 
@@ -7,9 +8,15 @@ from typedefs import Platform, Serial
 
 
 class Navigator(LinuxFlightController):
-    name = "Navigator"
     manufacturer = "Blue Robotics"
-    platform = Platform.Navigator
+
+    def __init__(self, **data: Any) -> None:
+        name = "Navigator"
+        plat = Platform.Navigator
+        if platform.machine() == "aarch64":
+            name = "Navigator64"
+            plat = Platform.Navigator64
+        super().__init__(**data, name=name, platform=plat)
 
     def is_pi5(self) -> bool:
         with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
