@@ -6,7 +6,7 @@ GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 CONFIGURE_BOARD_PATH="$ROOT/install/boards"
-alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
+alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
 
 function board_not_detected {
     echo "Hardware not identified in $1, please report back the following line:"
