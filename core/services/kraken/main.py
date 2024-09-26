@@ -32,7 +32,8 @@ if __name__ == "__main__":
     server = Server(config)
     jobs.set_base_host(f"http://{args.host}:{args.port}")
 
-    loop.create_task(kraken.start())
+    loop.create_task(kraken.start_cleaner_task())
+    loop.create_task(kraken.start_starter_task())
     loop.create_task(jobs.start())
     loop.run_until_complete(server.serve())
     loop.run_until_complete(jobs.stop())

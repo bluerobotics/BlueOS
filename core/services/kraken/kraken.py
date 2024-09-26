@@ -1,4 +1,5 @@
 import asyncio
+import time
 import traceback
 from typing import Any, List
 
@@ -25,6 +26,25 @@ class Kraken:
         self.is_running = True
         self.manifest = ManifestManager.instance()
 
+    def _extension_start_try_valid(self, extension: ExtensionSettings) -> bool:
+        unique_entry = f"{extension.identifier}{extension.tag}"
+
+        attempts, last_attempt = Extension.start_attempts.get(unique_entry, (0, 0))
+        maximum_delay = 600
+        minimum_delay = 10
+        required_delay = (
+            max(minimum_delay * (attempts != 0) + 2**attempts, maximum_delay) if attempts < 8 else maximum_delay
+        )
+
+        now = int(time.monotonic())
+
+        # If we found the identifier in the locked entries we skip the extension since its being pulled
+        return (
+            extension.enabled
+            and unique_entry not in Extension.locked_entries
+            and extension.container_name() not in Extension.locked_entries
+        ) and (unique_entry not in Extension.start_attempts or (now - last_attempt > required_delay))
+
     async def init_dead_extensions(self) -> None:
         # This can fail if docker daemon is not running
         try:
@@ -36,12 +56,7 @@ class Kraken:
         extensions: List[ExtensionSettings] = Extension._fetch_settings()
 
         for extension in extensions:
-            # If we found the identifier in the locked entries we skip the extension since its being pulled
-            if (
-                not extension.enabled
-                or f"{extension.identifier}{extension.tag}" in Extension.locked_entries
-                or extension.container_name() in Extension.locked_entries
-            ):
+            if not self._extension_start_try_valid(extension):
                 continue
 
             extension_name = extension.container_name()
@@ -142,16 +157,19 @@ class Kraken:
                 except Exception as e:
                     logger.warning(f"Dangling container {container_name} could not be removed: {e}")
 
-    async def poll(self) -> None:
-        await self.init_dead_extensions()
-        await self.setup_default_extensions()
-        await self.kill_invalid_extensions()
-        await self.kill_dangling_containers()
-
-    async def start(self) -> None:
+    async def start_starter_task(self) -> None:
         while self.is_running:
+            await self.init_dead_extensions()
+
             await asyncio.sleep(5)
-            await self.poll()
+
+    async def start_cleaner_task(self) -> None:
+        while self.is_running:
+            await self.setup_default_extensions()
+            await self.kill_invalid_extensions()
+            await self.kill_dangling_containers()
+
+            await asyncio.sleep(60)
 
     async def stop(self) -> None:
         self.is_running = False
