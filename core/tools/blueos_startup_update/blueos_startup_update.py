@@ -260,13 +260,13 @@ def update_dwc2() -> bool:
 
     # Add dwc2 overlay in pi4 section if it doesn't exist
     dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=otg"
-    pi4_session_name = "pi4"
-    boot_config_add_configuration_at_session(config_content, dwc2_overlay_config, pi4_session_name)
+    session_name = "pi4" if get_cpu_type() == CpuType.PI4 else "pi5"
+    boot_config_add_configuration_at_session(config_content, dwc2_overlay_config, session_name)
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
     dwc2_overlay_match_pattern = "^[#]*dtoverlay=dwc2.*$"
     config_content = boot_config_filter_conflicting_configuration_at_session(
-        config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, pi4_session_name
+        config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, session_name
     )
 
     # Save if needed, with backup
