@@ -7,6 +7,7 @@ from loguru import logger
 # Plugins
 # pylint: disable=unused-import
 import mavlink_proxy.MAVLinkRouter
+import mavlink_proxy.MAVLinkServer
 import mavlink_proxy.MAVP2P
 import mavlink_proxy.MAVProxy
 from exceptions import (
