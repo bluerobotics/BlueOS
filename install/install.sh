@@ -7,7 +7,7 @@ DOCKER_USER=${DOCKER_USER:-$(echo $GITHUB_REPOSITORY | cut -d'/' -f1 | tr '[:upp
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 
-alias curl="curl --retry 6 --max-time 15 --retry-all-errors"
+alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
 
 # Additional options
 DO_BOARD_CONFIG=1 # default to do the board config
