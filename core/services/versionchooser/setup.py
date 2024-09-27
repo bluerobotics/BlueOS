@@ -25,5 +25,6 @@ setup(
         "pyrsistent == 0.16.0",
         "pytest-asyncio == 0.14.0",
         "werkzeug == 2.2.3",
+        "yarl == 1.12.1",
     ],
 )
