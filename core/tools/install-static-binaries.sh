@@ -12,6 +12,7 @@ TOOLS=(
     machineid
     mavlink2rest
     mavlink_router
+    mavlink_server
     mavp2p
     ttyd
 )
