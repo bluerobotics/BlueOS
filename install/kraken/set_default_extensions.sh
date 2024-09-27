@@ -5,6 +5,8 @@
 COCKPIT_RELEASE_URL="https://api.github.com/repos/bluerobotics/cockpit/releases/latest"
 MAJOR_TOM_RELEASE_URL="https://blueos.cloud/major_tom/install"
 
+alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
+
 response=$(curl -fsSL $COCKPIT_RELEASE_URL)
 
 if [[ $response =~ \"tag_name\":\ *\"([^\"]+)\" ]]; then
