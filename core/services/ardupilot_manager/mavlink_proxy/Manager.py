@@ -124,12 +124,12 @@ class Manager:
         try:
             endpoints = self.endpoints()
             master_endpoint = self.master_endpoint
-            await self.tool.exit()
+            await self.stop()
             self.tool = AbstractRouter.get_interface(router_name)()
             for endpoint in endpoints:
                 self.tool.add_endpoint(endpoint)
             if master_endpoint:
-                await self.tool.start(master_endpoint)
+                await self.start(master_endpoint)
         except Exception as error:
             logger.error(f"Failed to set preferred router to {router_name}. {error}")
 
