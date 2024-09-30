@@ -54,10 +54,20 @@ class AutoPilotManager(metaclass=Singleton):
     async def setup(self) -> None:
         # This is the logical continuation of __init__(), extracted due to its async nature
         self.configuration = deepcopy(self.settings.content)
-        self.mavlink_manager = MavlinkManager(self.load_preferred_router())
-        if not self.load_preferred_router():
-            await self.set_preferred_router(self.mavlink_manager.available_interfaces()[0].name())
-            logger.info(f"Setting {self.mavlink_manager.available_interfaces()[0].name()} as preferred router.")
+
+        self.mavlink_manager = MavlinkManager()
+        preferred_router = self.load_preferred_router()
+        try:
+            self.mavlink_manager = MavlinkManager(preferred_router)
+        except ValueError as error:
+            logger.warning(
+                f"Failed to start MavlinkManager[{preferred_router}]. Falling back to the first available router. Error details: {error}"
+            )
+            preferred_router = None
+
+        if not preferred_router:
+            await self.set_preferred_router(self.mavlink_manager.tool.name())
+            logger.info(f"Setting {self.mavlink_manager.tool.name()} as preferred router.")
         self.mavlink_manager.set_logdir(self.settings.log_path)
 
         self._load_endpoints()
