@@ -34,7 +34,7 @@
             v-model="new_extension.docker"
             label="Docker image"
             :disabled="is_editing"
-            :rules="[validate_dockerhub]"
+            :rules="[validate_imagename]"
           />
 
           <v-text-field
@@ -140,20 +140,29 @@ export default Vue.extend({
       }
       return 'This field must contain two words separated by a period. Numbers are allowed after the first character.'
     },
-    validate_dockerhub(input: string): (true | string) {
-      if (input.includes(':')) {
-        return 'The name must not contain the docker tag'
+    validate_imagename(input: string): (true | string) {
+      // See https://github.com/distribution/reference/blob/main/reference.go
+      const path_part_regex = /^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*$/
+
+      if (!input) return 'Name must not be empty'
+
+      const parts = input.split('/')
+
+      for (const [i, part] of parts.entries()) {
+        if (path_part_regex.test(part)) {
+          continue
+        }
+        // note the domain is optional; we could just have a path
+        if (i === 0 && parts.length >= 2 && !URL.canParse(`http://${part}`)) {
+          return 'Name starts with an invalid domain'
+        }
+        if (part.includes(':')) {
+          return 'Name must not contain a tag'
+        }
+        return 'Image path is invalid'
       }
-      // A tag name must be valid ASCII and may contain lowercase and uppercase letters, digits,
-      // underscores, periods and dashes. A tag name may not start with a period or a dash and
-      // may contain a maximum of 128 characters.
-      // regex based on https://ktomk.github.io/pipelines/doc/DOCKER-NAME-TAG.html#grammar
-      const regex = /[a-zA-Z0-9.-]\/[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}/
-      if (regex.test(input)) {
-        return true
-      }
-      return 'This field must contain two words separated by a forward slash. '
-      + 'Numbers are allowed after the first character. e.g example/docker1'
+
+      return true
     },
     validate_name(input: string): (true | string) {
       if (input.trim().length === 0) {
