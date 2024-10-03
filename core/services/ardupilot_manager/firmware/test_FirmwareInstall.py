@@ -6,7 +6,8 @@ import pytest
 from exceptions import InvalidFirmwareFile
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareInstall import FirmwareInstaller
-from typedefs import FlightController, Platform, Vehicle
+from flight_controller import FlightController, Platform
+from typedefs import Vehicle
 
 
 def test_firmware_validation() -> None:

@@ -4,8 +4,9 @@ from typing import Any, List
 from commonwealth.utils.commands import load_file
 from elftools.elf.elffile import ELFFile
 
-from flight_controller_detector.linux.linux_boards import LinuxFlightController
-from typedefs import Platform, Serial
+from flight_controller import Platform
+from flight_controller.detector.linux.linux_boards import LinuxFlightController
+from typedefs import Serial
 
 
 class Navigator(LinuxFlightController):

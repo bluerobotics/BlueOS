@@ -18,23 +18,19 @@ from exceptions import (
     NoPreferredBoardSet,
 )
 from firmware.FirmwareManagement import FirmwareManager
-from flight_controller_detector.Detector import Detector as BoardDetector
-from flight_controller_detector.linux.linux_boards import LinuxFlightController
+from flight_controller import (
+    FlightController,
+    FlightControllerFlags,
+    Platform,
+    PlatformType,
+)
+from flight_controller.detector import FlightControllerDetector
+from flight_controller.detector.linux.linux_boards import LinuxFlightController
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
-from typedefs import (
-    Firmware,
-    FlightController,
-    FlightControllerFlags,
-    Parameters,
-    Platform,
-    PlatformType,
-    Serial,
-    SITLFrame,
-    Vehicle,
-)
+from typedefs import Firmware, Parameters, Serial, SITLFrame, Vehicle
 
 
 class AutoPilotManager(metaclass=Singleton):
@@ -309,7 +305,7 @@ class AutoPilotManager(metaclass=Singleton):
         return [router.name() for router in self.mavlink_manager.available_interfaces()]
 
     async def start_sitl(self) -> None:
-        self._current_board = BoardDetector.detect_sitl()
+        self._current_board = FlightControllerDetector.detect_sitl()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
             self.firmware_manager.install_firmware_from_params(Vehicle.Sub, self._current_board)
         frame = self.load_sitl_frame()
@@ -419,7 +415,7 @@ class AutoPilotManager(metaclass=Singleton):
 
     @staticmethod
     async def available_boards(include_bootloaders: bool = False) -> List[FlightController]:
-        all_boards = await BoardDetector.detect(True)
+        all_boards = await FlightControllerDetector.detect(True)
         if include_bootloaders:
             return all_boards
         return [board for board in all_boards if FlightControllerFlags.is_bootloader not in board.flags]
