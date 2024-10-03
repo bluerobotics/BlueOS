@@ -10,14 +10,14 @@ import mavlink_proxy.MAVLinkRouter
 import mavlink_proxy.MAVLinkServer
 import mavlink_proxy.MAVP2P
 import mavlink_proxy.MAVProxy
-from exceptions import (
+from mavlink_proxy.AbstractRouter import AbstractRouter
+from mavlink_proxy.Endpoint import Endpoint
+from mavlink_proxy.exceptions import (
     EndpointCreationFail,
     EndpointDeleteFail,
     EndpointUpdateFail,
     NoMasterMavlinkEndpoint,
 )
-from mavlink_proxy.AbstractRouter import AbstractRouter
-from mavlink_proxy.Endpoint import Endpoint
 
 
 class Manager:

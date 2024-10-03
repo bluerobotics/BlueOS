@@ -13,11 +13,10 @@ import pytest
 sys.path.append(str(pathlib.Path(__file__).absolute().parent.parent))
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
-from mavlink_proxy.Endpoint import Endpoint
+from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
 from mavlink_proxy.MAVP2P import MAVP2P
 from mavlink_proxy.MAVProxy import MAVProxy
-from typedefs import EndpointType
 
 _, slave_port = pty.openpty()
 serial_port_name = os.ttyname(slave_port)
