@@ -166,16 +166,6 @@ class FirmwareFormat(str, Enum):
     ELF = "ELF"
 
 
-class EndpointType(str, Enum):
-    """Supported Mavlink endpoint types."""
-
-    UDPServer = "udpin"
-    UDPClient = "udpout"
-    TCPServer = "tcpin"
-    TCPClient = "tcpout"
-    Serial = "serial"
-
-
 class Serial(BaseModel):
     """Simplified representation of linux serial port configurations,
     gets transformed into command line arguments such as

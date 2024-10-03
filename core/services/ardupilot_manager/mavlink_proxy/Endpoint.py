@@ -1,10 +1,19 @@
+from enum import Enum
 from typing import Any, Dict, Iterable, Optional, Type
 
 import validators
 from pydantic import constr, root_validator
 from pydantic.dataclasses import dataclass
 
-from typedefs import EndpointType
+
+class EndpointType(str, Enum):
+    """Supported Mavlink endpoint types."""
+
+    UDPServer = "udpin"
+    UDPClient = "udpout"
+    TCPServer = "tcpin"
+    TCPClient = "tcpout"
+    Serial = "serial"
 
 
 @dataclass

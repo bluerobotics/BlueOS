@@ -14,18 +14,17 @@ from loguru import logger
 
 from exceptions import (
     ArdupilotProcessKillFail,
-    EndpointAlreadyExists,
     NoDefaultFirmwareAvailable,
     NoPreferredBoardSet,
 )
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
-from mavlink_proxy.Endpoint import Endpoint
+from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
 from typedefs import (
-    EndpointType,
     Firmware,
     FlightController,
     FlightControllerFlags,
