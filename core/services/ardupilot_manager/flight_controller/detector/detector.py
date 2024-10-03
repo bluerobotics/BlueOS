@@ -4,12 +4,12 @@ from typing import List, Optional
 from commonwealth.utils.general import is_running_as_root
 from serial.tools.list_ports_linux import SysFS, comports
 
-from flight_controller_detector.board_identification import identifiers
-from flight_controller_detector.linux.detector import LinuxFlightControllerDetector
-from typedefs import FlightController, FlightControllerFlags, Platform
+from flight_controller import FlightController, FlightControllerFlags, Platform
+from flight_controller.detector.board_identification import identifiers
+from flight_controller.detector.linux.detector import LinuxFlightControllerDetector
 
 
-class Detector:
+class FlightControllerDetector:
     @classmethod
     async def detect_linux_board(cls) -> Optional[FlightController]:
         for _i in range(5):
@@ -59,16 +59,16 @@ class Detector:
             FlightController(
                 name=port.product or port.name,
                 manufacturer=port.manufacturer,
-                platform=Detector.detect_serial_platform(port)
+                platform=FlightControllerDetector.detect_serial_platform(port)
                 or Platform(),  # this is just to make CI happy. check line 82
                 path=port.device,
             )
             for port in unique_serial_devices
-            if Detector.detect_serial_platform(port) is not None
+            if FlightControllerDetector.detect_serial_platform(port) is not None
         ]
         for port in unique_serial_devices:
             for board in boards:
-                if board.path == port.device and Detector.is_serial_bootloader(port):
+                if board.path == port.device and FlightControllerDetector.is_serial_bootloader(port):
                     board.flags.append(FlightControllerFlags.is_bootloader)
         return boards
 
@@ -97,6 +97,6 @@ class Detector:
         available.extend(cls().detect_serial_flight_controllers())
 
         if include_sitl:
-            available.append(Detector.detect_sitl())
+            available.append(FlightControllerDetector.detect_sitl())
 
         return available

@@ -15,15 +15,8 @@ from exceptions import (
 )
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareInstall import FirmwareInstaller
-from typedefs import (
-    Firmware,
-    FirmwareFormat,
-    FlightController,
-    Parameters,
-    Platform,
-    PlatformType,
-    Vehicle,
-)
+from flight_controller import FlightController, Platform, PlatformType
+from typedefs import Firmware, FirmwareFormat, Parameters, Vehicle
 
 
 class FirmwareManager:
