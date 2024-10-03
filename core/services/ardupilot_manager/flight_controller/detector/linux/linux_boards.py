@@ -2,7 +2,8 @@ from typing import List, Type
 
 from smbus2 import SMBus
 
-from typedefs import FlightController, PlatformType, Serial
+from flight_controller import FlightController, PlatformType
+from typedefs import Serial
 
 
 class LinuxFlightController(FlightController):

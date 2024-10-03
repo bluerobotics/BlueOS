@@ -1,5 +1,5 @@
-from flight_controller_detector.linux.navigator import NavigatorPi4
-from typedefs import Platform
+from flight_controller import Platform
+from flight_controller.detector.linux.navigator import NavigatorPi4
 
 
 class Argonot(NavigatorPi4):

@@ -3,9 +3,9 @@ from typing import List, Optional, Type
 
 from loguru import logger
 
-from flight_controller_detector.linux.argonot import Argonot
-from flight_controller_detector.linux.linux_boards import LinuxFlightController
-from flight_controller_detector.linux.navigator import NavigatorPi4, NavigatorPi5
+from flight_controller.detector.linux.argonot import Argonot
+from flight_controller.detector.linux.linux_boards import LinuxFlightController
+from flight_controller.detector.linux.navigator import NavigatorPi4, NavigatorPi5
 
 
 class LinuxFlightControllerDetector:
