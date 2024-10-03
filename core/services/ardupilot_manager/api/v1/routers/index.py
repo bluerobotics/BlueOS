@@ -16,7 +16,7 @@ from fastapi.responses import PlainTextResponse
 from fastapi_versioning import versioned_api_route
 from loguru import logger
 
-from ArduPilotManager import ArduPilotManager
+from autopilot_manager import AutoPilotManager
 from exceptions import InvalidFirmwareFile
 from typedefs import Firmware, FlightController, Parameters, Serial, SITLFrame, Vehicle
 
@@ -26,7 +26,7 @@ index_router_v1 = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
-autopilot = ArduPilotManager()
+autopilot = AutoPilotManager()
 
 
 # By default, all REST resources should have its own router, but as some of them does not implement

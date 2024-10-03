@@ -14,7 +14,7 @@ async def root_v2() -> HTMLResponse:
     html_content = """
     <html>
         <head>
-            <title>ArduPilot Manager</title>
+            <title>AutoPilot Manager</title>
         </head>
     </html>
     """
