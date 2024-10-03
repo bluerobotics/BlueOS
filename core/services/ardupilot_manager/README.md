@@ -1,1 +1,1 @@
-# ArduPilot service manager
+# AutoPilot service manager

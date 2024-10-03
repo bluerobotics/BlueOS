@@ -11,8 +11,8 @@ from api.v1.routers import endpoints_router_v1, index_router_v1
 from api.v2.routers import index_router_v2
 
 application = FastAPI(
-    title="ArduPilot Manager API",
-    description="ArduPilot Manager is responsible for managing ArduPilot devices connected to BlueOS.",
+    title="AutoPilot Manager API",
+    description="AutoPilot Manager is responsible for managing AutoPilot devices connected to BlueOS.",
     default_response_class=PrettyJSONResponse,
     debug=True,  # TODO - Add debug after based on args
 )
@@ -33,7 +33,7 @@ async def root() -> HTMLResponse:
     html_content = """
     <html>
         <head>
-            <title>ArduPilot Manager</title>
+            <title>AutoPilot Manager</title>
         </head>
     </html>
     """

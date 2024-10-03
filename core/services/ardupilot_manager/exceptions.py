@@ -1,5 +1,5 @@
 """
-Ardupilot-manager exception classes.
+AutoPilot-manager exception classes.
 """
 
 
@@ -12,11 +12,11 @@ class NoVersionAvailable(ValueError):
 
 
 class InvalidManifest(ValueError):
-    """Ardupilot manifest file cannot be validated."""
+    """AutoPilot manifest file cannot be validated."""
 
 
 class ManifestUnavailable(RuntimeError):
-    """Ardupilot manifest file unavailable."""
+    """AutoPilot manifest file unavailable."""
 
 
 class NoCandidate(ValueError):
@@ -44,19 +44,19 @@ class InvalidFirmwareFile(ValueError):
 
 
 class UndefinedPlatform(ValueError):
-    """Ardupilot platform is not defined."""
+    """AutoPilot platform is not defined."""
 
 
 class UnsupportedPlatform(ValueError):
-    """Ardupilot platform not supported."""
+    """AutoPilot platform not supported."""
 
 
 class FirmwareInstallFail(RuntimeError):
     """Firmware install operation failed."""
 
 
-class ArdupilotProcessKillFail(RuntimeError):
-    """Could not kill Ardupilot process."""
+class AutoPilotProcessKillFail(RuntimeError):
+    """Could not kill AutoPilot process."""
 
 
 class NoDefaultFirmwareAvailable(RuntimeError):

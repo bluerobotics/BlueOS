@@ -13,7 +13,7 @@ from elftools.elf.elffile import ELFFile
 from loguru import logger
 
 from exceptions import (
-    ArdupilotProcessKillFail,
+    AutoPilotProcessKillFail,
     NoDefaultFirmwareAvailable,
     NoPreferredBoardSet,
 )
@@ -37,7 +37,7 @@ from typedefs import (
 )
 
 
-class ArduPilotManager(metaclass=Singleton):
+class AutoPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         self.settings = Settings()
@@ -481,7 +481,7 @@ class ArduPilotManager(metaclass=Singleton):
                     return
                 logger.debug("Waiting for process to die...")
                 await asyncio.sleep(0.5)
-            raise ArdupilotProcessKillFail("Could not terminate Ardupilot subprocess.")
+            raise AutoPilotProcessKillFail("Could not terminate Ardupilot subprocess.")
         logger.warning("Ardupilot subprocess already not running.")
 
     async def prune_ardupilot_processes(self) -> None:
@@ -502,7 +502,7 @@ class ArduPilotManager(metaclass=Singleton):
             try:
                 subprocess.run(["pkill", "-9", process.pid], check=True)
             except Exception as error:
-                raise ArdupilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
+                raise AutoPilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
 
     async def kill_ardupilot(self) -> None:
         self.should_be_running = False
