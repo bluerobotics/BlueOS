@@ -1,5 +1,5 @@
 # Build frontend
-FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontendBuilder
+FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontend-builder
 
 ARG VITE_APP_GIT_DESCRIBE
 ENV VITE_APP_GIT_DESCRIBE=${VITE_APP_GIT_DESCRIBE:-none/none-0-g00000000}
@@ -23,10 +23,10 @@ set -e
 
 EOF
 
-FROM bluerobotics/blueos-base:0.2.1 as base
+FROM bluerobotics/blueos-base:0.2.1 AS base
 
 # Download binaries
-FROM base as downloadBinaries
+FROM base AS download-binaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
@@ -80,8 +80,8 @@ RUN /home/pi/services/install-services.sh
 COPY start-blueos-core /usr/bin/start-blueos-core
 COPY run-service.sh /usr/bin/run-service
 
-# Copy binaries and necessary folders from downloadBinaries to this stage
-COPY --from=downloadBinaries \
+# Copy binaries and necessary folders from download-binaries to this stage
+COPY --from=download-binaries \
     /usr/bin/blueos_startup_update.py \
     /usr/bin/bridges \
     /usr/bin/machineid-cli \
@@ -92,8 +92,8 @@ COPY --from=downloadBinaries \
     /usr/bin/ttyd \
     /usr/bin/
 
-# Copy frontend built on frontendBuild to this stage
-COPY --from=frontendBuilder /home/pi/frontend/dist /home/pi/frontend
+# Copy frontend built on frontend-builder to this stage
+COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
 
 RUN <<-EOF
 set -e
@@ -132,4 +132,4 @@ set -e
 EOF
 
 # Start
-CMD /bin/bash -i /usr/bin/start-blueos-core && sleep infinity
+CMD ["/bin/bash", "-i", "-c", "/usr/bin/start-blueos-core && sleep infinity"]
