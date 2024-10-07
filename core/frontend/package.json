@@ -61,7 +61,7 @@
     "vue-tsc": "^2.1.6",
     "vuedraggable": "^2.24.3",
     "vuetify": "2.7.1",
-    "vuex": "^3.4.0",
+    "vuex": "^3.6.2",
     "vuex-module-decorators": "^1.0.1",
     "webpack": "^5.74.0",
     "wifi-qr-code-generator": "^1.1.1"

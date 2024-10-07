@@ -47,7 +47,7 @@
         v-if="current_network"
         connected
         :network="current_network"
-        :ip-address="wifi_status.ip_address"
+        :ip-address="wifi_status?.ip_address"
         @click="openDisconnectionDialog"
       />
 
@@ -66,7 +66,7 @@
             clearable
             class="ml-7 mr-7"
           />
-          <div v-if="!filtered_networks.isEmpty()">
+          <div v-if="!filtered_networks?.isEmpty()">
             <wifi-network-card
               v-for="(network, key) in filtered_networks"
               :key="key"
