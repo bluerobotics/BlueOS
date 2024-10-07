@@ -20,6 +20,7 @@ type CheckSiteStatus = {
 
 type SiteStatus = Record<string, CheckSiteStatus>
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

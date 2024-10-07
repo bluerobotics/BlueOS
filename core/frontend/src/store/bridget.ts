@@ -15,6 +15,7 @@ const notifier = new Notifier(bridget_service)
 let prefetched_bridges = false
 let prefetched_serial = false
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

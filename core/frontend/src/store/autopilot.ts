@@ -11,6 +11,7 @@ import ParameterFetcher from '@/types/autopilot/parameter-fetcher'
 
 const parameterFetcher = new ParameterFetcher()
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,
