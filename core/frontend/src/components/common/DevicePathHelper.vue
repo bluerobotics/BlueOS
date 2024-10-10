@@ -38,12 +38,14 @@ import Vue from 'vue'
 import navigator_image from '@/assets/img/devicePathHelper/navigator.svg'
 import raspberry_pi3_image from '@/assets/img/devicePathHelper/rpi3b.svg'
 import raspberry_pi4_image from '@/assets/img/devicePathHelper/rpi4b.svg'
+import raspberry_pi5_image from '@/assets/img/devicePathHelper/rpi5.svg'
 import system_information from '@/store/system-information'
 import { Dictionary } from '@/types/common'
 
 enum BoardType {
   Rpi4B = 'Rpi4B',
   Rpi3B = 'Rpi3B',
+  Rpi5 = 'Rpi5',
   Navigator = 'Navigator',
   Unknown = 'Unknown'
 }
@@ -63,6 +65,12 @@ const connector_map: Dictionary<string> = {
   '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.4:1.0-port0': 'top-right',
   '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1.0-port0': 'bottom-left',
   '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0-port0': 'top-left',
+  // Pi5
+  '/dev/serial/by-path/platform-xhci-hcd.1-usb-0:1:1.0-port0': 'top-left',
+  '/dev/serial/by-path/platform-xhci-hcd.0-usb-0:1:1.0-port0': 'bottom-left',
+  '/dev/serial/by-path/platform-xhci-hcd.0-usb-0:2:1.0-port0': 'top-right',
+  '/dev/serial/by-path/platform-xhci-hcd.1-usb-0:2:1.0-port0': 'bottom-right',
+
 }
 
 export default Vue.extend({
@@ -95,6 +103,18 @@ export default Vue.extend({
       /* returns the by-path path for the serial port if available */
       return system_information.serial?.ports?.find((a) => a.name === this.device)?.by_path ?? this.device as string
     },
+    get_host_board_type() : BoardType {
+      switch (true) {
+        case system_information.platform?.raspberry?.model?.includes('Raspberry Pi 4'):
+          return BoardType.Rpi4B
+        case system_information.platform?.raspberry?.model?.includes('Raspberry Pi 5'):
+          return BoardType.Rpi5
+        case system_information.platform?.raspberry?.model?.includes('Raspberry Pi 3'):
+          return BoardType.Rpi3B
+        default:
+          return BoardType.Unknown
+      }
+    },
     board_type() : BoardType {
       /* Detects board type between navigator and Rpi4 */
       switch (true) {
@@ -105,6 +125,8 @@ export default Vue.extend({
           return BoardType.Rpi3B
         case this.serial_port_path.includes('platform-fd500000'):
           return BoardType.Rpi4B
+        case this.get_host_board_type === BoardType.Rpi5 && this.serial_port_path.includes('platform-xhci-hcd'):
+          return BoardType.Rpi5
         default:
           return BoardType.Unknown
       }
@@ -117,6 +139,8 @@ export default Vue.extend({
           return raspberry_pi4_image
         case BoardType.Rpi3B:
           return raspberry_pi3_image
+        case BoardType.Rpi5:
+          return raspberry_pi5_image
         default:
           return ''
       }
