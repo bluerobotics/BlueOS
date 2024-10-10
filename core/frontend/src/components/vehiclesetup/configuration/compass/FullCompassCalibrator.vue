@@ -9,7 +9,7 @@
         v-bind="attrs"
         v-on="on"
       >
-        Full Calibration
+        Start Full Calibration
       </v-btn>
     </template>
 
@@ -85,7 +85,7 @@
           Dismiss
         </v-btn>
         <RebootButton />
-        <v-btn color="red" :disabled="state !== states.CALIBRATING" @click="cancelCalibration()">
+        <v-btn v-if="state == states.CALIBRATING" color="red" @click="cancelCalibration()">
           Cancel
         </v-btn>
       </v-card-actions>

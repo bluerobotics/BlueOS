@@ -15,6 +15,7 @@
           {{ page.title }}
         </v-tab>
       </v-tabs>
+      <not-safe-overlay />
       <v-tabs-items :value="currentSubtab">
         <v-tab-item
           v-for="page in filtered_pages"
@@ -33,6 +34,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
 import VehicleInfo from '@/components/vehiclesetup/overview/VehicleInfo.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import autopilot from '@/store/autopilot_manager'
@@ -76,6 +78,7 @@ export default Vue.extend({
     BaroCalib,
     FailsafesConfigration,
     Camera,
+    NotSafeOverlay,
   },
   data() {
     return {

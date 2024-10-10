@@ -34,7 +34,20 @@
               <v-expansion-panels>
                 <v-expansion-panel>
                   <v-expansion-panel-header>
-                    Quick Compass Calibration
+                    Full (Onboard) Calibration
+                  </v-expansion-panel-header>
+                  <v-expansion-panel-content>
+                    <p>
+                      This does a full calibration of the compasses.
+                      It requires you to spin the vehicle around manually multiple times.
+                      You need to move the vehicle around in all 3 axis.
+                    </p>
+                    <full-compass-calibrator :compasses="compasses" />
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
+                <v-expansion-panel>
+                  <v-expansion-panel-header>
+                    Large Vehicle Calibration
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
@@ -58,19 +71,6 @@
                       you see the message <b>"CompassLearn: finished"</b>
                     </p>
                     <compass-learn :compasses="compasses" />
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-                <v-expansion-panel>
-                  <v-expansion-panel-header>
-                    Onboard Calibration
-                  </v-expansion-panel-header>
-                  <v-expansion-panel-content>
-                    <p>
-                      This does a full calibration of the compasses.
-                      It requires you to spin the vehicle around manually multiple times.
-                      You need to move the vehicle around in all 3 axis.
-                    </p>
-                    <full-compass-calibrator :compasses="compasses" />
                   </v-expansion-panel-content>
                 </v-expansion-panel>
                 <v-expansion-panel>
