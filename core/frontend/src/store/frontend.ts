@@ -5,6 +5,7 @@ import {
 
 import store from '@/store'
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

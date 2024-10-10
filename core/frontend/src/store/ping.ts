@@ -14,6 +14,7 @@ const notifier = new Notifier(ping_service)
 
 let prefecthed_pings = false
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

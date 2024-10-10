@@ -6,27 +6,27 @@
   />
 </template>
 
-<script>
+<script lang="ts">
 import Vue from 'vue'
 
 import JsonEditor from '@/components/common/JsonEditor.vue'
 import bag from '@/store/bag'
 
 export default Vue.extend({
-  name: 'BagEditor',
+  name: 'BagEditorView',
   components: {
     JsonEditor,
   },
   data() {
     return {
-      json: {},
+      json: {} as any,
     }
   },
   async mounted() {
     this.json = await bag.getData('*')
   },
   methods: {
-    apply(json) {
+    apply(json: any) {
       bag.overwrite(json)
       this.json = json
     },

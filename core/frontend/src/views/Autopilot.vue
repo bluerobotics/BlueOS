@@ -55,7 +55,7 @@
         <v-btn
           v-if="settings.is_pirate_mode"
           color="secondary"
-          :block="$vuetify.breakpoint.xs"
+          :block="vuetify.breakpoint.xs"
           class="ma-1"
           :disabled="restarting"
           @click="openBoardChangeDialog"
@@ -65,7 +65,7 @@
         <v-btn
           v-if="settings.is_pirate_mode"
           class="ma-1"
-          :block="$vuetify.breakpoint.xs"
+          :block="vuetify.breakpoint.xs"
           color="secondary"
           :disabled="restarting"
           @click="start_autopilot"
@@ -75,7 +75,7 @@
         <v-btn
           v-if="settings.is_pirate_mode"
           class="ma-1"
-          :block="$vuetify.breakpoint.xs"
+          :block="vuetify.breakpoint.xs"
           color="secondary"
           :disabled="restarting"
           @click="stop_autopilot"
@@ -85,7 +85,7 @@
         <v-btn
           color="primary"
           class="ma-1"
-          :block="$vuetify.breakpoint.xs"
+          :block="vuetify.breakpoint.xs"
           :disabled="restarting"
           @click="restart_autopilot"
         >
@@ -122,6 +122,7 @@ import autopilot from '@/store/autopilot_manager'
 import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import Vuetify from 'vuetify/lib'
 
 const notifier = new Notifier(autopilot_service)
 
@@ -144,6 +145,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    vuetify(): any {
+      return (this as any).$route as any
+    },
     autopilot_info(): Record<string, string> {
       let version = 'Unknown'
       if (this.firmware_info) {
@@ -164,7 +168,7 @@ export default Vue.extend({
 
       return record
     },
-    banner(): string {
+    banner(): string | undefined {
       switch (autopilot_data.autopilot_type) {
         case MavAutopilot.MAV_AUTOPILOT_ARDUPILOTMEGA:
           return ArduPilotBanner

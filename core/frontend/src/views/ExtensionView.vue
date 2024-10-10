@@ -17,6 +17,7 @@ import helper from '@/store/helper'
 import { Service } from '@/types/helper'
 
 import PageNotFound from './PageNotFound.vue'
+import { Route } from 'vue-router'
 
 export default Vue.extend({
   name: 'ExtensionView',
@@ -33,12 +34,15 @@ export default Vue.extend({
     }
   },
   computed: {
+    route(): Route {
+      return (this as any).$route as Route
+    },
     fullpage(): boolean {
-      return this.$route.query.full_page === 'true'
+      return this.route.query.full_page === 'true'
     },
     service(): Service | undefined {
       return helper.services.filter(
-        (service) => service?.metadata?.sanitized_name === this.$route.params.name,
+        (service) => service?.metadata?.sanitized_name === this.route.params.name,
       )[0] ?? undefined
     },
     port(): number | undefined | null {
@@ -46,7 +50,7 @@ export default Vue.extend({
         return undefined
       }
       return helper.services.filter(
-        (service) => service?.metadata?.sanitized_name === this.$route.params.name,
+        (service) => service?.metadata?.sanitized_name === this.route.params.name,
       )[0]?.port ?? null
     },
     service_path(): string {
@@ -73,7 +77,7 @@ export default Vue.extend({
       this.detected_port = this.port
     }
     // eslint-disable-next-line
-    this.remaining_path = this.$route.params.pathMatch
+    this.remaining_path = this.route.params.pathMatch
   },
 })
 </script>

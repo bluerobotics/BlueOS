@@ -8,6 +8,7 @@ import {
   FlightController, SerialEndpoint,
 } from '@/types/autopilot'
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,
