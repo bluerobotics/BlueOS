@@ -9,7 +9,7 @@
         v-bind="attrs"
         v-on="on"
       >
-        Full Calibration
+        Start Full Calibration
       </v-btn>
     </template>
 
