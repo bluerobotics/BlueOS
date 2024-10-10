@@ -67,15 +67,19 @@
           >
             Disable <br> DHCP server
           </v-btn>
-          <v-btn
+          <span
             v-else
-            small
-            class="ma-2 px-2 py-5 elevation-1"
-            :disabled="!is_static_ip_present"
-            @click="openDHCPServerDialog"
+            v-tooltip="!is_static_ip_present ? 'A static IP address is required to enable DHCP server.' : undefined"
           >
-            Enable <br> DHCP server
-          </v-btn>
+            <v-btn
+              small
+              class="ma-2 px-2 py-5 elevation-1"
+              :disabled="!is_static_ip_present"
+              @click="openDHCPServerDialog"
+            >
+              Enable <br> DHCP server
+            </v-btn>
+          </span>
         </v-row>
       </v-container>
     </v-expansion-panel-content>
