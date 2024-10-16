@@ -7,21 +7,21 @@ from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 from uvicorn import Config, Server
 
-from ArduPilotManager import ArduPilotManager
 from args import CommandLineArgs
+from autopilot_manager import AutoPilotManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from settings import SERVICE_NAME
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-logger.info("Starting ArduPilot Manager.")
-autopilot = ArduPilotManager()
+logger.info("Starting AutoPilot Manager.")
+autopilot = AutoPilotManager()
 
 from api import application
 
 if not is_running_as_root():
-    raise RuntimeError("ArduPilot manager needs to run with root privilege.")
+    raise RuntimeError("AutoPilot manager needs to run with root privilege.")
 
 if __name__ == "__main__":
     args = CommandLineArgs.from_args()

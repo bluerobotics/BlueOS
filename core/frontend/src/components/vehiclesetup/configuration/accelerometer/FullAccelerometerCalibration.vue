@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
-    persistent
+    :persistent="!show_ok_button && !show_next_button && !show_start_button"
     width="500"
   >
     <template #activator="{ on, attrs }">
@@ -11,7 +11,7 @@
         v-bind="attrs"
         v-on="on"
       >
-        Full Calibration
+        Start Full Calibration
       </v-btn>
     </template>
 

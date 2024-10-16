@@ -115,7 +115,7 @@
           />
 
           <v-text-field
-            v-model="bridge.udp_listen_port"
+            v-model.number="bridge.udp_listen_port"
             :counter="50"
             :label="`Vehicle/Server port ${bridge.udp_listen_port == 0 ? '(Automatic)' : '' }`"
             :rules="[validate_required_field, is_socket_auto_port]"

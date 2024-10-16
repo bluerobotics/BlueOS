@@ -8,14 +8,14 @@ from typing import Any, List, Optional, Set, Type
 
 from loguru import logger
 
-from exceptions import (
+from mavlink_proxy.Endpoint import Endpoint
+from mavlink_proxy.exceptions import (
     DuplicateEndpointName,
     EndpointAlreadyExists,
     EndpointDontExist,
     MavlinkRouterStartFail,
     NoMasterMavlinkEndpoint,
 )
-from mavlink_proxy.Endpoint import Endpoint
 
 
 class AbstractRouter(metaclass=abc.ABCMeta):
@@ -81,7 +81,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         for interface in AbstractRouter.__subclasses__():
             if interface.is_ok() and interface.name() == name:
                 return interface
-        raise RuntimeError("Interface is not ok or does not exist.")
+        raise ValueError("Interface is not ok or does not exist.")
 
     def binary(self) -> Optional[str]:
         return self._binary

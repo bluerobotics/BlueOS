@@ -13,19 +13,18 @@ from elftools.elf.elffile import ELFFile
 from loguru import logger
 
 from exceptions import (
-    ArdupilotProcessKillFail,
-    EndpointAlreadyExists,
+    AutoPilotProcessKillFail,
     NoDefaultFirmwareAvailable,
     NoPreferredBoardSet,
 )
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
-from mavlink_proxy.Endpoint import Endpoint
+from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
 from settings import Settings
 from typedefs import (
-    EndpointType,
     Firmware,
     FlightController,
     FlightControllerFlags,
@@ -38,7 +37,7 @@ from typedefs import (
 )
 
 
-class ArduPilotManager(metaclass=Singleton):
+class AutoPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         self.settings = Settings()
@@ -55,10 +54,20 @@ class ArduPilotManager(metaclass=Singleton):
     async def setup(self) -> None:
         # This is the logical continuation of __init__(), extracted due to its async nature
         self.configuration = deepcopy(self.settings.content)
-        self.mavlink_manager = MavlinkManager(self.load_preferred_router())
-        if not self.load_preferred_router():
-            await self.set_preferred_router(self.mavlink_manager.available_interfaces()[0].name())
-            logger.info(f"Setting {self.mavlink_manager.available_interfaces()[0].name()} as preferred router.")
+
+        self.mavlink_manager = MavlinkManager()
+        preferred_router = self.load_preferred_router()
+        try:
+            self.mavlink_manager = MavlinkManager(preferred_router)
+        except ValueError as error:
+            logger.warning(
+                f"Failed to start MavlinkManager[{preferred_router}]. Falling back to the first available router. Error details: {error}"
+            )
+            preferred_router = None
+
+        if not preferred_router:
+            await self.set_preferred_router(self.mavlink_manager.tool.name())
+            logger.info(f"Setting {self.mavlink_manager.tool.name()} as preferred router.")
         self.mavlink_manager.set_logdir(self.settings.log_path)
 
         self._load_endpoints()
@@ -187,6 +196,11 @@ class ArduPilotManager(metaclass=Singleton):
                     pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator"),
                     board,
                 )
+            elif board.platform == Platform.Navigator64:
+                self.firmware_manager.install_firmware_from_file(
+                    pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator64"),
+                    board,
+                )
             else:
                 raise NoDefaultFirmwareAvailable(
                     f"No firmware installed for '{board.platform}' and no default firmware available. Please install the firmware manually."
@@ -272,7 +286,7 @@ class ArduPilotManager(metaclass=Singleton):
         self.settings.save(self.configuration)
 
     def load_sitl_frame(self) -> SITLFrame:
-        if self.configuration["sitl_frame"] != SITLFrame.UNDEFINED:
+        if self.configuration.get("sitl_frame", SITLFrame.UNDEFINED) != SITLFrame.UNDEFINED:
             return SITLFrame(self.configuration["sitl_frame"])
         frame = SITLFrame.VECTORED
         logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
@@ -477,7 +491,7 @@ class ArduPilotManager(metaclass=Singleton):
                     return
                 logger.debug("Waiting for process to die...")
                 await asyncio.sleep(0.5)
-            raise ArdupilotProcessKillFail("Could not terminate Ardupilot subprocess.")
+            raise AutoPilotProcessKillFail("Could not terminate Ardupilot subprocess.")
         logger.warning("Ardupilot subprocess already not running.")
 
     async def prune_ardupilot_processes(self) -> None:
@@ -496,9 +510,9 @@ class ArduPilotManager(metaclass=Singleton):
                 logger.debug(f"Ardupilot appears to be running.. going to call pkill: {error}")
 
             try:
-                subprocess.run(["pkill", "-9", process.pid], check=True)
+                subprocess.run(["kill", "-9", process.pid], check=True)
             except Exception as error:
-                raise ArdupilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
+                raise AutoPilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
 
     async def kill_ardupilot(self) -> None:
         self.should_be_running = False

@@ -1,5 +1,5 @@
 """
-Ardupilot-manager exception classes.
+AutoPilot-manager exception classes.
 """
 
 
@@ -12,11 +12,11 @@ class NoVersionAvailable(ValueError):
 
 
 class InvalidManifest(ValueError):
-    """Ardupilot manifest file cannot be validated."""
+    """AutoPilot manifest file cannot be validated."""
 
 
 class ManifestUnavailable(RuntimeError):
-    """Ardupilot manifest file unavailable."""
+    """AutoPilot manifest file unavailable."""
 
 
 class NoCandidate(ValueError):
@@ -44,55 +44,23 @@ class InvalidFirmwareFile(ValueError):
 
 
 class UndefinedPlatform(ValueError):
-    """Ardupilot platform is not defined."""
+    """AutoPilot platform is not defined."""
 
 
 class UnsupportedPlatform(ValueError):
-    """Ardupilot platform not supported."""
+    """AutoPilot platform not supported."""
 
 
 class FirmwareInstallFail(RuntimeError):
     """Firmware install operation failed."""
 
 
-class ArdupilotProcessKillFail(RuntimeError):
-    """Could not kill Ardupilot process."""
+class AutoPilotProcessKillFail(RuntimeError):
+    """Could not kill AutoPilot process."""
 
 
 class NoDefaultFirmwareAvailable(RuntimeError):
     """Default firmware file is not available."""
-
-
-class EndpointCreationFail(RuntimeError):
-    """Failed to add endpoint."""
-
-
-class EndpointDeleteFail(RuntimeError):
-    """Failed to delete endpoint."""
-
-
-class EndpointUpdateFail(RuntimeError):
-    """Failed to update endpoint."""
-
-
-class MavlinkRouterStartFail(RuntimeError):
-    """Failed to initiate Mavlink router."""
-
-
-class NoMasterMavlinkEndpoint(ValueError):
-    """No master Mavlink endpoint set."""
-
-
-class EndpointAlreadyExists(ValueError):
-    """Mavlink endpoint already exists."""
-
-
-class DuplicateEndpointName(ValueError):
-    """Another mavlink endpoint with same name already exists."""
-
-
-class EndpointDontExist(ValueError):
-    """Given Mavlink endpoint do not exist."""
 
 
 class NoPreferredBoardSet(RuntimeError):

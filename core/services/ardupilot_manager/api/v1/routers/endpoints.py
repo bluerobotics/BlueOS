@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Set
 from fastapi import APIRouter, Body, status
 from fastapi_versioning import versioned_api_route
 
-from ArduPilotManager import ArduPilotManager
+from autopilot_manager import AutoPilotManager
 from mavlink_proxy.Endpoint import Endpoint
 
 endpoints_router_v1 = APIRouter(
@@ -13,7 +13,7 @@ endpoints_router_v1 = APIRouter(
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
 
-autopilot = ArduPilotManager()
+autopilot = AutoPilotManager()
 
 
 @endpoints_router_v1.get("/", response_model=List[Dict[str, Any]])
