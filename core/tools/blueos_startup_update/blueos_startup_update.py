@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 import appdirs
 from commonwealth.utils.commands import run_command, save_file, locate_file, load_file
-from commonwealth.utils.general import CpuType, get_cpu_type, get_host_os
+from commonwealth.utils.general import HostOs, CpuType, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
@@ -404,6 +404,29 @@ def fix_ssh_ownership() -> bool:
     return False
 
 
+def fix_wpa_service() -> bool:
+    """
+    Adds -i wlan0 and -c /etc/wpa_supplicant/wpa_supplicant.conf to the wpa_supplicant service
+    This is needed to make the service actually consume the .conf file with update_config=1
+    """
+    logger.info("checking wpa_supplicant service...")
+    file_path = "/lib/systemd/system/wpa_supplicant.service"
+    original_file = load_file(file_path)
+    # extract execstart line
+    execstart_line = next((line for line in original_file.splitlines() if line.startswith("ExecStart=")), None)
+    if execstart_line and "-i " in execstart_line and "-c " in execstart_line:
+        # the settings are there. not our job to check if they are the ones we want
+        return False
+    new_execstart_line = execstart_line
+    if "-i " not in execstart_line:
+        new_execstart_line = new_execstart_line + " -i wlan0"
+    if "-c " not in execstart_line:
+        new_execstart_line = new_execstart_line + " -c /etc/wpa_supplicant/wpa_supplicant.conf"
+    original_file = original_file.replace(execstart_line, new_execstart_line)
+    save_file(file_path, original_file, "before_fix_wpa_service")
+    return True
+
+
 def main() -> int:
     start = time.time()
     # check if boot_loop_detector exists
@@ -452,6 +475,8 @@ def main() -> int:
                 update_dwc2,
             ]
         )
+    if host_os == HostOs.Bookworm:
+        patches_to_apply.extend([fix_wpa_service])
 
     logger.info("The following patches will be applied if needed:")
     for patch in patches_to_apply:
