@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 import appdirs
 from commonwealth.utils.commands import run_command, save_file, locate_file, load_file
-from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
+from commonwealth.utils.general import CpuType, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
@@ -442,7 +442,7 @@ def main() -> int:
     ]
 
     # this will always be pi4 as pi5 is not supported
-    if host_os == HostOs.Bullseye:
+    if host_cpu == CpuType.PI4:
         patches_to_apply.extend([update_navigator_overlays])
 
     if host_cpu == CpuType.PI4 or CpuType.PI5:
