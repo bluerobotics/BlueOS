@@ -1,3 +1,6 @@
+import filebrowser from '@/libs/filebrowser'
+import { XzReadableStream } from 'xz-decompress'
+
 interface PX4ParametersMetadataValuesItem {
   description: string
   value: number
@@ -32,8 +35,21 @@ interface PX4ParametersMetadata {
 }
 
 async function fetchPX4MetadataFromBoard(): Promise<PX4ParametersMetadata[]> {
-  // TODO - Add mav ftp fetch to get parameters.json from board
-  throw new Error('Not implemented')
+  const px4ExtrasFolder = await filebrowser.fetchFolder('ardupilot_logs/logs/mavftp/etc/extras', 30000)
+
+  const parameterFile = px4ExtrasFolder.items.find((file) => file.name === 'parameters.json.xz')
+  if (!parameterFile) {
+    throw new Error('PX4 parameters metadata file not found')
+  }
+
+  const response = await fetch(await filebrowser.singleFileRelativeURL(parameterFile))
+  if (!response || !response.ok || !response.body) {
+    throw new Error(`Failed to fetch PX4 parameters metadata: ${response.statusText}`)
+  }
+
+  const decompressedStream = new Response(new XzReadableStream(response.body))
+
+  return (await decompressedStream.json()).parameters as PX4ParametersMetadata[]
 }
 
 async function fetchPX4Metadata(): Promise<PX4ParametersMetadata[]> {
@@ -41,6 +57,7 @@ async function fetchPX4Metadata(): Promise<PX4ParametersMetadata[]> {
   try {
     metadata = await fetchPX4MetadataFromBoard()
   } catch (e) {
+    console.error('Falling back to default PX4 Metadata Repository parameters, unable to fetch from board.', e)
     metadata = (await import('@/PX4-parameters/master/parameters.json')).parameters
   }
 
