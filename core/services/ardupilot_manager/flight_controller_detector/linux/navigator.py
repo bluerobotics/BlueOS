@@ -2,6 +2,7 @@ import platform
 from typing import Any, List
 
 from commonwealth.utils.commands import load_file
+from elftools.elf.elffile import ELFFile
 
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from typedefs import Platform, Serial
@@ -14,8 +15,15 @@ class Navigator(LinuxFlightController):
         name = "Navigator"
         plat = Platform.Navigator
         if platform.machine() == "aarch64":
-            name = "Navigator64"
-            plat = Platform.Navigator64
+            # edge case for 64-bit kernel on 32-bit userland...
+            # let's check the arch for /usr/bin/ls
+            with open("/usr/bin/ls", "rb") as f:
+                elf_file = ELFFile(f)
+                firm_arch = elf_file.get_machine_arch()
+                # from https://github.com/eliben/pyelftools/blob/main/elftools/elf/elffile.py#L513
+                if firm_arch == "AArch64":
+                    name = "Navigator64"
+                    plat = Platform.Navigator64
         super().__init__(**data, name=name, platform=plat)
 
     def is_pi5(self) -> bool:
