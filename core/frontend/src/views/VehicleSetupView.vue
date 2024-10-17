@@ -23,7 +23,7 @@
         :value="page.value"
       >
         <parameter-loading-spinner>
-          <component :is="page.component" :subtab="$route.params.subtab" />
+          <component :is="page.component" :subtab="route.params.subtab" />
         </parameter-loading-spinner>
       </v-tab-item>
     </v-tabs-items>
@@ -39,6 +39,8 @@ import Configure from '@/components/vehiclesetup/Configure.vue'
 import PwmSetup from '@/components/vehiclesetup/PwmSetup.vue'
 import setupOverview from '@/components/vehiclesetup/SetupOverview.vue'
 import { OneMoreTime } from '@/one-more-time'
+import router from '@/router'
+import VueRouter, { Route } from 'vue-router'
 
 export interface Item {
   title: string,
@@ -73,8 +75,11 @@ export default Vue.extend({
     }
   },
   computed: {
+    route(): Route {
+      return (this as any).$route as Route
+    },
     currentTab(): string {
-      return this.$route.params.tab || 'overview'
+      return this.route.params.tab || 'overview'
     },
   },
   mounted() {

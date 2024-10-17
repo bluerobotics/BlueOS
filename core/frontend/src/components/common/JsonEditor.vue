@@ -35,7 +35,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import 'jsoneditor/dist/jsoneditor.min.css'
 
 import JSONEditor from 'jsoneditor'

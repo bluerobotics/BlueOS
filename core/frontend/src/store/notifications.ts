@@ -7,6 +7,7 @@ import {
   CumulatedNotification, Notification, NotificationLevel,
 } from '@/types/notifications'
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

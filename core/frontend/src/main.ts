@@ -59,6 +59,7 @@ if (version && isOfficialTag) {
 }
 
 new Vue({
+  // @ts-ignore
   router,
   store,
   vuetify,

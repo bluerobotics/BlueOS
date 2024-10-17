@@ -7,6 +7,7 @@ import store from '@/store'
 import beacon from '@/store/beacon'
 import { castString } from '@/utils/helper_functions'
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

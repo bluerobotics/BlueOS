@@ -11,7 +11,8 @@
     "dev": "vite --host",
     "build": "NODE_ENV=production vite build",
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
-    "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src"
+    "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src",
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@google/model-viewer": "^3.0.0",
@@ -57,9 +58,10 @@
     "vue-router": "^3.6.5",
     "vue-tooltip-directive": "^1.0.2",
     "vue-tour": "^2.0.0",
+    "vue-tsc": "^2.1.6",
     "vuedraggable": "^2.24.3",
     "vuetify": "2.7.1",
-    "vuex": "^3.4.0",
+    "vuex": "^3.6.2",
     "vuex-module-decorators": "^1.0.1",
     "webpack": "^5.74.0",
     "wifi-qr-code-generator": "^1.1.1"
@@ -79,7 +81,7 @@
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-vue": "^9.9.0",
     "sass": "~1.32.0",
-    "typescript": "~4.9.5",
+    "typescript": "^5.6.2",
     "unplugin-vue-components": "^0.25.2",
     "vite": "3",
     "vite-plugin-pwa": "^0.16.5",

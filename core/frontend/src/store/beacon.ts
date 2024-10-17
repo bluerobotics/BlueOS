@@ -16,6 +16,7 @@ let prefetched_domains = false
 let prefetched_ips = false
 let prefetched_names = false
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

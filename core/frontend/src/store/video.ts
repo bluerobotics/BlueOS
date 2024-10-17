@@ -20,6 +20,7 @@ export interface Thumbnail {
 
 const notifier = new Notifier(video_manager_service)
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,
