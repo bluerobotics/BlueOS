@@ -426,7 +426,7 @@ export default Vue.extend({
       for (const [index, compass] of compasses.entries()) {
         const param_name = `COMPASS_PRIO${index + 1}_ID`
         const param = autopilot_data.parameter(param_name)
-        if (param?.value !== compass.paramValue) {
+        if (param && param?.value !== compass.paramValue) {
           mavlink2rest.setParam(param_name, compass.paramValue, autopilot_data.system_id)
           autopilot_data.setRebootRequired(true)
         }
