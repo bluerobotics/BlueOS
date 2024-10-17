@@ -57,7 +57,7 @@ export default Vue.extend({
     return {
       canvasSize: 300,
       renderVariables: {
-        yawAngleDegrees: [0, 0, 0, 0],
+        yawAngleDegrees: [0, 0, 0, 0, 0, 0],
       },
     }
   },
@@ -106,8 +106,16 @@ export default Vue.extend({
       }
       return ret
     },
+    gps_yaws(): (number | null)[] {
+      const yaws = []
+      const msg = mavlink_store_get(mavlink, 'GPS_RAW_INT.messageData.message') as Dictionary<number>
+      yaws.push(msg?.yaw ? msg.yaw / 100 : null)
+      const msg2 = mavlink_store_get(mavlink, 'GPS2_RAW.messageData.message') as Dictionary<number>
+      yaws.push(msg2?.yaw ? msg2.yaw / 100 : null)
+      return yaws
+    },
     headings(): (number | null)[] {
-      return [...this.mag_headings, this.yaw]
+      return [...this.mag_headings, ...this.gps_yaws, this.yaw]
     },
     primaryBaseColor(): string {
       return getComputedStyle(document.documentElement).getPropertyValue('--v-primary-base').trim()
@@ -123,7 +131,7 @@ export default Vue.extend({
       this.canvas.height = this.canvasSize
     })
     this.initializeCanvas()
-    for (const msg of ['ATTITUDE', 'RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3']) {
+    for (const msg of ['ATTITUDE', 'RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'GPS_RAW_INT', 'GPS2_RAW']) {
       mavlink.setMessageRefreshRate({ messageName: msg, refreshRate: 10 })
     }
   },
@@ -157,7 +165,7 @@ export default Vue.extend({
       ctx.textBaseline = 'middle'
 
       const outerCircleRadius = 0.7 * halfCanvasSize
-      const innerIndicatorRadius = 0.4 * halfCanvasSize
+      const innerIndicatorRadius = 0.45 * halfCanvasSize
       const outerIndicatorRadius = 0.55 * halfCanvasSize
 
       // Start drawing from the center
@@ -168,7 +176,7 @@ export default Vue.extend({
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
 
-      const verticalOffset = 0.5 * this.renderVariables.yawAngleDegrees.length * 10
+      const verticalOffset = 0.2 * this.renderVariables.yawAngleDegrees.length * 10
       // Iterate over the devices and draw the legend
       for (const [index, device] of this.compasses.slice(0, 3).entries()) {
         // check if our device is in the colors dict
@@ -189,6 +197,18 @@ export default Vue.extend({
         'EKF',
         0,
         verticalOffset + this.compasses.slice(0, 3).length * 20 - this.renderVariables.yawAngleDegrees.length * 10,
+      )
+      ctx.fillStyle = this.colors.GPS1
+      ctx.fillText(
+        'GPS1',
+        0,
+        verticalOffset + this.compasses.slice(0, 3).length * 20 - this.renderVariables.yawAngleDegrees.length * 10 + 20,
+      )
+      ctx.fillStyle = this.colors.GPS2
+      ctx.fillText(
+        'GPS2',
+        0,
+        verticalOffset + this.compasses.slice(0, 3).length * 20 - this.renderVariables.yawAngleDegrees.length * 10 + 40,
       )
       ctx.restore()
 
@@ -232,10 +252,21 @@ export default Vue.extend({
       ctx.stroke()
 
       // Draw central indicator
+      let usedIndex = 0
       for (const [index, angleDegrees] of this.headings.entries()) {
         if (angleDegrees === null) continue
         const paramValue = this.compasses?.[index]?.paramValue
-        const color = paramValue ? this.colors[paramValue] : this.primaryBaseColor
+
+        let color = this.primaryBaseColor
+        if (index <= 2 && this.colors[paramValue]) {
+          color = this.colors[paramValue]
+        } else if (index === 3) {
+          color = this.colors.GPS1
+        } else if (index === 4) {
+          color = this.colors.GPS2
+        } else if (index === 5) {
+          color = this.primaryBaseColor
+        }
         ctx.save()
         this.renderVariables.yawAngleDegrees[index] = angleDegrees
         ctx.rotate(glMatrix.toRadian(angleDegrees))
@@ -243,15 +274,18 @@ export default Vue.extend({
         ctx.lineWidth = 1
         ctx.strokeStyle = color
         ctx.fillStyle = color
-        const triangleBaseSize = 0.05 * halfCanvasSize - index
-        ctx.moveTo(innerIndicatorRadius, triangleBaseSize)
-        ctx.lineTo(outerIndicatorRadius - index - 0.5 * triangleBaseSize, 0)
-        ctx.lineTo(innerIndicatorRadius, -triangleBaseSize)
-        ctx.lineTo(innerIndicatorRadius, triangleBaseSize)
+        const triangleBaseSize = 0.03 * halfCanvasSize
+        const inner_position = 1.3 * innerIndicatorRadius - usedIndex * (outerIndicatorRadius - innerIndicatorRadius)
+        const outer_position = 1.3 * outerIndicatorRadius - usedIndex * (outerIndicatorRadius - innerIndicatorRadius)
+        ctx.moveTo(inner_position, triangleBaseSize)
+        ctx.lineTo(outer_position - triangleBaseSize, 0)
+        ctx.lineTo(inner_position, -triangleBaseSize)
+        ctx.lineTo(inner_position, triangleBaseSize)
         ctx.closePath()
         ctx.fill()
         ctx.stroke()
         ctx.restore()
+        usedIndex += 1
       }
     },
     initializeCanvas() {

@@ -247,7 +247,7 @@ export default Vue.extend({
   data() {
     return {
       tab: 0,
-      color_options: ['green', 'blue', 'purple'],
+      color_options: ['green', 'blue', 'purple', 'red', 'orange', 'brown', 'grey', 'black'],
       reordered_compasses: [] as deviceId[],
       edited_param: undefined as (undefined | Parameter),
       edit_param_dialog: false,
@@ -261,6 +261,8 @@ export default Vue.extend({
       for (const [index, compass] of sorted_compasses.entries()) {
         results[compass.paramValue] = this.color_options[index % this.color_options.length]
       }
+      results.GPS1 = 'grey'
+      results.GPS2 = 'black'
       return results
     },
     compass_autodec(): Parameter | undefined {
