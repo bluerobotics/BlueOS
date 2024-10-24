@@ -5,13 +5,11 @@ import ssl
 import sys
 import time
 import urllib.request
-
 from warnings import warn
 
 import setuptools
 
 from config import DEFAULT_RESOURCES
-
 
 ssl._create_default_https_context = ssl._create_unverified_context
 

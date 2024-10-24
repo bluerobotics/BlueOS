@@ -1,8 +1,8 @@
 # This file is used to define general configurations for the app
-import appdirs
-
 from collections import namedtuple
 from pathlib import Path
+
+import appdirs
 
 SERVICE_NAME = "autopilot-manager"
 
@@ -15,6 +15,16 @@ USER_FIRMWARE_PATH = Path("/usr/blueos/userdata/firmware")
 BLUE_OS_FILES_PATH = Path.joinpath(Path.home(), "blueos-files")
 DEFAULTS_PATH = Path.joinpath(BLUE_OS_FILES_PATH, "ardupilot-manager/default")
 
+@staticmethod
+    def create_app_folders() -> None:
+        """Create the necessary folders for proper app function."""
+        for folder in Settings.app_folders:
+            try:
+                Path.mkdir(folder, parents=True, exist_ok=True)
+            except FileExistsError:
+                logger.warning(f"Found file {folder} where a folder should be. Removing file and creating folder.")
+                Path.unlink(folder)
+                Path.mkdir(folder)
 
 StaticFile = namedtuple("StaticFile", "parent filename url")
 DEFAULT_RESOURCES = [
