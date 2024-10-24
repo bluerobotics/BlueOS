@@ -149,16 +149,16 @@ export default Vue.extend({
       const parts = input.split('/')
 
       for (const [i, part] of parts.entries()) {
-        // note the domain is optional; we could just have a path.
-        // But if a domain is present, it has looser parsing rules.
-        if (i === 0 && parts.length >= 2 && !URL.canParse(`http://${part}`)) {
-          return 'Name has an invalid domain'
-        }
-        if (i === parts.length - 1 && part.includes(':')) {
+        if (i === 0 && parts.length >= 2) {
+          // note the domain is optional; we could just have a path.
+          // But if a domain is present, it has looser parsing rules.
+          if (!URL.canParse(`http://${part}`)) {
+            return 'Name has an invalid domain'
+          }
+        } else if (i === parts.length - 1 && part.includes(':')) {
           return 'Name must not contain a tag'
-        }
-        if (!path_part_regex.test(part)) {
-          return 'Image name is invalid'
+        } else if (!path_part_regex.test(part)) {
+          return 'Name is invalid'
         }
       }
 
