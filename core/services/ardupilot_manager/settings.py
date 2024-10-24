@@ -3,25 +3,12 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, cast
 
-import appdirs
 from loguru import logger
 
 from typedefs import SITLFrame
 
-SERVICE_NAME = "ardupilot-manager"
-
 
 class Settings:
-    app_name = SERVICE_NAME
-    settings_path = Path(appdirs.user_config_dir(app_name))
-    settings_file = Path.joinpath(settings_path, "settings.json")
-    firmware_folder = Path.joinpath(settings_path, "firmware")
-    user_firmware_folder = Path("/usr/blueos/userdata/firmware")
-    log_path = Path.joinpath(settings_path, "logs")
-    app_folders = [settings_path, firmware_folder, log_path, user_firmware_folder]
-
-    blueos_files_folder = Path.joinpath(Path.home(), "blueos-files")
-    defaults_folder = Path.joinpath(blueos_files_folder, "ardupilot-manager/default")
     sitl_frame = SITLFrame.UNDEFINED
     preferred_router: Optional[str] = None
 
