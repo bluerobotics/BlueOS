@@ -14,8 +14,8 @@
     "sourceMap": true,
     "baseUrl": ".",
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "types": [
-      "webpack-env",
       "vite/client"
     ],
     "paths": {

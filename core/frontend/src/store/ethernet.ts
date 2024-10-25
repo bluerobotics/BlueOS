@@ -5,6 +5,7 @@ import {
 import store from '@/store'
 import { EthernetInterface } from '@/types/ethernet'
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

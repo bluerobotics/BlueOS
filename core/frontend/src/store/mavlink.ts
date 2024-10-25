@@ -16,6 +16,7 @@ interface messsageRefreshRate {
   refreshRate: number
 }
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

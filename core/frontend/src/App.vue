@@ -15,7 +15,6 @@
           :key="index"
           v-model="selected_widgets"
           :label="name"
-          :value="name"
           class="pa-0 pl-3 ma-0"
         />
       </v-list>
