@@ -182,7 +182,7 @@ export default Vue.extend({
       if (!boardname) {
         return false
       }
-      return ['Navigator', 'SITL'].includes(boardname)
+      return ['Navigator', 'Navigator64', 'SITL'].includes(boardname)
     },
     current_board(): FlightController | null {
       return autopilot.current_board
