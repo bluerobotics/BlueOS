@@ -226,8 +226,23 @@ docker create \
     -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos \
     $BLUEOS_BOOTSTRAP
 
-# add docker entry to rc.local
-sed -i "\%^exit 0%idocker start blueos-bootstrap" /etc/rc.local || echo "Failed to add docker start on rc.local, BlueOS will not start on boot!"
+# Ensure docker can run without sudo
+groupadd docker
+usermod -aG docker pi
+
+# Create service to start blueos-bootstrap container on boot
+echo "[Unit]
+Description=Start BlueOS on boot
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker start blueos-bootstrap
+
+[Install]
+WantedBy=multi-user.target" >> /etc/systemd/system/blueos.service
+
+systemctl start start-blueos
+systemctl enable start-blueos
 
 # Configure network settings
 ## This should be after everything, otherwise network problems can happen
