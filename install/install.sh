@@ -231,16 +231,7 @@ groupadd docker
 usermod -aG docker pi
 
 # Create service to start blueos-bootstrap container on boot
-echo "[Unit]
-Description=Start BlueOS on boot
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/docker start blueos-bootstrap
-
-[Install]
-WantedBy=multi-user.target" >> /etc/systemd/system/blueos.service
-
+curl -fsSL "$ROOT/install/configs/blueos.service" -o /etc/systemd/system/blueos.service
 systemctl start start-blueos
 systemctl enable start-blueos
 
