@@ -1,0 +1,9 @@
+[Unit]
+Description=Start BlueOS on boot
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker start blueos-bootstrap
+
+[Install]
+WantedBy=multi-user.target
