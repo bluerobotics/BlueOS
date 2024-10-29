@@ -227,13 +227,13 @@ docker create \
     $BLUEOS_BOOTSTRAP
 
 # Ensure docker can run without sudo
-groupadd docker
-usermod -aG docker pi
+groupadd docker || true
+usermod -aG docker pi || true
 
 # Create service to start blueos-bootstrap container on boot
 curl -fsSL "$ROOT/install/configs/blueos.service" -o /etc/systemd/system/blueos.service
-systemctl start start-blueos
-systemctl enable start-blueos
+systemctl start blueos
+systemctl enable blueos
 
 # Configure network settings
 ## This should be after everything, otherwise network problems can happen
