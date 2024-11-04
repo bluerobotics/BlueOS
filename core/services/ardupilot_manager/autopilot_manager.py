@@ -510,7 +510,7 @@ class AutoPilotManager(metaclass=Singleton):
                 logger.debug(f"Ardupilot appears to be running.. going to call pkill: {error}")
 
             try:
-                subprocess.run(["kill", "-9", process.pid], check=True)
+                subprocess.run(["kill", "-9", f"{process.pid}"], check=True)
             except Exception as error:
                 raise AutoPilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
 
