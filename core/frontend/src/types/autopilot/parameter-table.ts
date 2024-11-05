@@ -99,6 +99,14 @@ export default class ParametersTable {
   }
 
   async fetchArduPilotMetadata(): Promise<MetadataFile | string> {
+    try {
+      const json_metadata_override = '/userdata/metadata_override.json'
+      const metadata = await axios.get(json_metadata_override).then(response => response.data as MetadataFile)
+      console.info(`Using metadata override from ${json_metadata_override}`)
+      return metadata
+    } catch (error) {
+      console.debug(`Metadata override not present`)
+    }
     await fetchFirmwareVehicleType() // required to populate autopilot.vehicle_type
     const jsons = Object.keys(await import.meta.glob('/public/assets/ArduPilot-Parameter-Repository/**/*.json')) as string[]
     let folder = "Copter"
