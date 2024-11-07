@@ -8,12 +8,12 @@ import {
 } from '@/types/wifi'
 import { sorted_networks } from '@/utils/wifi'
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,
   name: 'wifi',
 })
-
 class WifiStore extends VuexModule {
   API_URL = '/wifi-manager/v1.0'
 

@@ -8,6 +8,7 @@
 import Vue from 'vue'
 
 import BrIframe from '@/components/utils/BrIframe.vue'
+import { Route } from 'vue-router';
 
 export default Vue.extend({
   name: 'FileBrowserView',
@@ -20,8 +21,11 @@ export default Vue.extend({
     }
   },
   computed: {
-    full_path() {
-      return `${this.service_path}${this.$route.params.path ?? ''}`
+    route(): Route {
+      return (this as any).$route as Route
+    },
+    full_path() : string {
+      return `${this.service_path}${this.route.params.path ?? ''}`
     },
   },
 })

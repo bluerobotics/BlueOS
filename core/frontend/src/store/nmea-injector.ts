@@ -10,6 +10,7 @@ import back_axios from '@/utils/api'
 
 const notifier = new Notifier(nmea_injector_service)
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

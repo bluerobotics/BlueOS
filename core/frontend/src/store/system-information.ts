@@ -37,6 +37,7 @@ export enum FetchType {
 
 const notifier = new Notifier(system_information_service)
 
+// @ts-ignore
 @Module({
   dynamic: true,
   store,

@@ -316,12 +316,17 @@ enum ApplyStatus {
   Failed,
 }
 
+interface Binds {
+    configurations: any,
+    loading: any,
+}
+
 // There is no type that could serve for generic binds and generic vue components
 interface VehicleConfigurationPage {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   page: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  binds: any,
+  binds: Binds
 }
 
 export default Vue.extend({
@@ -383,7 +388,7 @@ export default Vue.extend({
     current_page(): unknown {
       return this.configuration_pages[this.configuration_page_index].page
     },
-    current_page_bind(): unknown {
+    current_page_bind(): Binds {
       return this.configuration_pages[this.configuration_page_index].binds
     },
   },
@@ -702,8 +707,11 @@ export default Vue.extend({
       const response = await fetch(`${REPOSITORY_ROOT}/scripts/ardupilot/${script}`)
       return response.text()
     },
+    param_loader(): any {
+      return this.$refs.param_loader
+    },
     validateParams(): boolean {
-      return this.$refs.param_loader?.validateParams()
+      return (this.param_loader as any).validateParams()
     },
   },
 })
