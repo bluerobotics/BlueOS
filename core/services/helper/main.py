@@ -577,11 +577,11 @@ def software_id() -> Any:
     summary="Check internet best server for test from BlueOS.",
 )
 @version(1, 0)
-async def internet_best_server() -> Any:
+async def internet_best_server(interface_addr: Optional[str] = None) -> Any:
     # Since we are finding a new server, clear previous results
     # pylint: disable=global-statement
     global SPEED_TEST
-    SPEED_TEST = Speedtest(secure=True)
+    SPEED_TEST = Speedtest(secure=True, source_address=interface_addr)
     SPEED_TEST.get_best_server()
     return SPEED_TEST.results.dict()
 
