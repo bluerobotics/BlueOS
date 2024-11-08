@@ -126,9 +126,9 @@ export default Vue.extend({
   }),
   computed: {
     filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
-      const fw_patch = `${this.vehicle}/${this.version}/${this.board}`
-      const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}`
-      const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}`
+      const fw_patch = `${this.vehicle}/${this.version}/${this.board}/`
+      const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}/`
+      const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}/`
 
       // returns a new dict where the keys start with the fullname
       // e.g. "ArduSub/BlueROV2/4.0.3" -> "ArduSub/BlueROV2/4.0.3/BlueROV2"
