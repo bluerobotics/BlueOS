@@ -36,7 +36,7 @@
 
         <auto-coordinate-detector
           v-if="state === states.IDLE"
-          v-model="coordinates"
+          warnonly
         />
         <compass-mask-picker v-if="state === states.IDLE" v-model="compass_mask" :devices="compasses" />
         <v-divider />
@@ -137,7 +137,6 @@ export default {
   data() {
     return {
       dialog: false,
-      coordinates: undefined as { lat: number, lon: number } | undefined,
       compass_mask: 0,
       status_type: '' as string | undefined,
       status_text: '' as string | undefined,
