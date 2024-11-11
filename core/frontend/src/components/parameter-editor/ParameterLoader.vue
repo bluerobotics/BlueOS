@@ -2,14 +2,14 @@
   <v-dialog
     v-model="should_open"
     width="fit-content"
-    max-width="80%"
+    min-width="60%"
     @click:outside="done"
   >
     <v-card>
       <v-card-title class="pt-6">
         Loading Parameters
       </v-card-title>
-      <v-card-text v-if="Object.keys(different_param_set).length !== 0">
+      <v-card-text v-if="Object.keys(different_param_set).length !== 0" height="80%">
         <v-row class="virtual-table-row">
           <v-col class="virtual-table-cell checkbox-cell">
             <v-checkbox
@@ -25,19 +25,19 @@
           <v-col class="virtual-table-cell name-cell">
             <strong>Name</strong>
           </v-col>
-          <v-col class="virtual-table-cell">
+          <v-col class="virtual-table-cell value-cell">
             <strong>Value</strong>
           </v-col>
-          <v-col class="virtual-table-cell">
+          <v-col class="virtual-table-cell value-cell">
             <strong>New Value</strong>
           </v-col>
         </v-row>
         <!-- display all parameters in a concise table using virtual scroller -->
         <v-virtual-scroll
           :items="parametersFromSet(different_param_set)"
-          height="300"
           item-height="30"
           class="virtual-table"
+          disabled
         >
           <template #default="{ item }">
             <v-row class="virtual-table-row">
@@ -64,7 +64,7 @@
                   </span>
                 </v-tooltip>
               </v-col>
-              <v-col class="virtual-table-cell">
+              <v-col class="virtual-table-cell value-cell">
                 <v-tooltip :disabled="!item.current" bottom>
                   <template #activator="{ on }">
                     <div
@@ -79,7 +79,7 @@
                   </span>
                 </v-tooltip>
               </v-col>
-              <v-col class="virtual-table-cell">
+              <v-col class="virtual-table-cell value-cell">
                 <v-tooltip bottom>
                   <template #activator="{ on }">
                     <div
@@ -324,11 +324,12 @@ button {
   flex: 1;
   padding: 5px;
   height: 30px;
-  min-width: 150px;
 }
+
 .virtual-table-cell .v-input {
   margin-top: -6px;
 }
+
 .virtual-table-cell .large-text-cell {
   white-space: nowrap;
   overflow: hidden;
@@ -343,11 +344,15 @@ button {
   min-width: 200px;
 }
 
+.value-cell {
+  min-width: 400px;
+}
+
 .checkbox-cell {
   width: 50px;
 }
 
 .virtual-table {
-  overflow-x: hidden;
+  overflow: hidden;
 }
 </style>
