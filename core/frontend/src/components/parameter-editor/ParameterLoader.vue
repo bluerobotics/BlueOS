@@ -49,7 +49,7 @@
                 />
               </v-col>
               <v-col class="virtual-table-cell name-cell">
-                <v-tooltip bottom>
+                <v-tooltip bottom open-delay="1000">
                   <template #activator="{ on }">
                     <div :style="!item.current ? { color: 'var(--v-warning-base)' } : {}" v-on="on">
                       {{ item.name }}
@@ -65,7 +65,7 @@
                 </v-tooltip>
               </v-col>
               <v-col class="virtual-table-cell">
-                <v-tooltip :disabled="!item.current" bottom>
+                <v-tooltip :disabled="!item.current" bottom open-delay="1000">
                   <template #activator="{ on }">
                     <div
                       class="large-text-cell"
@@ -80,7 +80,7 @@
                 </v-tooltip>
               </v-col>
               <v-col class="virtual-table-cell">
-                <v-tooltip bottom>
+                <v-tooltip bottom open-delay="1000">
                   <template #activator="{ on }">
                     <div
                       class="large-text-cell"
