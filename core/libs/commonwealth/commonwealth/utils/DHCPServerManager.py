@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import time
 from ipaddress import IPv4Address, IPv4Interface, IPv4Network
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import psutil
 from loguru import logger
@@ -16,7 +16,7 @@ class Dnsmasq:
         interface: str,
         ipv4_gateway: IPv4Address,
         subnet_mask: Optional[IPv4Address] = None,
-        ipv4_lease_range: Optional[tuple[IPv4Address, IPv4Address]] = None,
+        lease_range: Tuple[int, int] = (101, 200),
         lease_time: str = "24h",
     ) -> None:
         self._subprocess: Optional[Any] = None
@@ -32,9 +32,15 @@ class Dnsmasq:
             subnet_mask = IPv4Address("255.255.255.0")
         self._subnet_mask = subnet_mask
 
-        if ipv4_lease_range is None:
-            # If no lease-range is defined we offer all available IPs for lease
-            ipv4_lease_range = (list(self.ipv4_network.hosts())[100], list(self.ipv4_network.hosts())[199])
+        if 0 < lease_range[0] < 256 and 0 < lease_range[1] < 256 and lease_range[0] < lease_range[1]:
+            ipv4_lease_range = (
+                list(self.ipv4_network.hosts())[lease_range[0] - 1],
+                list(self.ipv4_network.hosts())[lease_range[1] - 1],
+            )
+        else:
+            logger.error(f"Outside valid lease range: {lease_range}")
+            ipv4_lease_range = (list(self.ipv4_network.hosts())[0], list(self.ipv4_network.hosts())[-1])
+
         self._ipv4_lease_range = ipv4_lease_range
 
         self._lease_time = lease_time
