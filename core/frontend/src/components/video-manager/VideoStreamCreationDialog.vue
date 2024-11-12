@@ -27,6 +27,7 @@
             label="Encoding"
             :disabled="is_redirect_source"
             :rules="[validate_required_field]"
+            @change="change_endpoints_from_encode($event)"
           />
           <v-select
             v-model="selected_size"
@@ -417,6 +418,22 @@ export default Vue.extend({
       }
 
       return protocols
+    },
+    change_endpoints_from_encode(encode: VideoEncodeType) {
+      this.stream_endpoints = this.stream_endpoints.map((endpoint) => {
+        if (encode === VideoEncodeType.H264) {
+          if (endpoint.includes('udp265://')) {
+            return endpoint.replace('udp265://', 'udp://')
+          }
+        }
+
+        if (encode === VideoEncodeType.H265) {
+          if (endpoint.includes('udp://')) {
+            return endpoint.replace('udp://', 'udp265://')
+          }
+        }
+        return endpoint
+      })
     },
     set_default_address_for_stream(index: number, stream_type: StreamType) {
       switch (stream_type) {
