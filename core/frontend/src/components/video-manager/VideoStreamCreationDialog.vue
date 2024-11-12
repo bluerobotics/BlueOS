@@ -390,6 +390,7 @@ export default Vue.extend({
       if (endpoint.startsWith('rtsp://')) return StreamType.RTSP
       if (endpoint.startsWith('rtspt://')) return StreamType.RTSPT
       if (endpoint.startsWith('rtsph://')) return StreamType.RTSPH
+      if (endpoint.startsWith('udp265://')) return StreamType.UDP265
       return StreamType.UDP
     },
     availableStreamTypes(endpoint: string): {text: StreamType, pirate: boolean, desc?: string}[] {
@@ -398,6 +399,7 @@ export default Vue.extend({
       const protocols = [
         { text: StreamType.RTSP, pirate: false },
         { text: StreamType.UDP, pirate: false },
+        { text: StreamType.UDP265, pirate: false },
       ]
 
       const pirateModeProtocols = [
@@ -441,6 +443,12 @@ export default Vue.extend({
           if (!this.stream_endpoints[index].includes('udp://')) {
             // Vue.set() forces the update of a nested property
             Vue.set(this.stream_endpoints, index, `udp://${this.user_ip_address}:${5600 + index}`)
+          }
+          break
+        case StreamType.UDP265:
+          if (!this.stream_endpoints[index].includes('udp265://')) {
+            // Vue.set() forces the update of a nested property
+            Vue.set(this.stream_endpoints, index, `udp265://${this.user_ip_address}:${5600 + index}`)
           }
           break
         case StreamType.RTSP:
