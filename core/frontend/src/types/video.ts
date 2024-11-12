@@ -19,6 +19,7 @@ export enum VideoEncodeType {
 export enum StreamType {
   RTSP = 'RTSP',
   UDP = 'UDP',
+  UDP265 = 'UDP265',
   RTSPU = 'RTSPU',
   RTSPT = 'RTSPT',
   RTSPH = 'RTSPH',
