@@ -92,7 +92,6 @@ export default Vue.extend({
       show_old_messages: false,
       timestamp: new Date(),
       seconds_recent: 60,
-      active_intervals: [] as number[],
       max_number_notifications: 100,
     }
   },
@@ -119,11 +118,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    const interval = setInterval(this.updateTimestamp, 1000)
-    this.active_intervals.push(interval)
+    setNamedInterval('NotificationTimestampUpdater', this.updateTimestamp, 1000)
   },
   beforeDestroy() {
-    this.active_intervals.forEach((interval) => clearInterval(interval))
+   clearInterval('NotificationTimestampUpdater')
   },
   methods: {
     dismissAllNotifications(): void {

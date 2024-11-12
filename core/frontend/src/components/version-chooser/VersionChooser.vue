@@ -313,11 +313,11 @@ export default Vue.extend({
           },
           20000,
         )
-        interval = setInterval(() => {
+        setNamedInterval('waitForBackendOffline', () => {
           this.backendIsOnline().then((backend_online) => {
             if (!backend_online) {
               clearTimeout(timeout)
-              clearInterval(interval)
+              clearInterval('waitForBackendOffline')
               resolve('backend went offline')
             }
           })
@@ -336,11 +336,11 @@ export default Vue.extend({
           },
           120000,
         )
-        interval = setInterval(() => {
+        setNamedInterval('waitForBackendOnline', () => {
           this.backendIsOnline().then((backend_online) => {
             if (backend_online) {
               clearTimeout(timeout)
-              clearInterval(interval)
+              clearInterval('waitForBackendOnline')
               resolve('backend went online')
             }
           })

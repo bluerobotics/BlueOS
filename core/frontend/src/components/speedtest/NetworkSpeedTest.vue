@@ -125,7 +125,6 @@ export default Vue.extend({
       latency_ms: undefined as number | undefined,
       websocket: undefined as WebSocket | undefined,
       upload_buffer: new ArrayBuffer(100 * 2 ** 20), // Generate 100MB buffer only once
-      interval: 0,
       series: { upload: [], download: [] } as GraphData,
     }
   },
@@ -135,7 +134,7 @@ export default Vue.extend({
     },
   },
   beforeDestroy() {
-    clearInterval(this.interval)
+    clearInterval('SpeedTestWebsocket')
     this.websocket?.close()
   },
   mounted() {
@@ -152,7 +151,7 @@ export default Vue.extend({
         this.latency_ms = -1
       }
 
-      this.interval = setInterval(() => {
+      setNamedInterval('SpeedTestWebsocket', () => {
         if (this.websocket === undefined || this.websocket?.readyState === WebSocket.CLOSED) {
           this.openWebSocket()
         }

@@ -32,21 +32,16 @@ export default Vue.extend({
   components: {
     NetworkCard,
   },
-  data() {
-    return {
-      timer: 0,
-    }
-  },
   computed: {
     networks(): Network[] {
       return system_information.system?.network.sort((first, second) => first.name.localeCompare(second.name)) ?? []
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemNetworkType), 2000)
+    setNamedInterval('FetchSystemNetworkInformation', () => system_information.fetchSystemInformation(FetchType.SystemNetworkType), 2000)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    clearInterval('FetchSystemNetworkInformation')
   },
 })
 </script>

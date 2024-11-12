@@ -153,9 +153,9 @@ export default Vue.extend({
   },
   mounted() {
     // Wait for svg element to be loaded to set object
-    let id = 0
+
     const name = `.${this.svgName}${this.inline ? '-inline' : ''}`
-    id = setInterval(() => {
+    setNamedInterval('DevicePathHelperSvgWaiter', () => {
       const element = document?.querySelector(name) as HTMLEmbedElement | null
       if (element) {
         this.imgObject = element?.getSVGDocument()
@@ -167,7 +167,7 @@ export default Vue.extend({
           }
         }
         this.updateImgObjectFromElement(element)
-        clearInterval(id)
+        clearInterval('DevicePathHelperSvgWaiter')
       }
     }, 500)
   },

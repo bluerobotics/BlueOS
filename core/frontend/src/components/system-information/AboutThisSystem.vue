@@ -30,11 +30,6 @@ import system_information, { FetchType } from '@/store/system-information'
 
 export default Vue.extend({
   name: 'Processes',
-  data() {
-    return {
-      timer: 0,
-    }
-  },
   computed: {
     info(): Record<string, unknown>[] | undefined {
       const info = system_information.system?.info
@@ -75,10 +70,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemUnixTimeSecondsType), 1000)
+    setNamedInterval('FetchSystemInformation', () => system_information.fetchSystemInformation(FetchType.SystemUnixTimeSecondsType), 1000)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    clearInterval('FetchSystemInformation')
   },
 })
 </script>

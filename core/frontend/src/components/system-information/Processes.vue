@@ -62,7 +62,6 @@ export default Vue.extend({
   name: 'Processes',
   data() {
     return {
-      timer: 0,
       search: null,
       filterHeader: [
         'pid',
@@ -99,10 +98,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemProcessType), 5000)
+    setNamedInterval('FetchSystemInformationProcesses', () => system_information.fetchSystemInformation(FetchType.SystemProcessType), 5000)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    clearInterval('FetchSystemInformationProcesses')
   },
   methods: {
     filterName(value: number | string | Array<string>, search: string, _item: unknown) {

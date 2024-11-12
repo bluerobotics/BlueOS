@@ -234,11 +234,14 @@ export default Vue.extend({
       this.writing = true
       this.initial_size = this.user_selected_params_length
       this.writeSelectedParams()
-      this.retry_interval = setInterval(() => {
+      if (this.retry_interval) {
+        clearInterval(this.retry_interval)
+      }
+      setNamedInterval('ParameterLoaderRetry', () => {
         if (this.user_selected_params_length) {
           this.retries += 1
           if (this.retries > 5) {
-            clearInterval(this.retry_interval)
+            clearInterval('ParameterLoaderRetry')
             this.retries = 0
             this.error = 'Failed to write some parameters. Please restart the vehicle and try again.'
             return
@@ -256,6 +259,7 @@ export default Vue.extend({
     },
     writeParam(name: string, value: number) {
       mavlink2rest.setParam(name, value, autopilot_data.system_id)
+      console.log('setting', name, 'to', value)
     },
     filterParamsByReadOnly(params: Dictionary<number>): Dictionary<number> {
       return Object.fromEntries(

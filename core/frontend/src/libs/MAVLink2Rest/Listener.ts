@@ -34,7 +34,9 @@ export default class Listener {
    * @returns Listener
    */
   setFrequency(frequency: number): Listener {
-    clearInterval(this.interval)
+    if (this.interval !== -1 && this.interval !== undefined) {
+      clearInterval(this.interval)
+    }
     this.frequency = frequency
     if (frequency === 0) {
       return this
@@ -57,7 +59,9 @@ export default class Listener {
   }
 
   discard(): void {
-    clearInterval(this.interval)
+    if (this.interval !== -1 && this.interval !== undefined) {
+      clearInterval(this.interval)
+    }
     this.parent.removeListener(this)
   }
 }

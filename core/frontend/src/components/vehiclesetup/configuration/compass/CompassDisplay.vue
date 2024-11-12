@@ -135,6 +135,9 @@ export default Vue.extend({
       mavlink.setMessageRefreshRate({ messageName: msg, refreshRate: 10 })
     }
   },
+  beforeDestroy() {
+    clearInterval('updateCompassHeading')
+  },
   methods: {
     resetCanvas(ctx: CanvasRenderingContext2D) {
       ctx.setTransform(1, 0, 0, 1, 0, 0)
@@ -289,7 +292,7 @@ export default Vue.extend({
       }
     },
     initializeCanvas() {
-      setInterval(() => {
+      setNamedInterval('updateCompassHeading', () => {
         for (const [index, _value] of this.renderVariables.yawAngleDegrees.entries()) {
           const angle = this.headings[index]
           const angleDegrees = this.headings[index]

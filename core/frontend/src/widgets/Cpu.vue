@@ -13,11 +13,6 @@ import system_information, { FetchType } from '@/store/system-information'
 
 export default Vue.extend({
   name: 'CpuWidget',
-  data() {
-    return {
-      timer: 0,
-    }
-  },
   computed: {
     cpu_usage(): string {
       const cpus = system_information.system?.cpu
@@ -28,10 +23,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemCpuType), 5000)
+    setNamedInterval('fetchCpuUsage', () => system_information.fetchSystemInformation(FetchType.SystemCpuType), 5000)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    clearInterval('fetchCpuUsage')
   },
 })
 </script>

@@ -156,8 +156,6 @@ export default Vue.extend({
     return {
       message_types: [] as string[],
       message_table: new MAVLinkMessageTable(),
-      message_type_interval: 0,
-      messages_in_view_interval: 0,
       messages_in_view: [] as Message[],
       selected_message_types: [],
       detailed_message: null as (null | Message),
@@ -179,8 +177,8 @@ export default Vue.extend({
     this.setupWs()
   },
   beforeDestroy() {
-    clearInterval(this.message_type_interval)
-    clearInterval(this.messages_in_view_interval)
+    clearInterval('InspectorMessagesInView')
+    clearInterval('InspectorMessageTypes')
   },
   methods: {
     update_messages_in_view() {
@@ -190,8 +188,8 @@ export default Vue.extend({
       this.detailed_message = message
     },
     setupWs() {
-      this.messages_in_view_interval = setInterval(() => this.update_messages_in_view(), 500)
-      this.message_type_interval = setInterval(() => { this.message_types = this.message_table.getTypes() }, 1000)
+      setNamedInterval('InspectorMessagesInView', () => this.update_messages_in_view(), 500)
+      setNamedInterval('InspectorMessageTypes', () => { this.message_types = this.message_table.getTypes() }, 1000)
       mavlink2rest.startListening('').setCallback((receivedMessage) => {
         this.message_table.add(receivedMessage)
       }).setFrequency(0)

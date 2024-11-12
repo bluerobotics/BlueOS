@@ -110,12 +110,12 @@ export default Vue.extend({
   mounted() {
     beacon.registerBeaconListener(this)
     this.probeDomains()
-    this.probe_timer = setInterval(() => {
+    setNamedInterval('BeaconProber', () => {
       this.probeDomains()
     }, 20000)
   },
   beforeDestroy() {
-    clearInterval(this.probe_timer)
+    clearInterval('BeaconProber')
   },
   methods: {
     probeDomains() {

@@ -26,12 +26,6 @@ export default Vue.extend({
   components: {
     SystemConditionCard,
   },
-  data() {
-    return {
-      timer: 0,
-    }
-  },
-  // TODO: move to computeds
   computed: {
     cpu(): Record<string, unknown> {
       const cpus = system_information.system?.cpu
@@ -129,7 +123,7 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => {
+    setNamedInterval("fetchSystemConditions", () => {
       system_information.fetchSystemInformation(FetchType.SystemCpuType)
       system_information.fetchSystemInformation(FetchType.SystemDiskType)
       system_information.fetchSystemInformation(FetchType.SystemMemoryType)
@@ -137,7 +131,7 @@ export default Vue.extend({
     }, 2000)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    clearInterval('fetchSystemConditions')
   },
 })
 </script>

@@ -30,10 +30,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemDiskType), 30000)
+    setNamedInterval('fetchDiskUsage', () => system_information.fetchSystemInformation(FetchType.SystemDiskType), 30000)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    clearInterval('fetchDiskUsage')
   },
 })
 </script>

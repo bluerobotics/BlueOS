@@ -211,8 +211,6 @@ export default Vue.extend({
       edit_param_dialog: false,
       param: undefined as Parameter | undefined,
       motor_targets: {} as {[key: number]: number},
-      motor_zeroer_interval: undefined as undefined | number,
-      motor_writer_interval: undefined as undefined | number,
       desired_armed_state: false,
       has_focus: true,
       motors_zeroed: false,
@@ -382,16 +380,16 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.motor_zeroer_interval = setInterval(this.zero_motors, 300)
-    this.motor_writer_interval = setInterval(this.write_motors, 100)
+    setNamedInterval('ZeroMotors', this.zero_motors, 300)
+    setNamedInterval('WriteMotors', this.write_motors, 100)
     mavlink.setMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 10 })
     this.desired_armed_state = this.is_armed
     this.installListeners()
     this.updateReversionValues()
   },
   beforeDestroy() {
-    clearInterval(this.motor_zeroer_interval)
-    clearInterval(this.motor_writer_interval)
+    clearInterval('ZeroMotors')
+    clearInterval('WriteMotors')
     mavlink.setMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 1 })
     this.uninstallListeners()
   },
@@ -460,8 +458,8 @@ export default Vue.extend({
       this.motors_zeroed = false
     },
     restart_motor_zeroer() {
-      clearInterval(this.motor_zeroer_interval)
-      this.motor_zeroer_interval = setInterval(this.zero_motors, 500)
+      clearInterval('ZeroMotors')
+      setNamedInterval('ZeroMotors', this.zero_motors, 300)
     },
     pause_motor_zeroer() {
       clearInterval(this.motor_zeroer_interval)
