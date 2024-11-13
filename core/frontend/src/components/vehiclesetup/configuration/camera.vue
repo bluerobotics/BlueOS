@@ -12,7 +12,7 @@
               :param="type_param"
               auto-set
               auto-refresh-params
-              label="Gimbal Type (None for no stabilization, 'Servo' for stabilized servo mount)"
+              label="Gimbal Type (BrushlessPWM for no stabilization, 'Servo' for stabilized servo mount)"
             />
             <p v-else>
               Camera mount setup is not supported on this Firmware (MNT1_TYPE param not found).
