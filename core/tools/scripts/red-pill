@@ -9,7 +9,7 @@ usage() {
 }
 
 # Default values
-user="pi"
+user=${SSH_USER:-pi}
 
 while getopts ":hu:" opt; do
   case ${opt} in
