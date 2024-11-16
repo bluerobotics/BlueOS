@@ -226,7 +226,10 @@ def setup_ssh() -> None:
     key_path = Path("/root/.config/.ssh")
     private_key = key_path / "id_rsa"
     public_key = private_key.with_suffix(".pub")
-    authorized_keys = Path("/home/pi/.ssh/authorized_keys")
+    user = os.environ.get("SSH_USER", "pi")
+    gid = int(os.environ.get("USER_GID", 1000))
+    uid = int(os.environ.get("USER_UID", 1000))
+    authorized_keys = Path(f"/home/{user}/.ssh/authorized_keys")
 
     try:
         key_path.mkdir(parents=True, exist_ok=True)
@@ -247,7 +250,7 @@ def setup_ssh() -> None:
             authorized_keys_text += public_key_text
             authorized_keys.write_text(authorized_keys_text, "utf-8")
 
-        shutil.chown(authorized_keys, "pi", "pi")
+        os.chown(authorized_keys, uid, gid)
         authorized_keys.chmod(0o600)
     except Exception as error:
         logger.error(f"Error setting up ssh: {error}")

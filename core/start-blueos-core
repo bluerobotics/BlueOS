@@ -159,8 +159,10 @@ function create_service {
     tmux send-keys -t $SESSION_NAME "run-service '$SERVICE_NAME' '$command' $memory_limit_mb " C-m
 }
 
+SSH_USER=${SSH_USER:-pi}
+
 ssh_command() {
-  ssh -i /root/.config/.ssh/id_rsa -o StrictHostKeyChecking=no pi@localhost "$1"
+  ssh -i /root/.config/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@localhost "$1"
 }
 
 prepare_cgroups() {

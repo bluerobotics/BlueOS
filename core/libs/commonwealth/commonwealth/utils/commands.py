@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 from typing import List, Optional
@@ -12,8 +13,8 @@ class KeyNotFound(Exception):
 def run_command_with_password(command: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
     # attempt to run the command with sshpass
     # used as a fallback if the ssh key is not found
-    user = "pi"
-    password = "raspberry"
+    user = os.environ.get("SSH_USER", "pi")
+    password = os.environ.get("SSH_PASSWORD", "raspberry")
 
     return subprocess.run(
         [
@@ -35,7 +36,7 @@ def run_command_with_password(command: str, check: bool = True) -> "subprocess.C
 
 def run_command_with_ssh_key(command: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
     # attempt to run the command with the ssh key
-    user = "pi"
+    user = os.environ.get("SSH_USER", "pi")
     id_file = "/root/.config/.ssh/id_rsa"
     if not Path(id_file).exists():
         raise KeyNotFound
@@ -84,8 +85,8 @@ def upload_file_with_password(
 ) -> "subprocess.CompletedProcess['str']":
     # attempt to upload the file with sshpass
     # used as a fallback if the ssh key is not found
-    user = "pi"
-    password = "raspberry"
+    user = os.environ.get("SSH_USER", "pi")
+    password = os.environ.get("SSH_PASSWORD", "raspberry")
 
     return subprocess.run(
         [
@@ -105,7 +106,7 @@ def upload_file_with_password(
 
 def upload_file_with_ssh_key(source: str, destination: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
     # attempt to upload the file with the ssh key
-    user = "pi"
+    user = os.environ.get("SSH_USER", "pi")
     id_file = "/root/.config/.ssh/id_rsa"
     if not Path(id_file).exists():
         raise KeyNotFound
