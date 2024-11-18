@@ -15,6 +15,7 @@ TOOLS=(
     mavlink_server
     mavp2p
     ttyd
+    zenoh
 )
 
 parallel --halt now,fail=1 'RUNNING_IN_CI=true /home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"

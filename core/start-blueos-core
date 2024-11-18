@@ -109,6 +109,7 @@ SERVICES=(
     # This services are not prioritized because they are not fundamental for the vehicle to work
     'kraken',0,"nice -19 $SERVICES_PATH/kraken/main.py"
     'wifi',0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
+    'zenohd',0,"ZENOH_BACKEND_FS_ROOT=$TOOLS_PATH/zenoh zenohd -c $TOOLS_PATH/zenoh/blueos-zenoh.json5"
     # This services are not as important as the others
     'beacon',250,"$SERVICES_PATH/beacon/main.py"
     'bridget',0,"nice -19 $RUN_AS_REGULAR_USER $SERVICES_PATH/bridget/main.py"

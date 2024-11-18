@@ -88,6 +88,7 @@ COPY --from=download-binaries \
     /usr/bin/mavlink2rest \
     /usr/bin/mavlink-routerd \
     /usr/bin/mavlink-server \
+    /usr/bin/zenoh \
     /usr/bin/mavp2p \
     /usr/bin/ttyd \
     /usr/bin/
