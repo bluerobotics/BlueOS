@@ -126,8 +126,8 @@ export const parameters_service: Service = {
   version: '0.1.0',
 }
 
-export const bag_of_holders_service: Service = {
-  name: 'Bag Of Holders',
+export const bag_of_holding_service: Service = {
+  name: 'Bag Of Holding',
   description: 'Service to manage json database for the vehicle',
   company: 'Blue Robotics',
   version: '0.1.0',
