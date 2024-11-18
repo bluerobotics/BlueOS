@@ -1,21 +1,21 @@
 import { StatusCodes } from 'http-status-codes'
 
 import Notifier from '@/libs/notifier'
-import { bag_of_holders_service } from '@/types/frontend_services'
+import { bag_of_holding_service } from '@/types/frontend_services'
 import back_axios, { backend_offline_error } from '@/utils/api'
 
-const notifier = new Notifier(bag_of_holders_service)
+const notifier = new Notifier(bag_of_holding_service)
 
-class BagOfHoldersStore {
+class BagOfHoldingStore {
   API_URL = '/bag/v1.0'
 
-  private static instance: BagOfHoldersStore
+  private static instance: BagOfHoldingStore
 
-  public static getInstance(): BagOfHoldersStore {
-    if (!BagOfHoldersStore.instance) {
-      BagOfHoldersStore.instance = new BagOfHoldersStore()
+  public static getInstance(): BagOfHoldingStore {
+    if (!BagOfHoldingStore.instance) {
+      BagOfHoldingStore.instance = new BagOfHoldingStore()
     }
-    return BagOfHoldersStore.instance
+    return BagOfHoldingStore.instance
   }
 
   async overwrite(payload: Record<string, unknown>): Promise<boolean> {
@@ -31,7 +31,7 @@ class BagOfHoldersStore {
           return false
         }
         const message = `Could not overwrite database: ${error.message ?? error.response?.data}.`
-        notifier.pushError('BAG_OF_HOLDERS_SET_DATA_FAIL', message, true)
+        notifier.pushError('BAG_OF_HOLDING_SET_DATA_FAIL', message, true)
         return false
       })
   }
@@ -49,7 +49,7 @@ class BagOfHoldersStore {
           return false
         }
         const message = `Could not set data: ${error.message ?? error.response?.data}.`
-        notifier.pushError('BAG_OF_HOLDERS_SET_DATA_FAIL', message, true)
+        notifier.pushError('BAG_OF_HOLDING_SET_DATA_FAIL', message, true)
         return false
       })
   }
@@ -74,11 +74,11 @@ class BagOfHoldersStore {
           return undefined
         }
         const message = `Could not get (${path}) data: ${error.response?.data ?? error.message}.`
-        notifier.pushError('BAG_OF_HOLDERS_GET_DATA_FAIL', message, true)
+        notifier.pushError('BAG_OF_HOLDING_GET_DATA_FAIL', message, true)
         return undefined
       })
   }
 }
 
-const bag = BagOfHoldersStore.getInstance()
+const bag = BagOfHoldingStore.getInstance()
 export default bag
