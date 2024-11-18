@@ -5,7 +5,6 @@ from typing import Any, ClassVar, Dict, List
 
 from loguru import logger
 from pydantic import BaseModel, ValidationError
-from pydantic import __version__ as pydantic_version
 
 from commonwealth.settings.exceptions import (
     BadAttributes,
@@ -100,11 +99,9 @@ class PydanticSettings(BaseModel):
 
         with open(file_path, "w", encoding="utf-8") as settings_file:
             logger.debug(f"Saving settings on: {file_path}")
-            if pydantic_version > "1.8.0":
-                json_data = self.dict()
-                json.dump(json_data, settings_file, indent=4)
-            else:
-                settings_file.write(self.json(indent=4))
+
+            json_data = self.dict()
+            json.dump(json_data, settings_file, indent=4)
 
     def reset(self) -> None:
         """Reset internal data to default values"""
