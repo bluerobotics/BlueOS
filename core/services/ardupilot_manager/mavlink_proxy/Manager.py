@@ -128,7 +128,10 @@ class Manager:
             await self.stop()
             self.tool = AbstractRouter.get_interface(router_name)()
             for endpoint in endpoints:
-                self.tool.add_endpoint(endpoint)
+                try:
+                    self.tool.add_endpoint(endpoint)
+                except Exception as error:
+                    logger.warning(str(error))
             if master_endpoint:
                 await self.start(master_endpoint)
         except Exception as error:
