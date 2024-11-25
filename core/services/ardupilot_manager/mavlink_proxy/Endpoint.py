@@ -14,6 +14,7 @@ class EndpointType(str, Enum):
     TCPServer = "tcpin"
     TCPClient = "tcpout"
     Serial = "serial"
+    Zenoh = "zenoh"
 
 
 @dataclass
@@ -41,6 +42,7 @@ class Endpoint:
             EndpointType.UDPClient,
             EndpointType.TCPServer,
             EndpointType.TCPClient,
+            EndpointType.Zenoh,
         ]:
             # pylint: disable-next=too-many-function-args
             if not (validators.domain(place) or validators.ipv4(place) or validators.ipv6(place)):
