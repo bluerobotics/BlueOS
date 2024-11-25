@@ -144,6 +144,14 @@ def update_host_dns(dns_data: DnsData) -> Any:
     manager.dns.update_host_nameservers(dns_data)
 
 
+app = VersionedFastAPI(
+    app,
+    version="1.0.0",
+    prefix_format="/v{major}.{minor}",
+    enable_latest=True,
+)
+
+
 @app.get("/")
 async def root() -> HTMLResponse:
     html_content = """
@@ -155,13 +163,6 @@ async def root() -> HTMLResponse:
     """
     return HTMLResponse(content=html_content, status_code=200)
 
-
-app = VersionedFastAPI(
-    app,
-    version="1.0.0",
-    prefix_format="/v{major}.{minor}",
-    enable_latest=True,
-)
 
 if __name__ == "__main__":
     if os.geteuid() != 0:
