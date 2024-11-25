@@ -29,6 +29,7 @@ from commonwealth.utils.general import (
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
@@ -645,6 +646,19 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
+
+
+@app.get("/")
+async def root() -> HTMLResponse:
+    html_content = """
+    <html>
+        <head>
+            <title>Helper</title>
+        </head>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
+
 
 port_to_service_map: Dict[int, str] = parse_nginx_file("/home/pi/tools/nginx/nginx.conf")
 
