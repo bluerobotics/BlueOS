@@ -245,6 +245,19 @@ def update_cgroups() -> bool:
     return True
 
 
+def update_i2c4_symlink() -> bool:
+    logger.info("Running i2c4 symlink update..")
+    i2c4_symlink = "/dev/i2c-4"
+    i2c4_device = "/dev/i2c-3"
+    if os.path.exists(i2c4_symlink):
+        return False
+    if not os.path.exists(i2c4_device):
+        return False
+    command = f"sudo ln -s {i2c4_device} {i2c4_symlink}"
+    run_command(command, False)
+    return False  # This patch doesn't require restart to take effect
+
+
 def update_dwc2() -> bool:
     logger.info("Running dwc2 update..")
 
@@ -473,6 +486,7 @@ def main() -> int:
             [
                 update_cgroups,
                 update_dwc2,
+                update_i2c4_symlink,
             ]
         )
     if host_os == HostOs.Bookworm:
