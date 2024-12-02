@@ -40,8 +40,9 @@ class ScannedWifiNetwork(BaseModel):
 class SavedWifiNetwork(BaseModel):
     networkid: int
     ssid: str
-    bssid: str
+    bssid: Optional[str]
     flags: Optional[str]
+    nm_id: Optional[str]
 
 
 class WifiCredentials(BaseModel):
