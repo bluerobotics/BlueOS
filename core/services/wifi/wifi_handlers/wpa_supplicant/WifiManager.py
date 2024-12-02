@@ -1,28 +1,94 @@
 import asyncio
+import os
+import stat
 import subprocess
 import time
+from argparse import ArgumentParser, Namespace
+from http.client import HTTPException
 from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
-from commonwealth.settings.manager import Manager
+from commonwealth.utils.general import HostOs, get_host_os
+from fastapi import status
 from loguru import logger
 
 from exceptions import FetchError, ParseError
-from Hotspot import HotspotManager
-from settings import SettingsV1
 from typedefs import (
     ConnectionStatus,
     SavedWifiNetwork,
     ScannedWifiNetwork,
     WifiCredentials,
+    WifiStatus,
 )
-from wpa_supplicant import WPASupplicant
+from wifi_handlers.AbstractWifiHandler import AbstractWifiManager
+from wifi_handlers.wpa_supplicant.Hotspot import HotspotManager
+from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
 
 
-class WifiManager:
+# pylint: disable=too-many-instance-attributes
+class WifiManager(AbstractWifiManager):
     wpa = WPASupplicant()
+    wpa_path: Optional[str] = None
 
-    def connect(self, path: Any) -> None:
+    async def can_work(self) -> bool:
+        return bool(get_host_os() == HostOs.Bullseye)
+
+    async def try_connect_to_network(self, credentials: WifiCredentials, hidden: bool = False) -> Any:
+        logger.info(f"Trying to connect to '{credentials.ssid}'.")
+
+        network_id: Optional[int] = None
+        is_new_network = False
+        try:
+            saved_networks = await self.get_saved_wifi_network()
+            match_network = next(filter(lambda network: network.ssid == credentials.ssid, saved_networks))
+            network_id = match_network.networkid
+            logger.info(f"Network is already known, id={network_id}.")
+        except StopIteration:
+            logger.info("Network is not known.")
+            is_new_network = True
+
+        is_secure = False
+        try:
+            available_networks = await self.get_wifi_available()
+            scanned_network = next(filter(lambda network: network.ssid == credentials.ssid, available_networks))
+            flags_for_passwords = ["WPA", "WEP", "WSN"]
+            for candidate in flags_for_passwords:
+                if candidate in scanned_network.flags:
+                    is_secure = True
+                    break
+        except StopIteration:
+            logger.info("Could not find wifi network around.")
+
+        if credentials.password == "" and network_id is None and is_secure:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No password received and network not found among saved ones.",
+            )
+
+        try:
+            # Update known network if password is not necessary anymore
+            if network_id is not None and not is_secure and credentials.password == "":
+                logger.info(f"Removing old entry for known network, id={network_id}.")
+                await self.remove_network_by_id(network_id)
+                network_id = await self.add_network(credentials, hidden)
+                logger.info(f"Network entry updated, id={network_id}.")
+
+            if network_id is None:
+                network_id = await self.add_network(credentials, hidden)
+                logger.info(f"Saving new network entry, id={network_id}.")
+
+            logger.info("Performing network connection.")
+            if network_id is None:
+                raise ValueError("Missing 'network_id' for network connection.")
+            await self.connect_to_network(network_id, timeout=40)
+        except ConnectionError as error:
+            if is_new_network and network_id is not None:
+                logger.info("Removing new network entry since connection failed.")
+                await self.remove_network_by_id(network_id)
+            raise error
+        logger.info(f"Successfully connected to '{credentials.ssid}'.")
+
+    async def connect(self, path: Any) -> None:
         """Does the connection with wpa_supplicant service
 
         Arguments:
@@ -36,10 +102,8 @@ class WifiManager:
         self._time_last_scan = 0.0
 
         # Perform first scan so the wlan interface gets configured (for just-flashed-images)
-        asyncio.run(self.get_wifi_available())
+        await self.get_wifi_available()
 
-        self._settings_manager = Manager("wifi-manager", SettingsV1)
-        self._settings_manager.load()
         try:
             self._hotspot: Optional[HotspotManager] = None
             ssid, password = (
@@ -47,10 +111,10 @@ class WifiManager:
                 self._settings_manager.settings.hotspot_password,
             )
             if ssid is not None and password is not None:
-                self.set_hotspot_credentials(WifiCredentials(ssid=ssid, password=password))
+                await self.set_hotspot_credentials(WifiCredentials(ssid=ssid, password=password))
             if self.hotspot.supports_hotspot and self._settings_manager.settings.hotspot_enabled in [True, None]:
                 time.sleep(5)
-                self.enable_hotspot()
+                await self.enable_hotspot()
         except Exception:
             logger.exception("Could not load previous hotspot settings.")
 
@@ -195,22 +259,34 @@ class WifiManager:
                 await self.wpa.send_command_set_network(network_number, "scan_ssid", "1")
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
-            return network_number
+            return int(network_number)
         except Exception as error:
             raise ConnectionError("Failed to set new network.") from error
 
-    async def remove_network(self, network_id: int) -> None:
-        """Remove saved wifi network
-
-        Arguments:
-            network_id {int} -- Network ID as it comes from WPA Supplicant list of saved networks
-        """
+    async def remove_network_by_id(self, network_id: int) -> None:
         try:
             await self.wpa.send_command_remove_network(network_id)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
         except Exception as error:
             raise ConnectionError("Failed to remove existing network.") from error
+
+    async def remove_network(self, ssid: str) -> None:
+        """Remove saved wifi network
+
+        Arguments:
+            network_id {int} -- Network ID as it comes from WPA Supplicant list of saved networks
+        """
+        saved_networks = await self.get_saved_wifi_network()
+        # Here we get all networks that match the ssid
+        # and get a list where the biggest networkid comes first.
+        # If we remove the lowest numbers first, it'll change the highest values to -1
+        # TODO: We should move the entire wifi framestack to work with bssid
+        match_networks = [network for network in saved_networks if network.ssid == ssid]
+        match_networks = sorted(match_networks, key=lambda network: network.networkid, reverse=True)
+        for match_network in match_networks:
+            logger.info(f"removing (networkid={match_network.networkid})")
+            await self.remove_network_by_id(match_network.networkid)
 
     async def connect_to_network(self, network_id: int, timeout: float = 20.0) -> None:
         """Connect to wifi network
@@ -222,15 +298,15 @@ class WifiManager:
         was_hotspot_enabled = self.hotspot.is_running()
         try:
             if was_hotspot_enabled:
-                self.disable_hotspot(save_settings=False)
+                await self.disable_hotspot(save_settings=False)
             await self.wpa.send_command_select_network(network_id)
             await self.wpa.send_command_save_config()
             await self.wpa.send_command_reconfigure()
             await self.wpa.send_command_reconnect()
             start_time = time.time()
             while True:
-                status = await self.status()
-                is_connected = status.get("wpa_state") == "COMPLETED"
+                wpa_status = await self.status()
+                is_connected = wpa_status.wpa_state == "COMPLETED"
                 if is_connected:
                     current_network = await self.get_current_network()
                     if current_network and current_network.networkid == network_id:
@@ -252,13 +328,14 @@ class WifiManager:
             raise ConnectionError(f"Failed to connect to network. {error}") from error
         finally:
             if was_hotspot_enabled:
-                self.enable_hotspot(save_settings=False)
+                await self.enable_hotspot(save_settings=False)
 
-    async def status(self) -> Dict[str, Any]:
+    async def status(self) -> WifiStatus:
         """Check wpa_supplicant status"""
         try:
             data = await self.wpa.send_command_status()
-            return WifiManager.__dict_from_list(data)
+            # pylint: disable=too-many-function-args
+            return WifiStatus(**WifiManager.__dict_from_list(data))
         except Exception as error:
             raise FetchError("Failed to get status from wifi manager.") from error
 
@@ -344,7 +421,7 @@ class WifiManager:
 
             is_connected = await self.get_current_network() is not None
 
-            if is_connected and "ip_address" not in await self.status():
+            if is_connected and (await self.status()).ip_address is None:
                 # we are connected but have no ip addres? lets ask cable-guy for a new ip
                 self.trigger_dhcp_client()
 
@@ -374,7 +451,7 @@ class WifiManager:
                 try:
                     if self._settings_manager.settings.smart_hotspot_enabled in [None, True]:
                         logger.debug("Starting smart-hotspot.")
-                        self.enable_hotspot()
+                        await self.enable_hotspot()
                 except Exception:
                     logger.exception("Could not start smart-hotspot.")
                 networks_reenabled = True
@@ -389,11 +466,11 @@ class WifiManager:
             try:
                 if self._settings_manager.settings.hotspot_enabled and not self.hotspot.is_running():
                     logger.warning("Hotspot should be working but is not. Restarting it.")
-                    self.enable_hotspot()
+                    await self.enable_hotspot()
             except Exception:
                 logger.exception("Could not start hotspot from the watchdog routine.")
 
-    def set_hotspot_credentials(self, credentials: WifiCredentials) -> None:
+    async def set_hotspot_credentials(self, credentials: WifiCredentials) -> None:
         self._settings_manager.settings.hotspot_ssid = credentials.ssid
         self._settings_manager.settings.hotspot_password = credentials.password
         self._settings_manager.save()
@@ -401,24 +478,25 @@ class WifiManager:
         self.hotspot.set_credentials(credentials)
 
         if self.hotspot.is_running():
-            self.disable_hotspot(save_settings=False)
+            await self.disable_hotspot(save_settings=False)
             time.sleep(5)
-            self.enable_hotspot(save_settings=False)
+            await self.enable_hotspot(save_settings=False)
 
     def hotspot_credentials(self) -> WifiCredentials:
-        return self.hotspot.credentials
+        credentials: WifiCredentials = self.hotspot.credentials
+        return credentials
 
-    def enable_hotspot(self, save_settings: bool = True) -> None:
+    async def enable_hotspot(self, save_settings: bool = True) -> bool:
         if save_settings:
             self._settings_manager.settings.hotspot_enabled = True
             self._settings_manager.save()
 
         if self.hotspot.is_running():
             logger.warning("Hotspot already running. No need to enable it again.")
-            return
         self.hotspot.start()
+        return True
 
-    def disable_hotspot(self, save_settings: bool = True) -> None:
+    async def disable_hotspot(self, save_settings: bool = True) -> None:
         if save_settings:
             self._settings_manager.settings.hotspot_enabled = False
             self._settings_manager.save()
@@ -435,3 +513,69 @@ class WifiManager:
 
     def is_smart_hotspot_enabled(self) -> bool:
         return self._settings_manager.settings.smart_hotspot_enabled is True
+
+    def add_arguments(self, parser: ArgumentParser) -> None:
+        """
+        adds custom entries to argparser
+        """
+        parser.add_argument(
+            "--socket",
+            dest="socket_name",
+            type=str,
+            help="Name of the WPA Supplicant socket. Usually 'wlan0' or 'wlp4s0'.",
+        )
+
+    def configure(self, args: Namespace) -> None:
+        self.args = args
+
+    async def start(self) -> None:
+        wpa_socket_folder = "/var/run/wpa_supplicant/"
+        try:
+            if self.args.socket_name:
+                logger.info("Connecting via provided socket.")
+                socket_name = self.args.socket_name
+            else:
+                logger.info("Connecting via default socket.")
+
+                def is_socket(file_path: str) -> bool:
+                    try:
+                        mode = os.stat(file_path).st_mode
+                        return stat.S_ISSOCK(mode)
+                    except Exception as error:
+                        logger.warning(f"Could not check if '{file_path}' is a socket: {error}")
+                        return False
+
+                # We are going to sort and get the latest file, since this in theory will be an external interface
+                # added by the user
+                entries = os.scandir(wpa_socket_folder)
+                available_sockets = sorted(
+                    [
+                        entry.path
+                        for entry in entries
+                        if entry.name.startswith(("wlan", "wifi", "wlp")) and is_socket(entry.path)
+                    ]
+                )
+                if not available_sockets:
+                    raise RuntimeError("No wifi sockets available.")
+                socket_name = available_sockets[-1]
+                logger.info(f"Going to use {socket_name} file")
+            WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
+            self.wpa_path = WLAN_SOCKET
+            await self.connect(WLAN_SOCKET)
+        except Exception as socket_connection_error:
+            logger.warning(f"Could not connect with wifi socket. {socket_connection_error}")
+            logger.info("Connecting via internet wifi socket.")
+            try:
+                await self.connect(("127.0.0.1", 6664))
+            except Exception as udp_connection_error:
+                logger.error(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
+                raise udp_connection_error
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.auto_reconnect(60))
+        loop.create_task(self.start_hotspot_watchdog())
+
+    async def supports_hotspot(self) -> bool:
+        return self.hotspot.supports_hotspot
+
+    async def hotspot_is_running(self) -> bool:
+        return self.hotspot.is_running()
