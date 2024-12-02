@@ -9,6 +9,26 @@ class HotspotStatus(BaseModel):
     enabled: bool
 
 
+class WifiStatus(BaseModel):
+    bssid: Optional[str]
+    freq: Optional[str]
+    ssid: Optional[str]
+    id: Optional[str]
+    mode: Optional[str]
+    wifi_generation: Optional[str]
+    pairwise_cipher: Optional[str]
+    group_cipher: Optional[str]
+    key_mgmt: Optional[str]
+    wpa_state: Optional[str]
+    ip_address: Optional[str]
+    p2p_device_address: Optional[str]
+    address: Optional[str]
+    uuid: Optional[str]
+    ieee80211ac: Optional[str]
+    state: Optional[str]
+    disabled: Optional[str]
+
+
 class ScannedWifiNetwork(BaseModel):
     ssid: Optional[str]
     bssid: str
