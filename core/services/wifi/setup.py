@@ -1,6 +1,20 @@
 #!/usr/bin/env python3
 
+import os
+import urllib.request
+
 import setuptools
+
+
+def download_script(url: str, dest: str) -> None:
+    urllib.request.urlretrieve(url, dest)
+    os.chmod(dest, 0o755)
+
+
+download_script(
+    "https://raw.githubusercontent.com/lakinduakash/linux-wifi-hotspot/refs/heads/master/src/scripts/create_ap",
+    "/usr/bin/create_ap",
+)
 
 setuptools.setup(
     name="wifi_service",
