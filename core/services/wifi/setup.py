@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
 
+import os
+import urllib.request
+
 import setuptools
+
+
+def download_script(url: str, dest: str) -> None:
+    urllib.request.urlretrieve(url, dest)
+    os.chmod(dest, 0o755)
+
+
+CREATE_AP_COMMIT = "2cedd27e324ac7b9cffd1537ef0b6c9e8564e9a3"
+
+download_script(
+    f"https://raw.githubusercontent.com/lakinduakash/linux-wifi-hotspot/{CREATE_AP_COMMIT}/src/scripts/create_ap",
+    "/usr/bin/create_ap",
+)
 
 setuptools.setup(
     name="wifi_service",
