@@ -1,5 +1,6 @@
 import re
 import subprocess
+from datetime import datetime
 from typing import Optional
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
@@ -37,7 +38,11 @@ class MAVLinkServer(AbstractRouter):
                 return f"zenoh:{endpoint.place}:{endpoint.argument}"
             raise ValueError(f"Endpoint of type {endpoint.connection_type} not supported on MAVLink-Server.")
 
-        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *self.endpoints()]])
+        # MAVlink-Server takes direct file paths as endpoints, so we generate a timestamped file path
+        now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        logging_endpoint = f"tlogwriter:/root/.config/ardupilot-manager/firmware/logs/mavlink-server-{now}.tlog"
+        str_endpoints = [convert_endpoint(endpoint) for endpoint in [master_endpoint, *self.endpoints()]]
+        endpoints = " ".join([*str_endpoints, logging_endpoint])
 
         return f"{self.binary()} {endpoints}"
 
