@@ -5,41 +5,16 @@ import ssl
 import sys
 import time
 import urllib.request
-from collections import namedtuple
 from warnings import warn
 
 import setuptools
 
-from settings import Settings
+from config import DEFAULT_RESOURCES
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-autopilot_settings = Settings()
-defaults_folder = autopilot_settings.defaults_folder
-
-StaticFile = namedtuple("StaticFile", "parent filename url")
-
-static_files = [
-    StaticFile(
-        defaults_folder,
-        "ardupilot_navigator",
-        "https://firmware.ardupilot.org/Sub/stable-4.5.0/navigator/ardusub",
-    ),
-    StaticFile(
-        defaults_folder,
-        "ardupilot_navigator",
-        "https://firmware.ardupilot.org/Sub/stable-4.5.0/navigator64/ardusub",
-    ),
-    StaticFile(
-        defaults_folder, "ardupilot_pixhawk1", "https://firmware.ardupilot.org/Sub/stable-4.5.0/Pixhawk1/ardusub.apj"
-    ),
-    StaticFile(
-        defaults_folder, "ardupilot_pixhawk4", "https://firmware.ardupilot.org/Sub/stable-4.5.0/Pixhawk4/ardusub.apj"
-    ),
-]
-
-for file in static_files:
+for file in DEFAULT_RESOURCES:
     path = pathlib.Path.joinpath(file.parent, file.filename)
     path.parent.mkdir(parents=True, exist_ok=True)
 
