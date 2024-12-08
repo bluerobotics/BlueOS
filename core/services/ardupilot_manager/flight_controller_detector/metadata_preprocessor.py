@@ -2,7 +2,7 @@ import gzip
 import io
 import json
 import sys
-from typing import Dict
+from typing import Any, Dict
 
 import requests
 
@@ -12,9 +12,9 @@ class ManifestHandler:
     Handles downloading and processing the ArduPilot firmware manifest to extract USB device information.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the manifest handler."""
-        self._usb_devices: Dict[str, list] = {}
+        self._usb_devices: Dict[str, list[str]] = {}
         self.manifest_url = "https://firmware.ardupilot.org/manifest.json.gz"
 
     def _format_usb_id(self, usb_id: str) -> str:
@@ -34,7 +34,7 @@ class ManifestHandler:
             return f"{vid}:{pid}"
         return usb_id.lower()  # Already in correct format
 
-    def download_manifest(self) -> dict:
+    def download_manifest(self) -> Any:
         """
         Download and decompress the manifest from the ArduPilot server.
 
@@ -51,13 +51,13 @@ class ManifestHandler:
             with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as gz_file:
                 return json.loads(gz_file.read().decode("utf-8"))
         except requests.RequestException as e:
-            raise RuntimeError(f"Error downloading manifest: {e}")
+            raise e
         except json.JSONDecodeError as e:
-            raise RuntimeError(f"Error parsing manifest JSON: {e}")
+            raise e
         except Exception as e:
-            raise RuntimeError(f"Unexpected error: {e}")
+            raise e
 
-    def parse_manifest(self, manifest_data: dict):
+    def parse_manifest(self, manifest_data: dict[str, list[str]]) -> Any:
         """
         Extract USB device information from the manifest data.
 
@@ -66,7 +66,7 @@ class ManifestHandler:
         """
         self._usb_devices.clear()
 
-        def process_node(node):
+        def process_node(node: Any) -> None:
             if isinstance(node, dict):
                 if "USBID" in node and "platform" in node:
                     usb_id = node["USBID"]
@@ -92,18 +92,18 @@ class ManifestHandler:
 
         process_node(manifest_data)
 
-    def export_json(self, output_file: str):
+    def export_json(self, output_file: str) -> None:
         """
         Export USB device information to a JSON file.
 
         Args:
             output_file: Path to the output JSON file.
         """
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(self._usb_devices, f, indent=2)
 
 
-def main():
+def main() -> None:
     if len(sys.argv) != 2:
         print("Usage: python manifest_handler.py <output_usb.json>")
         sys.exit(1)

@@ -38,7 +38,7 @@ identifiers: List[SerialBoardIdentifier] = [
 
 def load_board_identifiers() -> List[SerialBoardIdentifier]:
     json_path = Path(__file__).parent / "boards.json"
-    with open(json_path) as f:
+    with open(json_path, encoding="utf-8") as f:
         json_data = json.load(f)
 
     # Extract all unique board names
