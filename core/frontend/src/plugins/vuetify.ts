@@ -9,6 +9,26 @@ import * as DEFAULT_COLORS from '@/style/colors/default'
 
 Vue.use(Vuetify)
 
+const baseTheme = {
+  // Default colors used by BlueOS
+  primary: DEFAULT_COLORS.PRIMARY,
+  secondary: DEFAULT_COLORS.SECONDARY,
+  accent: DEFAULT_COLORS.ACCENT,
+  success: DEFAULT_COLORS.SUCCESS,
+  error: DEFAULT_COLORS.ERROR,
+  info: DEFAULT_COLORS.INFO,
+  warning: DEFAULT_COLORS.WARNING,
+  critical: DEFAULT_COLORS.CRITICAL,
+
+  // Colors from Blue Robotics color palette
+  br_blue: BR_COLORS.BR_BLUE,
+  mariner_blue: BR_COLORS.MARINER_BLUE,
+  blue_whale: BR_COLORS.BLUE_WHALE,
+  tether_yellow: BR_COLORS.TETHER_YELLOW,
+  tuna: BR_COLORS.TUNA,
+  oyster: BR_COLORS.OYSTER,
+}
+
 const vuetify = new Vuetify({
   icons: {
     iconfont: 'mdi',
@@ -17,46 +37,20 @@ const vuetify = new Vuetify({
     options: { customProperties: true },
     themes: {
       light: {
-        // Default colors used by BlueOS
-        primary: DEFAULT_COLORS.PRIMARY,
-        secondary: DEFAULT_COLORS.SECONDARY,
-        accent: DEFAULT_COLORS.ACCENT,
-        success: DEFAULT_COLORS.SUCCESS,
-        error: DEFAULT_COLORS.ERROR,
-        info: DEFAULT_COLORS.INFO,
-        warning: DEFAULT_COLORS.WARNING,
-        critical: DEFAULT_COLORS.CRITICAL,
+        // Colors common to both themes
+        ...baseTheme,
+        
+        // BlueOS light theme defaults
         sheet_bg: DEFAULT_COLORS.SHEET_LIGHT_BG,
         sheet_bg_complement: DEFAULT_COLORS.SHEET_DARK_BG,
-
-        // Colors from Blue Robotics color palette
-        br_blue: BR_COLORS.BR_BLUE,
-        mariner_blue: BR_COLORS.MARINER_BLUE,
-        blue_whale: BR_COLORS.BLUE_WHALE,
-        tether_yellow: BR_COLORS.TETHER_YELLOW,
-        tuna: BR_COLORS.TUNA,
-        oyster: BR_COLORS.OYSTER,
       },
       dark: {
-        // Default colors used by BlueOS
-        primary: DEFAULT_COLORS.PRIMARY,
-        secondary: DEFAULT_COLORS.SECONDARY,
-        accent: DEFAULT_COLORS.ACCENT,
-        success: DEFAULT_COLORS.SUCCESS,
-        error: DEFAULT_COLORS.ERROR,
-        info: DEFAULT_COLORS.INFO,
-        warning: DEFAULT_COLORS.WARNING,
-        critical: DEFAULT_COLORS.CRITICAL,
+        // Colors common to both themes
+        ...baseTheme,
+        
+        // BlueOS dark theme defaults
         sheet_bg: DEFAULT_COLORS.SHEET_DARK_BG,
         sheet_bg_complement: DEFAULT_COLORS.SHEET_LIGHT_BG,
-
-        // Colors from Blue Robotics color palette
-        br_blue: BR_COLORS.BR_BLUE,
-        mariner_blue: BR_COLORS.MARINER_BLUE,
-        blue_whale: BR_COLORS.BLUE_WHALE,
-        tether_yellow: BR_COLORS.TETHER_YELLOW,
-        tuna: BR_COLORS.TUNA,
-        oyster: BR_COLORS.OYSTER,
       },
     },
   },
