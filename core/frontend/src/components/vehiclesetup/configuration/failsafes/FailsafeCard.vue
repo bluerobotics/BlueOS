@@ -7,7 +7,7 @@
     <div class="ma-4">
       <!-- this is theoretically not safe, but we have a command that gives users root access, so... -->
       <!-- eslint-disable vue/no-v-html -->
-      <i :class="`${svg_outside_style} svg-icon`" v-html="image" />
+      <i class="svg-icon" v-html="image" />
     </div>
     <div class="d-flex flex-column justify-center">
       <v-card-title> {{ failsafeDefinition.name }}</v-card-title>
@@ -40,7 +40,6 @@ import { Dictionary } from 'vue-router/types/router.js'
 
 import { FailsafeDefinition, ParamDefinitions } from '@/components/vehiclesetup/configuration/failsafes/types'
 import autopilot_data from '@/store/autopilot'
-import settings from '@/store/settings'
 import Parameter from '@/types/autopilot/parameter'
 
 export default Vue.extend({
@@ -61,9 +60,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    svg_outside_style(): string {
-      return `mr-0 ${settings.is_dark_theme ? 'svg-outline-dark' : 'svg-outline-light'}`
-    },
     params(): Dictionary<Parameter> {
       return autopilot_data.parameters
         .filter((param) => this.failsafeDefinition.params.map((parameter) => parameter.name)
@@ -99,14 +95,6 @@ export default Vue.extend({
 i.svg-icon svg {
   height: 100% !important;
   min-width: 180px;
-}
-
-i.svg-outline-dark path {
-  fill: #d1eaf1;
-}
-
-i.svg-outline-light path {
-  fill: #002f45;
 }
 
 .failsafe-card {
