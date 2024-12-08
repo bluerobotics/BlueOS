@@ -20,6 +20,14 @@ const baseTheme = {
   warning: DEFAULT_COLORS.WARNING,
   critical: DEFAULT_COLORS.CRITICAL,
 
+  // Colors for explanatory diagrams
+  water: BR_COLORS.BR_BLUE,
+  detail: BR_COLORS.BLUE_WHALE,
+  positive: BR_COLORS.KELP_GREEN,
+  neutral: BR_COLORS.GARIBALDI_ORANGE,
+  negative: BR_COLORS.AXOLOTL_PINK,
+  attention: BR_COLORS.TETHER_YELLOW,
+
   // Colors from Blue Robotics color palette
   br_blue: BR_COLORS.BR_BLUE,
   mariner_blue: BR_COLORS.MARINER_BLUE,
@@ -43,6 +51,9 @@ const vuetify = new Vuetify({
         // BlueOS light theme defaults
         sheet_bg: DEFAULT_COLORS.SHEET_LIGHT_BG,
         sheet_bg_complement: DEFAULT_COLORS.SHEET_DARK_BG,
+
+        // Diagram light theme colors
+        outline: BR_COLORS.BLUE_WHALE,
       },
       dark: {
         // Colors common to both themes
@@ -51,6 +62,9 @@ const vuetify = new Vuetify({
         // BlueOS dark theme defaults
         sheet_bg: DEFAULT_COLORS.SHEET_DARK_BG,
         sheet_bg_complement: DEFAULT_COLORS.SHEET_LIGHT_BG,
+        
+        // Diagram dark theme colors
+        outline: BR_COLORS.SKY_BLUE,
       },
     },
   },
