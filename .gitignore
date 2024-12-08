@@ -18,3 +18,5 @@ registry/
 # Docker compose binds
 core/compose/workspace/
 
+# macOS filesystem tracking
+.DS_Store
