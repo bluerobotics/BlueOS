@@ -93,6 +93,11 @@ class WebsiteStatus(BaseModel):
     error: Optional[str] = None
 
 
+class CockpitWidget(BaseModel):
+    name: str
+    url: str
+
+
 class ServiceMetadata(BaseModel):
     name: str
     description: str
@@ -107,6 +112,7 @@ class ServiceMetadata(BaseModel):
     api: str
     sanitized_name: Optional[str]
     works_in_relative_paths: Optional[bool]
+    cockpit_widget: Optional[List[CockpitWidget]]
 
 
 class ServiceInfo(BaseModel):
