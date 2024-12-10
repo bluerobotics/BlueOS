@@ -107,6 +107,7 @@ class ServiceMetadata(BaseModel):
     api: str
     sanitized_name: Optional[str]
     works_in_relative_paths: Optional[bool]
+    extras: Optional[Dict[str, str]]
 
 
 class ServiceInfo(BaseModel):
