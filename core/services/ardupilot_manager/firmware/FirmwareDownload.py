@@ -21,7 +21,7 @@ from exceptions import (
     NoCandidate,
     NoVersionAvailable,
 )
-from typedefs import FirmwareFormat, Platform, PlatformType, Vehicle
+from typedefs import FirmwareFormat, FlightController, Platform, PlatformType, Vehicle
 
 # TODO: This should be not necessary
 # Disable SSL verification
@@ -123,8 +123,8 @@ class FirmwareDownloader:
         # Make sure that the item matches all args value
         for item in self._manifest["firmware"]:
             for key, value in args.items():
-                real_key = key.replace("_", "-")
-                if real_key not in item or item[real_key] != value:
+                real_key = key.replace("_", "-").lower()
+                if real_key not in item or item[real_key].lower() != value.lower():
                     break
             else:
                 found_version_item.append(item)
@@ -132,12 +132,12 @@ class FirmwareDownloader:
         return found_version_item
 
     @temporary_cache(timeout_seconds=3600)
-    def get_available_versions(self, vehicle: Vehicle, platform: Platform) -> List[str]:
+    def get_available_versions(self, vehicle: Vehicle, board: FlightController) -> List[str]:
         """Get available firmware versions for the specific plataform and vehicle
 
         Args:
             vehicle (Vehicle): Desired vehicle.
-            platform (Platform): Desired platform.
+            board (FlightController): Desired Flight Controller.
 
         Returns:
             List[str]: List of available versions that match the specific desired configuration.
@@ -147,16 +147,18 @@ class FirmwareDownloader:
         if not self._manifest_is_valid():
             raise InvalidManifest("Manifest file is invalid. Cannot use it to find available versions.")
 
-        items = self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
+        platform = board.platform.value if board.platform != Platform.GenericSerial else board.name
+        platform_type = board.platform.type if board.platform != Platform.GenericSerial else PlatformType.Serial
+        items = self._find_version_item(vehicletype=vehicle.value, platform=platform)
 
         for item in items:
-            if item["format"] == FirmwareDownloader._supported_firmware_formats[platform.type]:
+            if item["format"] == FirmwareDownloader._supported_firmware_formats[platform_type]:
                 available_versions.append(item["mav-firmware-version-type"])
 
         return available_versions
 
     @temporary_cache(timeout_seconds=3600)
-    def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> str:
+    def get_download_url(self, vehicle: Vehicle, board: FlightController, version: str = "") -> str:
         """Find a specific firmware URL from manifest that matches the arguments.
 
         Args:
@@ -168,16 +170,16 @@ class FirmwareDownloader:
         Returns:
             str: URL of valid firmware.
         """
-        versions = self.get_available_versions(vehicle, platform)
-        logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
+        versions = self.get_available_versions(vehicle, board)
+        logger.debug(f"Got following versions for {vehicle} running {board}: {versions}")
 
         if not versions:
-            raise NoVersionAvailable(f"Could not find available firmware versions for {platform}/{vehicle}.")
+            raise NoVersionAvailable(f"Could not find available firmware versions for {board}/{vehicle}.")
 
         if version and version not in versions:
-            raise NoVersionAvailable(f"Version {version} was not found for {platform}/{vehicle}.")
+            raise NoVersionAvailable(f"Version {version} was not found for {board}/{vehicle}.")
 
-        firmware_format = FirmwareDownloader._supported_firmware_formats[platform.type]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform.type]
 
         # Autodetect the latest supported version.
         # For .apj firmwares (e.g. Pixhawk), we use the latest STABLE version while for the others (e.g. SITL and
@@ -192,21 +194,22 @@ class FirmwareDownloader:
                     if not newest_version or Version(newest_version) < Version(semver_version):
                         newest_version = semver_version
                 if not newest_version:
-                    raise NoVersionAvailable(f"No firmware versions found for {platform}/{vehicle}.")
+                    raise NoVersionAvailable(f"No firmware versions found for {board}/{vehicle}.")
                 version = f"STABLE-{newest_version}"
             else:
                 version = "BETA"
 
         items = self._find_version_item(
             vehicletype=vehicle.value,
-            platform=platform.value,
+            platform=board.platform.value if board.platform == Platform.SITL else board.name,
             mav_firmware_version_type=version,
             format=firmware_format,
         )
 
         if len(items) == 0:
+            logger.error(f"Could not find any firmware for {vehicle=}, {board=}, {version=}, {firmware_format=}")
             raise NoCandidate(
-                f"Found no candidate for configuration: {vehicle=}, {platform=}, {version=}, {firmware_format=}"
+                f"Found no candidate for configuration: {vehicle=}, {board=}, {version=}, {firmware_format=}"
             )
 
         if len(items) != 1:
@@ -216,7 +219,7 @@ class FirmwareDownloader:
         logger.debug(f"Downloading following firmware: {item}")
         return str(item["url"])
 
-    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> pathlib.Path:
+    def download(self, vehicle: Vehicle, board: FlightController, version: str = "") -> pathlib.Path:
         """Download a specific firmware that matches the arguments.
 
         Args:
@@ -228,5 +231,5 @@ class FirmwareDownloader:
         Returns:
             pathlib.Path: Temporary path for the firmware file.
         """
-        url = self.get_download_url(vehicle, platform, version)
+        url = self.get_download_url(vehicle, board, version)
         return FirmwareDownloader._download(url)

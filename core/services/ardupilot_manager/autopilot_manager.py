@@ -207,7 +207,7 @@ class AutoPilotManager(metaclass=Singleton):
                 )
 
         firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
-        self.firmware_manager.validate_firmware(firmware_path, self._current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self._current_board)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -319,7 +319,7 @@ class AutoPilotManager(metaclass=Singleton):
         self.current_sitl_frame = frame
 
         firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
-        self.firmware_manager.validate_firmware(firmware_path, self._current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self._current_board)
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
@@ -624,8 +624,8 @@ class AutoPilotManager(metaclass=Singleton):
         self._save_current_endpoints()
         await self.mavlink_manager.restart()
 
-    def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
-        return self.firmware_manager.get_available_firmwares(vehicle, platform)
+    def get_available_firmwares(self, vehicle: Vehicle, board: FlightController) -> List[Firmware]:
+        return self.firmware_manager.get_available_firmwares(vehicle, board)
 
     def install_firmware_from_file(
         self, firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
