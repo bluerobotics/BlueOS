@@ -247,17 +247,22 @@ class ManifestManager:
         self._settings.manifests = ordered_manifests
         self._manager.save()
 
-    async def fetch_extension(self, identifier: str) -> Optional[RepositoryEntry]:
-        # Only fetch enabled sources already sorted by priority
-        manifest = await self.fetch_consolidated()
-        return next((ext for ext in manifest if ext.identifier == identifier), None)
+    async def fetch_extension(self, extension_id: str, manifest_id: Optional[str] = None) -> Optional[RepositoryEntry]:
+        manifest = []
+        if manifest_id is None:
+            # Only fetch enabled sources already sorted by priority
+            manifest = await self.fetch_consolidated()
+        else:
+            manifest = (await self.fetch_by_identifier(manifest_id, fetch_data=True)).data or []
 
-    async def fetch_latest_extension_version(self, identifier: str, stable: bool) -> Optional[ExtensionVersion]:
-        manifest = await self.fetch_consolidated()
-        ext = next((ext for ext in manifest if ext.identifier == identifier), None)
+        return next((ext for ext in manifest if ext.identifier == extension_id), None)
 
+    async def fetch_extension_versions(
+        self, extension_id: str, stable: bool, manifest_id: Optional[str] = None
+    ) -> List[semver.VersionInfo]:
+        ext = await self.fetch_extension(extension_id, manifest_id)
         if not ext or not ext.versions:
-            return None
+            return []
 
         def valid_semver(string: str) -> Optional[semver.VersionInfo]:
             # We want to allow versions to be prefixed with a 'v'.
@@ -266,17 +271,27 @@ class ManifestManager:
             try:
                 return semver.VersionInfo.parse(string)
             except ValueError:
-                return None
+                return []
 
         versions: List[semver.VersionInfo] = sorted([valid_semver(tag) for tag in ext.versions], reverse=True)
-
         if stable:
             versions = [v for v in versions if not v.prerelease and not v.patch]
 
+        return versions
+
+    async def fetch_latest_extension_version(
+        self, extension_id: str, stable: bool, manifest_id: Optional[str] = None
+    ) -> Optional[ExtensionVersion]:
+        ext = await self.fetch_extension(extension_id, manifest_id)
+        if not ext or not ext.versions:
+            return None
+
+        versions = await self.fetch_extension_versions(extension_id, stable, manifest_id)
+
         return ext.versions.get(str(versions[0])) if versions else None
 
-    async def fetch_extension_version(self, identifier: str, tag: str) -> Optional[ExtensionVersion]:
-        ext = await self.fetch_extension(identifier)
+    async def fetch_extension_version(self, extension_id: str, tag: str) -> Optional[ExtensionVersion]:
+        ext = await self.fetch_extension(extension_id)
         if not ext:
             return None
 
