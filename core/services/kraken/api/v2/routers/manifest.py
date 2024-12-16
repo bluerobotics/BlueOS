@@ -76,6 +76,30 @@ async def fetch_consolidated() -> list[RepositoryEntry]:
     return await manifest_manager.fetch_consolidated()
 
 
+@manifest_router_v2.get("/tags/{manifest_identifier}/{extension_identifier}/", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
+async def fetch_ext_tags_from_manifest(
+    manifest_identifier: str, extension_identifier: str, stable: bool = False
+) -> list[str]:
+    """
+    Get all tags for a given extension identifier using one manifest as source.
+    """
+    versions = await manifest_manager.fetch_extension_versions(extension_identifier, stable, manifest_identifier)
+
+    return [str(version) for version in versions]
+
+
+@manifest_router_v2.get("/tags/{extension_identifier}", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
+async def fetch_ext_tags_from_consolidated(extension_identifier: str, stable: bool = False) -> list[str]:
+    """
+    Get all tags for a given extension identifier using consolidated manifest as source.
+    """
+    versions = await manifest_manager.fetch_extension_versions(extension_identifier, stable)
+
+    return [str(version) for version in versions]
+
+
 @manifest_router_v2.post("/", status_code=status.HTTP_201_CREATED)
 @manifest_to_http_exception
 async def create(body: ManifestSource, validate_url: bool = True) -> Manifest:
