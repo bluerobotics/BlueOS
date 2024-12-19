@@ -124,6 +124,7 @@ class NetworkManagerHandler(AbstractNetworkHandler):
                 metric += 1000
                 logger.info(f"Settting current priority for {interface.name} as {metric}")
                 settings.update(properties)
+                settings.save()
                 network_manager.activate_connection(connection_path)
 
 
