@@ -49,13 +49,14 @@ class Filebrowser {
   /* Fetch a folder from filebrowser. */
   /**
    * @param folder_path - String absolute path of folder to be fetched
+   * @param timeout - Timeout in milliseconds
    * @returns FilebrowserFolder object
   * */
-  async fetchFolder(folder_path: string): Promise<FilebrowserFolder> {
+  async fetchFolder(folder_path: string, timeout = 10000): Promise<FilebrowserFolder> {
     return back_axios({
       method: 'get',
       url: `${filebrowser_url}/resources${folder_path}`,
-      timeout: 10000,
+      timeout,
       headers: { 'X-Auth': await this.filebrowserToken() },
     })
       .then((response) => response.data)
