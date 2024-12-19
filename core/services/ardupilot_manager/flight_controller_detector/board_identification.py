@@ -1,4 +1,6 @@
+import json
 from enum import Enum
+from pathlib import Path
 from typing import List
 
 from pydantic import BaseModel
@@ -32,3 +34,22 @@ identifiers: List[SerialBoardIdentifier] = [
     SerialBoardIdentifier(attribute=SerialAttr.manufacturer, id_value="Hex/ProfiCNC", platform=Platform.GenericSerial),
     SerialBoardIdentifier(attribute=SerialAttr.manufacturer, id_value="Holybro", platform=Platform.GenericSerial),
 ]
+
+
+def load_board_identifiers() -> List[SerialBoardIdentifier]:
+    json_path = Path(__file__).parent / "boards.json"
+    with open(json_path, encoding="utf-8") as f:
+        json_data = json.load(f)
+
+    # Extract all unique board names
+    board_names = set()
+    for boards_list in json_data.values():
+        board_names.update(boards_list)
+
+    return [
+        SerialBoardIdentifier(attribute=SerialAttr.product, id_value=board_name, platform=Platform.GenericSerial)
+        for board_name in board_names
+    ]
+
+
+identifiers.extend(load_board_identifiers())

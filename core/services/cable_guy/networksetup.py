@@ -82,6 +82,7 @@ class NetworkManagerHandler(AbstractNetworkHandler):
                 new_ip = AddressData(address=ip, prefix=24)
                 data.ipv4.address_data.append(new_ip)
                 settings.update_profile(data)
+                settings.save()
                 network_manager.activate_connection(connection_path)
                 return
             except Exception as e:
@@ -124,6 +125,7 @@ class NetworkManagerHandler(AbstractNetworkHandler):
                 metric += 1000
                 logger.info(f"Settting current priority for {interface.name} as {metric}")
                 settings.update(properties)
+                settings.save()
                 network_manager.activate_connection(connection_path)
 
 

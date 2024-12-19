@@ -154,6 +154,9 @@ class FlightController(BaseModel):
     def type(self) -> PlatformType:
         return self.platform.type
 
+    def __hash__(self) -> int:
+        return hash(self.name + self.platform)
+
 
 class AvailableBoards(BaseModel):
     regular: List[FlightController]
