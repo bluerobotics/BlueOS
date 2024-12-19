@@ -9,7 +9,7 @@ from uvicorn import Config, Server
 
 from args import CommandLineArgs
 from autopilot_manager import AutoPilotManager
-from flight_controller_detector.Detector import Detector as BoardDetector
+from flight_controller.detector.detector import FlightControllerDetector
 from settings import SERVICE_NAME
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     server = Server(config)
 
     if args.sitl:
-        autopilot.set_preferred_board(BoardDetector.detect_sitl())
+        autopilot.set_preferred_board(FlightControllerDetector.detect_sitl())
     try:
         loop.run_until_complete(autopilot.start_ardupilot())
     except Exception as start_error:
