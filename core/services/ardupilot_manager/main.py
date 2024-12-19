@@ -10,7 +10,7 @@ from uvicorn import Config, Server
 from args import CommandLineArgs
 from autopilot_manager import AutoPilotManager
 from flight_controller_detector.Detector import Detector as BoardDetector
-from settings import SERVICE_NAME
+from config import SERVICE_NAME
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)

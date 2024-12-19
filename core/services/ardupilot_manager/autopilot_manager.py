@@ -12,6 +12,7 @@ from commonwealth.utils.Singleton import Singleton
 from elftools.elf.elffile import ELFFile
 from loguru import logger
 
+from config import SERVICE_NAME
 from exceptions import (
     AutoPilotProcessKillFail,
     NoDefaultFirmwareAvailable,
@@ -212,7 +213,7 @@ class AutoPilotManager(metaclass=Singleton):
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
             name="Master",
-            owner=self.settings.app_name,
+            owner=SERVICE_NAME,
             connection_type=EndpointType.UDPServer,
             place="127.0.0.1",
             argument=8852,
@@ -269,7 +270,7 @@ class AutoPilotManager(metaclass=Singleton):
         await self.start_mavlink_manager(
             Endpoint(
                 name="Master",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.Serial,
                 place=board.path,
                 argument=baudrate,
@@ -324,7 +325,7 @@ class AutoPilotManager(metaclass=Singleton):
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
             name="Master",
-            owner=self.settings.app_name,
+            owner=SERVICE_NAME,
             connection_type=EndpointType.TCPClient,
             place="127.0.0.1",
             argument=5760,
@@ -353,7 +354,7 @@ class AutoPilotManager(metaclass=Singleton):
         default_endpoints = [
             Endpoint(
                 name="GCS Server Link",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPServer,
                 place="0.0.0.0",
                 argument=14550,
@@ -362,7 +363,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="GCS Client Link",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPClient,
                 place="192.168.2.1",
                 argument=14550,
@@ -371,7 +372,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="MAVLink2RestServer",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPServer,
                 place="127.0.0.1",
                 argument=14001,
@@ -380,7 +381,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="MAVLink2Rest",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPClient,
                 place="127.0.0.1",
                 argument=14000,
@@ -390,7 +391,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="Zenoh Deamon",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.Zenoh,
                 place="0.0.0.0",
                 argument=7117,
@@ -399,7 +400,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="Internal Link",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.TCPServer,
                 place="127.0.0.1",
                 argument=5777,
@@ -409,7 +410,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="Ping360 Heading",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPServer,
                 place="0.0.0.0",
                 argument=14660,
