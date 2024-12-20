@@ -80,6 +80,7 @@ class NetworkManagerHandler(AbstractNetworkHandler):
                     logger.info(f"IP {ip} already exists for {interface_name}")
                     continue
                 new_ip = AddressData(address=ip, prefix=24)
+                settings["ipv4"]["method"] = ("s", "shared")
                 data.ipv4.address_data.append(new_ip)
                 settings.update_profile(data)
                 network_manager.activate_connection(connection_path)
@@ -90,13 +91,18 @@ class NetworkManagerHandler(AbstractNetworkHandler):
     def enable_dhcp_client(self, interface_name: str) -> None:
         networkmanager_settings = NetworkManagerSettings()
         for connection_path in networkmanager_settings.connections:
-            settings = NetworkConnectionSettings(connection_path)
-            properties = settings.get_settings()
-            if properties["connection"]["interface-name"][1] != interface_name:
-                continue
-            properties["ipv4"]["method"] = ("s", "auto")
-            settings.update(properties)
-            network_manager.activate_connection(connection_path)
+            try:
+                settings = NetworkConnectionSettings(connection_path)
+                properties = settings.get_settings()
+                if properties["connection"]["interface-name"][1] != interface_name:
+                    continue
+                properties["ipv4"]["method"] = ("s", "shared")
+                properties["ipv4"]["may-fail"] = ("b", True)
+                settings.update(properties)
+                settings.save()
+                network_manager.activate_connection(connection_path)
+            except Exception as e:
+                logger.error(f"Failed to enable DHCP client for {interface_name}: {e}")
 
     def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
         interfaces = []
