@@ -123,6 +123,6 @@ echo "Running mypy.."
 git ls-files '*setup.py' | parallel 'mypy $(dirname {}) --cache-dir "$(dirname {})/__mypycache__"'
 
 echo "Running pytest.."
-pytest -n 10 --cov="$repository_path" --cov-report html
+pytest -n 10 --durations=0 --cov="$repository_path" --cov-report html
 
 exit 0
