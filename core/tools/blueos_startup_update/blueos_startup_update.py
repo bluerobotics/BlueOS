@@ -6,6 +6,7 @@ import os
 import re
 import time
 from typing import List, Tuple
+import configparser
 
 import appdirs
 from commonwealth.utils.commands import run_command, save_file, locate_file, load_file
@@ -442,6 +443,56 @@ def fix_wpa_service() -> bool:
     return True
 
 
+def configure_network_manager() -> bool:
+    """
+    Ensures NetworkManager.conf has [main] section with dns=none set if dns is not already configured
+    """
+    logger.info("Configuring NetworkManager DNS settings...")
+    file_path = "/etc/NetworkManager/NetworkManager.conf"
+
+    config = configparser.ConfigParser()
+
+    # Try to read existing file
+    result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
+    if result.returncode != 0:
+        # File doesn't exist, create with template
+        content = """[main]
+plugins=ifupdown,keyfile
+dns=none
+
+[ifupdown]
+managed=false
+
+[device]
+wifi.scan-rand-mac-address=no
+"""
+        run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
+        return True
+
+    config.read_string(result.stdout)
+
+    # Check if we need to make changes
+    if "main" in config.sections() and "dns" in config["main"]:
+        return False
+
+    # Add our settings if needed
+    if "main" not in config:
+        config.add_section("main")
+    if "dns" not in config["main"]:
+        config["main"]["dns"] = "none"
+
+    # Write back if changes were made
+    content = ""
+    for section in config.sections():
+        content += f"[{section}]\n"
+        for key, value in config[section].items():
+            content += f"{key}={value}\n"
+        content += "\n"
+
+    run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
+    return True
+
+
 def main() -> int:
     start = time.time()
     # check if boot_loop_detector exists
@@ -492,7 +543,7 @@ def main() -> int:
             ]
         )
     if host_os == HostOs.Bookworm:
-        patches_to_apply.extend([("wpa", fix_wpa_service)])
+        patches_to_apply.extend([("wpa", fix_wpa_service), ("networkmanager", configure_network_manager)])
 
     logger.info("The following patches will be applied if needed:")
     for name, patch in patches_to_apply:
