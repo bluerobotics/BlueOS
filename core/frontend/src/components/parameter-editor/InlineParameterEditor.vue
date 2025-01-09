@@ -4,47 +4,67 @@
     v-model="is_form_valid"
     @submit.prevent="saveEditedParam"
   >
-    <template v-if="!custom_input && param?.bitmask">
-      <v-checkbox
-        v-for="(key, keyvalue) in param.bitmask"
-        :key="keyvalue"
-        v-model="selected_bitflags"
-        dense
-        hide-details
-        :loading="waiting_for_param_update"
-        :label="key"
-        :value="2 ** keyvalue"
-      />
-    </template>
-    <v-autocomplete
-      v-else-if="!custom_input && Object.entries(param?.options ?? []).length > 10"
-      v-model.number="internal_new_value"
-      variant="solo"
-      :loading="waiting_for_param_update"
-      :items="as_select_items"
-      :label="label"
-    />
-    <v-select
-      v-else-if="!custom_input && param?.options"
-      v-model.number="internal_new_value"
-      dense
-      :items="as_select_items"
-      :label="label"
-      :indeterminate="waiting_for_param_update"
-      @change="updateVariables"
-    />
-    <v-text-field
-      v-if="custom_input || (!param?.options && !param?.bitmask)"
-      v-model.number="internal_new_value"
-      dense
-      type="number"
-      :label="label"
-      :step="param.increment ?? 0.01"
-      :suffix="param.units"
-      :rules="forcing_input ? [] : [isInRange, isValidType]"
-      :loading="waiting_for_param_update"
-      @blur="updateVariables"
-    />
+    <div class="d-flex align-center">
+      <div class="flex-grow-1">
+        <!-- Bitmask checkboxes -->
+        <template v-if="!custom_input && param?.bitmask">
+          <v-checkbox
+            v-for="(key, keyvalue) in param.bitmask"
+            :key="keyvalue"
+            v-model="selected_bitflags"
+            dense
+            hide-details
+            :loading="waiting_for_param_update"
+            :label="key"
+            :value="2 ** keyvalue"
+          />
+        </template>
+
+        <!-- Autocomplete for many options -->
+        <v-autocomplete
+          v-else-if="!custom_input && Object.entries(param?.options ?? []).length > 10"
+          v-model.number="internal_new_value"
+          variant="solo"
+          :loading="waiting_for_param_update"
+          :items="as_select_items"
+        >
+          <template #label>
+            <parameter-label :label="label" :param="param" :format-options="formatOptions" />
+          </template>
+        </v-autocomplete>
+
+        <!-- Select for few options -->
+        <v-select
+          v-else-if="!custom_input && param?.options"
+          v-model.number="internal_new_value"
+          dense
+          :items="as_select_items"
+          :indeterminate="waiting_for_param_update"
+          @change="updateVariables"
+        >
+          <template #label>
+            <parameter-label :label="label" :param="param" :format-options="formatOptions" />
+          </template>
+        </v-select>
+
+        <!-- Text input for numbers -->
+        <v-text-field
+          v-if="custom_input || (!param?.options && !param?.bitmask)"
+          v-model.number="internal_new_value"
+          dense
+          type="number"
+          :step="param.increment ?? 0.01"
+          :suffix="param.units"
+          :rules="forcing_input ? [] : [isInRange, isValidType]"
+          :loading="waiting_for_param_update"
+          @blur="updateVariables"
+        >
+          <template #label>
+            <parameter-label :label="label" :param="param" :format-options="formatOptions" />
+          </template>
+        </v-text-field>
+      </div>
+    </div>
 
     <v-checkbox
       v-if="show_advanced_checkbox"
@@ -68,8 +88,13 @@ import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import Parameter from '@/types/autopilot/parameter'
 
+import ParameterLabel from './ParameterLabel.vue'
+
 export default Vue.extend({
   name: 'InlineParameterEditor',
+  components: {
+    ParameterLabel,
+  },
   model: {
     prop: 'newValue',
     event: 'change',
@@ -133,6 +158,14 @@ export default Vue.extend({
     },
     param_value() {
       return this.param?.value ?? 0
+    },
+    formatOptions(): string {
+      if (!this.param?.options) {
+        return ''
+      }
+      return Object.entries(this.param.options)
+        .map(([value, name]) => `${value}: ${name}`)
+        .join(', ')
     },
   },
   watch: {
