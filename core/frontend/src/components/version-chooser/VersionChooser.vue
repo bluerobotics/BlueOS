@@ -217,6 +217,7 @@ import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import { version_chooser_service } from '@/types/frontend_services'
+import { InternetConnectionState } from '@/types/helper'
 import {
   isServerResponse,
   LocalVersionsQuery, Version, VersionsQuery, VersionType,
@@ -289,7 +290,7 @@ export default Vue.extend({
       return 'File is required'
     },
     has_internet(): boolean {
-      return helper.has_internet
+      return helper.has_internet !== InternetConnectionState.OFFLINE
     },
   },
   watch: {

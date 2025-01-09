@@ -20,7 +20,7 @@
           color="white"
           :title="tooltip"
         >
-          {{ helper.has_internet ? 'mdi-web' : 'mdi-web-off' }}
+          {{ icon }}
         </v-icon>
       </v-card>
     </template>
@@ -42,6 +42,7 @@ import Vue from 'vue'
 
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
+import { InternetConnectionState } from '@/types/helper'
 
 import NetworkInterfaceMenu from './NetworkInterfaceMenu.vue'
 
@@ -51,13 +52,37 @@ export default Vue.extend({
     NetworkInterfaceMenu,
   },
   data: () => ({
-    helper,
     settings,
     show_menu: false,
   }),
   computed: {
     tooltip() {
-      return helper.has_internet ? 'Vehicle has internet access.' : 'Internet connection is not available.'
+      switch (helper.has_internet) {
+        case InternetConnectionState.ONLINE:
+          return 'Vehicle has internet access.'
+        case InternetConnectionState.OFFLINE:
+          return 'Internet connection is not available.'
+        case InternetConnectionState.LIMITED:
+          return 'Internet connection is limited.'
+        case InternetConnectionState.UNKNOWN:
+          return 'Internet connection status is unknown.'
+        default:
+          return 'Internet connection is not available.'
+      }
+    },
+    icon(): string {
+      switch (helper.has_internet) {
+        case InternetConnectionState.ONLINE:
+          return 'mdi-web'
+        case InternetConnectionState.OFFLINE:
+          return 'mdi-web-off'
+        case InternetConnectionState.LIMITED:
+          return 'mdi-web-minus'
+        case InternetConnectionState.UNKNOWN:
+          return 'mdi-web-refresh'
+        default:
+          return 'mdi-web-off'
+      }
     },
   },
 })

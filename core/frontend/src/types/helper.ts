@@ -62,3 +62,10 @@ export interface SpeedTestResult {
     share: string | null
     client: SpeedtestClient
 }
+
+export enum InternetConnectionState {
+  OFFLINE = 0,
+  UNKNOWN = 1,
+  LIMITED = 2,
+  ONLINE = 3,
+}

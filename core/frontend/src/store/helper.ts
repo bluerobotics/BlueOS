@@ -7,7 +7,7 @@ import Notifier from '@/libs/notifier'
 import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { helper_service } from '@/types/frontend_services'
-import { Service, SpeedTestResult } from '@/types/helper'
+import { InternetConnectionState, Service, SpeedTestResult } from '@/types/helper'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(helper_service)
@@ -29,7 +29,7 @@ type SiteStatus = Record<string, CheckSiteStatus>
 class PingStore extends VuexModule {
   API_URL = '/helper/latest'
 
-  has_internet = false
+  has_internet: InternetConnectionState = InternetConnectionState.UNKNOWN
 
   services: Service[] = []
 
@@ -42,7 +42,7 @@ class PingStore extends VuexModule {
   )
 
   @Mutation
-  setHasInternet(has_internet: boolean): void {
+  setHasInternet(has_internet: InternetConnectionState): void {
     this.has_internet = has_internet
   }
 
@@ -59,13 +59,27 @@ class PingStore extends VuexModule {
       timeout: 10000,
     })
       .then((response) => {
-        const has_internet = !Object.values(response.data as SiteStatus)
-          .filter((item) => item.online)
-          .isEmpty()
+        const sites = Object.values(response.data as SiteStatus)
+        const online_sites = sites.filter((item) => item.online)
 
-        this.setHasInternet(has_internet)
+        // If no sites are reachable, we're offline
+        if (online_sites.length === 0) {
+          this.setHasInternet(InternetConnectionState.OFFLINE)
+          return
+        }
+
+        // If all sites are reachable, we're fully online
+        if (online_sites.length === sites.length) {
+          this.setHasInternet(InternetConnectionState.ONLINE)
+          return
+        }
+
+        // If some sites are reachable but not all, we have limited connectivity
+        this.setHasInternet(InternetConnectionState.LIMITED)
       })
       .catch((error) => {
+        // If we can't even reach the backend, we're in an unknown state
+        this.setHasInternet(InternetConnectionState.UNKNOWN)
         notifier.pushBackError('INTERNET_CHECK_FAIL', error)
       })
   }
