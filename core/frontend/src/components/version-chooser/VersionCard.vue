@@ -168,6 +168,7 @@ import Vue, { PropType } from 'vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import { Dictionary } from '@/types/common'
+import { InternetConnectionState } from '@/types/helper'
 import { DEFAULT_REMOTE_IMAGE } from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
@@ -248,7 +249,8 @@ export default Vue.extend({
       return this.image.repository === 'bluerobotics/blueos-core'
     },
     showBootstrapUpdate(): boolean {
-      if (!this.bootstrapVersion || !helper.has_internet) {
+      if (!this.bootstrapVersion || helper.has_internet === InternetConnectionState.OFFLINE
+        || helper.has_internet === InternetConnectionState.UNKNOWN) {
         return false
       }
       return this.settings.is_pirate_mode && this.current && !this.updateAvailable && this.isFromBR

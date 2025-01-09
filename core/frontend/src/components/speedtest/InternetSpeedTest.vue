@@ -9,7 +9,7 @@
           width="100%"
           absolute
           opacity="0.92"
-          :value="!helper.has_internet"
+          :value="helper.has_internet === InternetConnectionState.OFFLINE"
         >
           Waiting for internet connection..
         </v-overlay>

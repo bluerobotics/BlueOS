@@ -56,6 +56,7 @@ import BrIframe from '@/components/utils/BrIframe.vue'
 import { OneMoreTime } from '@/one-more-time'
 import bag from '@/store/bag'
 import helper from '@/store/helper'
+import { InternetConnectionState } from '@/types/helper'
 
 export default Vue.extend({
   name: 'BazaarTab',
@@ -76,7 +77,7 @@ export default Vue.extend({
       return this.bazaar_url_loading || this.bazaar_url_error !== undefined
     },
     internet_offline(): boolean {
-      return !helper.has_internet
+      return helper.has_internet === InternetConnectionState.OFFLINE
     },
     major_tom_not_configured(): boolean {
       return this.bazaar_url === undefined && !this.internet_offline
