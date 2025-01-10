@@ -21,6 +21,9 @@ RUN_AS_REGULAR_USER="sudo -u blueos"
 # Set BlueOS log folder
 BLUEOS_LOG_FOLDER_PATH="/var/logs/blueos"
 
+# Replace spaces with commas in the disabled services list
+BLUEOS_DISABLE_SERVICES=${BLUEOS_DISABLE_SERVICES// /,}
+
 # The system may start with full disk, in this case resulting in an unstable behavior.
 # As an attempt to recover the system, lets delete the log files before current boot
 AVAILABLE_SPACE_MB=$(($(stat -f / --format="%a*%S/1024**2")))
