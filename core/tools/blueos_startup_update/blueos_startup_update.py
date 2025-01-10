@@ -48,6 +48,8 @@ CONFIG_USER_PROTECTION_WORD = "custom"
 config_file = None
 cmdline_file = None
 
+disabled_patches = [entry.strip() for entry in os.getenv("BLUEOS_DISABLE_PATCHES", "").split(",")]
+
 # Copyright 2016-2022 Paul Durivage
 # Licensed under the Apache License, Version 2.0 (the "License");
 # Based on: https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
@@ -470,33 +472,35 @@ def main() -> int:
 
     # TODO: parse tag as semver and check before applying patches
     patches_to_apply = [
-        update_startup,
-        ensure_user_data_structure_is_in_place,
-        ensure_nginx_permissions,
-        create_dns_conf_host_link,
-        fix_ssh_ownership,
+        ("startup", update_startup),
+        ("userdata", ensure_user_data_structure_is_in_place),
+        ("nginx", ensure_nginx_permissions),
+        ("dns", create_dns_conf_host_link),
+        ("ssh", fix_ssh_ownership),
     ]
 
     # this will always be pi4 as pi5 is not supported
     if host_cpu == CpuType.PI4:
-        patches_to_apply.extend([update_navigator_overlays])
+        patches_to_apply.extend([("navigator", update_navigator_overlays)])
 
     if host_cpu == CpuType.PI4 or CpuType.PI5:
         patches_to_apply.extend(
             [
-                update_cgroups,
-                update_dwc2,
-                update_i2c4_symlink,
+                ("cgroups", update_cgroups),
+                ("dwc2", update_dwc2),
+                ("i2c4", update_i2c4_symlink),
             ]
         )
     if host_os == HostOs.Bookworm:
-        patches_to_apply.extend([fix_wpa_service])
+        patches_to_apply.extend([("wpa", fix_wpa_service)])
 
     logger.info("The following patches will be applied if needed:")
-    for patch in patches_to_apply:
-        logger.info(patch.__name__)
+    for name, patch in patches_to_apply:
+        logger.info(f"{name} {'(suppressed)' if name in disabled_patches else '(enabled)'}")
 
-    patches_requiring_restart = [patch.__name__ for patch in patches_to_apply if patch()]
+    enabled_patches = [(name, patch) for name, patch in patches_to_apply if name not in disabled_patches]
+
+    patches_requiring_restart = [name for name, patch in enabled_patches if patch()]
     if patches_requiring_restart:
         logger.warning("The system will restart in 10 seconds because the following applied patches required restart:")
         for patch in patches_requiring_restart:
