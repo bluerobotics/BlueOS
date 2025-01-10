@@ -9,6 +9,8 @@ class CommanderStore {
   API_URL = '/commander/v1.0'
 
   private static instance: CommanderStore
+  // environment variables need a full reboot to take effect, so we should be able to cache them
+  private environmentVariables: Record<string, unknown> | undefined
 
   public static getInstance(): CommanderStore {
     if (!CommanderStore.instance) {
@@ -145,12 +147,18 @@ class CommanderStore {
   }
 
   async getEnvironmentVariables(): Promise<Record<string, unknown> | undefined> {
+    if (this.environmentVariables) {
+      return this.environmentVariables
+    }
     return back_axios({
       method: 'get',
       url: `${this.API_URL}/environment_variables`,
       timeout: 5000,
     })
-      .then((response) => response.data)
+      .then((response) => {
+        this.environmentVariables = response.data
+        return response.data
+      })
       .catch((error) => {
         if (error === backend_offline_error) {
           return undefined

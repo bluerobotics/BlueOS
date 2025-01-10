@@ -369,7 +369,6 @@
       <div id="tour-center-hook" />
     </v-main>
     <ethernet-updater />
-    <wifi-updater />
     <mavlink-updater />
     <new-version-notificator />
     <Wizard />
@@ -419,7 +418,6 @@ import HealthTrayMenu from './components/health/HealthTrayMenu.vue'
 import MavlinkUpdater from './components/mavlink/MavlinkUpdater.vue'
 import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
-import WifiUpdater from './components/wifi/WifiUpdater.vue'
 import menus, { menuItem } from './menus'
 import autopilot_data from './store/autopilot'
 import Cpu from './widgets/Cpu.vue'
@@ -436,7 +434,6 @@ export default Vue.extend({
     'pirate-mode-tray-menu': PiradeModeTrayMenu,
     'theme-tray-menu': ThemeTrayMenu,
     'wifi-tray-menu': WifiTrayMenu,
-    'wifi-updater': WifiUpdater,
     'ethernet-tray-menu': EthernetTrayMenu,
     'cloud-tray-menu': CloudTrayMenu,
     'ethernet-updater': EthernetUpdater,
