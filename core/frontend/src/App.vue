@@ -17,6 +17,7 @@
           :label="name"
           :value="name"
           class="pa-0 pl-3 ma-0"
+          @change="settings.user_top_widgets = selected_widgets"
         />
       </v-list>
     </v-card>
@@ -502,6 +503,9 @@ export default Vue.extend({
       }
       return widgets
     },
+    settings_selected_widgets(): string[] {
+      return settings.user_top_widgets
+    },
     isBehindWebProxy(): boolean {
       return window.location.host.endsWith('.cloud')
     },
@@ -716,8 +720,8 @@ export default Vue.extend({
 
       document.title = `${this.$route.name} - ${project_name}`
     },
-    selected_widgets() {
-      settings.user_top_widgets = this.selected_widgets
+    settings_selected_widgets() {
+      this.selected_widgets = this.settings_selected_widgets
     },
   },
 
