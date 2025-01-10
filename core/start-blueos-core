@@ -21,6 +21,8 @@ RUN_AS_REGULAR_USER="sudo -u blueos"
 # Set BlueOS log folder
 BLUEOS_LOG_FOLDER_PATH="/var/logs/blueos"
 
+# Make sure the BLUEOS_DISABLE_SERVICES is set
+BLUEOS_DISABLE_SERVICES=${BLUEOS_DISABLE_SERVICES:-""}
 # Replace spaces with commas in the disabled services list
 BLUEOS_DISABLE_SERVICES=${BLUEOS_DISABLE_SERVICES// /,}
 
