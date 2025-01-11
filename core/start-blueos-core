@@ -158,7 +158,7 @@ function create_service {
     # Set all necessary environment variables for the new tmux session
     for NAME in $(compgen -v | grep -e MAV_ -e BLUEOS_); do
         VALUE=${!NAME}
-        tmux setenv -t $SESSION_NAME -g $NAME $VALUE
+        tmux setenv -t "$SESSION_NAME" -g "$NAME" "$VALUE"
     done
 
     # Use run_service to start the service with the memory limit
