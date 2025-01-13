@@ -30,7 +30,7 @@ FROM base AS download-binaries
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-static-binaries.sh
 
-# BlueOS-docker base image
+# BlueOS base image
 FROM base
 
 # Define arguments for target platform

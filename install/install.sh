@@ -2,7 +2,7 @@
 
 # Set desired version to be installed
 VERSION="${VERSION:-master}"
-GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/BlueOS}
 DOCKER_USER=${DOCKER_USER:-$(echo $GITHUB_REPOSITORY | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
@@ -170,7 +170,7 @@ test $NO_CLEAN || (
 )
 
 # Start installing necessary files and system configuration
-echo "Going to install blueos-docker version ${VERSION}."
+echo "Going to install BlueOS version ${VERSION}."
 
 echo "Downloading and installing udev rules."
 curl -fsSL $ROOT/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
