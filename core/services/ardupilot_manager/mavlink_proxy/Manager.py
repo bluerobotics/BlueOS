@@ -114,6 +114,10 @@ class Manager:
         return self.tool.master_endpoint
 
     async def start(self, master_endpoint: Endpoint) -> None:
+        # If the tool is already running, don't start it again to avoid port conflicts
+        if self.should_be_running and await self.is_running():
+            return
+
         if not self.tool:
             logger.info("No tool selected. Falling back to the first one found")
             self.tool = self.available_interfaces()[0]()
