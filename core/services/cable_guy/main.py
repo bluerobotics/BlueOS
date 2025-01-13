@@ -40,7 +40,13 @@ args = parser.parse_args()
 
 if args.default_config == "bluerov2":
     default_configs = [
-        NetworkInterface(name="eth0", addresses=[InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Server)]),
+        NetworkInterface(
+            name="eth0",
+            addresses=[
+                InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Server),
+                InterfaceAddress(ip="0.0.0.0", mode=AddressMode.Client),
+            ],
+        ),
         NetworkInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
     ]
 
