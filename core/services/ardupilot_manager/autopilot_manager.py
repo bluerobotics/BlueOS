@@ -43,6 +43,8 @@ class AutoPilotManager(metaclass=Singleton):
         self.settings = Settings()
         self.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
+        self.should_be_running = False
+        self.mavlink_manager = MavlinkManager()
 
         # Load settings and do the initial configuration
         if self.settings.load():
