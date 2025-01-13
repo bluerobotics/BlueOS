@@ -91,24 +91,27 @@ class EthernetManager:
             interface: NetworkInterface
         """
         interfaces = self.get_ethernet_interfaces()
-        logger.debug(f"Found following ethernet interfaces: {interfaces}.")
         valid_names = [interface.name for interface in interfaces]
-
         if interface.name not in valid_names:
             raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
 
+        logger.info(f"Setting configuration for interface '{interface.name}'.")
         # Reset the interface by removing all IPs and DHCP servers associated with it
         self.flush_interface(interface.name)
         self.remove_dhcp_server_from_interface(interface.name)
 
         # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
         if any(address.mode == AddressMode.Client for address in interface.addresses):
+            logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
             self.trigger_dynamic_ip_acquisition(interface.name)
 
+        logger.info(f"Configuring addresses for interface '{interface.name}': {interface.addresses}.")
         for address in interface.addresses:
             if address.mode == AddressMode.Unmanaged:
+                logger.info(f"Adding static IP '{address.ip}' to interface '{interface.name}'.")
                 self.add_static_ip(interface.name, address.ip)
             elif address.mode == AddressMode.Server:
+                logger.info(f"Adding DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
                 self.add_dhcp_server_to_interface(interface.name, address.ip)
 
     def _get_wifi_interfaces(self) -> List[str]:
