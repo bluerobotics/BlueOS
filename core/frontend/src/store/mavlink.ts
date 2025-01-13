@@ -63,7 +63,7 @@ class MavlinkStore extends VuexModule {
   updateMessage(message: MavlinkMessage): void {
     if (message) {
       // TODO: Check if this is the best possible way to update `available_messages`
-      // Reference: https://github.com/bluerobotics/blueos-docker/pull/508#discussion_r718729077
+      // Reference: https://github.com/bluerobotics/BlueOS/pull/508#discussion_r718729077
       // We should not use `message.messageName` as dictionary key since it's a regex,
       // the best approach is to use the message name as key
       const messageName = (message.messageData.message as any).type

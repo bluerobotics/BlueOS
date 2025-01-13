@@ -272,7 +272,7 @@ jobs:
     # - pi4-builders: A Raspberry Pi OS Bullseye (32-bit).
     # - pi5-builder: A Raspberry Pi OS Bookworm lite 64-bit.
     # For pi5-ci, install docker (curl -sSL https://get.docker.com/ | sh) and follow the instructions for setting up a new runner in
-    # https://github.com/bluerobotics/BlueOS-docker/settings/actions/runners/new
+    # https://github.com/bluerobotics/BlueOS/settings/actions/runners/new
 
     steps:
       - name: Install git

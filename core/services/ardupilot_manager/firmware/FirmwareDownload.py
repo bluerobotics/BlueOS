@@ -181,7 +181,7 @@ class FirmwareDownloader:
 
         # Autodetect the latest supported version.
         # For .apj firmwares (e.g. Pixhawk), we use the latest STABLE version while for the others (e.g. SITL and
-        # Navigator) we use latest BETA. Specially on this development phase of the blueos-docker/navigator, using
+        # Navigator) we use latest BETA. Specially on this development phase of the BlueOS/navigator, using
         # the BETA release allow us to track and fix introduced bugs faster.
         if not version:
             if firmware_format == FirmwareFormat.APJ:

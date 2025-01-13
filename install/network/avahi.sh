@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 VERSION="${VERSION:-master}"
-GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/blueos-docker}
+GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/BlueOS}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 REMOTE="$REMOTE/$VERSION"
 CONFIGURE_NETWORK_PATH="$REMOTE/install/network"
