@@ -57,6 +57,10 @@ class AutoPilotManager(metaclass=Singleton):
         # This is the logical continuation of __init__(), extracted due to its async nature
         self.configuration = deepcopy(self.settings.content)
 
+        # Undesired state, only to avoid losing the reference to a running MavlinkManager
+        if self.mavlink_manager is not None:
+            await self.mavlink_manager.stop()
+
         self.mavlink_manager = MavlinkManager()
         preferred_router = self.load_preferred_router()
         try:
@@ -101,16 +105,24 @@ class AutoPilotManager(metaclass=Singleton):
         except Exception as error:
             logger.warning(f"Failed to remove logs: {error}")
 
+    def is_running(self) -> bool:
+        if self.current_board is None:
+            return False
+
+        if self.current_board.type in [PlatformType.SITL, PlatformType.Linux]:
+            return (
+                self.ardupilot_subprocess is not None
+                and self.ardupilot_subprocess.poll() is None
+                and len(self.running_ardupilot_processes()) != 0
+            )
+
+        # Serial or others that are not processes based
+        return self.should_be_running
+
     async def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot when it's not running but was supposed to."""
         while True:
-            process_not_running = (
-                self.ardupilot_subprocess is not None and self.ardupilot_subprocess.poll() is not None
-            ) or len(self.running_ardupilot_processes()) == 0
-            needs_restart = self.should_be_running and (
-                self.current_board is None
-                or (self.current_board.type in [PlatformType.SITL, PlatformType.Linux] and process_not_running)
-            )
+            needs_restart = self.should_be_running and not self.is_running()
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
                 try:
@@ -549,6 +561,10 @@ class AutoPilotManager(metaclass=Singleton):
         logger.info("Mavlink manager stopped.")
 
     async def start_ardupilot(self) -> None:
+        # This only applies to autopilot process itself, mavlink manager will check by itself
+        if self.should_be_running and self.is_running():
+            return
+
         await self.setup()
         try:
             available_boards = await self.available_boards()
