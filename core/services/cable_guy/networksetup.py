@@ -80,7 +80,10 @@ class NetworkManagerHandler(AbstractNetworkHandler):
                     logger.info(f"IP {ip} already exists for {interface_name}")
                     continue
                 new_ip = AddressData(address=ip, prefix=24)
-                settings["ipv4"]["method"] = ("s", "shared")
+                properties = settings.get_settings()
+                properties["ipv4"]["method"] = ("s", "shared")
+                settings.update(properties)
+                settings.save()
                 data.ipv4.address_data.append(new_ip)
                 settings.update_profile(data)
                 network_manager.activate_connection(connection_path)
