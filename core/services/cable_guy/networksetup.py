@@ -1,16 +1,13 @@
 import os
-import time
-from typing import List
+import re
+import socket
+from typing import Dict, List
 
 import sdbus
 from loguru import logger
-from sdbus_block.networkmanager import (
-    NetworkConnectionSettings,
-    NetworkDeviceGeneric,
-    NetworkManager,
-    NetworkManagerSettings,
-)
-from sdbus_block.networkmanager.settings.datatypes import AddressData
+from pyroute2 import IPRoute
+from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
+from sdbus_block.networkmanager import NetworkDeviceGeneric, NetworkManager
 
 from typedefs import NetworkInterfaceMetric, NetworkInterfaceMetricApi
 
@@ -21,7 +18,7 @@ network_manager = NetworkManager()
 
 class AbstractNetworkHandler:
     def __init__(self) -> None:
-        pass
+        self.ipr = IPRoute()
 
     def detect(self) -> bool:
         raise NotImplementedError("NetworkManager does not support detecting network interfaces priority")
@@ -41,6 +38,9 @@ class AbstractNetworkHandler:
     def remove_static_ip(self, interface_name: str, ip: str) -> None:
         pass
 
+    def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
+        raise NotImplementedError("This Handler does not support setting interface priority")
+
 
 class NetworkManagerHandler(AbstractNetworkHandler):
     def detect(self) -> bool:
@@ -52,88 +52,173 @@ class NetworkManagerHandler(AbstractNetworkHandler):
             return False
 
     def remove_static_ip(self, interface_name: str, ip: str) -> None:
-        networkmanager_settings = NetworkManagerSettings()
-        for connection_path in networkmanager_settings.connections:
-            try:
-                settings = NetworkConnectionSettings(connection_path)
-                data = settings.get_profile()
-                if data.connection.interface_name != interface_name:
-                    continue
-                ips = data.ipv4.address_data
-                data.ipv4.address_data = [addressData for addressData in ips if ip not in addressData.address]
-                settings.update_profile(data)
-                network_manager.activate_connection(connection_path)
-            except Exception as e:
-                logger.error(f"Failed to remove static ip {ip} for {interface_name}: {e}")
+        interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
+        self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
 
     def add_static_ip(self, interface_name: str, ip: str) -> None:
-        networkmanager_settings = NetworkManagerSettings()
-
-        time.sleep(1)
-        for connection_path in networkmanager_settings.connections:
-            try:
-                settings = NetworkConnectionSettings(connection_path)
-                data = settings.get_profile()
-                if data.connection.interface_name != interface_name:
-                    continue
-                if any(ip in addressData.address for addressData in data.ipv4.address_data):
-                    logger.info(f"IP {ip} already exists for {interface_name}")
-                    continue
-                new_ip = AddressData(address=ip, prefix=24)
-                properties = settings.get_settings()
-                properties["ipv4"]["method"] = ("s", "shared")
-                settings.update(properties)
-                settings.save()
-                data.ipv4.address_data.append(new_ip)
-                settings.update_profile(data)
-                network_manager.activate_connection(connection_path)
-                return
-            except Exception as e:
-                logger.error(f"Failed to set static ip {ip} for {interface_name}: {e}")
-
-    def enable_dhcp_client(self, interface_name: str) -> None:
-        networkmanager_settings = NetworkManagerSettings()
-        for connection_path in networkmanager_settings.connections:
-            try:
-                settings = NetworkConnectionSettings(connection_path)
-                properties = settings.get_settings()
-                if properties["connection"]["interface-name"][1] != interface_name:
-                    continue
-                properties["ipv4"]["method"] = ("s", "shared")
-                properties["ipv4"]["may-fail"] = ("b", True)
-                settings.update(properties)
-                settings.save()
-                network_manager.activate_connection(connection_path)
-            except Exception as e:
-                logger.error(f"Failed to enable DHCP client for {interface_name}: {e}")
+        interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
+        self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
 
     def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
-        interfaces = []
-        networkmanager_settings = NetworkManagerSettings()
-        for dbus_connection_path in networkmanager_settings.connections:
-            profile = NetworkConnectionSettings(dbus_connection_path).get_profile()
-            if profile.connection.interface_name and profile.ipv4.route_metric:
-                interfaces.append(
-                    NetworkInterfaceMetric(
-                        index=0, name=profile.connection.interface_name, priority=profile.ipv4.route_metric
-                    )
-                )
-        return interfaces
+        """Get the priority metrics for all network interfaces using IPRoute.
 
+        Returns:
+            List[NetworkInterfaceMetric]: A list of priority metrics for each interface.
+        """
+        interfaces = self.ipr.get_links()
+        # Get all IPv4 routes
+        routes = self.ipr.get_routes(family=socket.AF_INET)
+
+        # Create a mapping of interface index to name
+        name_dict = {iface["index"]: iface.get_attr("IFLA_IFNAME") for iface in interfaces}
+
+        # Get metrics for each interface from routes
+        metric_index_list = [
+            {"metric": route.get_attr("RTA_PRIORITY", 0), "index": route.get_attr("RTA_OIF")} for route in routes
+        ]
+
+        # Keep the highest metric per interface
+        metric_dict: Dict[int, int] = {}
+        for d in metric_index_list:
+            if d["index"] in metric_dict:
+                metric_dict[d["index"]] = max(metric_dict[d["index"]], d["metric"])
+            else:
+                metric_dict[d["index"]] = d["metric"]
+
+        # Create NetworkInterfaceMetric objects for each interface
+        result = []
+        for index, name in name_dict.items():
+            metric = NetworkInterfaceMetric(index=index, name=name, priority=metric_dict.get(index, 0))
+            result.append(metric)
+
+        return result
+
+    # pylint: disable=too-many-nested-blocks
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
-        metric = interfaces[0].priority or 1000
+        """Sets network interface priority using IPRoute.
+
+        Args:
+            interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics,
+                sorted by priority to set.
+        """
+        if not interfaces:
+            logger.info("No interfaces to set priority for")
+            return
+
+        # If there's only one interface and no priority specified, set it to highest priority (0)
+        if len(interfaces) == 1 and interfaces[0].priority is None:
+            interfaces[0].priority = 0
+
+        current_priority = 1000
         for interface in interfaces:
-            networkmanager_settings = NetworkManagerSettings()
-            for connection_path in networkmanager_settings.connections:
-                settings = NetworkConnectionSettings(connection_path)
-                properties = settings.get_settings()
-                if properties["connection"]["interface-name"][1] != interface.name:
-                    continue
-                properties["ipv4"]["route-metric"] = ("u", metric)
-                metric += 1000
-                logger.info(f"Settting current priority for {interface.name} as {metric}")
-                settings.update(properties)
-                network_manager.activate_connection(connection_path)
+            try:
+                # Use specified priority or increment current_priority
+                priority = interface.priority if interface.priority is not None else current_priority
+
+                # Get interface index
+                interface_index = self.ipr.link_lookup(ifname=interface.name)[0]
+
+                # Get all routes for this interface
+                routes = self.ipr.get_routes(oif=interface_index, family=socket.AF_INET)
+
+                # Update existing routes
+                for route in routes:
+                    try:
+                        route_data = {"priority": priority}
+
+                        # Copy existing route attributes
+                        for attr in ["RTA_DST", "RTA_GATEWAY", "RTA_TABLE", "RTA_PREFSRC"]:
+                            value = route.get_attr(attr)
+                            if value:
+                                # Convert attribute name to lowercase and remove RTA_ prefix
+                                key = attr.lower().replace("rta_", "")
+                                route_data[key] = value
+
+                        # Update the route
+                        self.ipr.route(
+                            "replace",
+                            oif=interface_index,
+                            family=socket.AF_INET,
+                            scope=route["scope"],
+                            proto=route["proto"],
+                            type=route["type"],
+                            **route_data,
+                        )
+                        logger.info(f"Updated route for {interface.name} with priority {priority}")
+                    except Exception as e:
+                        logger.error(f"Failed to update route for {interface.name}: {e}")
+                        continue
+
+                current_priority += 1000
+            except Exception as e:
+                logger.error(f"Failed to set priority for interface {interface.name}: {e}")
+                continue
+
+    def _get_dhcp_address_using_dhclient(self, interface_name: str) -> str | None:
+        """Run dhclient to get a new IP address and return it.
+
+        Args:
+            interface_name: Name of the interface to get IP for
+
+        Returns:
+            The IP address acquired from DHCP, or None if failed
+        """
+        try:
+            # Just run dhclient without releasing existing IPs
+            dhclient_output = os.popen(f"dhclient -v {interface_name} 2>&1").read()
+
+            bound_ip_match = re.search(r"bound to ([0-9.]+)", dhclient_output)
+            if bound_ip_match:
+                return bound_ip_match.group(1)
+
+            logger.error(f"Could not find bound IP in dhclient output: {dhclient_output}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to run dhclient: {e}")
+            return None
+
+    def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
+        """Get a new IP from DHCP using dhclient.
+        The IP will be managed by dhclient and not added to NetworkManager's configuration.
+
+        Args:
+            interface_name: Name of the interface to get IP for
+        """
+        # Get new IP using dhclient
+        new_ip = self._get_dhcp_address_using_dhclient(interface_name)
+        if not new_ip:
+            logger.error(f"Failed to get DHCP-acquired IP for {interface_name}")
+            return
+
+        logger.info(f"Got new IP {new_ip} from DHCP for {interface_name}")
+
+    def get_interface_dynamic_ip(self, interface_name: str) -> str | None:
+        """Check if the interface has any dynamic IP addresses (non-static IPs)
+
+        Args:
+            interface_name (str): Name of the interface to check
+
+        Returns:
+            str | None: The dynamic IP address if found, None otherwise
+        """
+        try:
+            interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
+            addresses = self.ipr.get_addr(index=interface_index)
+            for addr in addresses:
+                for key, value in addr["attrs"]:
+                    if key == "IFA_ADDRESS":
+                        # If any IP is not static, it's dynamic
+                        flags = [flag for k, flag in addr["attrs"] if k == "IFA_FLAGS"][0]
+                        flag_names = ifaddrmsg.flags2names(flags)
+                        if "IFA_F_PERMANENT" not in flag_names:
+                            logger.debug(f"Found dynamic IP: {value}")
+                            return str(value)
+            logger.debug("No dynamic IP found")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to check dynamic IP for {interface_name}: {e}")
+            return None
 
 
 class DHCPCD(AbstractNetworkHandler):
@@ -245,6 +330,9 @@ class DHCPCD(AbstractNetworkHandler):
         with open("/etc/dhcpcd.conf", "w", encoding="utf-8") as f:
             f.writelines(lines)
 
+    def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
+        raise NotImplementedError("This Handler does not support triggering dynamic IP acquisition")
+
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         """Sets network interface priority..
 
@@ -281,9 +369,13 @@ class DHCPCD(AbstractNetworkHandler):
         with open("/etc/dhcpcd.conf", "a+", encoding="utf-8") as f:
             f.writelines(lines)
 
+    def remove_static_ip(self, interface_name: str, ip: str) -> None:
+        interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
+        self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
+
 
 class NetworkHandlerDetector:
-    def __iinit__(self) -> None:
+    def __init__(self) -> None:
         pass
 
     def getHandler(self) -> AbstractNetworkHandler:

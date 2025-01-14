@@ -245,10 +245,17 @@ class EthernetManager:
         Args:
             interface_name (str): Interface name
         """
-        logger.info(f"Restarting interface {interface_name} to trigger dynamic IP acquisition.")
-        self.enable_interface(interface_name, False)
-        time.sleep(1)
-        self.enable_interface(interface_name, True)
+        try:
+            self.network_handler.trigger_dynamic_ip_acquisition(interface_name)
+            return
+        except NotImplementedError as error:
+            logger.info(f"Handler does not support triggering dynamic IP acquisition. {error}")
+            logger.info(f"Restarting interface {interface_name} to trigger dynamic IP acquisition.")
+            self.enable_interface(interface_name, enable=False)
+            time.sleep(1)
+            self.enable_interface(interface_name, enable=True)
+        except Exception as error:
+            logger.error(f"Failed to trigger dynamic IP acquisition for interface {interface_name}. {error}")
 
     def add_static_ip(self, interface_name: str, ip: str) -> None:
         """Set ip address for a specific interface
@@ -257,6 +264,7 @@ class EthernetManager:
             interface_name (str): Interface name
             ip (str): Desired ip address
         """
+
         logger.info(f"Adding static IP '{ip}' to interface '{interface_name}'.")
         self.network_handler.add_static_ip(interface_name, ip)
         interface_index = self._get_interface_index(interface_name)
@@ -279,8 +287,6 @@ class EthernetManager:
                 and self._dhcp_server_on_interface(interface_name).ipv4_gateway == ip_address
             ):
                 self.remove_dhcp_server_from_interface(interface_name)
-            interface_index = self._get_interface_index(interface_name)
-            self.ipr.addr("del", index=interface_index, address=ip_address, prefixlen=24)
             self.network_handler.remove_static_ip(interface_name, ip_address)
         except Exception as error:
             raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
