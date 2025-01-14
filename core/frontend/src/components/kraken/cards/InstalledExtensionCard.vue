@@ -296,7 +296,11 @@ export default Vue.extend({
       const current_version = new semver.SemVer(this.extension.tag)
       // if is stable (which implies major >= 1), show latest stable
       if (stable.is(this.extension.tag) && current_version.major > 0) {
-        return stable.max(versions) === this.extension.tag ? false : stable.max(versions)
+        const latest = stable.max(versions)
+        if (semver.compare(this.extension.tag, latest) >= 0) {
+          return false
+        }
+        return latest
       }
       // show the latest version regardless of stability
       // eslint-disable-next-line no-extra-parens
