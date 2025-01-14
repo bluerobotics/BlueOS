@@ -100,11 +100,6 @@ class EthernetManager:
         self.flush_interface(interface.name)
         self.remove_dhcp_server_from_interface(interface.name)
 
-        # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
-        if any(address.mode == AddressMode.Client for address in interface.addresses):
-            logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
-            self.trigger_dynamic_ip_acquisition(interface.name)
-
         logger.info(f"Configuring addresses for interface '{interface.name}': {interface.addresses}.")
         for address in interface.addresses:
             if address.mode == AddressMode.Unmanaged:
@@ -113,6 +108,10 @@ class EthernetManager:
             elif address.mode == AddressMode.Server:
                 logger.info(f"Adding DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
                 self.add_dhcp_server_to_interface(interface.name, address.ip)
+        # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
+        if any(address.mode == AddressMode.Client for address in interface.addresses):
+            logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
+            self.trigger_dynamic_ip_acquisition(interface.name)
 
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
