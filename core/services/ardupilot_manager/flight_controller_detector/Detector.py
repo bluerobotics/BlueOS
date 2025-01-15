@@ -77,7 +77,7 @@ class Detector:
         return FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL)
 
     @classmethod
-    async def detect(cls, include_sitl: bool = True) -> List[FlightController]:
+    async def detect(cls, include_sitl: bool = True, include_manual: bool = True) -> List[FlightController]:
         """Return a list of available flight controllers
 
         Arguments:
@@ -98,5 +98,8 @@ class Detector:
 
         if include_sitl:
             available.append(Detector.detect_sitl())
+
+        if include_manual:
+            available.append(FlightController(name="Manual", manufacturer="Manual", platform=Platform.Manual))
 
         return available
