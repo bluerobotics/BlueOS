@@ -44,7 +44,17 @@
           <br>
         </div>
         <not-safe-overlay />
-        <v-expansion-panels>
+        <v-expansion-panels v-if="is_external_board">
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              Master endpoint
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <master-endpoint-manager />
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
+        <v-expansion-panels v-else>
           <v-expansion-panel>
             <v-expansion-panel-header>
               Firmware update
@@ -127,6 +137,7 @@ import {
 import AutopilotSerialConfiguration from '@/components/autopilot/AutopilotSerialConfiguration.vue'
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
+import MasterEndpointManager from '@/components/autopilot/MasterEndpointManager.vue'
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
 import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import Notifier from '@/libs/notifier'
@@ -148,6 +159,7 @@ export default Vue.extend({
     FirmwareManager,
     AutopilotSerialConfiguration,
     NotSafeOverlay,
+    MasterEndpointManager,
   },
   data() {
     return {
@@ -200,6 +212,9 @@ export default Vue.extend({
         return false
       }
       return ['Navigator', 'Navigator64', 'SITL'].includes(boardname)
+    },
+    is_external_board(): boolean {
+      return autopilot.current_board?.name === 'Manual'
     },
     current_board(): FlightController | null {
       return autopilot.current_board
