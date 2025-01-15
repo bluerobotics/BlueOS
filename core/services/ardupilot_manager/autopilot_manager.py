@@ -390,6 +390,12 @@ class AutoPilotManager(metaclass=Singleton):
     def get_available_routers(self) -> List[str]:
         return [router.name() for router in self.mavlink_manager.available_interfaces()]
 
+    async def start_manual_board(self, board: FlightController) -> None:
+        self._current_board = board
+        self.master_endpoint = self.get_manual_board_master_endpoint()
+        self.ardupilot_subprocess = None
+        await self.start_mavlink_manager(self.master_endpoint)
+
     async def start_sitl(self) -> None:
         self._current_board = BoardDetector.detect_sitl()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
@@ -486,9 +492,9 @@ class AutoPilotManager(metaclass=Singleton):
         # SITL should only be used if explicitly set by user, in which case it's a preferred board and the
         # previous return logic will get it. We do this to prevent the user thinking that it's physical board
         # is correctly running when in fact it was SITL automatically starting.
-        real_boards = [board for board in boards if board.type != PlatformType.SITL]
+        real_boards = [board for board in boards if board.type not in [PlatformType.SITL, PlatformType.Manual]]
         if not real_boards:
-            raise RuntimeError("Only available board is SITL, and it wasn't explicitly chosen.")
+            raise RuntimeError("No physical board detected and SITL/Manual board aren't explicitly chosen.")
         real_boards.sort(key=lambda board: board.platform)
         return real_boards[0]
 
@@ -584,6 +590,8 @@ class AutoPilotManager(metaclass=Singleton):
                 await self.start_serial(flight_controller)
             elif flight_controller.platform == Platform.SITL:
                 await self.start_sitl()
+            elif flight_controller.platform == Platform.Manual:
+                await self.start_manual_board(flight_controller)
             else:
                 raise RuntimeError(f"Invalid board type: {flight_controller}")
         finally:
@@ -662,3 +670,25 @@ class AutoPilotManager(metaclass=Singleton):
 
     async def restore_default_firmware(self, board: FlightController) -> None:
         await self.firmware_manager.restore_default_firmware(board)
+
+    async def set_manual_board_master_endpoint(self, endpoint: Endpoint) -> bool:
+        self.configuration["manual_board_master_endpoint"] = endpoint.as_dict()
+        self.settings.save(self.configuration)
+        self._save_current_endpoints()
+        await self.mavlink_manager.restart()
+        return True
+
+    def get_manual_board_master_endpoint(self) -> Endpoint:
+        default_master_endpoint = Endpoint(
+            name="Manual Board Master Endpoint",
+            owner=self.settings.app_name,
+            connection_type=EndpointType.UDPServer,
+            place="0.0.0.0",
+            argument=14551,
+            persistent=True,
+            enabled=True,
+        )
+        endpoint = self.configuration.get("manual_board_master_endpoint", None)
+        if endpoint is None:
+            return default_master_endpoint
+        return Endpoint(**endpoint)
