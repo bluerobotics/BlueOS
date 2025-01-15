@@ -34,3 +34,13 @@ async def remove_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
 @endpoints_router_v1.put("/", status_code=status.HTTP_200_OK)
 async def update_endpoints(endpoints: Set[Endpoint] = Body(...)) -> Any:
     await autopilot.update_endpoints(endpoints)
+
+
+@endpoints_router_v1.post("/manual_board_master_endpoint", summary="Set the master endpoint for an manual board.")
+async def set_manual_board_master_endpoint(endpoint: Endpoint) -> bool:
+    return await autopilot.set_manual_board_master_endpoint(endpoint)
+
+
+@endpoints_router_v1.get("/manual_board_master_endpoint", summary="Get the master endpoint for an manual board.")
+def get_manual_board_master_endpoint() -> Any:
+    return autopilot.get_manual_board_master_endpoint()
