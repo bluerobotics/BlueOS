@@ -579,6 +579,9 @@ class NetworkManagerWifi(AbstractWifiManager):
         """
         This takes care of the smart-hotspot feature. It will enable the hotspot if we stay disconnected for longer than 30 seconds
         """
+        if self._settings_manager.settings.hotspot_enabled in [True, None]:
+            await asyncio.sleep(5)
+            await self.enable_hotspot()
         while True:
             await asyncio.sleep(30)
             if not self._settings_manager.settings.smart_hotspot_enabled:
