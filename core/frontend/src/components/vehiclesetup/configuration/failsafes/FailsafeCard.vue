@@ -36,7 +36,6 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue, { PropType } from 'vue'
-import { Dictionary } from 'vue-router/types/router.js'
 
 import { FailsafeDefinition, ParamDefinitions } from '@/components/vehiclesetup/configuration/failsafes/types'
 import autopilot_data from '@/store/autopilot'
@@ -60,11 +59,11 @@ export default Vue.extend({
     }
   },
   computed: {
-    params(): Dictionary<Parameter> {
+    params(): Record<string, Parameter> {
       return autopilot_data.parameters
         .filter((param) => this.failsafeDefinition.params.map((parameter) => parameter.name)
           .includes(param.name))
-        .reduce((dict: Dictionary<Parameter>, param: Parameter) => {
+        .reduce((dict: Record<string, Parameter>, param: Parameter) => {
           dict[param.name] = param
           return dict
         }, {})
