@@ -28,7 +28,7 @@ static_files = [
     ),
     StaticFile(
         defaults_folder,
-        "ardupilot_navigator",
+        "ardupilot_navigator64",
         "https://firmware.ardupilot.org/Sub/stable-4.5.0/navigator64/ardusub",
     ),
     StaticFile(
