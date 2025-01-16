@@ -465,6 +465,9 @@ managed=false
 
 [device]
 wifi.scan-rand-mac-address=no
+
+[keyfile]
+unmanaged-devices=interface:eth0;interface:usb0
 """
         run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
         return True
@@ -472,7 +475,9 @@ wifi.scan-rand-mac-address=no
     config.read_string(result.stdout)
 
     # Check if we need to make changes
-    if "main" in config.sections() and "dns" in config["main"]:
+    if ("main" in config.sections() and "dns" in config["main"]) and (
+        "keyfile" in config.sections() and "unmanaged-devices" in config["keyfile"]
+    ):
         return False
 
     # Add our settings if needed
@@ -480,6 +485,12 @@ wifi.scan-rand-mac-address=no
         config.add_section("main")
     if "dns" not in config["main"]:
         config["main"]["dns"] = "none"
+
+    # Ensure keyfile section exists and has unmanaged-devices
+    if "keyfile" not in config:
+        config.add_section("keyfile")
+    if "unmanaged-devices" not in config["keyfile"]:
+        config["keyfile"]["unmanaged-devices"] = "interface:eth0;interface:usb0"
 
     # Write back if changes were made
     content = ""
