@@ -29,7 +29,7 @@ static_files = [
     StaticFile(
         defaults_folder,
         "ardupilot_navigator64",
-        "https://firmware.ardupilot.org/Sub/stable-4.5.0/navigator64/ardusub",
+        "https://firmware.ardupilot.org/Sub/stable-4.5.1/navigator64/ardusub",
     ),
     StaticFile(
         defaults_folder, "ardupilot_pixhawk1", "https://firmware.ardupilot.org/Sub/stable-4.5.0/Pixhawk1/ardusub.apj"
