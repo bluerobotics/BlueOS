@@ -90,6 +90,7 @@ class EthernetManager:
         Args:
             interface: NetworkInterface
         """
+        self.network_handler.cleanup_interface_connections(interface.name)
         interfaces = self.get_ethernet_interfaces()
         valid_names = [interface.name for interface in interfaces]
         if interface.name not in valid_names:
