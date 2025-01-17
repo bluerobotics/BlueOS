@@ -7,7 +7,12 @@ import sdbus
 from loguru import logger
 from pyroute2 import IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
-from sdbus_block.networkmanager import NetworkDeviceGeneric, NetworkManager
+from sdbus_block.networkmanager import (
+    NetworkConnectionSettings,
+    NetworkDeviceGeneric,
+    NetworkManager,
+    NetworkManagerSettings,
+)
 
 from typedefs import NetworkInterfaceMetric, NetworkInterfaceMetricApi
 
@@ -41,8 +46,32 @@ class AbstractNetworkHandler:
     def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
         raise NotImplementedError("This Handler does not support setting interface priority")
 
+    def cleanup_interface_connections(self, interface_name: str) -> None:
+        pass
 
-class NetworkManagerHandler(AbstractNetworkHandler):
+
+class BookwormHandler(AbstractNetworkHandler):
+    """
+    While this class requires NetworkManager, it does NOT use NetworkManager for controlling the interfaces.
+    Instead it uses the Bookworm-specific NetworkManagerSettings API to remove the connections.
+    It then relies on IPRoute, dhclient, and dnsmasq to manage the interfaces.
+    """
+
+    def cleanup_interface_connections(self, interface_name: str) -> None:
+        network_manager_settings = NetworkManagerSettings()
+        for connection_path in network_manager_settings.connections:
+            profile = NetworkConnectionSettings(connection_path).get_profile()
+            if profile.connection.interface_name == interface_name:
+                logger.info(
+                    f"Removing connection {profile.connection.uuid} ({profile.connection.connection_id}) for interface {interface_name}"
+                )
+                try:
+                    NetworkManagerSettings().delete_connection_by_uuid(profile.connection.uuid)
+                except Exception as e:
+                    logger.error(
+                        f"Failed to remove connection {profile.connection.uuid} ({profile.connection.connection_id}) for interface {interface_name}: {e}"
+                    )
+
     def detect(self) -> bool:
         try:
             all_devices = {path: NetworkDeviceGeneric(path) for path in network_manager.devices}
