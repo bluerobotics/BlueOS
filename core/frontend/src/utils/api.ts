@@ -6,8 +6,13 @@ const backend_offline_error = new Error('Backend is offline')
 backend_offline_error.name = 'BackendOffline'
 export { backend_offline_error }
 
-const axios_backend_instance: AxiosInstance = axios.create()
+export const isBackendOffline = (error: any): boolean => {
+  if (error === backend_offline_error) { return true }
+  if (error.message === 'Network Error') { return true }
+  return false;
+}
 
+const axios_backend_instance: AxiosInstance = axios.create()
 axios_backend_instance.interceptors.request.use(async (config) => {
   // Check if there's already a backend status request running. If yes, use it. If not, start one.
   if (frontend.backend_status_request === null) {
