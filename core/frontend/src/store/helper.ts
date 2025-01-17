@@ -8,7 +8,7 @@ import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { helper_service } from '@/types/frontend_services'
 import { Service, SpeedTestResult } from '@/types/helper'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(helper_service)
 
@@ -131,7 +131,7 @@ class PingStore extends VuexModule {
     })
       .then((response) => response.data as Service[])
       .catch((error) => {
-        if (error === backend_offline_error) { throw new Error(error) }
+        if (isBackendOffline(error)) { throw new Error(error) }
         const message = `Error scanning for services: ${error}`
         notifier.pushError('SERVICE_SCAN_FAIL', message)
         throw new Error(error)
