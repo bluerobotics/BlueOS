@@ -10,7 +10,7 @@ import { OneMoreTime } from '@/one-more-time'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { SavedNetwork, WPANetwork } from '@/types/wifi'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(wifi_service)
 
@@ -61,7 +61,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setCurrentNetwork(null)
-          if (error === backend_offline_error) { return }
+          if (isBackendOffline(error)) { return }
           const message = `Could not fetch wifi status: ${error.message}`
           notifier.pushError('WIFI_STATUS_FETCH_FAIL', message)
         })
@@ -126,7 +126,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setAvailableNetworks(null)
-          if (error === backend_offline_error) { return }
+          if (isBackendOffline(error)) { return }
           const message = `Could not scan for wifi networks: ${error.message}`
           notifier.pushError('WIFI_SCAN_FAIL', message)
         })
@@ -142,7 +142,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           wifi.setSavedNetworks(null)
-          if (error === backend_offline_error) { return }
+          if (isBackendOffline(error)) { return }
           const message = `Could not fetch saved networks: ${error.message}.`
           notifier.pushError('WIFI_SAVED_FETCH_FAIL', message)
         })
