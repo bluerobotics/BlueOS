@@ -133,6 +133,7 @@ export default Vue.extend({
       this.show_more_info = !this.show_more_info
     },
     async disconnectFromWifiNetwork(): Promise<void> {
+      wifi.setLoading(true)
       this.showDialog(false)
       await back_axios({
         method: 'get',
