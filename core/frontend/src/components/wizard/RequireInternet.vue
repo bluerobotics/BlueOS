@@ -26,7 +26,7 @@
 import Vue from 'vue'
 
 import WifiManager from '@/components/wifi/WifiManager.vue'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 type CheckSiteStatus = {
   site: string;
@@ -104,7 +104,7 @@ export default Vue.extend({
           this.re_checking = false
         })
         .catch((error) => {
-          if (error === backend_offline_error) { return }
+          if (isBackendOffline(error)) { return }
           this.is_online = false
         })
         .finally(() => {
