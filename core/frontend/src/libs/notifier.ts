@@ -2,7 +2,7 @@ import message_manager, { MessageLevel } from '@/libs/message-manager'
 import notifications from '@/store/notifications'
 import { GenericError, getErrorMessage, Service } from '@/types/common'
 import { LiveNotification, NotificationLevel } from '@/types/notifications'
-import { backend_offline_error } from '@/utils/api'
+import { isBackendOffline } from '@/utils/api'
 
 class Notifier {
   constructor(
@@ -39,7 +39,7 @@ class Notifier {
   }
 
   pushBackError(type: string, error: GenericError, alert = false): void {
-    if (error === backend_offline_error) { return }
+    if (isBackendOffline(error)) { return }
     const message = getErrorMessage(error)
     this.pushError(type, message, alert)
   }
