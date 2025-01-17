@@ -202,6 +202,7 @@ export default Vue.extend({
       const credentials: NetworkCredentials = { ssid: this.real_ssid, password: this.password }
       this.connection_status = ConnectionStatus.Connecting
       try {
+        wifi.setLoading(true)
         await back_axios({
           method: 'post',
           url: `${wifi.API_URL}/connect`,
@@ -223,6 +224,7 @@ export default Vue.extend({
       }
     },
     async removeSavedWifiNetwork(): Promise<void> {
+      wifi.setLoading(true)
       await back_axios({
         method: 'post',
         url: `${wifi.API_URL}/remove`,
