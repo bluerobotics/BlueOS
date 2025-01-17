@@ -191,7 +191,7 @@ import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, FlightController, Vehicle } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(autopilot_service)
 
@@ -362,7 +362,7 @@ export default Vue.extend({
         })
         .catch((error) => {
           this.install_status = InstallStatus.Failed
-          if (error === backend_offline_error) { return }
+          if (isBackendOffline(error)) { return }
           // Catch Chrome's net:::ERR_UPLOAD_FILE_CHANGED error
           if (error.message && error.message === 'Network Error') {
             this.install_result_message = 'Upload fail. If the file was changed, clean the form and re-select it.'
