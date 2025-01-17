@@ -29,7 +29,7 @@
           :items="as_select_items"
         >
           <template #label>
-            <parameter-label :label="label" :param="param" :format-options="formatOptions" />
+            <parameter-label :label="label ?? 'Select an option'" :param="param" :format-options="formatOptions" />
           </template>
         </v-autocomplete>
 
@@ -43,7 +43,7 @@
           @change="updateVariables"
         >
           <template #label>
-            <parameter-label :label="label" :param="param" :format-options="formatOptions" />
+            <parameter-label :label="label ?? 'Choose a value'" :param="param" :format-options="formatOptions" />
           </template>
         </v-select>
 
@@ -60,7 +60,7 @@
           @blur="updateVariables"
         >
           <template #label>
-            <parameter-label :label="label" :param="param" :format-options="formatOptions" />
+            <parameter-label :label="label ?? 'Enter a value'" :param="param" :format-options="formatOptions" />
           </template>
         </v-text-field>
       </div>
@@ -113,8 +113,8 @@ export default Vue.extend({
       default: false,
     },
     label: {
-      type: String,
-      default: '',
+      type: String as PropType<string | undefined>,
+      default: undefined,
     },
     autoRefreshParams: {
       type: Boolean,
