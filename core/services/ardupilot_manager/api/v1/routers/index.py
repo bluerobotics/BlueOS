@@ -168,7 +168,9 @@ async def install_firmware_from_file(
         await autopilot.start_ardupilot()
 
 
-@index_router_v1.get("/board", response_model=FlightController, summary="Check what is the current running board.")
+@index_router_v1.get(
+    "/board", response_model=Optional[FlightController], summary="Check what is the current running board."
+)
 def get_board() -> Any:
     return autopilot.current_board
 
