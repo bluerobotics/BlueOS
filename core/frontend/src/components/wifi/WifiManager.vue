@@ -42,7 +42,7 @@
       </v-btn>
     </v-app-bar>
 
-    <v-sheet>
+    <v-sheet v-if="!wifi_is_loading">
       <wifi-network-card
         v-if="current_network"
         connected
@@ -91,6 +91,12 @@
           />
         </div>
       </v-sheet>
+    </v-sheet>
+    <v-sheet v-else>
+      <spinning-logo
+        size="30%"
+        subtitle="Waiting for wifi networks..."
+      />
     </v-sheet>
 
     <connection-dialog
@@ -179,6 +185,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    wifi_is_loading(): boolean {
+      return wifi.is_loading
+    },
     wifi_status(): WifiStatus | null {
       return wifi.network_status
     },
