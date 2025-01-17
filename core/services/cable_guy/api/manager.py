@@ -100,6 +100,10 @@ class EthernetManager:
         self.flush_interface(interface.name)
         self.remove_dhcp_server_from_interface(interface.name)
 
+        if interface.addresses:
+            # bring interface up
+            interface_index = self._get_interface_index(interface.name)
+            self.ipr.link("set", index=interface_index, state="up")
         logger.info(f"Configuring addresses for interface '{interface.name}': {interface.addresses}.")
         for address in interface.addresses:
             if address.mode == AddressMode.Unmanaged:
