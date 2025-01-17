@@ -17,7 +17,7 @@ import { Serial } from '@/types/system-information/serial'
 import {
   CPU, Disk, Info, Memory, Network, Process, System, Temperature,
 } from '@/types/system-information/system'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 export enum FetchType {
     KernelType = 'kernel_buffer',
@@ -257,7 +257,7 @@ class SystemInformationStore extends VuexModule {
         }
       })
       .catch((error) => {
-        if (error === backend_offline_error) { return }
+        if (isBackendOffline(error)) { return }
         const message = `Could not fetch system information '${type}': ${error.message}`
         notifier.pushError('SYSTEM_FETCH_FAIL', message)
       })

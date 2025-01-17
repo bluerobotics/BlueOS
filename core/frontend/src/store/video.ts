@@ -11,7 +11,7 @@ import { video_manager_service } from '@/types/frontend_services'
 import {
   CreatedStream, Device, StreamStatus,
 } from '@/types/video'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 export interface Thumbnail {
   source: string | undefined
@@ -108,7 +108,7 @@ class VideoStore extends VuexModule {
     })
       .then(() => true)
       .catch((error) => {
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return false
         }
         const message = `Could not create video stream: ${error.response?.data ?? error.message}.`
@@ -131,7 +131,7 @@ class VideoStore extends VuexModule {
       })
       .catch((error) => {
         this.setAvailableDevices([])
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return
         }
 
@@ -155,7 +155,7 @@ class VideoStore extends VuexModule {
       })
       .catch((error) => {
         this.setAvailableStreams([])
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return
         }
         const message = `Could not fetch video streams: ${error.message}`

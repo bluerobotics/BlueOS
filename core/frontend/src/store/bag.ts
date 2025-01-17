@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes'
 
 import Notifier from '@/libs/notifier'
 import { bag_of_holding_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(bag_of_holding_service)
 
@@ -27,7 +27,7 @@ class BagOfHoldingStore {
     })
       .then(() => true)
       .catch((error) => {
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return false
         }
         const message = `Could not overwrite database: ${error.message ?? error.response?.data}.`
@@ -45,7 +45,7 @@ class BagOfHoldingStore {
     })
       .then(() => true)
       .catch((error) => {
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return false
         }
         const message = `Could not set data: ${error.message ?? error.response?.data}.`
@@ -70,7 +70,7 @@ class BagOfHoldingStore {
           return null
         }
 
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return undefined
         }
         const message = `Could not get (${path}) data: ${error.response?.data ?? error.message}.`

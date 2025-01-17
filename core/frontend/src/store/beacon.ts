@@ -8,7 +8,7 @@ import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { Domain } from '@/types/beacon'
 import { beacon_service } from '@/types/frontend_services'
-import back_axios, { backend_offline_error } from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(beacon_service)
 
@@ -115,7 +115,7 @@ class BeaconStore extends VuexModule {
         return true
       })
       .catch((error) => {
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return false
         }
         const message = `Could not set hostname: ${error.message ?? error.response?.data}.`
@@ -140,7 +140,7 @@ class BeaconStore extends VuexModule {
         return true
       })
       .catch((error) => {
-        if (error === backend_offline_error) {
+        if (isBackendOffline(error)) {
           return false
         }
         const message = `Could not set vehicle name: ${error.response?.data ?? error.message}.`
