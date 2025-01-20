@@ -15,12 +15,20 @@ from loguru import logger
 
 def get_current_arch() -> str:
     """Maps platform.machine() outputs to docker architectures"""
-    arch_map = {"x86_64": "amd64", "aarch64": "arm64", "armv7l": "arm"}
     machine = platform.machine()
-    arch = arch_map.get(machine, None)
-    if not arch:
-        raise RuntimeError(f"Unknown architecture! {machine}")
-    return arch
+
+    match machine:
+        case "armv7l":
+            return "arm"
+        case "x86_64" | "amd64":
+            return "amd64"
+        case "aarch64" | "arm64":
+            # catch the case of 64 bit kernel with 32bit userland on Pi 5
+            if platform.architecture()[0] == "32bit":
+                return "arm"
+            return "arm64"
+        case _:
+            raise RuntimeError(f"Unknown architecture! {machine}")
 
 
 @dataclass
