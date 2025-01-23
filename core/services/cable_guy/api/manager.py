@@ -1,8 +1,9 @@
+import asyncio
 import re
 import subprocess
 import time
 from socket import AddressFamily
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import psutil
 from commonwealth.utils.decorators import temporary_cache
@@ -84,13 +85,15 @@ class EthernetManager:
         result = [interface.dict(exclude={"info"}) for interface in self.result]
         self.settings.save(result)
 
-    def set_configuration(self, interface: NetworkInterface) -> None:
+    def set_configuration(self, interface: NetworkInterface, watchdog_call: bool = False) -> None:
         """Modify hardware based in the configuration
 
         Args:
             interface: NetworkInterface
+            watchdog_call: Whether this is a watchdog call
         """
-        self.network_handler.cleanup_interface_connections(interface.name)
+        if not watchdog_call:
+            self.network_handler.cleanup_interface_connections(interface.name)
         interfaces = self.get_ethernet_interfaces()
         valid_names = [interface.name for interface in interfaces]
         if interface.name not in valid_names:
@@ -533,3 +536,72 @@ class EthernetManager:
 
     def __del__(self) -> None:
         self.stop()
+
+    def priorities_mismatch(self) -> bool:
+        """Check if the current interface priorities differ from the saved ones.
+        Uses sets for order-independent comparison of NetworkInterfaceMetric objects,
+        which compare only name and priority fields.
+
+        Returns:
+            bool: True if priorities don't match, False if they do
+        """
+        if "priorities" not in self.settings.root:
+            return False
+
+        current = set(self.get_interfaces_priority())
+        # Convert saved priorities to NetworkInterfaceMetric, index value doesn't matter for comparison
+        saved = {NetworkInterfaceMetric(index=0, **iface) for iface in self.settings.root["priorities"]}
+
+        return current != saved
+
+    def config_mismatch(self) -> Set[NetworkInterface]:
+        """Check if the current interface config differs from the saved ones.
+
+        Returns:
+            bool: True if config doesn't match, False if it does
+        """
+
+        mismatches: Set[NetworkInterface] = set()
+        current = self.get_ethernet_interfaces()
+        if "content" not in self.settings.root:
+            logger.debug("No saved configuration found")
+            logger.debug(f"Current configuration: {self.settings.root}")
+            return mismatches
+
+        saved = self.settings.root["content"]
+        saved_interfaces = {interface["name"]: NetworkInterface(**interface) for interface in saved}
+
+        for interface in current:
+            if interface.name not in saved_interfaces:
+                logger.debug(f"Interface {interface.name} not in saved configuration, skipping")
+                continue
+
+            for address in saved_interfaces[interface.name].addresses:
+                if address not in interface.addresses:
+                    logger.info(
+                        f"Mismatch detected for {interface.name}: "
+                        f"saved address {address.ip} ({address.mode}) not found in current addresses "
+                        f"[{', '.join(f'{addr.ip} ({addr.mode})' for addr in interface.addresses)}]"
+                    )
+                    mismatches.add(saved_interfaces[interface.name])
+        return mismatches
+
+    async def watchdog(self) -> None:
+        """
+        periodically checks the interfaces states against the saved settings,
+        if there is a mismatch, it will apply the saved settings
+        """
+        while True:
+            if self.priorities_mismatch():
+                logger.warning("Interface priorities mismatch, applying saved settings.")
+                try:
+                    self.set_interfaces_priority(self.settings.root["priorities"])
+                except Exception as error:
+                    logger.error(f"Failed to set interface priorities: {error}")
+            mismatches = self.config_mismatch()
+            if mismatches:
+                logger.warning("Interface config mismatch, applying saved settings.")
+                logger.debug(f"Mismatches: {mismatches}")
+                for interface in mismatches:
+                    self.set_configuration(interface, watchdog_call=True)
+            await asyncio.sleep(5)
