@@ -24,7 +24,7 @@ case "$ARCH" in
     TOOLCHAIN="armv7-unknown-linux-gnueabihf"
     ;;
   aarch64 | arm64)
-    TOOLCHAIN="aarch64-unknown-linux-musl"
+    TOOLCHAIN="aarch64-unknown-linux-gnu"
     ;;
   *)
     echo "Architecture: $ARCH is unsupported, please create a new issue on https://github.com/bluerobotics/BlueOS/issues"
