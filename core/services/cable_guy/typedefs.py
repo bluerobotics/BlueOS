@@ -9,10 +9,16 @@ class AddressMode(str, Enum):
     Server = "server"
     Unmanaged = "unmanaged"
 
+    def __hash__(self) -> int:
+        return hash(self.value)
+
 
 class InterfaceAddress(BaseModel):
     ip: str
     mode: AddressMode
+
+    def __hash__(self) -> int:
+        return hash(self.ip) + hash(self.mode)
 
 
 class InterfaceInfo(BaseModel):
@@ -25,6 +31,9 @@ class NetworkInterface(BaseModel):
     name: str
     addresses: List[InterfaceAddress]
     info: Optional[InterfaceInfo]
+
+    def __hash__(self) -> int:
+        return hash(self.name) + sum(hash(address) for address in self.addresses)
 
 
 class NetworkInterfaceMetric(BaseModel):
