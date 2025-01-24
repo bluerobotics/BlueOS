@@ -11,7 +11,7 @@ def download_script(url: str, dest: str) -> None:
     os.chmod(dest, 0o755)
 
 
-CREATE_AP_COMMIT = "2cedd27e324ac7b9cffd1537ef0b6c9e8564e9a3"
+CREATE_AP_COMMIT = "4627e3c0ec0a7c86ba08089a8a00d32a61a05f1e"
 
 download_script(
     f"https://raw.githubusercontent.com/lakinduakash/linux-wifi-hotspot/{CREATE_AP_COMMIT}/src/scripts/create_ap",
