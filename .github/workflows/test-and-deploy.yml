@@ -331,12 +331,21 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Set asset name
+        run: |
+          if [[ ${{ matrix.runner }} == 'pi5-builder' ]]; then
+            echo "ASSET_NAME_SUFFIX=-pi5" >> $GITHUB_ENV
+          elif [[ ${{ matrix.os }} == 'bullseye' ]]; then
+            echo "ASSET_NAME_SUFFIX=-pi4" >> $GITHUB_ENV
+          fi
+
       - name: Upload raspberry image for release
         uses: svenstaro/upload-release-action@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip
+          asset_name: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}.zip
           tag: ${{ github.ref }}
           overwrite: true
           prerelease: true
