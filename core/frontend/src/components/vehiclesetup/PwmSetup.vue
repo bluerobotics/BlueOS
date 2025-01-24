@@ -142,9 +142,9 @@
         </v-card>
       </v-col>
     </v-row>
-    <parameter-editor-dialog
+    <servo-function-editor-dialog
       v-model="edit_param_dialog"
-      :param="param"
+      :param="selected_param"
     />
   </div>
 </template>
@@ -152,7 +152,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import ParameterEditorDialog from '@/components/parameter-editor/ParameterEditorDialog.vue'
+import ServoFunctionEditorDialog from '@/components/parameter-editor/ServoFunctionEditorDialog.vue'
 import MotorDetection from '@/components/vehiclesetup/MotorDetection.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
 import {
@@ -199,7 +199,7 @@ const param_value_map = {
 export default Vue.extend({
   name: 'PwmSetup',
   components: {
-    ParameterEditorDialog,
+    ServoFunctionEditorDialog,
     ParameterSwitch,
     VehicleViewer,
     MotorDetection,
@@ -209,7 +209,7 @@ export default Vue.extend({
       highlight: ['Motor', 'Light', 'Mount', 'Gripper'],
       default_highlight: ['Motor', 'Light', 'Mount', 'Gripper'],
       edit_param_dialog: false,
-      param: undefined as Parameter | undefined,
+      selected_param: undefined as Parameter | undefined,
       motor_targets: {} as {[key: number]: number},
       motor_zeroer_interval: undefined as undefined | number,
       motor_writer_interval: undefined as undefined | number,
@@ -426,7 +426,7 @@ export default Vue.extend({
       return `width: ${Math.abs(percent)}%; left: ${left}%; background-color: red`
     },
     showParamEdit(param: Parameter) {
-      this.param = param
+      this.selected_param = param
       this.edit_param_dialog = true
     },
     stringToUserFriendlyText(text: string) {
