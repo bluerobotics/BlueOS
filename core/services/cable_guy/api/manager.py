@@ -73,17 +73,8 @@ class EthernetManager:
 
     def save(self) -> None:
         """Save actual configuration"""
-        try:
-            self.get_ethernet_interfaces()
-        except Exception as exception:
-            logger.error(f"Failed to fetch actual configuration, going to use the previous info: {exception}")
-
-        if not self.result:
-            logger.error("Configuration is empty, aborting.")
-            return
-
-        result = [interface.dict(exclude={"info"}) for interface in self.result]
-        self.settings.save(result)
+        interfaces = list(self.settings.root["content"])
+        self.settings.save(interfaces)
 
     def set_configuration(self, interface: NetworkInterface, watchdog_call: bool = False) -> None:
         """Modify hardware based in the configuration
@@ -264,15 +255,31 @@ class EthernetManager:
             self.enable_interface(interface_name, enable=True)
         except Exception as error:
             logger.error(f"Failed to trigger dynamic IP acquisition for interface {interface_name}. {error}")
+        finally:
+            self.add_static_ip(interface_name, "0.0.0.0", mode=AddressMode.Client)
 
-    def add_static_ip(self, interface_name: str, ip: str) -> None:
+    def _update_interface_settings(self, interface_name: str, updated_interface: NetworkInterface) -> None:
+        """Helper method to update interface settings in a consistent way.
+
+        Args:
+            interface_name (str): Name of the interface to update
+            updated_interface (NetworkInterface): New interface configuration
+        """
+        # Filter out the old interface configuration and append the new one
+        updated_interfaces = [
+            interface for interface in self.settings.root["content"] if interface["name"] != interface_name
+        ]
+        updated_interfaces.append(updated_interface.dict())
+        self.settings.save(updated_interfaces)
+
+    def add_static_ip(self, interface_name: str, ip: str, mode: AddressMode = AddressMode.Unmanaged) -> None:
         """Set ip address for a specific interface
 
         Args:
             interface_name (str): Interface name
             ip (str): Desired ip address
+            mode (AddressMode, optional): Address mode. Defaults to AddressMode.Unmanaged
         """
-
         logger.info(f"Adding static IP '{ip}' to interface '{interface_name}'.")
         self.network_handler.add_static_ip(interface_name, ip)
         interface_index = self._get_interface_index(interface_name)
@@ -280,6 +287,12 @@ class EthernetManager:
             self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
         except Exception as error:
             logger.error(f"Failed to add IP '{ip}' to interface '{interface_name}'. {error}")
+
+        saved_interface = self.get_saved_interface_by_name(interface_name)
+        new_address = InterfaceAddress(ip=ip, mode=mode)
+        if new_address not in saved_interface.addresses:
+            saved_interface.addresses.append(new_address)
+        self._update_interface_settings(interface_name, saved_interface)
 
     def remove_ip(self, interface_name: str, ip_address: str) -> None:
         """Delete IP address appended on the interface
@@ -299,11 +312,21 @@ class EthernetManager:
         except Exception as error:
             raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
 
+        saved_interface = self.get_saved_interface_by_name(interface_name)
+        saved_interface.addresses = [address for address in saved_interface.addresses if address.ip != ip_address]
+        self._update_interface_settings(interface_name, saved_interface)
+
     def get_interface_by_name(self, name: str) -> NetworkInterface:
         for interface in self.get_ethernet_interfaces():
             if interface.name == name:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
+
+    def get_saved_interface_by_name(self, name: str) -> NetworkInterface:
+        for interface in self.settings.root["content"]:
+            if interface["name"] == name:
+                return NetworkInterface(**interface)
+        return self.get_interface_by_name(name)
 
     def get_interfaces(self, filter_wifi: bool = False) -> List[NetworkInterface]:
         """Get interfaces information
@@ -520,12 +543,25 @@ class EthernetManager:
         except Exception as error:
             raise RuntimeError("Cannot remove DHCP server from interface.") from error
 
+        saved_interface = self.get_saved_interface_by_name(interface_name)
+        # Get all non-server addresses
+        new_ip_list = [address for address in saved_interface.addresses if address.mode != AddressMode.Server]
+        # Find the server address if it exists and convert it to unmanaged
+        gateway_addresses = [address for address in saved_interface.addresses if address.mode == AddressMode.Server]
+        if gateway_addresses:
+            # Convert the server address to unmanaged
+            for gateway_address in gateway_addresses:
+                new_ip_list.append(InterfaceAddress(ip=gateway_address.ip, mode=AddressMode.Unmanaged))
+
+        saved_interface.addresses = new_ip_list
+        self._update_interface_settings(interface_name, saved_interface)
+
     def add_dhcp_server_to_interface(self, interface_name: str, ipv4_gateway: str) -> None:
         if self._is_dhcp_server_running_on_interface(interface_name):
             self.remove_dhcp_server_from_interface(interface_name)
         if self._is_ip_on_interface(interface_name, ipv4_gateway):
             self.remove_ip(interface_name, ipv4_gateway)
-        self.add_static_ip(interface_name, ipv4_gateway)
+        self.add_static_ip(interface_name, ipv4_gateway, mode=AddressMode.Server)
         logger.info(f"Adding DHCP server with gateway '{ipv4_gateway}' to interface '{interface_name}'.")
         self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway))
 
@@ -576,14 +612,20 @@ class EthernetManager:
                 logger.debug(f"Interface {interface.name} not in saved configuration, skipping")
                 continue
 
-            for address in saved_interfaces[interface.name].addresses:
-                if address not in interface.addresses:
-                    logger.info(
-                        f"Mismatch detected for {interface.name}: "
-                        f"saved address {address.ip} ({address.mode}) not found in current addresses "
-                        f"[{', '.join(f'{addr.ip} ({addr.mode})' for addr in interface.addresses)}]"
-                    )
-                    mismatches.add(saved_interfaces[interface.name])
+            for address in self.get_saved_interface_by_name(interface.name).addresses:
+                if address.mode == AddressMode.Client:
+                    if not any(addr.mode == AddressMode.Client for addr in interface.addresses):
+                        logger.info(f"Mismatch detected for {interface.name}: missing dhcp client address")
+                        mismatches.add(saved_interfaces[interface.name])
+                # Handle Server and Unmanaged modes
+                elif address.mode in [AddressMode.Server, AddressMode.Unmanaged]:
+                    if address not in interface.addresses:
+                        logger.info(
+                            f"Mismatch detected for {interface.name}: "
+                            f"saved address {address.ip} ({address.mode}) not found in current addresses "
+                            f"[{', '.join(f'{addr.ip} ({addr.mode})' for addr in interface.addresses)}]"
+                        )
+                        mismatches.add(saved_interfaces[interface.name])
         return mismatches
 
     async def watchdog(self) -> None:
