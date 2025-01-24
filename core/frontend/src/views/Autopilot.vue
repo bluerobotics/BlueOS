@@ -8,6 +8,21 @@
     <v-card>
       <v-card-title>Autopilot</v-card-title>
 
+      <v-tooltip bottom>
+        <template #activator="{ on, attrs }">
+          <v-btn
+            icon
+            class="wizard-btn"
+            v-bind="attrs"
+            v-on="on"
+            @click="enable_wizard"
+          >
+            <v-icon>mdi-wizard-hat</v-icon>
+          </v-btn>
+        </template>
+        <span>Click to activate wizard</span>
+      </v-tooltip>
+
       <img height="80" :src="banner" />
 
       <v-card-text>
@@ -119,6 +134,7 @@ import settings from '@/libs/settings'
 import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
+import bag from '@/store/bag'
 import { FirmwareInfo, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -207,6 +223,19 @@ export default Vue.extend({
     this.fetch_vehicle_type_task.setAction(fetchVehicleType)
   },
   methods: {
+    async enable_wizard(): Promise<void> {
+      const payload = { version: 0 }
+      await bag.setData('wizard', payload)
+        .then((result) => {
+          if (result) {
+            this.$router.push('/')
+            window.location.reload()
+          }
+        })
+        .catch(() => {
+          notifier.pushBackError('ENABLE_WIZARD', 'Failed to enable wizard')
+        })
+    },
     async start_autopilot(): Promise<void> {
       autopilot.setRestarting(true)
       await back_axios({
@@ -244,3 +273,11 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.wizard-btn {
+  position: absolute;
+  right: 15px;
+  top: 0;
+}
+</style>
