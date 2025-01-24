@@ -318,7 +318,7 @@ class Helper:
             "127.0.0.1", port=port, path="/", timeout=1.0, method="GET", follow_redirects=10
         )
         log_msg = f"Detecting service at port {port}"
-        if response.status == http.client.BAD_REQUEST || response.decoded_data is None:
+        if response.status == http.client.BAD_REQUEST or response.decoded_data is None:
             # If not valid web server, documentation will not be available
             logger.debug(f"{log_msg}: Invalid: {response.status} - {response.decoded_data!r}")
             return info
