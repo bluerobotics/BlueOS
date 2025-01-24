@@ -85,8 +85,26 @@ class BookwormHandler(AbstractNetworkHandler):
         self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
 
     def add_static_ip(self, interface_name: str, ip: str) -> None:
+        """Set ip address for a specific interface if it doesn't already exist
+
+        Args:
+            interface_name (str): Interface name
+            ip (str): Desired ip address
+        """
         interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
-        self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
+
+        # Check if IP already exists on the interface
+        existing_addrs = self.ipr.get_addr(index=interface_index)
+        for addr in existing_addrs:
+            if addr.get_attr("IFA_ADDRESS") == ip:
+                logger.info(f"IP '{ip}' already exists on interface '{interface_name}', skipping addition.")
+                return
+
+        try:
+            self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
+            logger.info(f"Added static IP '{ip}' to interface '{interface_name}'.")
+        except Exception as error:
+            logger.error(f"Failed to add IP '{ip}' to interface '{interface_name}'. {error}")
 
     def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
         """Get the priority metrics for all network interfaces using IPRoute.
