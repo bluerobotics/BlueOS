@@ -104,6 +104,17 @@ import {
   isBaudrate, isFilepath, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
 
+const defaultEndpointValue: AutopilotEndpoint = {
+  name: 'My endpoint',
+  owner: 'User',
+  connection_type: EndpointType.udpin,
+  place: '0.0.0.0',
+  argument: 14550,
+  protected: false,
+  persistent: true,
+  enabled: true,
+}
+
 export default Vue.extend({
   name: 'EndpointCreationDialog',
   model: {
@@ -123,16 +134,7 @@ export default Vue.extend({
       type: Object as PropType<AutopilotEndpoint>,
       required: false,
       default() {
-        return {
-          name: 'My endpoint',
-          owner: 'User',
-          connection_type: EndpointType.udpin,
-          place: '0.0.0.0',
-          argument: 14550,
-          protected: false,
-          persistent: true,
-          enabled: true,
-        }
+        return defaultEndpointValue
       },
     },
   },
@@ -164,6 +166,22 @@ export default Vue.extend({
   watch: {
     connection_type() {
       this.form.validate()
+    },
+    baseEndpoint: {
+      deep: true,
+      immediate: true,
+      handler(newValue) {
+        this.edited_endpoint = { ...newValue }
+      },
+    },
+    show: {
+      deep: true,
+      immediate: true,
+      handler(newValue) {
+        if (newValue && !this.edit) {
+          this.edited_endpoint = { ...defaultEndpointValue }
+        }
+      },
     },
   },
   methods: {
