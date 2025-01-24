@@ -101,16 +101,23 @@ class Dnsmasq:
         ]
 
     def start(self) -> None:
-        try:
-            # pylint: disable=consider-using-with
-            self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
-            time.sleep(3)
-            if not self.is_running():
+        attempts = 3
+        for attempt in range(attempts):
+            try:
+                # pylint: disable=consider-using-with
+                self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
+                time.sleep(3)
+                if self.is_running():
+                    logger.info("DHCP Server started.")
+                    return
+
                 exit_code = self._subprocess.returncode
-                raise RuntimeError(f"Failed to initialize Dnsmasq ({exit_code}).")
-            logger.info("DHCP Server started.")
-        except Exception as error:
-            raise RuntimeError("Unable to start DHCP Server.") from error
+                logger.error(f"Attempt {attempt} failed to initialize Dnsmasq ({exit_code}).")
+            except Exception as error:
+                logger.error(f"Attempt {attempt} encountered an error: {error}")
+                time.sleep(1)
+
+        raise RuntimeError("Unable to start DHCP Server")
 
     def stop(self) -> None:
         if self.is_running():
