@@ -372,7 +372,6 @@ class EthernetManager:
             if self.validate_interface_data(interface_data, filter_wifi):
                 result += [interface_data]
 
-        self.result = result
         return result
 
     def get_ethernet_interfaces(self) -> List[NetworkInterface]:
