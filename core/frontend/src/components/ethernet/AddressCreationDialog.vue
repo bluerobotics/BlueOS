@@ -11,6 +11,7 @@
         <v-form
           ref="form"
           lazy-validation
+          @submit.prevent="createNewAddress"
         >
           <v-text-field
             v-model="ip_address"
