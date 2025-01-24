@@ -131,7 +131,7 @@ export default Vue.extend({
     return {
       userFriendlyEndpointType,
       show_edit_dialog: false,
-      updated_endpoint: this.endpoint,
+      updated_endpoint: { ...this.endpoint },
     }
   },
   computed: {
@@ -167,6 +167,7 @@ export default Vue.extend({
       this.updateEndpoint(this.updated_endpoint)
     },
     openEditDialog(): void {
+      this.updated_endpoint = { ...this.endpoint }
       this.show_edit_dialog = true
     },
     async updateEndpoint(endpoint: AutopilotEndpoint): Promise<void> {
