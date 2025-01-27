@@ -253,7 +253,7 @@ echo "Restarting random-seeds."
 rm -rf /var/lib/systemd/random-seed /loader/random-seed
 
 echo "creating dns link"
-sudo ln /etc/resolv.conf /etc/resolv.conf.host
+sudo ln --force /etc/resolv.conf /etc/resolv.conf.host
 
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
