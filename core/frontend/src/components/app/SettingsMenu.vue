@@ -19,6 +19,21 @@
       @input="showDialog"
     >
       <v-card class="mx-auto pa-2 flex-column">
+        <div
+          v-if="operation_in_progress"
+          class="card-loading-overlay"
+        >
+          <SpinningLogo
+            size="150"
+            :subtitle="operation_description"
+          />
+        </div>
+        <div class="pt-2">
+          <v-alert v-if="has_operation_error" type="error">
+            {{ operation_error }}
+          </v-alert>
+          <v-divider />
+        </div>
         <v-card>
           <v-card-title class="align-center">
             Settings
@@ -137,6 +152,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import bag from '@/store/bag'
@@ -150,6 +166,9 @@ const notifier = new Notifier(commander_service)
 
 export default Vue.extend({
   name: 'SettingsMenu',
+  components: {
+    SpinningLogo,
+  },
   data() {
     return {
       disable_remove: true,
@@ -158,13 +177,26 @@ export default Vue.extend({
       mavlink_log_folder_size: null as null | string,
       show_dialog: false,
       show_reset_dialog: false,
+      operation_in_progress: false,
+      operation_description: '',
+      operation_error: undefined as undefined | string,
     }
+  },
+  computed: {
+    has_operation_error(): boolean {
+      return this.operation_error !== undefined
+    },
   },
   async mounted() {
     await this.get_log_folder_size()
     await this.get_mavlink_log_folder_size()
   },
   methods: {
+    prepare_operation(description: string): void {
+      this.operation_error = undefined
+      this.operation_in_progress = true
+      this.operation_description = description
+    },
     async download_service_log_files(): Promise<void> {
       const folder = await filebrowser.fetchFolder('system_logs')
       await filebrowser.downloadFolder(folder)
@@ -174,6 +206,7 @@ export default Vue.extend({
       await filebrowser.downloadFolder(folder)
     },
     async get_log_folder_size(): Promise<void> {
+      this.prepare_operation('Checking system log size...')
       await back_axios({
         url: `${API_URL}/services/check_log_folder_size`,
         method: 'get',
@@ -186,10 +219,13 @@ export default Vue.extend({
           this.log_folder_size = prettifySize(folder_data_bytes / 1024)
         })
         .catch((error) => {
+          this.operation_error = String(error)
           notifier.pushBackError('GET_SERVICES_LOG_SIZE', error)
         })
+      this.operation_in_progress = false
     },
     async get_mavlink_log_folder_size(): Promise<void> {
+      this.prepare_operation('Checking MAVLink log size...')
       await back_axios({
         url: `${API_URL}/services/check_mavlink_log_folder_size`,
         method: 'get',
@@ -202,10 +238,14 @@ export default Vue.extend({
           this.mavlink_log_folder_size = prettifySize(folder_data_bytes / 1024)
         })
         .catch((error) => {
+          this.operation_error = String(error)
           notifier.pushBackError('GET_MAVLINK_LOG_SIZE', error)
         })
+      this.operation_in_progress = false
     },
     async reset_settings(): Promise<void> {
+      this.prepare_operation('Resetting settings...')
+
       await back_axios({
         url: `${API_URL}/settings/reset`,
         method: 'post',
@@ -218,10 +258,14 @@ export default Vue.extend({
           this.show_reset_dialog = true
         })
         .catch((error) => {
+          this.operation_error = String(error)
           notifier.pushBackError('RESET_SETTINGS_FAIL', error)
         })
+      this.operation_in_progress = false
     },
     async remove_service_log_files(): Promise<void> {
+      this.prepare_operation('Removing system log files...')
+
       await back_axios({
         url: `${API_URL}/services/remove_log`,
         method: 'post',
@@ -234,11 +278,15 @@ export default Vue.extend({
           this.get_log_folder_size()
         })
         .catch((error) => {
+          this.operation_error = String(error)
           notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
         })
+      this.operation_in_progress = false
       this.showDialog(false)
     },
     async remove_mavlink_log_files(): Promise<void> {
+      this.prepare_operation('Removing MAVLink log files...')
+
       await back_axios({
         url: `${API_URL}/services/remove_mavlink_log`,
         method: 'post',
@@ -251,8 +299,10 @@ export default Vue.extend({
           this.get_mavlink_log_folder_size()
         })
         .catch((error) => {
+          this.operation_error = String(error)
           notifier.pushBackError('REMOVE_MAVLINK_LOG_FAIL', error)
         })
+      this.operation_in_progress = false
       this.showDialog(false)
     },
     async enable_wizard(): Promise<void> {
@@ -275,3 +325,18 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.card-loading-overlay {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(2px);
+  z-index: 9999 !important;
+}
+</style>
