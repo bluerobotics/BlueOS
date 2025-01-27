@@ -30,64 +30,63 @@
       </v-alert>
       <self-health-test />
     </v-row>
-    <v-row>
-      <v-col
-        v-for="({
-          icon, title, text, route, advanced,
-        }, i) in apps"
-        :key="i"
-        cols="6"
-        md="3"
-      >
-        <v-card
-          class="mb-3 px-3 rounded-xl"
-          style="height: 200px"
-          :href="route"
+    <div class="grid-holder">
+      <div class="grid-holder-container">
+        <div
+          v-for="({
+            icon, title, text, route, advanced,
+          }, i) in apps"
+          :key="i"
         >
-          <v-theme-provider dark>
-            <v-row
-              class="py-3 px-3 d-flex justify-space-between flex-nowrap"
-            >
-              <v-card-title
-                class="text-subtitle-2 font-weight-bold"
-                v-text="title"
-              />
-              <div>
+          <v-card
+            class="mb-3 px-3 rounded-xl app-card"
+            :href="route"
+          >
+            <v-theme-provider dark>
+              <v-row
+                class="py-3 px-3 d-flex justify-space-between flex-nowrap"
+              >
+                <v-card-title
+                  class="text-subtitle-2 font-weight-bold"
+                  v-text="title"
+                />
+                <div>
+                  <v-avatar
+                    color="primary"
+                    size="50"
+                  >
+                    <v-icon
+                      large
+                      v-text="icon"
+                    />
+                  </v-avatar>
+                </div>
+              </v-row>
+            </v-theme-provider>
+            <v-theme-provider dark>
+              <div
+                v-if="advanced"
+                v-tooltip="'This is an advanced feature'"
+                class="pirate-marker"
+              >
                 <v-avatar
-                  color="primary"
-                  size="50"
+                  color="error"
+                  size="35"
                 >
                   <v-icon
-                    large
-                    v-text="icon"
+                    v-text="'mdi-skull-crossbones'"
                   />
                 </v-avatar>
               </div>
-            </v-row>
-          </v-theme-provider>
-          <v-theme-provider dark>
-            <div
-              v-if="advanced"
-              v-tooltip="'This is an advanced feature'"
-              class="pirate-marker"
-            >
-              <v-avatar
-                color="error"
-                size="35"
-              >
-                <v-icon
-                  v-text="'mdi-skull-crossbones'"
-                />
-              </v-avatar>
-            </div>
-          </v-theme-provider>
-          <v-card-text
-            class="subtitle-1 text-justify-start text-clamp pt-0 pb-0"
-            v-text="text"
-          />
-        </v-card>
-      </v-col>
-    </v-row>
+            </v-theme-provider>
+            <v-card-text
+              class="subtitle-1 text-justify-start text-clamp pt-0 pb-0"
+              v-text="text"
+            />
+          </v-card>
+        </div>
+      </div>
+    </div>
   </v-container>
 </template>
 
@@ -159,4 +158,36 @@ div.pirate-marker.v-icon {
   overflow: hidden;
 }
 
+.grid-holder {
+  padding: 10px;
+}
+
+.grid-holder-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  justify-content: center;
+}
+
+.app-card {
+  width: auto;
+  min-width: 300px;
+  height: 200px;
+  transition: transform 0.3s;
+}
+
+.app-card:hover {
+  transform: translateY(-5px);
+}
+
+@media (max-width: 677px) {
+  .grid-holder-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .app-card {
+    width: 100%;
+  }
+}
 </style>
