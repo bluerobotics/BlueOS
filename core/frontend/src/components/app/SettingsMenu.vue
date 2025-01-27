@@ -252,7 +252,7 @@ export default Vue.extend({
         params: {
           i_know_what_i_am_doing: true,
         },
-        timeout: 2000,
+        timeout: 10000,
       })
         .then(() => {
           this.show_reset_dialog = true
@@ -272,7 +272,7 @@ export default Vue.extend({
         params: {
           i_know_what_i_am_doing: true,
         },
-        timeout: 5000,
+        timeout: 20000,
       })
         .then(() => {
           this.get_log_folder_size()
@@ -282,7 +282,6 @@ export default Vue.extend({
           notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
         })
       this.operation_in_progress = false
-      this.showDialog(false)
     },
     async remove_mavlink_log_files(): Promise<void> {
       this.prepare_operation('Removing MAVLink log files...')
@@ -293,7 +292,7 @@ export default Vue.extend({
         params: {
           i_know_what_i_am_doing: true,
         },
-        timeout: 5000,
+        timeout: 20000,
       })
         .then(() => {
           this.get_mavlink_log_folder_size()
@@ -303,7 +302,6 @@ export default Vue.extend({
           notifier.pushBackError('REMOVE_MAVLINK_LOG_FAIL', error)
         })
       this.operation_in_progress = false
-      this.showDialog(false)
     },
     async enable_wizard(): Promise<void> {
       const payload = { version: 0 }
