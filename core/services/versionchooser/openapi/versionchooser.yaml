@@ -194,6 +194,51 @@ paths:
               type: string
               format: binary
 
+  /docker/login/:
+    post:
+      operationId: main.docker_login
+      summary: Login Docker daemon to a registry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DockerLoginInfo'
+      responses:
+        '200':
+          description: Successfully logged in
+
+  /docker/logout/:
+    post:
+      operationId: main.docker_logout
+      summary: Logout Docker daemon from a registry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DockerLoginInfo'
+      responses:
+        '200':
+          description: Successfully logged out
+
+  /docker/accounts/:
+    get:
+      operationId: main.docker_accounts
+      summary: Get the list of accounts logged in
+      responses:
+        '200':
+          description: List of accounts logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DockerLoginInfo'
+
 components:
   schemas:
     Version:
@@ -205,3 +250,21 @@ components:
         tag:
           type: string
           example: master
+
+    DockerLoginInfo:
+      type: object
+      properties:
+        username:
+          type: string
+          example: username
+        password:
+          type: string
+          example: password
+        registry:
+          type: string
+          example: "https://index.docker.io/v1/"
+        root:
+          type: boolean
+          example: true
+      required:
+        - username
