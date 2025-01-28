@@ -38,6 +38,14 @@
                 "bind": "/home/pi/.ssh",
                 "mode": "rw"
             },
+            "/home/pi/.docker": {
+                "bind": "/home/pi/.docker",
+                "mode": "rw"
+            },
+            "/root/.docker": {
+                "bind": "/root/.docker",
+                "mode": "rw"
+            },
             "/etc/blueos": {
                 "bind": "/etc/blueos",
                 "mode": "rw"
