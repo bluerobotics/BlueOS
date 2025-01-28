@@ -212,7 +212,9 @@ class BookwormHandler(AbstractNetworkHandler):
         """
         try:
             # Just run dhclient without releasing existing IPs
-            dhclient_output = os.popen(f"dhclient -v {interface_name} 2>&1").read()
+            command = f"timeout 5 dhclient -v {interface_name} 2>&1"
+            logger.info(f"Running: {command}")
+            dhclient_output = os.popen(command).read()
 
             bound_ip_match = re.search(r"bound to ([0-9.]+)", dhclient_output)
             if bound_ip_match:
