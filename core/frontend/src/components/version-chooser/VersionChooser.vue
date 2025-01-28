@@ -59,7 +59,7 @@
           :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
           :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(image)"
-          :deleting="deleting.endsWith(image.tag)"
+          :deleting="isBeingDeleted(image)"
           :enable-delete="local_versions.result.local.length > 2"
           @delete="deleteVersion"
           @apply="setVersion"
@@ -646,6 +646,9 @@ export default Vue.extend({
       }
       this.latest_stable = undefined
       this.latest_beta = undefined
+    },
+    isBeingDeleted(image: Version) {
+      return this.deleting === `${image.repository}:${image.tag}`
     },
   },
 })
