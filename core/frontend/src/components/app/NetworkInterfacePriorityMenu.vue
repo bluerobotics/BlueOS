@@ -110,7 +110,8 @@ export default Vue.extend({
       await back_axios({
         method: 'get',
         url: `${ethernet.API_URL}/interfaces`,
-        timeout: 5000,
+        // Necessary since the system can hang with dhclient timeouts
+        timeout: 10000,
       })
         .then((response) => {
           const interfaces = response.data as EthernetInterface[]
