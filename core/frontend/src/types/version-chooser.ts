@@ -31,6 +31,13 @@ export interface ServerResponse {
   type: string,
 }
 
+export interface DockerLoginInfo {
+  root?: boolean
+  registry?: string
+  username: string
+  password?: string
+}
+
 export function isServerResponse(response: unknown): response is ServerResponse {
   // eslint-disable-next-line no-extra-parens
   return (response as ServerResponse).status !== undefined
