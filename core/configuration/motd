@@ -1,5 +1,5 @@
 
-Welcome to BlueOS 1.3!
+Welcome to BlueOS 1.4!
 
 What you currently see is a tmux session built into BlueOS's docker container.
 This means you are not in the host Raspbian OS itself, and most of the data in here is
