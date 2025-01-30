@@ -8,5 +8,5 @@ class Placeholder(NavigatorPi4):
     platform = Platform.Placeholder
 
     devices = {
-        "swap_multiplexer": (0x77, 1),
+        "ADS1115": (0x48, 1),
     }
