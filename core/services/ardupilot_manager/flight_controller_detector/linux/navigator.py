@@ -70,7 +70,7 @@ class NavigatorPi4(Navigator):
     def get_serials(self) -> List[Serial]:
         release = "Bullseye"
         os_release = load_file("/etc/os-release")
-        if "bookworm" in os_release:
+        if "bookworm" in os_release.lower():
             release = "Bookworm"
 
         match release:

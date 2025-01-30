@@ -43,9 +43,9 @@ def get_cpu_type() -> CpuType:
 @cache
 def get_host_os() -> HostOs:
     os_release = load_file("/etc/os-release")
-    if "bookworm" in os_release:
+    if "bookworm" in os_release.lower():
         return HostOs.Bookworm
-    if "bullseye" in os_release:
+    if "bullseye" in os_release.lower():
         return HostOs.Bullseye
     return HostOs.Other
 
