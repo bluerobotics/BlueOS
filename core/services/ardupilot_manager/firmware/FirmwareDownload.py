@@ -21,7 +21,8 @@ from exceptions import (
     NoCandidate,
     NoVersionAvailable,
 )
-from typedefs import FirmwareFormat, Platform, PlatformType, Vehicle
+from flight_controller import Platform, PlatformType
+from typedefs import FirmwareFormat, Vehicle
 
 # TODO: This should be not necessary
 # Disable SSL verification

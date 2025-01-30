@@ -13,7 +13,8 @@ from loguru import logger
 from exceptions import FirmwareInstallFail, InvalidFirmwareFile, UnsupportedPlatform
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareUpload import FirmwareUploader
-from typedefs import FirmwareFormat, FlightController, Platform, PlatformType
+from flight_controller import FlightController, Platform, PlatformType
+from typedefs import FirmwareFormat
 
 
 def get_board_id(platform: Platform) -> int:

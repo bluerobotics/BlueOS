@@ -4,7 +4,8 @@ import platform
 import pytest
 
 from firmware.FirmwareDownload import FirmwareDownloader
-from typedefs import Platform, Vehicle
+from flight_controller import Platform
+from typedefs import Vehicle
 
 
 def test_static() -> None:
