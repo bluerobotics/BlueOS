@@ -109,7 +109,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
             stderr = _strerr.decode("utf-8") if _strerr else "No stderr."
             output = f"message: stdout: '{stdout}', stderr: '{stderr}'"
             returncode = self._subprocess.returncode
-            raise MavlinkRouterStartFail(f"Failed to initialize Mavlink router, code: {returncode}, {output}")
+            raise MavlinkRouterStartFail(f"Failed to initialize {self.name()}, code: {returncode}, {output}")
         await self.start_house_keepers()
 
     async def exit(self) -> None:
@@ -127,7 +127,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
                     await asyncio.sleep(3)
                 await self._subprocess.wait()  # Wait for the subprocess to terminate
         else:
-            logger.debug("Tried to stop router, but it was already not running.")
+            logger.debug(f"Tried to stop {self.name()}, but it was already not running.")
 
     async def start_house_keepers(self) -> None:
         if self._subprocess is None:
@@ -158,7 +158,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
 
     async def restart(self) -> None:
         if self._master_endpoint is None:
-            raise NoMasterMavlinkEndpoint("Mavlink master endpoint was not set. Cannot restart router.")
+            raise NoMasterMavlinkEndpoint(f"Mavlink master endpoint was not set. Cannot restart {self.name()}.")
         await self.exit()
         await self.start(self._master_endpoint)
 
