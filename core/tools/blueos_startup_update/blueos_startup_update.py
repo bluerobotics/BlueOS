@@ -407,6 +407,45 @@ def ensure_user_data_structure_is_in_place() -> bool:
     return False
 
 
+def ensure_ipv6_disabled() -> bool:
+    required_entries = [
+        (
+            "net.ipv6.conf.all.disable_ipv6=1",
+            re.compile(r"^\s*#?\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1", re.MULTILINE),
+        ),
+        (
+            "net.ipv6.conf.default.disable_ipv6=1",
+            re.compile(r"^\s*#?\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1", re.MULTILINE),
+        ),
+        (
+            "net.ipv6.conf.lo.disable_ipv6=1",
+            re.compile(r"^\s*#?\s*net\.ipv6\.conf\.lo\.disable_ipv6\s*=\s*1", re.MULTILINE),
+        ),
+    ]
+
+    sysctl_config_path = "/etc/sysctl.conf"
+    sysctl_config_file = load_file(sysctl_config_path)
+
+    # Make sure every required entry is in the file and uncommented
+    needs_update = False
+    for (desired, pattern) in required_entries:
+        entry_match = pattern.search(sysctl_config_file)
+        if entry_match:
+            line_result = entry_match.group(0)
+            if "#" in line_result:
+                sysctl_config_file = pattern.sub(desired, sysctl_config_file)
+                needs_update = True
+        else:
+            sysctl_config_file += f"\n{desired}\n"
+            needs_update = True
+
+    if needs_update:
+        backup_identifier = "before_no_ipv6"
+        save_file(sysctl_config_path, sysctl_config_file, backup_identifier)
+
+    return needs_update
+
+
 def run_command_is_working():
     output = run_command("uname -a", check=False)
     if output.returncode != 0:
@@ -541,6 +580,7 @@ def main() -> int:
         ("nginx", ensure_nginx_permissions),
         ("dns", create_dns_conf_host_link),
         ("ssh", fix_ssh_ownership),
+        ("noIPV6", ensure_ipv6_disabled),
     ]
 
     # this will always be pi4 as pi5 is not supported
