@@ -18,6 +18,7 @@
 
       <v-card-text>
         <inline-parameter-editor
+          :auto-set="true"
           :label="param.name"
           :param="param"
         />
@@ -27,6 +28,7 @@
             sm="4"
           >
             <inline-parameter-editor
+              :auto-set="true"
               :label="max_param?.name"
               :param="max_param"
             />
@@ -36,6 +38,7 @@
             sm="4"
           >
             <inline-parameter-editor
+              :auto-set="true"
               :label="trim_param?.name"
               :param="trim_param"
             />
@@ -45,6 +48,7 @@
             sm="4"
           >
             <inline-parameter-editor
+              :auto-set="true"
               :label="min_param?.name"
               :param="min_param"
             />

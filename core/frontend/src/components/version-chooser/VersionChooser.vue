@@ -4,6 +4,14 @@
       max-width="1000"
       class="mx-auto"
     >
+      <v-dialog
+        v-model="show_docker_login_dialog"
+        max-width="450"
+      >
+        <DockerLogin
+          @cancel="show_docker_login_dialog = false"
+        />
+      </v-dialog>
       <v-card
         v-if="!settings.is_pirate_mode"
         max-width="900"
@@ -77,7 +85,15 @@
         max-width="900"
         class="mx-auto my-12 pa-4"
       >
-        <h2>Remote Versions</h2>
+        <div class="d-flex justify-space-between pb-3">
+          <h2>Remote Versions</h2>
+          <v-btn
+            color="primary"
+            @click="show_docker_login_dialog = true"
+          >
+            Docker Login
+          </v-btn>
+        </div>
         <v-form
           @submit.prevent="loadVersions()"
         >
@@ -211,6 +227,7 @@ import PullTracker from '@/utils/pull_tracker'
 import * as VCU from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import DockerLogin from './DockerLogin.vue'
 import VersionCard from './VersionCard.vue'
 
 const notifier = new Notifier(version_chooser_service)
@@ -218,6 +235,7 @@ const notifier = new Notifier(version_chooser_service)
 export default Vue.extend({
   name: 'VersionChooser',
   components: {
+    DockerLogin,
     SpinningLogo,
     VersionCard,
     PullProgress,
@@ -257,6 +275,7 @@ export default Vue.extend({
       selected_image: default_repository,
       deleting: '', // image currently being deleted, if any
       file_input_error: '',
+      show_docker_login_dialog: false,
     }
   },
   computed: {

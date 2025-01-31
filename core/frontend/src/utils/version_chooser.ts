@@ -3,6 +3,7 @@ import { gt as sem_ver_greater, SemVer } from 'semver'
 import Notifier from '@/libs/notifier'
 import { version_chooser_service } from '@/types/frontend_services'
 import {
+  DockerLoginInfo,
   LocalVersionsQuery, Version, VersionsQuery, VersionType,
 } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
@@ -173,8 +174,36 @@ async function loadBootstrapCurrentVersion(): Promise<string | undefined> {
     })
 }
 
+async function dockerLogin(info: DockerLoginInfo): Promise<void> {
+  await back_axios({
+    method: 'post',
+    url: `${API_URL}/docker/login/`,
+    data: info,
+  })
+}
+
+async function dockerLogout(info: DockerLoginInfo): Promise<void> {
+  await back_axios({
+    method: 'post',
+    url: `${API_URL}/docker/logout/`,
+    data: info,
+  })
+}
+
+async function dockerAccounts(): Promise<DockerLoginInfo[]> {
+  const data = await back_axios({
+    method: 'get',
+    url: `${API_URL}/docker/accounts/`,
+  })
+
+  return data.data as DockerLoginInfo[]
+}
+
 export {
   DEFAULT_REMOTE_IMAGE,
+  dockerAccounts,
+  dockerLogin,
+  dockerLogout,
   fixVersion,
   getLatestBeta,
   getLatestStable,

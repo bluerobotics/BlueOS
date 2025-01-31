@@ -31,6 +31,8 @@ DELTA_JSON = {
             "/etc/machine-id": {"bind": "/etc/machine-id", "mode": "ro"},
             "/etc/resolv.conf.host": {"bind": "/etc/resolv.conf.host", "mode": "ro"},
             "/home/pi/.ssh": {"bind": "/home/pi/.ssh", "mode": "rw"},
+            "/home/pi/.docker": {"bind": "/home/pi/.docker", "mode": "rw"},
+            "/root/.docker": {"bind": "/root/.docker", "mode": "rw"},
             "/run/udev": {"bind": "/run/udev", "mode": "ro"},
             "/sys/": {"bind": "/sys/", "mode": "rw"},
             "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
