@@ -129,6 +129,7 @@ export default Vue.extend({
       is_form_valid: false,
       internal_new_value: 0,
       selected_bitflags: [] as number[],
+      last_sent_value: undefined as number | undefined,
     }
   },
   computed: {
@@ -154,7 +155,11 @@ export default Vue.extend({
       if (!this.autoSet) {
         return false
       }
-      return this.param.value !== this.internal_new_value
+      // Don't show loading state if the value was just set and we're waiting for vehicle to catch up
+      if (!this.last_sent_value || this.internal_new_value === this.last_sent_value) {
+        return false
+      }
+      return this.param?.value !== this.internal_new_value
     },
     param_value() {
       return this.param?.value ?? 0
@@ -190,6 +195,9 @@ export default Vue.extend({
     },
     param_value() {
       this.updateSelectedFlags()
+      if (this.last_sent_value === undefined) {
+        this.internal_new_value = this.param_value
+      }
     },
   },
   mounted() {
@@ -281,6 +289,7 @@ export default Vue.extend({
       if (this.param?.rebootRequired) {
         autopilot_data.setRebootRequired(false)
       }
+      this.last_sent_value = value
       mavlink2rest.setParam(this.param.name, value, autopilot_data.system_id, this.param.paramType.type)
       if (this.autoRefreshParams) {
         autopilot_data.reset()
