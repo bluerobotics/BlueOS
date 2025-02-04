@@ -150,6 +150,18 @@ class PingStore extends VuexModule {
         this.updateFoundServices([])
       })
   }
+
+  @Action
+  async ping(options: {host: string, iface?: string}): Promise<boolean | undefined> {
+    return back_axios({
+      method: 'get',
+      url: `${this.API_URL}/ping`,
+      params: { host: options.host, interface_addr: options.iface },
+      timeout: 15000,
+    })
+      .then((response) => response.data as boolean)
+      .catch(() => undefined)
+  }
 }
 
 export { PingStore }
