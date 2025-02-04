@@ -143,6 +143,7 @@
       </v-col>
     </v-row>
     <servo-function-editor-dialog
+      v-if="edit_param_dialog"
       v-model="edit_param_dialog"
       :param="selected_param"
     />
