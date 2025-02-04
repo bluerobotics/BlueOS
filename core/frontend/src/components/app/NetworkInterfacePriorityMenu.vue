@@ -16,6 +16,20 @@
           <v-spacer />
           {{ element.name }}
           <v-spacer />
+          <v-tooltip bottom>
+            <template #activator="{ on }">
+              <v-icon
+                class="pr-2"
+                :color="internetStatusColor(element)"
+                v-on="on"
+              >
+                {{ internetStatusIcon(element) }}
+              </v-icon>
+            </template>
+            <span>
+              {{ internetStatusText(element) }}
+            </span>
+          </v-tooltip>
           <v-icon
             v-text="'mdi-drag'"
           />
@@ -53,6 +67,7 @@ import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
+import helper from '@/store/helper'
 import { EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -64,11 +79,20 @@ export default Vue.extend({
   data() {
     return {
       interfaces: [] as EthernetInterface[],
+      internet_access: {} as Record<string, boolean | undefined>,
     }
   },
   computed: {
     is_loading(): boolean {
       return this.interfaces.isEmpty()
+    },
+  },
+  watch: {
+    interfaces: {
+      handler(interfaces: EthernetInterface[]) {
+        this.checkInterfacesInternet(interfaces)
+      },
+      immediate: true,
     },
   },
   async mounted() {
@@ -81,6 +105,39 @@ export default Vue.extend({
     order(index: number): string {
       // Based over: https://stackoverflow.com/a/39466341
       return `${index}${['st', 'nd', 'rd'][((index + 90) % 100 - 10) % 10 - 1] || 'th'}`
+    },
+    internetStatusColor(iface: EthernetInterface): string {
+      const status = this.internet_access[iface.name]
+      if (status === undefined) return 'white'
+      return status ? 'green' : 'red'
+    },
+    internetStatusIcon(iface: EthernetInterface): string {
+      const status = this.internet_access[iface.name]
+      if (status === undefined) return 'mdi-loading mdi-spin'
+      return status ? 'mdi-web' : 'mdi-web-off'
+    },
+    internetStatusText(iface: EthernetInterface): string {
+      const status = this.internet_access[iface.name]
+      if (status === undefined) return 'Checking if interface have access to internet...'
+      return status ? 'Online' : 'Offline'
+    },
+    async checkInterfaceInternet(host: string, iface: EthernetInterface): Promise<void> {
+      const result = await helper.ping({ host, iface: iface.name })
+      Vue.set(this.internet_access, iface.name, result)
+    },
+    async checkInterfacesInternet(interfaces: EthernetInterface[]): Promise<void> {
+      if (!helper.has_internet) {
+        this.internet_access = interfaces.reduce((acc, iface) => {
+          acc[iface.name] = false
+          return acc
+        }, {} as Record<string, boolean | undefined>)
+        return
+      }
+
+      // TODO: Should move to some of the online hosts from has_internet test as soon as PR from make internet non
+      // binary is merged
+      const host = '1.1.1.1'
+      await Promise.all(interfaces.map((iface) => this.checkInterfaceInternet(host, iface)))
     },
     async setHighestInterface(): Promise<void> {
       this.is_loading = true
