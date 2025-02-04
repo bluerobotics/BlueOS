@@ -626,6 +626,20 @@ async def internet_test_previous_result() -> Any:
     return SPEED_TEST.results.dict()
 
 
+@fast_api_app.get(
+    "/ping",
+    summary="Ping a server using a specific interface.",
+)
+@version(1, 0)
+async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
+    iface = ["-I", interface_addr] if interface_addr else []
+    process = await asyncio.create_subprocess_exec(
+        "ping", "-c", "1", *iface, host, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
+    await process.communicate()
+    return process.returncode == 0
+
+
 async def periodic() -> None:
     while True:
         await asyncio.sleep(60)
