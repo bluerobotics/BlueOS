@@ -379,8 +379,46 @@ class DHCPCD(AbstractNetworkHandler):
         with open("/etc/dhcpcd.conf", "w", encoding="utf-8") as f:
             f.writelines(lines)
 
+    def _get_dhcp_address_using_dhclient(self, interface_name: str) -> str | None:
+        """Run dhclient to get a new IP address and return it.
+
+        Args:
+            interface_name: Name of the interface to get IP for
+
+        Returns:
+            The IP address acquired from DHCP, or None if failed
+        """
+        try:
+            # Just run dhclient without releasing existing IPs
+            command = f"timeout 5 dhclient -v {interface_name} 2>&1"
+            logger.info(f"Running: {command}")
+            dhclient_output = os.popen(command).read()
+
+            bound_ip_match = re.search(r"bound to ([0-9.]+)", dhclient_output)
+            if bound_ip_match:
+                return bound_ip_match.group(1)
+
+            logger.error(f"Could not find bound IP in dhclient output: {dhclient_output}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to run dhclient: {e}")
+            return None
+
     def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
-        raise NotImplementedError("This Handler does not support triggering dynamic IP acquisition")
+        """Get a new IP from DHCP using dhclient.
+        The IP will be managed by dhclient and not added to NetworkManager's configuration.
+
+        Args:
+            interface_name: Name of the interface to get IP for
+        """
+        # Get new IP using dhclient
+        new_ip = self._get_dhcp_address_using_dhclient(interface_name)
+        if not new_ip:
+            logger.error(f"Failed to get DHCP-acquired IP for {interface_name}")
+            return
+
+        logger.info(f"Got new IP {new_ip} from DHCP for {interface_name}")
 
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         """Sets network interface priority..
