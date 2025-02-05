@@ -50,7 +50,7 @@
         <!-- Text input for numbers -->
         <v-text-field
           v-if="custom_input || (!param?.options && !param?.bitmask)"
-          v-model.number="internal_new_value"
+          v-model="internal_new_value_as_string"
           dense
           type="number"
           :step="param.increment ?? 0.01"
@@ -58,6 +58,7 @@
           :rules="forcing_input ? [] : [isInRange, isValidType]"
           :loading="waiting_for_param_update"
           @blur="updateVariables"
+          @input="internal_new_value = parseFloat(internal_new_value_as_string)"
         >
           <template #label>
             <parameter-label :label="label ?? 'Enter a value'" :param="param" :format-options="formatOptions" />
@@ -128,6 +129,7 @@ export default Vue.extend({
       // Form can't be computed correctly, so we save it's state under data
       is_form_valid: false,
       internal_new_value: 0,
+      internal_new_value_as_string: '',
       selected_bitflags: [] as number[],
     }
   },
@@ -171,6 +173,7 @@ export default Vue.extend({
   watch: {
     param(newParam) {
       this.internal_new_value = newParam?.value ?? 0
+      this.internal_new_value_as_string = this.internal_new_value.toString()
     },
     is_form_valid(valid) {
       this.$emit('form-valid-change', valid)
