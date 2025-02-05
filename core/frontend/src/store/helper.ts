@@ -12,8 +12,14 @@ import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(helper_service)
 
+type site = {
+  hostname: string;
+  path: string;
+  port: number;
+}
+
 type CheckSiteStatus = {
-  site: string;
+  site: site;
   online: boolean;
   error: string | null;
 };
