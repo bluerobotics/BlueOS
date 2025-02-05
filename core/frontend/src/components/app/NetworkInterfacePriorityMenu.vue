@@ -134,9 +134,7 @@ export default Vue.extend({
         return
       }
 
-      // TODO: Should move to some of the online hosts from has_internet test as soon as PR from make internet non
-      // binary is merged
-      const host = '1.1.1.1'
+      const host = helper.reachable_hosts?.[0] ?? '1.1.1.1'
       await Promise.all(interfaces.map((iface) => this.checkInterfaceInternet(host, iface)))
     },
     async setHighestInterface(): Promise<void> {
