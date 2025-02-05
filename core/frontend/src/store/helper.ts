@@ -33,6 +33,8 @@ class PingStore extends VuexModule {
 
   services: Service[] = []
 
+  reachable_hosts: string[] = []
+
   checkInternetAccessTask = new OneMoreTime(
     { delay: 20000 },
   )
@@ -44,6 +46,11 @@ class PingStore extends VuexModule {
   @Mutation
   setHasInternet(has_internet: InternetConnectionState): void {
     this.has_internet = has_internet
+  }
+
+  @Mutation
+  setReachableHosts(hosts: string[]): void {
+    this.reachable_hosts = hosts
   }
 
   @Mutation
@@ -61,6 +68,7 @@ class PingStore extends VuexModule {
       .then((response) => {
         const sites = Object.values(response.data as SiteStatus)
         const online_sites = sites.filter((item) => item.online)
+        this.setReachableHosts(online_sites.map((item) => item.site.hostname))
 
         // If no sites are reachable, we're offline
         if (online_sites.length === 0) {
@@ -80,6 +88,7 @@ class PingStore extends VuexModule {
       .catch((error) => {
         // If we can't even reach the backend, we're in an unknown state
         this.setHasInternet(InternetConnectionState.UNKNOWN)
+        this.setReachableHosts([])
         notifier.pushBackError('INTERNET_CHECK_FAIL', error)
       })
   }
