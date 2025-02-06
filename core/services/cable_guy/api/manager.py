@@ -282,6 +282,14 @@ class EthernetManager:
             logger.error(f"Failed to add IP '{ip}' to interface '{interface_name}'. {error}")
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
+        if saved_interface is None:
+            # If the interface is not saved, create a new one
+            saved_interface = NetworkInterface(
+                name=interface_name,
+                addresses=[
+                    InterfaceAddress(ip=ip, mode=AddressMode.Unmanaged),
+                ],
+            )
         new_address = InterfaceAddress(ip=ip, mode=mode)
         if new_address not in saved_interface.addresses:
             saved_interface.addresses.append(new_address)
@@ -306,6 +314,9 @@ class EthernetManager:
             raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
+        if saved_interface is None:
+            logger.error(f"Interface {interface_name} is not managed by Cable Guy. Not deleting IP {ip_address}.")
+            return
         saved_interface.addresses = [address for address in saved_interface.addresses if address.ip != ip_address]
         self._update_interface_settings(interface_name, saved_interface)
 
