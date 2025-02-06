@@ -31,6 +31,7 @@ class NetworkInterface(BaseModel):
     name: str
     addresses: List[InterfaceAddress]
     info: Optional[InterfaceInfo]
+    priority: Optional[int]
 
     def __hash__(self) -> int:
         return hash(self.name) + sum(hash(address) for address in self.addresses)
@@ -44,4 +45,4 @@ class NetworkInterfaceMetric(BaseModel):
 
 class NetworkInterfaceMetricApi(BaseModel):
     name: str
-    priority: Optional[int]
+    priority: int

@@ -326,12 +326,13 @@ class EthernetManager:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
 
-    def get_saved_interface_by_name(self, name: str) -> NetworkInterface:
+    def get_saved_interface_by_name(self, name: str) -> Optional[NetworkInterface]:
         for interface in self.settings.root["content"]:
             if interface["name"] == name:
                 return NetworkInterface(**interface)
-        return self.get_interface_by_name(name)
+        return None
 
+    # pylint: disable=too-many-locals
     def get_interfaces(self, filter_wifi: bool = False) -> List[NetworkInterface]:
         """Get interfaces information
 
@@ -369,9 +370,18 @@ class EthernetManager:
                 else:
                     mode = AddressMode.Unmanaged if is_static_ip and valid_ip else AddressMode.Client
                 valid_addresses.append(InterfaceAddress(ip=ip, mode=mode))
-
             info = self.get_interface_info(interface)
-            interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info)
+            saved_interface = self.get_saved_interface_by_name(interface)
+            # Get priority from saved interface or from current interface metrics, defaulting to None if neither exists
+            priority = None
+            if saved_interface and saved_interface.priority is not None:
+                priority = saved_interface.priority
+            else:
+                interface_metric = self.get_interface_priority(interface)
+                if interface_metric:
+                    priority = interface_metric.priority
+
+            interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info, priority=priority)
             # Check if it's valid and add to the result
             if self.validate_interface_data(interface_data, filter_wifi):
                 result += [interface_data]
@@ -404,17 +414,13 @@ class EthernetManager:
         Returns:
             List[NetworkInterfaceMetric]: List of interface priorities, lower is higher priority
         """
-        result = self.network_handler.get_interfaces_priority()
-        if result:
-            return result
-
         return self._get_interfaces_priority_from_ipr()
 
     def _get_interfaces_priority_from_ipr(self) -> List[NetworkInterfaceMetric]:
-        """Get the priority metrics for all network interfaces.
+        """Get the priority metrics for all network interfaces that are UP and RUNNING.
 
         Returns:
-            List[NetworkInterfaceMetric]: A list of priority metrics for each interface.
+            List[NetworkInterfaceMetric]: A list of priority metrics for each active interface.
         """
 
         interfaces = self.ipr.get_links()
@@ -424,36 +430,36 @@ class EthernetManager:
         # GLHF
         routes = self.ipr.get_routes(family=AddressFamily.AF_INET)
 
-        # Generate a dict of index to network name.
-        # And a second list between the network index and metric,
-        # keep in mind that a single interface can have multiple routes
-        name_dict = {iface["index"]: iface.get_attr("IFLA_IFNAME") for iface in interfaces}
-        metric_index_list = [
-            {"metric": route.get_attr("RTA_PRIORITY", 0), "index": route.get_attr("RTA_OIF")} for route in routes
-        ]
+        # First find interfaces with default routes
+        interfaces_with_default_routes = set()
+        for route in routes:
+            dst = route.get_attr("RTA_DST")
+            oif = route.get_attr("RTA_OIF")
+            if dst is None and oif is not None:  # Default route
+                interfaces_with_default_routes.add(oif)
 
-        # Keep the highest metric per interface in a dict of index to metric
-        metric_dict: Dict[int, int] = {}
-        for d in metric_index_list:
-            if d["index"] in metric_dict:
-                metric_dict[d["index"]] = max(metric_dict[d["index"]], d["metric"])
-            else:
-                metric_dict[d["index"]] = d["metric"]
+        # Generate a dict of index to network name, but only for interfaces that are UP and RUNNING
+        # IFF_UP flag is 0x1, IFF_RUNNING is 0x40 in Linux
+        name_dict = {
+            iface["index"]: iface.get_attr("IFLA_IFNAME")
+            for iface in interfaces
+            if (iface["flags"] & 0x1) and (iface["flags"] & 0x40) and iface["index"] in interfaces_with_default_routes
+        }
 
-        # Highest priority wins for ipr but not for dhcpcd, so we sort and reverse the list
-        # Where we change the priorities between highest and low to convert that
-        original_list = sorted(
-            [
-                NetworkInterfaceMetric(index=index, name=name, priority=metric_dict.get(index) or 0)
-                for index, name in name_dict.items()
-            ],
-            key=lambda x: x.priority,
-            reverse=True,
-        )
+        # Get metrics for default routes of active interfaces
+        interface_metrics: Dict[int, int] = {}
+        for route in routes:
+            oif = route.get_attr("RTA_OIF")
+            if oif in name_dict and route.get_attr("RTA_DST") is None:  # Only default routes
+                metric = route.get_attr("RTA_PRIORITY", 0)
+                # Keep the highest metric for each interface
+                if oif not in interface_metrics or metric > interface_metrics[oif]:
+                    interface_metrics[oif] = metric
 
+        # Create the list of interface metrics
         return [
-            NetworkInterfaceMetric(index=item.index, name=item.name, priority=original_list[-(i + 1)].priority)
-            for i, item in enumerate(original_list)
+            NetworkInterfaceMetric(index=index, name=name, priority=interface_metrics.get(index, 0))
+            for index, name in name_dict.items()
         ]
 
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
@@ -465,6 +471,13 @@ class EthernetManager:
                 sorted by priority to set, if values are undefined.
         """
         self.network_handler.set_interfaces_priority(interfaces)
+        # save to settings
+        for interface in interfaces:
+            saved_interface = self.get_saved_interface_by_name(interface.name)
+            if saved_interface is None:
+                saved_interface = NetworkInterface(name=interface.name, addresses=[], priority=interface.priority)
+            saved_interface.priority = interface.priority
+            self._update_interface_settings(interface.name, saved_interface)
 
     def get_interface_priority(self, interface_name: str) -> Optional[NetworkInterfaceMetric]:
         """Get the priority metric for a network interface.
@@ -536,7 +549,7 @@ class EthernetManager:
         except Exception:
             return False
 
-    def remove_dhcp_server_from_interface(self, interface_name: str) -> DHCPServerManager:
+    def remove_dhcp_server_from_interface(self, interface_name: str) -> None:
         logger.info(f"Removing DHCP server from interface '{interface_name}'.")
         try:
             self._dhcp_servers.remove(self._dhcp_server_on_interface(interface_name))
@@ -547,6 +560,8 @@ class EthernetManager:
             raise RuntimeError("Cannot remove DHCP server from interface.") from error
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
+        if saved_interface is None:
+            return
         # Get all non-server addresses
         new_ip_list = [address for address in saved_interface.addresses if address.mode != AddressMode.Server]
         # Find the server address if it exists and convert it to unmanaged
@@ -576,7 +591,7 @@ class EthernetManager:
     def __del__(self) -> None:
         self.stop()
 
-    def priorities_mismatch(self) -> bool:
+    def priorities_mismatch(self) -> List[NetworkInterface]:
         """Check if the current interface priorities differ from the saved ones.
         Uses sets for order-independent comparison of NetworkInterfaceMetric objects,
         which compare only name and priority fields.
@@ -584,14 +599,21 @@ class EthernetManager:
         Returns:
             bool: True if priorities don't match, False if they do
         """
-        if "priorities" not in self.settings.root:
-            return False
 
-        current = set(self.get_interfaces_priority())
-        # Convert saved priorities to NetworkInterfaceMetric, index value doesn't matter for comparison
-        saved = {NetworkInterfaceMetric(index=0, **iface) for iface in self.settings.root["priorities"]}
+        mismatched_interfaces = []
+        current_priorities = {interface.name: interface.priority for interface in self.get_interfaces_priority()}
 
-        return current != saved
+        for interface_settings in self.settings.root["content"]:
+            interface = NetworkInterface(**interface_settings)
+            if interface.priority is None:
+                continue
+            if interface.name in current_priorities and interface.priority != current_priorities[interface.name]:
+                logger.info(
+                    f"Priority mismatch for {interface.name}: {interface.priority} != {current_priorities[interface.name]}"
+                )
+                mismatched_interfaces.append(interface)
+
+        return mismatched_interfaces
 
     def config_mismatch(self) -> Set[NetworkInterface]:
         """Check if the current interface config differs from the saved ones.
@@ -615,7 +637,7 @@ class EthernetManager:
                 logger.debug(f"Interface {interface.name} not in saved configuration, skipping")
                 continue
 
-            for address in self.get_saved_interface_by_name(interface.name).addresses:
+            for address in saved_interfaces[interface.name].addresses:
                 if address.mode == AddressMode.Client:
                     if not any(addr.mode == AddressMode.Client for addr in interface.addresses):
                         logger.info(f"Mismatch detected for {interface.name}: missing dhcp client address")
@@ -637,16 +659,20 @@ class EthernetManager:
         if there is a mismatch, it will apply the saved settings
         """
         while True:
-            if self.priorities_mismatch():
-                logger.warning("Interface priorities mismatch, applying saved settings.")
-                try:
-                    self.set_interfaces_priority(self.settings.root["priorities"])
-                except Exception as error:
-                    logger.error(f"Failed to set interface priorities: {error}")
             mismatches = self.config_mismatch()
             if mismatches:
                 logger.warning("Interface config mismatch, applying saved settings.")
                 logger.debug(f"Mismatches: {mismatches}")
                 for interface in mismatches:
                     self.set_configuration(interface, watchdog_call=True)
+            priority_mismatch = self.priorities_mismatch()
+            if priority_mismatch:
+                logger.warning("Interface priorities mismatch, applying saved settings.")
+                saved_interfaces = self.settings.root["content"]
+                priorities = [
+                    NetworkInterfaceMetricApi(name=interface["name"], priority=interface["priority"])
+                    for interface in saved_interfaces
+                    if "priority" in interface and interface["priority"] is not None
+                ]
+                self.set_interfaces_priority(priorities)
             await asyncio.sleep(5)

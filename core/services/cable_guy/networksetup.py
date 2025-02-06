@@ -1,7 +1,7 @@
 import os
 import re
 import socket
-from typing import Dict, List
+from typing import Any, List
 
 import sdbus
 from loguru import logger
@@ -14,7 +14,7 @@ from sdbus_block.networkmanager import (
     NetworkManagerSettings,
 )
 
-from typedefs import NetworkInterfaceMetric, NetworkInterfaceMetricApi
+from typedefs import NetworkInterfaceMetricApi
 
 sdbus.set_default_bus(sdbus.sd_bus_open_system())
 
@@ -27,9 +27,6 @@ class AbstractNetworkHandler:
 
     def detect(self) -> bool:
         raise NotImplementedError("NetworkManager does not support detecting network interfaces priority")
-
-    def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
-        raise NotImplementedError("NetworkManager does not support getting network interfaces priority")
 
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         raise NotImplementedError("NetworkManager does not support setting interface priority")
@@ -49,6 +46,83 @@ class AbstractNetworkHandler:
     def cleanup_interface_connections(self, interface_name: str) -> None:
         pass
 
+    def _update_route(self, interface_name: str, interface_index: int, route: Any, priority: int) -> None:
+        """Update a single route with new priority.
+
+        Args:
+            interface_name: Name of the interface
+            interface_index: Index of the interface
+            route: Route object
+            priority: New priority to set
+        """
+        # Skip non-default routes (those not pointing to 0.0.0.0/0)
+        dst = route.get_attr("RTA_DST")
+        if dst is not None:  # If dst is None, it's a default route (0.0.0.0/0)
+            return
+        if route.get_attr("RTA_PRIORITY") == priority:
+            return
+
+        self.ipr.route(
+            "del",
+            oif=interface_index,
+            family=socket.AF_INET,
+            scope=route["scope"],
+            proto=route["proto"],
+            type=route["type"],
+            dst="0.0.0.0/0",  # For default route
+            gateway=route.get_attr("RTA_GATEWAY"),
+            table=route.get_attr("RTA_TABLE", 254),  # Default to main table if not specified
+        )
+
+        for attempt in range(3):
+            try:
+                # Add the new route with updated priority
+                logger.info(f"Adding new route for {interface_name} with priority {priority}")
+                self.ipr.route(
+                    "add",
+                    oif=interface_index,
+                    family=socket.AF_INET,
+                    scope=route["scope"],
+                    proto=route["proto"],
+                    type=route["type"],
+                    dst="0.0.0.0/0",  # For default route
+                    gateway=route.get_attr("RTA_GATEWAY"),
+                    priority=priority + attempt,
+                    table=route.get_attr("RTA_TABLE", 254),  # Default to main table if not specified
+                )
+                logger.info(f"Updated default route for {interface_name} with priority {priority}")
+                break
+            except Exception as e:
+                logger.error(f"Failed to update route for {interface_name}: {e} (attempt {attempt})")
+
+    def set_interfaces_priority_using_ipr(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+        if not interfaces:
+            logger.info("No interfaces to set priority for")
+            return
+
+        for interface in interfaces:
+            try:
+                # Use specified priority or increment current_priority
+                priority = interface.priority
+
+                # Get interface index
+                interface_index = self.ipr.link_lookup(ifname=interface.name)[0]
+
+                # Get all routes for this interface
+                routes = self.ipr.get_routes(oif=interface_index, family=socket.AF_INET)
+
+                # Update existing routes
+                for route in routes:
+                    try:
+                        self._update_route(interface.name, interface_index, route, priority)
+                    except Exception as e:
+                        logger.error(f"Failed to update route for {interface.name}: {e}")
+                        continue
+
+            except Exception as e:
+                logger.error(f"Failed to set priority for interface {interface.name}: {e}")
+                continue
+
 
 class BookwormHandler(AbstractNetworkHandler):
     """
@@ -61,6 +135,9 @@ class BookwormHandler(AbstractNetworkHandler):
         network_manager_settings = NetworkManagerSettings()
         for connection_path in network_manager_settings.connections:
             profile = NetworkConnectionSettings(connection_path).get_profile()
+            # Skip if this is a wireless connection
+            if profile.connection.connection_type == "802-11-wireless":
+                continue
             if profile.connection.interface_name == interface_name:
                 logger.info(
                     f"Removing connection {profile.connection.uuid} ({profile.connection.connection_id}) for interface {interface_name}"
@@ -106,40 +183,6 @@ class BookwormHandler(AbstractNetworkHandler):
         except Exception as error:
             logger.error(f"Failed to add IP '{ip}' to interface '{interface_name}'. {error}")
 
-    def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
-        """Get the priority metrics for all network interfaces using IPRoute.
-
-        Returns:
-            List[NetworkInterfaceMetric]: A list of priority metrics for each interface.
-        """
-        interfaces = self.ipr.get_links()
-        # Get all IPv4 routes
-        routes = self.ipr.get_routes(family=socket.AF_INET)
-
-        # Create a mapping of interface index to name
-        name_dict = {iface["index"]: iface.get_attr("IFLA_IFNAME") for iface in interfaces}
-
-        # Get metrics for each interface from routes
-        metric_index_list = [
-            {"metric": route.get_attr("RTA_PRIORITY", 0), "index": route.get_attr("RTA_OIF")} for route in routes
-        ]
-
-        # Keep the highest metric per interface
-        metric_dict: Dict[int, int] = {}
-        for d in metric_index_list:
-            if d["index"] in metric_dict:
-                metric_dict[d["index"]] = max(metric_dict[d["index"]], d["metric"])
-            else:
-                metric_dict[d["index"]] = d["metric"]
-
-        # Create NetworkInterfaceMetric objects for each interface
-        result = []
-        for index, name in name_dict.items():
-            metric = NetworkInterfaceMetric(index=index, name=name, priority=metric_dict.get(index, 0))
-            result.append(metric)
-
-        return result
-
     # pylint: disable=too-many-nested-blocks
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         """Sets network interface priority using IPRoute.
@@ -148,58 +191,7 @@ class BookwormHandler(AbstractNetworkHandler):
             interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics,
                 sorted by priority to set.
         """
-        if not interfaces:
-            logger.info("No interfaces to set priority for")
-            return
-
-        # If there's only one interface and no priority specified, set it to highest priority (0)
-        if len(interfaces) == 1 and interfaces[0].priority is None:
-            interfaces[0].priority = 0
-
-        current_priority = 1000
-        for interface in interfaces:
-            try:
-                # Use specified priority or increment current_priority
-                priority = interface.priority if interface.priority is not None else current_priority
-
-                # Get interface index
-                interface_index = self.ipr.link_lookup(ifname=interface.name)[0]
-
-                # Get all routes for this interface
-                routes = self.ipr.get_routes(oif=interface_index, family=socket.AF_INET)
-
-                # Update existing routes
-                for route in routes:
-                    try:
-                        route_data = {"priority": priority}
-
-                        # Copy existing route attributes
-                        for attr in ["RTA_DST", "RTA_GATEWAY", "RTA_TABLE", "RTA_PREFSRC"]:
-                            value = route.get_attr(attr)
-                            if value:
-                                # Convert attribute name to lowercase and remove RTA_ prefix
-                                key = attr.lower().replace("rta_", "")
-                                route_data[key] = value
-
-                        # Update the route
-                        self.ipr.route(
-                            "replace",
-                            oif=interface_index,
-                            family=socket.AF_INET,
-                            scope=route["scope"],
-                            proto=route["proto"],
-                            type=route["type"],
-                            **route_data,
-                        )
-                        logger.info(f"Updated route for {interface.name} with priority {priority}")
-                    except Exception as e:
-                        logger.error(f"Failed to update route for {interface.name}: {e}")
-                        continue
-
-                current_priority += 1000
-            except Exception as e:
-                logger.error(f"Failed to set priority for interface {interface.name}: {e}")
-                continue
+        self.set_interfaces_priority_using_ipr(interfaces)
 
     def _get_dhcp_address_using_dhclient(self, interface_name: str) -> str | None:
         """Run dhclient to get a new IP address and return it.
@@ -275,7 +267,6 @@ class DHCPCD(AbstractNetworkHandler):
     dhcpcd_conf_start_string = "#blueos-interface-priority-start"
     dhcpcd_conf_end_string = "#blueos-interface-priority-end"
     # https://man.archlinux.org/man/dhcpcd.conf.5#metric
-    default_dhcpdc_metric = 1000
 
     def detect(self) -> bool:
         return os.path.isfile("/etc/dhcpcd.conf")
@@ -311,42 +302,6 @@ class DHCPCD(AbstractNetworkHandler):
         except Exception as exception:
             logger.warning(f"Failed to read {self.dhcpcd_conf_path}, error: {exception}")
             return []
-
-    def get_interfaces_priority(self) -> List[NetworkInterfaceMetric]:
-        """Parses dhcpcd config file to get network interface priorities.
-        Goes through the dhcpcd config file line by line looking for "interface"
-        and "metric" lines. Extracts the interface name and metric value. The
-        metric is used as the priority, with lower being better.
-
-        List[NetworkInterfaceMetric]: A list of priority metrics for each interface.
-        """
-        lines = self._get_service_dhcpcd_content()
-        result = []
-        current_interface = None
-        current_metric = None
-        for line in lines:
-            if line.startswith("interface"):
-                if current_interface is not None and current_metric is not None:  # type: ignore[unreachable]
-                    # Metric is inverted compared to priority, lowest metric wins
-                    result.append(NetworkInterfaceMetric(index=0, name=current_interface, priority=current_metric))  # type: ignore[unreachable]
-
-                current_interface = line.split()[1]
-                current_metric = None
-
-            elif line.startswith("metric") and current_interface is not None:
-                try:
-                    current_metric = int(line.split()[1])
-                except Exception as exception:
-                    logger.error(
-                        f"Failed to parse {current_interface} metric, error: {exception}, line: {line}, using default metric"
-                    )
-                    current_metric = self.default_dhcpdc_metric
-
-        # Add the last entry to the result_list
-        if current_interface is not None and current_metric is not None:
-            result.append(NetworkInterfaceMetric(index=0, name=current_interface, priority=current_metric))
-
-        return result
 
     def _remove_dhcpcd_configuration(self) -> None:
         """Removes the network priority configuration added by this service from
@@ -427,7 +382,8 @@ class DHCPCD(AbstractNetworkHandler):
             interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics.
         """
 
-        # Note: With DHCPCD, lower priority wins!
+        self.set_interfaces_priority_using_ipr(interfaces)
+
         self._remove_dhcpcd_configuration()
 
         # Update interfaces priority if possible
@@ -435,11 +391,7 @@ class DHCPCD(AbstractNetworkHandler):
             logger.info("Cant change network priority from empty list.")
             return
 
-        # If there is a single interface without metric, make it the highest priority
-        if len(interfaces) == 1 and interfaces[0].priority is None:
-            interfaces[0].priority = 0
-
-        current_priority = interfaces[0].priority or self.default_dhcpdc_metric
+        current_priority = interfaces[0].priority
         lines = []
         lines.append(f"{self.dhcpcd_conf_start_string}\n")
         for interface in interfaces:
