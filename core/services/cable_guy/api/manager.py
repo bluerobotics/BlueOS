@@ -80,7 +80,7 @@ class EthernetManager:
         """
         if not watchdog_call:
             self.network_handler.cleanup_interface_connections(interface.name)
-        interfaces = self.get_ethernet_interfaces()
+        interfaces = self.get_interfaces()
         valid_names = [interface.name for interface in interfaces]
         if interface.name not in valid_names:
             raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
