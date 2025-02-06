@@ -53,6 +53,74 @@ class AutoPilotManager(metaclass=Singleton):
         else:
             self.settings.create_settings_file()
 
+        self.autopilot_default_endpoints = [
+            Endpoint(
+                name="GCS Server Link",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPServer,
+                place="0.0.0.0",
+                argument=14550,
+                persistent=True,
+                enabled=False,
+            ),
+            Endpoint(
+                name="GCS Client Link",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPClient,
+                place="192.168.2.1",
+                argument=14550,
+                persistent=True,
+                enabled=True,
+            ),
+            Endpoint(
+                name="MAVLink2RestServer",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPServer,
+                place="127.0.0.1",
+                argument=14001,
+                persistent=True,
+                protected=True,
+            ),
+            Endpoint(
+                name="MAVLink2Rest",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPClient,
+                place="127.0.0.1",
+                argument=14000,
+                persistent=True,
+                protected=True,
+                overwrite_settings=True,
+            ),
+            Endpoint(
+                name="Zenoh Deamon",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.Zenoh,
+                place="0.0.0.0",
+                argument=7117,
+                persistent=True,
+                protected=True,
+            ),
+            Endpoint(
+                name="Internal Link",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.TCPServer,
+                place="127.0.0.1",
+                argument=5777,
+                persistent=True,
+                protected=True,
+                overwrite_settings=True,
+            ),
+            Endpoint(
+                name="Ping360 Heading",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.UDPServer,
+                place="0.0.0.0",
+                argument=14660,
+                persistent=True,
+                protected=True,
+            ),
+        ]
+
     async def setup(self) -> None:
         # This is the logical continuation of __init__(), extracted due to its async nature
         self.configuration = deepcopy(self.settings.content)
@@ -311,7 +379,7 @@ class AutoPilotManager(metaclass=Singleton):
         self.settings.preferred_router = router
         self.configuration["preferred_router"] = router
         self.settings.save(self.configuration)
-        await self.mavlink_manager.set_preferred_router(router)
+        await self.mavlink_manager.set_preferred_router(router, self.autopilot_default_endpoints)
 
     def load_preferred_router(self) -> Optional[str]:
         try:
@@ -364,74 +432,7 @@ class AutoPilotManager(metaclass=Singleton):
         await self.start_mavlink_manager(master_endpoint)
 
     async def start_mavlink_manager(self, device: Endpoint) -> None:
-        default_endpoints = [
-            Endpoint(
-                name="GCS Server Link",
-                owner=self.settings.app_name,
-                connection_type=EndpointType.UDPServer,
-                place="0.0.0.0",
-                argument=14550,
-                persistent=True,
-                enabled=False,
-            ),
-            Endpoint(
-                name="GCS Client Link",
-                owner=self.settings.app_name,
-                connection_type=EndpointType.UDPClient,
-                place="192.168.2.1",
-                argument=14550,
-                persistent=True,
-                enabled=True,
-            ),
-            Endpoint(
-                name="MAVLink2RestServer",
-                owner=self.settings.app_name,
-                connection_type=EndpointType.UDPServer,
-                place="127.0.0.1",
-                argument=14001,
-                persistent=True,
-                protected=True,
-            ),
-            Endpoint(
-                name="MAVLink2Rest",
-                owner=self.settings.app_name,
-                connection_type=EndpointType.UDPClient,
-                place="127.0.0.1",
-                argument=14000,
-                persistent=True,
-                protected=True,
-                overwrite_settings=True,
-            ),
-            Endpoint(
-                name="Zenoh Deamon",
-                owner=self.settings.app_name,
-                connection_type=EndpointType.Zenoh,
-                place="0.0.0.0",
-                argument=7117,
-                persistent=True,
-                protected=True,
-            ),
-            Endpoint(
-                name="Internal Link",
-                owner=self.settings.app_name,
-                connection_type=EndpointType.TCPServer,
-                place="127.0.0.1",
-                argument=5777,
-                persistent=True,
-                protected=True,
-                overwrite_settings=True,
-            ),
-            Endpoint(
-                name="Ping360 Heading",
-                owner=self.settings.app_name,
-                connection_type=EndpointType.UDPServer,
-                place="0.0.0.0",
-                argument=14660,
-                persistent=True,
-                protected=True,
-            ),
-        ]
-        for endpoint in default_endpoints:
+        for endpoint in self.autopilot_default_endpoints:
             try:
                 self.mavlink_manager.add_endpoint(endpoint)
             except EndpointAlreadyExists:
