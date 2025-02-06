@@ -19,4 +19,5 @@ export interface EthernetInterface {
     name: string,
     addresses: InterfaceAddress[],
     info?: InterfaceInfo,
+    priority?: number,
 }
