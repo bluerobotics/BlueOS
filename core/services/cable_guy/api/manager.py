@@ -86,8 +86,6 @@ class EthernetManager:
             raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
 
         logger.info(f"Setting configuration for interface '{interface.name}'.")
-        # Reset the interface by removing all IPs and DHCP servers associated with it
-        self.flush_interface(interface.name)
         self.remove_dhcp_server_from_interface(interface.name)
 
         if interface.addresses:
