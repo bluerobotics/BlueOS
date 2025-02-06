@@ -13,6 +13,7 @@ import mavlink_proxy.MAVProxy
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.exceptions import (
+    EndpointAlreadyExists,
     EndpointCreationFail,
     EndpointDeleteFail,
     EndpointUpdateFail,
@@ -125,15 +126,20 @@ class Manager:
         await self.tool.start(master_endpoint)
         self._last_valid_endpoints = self.endpoints()
 
-    async def set_preferred_router(self, router_name: str) -> None:
+    async def set_preferred_router(self, router_name: str, default_endpoints: Optional[List[Endpoint]] = None) -> None:
+        if default_endpoints is None:
+            default_endpoints = []
+
         try:
             endpoints = self.endpoints()
             master_endpoint = self.master_endpoint
             await self.stop()
             self.tool = AbstractRouter.get_interface(router_name)()
-            for endpoint in endpoints:
+            for endpoint in endpoints | set(default_endpoints):
                 try:
                     self.tool.add_endpoint(endpoint)
+                except EndpointAlreadyExists:
+                    pass
                 except Exception as error:
                     logger.warning(str(error))
             if master_endpoint:
