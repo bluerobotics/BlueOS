@@ -386,3 +386,31 @@ class VersionChooser:
         core = await self.client.containers.get("blueos-core")  # type: ignore
         await core.kill()
         return web.Response(status=200, text="Restarting...")
+
+    async def get_environment_variables(self) -> web.Response:
+        with open(DOCKER_CONFIG_PATH, encoding="utf-8") as startup_file:
+            try:
+                core = json.load(startup_file)["core"]
+                environment_variables = core.get("environment_variables", {})
+                return web.json_response(environment_variables)
+            except KeyError as error:
+                logger.warning(f"Invalid version file: {error}")
+                return web.Response(status=500, text=f"Invalid version file: {error}")
+            except Exception as e:
+                logger.warning(f"Unable to load settings file: {e}")
+                return web.Response(status=500, text=f"Unable to load settings file: {e}")
+
+    async def set_environment_variables(self, environment_variables: Dict[str, Any]) -> web.Response:
+        with open(DOCKER_CONFIG_PATH, "r+", encoding="utf-8") as startup_file:
+            try:
+                data = json.load(startup_file)
+                if "core" not in data:
+                    data["core"] = {}
+                data["core"]["environment_variables"] = environment_variables
+                startup_file.seek(0)
+                startup_file.write(json.dumps(data, indent=2))
+                startup_file.truncate()
+            except Exception as e:
+                logger.warning(f"Unable to set environment variables: {e}")
+                return web.Response(status=500, text=f"Unable to set environment variables: {e}")
+        return web.Response(status=200, text="Environment variables set")

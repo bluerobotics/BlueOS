@@ -96,6 +96,15 @@ async def docker_logout(request: web.Request) -> Any:
     return make_docker_logout(info)
 
 
+async def set_environment_variables(request: web.Request) -> Any:
+    data = await request.json()
+    return await versionChooser.set_environment_variables(data)
+
+
+async def get_environment_variables() -> Any:
+    return await versionChooser.get_environment_variables()
+
+
 def docker_accounts() -> Any:
     return get_docker_accounts()
 
