@@ -153,7 +153,6 @@ export default Vue.extend({
       })
         .catch((error) => {
           const message = `Could not set network interface priorities: ${interface_priorities}, error: ${error}`
-          console.log(interface_priorities)
           notifier.pushError('INCREASE_NETWORK_INTERFACE_METRIC_FAIL', message)
         })
         .then(() => {
