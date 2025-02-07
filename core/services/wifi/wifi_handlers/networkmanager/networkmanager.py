@@ -4,7 +4,7 @@ import select
 import signal
 import subprocess
 from concurrent.futures import CancelledError
-from typing import Any, List, Optional
+from typing import Any, List, MutableMapping, Optional
 
 import sdbus
 from commonwealth.utils.general import device_id
@@ -219,7 +219,7 @@ class NetworkManagerWifi(AbstractWifiManager):
             return
 
         # If no existing connection, create a new one
-        connection = {
+        connection: MutableMapping[str, Any] = {
             "connection": {
                 "type": ("s", "802-11-wireless"),
                 "id": ("s", credentials.ssid),
@@ -231,6 +231,7 @@ class NetworkManagerWifi(AbstractWifiManager):
                 "mode": ("s", "infrastructure"),
                 "hidden": ("b", hidden),
             },
+            "ipv6": {"method": ("s", "disabled")},
         }
 
         if credentials.password:
