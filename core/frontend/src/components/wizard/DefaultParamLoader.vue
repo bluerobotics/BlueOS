@@ -69,11 +69,11 @@
                     class="large-text-cell"
                     v-on="on"
                   >
-                    {{ item.current ? printParamWithUnit(item.current) : item.value }}
+                    {{ item.current ? printParamWithUnit(item.value) : item.value.value }}
                   </div>
                 </template>
                 <span>
-                  {{ item.current ? printParamWithUnit(item.current) : item.value }}
+                  {{ item.current ? printParamWithUnit(item.value) : item.value.value }}
                 </span>
               </v-tooltip>
             </v-col>
@@ -245,10 +245,15 @@ export default Vue.extend({
       return Object.entries(paramset).map(([name]) => {
         const currentParameter = autopilot_data.parameter(name)
 
+        const newParameter = {
+          ...currentParameter,
+          value: paramset[name],
+        }
+
         return {
           name,
           current: currentParameter,
-          value: paramset[name],
+          value: newParameter,
         }
       })
     },
