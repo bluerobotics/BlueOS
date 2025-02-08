@@ -19,6 +19,8 @@ from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
+from service_definitions import get_service
+
 SERVICE_NAME = "commander"
 LOG_FOLDER_PATH = os.environ.get("BLUEOS_LOG_FOLDER_PATH", "/var/logs/blueos")
 MAVLINK_LOG_FOLDER_PATH = os.environ.get("BLUEOS_MAVLINK_LOG_FOLDER_PATH", "/shortcuts/ardupilot_logs/logs/")
@@ -204,6 +206,52 @@ async def check_mavlink_log_folder_size() -> Any:
 @version(1, 0)
 async def environment_variables() -> Any:
     return os.environ
+
+
+@app.post("/services/kill", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def kill_service(service_name: str, i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    # The service name is the tmux session name
+    command = f"tmux kill-session -t {service_name}"
+    output = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+    logger.debug(f"Kill service output: {output}")
+    message = {
+        "stdout": f"{output.stdout!r}",
+        "stderr": f"{output.stderr!r}",
+        "return_code": output.returncode,
+    }
+    return message
+
+
+@app.post("/services/restart", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def restart_service(service_name: str, i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+
+    try:
+        service = get_service(service_name)
+    except KeyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown service: {service_name}",
+        ) from error
+
+    # Create new tmux session and run the command
+    create_session = f"tmux new -d -s {service_name}"
+    output = subprocess.run(create_session, shell=True, check=True, capture_output=True, text=True)
+
+    # Run the service with memory limit using run-service script
+    run_service_cmd = f'tmux send-keys -t {service_name}:0 \'run-service "{service_name}" "{service.command}" {service.memory_limit}\' C-m'
+    output = subprocess.run(run_service_cmd, shell=True, check=True, capture_output=True, text=True)
+
+    logger.debug(f"Restart service output: {output}")
+    message = {
+        "stdout": f"{output.stdout!r}",
+        "stderr": f"{output.stderr!r}",
+        "return_code": output.returncode,
+    }
+    return message
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
