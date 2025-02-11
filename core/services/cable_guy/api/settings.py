@@ -44,6 +44,7 @@ class Settings:
         except Exception as exception:
             logger.warning(f"Failed to fetch data from file ({self.settings_file}): {exception}")
             logger.warning(data)
+            return False
 
         return True
 
