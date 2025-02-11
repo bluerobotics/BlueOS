@@ -1,7 +1,7 @@
-<template>
+  <template>
   <v-dialog
     v-if="extension"
-    width="500"
+    width="700"
     :value="Boolean(extension)"
     persistent
     @input="showDialog"
@@ -43,27 +43,26 @@
             :rules="[validate_tag]"
           />
 
-          <v-textarea
-            v-if="is_editing"
-            v-model="formatted_permissions"
-            label="Original Settings"
-            :disabled="is_editing"
-            :rules="[validate_permissions]"
-          />
-          <v-textarea
-            v-else
-            v-model="new_extension.permissions"
-            label="Original Settings"
-            :disabled="is_editing"
-            :rules="[validate_permissions]"
-          />
-
-          <v-textarea
-            v-if="is_editing"
-            v-model="new_extension.user_permissions"
-            :label="'Custom settings (these replace regular settings)'"
-            :rules="[validate_user_permissions]"
-          />
+          <json-editor
+            v-model="new_permissions"
+              style="width:100%; height:100%"
+              @save="onEditingPermissionsSave"
+            >
+              <template
+                v-if="is_reset_editing_permissions_visible"
+                #controls
+              >
+                <v-btn
+                  v-tooltip="'Reset to default permissions'"
+                  class="editor-control"
+                  icon
+                  color="white"
+                  @click="resetToDefaultPermissions"
+                >
+                  <v-icon>mdi-restore</v-icon>
+                </v-btn>
+              </template>
+            </json-editor>
 
           <v-btn
             color="primary"
@@ -100,6 +99,7 @@ export default Vue.extend({
   data() {
     return {
       new_extension: this.extension,
+      new_permissions: this.extension?.permissions ?? '{}',
     }
   },
   computed: {
@@ -112,6 +112,12 @@ export default Vue.extend({
     is_editing() {
       return this.extension?.editing ?? false
     },
+    is_reset_editing_permissions_visible() {
+      return this.new_permissions !== this.extension?.permissions
+    valid_permissions() {
+      return this.new_permissions
+    },
+    },
   },
   watch: {
     new_extension() {
@@ -119,16 +125,29 @@ export default Vue.extend({
     },
     extension() {
       this.new_extension = this.extension
-
-      if (this.is_editing && this.new_extension?.permissions) {
+      this.new_permissions = JSON.parse(this.extension?.permissions ?? '{}')
+    this.populatePermissions()
         this.new_extension.user_permissions = this.new_extension.permissions
       }
     },
   },
+  mounted() {
+    this.new_permissions = JSON.parse(this.extension?.permissions ?? '{}')
+  },
   methods: {
+    onEditingPermissionsSave(permissions: string) {
+      if (this.new_extension) {
+        this.new_extension.permissions = permissions
+      }
+    },
     closeDialog() {
       this.new_extension = null
       this.$emit('closed')
+    },
+    resetToDefaultPermissions() {
+      if (this.new_extension) {
+        this.new_extension.permissions = this.extension?.permissions ?? '{}'
+      }
     },
     validate_identifier(input: string): (true | string) {
       // Identifiers should be two words separated by a period
