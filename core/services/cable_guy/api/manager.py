@@ -56,7 +56,7 @@ class EthernetManager:
         # Load settings and do the initial configuration
         if not self.settings.load():
             logger.error(f"Failed to load previous settings. Using default configuration: {default_configs}")
-            self.settings.root = {"content": [entry.dict() for entry in default_configs]}
+            self.settings.root = {"version": 0, "content": [entry.dict() for entry in default_configs]}
 
         logger.info("Loading previous settings.")
         for item in self.settings.root["content"]:
