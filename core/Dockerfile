@@ -110,6 +110,7 @@ set -e
     echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
     echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
     echo "export PATH=$(python -m site --user-base)/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
+    echo "export RUST_BACKTRACE=1" >> $RCFILE_PATH
 
     # Setup shortcuts
     mkdir -p /shortcuts
