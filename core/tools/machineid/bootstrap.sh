@@ -3,7 +3,7 @@
 # Immediately exit on errors
 set -e
 
-VERSION="0.2.2"
+VERSION="0.2.3"
 REPOSITORY_ORG="patrickelectric"
 REPOSITORY_NAME="machineid-cli"
 PROJECT_NAME="$REPOSITORY_NAME"
