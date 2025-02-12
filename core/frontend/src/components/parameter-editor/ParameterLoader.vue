@@ -9,7 +9,7 @@
       <v-card-title class="pt-6">
         Loading Parameters
       </v-card-title>
-      <v-card-text v-if="Object.keys(different_param_set).length !== 0" height="80%">
+      <v-card-text v-if="different_param_set_length !== 0" height="80%">
         <v-row class="virtual-table-row">
           <v-col class="virtual-table-cell checkbox-cell">
             <v-checkbox
