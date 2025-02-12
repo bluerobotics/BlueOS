@@ -33,6 +33,7 @@
         </v-row>
         <!-- display all parameters in a concise table using virtual scroller -->
         <v-virtual-scroll
+          :bench="100"
           :items="parametersFromSet(different_param_set)"
           :item-height="30"
           class="virtual-table"
