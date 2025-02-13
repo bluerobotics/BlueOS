@@ -96,9 +96,9 @@
 import Vue, { PropType } from 'vue'
 
 import JsonEditor from '@/components/common/JsonEditor.vue'
+import { copyToClipboard } from '@/cosmos'
 import { InstalledExtensionData } from '@/types/kraken'
 import { VForm } from '@/types/vuetify'
-import { copyToClipboard } from '@/utils/clipboard'
 
 export default Vue.extend({
   name: 'ExtensionCreationModal',
