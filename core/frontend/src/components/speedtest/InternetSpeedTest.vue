@@ -9,7 +9,7 @@
           width="100%"
           absolute
           opacity="0.92"
-          :value="helper.has_internet === InternetConnectionState.OFFLINE"
+          :value="internet_offline"
         >
           Waiting for internet connection..
         </v-overlay>
@@ -127,13 +127,12 @@
 import Vue from 'vue'
 
 import helper from '@/store/helper'
-import { SpeedTestResult } from '@/types/helper'
+import { InternetConnectionState, SpeedTestResult } from '@/types/helper'
 
 export default Vue.extend({
   name: 'InternetSpeedTest',
   data() {
     return {
-      helper,
       result: undefined as SpeedTestResult | undefined,
       started: false,
       message: undefined as string | undefined,
@@ -170,6 +169,9 @@ export default Vue.extend({
     },
     latency_ms(): number | undefined {
       return this.result?.ping
+    },
+    internet_offline(): boolean {
+      return helper.has_internet === InternetConnectionState.OFFLINE
     },
   },
   async mounted() {
