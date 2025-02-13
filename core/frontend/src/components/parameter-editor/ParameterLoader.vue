@@ -36,8 +36,7 @@
           :bench="100"
           :items="parametersFromSet(different_param_set)"
           :item-height="30"
-          class="virtual-table"
-          disabled
+          :max-height="500"
         >
           <template #default="{ item }">
             <v-row class="virtual-table-row">
