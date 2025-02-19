@@ -78,7 +78,12 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn v-if="state !== states.CALIBRATING" color="primary" :disabled="!compass_mask" @click="calibrate()">
+        <v-btn
+          v-if="state !== states.CALIBRATING && state !== states.FAILED"
+          color="primary"
+          :disabled="!compass_mask"
+          @click="calibrate()"
+        >
           Calibrate
         </v-btn>
         <v-btn v-if="state === states.DONE" color="primary" @click="dismiss">
@@ -88,6 +93,10 @@
         <v-btn v-if="state == states.CALIBRATING" color="red" @click="cancelCalibration()">
           Cancel
         </v-btn>
+        <v-btn v-if="state == states.FAILED" color="primary" @click="reset()">
+          Ok
+        </v-btn>
+        <v-spacer />
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -171,6 +180,11 @@ export default {
     this.progress_listener?.discard()
   },
   methods: {
+    reset() {
+      this.state = states.IDLE
+      this.cleanup()
+      this.fitness = {}
+    },
     dismiss() {
       this.state = states.IDLE
       this.dialog = false
