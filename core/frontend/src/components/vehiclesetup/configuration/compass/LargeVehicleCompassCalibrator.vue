@@ -33,7 +33,7 @@
         <StatusTextWatcher :style="`display : ${status_type === 'error' ? 'block' : 'none'};`" />
       </v-card-text>
       <v-card-actions class="justify-center">
-        <v-btn color="primary" :disabled="calibrating || !compass_mask" @click="calibrate()">
+        <v-btn color="primary" :disabled="calibrating || !compass_mask || !coordinates" @click="calibrate()">
           Calibrate
         </v-btn>
         <reboot-button />

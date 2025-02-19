@@ -81,7 +81,7 @@
         <v-btn
           v-if="state !== states.CALIBRATING && state !== states.FAILED"
           color="primary"
-          :disabled="!compass_mask"
+          :disabled="!compass_mask || !coordinates"
           @click="calibrate()"
         >
           Calibrate
