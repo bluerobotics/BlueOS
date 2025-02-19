@@ -140,6 +140,7 @@
         >
           Write Parameters
         </v-btn>
+        <RebootButton v-if="error" />
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -149,12 +150,16 @@
 import Vue, { PropType } from 'vue'
 import { Dictionary } from 'vue-router'
 
+import RebootButton from '@/components/utils/RebootButton.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import { printParamWithUnit } from '@/types/autopilot/parameter'
 
 export default Vue.extend({
   name: 'ParameterLoader',
+  components: {
+    RebootButton,
+  },
   props: {
     parameters: {
       type: Object as PropType<Dictionary<number>> | undefined,
@@ -251,6 +256,9 @@ export default Vue.extend({
     writeSelectedParams() {
       for (const [name, value] of Object.entries(this.user_selected_params)) {
         this.writeParam(name, value)
+        if (autopilot_data.parameter(name)?.rebootRequired) {
+          autopilot_data.setRebootRequired(true)
+        }
       }
     },
     writeParam(name: string, value: number) {
