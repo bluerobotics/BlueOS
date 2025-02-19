@@ -477,6 +477,8 @@ class NetworkManagerWifi(AbstractWifiManager):
         self._settings_manager.settings.hotspot_ssid = credentials.ssid
         self._settings_manager.settings.hotspot_password = credentials.password
         self._settings_manager.save()
+        await self.disable_hotspot(save_settings=False)
+        await self.enable_hotspot()
 
     def hotspot_credentials(self) -> WifiCredentials:
         try:
