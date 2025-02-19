@@ -90,7 +90,6 @@ class Dnsmasq:
             f"--dhcp-option=option:router,{self._ipv4_gateway}",
             "--bind-interfaces",
             "--dhcp-option=option6:information-refresh-time,6h",
-            "--dhcp-authoritative",
             "--dhcp-rapid-commit",
             "--cache-size=1500",
             "--no-negcache",
