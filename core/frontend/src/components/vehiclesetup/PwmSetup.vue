@@ -128,7 +128,7 @@
                   v-for="(item, index) in servo_function_parameters"
                   :key="item.name"
                   style="cursor: pointer;"
-                  @mouseover="highlight = [stringToUserFriendlyText(printParam(item))]"
+                  @mouseover="highlight = [servoToHighlight(item)]"
                   @mouseleave="highlight = default_highlight"
                   @click="showParamEdit(item)"
                 >
@@ -425,6 +425,14 @@ export default Vue.extend({
       const percent = (value - 1500) / 10
       const left = percent < 0 ? 50 + percent : 50
       return `width: ${Math.abs(percent)}%; left: ${left}%; background-color: red`
+    },
+    servoToHighlight(param: Parameter): string {
+      const pretty_name = this.stringToUserFriendlyText(printParam(param))
+      // map for backwards compatibility
+      const map: Record<string, string> = {
+        Mount1Pitch: 'MountTilt',
+      }
+      return map[pretty_name] ?? pretty_name
     },
     showParamEdit(param: Parameter) {
       this.selected_param = param
