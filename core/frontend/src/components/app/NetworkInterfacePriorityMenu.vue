@@ -118,7 +118,7 @@ export default Vue.extend({
     },
     internetStatusText(iface: EthernetInterface): string {
       const status = this.internet_access[iface.name]
-      if (status === undefined) return 'Checking if interface have access to internet...'
+      if (status === undefined) return 'Checking if this interface has access to internet...'
       return status ? 'Online' : 'Offline'
     },
     async checkInterfaceInternet(host: string, iface: EthernetInterface): Promise<void> {
