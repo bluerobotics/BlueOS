@@ -69,19 +69,30 @@ export default Vue.extend({
     fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
   }),
   computed: {
-    filtered_scripts(): string[] | undefined {
+    filtered_scripts(): string[] {
       // for scripts, we only check major version for now
       // TODO: support other vehicles
-      let match_string: string
-      if (this.vehicle === 'Rover') {
-        match_string = `ArduRover/${this.version?.major}.`
-      } else {
+      if (this.vehicle !== 'Rover') {
         return []
       }
-      console.log(match_string)
-      return this.all_scripts.filter((name) => name.includes(match_string)).map(
-        (name) => name.replace('scripts/ardupilot/', ''),
-      )
+
+      // Try to match scripts with major version first, then fallback to any Rover script
+      const matchStrings = [
+        `ArduRover/${this.version?.major}.`,
+        'ArduRover/',
+      ]
+
+      // Find first match that returns scripts
+      for (const matchString of matchStrings) {
+        const scripts = this.all_scripts
+          .filter((name) => name.includes(matchString))
+          .map((name) => name.replace('scripts/ardupilot/', ''))
+
+        if (scripts.length > 0) {
+          return scripts
+        }
+      }
+      return []
     },
     board(): string | undefined {
       return autopilot.current_board?.name
