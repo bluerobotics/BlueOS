@@ -224,7 +224,7 @@ class Beacon:
                             runner.add_services(self.create_async_service_infos(interface, service, domain, ip))
                         except ValueError as e:
                             logger.warning(f"Error adding service for {interface.name}-{service}: {e}, skipping.")
-                    runners[f"{interface_name}-{domain}"] = runner
+                    runners[f"{interface_name}-{domain}-{ip}"] = runner
         return runners
 
     async def run(self) -> None:
