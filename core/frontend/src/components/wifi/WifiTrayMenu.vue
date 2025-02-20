@@ -85,7 +85,7 @@ export default Vue.extend({
   },
   mounted() {
     commander.getEnvironmentVariables().then((environment_variables) => {
-      this.disabled_services = ((environment_variables?.BLUEOS_DISABLE_SERVICES as string) ?? '').split(',') as string[]
+      this.disabled_services = (environment_variables?.BLUEOS_DISABLE_SERVICES as string ?? '').split(',') as string[]
     })
   },
 })
