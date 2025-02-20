@@ -44,7 +44,7 @@ export default Vue.extend({
       return ethernet.available_interfaces.length > 0
     },
     available_interfaces(): EthernetInterface[] {
-      return ethernet.available_interfaces
+      return ethernet.available_interfaces.sort((a, b) => a.name.localeCompare(b.name))
     },
     updating_interfaces(): boolean {
       return ethernet.updating_interfaces
