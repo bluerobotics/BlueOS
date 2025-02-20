@@ -50,7 +50,7 @@ enum BoardType {
   Unknown = 'Unknown'
 }
 
-const connector_map: Dictionary<string> = {
+const standard_connector_map: Dictionary<string> = {
   '/dev/ttyS0': 'serial1',
   '/dev/ttyAMA1': 'serial3',
   '/dev/ttyAMA2': 'serial4',
@@ -96,6 +96,34 @@ export default Vue.extend({
     svgName: `device-path-helper-img-${uuid()}`,
   }),
   computed: {
+    is_kernel_6() : boolean {
+      return system_information.system?.info?.kernel_version?.startsWith('6.') ?? false
+    },
+    updated_connector_map() : Dictionary<string> {
+      if (this.is_kernel_6) {
+        switch (this.get_host_board_type) {
+          case BoardType.Rpi5:
+            return {
+              ...standard_connector_map,
+              '/dev/ttyAMA0': 'serial1',
+              '/dev/ttyAMA2': 'serial3',
+              '/dev/ttyAMA3': 'serial4',
+              '/dev/ttyAMA4': 'serial5',
+            }
+          case BoardType.Rpi4B:
+            return {
+              ...standard_connector_map,
+              '/dev/ttyS0': 'serial1',
+              '/dev/ttyAMA3': 'serial3',
+              '/dev/ttyAMA4': 'serial4',
+              '/dev/ttyAMA5': 'serial5',
+            }
+          default:
+            return standard_connector_map
+        }
+      }
+      return standard_connector_map
+    },
     inline_name(): string {
       return `${this.svgName}-inline`
     },
@@ -146,7 +174,7 @@ export default Vue.extend({
       }
     },
     board_connector() : string | undefined {
-      const connector = connector_map[this.serial_port_path]
+      const connector = this.updated_connector_map[this.serial_port_path]
       this.setSvgConnector(connector)
       return connector
     },
