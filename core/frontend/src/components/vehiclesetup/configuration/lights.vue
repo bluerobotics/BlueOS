@@ -6,7 +6,7 @@
         Here you can configure what pin outputs the signal for the first set of lights.
         <v-select
           v-model="lights1_new_param"
-          :items="recommended_params"
+          :items="servo_params"
           :item-text="friendlyName"
           :item-value="'name'"
           label="Lights 1"
@@ -19,7 +19,7 @@
         What pin outputs the signal for the second set of lights.
         <v-select
           v-model="lights2_new_param"
-          :items="recommended_params"
+          :items="servo_params"
           :item-text="friendlyName"
           :item-value="'name'"
           label="Lights 2"
@@ -68,13 +68,6 @@ export default {
   computed: {
     light_steps(): Parameter | undefined {
       return autopilot_data.parameter('JS_LIGHTS_STEPS')
-    },
-    recommended_params(): Parameter[] {
-      // return parameters in servo_params that are on channel 9 and higher
-      return this.servo_params.filter((param) => {
-        const servoNumber = parseInt(param.name.replace('SERVO', '').split('_')[0], 10)
-        return servoNumber >= 9
-      })
     },
     servo_params(): Parameter[] {
       return autopilot_data.parameterRegex('SERVO[0-9]+_FUNCTION')
