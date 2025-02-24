@@ -238,6 +238,12 @@
           <v-card-title class="mb-5">
             {{ internet_offline ? 'Vehicle is not connected to the internet.' : 'Failed to fetch extension manifest.' }}
           </v-card-title>
+          <v-btn
+            color="primary"
+            @click="$emit('refresh')"
+          >
+            Try Again
+          </v-btn>
         </div>
       </v-container>
     </v-card>
