@@ -21,7 +21,7 @@
             <v-select
               v-if="is_servo_type"
               v-model="mnt1_pitch_new_param"
-              :items="recommended_params"
+              :items="servo_params"
               :item-text="friendlyName"
               :item-value="'name'"
               label="Mount 1 Pitch Servo"
@@ -121,13 +121,6 @@ export default {
     }
   },
   computed: {
-    recommended_params(): Parameter[] {
-      // return parameters in servo_params that are on channel 9 and higher
-      return this.servo_params.filter((param) => {
-        const servoNumber = parseInt(param.name.replace('SERVO', '').split('_')[0], 10)
-        return servoNumber >= 9
-      })
-    },
     type_param(): Parameter | undefined {
       return autopilot_data.parameters.find((p) => p.name === 'MNT1_TYPE')
     },
