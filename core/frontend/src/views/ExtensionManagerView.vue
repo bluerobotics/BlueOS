@@ -106,6 +106,7 @@
       :installed-extensions="installed_extensions"
       @clicked="showModal"
       @update="update"
+      @refresh="fetchManifest"
     />
     <BazaarTab
       v-show="is_bazaar_tab"
