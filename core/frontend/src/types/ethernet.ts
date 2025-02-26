@@ -1,6 +1,7 @@
 export enum AddressMode {
     client = 'client',
     server = 'server',
+    backupServer = 'backup_server',
     unmanaged = 'unmanaged',
 }
 
