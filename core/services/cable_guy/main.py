@@ -43,7 +43,7 @@ if args.default_config == "bluerov2":
         NetworkInterface(
             name="eth0",
             addresses=[
-                InterfaceAddress(ip="192.168.2.2", mode=AddressMode.Server),
+                InterfaceAddress(ip="192.168.2.2", mode=AddressMode.BackupServer),
                 InterfaceAddress(ip="0.0.0.0", mode=AddressMode.Client),
             ],
         ),
@@ -74,9 +74,9 @@ def retrieve_ethernet_interfaces() -> Any:
 
 @app.post("/ethernet", response_model=NetworkInterface, summary="Configure a ethernet interface.")
 @version(1, 0)
-def configure_interface(interface: NetworkInterface = Body(...)) -> Any:
+async def configure_interface(interface: NetworkInterface = Body(...)) -> Any:
     """REST API endpoint to configure a new ethernet interface or modify an existing one."""
-    manager.set_configuration(interface)
+    await manager.set_configuration(interface)
     manager.save()
     return interface
 
@@ -114,9 +114,9 @@ def delete_address(interface_name: str, ip_address: str) -> Any:
 
 @app.post("/dhcp", summary="Add local DHCP server to interface.")
 @version(1, 0)
-def add_dhcp_server(interface_name: str, ipv4_gateway: str) -> Any:
+def add_dhcp_server(interface_name: str, ipv4_gateway: str, is_backup_server: bool = False) -> Any:
     """REST API endpoint to enable/disable local DHCP server."""
-    manager.add_dhcp_server_to_interface(interface_name, ipv4_gateway)
+    manager.add_dhcp_server_to_interface(interface_name, ipv4_gateway, is_backup_server)
     manager.save()
 
 
@@ -182,5 +182,6 @@ if __name__ == "__main__":
     # Running uvicorn with log disabled so loguru can handle it
     config = Config(app=app, loop=loop, host="0.0.0.0", port=9090, log_config=None)
     server = Server(config)
+    loop.run_until_complete(manager.initialize())
     loop.create_task(manager.watchdog())
     loop.run_until_complete(server.serve())
