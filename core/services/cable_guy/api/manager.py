@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import psutil
 from commonwealth.utils.decorators import temporary_cache
+from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, has_dhcp_server
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pyroute2 import IW, NDB, IPRoute
@@ -47,31 +48,45 @@ class EthernetManager:
     result: List[NetworkInterface] = []
 
     def __init__(self, default_configs: List[NetworkInterface]) -> None:
-        self.network_handler = NetworkHandlerDetector().getHandler()
-
         self.settings = settings.Settings()
 
         self._dhcp_servers: List[DHCPServerManager] = []
-
         # Load settings and do the initial configuration
         if not self.settings.load():
             logger.error(f"Failed to load previous settings. Using default configuration: {default_configs}")
             self.settings.root = {"version": 0, "content": [entry.dict() for entry in default_configs]}
 
+    async def initialize(self) -> None:
+        self.network_handler = await NetworkHandlerDetector().getHandler()
         logger.info("Loading previous settings.")
         for item in self.settings.root["content"]:
             logger.info(f"Loading following configuration: {item}.")
-            try:
-                self.set_configuration(NetworkInterface(**item))
-            except Exception as error:
-                logger.error(f"Failed loading saved configuration. {error}")
+            # try:
+            await self.set_configuration(NetworkInterface(**item))
+            # except Exception as error:
+            #    logger.error(f"Failed loading saved configuration. {error}")
+
+    async def dhcp_server_found_on_network(self, interface_name: str) -> bool:
+        """Check if a DHCP server is already running on the network
+
+        Args:
+            interface_name (str): Interface name
+
+        Returns:
+            bool: True if DHCP server is already running on the network, False otherwise
+        """
+        try:
+            return bool(await has_dhcp_server(interface_name))
+        except DHCPDiscoveryError as e:
+            logger.error(f"Failed to check DHCP server on network. {e}")
+            return False
 
     def save(self) -> None:
         """Save actual configuration"""
         interfaces = list(self.settings.root["content"])
         self.settings.save(interfaces)
 
-    def set_configuration(self, interface: NetworkInterface, watchdog_call: bool = False) -> None:
+    async def set_configuration(self, interface: NetworkInterface, watchdog_call: bool = False) -> None:
         """Modify hardware based in the configuration
 
         Args:
@@ -79,7 +94,7 @@ class EthernetManager:
             watchdog_call: Whether this is a watchdog call
         """
         if not watchdog_call:
-            self.network_handler.cleanup_interface_connections(interface.name)
+            await self.network_handler.cleanup_interface_connections(interface.name)
         interfaces = self.get_interfaces()
         valid_names = [interface.name for interface in interfaces]
         if interface.name not in valid_names:
@@ -100,6 +115,12 @@ class EthernetManager:
             elif address.mode == AddressMode.Server:
                 logger.info(f"Adding DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
                 self.add_dhcp_server_to_interface(interface.name, address.ip)
+            elif address.mode == AddressMode.BackupServer:
+                logger.info(f"Adding backup DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
+                if await self.dhcp_server_found_on_network(interface.name):
+                    logger.info("DHCP server already found on network. Skipping backup server.")
+                    continue
+                self.add_dhcp_server_to_interface(interface.name, address.ip, backup=True)
         # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
         if any(address.mode == AddressMode.Client for address in interface.addresses):
             logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
@@ -574,14 +595,16 @@ class EthernetManager:
         saved_interface.addresses = new_ip_list
         self._update_interface_settings(interface_name, saved_interface)
 
-    def add_dhcp_server_to_interface(self, interface_name: str, ipv4_gateway: str) -> None:
+    def add_dhcp_server_to_interface(self, interface_name: str, ipv4_gateway: str, backup: bool = False) -> None:
         if self._is_dhcp_server_running_on_interface(interface_name):
             self.remove_dhcp_server_from_interface(interface_name)
         if self._is_ip_on_interface(interface_name, ipv4_gateway):
             self.remove_ip(interface_name, ipv4_gateway)
-        self.add_static_ip(interface_name, ipv4_gateway, mode=AddressMode.Server)
+        self.add_static_ip(
+            interface_name, ipv4_gateway, mode=AddressMode.Server if not backup else AddressMode.BackupServer
+        )
         logger.info(f"Adding DHCP server with gateway '{ipv4_gateway}' to interface '{interface_name}'.")
-        self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway))
+        self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway, backup=backup))
 
     def stop(self) -> None:
         """Perform steps necessary to properly stop the manager."""
@@ -664,7 +687,7 @@ class EthernetManager:
                 logger.warning("Interface config mismatch, applying saved settings.")
                 logger.debug(f"Mismatches: {mismatches}")
                 for interface in mismatches:
-                    self.set_configuration(interface, watchdog_call=True)
+                    await self.set_configuration(interface, watchdog_call=True)
             priority_mismatch = self.priorities_mismatch()
             if priority_mismatch:
                 logger.warning("Interface priorities mismatch, applying saved settings.")

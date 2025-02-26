@@ -7,7 +7,7 @@ import sdbus
 from loguru import logger
 from pyroute2 import IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
-from sdbus_block.networkmanager import (
+from sdbus_async.networkmanager import (
     NetworkConnectionSettings,
     NetworkDeviceGeneric,
     NetworkManager,
@@ -25,7 +25,7 @@ class AbstractNetworkHandler:
     def __init__(self) -> None:
         self.ipr = IPRoute()
 
-    def detect(self) -> bool:
+    async def detect(self) -> bool:
         raise NotImplementedError("NetworkManager does not support detecting network interfaces priority")
 
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
@@ -43,7 +43,7 @@ class AbstractNetworkHandler:
     def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
         raise NotImplementedError("This Handler does not support setting interface priority")
 
-    def cleanup_interface_connections(self, interface_name: str) -> None:
+    async def cleanup_interface_connections(self, interface_name: str) -> None:
         pass
 
     def _update_route(self, interface_name: str, interface_index: int, route: Any, priority: int) -> None:
@@ -131,27 +131,29 @@ class BookwormHandler(AbstractNetworkHandler):
     It then relies on IPRoute, dhclient, and dnsmasq to manage the interfaces.
     """
 
-    def cleanup_interface_connections(self, interface_name: str) -> None:
+    async def cleanup_interface_connections(self, interface_name: str) -> None:
         network_manager_settings = NetworkManagerSettings()
-        for connection_path in network_manager_settings.connections:
+        for connection_path in await network_manager_settings.connections:
             profile = NetworkConnectionSettings(connection_path).get_profile()
             # Skip if this is a wireless connection
-            if profile.connection.connection_type == "802-11-wireless":
+            profile_connection = (await profile).connection
+            if profile_connection.connection_type == "802-11-wireless":
                 continue
-            if profile.connection.interface_name == interface_name:
+            if profile_connection.interface_name == interface_name:
                 logger.info(
-                    f"Removing connection {profile.connection.uuid} ({profile.connection.connection_id}) for interface {interface_name}"
+                    f"Removing connection {profile_connection.uuid} ({profile_connection.connection_id}) for interface {interface_name}"
                 )
                 try:
-                    NetworkManagerSettings().delete_connection_by_uuid(profile.connection.uuid)
+                    await NetworkManagerSettings().delete_connection_by_uuid(profile_connection.uuid)
                 except Exception as e:
                     logger.error(
-                        f"Failed to remove connection {profile.connection.uuid} ({profile.connection.connection_id}) for interface {interface_name}: {e}"
+                        f"Failed to remove connection {profile_connection.uuid} ({profile_connection.connection_id}) for interface {interface_name}: {e}"
                     )
 
-    def detect(self) -> bool:
+    async def detect(self) -> bool:
         try:
-            all_devices = {path: NetworkDeviceGeneric(path) for path in network_manager.devices}
+
+            all_devices = {path: NetworkDeviceGeneric(path) for path in await network_manager.get_devices()}
             return bool(len(all_devices))
         except Exception as error:
             logger.error(f"Failed to detect NetworkManager: {error}")
@@ -268,7 +270,7 @@ class DHCPCD(AbstractNetworkHandler):
     dhcpcd_conf_end_string = "#blueos-interface-priority-end"
     # https://man.archlinux.org/man/dhcpcd.conf.5#metric
 
-    def detect(self) -> bool:
+    async def detect(self) -> bool:
         return os.path.isfile("/etc/dhcpcd.conf")
 
     def _get_service_dhcpcd_content(self) -> List[str]:
@@ -417,9 +419,9 @@ class NetworkHandlerDetector:
     def __init__(self) -> None:
         pass
 
-    def getHandler(self) -> AbstractNetworkHandler:
+    async def getHandler(self) -> AbstractNetworkHandler:
         for candidate in AbstractNetworkHandler.__subclasses__():
-            if candidate().detect():
+            if await candidate().detect():
                 logger.info(f"Detected network handler: {candidate.__name__}")
                 return candidate()
         raise RuntimeError("No network handler detected")

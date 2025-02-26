@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 import shutil
 import subprocess
@@ -8,8 +9,11 @@ from typing import Any, List, Optional, Tuple, Union
 import psutil
 from loguru import logger
 
+from commonwealth.utils.DHCPDiscovery import discover_dhcp_servers
+
 
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-instance-attributes
 class Dnsmasq:
     def __init__(
         self,
@@ -18,12 +22,14 @@ class Dnsmasq:
         subnet_mask: Optional[IPv4Address] = None,
         lease_range: Tuple[int, int] = (101, 200),
         lease_time: str = "24h",
+        backup: bool = False,
     ) -> None:
         self._subprocess: Optional[Any] = None
 
         if interface not in psutil.net_if_stats():
             raise ValueError(f"Interface '{interface}' not found. Available interfaces are {psutil.net_if_stats()}.")
         self._interface = interface
+        self._is_backup = backup
 
         self._ipv4_gateway = ipv4_gateway
 
@@ -54,7 +60,7 @@ class Dnsmasq:
         self.validate_binary()
 
         self.validate_config()
-        self.start()
+        asyncio.create_task(self.start())
 
     @staticmethod
     def binary_name() -> str:
@@ -99,7 +105,14 @@ class Dnsmasq:
             "--user=root",
         ]
 
-    def start(self) -> None:
+    async def start(self) -> None:
+        if self._is_backup:
+            servers_found = await discover_dhcp_servers(self._interface)
+            if len(servers_found) > 0:
+                logger.info(
+                    f"Found {len(servers_found)} DHCP servers on the network. NOT starting DHCP server on interface {self._interface}."
+                )
+                return
         try:
             # pylint: disable=consider-using-with
             self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
@@ -119,9 +132,9 @@ class Dnsmasq:
         else:
             logger.info("Tried to stop DHCP Server, but it was already not running.")
 
-    def restart(self) -> None:
+    async def restart(self) -> None:
         self.stop()
-        self.start()
+        await self.start()
 
     def is_running(self) -> bool:
         return self._subprocess is not None and self._subprocess.poll() is None
