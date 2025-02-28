@@ -386,6 +386,8 @@ class EthernetManager:
                     and self._dhcp_server_on_interface(interface).ipv4_gateway == ip
                 ):
                     mode = AddressMode.Server
+                    if self._dhcp_server_on_interface(interface).is_backup_server:
+                        mode = AddressMode.BackupServer
                 else:
                     mode = AddressMode.Unmanaged if is_static_ip and valid_ip else AddressMode.Client
                 valid_addresses.append(InterfaceAddress(ip=ip, mode=mode))

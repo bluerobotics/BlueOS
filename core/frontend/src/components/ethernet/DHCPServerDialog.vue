@@ -139,7 +139,11 @@ export default Vue.extend({
         method: 'post',
         url: `${ethernet.API_URL}/dhcp`,
         timeout: 10000,
-        params: { interface_name: this.adapter.name, ipv4_gateway: this.selected_ip, is_backup_server: this.is_backup_server },
+        params: {
+          interface_name: this.adapter.name,
+          ipv4_gateway: this.selected_ip,
+          is_backup_server: this.is_backup_server,
+        },
       })
         .then(() => {
           this.creation_status = ServerCreationStatus.Succeeded

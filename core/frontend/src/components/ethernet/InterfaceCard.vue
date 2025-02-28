@@ -136,7 +136,9 @@ export default Vue.extend({
       return this.is_connected ? 'Connected' : 'Not connected'
     },
     is_there_dhcp_server_already(): boolean {
-      return this.adapter.addresses.some((address) => [AddressMode.server, AddressMode.backupServer].includes(address.mode))
+      return this.adapter.addresses.some(
+        (address) => [AddressMode.server, AddressMode.backupServer].includes(address.mode),
+      )
     },
     is_static_ip_present(): boolean {
       return this.adapter.addresses.some((address) => address.mode === AddressMode.unmanaged)

@@ -114,7 +114,7 @@ def delete_address(interface_name: str, ip_address: str) -> Any:
 
 @app.post("/dhcp", summary="Add local DHCP server to interface.")
 @version(1, 0)
-def add_dhcp_server(interface_name: str, ipv4_gateway: str, is_backup_server: bool = False) -> Any:
+async def add_dhcp_server(interface_name: str, ipv4_gateway: str, is_backup_server: bool = False) -> Any:
     """REST API endpoint to enable/disable local DHCP server."""
     manager.add_dhcp_server_to_interface(interface_name, ipv4_gateway, is_backup_server)
     manager.save()
