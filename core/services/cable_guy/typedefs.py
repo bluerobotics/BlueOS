@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class AddressMode(str, Enum):
     Client = "client"
+    BackupServer = "backup_server"
     Server = "server"
     Unmanaged = "unmanaged"
 
