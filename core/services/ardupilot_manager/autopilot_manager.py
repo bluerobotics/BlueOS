@@ -20,6 +20,7 @@ from exceptions import (
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
+from mavlink_proxy.AbstractRouter import TLogCondition
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
@@ -389,6 +390,12 @@ class AutoPilotManager(metaclass=Singleton):
 
     def get_available_routers(self) -> List[str]:
         return [router.name() for router in self.mavlink_manager.available_interfaces()]
+
+    def get_tlog_condition(self) -> TLogCondition:
+        return self.mavlink_manager.tlog_condition()
+
+    def set_tlog_condition(self, tlog_condition: TLogCondition) -> None:
+        self.mavlink_manager.set_tlog_condition(tlog_condition)
 
     async def start_sitl(self) -> None:
         self._current_board = BoardDetector.detect_sitl()
