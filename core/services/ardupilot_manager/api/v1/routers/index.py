@@ -1,7 +1,8 @@
 import os
 import shutil
+from functools import wraps
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional, Tuple
 
 from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
@@ -17,7 +18,7 @@ from fastapi_versioning import versioned_api_route
 from loguru import logger
 
 from autopilot_manager import AutoPilotManager
-from exceptions import InvalidFirmwareFile
+from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
 from typedefs import Firmware, FlightController, Parameters, Serial, SITLFrame, Vehicle
 
 index_router_v1 = APIRouter(
@@ -27,6 +28,19 @@ index_router_v1 = APIRouter(
 )
 
 autopilot = AutoPilotManager()
+
+
+def index_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
+    @wraps(endpoint)
+    async def wrapper(*args: Tuple[Any], **kwargs: dict[str, Any]) -> Any:
+        try:
+            return await endpoint(*args, **kwargs)
+        except HTTPException as error:
+            raise error
+        except Exception as error:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+
+    return wrapper
 
 
 # By default, all REST resources should have its own router, but as some of them does not implement
@@ -63,16 +77,19 @@ def raise_lock(*raise_args: str, **kwargs: int) -> None:
 
 
 @index_router_v1.put("/serials", status_code=status.HTTP_200_OK)
+@index_to_http_exception
 def update_serials(serials: List[Serial] = Body(...)) -> Any:
     autopilot.update_serials(serials)
 
 
 @index_router_v1.get("/serials", response_model=List[Serial])
+@index_to_http_exception
 def get_serials() -> Any:
     return autopilot.get_serials()
 
 
 @index_router_v1.get("/firmware_info", response_model=FirmwareInfo, summary="Get version and type of current firmware.")
+@index_to_http_exception
 async def get_firmware_info() -> Any:
     if not autopilot.current_board:
         message = "No board running, firmware information is unavailable"
@@ -87,6 +104,7 @@ async def get_firmware_info() -> Any:
 
 
 @index_router_v1.get("/vehicle_type", response_model=MavlinkVehicleType, summary="Get mavlink vehicle type.")
+@index_to_http_exception
 async def get_vehicle_type() -> Any:
     if not autopilot.current_board:
         message = "No board running, vehicle type is unavailable"
@@ -101,11 +119,13 @@ async def get_vehicle_type() -> Any:
 
 
 @index_router_v1.post("/sitl_frame", summary="Set SITL Frame type.")
+@index_to_http_exception
 async def set_sitl_frame(frame: SITLFrame) -> Any:
     return autopilot.set_sitl_frame(frame)
 
 
 @index_router_v1.get("/firmware_vehicle_type", response_model=str, summary="Get firmware vehicle type.")
+@index_to_http_exception
 async def get_firmware_vehicle_type() -> Any:
     if not autopilot.current_board:
         raise RuntimeError("Cannot fetch vehicle type info as there's no board running.")
@@ -117,11 +137,13 @@ async def get_firmware_vehicle_type() -> Any:
     response_model=List[Firmware],
     summary="Retrieve dictionary of available firmwares versions with their respective URL.",
 )
+@index_to_http_exception
 async def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) -> Any:
     return autopilot.get_available_firmwares(vehicle, (await target_board(board_name)).platform)
 
 
 @index_router_v1.post("/install_firmware_from_url", summary="Install firmware for given URL.")
+@index_to_http_exception
 @single_threaded(callback=raise_lock)
 async def install_firmware_from_url(
     url: str,
@@ -145,6 +167,7 @@ async def install_firmware_from_url(
 
 
 @index_router_v1.post("/install_firmware_from_file", summary="Install firmware from user file.")
+@index_to_http_exception
 @single_threaded(callback=raise_lock)
 async def install_firmware_from_file(
     binary: UploadFile = File(...),
@@ -171,17 +194,20 @@ async def install_firmware_from_file(
 @index_router_v1.get(
     "/board", response_model=Optional[FlightController], summary="Check what is the current running board."
 )
+@index_to_http_exception
 def get_board() -> Any:
     return autopilot.current_board
 
 
 @index_router_v1.post("/board", summary="Set board to be used.")
+@index_to_http_exception
 async def set_board(board: FlightController, sitl_frame: SITLFrame = SITLFrame.VECTORED) -> Any:
     autopilot.current_sitl_frame = sitl_frame
     await autopilot.change_board(board)
 
 
 @index_router_v1.post("/restart", summary="Restart the autopilot with current set options.")
+@index_to_http_exception
 async def restart() -> Any:
     logger.debug("Restarting ardupilot...")
     await autopilot.restart_ardupilot()
@@ -189,6 +215,7 @@ async def restart() -> Any:
 
 
 @index_router_v1.post("/start", summary="Start the autopilot.")
+@index_to_http_exception
 async def start() -> Any:
     logger.debug("Starting ardupilot...")
     await autopilot.start_ardupilot()
@@ -196,6 +223,7 @@ async def start() -> Any:
 
 
 @index_router_v1.post("/preferred_router", summary="Set the preferred MAVLink router.")
+@index_to_http_exception
 async def set_preferred_router(router: str) -> Any:
     logger.debug("Setting preferred Router")
     await autopilot.set_preferred_router(router)
@@ -203,16 +231,19 @@ async def set_preferred_router(router: str) -> Any:
 
 
 @index_router_v1.get("/preferred_router", summary="Retrieve preferred router")
+@index_to_http_exception
 def preferred_router() -> Any:
     return autopilot.load_preferred_router()
 
 
 @index_router_v1.get("/available_routers", summary="Retrieve preferred router")
+@index_to_http_exception
 def available_routers() -> Any:
     return autopilot.get_available_routers()
 
 
 @index_router_v1.post("/stop", summary="Stop the autopilot.")
+@index_to_http_exception
 async def stop() -> Any:
     logger.debug("Stopping ardupilot...")
     await autopilot.kill_ardupilot()
@@ -220,10 +251,13 @@ async def stop() -> Any:
 
 
 @index_router_v1.post("/restore_default_firmware", summary="Restore default firmware.")
+@index_to_http_exception
 async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
         autopilot.restore_default_firmware(await target_board(board_name))
+    except (NoDefaultFirmwareAvailable, ValueError) as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
     finally:
         await autopilot.start_ardupilot()
 
@@ -231,5 +265,6 @@ async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
 @index_router_v1.get(
     "/available_boards", response_model=List[FlightController], summary="Retrieve list of connected boards."
 )
+@index_to_http_exception
 async def available_boards() -> Any:
     return await autopilot.available_boards(True)
