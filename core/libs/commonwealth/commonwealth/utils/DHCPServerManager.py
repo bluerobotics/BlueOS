@@ -140,6 +140,10 @@ class Dnsmasq:
         return self._subprocess is not None and self._subprocess.poll() is None
 
     @property
+    def is_backup_server(self) -> bool:
+        return self._is_backup
+
+    @property
     def interface(self) -> str:
         return self._interface
 
