@@ -41,7 +41,11 @@ async function fetchPX4Metadata(): Promise<PX4ParametersMetadata[]> {
   try {
     metadata = await fetchPX4MetadataFromBoard()
   } catch (e) {
-    metadata = (await import('@/PX4-parameters/master/parameters.json')).parameters
+    const response = await fetch('/PX4-parameters/master/parameters.json');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch PX4 metadata: ${response.statusText}`);
+    }
+    metadata = (await response.json()).parameters;
   }
 
   return metadata as PX4ParametersMetadata[]
