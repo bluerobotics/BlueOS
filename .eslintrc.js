@@ -26,6 +26,7 @@ module.exports = {
     'func-style': ['error', 'declaration'],
     'import/extensions': 'off',
     'import/order': 'off',
+    'import/no-unresolved': 'error',
     'max-len': ['error', { code: 120 }],
     'no-alert': 'off',
     'no-bitwise': 'off',
@@ -101,6 +102,9 @@ module.exports = {
       },
       node: {
         extensions: ['.js', '.json', '.jsx', '.ts', '.tsx', '.vue'],
+      },
+      vite: {
+        viteConfig: require('./vite.config').viteConfigObj, // named export of the Vite config object.
       },
     },
   },
