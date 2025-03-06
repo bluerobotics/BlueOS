@@ -4,7 +4,7 @@
       <!-- eslint-disable vue/no-v-html -->
       <div class="left-content ml-2">
         <i class="pi-icon" v-html="image" />
-        <span class="vertical-text">Eth0</span>
+        <span class="vertical-text">WiFi</span>
       </div>
       <v-spacer />
       <div class="d-flex flex-column stacked-text mr-2">
@@ -34,7 +34,7 @@ import system_information, { FetchType } from '@/store/system-information'
 import { formatBandwidth } from '@/utils/networking'
 
 export default Vue.extend({
-  name: 'ETh0Widget',
+  name: 'WifiNetworking',
   data() {
     return {
       timer: 0,
@@ -46,11 +46,11 @@ export default Vue.extend({
   },
   computed: {
     upload(): number {
-      const eth0 = system_information.system?.network?.find((iface) => iface.name === 'eth0')
+      const eth0 = system_information.system?.network?.find((iface) => iface.name === 'wlan0')
       return eth0?.upload_speed ?? 0
     },
     download(): number {
-      const eth0 = system_information.system?.network?.find((iface) => iface.name === 'eth0')
+      const eth0 = system_information.system?.network?.find((iface) => iface.name === 'wlan0')
       return eth0?.download_speed ?? 0
     },
   },
