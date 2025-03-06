@@ -1,0 +1,31 @@
+on:
+  schedule:
+    # Run at 11:11 (UTC) every Monday
+    - cron:  '11 11 * * 1'
+  # Allow running manually, from the Actions tab or through the GitHub HTTP API
+  workflow_dispatch:
+
+name: Sync Submodules
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Git submodule update
+      run: |
+        git submodule update --init --recursive --remote
+
+    - name: Commit update
+      run: |
+        git config --global user.name 'Git bot'
+        git config --global user.email 'bot@noreply.github.com'
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        git commit -am "submodules: Updated references" && git push || echo "No changes to commit"
