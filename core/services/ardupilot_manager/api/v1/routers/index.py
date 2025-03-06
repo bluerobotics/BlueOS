@@ -118,7 +118,7 @@ async def get_firmware_vehicle_type() -> Any:
     summary="Retrieve dictionary of available firmwares versions with their respective URL.",
 )
 async def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) -> Any:
-    return autopilot.get_available_firmwares(vehicle, (await target_board(board_name)).platform)
+    return autopilot.get_available_firmwares(vehicle, (await target_board(board_name)))
 
 
 @index_router_v1.post("/install_firmware_from_url", summary="Install firmware for given URL.")

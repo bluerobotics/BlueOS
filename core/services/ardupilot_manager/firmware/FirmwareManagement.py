@@ -78,14 +78,15 @@ class FirmwareManager:
 
         raise UnsupportedPlatform("Install check is not implemented for this platform.")
 
-    def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
+    def get_available_firmwares(self, vehicle: Vehicle, board: FlightController) -> List[Firmware]:
         firmwares = []
-        versions = self.firmware_download.get_available_versions(vehicle, platform)
+        versions = self.firmware_download.get_available_versions(vehicle, board)
         if not versions:
             raise NoVersionAvailable(f"Failed to find any version for vehicle {vehicle}.")
         for version in versions:
             try:
-                url = self.firmware_download.get_download_url(vehicle, platform, version)
+                logger.debug(f"Fetching URL for version {version} on vehicle {vehicle} and board {board}.")
+                url = self.firmware_download.get_download_url(vehicle, board, version)
                 firmware = Firmware(name=version, url=url)
                 firmwares.append(firmware)
             except Exception as error:
@@ -159,7 +160,7 @@ class FirmwareManager:
         self.install_firmware_from_file(temporary_file, board, default_parameters)
 
     def install_firmware_from_params(self, vehicle: Vehicle, board: FlightController, version: str = "") -> None:
-        url = self.firmware_download.get_download_url(vehicle, board.platform, version)
+        url = self.firmware_download.get_download_url(vehicle, board, version)
         self.install_firmware_from_url(url, board)
 
     def restore_default_firmware(self, board: FlightController) -> None:
@@ -169,5 +170,5 @@ class FirmwareManager:
         self.install_firmware_from_file(self.default_firmware_path(board.platform), board)
 
     @staticmethod
-    def validate_firmware(firmware_path: pathlib.Path, platform: Platform) -> None:
-        FirmwareInstaller.validate_firmware(firmware_path, platform)
+    def validate_firmware(firmware_path: pathlib.Path, board: FlightController) -> None:
+        FirmwareInstaller.validate_firmware(firmware_path, board)
