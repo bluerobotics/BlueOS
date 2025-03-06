@@ -19,7 +19,7 @@ RUN <<-EOF
 set -e
 
     bun install --cwd /home/pi/frontend
-    bun run --cwd /home/pi/frontend build
+    NODE_OPTIONS=--max-old-space-size=8192 bun run --cwd /home/pi/frontend build
 
 EOF
 

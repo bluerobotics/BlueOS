@@ -63,7 +63,7 @@ jobs:
         run: bun --cwd ./core/frontend lint
 
       - name: Bun build
-        run: bun run --cwd ./core/frontend build
+        run: NODE_OPTIONS=--max-old-space-size=8192 bun run --cwd ./core/frontend build
 
   deploy-docker-images:
     runs-on: ubuntu-latest

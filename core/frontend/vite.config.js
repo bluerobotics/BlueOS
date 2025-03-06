@@ -2,6 +2,7 @@ import vue from '@vitejs/plugin-vue2'
 import { VuetifyResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig, loadEnv } from 'vite'
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { VitePWA } from 'vite-plugin-pwa'
 const { name } = require('./package.json')
 
@@ -49,6 +50,11 @@ export default defineConfig(({ command, mode }) => {
         // Vue version of project.
         version: 2.7,
       }),
+      sentryVitePlugin({
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        org: "blue-robotics-c7",
+        project: "blueos",
+      })
     ],
     assetsInclude: ['**/*.gif', '**/*.glb', '**/*.png', '**/*.svg', '**/assets/ArduPilot-Parameter-Repository**.json'],
     resolve: {
@@ -58,6 +64,7 @@ export default defineConfig(({ command, mode }) => {
       },
     },
     build: {
+      sourcemap: true,
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
