@@ -2,6 +2,7 @@ import Notifier from '@/libs/notifier'
 import { ReturnStruct, ShutdownType } from '@/types/commander'
 import { commander_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import axios from 'axios'
 
 const notifier = new Notifier(commander_service)
 
@@ -169,6 +170,26 @@ class CommanderStore {
       })
   }
 
+  async setEnvironmentVariables(variables: Record<string, unknown>): Promise<void> {
+    return back_axios({
+      method: 'post',
+      url: `/version-chooser/v1.0/version/environment_variables`,
+      timeout: 5000,
+      data: variables,
+    })
+      .then(() => {
+        // Update cache
+        this.environmentVariables = variables
+      })
+      .catch((error) => {
+        if (isBackendOffline(error)) {
+          return
+        }
+        const message = `Could not set environment variables: ${error.response?.data ?? error.message}.`
+        notifier.pushError('COMMANDER_SET_ENV_VARS_FAIL', message, true)
+      })
+  }
+
   async getRaspiEEPROM(): Promise<ReturnStruct | undefined> {
     return back_axios({
       method: 'get',
@@ -207,6 +228,26 @@ class CommanderStore {
         notifier.pushError('COMMANDER_UPDATE_RASPI_EEPROM_FAIL', message, true)
         return undefined
       })
+  }
+
+  async killService(service: string): Promise<void> {
+    await axios.post(`${this.API_URL}/services/kill`, null, {
+      params: {
+        service_name: service,
+        i_know_what_i_am_doing: true,
+      },
+      timeout: 10000,
+    })
+  }
+
+  async restartService(service: string): Promise<void> {
+    await axios.post(`${this.API_URL}/services/restart`, null, {
+      params: {
+        service_name: service,
+        i_know_what_i_am_doing: true,
+      },
+      timeout: 10000,
+    })
   }
 }
 

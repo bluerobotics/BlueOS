@@ -6,7 +6,7 @@ import {
   DockerLoginInfo,
   LocalVersionsQuery, Version, VersionsQuery, VersionType,
 } from '@/types/version-chooser'
-import back_axios from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 const API_URL = '/version-chooser/v1.0'
 const DEFAULT_REMOTE_IMAGE = 'bluerobotics/blueos-core'
@@ -199,6 +199,43 @@ async function dockerAccounts(): Promise<DockerLoginInfo[]> {
   return data.data as DockerLoginInfo[]
 }
 
+
+async function getVersionChooserEnvironmentVariables(): Promise<Record<string, unknown> | undefined> {
+  return back_axios({
+    method: 'get',
+    url: '/version-chooser/v1.0/version/environment_variables',
+    timeout: 5000,
+  })
+    .then((response) => response.data.environment_variables)
+    .catch((error) => {
+      if (isBackendOffline(error)) {
+        return undefined
+      }
+      const message = `Could not get version chooser environment variables: ${error.response?.data ?? error.message}.`
+      notifier.pushError('COMMANDER_GET_VERSION_CHOOSER_ENV_VARS_FAIL', message, true)
+      return undefined
+    })
+}
+
+async function setVersionChooserEnvironmentVariables(variables: Record<string, unknown>): Promise<void> {
+  return back_axios({
+    method: 'post',
+    url: '/version-chooser/v1.0/version/environment_variables',
+    timeout: 5000,
+    data: {
+      environment_variables: variables,
+    },
+  })
+    .then(() => {})
+    .catch((error) => {
+      if (isBackendOffline(error)) {
+        return
+      }
+      const message = `Could not set version chooser environment variables: ${error.response?.data ?? error.message}.`
+      notifier.pushError('COMMANDER_SET_VERSION_CHOOSER_ENV_VARS_FAIL', message, true)
+    })
+}
+
 export {
   DEFAULT_REMOTE_IMAGE,
   dockerAccounts,
@@ -209,6 +246,8 @@ export {
   getLatestStable,
   getLatestVersion,
   getVersionType,
+  getVersionChooserEnvironmentVariables,
+  setVersionChooserEnvironmentVariables,
   isSemVer,
   loadAvailableVersions,
   loadBootstrapCurrentVersion,
