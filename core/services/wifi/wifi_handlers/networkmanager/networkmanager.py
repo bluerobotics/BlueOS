@@ -455,7 +455,7 @@ class NetworkManagerWifi(AbstractWifiManager):
             for conn_path in await self._nm_settings.connections:
                 try:
                     settings = NetworkConnectionSettings(conn_path, self._bus)
-                    profile = await settings.get_profile()
+                    profile = await settings.get_profile(fetch_secrets=False)
 
                     if not profile.wireless or not profile.wireless.ssid:
                         continue
