@@ -221,6 +221,7 @@
 </template>
 
 <script lang="ts">
+import * as Sentry from '@sentry/vue'
 import semver from 'semver'
 import stable from 'semver-stable'
 import Vue, { PropType } from 'vue'
@@ -343,11 +344,18 @@ export default Vue.extend({
       const permissions_str = this.extension.user_permissions
         ? this.extension.user_permissions : this.extension.permissions
       const permissions = JSON.parse(permissions_str)
-      const period = permissions.HostConfig?.CpuPeriod
-      const quota = permissions.HostConfig?.CpuQuota
+      const period = permissions?.HostConfig?.CpuPeriod
+      const quota = permissions?.HostConfig?.CpuQuota
       if (quota && period) {
         return quota / (period * this.cpus * 0.01)
       }
+
+      Sentry.captureMessage('Invalid permissions data', {
+        level: 'warning',
+        extra: {
+          permissions,
+        },
+      })
       return 100
     },
     getStatus(): string {
