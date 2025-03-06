@@ -97,6 +97,9 @@ mkdir -p /usr/blueos/userdata/settings
 find /usr/blueos/userdata -type d -exec chmod a+rw {} \;
 find /usr/blueos/userdata -type f -exec chmod a+rw {} \;
 
+cron || echo "Failed to start cron service!"
+journalctl-vacuum || echo "Failed to run journalctl-vacuum service!"
+
 # These services have priority because they do the fundamental for the vehicle to work,
 # and by initializing them first we reduce the time users have to wait to control the vehicle.
 # From tests with QGC and Pi3, the reboot time was ~1min42s when not using this strategy,

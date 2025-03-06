@@ -79,6 +79,8 @@ COPY services /home/pi/services
 RUN /home/pi/services/install-services.sh
 COPY start-blueos-core /usr/bin/start-blueos-core
 COPY run-service.sh /usr/bin/run-service
+RUN rm -f /etc/cron.d/*
+COPY cron /etc/cron.d
 
 # Copy binaries and necessary folders from download-binaries to this stage
 COPY --from=download-binaries \
