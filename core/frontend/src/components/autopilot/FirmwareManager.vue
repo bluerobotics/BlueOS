@@ -289,7 +289,7 @@ export default Vue.extend({
         return this.cloud_firmware_options_status === CloudFirmwareOptionsStatus.Chosen
       }
       if (this.upload_type === UploadType.File) {
-        return this.firmware_file !== null
+        return this.firmware_file != null
       }
       return true
     },
