@@ -132,7 +132,9 @@
                   @mouseleave="highlight = default_highlight"
                   @click="showParamEdit(item)"
                 >
-                  <td>{{ item.name }}</td>
+                  <td v-tooltip="item.name">
+                    {{ convert_servo_name(item.name) }}
+                  </td>
                   <td>{{ stringToUserFriendlyText(printParam(item)) }}</td>
                   <td>{{ servo_output[index] }}</td>
                 </tr>
@@ -397,6 +399,9 @@ export default Vue.extend({
     this.uninstallListeners()
   },
   methods: {
+    convert_servo_name(name: string) {
+      return name.replace('SERVO', 'Output ').replace('_FUNCTION', '')
+    },
     updateReversionValues() {
       if (this.is_rover) {
         this.reverse_on_value = 1.0

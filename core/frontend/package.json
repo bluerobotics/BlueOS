@@ -33,7 +33,7 @@
     "date-fns": "^2.23.0",
     "file-saver": "^2.0.5",
     "fuse.js": "^6.6.2",
-    "gl-matrix": "JoaoMario109/gl-matrix#v3.4.x-extended-package",
+    "gl-matrix": "joaomariolago/gl-matrix#v3.4.x-extended-package",
     "gsap": "^3.12.3",
     "http-status-codes": "^2.2.0",
     "image-js": "^0.35.3",
