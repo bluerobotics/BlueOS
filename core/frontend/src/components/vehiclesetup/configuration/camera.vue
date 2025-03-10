@@ -128,7 +128,7 @@ export default {
       return this.is_servo_type
     },
     is_servo_type(): boolean {
-      return this.type_param?.value === 1
+      return this.type_param?.value === 1 || this.type_param?.value === 7
     },
     pitch_max_param(): Parameter | undefined {
       return autopilot_data.parameters.find((p) => p.name === 'MNT1_PITCH_MAX')
