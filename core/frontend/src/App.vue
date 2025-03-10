@@ -423,6 +423,7 @@ import autopilot_data from './store/autopilot'
 import Cpu from './widgets/Cpu.vue'
 import Disk from './widgets/Disk.vue'
 import Networking from './widgets/Networking.vue'
+import WifiNetworking from './widgets/WifiNetworking.vue'
 
 export default Vue.extend({
   name: 'App',
@@ -472,7 +473,11 @@ export default Vue.extend({
       },
       {
         component: Networking,
-        name: 'Networking',
+        name: 'Eth0 Networking',
+      },
+      {
+        component: WifiNetworking,
+        name: 'Wifi Networking',
       },
     ],
     selected_widgets: settings.user_top_widgets,
