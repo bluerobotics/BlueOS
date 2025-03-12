@@ -1,3 +1,4 @@
+import asyncio
 import os
 import shutil
 from functools import wraps
@@ -31,10 +32,14 @@ autopilot = AutoPilotManager()
 
 
 def index_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
+    is_async = asyncio.iscoroutinefunction(endpoint)
+
     @wraps(endpoint)
     async def wrapper(*args: Tuple[Any], **kwargs: dict[str, Any]) -> Any:
         try:
-            return await endpoint(*args, **kwargs)
+            if is_async:
+                return await endpoint(*args, **kwargs)
+            return endpoint(*args, **kwargs)
         except HTTPException as error:
             raise error
         except Exception as error:
