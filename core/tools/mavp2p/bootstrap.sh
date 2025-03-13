@@ -3,7 +3,7 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-VERSION="v1.1.1"
+VERSION="v1.3.0"
 REPOSITORY_ORG="bluenviron"
 REPOSITORY_NAME="mavp2p"
 PROJECT_NAME="mavp2p"
