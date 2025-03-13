@@ -51,9 +51,10 @@
         </v-card>
         <draggable v-model="selected_widgets" class="d-flex align-center justify-center">
           <component
-            :is="getWidget(widget_name)"
+            :is="getWidget(widget_name).component"
             v-for="(widget_name, i) in selected_widgets"
             :key="i"
+            v-bind="getWidget(widget_name).props"
             class="mr-2"
             ripple
             disabled
@@ -420,10 +421,11 @@ import NotificationTrayButton from './components/notifications/TrayButton.vue'
 import WifiTrayMenu from './components/wifi/WifiTrayMenu.vue'
 import menus, { menuItem } from './menus'
 import autopilot_data from './store/autopilot'
+import system_information from './store/system-information'
+import { TopBarWidget } from './types/common'
 import Cpu from './widgets/Cpu.vue'
 import Disk from './widgets/Disk.vue'
 import Networking from './widgets/Networking.vue'
-import WifiNetworking from './widgets/WifiNetworking.vue'
 
 export default Vue.extend({
   name: 'App',
@@ -462,29 +464,44 @@ export default Vue.extend({
     tourCallbacks: {}, // we are setting this up in mounted otherwise "this" can be undefined
     context_menu_position: [0, 0],
     context_menu_visible: false,
-    widgets: [
-      {
-        component: Cpu,
-        name: 'CPU',
-      },
-      {
-        component: Disk,
-        name: 'Disk',
-      },
-      {
-        component: Networking,
-        name: 'Eth0 Networking',
-      },
-      {
-        component: WifiNetworking,
-        name: 'Wifi Networking',
-      },
-    ],
+
     selected_widgets: settings.user_top_widgets,
     bootstrap_version: undefined as string|undefined,
     build_clicks: 0,
   }),
   computed: {
+    widgets(): TopBarWidget[] {
+      const widgets = [
+        {
+          component: Cpu,
+          name: 'CPU',
+          props: {},
+        },
+        {
+          component: Disk,
+          name: 'Disk',
+          props: {},
+        },
+      ]
+      // lets filter out docker, veth, and zerotier interfaces
+      if (!system_information.system?.network) {
+        return widgets
+      }
+      const extra_interfaces = system_information.system?.network?.filter(
+        (iface) => !['docker', 'lo', 'veth'].some((prefix) => iface.name.startsWith(prefix)),
+      )
+      for (const iface of extra_interfaces) {
+        widgets.push({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          component: Networking as any,
+          props: {
+            interface: iface.name,
+          },
+          name: `${iface.name} Networking`,
+        })
+      }
+      return widgets
+    },
     isBehindWebProxy(): boolean {
       return window.location.host.endsWith('.cloud')
     },
@@ -729,7 +746,7 @@ export default Vue.extend({
       return url + separator + extra_queries
     },
     getWidget(name: string) {
-      return this.widgets.filter((widget) => widget.name === name)?.[0]?.component
+      return this.widgets.find((widget) => widget.name === name) || { component: null, props: {} }
     },
     navBarHandler(event: Event) {
       const { clientX: mouseX, clientY: mouseY } = event as MouseEvent
