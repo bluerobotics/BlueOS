@@ -121,6 +121,10 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
+    overrideOptionEntries: {
+      type: Object as PropType<{ [key: number]: string }>,
+      default: undefined,
+    },
   },
   data() {
     return {
@@ -135,10 +139,16 @@ export default Vue.extend({
     }
   },
   computed: {
+    options(): { [key: number]: string } {
+      const original_options = this.param?.options ?? {}
+      const override_options = this.overrideOptionEntries ?? {}
+      return { ...original_options, ...override_options }
+    },
     as_select_items() {
-      const entries = Object.entries(this.param?.options ?? [])
-      const value_is_known = Object.keys(this.param?.options ?? []).map(parseFloat).includes(this.param?.value)
-      const options = entries.map(([value, name]) => ({ text: name, value: parseFloat(value), disabled: false }))
+      const value_is_known = Object.keys(this.options).map(parseFloat).includes(this.param?.value)
+      const options = Object.entries(
+        this.options,
+      ).map(([value, name]) => ({ text: name, value: parseFloat(value), disabled: false }))
       if (!value_is_known) {
         options.push({ text: `Custom: ${this.param?.value}`, value: this.param?.value, disabled: false })
       }
