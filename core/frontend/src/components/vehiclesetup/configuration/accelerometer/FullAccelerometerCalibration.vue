@@ -3,6 +3,7 @@
     v-model="dialog"
     :persistent="!show_ok_button && !show_next_button && !show_start_button"
     width="500"
+    @click:outside="cleanup"
   >
     <template #activator="{ on, attrs }">
       <v-btn
