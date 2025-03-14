@@ -24,6 +24,17 @@
           >
             <v-radio v-for="router in available_routers" :key="router" :label="router" :value="router" />
           </v-radio-group>
+          <v-alert
+            v-if="selected_router === 'MAVP2P'"
+            outline
+            text
+            dense
+            type="warning"
+          >
+            <p>
+              MAVP2P has been presenting issues and is not currently recommended.
+            </p>
+          </v-alert>
         </v-card-text>
       </v-card>
       <v-divider
