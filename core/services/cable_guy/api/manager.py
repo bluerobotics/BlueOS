@@ -123,6 +123,19 @@ class EthernetManager:
             logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
             self.trigger_dynamic_ip_acquisition(interface.name)
 
+        # Handle multicast configuration
+        try:
+            current_multicast = self.get_interface_multicast(interface.name)
+            desired_multicast = interface.multicast
+
+            if current_multicast != desired_multicast:
+                if current_multicast:
+                    self.remove_multicast_route(interface.name, current_multicast)
+                if desired_multicast:
+                    self.add_multicast_route(interface.name, desired_multicast)
+        except Exception as error:
+            logger.error(f"Multicast configuration failed: {error}")
+
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
 
@@ -402,7 +415,11 @@ class EthernetManager:
                 if interface_metric:
                     priority = interface_metric.priority
 
-            interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info, priority=priority)
+            multicast = self.get_interface_multicast(interface)
+
+            interface_data = NetworkInterface(
+                name=interface, addresses=valid_addresses, info=info, priority=priority, multicast=multicast
+            )
             # Check if it's valid and add to the result
             if self.validate_interface_data(interface_data, filter_wifi):
                 result += [interface_data]
@@ -553,6 +570,37 @@ class EthernetManager:
             number_of_disconnections=interface.carrier_down_count,
             priority=priority,
         )
+
+    def add_multicast_route(self, interface_name: str, multicast_range: str) -> None:
+        try:
+            interface_index = self._get_interface_index(interface_name)
+            self.ipr.route("add", dst=multicast_range, oif=interface_index)
+            logger.info(f"Added multicast route {multicast_range} to {interface_name}.")
+        except Exception as error:
+            logger.error(f"Failed to add multicast route {multicast_range} to {interface_name}: {error}")
+            raise
+
+    def remove_multicast_route(self, interface_name: str, multicast_range: str) -> None:
+        try:
+            interface_index = self._get_interface_index(interface_name)
+            self.ipr.route("del", dst=multicast_range, oif=interface_index)
+            logger.info(f"Removed multicast route {multicast_range} from {interface_name}.")
+        except Exception as error:
+            logger.error(f"Failed to remove multicast route {multicast_range} from {interface_name}: {error}")
+            raise
+
+    def get_interface_multicast(self, interface_name: str) -> Optional[str]:
+        try:
+            interface_index = self._get_interface_index(interface_name)
+            routes = self.ipr.get_routes(oif=interface_index)
+            for route in routes:
+                dst = route.get_attr("RTA_DST")
+                if dst and dst.startswith("224.0.0.0/4"):
+                    return dst
+            return None
+        except Exception as error:
+            logger.error(f"Failed to get multicast route for {interface_name}: {error}")
+            return None
 
     def _is_ip_on_interface(self, interface_name: str, ip_address: str) -> bool:
         interface = self.get_interface_by_name(interface_name)
