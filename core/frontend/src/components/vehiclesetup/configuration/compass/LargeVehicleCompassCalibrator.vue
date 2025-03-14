@@ -21,6 +21,7 @@
         A Valid position is required for Compass Learn to estimate the local world magnetic field.
         <auto-coordinate-detector
           v-model="coordinates"
+          warnonly
         />
         <compass-mask-picker v-model="compass_mask" :devices="compasses" />
         <v-divider />
