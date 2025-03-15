@@ -33,6 +33,7 @@ class NetworkInterface(BaseModel):
     addresses: List[InterfaceAddress]
     info: Optional[InterfaceInfo]
     priority: Optional[int]
+    multicast: Optional[str]
 
     def __hash__(self) -> int:
         return hash(self.name) + sum(hash(address) for address in self.addresses)
