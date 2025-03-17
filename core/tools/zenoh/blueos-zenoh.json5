@@ -1,19 +1,5 @@
 {
   plugins: {
-    storage_manager: {
-      volumes: {
-        fs: {},
-      },
-      storages: {
-        fs_storage: {
-          key_expr: "**",
-          volume: {
-            id: "fs",
-            dir: "fs"
-          }
-        }
-      }
-    },
     rest: { http_port: 7117 }
   }
 }
