@@ -287,7 +287,7 @@ class EthernetManager:
         self.save()
 
     def add_static_ip(self, interface_name: str, ip: str, mode: AddressMode = AddressMode.Unmanaged) -> None:
-        """Set ip address for a specific interface
+        """Set ip address for a specific interface and saves it to the settings file
 
         Args:
             interface_name (str): Interface name
@@ -573,6 +573,11 @@ class EthernetManager:
             return False
 
     def remove_dhcp_server_from_interface(self, interface_name: str) -> None:
+        """
+        Removes a DHCP server from an interface and saves it to the settings file
+        The DHCP Server entry is removed from the address list and is replaced by an
+        Unmanaged address
+        """
         logger.info(f"Removing DHCP server from interface '{interface_name}'.")
         try:
             self._dhcp_servers.remove(self._dhcp_server_on_interface(interface_name))
