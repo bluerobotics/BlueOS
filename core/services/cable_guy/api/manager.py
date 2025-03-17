@@ -56,6 +56,14 @@ class EthernetManager:
             logger.error(f"Failed to load previous settings. Using default configuration: {default_configs}")
             self.settings.root = {"version": 0, "content": [entry.dict() for entry in default_configs]}
 
+        # Make sure we have a multicast for eth0, for migration from BlueOS < 1.4
+        for interface in self.settings.root["content"]:
+            if interface["name"] == "eth0":
+                interface["multicast"] = next(
+                    (interface.multicast for interface in default_configs if interface.name == "eth0")
+                )
+        self.save()
+
     async def initialize(self) -> None:
         self.network_handler = await NetworkHandlerDetector().getHandler()
         logger.info("Loading previous settings.")
