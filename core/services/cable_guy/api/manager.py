@@ -44,6 +44,7 @@ class EthernetManager:
     dns = dns.Dns()
     # Network handler for dhcpd and network manager
     network_handler: AbstractNetworkHandler
+    config_mutex: asyncio.Lock = asyncio.Lock()
 
     result: List[NetworkInterface] = []
 
@@ -93,35 +94,36 @@ class EthernetManager:
             interface: NetworkInterface
             watchdog_call: Whether this is a watchdog call
         """
-        if not watchdog_call:
-            await self.network_handler.cleanup_interface_connections(interface.name)
-        interfaces = self.get_interfaces()
-        valid_names = [interface.name for interface in interfaces]
-        if interface.name not in valid_names:
-            raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
+        async with self.config_mutex:
+            if not watchdog_call:
+                await self.network_handler.cleanup_interface_connections(interface.name)
+            interfaces = self.get_interfaces()
+            valid_names = [interface.name for interface in interfaces]
+            if interface.name not in valid_names:
+                raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
 
-        logger.info(f"Setting configuration for interface '{interface.name}'.")
-        self.remove_dhcp_server_from_interface(interface.name)
+            logger.info(f"Setting configuration for interface '{interface.name}'.")
+            self.remove_dhcp_server_from_interface(interface.name)
 
-        if interface.addresses:
-            # bring interface up
-            interface_index = self._get_interface_index(interface.name)
-            self.ipr.link("set", index=interface_index, state="up")
-        logger.info(f"Configuring addresses for interface '{interface.name}': {interface.addresses}.")
-        for address in interface.addresses:
-            if address.mode == AddressMode.Unmanaged:
-                logger.info(f"Adding static IP '{address.ip}' to interface '{interface.name}'.")
-                self.add_static_ip(interface.name, address.ip)
-            elif address.mode == AddressMode.Server:
-                logger.info(f"Adding DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
-                self.add_dhcp_server_to_interface(interface.name, address.ip)
-            elif address.mode == AddressMode.BackupServer:
-                logger.info(f"Adding backup DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
-                self.add_dhcp_server_to_interface(interface.name, address.ip, backup=True)
-        # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
-        if any(address.mode == AddressMode.Client for address in interface.addresses):
-            logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
-            self.trigger_dynamic_ip_acquisition(interface.name)
+            if interface.addresses:
+                # bring interface up
+                interface_index = self._get_interface_index(interface.name)
+                self.ipr.link("set", index=interface_index, state="up")
+            logger.info(f"Configuring addresses for interface '{interface.name}': {interface.addresses}.")
+            for address in interface.addresses:
+                if address.mode == AddressMode.Unmanaged:
+                    logger.info(f"Adding static IP '{address.ip}' to interface '{interface.name}'.")
+                    self.add_static_ip(interface.name, address.ip)
+                elif address.mode == AddressMode.Server:
+                    logger.info(f"Adding DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
+                    self.add_dhcp_server_to_interface(interface.name, address.ip)
+                elif address.mode == AddressMode.BackupServer:
+                    logger.info(f"Adding backup DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
+                    self.add_dhcp_server_to_interface(interface.name, address.ip, backup=True)
+            # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
+            if any(address.mode == AddressMode.Client for address in interface.addresses):
+                logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
+                self.trigger_dynamic_ip_acquisition(interface.name)
 
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
