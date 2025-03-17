@@ -132,6 +132,19 @@ class EthernetManager:
             logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
             self.trigger_dynamic_ip_acquisition(interface.name)
 
+        # Handle multicast configuration
+        try:
+            current_multicast = self.get_interface_multicast(interface.name)
+            desired_multicast = interface.multicast
+
+            if current_multicast != desired_multicast:
+                if current_multicast:
+                    self.remove_multicast_route(interface.name, current_multicast)
+                if desired_multicast:
+                    self.add_multicast_route(interface.name, desired_multicast)
+        except Exception as error:
+            logger.error(f"Multicast configuration failed: {error}")
+
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
 
