@@ -411,7 +411,11 @@ class EthernetManager:
                 if interface_metric:
                     priority = interface_metric.priority
 
-            interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info, priority=priority)
+            multicast = self.get_interface_multicast(interface)
+
+            interface_data = NetworkInterface(
+                name=interface, addresses=valid_addresses, info=info, priority=priority, multicast=multicast
+            )
             # Check if it's valid and add to the result
             if self.validate_interface_data(interface_data, filter_wifi):
                 result += [interface_data]
