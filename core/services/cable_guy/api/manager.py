@@ -103,8 +103,6 @@ class EthernetManager:
                 raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
 
             logger.info(f"Setting configuration for interface '{interface.name}'.")
-            self.remove_dhcp_server_from_interface(interface.name)
-
             if interface.addresses:
                 # bring interface up
                 interface_index = self._get_interface_index(interface.name)
@@ -118,7 +116,9 @@ class EthernetManager:
                     logger.info(f"Adding DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
                     self.add_dhcp_server_to_interface(interface.name, address.ip)
                 elif address.mode == AddressMode.BackupServer:
-                    logger.info(f"Adding backup DHCP server with gateway '{address.ip}' to interface '{interface.name}'.")
+                    logger.info(
+                        f"Adding backup DHCP server with gateway '{address.ip}' to interface '{interface.name}'."
+                    )
                     self.add_dhcp_server_to_interface(interface.name, address.ip, backup=True)
             # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
             if any(address.mode == AddressMode.Client for address in interface.addresses):
