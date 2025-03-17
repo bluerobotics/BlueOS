@@ -1,7 +1,7 @@
 import platform
 from typing import Any, List
 
-from commonwealth.utils.commands import load_file
+from commonwealth.utils.commands import CpuType, get_cpu_type, load_file
 from elftools.elf.elffile import ELFFile
 
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
@@ -25,10 +25,6 @@ class Navigator(LinuxFlightController):
                     name = "Navigator64"
                     plat = Platform.Navigator64
         super().__init__(**data, name=name, platform=plat)
-
-    def is_pi5(self) -> bool:
-        with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
-            return "Raspberry Pi 5" in f.read()
 
     def detect(self) -> bool:
         return False
@@ -54,7 +50,7 @@ class NavigatorPi5(Navigator):
         ]
 
     def detect(self) -> bool:
-        if not self.is_pi5():
+        if not get_cpu_type() == CpuType.PI5:
             return False
         return all(self.check_for_i2c_device(bus, address) for address, bus in self.devices.values())
 
@@ -91,6 +87,6 @@ class NavigatorPi4(Navigator):
         raise RuntimeError("Unknown release, unable to map ports")
 
     def detect(self) -> bool:
-        if self.is_pi5():
+        if not get_cpu_type() == CpuType.PI4:
             return False
         return all(self.check_for_i2c_device(bus, address) for address, bus in self.devices.values())
