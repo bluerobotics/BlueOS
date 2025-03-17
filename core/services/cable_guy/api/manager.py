@@ -317,6 +317,7 @@ class EthernetManager:
         new_address = InterfaceAddress(ip=ip, mode=mode)
         if new_address not in saved_interface.addresses:
             saved_interface.addresses.append(new_address)
+            saved_interface.addresses = list(set(saved_interface.addresses))
         self._update_interface_settings(interface_name, saved_interface)
 
     def remove_ip(self, interface_name: str, ip_address: str) -> None:
