@@ -1,8 +1,7 @@
+import asyncio
 import pathlib
 import shutil
 import subprocess
-import threading
-import time
 
 from loguru import logger
 
@@ -44,39 +43,47 @@ class FirmwareUploader:
     def set_baudrate_flightstack(self, baudrate: int) -> None:
         self._baudrate_flightstack = baudrate
 
-    def upload(self, firmware_path: pathlib.Path) -> None:
+    async def upload(self, firmware_path: pathlib.Path) -> None:
         logger.info("Starting upload of firmware to board.")
-        # pylint: disable=consider-using-with
-        process = subprocess.Popen(
+
+        process = await asyncio.create_subprocess_shell(
             f"{self.binary()} {firmware_path}"
             f" --port {self._autopilot_port}"
             f" --baud-bootloader {self._baudrate_bootloader}"
             f" --baud-flightstack {self._baudrate_flightstack}",
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
             shell=True,
-            encoding="utf-8",
         )
 
-        # Using a timer of 180 seconds to prevent being stuck on upload. Upload usually takes 20-40 seconds.
-        timer = threading.Timer(180, process.kill)
-        try:
-            timer.start()
-            if process.stdout is not None:
-                for line in iter(process.stdout.readline, b""):
-                    logger.debug(line)
-                    if process.poll() is not None:
+        async def monitor_uploader_process() -> None:
+            if process.stdout:
+                while True:
+                    line = await process.stdout.readline()
+                    if not line:
                         break
-            while process.poll() is None:
-                logger.debug("Waiting for upload tool to finish its job.")
-                time.sleep(0.5)
-            if process.returncode != 0:
-                raise FirmwareUploadFail(f"Upload process returned non-zero code {process.returncode}.")
+                    logger.debug(line.decode().strip())
+
+            while True:
+                if process.returncode is not None:
+                    break
+                logger.debug("Waiting for upload process to finish.")
+                await asyncio.sleep(1)
+
+        try:
+            await asyncio.wait_for(monitor_uploader_process(), timeout=180)
+
+            return_code = await process.wait()
+            if return_code != 0:
+                raise FirmwareUploadFail(f"Upload process returned non-zero code {return_code}.")
+
             logger.info("Successfully uploaded firmware to board.")
+        except asyncio.TimeoutError as error:
+            process.kill()
+            raise FirmwareUploadFail("Firmware upload timed out after 180 seconds.") from error
         except Exception as error:
             process.kill()
             raise FirmwareUploadFail("Unable to upload firmware to board.") from error
         finally:
-            timer.cancel()
             # Give some time for the board to reboot (preventing fail reconnecting to it)
-            time.sleep(10)
+            await asyncio.sleep(10)
