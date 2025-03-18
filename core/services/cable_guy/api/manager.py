@@ -294,16 +294,11 @@ class EthernetManager:
             ip (str): Desired ip address
             mode (AddressMode, optional): Address mode. Defaults to AddressMode.Unmanaged
         """
-        logger.info(f"Adding static IP '{ip}' to interface '{interface_name}'.")
+        logger.info(f"Adding {mode} IP '{ip}' to interface '{interface_name}'.")
         if self._is_ip_on_interface(interface_name, ip):
             logger.info(f"IP '{ip}' already exists on interface '{interface_name}'. Skipping.")
             return
         self.network_handler.add_static_ip(interface_name, ip)
-        interface_index = self._get_interface_index(interface_name)
-        try:
-            self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
-        except Exception as error:
-            logger.info(f"Failed to add IP '{ip}' to interface '{interface_name}'. {error}")
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
         if saved_interface is None:
@@ -626,13 +621,13 @@ class EthernetManager:
         """
         if self._is_dhcp_server_running_on_interface(interface_name):
             dhcp_on_interface = self._dhcp_server_on_interface(interface_name)
-            if dhcp_on_interface.ipv4_gateway == ipv4_gateway and dhcp_on_interface.backup == backup:
+            if dhcp_on_interface.ipv4_gateway == ipv4_gateway and dhcp_on_interface.is_backup_server == backup:
                 logger.warning(
                     f"DHCP server with gateway '{ipv4_gateway}' and backup '{backup}' already exists on interface '{interface_name}'"
                 )
                 return
             logger.info(
-                f"Removing DHCP server on '{dhcp_on_interface.ipv4_gateway}'('{dhcp_on_interface.backup}') from '{interface_name}'"
+                f"Removing DHCP server on '{dhcp_on_interface.ipv4_gateway}'('{dhcp_on_interface.is_backup_server}') from '{interface_name}'"
             )
             self.remove_dhcp_server_from_interface(interface_name)
 
