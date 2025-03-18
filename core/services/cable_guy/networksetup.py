@@ -206,9 +206,14 @@ class BookwormHandler(AbstractNetworkHandler):
         """
         try:
             # Just run dhclient without releasing existing IPs
-            command = f"timeout 5 dhclient -v {interface_name} 2>&1"
+            command = f"timeout 5 dhclient -v {interface_name} 2>&1 || echo 'timeout'"
             logger.info(f"Running: {command}")
             dhclient_output = os.popen(command).read()
+
+            # Check if timeout occurred
+            if "timeout" in dhclient_output:
+                logger.info(f"dhclient timed out for interface {interface_name}.")
+                return None
 
             bound_ip_match = re.search(r"bound to ([0-9.]+)", dhclient_output)
             if bound_ip_match:
@@ -347,9 +352,14 @@ class DHCPCD(AbstractNetworkHandler):
         """
         try:
             # Just run dhclient without releasing existing IPs
-            command = f"timeout 5 dhclient -v {interface_name} 2>&1"
+            command = f"timeout 5 dhclient -v {interface_name} 2>&1 || echo 'timeout'"
             logger.info(f"Running: {command}")
             dhclient_output = os.popen(command).read()
+
+            # Check if timeout occurred
+            if "timeout" in dhclient_output:
+                logger.info(f"dhclient timed out for interface {interface_name}.")
+                return None
 
             bound_ip_match = re.search(r"bound to ([0-9.]+)", dhclient_output)
             if bound_ip_match:
