@@ -19,7 +19,10 @@ class InterfaceAddress(BaseModel):
     mode: AddressMode
 
     def __hash__(self) -> int:
-        return hash(self.ip) + hash(self.mode)
+        if self.mode == AddressMode.Client:
+            # we dont support multiple client ips. they will all be considered the same
+            return hash(self.mode)
+        return hash(self.mode) + hash(self.ip)
 
 
 class InterfaceInfo(BaseModel):
