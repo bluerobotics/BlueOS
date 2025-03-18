@@ -176,11 +176,11 @@ async def install_firmware_from_url(
     # In some cases user might install a firmware that implies in a board change but this is not reflected,
     # so if the board is different from the current one, we change it.
     if (
-        auto_switch_board and
-        board and
-        autopilot.current_board and
-        autopilot.current_board.name != board.name and
-        FlightControllerFlags.is_bootloader not in board.flags
+        auto_switch_board
+        and board
+        and autopilot.current_board
+        and autopilot.current_board.name != board.name
+        and FlightControllerFlags.is_bootloader not in board.flags
     ):
         await autopilot.change_board(board)
 
