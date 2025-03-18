@@ -70,6 +70,7 @@ class FirmwareDownloader:
         name = pathlib.Path(urlparse(url).path).name
         filename = pathlib.Path(f"{FirmwareDownloader._generate_random_filename()}-{name}")
         try:
+            # TODO: Migrate pipeline to async and use aiohttp
             logger.debug(f"Downloading: {url}")
             urlretrieve(url, filename)
         except Exception as error:
@@ -90,6 +91,7 @@ class FirmwareDownloader:
         Returns:
             bool: True if file was downloaded and validated, False if not.
         """
+        # TODO: Migrate pipeline to async and use aiohttp
         with urlopen(FirmwareDownloader._manifest_remote) as http_response:
             manifest_gzip = http_response.read()
             manifest = gzip.decompress(manifest_gzip)
