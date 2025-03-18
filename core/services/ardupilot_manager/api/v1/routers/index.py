@@ -20,7 +20,15 @@ from loguru import logger
 
 from autopilot_manager import AutoPilotManager
 from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
-from typedefs import Firmware, FlightController, Parameters, Serial, SITLFrame, Vehicle
+from typedefs import (
+    Firmware,
+    FlightController,
+    FlightControllerFlags,
+    Parameters,
+    Serial,
+    SITLFrame,
+    Vehicle,
+)
 
 index_router_v1 = APIRouter(
     tags=["index_v1"],
@@ -161,13 +169,19 @@ async def install_firmware_from_url(
     try:
         await autopilot.kill_ardupilot()
         board = await target_board(board_name)
-        autopilot.install_firmware_from_url(url, board, make_default, parameters)
+        await autopilot.install_firmware_from_url(url, board, make_default, parameters)
     finally:
         await autopilot.start_ardupilot()
 
     # In some cases user might install a firmware that implies in a board change but this is not reflected,
     # so if the board is different from the current one, we change it.
-    if auto_switch_board and board and autopilot.current_board and autopilot.current_board.name != board.name:
+    if (
+        auto_switch_board and
+        board and
+        autopilot.current_board and
+        autopilot.current_board.name != board.name and
+        FlightControllerFlags.is_bootloader not in board.flags
+    ):
         await autopilot.change_board(board)
 
 
@@ -186,7 +200,7 @@ async def install_firmware_from_file(
         logger.debug("Going to kill ardupilot")
         await autopilot.kill_ardupilot()
         logger.debug("Installing firmware from file")
-        autopilot.install_firmware_from_file(custom_firmware, await target_board(board_name), parameters)
+        await autopilot.install_firmware_from_file(custom_firmware, await target_board(board_name), parameters)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
@@ -260,7 +274,7 @@ async def stop() -> Any:
 async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware(await target_board(board_name))
+        await autopilot.restore_default_firmware(await target_board(board_name))
     except (NoDefaultFirmwareAvailable, ValueError) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
     finally:
