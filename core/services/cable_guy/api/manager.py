@@ -298,7 +298,7 @@ class EthernetManager:
         if self._is_ip_on_interface(interface_name, ip):
             logger.info(f"IP '{ip}' already exists on interface '{interface_name}'. Skipping.")
             return
-        self.network_handler.add_static_ip(interface_name, ip)
+        self.network_handler.add_ip(interface_name, ip)
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
         if saved_interface is None:
