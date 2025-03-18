@@ -40,21 +40,6 @@ class AbstractNetworkHandler:
     def remove_static_ip(self, interface_name: str, ip: str) -> None:
         pass
 
-    def trigger_dynamic_ip_acquisition(self, interface_name: str) -> None:
-        """Get a new IP from DHCP using dhclient.
-        The IP will be managed by dhclient and not added to NetworkManager's configuration.
-
-        Args:
-            interface_name: Name of the interface to get IP for
-        """
-        # Get new IP using dhclient
-        new_ip = self._get_dhcp_address_using_dhclient(interface_name)
-        if not new_ip:
-            logger.error(f"Failed to get DHCP-acquired IP for {interface_name}")
-            return
-
-        logger.info(f"Got new IP {new_ip} from DHCP for {interface_name}")
-
     async def cleanup_interface_connections(self, interface_name: str) -> None:
         pass
 
@@ -107,7 +92,7 @@ class AbstractNetworkHandler:
             except Exception as e:
                 logger.error(f"Failed to update route for {interface_name}: {e} (attempt {attempt})")
 
-    def _get_dhcp_address_using_dhclient(self, interface_name: str) -> str | None:
+    def trigger_dynamic_ip_acquisition(self, interface_name: str) -> str | None:
         """Run dhclient to get a new IP address and return it.
 
         Args:
@@ -129,6 +114,7 @@ class AbstractNetworkHandler:
 
             bound_ip_match = re.search(r"bound to ([0-9.]+)", dhclient_output)
             if bound_ip_match:
+                logger.info(f"Got new IP {bound_ip_match.group(1)} from DHCP for {interface_name}")
                 return bound_ip_match.group(1)
 
             logger.error(f"Could not find bound IP in dhclient output: {dhclient_output}")
