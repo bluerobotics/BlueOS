@@ -161,7 +161,7 @@ async def install_firmware_from_url(
     try:
         await autopilot.kill_ardupilot()
         board = await target_board(board_name)
-        autopilot.install_firmware_from_url(url, board, make_default, parameters)
+        await autopilot.install_firmware_from_url(url, board, make_default, parameters)
     finally:
         await autopilot.start_ardupilot()
 
@@ -186,7 +186,7 @@ async def install_firmware_from_file(
         logger.debug("Going to kill ardupilot")
         await autopilot.kill_ardupilot()
         logger.debug("Installing firmware from file")
-        autopilot.install_firmware_from_file(custom_firmware, await target_board(board_name), parameters)
+        await autopilot.install_firmware_from_file(custom_firmware, await target_board(board_name), parameters)
         os.remove(custom_firmware)
     except InvalidFirmwareFile as error:
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
@@ -260,7 +260,7 @@ async def stop() -> Any:
 async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
     try:
         await autopilot.kill_ardupilot()
-        autopilot.restore_default_firmware(await target_board(board_name))
+        await autopilot.restore_default_firmware(await target_board(board_name))
     except (NoDefaultFirmwareAvailable, ValueError) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
     finally:
