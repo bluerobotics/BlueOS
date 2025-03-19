@@ -3,7 +3,7 @@
 # Immediately exit on errors
 set -e
 
-VERSION="0.10.2"
+VERSION="0.10.3"
 REPOSITORY_ORG="patrickelectric"
 REPOSITORY_NAME="bridges"
 PROJECT_NAME="$REPOSITORY_NAME"
