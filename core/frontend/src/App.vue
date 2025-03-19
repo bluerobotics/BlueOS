@@ -341,7 +341,7 @@
             v-if="settings.is_dev_mode"
             v-tooltip="'Disable dev mode'"
             icon
-            @click.stop="settings.is_dev_mode = false"
+            @click.stop="bluePillClick"
           >
             <v-icon color="primary">
               mdi-pill
@@ -782,10 +782,14 @@ export default Vue.extend({
       }
     },
     buildDateClick(): void {
-      this.build_clicks = (this.build_clicks + 1) % 10
+      this.build_clicks = (this.build_clicks + 1) % 5
       if (this.build_clicks === 0) {
         settings.is_dev_mode = true
       }
+    },
+    bluePillClick(): void {
+      this.build_clicks = 0
+      settings.is_dev_mode = false
     },
   },
 })
@@ -833,6 +837,10 @@ span.build_info {
   font-size: 70%;
   margin-left: 30px;
   display: block;
+}
+
+#current-version {
+  user-select: none;
 }
 
 #tour-center-hook {
