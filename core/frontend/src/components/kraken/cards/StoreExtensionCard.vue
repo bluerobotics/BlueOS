@@ -41,11 +41,11 @@
 
           <v-card-subtitle class="px-3 py-2 ext-subtitles">
             <div
-              class="extension-name"
+              class="line-constrained extension-name"
             >
               {{ extension.name.toUpperCase() }}
             </div>
-            <div class="extension-description">
+            <div class="line-constrained extension-description">
               {{ extension.description }}
             </div>
           </v-card-subtitle>
@@ -66,7 +66,7 @@
         />
       </v-avatar>
       <div class="extension-creators">
-        <div class="extension-company">
+        <div class="line-constrained extension-company">
           {{ extension_company }}
         </div>
         <div class="extension-authors">
@@ -399,26 +399,27 @@ export default Vue.extend({
   z-index: 4 !important;
 }
 
+.line-constrained {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
 .extension-name {
   font-weight: bold;
   font-size: 18px;
   max-height: 1.4em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
+  line-clamp: 1;
   -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
 }
 
 .extension-description {
   color: gray;
   font-size: 14px;
   max-height: 3.6em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .extension-creators {
@@ -430,6 +431,8 @@ export default Vue.extend({
 .extension-company {
   font-weight: bold;
   font-size: 14px;
+  line-clamp: 1;
+  -webkit-line-clamp: 1;
 }
 
 .extension-authors {
