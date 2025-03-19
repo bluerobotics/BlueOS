@@ -9,6 +9,23 @@
     class="store-extension-card"
   >
     <div
+      v-if="is_beta_only_extension"
+      class="beta-holder-container"
+    >
+      <v-chip
+        color="red"
+        small
+        label
+        text-color="white"
+        class="beta-chip"
+      >
+        <div style="width: 20px;" />
+        Beta
+        <div style="width: 20px;" />
+      </v-chip>
+    </div>
+
+    <div
       :style="img_background_style"
       class="img-background"
     />
@@ -211,6 +228,9 @@ export default Vue.extend({
       }
 
       return {}
+    },
+    is_beta_only_extension(): boolean {
+      return Object.values(this.extension.versions).every((version) => !isStable(version.tag))
     },
   },
   methods: {
@@ -481,4 +501,17 @@ export default Vue.extend({
   );
   pointer-events: none;
 }
+
+.beta-holder-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  transform: translate(50%, -50%) rotateZ(45deg);
+  z-index: 5 !important;
+}
+
+.beta-chip {
+  transform-origin: center;
+}
+
 </style>
