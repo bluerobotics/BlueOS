@@ -206,7 +206,7 @@ class BookwormHandler(AbstractNetworkHandler):
         """
         try:
             # Just run dhclient without releasing existing IPs
-            command = f"timeout 5 dhclient -v {interface_name} 2>&1"
+            command = f"timeout --kill-after=5 --signal=KILL 5 dhclient -v {interface_name} 2>&1"
             logger.info(f"Running: {command}")
             dhclient_output = os.popen(command).read()
 
@@ -347,7 +347,7 @@ class DHCPCD(AbstractNetworkHandler):
         """
         try:
             # Just run dhclient without releasing existing IPs
-            command = f"timeout 5 dhclient -v {interface_name} 2>&1"
+            command = f"timeout --kill-after=5 --signal=KILL 5 dhclient -v {interface_name} 2>&1"
             logger.info(f"Running: {command}")
             dhclient_output = os.popen(command).read()
 
