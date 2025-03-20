@@ -35,7 +35,10 @@
                 v-on="on"
               >
                 <v-list-item-content>
-                  <v-list-item-title v-text="item.text" />
+                  <v-list-item-title
+                    :style="item.value === installed ? { color: 'var(--v-success-darken1)' } : {}"
+                    v-text="item.value === installed ? `${item.text} (Active)` : item.text"
+                  />
                 </v-list-item-content>
               </div>
             </template>
@@ -49,7 +52,7 @@
             :disabled="!extension.is_compatible || !is_version_compatible"
             width="120px"
             height="40px"
-            color="primary"
+            :color="is_installed ? 'error' : 'primary'"
 
             v-bind="attrs"
             v-on="on"
