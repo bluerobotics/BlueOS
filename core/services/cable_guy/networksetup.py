@@ -122,7 +122,7 @@ class AbstractNetworkHandler:
         """
         try:
             # Just run dhclient without releasing existing IPs
-            command = f"timeout 5 dhclient -v {interface_name} 2>&1 || echo 'timeout'"
+            command = f"timeout 5 dhclient -d -v {interface_name} 2>&1 || echo 'timeout'"
             logger.info(f"Running: {command}")
             dhclient_output = os.popen(command).read()
 
