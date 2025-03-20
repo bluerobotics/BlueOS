@@ -32,8 +32,6 @@ app = FastAPI(
 app.router.route_class = GenericErrorHandlingRoute
 logger.info(f"Starting Bag of Holding: {FILE_PATH}")
 
-app = FastAPI()
-
 
 class KeyValue(BaseModel):
     key: str
