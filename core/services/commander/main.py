@@ -2,7 +2,6 @@
 import logging
 import os
 import shutil
-import subprocess
 import time
 from enum import Enum
 from pathlib import Path
@@ -221,44 +220,7 @@ async def root() -> Any:
     return HTMLResponse(content=html_content, status_code=200)
 
 
-def setup_ssh() -> None:
-    # store the key in the docker .config volume
-    key_path = Path("/root/.config/.ssh")
-    private_key = key_path / "id_rsa"
-    public_key = private_key.with_suffix(".pub")
-    user = os.environ.get("SSH_USER", "pi")
-    gid = int(os.environ.get("USER_GID", 1000))
-    uid = int(os.environ.get("USER_UID", 1000))
-    authorized_keys = Path(f"/home/{user}/.ssh/authorized_keys")
-
-    try:
-        key_path.mkdir(parents=True, exist_ok=True)
-        # check if id_rsa.pub exists, creates a new one if it doesnt
-        if not public_key.is_file():
-            subprocess.run(["ssh-keygen", "-t", "rsa", "-f", private_key, "-q", "-N", ""], check=True)
-        public_key_text = public_key.read_text("utf-8")
-        # add id_rsa.pub to authorized_keys if not there already
-        try:
-            authorized_keys_text = authorized_keys.read_text("utf-8")
-        except FileNotFoundError:
-            logger.info(f"File does not exist: {authorized_keys}")
-            authorized_keys_text = ""
-
-        if public_key_text not in authorized_keys_text:
-            if not authorized_keys_text.endswith("\n"):
-                authorized_keys_text += "\n"
-            authorized_keys_text += public_key_text
-            authorized_keys.write_text(authorized_keys_text, "utf-8")
-
-        os.chown(authorized_keys, uid, gid)
-        authorized_keys.chmod(0o600)
-    except Exception as error:
-        logger.error(f"Error setting up ssh: {error}")
-    logger.info("SSH setup done")
-
-
 if __name__ == "__main__":
-    setup_ssh()
     # Register ssh client and remove message from the following commands
     run_command("ls")
 
