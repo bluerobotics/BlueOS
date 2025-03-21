@@ -390,6 +390,12 @@ class AutoPilotManager(metaclass=Singleton):
     def get_available_routers(self) -> List[str]:
         return [router.name() for router in self.mavlink_manager.available_interfaces()]
 
+    async def start_unmanaged_board(self, board: FlightController) -> None:
+        self._current_board = board
+        self.master_endpoint = self.get_unmanaged_board_master_endpoint()
+        self.ardupilot_subprocess = None
+        await self.start_mavlink_manager(self.master_endpoint)
+
     async def start_sitl(self) -> None:
         self._current_board = BoardDetector.detect_sitl()
         if not self.firmware_manager.is_firmware_installed(self._current_board):
@@ -584,6 +590,8 @@ class AutoPilotManager(metaclass=Singleton):
                 await self.start_serial(flight_controller)
             elif flight_controller.platform == Platform.SITL:
                 await self.start_sitl()
+            elif flight_controller.platform == Platform.Unmanaged:
+                await self.start_unmanaged_board(flight_controller)
             else:
                 raise RuntimeError(f"Invalid board type: {flight_controller}")
         finally:
@@ -662,3 +670,23 @@ class AutoPilotManager(metaclass=Singleton):
 
     def restore_default_firmware(self, board: FlightController) -> None:
         self.firmware_manager.restore_default_firmware(board)
+
+    def set_unmanaged_board_master_endpoint(self, endpoint: Endpoint) -> bool:
+        self.configuration["unmanaged_board_master_endpoint"] = endpoint.as_dict()
+        self.settings.save(self.configuration)
+        return True
+
+    def get_unmanaged_board_master_endpoint(self) -> Endpoint:
+        default_master_endpoint = Endpoint(
+            name="Unmanaged Board Master Endpoint",
+            owner=self.settings.app_name,
+            connection_type=EndpointType.UDPServer,
+            place="0.0.0.0",
+            argument=14550,
+            persistent=True,
+            enabled=True,
+        )
+        endpoint = self.configuration.get("unmanaged_board_master_endpoint", None)
+        if endpoint is None:
+            return default_master_endpoint
+        return Endpoint(**endpoint)
