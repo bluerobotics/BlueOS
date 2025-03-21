@@ -34,7 +34,7 @@ class AbstractNetworkHandler:
     def enable_dhcp_client(self, interface_name: str) -> None:
         pass
 
-    def add_ip(self, interface_name: str, ip: str) -> None:
+    def add_static_ip(self, interface_name: str, ip: str) -> None:
         """Set ip address for a specific interface if it doesn't already exist
 
         Args:

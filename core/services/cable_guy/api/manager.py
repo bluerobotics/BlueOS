@@ -295,24 +295,29 @@ class EthernetManager:
             mode (AddressMode, optional): Address mode. Defaults to AddressMode.Unmanaged
         """
         logger.info(f"Adding {mode} IP '{ip}' to interface '{interface_name}'.")
-        if self._is_ip_on_interface(interface_name, ip):
-            logger.info(f"IP '{ip}' already exists on interface '{interface_name}'. Skipping.")
-            return
-        self.network_handler.add_ip(interface_name, ip)
+        if mode != AddressMode.Client:
+            if not self._is_ip_on_interface(interface_name, ip):
+                self.network_handler.add_static_ip(interface_name, ip)
+            else:
+                logger.info(f"IP '{ip}' already exists on interface '{interface_name}'. Skipping.")
+
+        logger.info(f"Saving IP '{ip}' ({mode}) on '{interface_name}' to settings.")
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
+        # it not saved, create a new one
         if saved_interface is None:
             # If the interface is not saved, create a new one
             saved_interface = NetworkInterface(
                 name=interface_name,
-                addresses=[
-                    InterfaceAddress(ip=ip, mode=AddressMode.Unmanaged),
-                ],
+                addresses=[],
             )
+
         new_address = InterfaceAddress(ip=ip, mode=mode)
-        if new_address not in saved_interface.addresses:
-            saved_interface.addresses.append(new_address)
-            saved_interface.addresses = list(set(saved_interface.addresses))
+        saved_interface.addresses = [address for address in saved_interface.addresses if address.ip != ip]
+        saved_interface.addresses.append(new_address)
+        # remove duplicates. this will prevent multiple client entries on the same interface
+        saved_interface.addresses = list(set(saved_interface.addresses))
+
         self._update_interface_settings(interface_name, saved_interface)
 
     def remove_ip(self, interface_name: str, ip_address: str) -> None:
@@ -323,6 +328,7 @@ class EthernetManager:
             ip_address (str): IP address to be deleted
         """
         logger.info(f"Deleting IP {ip_address} from interface {interface_name}.")
+        static_ip = self.is_static_ip(ip_address)
         try:
             if (
                 self._is_dhcp_server_running_on_interface(interface_name)
@@ -334,10 +340,17 @@ class EthernetManager:
             raise RuntimeError(f"Cannot delete IP '{ip_address}' from interface {interface_name}.") from error
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
+
         if saved_interface is None:
             logger.error(f"Interface {interface_name} is not managed by Cable Guy. Not deleting IP {ip_address}.")
             return
+
         saved_interface.addresses = [address for address in saved_interface.addresses if address.ip != ip_address]
+        if not static_ip:
+            saved_interface.addresses = [
+                address for address in saved_interface.addresses if address.mode != AddressMode.Client
+            ]
+
         self._update_interface_settings(interface_name, saved_interface)
 
     def get_interface_by_name(self, name: str) -> NetworkInterface:
