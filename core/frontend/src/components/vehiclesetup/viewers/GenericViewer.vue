@@ -77,29 +77,17 @@ import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import autopilot_data from '@/store/autopilot'
-import autopilot from '@/store/autopilot_manager'
 import ping from '@/store/ping'
 import {
-  FRAME_TYPE as ROVER_FRAME_TYPE,
-} from '@/types/autopilot/parameter-rover-enums'
-import {
   BTN_FUNCTION as SUB_BTN_FUNCTION,
-  FRAME_CONFIG as SUB_FRAME_CONFIG,
   SERVO_FUNCTION as SUB_SERVO_FUNCTION,
 } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary, Indexed, Keyed } from '@/types/common'
 import { PingType } from '@/types/ping'
-import { sleep } from '@/utils/helper_functions'
+
+import { checkModelOverrides, frame_name, get_model } from './modelHelper'
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
-
-function get_model(vehicle_name: string, frame_name: string): undefined | string {
-  const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
-  if (models[`/public/${release_path}`]) {
-    return `/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
-  }
-  return undefined
-}
 
 export default Vue.extend({
   name: 'GenericViewer',
@@ -134,60 +122,14 @@ export default Vue.extend({
     }
   },
   computed: {
-    vehicle_type(): string | null {
-      return autopilot.vehicle_type
-    },
-    vehicle_folder(): string {
-      switch (this.vehicle_type) {
-        case 'Submarine':
-          return 'sub'
-        case 'Surface Boat':
-          return 'boat'
-        case 'Ground Rover':
-          return 'rover'
-        default:
-          return ''
-      }
-    },
-    frame_type(): number | undefined {
-      switch (this.vehicle_type) {
-        case 'Submarine':
-          return autopilot_data.parameter('FRAME_CONFIG')?.value
-        case 'Surface Boat':
-          return autopilot_data.parameter('FRAME_TYPE')?.value
-          // TODO: other vehicles
-        default:
-          return undefined
-      }
-    },
-    frame_name(): string | undefined {
-      let result
-      switch (this.vehicle_type) {
-        case 'Submarine':
-          result = Object.entries(SUB_FRAME_CONFIG).find((key, value) => value === this.frame_type)?.[1] as string
-          break
-        case 'Surface Boat':
-          // we already know it is a boat, so check only TYPE and ignore CLASS (rover/boat/balancebot)
-          result = Object.entries(ROVER_FRAME_TYPE).find((key, value) => value === this.frame_type)?.[1] as string
-          break
-        case 'Ground Rover':
-          // TOOD: check FRAME_TYPE
-          result = 'unknown'
-          break
-          // TODO: other vehicles
-        default:
-          break
-      }
-      return result ? `${result}` : undefined
-    },
     model_path(): string | undefined {
-      return get_model(this.vehicle_folder, this.frame_name)
+      return get_model()
     },
     filtered_annotations(): (HotspotConfiguration & Indexed & Keyed)[] {
       if (this.noannotations) {
         return []
       }
-      if (this.frame_name === undefined) {
+      if (frame_name === undefined) {
         return []
       }
       // pick correct set
@@ -271,7 +213,7 @@ export default Vue.extend({
     },
     async model_path() {
       this.reloadAnnotations()
-      this.model_override_path = await this.checkModelOverrides()
+      this.model_override_path = await checkModelOverrides()
       this.override_annotations = await this.loadAnottationsOverride()
       this.forceRefreshAnnotations()
     },
@@ -308,7 +250,6 @@ export default Vue.extend({
       }
       this.hideIrrelevantParts()
     })
-    this.model_override_path = await this.checkModelOverrides()
     this.override_annotations = await this.loadAnottationsOverride()
     this.reloadAnnotations()
   },
@@ -360,26 +301,7 @@ export default Vue.extend({
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
     },
-    async checkModelOverrides() {
-      while (!this.vehicle_type || !this.frame_name) {
-        await sleep(100)
-      }
-      const master_override = '/userdata/modeloverrides/ALL.glb'
-      const vehicle_override = `/userdata/modeloverrides/${this.vehicle_folder}/${this.frame_name}.glb`
-      try {
-        await axios.head(master_override)
-        return master_override
-      } catch {
-        console.log(`master override model not found at ${master_override}`)
-      }
-      try {
-        await axios.head(vehicle_override)
-        return vehicle_override
-      } catch {
-        console.log(`vehicle override model not found at ${vehicle_override}`)
-      }
-      return undefined
-    },
+
     async loadAnottationsOverride(): Promise<Dictionary<HotspotConfiguration>> {
       if (!this.model_override_path) {
         return {}
