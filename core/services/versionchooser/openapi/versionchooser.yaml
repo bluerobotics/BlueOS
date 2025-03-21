@@ -239,6 +239,41 @@ paths:
                     items:
                       $ref: '#/components/schemas/DockerLoginInfo'
 
+  /version/environment_variables:
+    get:
+      operationId: main.get_environment_variables
+      summary: Get the environment variables
+      responses:
+        '200':
+          description: Environment variables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  environment_variables:
+                    type: object
+                    additionalProperties:
+                      type: string
+    post:
+      operationId: main.set_environment_variables
+      summary: Set the environment variables
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                environment_variables:
+                  type: object
+                  additionalProperties:
+                    type: string
+      responses:
+        '200':
+          description: Environment variables set
+        '400':
+          description: Invalid environment variables
+
 components:
   schemas:
     Version:
