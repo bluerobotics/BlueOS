@@ -1,18 +1,33 @@
 <template>
   <v-dialog
     v-if="extension"
-    width="500"
+    width="700"
     :value="Boolean(extension)"
     persistent
     @input="showDialog"
     @click:outside="closeDialog"
   >
     <v-card>
-      <v-card-title>
-        {{ is_editing ? 'Edit' : 'Create' }} Extension
+      <v-card-title class="d-flex align-center justify-space-between">
+        <span>{{ is_editing ? 'Edit' : 'Create' }} Extension</span>
+        <v-btn
+          icon
+          x-small
+          class="ml-2"
+          :color="copySuccess ? 'success' : undefined"
+          title="Copy configuration"
+          @click="copyConfig"
+        >
+          <v-icon small>
+            {{ copySuccess ? 'mdi-check' : 'mdi-content-copy' }}
+          </v-icon>
+        </v-btn>
       </v-card-title>
 
-      <v-card-text class="d-flex flex-column">
+      <v-card-text
+        class="d-flex flex-column"
+        @paste="handlePaste"
+      >
         <v-form
           ref="form"
           lazy-validation
@@ -43,31 +58,30 @@
             :rules="[validate_tag]"
           />
 
-          <v-textarea
-            v-if="is_editing"
-            v-model="formatted_permissions"
-            label="Original Settings"
-            :disabled="is_editing"
-            :rules="[validate_permissions]"
-          />
-          <v-textarea
-            v-else
-            v-model="new_extension.permissions"
-            label="Original Settings"
-            :disabled="is_editing"
-            :rules="[validate_permissions]"
-          />
-
-          <v-textarea
-            v-if="is_editing"
-            v-model="new_extension.user_permissions"
-            :label="'Custom settings (these replace regular settings)'"
-            :rules="[validate_user_permissions]"
-          />
-
+          <json-editor
+            v-model="new_permissions"
+            style="width:100%; min-height:400px"
+          >
+            <template
+              v-if="is_reset_editing_permissions_visible"
+              #controls
+            >
+              <v-btn
+                v-tooltip="'Reset to default permissions'"
+                class="editor-control"
+                icon
+                color="white"
+                @click="resetToDefaultPermissions"
+              >
+                <v-icon>mdi-restore</v-icon>
+              </v-btn>
+            </template>
+          </json-editor>
+          <v-spacer />
           <v-btn
             color="primary"
             class="mr-4"
+            :disabled="!valid_permissions"
             @click="saveExtension"
           >
             {{ is_editing ? 'Save' : 'Create' }}
@@ -81,11 +95,16 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import JsonEditor from '@/components/common/JsonEditor.vue'
 import { InstalledExtensionData } from '@/types/kraken'
 import { VForm } from '@/types/vuetify'
+import { copyToClipboard } from '@/utils/clipboard'
 
 export default Vue.extend({
   name: 'ExtensionCreationModal',
+  components: {
+    JsonEditor,
+  },
   model: {
     prop: 'extension',
     event: 'change',
@@ -99,36 +118,83 @@ export default Vue.extend({
 
   data() {
     return {
-      new_extension: this.extension,
+      new_extension: this.extension ?? {
+        identifier: '',
+        name: '',
+        docker: '',
+        tag: '',
+        permissions: '{}',
+        editing: false,
+      } as InstalledExtensionData & { editing: boolean },
+      new_permissions: JSON.parse(this.extension?.permissions ?? '{}'),
+      copySuccess: false,
     }
   },
   computed: {
     form(): VForm {
       return this.$refs.form as VForm
     },
-    formatted_permissions() {
-      return JSON.stringify(JSON.parse(this.new_extension?.permissions ?? '{}'), null, 2)
-    },
     is_editing() {
       return this.extension?.editing ?? false
+    },
+    is_reset_editing_permissions_visible() {
+      return this.new_permissions !== this.extension?.permissions
+    },
+    valid_permissions() {
+      return this.new_permissions
     },
   },
   watch: {
     new_extension() {
       this.$emit('input', this.new_extension)
     },
+    new_permissions(new_permissions: string) {
+      this.new_extension.user_permissions = JSON.stringify(new_permissions)
+    },
     extension() {
-      this.new_extension = this.extension
-
-      if (this.is_editing && this.new_extension?.permissions) {
-        this.new_extension.user_permissions = this.new_extension.permissions
+      if (this.extension) {
+        this.new_extension = { ...this.extension }
+      } else {
+        this.new_extension = {
+          identifier: '',
+          name: '',
+          docker: '',
+          tag: '',
+          permissions: '{}',
+          editing: false,
+        } as InstalledExtensionData & { editing: boolean }
       }
+      this.populatePermissions()
     },
   },
+  mounted() {
+    this.populatePermissions()
+  },
   methods: {
+    populatePermissions() {
+      const user_permissions = JSON.parse(this.extension?.user_permissions ?? '{}')
+      const original_permissions = JSON.parse(this.extension?.permissions ?? '{}')
+      if (user_permissions) {
+        this.new_permissions = user_permissions
+      } else {
+        this.new_permissions = original_permissions
+      }
+    },
     closeDialog() {
-      this.new_extension = null
+      this.new_extension = {
+        identifier: '',
+        name: '',
+        docker: '',
+        tag: '',
+        permissions: '{}',
+        editing: false,
+      } as InstalledExtensionData & { editing: boolean }
       this.$emit('closed')
+    },
+    resetToDefaultPermissions() {
+      if (this.new_extension) {
+        this.new_permissions = JSON.parse(this.extension?.permissions ?? '{}')
+      }
     },
     validate_identifier(input: string): (true | string) {
       // Identifiers should be two words separated by a period
@@ -173,26 +239,6 @@ export default Vue.extend({
       }
       return true
     },
-    validate_permissions(input: string): (true | string) {
-      try {
-        JSON.parse(input)
-        return true
-      } catch {
-        return 'This entry must be in valid JSON format.'
-      }
-    },
-    validate_user_permissions(input: string): (true | string) {
-      if (input === '') {
-        return true
-      }
-
-      try {
-        JSON.parse(input)
-        return true
-      } catch {
-        return 'This entry must be in valid JSON format.'
-      }
-    },
     validate_tag(input: string) {
       if (input.includes(' ')) {
         return 'Tag name must not include spaces.'
@@ -210,6 +256,9 @@ export default Vue.extend({
       return true
     },
     async saveExtension(): Promise<void> {
+      if (this.new_permissions) {
+        this.new_extension.user_permissions = JSON.stringify(this.new_permissions)
+      }
       if (this.form.validate() === true) {
         this.$emit('extensionChange', this.new_extension)
       }
@@ -217,6 +266,66 @@ export default Vue.extend({
     showDialog(state: boolean) {
       if (this.form.validate() === true) {
         this.$emit('change', state)
+      }
+    },
+    async copyConfig() {
+      if (!this.new_extension) {
+        return
+      }
+
+      const config = {
+        identifier: this.new_extension.identifier,
+        name: this.new_extension.name,
+        docker: this.new_extension.docker,
+        tag: this.new_extension.tag,
+        permissions: this.new_extension.permissions,
+      }
+
+      const jsonString = JSON.stringify(config, null, 2)
+      const success = await copyToClipboard(jsonString)
+
+      if (success) {
+        this.copySuccess = true
+        setTimeout(() => {
+          this.copySuccess = false
+        }, 2000) // Reset after 2 seconds
+      }
+    },
+    handlePaste(event: ClipboardEvent) {
+      try {
+        // Get the pasted text
+        const pastedText = event.clipboardData?.getData('text')
+        if (!pastedText) return
+
+        // Try to parse it as JSON
+        const config = JSON.parse(pastedText)
+
+        // Validate that it has the expected structure
+        if (config.identifier && config.name && config.docker && config.tag) {
+          // Prevent the default paste
+          event.preventDefault()
+
+          // Update the form data
+          if (!this.new_extension) {
+            this.new_extension = {} as InstalledExtensionData & { editing: boolean }
+          }
+
+          this.new_extension.identifier = config.identifier
+          this.new_extension.name = config.name
+          this.new_extension.docker = config.docker
+          this.new_extension.tag = config.tag
+
+          // Handle permissions if present
+          if (config.permissions) {
+            this.new_extension.permissions = typeof config.permissions === 'string'
+              ? config.permissions
+              : JSON.stringify(config.permissions)
+            this.new_permissions = JSON.parse(this.new_extension.permissions)
+          }
+        }
+      } catch (error) {
+        // Not valid JSON or doesn't match our format - ignore
+        console.debug('Pasted content was not valid extension configuration')
       }
     },
   },
