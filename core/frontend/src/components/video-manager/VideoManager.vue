@@ -92,7 +92,7 @@ import commander from '@/store/commander'
 import video from '@/store/video'
 import { commander_service } from '@/types/frontend_services'
 import {
-  Device, Format, StreamStatus, VideoEncodeType, VideoSourceRedirect,
+  Device, Format, VideoEncodeTypeEnum,
 } from '@/types/video'
 
 import VideoDevice from './VideoDevice.vue'
@@ -127,7 +127,7 @@ export default Vue.extend({
         if (settings.is_pirate_mode) {
           return true
         }
-        return device.formats.some((format: Format) => format.encode === VideoEncodeType.H264)
+        return device.formats.some((format: Format) => format.encode === VideoEncodeTypeEnum.H264)
       }
 
       const has_active_stream = (device: Device): boolean => this.video_streams.some((stream) => {
