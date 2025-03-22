@@ -82,8 +82,9 @@ import Vue, { PropType } from 'vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import video from '@/store/video'
 import {
-  CreatedStream, Device, StreamStatus, VideoSourceRedirect,
+  CreatedStream, Device, StreamStatus,
 } from '@/types/video'
+import { available_streams_from_device } from '@/utils/video'
 
 import VideoControlsDialog from './VideoControlsDialog.vue'
 import VideoStream from './VideoStream.vue'
@@ -117,6 +118,9 @@ export default Vue.extend({
     },
     updating_streams(): boolean {
       return video.updating_streams
+    },
+    device_streams(): StreamStatus[] {
+      return available_streams_from_device(video.available_streams, this.device)
     },
     is_redirect_source(): boolean {
       return this.device.source === 'Redirect'
