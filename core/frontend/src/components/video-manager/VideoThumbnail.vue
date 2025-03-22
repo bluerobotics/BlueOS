@@ -93,10 +93,15 @@ export default Vue.extend({
     video.stopGetThumbnailForDevice(this.source)
   },
   methods: {
-    updateThumbnail() {
+    async updateThumbnail() {
       const result = video.thumbnails.get(this.source)
-      if (result?.status === 200) {
-        this.thumbnail = result
+      if (result?.status === 200 && result?.source !== undefined) {
+        // Only accepts if the source blob URL is still valid
+        const img = new Image()
+        img.src = result.source
+        img.onload = () => {
+          this.thumbnail = result
+        }
       }
     },
   },
