@@ -1,13 +1,34 @@
 <template>
-  <v-card
-    width="100%"
-    class="pa-2 my-4"
-  >
-    <div class="d-flex flex-column flex-sm-row align-center justify-space-between ma-4">
-      <div class="d-flex flex-column align-center align-sm-start">
-        <p class="font-weigth-medium text-sm-h6 ma-0">
-          {{ device.name }}
-        </p>
+  <v-card class="pa-2 my-4">
+    <div class="d-flex flex-column flex-sm-row justify-space-between ma-7">
+      <div class="d-flex flex-column align-start align-sm-start">
+        <div class="d-flex align-center align-sm-start">
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-icon
+                small
+                class="mr-2 mt-sm-2"
+                :color="!are_video_streams_available ? 'grey' : has_running_streams ? 'success' : 'error'"
+                v-bind="attrs"
+                v-on="on"
+              >
+                mdi-circle
+              </v-icon>
+            </template>
+            <span v-if="!are_video_streams_available">
+              No streams added to this video source
+            </span>
+            <span v-else-if="has_running_streams">
+              All streams running
+            </span>
+            <span v-else>
+              Streams not running, see the errors for more information
+            </span>
+          </v-tooltip>
+          <p class="font-weigth-medium text-sm-h6 ma-0">
+            {{ device.name }}
+          </p>
+        </div>
         <p class="text-subtitle-2 font text--secondary ma-0">
           {{ device.source }}
         </p>
