@@ -45,6 +45,8 @@ class VideoStore extends VuexModule {
 
   private sources_to_request_thumbnail: Set<string> = new Set()
 
+  private busy_sources: Set<string> = new Set()
+
   fetchThumbnailsTask = new OneMoreTime(
     { delay: 1000, autostart: false },
   )
@@ -94,6 +96,9 @@ class VideoStore extends VuexModule {
       const message = `Could not delete video stream: ${error.message}.`
       notifier.pushError('VIDEO_STREAM_DELETE_FAIL', message)
     })
+      .finally(() => {
+        this.setUpdatingStreams(false)
+      })
   }
 
   @Action
@@ -114,6 +119,9 @@ class VideoStore extends VuexModule {
         const message = `Could not create video stream: ${error.response?.data ?? error.message}.`
         notifier.pushError('VIDEO_STREAM_CREATION_FAIL', message, true)
         return false
+      })
+      .finally(() => {
+        this.setUpdatingStreams(false)
       })
   }
 
@@ -169,32 +177,39 @@ class VideoStore extends VuexModule {
     const target_height = 150
     const quality = 75
 
-    this.sources_to_request_thumbnail.forEach(async (source: string) => back_axios({
-      method: 'get',
-      url: `${this.API_URL}/thumbnail?source=${source}&quality=${quality}&target_height=${target_height}`,
-      timeout: 10000,
-      responseType: 'blob',
-    })
-      .then((response) => {
-        const old_thumbnail_source = this.thumbnails.get(source)?.source
-        if (old_thumbnail_source !== undefined) {
-          URL.revokeObjectURL(old_thumbnail_source)
-        }
-        if (response.status === 200) {
-          this.thumbnails.set(source, { source: URL.createObjectURL(response.data), status: response.status })
-        }
+    this.sources_to_request_thumbnail.forEach(async (source: string) => {
+      if (this.busy_sources.has(source)) {
+        return
+      }
+      this.busy_sources.add(source)
+
+      back_axios({
+        method: 'get',
+        url: `${this.API_URL}/thumbnail?source=${source}&quality=${quality}&target_height=${target_height}`,
+        timeout: 10000,
+        responseType: 'blob',
       })
-      .catch((error) => {
-        const old_thumbnail_source = this.thumbnails.get(source)?.source
-        if (old_thumbnail_source !== undefined) {
-          URL.revokeObjectURL(old_thumbnail_source)
-        }
-        if (error?.response?.status === StatusCodes.SERVICE_UNAVAILABLE) {
-          this.thumbnails.set(source, { source: undefined, status: error.response.status })
-        } else {
-          this.thumbnails.delete(source)
-        }
-      }))
+        .then((response) => {
+          if (response.status === 200) {
+            const old_thumbnail_source = this.thumbnails.get(source)?.source
+            if (old_thumbnail_source !== undefined) {
+              URL.revokeObjectURL(old_thumbnail_source)
+            }
+
+            this.thumbnails.set(source, { source: URL.createObjectURL(response.data), status: response.status })
+          }
+        })
+        .catch((error) => {
+          if (error?.response?.status === StatusCodes.SERVICE_UNAVAILABLE) {
+            this.thumbnails.set(source, { source: undefined, status: error.response.status })
+          } else {
+            this.thumbnails.delete(source)
+          }
+        })
+        .finally(() => {
+          this.busy_sources.delete(source)
+        })
+    })
   }
 
   @Action

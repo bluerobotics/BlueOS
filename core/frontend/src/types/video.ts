@@ -9,7 +9,9 @@ export interface Size {
   intervals: FrameInterval[]
 }
 
-export enum VideoEncodeType {
+export type VideoEncodeType = VideoEncodeTypeEnum | { 'UNKNOWN': string }
+
+export enum VideoEncodeTypeEnum {
   H265 = 'H265',
   H264 = 'H264',
   MJPG = 'MJPG',
@@ -146,11 +148,31 @@ export interface VideoSourceLocal {
   Local: VideoSourceLocalType
 }
 
-export interface VideoSourceRedirect {
+export interface VideoSourceOnvifType {
+  name: string
+  model: string
+  serial_number: string
+  manufacturer: string
+  hardware_id: string
+  firmware_version: string
+  source: {
+    Onvif: string
+  }
+}
+
+export interface VideoSourceOnvif {
+  Onvif: VideoSourceOnvifType
+}
+
+export interface VideoSourceRedirectType {
   name: string
   source: {
     Redirect: string
   }
+}
+
+export interface VideoSourceRedirect {
+  Redirect: VideoSourceRedirectType
 }
 
 export interface VideoSourceFake {
@@ -169,11 +191,13 @@ export interface VideoSourceGst {
 export interface VideoAndStreamInformation {
   name: string
   stream_information: StreamInformation
-  video_source: VideoSourceLocal | VideoSourceGst | VideoSourceRedirect
+  video_source: VideoSourceLocal | VideoSourceGst | VideoSourceRedirect | VideoSourceOnvif
 }
 
 export interface StreamStatus {
+  id: string
   running: boolean
+  error: string | null
   video_and_stream: VideoAndStreamInformation
 }
 

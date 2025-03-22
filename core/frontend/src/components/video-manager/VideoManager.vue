@@ -92,8 +92,9 @@ import commander from '@/store/commander'
 import video from '@/store/video'
 import { commander_service } from '@/types/frontend_services'
 import {
-  Device, Format, StreamStatus, VideoEncodeType, VideoSourceRedirect,
+  Device, Format, VideoEncodeTypeEnum,
 } from '@/types/video'
+import { available_streams_from_device } from '@/utils/video'
 
 import VideoDevice from './VideoDevice.vue'
 import VideoDiagnosticHelper from './VideoDiagnosticHelper.vue'
@@ -116,9 +117,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    video_streams(): StreamStatus[] {
-      return video.available_streams
-    },
     are_video_devices_available(): boolean {
       return !this.video_devices.isEmpty()
     },
@@ -127,23 +125,12 @@ export default Vue.extend({
         if (settings.is_pirate_mode) {
           return true
         }
-        return device.formats.some((format: Format) => format.encode === VideoEncodeType.H264)
+        return device.formats.some((format: Format) => format.encode === VideoEncodeTypeEnum.H264)
       }
 
-      const has_active_stream = (device: Device): boolean => this.video_streams.some((stream) => {
-        if ('Gst' in stream.video_and_stream.video_source) {
-          return stream.video_and_stream.video_source.Gst.source.Fake === device.source
-        }
-        if ('Local' in stream.video_and_stream.video_source) {
-          return stream.video_and_stream.video_source.Local.device_path === device.source
-        }
-        if ('Redirect' in stream.video_and_stream.video_source) {
-          // eslint-disable-next-line no-extra-parens
-          return (stream.video_and_stream.video_source.Redirect as VideoSourceRedirect)
-            .source.Redirect === device.source
-        }
-        return false
-      })
+      function has_active_stream(device: Device): boolean {
+        return !available_streams_from_device(video.available_streams, device).isEmpty()
+      }
 
       function should_show(device: Device): boolean {
         if (device.name === 'Fake source') {
@@ -207,7 +194,8 @@ export default Vue.extend({
   background-color: transparent;
 }
 .videos-list {
-  margin: 30px 15px;
+  margin: 0px 15px;
+  margin-bottom: 100px !important;
   background-color: transparent;
 }
 </style>

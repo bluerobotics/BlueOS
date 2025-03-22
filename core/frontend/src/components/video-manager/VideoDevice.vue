@@ -1,39 +1,62 @@
 <template>
-  <v-card
-    width="100%"
-    class="pa-2 my-4"
-  >
-    <div class="d-flex flex-column flex-sm-row align-center justify-space-between ma-4">
-      <div class="d-flex flex-column align-center align-sm-start">
-        <p class="font-weigth-medium text-sm-h6 ma-0">
-          {{ device.name }}
-        </p>
+  <v-card class="pa-2 my-4">
+    <div class="d-flex flex-column flex-sm-row justify-space-between ma-7">
+      <div class="d-flex flex-column align-start align-sm-start">
+        <div class="d-flex align-center align-sm-start">
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-icon
+                small
+                class="mr-2 mt-sm-2"
+                :color="!are_video_streams_available ? 'grey' : has_running_streams ? 'success' : 'error'"
+                v-bind="attrs"
+                v-on="on"
+              >
+                mdi-circle
+              </v-icon>
+            </template>
+            <span v-if="!are_video_streams_available">
+              No streams added to this video source
+            </span>
+            <span v-else-if="has_running_streams">
+              All streams running
+            </span>
+            <span v-else>
+              Streams not running, see the errors for more information
+            </span>
+          </v-tooltip>
+          <p class="font-weigth-medium text-sm-h6 ma-0">
+            {{ device.name }}
+          </p>
+        </div>
         <p class="text-subtitle-2 font text--secondary ma-0">
           {{ device.source }}
         </p>
-        <v-btn
-          class="my-2"
-          @click="openControlsDialog"
-        >
-          <v-icon>mdi-cog</v-icon>
-          Configure
-        </v-btn>
-        <v-btn
-          class="my-2"
-          :disabled="!is_redirect_source && (are_video_streams_available || updating_streams)"
-          @click="openStreamCreationDialog"
-        >
-          <v-icon>mdi-plus</v-icon>
-          Add stream
-        </v-btn>
+        <div class="d-flex flex-column my-2 justify-space-around">
+          <v-btn
+            class="my-1"
+            :disabled="!has_configs"
+            @click="openControlsDialog"
+          >
+            <v-icon>mdi-cog</v-icon>
+            Configure
+          </v-btn>
+          <v-btn
+            class="my-1"
+            :disabled="!is_redirect_source && (are_video_streams_available || updating_streams)"
+            @click="openStreamCreationDialog"
+          >
+            <v-icon>mdi-plus</v-icon>
+            Add stream
+          </v-btn>
+        </div>
       </div>
       <div>
         <video-thumbnail
-          v-if="$vuetify.breakpoint.smAndUp"
           height="auto"
           width="280"
           :source="device.source"
-          :register="are_video_streams_available"
+          :register="are_video_streams_available && has_running_streams"
         />
       </div>
     </div>
@@ -82,8 +105,9 @@ import Vue, { PropType } from 'vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import video from '@/store/video'
 import {
-  CreatedStream, Device, StreamStatus, VideoSourceRedirect,
+  CreatedStream, Device, StreamStatus,
 } from '@/types/video'
+import { available_streams_from_device } from '@/utils/video'
 
 import VideoControlsDialog from './VideoControlsDialog.vue'
 import VideoStream from './VideoStream.vue'
@@ -115,30 +139,20 @@ export default Vue.extend({
     are_video_streams_available(): boolean {
       return !this.device_streams.isEmpty()
     },
-    device_streams(): StreamStatus[] {
-      return this.video_streams.filter((stream) => {
-        if ('Gst' in stream.video_and_stream.video_source) {
-          return stream.video_and_stream.video_source.Gst.source.Fake === this.device.source
-        }
-        if ('Local' in stream.video_and_stream.video_source) {
-          return stream.video_and_stream.video_source.Local.device_path === this.device.source
-        }
-        if ('Redirect' in stream.video_and_stream.video_source) {
-          // eslint-disable-next-line no-extra-parens
-          return (stream.video_and_stream.video_source.Redirect as VideoSourceRedirect)
-            .source.Redirect === this.device.source
-        }
-        return false
-      })
-    },
-    video_streams(): StreamStatus[] {
-      return video.available_streams
-    },
     updating_streams(): boolean {
       return video.updating_streams
     },
+    device_streams(): StreamStatus[] {
+      return available_streams_from_device(video.available_streams, this.device)
+    },
     is_redirect_source(): boolean {
       return this.device.source === 'Redirect'
+    },
+    has_configs(): boolean {
+      return !this.device.controls.isEmpty()
+    },
+    has_running_streams(): boolean {
+      return this.device_streams.some((stream) => stream.running)
     },
   },
   methods: {

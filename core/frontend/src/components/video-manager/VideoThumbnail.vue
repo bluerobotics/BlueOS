@@ -7,9 +7,8 @@
     >
       <span
         v-if="not_available"
-        :style="{ border: '2px dashed' }"
         class="text-caption"
-        style="opacity: 30%; padding: 20px"
+        style="border: 2px dashed; opacity: 30%; padding: 20px;"
       >
         Preview not<br>
         available<br>
@@ -34,6 +33,7 @@ import Vue from 'vue'
 import { VAvatar, VContainer } from 'vuetify/lib'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import { OneMoreTime } from '@/one-more-time'
 import type { Thumbnail } from '@/store/video'
 import video from '@/store/video'
 
@@ -62,7 +62,7 @@ export default Vue.extend({
   data() {
     return {
       thumbnail: undefined as undefined | Thumbnail,
-      interval: undefined as undefined | number,
+      update_task: new OneMoreTime({ delay: 1000, disposeWith: this, autostart: true }),
     }
   },
   computed: {
@@ -77,18 +77,8 @@ export default Vue.extend({
     register(newValue, oldValue) {
       if (!newValue && oldValue) {
         video.stopGetThumbnailForDevice(this.source)
-        if (this.interval !== undefined) {
-          clearInterval(this.interval)
-          this.interval = undefined
-        }
       } else if (newValue && !oldValue) {
         video.startGetThumbnailForDevice(this.source)
-        if (this.interval === undefined) {
-          this.updateThumbnail()
-          this.interval = setInterval(() => {
-            this.updateThumbnail()
-          }, 1000)
-        }
       }
     },
   },
@@ -96,23 +86,21 @@ export default Vue.extend({
     if (this.register) {
       video.startGetThumbnailForDevice(this.source)
     }
-    this.updateThumbnail()
-    this.interval = setInterval(() => {
-      this.updateThumbnail()
-    }, 1000)
+    this.update_task.setAction(this.updateThumbnail)
   },
   beforeDestroy() {
     video.stopGetThumbnailForDevice(this.source)
-    if (this.interval !== undefined) {
-      clearInterval(this.interval)
-      this.interval = undefined
-    }
   },
   methods: {
-    updateThumbnail() {
+    async updateThumbnail() {
       const result = video.thumbnails.get(this.source)
-      if (result?.status === 200) {
-        this.thumbnail = result
+      if (result?.status === 200 && result?.source !== undefined) {
+        // Only accepts if the source blob URL is still valid
+        const img = new Image()
+        img.src = result.source
+        img.onload = () => {
+          this.thumbnail = result
+        }
       }
     },
   },

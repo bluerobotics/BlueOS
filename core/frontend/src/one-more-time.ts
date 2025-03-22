@@ -1,7 +1,7 @@
 /**
  * Represents a function that can be OneMoreTime valid action
  */
-type OneMoreTimeAction = (() => Promise<void>) | (() => void) | undefined;
+type OneMoreTimeAction = (() => Promise<void>) | (() => void) | undefined
 
 /**
  * Used to configure the OneMoreTime instance
