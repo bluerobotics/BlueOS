@@ -4,14 +4,14 @@ import {
 
 
 export function video_dimension_text(height?: number, width?: number): string {
-  if (height === undefined || width === undefined) {
+  if (height === undefined || width === undefined || width === 0 || height === 0) {
     return 'Unknown size'
   }
   return `${width} x ${height} px`
 }
 
 export function video_framerate_text(frame_interval?: FrameInterval): string {
-  if (frame_interval === undefined) {
+  if (frame_interval === undefined || frame_interval.denominator === 0 || frame_interval.numerator === 0) {
     return 'Unknown fps'
   }
   const framerate = frame_interval.denominator / frame_interval.numerator
