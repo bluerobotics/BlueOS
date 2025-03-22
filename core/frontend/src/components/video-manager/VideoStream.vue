@@ -1,57 +1,168 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <v-card style="max-width: 93%; margin: auto">
-    <v-container
-      class="d-flex align-center justify-space-around elevation-0 py-6 px-4"
-      :class="{ 'flex-column': $vuetify.breakpoint.xs }"
-    >
-      <div class="d-flex flex-column justify-space-between" :class="{ 'align-center': $vuetify.breakpoint.xs }">
-        <p class="text-h6 ma-0">
-          {{ stream.video_and_stream.name }}
-        </p>
-        <p class="text-subtitle-2 text-no-wrap text--secondary ma-0">
-          {{ settings_summary }}
-        </p>
-        <p class="mb-2 mt-6">
-          Status: {{ stream.running ? 'running' : 'Not running' }}
-        </p>
-      </div>
-      <div class="d-flex ma-6 flex-column" :class="{ 'align-right': $vuetify.breakpoint.xs }">
-        <v-simple-table dense class="text-center" style="margin: auto">
-          <template #default>
-            <tbody>
-              <tr>
-                <td>{{ stream.video_and_stream.stream_information.configuration.encode }}</td>
-              </tr>
-              <tr v-for="(endpoint, index) in stream.video_and_stream.stream_information.endpoints" :key="index">
-                <td>
-                  {{ endpoint }}
-                </td>
-              </tr>
-              <tr>
-                <td>{{ source_path }}</td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-        <div v-if="isSDPFileAvailable" style="min-width: 180px;" class="ma-2 justify-space-between">
-          SDP file:
-          <v-btn v-tooltip="'Download to file'" class="ma-1 elevation-1" small @click="downloadSDPFile">
-            <v-icon>mdi-download</v-icon>
-          </v-btn>
-          <v-btn v-tooltip="'Copy URL to clipboard'" class="ma-1 elevation-1" small @click="copySDPFileURL">
-            <v-icon>mdi-file-link</v-icon>
-          </v-btn>
+  <v-card style="min-width: 300px;">
+    <v-container>
+      <div class="stream-info-grid">
+        <div class="info-label">
+          Stream Name:
         </div>
+        <div class="info-value">
+          {{ stream.video_and_stream.name }}
+        </div>
+
+        <div class="info-label">
+          Format:
+        </div>
+        <div class="info-value">
+          {{ format }}
+        </div>
+
+        <div class="info-label">
+          Encoding:
+        </div>
+        <div class="info-value">
+          {{ encode }}
+        </div>
+
+        <div class="info-label">
+          Endpoints:
+        </div>
+        <div class="info-value wrap-commas">
+          <span v-for="(endpoint, idx) in stream.video_and_stream.stream_information.endpoints" :key="endpoint">
+            {{ endpoint }}<span v-if="idx !== stream.video_and_stream.stream_information.endpoints.length - 1">, </span>
+          </span>
+        </div>
+
+        <div class="info-label">
+          Source:
+        </div>
+        <div class="info-value text-truncate">
+          {{ source_path }}
+        </div>
+
+        <div class="info-label">
+          Status:
+        </div>
+        <div class="info-value">
+          {{ stream.running ? 'Running' : 'Not running' }}
+        </div>
+
+        <template v-if="(!stream.running) && stream.error">
+          <div class="info-label error--text font-weight-bold">
+            Errors:
+          </div>
+          <div class="info-value error-content">
+            <v-textarea
+              class="text-caption stream-error-textarea"
+              :rows="isExpanded ? 12 : 1"
+              :auto-grow="!isExpanded"
+              readonly
+              :value="streamErrorText"
+              hide-details
+              flat
+              dense
+            />
+            <div class="d-flex justify-end align-center pr-4">
+              <v-btn
+                small
+                text
+                class="mr-2"
+                @click.stop="copyVideoStreamToClipboard"
+              >
+                <v-icon small left>
+                  mdi-content-copy
+                </v-icon>
+                Copy
+              </v-btn>
+              <v-btn
+                small
+                text
+                class="mr-2"
+                @click.stop="toggleExpandStreamError"
+              >
+                <v-icon
+                  v-if="isExpanded"
+                  small
+                  left
+                >
+                  mdi-chevron-up
+                </v-icon>
+                <v-icon
+                  v-else
+                  small
+                  left
+                >
+                  mdi-chevron-down
+                </v-icon>
+                {{ isExpanded ? "Show less" : "Show more" }}
+              </v-btn>
+            </div>
+          </div>
+        </template>
       </div>
     </v-container>
-    <div style="align-content: space-between">
-      <v-btn class="stream-edit-btn elevation-1" color="primary" dark fab small @click="openStreamEditDialog">
+
+    <v-card-actions class="actions-container">
+      <v-btn
+        v-if="isEditable"
+        v-tooltip="'Edit stream'"
+        class="stream-edit-btn elevation-1"
+        color="primary"
+        dark
+        fab
+        small
+        @click="openStreamEditDialog"
+      >
         <v-icon>mdi-pencil</v-icon>
       </v-btn>
-      <v-btn class="stream-remove-btn elevation-1" color="error" dark fab small @click="deleteStream">
+      <v-btn
+        v-if="isRemovable"
+        v-tooltip="'Remove stream'"
+        class="stream-remove-btn elevation-1"
+        color="error"
+        dark
+        fab
+        small
+        @click="deleteStream"
+      >
         <v-icon>mdi-delete</v-icon>
       </v-btn>
-    </div>
+      <v-btn
+        v-if="isSDPFileAvailable"
+        v-tooltip="'Download SDP to file'"
+        class="stream-edit-btn elevation-1"
+        color="grey"
+        dark
+        fab
+        small
+        @click="downloadSDPFile"
+      >
+        <div class="d-flex flex-column align-center">
+          <span class="text-caption font-weight-bold pt-2 pb-1">SDP</span>
+          <v-icon class="pb-4">
+            mdi-file-download
+          </v-icon>
+        </div>
+      </v-btn>
+      <v-btn
+        v-if="isSDPFileAvailable"
+        v-tooltip="'Copy SDP file URL'"
+        class="stream-edit-btn elevation-1"
+        color="grey"
+        dark
+        fab
+        small
+        @click="copySDPFileURL"
+      >
+        <div class="d-flex flex-column align-center">
+          <span class="text-caption font-weight-bold pt-2 pb-1">SDP</span>
+          <v-icon class="pb-4">
+            mdi-file-link
+          </v-icon>
+        </div>
+      </v-btn>
+    </v-card-actions>
+
     <video-stream-creation-dialog
       v-model="show_stream_edit_dialog"
       :device="device"
@@ -71,7 +182,7 @@ import {
   CreatedStream, Device, StreamPrototype, StreamStatus,
 } from '@/types/video'
 import back_axios from '@/utils/api'
-import { video_dimension_framerate_text } from '@/utils/video'
+import { video_dimension_framerate_text, video_encode_text } from '@/utils/video'
 
 import VideoStreamCreationDialog from './VideoStreamCreationDialog.vue'
 
@@ -93,6 +204,7 @@ export default Vue.extend({
   data() {
     return {
       show_stream_edit_dialog: false,
+      isExpanded: false,
     }
   },
   computed: {
@@ -116,9 +228,13 @@ export default Vue.extend({
           this.stream.video_and_stream.stream_information?.extended_configuration?.disable_mavlink ?? false,
       }
     },
-    settings_summary(): string {
+    format(): string {
       const { height, width, frame_interval } = this.stream.video_and_stream.stream_information.configuration
       return video_dimension_framerate_text(height, width, frame_interval)
+    },
+    encode(): string {
+      const { encode } = this.stream.video_and_stream.stream_information.configuration
+      return video_encode_text(encode)
     },
     source_path(): string {
       if ('Gst' in this.stream.video_and_stream.video_source) {
@@ -127,6 +243,12 @@ export default Vue.extend({
       if ('Local' in this.stream.video_and_stream.video_source) {
         return this.stream.video_and_stream.video_source.Local.device_path
       }
+      if ('Onvif' in this.stream.video_and_stream.video_source) {
+        return this.stream.video_and_stream.video_source.Onvif.source.Onvif
+      }
+      if ('Redirect' in this.stream.video_and_stream.video_source) {
+        return this.stream.video_and_stream.video_source.Redirect.source.Redirect
+      }
       return 'Source unavailable'
     },
     isSDPFileAvailable(): boolean {
@@ -134,6 +256,25 @@ export default Vue.extend({
     },
     sDPFileURL(): string {
       return `${window.location.origin}${video.API_URL}/sdp?source=${encodeURIComponent(this.source_path)}`
+    },
+    streamErrorText(): string | null {
+      if (this.stream.error === null) {
+        return null
+      }
+
+      if (this.stream.error === '') {
+        return 'Unknown. See Mavlink Camera Manager backend logs for details.'
+      }
+
+      const fullText = this.stream.error
+        .replaceAll('\\n', '\n').replaceAll(': "', ': \n\n"').replaceAll('". ', '".\n\n')
+
+      if (this.isExpanded) {
+        return `${fullText} \n`
+      }
+
+      const firstLine = fullText.split('\n')[0]
+      return firstLine
     },
   },
   methods: {
@@ -165,11 +306,15 @@ export default Vue.extend({
         })
     },
     async copySDPFileURL(): Promise<void> {
+      return this.copyToClipboard(this.sDPFileURL)
+    },
+    async copyToClipboard(content: string): Promise<void> {
+      // eslint-disable-next-line func-style
       const try_fallback_clipboard_copy_method = (): void => {
         // If we don't have the permission, fallback to the old hacky way of creating an input,
         // copying the text from it, and destroy it even before it renders.
         const temporaryInputElement = document.createElement('input')
-        temporaryInputElement.value = this.sDPFileURL
+        temporaryInputElement.value = content
         document.body.appendChild(temporaryInputElement)
 
         try {
@@ -182,8 +327,9 @@ export default Vue.extend({
         }
       }
 
+      // eslint-disable-next-line func-style
       const clipboard_copy_api = (): void => {
-        navigator.clipboard.writeText(this.sDPFileURL).catch((error) => {
+        navigator.clipboard.writeText(content).catch((error) => {
           console.error(`Failed to copy URL to clipboard using Clipboard API. Reason: ${error}`)
           try_fallback_clipboard_copy_method()
         })
@@ -212,19 +358,68 @@ export default Vue.extend({
           try_fallback_clipboard_copy_method()
         })
     },
+    async copyVideoStreamToClipboard(): Promise<void> {
+      return this.copyToClipboard(JSON.stringify(this.$props, null, 2))
+    },
+    toggleExpandStreamError() {
+      this.isExpanded = !this.isExpanded
+    },
   },
 })
 </script>
-
 <style scoped>
-.stream-edit-btn {
-  position: absolute;
-  top: 15%;
-  right: -20px;
+.stream-info-grid {
+  display: grid;
+  grid-template-columns: minmax(100px, max-content) 1fr;
+  gap: 0.5rem 1rem;
+  padding-top: 10px;
 }
-.stream-remove-btn {
-  position: absolute;
-  bottom: 15%;
-  right: -20px;
+
+.info-label {
+  font-weight: 500;
+  text-align: right;
+  color: var(--v-tuna-base);
+}
+
+.info-value {
+  overflow-wrap: anywhere;
+}
+
+.error-content {
+  position: relative;
+  padding-bottom: 25px;
+}
+
+.actions-container {
+    position: absolute;
+    top: -28px;
+    right: 0px;
+    display: flex;
+    flex-direction: row;
+  }
+
+.action-buttons {
+  position: relative;
+}
+
+@media (max-width: 600px) {
+  .stream-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-label {
+    text-align: left;
+    padding-right: 0;
+    margin-top: 0.5rem;
+  }
+
+  .info-label:first-child {
+    margin-top: 0;
+  }
+
+  .action-buttons {
+    justify-content: center;
+    width: 100%;
+  }
 }
 </style>
