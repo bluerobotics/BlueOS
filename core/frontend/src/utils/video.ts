@@ -1,7 +1,18 @@
 import {
-  Device, FrameInterval, StreamStatus,
+  Device, FrameInterval, StreamStatus, VideoEncodeType,
 } from '@/types/video'
 
+export function video_encode_text(encode?: VideoEncodeType): string {
+  if (encode === undefined) {
+    return 'Unknown encode'
+  }
+
+  if (typeof encode === 'object' && 'UNKNOWN' in encode) {
+    return `Unknown encode: ${encode.UNKNOWN}`
+  }
+
+  return encode
+}
 
 export function video_dimension_text(height?: number, width?: number): string {
   if (height === undefined || width === undefined || width === 0 || height === 0) {
