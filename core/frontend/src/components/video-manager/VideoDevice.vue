@@ -35,6 +35,7 @@
         <div class="d-flex flex-column my-2 justify-space-around">
           <v-btn
             class="my-1"
+            :disabled="!has_configs"
             @click="openControlsDialog"
           >
             <v-icon>mdi-tune-variant</v-icon>
@@ -146,6 +147,9 @@ export default Vue.extend({
     },
     is_redirect_source(): boolean {
       return this.device.source === 'Redirect'
+    },
+    has_configs(): boolean {
+      return !this.device.controls.isEmpty()
     },
     has_running_streams(): boolean {
       return this.device_streams.some((stream) => stream.running)
