@@ -195,7 +195,9 @@ export interface VideoAndStreamInformation {
 }
 
 export interface StreamStatus {
+  id: string
   running: boolean
+  error: string | null
   video_and_stream: VideoAndStreamInformation
 }
 
