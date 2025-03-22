@@ -32,21 +32,23 @@
         <p class="text-subtitle-2 font text--secondary ma-0">
           {{ device.source }}
         </p>
-        <v-btn
-          class="my-2"
-          @click="openControlsDialog"
-        >
-          <v-icon>mdi-cog</v-icon>
-          Configure
-        </v-btn>
-        <v-btn
-          class="my-2"
-          :disabled="!is_redirect_source && (are_video_streams_available || updating_streams)"
-          @click="openStreamCreationDialog"
-        >
-          <v-icon>mdi-plus</v-icon>
-          Add stream
-        </v-btn>
+        <div class="d-flex flex-column my-2 justify-space-around">
+          <v-btn
+            class="my-1"
+            @click="openControlsDialog"
+          >
+            <v-icon>mdi-tune-variant</v-icon>
+            Device Controls
+          </v-btn>
+          <v-btn
+            class="my-1"
+            :disabled="!is_redirect_source && (are_video_streams_available || updating_streams)"
+            @click="openStreamCreationDialog"
+          >
+            <v-icon>mdi-plus</v-icon>
+            Add stream
+          </v-btn>
+        </div>
       </div>
       <div>
         <video-thumbnail
