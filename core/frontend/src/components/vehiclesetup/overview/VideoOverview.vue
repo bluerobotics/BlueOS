@@ -52,6 +52,7 @@ import { Dictionary } from '@/types/common'
 import {
   Device, Format, StreamInformation, VideoEncodeType,
 } from '@/types/video'
+import { available_streams_from_device } from '@/utils/video'
 
 export default Vue.extend({
   name: 'VideoOverview',
@@ -65,10 +66,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    streams() {
-      return video.available_streams
-    },
-
     devices() {
       function has_supported_encode(device: Device): boolean {
         return device.formats.some((format: Format) => format.encode === VideoEncodeType.H264)
@@ -82,22 +79,13 @@ export default Vue.extend({
       return valid_devices
     },
     streams_for_device(): Dictionary<StreamInformation> {
-      const streams_for_device: Dictionary<StreamInformation> = {}
-      for (const device of this.devices) {
-        for (const stream of this.streams) {
-          let source = null
-          if ('Gst' in stream.video_and_stream.video_source) {
-            continue
-          }
-          if ('Local' in stream.video_and_stream.video_source) {
-            source = stream.video_and_stream.video_source.Local.device_path
-          }
-          if (source === device.source) {
-            streams_for_device[`${device.name}`] = stream.video_and_stream.stream_information
-          }
-        }
-      }
-      return streams_for_device
+      return Object.fromEntries(
+        this.devices.flatMap((device) => available_streams_from_device(video.available_streams, device)
+          .map((stream) => [
+            `${device.name}`,
+            stream.video_and_stream.stream_information,
+          ])),
+      )
     },
 
   },
