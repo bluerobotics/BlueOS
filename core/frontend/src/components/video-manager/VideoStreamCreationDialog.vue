@@ -165,7 +165,7 @@ import settings from '@/libs/settings'
 import beacon from '@/store/beacon'
 import {
   CreatedStream, Device, Format, FrameInterval, Size, StreamPrototype, StreamType, VideoCaptureType,
-  VideoEncodeType,
+  VideoEncodeTypeEnum,
 } from '@/types/video'
 import { VForm } from '@/types/vuetify'
 import {
@@ -277,11 +277,11 @@ export default Vue.extend({
       const match_format = this.device.formats.find((format) => format.encode === this.selected_encode)
       return match_format === undefined ? null : match_format
     },
-    available_encodes(): {text: string, value: VideoEncodeType}[] {
+    available_encodes(): {text: string, value: VideoEncodeTypeEnum}[] {
       // Filter out any unknown encode types
       const supported_formats = this.device.formats.filter((format) => typeof format.encode === 'string')
       return supported_formats.map((format) => ({
-        text: format.encode, value: format.encode,
+        text: format.encode as VideoEncodeTypeEnum, value: format.encode as VideoEncodeTypeEnum,
       }))
     },
     available_sizes(): {text: string, value: Size}[] {
@@ -421,15 +421,15 @@ export default Vue.extend({
 
       return protocols
     },
-    change_endpoints_from_encode(encode: VideoEncodeType) {
+    change_endpoints_from_encode(encode: VideoEncodeTypeEnum) {
       this.stream_endpoints = this.stream_endpoints.map((endpoint) => {
-        if (encode === VideoEncodeType.H264) {
+        if (encode === VideoEncodeTypeEnum.H264) {
           if (endpoint.includes('udp265://')) {
             return endpoint.replace('udp265://', 'udp://')
           }
         }
 
-        if (encode === VideoEncodeType.H265) {
+        if (encode === VideoEncodeTypeEnum.H265) {
           if (endpoint.includes('udp://')) {
             return endpoint.replace('udp://', 'udp265://')
           }

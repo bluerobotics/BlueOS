@@ -50,7 +50,8 @@ import { OneMoreTime } from '@/one-more-time'
 import video from '@/store/video'
 import { Dictionary } from '@/types/common'
 import {
-  Device, Format, StreamInformation, VideoEncodeType,
+  Device, Format, StreamInformation,
+  VideoEncodeTypeEnum,
 } from '@/types/video'
 import { available_streams_from_device } from '@/utils/video'
 
@@ -68,7 +69,7 @@ export default Vue.extend({
   computed: {
     devices() {
       function has_supported_encode(device: Device): boolean {
-        return device.formats.some((format: Format) => format.encode === VideoEncodeType.H264)
+        return device.formats.some((format: Format) => format.encode === VideoEncodeTypeEnum.H264)
       }
       const devices = video.available_devices
       const valid_devices = devices.filter(
