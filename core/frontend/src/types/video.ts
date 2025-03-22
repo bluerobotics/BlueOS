@@ -191,7 +191,7 @@ export interface VideoSourceGst {
 export interface VideoAndStreamInformation {
   name: string
   stream_information: StreamInformation
-  video_source: VideoSourceLocal | VideoSourceGst | VideoSourceRedirect
+  video_source: VideoSourceLocal | VideoSourceGst | VideoSourceRedirect | VideoSourceOnvif
 }
 
 export interface StreamStatus {
