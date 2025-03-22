@@ -7,9 +7,8 @@
     >
       <span
         v-if="not_available"
-        :style="{ border: '2px dashed' }"
         class="text-caption"
-        style="opacity: 30%; padding: 20px"
+        style="border: 2px dashed; opacity: 30%; padding: 20px;"
       >
         Preview not<br>
         available<br>
