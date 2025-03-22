@@ -9,7 +9,9 @@ export interface Size {
   intervals: FrameInterval[]
 }
 
-export enum VideoEncodeType {
+export type VideoEncodeType = VideoEncodeTypeEnum | { 'UNKNOWN': string }
+
+export enum VideoEncodeTypeEnum {
   H265 = 'H265',
   H264 = 'H264',
   MJPG = 'MJPG',
