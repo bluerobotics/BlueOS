@@ -29,7 +29,6 @@
       </div>
       <div>
         <video-thumbnail
-          v-if="$vuetify.breakpoint.smAndUp"
           height="auto"
           width="280"
           :source="device.source"
