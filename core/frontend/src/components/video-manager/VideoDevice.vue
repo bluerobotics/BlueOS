@@ -115,25 +115,6 @@ export default Vue.extend({
     are_video_streams_available(): boolean {
       return !this.device_streams.isEmpty()
     },
-    device_streams(): StreamStatus[] {
-      return this.video_streams.filter((stream) => {
-        if ('Gst' in stream.video_and_stream.video_source) {
-          return stream.video_and_stream.video_source.Gst.source.Fake === this.device.source
-        }
-        if ('Local' in stream.video_and_stream.video_source) {
-          return stream.video_and_stream.video_source.Local.device_path === this.device.source
-        }
-        if ('Redirect' in stream.video_and_stream.video_source) {
-          // eslint-disable-next-line no-extra-parens
-          return (stream.video_and_stream.video_source.Redirect as VideoSourceRedirect)
-            .source.Redirect === this.device.source
-        }
-        return false
-      })
-    },
-    video_streams(): StreamStatus[] {
-      return video.available_streams
-    },
     updating_streams(): boolean {
       return video.updating_streams
     },
