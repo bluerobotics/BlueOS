@@ -148,11 +148,15 @@ export interface VideoSourceLocal {
   Local: VideoSourceLocalType
 }
 
-export interface VideoSourceRedirect {
+export interface VideoSourceRedirectType {
   name: string
   source: {
     Redirect: string
   }
+}
+
+export interface VideoSourceRedirect {
+  Redirect: VideoSourceRedirectType
 }
 
 export interface VideoSourceFake {
