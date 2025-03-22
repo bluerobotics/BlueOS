@@ -148,6 +148,22 @@ export interface VideoSourceLocal {
   Local: VideoSourceLocalType
 }
 
+export interface VideoSourceOnvifType {
+  name: string
+  model: string
+  serial_number: string
+  manufacturer: string
+  hardware_id: string
+  firmware_version: string
+  source: {
+    Onvif: string
+  }
+}
+
+export interface VideoSourceOnvif {
+  Onvif: VideoSourceOnvifType
+}
+
 export interface VideoSourceRedirectType {
   name: string
   source: {
