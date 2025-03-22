@@ -32,7 +32,7 @@
           height="auto"
           width="280"
           :source="device.source"
-          :register="are_video_streams_available"
+          :register="are_video_streams_available && has_running_streams"
         />
       </div>
     </div>
@@ -123,6 +123,9 @@ export default Vue.extend({
     },
     is_redirect_source(): boolean {
       return this.device.source === 'Redirect'
+    },
+    has_running_streams(): boolean {
+      return this.device_streams.some((stream) => stream.running)
     },
   },
   methods: {
