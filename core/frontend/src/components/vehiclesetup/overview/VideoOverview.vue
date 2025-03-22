@@ -20,12 +20,14 @@
               mdi-video-box
             </v-icon>
           </template>
-          <video-thumbnail
-            height="auto"
-            width="auto"
-            :source="device.source"
-            register
-          />
+          <template #default="{ value }">
+            <video-thumbnail
+              v-if="value"
+              width="280px"
+              :source="device.source"
+              register
+            />
+          </template>
         </v-tooltip>
         <b>{{ device.name }}</b></span>
       <span
