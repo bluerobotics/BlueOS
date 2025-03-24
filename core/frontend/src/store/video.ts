@@ -177,13 +177,15 @@ class VideoStore extends VuexModule {
     const target_height = 150
     const quality = 75
 
+    const requests: Promise<void>[] = []
+
     this.sources_to_request_thumbnail.forEach(async (source: string) => {
       if (this.busy_sources.has(source)) {
         return
       }
       this.busy_sources.add(source)
 
-      back_axios({
+      const request = back_axios({
         method: 'get',
         url: `${this.API_URL}/thumbnail?source=${source}&quality=${quality}&target_height=${target_height}`,
         timeout: 10000,
@@ -209,7 +211,11 @@ class VideoStore extends VuexModule {
         .finally(() => {
           this.busy_sources.delete(source)
         })
+
+      requests.push(request)
     })
+
+    await Promise.allSettled(requests)
   }
 
   @Action
@@ -234,6 +240,8 @@ class VideoStore extends VuexModule {
   startGetThumbnailForDevice(source: string): void {
     if (this.sources_to_request_thumbnail.size === 0) {
       this.fetchThumbnailsTask.resume()
+    } else {
+      this.fetchThumbnailsTask.start()
     }
     this.sources_to_request_thumbnail.add(source)
   }
