@@ -75,9 +75,8 @@ export default Vue.extend({
       }
       const devices = video.available_devices
       const valid_devices = devices.filter(
-        (device) => device.name !== 'Fake source'
-          && !device.name.startsWith('bcm')
-          && !device.name.startsWith('Redirect ')
+        (device) => !device.name.toLocaleLowerCase().startsWith('fake')
+          && !device.name.toLocaleLowerCase().startsWith('bcm')
           && has_supported_encode(device),
       )
       return valid_devices
