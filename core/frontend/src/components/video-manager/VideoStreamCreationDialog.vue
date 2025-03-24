@@ -312,10 +312,7 @@ export default Vue.extend({
     },
   },
   mounted() {
-    // Set default address if stream has no endpoints
-    if (this.stream_endpoints[0].isEmpty()) {
-      this.set_default_address_for_stream(0, StreamType.UDP)
-    }
+    this.set_default_configurations()
   },
   methods: {
     validate_required_field(input: string | null): (true | string) {
@@ -469,6 +466,38 @@ export default Vue.extend({
           break
         default:
           break
+      }
+    },
+    set_default_configurations() {
+      const is_fake = this.device.name.toLowerCase().startsWith('fake')
+
+      if (this.selected_encode === undefined) {
+        const default_encode = this.available_encodes.first()
+
+        if (default_encode !== undefined) {
+          this.selected_encode = default_encode.value
+        }
+      }
+
+      if (this.selected_size === null) {
+        const default_size = is_fake ? this.available_sizes.last() : this.available_sizes.first()
+
+        if (default_size !== undefined) {
+          this.selected_size = default_size.value
+        }
+      }
+
+      if (this.selected_interval === undefined) {
+        const default_interval = is_fake ? this.available_framerates.last() : this.available_framerates.first()
+
+        if (default_interval !== undefined) {
+          this.selected_interval = default_interval.value
+        }
+      }
+
+      // Set default address if stream has no endpoints
+      if (this.stream_endpoints[0].isEmpty()) {
+        this.set_default_address_for_stream(0, StreamType.UDP)
       }
     },
   },
