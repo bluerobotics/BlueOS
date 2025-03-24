@@ -60,8 +60,8 @@ export default Vue.extend({
   },
   data() {
     return {
-      fetch_devices_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
-      fetch_streams_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
+      fetch_devices_task: new OneMoreTime({ delay: 1000, disposeWith: this }),
+      fetch_streams_task: new OneMoreTime({ delay: 1000, disposeWith: this }),
     }
   },
   computed: {
