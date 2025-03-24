@@ -276,6 +276,12 @@ export default Vue.extend({
       const firstLine = fullText.split('\n')[0]
       return firstLine
     },
+    isEditable(): boolean {
+      return !('Onvif' in this.stream.video_and_stream.video_source)
+    },
+    isRemovable(): boolean {
+      return !('Onvif' in this.stream.video_and_stream.video_source)
+    },
   },
   methods: {
     openStreamEditDialog(): void {
