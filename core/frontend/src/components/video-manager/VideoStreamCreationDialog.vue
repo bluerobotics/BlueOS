@@ -496,7 +496,7 @@ export default Vue.extend({
       }
 
       // Set default address if stream has no endpoints
-      if (this.stream_endpoints[0].isEmpty()) {
+      if (!this.device.name.toLocaleLowerCase().startsWith('redirect') && this.stream_endpoints[0].isEmpty()) {
         this.set_default_address_for_stream(0, StreamType.UDP)
       }
     },
