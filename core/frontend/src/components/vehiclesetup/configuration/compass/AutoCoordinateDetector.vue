@@ -67,6 +67,7 @@ import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { FirmwareVehicleType } from '@/types/autopilot'
+import Parameter from '@/types/autopilot/parameter'
 import { sleep } from '@/utils/helper_functions'
 
 export default {
@@ -104,6 +105,19 @@ export default {
     supports_setting_position(): boolean {
       // So far we can only do this for Sub
       return autopilot.firmware_vehicle_type === FirmwareVehicleType.ArduSub
+    },
+    origin_lat_param(): Parameter | undefined {
+      return autopilot_data.parameter('ORIGIN_LAT')
+    },
+    origin_lon_param(): Parameter | undefined {
+      return autopilot_data.parameter('ORIGIN_LON')
+    },
+    firmware_backup_origin_is_unset(): boolean {
+      if (!this.origin_lat_param || !this.origin_lon_param) {
+        // A parameter that does not exist cannot be unset
+        return true
+      }
+      return this.origin_lat_param.value === 0.0 && this.origin_lon_param.value === 0.0
     },
   },
   watch: {
@@ -182,6 +196,10 @@ export default {
       await sleep(0.5)
       mavlink2rest.setParam('EK3_SRC1_POSXY', this.original_ekf_src, autopilot_data.system_id)
       await this.waitFor(() => this.current_ekf_src !== this.original_ekf_src)
+      if (this.firmware_backup_origin_is_unset) {
+        mavlink2rest.setParam('ORIGIN_LAT', lat, autopilot_data.system_id)
+        mavlink2rest.setParam('ORIGIN_LON', lon, autopilot_data.system_id)
+      }
     },
   },
 }
