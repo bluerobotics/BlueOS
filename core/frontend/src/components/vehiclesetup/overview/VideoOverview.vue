@@ -10,7 +10,7 @@
       class="ma-2 pa-2"
     >
       <span class="d-block">
-        <v-tooltip bottom>
+        <v-tooltip bottom :disabled="streams_for_device[device.name] === undefined">
           <template #activator="{ on, attrs }">
             <v-icon
               class="mr-2"
