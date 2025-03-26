@@ -545,6 +545,57 @@ unmanaged-devices=interface:eth0;interface:usb0
     return True
 
 
+def check_available_space(required_mb: int) -> bool:
+    """Check if there is enough space in disk for the required megabytes"""
+    try:
+        stats = os.statvfs("/")
+        available_mb = stats.f_bavail * stats.f_frsize / (1024 * 1024)
+        return available_mb >= required_mb
+    except Exception as exception:
+        logger.error(f"Failed to check available space: {exception}")
+        return False
+
+
+def update_swap_size() -> bool:
+    """Updates the swap size if there is enough space available"""
+    logger.info("Checking and updating swap size...")
+
+    swap_conf_file = "/etc/dphys-swapfile"
+
+    if check_available_space(1300):
+        desired_size = 1024
+    elif check_available_space(800):
+        desired_size = 512
+    else:
+        logger.warning("Not enough space to increase swap size")
+        return False
+
+    try:
+        content = load_file(swap_conf_file)
+
+        match = re.search(r"^CONF_SWAPSIZE=(\d+)", content, re.MULTILINE)
+        if not match:
+            logger.error("Could not find CONF_SWAPSIZE in configuration")
+            return False
+
+        current_size = int(match.group(1))
+        if current_size >= desired_size:
+            logger.info(f"Current swap size ({current_size}MB) is already >= desired size ({desired_size}MB)")
+            return False
+
+        new_content = re.sub(r"^CONF_SWAPSIZE=\d+", f"CONF_SWAPSIZE={desired_size}", content, flags=re.MULTILINE)
+
+        backup_identifier = "before_update_swap"
+        save_file(swap_conf_file, new_content, backup_identifier)
+
+        logger.info(f"Updated swap size from {current_size}MB to {desired_size}MB")
+        return True
+
+    except Exception as exception:
+        logger.error(f"Failed to update swap size: {exception}")
+        return False
+
+
 def main() -> int:
     start = time.time()
     # check if boot_loop_detector exists
@@ -581,6 +632,7 @@ def main() -> int:
         ("dns", create_dns_conf_host_link),
         ("ssh", fix_ssh_ownership),
         ("noIPV6", ensure_ipv6_disabled),
+        ("swap", update_swap_size),
     ]
 
     # this will always be pi4 as pi5 is not supported
