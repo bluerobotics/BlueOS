@@ -51,6 +51,10 @@ export class OneMoreTime {
 
   private isPaused = false
 
+  private isRunning = false
+
+  private timeoutId?: ReturnType<typeof setTimeout>
+
   /**
    * Constructs an instance of OneMoreTime, optionally starting the action immediately.
    * @param {OneMoreTimeOptions} options Configuration options for the instance.
@@ -65,6 +69,13 @@ export class OneMoreTime {
     this.softStart()
   }
 
+  private killTask(): void {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId)
+      this.timeoutId = undefined
+    }
+  }
+
   private watchDisposeWith(): void {
     if (this.options.disposeWith) {
       const ref = new WeakRef(this.options.disposeWith)
@@ -73,18 +84,25 @@ export class OneMoreTime {
         // Check if object does not exist anymore or if it was destroyed by vue
         // eslint-disable-next-line
         if (!ref.deref() || ref.deref()._isDestroyed) {
-          this.stop()
+          this.isDisposed = true
+          this.killTask()
           clearInterval(id)
         }
       }, 1000)
     }
   }
 
+  // Celebrate and dance so free
+  [Symbol.dispose](): void {
+    this.isDisposed = true
+    this.killTask()
+  }
+
   /**
    * Starts the action if `autostart` is enabled and an action is defined.
    * @returns {void}
    */
-  softStart(): void {
+  private softStart(): void {
     if (this.action && (this.options.autostart ?? true)) {
       this.start()
     }
@@ -116,8 +134,14 @@ export class OneMoreTime {
    */
   async start(): Promise<void> {
     // Come on, alright
-    if (this.isDisposed || this.isPaused) return
+    if (this.isDisposed || this.isPaused || this.isRunning) return
 
+    if (!this.action) {
+      console.warn('OneMoreTime: Started without an action, stopping execution')
+      return
+    }
+
+    this.isRunning = true
     try {
       // One more time, we're gonna celebrate
       await this.action?.()
@@ -127,23 +151,27 @@ export class OneMoreTime {
       // Oh yeah, alright, don't stop the dancing
       // eslint-disable-next-line no-promise-executor-return
       await new Promise((resolve) => setTimeout(resolve, this.options.errorDelay))
+    } finally {
+      this.isRunning = false
     }
 
-    setTimeout(() => this.start(), this.options.delay)
-  }
-
-  // Celebrate and dance so free
-  [Symbol.dispose](): void {
-    this.isDisposed = true
+    if (!this.isPaused && !this.isDisposed) {
+      this.timeoutId = setTimeout(() => this.start(), this.options.delay)
+    }
   }
 
   // Stop timer
   stop(): void {
+    if (this.isDisposed || this.isPaused) return
+
     this.isPaused = true
+    this.killTask()
   }
 
   // Resume timer
   resume(): void {
+    if (this.isDisposed || !this.isPaused) return
+
     this.isPaused = false
     this.start()
   }
