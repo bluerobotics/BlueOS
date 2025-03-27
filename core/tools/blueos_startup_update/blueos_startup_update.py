@@ -263,6 +263,25 @@ def update_i2c4_symlink() -> bool:
     return False  # This patch doesn't require restart to take effect
 
 
+def revert_pi3_dwc2_config() -> bool:
+    """
+    Removes dwc2 configuration from cmdline.txt on Pi3.
+    This was being wrongly applied due to a bad host_cpu check.
+    """
+    if get_cpu_type() != CpuType.PI3:
+        return False
+    cmdline_content = load_file(cmdline_file).replace("\n", "").split(" ")
+    unpatched_cmdline_content = cmdline_content.copy()
+    cmdline_content = []
+    for item in unpatched_cmdline_content:
+        if "dwc2" not in item and "g_ether" not in item:
+            cmdline_content.append(item)
+    if unpatched_cmdline_content == cmdline_content:
+        return False
+    save_file(cmdline_file, " ".join(cmdline_content), "before_revert_pi3_dwc2_config")
+    return True
+
+
 def update_dwc2() -> bool:
     logger.info("Running dwc2 update..")
 
@@ -636,7 +655,8 @@ def main() -> int:
         ("cgroups", update_cgroups),
     ]
 
-    # this will always be pi4 as pi5 is not supported
+    if host_cpu == CpuType.PI3:
+        patches_to_apply.extend([("revert_dwc2", revert_pi3_dwc2_config)])
     if host_cpu == CpuType.PI4:
         patches_to_apply.extend([("navigator", update_navigator_overlays)])
 
