@@ -23,8 +23,7 @@ from api.manager import (
     NetworkInterface,
     NetworkInterfaceMetricApi,
 )
-
-SERVICE_NAME = "cable-guy"
+from config import SERVICE_NAME
 
 parser = argparse.ArgumentParser(description="CableGuy service for Blue Robotics BlueOS")
 parser.add_argument(
