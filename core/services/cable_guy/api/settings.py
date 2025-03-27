@@ -1,68 +1,52 @@
 import json
-import os
+import pathlib
 from typing import Any, Dict, List
 
-import appdirs
-from loguru import logger
+from commonwealth.settings.settings import PydanticSettings
+
+from config import DEFAULT_NETWORK_INTERFACES
+from typedefs import AddressMode, NetworkInterface
 
 
-class Settings:
-    app_name = "cable-guy"
-    settings_path = appdirs.user_config_dir(app_name)
-    settings_file = os.path.join(settings_path, "settings.json")
+def sanitize_old_settings_file(path: pathlib.Path) -> None:
+    with open(path, "r", encoding="utf-8") as file:
+        data = json.load(file)
 
-    def __init__(self) -> None:
-        self.root: Dict[str, Any] = {"version": 0, "content": {}}
+    # Modify old cases of BackupServer to Server in old settings since it will case issues in downgrading
+    for iface in data["content"]:
+        for address in iface["addresses"]:
+            if address["mode"] == AddressMode.BackupServer:
+                address["mode"] = AddressMode.Unmanaged
 
-    def settings_exist(self) -> bool:
-        """Check if settings file exist
+    with open(path, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4)
 
-        Returns:
-            bool: True if it exist
-        """
-        return os.path.isfile(self.settings_file)
 
-    def load(self) -> bool:
-        """Load settings from file
+class SettingsV1(PydanticSettings):
+    content: List[NetworkInterface] = DEFAULT_NETWORK_INTERFACES
 
-        Returns:
-            bool: False if failed
-        """
-        if not self.settings_exist():
-            logger.warning(f"User settings does not exist: {self.settings_file}")
-            return False
-
-        data = None
-        try:
-            with open(self.settings_file, encoding="utf-8") as file:
-                data = json.load(file)
-                if data["version"] != self.root["version"]:
-                    logger.warning("User settings does not match with our supported version.")
-                    return False
-
-                self.root = data
-        except Exception as exception:
-            logger.warning(f"Failed to fetch data from file ({self.settings_file}): {exception}")
-            logger.warning(data)
-            return False
-
-        return True
-
-    def save(self, content: List[Any]) -> None:
-        """Save content to file
-
-        Args:
-            content (list): Configuration list
-        """
-        # We don't want to write in disk if there is nothing different to write
-        if self.root["content"] == content:
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        self.root["content"] = content
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
+            super().migrate(data)
 
-        if not os.path.exists(self.settings_path):
-            os.makedirs(self.settings_path)
+        data["VERSION"] = SettingsV1.STATIC_VERSION
 
-        with open(self.settings_file, "w+", encoding="utf-8") as file:
-            logger.debug(f"Updating settings file: {self.settings_file}")
-            json.dump(self.root, file, sort_keys=True, indent=4)
+    def on_settings_created(self, file_path: pathlib.Path) -> None:
+        if self.VERSION != SettingsV1.STATIC_VERSION:
+            return
+
+        # If we have some old settings, let's try to use them
+        try:
+            old_settings_file_path = file_path.parent / "settings.json"
+
+            with open(old_settings_file_path, "r", encoding="utf-8") as file:
+                self.content = [NetworkInterface.parse_obj(iface) for iface in json.load(file)["content"]]
+
+            # TODO: Remove the patch bellow around BlueOS 1.5.0 since it's purpose is only sanitizing the settings
+            # that may have been corrupted by 1.4.0-beta.17 and 1.4.0-beta.18
+            sanitize_old_settings_file(old_settings_file_path)
+        except Exception:
+            pass
