@@ -633,6 +633,7 @@ def main() -> int:
         ("ssh", fix_ssh_ownership),
         ("noIPV6", ensure_ipv6_disabled),
         ("swap", update_swap_size),
+        ("cgroups", update_cgroups),
     ]
 
     # this will always be pi4 as pi5 is not supported
@@ -642,7 +643,6 @@ def main() -> int:
     if host_cpu == CpuType.PI4 or CpuType.PI5:
         patches_to_apply.extend(
             [
-                ("cgroups", update_cgroups),
                 ("dwc2", update_dwc2),
                 ("i2c4", update_i2c4_symlink),
             ]
