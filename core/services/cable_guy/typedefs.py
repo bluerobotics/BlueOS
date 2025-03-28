@@ -34,8 +34,8 @@ class InterfaceInfo(BaseModel):
 class NetworkInterface(BaseModel):
     name: str
     addresses: List[InterfaceAddress]
-    info: Optional[InterfaceInfo]
-    priority: Optional[int]
+    info: Optional[InterfaceInfo] = None
+    priority: Optional[int] = None
 
     def __hash__(self) -> int:
         return hash(self.name) + sum(hash(address) for address in self.addresses)
