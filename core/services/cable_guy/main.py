@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-import argparse
 import asyncio
 import logging
 import os
@@ -16,43 +15,13 @@ from loguru import logger
 from uvicorn import Config, Server
 
 from api.dns import DnsData
-from api.manager import (
-    AddressMode,
-    EthernetManager,
-    InterfaceAddress,
-    NetworkInterface,
-    NetworkInterfaceMetricApi,
-)
+from api.manager import EthernetManager, NetworkInterface, NetworkInterfaceMetricApi
 from config import SERVICE_NAME
-
-parser = argparse.ArgumentParser(description="CableGuy service for Blue Robotics BlueOS")
-parser.add_argument(
-    "--default_config",
-    dest="default_config",
-    type=str,
-    default="bluerov2",
-    choices=["bluerov2"],
-    help="Specify configuration to use if settings file cannot be loaded or is not found. Defaults to 'bluerov2'.",
-)
-
-args = parser.parse_args()
-
-if args.default_config == "bluerov2":
-    default_configs = [
-        NetworkInterface(
-            name="eth0",
-            addresses=[
-                InterfaceAddress(ip="192.168.2.2", mode=AddressMode.BackupServer),
-                InterfaceAddress(ip="0.0.0.0", mode=AddressMode.Client),
-            ],
-        ),
-        NetworkInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
-    ]
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-manager = EthernetManager(default_configs)
+manager = EthernetManager()
 
 app = FastAPI(
     title="Cable Guy API",
