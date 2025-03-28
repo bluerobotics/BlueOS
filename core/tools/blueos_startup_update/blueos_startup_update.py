@@ -89,51 +89,51 @@ def update_startup() -> bool:
         return True
 
 
-def boot_config_get_or_append_session(config_content: List[str], session_name: str) -> Tuple[int, int]:
+def boot_config_get_or_append_section(config_content: List[str], section_name: str) -> Tuple[int, int]:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
-    session_match_pattern = r"^\[" + session_name + r"\].*$"
-    session_start_line_number = next(
-        (i for (i, line) in enumerate(config_content) if re.match(session_match_pattern, line, regex_flags)), None
+    section_match_pattern = r"^\[" + section_name + r"\].*$"
+    section_start_line_number = next(
+        (i for (i, line) in enumerate(config_content) if re.match(section_match_pattern, line, regex_flags)), None
     )
-    if session_start_line_number is None:
-        config_content.append(f"\n[{session_name}]")
-        session_start_line_number = len(config_content)
+    if section_start_line_number is None:
+        config_content.append(f"\n[{section_name}]")
+        section_start_line_number = len(config_content)
 
-    any_session_match_pattern = r"^\[.*\].*$"
-    session_end_line_number = next(
+    any_section_match_pattern = r"^\[.*\].*$"
+    section_end_line_number = next(
         (
-            (i + session_start_line_number + 1)
-            for (i, line) in enumerate(config_content[session_start_line_number + 1 :])
-            if line == "" or re.match(any_session_match_pattern, line, regex_flags)
+            (i + section_start_line_number + 1)
+            for (i, line) in enumerate(config_content[section_start_line_number + 1 :])
+            if line == "" or re.match(any_section_match_pattern, line, regex_flags)
         ),
         None,
     )
-    if session_end_line_number is None:
-        session_end_line_number = len(config_content)
+    if section_end_line_number is None:
+        section_end_line_number = len(config_content)
 
-    return (session_start_line_number, session_end_line_number)
+    return (section_start_line_number, section_end_line_number)
 
 
-def boot_config_add_configuration_at_session(config_content: List[str], config: str, session_name: str) -> None:
+def boot_config_add_configuration_at_section(config_content: List[str], config: str, section_name: str) -> None:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
-    (session_start, session_end) = boot_config_get_or_append_session(config_content, session_name)
+    (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
 
-    session_content = config_content[session_start:session_end]
+    section_content = config_content[section_start:section_end]
     config_already_exists = any(
-        session_content for session_content in session_content if re.match(config, session_content, regex_flags)
+        section_content for section_content in section_content if re.match(config, section_content, regex_flags)
     )
     if not config_already_exists:
-        config_content.insert(session_start + 1, config)
+        config_content.insert(section_start + 1, config)
 
 
-def boot_config_filter_conflicting_configuration_at_session(
-    config_content: List[str], config_pattern_match: str, config: str, session_name: str
+def boot_config_filter_conflicting_configuration_at_section(
+    config_content: List[str], config_pattern_match: str, config: str, section_name: str
 ) -> List[str]:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
-    (session_start, session_end) = boot_config_get_or_append_session(config_content, session_name)
+    (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
 
     return [
         line
@@ -148,8 +148,8 @@ def boot_config_filter_conflicting_configuration_at_session(
                 and not (
                     # ...if it's the correct one....
                     re.match(f"^{config}.*$", line, regex_flags)
-                    # ...and lives inside the correct session.
-                    and (session_start < i < session_end)
+                    # ...and lives inside the correct section.
+                    and (section_start < i < section_end)
                 )
             )
         )
@@ -166,7 +166,7 @@ def create_hard_link(source_file_name: str, destination_file_name: str) -> bool:
     return run_command(command, False).returncode == 0
 
 
-def boot_cmdfile_add_modules(cmdline_content: List[str], config_key: str, desired_config: List[str]):
+def boot_cmdline_add_modules(cmdline_content: List[str], config_key: str, desired_config: List[str]):
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
     # Get each configs line indexes, if any
@@ -192,7 +192,7 @@ def boot_cmdfile_add_modules(cmdline_content: List[str], config_key: str, desire
         cmdline_content.append(config_line)
 
 
-def boot_cmdfile_add_config(cmdline_content: List[str], config_key: str, config_value: str):
+def boot_cmdline_add_config(cmdline_content: List[str], config_key: str, config_value: str):
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
     # Get each configs line indexes, if any
@@ -235,7 +235,7 @@ def update_cgroups() -> bool:
         ("cgroup_enable", "memory"),
     ]
     for (config_key, config_value) in cgroups:
-        boot_cmdfile_add_config(cmdline_content, config_key, config_value)
+        boot_cmdline_add_config(cmdline_content, config_key, config_value)
 
     # Don't need to apply or restart if the content is the same
     if unpatched_cmdline_content == cmdline_content:
@@ -278,13 +278,13 @@ def update_dwc2() -> bool:
 
     # Add dwc2 overlay in pi4 section if it doesn't exist
     dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=otg"
-    session_name = "pi4" if get_cpu_type() == CpuType.PI4 else "pi5"
-    boot_config_add_configuration_at_session(config_content, dwc2_overlay_config, session_name)
+    section_name = "pi4" if get_cpu_type() == CpuType.PI4 else "pi5"
+    boot_config_add_configuration_at_section(config_content, dwc2_overlay_config, section_name)
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
     dwc2_overlay_match_pattern = "^[#]*dtoverlay=dwc2.*$"
-    config_content = boot_config_filter_conflicting_configuration_at_session(
-        config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, session_name
+    config_content = boot_config_filter_conflicting_configuration_at_section(
+        config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, section_name
     )
 
     # Save if needed, with backup
@@ -297,7 +297,7 @@ def update_dwc2() -> bool:
     unpatched_cmdline_content = cmdline_content.copy()
 
     # Add the dwc2 module configuration to enable USB OTG as ethernet adapter
-    boot_cmdfile_add_modules(cmdline_content, "modules-load", ["dwc2", "g_ether"])
+    boot_cmdline_add_modules(cmdline_content, "modules-load", ["dwc2", "g_ether"])
 
     # Don't need to apply if the content is the same, restart if the above part requires
     if unpatched_cmdline_content == cmdline_content:
@@ -339,14 +339,14 @@ def update_navigator_overlays() -> bool:
     ]
     navigator_configs_with_match_patterns.reverse()
 
-    pi4_session_name = "pi4"
+    pi4_section_name = "pi4"
     for (config, config_match_pattern) in navigator_configs_with_match_patterns:
-        # Add each navigator configuration to pi4 session
-        boot_config_add_configuration_at_session(config_content, config, pi4_session_name)
+        # Add each navigator configuration to pi4 section
+        boot_config_add_configuration_at_section(config_content, config, pi4_section_name)
 
         # Remove any unprotected and conflicting configuration of peripherals
-        config_content = boot_config_filter_conflicting_configuration_at_session(
-            config_content, config_match_pattern, config, pi4_session_name
+        config_content = boot_config_filter_conflicting_configuration_at_section(
+            config_content, config_match_pattern, config, pi4_section_name
         )
 
     # Don't need to apply or restart if the content is the same
