@@ -87,6 +87,11 @@ class PydanticSettings(BaseModel):
             except ValidationError as e:
                 raise BadSettingsFile(f"Settings file contains invalid data: {e}") from e
 
+    def on_settings_created(self, _: pathlib.Path) -> None:
+        # Base implementation for users, usually this is not needed, but mainly on SettingsV1 users may want to populate
+        # from maybe another source and this callback can be used
+        return
+
     def save(self, file_path: pathlib.Path) -> None:
         """Save settings to file
 
@@ -96,6 +101,10 @@ class PydanticSettings(BaseModel):
         # Path for settings file does not exist, lets ensure that it does
         parent_path = file_path.parent.absolute()
         parent_path.mkdir(parents=True, exist_ok=True)
+
+        if not file_path.exists():
+            # We call this to allow users to initialize the settings from another source if needed
+            self.on_settings_created(file_path)
 
         with open(file_path, "w", encoding="utf-8") as settings_file:
             logger.debug(f"Saving settings on: {file_path}")
