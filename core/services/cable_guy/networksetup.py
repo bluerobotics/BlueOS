@@ -211,7 +211,6 @@ class BookwormHandler(AbstractNetworkHandler):
         interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
         self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
 
-    # pylint: disable=too-many-nested-blocks
     def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         """Sets network interface priority using IPRoute.
 
