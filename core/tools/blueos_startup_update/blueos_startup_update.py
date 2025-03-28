@@ -128,6 +128,25 @@ def boot_config_add_configuration_at_section(config_content: List[str], config: 
         config_content.insert(section_start + 1, config)
 
 
+def boot_config_remove_section(config_content: List[str], section_name: str) -> None:
+    (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
+    del config_content[section_start:section_end]
+
+
+def boot_config_get_available_section(config_content: List[str]) -> List[str]:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    section_match_pattern = r"^\[(?P<section>\w+)\].*$"
+
+    section = []
+    for line in config_content:
+        match = re.match(section_match_pattern, line, regex_flags)
+        if match:
+            section.append(match.group("section"))
+
+    return section
+
+
 def boot_config_filter_conflicting_configuration_at_section(
     config_content: List[str], config_pattern_match: str, config: str, section_name: str
 ) -> List[str]:
@@ -280,6 +299,33 @@ def revert_update_dwc2() -> bool:
     if unpatched_cmdline_content == cmdline_content:
         return False
     save_file(cmdline_file, " ".join(cmdline_content), "before_revert_update_dwc2")
+
+    # Patch applied and system needs to be restarted for it to take effect
+    return True
+
+
+def clean_config_pi3() -> bool:
+    """
+    Removes any tagged configurations from config.txt on Pi3
+    This was being wrongly applied due to a bad host_cpu check.
+    """
+    config_content = load_file(config_file).splitlines()
+    unpatched_config_content = config_content.copy()
+
+    # Remove unwanted sections
+    # For a Pi3, we want to keep certain sections (see https://www.raspberrypi.com/documentation/computers/config_txt.html#model-filters)
+    sections_to_keep = ["all", "pi3", "pi3+", "cm3", "cm3+"]
+    current_section = boot_config_get_available_section(config_content)
+    for section in current_section:
+        if section not in sections_to_keep:
+            boot_config_remove_section(config_content, section)
+
+    # Save if needed, with backup
+    backup_identifier = "before_clean_config_pi3"
+    if unpatched_config_content == config_content:
+        return False
+    config_content_str = "\n".join(config_content)
+    save_file(config_file, config_content_str, backup_identifier)
 
     # Patch applied and system needs to be restarted for it to take effect
     return True
@@ -662,6 +708,7 @@ def main() -> int:
         patches_to_apply.extend(
             [
                 ("revert_update_dwc2", revert_update_dwc2),
+                ("clean_config_pi3", clean_config_pi3),
             ]
         )
 
