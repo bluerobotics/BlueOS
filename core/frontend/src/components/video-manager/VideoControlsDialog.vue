@@ -17,7 +17,7 @@
           <video-thumbnail
             height="auto"
             width="280"
-            register="true"
+            :register="thumbnailRegister"
             :source="device.source"
           />
           <v-container v-if="are_controllers_available">
@@ -121,6 +121,10 @@ export default Vue.extend({
     device: {
       type: Object as PropType<Device>,
       required: true,
+    },
+    thumbnailRegister: {
+      type: Boolean,
+      default: true,
     },
   },
   data() {
