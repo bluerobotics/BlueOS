@@ -133,8 +133,8 @@ class SystemInformationStore extends VuexModule {
         const dt = (now - (previousNetwork?.last_update ?? 5)) / 1000
         network.last_update = now
         if (previousNetwork) {
-          network.upload_speed = (network.total_received_B - previousNetwork.total_received_B) / dt
-          network.download_speed = (network.total_transmitted_B - previousNetwork.total_transmitted_B) / dt
+          network.download_speed = (network.total_received_B - previousNetwork.total_received_B) / dt
+          network.upload_speed = (network.total_transmitted_B - previousNetwork.total_transmitted_B) / dt
         }
       }
       this.system.network = networks
