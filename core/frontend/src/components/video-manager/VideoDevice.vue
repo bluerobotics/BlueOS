@@ -90,6 +90,7 @@
     <video-controls-dialog
       v-model="show_controls_dialog"
       :device="device"
+      :thumbnail-register="are_video_streams_available && has_running_streams"
     />
     <video-stream-creation-dialog
       v-model="show_stream_creation_dialog"
