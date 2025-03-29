@@ -3,9 +3,10 @@ import re
 import subprocess
 import time
 from socket import AddressFamily
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import psutil
+from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, discover_dhcp_servers
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
@@ -14,6 +15,7 @@ from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 
 from api import dns, settings
+from config import SERVICE_NAME
 from networksetup import AbstractNetworkHandler, NetworkHandlerDetector
 from typedefs import (
     AddressMode,
@@ -48,22 +50,22 @@ class EthernetManager:
 
     result: List[NetworkInterface] = []
 
-    def __init__(self, default_configs: List[NetworkInterface]) -> None:
-        self.settings = settings.Settings()
+    _manager: PydanticManager = PydanticManager(SERVICE_NAME, settings.SettingsV1)
 
+    @property
+    def _settings(self) -> settings.SettingsV1:
+        return cast(settings.SettingsV1, self._manager.settings)
+
+    def __init__(self) -> None:
         self._dhcp_servers: List[DHCPServerManager] = []
-        # Load settings and do the initial configuration
-        if not self.settings.load():
-            logger.error(f"Failed to load previous settings. Using default configuration: {default_configs}")
-            self.settings.root = {"version": 0, "content": [entry.dict() for entry in default_configs]}
 
     async def initialize(self) -> None:
         self.network_handler = await NetworkHandlerDetector().getHandler()
         logger.info("Loading previous settings.")
-        for item in self.settings.root["content"]:
+        for item in self._settings.content:
             logger.info(f"Loading following configuration: {item}.")
             try:
-                await self.set_configuration(NetworkInterface(**item))
+                await self.set_configuration(item)
             except Exception as error:
                 logger.error(f"Failed loading saved configuration. {error}")
 
@@ -84,8 +86,7 @@ class EthernetManager:
 
     def save(self) -> None:
         """Save actual configuration"""
-        interfaces = list(self.settings.root["content"])
-        self.settings.save(interfaces)
+        self._manager.save()
 
     async def set_configuration(self, interface: NetworkInterface, watchdog_call: bool = False) -> None:
         """Modify hardware based in the configuration
@@ -279,12 +280,9 @@ class EthernetManager:
             updated_interface (NetworkInterface): New interface configuration
         """
         # Filter out the old interface configuration and append the new one
-        updated_interfaces = [
-            interface for interface in self.settings.root["content"] if interface["name"] != interface_name
-        ]
-        updated_interfaces.append(updated_interface.dict())
-        self.settings.save(updated_interfaces)
-        self.save()
+        self._settings.content = [interface for interface in self._settings.content if interface.name != interface_name]
+        self._settings.content.append(updated_interface)
+        self._manager.save()
 
     def add_static_ip(self, interface_name: str, ip: str, mode: AddressMode = AddressMode.Unmanaged) -> None:
         """Set ip address for a specific interface and saves it to the settings file
@@ -360,10 +358,7 @@ class EthernetManager:
         raise ValueError(f"No interface with name '{name}' is present.")
 
     def get_saved_interface_by_name(self, name: str) -> Optional[NetworkInterface]:
-        for interface in self.settings.root["content"]:
-            if interface["name"] == name:
-                return NetworkInterface(**interface)
-        return None
+        return next((i for i in self._settings.content if i.name == name), None)
 
     # pylint: disable=too-many-locals
     def get_interfaces(self, filter_wifi: bool = False) -> List[NetworkInterface]:
@@ -676,8 +671,7 @@ class EthernetManager:
         mismatched_interfaces = []
         current_priorities = {interface.name: interface.priority for interface in self.get_interfaces_priority()}
 
-        for interface_settings in self.settings.root["content"]:
-            interface = NetworkInterface(**interface_settings)
+        for interface in self._settings.content:
             if interface.priority is None:
                 continue
             if interface.name in current_priorities and interface.priority != current_priorities[interface.name]:
@@ -697,13 +691,12 @@ class EthernetManager:
 
         mismatches: Set[NetworkInterface] = set()
         current = self.get_ethernet_interfaces()
-        if "content" not in self.settings.root:
+        if len(self._settings.content) == 0:
             logger.debug("No saved configuration found")
-            logger.debug(f"Current configuration: {self.settings.root}")
+            logger.debug(f"Current configuration: {self._settings}")
             return mismatches
 
-        saved = self.settings.root["content"]
-        saved_interfaces = {interface["name"]: NetworkInterface(**interface) for interface in saved}
+        saved_interfaces = {interface.name: interface for interface in self._settings.content}
 
         for interface in current:
             if interface.name not in saved_interfaces:
@@ -743,11 +736,10 @@ class EthernetManager:
                 priority_mismatch = self.priorities_mismatch()
                 if priority_mismatch:
                     logger.warning("Interface priorities mismatch, applying saved settings.")
-                    saved_interfaces = self.settings.root["content"]
                     priorities = [
-                        NetworkInterfaceMetricApi(name=interface["name"], priority=interface["priority"])
-                        for interface in saved_interfaces
-                        if "priority" in interface and interface["priority"] is not None
+                        NetworkInterfaceMetricApi(name=interface.name, priority=interface.priority)
+                        for interface in self._settings.content
+                        if interface.priority is not None
                     ]
                     self.set_interfaces_priority(priorities)
                 await asyncio.sleep(5)
