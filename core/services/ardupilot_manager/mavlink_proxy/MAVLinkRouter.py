@@ -1,8 +1,10 @@
+import configparser
 import re
 import subprocess
+import tempfile
 from typing import Optional
 
-from mavlink_proxy.AbstractRouter import AbstractRouter
+from mavlink_proxy.AbstractRouter import AbstractRouter, TLogCondition
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 
 
@@ -20,6 +22,21 @@ class MAVLinkRouter(AbstractRouter):
                     return regex.group("version")
 
         return None
+
+    def _write_configuration_file(self) -> str:
+        def convert_tlog_condition(tlog_condition: TLogCondition) -> str:
+            match tlog_condition:
+                case TLogCondition.Always:
+                    return "always"
+                case TLogCondition.WhileArmed:
+                    return "while-armed"
+
+        config = configparser.ConfigParser()
+        config["General"] = {"LogMode": convert_tlog_condition(self.tlog_condition())}
+
+        with tempfile.NamedTemporaryFile("w", suffix=".conf", delete=False) as temp_file:
+            config.write(temp_file, space_around_delimiters=True)
+            return temp_file.name
 
     def assemble_command(self, master_endpoint: Endpoint) -> str:
         # Convert endpoint format to mavlink-router format
@@ -63,7 +80,7 @@ class MAVLinkRouter(AbstractRouter):
                 f"Master endpoint of type {master_endpoint.connection_type} not supported on MavlinkRouter."
             )
 
-        return f"{self.binary()} {convert_endpoint(master_endpoint)} {endpoints} -l {self.logdir()} -T {self.logdir()}"
+        return f"{self.binary()} {convert_endpoint(master_endpoint)} {endpoints} -l {self.logdir()} -T {self.logdir()} -c {self._write_configuration_file()}"
 
     @staticmethod
     def name() -> str:
