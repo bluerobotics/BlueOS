@@ -238,7 +238,7 @@ class VideoStore extends VuexModule {
 
   @Action
   startGetThumbnailForDevice(source: string): void {
-    if (this.sources_to_request_thumbnail.size === 0) {
+    if (this.sources_to_request_thumbnail.size > 0) {
       this.fetchThumbnailsTask.resume()
     } else {
       this.fetchThumbnailsTask.start()
