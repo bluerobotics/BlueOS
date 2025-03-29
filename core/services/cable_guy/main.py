@@ -46,6 +46,7 @@ if args.default_config == "bluerov2":
                 InterfaceAddress(ip="192.168.2.2", mode=AddressMode.BackupServer),
                 InterfaceAddress(ip="0.0.0.0", mode=AddressMode.Client),
             ],
+            multicast="224.0.0.0/4",
         ),
         NetworkInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
     ]
