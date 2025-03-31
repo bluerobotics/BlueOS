@@ -163,7 +163,7 @@ class HotspotManager:
     def command_list(self) -> List[str]:
         return shlex.split(f"{self.binary()} {self.config_path()}")
 
-    def start(self) -> None:
+    async def start(self) -> None:
         logger.info("Starting hotspot.")
         if not self.supports_hotspot:
             raise RuntimeError("Hotspot not supported on this device.")
@@ -180,7 +180,7 @@ class HotspotManager:
             if not self._dhcp_server:
                 self._dhcp_server = DHCPServerManager(self._ap_interface_name, self._ipv4_gateway)
                 return
-            self._dhcp_server.restart()
+            await self._dhcp_server.restart()
         except Exception as error:
             raise RuntimeError(f"Unable to start hotspot. {error}") from error
 
@@ -196,9 +196,9 @@ class HotspotManager:
         else:
             logger.info("Tried to stop hostpot, but it was already not running.")
 
-    def restart(self) -> None:
+    async def restart(self) -> None:
         self.stop()
-        self.start()
+        await self.start()
 
     def is_running(self) -> bool:
         if not self.supports_hotspot:
