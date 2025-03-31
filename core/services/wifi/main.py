@@ -109,9 +109,9 @@ async def disconnect() -> Any:
 
 @app.get("/hotspot", summary="Get hotspot state.")
 @version(1, 0)
-def hotspot_state() -> Any:
+async def hotspot_state() -> Any:
     assert wifi_manager is not None
-    return wifi_manager.hotspot_is_running()
+    return await wifi_manager.hotspot_is_running()
 
 
 @app.get("/hotspot_extended_status", summary="Get extended hotspot status.")
