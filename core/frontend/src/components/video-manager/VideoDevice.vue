@@ -68,17 +68,16 @@
     </v-container>
     <v-card flat>
       <v-container v-if="are_video_streams_available && !updating_streams">
-        <v-row>
-          <v-col
-            v-for="(stream, i) in device_streams"
-            :key="i"
-          >
-            <video-stream
-              :stream="stream"
-              :device="device"
-            />
-          </v-col>
-        </v-row>
+        <div
+          v-for="(stream, i) in device_streams"
+          :key="i"
+        >
+          <div v-if="i > 0" class="mt-10" />
+          <video-stream
+            :stream="stream"
+            :device="device"
+          />
+        </div>
       </v-container>
       <v-container v-else-if="updating_streams">
         <spinning-logo
