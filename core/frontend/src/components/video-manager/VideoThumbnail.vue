@@ -70,7 +70,7 @@ export default Vue.extend({
       return this.register === false
     },
     fetching(): boolean {
-      return this.thumbnail === undefined
+      return this.register && this.thumbnail === undefined
     },
   },
   watch: {
