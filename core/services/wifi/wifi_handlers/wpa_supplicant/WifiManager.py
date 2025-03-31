@@ -493,7 +493,7 @@ class WifiManager(AbstractWifiManager):
 
         if self.hotspot.is_running():
             logger.warning("Hotspot already running. No need to enable it again.")
-        self.hotspot.start()
+        await self.hotspot.start()
         return True
 
     async def disable_hotspot(self, save_settings: bool = True) -> None:
