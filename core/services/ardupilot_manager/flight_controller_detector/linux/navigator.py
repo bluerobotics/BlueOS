@@ -30,6 +30,10 @@ class Navigator(LinuxFlightController):
         with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
             return "Raspberry Pi 5" in f.read()
 
+    def is_pi4(self) -> bool:
+        with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
+            return "Raspberry Pi 4" in f.read()
+
     def detect(self) -> bool:
         return False
 
@@ -91,6 +95,6 @@ class NavigatorPi4(Navigator):
         raise RuntimeError("Unknown release, unable to map ports")
 
     def detect(self) -> bool:
-        if self.is_pi5():
+        if not self.is_pi4():
             return False
         return all(self.check_for_i2c_device(bus, address) for address, bus in self.devices.values())
