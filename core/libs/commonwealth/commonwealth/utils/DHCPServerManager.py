@@ -114,6 +114,8 @@ class Dnsmasq:
                 )
                 return
         try:
+            logger.info(f"Starting DHCP server on interface {self._interface}")
+            logger.info("Command: " + " ".join(self.command_list()))
             # pylint: disable=consider-using-with
             self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
             time.sleep(3)
