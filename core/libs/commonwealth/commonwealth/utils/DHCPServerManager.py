@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import time
 from ipaddress import IPv4Address, IPv4Interface, IPv4Network
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 import psutil
 from loguru import logger
@@ -84,12 +84,12 @@ class Dnsmasq:
 
         subprocess.check_output([*self.command_list(), "--test"])
 
-    def command_list(self) -> List[Union[str, pathlib.Path]]:
+    def command_list(self) -> List[str]:
         """List of arguments to be used in the command line call.
         Refer to https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html for details about each argument."""
 
         return [
-            self.binary(),
+            self.binary().as_posix(),
             "--no-daemon",
             f"--interface={self._interface}",
             f"--dhcp-range={self._ipv4_lease_range[0]},{self._ipv4_lease_range[1]},{self._subnet_mask},{self._lease_time}",  # fmt: skip
