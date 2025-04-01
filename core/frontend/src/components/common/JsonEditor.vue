@@ -1,5 +1,8 @@
 <template>
-  <div class="d-flex flex-column">
+  <div
+    class="d-flex flex-column"
+    :style="{ height: height }"
+  >
     <div
       v-if="!is_read_only"
       class="editor d-flex"
@@ -51,6 +54,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    height: {
+      type: String,
+      default: '300px',
+    },
   },
   data() {
     return {
@@ -92,6 +99,9 @@ export default {
         this.edited_code = json
         this.editor.set(json)
       }
+    },
+    edited_code(json) {
+      this.$emit('input', json)
     },
     readOnly() {
       this.editor.setMode(this.read ? 'view' : this.editor_code_mode)
