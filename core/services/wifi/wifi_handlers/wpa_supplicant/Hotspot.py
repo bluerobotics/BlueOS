@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import pathlib
 import shlex
@@ -173,7 +174,7 @@ class HotspotManager:
             # pylint: disable=consider-using-with
             if not self.is_running():
                 self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
-                time.sleep(3)
+                await asyncio.sleep(3)
                 if not self.is_running():
                     exit_code = self._subprocess.returncode
                     raise RuntimeError(f"Failed to initialize Hostapd ({exit_code}).")
