@@ -2,7 +2,6 @@ import asyncio
 import pathlib
 import shutil
 import subprocess
-import time
 from ipaddress import IPv4Address, IPv4Interface, IPv4Network
 from typing import Any, List, Optional, Tuple
 
@@ -118,7 +117,7 @@ class Dnsmasq:
             logger.info("Command: " + " ".join(self.command_list()))
             # pylint: disable=consider-using-with
             self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
-            time.sleep(3)
+            await asyncio.sleep(3)
             if not self.is_running():
                 exit_code = self._subprocess.returncode
                 raise RuntimeError(f"Failed to initialize Dnsmasq ({exit_code}).")
