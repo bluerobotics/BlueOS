@@ -224,6 +224,8 @@ class Bootstrapper:
             return False
 
         logger.info(f"{component_name} ({docker_name}) started")
+        # Restart counter with new core
+        self.core_last_response_time = time.monotonic()
         return True
 
     def is_running(self, component: str) -> bool:
