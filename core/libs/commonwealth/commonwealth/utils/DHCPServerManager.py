@@ -93,7 +93,7 @@ class Dnsmasq:
             f"--interface={self._interface}",
             f"--dhcp-range={self._ipv4_lease_range[0]},{self._ipv4_lease_range[1]},{self._subnet_mask},{self._lease_time}",  # fmt: skip
             "--dhcp-option=option:router",
-            "--bind-interfaces",
+            "--bind-dynamic",
             "--dhcp-option=option6:information-refresh-time,6h",
             "--dhcp-rapid-commit",
             "--cache-size=1500",
