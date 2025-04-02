@@ -73,7 +73,7 @@
             <v-btn
               v-tooltip="'Frees up space on the SD card'"
               class="ma-2"
-              :disabled="disable_remove"
+              :disabled="disable_remove || deletion_in_progress"
               @click="remove_service_log_files"
             >
               <v-icon left>
@@ -82,6 +82,29 @@
               Remove
             </v-btn>
           </v-card-actions>
+
+          <v-expand-transition>
+            <div v-if="deletion_in_progress" class="pa-4">
+              <v-progress-linear
+                indeterminate
+                color="primary"
+              />
+              <div class="mt-2">
+                <div class="text-subtitle-2">
+                  Deleting: {{ current_deletion_path }}
+                </div>
+                <div class="text-caption">
+                  Size: {{ formatSize(current_deletion_size / 1024) }}
+                </div>
+                <div class="text-caption">
+                  Total: {{ formatSize(current_deletion_total_size / 1024) }}
+                </div>
+                <div class="text-caption">
+                  Status: {{ current_deletion_status }}
+                </div>
+              </div>
+            </div>
+          </v-expand-transition>
 
           <v-divider />
 
@@ -150,6 +173,7 @@
 </template>
 
 <script lang="ts">
+import axios, { CancelTokenSource } from 'axios'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -159,6 +183,7 @@ import bag from '@/store/bag'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { prettifySize } from '@/utils/helper_functions'
+import { parseStreamingResponse } from '@/utils/streaming'
 
 const API_URL = '/commander/v1.0'
 
@@ -180,11 +205,27 @@ export default Vue.extend({
       operation_in_progress: false,
       operation_description: '',
       operation_error: undefined as undefined | string,
+      deletion_in_progress: false,
+      deletion_log_abort_controller: null as null | CancelTokenSource,
+      current_deletion_path: '',
+      current_deletion_size: 0,
+      current_deletion_total_size: 0,
+      current_deletion_status: '',
     }
   },
   computed: {
     has_operation_error(): boolean {
       return this.operation_error !== undefined
+    },
+  },
+  watch: {
+    show_dialog: {
+      handler(val) {
+        if (!val) {
+          this.deletion_log_abort_controller?.cancel()
+        }
+      },
+      immediate: true,
     },
   },
   async mounted() {
@@ -196,6 +237,9 @@ export default Vue.extend({
       this.operation_error = undefined
       this.operation_in_progress = true
       this.operation_description = description
+    },
+    formatSize(bytes: number): string {
+      return prettifySize(bytes)
     },
     async download_service_log_files(): Promise<void> {
       const folder = await filebrowser.fetchFolder('system_logs')
@@ -216,7 +260,7 @@ export default Vue.extend({
           const folder_data_bytes = response.data
           const one_hundred_MB = 100 * 2 ** 20
           this.disable_remove = folder_data_bytes < one_hundred_MB
-          this.log_folder_size = prettifySize(folder_data_bytes / 1024)
+          this.log_folder_size = this.formatSize(folder_data_bytes / 1024)
         })
         .catch((error) => {
           this.operation_error = String(error)
@@ -235,7 +279,7 @@ export default Vue.extend({
           const folder_data_bytes = response.data
           const one_hundred_MB = 100 * 2 ** 20
           this.disable_remove_mavlink = folder_data_bytes < one_hundred_MB
-          this.mavlink_log_folder_size = prettifySize(folder_data_bytes / 1024)
+          this.mavlink_log_folder_size = this.formatSize(folder_data_bytes / 1024)
         })
         .catch((error) => {
           this.operation_error = String(error)
@@ -264,24 +308,54 @@ export default Vue.extend({
       this.operation_in_progress = false
     },
     async remove_service_log_files(): Promise<void> {
-      this.prepare_operation('Removing system log files...')
+      this.deletion_log_abort_controller = axios.CancelToken.source()
+      this.deletion_in_progress = true
+      this.current_deletion_path = '...'
+      this.current_deletion_size = 0
+      this.current_deletion_total_size = 0
+      this.current_deletion_status = 'Starting deletion...'
 
-      await back_axios({
-        url: `${API_URL}/services/remove_log`,
-        method: 'post',
-        params: {
-          i_know_what_i_am_doing: true,
-        },
-        timeout: 20000,
-      })
-        .then(() => {
-          this.get_log_folder_size()
+      try {
+        await back_axios({
+          url: `${API_URL}/services/remove_log_stream`,
+          method: 'post',
+          params: {
+            i_know_what_i_am_doing: true,
+          },
+          responseType: 'text',
+          onDownloadProgress: (progressEvent) => {
+            let result = parseStreamingResponse(progressEvent.currentTarget.response)
+            result = result.filter((fragment) => fragment.fragment !== -1)
+            const last_fragment = result.last()
+            const total_deleted = result
+              .reduce((acc, fragment) => acc + (JSON.parse(fragment?.data ?? '{}')?.size ?? 0), 0)
+
+            if (last_fragment?.data) {
+              try {
+                const info = JSON.parse(last_fragment.data)
+                this.current_deletion_path = info.path.length > 30 ? `...${info.path.slice(-20)}` : info.path
+                this.current_deletion_size = info.size
+                this.current_deletion_total_size = total_deleted
+                this.current_deletion_status = info.success ? 'Deleting..' : 'Failed to delete file..'
+              } catch (e) {
+                console.error('Error parsing deletion info:', e)
+              }
+            }
+          },
+          cancelToken: this.deletion_log_abort_controller?.token,
         })
-        .catch((error) => {
-          this.operation_error = String(error)
-          notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
-        })
-      this.operation_in_progress = false
+      } catch (error) {
+        this.operation_error = String(error)
+        notifier.pushBackError('REMOVE_SERVICES_LOG_FAIL', error)
+      } finally {
+        this.operation_in_progress = false
+        this.deletion_in_progress = false
+        this.current_deletion_path = ''
+        this.current_deletion_size = 0
+        this.current_deletion_status = ''
+      }
+
+      this.get_log_folder_size()
     },
     async remove_mavlink_log_files(): Promise<void> {
       this.prepare_operation('Removing MAVLink log files...')
