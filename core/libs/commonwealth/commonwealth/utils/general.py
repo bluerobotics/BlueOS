@@ -1,9 +1,12 @@
+import asyncio
 import os
 import subprocess
 import uuid
+from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import cache
 from pathlib import Path
+from typing import Any, AsyncGenerator
 
 import psutil
 from loguru import logger
@@ -67,6 +70,88 @@ def delete_everything(path: Path) -> None:
                 delete_everything(item)
         except Exception as exception:
             logger.warning(f"Failed to delete: {item}, {exception}")
+
+
+@dataclass
+class DeletionInfo:
+    path: str
+    size: int
+    type: str
+    success: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+async def delete_everything_stream(path: Path) -> AsyncGenerator[dict[str, Any], None]:
+    """Delete everything in a path and yield information about each file being deleted.
+
+    Args:
+        path: Path to delete
+
+    Yields:
+        Dictionary containing information about each file being deleted:
+        {
+            'path': str,  # Path of the file being deleted
+            'size': int,  # Size of the file in bytes
+            'type': str,  # 'file' or 'directory'
+            'success': bool  # Whether deletion was successful
+        }
+    """
+
+    if path.is_file() and not file_is_open(path):
+        try:
+            size = path.stat().st_size
+            await asyncio.to_thread(path.unlink)
+            # fmt: off
+            yield DeletionInfo(
+                path=str(path),
+                size=size,
+                type="file",
+                success=True
+            ).to_dict()
+            # fmt: on
+        except Exception as exception:
+            logger.warning(f"Failed to delete: {path}, {exception}")
+            # fmt: off
+            yield DeletionInfo(
+                path=str(path),
+                size=0,
+                type="file",
+                success=False
+            ).to_dict()
+            # fmt: on
+        return
+
+    items = await asyncio.to_thread(lambda: list(path.glob("*")))
+
+    for item in items:
+        try:
+            if item.is_file() and not file_is_open(item):
+                size = item.stat().st_size
+                await asyncio.to_thread(item.unlink)
+                # fmt: off
+                yield DeletionInfo(
+                    path=str(item),
+                    size=size,
+                    type="file",
+                    success=True
+                ).to_dict()
+                # fmt: on
+            if item.is_dir() and not item.is_symlink():
+                # Delete folder contents
+                async for info in delete_everything_stream(item):
+                    yield info
+        except Exception as exception:
+            logger.warning(f"Failed to delete: {item}, {exception}")
+            # fmt: off
+            yield DeletionInfo(
+                path=str(item),
+                size=0,
+                type="directory" if item.is_dir() else "file",
+                success=False
+            ).to_dict()
+            # fmt: on
 
 
 def file_is_open(path: Path) -> bool:
