@@ -200,7 +200,6 @@ export default Vue.extend({
       back_axios({
         method: 'post',
         url: '/network-test/post_file',
-        timeout: 20000,
         data: this.upload_buffer,
         onUploadProgress: (progress_event) => {
           if (start_time === undefined) {
@@ -234,7 +233,6 @@ export default Vue.extend({
       back_axios({
         method: 'get',
         url: '/network-test/get_file',
-        timeout: 20000,
         data: {
           size: one_hundred_mega_bytes,
           avoid_cache: new Date().getTime(),
