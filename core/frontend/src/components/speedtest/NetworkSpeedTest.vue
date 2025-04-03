@@ -219,12 +219,18 @@ export default Vue.extend({
             `network-test: Upload: ${speed_Mb.toFixed(2)}Mbps ${percentage.toFixed(2)}% ${seconds.toFixed(2)}s`,
           )
           this.setSpeed(speed_Mb)
+
+          // For some reason, this code never reaches finally block
+          // So we need to check if the upload is done
+          if (percentage > 99) {
+            this.updateState(State.Done)
+          }
         },
       }).catch((error) => {
         const message = `Failed to do speed test: ${error.message}`
         notifier.pushError('NETWORK_SPEED_TEST_UPLOAD', message)
         console.error(message)
-      }).finally(() => this.updateState(State.Done))
+      })
     },
     checkDownloadSpeed(): void {
       const one_hundred_mega_bytes = 100 * 2 ** 20
