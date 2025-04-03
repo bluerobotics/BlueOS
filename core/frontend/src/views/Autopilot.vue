@@ -122,7 +122,7 @@ import OpenPilotBanner from '@/assets/img/banners/OpenPilot.svg'
 import PX4Banner from '@/assets/img/banners/PX4.svg'
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import {
-  fetchAvailableBoards, fetchCurrentBoard, fetchFirmwareInfo, fetchVehicleType,
+  fetchAvailableBoards, fetchCurrentBoard, fetchFirmwareInfo, fetchFirmwareVehicleType, fetchVehicleType,
 } from '@/components/autopilot/AutopilotManagerUpdater'
 import AutopilotSerialConfiguration from '@/components/autopilot/AutopilotSerialConfiguration.vue'
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
@@ -157,6 +157,7 @@ export default Vue.extend({
       fetch_current_board_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
       fetch_firmware_info_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
       fetch_vehicle_type_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_firmware_vehicle_type_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
     }
   },
   computed: {
@@ -171,7 +172,7 @@ export default Vue.extend({
         Manufacturer: this.current_board?.manufacturer ?? 'Unknown',
         'Mavlink platform': this.current_board?.platform ?? 'Unknown',
         'Firmware version': version,
-        'Vehicle type': this.vehicle_type ?? 'Unknown',
+        'Vehicle type': `${this.vehicle_type ?? 'Unknown'} (${this.firmware_vehicle_type ?? 'Unknown'})`,
       }
 
       if (this.current_board?.path) {
@@ -206,6 +207,9 @@ export default Vue.extend({
     firmware_info(): FirmwareInfo | null {
       return autopilot.firmware_info
     },
+    firmware_vehicle_type(): string | null {
+      return autopilot.firmware_vehicle_type
+    },
     vehicle_type(): string | null {
       return autopilot.vehicle_type
     },
@@ -221,6 +225,7 @@ export default Vue.extend({
     this.fetch_current_board_task.setAction(fetchCurrentBoard)
     this.fetch_firmware_info_task.setAction(fetchFirmwareInfo)
     this.fetch_vehicle_type_task.setAction(fetchVehicleType)
+    this.fetch_firmware_vehicle_type_task.setAction(fetchFirmwareVehicleType)
   },
   methods: {
     async enable_wizard(): Promise<void> {
