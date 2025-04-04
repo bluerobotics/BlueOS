@@ -334,7 +334,6 @@ class WifiManager(AbstractWifiManager):
         """Check wpa_supplicant status"""
         try:
             data = await self.wpa.send_command_status()
-            # pylint: disable=too-many-function-args
             return WifiStatus(**WifiManager.__dict_from_list(data))
         except Exception as error:
             raise FetchError("Failed to get status from wifi manager.") from error
