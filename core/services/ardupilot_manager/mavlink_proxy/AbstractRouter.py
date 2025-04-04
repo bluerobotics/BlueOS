@@ -81,7 +81,8 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         for interface in AbstractRouter.__subclasses__():
             if interface.is_ok() and interface.name() == name:
                 return interface
-        raise ValueError("Interface is not ok or does not exist.")
+        possible_names = [interface.name() for interface in AbstractRouter.__subclasses__()]
+        raise ValueError(f"Interface is not ok or does not exist. Possible names: {possible_names}")
 
     def binary(self) -> Optional[str]:
         return self._binary
