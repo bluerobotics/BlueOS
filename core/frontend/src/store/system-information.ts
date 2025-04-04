@@ -11,6 +11,7 @@ import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { system_information_service } from '@/types/frontend_services'
 import { KernelMessage } from '@/types/system-information/kernel'
+import { Model } from '@/types/system-information/model'
 import { Netstat } from '@/types/system-information/netstat'
 import { Platform } from '@/types/system-information/platform'
 import { Serial } from '@/types/system-information/serial'
@@ -21,6 +22,7 @@ import back_axios, { isBackendOffline } from '@/utils/api'
 
 export enum FetchType {
     KernelType = 'kernel_buffer',
+    ModelType = 'model',
     NetstatType = 'netstat',
     PlatformType = 'platform',
     SerialType = 'serial?udev=true',
@@ -47,6 +49,8 @@ class SystemInformationStore extends VuexModule {
 
   kernel_message: KernelMessage[] = []
 
+  model: Model | null = null
+
   netstat: Netstat | null = null
 
   platform: Platform | null = null
@@ -68,6 +72,11 @@ class SystemInformationStore extends VuexModule {
   @Mutation
   appendKernelMessage(kernel_message: [KernelMessage]): void {
     this.kernel_message = this.kernel_message.concat(kernel_message)
+  }
+
+  @Mutation
+  updateModel(model: Model): void {
+    this.model = model
   }
 
   @Mutation
@@ -168,6 +177,11 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Action
+  async fetchModel(): Promise<void> {
+    await this.fetchSystemInformation(FetchType.ModelType)
+  }
+
+  @Action
   async fetchNetstat(): Promise<void> {
     await this.fetchSystemInformation(FetchType.NetstatType)
   }
@@ -223,6 +237,9 @@ class SystemInformationStore extends VuexModule {
         switch (type) {
           case FetchType.KernelType:
             this.updateKernelMessage(response.data)
+            break
+          case FetchType.ModelType:
+            this.updateModel(response.data)
             break
           case FetchType.NetstatType:
             this.updateNetstat(response.data)
