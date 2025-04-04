@@ -32,7 +32,8 @@ export default Vue.extend({
   name: 'Processes',
   data() {
     return {
-      timer: 0,
+      timer_unix: 0,
+      timer_model: 0,
     }
   },
   computed: {
@@ -49,6 +50,12 @@ export default Vue.extend({
         },
         {
           title: 'Kernel', value: `${info.kernel_version}`,
+        },
+        {
+          title: 'Model',
+          value: `${system_information.model?.model ?? 'Unknown Model'} `
+            + `- ${system_information.model?.arch ?? 'Unknown Architecture'} `
+            + `(${system_information.model?.cpu_name ?? 'Unknown CPU'})`,
         },
         {
           title: 'Hostname', value: `${info.host_name}`,
@@ -75,10 +82,14 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemUnixTimeSecondsType), 1000)
+    this.timer_unix = setInterval(() => {
+      system_information.fetchSystemInformation(FetchType.SystemUnixTimeSecondsType)
+    }, 1000)
+    this.timer_model = setInterval(() => system_information.fetchSystemInformation(FetchType.ModelType), 1000)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    clearInterval(this.timer_unix)
+    clearInterval(this.timer_model)
   },
 })
 </script>
