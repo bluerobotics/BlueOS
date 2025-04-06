@@ -35,7 +35,8 @@ class MAVP2P(AbstractRouter):
                 return f"udpc:{endpoint.place}:{endpoint.argument}"
             raise ValueError(f"Endpoint of type {endpoint.connection_type} not supported on MAVP2P.")
 
-        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *self.endpoints()]])
+        filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
+        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *filtered_endpoints]])
 
         return f"{self.binary()} {endpoints} --streamreq-disable"
 

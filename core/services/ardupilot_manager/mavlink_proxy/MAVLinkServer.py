@@ -37,7 +37,8 @@ class MAVLinkServer(AbstractRouter):
                 return f"zenoh:{endpoint.place}:{endpoint.argument}"
             raise ValueError(f"Endpoint of type {endpoint.connection_type} not supported on MAVLink-Server.")
 
-        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *self.endpoints()]])
+        filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
+        endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *filtered_endpoints]])
 
         return f"{self.binary()} {endpoints}"
 
