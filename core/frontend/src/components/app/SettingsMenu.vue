@@ -14,11 +14,12 @@
     </v-btn>
     <v-dialog
       class="pa-2"
-      width="fit-content"
+      max-width="50%"
+      scrollable
       :value="show_dialog"
       @input="showDialog"
     >
-      <v-card class="mx-auto pa-2 flex-column">
+      <v-card class="mx-auto flex-column">
         <div
           v-if="operation_in_progress"
           class="card-loading-overlay"
@@ -28,8 +29,8 @@
             :subtitle="operation_description"
           />
         </div>
-        <div class="pt-2">
-          <v-alert v-if="has_operation_error" type="error">
+        <div v-if="has_operation_error" class="pt-2">
+          <v-alert type="error">
             {{ operation_error }}
           </v-alert>
           <v-divider />
@@ -39,99 +40,116 @@
             Settings
           </v-card-title>
 
-          <v-container class="pa-2 align-center">
-            <v-btn
-              v-tooltip="'Restores BlueOS services to default configurations'"
-              class="ma-2"
-              @click="reset_settings"
-            >
-              <v-icon left>
-                mdi-cog-refresh
-              </v-icon>
-              Reset Settings
-            </v-btn>
-          </v-container>
+          <v-row class="ma-0">
+            <v-col cols="6">
+              <v-container class="pa-2 align-center">
+                <v-btn
+                  v-tooltip="'Restores BlueOS services to default configurations'"
+                  class="ma-2"
+                  @click="reset_settings"
+                >
+                  <v-icon left>
+                    mdi-cog-refresh
+                  </v-icon>
+                  Reset Settings
+                </v-btn>
+              </v-container>
 
-          <v-divider />
+              <v-divider />
 
-          <v-card-title class="align-center">
-            System Log Files ({{ log_folder_size }})
-          </v-card-title>
+              <v-card-title class="align-center">
+                System Log Files ({{ log_folder_size }})
+              </v-card-title>
 
-          <v-card-actions class="flex-row">
-            <v-btn
-              v-tooltip="'Download log for all services in BlueOS'"
-              class="ma-2"
-              @click="download_service_log_files"
-            >
-              <v-icon left>
-                mdi-folder-download
-              </v-icon>
-              Download
-            </v-btn>
+              <v-card-actions class="flex-row">
+                <v-btn
+                  v-tooltip="'Download log for all services in BlueOS'"
+                  class="ma-2"
+                  @click="download_service_log_files"
+                >
+                  <v-icon left>
+                    mdi-folder-download
+                  </v-icon>
+                  Download
+                </v-btn>
 
-            <v-btn
-              v-tooltip="'Frees up space on the SD card'"
-              class="ma-2"
-              :disabled="disable_remove"
-              @click="remove_service_log_files"
-            >
-              <v-icon left>
-                mdi-trash-can
-              </v-icon>
-              Remove
-            </v-btn>
-          </v-card-actions>
+                <v-btn
+                  v-tooltip="'Frees up space on the SD card'"
+                  class="ma-2"
+                  :disabled="disable_remove"
+                  @click="remove_service_log_files"
+                >
+                  <v-icon left>
+                    mdi-trash-can
+                  </v-icon>
+                  Remove
+                </v-btn>
+              </v-card-actions>
 
-          <v-divider />
+              <v-divider />
 
-          <v-card-title class="align-center">
-            MAVLink Log Files ({{ mavlink_log_folder_size }})
-          </v-card-title>
+              <v-card-title class="align-center">
+                MAVLink Log Files ({{ mavlink_log_folder_size }})
+              </v-card-title>
 
-          <v-card-actions class="flex-row">
-            <v-btn
-              v-tooltip="'Download logs from MAVLink'"
-              class="ma-2"
-              @click="download_mavlink_log_files"
-            >
-              <v-icon left>
-                mdi-folder-download
-              </v-icon>
-              Download
-            </v-btn>
+              <v-card-actions class="flex-row">
+                <v-btn
+                  v-tooltip="'Download logs from MAVLink'"
+                  class="ma-2"
+                  @click="download_mavlink_log_files"
+                >
+                  <v-icon left>
+                    mdi-folder-download
+                  </v-icon>
+                  Download
+                </v-btn>
 
-            <v-btn
-              v-tooltip="'Frees up space on the SD card deleting MAVLink logs'"
-              class="ma-2"
-              :disabled="disable_remove_mavlink"
-              @click="remove_mavlink_log_files"
-            >
-              <v-icon left>
-                mdi-trash-can
-              </v-icon>
-              Remove
-            </v-btn>
-          </v-card-actions>
+                <v-btn
+                  v-tooltip="'Frees up space on the SD card deleting MAVLink logs'"
+                  class="ma-2"
+                  :disabled="disable_remove_mavlink"
+                  @click="remove_mavlink_log_files"
+                >
+                  <v-icon left>
+                    mdi-trash-can
+                  </v-icon>
+                  Remove
+                </v-btn>
+              </v-card-actions>
 
-          <v-divider />
+              <v-divider />
 
-          <v-card-title class="align-center">
-            Run Vehicle Configuration Wizard
-          </v-card-title>
+              <v-card-title class="align-center">
+                Run Vehicle Configuration Wizard
+              </v-card-title>
 
-          <v-card-actions class="flex-row">
-            <v-btn
-              v-tooltip="'Run Wizard'"
-              class="ma-2"
-              @click="enable_wizard"
-            >
-              <v-icon left>
-                mdi-wizard-hat
-              </v-icon>
-              Enable
-            </v-btn>
-          </v-card-actions>
+              <v-card-actions class="flex-row">
+                <v-btn
+                  v-tooltip="'Run Wizard'"
+                  class="ma-2"
+                  @click="enable_wizard"
+                >
+                  <v-icon left>
+                    mdi-wizard-hat
+                  </v-icon>
+                  Enable
+                </v-btn>
+              </v-card-actions>
+            </v-col>
+            <v-col cols="6">
+              <v-card-title class="align-center">
+                Service Management
+              </v-card-title>
+              <v-card-subtitle class="text-caption">
+                Enable or disable BlueOS services. Hover over the info icon for details about each service.
+              </v-card-subtitle>
+              <v-container class="pa-2">
+                <v-card outlined class="pa-2">
+                  <ServiceDisabler />
+                </v-card>
+              </v-container>
+            </v-col>
+          </v-row>
         </v-card>
       </v-card>
     </v-dialog>
@@ -153,6 +171,7 @@
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import ServiceDisabler from '@/components/settings/serviceDisabler.vue'
 import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import bag from '@/store/bag'
@@ -168,6 +187,7 @@ export default Vue.extend({
   name: 'SettingsMenu',
   components: {
     SpinningLogo,
+    ServiceDisabler,
   },
   data() {
     return {
