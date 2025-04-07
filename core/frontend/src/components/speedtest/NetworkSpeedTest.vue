@@ -200,7 +200,6 @@ export default Vue.extend({
       back_axios({
         method: 'post',
         url: '/network-test/post_file',
-        timeout: 20000,
         data: this.upload_buffer,
         onUploadProgress: (progress_event) => {
           if (start_time === undefined) {
@@ -220,12 +219,18 @@ export default Vue.extend({
             `network-test: Upload: ${speed_Mb.toFixed(2)}Mbps ${percentage.toFixed(2)}% ${seconds.toFixed(2)}s`,
           )
           this.setSpeed(speed_Mb)
+
+          // For some reason, this code never reaches finally block
+          // So we need to check if the upload is done
+          if (percentage > 99) {
+            this.updateState(State.Done)
+          }
         },
       }).catch((error) => {
         const message = `Failed to do speed test: ${error.message}`
         notifier.pushError('NETWORK_SPEED_TEST_UPLOAD', message)
         console.error(message)
-      }).finally(() => this.updateState(State.Done))
+      })
     },
     checkDownloadSpeed(): void {
       const one_hundred_mega_bytes = 100 * 2 ** 20
@@ -234,7 +239,6 @@ export default Vue.extend({
       back_axios({
         method: 'get',
         url: '/network-test/get_file',
-        timeout: 20000,
         data: {
           size: one_hundred_mega_bytes,
           avoid_cache: new Date().getTime(),
