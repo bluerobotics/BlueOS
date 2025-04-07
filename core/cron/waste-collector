@@ -1,0 +1,1 @@
+0 */4 * * * root journalctl-vacuum # Run every 4 hours
