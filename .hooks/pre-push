@@ -48,10 +48,8 @@ poetry install
 . "$(poetry env info --path)/bin/activate"
 
 # download some required files if they are not present
-echo "installing mavlink-router"
-./core/tools/mavlink_router/bootstrap.sh
-echo "installing mavp2p"
-./core/tools/mavp2p/bootstrap.sh
+echo "installing mavlink-server"
+./core/tools/mavlink_server/bootstrap.sh
 echo "installing ardupilot_tools"
 NOSUDO=1 ./core/tools/ardupilot_tools/bootstrap.sh
 

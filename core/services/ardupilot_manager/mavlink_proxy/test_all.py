@@ -16,6 +16,7 @@ sys.path.append(str(pathlib.Path(__file__).absolute().parent.parent))
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
+from mavlink_proxy.MAVLinkServer import MAVLinkServer
 from mavlink_proxy.MAVP2P import MAVP2P
 from mavlink_proxy.MAVProxy import MAVProxy
 
@@ -282,13 +283,46 @@ async def serial_test_mavp2p(valid_output_endpoints: Set[Endpoint], valid_master
     )
 
 
+@pytest.mark.asyncio
+async def serial_test_mavlink_server(
+    valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]
+) -> None:
+    if not MAVLinkServer.is_ok():
+        warnings.warn("Failed to test MAVLinkServer service", UserWarning)
+        return
+
+    assert AbstractRouter.get_interface("MAVLink-Server"), "Failed to find interface MAVLinkServer"
+
+    output_endpoints = create_endpoints_with_offset(valid_output_endpoints, 0)
+    master_endpoints = create_endpoints_with_offset(valid_master_endpoints, 0)
+
+    mavlink_server = MAVLinkServer()
+    assert mavlink_server.name() == "MAVLink-Server", "Name does not match."
+    assert re.search(r"\d+.\d+.\d+", str(mavlink_server.version())) is not None, "Version does not follow pattern."
+
+    allowed_output_types = [
+        EndpointType.UDPServer,
+        EndpointType.UDPClient,
+        EndpointType.TCPServer,
+        EndpointType.TCPClient,
+        EndpointType.Serial,
+    ]
+    allowed_master_types = allowed_output_types
+
+    filtered_output_endpoints = set(e for e in output_endpoints if e.connection_type in allowed_output_types)
+    filtered_master_endpoints = set(e for e in master_endpoints if e.connection_type in allowed_master_types)
+
+    await run_common_routing_tests(
+        mavlink_server, allowed_output_types, allowed_master_types, filtered_output_endpoints, filtered_master_endpoints
+    )
+
+
 @pytest.mark.timeout(120)
 @pytest.mark.asyncio
 async def test_router(valid_output_endpoints: Set[Endpoint], valid_master_endpoints: Set[Endpoint]) -> None:
     # Run both router tests in parallel
     await asyncio.gather(
-        serial_test_mavlink_router(valid_output_endpoints, valid_master_endpoints),
-        serial_test_mavp2p(valid_output_endpoints, valid_master_endpoints),
+        serial_test_mavlink_server(valid_output_endpoints, valid_master_endpoints),
     )
 
 
