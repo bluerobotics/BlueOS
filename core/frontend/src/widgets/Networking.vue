@@ -118,6 +118,7 @@ export default Vue.extend({
 
 .pi-icon :deep(svg) {
   width: 35px;
+  height: 40px;
   margin-bottom: -10px;
 }
 
