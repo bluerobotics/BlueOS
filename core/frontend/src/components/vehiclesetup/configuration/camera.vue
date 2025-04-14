@@ -8,8 +8,8 @@
         <v-row>
           <v-col>
             <p v-if="!type_param">
-              Camera mount setup is not supported on this Firmware (MNT1_TYPE param not found).
-              please update to a newer version.
+              Camera mount setup is not supported on this firmware (MNT1_TYPE param not found).
+              Please update to a newer autopilot firmware version.
             </p>
             <v-select
               v-if="is_servo_type"
@@ -20,7 +20,7 @@
               label="Mount 1 Pitch Servo"
             />
             <p v-else-if="type_param">
-              Mount is disabled. Enable it by setting the 'Gimbal Type' to 'Servo'
+              Mount is disabled. Enable it by setting the 'Gimbal Type' to 'Servo'.
             </p>
 
             <v-row>
@@ -52,7 +52,7 @@
               <v-card-text>
                 <v-row class="ma-3">
                   <p>
-                    To find the physical limites of the servo, move the camera to the minimum and maximum positions,
+                    To find the physical limits of the servo, move the camera to the minimum and maximum positions,
                     then adjust the minimum/maximum PWMs values until it reaches the furthest it can move
                     without hitting other components.
                   </p>
@@ -91,8 +91,9 @@
               <v-card-text>
                 <v-row class="ma-3">
                   <p>
-                    Measure the found limits and input them below.
-                    This will allow Ardupilot to know how to convert PWM to angle.
+                    Measure the rotation limit angles and input them below.
+                    This will allow Ardupilot to accurately report the camera rotation angle
+                    from its commanded servo PWM value.
                   </p>
                   <v-col>
                     <InlineParameterEditor
@@ -117,10 +118,10 @@
                   <v-col>
                     <strong>Calculated PWM/degree:</strong> {{ pwm_per_deg.toFixed(2) }} <br>
                     <p>
-                      This represents how much the PWM value changes per degree. use this to
+                      This represents how much the PWM value changes per degree. Use this to
                       verify against your servo specs.
                       One that reaches +-45º with 1100-1900 PWM (all current BlueRobotics servos),
-                      has a ratio of 8.88us per degree.
+                      has a ratio of 8.88µs per degree.
                       This can help you make sure you measured the angles correctly.
                     </p>
                   </v-col>
