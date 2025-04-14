@@ -2,8 +2,8 @@
   <v-card class="pa-2 mx-auto" min-width="100%">
     <v-list>
       <v-card-subtitle class="text-md-center" max-width="30">
-        Move network interfaces over
-        to change network access priority.<br>Applied changes require a <b>system reboot</b>.
+        Drag the network interfaces to move the highest priority to the top.<br>
+        Applied changes require a <b>system reboot</b>.
       </v-card-subtitle>
       <draggable v-model="interfaces">
         <v-card
@@ -118,7 +118,7 @@ export default Vue.extend({
     },
     internetStatusText(iface: EthernetInterface): string {
       const status = this.internet_access[iface.name]
-      if (status === undefined) return 'Checking if this interface has access to internet...'
+      if (status === undefined) return 'Checking if this interface has internet access...'
       return status ? 'Online' : 'Offline'
     },
     async checkInterfaceInternet(host: string, iface: EthernetInterface): Promise<void> {
@@ -156,7 +156,7 @@ export default Vue.extend({
         .then(() => {
           notifier.pushSuccess(
             'INCREASE_NETWORK_INTERFACE_METRIC_SUCCESS',
-            'Interfaces priorities successfully updated!',
+            'Network interface priorities successfully updated!',
             true,
           )
           this.close()
