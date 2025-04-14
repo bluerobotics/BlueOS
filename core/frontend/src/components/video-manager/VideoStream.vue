@@ -177,6 +177,7 @@
 import { saveAs } from 'file-saver'
 import Vue, { PropType } from 'vue'
 
+import { copyToClipboard } from '@/cosmos'
 import video from '@/store/video'
 import {
   CreatedStream, Device, StreamPrototype, StreamStatus,
@@ -312,60 +313,10 @@ export default Vue.extend({
         })
     },
     async copySDPFileURL(): Promise<void> {
-      return this.copyToClipboard(this.sDPFileURL)
-    },
-    async copyToClipboard(content: string): Promise<void> {
-      // eslint-disable-next-line func-style
-      const try_fallback_clipboard_copy_method = (): void => {
-        // If we don't have the permission, fallback to the old hacky way of creating an input,
-        // copying the text from it, and destroy it even before it renders.
-        const temporaryInputElement = document.createElement('input')
-        temporaryInputElement.value = content
-        document.body.appendChild(temporaryInputElement)
-
-        try {
-          temporaryInputElement.select()
-          document.execCommand('copy')
-        } catch (error) {
-          console.error(`Failed to copy URL to clipboard. Reason: ${error}`)
-        } finally {
-          document.body.removeChild(temporaryInputElement)
-        }
-      }
-
-      // eslint-disable-next-line func-style
-      const clipboard_copy_api = (): void => {
-        navigator.clipboard.writeText(content).catch((error) => {
-          console.error(`Failed to copy URL to clipboard using Clipboard API. Reason: ${error}`)
-          try_fallback_clipboard_copy_method()
-        })
-      }
-
-      navigator.permissions
-        .query({ name: 'clipboard-write' as PermissionName })
-        .then((permissionStatus) => {
-          if (permissionStatus.state === 'granted') {
-            clipboard_copy_api()
-          } else if (permissionStatus.state === 'prompt') {
-            // The user will be prompted to grant the permission.
-            permissionStatus.onchange = () => {
-              if (permissionStatus.state === 'granted') {
-                clipboard_copy_api()
-              } else {
-                try_fallback_clipboard_copy_method()
-              }
-            }
-          } else {
-            try_fallback_clipboard_copy_method()
-          }
-        })
-        .catch((error) => {
-          console.error('Error while requesting clipboard-write permission:', error)
-          try_fallback_clipboard_copy_method()
-        })
+      await copyToClipboard(this.sDPFileURL)
     },
     async copyVideoStreamToClipboard(): Promise<void> {
-      return this.copyToClipboard(JSON.stringify(this.$props, null, 2))
+      await copyToClipboard(JSON.stringify(this.$props, null, 2))
     },
     toggleExpandStreamError() {
       this.isExpanded = !this.isExpanded
