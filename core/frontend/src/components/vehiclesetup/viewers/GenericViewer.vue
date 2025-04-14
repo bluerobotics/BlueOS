@@ -272,7 +272,7 @@ export default Vue.extend({
     async model_path() {
       this.reloadAnnotations()
       this.model_override_path = await this.checkModelOverrides()
-      this.override_annotations = await this.loadAnottationsOverride()
+      this.override_annotations = await this.loadAnnotationsOverride()
       this.forceRefreshAnnotations()
     },
     frame_type() {
@@ -309,7 +309,7 @@ export default Vue.extend({
       this.hideIrrelevantParts()
     })
     this.model_override_path = await this.checkModelOverrides()
-    this.override_annotations = await this.loadAnottationsOverride()
+    this.override_annotations = await this.loadAnnotationsOverride()
     this.reloadAnnotations()
   },
   methods: {
@@ -380,7 +380,7 @@ export default Vue.extend({
       }
       return undefined
     },
-    async loadAnottationsOverride(): Promise<Dictionary<HotspotConfiguration>> {
+    async loadAnnotationsOverride(): Promise<Dictionary<HotspotConfiguration>> {
       if (!this.model_override_path) {
         return {}
       }
