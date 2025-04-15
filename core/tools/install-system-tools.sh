@@ -7,10 +7,10 @@ set -e
 TOOLS=(
     ardupilot_tools
     filebrowser
-    linux2rest
     logviewer
     mavlink_camera_manager
     scripts
+    wifi
 )
 
 parallel --halt now,fail=1 '/home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
