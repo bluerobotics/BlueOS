@@ -37,7 +37,7 @@ __all__ = [
 
 class EthernetManager:
     # RTNL interface
-    ndb = NDB(log="on")
+    ndb = NDB(log=True)
     # WIFI interface
     iw = IW()
     # IP abstraction interface
