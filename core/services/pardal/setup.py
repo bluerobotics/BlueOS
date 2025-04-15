@@ -8,7 +8,7 @@ setuptools.setup(
     description="Web service to help with speed and latency tests",
     license="MIT",
     install_requires=[
-        "aiohttp == 3.7.4",
+        "aiohttp == 3.11.16",
         "commonwealth == 0.1.0",
         "loguru == 0.5.3",
     ],
