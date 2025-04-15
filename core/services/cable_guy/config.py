@@ -1,6 +1,8 @@
 # This file is used to define general configurations for the app
 
-from typedefs import AddressMode, InterfaceAddress, NetworkInterface
+from ipaddress import ip_network
+
+from typedefs import AddressMode, InterfaceAddress, NetworkInterface, Route
 
 SERVICE_NAME = "cable-guy"
 
@@ -12,6 +14,7 @@ DEFAULT_NETWORK_INTERFACES = [
             InterfaceAddress(ip="192.168.2.2", mode=AddressMode.BackupServer),
             InterfaceAddress(ip="0.0.0.0", mode=AddressMode.Client),
         ],
+        routes=[Route(destination=ip_network("224.0.0.0/4"), next_hop=None, metric=None, default=False, enabled=True)],
     ),
-    NetworkInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)]),
+    NetworkInterface(name="usb0", addresses=[InterfaceAddress(ip="192.168.3.1", mode=AddressMode.Server)], routes=[]),
 ]
