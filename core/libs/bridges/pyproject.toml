@@ -1,0 +1,10 @@
+[project]
+name = "bridges"
+version = "0.1.0"
+description = "BlueOS abstraction over bridges tool."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "loguru==0.5.3",
+    "pyserial==3.5",
+]

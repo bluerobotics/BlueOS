@@ -1,0 +1,28 @@
+[project]
+name = "ardupilot_manager"
+version = "0.0.1"
+description = "AutoPilot service manager."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiofiles==0.6.0",
+    "anyio==3.7.1",
+    "appdirs==1.4.4",
+    "commonwealth==0.1.0",
+    "fastapi==0.105.0",
+    "fastapi-versioning==0.9.1",
+    "loguru==0.5.3",
+    "packaging==20.4",
+    "psutil==5.7.2",
+    "pydantic==1.10.12",
+    "pyelftools==0.30",
+    "pyserial==3.5",
+    "python-multipart==0.0.5",
+    "smbus2==0.3.0",
+    "starlette==0.27.0",
+    "uvicorn==0.13.4",
+    "validators==0.18.2",
+]
+
+[tool.uv.sources]
+commonwealth = { workspace = true }

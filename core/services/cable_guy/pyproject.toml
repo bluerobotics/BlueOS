@@ -1,0 +1,22 @@
+[project]
+name = "cable_guy"
+version = "0.1.0"
+description = "A simple web api to provide access to ethernet configuration."
+requires-python = ">=3.11"
+dependencies = [
+    "aiofiles==0.6.0",
+    "anyio==3.7.1",
+    "appdirs==1.4.4",
+    "commonwealth==0.1.0",
+    "fastapi==0.105.0",
+    "fastapi-versioning==0.9.1",
+    "loguru==0.5.3",
+    "psutil==5.7.2",
+    "pyroute2==0.7.12",
+    "sdbus-networkmanager==2.0.0",
+    "starlette==0.27.0",
+    "uvicorn==0.13.4",
+]
+
+[tool.uv.sources]
+commonwealth = { workspace = true }
