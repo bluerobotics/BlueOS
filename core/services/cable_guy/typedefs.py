@@ -1,7 +1,19 @@
 from enum import Enum
-from typing import List, Optional
+from ipaddress import (
+    IPv4Address,
+    IPv4Interface,
+    IPv4Network,
+    IPv6Address,
+    IPv6Interface,
+    IPv6Network,
+)
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
+
+IPAddress = Union[IPv4Address, IPv6Address]
+IPNetwork = Union[IPv4Network, IPv6Network]
+IPInterface = Union[IPv4Interface, IPv6Interface]
 
 
 class AddressMode(str, Enum):
@@ -31,11 +43,20 @@ class InterfaceInfo(BaseModel):
     priority: int
 
 
+class Route(BaseModel):
+    destination: IPNetwork
+    next_hop: Optional[IPAddress]
+    metric: Optional[int]
+    default: bool
+    enabled: bool
+
+
 class NetworkInterface(BaseModel):
     name: str
     addresses: List[InterfaceAddress]
     info: Optional[InterfaceInfo] = None
     priority: Optional[int] = None
+    routes: List[Route]
 
     def __hash__(self) -> int:
         return hash(self.name) + sum(hash(address) for address in self.addresses)

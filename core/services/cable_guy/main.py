@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import sys
+from ipaddress import IPv4Address
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
@@ -84,7 +85,7 @@ def delete_address(interface_name: str, ip_address: str) -> Any:
 @version(1, 0)
 async def add_dhcp_server(interface_name: str, ipv4_gateway: str, is_backup_server: bool = False) -> Any:
     """REST API endpoint to enable/disable local DHCP server."""
-    manager.add_dhcp_server_to_interface(interface_name, ipv4_gateway, is_backup_server)
+    manager.add_dhcp_server_to_interface(interface_name, IPv4Address(ipv4_gateway), is_backup_server)
     manager.save()
 
 
