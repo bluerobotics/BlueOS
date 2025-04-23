@@ -2,6 +2,7 @@ import asyncio
 import re
 import subprocess
 import time
+from ipaddress import ip_network
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -26,6 +27,9 @@ from typedefs import (
     NetworkInterfaceMetricApi,
     Route,
 )
+
+# TODO: Replace this by `from pydantic import IPvAnyAddress, IPvAnyNetwork` once we update to pydantic v2
+from typedefs_pydantic_network_shin import IPvAnyAddress, IPvAnyNetwork
 
 __all__ = [
     "AddressMode",
@@ -572,6 +576,115 @@ class EthernetManager:
             number_of_disconnections=interface.carrier_down_count,
             priority=priority,
         )
+
+    def add_route(self, interface_name: str, route: Route) -> None:
+        self._execute_route("add", interface_name, route)
+
+    def remove_route(self, interface_name: str, route: Route) -> None:
+        self._execute_route("del", interface_name, route)
+
+    def _execute_route(self, action: str, interface_name: str, route: Route) -> None:
+        try:
+            interface_index = self._get_interface_index(interface_name)
+            gateway = self.__class__._normalize_gateway(route.destination_parsed, route.next_hop_parsed)
+
+            self.ipr.route(
+                action,
+                oif=interface_index,
+                dst=str(route.destination_parsed),
+                gateway=str(gateway) if gateway else None,
+                metrics={"metric": route.priority} if route.priority else None,
+            )
+
+            act = "Removed" if action == "del" else "Added" if action == "add" else action
+            logger.info(f"{act} route to {route.destination_parsed} via {gateway} on {interface_name}")
+        except Exception as e:
+            act = "Remove" if action == "del" else "Add" if action == "add" else action
+            logger.error(f"Failed to {act} route: {e}")
+            raise
+
+        # Update settings
+        current_interface = self.get_interface_by_name(interface_name)
+        for current_route in current_interface.routes:
+            if current_route.destination_parsed == route.destination_parsed and current_route.gateway == route.gateway:
+                current_route.managed = route.managed
+        self._update_interface_settings(interface_name, current_interface)
+
+    def get_routes(self, interface_name: str, ignore_unmanaged: bool = True) -> Set[Route]:
+        try:
+            interface_index = self._get_interface_index(interface_name)
+            raw_routes = self.ipr.get_routes(oif=interface_index)
+        except Exception as err:
+            logger.error(f"Failed to get routes for {interface_name}: {err}")
+            return set()
+
+        saved_iface = self.get_saved_interface_by_name(interface_name)
+        saved_routes = saved_iface.routes if saved_iface is not None else []
+
+        routes: Set[Route] = set()
+        for raw_route in raw_routes:
+            try:
+                route = self._parse_route(raw_route)
+
+            except Exception as err:
+                logger.error(f"Failed to parse route record {raw_route}: {err}")
+                continue
+
+            # Synchronize the 'managed' attribute
+            for saved_route in saved_routes:
+                if saved_route == route:
+                    route.managed = saved_route.managed
+
+            if ignore_unmanaged and not route.managed:
+                continue
+
+            routes.add(route)
+
+        return routes
+
+    def _parse_route(
+        self,
+        raw_route: Any,
+    ) -> Route:
+        raw_destination: Optional[str] = raw_route.get_attr("RTA_DST")
+        raw_prefixlen: int = raw_route["dst_len"]
+        raw_gateway: Optional[str] = raw_route.get_attr("RTA_GATEWAY")
+        raw_priority: int = raw_route.get_attr("RTA_PRIORITY")
+
+        # Parse destination
+        if raw_destination is None:
+            net = "0.0.0.0/0" if raw_route["family"] == AddressFamily.AF_INET else "::/0"
+        else:
+            net = f"{raw_destination}/{raw_prefixlen}"
+        destination = IPvAnyNetwork(ip_network(net))
+
+        # Parse gateway
+        gateway = (
+            self.__class__._normalize_gateway(destination, IPvAnyAddress(raw_gateway))
+            if raw_gateway is not None
+            else None
+        )
+
+        route = Route(
+            destination=str(destination),
+            gateway=str(gateway) if gateway else None,
+            priority=raw_priority,
+        )
+
+        return route
+
+    @staticmethod
+    def _normalize_gateway(destination: IPvAnyNetwork, gateway: Optional[IPvAnyAddress]) -> Optional[IPvAnyAddress]:
+        if gateway is None:
+            return None
+
+        if destination.version == 4 and gateway.version != 4:
+            raise ValueError(f"Gateway {gateway} must be IPv4 for destination {destination}")
+
+        if destination.version == 6 and gateway.version != 6:
+            raise ValueError(f"Gateway {gateway} must be IPv6 for destination {destination}")
+
+        return gateway
 
     def _is_ip_on_interface(self, interface_name: str, ip_address: str) -> bool:
         interface = self.get_interface_by_name(interface_name)
