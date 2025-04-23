@@ -133,6 +133,27 @@ class EthernetManager:
                 logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
                 self.trigger_dynamic_ip_acquisition(interface.name)
 
+            # Handle routes configuration
+            self._set_routes_configuration(interface)
+
+    def _set_routes_configuration(self, interface: NetworkInterface) -> None:
+        try:
+            current_routes = self.get_routes(interface.name, ignore_unmanaged=True)
+            desired_routes = interface.routes
+
+            # Remove old routes
+            for current_route in current_routes:
+                if current_route not in desired_routes:
+                    self.remove_route(interface.name, current_route)
+
+            # Add new routes
+            for desired_route in desired_routes:
+                if desired_route not in current_routes:
+                    self.add_route(interface.name, desired_route)
+
+        except Exception as error:
+            logger.error(f"Routes configuration failed: {error}")
+
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
 
