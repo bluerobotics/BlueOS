@@ -1,6 +1,6 @@
 import json
 import pathlib
-from typing import Any, Dict, List
+from typing import Any, Dict, Sequence
 
 from commonwealth.settings.settings import PydanticSettings
 
@@ -50,3 +50,21 @@ class SettingsV1(PydanticSettings):
             sanitize_old_settings_file(old_settings_file_path)
         except Exception:
             pass
+
+
+class SettingsV2(SettingsV1):
+    content: Sequence[NetworkInterface] = DEFAULT_NETWORK_INTERFACES
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
+            super().migrate(data)
+
+        data["VERSION"] = SettingsV2.STATIC_VERSION
+
+        # Transfer routes from default settings, falling back to empty list
+        default_routes_map = {net.name: net.routes for net in self.content}
+        for iface in data["content"]:
+            iface["routes"] = default_routes_map.get(iface["name"], [])
