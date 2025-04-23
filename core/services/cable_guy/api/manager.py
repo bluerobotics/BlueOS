@@ -690,7 +690,7 @@ class EthernetManager:
         """
 
         mismatches: Set[NetworkInterface] = set()
-        current = self.get_ethernet_interfaces()
+        current_interfaces = self.get_ethernet_interfaces()
         if len(self._settings.content) == 0:
             logger.debug("No saved configuration found")
             logger.debug(f"Current configuration: {self._settings}")
@@ -698,25 +698,27 @@ class EthernetManager:
 
         saved_interfaces = {interface.name: interface for interface in self._settings.content}
 
-        for interface in current:
-            if interface.name not in saved_interfaces:
-                logger.debug(f"Interface {interface.name} not in saved configuration, skipping")
+        for current_interface in current_interfaces:
+            if current_interface.name not in saved_interfaces:
+                logger.debug(f"Interface {current_interface.name} not in saved configuration, skipping")
                 continue
+            saved_interface = saved_interfaces[current_interface.name]
 
-            for address in saved_interfaces[interface.name].addresses:
-                if address.mode == AddressMode.Client:
-                    if not any(addr.mode == AddressMode.Client for addr in interface.addresses):
-                        logger.info(f"Mismatch detected for {interface.name}: missing dhcp client address")
-                        mismatches.add(saved_interfaces[interface.name])
+            for saved_address in saved_interface.addresses:
+                if saved_address.mode == AddressMode.Client:
+                    if not any(addr.mode == AddressMode.Client for addr in current_interface.addresses):
+                        logger.info(f"Mismatch detected for {current_interface.name}: missing dhcp client address")
+                        mismatches.add(saved_interface)
                 # Handle Server and Unmanaged modes
-                elif address.mode in [AddressMode.Server, AddressMode.Unmanaged]:
-                    if address not in interface.addresses:
+                elif saved_address.mode in [AddressMode.Server, AddressMode.Unmanaged]:
+                    if saved_address not in current_interface.addresses:
                         logger.info(
-                            f"Mismatch detected for {interface.name}: "
-                            f"saved address {address.ip} ({address.mode}) not found in current addresses "
-                            f"[{', '.join(f'{addr.ip} ({addr.mode})' for addr in interface.addresses)}]"
+                            f"Mismatch detected for {current_interface.name}: "
+                            f"saved address {saved_address.ip} ({saved_address.mode}) not found in current addresses "
+                            f"[{', '.join(f'{addr.ip} ({addr.mode})' for addr in current_interface.addresses)}]"
                         )
-                        mismatches.add(saved_interfaces[interface.name])
+                        mismatches.add(saved_interface)
+
         return mismatches
 
     async def watchdog(self) -> None:
