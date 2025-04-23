@@ -50,11 +50,11 @@ class EthernetManager:
 
     result: List[NetworkInterface] = []
 
-    _manager: PydanticManager = PydanticManager(SERVICE_NAME, settings.SettingsV1)
+    _manager: PydanticManager = PydanticManager(SERVICE_NAME, settings.SettingsV2)
 
     @property
-    def _settings(self) -> settings.SettingsV1:
-        return cast(settings.SettingsV1, self._manager.settings)
+    def _settings(self) -> settings.SettingsV2:
+        return cast(settings.SettingsV2, self._manager.settings)
 
     def __init__(self) -> None:
         self._dhcp_servers: List[DHCPServerManager] = []
