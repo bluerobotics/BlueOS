@@ -24,6 +24,7 @@ from typedefs import (
     NetworkInterface,
     NetworkInterfaceMetric,
     NetworkInterfaceMetricApi,
+    Route,
 )
 
 __all__ = [
@@ -310,6 +311,7 @@ class EthernetManager:
             saved_interface = NetworkInterface(
                 name=interface_name,
                 addresses=[],
+                routes=[],
             )
 
         new_address = InterfaceAddress(ip=ip, mode=mode)
@@ -413,7 +415,11 @@ class EthernetManager:
                 if interface_metric:
                     priority = interface_metric.priority
 
-            interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info, priority=priority)
+            routes = self.get_routes(interface, ignore_unmanaged=False)
+
+            interface_data = NetworkInterface(
+                name=interface, addresses=valid_addresses, info=info, priority=priority, routes=list(routes)
+            )
             # Check if it's valid and add to the result
             if self.validate_interface_data(interface_data, filter_wifi):
                 result += [interface_data]
@@ -507,7 +513,9 @@ class EthernetManager:
         for interface in interfaces:
             saved_interface = self.get_saved_interface_by_name(interface.name)
             if saved_interface is None:
-                saved_interface = NetworkInterface(name=interface.name, addresses=[], priority=interface.priority)
+                saved_interface = NetworkInterface(
+                    name=interface.name, addresses=[], priority=interface.priority, routes=[]
+                )
             saved_interface.priority = interface.priority
             self._update_interface_settings(interface.name, saved_interface)
 
@@ -653,7 +661,7 @@ class EthernetManager:
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
         if saved_interface is None:
-            saved_interface = NetworkInterface(name=interface_name, addresses=[], priority=None)
+            saved_interface = NetworkInterface(name=interface_name, addresses=[], priority=None, routes=[])
 
         self._update_interface_settings(interface_name, saved_interface)
 
