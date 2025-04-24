@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title> Lights 1 (RCIN9) </v-card-title>
       <v-card-text>
-        Here you can configure what pin outputs the signal for the first set of lights.
+        The output pin for the primary set of lights:
         <v-select
           v-model="lights1_new_param"
           :items="servo_params"
@@ -16,7 +16,7 @@
     <v-card>
       <v-card-title> Lights 2 (RCIN10) </v-card-title>
       <v-card-text>
-        What pin outputs the signal for the second set of lights.
+        The output pin for the secondary set of lights:
         <v-select
           v-model="lights2_new_param"
           :items="servo_params"
@@ -29,7 +29,7 @@
     <v-card>
       <v-card-title> Joystick steps </v-card-title>
       <v-card-text>
-        How many button presses it takes to go from 0% to 100% brightness.
+        Number of button presses to step from 0% to 100% brightness:
         <br>
         {{ light_steps?.value }} steps result in a {{ (100 / light_steps?.value).toFixed(1) }}%
         increase per button press.
