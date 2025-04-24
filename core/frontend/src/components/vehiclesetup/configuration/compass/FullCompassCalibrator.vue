@@ -20,18 +20,18 @@
       <v-card-text class="pa-10">
         <span v-if="state === states.IDLE">
           <p>
-            <strong> Onboard Compass Calibration</strong> is the regular calibration used
-            for Ardupilot vehicles.
-            It requires you to spin the vehicle aroung all axis, which allows it to calibrated the
+            <strong>Onboard Compass Calibration</strong> is the regular calibration used
+            for ArduPilot vehicles.
+            It requires spinning the vehicle around all axes, which allows it to calibrate the
             readings to the expected local magnetic field.
           </p>
           <p>
-            A Valid position is <strong>recomended</strong> for Onboard Calibration to estimate the
-            local world magnetic field.
+            A valid global region/position is <strong>recomended</strong> for Onboard Calibration to
+            estimate the local world magnetic field.
           </p>
         </span>
         <span v-else-if="state === states.CALIBRATING">
-          Spin your vehicle around all of its axis until the progress bar completes.
+          Spin your vehicle around all of its axes until the progress bar completes.
         </span>
 
         <auto-coordinate-detector
