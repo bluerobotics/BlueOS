@@ -18,7 +18,7 @@
         Large Vehicle Compass Calibration
       </v-card-title>
       <v-card-text>
-        A Valid position is required for Compass Learn to estimate the local world magnetic field.
+        A valid global region/position is required to estimate the local world magnetic field.
         <auto-coordinate-detector
           v-model="coordinates"
         />

@@ -38,9 +38,8 @@
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      This does a full calibration of the compasses.
-                      It requires you to spin the vehicle around manually multiple times.
-                      You need to move the vehicle around in all 3 axis.
+                      Perform a full calibration of the selected compass(es) by manually spinning
+                      the vehicle around multiple times, about all 3 rotation axes.
                     </p>
                     <full-compass-calibrator :compasses="compasses" />
                   </v-expansion-panel-content>
@@ -51,10 +50,9 @@
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      This does a "quick" calibration of your compass.
-                      You need to point your vehicle North,and then click the button.
-                      This results in a much less accurate calibration, but is also much faster.
-                      It can be a good starting point for calibration, followed by <b>CompassLearn</b>.
+                      Perform a quick, low-accuracy calibration of the compass(es) by pointing
+                      your vehicle North, then clicking the Calibrate button.
+                      It can be a good starting point for calibration, followed by <b>Compass Learn</b>.
                     </p>
                     <large-vehicle-compass-calibrator :compasses="compasses" />
                   </v-expansion-panel-content>
@@ -66,9 +64,9 @@
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      This allows automatic "calibration" of compass offsets. You need to have a valid world position.
-                      In order to use this option, click the following button and then drive the vehicle around until
-                      you see the message <b>"CompassLearn: finished"</b>
+                      Automatically "learn" compass calibration offsets by driving the vehicle around until
+                      enough data has been collected, and <b>"CompassLearn: finished"</b> is displayed.
+                      A valid global region estimate is required.
                     </p>
                     <compass-learn :compasses="compasses" />
                   </v-expansion-panel-content>
@@ -79,11 +77,14 @@
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      This used logs from previous flights to calibrate the compasses.
+                      Calibrate the compass(es) using a previous flight log.
                       This usually gives the best results.
-                      While it is not currently implemented here. It can be done either in
-                      <a href="https://firmware.ardupilot.org/Tools/WebTools/">Ardupilot WebTools</a> and
-                      <a href="https://plotbeta.ardupilot.org/">LogViewer</a>.
+                      While it is not currently implemented here, the compass offset information can be
+                      determined in the Log Browser page. Press the green play button on a log file,
+                      click the three vertical dots in the sidebar, open the <b>Mag Fit Tool</b>,
+                      specify the general global region where the log was created, then click "Fit"
+                      for each compass you wish to calibrate. Resulting values can be copied across to
+                      the COMPASS_* autopilot parameters.
                     </p>
                   </v-expansion-panel-content>
                 </v-expansion-panel>
@@ -122,8 +123,8 @@
             </v-tab>
           </draggable>
           <v-card outlined class="ml-auto mr-auto rounded-lg pa-3" style="max-width: 200px;">
-            To change the order of the compasses, drag them up and down in this list using the drag handler.
-            This Operation requires an autopilot restart.
+            Click-and-drag the dots to change the priority of the compass options.
+            Adjusted compass priorities are applied once the autopilot restarts.
           </v-card>
           <v-tab-item
             v-for="(compass, index) in compasses"
@@ -150,7 +151,7 @@
                       />
                     </div>
                     <div v-else>
-                      This Compass is not in use, move it higher in the list in order to be able to use it
+                      This Compass is not in use, drag it higher (by the dots) to be able to use it.
                     </div>
                     <b>External/Internal:</b>
                     <v-btn class="ml-8 mb-4 mt-2" fab x-small @click="openParameterEditor(compass_extern_param[index])">
@@ -371,7 +372,7 @@ export default Vue.extend({
             calibration: CalibrationType.FULL_NO_WMM,
             color: 'var(--v-warning-darken1)',
             alert: 'warning',
-            description: 'Calibrated, but without a known (detected or specified) global position, '
+            description: 'Calibrated, but without a known (detected or specified) global region, '
             + 'so no corrections were applied from the internal World Magnetic Model (WMM). '
             + 'Consider retrying with a valid position to improve compass performance.',
             calibration_short: 'Calibrated (No WMM)',
