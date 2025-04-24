@@ -22,12 +22,12 @@
         Compass Calibration Learning
       </v-card-title>
       <v-card-text>
-        A valid position is required for Compass Learn to estimate the local world magnetic field.
+        A valid global region is required for Compass Learn to estimate the local world magnetic field.
         <auto-coordinate-detector
           v-model="coordinates"
         />
-        Make sure you have a valid position, then click start and drive the vehicle around in
-        manual mode until you see the message "CompassLearn: finished"
+        Make sure you have a valid region/position specified, then click start and drive the vehicle around
+        in manual mode until you see the message <b>"CompassLearn: finished"</b>.
         <v-divider />
         <v-alert
           v-if="status_text"
