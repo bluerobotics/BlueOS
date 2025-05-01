@@ -6,7 +6,8 @@
       ref="modelviewer"
       :src="model_override_path || model_path"
       :auto-rotate="autorotate"
-      camera-controls
+      :camera-controls="cameracontrols"
+      :orientation="orientation"
       shadow-intensity="0.3"
       interaction-prompt="none"
     >
@@ -105,6 +106,16 @@ export default Vue.extend({
   name: 'GenericViewer',
   components: { SpinningLogo },
   props: {
+    cameracontrols: {
+      type: Boolean,
+      required: false,
+      default: true,
+    },
+    orientation: {
+      type: String,
+      required: false,
+      default: '0deg 0deg 0deg',
+    },
     transparent: {
       type: Boolean,
       required: false,
