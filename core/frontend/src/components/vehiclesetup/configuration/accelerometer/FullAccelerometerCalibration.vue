@@ -33,6 +33,12 @@
       >
         <strong>{{ current_state_text }}</strong>
       </v-alert>
+      <generic-viewer
+        :autorotate="false"
+        :transparent="false"
+        :cameracontrols="false"
+        :orientation="current_state_3D"
+      />
       <v-card-actions class="justify-center">
         <v-btn v-if="show_start_button" :loading="start_button_loading" class="primary" @click="startCalibration">
           Start Calibration
@@ -50,6 +56,7 @@
 
 <script lang="ts">
 
+import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
@@ -85,6 +92,7 @@ enum CalState {
 export default {
   name: 'FullAccelerometerCalibration',
   components: {
+    GenericViewer,
   },
   data() {
     return {
@@ -125,6 +133,17 @@ export default {
         [CalState.FAIL]: 'Calibration Failed',
       }
       return AccelStateText[Number(this.state)] ?? ''
+    },
+    current_state_3D() {
+      const AccelStateText: { [key: number]: string } = {
+        [CalState.WAITING_FOR_LEVEL_POSITION]: '0deg 0deg 0deg',
+        [CalState.WAITING_FOR_LEFT_POSITION]: '-90deg 0deg 0deg',
+        [CalState.WAITING_FOR_RIGHT_POSITION]: '90deg 0deg 0deg',
+        [CalState.WAITING_FOR_NOSEDOWN_POSITION]: '0deg 90deg 0deg',
+        [CalState.WAITING_FOR_NOSEUP_POSITION]: '0deg -90deg 0deg',
+        [CalState.WAITING_FOR_BACK_POSITION]: '0deg 180deg 0deg',
+      }
+      return AccelStateText[Number(this.state)] ?? '0deg 0deg 0deg'
     },
     current_state_type() {
       if (this.state === CalState.SUCCESS) {
