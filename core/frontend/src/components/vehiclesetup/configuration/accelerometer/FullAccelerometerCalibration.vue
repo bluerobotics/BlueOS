@@ -132,7 +132,7 @@ export default {
         [CalState.SUCCESS]: 'Calibration Successful',
         [CalState.FAIL]: 'Calibration Failed',
       }
-      return AccelStateText[Number(this.state)] ?? ''
+      return AccelStateText[Number(this.state)] ?? 'Unknown state'
     },
     current_state_3D() {
       const AccelStateText: { [key: number]: string } = {
