@@ -1,5 +1,6 @@
 {
   plugins: {
-    rest: { http_port: 7117 }
+    rest: { http_port: 7117 },
+    remote_api: { websocket_port: 7118 }
   }
 }
