@@ -9,6 +9,7 @@ BINARIES=(
   "zenoh"
   "zenoh-plugin-webserver"
   "zenoh-backend-filesystem"
+  "zenoh-plugin-remote-api/zenoh-ts"
 )
 
 echo "Installing project $PROJECT_NAME and friends with version $VERSION"
@@ -51,9 +52,17 @@ echo "Downloading binaries..."
 DOWNLOAD_FOLDER="/tmp/zenoh_and_friends"
 mkdir -p "$DOWNLOAD_FOLDER"
 for BINARY in "${BINARIES[@]}"; do
-  URL="https://download.eclipse.org/zenoh/${BINARY}/${VERSION}/${BINARY}-${VERSION}-${TOOLCHAIN}-standalone.zip"
+  if [[ "$BINARY" == *"/"* ]]; then
+    BINARY_URL_PATH="${BINARY%/*}"
+    BINARY_URL_NAME="${BINARY##*/}"
+  else
+    BINARY_URL_PATH="$BINARY"
+    BINARY_URL_NAME="$BINARY"
+  fi
+
+  URL="https://download.eclipse.org/zenoh/${BINARY_URL_PATH}/${VERSION}/${BINARY_URL_NAME}-${VERSION}-${TOOLCHAIN}-standalone.zip"
   echo " - Download: ${URL}"
-  wget -q "$URL" -O "${DOWNLOAD_FOLDER}/${BINARY}.zip"
+  wget -q "$URL" -O "${DOWNLOAD_FOLDER}/${BINARY_URL_PATH}.zip"
 done
 echo "Downloaded all binaries, now installing to $BINARY_PATH"
 
