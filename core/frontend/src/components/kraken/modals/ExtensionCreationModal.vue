@@ -77,17 +77,21 @@
               </v-btn>
             </template>
           </json-editor>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            class="mr-4"
-            :disabled="!valid_permissions"
-            @click="saveExtension"
-          >
-            {{ is_editing ? 'Save' : 'Create' }}
-          </v-btn>
         </v-form>
       </v-card-text>
+      <v-card-actions
+        class="pt-1"
+      >
+        <v-spacer />
+        <v-btn
+          color="primary"
+          class="mr-4"
+          :disabled="!valid_permissions"
+          @click="saveExtension"
+        >
+          {{ is_editing ? 'Save' : 'Create' }}
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
