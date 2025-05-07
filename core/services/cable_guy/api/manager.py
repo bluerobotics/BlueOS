@@ -63,6 +63,8 @@ class EthernetManager:
 
     def __init__(self) -> None:
         self._dhcp_servers: List[DHCPServerManager] = []
+        # Make sure that default behavior changes will be persisted initially on the disk
+        self._manager.save()
 
     async def initialize(self) -> None:
         self.network_handler = await NetworkHandlerDetector().getHandler()
