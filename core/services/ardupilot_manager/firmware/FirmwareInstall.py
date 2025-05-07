@@ -23,11 +23,6 @@ def get_board_id(board: Union[FlightController, str]) -> int:
     else:
         platform = board
     ardupilot_board_ids = {
-        Platform.Pixhawk1: 9,
-        Platform.Pixhawk4: 50,
-        Platform.Pixhawk6X: 53,
-        Platform.Pixhawk6C: 56,
-        Platform.CubeOrange: 140,
         "PX4_FMU_V1": 5,
         "PX4_FMU_V2": 9,
         "PX4_FMU_V3": 9,  # same as FMU_V2

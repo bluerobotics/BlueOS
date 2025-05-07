@@ -6,8 +6,8 @@ import pytest
 from firmware.FirmwareDownload import FirmwareDownloader
 from typedefs import FlightController, Platform, Vehicle
 
-Pixhawk1 = FlightController(name="Pixhawk1", manufacturer="3DR", platform=Platform.Pixhawk1)
-Pixhawk4 = FlightController(name="Pixhawk4", manufacturer="Holybro", platform=Platform.Pixhawk4)
+Pixhawk1 = FlightController(name="Pixhawk1", manufacturer="3DR", platform=Platform.GenericSerial)
+Pixhawk4 = FlightController(name="Pixhawk4", manufacturer="Holybro", platform=Platform.GenericSerial)
 SITL = FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL)
 Navigator = FlightController(name="Navigator", manufacturer="Blue Robotics", platform=Platform.Navigator)
 
