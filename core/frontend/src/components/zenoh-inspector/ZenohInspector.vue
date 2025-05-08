@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col
-        sm="3"
+        sm="4"
       >
         <v-sheet
           rounded="lg"
@@ -21,8 +21,8 @@
             />
             <v-list shaped>
               <v-list-item-group
-                v-model="selected_topics"
-                multiple
+                v-model="selected_topic"
+                mandatory
               >
                 <template v-for="(item, i) in filtered_topics">
                   <v-list-item
@@ -36,7 +36,7 @@
                       </v-list-item-content>
 
                       <v-list-item-action>
-                        <v-checkbox
+                        <v-radio
                           :input-value="active"
                           color="deep-purple accent-4"
                         />
@@ -51,46 +51,21 @@
       </v-col>
 
       <v-col
-        sm="6"
-        height="700px"
-      >
-        <v-sheet
-          rounded="lg"
-        >
-          <v-card>
-            <v-virtual-scroll
-              :items="messages_in_view"
-              :item-height="40"
-              height="700px"
-            >
-              <template #default="{ item }">
-                <v-list-item
-                  @click="showDetailed(item)"
-                >
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      {{ item.timestamp.toLocaleString() }} | {{ item.topic }}: {{ item.payload }}
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </template>
-            </v-virtual-scroll>
-          </v-card>
-        </v-sheet>
-      </v-col>
-
-      <v-col
-        sm="3"
+        sm="8"
       >
         <v-card
-          v-if="detailed_message"
+          v-if="selected_topic"
           outlined
           width="100%"
+          height="700px"
         >
+          <v-card-title>
+            {{ selected_topic }}
+          </v-card-title>
           <v-card-text
-            style="overflow: auto;"
+            style="overflow: auto; height: calc(100% - 48px);"
           >
-            <pre> {{ detailed_message }} </pre>
+            <pre>{{ formatMessage(current_message) }}</pre>
           </v-card-text>
         </v-card>
       </v-col>
@@ -107,49 +82,14 @@ interface ZenohMessage {
   timestamp: Date
 }
 
-class ZenohMessageTable {
-  messages: ZenohMessage[] = []
-  topics: Set<string> = new Set()
-  size_limit = 1000 // Maximum number of messages to store
-
-  add(topic: string, payload: string): void {
-    const message: ZenohMessage = {
-      topic,
-      payload,
-      timestamp: new Date()
-    }
-
-    this.messages.push(message)
-    this.topics.add(topic)
-
-    if (this.messages.length > this.size_limit) {
-      this.messages.shift()
-    }
-  }
-
-  getTopics(): string[] {
-    return Array.from(this.topics).sort()
-  }
-
-  getMessages(selectedTopics: string[]): ZenohMessage[] {
-    if (selectedTopics.length === 0) return []
-    return this.messages
-      .filter(msg => selectedTopics.includes(msg.topic))
-      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-  }
-}
-
 export default Vue.extend({
   name: 'ZenohInspector',
   data() {
     return {
       topics: [] as string[],
-      message_table: new ZenohMessageTable(),
+      messages: {} as { [key: string]: ZenohMessage },
       topic_interval: 0,
-      messages_in_view_interval: 0,
-      messages_in_view: [] as ZenohMessage[],
-      selected_topics: [] as string[],
-      detailed_message: null as (null | ZenohMessage),
+      selected_topic: null as string | null,
       topic_filter: '',
       session: null as Session | null,
       subscriber: null as Subscriber | null,
@@ -165,21 +105,37 @@ export default Vue.extend({
         return this.topics
       }
     },
+    current_message(): ZenohMessage | null {
+      if (!this.selected_topic) return null
+      return this.messages[this.selected_topic] || null
+    }
   },
   async mounted() {
     await this.setupZenoh()
   },
   beforeDestroy() {
     clearInterval(this.topic_interval)
-    clearInterval(this.messages_in_view_interval)
     this.disconnectZenoh()
   },
   methods: {
-    update_messages_in_view() {
-      this.messages_in_view = this.message_table.getMessages(this.selected_topics)
-    },
-    showDetailed(message: ZenohMessage) {
-      this.detailed_message = message
+    formatMessage(message: ZenohMessage | null): string {
+      if (!message) return 'No messages received yet'
+
+      try {
+        const parsedPayload = JSON.parse(message.payload)
+        return JSON.stringify({
+          topic: message.topic,
+          timestamp: message.timestamp.toLocaleString(),
+          payload: parsedPayload
+        }, null, 2)
+      } catch (e) {
+        // If payload is not valid JSON, return the raw message
+        return JSON.stringify({
+          topic: message.topic,
+          timestamp: message.timestamp.toLocaleString(),
+          payload: message.payload
+        }, null, 2)
+      }
     },
     async setupZenoh() {
       try {
@@ -190,15 +146,22 @@ export default Vue.extend({
         this.subscriber = await this.session.declare_subscriber('**', {
           handler: (sample: Sample) => {
             const topic = sample.keyexpr().toString()
-            const payload = sample.payload().to_string()
-            this.message_table.add(topic, payload)
+            const message: ZenohMessage = {
+              topic,
+              payload: sample.payload().to_string(),
+              timestamp: new Date()
+            }
+
+            // Update messages and topics
+            this.$set(this.messages, topic, message)
+            if (!this.topics.includes(topic)) {
+              this.topics = [...this.topics, topic].sort()
+            }
+
             return Promise.resolve()
           }
         })
         console.log('[Zenoh] Subscribed to all topics')
-
-        this.messages_in_view_interval = setInterval(() => this.update_messages_in_view(), 500)
-        this.topic_interval = setInterval(() => { this.topics = this.message_table.getTopics() }, 1000)
       } catch (error) {
         console.error('[Zenoh] Connection error:', error)
       }
