@@ -6,12 +6,18 @@ set -e
 BUILD_PACKAGES=(
     g++
 )
+EXTERNAL_PROGRAMS=(
+    cron
+)
+
+apt update
 
 # Install build packages if not on armv7, which we have all pre-built wheels for
 if ! { [ "$TARGETARCH" == "arm" ] && [ "$TARGETVARIANT" == "v7" ]; }; then
-    apt update
     apt install -y --no-install-recommends ${BUILD_PACKAGES[*]}
 fi
+
+apt install -y --no-install-recommends ${EXTERNAL_PROGRAMS[*]}
 
 # Wifi service:
 ## Bind path for wpa
