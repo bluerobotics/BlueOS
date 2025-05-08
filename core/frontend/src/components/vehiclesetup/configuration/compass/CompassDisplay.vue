@@ -334,5 +334,6 @@ export default Vue.extend({
 .compass canvas {
   border-radius: 15%;
   border: 1px solid var(--v-primary-base);
+  background-color: white;
 }
 </style>
