@@ -13,18 +13,18 @@
             max-height="700px"
           >
             <v-text-field
-              v-model="message_filter"
+              v-model="topic_filter"
               class="ma-2"
-              label="Search"
+              label="Search Topics"
               clearable
               prepend-inner-icon="mdi-magnify"
             />
             <v-list shaped>
               <v-list-item-group
-                v-model="selected_message_types"
+                v-model="selected_topics"
                 multiple
               >
-                <template v-for="(item, i) in filtered_messages">
+                <template v-for="(item, i) in filtered_topics">
                   <v-list-item
                     :key="i"
                     :value="item"
@@ -69,7 +69,7 @@
                 >
                   <v-list-item-content>
                     <v-list-item-title>
-                      {{ item.timestamp.toLocaleString() }} | {{ item | prettyPrint }}
+                      {{ item.timestamp.toLocaleString() }} | {{ item.topic }}: {{ item.payload }}
                     </v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
@@ -99,144 +99,118 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
+import { Config, Session, Subscriber, Sample } from '@eclipse-zenoh/zenoh-ts'
 
-import mavlink2rest from '@/libs/MAVLink2Rest'
-import { Message } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest'
-import { Dictionary } from '@/types/common'
-import prettify from '@/utils/mavlink_prettifier'
-import { Config, Session, KeyExpr, Subscriber, Sample, SampleKind } from '@eclipse-zenoh/zenoh-ts'
-
-// Create a simple Zenoh inspector that subscribes to all topics
-class ZenohInspector {
-  session: Session | null = null
-  subscriber: Subscriber | null = null
-
-  async connect(serverUrl: string): Promise<void> {
-    try {
-      const config = new Config(serverUrl)
-      this.session = await Session.open(config)
-      console.log(`[Zenoh] Connected to ${serverUrl}`)
-
-      // Subscribe to all topics using wildcard
-      this.subscriber = await this.session.declare_subscriber('**', {
-        handler: (sample: Sample) => {
-          const keyExpr = sample.keyexpr().toString()
-          const payload = sample.payload().to_string()
-          console.log(`[Zenoh] Topic: ${keyExpr}, Payload: ${payload}`)
-          return Promise.resolve()
-        }
-      })
-      console.log('[Zenoh] Subscribed to all topics')
-    } catch (error) {
-      console.error('[Zenoh] Connection error:', error)
-    }
-  }
-
-  async disconnect(): Promise<void> {
-    if (this.session) {
-      await this.session.close()
-      console.log('[Zenoh] Disconnected')
-      this.session = null
-      this.subscriber = null
-    }
-  }
+interface ZenohMessage {
+  topic: string
+  payload: string
+  timestamp: Date
 }
 
-// Create and connect the inspector
-const zenohInspector = new ZenohInspector()
-zenohInspector.connect('ws://192.168.31.179:10000')
+class ZenohMessageTable {
+  messages: ZenohMessage[] = []
+  topics: Set<string> = new Set()
+  size_limit = 1000 // Maximum number of messages to store
 
-class MAVLinkMessageTable {
-  tables: Dictionary<Array<Message>> = {}
+  add(topic: string, payload: string): void {
+    const message: ZenohMessage = {
+      topic,
+      payload,
+      timestamp: new Date()
+    }
 
-  messageTypes: string[] = []
+    this.messages.push(message)
+    this.topics.add(topic)
 
-  size_limit = 100 // do not store more than 100 of each message
-
-  constructor() {
-    this.tables = {}
-  }
-
-  add(mavlink_message: Message): void {
-    const message_timed = mavlink_message
-    message_timed.timestamp = new Date()
-    const { message } = mavlink_message
-    if (message.type in this.tables) {
-      this.tables[message.type].push(message_timed)
-      if (this.tables[message.type].length > this.size_limit) {
-        this.tables[message.type].shift()
-      }
-    } else {
-      this.tables[message.type] = [message_timed]
+    if (this.messages.length > this.size_limit) {
+      this.messages.shift()
     }
   }
 
-  getTypes(): string[] {
-    return Object.keys(this.tables).sort()
+  getTopics(): string[] {
+    return Array.from(this.topics).sort()
   }
 
-  get(types: string[]): Message[] {
-    let result: Message[] = []
-    for (const type of types) {
-      result = [...result, ...this.tables[type]]
-    }
-    return result.sort((x, y) => x.timestamp - y.timestamp)
+  getMessages(selectedTopics: string[]): ZenohMessage[] {
+    if (selectedTopics.length === 0) return []
+    return this.messages
+      .filter(msg => selectedTopics.includes(msg.topic))
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
   }
 }
 
 export default Vue.extend({
   name: 'ZenohInspector',
-  components: {
-  },
-  filters: {
-    prettyPrint(mavlink_message: Message) {
-      return prettify(mavlink_message.message)
-    },
-  },
   data() {
     return {
-      message_types: [] as string[],
-      message_table: new MAVLinkMessageTable(),
-      message_type_interval: 0,
+      topics: [] as string[],
+      message_table: new ZenohMessageTable(),
+      topic_interval: 0,
       messages_in_view_interval: 0,
-      messages_in_view: [] as Message[],
-      selected_message_types: [],
-      detailed_message: null as (null | Message),
-      message_filter: '',
+      messages_in_view: [] as ZenohMessage[],
+      selected_topics: [] as string[],
+      detailed_message: null as (null | ZenohMessage),
+      topic_filter: '',
+      session: null as Session | null,
+      subscriber: null as Subscriber | null,
     }
   },
   computed: {
-    filtered_messages(): string[] {
+    filtered_topics(): string[] {
       try {
-        return this.message_types.filter(
-          (name: string) => name.toLowerCase().includes(this.message_filter.toLowerCase().trim()),
+        return this.topics.filter(
+          (name: string) => name.toLowerCase().includes(this.topic_filter.toLowerCase().trim()),
         )
       } catch {
-        return this.message_types
+        return this.topics
       }
     },
   },
-  mounted() {
-    this.setupWs()
+  async mounted() {
+    await this.setupZenoh()
   },
   beforeDestroy() {
-    clearInterval(this.message_type_interval)
+    clearInterval(this.topic_interval)
     clearInterval(this.messages_in_view_interval)
+    this.disconnectZenoh()
   },
   methods: {
     update_messages_in_view() {
-      this.messages_in_view = this.message_table.get(this.selected_message_types)
+      this.messages_in_view = this.message_table.getMessages(this.selected_topics)
     },
-    showDetailed(message: Message) {
+    showDetailed(message: ZenohMessage) {
       this.detailed_message = message
     },
-    setupWs() {
-      this.messages_in_view_interval = setInterval(() => this.update_messages_in_view(), 500)
-      this.message_type_interval = setInterval(() => { this.message_types = this.message_table.getTypes() }, 1000)
-      mavlink2rest.startListening('').setCallback((receivedMessage) => {
-        this.message_table.add(receivedMessage)
-      }).setFrequency(0)
+    async setupZenoh() {
+      try {
+        const config = new Config('ws://192.168.31.179:10000')
+        this.session = await Session.open(config)
+        console.log('[Zenoh] Connected')
+
+        this.subscriber = await this.session.declare_subscriber('**', {
+          handler: (sample: Sample) => {
+            const topic = sample.keyexpr().toString()
+            const payload = sample.payload().to_string()
+            this.message_table.add(topic, payload)
+            return Promise.resolve()
+          }
+        })
+        console.log('[Zenoh] Subscribed to all topics')
+
+        this.messages_in_view_interval = setInterval(() => this.update_messages_in_view(), 500)
+        this.topic_interval = setInterval(() => { this.topics = this.message_table.getTopics() }, 1000)
+      } catch (error) {
+        console.error('[Zenoh] Connection error:', error)
+      }
     },
+    async disconnectZenoh() {
+      if (this.session) {
+        await this.session.close()
+        console.log('[Zenoh] Disconnected')
+        this.session = null
+        this.subscriber = null
+      }
+    }
   },
 })
 </script>
