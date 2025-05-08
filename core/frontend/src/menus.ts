@@ -124,6 +124,13 @@ const menus = [
     advanced: false,
     text: 'Manage your video devices and video streams.',
   },
+  {
+    title: 'Zenoh Inspector',
+    icon: 'mdi-chart-areaspline',
+    route: '/tools/zenoh-inspector',
+    advanced: true,
+    text: 'View detailed Zenoh traffic coming from your vehicle.',
+  },
 ] as menuItem[]
 
 export interface menuItem {
