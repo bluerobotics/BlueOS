@@ -51,7 +51,7 @@ poetry install
 echo "installing mavlink-server"
 ./core/tools/mavlink_server/bootstrap.sh
 echo "installing ardupilot_tools"
-NOSUDO=1 ./core/tools/ardupilot_tools/bootstrap.sh
+NOSUDO=1 ./core/tools/ardupilot_tools/bootstrap.sh && ./core/tools/ardupilot_tools/setup-python-libs.sh
 
 isort_extra_args="--check-only --diff"
 black_extra_args="--check --diff"
