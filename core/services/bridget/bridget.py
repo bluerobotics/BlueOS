@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 from typing import Dict, List
@@ -94,6 +95,12 @@ class Bridget:
         if bridge is None:
             raise RuntimeError("Bridge doesn't exist.")
         bridge.stop()
+
+    async def do_house_keeping(self) -> None:
+        while True:
+            await asyncio.sleep(5)
+            for _, bridge in self._bridges.items():
+                bridge.commmunicate()
 
     def stop(self) -> None:
         logging.debug("Stopping Bridget and removing all bridges.")
