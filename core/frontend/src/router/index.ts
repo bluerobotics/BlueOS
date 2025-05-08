@@ -2,24 +2,9 @@ import { defineAsyncComponent } from 'vue'
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
-import AvailableServicesView from '../views/AvailableServicesView.vue'
-import BagEditorView from '../views/BagEditorView.vue'
-import BridgesView from '../views/BridgesView.vue'
-import Endpoint from '../views/EndpointView.vue'
-import ExtensionManagerView from '../views/ExtensionManagerView.vue'
 import ExtensionView from '../views/ExtensionView.vue'
-import FileBrowserView from '../views/FileBrowserView.vue'
 import Main from '../views/MainView.vue'
-import MavlinkInspectorView from '../views/MavlinkInspectorView.vue'
-import NetworkTestView from '../views/NetworkTestView.vue'
-import NMEAInjectorView from '../views/NMEAInjectorView.vue'
 import PageNotFound from '../views/PageNotFound.vue'
-import ParameterEditorView from '../views/ParameterEditorView.vue'
-import SystemInformationView from '../views/SystemInformationView.vue'
-import TerminalView from '../views/TerminalView.vue'
-import VersionChooser from '../views/VersionChooser.vue'
-import VideoManagerView from '../views/VideoManagerView.vue'
-
 Vue.use(VueRouter)
 
 const routes: Array<RouteConfig> = [
