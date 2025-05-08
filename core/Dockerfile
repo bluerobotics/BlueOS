@@ -34,6 +34,39 @@ COPY tools /home/pi/tools
 RUN apt update && apt install -y --no-install-recommends binutils
 RUN /home/pi/tools/install-static-binaries.sh
 
+# Generation of python virtual environment for our libraries and services
+FROM base AS install-services-and-libs
+
+RUN apt update && apt install -y --no-install-recommends g++
+
+# Wifi service / Bind path for wpa
+RUN mkdir -p /var/run/wpa_supplicant/
+
+# Install UV, version pinned so the resolver that reads uv.lock never changes on its own
+ADD https://astral.sh/uv/0.12.0/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
+
+# Project files
+COPY ./uv.lock /home/pi/uv.lock
+COPY ./pyproject.toml /home/pi/pyproject.toml
+COPY ./.python-version /home/pi/.python-version
+
+COPY ./libs /home/pi/libs
+COPY ./services /home/pi/services
+
+COPY ./tools /home/pi/tools
+
+# Virtual environment creation and packages installation
+WORKDIR /home/pi
+# --locked fails the build when uv.lock is out of sync with the pyprojects, so dependency
+# changes have to be relocked and committed instead of silently resolved at build time
+RUN uv venv && uv sync --locked
+
+# Post install scripts
+ENV VIRTUAL_ENV=/home/pi/.venv
+RUN /home/pi/tools/install-python-libs.sh
+
 # BlueOS base image
 FROM base
 
@@ -70,17 +103,15 @@ ENV TARGETVARIANT=${TARGETVARIANT}
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-system-tools.sh
 
-# Install custom libraries
+# Copy libs and services code
 COPY libs /home/pi/libs
-RUN /home/pi/libs/install-libs.sh
+COPY services /home/pi/services
 
 # Set tmux configuration file
 COPY configuration/tmux.conf /etc/tmux.conf
 COPY configuration/motd /etc/motd
 
-# Install services
-COPY services /home/pi/services
-RUN /home/pi/services/install-services.sh
+# Copy configuration files
 COPY start-blueos-core /usr/bin/start-blueos-core
 COPY run-service.sh /usr/bin/run-service
 
@@ -99,6 +130,7 @@ COPY --from=download-binaries \
 
 # Copy frontend built on frontend-builder to this stage
 COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
+COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
 
 RUN <<-EOF
 set -e
@@ -113,7 +145,7 @@ set -e
     RCFILE_PATH="/etc/blueosrc"
     echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
     echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
-    echo "export PATH=$(python -m site --user-base)/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
+    echo "export PATH=/usr/blueos/venv/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
     echo "export RUST_BACKTRACE=1" >> $RCFILE_PATH
 
     # Setup shortcuts
