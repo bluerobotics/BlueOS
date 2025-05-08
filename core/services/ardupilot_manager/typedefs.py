@@ -103,11 +103,6 @@ class Platform(str, Enum):
     """Valid Ardupilot platform types.
     The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
 
-    Pixhawk1 = "Pixhawk1"
-    Pixhawk4 = "Pixhawk4"
-    Pixhawk6X = "Pixhawk6X"
-    Pixhawk6C = "Pixhawk6C"
-    CubeOrange = "CubeOrange"
     GenericSerial = "GenericSerial"
     Navigator = "navigator"
     Navigator64 = "navigator64"
@@ -117,11 +112,6 @@ class Platform(str, Enum):
     @property
     def type(self) -> PlatformType:
         platform_types = {
-            Platform.Pixhawk1: PlatformType.Serial,
-            Platform.Pixhawk4: PlatformType.Serial,
-            Platform.Pixhawk6X: PlatformType.Serial,
-            Platform.Pixhawk6C: PlatformType.Serial,
-            Platform.CubeOrange: PlatformType.Serial,
             Platform.GenericSerial: PlatformType.Serial,
             Platform.Navigator: PlatformType.Linux,
             Platform.Navigator64: PlatformType.Linux,
@@ -153,6 +143,9 @@ class FlightController(BaseModel):
     @property
     def type(self) -> PlatformType:
         return self.platform.type
+
+    def __hash__(self) -> int:
+        return hash(self.name + self.platform)
 
 
 class AvailableBoards(BaseModel):
