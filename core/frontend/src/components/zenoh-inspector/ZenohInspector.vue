@@ -12,13 +12,18 @@
             class="mx-auto height-limited"
             max-height="700px"
           >
-            <v-text-field
-              v-model="topic_filter"
-              class="ma-2"
-              label="Search Topics"
-              clearable
-              prepend-inner-icon="mdi-magnify"
-            />
+            <v-card-title>
+              <v-text-field
+                v-model="topic_filter"
+                label="Search Topics"
+                clearable
+                prepend-inner-icon="mdi-magnify"
+                single-line
+                hide-details
+                class="mt-0 pt-0"
+              />
+            </v-card-title>
+            <v-divider />
             <v-list shaped>
               <v-list-item-group
                 v-model="selected_topic"
@@ -32,7 +37,16 @@
                   >
                     <template #default="{ active }">
                       <v-list-item-content>
-                        <v-list-item-title v-text="item" />
+                        <v-list-item-title>
+                          {{ item }}
+                          <v-chip
+                            x-small
+                            :color="topic_liveliness[item] ? 'green' : 'red'"
+                            class="ml-2"
+                          >
+                            {{ topic_liveliness[item] ? 'Alive' : 'Dead' }}
+                          </v-chip>
+                        </v-list-item-title>
                       </v-list-item-content>
 
                       <v-list-item-action>
@@ -61,6 +75,12 @@
         >
           <v-card-title>
             {{ selected_topic }}
+            <v-chip
+              :color="topic_liveliness[selected_topic] ? 'green' : 'red'"
+              class="ml-2"
+            >
+              {{ topic_liveliness[selected_topic] ? 'Alive' : 'Dead' }}
+            </v-chip>
           </v-card-title>
           <v-card-text
             style="overflow: auto; height: calc(100% - 48px);"
@@ -74,7 +94,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { Config, Session, Subscriber, Sample } from '@eclipse-zenoh/zenoh-ts'
+import { Config, Session, Subscriber, Sample, SampleKind } from '@eclipse-zenoh/zenoh-ts'
 
 interface ZenohMessage {
   topic: string
@@ -88,11 +108,13 @@ export default Vue.extend({
     return {
       topics: [] as string[],
       messages: {} as { [key: string]: ZenohMessage },
+      topic_liveliness: {} as { [key: string]: boolean },
       topic_interval: 0,
       selected_topic: null as string | null,
       topic_filter: '',
       session: null as Session | null,
       subscriber: null as Subscriber | null,
+      liveliness_subscriber: null as Subscriber | null,
     }
   },
   computed: {
@@ -126,6 +148,7 @@ export default Vue.extend({
         return JSON.stringify({
           topic: message.topic,
           timestamp: message.timestamp.toLocaleString(),
+          liveliness: this.topic_liveliness[message.topic] ? 'Alive' : 'Dead',
           payload: parsedPayload
         }, null, 2)
       } catch (e) {
@@ -133,6 +156,7 @@ export default Vue.extend({
         return JSON.stringify({
           topic: message.topic,
           timestamp: message.timestamp.toLocaleString(),
+          liveliness: this.topic_liveliness[message.topic] ? 'Alive' : 'Dead',
           payload: message.payload
         }, null, 2)
       }
@@ -143,6 +167,7 @@ export default Vue.extend({
         this.session = await Session.open(config)
         console.log('[Zenoh] Connected')
 
+        // Setup regular message subscriber
         this.subscriber = await this.session.declare_subscriber('**', {
           handler: (sample: Sample) => {
             const topic = sample.keyexpr().toString()
@@ -162,6 +187,31 @@ export default Vue.extend({
           }
         })
         console.log('[Zenoh] Subscribed to all topics')
+
+        // Setup liveliness subscriber
+        const lv_ke = '@/**/@ros2_lv/**'
+        console.log('[Zenoh] Setting up liveliness subscriber for:', lv_ke)
+
+        this.liveliness_subscriber = await this.session.liveliness().declare_subscriber(lv_ke, {
+          handler: (sample: Sample) => {
+            console.log('[Zenoh] Liveliness update:', sample.keyexpr().toString())
+            const topic = sample.keyexpr().toString().replace(/§/g, '/')
+            const isAlive = sample.kind() === SampleKind.PUT
+
+            console.log('[Zenoh] Topic:', topic, 'isAlive:', isAlive)
+            // Update liveliness state
+            this.$set(this.topic_liveliness, topic, isAlive)
+
+            // Add to topics if not already present
+            if (!this.topics.includes(topic)) {
+              this.topics = [...this.topics, topic].sort()
+            }
+
+            return Promise.resolve()
+          },
+          history: true // Enable history to get initial state
+        })
+        console.log('[Zenoh] Subscribed to liveliness updates')
       } catch (error) {
         console.error('[Zenoh] Connection error:', error)
       }
@@ -172,6 +222,7 @@ export default Vue.extend({
         console.log('[Zenoh] Disconnected')
         this.session = null
         this.subscriber = null
+        this.liveliness_subscriber = null
       }
     }
   },
