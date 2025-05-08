@@ -4,6 +4,7 @@ import Components from 'unplugin-vue-components/vite'
 import { defineConfig, loadEnv } from 'vite'
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { VitePWA } from 'vite-plugin-pwa'
+import wasm from "vite-plugin-wasm"
 const { name } = require('./package.json')
 
 process.env.PROJECT_NAME = name
@@ -22,6 +23,7 @@ export default defineConfig(({ command, mode }) => {
   return {
     plugins: [
       vue(),
+      wasm(),
       VitePWA({
         registerType: 'autoUpdate',
         devOptions: {
