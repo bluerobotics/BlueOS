@@ -33,34 +33,28 @@ RUN /home/pi/tools/install-static-binaries.sh
 # Generation of python virtual environment for our libraries and services
 FROM base AS install-services-and-libs
 
-# Install g++
 RUN apt update && apt install -y --no-install-recommends g++
 
-# Wifi service / Bind path for wpa
-RUN mkdir -p /var/run/wpa_supplicant/
-
-# Install UV
+# UV installation
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
-
-# Ensure the installed binary is on the `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
 
-# UV project files
+# Project files
 COPY ./uv.lock /home/pi/uv.lock
 COPY ./pyproject.toml /home/pi/pyproject.toml
 COPY ./.python-version /home/pi/.python-version
 
-# Copy our libraries and services
 COPY ./libs /home/pi/libs
 COPY ./services /home/pi/services
 
-# Generate the python virtual environment
+COPY ./tools /home/pi/tools
+
+# Virtual environment creation and packages installation
 WORKDIR /home/pi
 RUN uv venv && uv sync --frozen
 
-# Install necessary tools
-COPY tools /home/pi/tools
+# Post install scripts
 ENV VIRTUAL_ENV=/home/pi/.venv
 RUN /home/pi/tools/install-python-libs.sh
 

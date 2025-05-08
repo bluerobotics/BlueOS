@@ -3,6 +3,10 @@
 # Immediately exit on errors
 set -e
 
+# Wifi service / Bind path for wpa
+mkdir -p /var/run/wpa_supplicant/
+
+# Install create_ap script
 alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
 
 CREATE_AP_COMMIT="4627e3c0ec0a7c86ba08089a8a00d32a61a05f1e"
