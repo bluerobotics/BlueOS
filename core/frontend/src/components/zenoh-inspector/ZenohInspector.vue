@@ -46,6 +46,20 @@
                           >
                             {{ topic_liveliness[item] ? 'Alive' : 'Dead' }}
                           </v-chip>
+                          <v-chip
+                            x-small
+                            color="blue"
+                            class="ml-2"
+                          >
+                            {{ topic_types[item] || 'Unknown' }}
+                          </v-chip>
+                          <v-chip
+                            x-small
+                            color="purple"
+                            class="ml-2"
+                          >
+                            {{ topic_typs[item] || 'Unknown' }}
+                          </v-chip>
                         </v-list-item-title>
                       </v-list-item-content>
 
@@ -81,6 +95,18 @@
             >
               {{ topic_liveliness[selected_topic] ? 'Alive' : 'Dead' }}
             </v-chip>
+            <v-chip
+              color="blue"
+              class="ml-2"
+            >
+              {{ topic_types[selected_topic] || 'Unknown' }}
+            </v-chip>
+            <v-chip
+              color="purple"
+              class="ml-2"
+            >
+              {{ topic_typs[selected_topic] || 'Unknown' }}
+            </v-chip>
           </v-card-title>
           <v-card-text
             style="overflow: auto; height: calc(100% - 48px);"
@@ -109,6 +135,8 @@ export default Vue.extend({
       topics: [] as string[],
       messages: {} as { [key: string]: ZenohMessage },
       topic_liveliness: {} as { [key: string]: boolean },
+      topic_types: {} as { [key: string]: string },
+      topic_typs: {} as { [key: string]: string },
       topic_interval: 0,
       selected_topic: null as string | null,
       topic_filter: '',
@@ -149,6 +177,8 @@ export default Vue.extend({
           topic: message.topic,
           timestamp: message.timestamp.toLocaleString(),
           liveliness: this.topic_liveliness[message.topic] ? 'Alive' : 'Dead',
+          topic_type: this.topic_types[message.topic] || 'Unknown',
+          message_type: this.topic_typs[message.topic] || 'Unknown',
           payload: parsedPayload
         }, null, 2)
       } catch (e) {
@@ -157,6 +187,8 @@ export default Vue.extend({
           topic: message.topic,
           timestamp: message.timestamp.toLocaleString(),
           liveliness: this.topic_liveliness[message.topic] ? 'Alive' : 'Dead',
+          topic_type: this.topic_types[message.topic] || 'Unknown',
+          message_type: this.topic_typs[message.topic] || 'Unknown',
           payload: message.payload
         }, null, 2)
       }
@@ -195,12 +227,28 @@ export default Vue.extend({
         this.liveliness_subscriber = await this.session.liveliness().declare_subscriber(lv_ke, {
           handler: (sample: Sample) => {
             console.log('[Zenoh] Liveliness update:', sample.keyexpr().toString())
-            const topic = sample.keyexpr().toString().replace(/§/g, '/')
-            const isAlive = sample.kind() === SampleKind.PUT
 
-            console.log('[Zenoh] Topic:', topic, 'isAlive:', isAlive)
-            // Update liveliness state
+            // Parse the liveliness token using regex
+            // https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds/blob/865d3db009d0d2635826700a35483e88a077967d/zenoh-plugin-ros2dds/src/liveliness_mgt.rs#L202
+            const keyexpr = sample.keyexpr().toString()
+            const match = keyexpr.match(/@\/(?<zenoh_id>[^/]+)\/@ros2_lv\/(?<type>MP|MS|SS|SC|AS|AC)\/(?<ke>[^/]+)\/(?<typ>[^/]+)(?:\/(?<qos_ke>[^/]+))?/)
+
+            if (!match) {
+              console.log('[Zenoh] Invalid liveliness token format:', keyexpr)
+              return Promise.resolve()
+            }
+
+            const { type, ke, typ } = match.groups || {}
+            const topic = ke.replace(/§/g, '/')
+            const messageTyp = typ.replace(/§/g, '/')
+
+            const isAlive = sample.kind() === SampleKind.PUT
+            console.log('[Zenoh] Topic:', topic, 'Type:', type, 'Typ:', messageTyp, 'isAlive:', isAlive)
+
+            // Update liveliness state and type
             this.$set(this.topic_liveliness, topic, isAlive)
+            this.$set(this.topic_types, topic, type)
+            this.$set(this.topic_typs, topic, messageTyp)
 
             // Add to topics if not already present
             if (!this.topics.includes(topic)) {
