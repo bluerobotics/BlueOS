@@ -119,6 +119,11 @@ const routes: Array<RouteConfig> = [
     component: defineAsyncComponent(() => import('../views/ParameterEditorView.vue')),
   },
   {
+    path: '/tools/zenoh-inspector',
+    name: 'Zenoh Inspector',
+    component: defineAsyncComponent(() => import('../views/ZenohInspectorView.vue')),
+  },
+  {
     path: '*',
     name: '404',
     component: PageNotFound,
