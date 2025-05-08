@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 """
 Responsible for interacting with dockerhub
 adapted from https://github.com/al4/docker-registry-list

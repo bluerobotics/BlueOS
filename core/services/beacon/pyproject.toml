@@ -1,0 +1,14 @@
+[project]
+name = "beacon"
+version = "0.1.0"
+description = "MDNS service."
+requires-python = ">=3.11"
+dependencies = [
+    "commonwealth==0.1.0",
+    "loguru==0.5.3",
+    "uvicorn==0.13.4",
+    "zeroconf==0.38.4",
+]
+
+[tool.uv.sources]
+commonwealth = { workspace = true }
