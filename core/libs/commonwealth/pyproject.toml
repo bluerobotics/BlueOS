@@ -1,0 +1,21 @@
+[project]
+name = "commonwealth"
+version = "0.1.0"
+description = "BlueOS library to share common code."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp==3.7.4",
+    "appdirs==1.4.4",
+    "loguru==0.5.3",
+    "psutil==5.7.2",
+    "pykson==1.0.2",
+    "starlette==0.27.0",
+]
+
+[tool.uv.sources]
+pykson = { url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
