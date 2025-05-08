@@ -53,10 +53,7 @@ def get_new_log_path(service_name: str) -> Path:
     default_log_folder = Path("/var/logs/blueos/services")
     service_log_folder = default_log_folder.joinpath(service_name)
     service_log_folder.mkdir(parents=True, exist_ok=True)
-
-    # Returned log path are service-specific and store datetime information
-    datetime_now = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return service_log_folder.joinpath(f"logfile_{datetime_now}.log")
+    return service_log_folder.joinpath(f"{service_name}.log")
 
 
 def init_logger(service_name: str) -> None:
