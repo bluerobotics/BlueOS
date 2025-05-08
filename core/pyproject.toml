@@ -1,0 +1,44 @@
+[project]
+name = "blueos-core"
+version = "1.4.0"
+description = "Core workspace with backend services for BlueOS."
+requires-python = ">=3.11"
+dependencies = [
+  "bridges",
+  "commonwealth",
+  "ardupilot_manager",
+  "bag_of_holding",
+  "beacon",
+  "bridget",
+  "cable_guy",
+  "commander",
+  "helper",
+  "kraken",
+  "log_zipper",
+  "nmea_injector",
+  "pardal",
+  "ping",
+  "versionchooser",
+  "wifi",
+]
+
+[tool.uv.sources]
+bridges = { workspace = true }
+commonwealth = { workspace = true }
+ardupilot_manager = { workspace = true }
+bag_of_holding = { workspace = true }
+beacon = { workspace = true }
+bridget = { workspace = true }
+cable_guy = { workspace = true }
+commander = { workspace = true }
+helper = { workspace = true }
+kraken = { workspace = true }
+log_zipper = { workspace = true }
+nmea_injector = { workspace = true }
+pardal = { workspace = true }
+ping = { workspace = true }
+versionchooser = { workspace = true }
+wifi = { workspace = true }
+
+[tool.uv.workspace]
+members = ["services/*", "libs/*"]
