@@ -11,6 +11,7 @@ TOOLS=(
     logviewer
     mavlink_camera_manager
     scripts
+    wifi
 )
 
 parallel --halt now,fail=1 '/home/pi/tools/{}/bootstrap.sh' ::: "${TOOLS[@]}"
