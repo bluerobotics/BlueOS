@@ -771,7 +771,11 @@ class EthernetManager:
         """
         if self._is_dhcp_server_running_on_interface(interface_name):
             dhcp_on_interface = self._dhcp_server_on_interface(interface_name)
-            if dhcp_on_interface.ipv4_gateway == ipv4_gateway and dhcp_on_interface.is_backup_server == backup:
+            if (
+                dhcp_on_interface.ipv4_gateway == ipv4_gateway
+                and dhcp_on_interface.is_backup_server == backup
+                and self._is_ip_on_interface(interface_name, ipv4_gateway)
+            ):
                 logger.warning(
                     f"DHCP server with gateway '{ipv4_gateway}' and backup '{backup}' already exists on interface '{interface_name}'"
                 )
