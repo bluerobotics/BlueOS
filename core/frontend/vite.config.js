@@ -186,6 +186,14 @@ export default defineConfig(({ command, mode }) => {
         '^/wifi-manager': {
           target: SERVER_ADDRESS,
         },
+        '^/zenoh': {
+          target: SERVER_ADDRESS,
+        },
+        '^/zenoh-api': {
+          target: SERVER_ADDRESS,
+          changeOrigin: true,
+          ws: true,
+        },
       },
     },
   }
