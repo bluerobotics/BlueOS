@@ -63,7 +63,8 @@
     "vuex": "^3.4.0",
     "vuex-module-decorators": "^1.0.1",
     "webpack": "^5.74.0",
-    "wifi-qr-code-generator": "^1.1.1"
+    "wifi-qr-code-generator": "^1.1.1",
+    "xz-decompress": "^0.2.2"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.51.0",
