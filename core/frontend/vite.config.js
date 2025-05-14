@@ -67,6 +67,7 @@ export default defineConfig(({ command, mode }) => {
     },
     build: {
       sourcemap: true,
+      target: 'esnext',
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'index.html'),
