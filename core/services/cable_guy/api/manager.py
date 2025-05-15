@@ -621,7 +621,7 @@ class EthernetManager:
             logger.info(f"{act} route to {route.destination_parsed} via {gateway} on {interface_name}")
         except Exception as e:
             act = "Remove" if action == "del" else "Add" if action == "add" else action
-            logger.error(f"Failed to {act} route: {e}")
+            logger.error(f"Failed to {act} route {route.destination_parsed} via {gateway} on {interface_name}: {e}")
             raise
 
         # Update settings
