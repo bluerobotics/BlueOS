@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import re
 import subprocess
 import time
@@ -13,6 +14,7 @@ from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, discover_dhcp_s
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pyroute2 import IW, NDB, IPRoute
+from pyroute2.netlink.exceptions import NetlinkError
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 
 from api import dns, settings
@@ -619,6 +621,13 @@ class EthernetManager:
 
             act = "Removed" if action == "del" else "Added" if action == "add" else action
             logger.info(f"{act} route to {route.destination_parsed} via {gateway} on {interface_name}")
+        except NetlinkError as e:
+            if e.code == errno.EEXIST and action == "add":
+                logger.debug(
+                    f"Route {route.destination_parsed} via {gateway} on {interface_name} already exists, ignoring"
+                )
+                return
+
         except Exception as e:
             act = "Remove" if action == "del" else "Add" if action == "add" else action
             logger.error(f"Failed to {act} route {route.destination_parsed} via {gateway} on {interface_name}: {e}")
