@@ -63,6 +63,7 @@
           outlined
           width="100%"
           height="700px"
+          class="d-flex flex-column"
         >
           <template
             v-if="selected_topic"
@@ -93,15 +94,14 @@
                 {{ topic_message_types[selected_topic] || 'Unknown' }}
               </v-chip>
             </v-card-title>
-            <v-card-text
-              style="overflow: auto; height: calc(100% - 48px);"
-            >
+
+            <v-card-text class="flex-grow-1 overflow-auto">
               <pre>{{ formatMessage(current_message) }}</pre>
             </v-card-text>
           </template>
           <div
             v-else
-            class="select-topic"
+            class="select-topic d-flex align-center justify-center fill-height"
           >
             <span style="font-size: 1.5rem; font-weight: 500;">
               Select a topic to view its messages.
