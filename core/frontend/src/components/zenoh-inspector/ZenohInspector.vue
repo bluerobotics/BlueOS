@@ -27,7 +27,6 @@
             <v-list shaped>
               <v-list-item-group
                 v-model="selected_topic"
-                mandatory
               >
                 <template v-for="(item, i) in filtered_topics">
                   <v-list-item
@@ -61,42 +60,53 @@
         sm="8"
       >
         <v-card
-          v-if="selected_topic"
           outlined
           width="100%"
           height="700px"
         >
-          <v-card-title>
-            {{ selected_topic }}
-            <v-chip
-              v-tooltip="'Topic liveliness status'"
-              :color="topic_liveliness[selected_topic] === undefined ? 'grey'
-                : (topic_liveliness[selected_topic] ? 'green' : 'red')"
-              class="ml-2"
-            >
-              {{ topic_liveliness[selected_topic] === undefined ? 'Unknown'
-                : (topic_liveliness[selected_topic] ? 'Alive' : 'Dead') }}
-            </v-chip>
-            <v-chip
-              v-tooltip="'Topic type'"
-              color="blue"
-              class="ml-2"
-            >
-              {{ topic_types[selected_topic] || 'Unknown' }}
-            </v-chip>
-            <v-chip
-              v-tooltip="'Topic message serialization type'"
-              color="purple"
-              class="ml-2"
-            >
-              {{ topic_message_types[selected_topic] || 'Unknown' }}
-            </v-chip>
-          </v-card-title>
-          <v-card-text
-            style="overflow: auto; height: calc(100% - 48px);"
+          <template
+            v-if="selected_topic"
           >
-            <pre>{{ formatMessage(current_message) }}</pre>
-          </v-card-text>
+            <v-card-title>
+              {{ selected_topic }}
+              <v-chip
+                v-tooltip="'Topic liveliness status'"
+                :color="topic_liveliness[selected_topic] === undefined ? 'grey'
+                  : (topic_liveliness[selected_topic] ? 'green' : 'red')"
+                class="ml-2"
+              >
+                {{ topic_liveliness[selected_topic] === undefined ? 'Unknown'
+                  : (topic_liveliness[selected_topic] ? 'Alive' : 'Dead') }}
+              </v-chip>
+              <v-chip
+                v-tooltip="'Topic type'"
+                color="blue"
+                class="ml-2"
+              >
+                {{ topic_types[selected_topic] || 'Unknown' }}
+              </v-chip>
+              <v-chip
+                v-tooltip="'Topic message serialization type'"
+                color="purple"
+                class="ml-2"
+              >
+                {{ topic_message_types[selected_topic] || 'Unknown' }}
+              </v-chip>
+            </v-card-title>
+            <v-card-text
+              style="overflow: auto; height: calc(100% - 48px);"
+            >
+              <pre>{{ formatMessage(current_message) }}</pre>
+            </v-card-text>
+          </template>
+          <div
+            v-else
+            class="select-topic"
+          >
+            <span style="font-size: 1.5rem; font-weight: 500;">
+              Select a topic to view its messages.
+            </span>
+          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -259,5 +269,13 @@ export default Vue.extend({
 .height-limited {
   overflow-y: auto;
   max-height: 700px;
+}
+
+.select-topic {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
 }
 </style>
