@@ -117,7 +117,7 @@ class AutoPilotManager(metaclass=Singleton):
                 place="0.0.0.0",
                 argument=14660,
                 persistent=True,
-                protected=True,
+                protected=False,
             ),
         ]
 
