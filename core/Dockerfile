@@ -52,7 +52,7 @@ COPY ./tools /home/pi/tools
 
 # Virtual environment creation and packages installation
 WORKDIR /home/pi
-RUN uv venv && uv sync --frozen
+RUN uv venv && uv sync --frozen --no-default-groups
 
 # Post install scripts
 ENV VIRTUAL_ENV=/home/pi/.venv
