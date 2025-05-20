@@ -1,15 +1,14 @@
 <template>
   <div class="main-container">
-    <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2">
+    <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2 main-card">
       <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2">
         <v-card-title>
           Frame <parameter-label :param="frame_parameter" label="" />
         </v-card-title>
-        <InlineParameterEditor
+        <FrameSelector
           v-if="frame_parameter"
-          :param="frame_parameter"
-          :label="'Frame Configuration'"
-          :auto-set="true"
+          :parameter="frame_parameter"
+          @update:value="updateFrameValue"
         />
         <InlineParameterEditor
           v-if="frame_type_parameter"
@@ -33,15 +32,19 @@ import {
   fetchCurrentBoard,
 } from '@/components/autopilot/AutopilotManagerUpdater'
 import OrientationPicker from '@/components/vehiclesetup/OrientationPicker.vue'
+import mavlink2rest from '@/libs/MAVLink2Rest'
 import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import Parameter from '@/types/autopilot/parameter'
 
+import FrameSelector from './FrameSelector.vue'
+
 export default Vue.extend({
   name: 'ArdupilotVehicleBodySetup',
   components: {
     OrientationPicker,
+    FrameSelector,
   },
   data() {
     return {
@@ -77,6 +80,18 @@ export default Vue.extend({
     this.fetch_board_task.setAction(() => fetchCurrentBoard())
     this.fetch_board_task.start()
   },
+  methods: {
+    updateFrameValue(value: number) {
+      if (this.frame_parameter) {
+        mavlink2rest.setParam(
+          this.frame_parameter.name,
+          value,
+          autopilot_data.system_id,
+          this.frame_parameter.paramType.type,
+        )
+      }
+    },
+  },
 })
 </script>
 <style scoped="true">
@@ -85,6 +100,10 @@ export default Vue.extend({
   flex-direction: column;
   align-items: center;
   padding: 10px;
+}
+
+.main-card {
+  min-width: 800px;
 }
 
 td {
