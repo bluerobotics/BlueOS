@@ -22,6 +22,33 @@ dependencies = [
   "wifi",
 ]
 
+[dependency-groups]
+dev = [
+  "coverage==7.5.1",
+  "nmeasim==1.1.1.0",
+  "pytest==7.4.2",
+  "pytest-cov==4.1.0",
+  "pyfakefs==5.2.4",
+  "pytest-asyncio==0.14.0",
+  "pytest-mock==3.10.0",
+  "pytest-timeout==2.1.0",
+  "pytest-xdist>=3.3.1",
+  "pyelftools==0.30",
+]
+lint = [
+  "black==22.3.0",
+  "isort==5.8",
+  "pylint==3.0",
+  "mypy==1.4.1",
+  "ruff==0.0.288",
+  "pylint-pydantic==0.3.2",
+  "pylint-plugin-utils==0.8.2",
+  "types-requests==2.31.0.2",
+]
+
+[tool.uv]
+default-groups = ["dev", "lint"]
+
 [tool.uv.sources]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
@@ -42,3 +69,81 @@ wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
+
+# ------------------ Tooling Configurations ------------------
+
+[tool.pytest.ini_options]
+markers = [
+  "timeout",
+]
+
+[tool.coverage.run]
+branch = true
+omit = [
+  "*/setup.py",
+  "*/__init__.py",
+]
+
+[tool.coverage.report]
+fail_under = 75
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+allow_untyped_decorators = true
+disallow_subclassing_any = false
+ignore_missing_imports = true
+strict = true
+warn_unreachable = true
+warn_unused_ignores = false
+plugins = "pydantic.mypy"
+disable_error_code = [
+  "call-arg",
+]
+
+[tool.ruff]
+ignore = [
+  "A003", # BuiltinAttributeShadowing: Unnecessary restriction (not a source of confusion)
+  "E501", # LineTooLong: Let black take care of
+  "F401", # UnusedImport: We are using pylint 'ignore' comments for it
+  "F821", # UndefinedName: We are using pylint 'ignore' comments for it
+  "F841", # UnusedVariable: We are using pylint 'ignore' comments for it
+  "E402", # ModuleImportNotAtTopOfFile: noqa doesn't work and this is required at some places
+]
+
+[tool.pylint]
+  [tool.pylint.master]
+  load-plugins = "pylint_pydantic"
+  enable = "all"
+  disable = [
+    "attribute-defined-outside-init",
+    "broad-except",
+    "duplicate-code",
+    "import-error",
+    "inconsistent-return-statements",
+    "invalid-name",
+    "line-too-long", # We already have this in black.
+    "locally-disabled", # We know what we are doing, necessary to load plugins in runtime
+    "logging-fstring-interpolation", # We want a good-to-read logging interface
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "no-member", # Some members are created in runtime, pylint fails to detect such cases
+    "no-name-in-module", # Names can be generated in runtime
+    "protected-access", # Necessary for internal tests
+    "suppressed-message",
+    "too-few-public-methods", # We know what kind of architecture we want
+    "too-many-public-methods", # Wrappers will have multiple public methods
+    "use-implicit-booleaness-not-comparison-to-zero",
+    "use-implicit-booleaness-not-comparison-to-string",
+    "useless-super-delegation", # Fails to check it properly
+    "wildcard-import", # Necessary to locate installed plugins
+    "wrong-import-position",
+  ]
+
+  [tool.pylint.miscellaneous]
+  notes = [ "FIXME" ] # TODO is removed for internal development
