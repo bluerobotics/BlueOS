@@ -5,11 +5,10 @@
         <v-card-title>
           Frame
         </v-card-title>
-        <InlineParameterEditor
+        <FrameSelector
           v-if="frame_parameter"
-          :param="frame_parameter"
-          :label="'Frame Configuration'"
-          :auto-set="true"
+          :parameter="frame_parameter"
+          @update:value="updateFrameValue"
         />
         <InlineParameterEditor
           v-if="frame_type_parameter"
@@ -37,11 +36,13 @@ import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import Parameter from '@/types/autopilot/parameter'
+import FrameSelector from './FrameSelector.vue'
 
 export default Vue.extend({
   name: 'ArdupilotVehicleBodySetup',
   components: {
     OrientationPicker,
+    FrameSelector,
   },
   data() {
     return {
@@ -67,6 +68,14 @@ export default Vue.extend({
   },
   mounted() {
     this.fetch_board_task.setAction(() => fetchCurrentBoard())
+  },
+  methods: {
+    updateFrameValue(value: number) {
+      if (this.frame_parameter) {
+        const updatedParam = { ...this.frame_parameter, value }
+        autopilot_data.setParameters([updatedParam])
+      }
+    },
   },
 })
 </script>
