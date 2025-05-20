@@ -15,7 +15,7 @@ dependencies = [
     "loguru==0.5.3",
     "psutil==5.7.2",
     "semver==3.0.2",
-    "uvicorn==0.13.4",
+    "uvicorn==0.18.0",
 ]
 
 [tool.uv.sources]
