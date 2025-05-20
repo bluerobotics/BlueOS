@@ -47,15 +47,15 @@ export function frame_type(): number | undefined {
   }
 
 
-export function frame_name(): string | undefined {
+export function frame_name(vehicle_type: string, frame_type?: number, frame_subtype?: number): string | undefined {
     let result
-    switch (autopilot.vehicle_type) {
+    switch (vehicle_type) {
       case 'Submarine':
-        result = Object.entries(SUB_FRAME_CONFIG).find((key, value) => value === frame_type())?.[1] as string
+        result = Object.entries(SUB_FRAME_CONFIG).find((key, value) => value === frame_type)?.[1] as string
         break
       case 'Surface Boat':
         // we already know it is a boat, so check only TYPE and ignore CLASS (rover/boat/balancebot)
-        result = Object.entries(ROVER_FRAME_TYPE).find((key, value) => value === frame_type())?.[1] as string
+        result = Object.entries(ROVER_FRAME_TYPE).find((key, value) => value === frame_type)?.[1] as string
         break
       case 'Ground Rover':
         // TOOD: check FRAME_TYPE
@@ -73,7 +73,7 @@ export async function checkModelOverrides() {
       await sleep(100)
     }
     const master_override = '/userdata/modeloverrides/ALL.glb'
-    const vehicle_override = `/userdata/modeloverrides/${vehicle_folder()}/${frame_name()}.glb`
+    const vehicle_override = `/userdata/modeloverrides/${vehicle_folder()}/${frame_name(autopilot.vehicle_type, frame_type())}.glb`
     try {
       await axios.head(master_override)
       return master_override
