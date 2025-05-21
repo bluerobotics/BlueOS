@@ -11,9 +11,9 @@
       >
         <v-card
           :class="{ 'selected-frame': isSelected(option.value) }"
-          @click="handleFrameClick(option.value)"
           class="frame-card"
           :elevation="isSelected(option.value) ? 4 : 1"
+          @click="handleFrameClick(option.value)"
         >
           <generic-viewer
             :modelpath="getModelPath(option.value)"
@@ -37,9 +37,11 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import Parameter from '@/types/autopilot/parameter'
-import { vehicle_folder, frame_name } from '../viewers/modelHelper'
+
 import autopilot from '@/store/autopilot_manager'
+import Parameter from '@/types/autopilot/parameter'
+
+import { frame_name, vehicle_folder } from '../viewers/modelHelper'
 
 export default Vue.extend({
   name: 'FrameSelector',
@@ -59,16 +61,24 @@ export default Vue.extend({
     frameOptions(): Array<{ value: number; label: string }> {
       if (!this.parameter?.options) return []
       return Object.entries(this.parameter.options).map(([value, label]) => ({
-        value: parseInt(value),
+        value: parseInt(value, 10),
         label: label as string,
       }))
     },
     displayOptions(): Array<{ value: number; label: string }> {
       if (!this.isExpanded && this.selectedValue !== null) {
-        return this.frameOptions.filter((option: { value: number; label: string }) => option.value === this.selectedValue)
+        return this.frameOptions.filter(
+          (option: { value: number; label: string }) => option.value === this.selectedValue,
+        )
       }
       return this.frameOptions
     },
+  },
+  mounted() {
+    if (this.parameter?.value !== undefined) {
+      this.selectedValue = this.parameter.value
+      this.isExpanded = false
+    }
   },
   methods: {
     isSelected(value: number): boolean {
@@ -85,18 +95,13 @@ export default Vue.extend({
     },
     getModelPath(frameValue: number): string {
       if (!autopilot.vehicle_type) return ''
-      return `/assets/vehicles/models/${this.vehicleFolder()}/${this.frame_name(autopilot.vehicle_type, frameValue)}.glb`
+      const frameName = this.frame_name(autopilot.vehicle_type, frameValue)
+      return `/assets/vehicles/models/${this.vehicleFolder()}/${frameName}.glb`
     },
     vehicleFolder(): string {
       return vehicle_folder()
     },
-    frame_name
-  },
-  mounted() {
-    if (this.parameter?.value !== undefined) {
-      this.selectedValue = this.parameter.value
-      this.isExpanded = false
-    }
+    frame_name,
   },
 })
 </script>
@@ -126,4 +131,4 @@ model-viewer {
   background-color: #f5f5f5;
   border-radius: 4px 4px 0 0;
 }
-</style> 
+</style>

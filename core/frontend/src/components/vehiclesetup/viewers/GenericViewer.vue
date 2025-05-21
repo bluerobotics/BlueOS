@@ -10,7 +10,7 @@
       :orientation="orientation"
       shadow-intensity="0.3"
       interaction-prompt="none"
-      :camera-orbit="camera_orbit"
+      :camera-orbit="cameraOrbit"
     >
       <button
         v-for="annotation in filtered_annotations"
@@ -79,6 +79,7 @@ import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import autopilot_data from '@/store/autopilot'
+import autopilot from '@/store/autopilot_manager'
 import ping from '@/store/ping'
 import {
   BTN_FUNCTION as SUB_BTN_FUNCTION,
@@ -90,7 +91,6 @@ import { PingType } from '@/types/ping'
 import {
   checkModelOverrides, frame_name, frame_type, get_model, vehicle_folder,
 } from './modelHelper'
-import autopilot from '@/store/autopilot_manager'
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
 
@@ -132,7 +132,7 @@ export default Vue.extend({
       required: false,
       default: undefined,
     },
-    camera_orbit: {
+    cameraOrbit: {
       type: String,
       required: false,
       default: '45deg 70deg 0deg',
@@ -151,11 +151,11 @@ export default Vue.extend({
       if (this.modelpath) {
         return this.modelpath
       }
-      const _frame_type = frame_type()
-      if (!autopilot.vehicle_type || !_frame_type) {
+      const frame = frame_type()
+      if (!autopilot.vehicle_type || frame === undefined) {
         return undefined
       }
-      return get_model(autopilot.vehicle_type, _frame_type)
+      return get_model(autopilot.vehicle_type, frame)
     },
     filtered_annotations(): (HotspotConfiguration & Indexed & Keyed)[] {
       if (this.noannotations) {

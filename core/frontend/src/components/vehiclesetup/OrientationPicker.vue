@@ -36,15 +36,15 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { PropType } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
+import autopilot from '@/store/autopilot_manager'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
 
 import { frame_type, get_board_model, get_model } from './viewers/modelHelper'
-import autopilot from '@/store/autopilot_manager'
 
 class Rotation {
   name: string
@@ -128,12 +128,12 @@ export default {
         new Rotation('PITCH_7', 0, 7, 0, 41),
       ] as Rotation[],
       unsupportedRotation: new Rotation('UNSUPPORTED', 0, 0, 0, -1),
-      object: undefined as THREE.WebGLObject,
-      camera: undefined as THREE.WebGLCAMERA | undefined,
-      scene: undefined as THREE.WebGLScene | undefined,
+      object: undefined as THREE.Object3D,
+      camera: undefined as THREE.Camera | undefined,
+      scene: undefined as THREE.Scene | undefined,
       renderer: undefined as THREE.WebGLRenderer | undefined,
-      vehicle_obj: undefined as THREE.WebGLObject,
-      arrows: [] as THREE.WebGLArrowHelper[],
+      vehicle_obj: undefined as THREE.Object3D,
+      arrows: [] as THREE.ArrowHelper[],
       orbitControls: undefined as OrbitControls | undefined,
     }
   },
@@ -142,13 +142,13 @@ export default {
       return this.$refs.threemount as HTMLDivElement
     },
     vehicle_model(): string | undefined {
-      const _frame_type = frame_type()
-      console.log(`vehicle_model: ${autopilot.vehicle_type} ${_frame_type}`)
-      if (!autopilot.vehicle_type || _frame_type === undefined) {
+      const frameType = frame_type()
+      console.log(`vehicle_model: ${autopilot.vehicle_type} ${frameType}`)
+      if (!autopilot.vehicle_type || frameType === undefined) {
         return undefined
       }
-      const model = get_model(autopilot.vehicle_type, _frame_type)
-      console.log(`vehicle_model: ${model}`)  
+      const model = get_model(autopilot.vehicle_type, frameType)
+      console.log(`vehicle_model: ${model}`)
       return model
     },
     rotationsWithCustom(): Rotation[] {
@@ -342,8 +342,8 @@ export default {
         loader.setDRACOLoader(dracoLoader)
         loader.load(
           this.vehicle_model,
-          (gltf) => {
-            gltf.scene.traverse((child) => {
+          (gltf: GLTF) => {
+            gltf.scene.traverse((child: THREE.Object3D) => {
               if (child instanceof THREE.Mesh) {
                 child.material = new THREE.MeshStandardMaterial({
                   color: 0x666666,
@@ -361,10 +361,10 @@ export default {
             this.scene.add(gltf.scene)
           },
           undefined,
-          (progressEvent) => {
+          (progressEvent: ProgressEvent) => {
             console.log('Loading progress:', progressEvent)
           },
-          (error) => {
+          (error: ErrorEvent) => {
             console.error('An error occurred while loading the GLB model:', error)
           },
         )
@@ -383,8 +383,9 @@ export default {
           let modelPath = ''
           if (typeof board_model === 'string') {
             modelPath = board_model
-          } else if (board_model && board_model.default) {
-            modelPath = board_model.default
+          } else if (board_model && typeof board_model === 'object' && 'default' in board_model) {
+            const modelWithDefault = board_model as { default: string }
+            modelPath = modelWithDefault.default
           }
 
           if (!modelPath) {
@@ -394,7 +395,7 @@ export default {
 
           loader.load(
             modelPath,
-            (gltf) => {
+            (gltf: GLTF) => {
               if (this.object) {
                 this.scene.remove(this.object)
               }
@@ -402,7 +403,7 @@ export default {
               this.scene.add(gltf.scene)
               this.rotateObject(this.selectedRotation)
             },
-            (error) => {
+            (error: ErrorEvent) => {
               console.error('An error occurred while loading the GLB model:', error)
             },
           )
