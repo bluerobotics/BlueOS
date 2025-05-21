@@ -2,53 +2,33 @@
   <div v-if="parameter">
     <v-card outline class="pa-5 mt-4 mr-2 mb-2">
       <v-card-title>Board Orientation</v-card-title>
-      <div class="d-flex align-center">
-        <v-btn @click="openModal">
-          <span class="mr-4">{{ selectedRotation?.name || 'Not Set' }}</span>
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
+      <div class="threejs-relative-container">
+        <v-card class="orientation-selector-overlay">
+          <v-select
+            v-model="selectedRotation"
+            :items="rotationsWithCustom"
+            return-object
+            :item-text="'name'"
+            @blur="handleRotationLeave"
+          >
+            <template #item="{ item, on, attrs }">
+              <v-list-item
+                v-bind="attrs"
+                v-on="on"
+                @mouseover="handleRotationHover(item)"
+              >
+                <v-list-item-content>
+                  <v-list-item-title>{{ item.name }}</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </template>
+          </v-select>
+        </v-card>
+        <div class="threejs-container">
+          <div ref="threemount" class="threejsmount" />
+        </div>
       </div>
     </v-card>
-
-    <v-dialog v-model="showModal" max-width="98vw" max-height="98vh" class="large-orientation-modal">
-      <v-card style="height:90vh;">
-        <v-card-title class="headline">
-          Board Orientation
-          <v-spacer />
-          <v-btn icon @click="showModal = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-card-title>
-        <v-card-text style="height:calc(80vh - 64px); padding:0;">
-          <div class="threejs-relative-container">
-            <v-card class="orientation-selector-overlay">
-              <v-select
-                v-model="selectedRotation"
-                :items="rotationsWithCustom"
-                return-object
-                :item-text="'name'"
-                @blur="handleRotationLeave"
-              >
-                <template #item="{ item, on, attrs }">
-                  <v-list-item
-                    v-bind="attrs"
-                    v-on="on"
-                    @mouseover="handleRotationHover(item)"
-                  >
-                    <v-list-item-content>
-                      <v-list-item-title>{{ item.name }}</v-list-item-title>
-                    </v-list-item-content>
-                  </v-list-item>
-                </template>
-              </v-select>
-            </v-card>
-            <div class="threejs-container">
-              <div ref="threemount" class="threejsmount" />
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -102,7 +82,6 @@ export default {
   },
   data() {
     return {
-      showModal: false,
       hoveredRotation: undefined as Rotation | undefined,
       rotations: [
         new Rotation('NONE', 0, 0, 0, 0),
@@ -214,23 +193,16 @@ export default {
     },
   },
   watch: {
-    showModal(newValue) {
-      if (newValue) {
-        // Initialize Three.js when modal opens
-        this.$nextTick(() => {
-          this.initializeThreeJS()
-        })
-      } else {
-        // Cleanup when modal closes
-        this.cleanupThreeJS()
-      }
-    },
     selectedRotation(rotation) {
       this.rotateObject(rotation)
     },
     componentModel() {
       this.add_board_model()
     },
+  },
+  mounted() {
+    this.initializeThreeJS()
+    window.addEventListener('resize', this.resize)
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.resize)
@@ -301,7 +273,6 @@ export default {
         }
         this.renderer.render(scene, this.camera)
       }
-      window.addEventListener('resize', this.resize)
       this.add_vehicle_model()
       this.add_board_model()
       this.resize()
@@ -453,14 +424,6 @@ export default {
       const rotationName = `UNSUPPORTED - ${valueDisplay}`
       return new Rotation(rotationName, 0, 0, 0, paramValue)
     },
-    openModal() {
-      this.showModal = true
-      this.$nextTick(() => {
-        setTimeout(() => {
-          this.resize()
-        }, 300) // Adjust delay as needed for modal animation
-      })
-    },
     handleRotationHover(rotation: Rotation) {
       this.hoveredRotation = rotation
       this.rotateObject(rotation)
@@ -474,26 +437,18 @@ export default {
 </script>
 
 <style scoped>
-.large-orientation-modal .v-card {
-  width: 80vw;
-  max-width: 88vw;
-  height: 80vh;
-  max-height: 88vh;
-}
-
-.large-orientation-modal .v-card-text {
-  height: calc(80vh - 64px);
-  overflow: auto;
-}
-
-div.threejsmount {
-  width: 100%;
-  height: calc(80vh - 64px);
-  margin-top: 16px;
-}
-
 .threejs-relative-container {
   position: relative;
+  width: 100%;
+  height: 400px;
+}
+
+.threejsmount {
+  width: 100%;
+  height: 100%;
+}
+
+.threejs-container {
   width: 100%;
   height: 100%;
 }
@@ -506,14 +461,5 @@ div.threejsmount {
   padding: 8px 12px 4px 12px;
   min-width: 220px;
   max-width: 320px;
-}
-
-.threejs-container, .threejsmount {
-  width: 100%;
-  height: 100%;
-}
-
-.v-dialog {
-  overflow: hidden;
 }
 </style>

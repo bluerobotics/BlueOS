@@ -1,6 +1,6 @@
 <template>
   <div class="main-container">
-    <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2">
+    <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2 main-card">
       <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2">
         <v-card-title>
           Frame
@@ -85,6 +85,10 @@ export default Vue.extend({
   flex-direction: column;
   align-items: center;
   padding: 10px;
+}
+
+.main-card {
+  min-width: 800px;
 }
 
 td {

@@ -2,12 +2,12 @@
   <div class="frame-selector">
     <v-row v-if="parameter?.options">
       <v-col
-        v-for="option in frameOptions"
+        v-for="option in displayOptions"
         :key="option.value"
         cols="12"
-        sm="6"
-        md="4"
-        lg="3"
+        :sm="isCollapsed ? '12' : '6'"
+        :md="isCollapsed ? '12' : '4'"
+        :lg="isCollapsed ? '12' : '3'"
       >
         <v-card
           :class="{ 'selected-frame': isSelected(option.value) }"
@@ -22,7 +22,7 @@
             :noannotations="true"
             :transparent="true"
             :cameracontrols="false"
-            :style="{ width: '100%', height: '200px' }"
+            :style="{ width: '100%', height: isCollapsed ? '300px' : '200px' }"
             :highlight="['Motor']"
             :zoom="1.5"
             :camera_orbit="'-45deg 55deg 0.8m'"
@@ -53,15 +53,22 @@ export default Vue.extend({
   data() {
     return {
       selectedValue: null as number | null,
+      isCollapsed: false,
     }
   },
   computed: {
-    frameOptions() {
+    frameOptions(): Array<{ value: number; label: string }> {
       if (!this.parameter?.options) return []
       return Object.entries(this.parameter.options).map(([value, label]) => ({
         value: parseInt(value),
         label: label as string,
       }))
+    },
+    displayOptions(): Array<{ value: number; label: string }> {
+      if (this.isCollapsed && this.selectedValue !== null) {
+        return this.frameOptions.filter((option: { value: number; label: string }) => option.value === this.selectedValue)
+      }
+      return this.frameOptions
     },
   },
   methods: {
@@ -69,8 +76,13 @@ export default Vue.extend({
       return this.selectedValue === value
     },
     selectFrame(value: number) {
-      this.selectedValue = value
-      this.$emit('update:value', value)
+      if (this.selectedValue === value) {
+        this.isCollapsed = false
+      } else {
+        this.selectedValue = value
+        this.isCollapsed = true
+        this.$emit('update:value', value)
+      }
     },
     getModelPath(frameValue: number): string {
       if (!autopilot.vehicle_type) return ''
@@ -84,6 +96,7 @@ export default Vue.extend({
   mounted() {
     if (this.parameter?.value !== undefined) {
       this.selectedValue = this.parameter.value
+      this.isCollapsed = true
     }
   },
 })
@@ -97,6 +110,7 @@ export default Vue.extend({
 .frame-card {
   cursor: pointer;
   transition: all 0.3s ease;
+  margin-bottom: 16px;
 }
 
 .frame-card:hover {
