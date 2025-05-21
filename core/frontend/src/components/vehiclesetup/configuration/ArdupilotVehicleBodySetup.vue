@@ -37,6 +37,7 @@ import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import Parameter from '@/types/autopilot/parameter'
 import FrameSelector from './FrameSelector.vue'
+import mavlink2rest from '@/libs/MAVLink2Rest'
 
 export default Vue.extend({
   name: 'ArdupilotVehicleBodySetup',
@@ -72,8 +73,7 @@ export default Vue.extend({
   methods: {
     updateFrameValue(value: number) {
       if (this.frame_parameter) {
-        const updatedParam = { ...this.frame_parameter, value }
-        autopilot_data.setParameters([updatedParam])
+        mavlink2rest.setParam(this.frame_parameter.name, value, autopilot_data.system_id, this.frame_parameter  .paramType.type)
       }
     },
   },

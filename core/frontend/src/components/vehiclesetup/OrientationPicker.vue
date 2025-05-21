@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="parameter">
     <v-card outline class="pa-5 mt-4 mr-2 mb-2">
       <v-card-title>Board Orientation</v-card-title>
       <div class="d-flex align-center">
@@ -63,7 +63,8 @@ import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
 
-import { get_board_model, get_model } from './viewers/modelHelper'
+import { frame_type, get_board_model, get_model } from './viewers/modelHelper'
+import autopilot from '@/store/autopilot_manager'
 
 class Rotation {
   name: string
@@ -90,7 +91,8 @@ export default {
   props: {
     parameter: {
       type: Object as PropType<Parameter | undefined>,
-      required: true,
+      required: false,
+      default: undefined,
     },
     componentModel: {
       type: String,
@@ -161,7 +163,11 @@ export default {
       return this.$refs.threemount as HTMLDivElement
     },
     vehicle_model(): string | undefined {
-      return get_model()
+      const _frame_type = frame_type()
+      if (!autopilot.vehicle_type || !_frame_type) {
+        return undefined
+      }
+      return get_model(autopilot.vehicle_type, _frame_type)
     },
     rotationsWithCustom(): Rotation[] {
       if (this.isUnsupportedRotation) {

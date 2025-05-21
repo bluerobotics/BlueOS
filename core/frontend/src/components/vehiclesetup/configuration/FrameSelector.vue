@@ -1,6 +1,6 @@
 <template>
   <div class="frame-selector">
-    <v-row>
+    <v-row v-if="parameter?.options">
       <v-col
         v-for="option in frameOptions"
         :key="option.value"
@@ -15,13 +15,18 @@
           class="frame-card"
           :elevation="isSelected(option.value) ? 4 : 1"
         >
-          <model-viewer
-            :src="getModelPath(option.value)"
-            :alt="option.label"
-            auto-rotate
-            disable-zoom
+          <generic-viewer
+            :modelpath="getModelPath(option.value)"
+            :autorotate="true"
+            :disable-zoom="true"
+            :noannotations="true"
+            :transparent="true"
+            :cameracontrols="false"
             :style="{ width: '100%', height: '200px' }"
-          ></model-viewer>
+            :highlight="['Motor']"
+            :zoom="1.5"
+            :camera_orbit="'-45deg 55deg 0.8m'"
+          />
           <v-card-title class="text-center">
             {{ option.label }}
           </v-card-title>
@@ -32,20 +37,16 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { PropType } from 'vue'
 import Parameter from '@/types/autopilot/parameter'
 import { vehicle_folder, frame_name } from '../viewers/modelHelper'
 import autopilot from '@/store/autopilot_manager'
-
-interface FrameParameter extends Parameter {
-  values: { [key: string]: string }
-}
 
 export default Vue.extend({
   name: 'FrameSelector',
   props: {
     parameter: {
-      type: Object as () => FrameParameter,
+      type: Object as PropType<Parameter | undefined>,
       required: true,
     },
   },
@@ -81,7 +82,7 @@ export default Vue.extend({
     frame_name
   },
   mounted() {
-    if (this.parameter.value !== undefined) {
+    if (this.parameter?.value !== undefined) {
       this.selectedValue = this.parameter.value
     }
   },
