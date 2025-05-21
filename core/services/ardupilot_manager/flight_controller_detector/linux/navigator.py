@@ -1,7 +1,8 @@
 import platform
 from typing import Any, List
 
-from commonwealth.utils.commands import CpuType, get_cpu_type, load_file
+from commonwealth.utils.commands import load_file
+from commonwealth.utils.general import CpuType, get_cpu_type
 from elftools.elf.elffile import ELFFile
 
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
