@@ -1,10 +1,13 @@
 import time
 from functools import wraps
 from threading import Lock
+from typing import TypeVar
 from typing import Any, Callable, Dict
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def temporary_cache(timeout_seconds: float = 10) -> Callable[[Callable[[Any], Any]], Any]:
+
+def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
     """Decorator that creates a cache for specific inputs with a configured timeout in seconds.
 
     Args:
@@ -16,7 +19,7 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[Callable[[Any], An
     cache: Dict[Any, Any] = {}
     last_sample_time: Dict[Any, float] = {}
 
-    def inner_function(function: Callable[[Any], Any]) -> Any:
+    def inner_function(function: F) -> F:
         @wraps(function)
         def wrapper(*args: Any) -> Any:
             nonlocal last_sample_time
@@ -33,7 +36,7 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[Callable[[Any], An
             cache[args] = function_return
             return function_return
 
-        return wrapper
+        return wrapper  # type: ignore
 
     return inner_function
 
