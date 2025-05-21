@@ -3,7 +3,7 @@ import errno
 import re
 import subprocess
 import time
-from ipaddress import ip_network
+from ipaddress import ip_network, IPv4Address
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -800,7 +800,7 @@ class EthernetManager:
             interface_name, ipv4_gateway, mode=AddressMode.Server if not backup else AddressMode.BackupServer
         )
         logger.info(f"Adding DHCP server with gateway '{ipv4_gateway}' to interface '{interface_name}'.")
-        self._dhcp_servers.append(DHCPServerManager(interface_name, ipv4_gateway, backup=backup))
+        self._dhcp_servers.append(DHCPServerManager(interface_name, IPv4Address(ipv4_gateway), backup=backup))
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
         if saved_interface is None:
