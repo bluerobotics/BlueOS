@@ -3,7 +3,7 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, List
+from typing import Any, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
@@ -36,7 +36,7 @@ app.router.route_class = GenericErrorHandlingRoute
 @app.get("/ethernet", response_model=List[NetworkInterface], summary="Retrieve ethernet interfaces.")
 @version(1, 0)
 @temporary_cache(timeout_seconds=10)
-def retrieve_ethernet_interfaces() -> Any:
+def retrieve_ethernet_interfaces(_: Optional[Any] = None) -> Any:
     """REST API endpoint to retrieve the configured ethernet interfaces."""
     return manager.get_ethernet_interfaces()
 
@@ -53,7 +53,7 @@ async def configure_interface(interface: NetworkInterface = Body(...)) -> Any:
 @app.get("/interfaces", response_model=List[NetworkInterface], summary="Retrieve all network interfaces.")
 @version(1, 0)
 @temporary_cache(timeout_seconds=1)
-def retrieve_interfaces() -> Any:
+def retrieve_interfaces(_: Optional[Any] = None) -> Any:
     """REST API endpoint to retrieve the all network interfaces."""
     return manager.get_interfaces()
 

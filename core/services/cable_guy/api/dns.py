@@ -1,5 +1,5 @@
 import ipaddress
-from typing import List
+from typing import Any, List, Optional
 
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.decorators import temporary_cache
@@ -17,7 +17,7 @@ class DnsData(BaseModel):
 class Dns:
     @staticmethod
     @temporary_cache(timeout_seconds=1)
-    def retrieve_host_nameservers() -> DnsData:
+    def retrieve_host_nameservers(_: Optional[Any] = None) -> DnsData:
         """Retrieve the host's DNS configuration from `/etc/resolv.conf`"""
         logger.debug(f"Retrieving DNS configuration from host {RESOLVCONF_FILE_PATH}...")
 
