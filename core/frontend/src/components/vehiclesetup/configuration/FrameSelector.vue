@@ -24,7 +24,7 @@
             :cameracontrols="false"
             :style="{ width: '100%', height: !isExpanded ? '300px' : '250px' }"
             :highlight="['Motor']"
-            :camera_orbit="'-45deg 55deg 1m'"
+            :camera-orbit="isSelected(option.value) ? '-45deg 65deg 1.2m' : '-45deg 55deg 1.2m'"
           />
           <v-card-title class="text-center">
             {{ option.label }}
