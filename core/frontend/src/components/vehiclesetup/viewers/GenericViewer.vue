@@ -10,7 +10,6 @@
       :orientation="orientation"
       shadow-intensity="0.3"
       interaction-prompt="none"
-      :zoom="zoom"
       :camera-orbit="camera_orbit"
     >
       <button
@@ -132,11 +131,6 @@ export default Vue.extend({
       type: String,
       required: false,
       default: undefined,
-    },
-    zoom: {
-      type: Number,
-      required: false,
-      default: 1,
     },
     camera_orbit: {
       type: String,

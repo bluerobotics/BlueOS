@@ -143,10 +143,13 @@ export default {
     },
     vehicle_model(): string | undefined {
       const _frame_type = frame_type()
-      if (!autopilot.vehicle_type || !_frame_type) {
+      console.log(`vehicle_model: ${autopilot.vehicle_type} ${_frame_type}`)
+      if (!autopilot.vehicle_type || _frame_type === undefined) {
         return undefined
       }
-      return get_model(autopilot.vehicle_type, _frame_type)
+      const model = get_model(autopilot.vehicle_type, _frame_type)
+      console.log(`vehicle_model: ${model}`)  
+      return model
     },
     rotationsWithCustom(): Rotation[] {
       if (this.isUnsupportedRotation) {
@@ -198,6 +201,9 @@ export default {
     },
     componentModel() {
       this.add_board_model()
+    },
+    vehicle_model() {
+      this.add_vehicle_model()
     },
   },
   mounted() {
@@ -323,7 +329,13 @@ export default {
       this.object.quaternion.copy(finalQuaternion)
     },
     add_vehicle_model() {
-      if (this.scene) {
+      if (this.scene && this.vehicle_model) {
+        // Remove existing vehicle model if it exists
+        if (this.vehicle_obj) {
+          this.scene.remove(this.vehicle_obj)
+          this.vehicle_obj = undefined
+        }
+
         const dracoLoader = new DRACOLoader()
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/')
         const loader = new GLTFLoader()
@@ -440,7 +452,7 @@ export default {
 .threejs-relative-container {
   position: relative;
   width: 100%;
-  height: 400px;
+  height: 500px;
 }
 
 .threejsmount {

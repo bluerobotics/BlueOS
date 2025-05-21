@@ -5,13 +5,13 @@
         v-for="option in displayOptions"
         :key="option.value"
         cols="12"
-        :sm="isCollapsed ? '12' : '6'"
-        :md="isCollapsed ? '12' : '4'"
-        :lg="isCollapsed ? '12' : '3'"
+        :sm="!isExpanded ? '12' : '6'"
+        :md="!isExpanded ? '12' : '4'"
+        :lg="!isExpanded ? '12' : '3'"
       >
         <v-card
           :class="{ 'selected-frame': isSelected(option.value) }"
-          @click="selectFrame(option.value)"
+          @click="handleFrameClick(option.value)"
           class="frame-card"
           :elevation="isSelected(option.value) ? 4 : 1"
         >
@@ -22,10 +22,9 @@
             :noannotations="true"
             :transparent="true"
             :cameracontrols="false"
-            :style="{ width: '100%', height: isCollapsed ? '300px' : '200px' }"
+            :style="{ width: '100%', height: !isExpanded ? '300px' : '250px' }"
             :highlight="['Motor']"
-            :zoom="1.5"
-            :camera_orbit="'-45deg 55deg 0.8m'"
+            :camera_orbit="'-45deg 55deg 1m'"
           />
           <v-card-title class="text-center">
             {{ option.label }}
@@ -53,7 +52,7 @@ export default Vue.extend({
   data() {
     return {
       selectedValue: null as number | null,
-      isCollapsed: false,
+      isExpanded: false,
     }
   },
   computed: {
@@ -65,7 +64,7 @@ export default Vue.extend({
       }))
     },
     displayOptions(): Array<{ value: number; label: string }> {
-      if (this.isCollapsed && this.selectedValue !== null) {
+      if (!this.isExpanded && this.selectedValue !== null) {
         return this.frameOptions.filter((option: { value: number; label: string }) => option.value === this.selectedValue)
       }
       return this.frameOptions
@@ -75,12 +74,12 @@ export default Vue.extend({
     isSelected(value: number): boolean {
       return this.selectedValue === value
     },
-    selectFrame(value: number) {
+    handleFrameClick(value: number) {
       if (this.selectedValue === value) {
-        this.isCollapsed = false
+        this.isExpanded = !this.isExpanded
       } else {
         this.selectedValue = value
-        this.isCollapsed = true
+        this.isExpanded = false
         this.$emit('update:value', value)
       }
     },
@@ -96,7 +95,7 @@ export default Vue.extend({
   mounted() {
     if (this.parameter?.value !== undefined) {
       this.selectedValue = this.parameter.value
-      this.isCollapsed = true
+      this.isExpanded = false
     }
   },
 })
@@ -119,6 +118,8 @@ export default Vue.extend({
 
 .selected-frame {
   border: 2px solid var(--v-primary-base);
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 model-viewer {
