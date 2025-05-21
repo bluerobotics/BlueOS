@@ -4,6 +4,7 @@ build/
 *.egg-info
 dist/
 node_modules
+core/logs
 
 # Avoid local python development
 *__pycache__
