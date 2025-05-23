@@ -255,6 +255,9 @@ rm -rf /var/lib/systemd/random-seed /loader/random-seed
 echo "creating dns link"
 sudo ln --force /etc/resolv.conf /etc/resolv.conf.host
 
+echo "disabling NetworkManager-wait-online.service"
+systemctl disable NetworkManager-wait-online.service || true
+
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
 echo "- The computer webpage: http://blueos-avahi.local"
