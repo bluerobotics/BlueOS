@@ -31,7 +31,7 @@ export async function fetchAvailableEndpoints(): Promise<void> {
   try {
     const response = await back_axios({
       method: 'get',
-      url: `${autopilot.API_URL}/endpoints`,
+      url: `${autopilot.API_URL}/endpoints/`,
       timeout: 10000,
     })
     const available_endpoints = response.data
