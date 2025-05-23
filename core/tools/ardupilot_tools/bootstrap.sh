@@ -25,16 +25,16 @@ download_if_not_exists() {
     fi
 }
 
-download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.0/navigator/ardusub" \
+download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.3/navigator/ardusub" \
                        "$AUTOPILOT_DEFAULT_FIRMWARE_PATH/ardupilot_navigator/ardusub"
 
-download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.1/navigator64/ardusub" \
+download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.3/navigator64/ardusub" \
                        "$AUTOPILOT_DEFAULT_FIRMWARE_PATH/ardupilot_navigator64/ardusub"
 
-download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.0/Pixhawk1/ardusub.apj" \
+download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.3/Pixhawk1/ardusub.apj" \
                        "$AUTOPILOT_DEFAULT_FIRMWARE_PATH/ardupilot_pixhawk1/ardusub.apj"
 
-download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.0/Pixhawk4/ardusub.apj" \
+download_if_not_exists "https://firmware.ardupilot.org/Sub/stable-4.5.3/Pixhawk4/ardusub.apj" \
                        "$AUTOPILOT_DEFAULT_FIRMWARE_PATH/ardupilot_pixhawk4/ardusub.apj"
 
 # Wait for all background jobs to finish
