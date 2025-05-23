@@ -1,5 +1,7 @@
 [Unit]
 Description=Start BlueOS on boot
+After=docker.service
+Requires=docker.service
 
 [Service]
 Type=oneshot
