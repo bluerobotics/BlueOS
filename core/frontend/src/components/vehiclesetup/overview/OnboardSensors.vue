@@ -236,12 +236,10 @@ export default Vue.extend({
           results[compass.param] = false
           continue
         }
-        const scale_param_name = `COMPASS_SCALE${compass_number}`
-        const scale_param = autopilot_data.parameter(scale_param_name)
         const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
         const is_at_default_diagonals = diagonal_params.every((param) => param?.value === 0.0)
-        results[compass.param] = offset_params.isEmpty() || diagonal_params.isEmpty()
-          || !is_at_default_offsets || !is_at_default_diagonals || scale_param?.value !== 0.0
+        results[compass.param] = !offset_params.isEmpty() && !diagonal_params.isEmpty()
+          && (!is_at_default_offsets || !is_at_default_diagonals)
       }
       return results
     },
