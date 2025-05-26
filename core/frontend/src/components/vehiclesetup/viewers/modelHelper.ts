@@ -89,10 +89,10 @@ export async function checkModelOverrides() {
     return undefined
   }
 
-  export function get_model(): undefined | string {
-    const release_path = `assets/vehicles/models/${vehicle_folder()}/${frame_name()}.glb`
+  export function get_model(vehicle_type: string, frame_type: number, frame_subtype?: number): undefined | string {
+    const release_path = `assets/vehicles/models/${vehicle_folder()}/${frame_name(vehicle_type, frame_type, frame_subtype)}.glb`
     if (models[`/public/${release_path}`]) {
-      return `/assets/vehicles/models/${vehicle_folder()}/${frame_name()}.glb`
+      return `/assets/vehicles/models/${vehicle_folder()}/${frame_name(vehicle_type, frame_type, frame_subtype)}.glb`
     }
     return undefined
   }
