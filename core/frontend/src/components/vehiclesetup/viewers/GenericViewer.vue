@@ -1,15 +1,16 @@
 <template>
   <div>
     <model-viewer
-      v-if="model_path"
+      v-if="computed_model_path"
       id="modelviewer"
       ref="modelviewer"
-      :src="model_override_path || model_path"
+      :src="model_override_path || computed_model_path"
       :auto-rotate="autorotate"
       :camera-controls="cameracontrols"
       :orientation="orientation"
       shadow-intensity="0.3"
       interaction-prompt="none"
+      :camera-orbit="cameraOrbit"
     >
       <button
         v-for="annotation in filtered_annotations"
@@ -47,7 +48,7 @@
       </v-btn>
     </model-viewer>
     <div v-else class="d-flex flex-column align-center">
-      <SpinningLogo v-if="!model_path" size="40%" />
+      <SpinningLogo v-if="!computed_model_path" size="40%" />
       <div v-else>
         <v-icon
           style="height: 400px"
@@ -86,9 +87,7 @@ import {
 import { Dictionary, Indexed, Keyed } from '@/types/common'
 import { PingType } from '@/types/ping'
 
-import {
-  checkModelOverrides, frame_name, get_model, vehicle_folder,
-} from './modelHelper'
+import { checkModelOverrides, frame_name, vehicle_folder } from './modelHelper'
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
 
@@ -125,6 +124,16 @@ export default Vue.extend({
       required: false,
       default: false,
     },
+    modelpath: {
+      type: String,
+      required: false,
+      default: undefined,
+    },
+    cameraOrbit: {
+      type: String,
+      required: false,
+      default: '45deg 70deg 0deg',
+    },
   },
   data() {
     return {
@@ -135,8 +144,11 @@ export default Vue.extend({
     }
   },
   computed: {
-    model_path(): string | undefined {
-      return get_model()
+    computed_model_path(): string | undefined {
+      if (this.modelpath) {
+        return this.modelpath
+      }
+      return autopilot_data.vehicle_model
     },
     filtered_annotations(): (HotspotConfiguration & Indexed & Keyed)[] {
       if (this.noannotations) {
@@ -213,18 +225,11 @@ export default Vue.extend({
         this.forceRefreshAnnotations()
         return
       }
-      if (this.transparent) {
-        this.setAlphas(0.05)
-        for (const part of this.highlight) {
-          this.makeOpaque(part)
-        }
-      } else {
-        this.setAlphas(1)
-      }
+      this.redraw()
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
     },
-    async model_path() {
+    async computed_model_path() {
       this.reloadAnnotations()
       this.model_override_path = await checkModelOverrides()
       this.override_annotations = await this.loadAnnotationsOverride()
@@ -251,16 +256,8 @@ export default Vue.extend({
   },
   async mounted() {
     // eslint-disable-next-line no-extra-parens
-    this.modelViewerLoadCallback = () => {
+    (this.$refs.modelviewer as ModelViewerElement)?.addEventListener('load', () => {
       this.redraw()
-      if (this.transparent) {
-        this.setAlphas(0.05)
-        for (const part of this.highlight) {
-          this.makeOpaque(part)
-        }
-      } else {
-        this.setAlphas(1)
-      }
       this.hideIrrelevantParts()
     })
     this.override_annotations = await this.loadAnnotationsOverride()
@@ -311,7 +308,14 @@ export default Vue.extend({
       }
     },
     redraw() {
-      this.setAlphas(1)
+      if (this.transparent) {
+        this.setAlphas(0.05)
+        for (const part of this.highlight) {
+          this.makeOpaque(part)
+        }
+      } else {
+        this.setAlphas(1)
+      }
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
     },
@@ -394,7 +398,7 @@ export default Vue.extend({
 
 <style scoped>
 model-viewer {
-  min-height: 500px;
+  height: 100%;
   width: 100%;
 }
 .HotspotAnnotation {
