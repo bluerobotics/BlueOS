@@ -24,18 +24,18 @@ static_files = [
     StaticFile(
         defaults_folder,
         "ardupilot_navigator",
-        "https://firmware.ardupilot.org/Sub/stable-4.5.0/navigator/ardusub",
+        "https://firmware.ardupilot.org/Sub/stable-4.5.3/navigator/ardusub",
     ),
     StaticFile(
         defaults_folder,
         "ardupilot_navigator64",
-        "https://firmware.ardupilot.org/Sub/stable-4.5.1/navigator64/ardusub",
+        "https://firmware.ardupilot.org/Sub/stable-4.5.3/navigator64/ardusub",
     ),
     StaticFile(
-        defaults_folder, "ardupilot_pixhawk1", "https://firmware.ardupilot.org/Sub/stable-4.5.0/Pixhawk1/ardusub.apj"
+        defaults_folder, "ardupilot_pixhawk1", "https://firmware.ardupilot.org/Sub/stable-4.5.3/Pixhawk1/ardusub.apj"
     ),
     StaticFile(
-        defaults_folder, "ardupilot_pixhawk4", "https://firmware.ardupilot.org/Sub/stable-4.5.0/Pixhawk4/ardusub.apj"
+        defaults_folder, "ardupilot_pixhawk4", "https://firmware.ardupilot.org/Sub/stable-4.5.3/Pixhawk4/ardusub.apj"
     ),
 ]
 
