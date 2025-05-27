@@ -46,7 +46,7 @@ def main(conf: zenoh.Config, key: str):
                 try:
                     data = json.loads(sample.payload.to_string())
                     if not validate_data(data):
-                        logger.warning(f"Invalid data format for topic {topic}")
+                        # logger.warning(f"Invalid data format for topic {topic}")
                         return
                 except json.JSONDecodeError as e:
                     logger.error(f"Failed to parse JSON for topic {topic}: {e}")
