@@ -674,7 +674,7 @@ class AutoPilotManager(metaclass=Singleton):
     async def set_manual_board_master_endpoint(self, endpoint: Endpoint) -> bool:
         self.configuration["manual_board_master_endpoint"] = endpoint.as_dict()
         self.settings.save(self.configuration)
-        self._save_current_endpoints()
+        self.mavlink_manager.master_endpoint = endpoint
         await self.mavlink_manager.restart()
         return True
 

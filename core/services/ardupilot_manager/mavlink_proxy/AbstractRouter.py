@@ -94,6 +94,10 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def master_endpoint(self) -> Optional[Endpoint]:
         return self._master_endpoint
 
+    @master_endpoint.setter
+    def master_endpoint(self, master_endpoint: Endpoint) -> None:
+        self._master_endpoint = master_endpoint
+
     async def start(self, master_endpoint: Endpoint) -> None:
         self._master_endpoint = master_endpoint
         command = self.assemble_command(self._master_endpoint)
