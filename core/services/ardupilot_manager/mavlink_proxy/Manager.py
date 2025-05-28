@@ -114,6 +114,10 @@ class Manager:
     def master_endpoint(self) -> Optional[Endpoint]:
         return self.tool.master_endpoint
 
+    @master_endpoint.setter
+    def master_endpoint(self, master_endpoint: Endpoint) -> None:
+        self.tool.master_endpoint = master_endpoint
+
     async def start(self, master_endpoint: Endpoint) -> None:
         # If the tool is already running, don't start it again to avoid port conflicts
         if self.should_be_running and await self.is_running():
@@ -151,8 +155,10 @@ class Manager:
         self.should_be_running = False
         await self.tool.exit()
 
-    async def restart(self) -> None:
+    async def restart(self, master_endpoint: Optional[Endpoint] = None) -> None:
         self.should_be_running = False
+        if master_endpoint:
+            self.tool.master_endpoint = master_endpoint
         await self.tool.restart()
         self._last_valid_endpoints = self.endpoints()
         self.should_be_running = True
