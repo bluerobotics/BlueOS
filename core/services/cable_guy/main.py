@@ -3,10 +3,10 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, List
+from typing import Any, List, Optional
 
+from aiocache import cached
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI
 from fastapi.responses import HTMLResponse
@@ -35,10 +35,10 @@ app.router.route_class = GenericErrorHandlingRoute
 
 @app.get("/ethernet", response_model=List[NetworkInterface], summary="Retrieve ethernet interfaces.")
 @version(1, 0)
-@temporary_cache(timeout_seconds=10)
-def retrieve_ethernet_interfaces() -> Any:
+@cached(ttl=10)
+async def retrieve_ethernet_interfaces(_: Optional[Any] = None) -> Any:
     """REST API endpoint to retrieve the configured ethernet interfaces."""
-    return manager.get_ethernet_interfaces()
+    return await manager.get_ethernet_interfaces()
 
 
 @app.post("/ethernet", response_model=NetworkInterface, summary="Configure a ethernet interface.")
@@ -52,32 +52,32 @@ async def configure_interface(interface: NetworkInterface = Body(...)) -> Any:
 
 @app.get("/interfaces", response_model=List[NetworkInterface], summary="Retrieve all network interfaces.")
 @version(1, 0)
-@temporary_cache(timeout_seconds=1)
-def retrieve_interfaces() -> Any:
+@cached(ttl=10)
+async def retrieve_interfaces(_: Optional[Any] = None) -> Any:
     """REST API endpoint to retrieve the all network interfaces."""
-    return manager.get_interfaces()
+    return await manager.get_interfaces()
 
 
 @app.post("/set_interfaces_priority", summary="Set interface priority")
 @version(1, 0)
-def set_interfaces_priority(interfaces: List[NetworkInterfaceMetricApi]) -> Any:
+async def set_interfaces_priority(interfaces: List[NetworkInterfaceMetricApi]) -> Any:
     """REST API endpoint to set the interface priority."""
-    return manager.set_interfaces_priority(interfaces)
+    return await manager.set_interfaces_priority(interfaces)
 
 
 @app.post("/address", summary="Add IP address to interface.")
 @version(1, 0)
-def add_address(interface_name: str, ip_address: str) -> Any:
+async def add_address(interface_name: str, ip_address: str) -> Any:
     """REST API endpoint to add a static IP address to an ethernet interface."""
-    manager.add_static_ip(interface_name, ip_address)
+    await manager.add_static_ip(interface_name, ip_address)
     manager.save()
 
 
 @app.delete("/address", summary="Delete IP address from interface.")
 @version(1, 0)
-def delete_address(interface_name: str, ip_address: str) -> Any:
+async def delete_address(interface_name: str, ip_address: str) -> Any:
     """REST API endpoint to delete an IP address from an ethernet interface."""
-    manager.remove_ip(interface_name, ip_address)
+    await manager.remove_ip(interface_name, ip_address)
     manager.save()
 
 
@@ -85,7 +85,7 @@ def delete_address(interface_name: str, ip_address: str) -> Any:
 @version(1, 0)
 async def add_dhcp_server(interface_name: str, ipv4_gateway: str, is_backup_server: bool = False) -> Any:
     """REST API endpoint to enable/disable local DHCP server."""
-    manager.add_dhcp_server_to_interface(interface_name, ipv4_gateway, is_backup_server)
+    await manager.add_dhcp_server_to_interface(interface_name, ipv4_gateway, is_backup_server)
     manager.save()
 
 
@@ -99,9 +99,9 @@ def remove_dhcp_server(interface_name: str) -> Any:
 
 @app.post("/dynamic_ip", summary="Trigger reception of dynamic IP.")
 @version(1, 0)
-def trigger_dynamic_ip_acquisition(interface_name: str) -> Any:
+async def trigger_dynamic_ip_acquisition(interface_name: str) -> Any:
     """REST API endpoint to trigger interface to receive a new dynamic IP."""
-    manager.trigger_dynamic_ip_acquisition(interface_name)
+    await manager.trigger_dynamic_ip_acquisition(interface_name)
     manager.save()
 
 
@@ -121,25 +121,25 @@ def update_host_dns(dns_data: DnsData) -> Any:
 
 @app.post("/route", summary="Add route to interface.")
 @version(1, 0)
-def add_route(interface_name: str, route: Route) -> Any:
+async def add_route(interface_name: str, route: Route) -> Any:
     """REST API endpoint to add route."""
-    manager.add_route(interface_name, route)
+    await manager.add_route(interface_name, route)
     manager.save()
 
 
 @app.delete("/route", summary="Remove route from interface.")
 @version(1, 0)
-def remove_route(interface_name: str, route: Route) -> Any:
+async def remove_route(interface_name: str, route: Route) -> Any:
     """REST API endpoint remove route."""
-    manager.remove_route(interface_name, route)
+    await manager.remove_route(interface_name, route)
     manager.save()
 
 
 @app.get("/route", summary="Get the interface routes.")
 @version(1, 0)
-def get_route(interface_name: str) -> List[Route]:
+async def get_route(interface_name: str) -> List[Route]:
     """REST API endpoint to get routes."""
-    return list(manager.get_routes(interface_name, ignore_unmanaged=False))
+    return list(await manager.get_routes(interface_name, ignore_unmanaged=False))
 
 
 app = VersionedFastAPI(
@@ -169,11 +169,26 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    loop = asyncio.new_event_loop()
+    async def main() -> None:
+        config = Config(app=app, host="0.0.0.0", port=9090, log_config=None)
+        server = Server(config)
 
-    # Running uvicorn with log disabled so loguru can handle it
-    config = Config(app=app, loop=loop, host="0.0.0.0", port=9090, log_config=None)
-    server = Server(config)
-    loop.run_until_complete(manager.initialize())
-    loop.create_task(manager.watchdog())
-    loop.run_until_complete(server.serve())
+        await manager.initialize()
+        watchdog_task = asyncio.create_task(manager.watchdog())
+
+        try:
+            await server.serve()
+        finally:
+            watchdog_task.cancel()
+            try:
+                await watchdog_task
+            except asyncio.CancelledError:
+                logger.info("Watchdog task cancelled.")
+            manager.stop()
+            logger.info("Cable Guy service shut down.")
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Cable Guy interrupted by user.")
+        sys.exit(0)

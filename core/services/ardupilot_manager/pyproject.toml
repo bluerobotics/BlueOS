@@ -20,7 +20,7 @@ dependencies = [
     "python-multipart==0.0.5",
     "smbus2==0.3.0",
     "starlette==0.27.0",
-    "uvicorn==0.13.4",
+    "uvicorn==0.18.0",
     "validators==0.18.2",
 ]
 

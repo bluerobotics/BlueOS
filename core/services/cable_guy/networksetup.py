@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import socket
@@ -5,7 +6,7 @@ from typing import Any, List
 
 import sdbus
 from loguru import logger
-from pyroute2 import IPRoute
+from pyroute2 import AsyncIPRoute
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 from sdbus_async.networkmanager import (
     NetworkConnectionSettings,
@@ -23,46 +24,45 @@ network_manager = NetworkManager()
 
 class AbstractNetworkHandler:
     def __init__(self) -> None:
-        self.ipr = IPRoute()
+        self.ipr = AsyncIPRoute()
 
     async def detect(self) -> bool:
         raise NotImplementedError("NetworkManager does not support detecting network interfaces priority")
 
-    def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+    async def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         raise NotImplementedError("NetworkManager does not support setting interface priority")
 
     def enable_dhcp_client(self, interface_name: str) -> None:
         pass
 
-    def add_static_ip(self, interface_name: str, ip: str) -> None:
+    async def add_static_ip(self, interface_name: str, ip: str) -> None:
         """Set ip address for a specific interface if it doesn't already exist
 
         Args:
             interface_name (str): Interface name
             ip (str): Desired ip address
         """
-        interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
+        interface_index = (await self.ipr.link_lookup(ifname=interface_name))[0]
 
         # Check if IP already exists on the interface
-        existing_addrs = self.ipr.get_addr(index=interface_index)
-        for addr in existing_addrs:
+        async for addr in await self.ipr.get_addr(index=interface_index):
             if addr.get_attr("IFA_ADDRESS") == ip:
                 logger.info(f"IP '{ip}' already exists on interface '{interface_name}', skipping addition.")
                 return
 
         try:
-            self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
+            await self.ipr.addr("add", index=interface_index, address=ip, prefixlen=24)
             logger.info(f"Added IP '{ip}' to interface '{interface_name}'.")
         except Exception as error:
             logger.error(f"Failed to add IP '{ip}' to interface '{interface_name}'. {error}")
 
-    def remove_static_ip(self, interface_name: str, ip: str) -> None:
+    async def remove_static_ip(self, interface_name: str, ip: str) -> None:
         pass
 
     async def cleanup_interface_connections(self, interface_name: str) -> None:
         pass
 
-    def _update_route(self, interface_name: str, interface_index: int, route: Any, priority: int) -> None:
+    async def _update_route(self, interface_name: str, interface_index: int, route: Any, priority: int) -> None:
         """Update a single route with new priority.
 
         Args:
@@ -78,7 +78,7 @@ class AbstractNetworkHandler:
         if route.get_attr("RTA_PRIORITY") == priority:
             return
 
-        self.ipr.route(
+        await self.ipr.route(
             "del",
             oif=interface_index,
             family=socket.AF_INET,
@@ -94,7 +94,7 @@ class AbstractNetworkHandler:
             try:
                 # Add the new route with updated priority
                 logger.info(f"Adding new route for {interface_name} with priority {priority}")
-                self.ipr.route(
+                await self.ipr.route(
                     "add",
                     oif=interface_index,
                     family=socket.AF_INET,
@@ -111,7 +111,7 @@ class AbstractNetworkHandler:
             except Exception as e:
                 logger.error(f"Failed to update route for {interface_name}: {e} (attempt {attempt})")
 
-    def trigger_dynamic_ip_acquisition(self, interface_name: str) -> str | None:
+    async def trigger_dynamic_ip_acquisition(self, interface_name: str) -> str | None:
         """Run dhclient to get a new IP address and return it.
 
         Args:
@@ -124,7 +124,13 @@ class AbstractNetworkHandler:
             # Just run dhclient without releasing existing IPs
             command = f"timeout 5 dhclient -d -v {interface_name} 2>&1 || echo 'timeout'"
             logger.info(f"Running: {command}")
-            dhclient_output = os.popen(command).read()
+            process = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
+            stdout, _ = await process.communicate()
+            dhclient_output = stdout.decode()
 
             # Check if timeout occurred
             if "timeout" in dhclient_output:
@@ -143,7 +149,7 @@ class AbstractNetworkHandler:
             logger.error(f"Failed to run dhclient: {e}")
             return None
 
-    def set_interfaces_priority_using_ipr(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+    async def set_interfaces_priority_using_ipr(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         if not interfaces:
             logger.info("No interfaces to set priority for")
             return
@@ -154,15 +160,15 @@ class AbstractNetworkHandler:
                 priority = interface.priority
 
                 # Get interface index
-                interface_index = self.ipr.link_lookup(ifname=interface.name)[0]
+                interface_index = (await self.ipr.link_lookup(ifname=interface.name))[0]
 
                 # Get all routes for this interface
-                routes = self.ipr.get_routes(oif=interface_index, family=socket.AF_INET)
+                routes = await self.ipr.get_routes(oif=interface_index, family=socket.AF_INET)
 
                 # Update existing routes
-                for route in routes:
+                async for route in routes:
                     try:
-                        self._update_route(interface.name, interface_index, route, priority)
+                        await self._update_route(interface.name, interface_index, route, priority)
                     except Exception as e:
                         logger.error(f"Failed to update route for {interface.name}: {e}")
                         continue
@@ -192,6 +198,9 @@ class BookwormHandler(AbstractNetworkHandler):
                     f"Removing connection {profile_connection.uuid} ({profile_connection.connection_id}) for interface {interface_name}"
                 )
                 try:
+                    if profile_connection.uuid is None:
+                        raise ValueError("Invalid connection UUID")
+
                     await NetworkManagerSettings().delete_connection_by_uuid(profile_connection.uuid)
                 except Exception as e:
                     logger.error(
@@ -207,20 +216,20 @@ class BookwormHandler(AbstractNetworkHandler):
             logger.error(f"Failed to detect NetworkManager: {error}")
             return False
 
-    def remove_static_ip(self, interface_name: str, ip: str) -> None:
-        interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
-        self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
+    async def remove_static_ip(self, interface_name: str, ip: str) -> None:
+        interface_index = (await self.ipr.link_lookup(ifname=interface_name))[0]
+        await self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
 
-    def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+    async def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         """Sets network interface priority using IPRoute.
 
         Args:
             interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics,
                 sorted by priority to set.
         """
-        self.set_interfaces_priority_using_ipr(interfaces)
+        await self.set_interfaces_priority_using_ipr(interfaces)
 
-    def get_interface_dynamic_ip(self, interface_name: str) -> str | None:
+    async def get_interface_dynamic_ip(self, interface_name: str) -> str | None:
         """Check if the interface has any dynamic IP addresses (non-static IPs)
 
         Args:
@@ -230,9 +239,8 @@ class BookwormHandler(AbstractNetworkHandler):
             str | None: The dynamic IP address if found, None otherwise
         """
         try:
-            interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
-            addresses = self.ipr.get_addr(index=interface_index)
-            for addr in addresses:
+            interface_index = (await self.ipr.link_lookup(ifname=interface_name))[0]
+            async for addr in await self.ipr.get_addr(index=interface_index):
                 for key, value in addr["attrs"]:
                     if key == "IFA_ADDRESS":
                         # If any IP is not static, it's dynamic
@@ -320,14 +328,14 @@ class DHCPCD(AbstractNetworkHandler):
         with open("/etc/dhcpcd.conf", "w", encoding="utf-8") as f:
             f.writelines(lines)
 
-    def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
+    async def set_interfaces_priority(self, interfaces: List[NetworkInterfaceMetricApi]) -> None:
         """Sets network interface priority..
 
         Args:
             interfaces (List[NetworkInterfaceMetricApi]): A list of interfaces and their priority metrics.
         """
 
-        self.set_interfaces_priority_using_ipr(interfaces)
+        await self.set_interfaces_priority_using_ipr(interfaces)
 
         self._remove_dhcpcd_configuration()
 
@@ -353,9 +361,9 @@ class DHCPCD(AbstractNetworkHandler):
         with open("/etc/dhcpcd.conf", "a+", encoding="utf-8") as f:
             f.writelines(lines)
 
-    def remove_static_ip(self, interface_name: str, ip: str) -> None:
-        interface_index = self.ipr.link_lookup(ifname=interface_name)[0]
-        self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
+    async def remove_static_ip(self, interface_name: str, ip: str) -> None:
+        interface_index = (await self.ipr.link_lookup(ifname=interface_name))[0]
+        await self.ipr.addr("del", index=interface_index, address=ip, prefixlen=24)
 
 
 class NetworkHandlerDetector:
