@@ -73,6 +73,7 @@ import { SemVer } from 'semver'
 import Vue from 'vue'
 
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
+import { fetchCurrentBoard } from '@/components/autopilot/AutopilotManagerUpdater'
 import ParameterLoader from '@/components/parameter-editor/ParameterLoader.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import {
@@ -138,6 +139,7 @@ export default Vue.extend({
     },
   },
   mounted() {
+    fetchCurrentBoard()
     this.loadParamSets()
   },
   methods: {
