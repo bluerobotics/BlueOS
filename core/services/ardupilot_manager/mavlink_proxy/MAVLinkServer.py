@@ -40,7 +40,10 @@ class MAVLinkServer(AbstractRouter):
         filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *filtered_endpoints]])
 
-        return f"{self.binary()} {endpoints}"
+        if not self.log_path:
+            self.log_path = "/var/logs/blueos/services/mavlink-server/"
+
+        return f"{self.binary()} {endpoints} --log-path={self.log_path}"
 
     @staticmethod
     def name() -> str:
