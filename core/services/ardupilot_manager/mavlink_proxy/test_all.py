@@ -297,6 +297,7 @@ async def serial_test_mavlink_server(
     master_endpoints = create_endpoints_with_offset(valid_master_endpoints, 0)
 
     mavlink_server = MAVLinkServer()
+    mavlink_server.log_path = "./logs"
     assert mavlink_server.name() == "MAVLink-Server", "Name does not match."
     assert re.search(r"\d+.\d+.\d+", str(mavlink_server.version())) is not None, "Version does not follow pattern."
 
