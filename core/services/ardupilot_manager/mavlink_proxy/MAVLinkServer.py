@@ -9,6 +9,7 @@ from mavlink_proxy.Endpoint import Endpoint, EndpointType
 class MAVLinkServer(AbstractRouter):
     def __init__(self) -> None:
         super().__init__()
+        self.log_path: Optional[str] = None
 
     def _get_version(self) -> Optional[str]:
         binary = self.binary()
