@@ -9,4 +9,4 @@
 	url = https://github.com/pulsardev/vue-tour
 [submodule "core/frontend/src/PX4-parameters"]
 	path = core/frontend/src/PX4-parameters
-	url = git@github.com:patrickelectric/PX4-parameters.git
+	url = https://github.com/patrickelectric/PX4-parameters.git
