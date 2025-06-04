@@ -23,7 +23,7 @@ set -e
 
 EOF
 
-FROM bluerobotics/blueos-base:0.2.1 AS base
+FROM bluerobotics/blueos-base:0.2.2 AS base
 
 # Download binaries
 FROM base AS download-binaries
