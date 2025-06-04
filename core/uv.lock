@@ -253,6 +253,7 @@ dependencies = [
     { name = "helper" },
     { name = "kraken" },
     { name = "log-zipper" },
+    { name = "mcap-logger" },
     { name = "nmea-injector" },
     { name = "pardal" },
     { name = "ping" },
@@ -273,6 +274,7 @@ requires-dist = [
     { name = "helper", virtual = "services/helper" },
     { name = "kraken", virtual = "services/kraken" },
     { name = "log-zipper", virtual = "services/log_zipper" },
+    { name = "mcap-logger", virtual = "services/mcap_logger" },
     { name = "nmea-injector", virtual = "services/nmea_injector" },
     { name = "pardal", virtual = "services/pardal" },
     { name = "ping", virtual = "services/ping" },
@@ -643,70 +645,72 @@ wheels = [
 
 [[package]]
 name = "foxglove-sdk"
-version = "0.7.1"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/42/f9/27f72bc297f9ee3b1d3d4d2d8fb4fb03f64b8f5b801596fab314468d4508/foxglove_sdk-0.7.1.tar.gz", hash = "sha256:e80298af223e24fa4f5a54614eff1f24abf0fcb66bf1c7f0bdb88889e6d27e70", size = 231353 }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/83/23adf80afb9b9d179f822e047abdae18a05b0176fe6df1774041eb2e93d0/foxglove_sdk-0.8.0.tar.gz", hash = "sha256:c5bff4fc92f4786499c7361f0260fc26afa53608a486a69ac949e3d8b349eb44", size = 253792 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/55/62/aa8b0aba0301c6d0e11825ae2107951394a36f7aa377e30c0bd650a1bb5a/foxglove_sdk-0.7.1-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:268727dca0ecab463aad09461b14249a9bac821045fa92570f0b1a281385f19c", size = 1748576 },
-    { url = "https://files.pythonhosted.org/packages/fb/45/132c25fced75bd931600889a01810efee90c41c957619f31f03cc9bf6a39/foxglove_sdk-0.7.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:64814e63f24e0fb27b0818d4282527ebbefe59d0d994ae6deca23df09250ca93", size = 1654328 },
-    { url = "https://files.pythonhosted.org/packages/48/6d/c8e36caeef166f2f94e35a6af0fc1b90a1ca1cb882cf9b92222e87c89dbe/foxglove_sdk-0.7.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:abddd40a767f56b36419855894df40b34695122bc8a251e7d03547ff1fc39ca1", size = 1841560 },
-    { url = "https://files.pythonhosted.org/packages/2b/2d/aecd2382b22393fa5c1950d59f97de9045dde0c10548972e96e8d175059d/foxglove_sdk-0.7.1-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:c0109e295a2a75c3cad7c62b44302bfe1a083f4263b2fa02c4ec3f539c6a69e2", size = 1845258 },
-    { url = "https://files.pythonhosted.org/packages/87/40/1d99fdf00660657033627f9f61a32367008b6e228e01b7a208600d77cc77/foxglove_sdk-0.7.1-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:741e8621e9015fa629b9538ffc597263a09692699f66c13fb935d15c468595a2", size = 1993708 },
-    { url = "https://files.pythonhosted.org/packages/36/94/94baeabcd115794ef7ef4af6f5a36a344aaeac964bbdb56a55f23f4f5049/foxglove_sdk-0.7.1-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:bb67c49eeb61445f7b56578fafd10a3d7fdd4ea2bf6616ccd85cede89edc1c1e", size = 2028044 },
-    { url = "https://files.pythonhosted.org/packages/b5/9d/81870c09cec6e8dbd3b35c745f4ed6d5016a6b43b286bb8557b9c9d4e93f/foxglove_sdk-0.7.1-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:0e5229cd22d2da37faf48c198ae546176f254d00582dd0d7295baf7fa1fe3bbe", size = 2070601 },
-    { url = "https://files.pythonhosted.org/packages/7e/b8/917d3c8a81c9708c9f1a613114ffde43b74d1b43724121c6599e6c8d775d/foxglove_sdk-0.7.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:531224417e8794f0693356d04f0580fee56cb28795ddb356d18169423ed1c2fc", size = 1890780 },
-    { url = "https://files.pythonhosted.org/packages/e5/ee/39e2d7288c7daaae48e21ce47ea0bc398c756addadd7f8472fae76925f0f/foxglove_sdk-0.7.1-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:765c3402b3e4434735e0b25afd15ac0765539d5d49e58540a31868deea3db7c2", size = 2048145 },
-    { url = "https://files.pythonhosted.org/packages/14/9c/1353986d2e4d10adbc72a31006af3756f17b7ef3a64aebaf92c8894f07c0/foxglove_sdk-0.7.1-cp311-cp311-musllinux_1_2_armv7l.whl", hash = "sha256:fec2a122214f8fd6b17ac20b1d25e39835711c07dea3c4b902107415a2fc35ce", size = 2111345 },
-    { url = "https://files.pythonhosted.org/packages/f5/6f/bfb0cb5b3b3c319e5117392ef69b6464d10572f9dd02618859db50f1805b/foxglove_sdk-0.7.1-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:08ffab8e99f7b4469c86d58a9f6ca8a02d1f9b63f887b6b838160248c1eac558", size = 2105505 },
-    { url = "https://files.pythonhosted.org/packages/b5/e8/82df56409fddd8fb253c670031003aa3aac5e8c8e2c65065d30270488337/foxglove_sdk-0.7.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:425b68585257ad17462947afbdf9c9b88777262056de21b68c893d094300d01b", size = 2059440 },
-    { url = "https://files.pythonhosted.org/packages/48/4e/7a3b9eee09aaa2b7513e3dc839a85a16428ca17e2c9f0ca96d8383269e60/foxglove_sdk-0.7.1-cp311-cp311-win32.whl", hash = "sha256:c8431194c477d44c445af116e30913e67af19962bce1200ece4860db001dd0cd", size = 1322279 },
-    { url = "https://files.pythonhosted.org/packages/6b/29/09482018b0c45fb5e7ba4b27db3bf405690fd5c850c423073b7e6554b338/foxglove_sdk-0.7.1-cp311-cp311-win_amd64.whl", hash = "sha256:8d8dc2effaa729b29ffd8869ac40fa8ad8716d945016169e95ccafa0b25778a5", size = 1421665 },
-    { url = "https://files.pythonhosted.org/packages/ea/ab/433ee61a760ae250d8f6272b202163976a7ecba50298df9638361e2d41df/foxglove_sdk-0.7.1-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:0526d7e1a8d96b5951cde38ab8664b0af46b4683e7db80c2c016ca135e2116fc", size = 1731657 },
-    { url = "https://files.pythonhosted.org/packages/4b/c3/ff1c7586b0fa1651de6bcd31132427830261a50d696faf42154ab61cafc2/foxglove_sdk-0.7.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:e72c8ebf5280e834cb5e0931ac265d31640e8b4db6742b5165758f600df87783", size = 1641742 },
-    { url = "https://files.pythonhosted.org/packages/30/0c/7f13373f86f9ca2d2ba9dce0a45f92591138747a6a4b717636357f5422d8/foxglove_sdk-0.7.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:93320c5065b821fa7268e1c721e99e83208e0906914edd253a66cd52cef14415", size = 1845693 },
-    { url = "https://files.pythonhosted.org/packages/f1/1a/1b165b36644b239a51c43595240067da0d8017d3179b77d957a1332efe2b/foxglove_sdk-0.7.1-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:02ad85177e603331ca7641fb6e97b8c2480fe7c2f111483f7c773204c3cd9041", size = 1846437 },
-    { url = "https://files.pythonhosted.org/packages/7c/18/0341a923394aab030d5df21d46dd31819332c0992d31ea98641a10cfab7c/foxglove_sdk-0.7.1-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b3e6871045f0d3a2ff9bba4ab371d64a289510035a1fd3f9a82c89aebda34208", size = 1993447 },
-    { url = "https://files.pythonhosted.org/packages/be/9b/aac8adc86b06c4b293a93d9dd851acdc00758e6d90e112d8e089658eeefa/foxglove_sdk-0.7.1-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:1af4aef9b613475b343eeea93f9c3fc2157e62c8127ff55d1667d63bf9a4fb0b", size = 2033181 },
-    { url = "https://files.pythonhosted.org/packages/76/85/7733e19006a6ef9040fdcff864819cba1bd4bbcc5af98101447ab77d1426/foxglove_sdk-0.7.1-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:a5e1d0f3c09f5baa2237bbb3589822abc2aa25e6e486340dffb5afee8494e584", size = 2063356 },
-    { url = "https://files.pythonhosted.org/packages/52/b8/b3440af1c8c9d38717a463a6bb92c4107e3285f9810f8ea777e466e89cc7/foxglove_sdk-0.7.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c567a695f8d866c2c870f7056d000196f533c125f5d2148fc7a42a42c54d1303", size = 1898086 },
-    { url = "https://files.pythonhosted.org/packages/5e/5b/fe99a8cc7dd3ded5c974cf75028eafb7270a71872c0efdc895b880d3cfca/foxglove_sdk-0.7.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:4ddd18f0d97ddeb437333a3cd9c4b081ff7bfc3cd067527d004e0fefaecfdaf4", size = 2049992 },
-    { url = "https://files.pythonhosted.org/packages/d6/94/2395c36d61d6aff0ed2f80eaa57b07041e485560bcc5e86dc8aa491b0fd3/foxglove_sdk-0.7.1-cp312-cp312-musllinux_1_2_armv7l.whl", hash = "sha256:0351cb6e6fb39d2c3413fe30116b01a2af9ecc61c38515fa11157cb96cc54673", size = 2112491 },
-    { url = "https://files.pythonhosted.org/packages/c2/14/c720760f5ffe4e21b69cb0686662adccce622c4c39fd3c0180c903f08438/foxglove_sdk-0.7.1-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:1eee3cb50a6471f6014762f204c9e8d5b60c2fb85afc843a1bf9884e3b7e012e", size = 2105715 },
-    { url = "https://files.pythonhosted.org/packages/8a/26/0df7a2623968374b6171ab97db65eed80f7c1fd2db8b29d4f0131430e6f0/foxglove_sdk-0.7.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:389ba829fe0ea9efa7ff276da59c9de1594f1765a84434791bdb16ae744972af", size = 2068601 },
-    { url = "https://files.pythonhosted.org/packages/6c/cc/71016048e08c63b184d5dd5c65fc1e5829c515de88fdab0bf88c5cac510e/foxglove_sdk-0.7.1-cp312-cp312-win32.whl", hash = "sha256:3704cd39cf98c4a2bcdacab19aae6f1076663da45b775e57da7d0eeac5a52fea", size = 1321439 },
-    { url = "https://files.pythonhosted.org/packages/1a/b2/c40d8022556e07d3ae6c6061ae4eb5a71b0c24ad07f74cbcd40953776763/foxglove_sdk-0.7.1-cp312-cp312-win_amd64.whl", hash = "sha256:858301b058817e81caa7fe4bfb6e53ad85f577c6b5abf2eb18c75187d8e1cc2b", size = 1425173 },
-    { url = "https://files.pythonhosted.org/packages/31/6b/e9c2f8526bcfa0a164ce2477262994e282e49e27043b3f20da637d165768/foxglove_sdk-0.7.1-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:5f0e2c0c9c2536fde61304ae231f7fa0fdd75d4b18e216f6c0cfc554412f5bc2", size = 1730451 },
-    { url = "https://files.pythonhosted.org/packages/eb/ac/cb719cd39261804c4b456ced62d8a3cc344ade79d9e08bb57edcd64ab19b/foxglove_sdk-0.7.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:f5b748a161f15d3f81ab5f8e63913342cd086e63e4941cc1a9a54174e73cc854", size = 1640522 },
-    { url = "https://files.pythonhosted.org/packages/95/8b/d214933ac0e2a4102ed959d21fdd40cc0dbf6156777654ebb48fcbe7a3a7/foxglove_sdk-0.7.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ff9b71336214bd7afa6f83c9825df2a3ac058fc851470d3f6d69f536daffafda", size = 1845028 },
-    { url = "https://files.pythonhosted.org/packages/d1/5f/e7ef9a6e3fd98d15b6c561ddf3f8179eba11012c895695e5f37b4d3c180e/foxglove_sdk-0.7.1-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:684e7c161a7cb1ba9e05a46fb35290a3e6a34a155212609d8b8a4d4ff0c62480", size = 1846072 },
-    { url = "https://files.pythonhosted.org/packages/66/40/761d36c2e63b018369e876130ee6b25fa8d60989016c7ed53c135944a7d4/foxglove_sdk-0.7.1-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:9ce0894e5cf3721da610f0819da7ef5d25f600affb76fef41775c5a4030958ff", size = 1993012 },
-    { url = "https://files.pythonhosted.org/packages/36/db/77f7b4f42dc7d5bf540cda7c54a6ca854a12e8f16ecf03b28a3cbd2bc981/foxglove_sdk-0.7.1-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:9acc1a8f76d8465ee31448be5a2d5895e51ef4e8ee693aa062613e2eece6d5aa", size = 2032686 },
-    { url = "https://files.pythonhosted.org/packages/54/0a/6e9384f093d81ff7994b1563aaa127f88b364ac8cf517a3a450775d2e3eb/foxglove_sdk-0.7.1-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:e87e7e414f45a3742dddc3381e8c2f27e30490d8734476a0182ca73b14a2ef40", size = 2063408 },
-    { url = "https://files.pythonhosted.org/packages/c6/98/f1ef1456ba5de19d666e834fe13dc4258123973b139750085f0feb2a77f5/foxglove_sdk-0.7.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a4d438c5509ceaeec9a7b201b08c1eac61dbf264b72f7d7efdb81f7adad344cc", size = 1897913 },
-    { url = "https://files.pythonhosted.org/packages/17/57/9ba1e1d762ff7dbc2f6d491cb8fc10fa28d1660ceab3db1eb1c991d9b9e2/foxglove_sdk-0.7.1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:71f6cda18bd308aecf74f4a233b3abede1c7462e6180dc5313d4230317969c78", size = 2049403 },
-    { url = "https://files.pythonhosted.org/packages/62/bb/77ca251a6eda4c32fa1e456eda1751b6a4077f8da4c918eff97597b3592c/foxglove_sdk-0.7.1-cp313-cp313-musllinux_1_2_armv7l.whl", hash = "sha256:af15ea9dc10978acade48dbbe1b5ae6234ac840e90b78dbc95e491461af768f4", size = 2111997 },
-    { url = "https://files.pythonhosted.org/packages/b5/98/81ec70325d95b38ad0ecb15e024ba5579debcd14ccd96632350da8ec6946/foxglove_sdk-0.7.1-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:4b4e713108a5b05758ad63986fd2277672cddb4b640398fe8e58042a3f94d96c", size = 2105406 },
-    { url = "https://files.pythonhosted.org/packages/d7/d9/893bcef3b5cacdb305bec1a1ae46471bf542336d43df3d96755fc182e4ec/foxglove_sdk-0.7.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:4f894150dbda1a386b1f246b71aa9f432d9798d77e53c2895769ae75f783bd6a", size = 2068085 },
-    { url = "https://files.pythonhosted.org/packages/bc/0d/073533b5663da59efa94a7889b1627b0b274b7027bef3a8cc38428937d42/foxglove_sdk-0.7.1-cp313-cp313-win32.whl", hash = "sha256:0859267ec5a11c4508dfd95f1b302cfa19c582deae44351dca07af5cfdbc7c0d", size = 1320656 },
-    { url = "https://files.pythonhosted.org/packages/42/64/f70f7b5db7553f10d8d10f2704ee93da220e30f94fc2a7ad7e9d1cb2ff05/foxglove_sdk-0.7.1-cp313-cp313-win_amd64.whl", hash = "sha256:c788c2b3472750c75de74b522fd1e58f863b59d99b1c3a920e15b7851c0afc05", size = 1424013 },
-    { url = "https://files.pythonhosted.org/packages/21/07/af524d35f2bc06f6f075c9ce615f10ec8a459e4c7e2a74bd983a915001a9/foxglove_sdk-0.7.1-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c4b135a587a0cbd47f2e6d31462c1aba9b8dee214919150085762764de8cce0d", size = 1831724 },
-    { url = "https://files.pythonhosted.org/packages/d2/30/2864e8ba04e62fec48699b7a6f77afc7bcc4a4f436a561714da329050cb6/foxglove_sdk-0.7.1-cp313-cp313t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:b869f82c1cb342732684f671d45e3e3eb8d4a43c2b730015fd21317cb710a1e8", size = 1842163 },
-    { url = "https://files.pythonhosted.org/packages/4d/cd/64b7e24e7d0433ca53d10b5877d9bd349ffde1d4c3c26bca2c18bc951a65/foxglove_sdk-0.7.1-cp313-cp313t-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:19531e3fc65bb39cc99ef74488cfe01d2670f161abd4e3ce5339564ceba51303", size = 2026722 },
-    { url = "https://files.pythonhosted.org/packages/bc/61/2b6216a53e35cf327b66950281d6efb0f065ea1fb32e8cd39de7d6012289/foxglove_sdk-0.7.1-cp313-cp313t-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:09378e2bee4060bb4619d782f0551c3a885b6ec2dba873d510a94ce53c667179", size = 2062522 },
-    { url = "https://files.pythonhosted.org/packages/21/82/441eb2072b73509cdabd2039317245004d66aa5ab8153d41007a9182f7f7/foxglove_sdk-0.7.1-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:3f6119f80e4e51d6ecc68de339d81e96a48844731e2f79f323d9a657546540dd", size = 2039597 },
-    { url = "https://files.pythonhosted.org/packages/b9/78/1709b624eed8817c1c6e18db59e38200ffb6e9925629a9b050fc1c96c2f0/foxglove_sdk-0.7.1-cp313-cp313t-musllinux_1_2_armv7l.whl", hash = "sha256:401268d602047d30b305af79e636c9d36042ca37a53c44c2d67edd8b59da3ffd", size = 2104294 },
-    { url = "https://files.pythonhosted.org/packages/4a/20/a7a3a4adbe871c5809871e0dc342eb71484cb4609a3b6d0d0de62d5c2bfb/foxglove_sdk-0.7.1-cp313-cp313t-musllinux_1_2_i686.whl", hash = "sha256:40f63c094723f2891243fbd883222eb7c79155b3e5a625f1f3552dc5f1f3d9a7", size = 2102020 },
-    { url = "https://files.pythonhosted.org/packages/65/c3/638d3d9f8156abfdadc7e5ca34c232c2ffb97458d624ec105bf14433c946/foxglove_sdk-0.7.1-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:c73ce01c3a0a6da4cd7448b4652c0fd6df59b66392cf0c315bab5a273d632d2e", size = 2054859 },
-    { url = "https://files.pythonhosted.org/packages/7f/a0/f344062e8bb8fa93c81aabc85396800200f18f2bee20624a0ebae066274d/foxglove_sdk-0.7.1-pp311-pypy311_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e3196374a533095412a6e38ac6ea14ba93090d7037c8e21958ef11665957e4d8", size = 1838985 },
-    { url = "https://files.pythonhosted.org/packages/68/86/cb27f2e85a38a2d235d6a18b690cd1f78d5c75836fc74bda605f01de789e/foxglove_sdk-0.7.1-pp311-pypy311_pp73-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:50d160fddeb78052b08f26a0ac5bf5c7fdf9d2aafc7813cf1b626935473b82eb", size = 1841302 },
-    { url = "https://files.pythonhosted.org/packages/bd/ef/dbc414c09adb9b3b84323f67a0e9f6cc3d438e5534bd6b5168c9b41da3a6/foxglove_sdk-0.7.1-pp311-pypy311_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ee0191d25f49b311b4c38e455145e756d0aff6fd16edf35f426d368cf642dfae", size = 1992400 },
-    { url = "https://files.pythonhosted.org/packages/5b/9a/84dbc7aeb8f15efdc05ba8015aabd0bb1f9d28272d562e1e73104ccf1912/foxglove_sdk-0.7.1-pp311-pypy311_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8345754f7be301531c88640c5596cec967256a084dc81b9eacfeee4532aaa17d", size = 2025654 },
-    { url = "https://files.pythonhosted.org/packages/3f/9d/b569323122f304c6e4a4fdb6911f25fbcc89d87fe1eb12e1a1f5630f7931/foxglove_sdk-0.7.1-pp311-pypy311_pp73-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:06a94707c32ee2b1947277674e43176e3dafb0a3beb7de18cd6f39b8f6fc8093", size = 2070768 },
-    { url = "https://files.pythonhosted.org/packages/f7/0b/7aa536fe11247141f7861bb8adcacca43c434604290f162c4921b781b559/foxglove_sdk-0.7.1-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:da95ce7909a262847425996907228667676bee43974afae957cce1540f0b54f2", size = 1884660 },
-    { url = "https://files.pythonhosted.org/packages/f2/ad/feb24428c4a97206eed0a71d644f754ad9911788a41c104166c2aad8d64a/foxglove_sdk-0.7.1-pp311-pypy311_pp73-musllinux_1_2_aarch64.whl", hash = "sha256:ed1958009f52a8000d7c09231a9671a7ae441f1abedebbf19bf02d808d4f80dd", size = 2045749 },
-    { url = "https://files.pythonhosted.org/packages/df/05/52e6a2242b5da9c39b5e7248e40aebd44a6e6873be0fb52ca3006b4ce91f/foxglove_sdk-0.7.1-pp311-pypy311_pp73-musllinux_1_2_armv7l.whl", hash = "sha256:108ef4558692e5ccead29b85165d56774e41b4037e75b4e6e2df9eb6b9b41dc8", size = 2104012 },
-    { url = "https://files.pythonhosted.org/packages/c9/9f/cdf70c2692b04d19bcf89d4cb1477856c22cb510746b8c100ed07243c087/foxglove_sdk-0.7.1-pp311-pypy311_pp73-musllinux_1_2_i686.whl", hash = "sha256:300c3e228227f62f9318bf050399d0861d5e38e911610e1b5e22dd8244282ee9", size = 2105375 },
-    { url = "https://files.pythonhosted.org/packages/11/61/6b9ba9747e2337bf74d58e66a89d2f91d2eb0bbcebba56427c6b437cdcbc/foxglove_sdk-0.7.1-pp311-pypy311_pp73-musllinux_1_2_x86_64.whl", hash = "sha256:de014b1977702fb2407d449703ad1538b79bebd9b0875f7c6d5d043274f8b01f", size = 2053416 },
+    { url = "https://files.pythonhosted.org/packages/63/3f/e3b0df74da00657b2c6f98ce7bca1c66e3b5e6ae90b156a77c24cb707b39/foxglove_sdk-0.8.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:7f7f9797df049d4b861135fc5c8b608a2871698c7b0338ad9492bff9ece0dd34", size = 1834611 },
+    { url = "https://files.pythonhosted.org/packages/96/d5/e132e194d3fe63d6a6199f8add77175fbfeb0e5b00377a1bbbe996d0ae6e/foxglove_sdk-0.8.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:9bfc2bae6c1b6c5b1dfd119796b9c8393d71946f02c8cfd6b5ea5332ea4753e4", size = 1758558 },
+    { url = "https://files.pythonhosted.org/packages/ae/d7/a665de74722afac30419ec9c818e87f78a6acf21200ee461f04c71501201/foxglove_sdk-0.8.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5fb17c09006e1621459d0ce85d63a48caf4b1e37ccb80dd0ea23125ad23b582a", size = 1947403 },
+    { url = "https://files.pythonhosted.org/packages/0a/e6/8642771f137e938707f2fde927ebb842c42fba5caa18c6e043beffec5ea6/foxglove_sdk-0.8.0-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:543d00763c43fe7e5c463ab59fbc21536627dcb7f25dd4c63093b00cfa013b09", size = 1939162 },
+    { url = "https://files.pythonhosted.org/packages/eb/20/55b602bdea9f6a4bc629c1432a21b64312491e1e9d83bfed40e9d5f1d068/foxglove_sdk-0.8.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f9ed671dc273171189effa850bec00b0e505b89fa0f617c7d277b6cd5841bba9", size = 2091744 },
+    { url = "https://files.pythonhosted.org/packages/23/9d/5a28cc0a0dcab7c170d632a60d4fd33d59a8aae53ab2ce5fd64d6d5e4a6b/foxglove_sdk-0.8.0-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:52cbdbffa1fa99b4a7590c4fcbcc9b29965a8d75a4abdf45e19c520e032a861a", size = 2413784 },
+    { url = "https://files.pythonhosted.org/packages/2f/f3/7688b72e4c6bc8e8693a043f02f0c4ec1185b1aae6d5975bd27686273e29/foxglove_sdk-0.8.0-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:202df83aac68e4933f7ae0ca15bbe72577bb70288f84404f32b41c6a721fe70a", size = 2060320 },
+    { url = "https://files.pythonhosted.org/packages/c5/d9/eb7952ee26897d1d71cf5a62e246a807516b43afac0cfc91bd1fa8727491/foxglove_sdk-0.8.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f3113637b5b4c5e71b76dfdab2c0023f1fd6a11e64d3e8f4b6555c6c12f79aa4", size = 2003166 },
+    { url = "https://files.pythonhosted.org/packages/5b/e3/f901fcbaee4b99387e89cd8b03ebcb2e90fc12583addfe01425a41a71883/foxglove_sdk-0.8.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:e03ceb1731db59fb8c3533b2604f4b646da5b0de28b1b3d92093e24d9b9f56e9", size = 2154368 },
+    { url = "https://files.pythonhosted.org/packages/30/a8/0e292f658280674761040bab62da2b695f83979dd0c796336b3bb291ee44/foxglove_sdk-0.8.0-cp311-cp311-musllinux_1_2_armv7l.whl", hash = "sha256:9ece6f8f5f2a15712d2243e22e6ee865db967e68a4340eb9fff759f5c24d572b", size = 2208457 },
+    { url = "https://files.pythonhosted.org/packages/72/8a/cda972523458b9e020a0b9018e8713d6bf8cd36c8c1deecaab6cec1adcac/foxglove_sdk-0.8.0-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:275be87c0ccc3f3f087bb11d5f3209aeb841fd3a04b73adbc7084ebdaa75047b", size = 2199549 },
+    { url = "https://files.pythonhosted.org/packages/2c/db/c3e1bd2d35be87de6f2c858a65081f0b66f5a9e22b39274af1dc1598950d/foxglove_sdk-0.8.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:2f6ffe249f36c71bf95fdae6b04954be125b826b753fc3f1b689fde6d81206a8", size = 2174746 },
+    { url = "https://files.pythonhosted.org/packages/ba/5e/f66c68278aca460840304a1a62181b3339097832ff6e88654158618b2b9e/foxglove_sdk-0.8.0-cp311-cp311-win32.whl", hash = "sha256:cb6e9c27541376794c7fbbd9f0aee495ab3599a32e99535345077210a31dab07", size = 1384412 },
+    { url = "https://files.pythonhosted.org/packages/c4/08/1e753890c9c32b8f0da1aed1106344a2fda2d5916cd71c7ce38713006b3e/foxglove_sdk-0.8.0-cp311-cp311-win_amd64.whl", hash = "sha256:ee616ae8ff2c9f87e9f717b176b6cdd03c130adf5180c3015ebe174ed823ad14", size = 1511429 },
+    { url = "https://files.pythonhosted.org/packages/2c/c2/f90721a0e64ddd2c3f14a9ca7a8d230aa91e18129d34a62facc6baf1be32/foxglove_sdk-0.8.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:d7e4c7f4bc4105ca4e41f914114ef4afe8327382e27d98fa6b3807043e754fc4", size = 1823701 },
+    { url = "https://files.pythonhosted.org/packages/ff/6d/e4426a372b332fb20a151a4415c19de0c5da7c56d73fb8568e343c8f4734/foxglove_sdk-0.8.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:564ff10b5cab209d56a775de4a256c630edcd00f55c25485d99739bbf50a3794", size = 1739995 },
+    { url = "https://files.pythonhosted.org/packages/d4/cc/1d4e746ed700c956385599a304ce2e706cc627ff628ccd558a6ebecf9391/foxglove_sdk-0.8.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4aadf1cd9f3907df0daeff0328b7e234ebfc8d8b4489d3b54f94523b451c5894", size = 1956005 },
+    { url = "https://files.pythonhosted.org/packages/57/b3/9d11ea56e6021b53b1ae736f56d4fb3139fc7179b73dd9ee91a6a0c69fb1/foxglove_sdk-0.8.0-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:6dea160909a61c1d70fb64a58303c2171791b3d281d265a2c5522986b36bc5a9", size = 1949393 },
+    { url = "https://files.pythonhosted.org/packages/34/6b/30672ad7f9bc40e9918e3e4202ae0853fc2d6cd818706dbe129c0c7f7e9a/foxglove_sdk-0.8.0-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:abb48ceed4f3bc1fdc365532f49a7bf5bbeecabbda5270895bc32047ef526e5e", size = 2103015 },
+    { url = "https://files.pythonhosted.org/packages/89/ae/c305f6fd3f602748c4111554670b6c1423956f0fdf74e94b2772ff8976ff/foxglove_sdk-0.8.0-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:935eadc0dd84ef83ac421232f428ec9b7f8fd71e809d7c96c994236ec6cba05a", size = 2424182 },
+    { url = "https://files.pythonhosted.org/packages/16/d4/b2d4b32a8ed143b0a215254180a1e64fd07595c8a3d0f41b014af5c66ce5/foxglove_sdk-0.8.0-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:a65838a4779945b81334490c3f6b5f0b230fb1a4200f958cd69df6fa3d09a584", size = 2071112 },
+    { url = "https://files.pythonhosted.org/packages/f1/a6/2c00783281075dff6631c11ec8bd9e16d9c9fa10905d3b622c6363ad2701/foxglove_sdk-0.8.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e5e6f6357da9166986d11b059dca2ef1a8b9d453016ebf9e56fb8851b005e37b", size = 2006866 },
+    { url = "https://files.pythonhosted.org/packages/9f/ba/026bb4bd575bc534348aca39ddd26595c9f8d6391e95bc419c20c64cb679/foxglove_sdk-0.8.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:121e977d5bc3c5d56bde0f3bead373c1fdd8ca509e2bfdbebdc5821a3d65e714", size = 2161758 },
+    { url = "https://files.pythonhosted.org/packages/ef/0f/a294b7948359552787688ccd82da6140c59bbaadcb1fbddb6ccd204be470/foxglove_sdk-0.8.0-cp312-cp312-musllinux_1_2_armv7l.whl", hash = "sha256:6bb1539a9bcabbbc29e94ec05451b4fe8e8de0229b4426af531cc04db55c081c", size = 2217021 },
+    { url = "https://files.pythonhosted.org/packages/cc/7d/24ba80902717df3a0d37f12287f59ce4a0e4c40258cf3002955c3d4ee963/foxglove_sdk-0.8.0-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:44d6f09719002d5c55d9e58848e55c857d29bdaf262070186cb5a6255d68bdd1", size = 2213303 },
+    { url = "https://files.pythonhosted.org/packages/44/09/0af485a380e6c495ca3906e0d6b0b28827309cbd544b61023c1ec419ccf5/foxglove_sdk-0.8.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:46993b74ea7bb19175b06c1392058a38b3898616cb2a9b6e3ae6b965f9eba556", size = 2177371 },
+    { url = "https://files.pythonhosted.org/packages/27/a8/d9d2539bab2dd11bec2655e9829fdd9e1eb183eca9ad1788dadddbe99ced/foxglove_sdk-0.8.0-cp312-cp312-win32.whl", hash = "sha256:18e6c733fdd60a097d8e59f845e71b1b5f31ae81ffcbe5a6e47431ce828e477a", size = 1386755 },
+    { url = "https://files.pythonhosted.org/packages/35/a6/b557eb702e7e6947fe7faeebce1554f335e9a3eb0ef41cfcbe62a95a6812/foxglove_sdk-0.8.0-cp312-cp312-win_amd64.whl", hash = "sha256:ea405acd06224ab85649a4f5e12932b2d30c579a76168058d12c4134a46964b1", size = 1514837 },
+    { url = "https://files.pythonhosted.org/packages/8f/af/854d8221350f8605b019dd2bcb6780257cb9d2804e01fabab752e98654fe/foxglove_sdk-0.8.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:7c815cd93cf06d046455d9267734edae38804ad289d273b7e7ab2b449dc94695", size = 1823521 },
+    { url = "https://files.pythonhosted.org/packages/b4/19/a2324777ee1ceb6ddb263c9362eabec61e9cf4b87967c7e08333ab8b66fb/foxglove_sdk-0.8.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8c3a83bd41cc2b7ea25f7c6eaa7f367f2cd0b6ae21b3562f4cc2bfd50a373193", size = 1739996 },
+    { url = "https://files.pythonhosted.org/packages/31/ac/6f89644f83ace28ece757e0457cfa86bbc4fcd141087a1a38c4bf052bf0c/foxglove_sdk-0.8.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1e0b102676870c9d07122c400aea2cd7c05f447aa653c118ab011834e29152dc", size = 1955008 },
+    { url = "https://files.pythonhosted.org/packages/17/0e/e6d4eec2ce0d802d9ed92a129440085a4ba8f0c4850da986e5779bb7c287/foxglove_sdk-0.8.0-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:ef7e4b77cd1b781c1cb9a754c655ad2ae7116e4dace2f87912e405497b594921", size = 1947533 },
+    { url = "https://files.pythonhosted.org/packages/2c/ca/42d5b4669be81c3506bea631837a95065b262736bdfa4aa45a99ffd12062/foxglove_sdk-0.8.0-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:434bf449dc7a23b5a858fdae80b779b77534c6df95ecde3f91c5738ae63164c2", size = 2101942 },
+    { url = "https://files.pythonhosted.org/packages/8a/19/48bdf4f06d6835cc25ee06f9db29991ae3e9b392a3dd4b945eba815123b4/foxglove_sdk-0.8.0-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:cf73568d6f7cd3b682e8ef11b97b2c73d6062af574df9b698bf7bb885448f942", size = 2423609 },
+    { url = "https://files.pythonhosted.org/packages/40/03/1f62ea11325e4dc3fd8401a0ca4ca796b51300d5f52a6628c1be55ab6245/foxglove_sdk-0.8.0-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:38173707b24766470b96e3a8fa9fd90e819cc04bdca51a1961fb99316b21983e", size = 2070743 },
+    { url = "https://files.pythonhosted.org/packages/46/98/cddef973a7dea3ba25f6f559c94b170c676362f9d802bd51505f729396b9/foxglove_sdk-0.8.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fed6d7b56030f57b3dcfa23b8a5c22736401d694823806bb0cdf4c8d4d41cd6d", size = 2006429 },
+    { url = "https://files.pythonhosted.org/packages/0c/c5/1f8f4747216c00bc6c634956eddf42e6511013b7e1533f66141e80e30bb3/foxglove_sdk-0.8.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:82e085ec5c4400a061d000e00344f865024080612125d672f39cab9041146467", size = 2160341 },
+    { url = "https://files.pythonhosted.org/packages/00/c6/c7c9123d8862711c3cf966e80b05d01a223c7f7797834e27dc6ad2fe298e/foxglove_sdk-0.8.0-cp313-cp313-musllinux_1_2_armv7l.whl", hash = "sha256:20a32cf5096b4a8aaa0418dc7eeb1da53ba100f08261242254a29ee564a1a365", size = 2215690 },
+    { url = "https://files.pythonhosted.org/packages/15/e6/e0cd46ce075b13e1e9ab4621e85fe0e26a662483e7cbab8c47f0d977f59e/foxglove_sdk-0.8.0-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:2d6cb6568152d8c6fd612b2fca30b3bbad8a909bd0e3f004f80079f213477ed9", size = 2212083 },
+    { url = "https://files.pythonhosted.org/packages/9d/d7/8f9ff9f9640b534e20ded73dde91db7d1330a7564c378cf60de9b4a1564e/foxglove_sdk-0.8.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:26a035f2d50d750a103185f0cb1fc9757fa262bab0ed411585ae778a331d156e", size = 2176369 },
+    { url = "https://files.pythonhosted.org/packages/79/72/fba72b2518833988b998b4f2a7b365031b9923ef1008f8abaf949cc24a13/foxglove_sdk-0.8.0-cp313-cp313-win32.whl", hash = "sha256:da2c864df7c0d6ceb37743f82b0fbc65f83b9c1caadaa937de88948ccba3363e", size = 1386511 },
+    { url = "https://files.pythonhosted.org/packages/5b/ac/8933ef03ec50126f3acaaa7a0c88a434066f5334b103fa2d5567572ebe3f/foxglove_sdk-0.8.0-cp313-cp313-win_amd64.whl", hash = "sha256:5e2c0a43e8973e328ca1452ddd5de9496217a5fc546669426405be4f3a204c6c", size = 1514356 },
+    { url = "https://files.pythonhosted.org/packages/8c/3e/b451c53bdad1e967e90b54382a14961f700fb74b364018f4a7d5052135d4/foxglove_sdk-0.8.0-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8af5562605470ed554f43c1c980561693fabfe21f46c9c38042a18757bac5227", size = 1954713 },
+    { url = "https://files.pythonhosted.org/packages/6a/ff/c77cc45e0550ea22ecdb2f1fd347a85df86c4fb4b5112b5e98916c34cd17/foxglove_sdk-0.8.0-cp313-cp313t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:23543fc18c405638efc642121464d1b2114b6244340f4bd1b04f0c7e9c5843bf", size = 1935327 },
+    { url = "https://files.pythonhosted.org/packages/c3/a9/ca79d9746a4cccd55f4befe53b2b480274ca5c72976aaf4c1846cbb624d8/foxglove_sdk-0.8.0-cp313-cp313t-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:077aaa488a30722a962a2212b9dfeba277a61f947b878b3577e0527b61a8e7f0", size = 2427682 },
+    { url = "https://files.pythonhosted.org/packages/5d/18/de15f4772f4d14e10bf16eea3bacdd92b3862c1ce5893b573c4e33b42a2d/foxglove_sdk-0.8.0-cp313-cp313t-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:19db77bd9c89625e7943f4666c43a26ef717256947d0b9ea38a9e3a949c379a6", size = 2067195 },
+    { url = "https://files.pythonhosted.org/packages/73/28/a8aef2da0473760bbcedc18d176acdf7057383b8e90afc31f96d92a3b594/foxglove_sdk-0.8.0-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:3f879400a03ac3d4e82252d56b53514a64257e0feb5fc8ae66c44c387ba009df", size = 2161322 },
+    { url = "https://files.pythonhosted.org/packages/09/82/2dfa60f4b35ffcea270d6511d17b1e0c3bb3add7906221b479bf9656344a/foxglove_sdk-0.8.0-cp313-cp313t-musllinux_1_2_armv7l.whl", hash = "sha256:fba03685c86a254c6df60494b646a6bc9f1f50b5570deb4a68a7561eeda4a142", size = 2204662 },
+    { url = "https://files.pythonhosted.org/packages/f4/df/5078403c3082d9b27cc1f41b246ff6f2b4cde738dd771df66ca6b16a6574/foxglove_sdk-0.8.0-cp313-cp313t-musllinux_1_2_i686.whl", hash = "sha256:a3df79b979081b8899966479da9b32f4d7d6046c11eaf36f7aca5f1a9b1d3b5e", size = 2204595 },
+    { url = "https://files.pythonhosted.org/packages/11/7f/5afce346bec8598d3cbb3a453871ebb09ab18faa6957b26f01da0611c632/foxglove_sdk-0.8.0-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:7c75049c255df531b639eef5c13325da31ef78d6d10ccf9cca4fc84bfb62524d", size = 2178947 },
+    { url = "https://files.pythonhosted.org/packages/e9/c8/37a9a83ab5e0b854e58e45ee87d963d24bb8c60917d1e747e1274c80b85a/foxglove_sdk-0.8.0-cp314-cp314-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2e3914f543f3e09cdd28ed511405b53e81ebf52346a910e0b2db376fbd363fcd", size = 2104150 },
+    { url = "https://files.pythonhosted.org/packages/b5/f3/3a43d8b7237927d25982794f170584cc62a2a717e17394f606e6f7f33976/foxglove_sdk-0.8.0-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:15b47854c3ed78736bf5269086e49fbe97867c54d2ae8aaa93515ec44b847413", size = 2008901 },
+    { url = "https://files.pythonhosted.org/packages/c0/05/10b291b35b78077f13feb0e765415bad67c15b7df8541f837c66c95e537c/foxglove_sdk-0.8.0-pp311-pypy311_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d7447c237680d0a358dde5d844ab1bb1626bc300599b5413e861fdc5e07f38df", size = 1947563 },
+    { url = "https://files.pythonhosted.org/packages/59/5b/dbb471af63629336eedfb0b66294ac77826c23b8af20261ff2867faeb5b1/foxglove_sdk-0.8.0-pp311-pypy311_pp73-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:ae11974a28ded187752be3ee133c6058e4bea8712a8112abbfacd7ef47a3f66a", size = 1932460 },
+    { url = "https://files.pythonhosted.org/packages/e8/17/315e91cab2feb22a44b930c405183833b41ca9b9144c2deff9b03859f66c/foxglove_sdk-0.8.0-pp311-pypy311_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:064337ec15705a604a29d897f92cdb6d26aca69be69ca9d270b8126ac3073f96", size = 2092579 },
+    { url = "https://files.pythonhosted.org/packages/fe/57/cc4a86af74d380db3f753ef984d4f8834e46f567b206a97c45c668ac2619/foxglove_sdk-0.8.0-pp311-pypy311_pp73-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:e00873281224d16d7cefa8b39fc2b0cce6e4e5b75761d3bf170ee10733fbc3cc", size = 2410896 },
+    { url = "https://files.pythonhosted.org/packages/5d/b9/26fbc9e86458a96d4f59b4b651c2500cf5c65c24db90ec7e439b672d896f/foxglove_sdk-0.8.0-pp311-pypy311_pp73-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:7b0e0b5fc3fc3f3cff24b300deabba49346f266b3f7d26d68506f1240dbcc826", size = 2058390 },
+    { url = "https://files.pythonhosted.org/packages/d8/1f/2af09859831242c8e7140d4af9fe9f243ef88d7839bb785203a92f8d848d/foxglove_sdk-0.8.0-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3d3b00e1281d02459e6cf8448bab4085aaf9474b58f617eaa35817289f1ca8e1", size = 1998818 },
+    { url = "https://files.pythonhosted.org/packages/c2/09/ff2e36c019a15b8c3e9cc9cc08a03813bda48a4c881dd13afbc4ac1947f9/foxglove_sdk-0.8.0-pp311-pypy311_pp73-musllinux_1_2_aarch64.whl", hash = "sha256:e7e01b00798e1b6913c6f4c3216f82b359b6964593d9791ca8c934d97b78dcd8", size = 2152505 },
+    { url = "https://files.pythonhosted.org/packages/c6/a2/916078ed0487cf7b76aecd744bc863f062cee7007d245febf445e38ba940/foxglove_sdk-0.8.0-pp311-pypy311_pp73-musllinux_1_2_armv7l.whl", hash = "sha256:4e922c77cbb7ef1deb0dd6c4228edad3437f4b55903fdbf1f322df5d01086f9a", size = 2202376 },
+    { url = "https://files.pythonhosted.org/packages/15/56/d3f48ccfbd1a1004cfd736dddefe6f0b9a29dd5337c2f88eb3ad439a538b/foxglove_sdk-0.8.0-pp311-pypy311_pp73-musllinux_1_2_i686.whl", hash = "sha256:640b78387ffe7e2be4542f979397545d778d6b2fc9d8b9fc3f5848419a812cb4", size = 2200286 },
+    { url = "https://files.pythonhosted.org/packages/79/d6/ccc0837ec896045c8e8483831cbb36ba78aa78173265009fc8257063dd0b/foxglove_sdk-0.8.0-pp311-pypy311_pp73-musllinux_1_2_x86_64.whl", hash = "sha256:d6adffdead38551dd6c3bff0dbe05b3353bacd8618d195929e217852f275ea8a", size = 2169609 },
 ]
 
 [[package]]
@@ -720,12 +724,9 @@ wheels = [
 
 [[package]]
 name = "genson"
-version = "1.3.0"
+version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c5/cf/2303c8ad276dcf5ee2ad6cf69c4338fd86ef0f471a5207b069adf7a393cf/genson-1.3.0.tar.gz", hash = "sha256:e02db9ac2e3fd29e65b5286f7135762e2cd8a986537c075b06fc5f1517308e37", size = 34919 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/5c/e226de133afd8bb267ec27eead9ae3d784b95b39a287ed404caab39a5f50/genson-1.3.0-py3-none-any.whl", hash = "sha256:468feccd00274cc7e4c09e84b08704270ba8d95232aa280f65b986139cec67f7", size = 21470 },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/e1/71/fbd2f1ad9695c92ad756b91f5a570f809c4959d3bd82266788cf222e5c5c/genson-1.2.2.tar.gz", hash = "sha256:8caf69aa10af7aee0e1a1351d1d06801f4696e005f06cedef438635384346a16", size = 34387 }
 
 [[package]]
 name = "h11"
@@ -1023,20 +1024,22 @@ wheels = [
 [[package]]
 name = "mcap-logger"
 version = "0.1.0"
-source = { virtual = "services/mcap-logger" }
+source = { virtual = "services/mcap_logger" }
 dependencies = [
     { name = "eclipse-zenoh" },
     { name = "foxglove-sdk" },
     { name = "genson" },
+    { name = "loguru" },
     { name = "mcap" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "eclipse-zenoh", specifier = ">=1.4.0" },
-    { name = "foxglove-sdk", specifier = ">=0.7.1" },
-    { name = "genson", specifier = ">=1.3.0" },
-    { name = "mcap", specifier = ">=1.2.2" },
+    { name = "eclipse-zenoh", specifier = "==1.4.0" },
+    { name = "foxglove-sdk", specifier = "==0.8.0" },
+    { name = "genson", specifier = "==1.2.2" },
+    { name = "loguru", specifier = "==0.5.3" },
+    { name = "mcap", specifier = "==1.2.2" },
 ]
 
 [[package]]
