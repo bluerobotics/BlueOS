@@ -2,6 +2,7 @@
 
 [![Test, Build and Deploy Images](https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml/badge.svg)](https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml)
 ![Downloads](https://img.shields.io/github/downloads/bluerobotics/blueos/total?label=Downloads)
+[![Discord](https://img.shields.io/discord/1135646343776456765?label=Discord)](https://discord.gg/y9JNPDMsFv)
 
 [![Latest Stable](https://img.shields.io/github/v/release/bluerobotics/blueos.svg?label=Latest%20Stable)
 ![Date](https://img.shields.io/github/release-date/bluerobotics/blueos?label=Date)](https://github.com/bluerobotics/blueos/releases/latest)
