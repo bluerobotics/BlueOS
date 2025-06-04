@@ -3,8 +3,9 @@ from datetime import datetime, timezone
 from logging import LogRecord
 from pathlib import Path
 from types import FrameType
-from typing import Any, Optional, TextIO, Union
+from typing import Any, Optional, TextIO, Union, Callable, Dict
 
+import zenoh
 from loguru import logger
 
 
@@ -39,15 +40,18 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-def get_new_log_path(service_name: str) -> Path:
-    """Get default Path to a new log for a given service."""
-    # Prevent problematic service names
+def validate_service_name(service_name: str) -> None:
+    """Validate the service name."""
     if service_name == "":
         raise ValueError("Service name cannot be empty")
     if "/" in service_name:
         raise ValueError("Service name cannot contain forward slash character ('/').")
     if "." in service_name:
         raise ValueError("Service name cannot contain extension-separation character ('.').")
+
+
+def get_new_log_path(service_name: str) -> Path:
+    """Get default Path to a new log for a given service."""
 
     # Create folder for service logs if it doesn't exist yet
     default_log_folder = Path("/var/logs/blueos/services")
@@ -61,7 +65,9 @@ def get_new_log_path(service_name: str) -> Path:
 
 def init_logger(service_name: str) -> None:
     try:
+        validate_service_name(service_name)
         logger.add(get_new_log_path(service_name), rotation="10 MB")
+        logger.add(create_log_sink(service_name), serialize=True)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
 
@@ -74,3 +80,21 @@ def stack_trace_message(error: BaseException) -> str:
         message = f"{message} {sub_error}"
         sub_error = sub_error.__cause__
     return message
+
+
+def create_log_sink(service_name: str) -> Callable[[Dict[str, Any]], None]:
+    """Create a loguru sink that publishes logs to a zenoh topic.
+
+    Args:
+        service_name: The name of the service to use in the topic path
+
+    Returns:
+        A function that can be used as a loguru sink
+    """
+    session = zenoh.open(zenoh.Config())
+    topic = f"services/{service_name}/log"
+
+    def sink(message: Dict[str, Any]) -> None:
+        session.put(topic, message)
+
+    return sink
