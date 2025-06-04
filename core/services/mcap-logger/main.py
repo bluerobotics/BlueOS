@@ -2,6 +2,7 @@ import time
 import json
 import zenoh
 import logging
+from functools import partial
 from genson import SchemaBuilder
 from mcap.writer import Writer
 from typing import Dict, Any, Optional
@@ -28,6 +29,85 @@ def validate_data(data: Any) -> bool:
     """Validate if the data is in the expected format."""
     return isinstance(data, dict) and len(data) > 0
 
+def listener(writer: Writer,sample: zenoh.Sample):
+    topic = str(sample.key_expr)
+    logger.debug(f"Received message on topic: {topic}")
+
+    try:
+        data = json.loads(sample.payload.to_string())
+        if not validate_data(data):
+            return
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse JSON for topic {topic}: {e}")
+        return
+    except Exception as e:
+        logger.error(f"Unexpected error processing message for topic {topic}: {e}")
+        return
+
+    # Handle schema registration
+    if topic not in schema_map:
+        try:
+            if topic.endswith("/log"):
+                channel = Channel(topic, message_encoding="json")
+                schema_id = writer.register_schema(
+                    name="foxglove.Log",
+                    encoding="jsonschema",
+                    data=json.dumps({"type": "object"}).encode()
+                )
+                channel_id = writer.register_channel(
+                    schema_id=schema_id,
+                    topic=topic,
+                    message_encoding="json"
+                )
+                channel_map[topic] = channel_id
+                schema_map[topic] = schema_id
+                logger.info(f"Registered Foxglove Log schema for topic: {topic}")
+            else:
+                schema_data = create_schema(data)
+                if schema_data is None:
+                    logger.error(f"Failed to create schema for topic: {topic}")
+                    return
+
+                schema_id = writer.register_schema(
+                    name=f"json_{topic}",
+                    encoding="jsonschema",
+                    data=schema_data
+                )
+                schema_map[topic] = schema_id
+                logger.info(f"Registered custom schema for topic: {topic}")
+        except Exception as e:
+            logger.error(f"Schema registration error for topic {topic}: {e}")
+            return
+
+    # Handle channel registration
+    try:
+        if topic not in channel_map and not topic.endswith("/log"):
+            channel_id = writer.register_channel(
+                schema_id=schema_map[topic],
+                topic=topic,
+                message_encoding="json"
+            )
+            channel_map[topic] = channel_id
+            logger.info(f"Registered channel for topic: {topic}")
+        else:
+            channel_id = channel_map[topic]
+    except Exception as e:
+        logger.error(f"Channel registration error for topic {topic}: {e}")
+        return
+
+    # Write message
+    try:
+        ts = int(time.time_ns())
+        writer.add_message(
+            channel_id=channel_id,
+            log_time=ts,
+            publish_time=ts,
+            data=json.dumps(data).encode()
+        )
+        logger.debug(f"Successfully wrote message for topic: {topic}")
+    except Exception as e:
+        logger.error(f"Failed to write message for topic {topic}: {e}")
+
 def main(conf: zenoh.Config, key: str):
     zenoh.init_log_from_env_or("error")
     logger.info("Opening session...")
@@ -39,87 +119,7 @@ def main(conf: zenoh.Config, key: str):
             writer = Writer(f)
             writer.start()
 
-            def listener(sample: zenoh.Sample):
-                topic = str(sample.key_expr)
-                logger.debug(f"Received message on topic: {topic}")
-
-                try:
-                    data = json.loads(sample.payload.to_string())
-                    if not validate_data(data):
-                        # logger.warning(f"Invalid data format for topic {topic}")
-                        return
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse JSON for topic {topic}: {e}")
-                    return
-                except Exception as e:
-                    logger.error(f"Unexpected error processing message for topic {topic}: {e}")
-                    return
-
-                # Handle schema registration
-                if topic not in schema_map:
-                    try:
-                        if topic.endswith("/log"):
-                            channel = Channel(topic, message_encoding="json")
-                            schema_id = writer.register_schema(
-                                name="foxglove.Log",
-                                encoding="jsonschema",
-                                data=json.dumps({"type": "object"}).encode()
-                            )
-                            channel_id = writer.register_channel(
-                                schema_id=schema_id,
-                                topic=topic,
-                                message_encoding="json"
-                            )
-                            channel_map[topic] = channel_id
-                            schema_map[topic] = schema_id
-                            logger.info(f"Registered Foxglove Log schema for topic: {topic}")
-                        else:
-                            schema_data = create_schema(data)
-                            if schema_data is None:
-                                logger.error(f"Failed to create schema for topic: {topic}")
-                                return
-
-                            schema_id = writer.register_schema(
-                                name=f"json_{topic}",
-                                encoding="jsonschema",
-                                data=schema_data
-                            )
-                            schema_map[topic] = schema_id
-                            logger.info(f"Registered custom schema for topic: {topic}")
-                    except Exception as e:
-                        logger.error(f"Schema registration error for topic {topic}: {e}")
-                        return
-
-                # Handle channel registration
-                try:
-                    if topic not in channel_map and not topic.endswith("/log"):
-                        channel_id = writer.register_channel(
-                            schema_id=schema_map[topic],
-                            topic=topic,
-                            message_encoding="json"
-                        )
-                        channel_map[topic] = channel_id
-                        logger.info(f"Registered channel for topic: {topic}")
-                    else:
-                        channel_id = channel_map[topic]
-                except Exception as e:
-                    logger.error(f"Channel registration error for topic {topic}: {e}")
-                    return
-
-                # Write message
-                try:
-                    ts = int(time.time_ns())
-                    writer.add_message(
-                        channel_id=channel_id,
-                        log_time=ts,
-                        publish_time=ts,
-                        data=json.dumps(data).encode()
-                    )
-                    logger.debug(f"Successfully wrote message for topic: {topic}")
-                except Exception as e:
-                    logger.error(f"Failed to write message for topic {topic}: {e}")
-
-            session.declare_subscriber(key, listener)
+            session.declare_subscriber(key, partial(listener, writer))
 
             logger.info("Press CTRL-C to quit...")
             try:
