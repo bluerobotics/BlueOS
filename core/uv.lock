@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.11"
 
 [manifest]
@@ -448,6 +447,7 @@ source = { editable = "libs/commonwealth" }
 dependencies = [
     { name = "aiohttp" },
     { name = "appdirs" },
+    { name = "eclipse-zenoh" },
     { name = "loguru" },
     { name = "psutil" },
     { name = "pykson" },
@@ -458,6 +458,7 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp", specifier = "==3.7.4" },
     { name = "appdirs", specifier = "==1.4.4" },
+    { name = "eclipse-zenoh", specifier = "==1.4.0" },
     { name = "loguru", specifier = "==0.5.3" },
     { name = "psutil", specifier = "==5.7.2" },
     { name = "pykson", url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" },
@@ -535,6 +536,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e2/c6/560d012e89b10b440d9f796ac0f97d2fbdcb5095d22442e1fc0d58c8387a/dpath-2.1.5.tar.gz", hash = "sha256:ccd964db839baad4aa820612b4b8731b09f40a245d401b723156ce4ef45b22b7", size = 28128 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/4f/b1f2da869ac4f64a05e623e8809edef3fafc735219fcc92bebaa8128605a/dpath-2.1.5-py3-none-any.whl", hash = "sha256:559edcbfc806ca2f9ad9e63566f22e5d41c000e4215bbce9dbf1ca4c859f5e0b", size = 17470 },
+]
+
+[[package]]
+name = "eclipse-zenoh"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ab/45/fdbccdadf83906ba93514e0c771dc604456d46fc57cb45736114c8b14079/eclipse_zenoh-1.4.0.tar.gz", hash = "sha256:c0704127f8bb5ffde7ee8886aaf202ec8f0440a3ee409b8981a9189ae94d0078", size = 123718 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c2/a6/32f57bc1c928e9f6ddbf32d4adb9748b33a47eaf01afde380c2e38d7c988/eclipse_zenoh-1.4.0-cp38-abi3-linux_armv6l.whl", hash = "sha256:103869ac9839063350e75babb480a9cce779b6c363f58df430c776119888b0d3", size = 8408696 },
+    { url = "https://files.pythonhosted.org/packages/b7/01/b9974ebd306d434e17c58027cda53bdb6801f4d474db8595cee77ccce9b0/eclipse_zenoh-1.4.0-cp38-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:b798c4e549ee2734a9a05f5ba5f8e4562b13007b5802870ada1424584ee0873e", size = 15558518 },
+    { url = "https://files.pythonhosted.org/packages/85/fc/9e4aa24ed910881a34feb4ae25f649e60accfc4ead00038c71d23a1ac353/eclipse_zenoh-1.4.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:a1e068d8fc100fe47ea959aa7e44b0c60c46258601bf4331b51a8979b05b9398", size = 7960600 },
+    { url = "https://files.pythonhosted.org/packages/bf/9d/94e537b2e086d58f005dec75009fa49a8c8ab78c6784019c6eb9d5c31a10/eclipse_zenoh-1.4.0-cp38-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:459449cfb46450c54a2ff7db6db7dc0e657553f632bf85bc6790d4f591def088", size = 8300352 },
+    { url = "https://files.pythonhosted.org/packages/3a/84/54638659b4f5e63ccee5501564fff62e54a4ef11599f4bbe7b43c08b9d0e/eclipse_zenoh-1.4.0-cp38-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:aefcbdbb66049fc495aabf22b783115609eb0fbac2bf1256056b2d99e08495ba", size = 9024970 },
+    { url = "https://files.pythonhosted.org/packages/fb/fd/b01d316b31f14981117f346e0cb53f09b8bf4c75e77ca3d4eba16f00e2d2/eclipse_zenoh-1.4.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:585a84ae2c07099e566d473659e455e7a1e7def1124f59984f68a73fe1862d62", size = 8578628 },
+    { url = "https://files.pythonhosted.org/packages/39/be/00cb79dae78936ebf5cc253c9d84f27c4df33dde7e831cf3b5bc2b2871c9/eclipse_zenoh-1.4.0-cp38-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:f5f767e63f581bd9fdb18fa801bdd9f178e99f390923174f4f247f4d8c42a709", size = 8425396 },
+    { url = "https://files.pythonhosted.org/packages/b2/0e/13e4a80a88b3c68ac2433bacbc8fd9c1f7a963e5c4405753af5145a46b4d/eclipse_zenoh-1.4.0-cp38-abi3-win_amd64.whl", hash = "sha256:b6ff6e5e4cf0d6cb5feb828203e4b30da6414a2725736bea4f5a75394b18d685", size = 7019263 },
 ]
 
 [[package]]
