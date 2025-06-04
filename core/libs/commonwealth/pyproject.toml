@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "aiohttp==3.7.4",
     "appdirs==1.4.4",
+    "eclipse-zenoh==1.4.0",
     "loguru==0.5.3",
     "psutil==5.7.2",
     "pykson==1.0.2",
