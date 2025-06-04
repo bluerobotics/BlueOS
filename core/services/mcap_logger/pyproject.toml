@@ -1,0 +1,15 @@
+[project]
+name = "mcap_logger"
+version = "0.1.0"
+description = "MCAP logger service for BlueOS"
+requires-python = ">=3.11"
+authors = ["Software Department <software@bluerobotics.com>"]
+license = "MIT"
+
+dependencies = [
+    "loguru==0.5.3",
+    "eclipse-zenoh==1.4.0",
+    "mcap==1.2.2",
+    "genson==1.2.2",
+    "foxglove-sdk==0.8.0",
+]
