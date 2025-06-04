@@ -69,7 +69,7 @@ ArduRover is an open-source, uncrewed boat platform. Whether you are commanding 
 
 ### **Submarines (ArduSub)**
 
-ArduSub is the go-to control system for remotely operated underwater vehicles (ROVs) 🐟. BlueOS offers seamless integration with ArduSub, enabling efficient management and operation of underwater vehicles. 
+ArduSub is the go-to control system for remotely operated underwater vehicles (ROVs) 🐟. BlueOS offers seamless integration with ArduSub, enabling efficient management and operation of underwater vehicles.
 
 [BlueROV2](https://bluerobotics.com/store/rov/bluerov2/) is supported out of the box.
 
