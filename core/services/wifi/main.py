@@ -12,6 +12,7 @@ from commonwealth.utils.apis import (
     StackedHTTPException,
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -167,20 +168,25 @@ app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", 
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 
-async def async_start() -> None:
-    # pylint: disable=global-statement
-    global wifi_manager
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
     parser = argparse.ArgumentParser(description="Abstraction CLI for WifiManager configuration.")
     candidates = [wpa_manager, network_manager]
+
     for implementation in candidates:
         implementation.add_arguments(parser)
+
     # we need to configure all arguments before parsing them, hence two loops
     for implementation in candidates:
         implementation.configure(parser.parse_args())
-    async_loop = asyncio.get_event_loop()
+
     # Running uvicorn with log disabled so loguru can handle it
-    config = Config(app=app, loop=async_loop, host="0.0.0.0", port=9000, log_config=None)
+    config = Config(app=app, host="0.0.0.0", port=9000, log_config=None)
     server = Server(config)
+
+    # pylint: disable=global-statement
+    global wifi_manager
     for implementation in candidates:
         can_work = await implementation.can_work()
         logger.info(f"{implementation} can work: {can_work}")
@@ -189,9 +195,9 @@ async def async_start() -> None:
             await implementation.start()
             wifi_manager = implementation
             break
+
     await server.serve()
 
 
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(async_start())
+    asyncio.run(main())

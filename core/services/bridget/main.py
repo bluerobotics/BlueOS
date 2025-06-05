@@ -1,10 +1,12 @@
 #! /usr/bin/env python3
+import asyncio
 import logging
 from typing import Any, List
 
-import uvicorn
+from uvicorn import Config, Server
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -75,6 +77,15 @@ async def read_items() -> Any:
     return HTMLResponse(content=html_content, status_code=200)
 
 
-if __name__ == "__main__":
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
     # Running uvicorn with log disabled so loguru can handle it
-    uvicorn.run(app, host="0.0.0.0", port=27353, log_config=None)
+    config = Config(app=app, host="0.0.0.0", port=27353, log_config=None)
+    server = Server(config)
+
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

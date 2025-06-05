@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+import asyncio
 import json
 import logging
 import os
@@ -10,11 +11,12 @@ from pathlib import Path
 from typing import Any, AsyncGenerator
 
 import appdirs
-import uvicorn
+from uvicorn import Config, Server
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.general import delete_everything, delete_everything_stream
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from commonwealth.utils.streaming import streamer
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -285,10 +287,18 @@ def setup_ssh() -> None:
     logger.info("SSH setup done")
 
 
-if __name__ == "__main__":
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
     setup_ssh()
     # Register ssh client and remove message from the following commands
     run_command("ls")
 
     # Running uvicorn with log disabled so loguru can handle it
-    uvicorn.run(app, host="0.0.0.0", port=9100, log_config=None)
+    config = Config(app=app, host="0.0.0.0", port=9100, log_config=None)
+    server = Server(config)
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+import asyncio
 import logging
 from typing import Any
 
@@ -6,6 +7,7 @@ import aiodocker
 import connexion
 from aiohttp import web
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from loguru import logger
 
 from docker_login import (
@@ -100,11 +102,26 @@ def docker_accounts() -> Any:
     return get_docker_accounts()
 
 
-if __name__ == "__main__":
-    maximum_number_of_bytes = 2 * (2**30)  # 2 GBs
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
     app = connexion.AioHttpApp(__name__, specification_dir="openapi/")
     app.add_api("versionchooser.yaml", arguments={"title": "BlueOS Version Chooser"}, pass_context_arg_name="request")
-    app.app._client_max_size = maximum_number_of_bytes
+
+    app.app.client_max_size = 2 * (2**30)  # 2 GBs
+
     app.app.router.add_static("/static/", path=str(STATIC_FOLDER))
     app.app.router.add_route("GET", "/", index)
-    app.run(port=8081)
+
+    runner = web.AppRunner(app.app)
+    await runner.setup()
+
+    site = web.TCPSite(runner, host="0.0.0.0", port=8081)
+    await site.start()
+
+    # Wait forever
+    await asyncio.Event().wait()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

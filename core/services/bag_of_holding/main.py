@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+import asyncio
 import json
 import logging
 from pathlib import Path
@@ -6,9 +7,10 @@ from typing import Any, Dict
 
 import appdirs
 import dpath
-import uvicorn
+from uvicorn import Config, Server
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import Body, FastAPI, HTTPException
 from fastapi import Path as FastPath
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -108,6 +110,15 @@ async def root() -> HTMLResponse:
     return HTMLResponse(content=html_content, status_code=200)
 
 
-if __name__ == "__main__":
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
     # Running uvicorn with log disabled so loguru can handle it
-    uvicorn.run(app, host="0.0.0.0", port=9101, log_config=None)
+    config = Config(app=app, host="0.0.0.0", port=9101, log_config=None)
+    server = Server(config)
+
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

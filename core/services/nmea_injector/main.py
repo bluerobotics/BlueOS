@@ -6,6 +6,7 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -81,16 +82,22 @@ async def read_items() -> Any:
     return HTMLResponse(content=html_content, status_code=200)
 
 
-if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
 
     # # Running uvicorn with log disabled so loguru can handle it
-    config = Config(app=app, loop=loop, host="0.0.0.0", port=2748, log_config=None)
+    config = Config(app=app, host="0.0.0.0", port=2748, log_config=None)
     server = Server(config)
 
-    loop.create_task(controller.load_socks_from_settings())
+    asyncio.create_task(controller.load_socks_from_settings())
+
     if args.udp:
-        loop.create_task(controller.add_sock(NMEASocket(kind=SocketKind.UDP, port=args.udp, component_id=220)))
+        asyncio.create_task(controller.add_sock(NMEASocket(kind=SocketKind.UDP, port=args.udp, component_id=220)))
     if args.tcp:
-        loop.create_task(controller.add_sock(NMEASocket(kind=SocketKind.TCP, port=args.tcp, component_id=221)))
-    loop.run_until_complete(server.serve())
+        asyncio.create_task(controller.add_sock(NMEASocket(kind=SocketKind.TCP, port=args.tcp, component_id=221)))
+
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

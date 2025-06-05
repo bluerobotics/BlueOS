@@ -3,6 +3,7 @@ import asyncio
 import logging
 
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from loguru import logger
 from uvicorn import Config, Server
 
@@ -19,22 +20,32 @@ from kraken import Kraken
 kraken = Kraken()
 jobs = JobsManager()
 
-if __name__ == "__main__":
+
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
     args = CommandLineArgs.from_args()
 
     if args.debug:
         logging.getLogger(SERVICE_NAME).setLevel(logging.DEBUG)
 
     logger.info("Releasing the Kraken service.")
-    loop = asyncio.new_event_loop()
 
-    config = Config(app=application, loop=loop, host=args.host, port=args.port, log_config=None)
+    config = Config(app=application, host=args.host, port=args.port, log_config=None)
     server = Server(config)
+
     jobs.set_base_host(f"http://{args.host}:{args.port}")
 
-    loop.create_task(kraken.start_cleaner_task())
-    loop.create_task(kraken.start_starter_task())
-    loop.create_task(jobs.start())
-    loop.run_until_complete(server.serve())
-    loop.run_until_complete(jobs.stop())
-    loop.run_until_complete(kraken.stop())
+    # Launch background tasks
+    asyncio.create_task(kraken.start_cleaner_task())
+    asyncio.create_task(kraken.start_starter_task())
+    asyncio.create_task(jobs.start())
+
+    await server.serve()
+
+    await jobs.stop()
+    await kraken.stop()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
