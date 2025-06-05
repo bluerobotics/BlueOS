@@ -6,6 +6,7 @@ from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -76,15 +77,19 @@ async def sensor_manager() -> None:
     await port_watcher.start_watching()
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Ping Service for Bluerobotics BlueOS")
-    args = parser.parse_args()
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
 
-    loop = asyncio.new_event_loop()
+    parser = argparse.ArgumentParser(description="Ping Service for Bluerobotics BlueOS")
+    _ = parser.parse_args()
 
     # Running uvicorn with log disabled so loguru can handle it
-    config = Config(app=app, loop=loop, host="0.0.0.0", port=9110, log_config=None)
+    config = Config(app=app, host="0.0.0.0", port=9110, log_config=None)
     server = Server(config)
 
-    loop.create_task(sensor_manager())
-    loop.run_until_complete(server.serve())
+    asyncio.create_task(sensor_manager())
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

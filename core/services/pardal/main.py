@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import asyncio
 import argparse
 import logging
 import os
@@ -8,6 +9,7 @@ from typing import Generator
 import aiohttp
 from aiohttp import web
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from loguru import logger
 
 SERVICE_NAME = "pardal"
@@ -75,11 +77,26 @@ async def root(request: web.Request) -> web.Response:
     return web.Response(text=html_content, content_type="text/html")
 
 
-app = web.Application()
-maximum_number_of_bytes = 2 * (2**30)  # 2 GBs
-app._client_max_size = maximum_number_of_bytes
-app.add_routes([web.get("/ws", websocket_echo)])
-app.router.add_get("/", root, name="root")
-app.router.add_get("/get_file", get_file, name="get_file")
-app.router.add_post("/post_file", post_file, name="post_file")
-web.run_app(app, path="0.0.0.0", port=args.port)
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
+    app = web.Application()
+    app.client_max_size = 2 * (2**30)  # 2 GBs
+
+    app.add_routes([web.get("/ws", websocket_echo)])
+    app.router.add_get("/", root, name="root")
+    app.router.add_get("/get_file", get_file, name="get_file")
+    app.router.add_post("/post_file", post_file, name="post_file")
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+
+    site = web.TCPSite(runner, host="0.0.0.0", port=args.port)
+    await site.start()
+
+    # Wait forever
+    await asyncio.Event().wait()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

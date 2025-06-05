@@ -28,6 +28,7 @@ from commonwealth.utils.general import (
     local_unique_identifier,
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -677,12 +678,17 @@ async def root() -> HTMLResponse:
 
 port_to_service_map: Dict[int, str] = parse_nginx_file("/home/pi/tools/nginx/nginx.conf")
 
-if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
 
-    # Running uvicorn with log disabled so loguru can handle it
-    config = Config(app=app, loop=loop, host="0.0.0.0", port=Helper.PORT, log_config=None)
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
+    config = Config(app=app, host="0.0.0.0", port=Helper.PORT, log_config=None)
     server = Server(config)
 
-    loop.create_task(periodic())
-    loop.run_until_complete(server.serve())
+    asyncio.create_task(periodic())
+
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

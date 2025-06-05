@@ -11,6 +11,7 @@ import psutil
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import init_logger
+from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -333,7 +334,9 @@ async def root() -> Any:
     return HTMLResponse(content=html_content, status_code=200)
 
 
-if __name__ == "__main__":
+async def main() -> None:
+    await init_sentry_async(SERVICE_NAME)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
@@ -343,11 +346,13 @@ if __name__ == "__main__":
 
     logger.info("Starting Beacon Service.")
 
-    loop = asyncio.new_event_loop()
-
-    config = Config(app=app, loop=loop, host="0.0.0.0", port=9111, log_config=None)
+    config = Config(app=app, host="0.0.0.0", port=9111, log_config=None)
     server = Server(config)
 
-    loop.create_task(beacon.run())
-    loop.run_until_complete(server.serve())
-    loop.run_until_complete(beacon.stop())
+    asyncio.create_task(beacon.run())
+    await server.serve()
+    await beacon.stop()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

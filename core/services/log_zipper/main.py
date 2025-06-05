@@ -12,9 +12,12 @@ from typing import List
 
 from commonwealth.utils.general import available_disk_space_mb, delete_everything
 from commonwealth.utils.logs import InterceptHandler, init_logger
+from commonwealth.utils.sentry_config import init_sentry
 from loguru import logger
 
 SERVICE_NAME = "log-zipper"
+
+init_sentry(SERVICE_NAME)
 
 
 def zip_files(files: List[str], output_path: str) -> None:
