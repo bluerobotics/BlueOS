@@ -1,0 +1,73 @@
+{
+  "VERSION": 4,
+  "advertisement_types": [
+    {
+      "name": "_mavlink",
+      "port": 14550,
+      "properties": "{\"name\": \"ardusub\"}",
+      "protocol": "_udp"
+    },
+    {
+      "name": "_http",
+      "port": 80,
+      "properties": null,
+      "protocol": "_tcp"
+    }
+  ],
+  "blacklist": [
+    "lo",
+    "docker"
+  ],
+  "default": {
+    "advertise": [
+      "_http"
+    ],
+    "domain_names": [
+      "blueos"
+    ],
+    "ip": "ips[0]"
+  },
+  "interfaces": [
+    {
+      "advertise": [
+        "_mavlink",
+        "_http"
+      ],
+      "domain_names": [
+        "blueos",
+        "blueos"
+      ],
+      "ip": "ips[*]",
+      "name": "eth0"
+    },
+    {
+      "advertise": [
+        "_http"
+      ],
+      "domain_names": [
+        "blueos-wifi"
+      ],
+      "ip": "ips[0]",
+      "name": "wlan0"
+    },
+    {
+      "advertise": [
+        "_http"
+      ],
+      "domain_names": [
+        "blueos-hostspot"
+      ],
+      "ip": "ips[0]",
+      "name": "uap0"
+    },
+    {
+      "advertise": [
+        "_http"
+      ],
+      "domain_names": [],
+      "ip": "ips[0]",
+      "name": "usb0"
+    }
+  ],
+  "vehicle_name": "BlueBoat"
+}
