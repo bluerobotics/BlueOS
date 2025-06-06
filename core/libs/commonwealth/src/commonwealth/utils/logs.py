@@ -3,10 +3,10 @@ from datetime import datetime, timezone
 from logging import LogRecord
 from pathlib import Path
 from types import FrameType
-from typing import Any, Optional, TextIO, Union, Callable, Dict
+from typing import Any, Optional, TextIO, Union, Callable
 
 import zenoh
-from loguru import logger
+from loguru import logger, _handler
 
 
 class LogRotator:
@@ -82,7 +82,7 @@ def stack_trace_message(error: BaseException) -> str:
     return message
 
 
-def create_log_sink(service_name: str) -> Callable[[Dict[str, Any]], None]:
+def create_log_sink(service_name: str) -> Callable[[_handler.Message], None]:
     """Create a loguru sink that publishes logs to a zenoh topic.
 
     Args:
@@ -94,7 +94,7 @@ def create_log_sink(service_name: str) -> Callable[[Dict[str, Any]], None]:
     session = zenoh.open(zenoh.Config())
     topic = f"services/{service_name}/log"
 
-    def sink(message: Dict[str, Any]) -> None:
+    def sink(message: _handler.Message) -> None:
         session.put(topic, message)
 
     return sink
