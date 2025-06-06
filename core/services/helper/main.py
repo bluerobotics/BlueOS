@@ -24,6 +24,8 @@ from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONRespons
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
     blueos_version,
+    CpuType,
+    get_cpu_type,
     local_hardware_identifier,
     local_unique_identifier,
 )
@@ -427,7 +429,12 @@ class Helper:
         ports.difference_update(Helper.SKIP_PORTS, known_ports)
 
         # The detect_services run several of requests sequentially, so we are capping the amount of executors to lower the peaks on the CPU usage
-        with futures.ThreadPoolExecutor(max_workers=2) as executor:
+        if get_cpu_type() == CpuType.PI3 or len(ports) == 0:
+            max_workers = 2
+        else:
+            max_workers = len(ports)
+
+        with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             tasks = [executor.submit(Helper.detect_service, port) for port in ports]
             services = {task.result() for task in futures.as_completed(tasks)}
 
