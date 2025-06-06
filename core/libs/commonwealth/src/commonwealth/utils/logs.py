@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timezone
 from logging import LogRecord
@@ -95,6 +96,38 @@ def create_log_sink(service_name: str) -> Callable[[_handler.Message], None]:
     topic = f"services/{service_name}/log"
 
     def sink(message: _handler.Message) -> None:
-        session.put(topic, message)
+        # Transform the message to the Foxglove log format
+        # https://docs.foxglove.dev/docs/visualization/message-schemas/log
+
+        # fmt: off
+        LEVEL_MAP = {
+            "UNKNOWN": 0, # Foxglove value
+            "TRACE": 0,
+            "DEBUG": 1,
+            "INFO": 2, # Foxglove value
+            "SUCCESS": 2,
+            "WARNING": 3,
+            "ERROR": 4,
+            "FATAL": 5, # Foxglove value
+            "CRITICAL": 5,
+        }
+
+        record = message.record
+        total_ns = record["time"].timestamp() * 1e9
+
+        foxglove_log = {
+            "timestamp": {
+                "sec": total_ns // 1_000_000_000,
+                "nsec": total_ns % 1_000_000_000
+            },
+            "level": LEVEL_MAP.get(record["level"].name.upper(), LEVEL_MAP["UNKNOWN"]),
+            "message": record["message"],
+            "name": record["name"],
+            "file": record["file"].name,
+            "line": record["line"],
+        }
+        # fmt: on
+
+        session.put(topic, json.dumps(foxglove_log))
 
     return sink
