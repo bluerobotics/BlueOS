@@ -96,7 +96,12 @@
             </v-card-title>
 
             <v-card-text class="flex-grow-1 overflow-auto">
-              <pre>{{ formatMessage(current_message) }}</pre>
+              <template v-if="isVideoTopic">
+                <canvas ref="videoCanvas" width="640" height="480" />
+              </template>
+              <template v-else>
+                <pre>{{ formatMessage(current_message) }}</pre>
+              </template>
             </v-card-text>
           </template>
           <div
@@ -120,7 +125,7 @@ import Vue from 'vue'
 
 interface ZenohMessage {
   topic: string
-  payload: string
+  payload: string | Uint8Array
   timestamp: Date
 }
 
@@ -138,6 +143,7 @@ export default Vue.extend({
       session: null as Session | null,
       subscriber: null as Subscriber | null,
       liveliness_subscriber: null as Subscriber | null,
+      videoDecoder: null as VideoDecoder | null,
     }
   },
   computed: {
@@ -154,14 +160,66 @@ export default Vue.extend({
       if (!this.selected_topic) return null
       return this.messages[this.selected_topic] || null
     },
+    isVideoTopic(): boolean {
+      return this.selected_topic?.toLowerCase().includes('video') || false
+    },
+  },
+  watch: {
+    selected_topic(newTopic: string | null) {
+      if (newTopic && this.isVideoTopic) {
+        this.$nextTick(() => {
+          this.setupVideoDecoder()
+        })
+        return
+      }
+
+      this.cleanupVideoDecoder()
+    },
   },
   async mounted() {
     await this.setupZenoh()
   },
   beforeDestroy() {
     this.disconnectZenoh()
+    this.cleanupVideoDecoder()
   },
   methods: {
+    setupVideoDecoder() {
+      const canvas = this.$refs.videoCanvas as HTMLCanvasElement
+      if (!canvas) {
+        console.error('Canvas element not found')
+        return
+      }
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        console.error('Could not get canvas context')
+        return
+      }
+
+      try {
+        this.videoDecoder = new VideoDecoder({
+          output: (frame) => {
+            ctx.drawImage(frame, 0, 0)
+            frame.close()
+          },
+          error: (e) => console.error('VideoDecoder error:', e),
+        })
+
+        this.videoDecoder.configure({
+          codec: 'avc1.42E01E',
+          optimizeForLatency: true,
+        })
+      } catch (error) {
+        console.error('Failed to create VideoDecoder:', error)
+      }
+    },
+    cleanupVideoDecoder() {
+      if (this.videoDecoder) {
+        this.videoDecoder.close()
+        this.videoDecoder = null
+      }
+    },
     formatMessage(message: ZenohMessage | null): string {
       if (!message) return 'No messages received yet'
 
@@ -178,10 +236,12 @@ export default Vue.extend({
       }
 
       // Try to parse the payload as JSON if possible
-      try {
-        formattedMessage.payload = JSON.parse(message.payload)
-      } catch (exception) {
-        // Keep the raw payload if it's not valid JSON
+      if (typeof message.payload === 'string') {
+        try {
+          formattedMessage.payload = JSON.parse(message.payload)
+        } catch (exception) {
+          // Keep the raw payload if it's not valid JSON
+        }
       }
 
       return JSON.stringify(formattedMessage, null, 2)
@@ -197,9 +257,12 @@ export default Vue.extend({
         this.subscriber = await this.session.declare_subscriber('**', {
           handler: (sample: Sample) => {
             const topic = sample.keyexpr().toString()
+            const payload = sample.payload()
             const message: ZenohMessage = {
               topic,
-              payload: sample.payload().to_string(),
+              payload: topic.toLowerCase().includes('video')
+                ? payload.to_bytes()
+                : payload.to_string(),
               timestamp: new Date(),
             }
 
@@ -207,6 +270,26 @@ export default Vue.extend({
             this.$set(this.messages, topic, message)
             if (!this.topics.includes(topic)) {
               this.topics = [...this.topics, topic].sort()
+            }
+
+            // Handle H264 video decoding
+            if (
+              topic === this.selected_topic
+              && this.isVideoTopic
+              && this.videoDecoder
+              && message.payload instanceof Uint8Array
+            ) {
+              try {
+                const chunkData = message.payload
+                const chunk = new EncodedVideoChunk({
+                  type: 'delta',
+                  timestamp: performance.now() * 1000,
+                  data: chunkData,
+                })
+                this.videoDecoder.decode(chunk)
+              } catch (error) {
+                console.error('Error decoding video chunk:', error)
+              }
             }
 
             return Promise.resolve()
