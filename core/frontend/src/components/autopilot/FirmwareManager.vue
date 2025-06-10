@@ -3,6 +3,45 @@
     elevation="0"
     class="pa-2"
   >
+    <v-alert
+      v-if="only_bootloader_boards_available"
+      type="warning"
+      class="mb-6"
+      icon="mdi-information-outline"
+      text
+    >
+      <div class="d-flex flex-column">
+        <p class="mr-2" style="text-align: justify;">
+          <strong>  Only bootloader boards detected.</strong> This likely means the firmware is corrupted.
+          Please select the correct vehicle type and update to the latest autopilot firmware.
+        </p>
+        <p class="mr-2" style="text-align: justify;">
+          <strong>Installation may take a few minutes.</strong>
+        </p>
+        <div
+          v-if="has_install_failed"
+          class="bl-only-info-action"
+        >
+          <p class="mr-2 mb-0" style="text-align: justify;">
+            If it fails, this is normal for some corrupted firmware. Just reboot the onboard computer and try again from
+            this page.
+          </p>
+          <v-btn
+            v-tooltip="'Fully restarts the onboard computer'"
+            class="ma-2"
+            @click="rebootOnBoardComputer"
+          >
+            <v-icon
+              left
+              color="orange"
+            >
+              mdi-restart-alert
+            </v-icon>
+            Reboot
+          </v-btn>
+        </div>
+      </div>
+    </v-alert>
     <div id="update-configs">
       <div id="update-modes">
         <v-item-group
@@ -68,7 +107,7 @@
       </div>
       <div id="update-options">
         <v-select
-          v-if="settings.is_pirate_mode"
+          v-if="settings.is_pirate_mode || only_bootloader_boards_available"
           v-model="chosen_board"
           :items="available_boards"
           label="Board"
@@ -189,7 +228,13 @@ import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { Firmware, FlightController, Vehicle } from '@/types/autopilot'
+import commander from '@/store/commander'
+import {
+  Firmware,
+  FlightController,
+  FlightControllerFlags,
+  Vehicle,
+} from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
@@ -220,6 +265,7 @@ export default Vue.extend({
   name: 'FirmwareManager',
   data() {
     const { current_board } = autopilot
+    const { rebootOnBoardComputer, requestOnBoardComputerReboot } = commander
     return {
       settings,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
@@ -232,6 +278,8 @@ export default Vue.extend({
       available_firmwares: [] as Firmware[],
       firmware_file: null as (Blob | null),
       install_result_message: '',
+      rebootOnBoardComputer,
+      requestOnBoardComputerReboot,
     }
   },
   computed: {
@@ -253,13 +301,28 @@ export default Vue.extend({
     install_alert_icon(): string {
       return this.install_status === InstallStatus.Succeeded ? 'mdi-check-decagram' : 'close-octagon'
     },
+    has_install_failed(): boolean {
+      return this.install_status === InstallStatus.Failed
+    },
     vehicle_types(): {value: string, text: Vehicle}[] {
       return Object.entries(Vehicle).map(
         (vehicle) => ({ value: vehicle[0], text: vehicle[1] }),
       )
     },
+    no_sitl_boards(): FlightController[] {
+      return autopilot.available_boards.filter((board) => board.name.toLowerCase() !== 'sitl')
+    },
+    only_bootloader_boards_available(): boolean {
+      /** If user explicitly selected SITL, we don't want to show as bootloader only boards */
+      if (autopilot.current_board?.name.toLowerCase() === 'sitl') {
+        return false
+      }
+
+      return this.no_sitl_boards.length > 0
+        && this.no_sitl_boards.every((board) => board.flags.includes(FlightControllerFlags.is_bootloader))
+    },
     available_boards(): {value: FlightController, text: string}[] {
-      return autopilot.available_boards.map(
+      return (this.only_bootloader_boards_available ? this.no_sitl_boards : autopilot.available_boards).map(
         (board) => ({
           value: board,
           text: board.name === autopilot.current_board?.name ? `${board.name} (current)` : board.name,
@@ -294,7 +357,28 @@ export default Vue.extend({
       return true
     },
   },
+  watch: {
+    only_bootloader_boards_available(new_value: boolean): void {
+      if (new_value) {
+        this.setFirstNoSitlBoard()
+      }
+    },
+    has_install_failed(new_value: boolean): void {
+      if (new_value && this.only_bootloader_boards_available) {
+        this.requestOnBoardComputerReboot()
+      }
+    },
+  },
+  mounted(): void {
+    if (this.only_bootloader_boards_available) {
+      this.setFirstNoSitlBoard()
+    }
+  },
   methods: {
+    setFirstNoSitlBoard(): void {
+      const [first_board] = this.no_sitl_boards
+      this.chosen_board = first_board
+    },
     async updateAvailableFirmwares(): Promise<void> {
       this.chosen_firmware_url = null
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
@@ -400,5 +484,18 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.bl-only-info-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 600px) {
+  .bl-only-info-action {
+    flex-direction: column;
+    align-items: flex-end;
+  }
 }
 </style>
