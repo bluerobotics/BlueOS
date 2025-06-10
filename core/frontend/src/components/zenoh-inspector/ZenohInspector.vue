@@ -96,7 +96,14 @@
             </v-card-title>
 
             <v-card-text class="flex-grow-1 overflow-auto">
-              <pre>{{ formatMessage(current_message) }}</pre>
+              <template v-if="isVideoTopic">
+                <raw-video-player
+                  :video-data="videoData"
+                />
+              </template>
+              <template v-else>
+                <pre>{{ formatMessage(current_message) }}</pre>
+              </template>
             </v-card-text>
           </template>
           <div
@@ -112,20 +119,26 @@
     </v-row>
   </v-container>
 </template>
+
 <script lang="ts">
 import {
   Config, Sample, SampleKind, Session, Subscriber,
 } from '@eclipse-zenoh/zenoh-ts'
 import Vue from 'vue'
 
+import RawVideoPlayer from './RawVideoPlayer.vue'
+
 interface ZenohMessage {
   topic: string
-  payload: string
+  payload: string | Uint8Array
   timestamp: Date
 }
 
 export default Vue.extend({
   name: 'ZenohInspector',
+  components: {
+    RawVideoPlayer,
+  },
   data() {
     return {
       topics: [] as string[],
@@ -154,6 +167,15 @@ export default Vue.extend({
       if (!this.selected_topic) return null
       return this.messages[this.selected_topic] || null
     },
+    isVideoTopic(): boolean {
+      return this.selected_topic?.toLowerCase().includes('video') || false
+    },
+    videoData(): Uint8Array | null {
+      if (!this.current_message?.payload || typeof this.current_message.payload === 'string') {
+        return null
+      }
+      return this.current_message.payload as Uint8Array
+    },
   },
   async mounted() {
     await this.setupZenoh()
@@ -177,15 +199,17 @@ export default Vue.extend({
         payload: message.payload,
       }
 
-      // Try to parse the payload as JSON if possible
-      try {
-        formattedMessage.payload = JSON.parse(message.payload)
-      } catch (exception) {
-        // Keep the raw payload if it's not valid JSON
+      if (typeof message.payload === 'string') {
+        try {
+          formattedMessage.payload = JSON.parse(message.payload)
+        } catch (exception) {
+          // Keep the raw payload if it's not valid JSON
+        }
       }
 
       return JSON.stringify(formattedMessage, null, 2)
     },
+
     async setupZenoh() {
       try {
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -195,11 +219,14 @@ export default Vue.extend({
 
         // Setup regular message subscriber
         this.subscriber = await this.session.declare_subscriber('**', {
-          handler: (sample: Sample) => {
+          handler: async (sample: Sample) => {
             const topic = sample.keyexpr().toString()
+            const payload = sample.payload()
             const message: ZenohMessage = {
               topic,
-              payload: sample.payload().to_string(),
+              payload: topic.toLowerCase().includes('video')
+                ? payload.to_bytes()
+                : payload.to_string(),
               timestamp: new Date(),
             }
 
