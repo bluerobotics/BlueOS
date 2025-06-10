@@ -3,6 +3,45 @@
     elevation="0"
     class="pa-2"
   >
+    <v-alert
+      v-if="only_bootloader_boards_available"
+      type="warning"
+      class="mb-6"
+      icon="mdi-information-outline"
+      text
+    >
+      <div class="d-flex flex-column">
+        <p class="mr-2" style="text-align: justify;">
+          <strong>  Only bootloader boards detected.</strong> This likely means the firmware is corrupted.
+          Please select the correct vehicle type and update to the latest autopilot firmware.
+        </p>
+        <p class="mr-2" style="text-align: justify;">
+          <strong>Installation may take a few minutes.</strong>
+        </p>
+        <div
+          v-if="has_install_failed"
+          class="bl-only-info-action"
+        >
+          <p class="mr-2 mb-0" style="text-align: justify;">
+            If it fails, this is normal for some corrupted firmware. Just reboot the onboard computer and try again from
+            this page.
+          </p>
+          <v-btn
+            v-tooltip="'Fully restarts the onboard computer'"
+            class="ma-2"
+            @click="rebootOnBoardComputer"
+          >
+            <v-icon
+              left
+              color="orange"
+            >
+              mdi-restart-alert
+            </v-icon>
+            Reboot
+          </v-btn>
+        </div>
+      </div>
+    </v-alert>
     <div id="update-configs">
       <div id="update-modes">
         <v-item-group
@@ -198,6 +237,7 @@ import Vue from 'vue'
 import Notifier from '@/libs/notifier'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
+import commander from '@/store/commander'
 import {
   Firmware,
   FirmwareVehicleType,
@@ -235,6 +275,7 @@ enum UploadType {
 export default Vue.extend({
   name: 'FirmwareManager',
   data() {
+    const { rebootOnBoardComputer, requestOnBoardComputerReboot } = commander
     return {
       autopilot,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
@@ -247,6 +288,8 @@ export default Vue.extend({
       available_firmwares: [] as Firmware[],
       firmware_file: null as (Blob | null),
       install_result_message: '',
+      rebootOnBoardComputer,
+      requestOnBoardComputerReboot,
     }
   },
   computed: {
@@ -267,6 +310,9 @@ export default Vue.extend({
     },
     install_alert_icon(): string {
       return this.install_status === InstallStatus.Succeeded ? 'mdi-check-decagram' : 'close-octagon'
+    },
+    has_install_failed(): boolean {
+      return this.install_status === InstallStatus.Failed
     },
     vehicle_types(): {value: string, text: Vehicle}[] {
       return Object.entries(Vehicle).map(
@@ -357,6 +403,11 @@ export default Vue.extend({
     only_bootloader_boards_available(new_value: boolean): void {
       if (new_value) {
         this.setFirstNoSitlBoard()
+      }
+    },
+    has_install_failed(new_value: boolean): void {
+      if (new_value && this.only_bootloader_boards_available) {
+        this.requestOnBoardComputerReboot()
       }
     },
   },
@@ -482,5 +533,18 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.bl-only-info-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 600px) {
+  .bl-only-info-action {
+    flex-direction: column;
+    align-items: flex-end;
+  }
 }
 </style>
