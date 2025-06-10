@@ -31,6 +31,7 @@
     "apexcharts": "^3.36.3",
     "axios": "^0.21.1",
     "babel-loader": "^8.2.5",
+    "broadway-player": "^0.1.1",
     "colorthief": "2.4.0",
     "date-fns": "^2.23.0",
     "file-saver": "^2.0.5",
