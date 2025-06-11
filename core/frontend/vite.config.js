@@ -78,6 +78,9 @@ export default defineConfig(({ command, mode }) => {
       'process.env': {},
       __APP_ENV__: env.APP_ENV,
     },
+    optimizeDeps: {
+      exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util']
+    },
     server: {
       port: 8080,
       proxy: {
