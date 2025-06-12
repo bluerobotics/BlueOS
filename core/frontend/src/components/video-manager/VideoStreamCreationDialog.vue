@@ -439,13 +439,13 @@ export default Vue.extend({
         case StreamType.UDP:
           if (!this.stream_endpoints[index].includes('udp://')) {
             // Vue.set() forces the update of a nested property
-            Vue.set(this.stream_endpoints, index, `udp://${this.user_ip_address}:${5600 + index}`)
+            Vue.set(this.stream_endpoints, index, `udp://${this.user_ip_address}:${5600 + 2 * index}`)
           }
           break
         case StreamType.UDP265:
           if (!this.stream_endpoints[index].includes('udp265://')) {
             // Vue.set() forces the update of a nested property
-            Vue.set(this.stream_endpoints, index, `udp265://${this.user_ip_address}:${5600 + index}`)
+            Vue.set(this.stream_endpoints, index, `udp265://${this.user_ip_address}:${5600 + 2 * index}`)
           }
           break
         case StreamType.RTSP:
