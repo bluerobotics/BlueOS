@@ -130,7 +130,7 @@ import RawVideoPlayer from './RawVideoPlayer.vue'
 
 interface ZenohMessage {
   topic: string
-  payload: string | Uint8Array
+  payload: string
   timestamp: Date
 }
 
@@ -171,10 +171,10 @@ export default Vue.extend({
       return this.selected_topic?.toLowerCase().includes('video') || false
     },
     videoData(): Uint8Array | null {
-      if (!this.current_message?.payload || typeof this.current_message.payload === 'string') {
+      if (!this.current_message?.payload) {
         return null
       }
-      return this.current_message.payload as Uint8Array
+      return new Uint8Array(JSON.parse(this.current_message.payload)?.data)
     },
   },
   async mounted() {
@@ -224,9 +224,7 @@ export default Vue.extend({
             const payload = sample.payload()
             const message: ZenohMessage = {
               topic,
-              payload: topic.toLowerCase().includes('video')
-                ? payload.to_bytes()
-                : payload.to_string(),
+              payload: payload.to_string(),
               timestamp: new Date(),
             }
 
