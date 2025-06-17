@@ -98,6 +98,13 @@ mkdir -p /usr/blueos/userdata/settings
 find /usr/blueos/userdata -type d -exec chmod a+rw {} \;
 find /usr/blueos/userdata -type f -exec chmod a+rw {} \;
 
+# copy nginx configs over from $TOOLS_PATH to persistent storage if we don't already have one
+if [ ! -d "/etc/blueos/nginx" ]; then
+    mkdir -p /etc/blueos/nginx
+    cp $TOOLS_PATH/nginx/nginx.conf /etc/blueos/nginx/nginx.conf
+    cp $TOOLS_PATH/nginx/cors.conf /etc/blueos/nginx/cors.conf
+fi
+
 # These services have priority because they do the fundamental for the vehicle to work,
 # and by initializing them first we reduce the time users have to wait to control the vehicle.
 # From tests with QGC and Pi3, the reboot time was ~1min42s when not using this strategy,
@@ -130,7 +137,7 @@ SERVICES=(
     'ping',0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
     'user_terminal',0,"cat /etc/motd"
     'ttyd',250,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
-    'nginx',250,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
+    'nginx',250,"nice -18 nginx -g \"daemon off;\" -c /etc/blueos/nginx/nginx.conf"
     'log_zipper',250,"nice -20 $SERVICES_PATH/log_zipper/main.py '/shortcuts/system_logs/\\\\*\\\\*/\\\\*.log' --max-age-minutes 60"
     'bag_of_holding',250,"$SERVICES_PATH/bag_of_holding/main.py"
 )

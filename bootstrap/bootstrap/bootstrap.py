@@ -10,6 +10,7 @@ from warnings import warn
 
 import docker
 import requests
+import urllib3
 from loguru import logger
 
 
@@ -250,7 +251,7 @@ class Bootstrapper:
             bool: True if version chooser is online, False otherwise.
         """
         try:
-            response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10)
+            response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10, verify=False)
             if Bootstrapper.SETTINGS_NAME_CORE in response.json()["repository"]:
                 if not self.version_chooser_is_online:
                     self.version_chooser_is_online = True
