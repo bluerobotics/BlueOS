@@ -159,7 +159,7 @@ class Beacon:
 
     def get_vehicle_name(self) -> str:
         return self.manager.settings.vehicle_name or "BlueROV2"
-    
+
     def get_enable_tls(self) -> bool:
         # TODO: return what's in settings or assume no...this may change in the future
         return self.manager.settings.use_tls or False

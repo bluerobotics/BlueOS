@@ -202,6 +202,7 @@ class SettingsV4(SettingsV3):
 
         data["VERSION"] = SettingsV4.VERSION
 
+
 class SettingsV5(SettingsV4):
     VERSION = 5
     use_tls = BooleanField()
