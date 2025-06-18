@@ -1,24 +1,41 @@
+import {
+  Action, getModule, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators'
+
 import Notifier from '@/libs/notifier'
+import store from '@/store'
 import { ReturnStruct, ShutdownType } from '@/types/commander'
 import { commander_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(commander_service)
 
-class CommanderStore {
+@Module({
+  dynamic: true,
+  store,
+  name: 'commander',
+})
+class CommanderStore extends VuexModule {
   API_URL = '/commander/v1.0'
 
-  private static instance: CommanderStore
   // environment variables need a full reboot to take effect, so we should be able to cache them
   private environmentVariables: Record<string, unknown> | undefined
 
-  public static getInstance(): CommanderStore {
-    if (!CommanderStore.instance) {
-      CommanderStore.instance = new CommanderStore()
-    }
-    return CommanderStore.instance
+  on_board_computer_reboot_required = false
+
+  on_board_computer_immediate_reboot = false
+
+  @Mutation
+  setOnBoardComputerRebootRequired(required: boolean): void {
+    this.on_board_computer_reboot_required = required
   }
 
+  @Mutation
+  setOnBoardComputerImmediateReboot(immediate: boolean): void {
+    this.on_board_computer_immediate_reboot = immediate
+  }
+
+  @Action
   async commandHost(command: string): Promise<undefined | ReturnStruct> {
     return back_axios({
       method: 'post',
@@ -40,6 +57,7 @@ class CommanderStore {
       })
   }
 
+  @Action
   async setTime(unixTimeSeconds: number): Promise<void> {
     return back_axios({
       method: 'post',
@@ -60,7 +78,11 @@ class CommanderStore {
       })
   }
 
+  @Action
   async shutdown(shutdownType: ShutdownType): Promise<void> {
+    this.setOnBoardComputerImmediateReboot(false)
+    this.setOnBoardComputerRebootRequired(false)
+
     return back_axios({
       method: 'post',
       url: `${this.API_URL}/shutdown`,
@@ -86,6 +108,7 @@ class CommanderStore {
       })
   }
 
+  @Action
   async getRaspiCameraLegacy(): Promise<boolean | undefined> {
     return back_axios({
       method: 'get',
@@ -104,6 +127,7 @@ class CommanderStore {
       })
   }
 
+  @Action
   async setRaspiCameraLegacy(enable = true): Promise<boolean> {
     return back_axios({
       method: 'post',
@@ -126,6 +150,7 @@ class CommanderStore {
       })
   }
 
+  @Action
   async getVcgencmd(): Promise<undefined | Record<string, ReturnStruct>> {
     return back_axios({
       method: 'get',
@@ -146,6 +171,7 @@ class CommanderStore {
       })
   }
 
+  @Action
   async getEnvironmentVariables(): Promise<Record<string, unknown> | undefined> {
     if (this.environmentVariables) {
       return this.environmentVariables
@@ -169,6 +195,7 @@ class CommanderStore {
       })
   }
 
+  @Action
   async getRaspiEEPROM(): Promise<ReturnStruct | undefined> {
     return back_axios({
       method: 'get',
@@ -189,6 +216,7 @@ class CommanderStore {
       })
   }
 
+  @Action
   async doRaspiEEPROMUpdate(): Promise<ReturnStruct | undefined> {
     return back_axios({
       method: 'post',
@@ -208,7 +236,19 @@ class CommanderStore {
         return undefined
       })
   }
+
+  @Action
+  requestOnBoardComputerReboot(): void {
+    this.setOnBoardComputerRebootRequired(true)
+  }
+
+  @Action
+  rebootOnBoardComputer(): void {
+    this.setOnBoardComputerImmediateReboot(true)
+  }
 }
 
-const Commander = CommanderStore.getInstance()
-export default Commander
+export { CommanderStore }
+
+const commander: CommanderStore = getModule(CommanderStore)
+export default commander
