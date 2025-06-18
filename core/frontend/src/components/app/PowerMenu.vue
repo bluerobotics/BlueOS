@@ -129,6 +129,7 @@ export default Vue.extend({
       settings,
       service_status: Status.None,
       show_dialog: false,
+      commander,
     }
   },
   computed: {
@@ -152,6 +153,17 @@ export default Vue.extend({
     },
     show_spinner(): boolean {
       return this.service_status !== Status.None && this.service_status !== Status.PowerOff
+    },
+  },
+  watch: {
+    'commander.on_board_computer_immediate_reboot': {
+      immediate: true,
+      handler(newValue: boolean) {
+        if (newValue) {
+          this.showDialog(true)
+          this.reboot()
+        }
+      },
     },
   },
   methods: {
