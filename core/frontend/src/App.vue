@@ -73,6 +73,7 @@
         <theme-tray-menu />
         <system-checker-tray-menu />
         <vehicle-reboot-required-tray-menu />
+        <on-board-computer-required-tray-menu />
         <pirate-mode-tray-menu />
         <internet-tray-menu />
         <wifi-tray-menu />
@@ -403,6 +404,7 @@ import Alerter from './components/app/Alerter.vue'
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import InternetTrayMenu from './components/app/InternetTrayMenu.vue'
 import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
+import OnBoardComputerRequiredTrayMenu from './components/app/OnBoardComputerRequiredTrayMenu.vue'
 import PiradeModeTrayMenu from './components/app/PirateModeTrayMenu.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
 import ReportMenu from './components/app/ReportMenu.vue'
@@ -453,6 +455,7 @@ export default Vue.extend({
     'new-version-notificator': NewVersionNotificator,
     SystemCheckerTrayMenu,
     VehicleRebootRequiredTrayMenu,
+    OnBoardComputerRequiredTrayMenu,
     Wizard: defineAsyncComponent(() => import('@/components/wizard/Wizard.vue')),
   },
 
