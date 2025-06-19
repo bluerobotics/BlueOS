@@ -30,10 +30,7 @@
       class="img-background"
     />
 
-    <div
-      :style="architecture_list_style"
-      class="pt-1 mb-2 pl-2 pr-3 architectures-list"
-    >
+    <div class="pt-1 mb-2 pl-2 pr-3 architectures-list">
       {{ compatible_architectures }}
     </div>
 
@@ -188,17 +185,6 @@ export default Vue.extend({
       }
 
       return this.has_update_available ? 'UPDATE' : 'INSTALLED'
-    },
-    architecture_list_style(): Record<string, string> {
-      const style: Record<string, string> = {
-        color: this.is_card_dominant_color_light ? 'black' : 'white',
-      }
-
-      if (this.card_dominant_color) {
-        style.backgroundColor = this.card_dominant_color
-      }
-
-      return style
     },
     extension_company(): string {
       return getLatestVersion(this.extension.versions)?.company?.name ?? 'Unknown'
@@ -412,7 +398,6 @@ export default Vue.extend({
 .architectures-list {
   width: fit-content;
   height: 2.4em;
-  color: white;
   font-size: 12px;
   box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.5);
   border-radius: 8px 0px 10px 0px !important;
