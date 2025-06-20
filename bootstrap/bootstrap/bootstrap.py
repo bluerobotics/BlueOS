@@ -13,7 +13,6 @@ import requests
 import urllib3
 from loguru import logger
 
-
 urllib3.disable_warnings()
 
 
