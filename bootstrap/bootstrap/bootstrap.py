@@ -14,6 +14,9 @@ import urllib3
 from loguru import logger
 
 
+urllib3.disable_warnings()
+
+
 class Bootstrapper:
 
     DEFAULT_FILE_PATH = pathlib.Path("/bootstrap/startup.json.default")
@@ -25,7 +28,9 @@ class Bootstrapper:
     SETTINGS_NAME_CORE = "core"
     core_last_response_time = time.monotonic()
 
-    def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
+    def __init__(
+        self, client: docker.DockerClient, low_level_api: docker.APIClient = None
+    ) -> None:
         self.version_chooser_is_online = False
         self.client: docker.DockerClient = client
         self.core_last_response_time = time.monotonic()
@@ -38,7 +43,9 @@ class Bootstrapper:
     def overwrite_config_file_with_defaults() -> None:
         """Overwrites the config file with the default configuration"""
         try:
-            os.makedirs(pathlib.Path(Bootstrapper.DOCKER_CONFIG_FILE_PATH).parent, exist_ok=True)
+            os.makedirs(
+                pathlib.Path(Bootstrapper.DOCKER_CONFIG_FILE_PATH).parent, exist_ok=True
+            )
         except Exception as exception:
             raise RuntimeError(
                 f"Failed to create folder for configuration file: {Bootstrapper.DOCKER_CONFIG_FILE_PATH}"
@@ -46,12 +53,15 @@ class Bootstrapper:
 
         try:
             shutil.copy(
-                Bootstrapper.DOCKER_CONFIG_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH.with_suffix(".json.bak")
+                Bootstrapper.DOCKER_CONFIG_FILE_PATH,
+                Bootstrapper.DOCKER_CONFIG_FILE_PATH.with_suffix(".json.bak"),
             )
         except FileNotFoundError:
             # we don't mind if the file is already there
             pass
-        shutil.copy(Bootstrapper.DEFAULT_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH)
+        shutil.copy(
+            Bootstrapper.DEFAULT_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH
+        )
 
     @staticmethod
     def read_config_file() -> Dict[str, Any]:
@@ -64,21 +74,31 @@ class Bootstrapper:
         # Tries to open the current file
         config = {}
         try:
-            with open(Bootstrapper.DOCKER_CONFIG_FILE_PATH, encoding="utf-8") as config_file:
+            with open(
+                Bootstrapper.DOCKER_CONFIG_FILE_PATH, encoding="utf-8"
+            ) as config_file:
                 config = json.load(config_file)
-                assert Bootstrapper.SETTINGS_NAME_CORE in config, "missing core entry in startup.json"
+                assert (
+                    Bootstrapper.SETTINGS_NAME_CORE in config
+                ), "missing core entry in startup.json"
                 necessary_keys = ["image", "tag", "binds", "privileged", "network"]
                 for key in necessary_keys:
-                    assert key in config[Bootstrapper.SETTINGS_NAME_CORE], f"missing key in json file: {key}"
+                    assert (
+                        key in config[Bootstrapper.SETTINGS_NAME_CORE]
+                    ), f"missing key in json file: {key}"
 
         except Exception as error:
-            logger.error(f"unable to read startup.json file ({error}), reverting to defaults...")
+            logger.error(
+                f"unable to read startup.json file ({error}), reverting to defaults..."
+            )
             # Copy defaults over and read again
             Bootstrapper.overwrite_config_file_with_defaults()
             with open(Bootstrapper.DEFAULT_FILE_PATH, encoding="utf-8") as config_file:
                 config = json.load(config_file)
 
-        config[Bootstrapper.SETTINGS_NAME_CORE]["binds"][str(Bootstrapper.HOST_CONFIG_PATH)] = {
+        config[Bootstrapper.SETTINGS_NAME_CORE]["binds"][
+            str(Bootstrapper.HOST_CONFIG_PATH)
+        ] = {
             "bind": str(Bootstrapper.DOCKER_CONFIG_PATH),
             "mode": "rw",
         }
@@ -122,7 +142,9 @@ class Bootstrapper:
             try:
                 self.client.images.pull(f"{image_name}:{tag}")
             except Exception as exception:
-                logger.warning(f"Failed to pull image ({image_name}:{tag}): {exception}")
+                logger.warning(
+                    f"Failed to pull image ({image_name}:{tag}): {exception}"
+                )
             return
 
         # if there is ncurses support, proceed with it
@@ -130,7 +152,9 @@ class Bootstrapper:
         # map each id to a line
         id_line: Dict[str, int] = {}
         try:
-            for line in self.low_level_api.pull(f"{image_name}:{tag}", stream=True, decode=True):
+            for line in self.low_level_api.pull(
+                f"{image_name}:{tag}", stream=True, decode=True
+            ):
                 if len(line.keys()) == 1 and "status" in line:
                     # in some cases there is only "status", print that on the last line
                     screen.addstr(lines, 0, line["status"])
@@ -145,7 +169,9 @@ class Bootstrapper:
                 current_line = id_line[layer_id]
                 if "progress" in line:
                     progress = line["progress"]
-                    screen.addstr(current_line, 0, f"[{layer_id}]\t({status})\t{progress}")
+                    screen.addstr(
+                        current_line, 0, f"[{layer_id}]\t({status})\t{progress}"
+                    )
                 else:
                     screen.addstr(current_line, 0, f"[{layer_id}]\t({status})")
 
@@ -192,7 +218,9 @@ class Bootstrapper:
             try:
                 self.pull(component_name)
             except docker.errors.NotFound:
-                warn(f"Image {image_name}:{image_version} not found, reverting to default...")
+                warn(
+                    f"Image {image_name}:{image_version} not found, reverting to default..."
+                )
                 self.overwrite_config_file_with_defaults()
                 return False
             except docker.errors.APIError as error:
@@ -239,7 +267,10 @@ class Bootstrapper:
             bool: True if the chosen container is running
         """
         try:
-            return any(container.name.endswith(component) for container in self.client.containers.list())
+            return any(
+                container.name.endswith(component)
+                for container in self.client.containers.list()
+            )
         except Exception as exception:
             logger.warning(f"Could not list containers: {exception}")
         return False
@@ -251,7 +282,11 @@ class Bootstrapper:
             bool: True if version chooser is online, False otherwise.
         """
         try:
-            response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10, verify=False)
+            response = requests.get(
+                "http://localhost/version-chooser/v1.0/version/current",
+                timeout=10,
+                verify=False,
+            )
             if Bootstrapper.SETTINGS_NAME_CORE in response.json()["repository"]:
                 if not self.version_chooser_is_online:
                     self.version_chooser_is_online = True
@@ -301,7 +336,9 @@ class Bootstrapper:
 
                 # Version choose failed, time to restarted core
                 self.core_last_response_time = time.monotonic()
-                logger.warning("Core has not responded in 5 minutes, resetting to factory...")
+                logger.warning(
+                    "Core has not responded in 5 minutes, resetting to factory..."
+                )
                 self.overwrite_config_file_with_defaults()
                 try:
                     if self.start(image):
