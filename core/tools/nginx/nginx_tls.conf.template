@@ -53,8 +53,8 @@ http {
     }
 
     server {
-        listen 443; # IPv4
-        listen [::]:443; # IPv6
+        listen 443 ssl http2; # IPv4
+        listen [::]:443 ssl http2; # IPv6
 
         server_name _;
         ssl_certificate blueos.crt;
