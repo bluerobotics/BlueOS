@@ -207,7 +207,7 @@ class Helper:
     SKIP_PORTS: Set[int] = {
         22,  # SSH
         80,  # BlueOS
-        443,  # BlueoS TLS
+        443,  # BlueOS TLS
         5201,  # Iperf
         6021,  # Mavlink Camera Manager's WebRTC signaller
         7000,  # Major Tom does not have a public API yet

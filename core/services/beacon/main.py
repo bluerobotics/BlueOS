@@ -176,8 +176,10 @@ class Beacon:
             # bounce nginx
             self.nginx_promote_config(keep_backup=True)
             # remove old cert
-            os.unlink(TLS_CERT_PATH)
-            os.unlink(TLS_KEY_PATH)
+            if os.path.exists(TLS_CERT_PATH):
+                os.unlink(TLS_CERT_PATH)
+            if os.path.exists(TLS_KEY_PATH):
+                os.unlink(TLS_KEY_PATH)
         elif enable_tls and not self.get_enable_tls():
             # tls is currently disabled and we need to enable
             # generate cert
@@ -198,13 +200,13 @@ class Beacon:
         """
         # get the hostname
         current_hostname = self.get_hostname()
-        alt_names = []
-        alt_names.append(f"DNS:{current_hostname}")
-        alt_names.append(f"DNS:{current_hostname}-wifi")
-        alt_names.append(f"DNS:{current_hostname}-hotspot")
-        alt_names.append("IP:192.168.2.2")
-        alt_names.append("IP:192.168.3.1")
-
+        alt_names = [
+            f"DNS:{current_hostname}",
+            f"DNS:{current_hostname}-wifi",
+            f"DNS:{current_hostname}-hotspot",
+            "IP:192.168.2.2",
+            "IP:192.168.3.1",
+        ]
         # shell out to openssl to get the cert
         try:
             subprocess.check_call(
@@ -270,16 +272,15 @@ class Beacon:
         """
         Moves the file at new_config_path to config_path and bounces nginx, optionally keeping a backup of config_path
         """
-        # do both files exist
-        if not os.path.exists(config_path):
-            raise FileNotFoundError("Old config not found")
+        # ensure new config exists
         if not os.path.isfile(new_config_path):
             raise FileNotFoundError("New config not found")
+        # old config may not exist (first-time setup), so do not raise if missing
 
         if keep_backup:
             shutil.copyfile(
                 config_path,
-                f"{config_path}_backup_{datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                f"{config_path}_backup_{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d_%H%M%S')}",
                 follow_symlinks=False,
             )
 
@@ -449,9 +450,10 @@ def get_services() -> Any:
 @version(1, 0)
 def set_hostname(hostname: str) -> Any:
     # beacon.ts has a regex to validate hostname format, but we should check here too
-    hostname_regex = re.compile(r"^[a-zA-Z0-9-]+$")
-    if not hostname_regex.match(hostname):
-        raise ValueError("Invalid characters in hostname")
+    # Hostname must not start or end with a hyphen, nor contain consecutive hyphens
+    hostname_regex = re.compile(r"^(?!-)[A-Za-z0-9-]+(?<!-)$")
+    if not hostname_regex.match(hostname) or "--" in hostname:
+        raise ValueError("Invalid hostname: must only contain alphanumeric characters and hyphens, cannot start or end with a hyphen, and cannot contain consecutive hyphens")
     return beacon.set_hostname(hostname)
 
 
@@ -490,7 +492,7 @@ def get_enable_tls() -> bool:
     return beacon.get_enable_tls()
 
 
-@app.post("/use_tls", summary="Set whether TLS should be enbabled")
+@app.post("/use_tls", summary="Set whether TLS should be enabled")
 @version(1, 0)
 def set_enable_tls(enable_tls: bool) -> Any:
     return beacon.set_enable_tls(enable_tls)
