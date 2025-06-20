@@ -60,7 +60,7 @@ import {
   Config, QueryTarget, Receiver, RecvErr, ReplyError,
   Sample, Session,
 } from '@eclipse-zenoh/zenoh-ts'
-import cytoscape from 'cytoscape'
+import cytoscape, { Core } from 'cytoscape'
 import fcose from 'cytoscape-fcose'
 import Vue from 'vue'
 
@@ -82,7 +82,7 @@ export default Vue.extend({
   data() {
     return {
       session: null as Session | null,
-      cy: null as typeof cytoscape | null,
+      cy: null as Core | null,
       loading: false,
       networkData: {
         nodes: [] as NetworkNode[],
