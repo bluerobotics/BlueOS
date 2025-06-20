@@ -67,6 +67,7 @@ import Vue from 'vue'
 interface NetworkNode {
   id: string
   whatami: string
+  name?: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: any
 }
@@ -146,7 +147,9 @@ export default Vue.extend({
           data: {
             id: node.id,
             whatami: node.whatami,
+            name: node.name,
             metadata: node.metadata,
+            label: node.name || node.id, // Use name if available, otherwise use id
           },
         })
       })
@@ -172,7 +175,7 @@ export default Vue.extend({
           selector: 'node',
           style: {
             'background-color': '#666',
-            label: 'data(id)',
+            label: 'data(label)', // Use the label field which contains name or id
             'text-valign': 'center',
             'text-halign': 'center',
             color: '#fff',
@@ -284,6 +287,9 @@ export default Vue.extend({
       try {
         await this.queryRouters()
         await this.queryPeers()
+
+        // Query specific nodes for detailed information
+        await this.queryAllSpecificNodes()
       } catch (error) {
         console.error('[Zenoh Network] Network discovery error:', error)
       }
@@ -418,6 +424,70 @@ export default Vue.extend({
         }
       } catch (error) {
         console.warn('[Zenoh Network] Peer query failed:', error)
+      }
+    },
+
+    async querySpecificNode(zid: string, whatami: string) {
+      try {
+        const keyexpr = `@/${zid}/${whatami}`
+
+        const receiver: void | Receiver = this.session!.get(keyexpr, {
+          target: QueryTarget.BestMatching,
+        })
+
+        if (!(receiver instanceof Receiver)) {
+          console.warn(`[Zenoh Network] Specific node query for ${keyexpr} returned void`)
+          return null
+        }
+
+        const reply = await receiver.receive()
+        if (reply === RecvErr.Disconnected) {
+          console.debug(`[Zenoh Network] No response for ${keyexpr}`)
+          return null
+        }
+
+        if (reply === RecvErr.MalformedReply) {
+          console.warn(`[Zenoh Network] MalformedReply from ${keyexpr}`)
+          return null
+        }
+
+        const resp = reply.result()
+        if (resp instanceof Sample) {
+          const sample: Sample = resp
+          try {
+            const payload = sample.payload().to_string()
+            console.debug(`[Zenoh Network] Specific node response for ${keyexpr}:`, payload)
+            return JSON.parse(payload)
+          } catch (parseError) {
+            console.error(`[Zenoh Network] Error parsing specific node response for ${keyexpr}:`, parseError)
+            return null
+          }
+        } else {
+          const replyError: ReplyError = resp
+          console.error(`[Zenoh Network] Specific node query error for ${keyexpr}:`, replyError.payload().to_string())
+          return null
+        }
+      } catch (error) {
+        console.warn(`[Zenoh Network] Specific node query failed for ${zid}/${whatami}:`, error)
+        return null
+      }
+    },
+
+    async queryAllSpecificNodes() {
+      try {
+        for (const node of this.networkData.nodes) {
+          if (node.whatami && node.whatami !== 'unknown') {
+            const detailedInfo = await this.querySpecificNode(node.id, node.whatami)
+            if (detailedInfo) {
+              // Update the node with detailed information
+              node.metadata = { ...node.metadata, ...detailedInfo }
+            }
+          }
+        }
+
+        console.debug('[Zenoh Network] Specific node queries completed')
+      } catch (error) {
+        console.warn('[Zenoh Network] Error querying specific nodes:', error)
       }
     },
 
