@@ -93,6 +93,8 @@ def create_log_sink(service_name: str) -> Callable[[_handler.Message], None]:
         A function that can be used as a loguru sink
     """
     zenoh_config = zenoh.Config()
+    zenoh_config.insert_json5("adminspace", json.dumps({"enabled": True}))
+    zenoh_config.insert_json5("metadata", json.dumps({"name": service_name}))
     zenoh_config.insert_json5("mode", json.dumps("client"))
     zenoh_config.insert_json5("connect/endpoints", json.dumps(["tcp/127.0.0.1:7447"]))
     session = zenoh.open(zenoh_config)
