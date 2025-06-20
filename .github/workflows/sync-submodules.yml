@@ -9,6 +9,7 @@ name: Sync Submodules
 jobs:
   sync:
     runs-on: ubuntu-latest
+    if: github.repository == 'bluerobotics/BlueOS'
 
     permissions:
       contents: write
