@@ -453,7 +453,9 @@ def set_hostname(hostname: str) -> Any:
     # Hostname must not start or end with a hyphen, nor contain consecutive hyphens
     hostname_regex = re.compile(r"^(?!-)[A-Za-z0-9-]+(?<!-)$")
     if not hostname_regex.match(hostname) or "--" in hostname:
-        raise ValueError("Invalid hostname: must only contain alphanumeric characters and hyphens, cannot start or end with a hyphen, and cannot contain consecutive hyphens")
+        raise ValueError(
+            "Invalid hostname: must only contain alphanumeric characters and hyphens, cannot start or end with a hyphen, and cannot contain consecutive hyphens"
+        )
     return beacon.set_hostname(hostname)
 
 
