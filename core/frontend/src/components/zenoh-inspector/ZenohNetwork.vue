@@ -139,7 +139,7 @@ export default Vue.extend({
     },
 
     prepareCytoscapeElements() {
-      const elements: (NetworkNode | NetworkEdge)[] = []
+      const elements: { data: (NetworkNode | NetworkEdge) }[] = []
 
       // Add nodes
       this.networkData.nodes.forEach((node) => {
