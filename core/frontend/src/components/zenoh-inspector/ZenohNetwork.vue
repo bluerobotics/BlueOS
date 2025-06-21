@@ -457,7 +457,13 @@ export default Vue.extend({
           try {
             const payload = sample.payload().to_string()
             console.debug(`[Zenoh Network] Specific node response for ${keyexpr}:`, payload)
-            return JSON.parse(payload)
+            const data = JSON.parse(payload)
+
+            if (whatami === 'peer' && Array.isArray(data.sessions)) {
+              this.processPeerConnections(zid, data.sessions)
+            }
+
+            return data
           } catch (parseError) {
             console.error(`[Zenoh Network] Error parsing specific node response for ${keyexpr}:`, parseError)
             return null
@@ -472,7 +478,55 @@ export default Vue.extend({
         return null
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    processPeerConnections(peerZid: string, sessions: any[]) {
+      try {
+        for (const session of sessions) {
+          const peer = session.peer || 'unknown-peer'
+          const whatami = session.whatami || 'unknown'
 
+          // Add the connected peer if it doesn't exist
+          if (!this.networkData.nodes.find((n) => n.id === peer)) {
+            this.networkData.nodes.push({
+              id: peer,
+              whatami,
+            })
+          }
+
+          // Extract protocol information from links
+          let linkProtocols = 'unknown'
+          try {
+            if (session.links && Array.isArray(session.links)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              linkProtocols = session.links.map((link: any) => {
+                if (typeof link === 'string') {
+                  return link.split('/')[0]
+                }
+                return link.src?.split('/')[0] || 'unknown'
+              }).join(',')
+            }
+          } catch (error) {
+            console.warn('Error parsing peer link protocols:', error)
+          }
+
+          // Add edge from this peer to the connected items
+          // Check if edge already exists to avoid duplicates
+          const existingEdge = this.networkData.edges.find(
+            (e) => e.source === peerZid && e.target === peer || e.source === peer && e.target === peerZid,
+          )
+
+          if (!existingEdge) {
+            this.networkData.edges.push({
+              source: peerZid,
+              target: peer,
+              protocol: linkProtocols,
+            })
+          }
+        }
+      } catch (error) {
+        console.error('[Zenoh Network] Error processing peer connections:', error)
+      }
+    },
     async queryAllSpecificNodes() {
       try {
         for (const node of this.networkData.nodes) {
