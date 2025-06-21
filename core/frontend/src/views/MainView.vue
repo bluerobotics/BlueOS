@@ -54,6 +54,7 @@
                 >
                   <v-card-title
                     class="text-subtitle-2 font-weight-bold"
+                    style="word-break: break-word;"
                     v-text="title"
                   />
                   <v-avatar
