@@ -481,11 +481,19 @@ export default Vue.extend({
             if (detailedInfo) {
               // Update the node with detailed information
               node.metadata = { ...node.metadata, ...detailedInfo }
+
+              if (detailedInfo.metadata?.name) {
+                node.name = detailedInfo.metadata.name
+                console.debug(`[Zenoh Network] Updated node ${node.id} with name: ${detailedInfo.metadata.name}`)
+              }
             }
           }
         }
 
         console.debug('[Zenoh Network] Specific node queries completed')
+
+        // Update the graph to show the new names
+        this.updateCytoscapeGraph()
       } catch (error) {
         console.warn('[Zenoh Network] Error querying specific nodes:', error)
       }
