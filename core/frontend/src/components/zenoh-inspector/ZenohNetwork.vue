@@ -61,7 +61,7 @@ import {
   Sample, Session,
 } from '@eclipse-zenoh/zenoh-ts'
 import cytoscape, { Core } from 'cytoscape'
-import fcose from 'cytoscape-fcose'
+import fcose, { FcoseLayoutOptions } from 'cytoscape-fcose'
 import Vue from 'vue'
 
 interface NetworkNode {
@@ -253,7 +253,7 @@ export default Vue.extend({
           idealEdgeLength: 140,
           packComponents: false,
           nodeRepulsion: 25000,
-        }).run()
+        } as FcoseLayoutOptions).run()
       } catch (error) {
         console.error('[Zenoh Network] Graph update error:', error)
       }
@@ -267,12 +267,13 @@ export default Vue.extend({
         this.session = await Session.open(config)
 
         await this.discoverNetworkTopology()
-      } catch (error) {
+      } catch (innerError: unknown) {
+        const error = innerError as Error
         console.error('[Zenoh Network] Setup error:', error)
         console.error('[Zenoh Network] Error details:', {
-          message: error as Error.message,
-          stack: error as Error.stack,
-          name: error as Error.name,
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
         })
 
         // Add a fallback node to show something
