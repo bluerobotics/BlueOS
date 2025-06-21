@@ -92,15 +92,26 @@ export default Vue.extend({
     return {
       hasDecodedFrame: false,
       videoCanvas: null as HTMLCanvasElement | null,
-      selectedDecoder: 'video',
-      decoderOptions: [
-        { text: 'Broadway Decoder', value: 'broadway' },
-        { text: 'FFmpeg Decoder', value: 'ffmpeg' },
-        { text: 'Hardware Decoder', value: 'video' },
-      ],
+      selectedDecoder: 'ffmpeg',
     }
   },
   computed: {
+    allowHardwareDecoding(): boolean {
+      const { isSecureContext } = window
+      const { hostname } = window.location
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
+      return isLocalhost || isSecureContext
+    },
+    decoderOptions() {
+      const options = [
+        { text: 'FFmpeg Decoder', value: 'ffmpeg' },
+        { text: 'Broadway Decoder', value: 'broadway' },
+      ]
+      if (this.allowHardwareDecoding) {
+        options.push({ text: 'Hardware Decoder', value: 'video' })
+      }
+      return options
+    },
     isLoading(): boolean {
       return !this.hasDecodedFrame
     },
@@ -116,7 +127,10 @@ export default Vue.extend({
         case 'video':
           return 'VideoDecoder'
         default:
-          return 'VideoDecoder'
+          if (this.allowHardwareDecoding) {
+            return 'VideoDecoder'
+          }
+          return 'FFmpegDecoder'
       }
     },
   },
@@ -142,6 +156,7 @@ export default Vue.extend({
   },
   mounted() {
     this.videoCanvas = this.$refs.videoCanvas as HTMLCanvasElement
+    this.selectedDecoder = this.allowHardwareDecoding ? 'video' : 'ffmpeg'
   },
   methods: {
     onFrameDecoded() {
