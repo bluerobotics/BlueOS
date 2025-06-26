@@ -46,6 +46,10 @@
                 "bind": "/root/.docker",
                 "mode": "rw"
             },
+            "/root/.majortom": {
+                "bind": "/root/.majortom",
+                "mode": "rw"
+            },
             "/etc/blueos": {
                 "bind": "/etc/blueos",
                 "mode": "rw"
