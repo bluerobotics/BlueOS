@@ -6,14 +6,13 @@ requires-python = ">=3.11"
 dependencies = [
     "aiocache==0.12.2",
     "aiodocker==0.21.0",
-    "anyio==3.7.1",
-    "appdirs==1.4.4",
-    "commonwealth==0.1.0",
-    "dataclass-wizard==0.22.3",
+    "aiohttp==3.7.4",
+    "commonwealth==0.1.1",
     "fastapi==0.105.0",
     "fastapi-versioning==0.9.1",
     "loguru==0.5.3",
     "psutil==5.7.2",
+    "pydantic==1.10.12",
     "semver==3.0.2",
     "uvicorn==0.18.0",
 ]
