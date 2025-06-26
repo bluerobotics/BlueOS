@@ -255,7 +255,7 @@ export default Vue.extend({
     is_water_baro(): Dictionary<boolean> {
       const results = {} as Dictionary<boolean>
       for (const baro of this.baros) {
-        if (['MS5837', 'MS5611', 'KELLERLD'].includes(baro.deviceName ?? '--')
+        if (['MS5837_30BA', 'MS5837_02BA', 'MS5611', 'KELLERLD'].includes(baro.deviceName ?? '--')
         && autopilot.vehicle_type === 'Submarine' && baro.busType === BUS_TYPE.I2C
         && baro.bus === this.external_i2c_bus) {
           results[baro.param] = true
