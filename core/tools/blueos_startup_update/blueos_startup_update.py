@@ -33,6 +33,7 @@ DELTA_JSON = {
             "/home/pi/.ssh": {"bind": "/home/pi/.ssh", "mode": "rw"},
             "/home/pi/.docker": {"bind": "/home/pi/.docker", "mode": "rw"},
             "/root/.docker": {"bind": "/root/.docker", "mode": "rw"},
+            "/root/.majortom": {"bind": "/root/.majortom", "mode": "rw"},
             "/run/udev": {"bind": "/run/udev", "mode": "ro"},
             "/sys/": {"bind": "/sys/", "mode": "rw"},
             "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
