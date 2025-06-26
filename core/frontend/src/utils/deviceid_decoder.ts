@@ -90,9 +90,13 @@ enum BARO_TYPE {
   ICP101XX = 0x0F,
   ICP201XX = 0x10,
   MS5607 = 0x11,
-  MS5837 = 0x12,
+  MS5837_30BA = 0x12,
   MS5637 = 0x13,
   BMP390 = 0x14,
+  BMP581 = 0x15,
+  SPA06 = 0x16,
+  AUAV = 0x17,
+  MS5837_02BA = 0x18,
 }
 
 enum AIRSPEED_TYPE {

@@ -120,7 +120,7 @@ export default Vue.extend({
       for (const baro of this.baros) {
         // BARO_SPEC_GRAV Only exist for underwater vehicles
         const spec_gravity_param = autopilot_data.parameter('BARO_SPEC_GRAV')
-        const water = ['MS5837', 'MS5611', 'KELLERLD'].includes(baro.deviceName ?? '--')
+        const water = ['MS5837_30BA', 'MS5837_02BA', 'MS5611', 'KELLERLD'].includes(baro.deviceName ?? '--')
         && autopilot.vehicle_type === 'Submarine' && baro.busType === BUS_TYPE.I2C
         && baro.bus === this.external_i2c_bus
         if (water) {
