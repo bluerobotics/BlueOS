@@ -505,8 +505,12 @@ class AutoPilotManager(metaclass=Singleton):
             """Checks if given process is using a Ardupilot's firmware file, for any known platform."""
             for platform in Platform:
                 firmware_path = self.firmware_manager.firmware_path(platform)
-                if str(firmware_path) in " ".join(process.cmdline()):
-                    return True
+                try:
+                    if str(firmware_path) in " ".join(process.cmdline()):
+                        return True
+                except psutil.NoSuchProcess:
+                    # process may have died before we could call cmdline()
+                    pass
             return False
 
         return list(filter(is_ardupilot_process, psutil.process_iter()))
