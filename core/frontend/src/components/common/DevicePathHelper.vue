@@ -56,20 +56,20 @@ const standard_connector_map: Dictionary<string> = {
   '/dev/ttyAMA2': 'serial4',
   '/dev/ttyAMA3': 'serial5',
   // Pi4
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.3:1.0-port0': 'top-left',
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.0-port0': 'bottom-left',
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1:1.0-port0': 'top-right',
-  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2:1.0-port0': 'bottom-right',
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.3': 'top-left',
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4': 'bottom-left',
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1': 'top-right',
+  '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.2': 'bottom-right',
   // Pi3
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.5:1.0-port0': 'bottom-right',
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.4:1.0-port0': 'top-right',
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1.0-port0': 'bottom-left',
-  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0-port0': 'top-left',
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.5:1': 'bottom-right',
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.4:1': 'top-right',
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1': 'bottom-left',
+  '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1': 'top-left',
   // Pi5
-  '/dev/serial/by-path/platform-xhci-hcd.1-usb-0:1:1.0-port0': 'top-left',
-  '/dev/serial/by-path/platform-xhci-hcd.0-usb-0:1:1.0-port0': 'bottom-left',
-  '/dev/serial/by-path/platform-xhci-hcd.0-usb-0:2:1.0-port0': 'top-right',
-  '/dev/serial/by-path/platform-xhci-hcd.1-usb-0:2:1.0-port0': 'bottom-right',
+  '/dev/serial/by-path/platform-xhci-hcd.1-usb-0:1': 'top-left',
+  '/dev/serial/by-path/platform-xhci-hcd.0-usb-0:1': 'bottom-left',
+  '/dev/serial/by-path/platform-xhci-hcd.0-usb-0:2': 'top-right',
+  '/dev/serial/by-path/platform-xhci-hcd.1-usb-0:2': 'bottom-right',
 
 }
 
@@ -174,9 +174,9 @@ export default Vue.extend({
       }
     },
     board_connector() : string | undefined {
-      const connector = this.updated_connector_map[this.serial_port_path]
-      this.setSvgConnector(connector)
-      return connector
+      const usbRoot = this.serial_port_path.split('-port0')[0]
+      const connector = Object.entries(this.updated_connector_map).find(([key, _]) => usbRoot.includes(key))
+      return connector?.[1]
     },
   },
   mounted() {
