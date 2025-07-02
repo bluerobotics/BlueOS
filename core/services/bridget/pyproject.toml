@@ -5,12 +5,14 @@ description = "Manager for 'bridges' links."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "anyio==3.7.1",
     "bridges==0.1.0",
     "commonwealth==0.1.0",
     "fastapi==0.105.0",
     "fastapi-versioning==0.9.1",
     "loguru==0.5.3",
+    "pydantic==1.10.12",
+    "pyserial==3.5",
+    "requests==2.26.0",
     "uvicorn==0.18.0",
 ]
 
