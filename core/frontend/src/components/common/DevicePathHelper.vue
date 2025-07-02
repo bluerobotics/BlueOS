@@ -1,6 +1,9 @@
 <template>
   <div v-if="board_connector">
     <template v-if="inline">
+      <div v-if="usbOverlayInfo" class="usb-overlay">
+        {{ usbOverlayInfo }}
+      </div>
       <object
         :class="inline_name"
         type="image/svg+xml"
@@ -21,6 +24,9 @@
           mdi-eye
         </v-icon>
       </template>
+      <div v-if="usbOverlayInfo" class="usb-overlay">
+        {{ usbOverlayInfo }}
+      </div>
       <object
         :class="svgName"
         type="image/svg+xml"
@@ -178,6 +184,14 @@ export default Vue.extend({
       const connector = Object.entries(this.updated_connector_map).find(([key, _]) => usbRoot.includes(key))
       return connector?.[1]
     },
+    usbOverlayInfo(): string | null {
+      // This regex matches ...usb-0:1.4.3:1.0... and captures the last number before :1.0 (the hub port)
+      const match = this.serial_port_path.match(/usb-0:(?:[0-9]+\.)+([0-9]+):1\.0/)
+      if (match) {
+        return `Connected via hub, device is on hub port ${match[1]}`
+      }
+      return null
+    },
   },
   mounted() {
     // Wait for svg element to be loaded to set object
@@ -215,3 +229,18 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.usb-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 10;
+  pointer-events: none;
+}
+</style>
