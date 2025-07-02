@@ -27,7 +27,28 @@
             :height="'150px'"
             :device="data.item"
           />
-          {{ data.item }}
+          <table class="dense-table">
+            <tr>
+              <th>Path</th>
+              <td>{{ data.item }}</td>
+            </tr>
+            <tr v-if="deviceInfo(data.item)?.DEVNAME">
+              <th>Device</th>
+              <td>{{ deviceInfo(data.item)?.DEVNAME }}</td>
+            </tr>
+            <tr v-if="deviceInfo(data.item)?.ID_MODEL">
+              <th>Model</th>
+              <td>{{ deviceInfo(data.item)?.ID_MODEL }}</td>
+            </tr>
+            <tr v-if="deviceInfo(data.item)?.ID_USB_DRIVER">
+              <th>Driver</th>
+              <td>{{ deviceInfo(data.item)?.ID_USB_DRIVER }}</td>
+            </tr>
+            <tr v-if="deviceInfo(data.item)?.ID_SERIAL">
+              <th>Serial</th>
+              <td>{{ deviceInfo(data.item)?.ID_SERIAL }}</td>
+            </tr>
+          </table>
         </v-chip>
       </template>
       <template #selection="{ attrs, item, parent }">
@@ -36,7 +57,7 @@
           v-bind="attrs"
           small
         >
-          {{ item }}
+          {{ condensedDeviceInfo(item) }}
           <v-icon
             class="ml-1"
             small
@@ -73,7 +94,7 @@ import { OneMoreTime } from '@/one-more-time'
 import autopilot from '@/store/autopilot_manager'
 import system_information from '@/store/system-information'
 import { SerialEndpoint } from '@/types/autopilot'
-import { Dictionary } from '@/types/common'
+import { Dictionary, JSONValue } from '@/types/common'
 import back_axios from '@/utils/api'
 import { isIpAddress } from '@/utils/pattern_validators'
 
@@ -137,6 +158,17 @@ export default Vue.extend({
     this.update_ports(this.current_serial_ports)
   },
   methods: {
+    condensedDeviceInfo(path: string): string {
+      const info = this.deviceInfo(path)
+      const device = info.DEVNAME ?? path
+      const driver = info.ID_USB_DRIVER
+      const serial = info.ID_SERIAL
+      const names = [device, driver, serial].filter((name) => name !== undefined)
+      return names.join(' - ')
+    },
+    deviceInfo(path: string): JSONValue {
+      return system_information.serial?.ports?.find((port) => port.by_path === path)?.udev_properties ?? {}
+    },
     update_ports(new_ports: SerialEndpoint[]) {
       for (const port of new_ports) {
         if (this.ports[port.port] === undefined) {
@@ -203,3 +235,23 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.dense-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+.dense-table th,
+.dense-table td {
+  border: 1px solid;
+  padding: 2px 6px;
+  text-align: left;
+  vertical-align: middle;
+}
+.dense-table th {
+  font-weight: 600;
+  width: 1%;
+  white-space: nowrap;
+}
+</style>
