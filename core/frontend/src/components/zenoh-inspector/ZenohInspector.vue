@@ -122,15 +122,20 @@
 
 <script lang="ts">
 import {
-  Config, Sample, SampleKind, Session, Subscriber,
+  Config, Encoding, Sample, SampleKind, Session, Subscriber, ZBytes,
 } from '@eclipse-zenoh/zenoh-ts'
+import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
+import { MessageReader } from '@foxglove/rosmsg2-serialization'
+import axios from 'axios'
 import Vue from 'vue'
 
 import RawVideoPlayer from './RawVideoPlayer.vue'
 
 interface ZenohMessage {
   topic: string
-  payload: string
+  payload: ZBytes
+  encoding: string
+  schema: string | undefined
   timestamp: Date
 }
 
@@ -151,6 +156,7 @@ export default Vue.extend({
       session: null as Session | null,
       subscriber: null as Subscriber | null,
       liveliness_subscriber: null as Subscriber | null,
+      video_reader: null as MessageReader | null,
     }
   },
   computed: {
@@ -171,19 +177,26 @@ export default Vue.extend({
       return this.selected_topic?.toLowerCase().includes('video') || false
     },
     videoData(): Uint8Array | null {
-      if (!this.current_message?.payload) {
+      if (!this.current_message?.payload || !this.video_reader) {
         return null
       }
-      return new Uint8Array(JSON.parse(this.current_message.payload)?.data)
+      const msg: { data: Uint8Array } = this.video_reader.readMessage(this.current_message.payload.to_bytes())
+      return msg.data
     },
   },
   async mounted() {
+    await this.setupVideoReader()
     await this.setupZenoh()
   },
   beforeDestroy() {
     this.disconnectZenoh()
   },
   methods: {
+    async setupVideoReader() {
+      const CompressedVideo = await axios.get('/msgs/CompressedVideo.msg').then((response) => response.data as string)
+      const definition = parseMessageDefinition(CompressedVideo)
+      this.video_reader = new MessageReader(definition)
+    },
     formatMessage(message: ZenohMessage | null): string {
       if (!message) return 'No messages received yet'
 
@@ -196,17 +209,19 @@ export default Vue.extend({
           : this.topic_liveliness[message.topic] ? 'Alive' : 'Dead',
         topic_type: this.topic_types[message.topic] || 'Unknown',
         message_type: this.topic_message_types[message.topic] || 'Unknown',
-        payload: message.payload,
+        payload: message.payload.toString(),
       }
 
-      if (typeof message.payload === 'string') {
+      if (message.encoding === Encoding.APPLICATION_JSON.toString()) {
+        formattedMessage.payload = JSON.parse(message.payload.to_string())
+      } else if (message.encoding === Encoding.ZENOH_BYTES.toString()) {
         try {
-          formattedMessage.payload = JSON.parse(message.payload)
+          formattedMessage.payload = JSON.parse(message.payload.to_string())
         } catch (exception) {
           // Keep the raw payload if it's not valid JSON
+          formattedMessage.payload = message.payload.toString()
         }
       }
-
       return JSON.stringify(formattedMessage, null, 2)
     },
 
@@ -222,9 +237,13 @@ export default Vue.extend({
           handler: async (sample: Sample) => {
             const topic = sample.keyexpr().toString()
             const payload = sample.payload()
+            const [encoding, schema] = sample.encoding().toString().split(';')
+
             const message: ZenohMessage = {
               topic,
-              payload: payload.to_string(),
+              payload,
+              encoding,
+              schema,
               timestamp: new Date(),
             }
 
