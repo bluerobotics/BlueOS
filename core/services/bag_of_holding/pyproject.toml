@@ -4,14 +4,14 @@ version = "0.1.0"
 description = "Allow the persistence of arbitrary data in a Blue Robotics BlueOS system."
 requires-python = ">=3.11"
 dependencies = [
-    "anyio==3.7.1",
     "appdirs==1.4.4",
     "commonwealth==0.1.0",
     "dpath==2.1.5",
     "fastapi==0.105.0",
     "fastapi-versioning==0.9.1",
     "loguru==0.5.3",
-    "uvicorn==0.18.0",
+    "pydantic==1.10.12",
+    "uvicorn==0.18.0"
 ]
 
 [tool.uv.sources]
