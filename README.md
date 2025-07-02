@@ -41,7 +41,7 @@ The development of BlueOS is driven by the following core principles:
 * **Make complex tasks simpler** and improve ease of use by reusing design patterns from other applications (based on the [material UI guidelines](https://material.io/design/guidelines-overview))
 * **Advanced error handling and detection**, making any problems clear to the user and developers, along with how to fix them
 * **Simplify development**, providing full access to our [services API](https://blueos.cloud/docs/blueos/1.1/development/core/#services) and [modular development model](https://blueos.cloud/docs/blueos/1.1/development/overview/)
-* **Portable and flexible**, you should be able to run on a Raspberry Pi 3/4 or any SBC with Linux operating system, contributions are welcomed
+* **Portable and flexible**, you should be able to run on a Raspberry Pi 3/4/5 or any SBC with Linux operating system, contributions are welcomed
 * **Highly functional with low CPU usage**, the entire system is built to run efficiently
 * **Developed on solid foundations**, critical parts or intensive workforce services are designed using the most advanced languages and features available for stability
 
@@ -91,7 +91,7 @@ BlueOS is designed to perform optimally across a wide range of systems. Our late
 
 - **amd64:** This is the architecture used by most desktop and laptop computers. A typical example is any modern PC running a 64-bit version of Linux. **Not fully supported.**
 
-Right now we officially support the Raspberry Pi 3 and 4, but the system should "just work" on all listed architectures with the correct docker binds.
+Right now we officially support the Raspberry Pi 3, 4 and 5, but the system should "just work" on all listed architectures with the correct docker binds.
 
 ## Development Environment
 
