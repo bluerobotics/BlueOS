@@ -1197,6 +1197,43 @@
   resolved "https://registry.yarnpkg.com/@ffmpeg/util/-/util-0.12.2.tgz#6bab9d8022a5bed9a6ff0933e5235b9b38698599"
   integrity sha512-ouyoW+4JB7WxjeZ2y6KpRvB+dLp7Cp4ro8z0HIVpZVCM7AwFlHa0c4R8Y/a4M3wMqATpYKhC7lSFHQ0T11MEDw==
 
+"@foxglove/cdr@^3.3.0":
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/@foxglove/cdr/-/cdr-3.3.0.tgz#8d273e1d6a11b8b3c508162c41073d4dad78cc5c"
+  integrity sha512-CjeA6ka/0cddVzQZY0qTEbExw849C7dD1aGpa+KeEzx0LZNxsQvvhsqWeGjszVM4BzwPcyWHwsiOZv27zbnnFA==
+
+"@foxglove/message-definition@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@foxglove/message-definition/-/message-definition-0.3.1.tgz#63f48e8f3de47bba8943d8bfa8021af635254f1c"
+  integrity sha512-nkPowiED67LjcKEC77CprkUG3XvSsFHHR9HEwWCuhnIC2wm0W57T1J+WWvteoArZ7SdGGlKzSYSRFyjQkgmITw==
+
+"@foxglove/message-definition@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@foxglove/message-definition/-/message-definition-0.4.0.tgz#ecce0c30a58e0ddda776045e486c64dc29d501c1"
+  integrity sha512-lo98RFt+w7B3s+G3G431xyvXcc49GWRDLCj4NxPK5TXS3BkMKpe4+FVj4I3fSF87xYAFE52SgMqvBVUHnnRWQw==
+
+"@foxglove/rosmsg2-serialization@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@foxglove/rosmsg2-serialization/-/rosmsg2-serialization-3.0.2.tgz#e22733913870f265f2d0724d33eb5fea2c050067"
+  integrity sha512-NKMmRqyKWQk5mkWzE6WvYWdOUqnQzySgn+FLPa3Bc6eZt22ARZ9QNtX4MpymmCXNjC8Iocp/jpLC0uCrDPMILw==
+  dependencies:
+    "@foxglove/cdr" "^3.3.0"
+    "@foxglove/message-definition" "^0.4.0"
+    "@foxglove/rostime" "^1.1.2"
+
+"@foxglove/rosmsg@^5.0.4":
+  version "5.0.4"
+  resolved "https://registry.yarnpkg.com/@foxglove/rosmsg/-/rosmsg-5.0.4.tgz#445328d9722dff6960e060113a930f64a76b3ecb"
+  integrity sha512-s0JQLA6Zi0Qh9HtzyAan30sjiMU0u34+fkwccek/Xt+aQjCkSoErP/U4NBP6hCDfp0fBcb7CDSU2ggLFy/rJAQ==
+  dependencies:
+    "@foxglove/message-definition" "^0.3.1"
+    md5-typescript "^1.0.5"
+
+"@foxglove/rostime@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@foxglove/rostime/-/rostime-1.1.2.tgz#f8e1f10bff115c22be8a3e06791c2ac800449ee8"
+  integrity sha512-vWuTJCuGv0xvgwOlrZ1y2MevmNMVxWcUU/HwlmYXi/jUq/kRaACStU18uyuZ3LzdNKaffkti0rTcXWESaQjwQw==
+
 "@google/model-viewer@^3.0.0":
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/@google/model-viewer/-/model-viewer-3.1.0.tgz#2d6fa32ca1a0e0d30e457a448a49aa41b28de037"
@@ -4967,6 +5004,11 @@ marked@^4.1.1:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/marked/-/marked-4.3.0.tgz#796362821b019f734054582038b116481b456cf3"
   integrity sha512-PRsaiG84bK+AMvxziE/lCFss8juXjNaWzVbN5tXAm4XjeaS9NAHhop+PjQxz2A9h8Q4M/xGmzP8vqNwy6JeK0A==
+
+md5-typescript@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/md5-typescript/-/md5-typescript-1.0.5.tgz#68c0b24dff8e5d3162e498fa9893b63be72e038f"
+  integrity sha512-ovAc4EtiNt2dY8JPhPr/wkC9h4U5k/nuClNVcG0Ga3V1rMlYpAY24ZaaymFXJlz+ccJ6UMPo3FSaVKe7czBsXw==
 
 median-quickselect@^1.0.1:
   version "1.0.1"
