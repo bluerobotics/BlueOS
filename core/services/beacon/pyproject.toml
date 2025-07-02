@@ -5,7 +5,11 @@ description = "MDNS service."
 requires-python = ">=3.11"
 dependencies = [
     "commonwealth==0.1.0",
+    "fastapi==0.105.0",
+    "fastapi-versioning==0.9.1",
     "loguru==0.5.3",
+    "psutil==5.7.2",
+    "pydantic==1.10.12",
     "uvicorn==0.18.0",
     "zeroconf==0.38.4",
 ]
