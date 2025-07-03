@@ -5,15 +5,15 @@ description = "Wifi manager."
 requires-python = ">=3.11"
 dependencies = [
     "commonwealth==0.1.0",
-    "fastapi==0.105.0",
-    "fastapi-versioning==0.9.1",
-    "loguru==0.5.3",
-    "psutil==5.7.2",
-    "pydantic==1.10.12",
+    "fastapi==0.115.14",
+    "fastapi-versioning==0.10.0",
+    "loguru==0.7.3",
+    "psutil==7.0.0",
+    "pydantic==2.11.7",
     "pyroute2==0.8.1",
     "sdbus-networkmanager==2.0.0",
-    "tabulate==0.8.9",
-    "uvicorn==0.18.0",
+    "tabulate==0.9.0",
+    "uvicorn==0.35.0",
 ]
 
 [tool.uv]
