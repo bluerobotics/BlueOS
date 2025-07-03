@@ -15,6 +15,8 @@ dependencies = [
     "pydantic==1.10.12",
     "pyelftools==0.30",
     "pyserial==3.5",
+    # This dependency needs to be locked since it is used by fastapi
+    "python-multipart==0.0.5",
     "smbus2==0.3.0",
     "uvicorn==0.18.0",
     "validators==0.18.2",

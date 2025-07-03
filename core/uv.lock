@@ -113,6 +113,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyelftools" },
     { name = "pyserial" },
+    { name = "python-multipart" },
     { name = "smbus2" },
     { name = "uvicorn" },
     { name = "validators" },
@@ -130,6 +131,7 @@ requires-dist = [
     { name = "pydantic", specifier = "==1.10.12" },
     { name = "pyelftools", specifier = "==0.30" },
     { name = "pyserial", specifier = "==3.5" },
+    { name = "python-multipart", specifier = "==0.0.5" },
     { name = "smbus2", specifier = "==0.3.0" },
     { name = "uvicorn", specifier = "==0.18.0" },
     { name = "validators", specifier = "==0.18.2" },
@@ -1450,6 +1452,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
 ]
+
+[[package]]
+name = "python-multipart"
+version = "0.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/46/40/a933ac570bf7aad12a298fc53458115cc74053474a72fbb8201d7dc06d3d/python-multipart-0.0.5.tar.gz", hash = "sha256:f7bb5f611fc600d15fa47b3974c8aa16e93724513b49b5f95c81e6624c83fa43", size = 32581, upload-time = "2018-10-12T08:36:41.595Z" }
 
 [[package]]
 name = "pytz"
