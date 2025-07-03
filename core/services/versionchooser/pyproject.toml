@@ -11,6 +11,8 @@ dependencies = [
     "connexion[aiohttp,swagger-ui]==2.14.2",
     "docker==6.0.0",
     "loguru==0.5.3",
+    # This dependency needs to be locked due to error in aiohttp
+    "yarl==1.12.1",
 ]
 
 [tool.uv.sources]
