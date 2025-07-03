@@ -392,6 +392,7 @@ import Vue, { defineAsyncComponent } from 'vue'
 
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
 import blueos_white from '@/assets/img/blueos-logo-white.svg'
+import consoleLogger from '@/libs/console-logger'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import wifi from '@/store/wifi'
@@ -743,6 +744,13 @@ export default Vue.extend({
     })
     this.bootstrap_version = await VCU.loadBootstrapCurrentVersion()
   },
+
+  beforeDestroy() {
+    consoleLogger.cleanup().catch((error) => {
+      console.error('Failed to cleanup console logger:', error)
+    })
+  },
+
   methods: {
     addExtraQuery(url: string, extra_queries?: string) {
       if (!extra_queries) {
