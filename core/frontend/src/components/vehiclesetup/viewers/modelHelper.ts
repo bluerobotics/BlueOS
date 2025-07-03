@@ -3,6 +3,7 @@ import autopilot_data from "@/store/autopilot"
 import autopilot from "@/store/autopilot_manager"
 
 import {
+    FRAME_CLASS as ROVER_FRAME_CLASS,
     FRAME_TYPE as ROVER_FRAME_TYPE,
   } from '@/types/autopilot/parameter-rover-enums'
 
@@ -15,13 +16,12 @@ import axios from "axios"
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
 
 export function vehicle_folder(): string {
-  const mav_type = 'MAV_TYPE_' + autopilot.vehicle_type?.toUpperCase()
+  const mav_type = 'MAV_TYPE_' + autopilot.vehicle_type?.toUpperCase().replace(' ', '_')
   switch (mav_type) {
     case MavType.MAV_TYPE_SUBMARINE:
     return 'sub'
     case MavType.MAV_TYPE_SURFACE_BOAT:
-    return 'boat'
-    case MavType.MAV_TYPE_GROUND_ROVER:
+      case MavType.MAV_TYPE_GROUND_ROVER:
     return 'rover'
     default:
     return autopilot.vehicle_type?.toLowerCase() || 'unknown'
@@ -55,7 +55,7 @@ export function frame_name(vehicle_type: string, frame_type?: number, frame_subt
       case 'Surface Boat':
       case 'Ground Rover':
         // we already know it is a boat, so check only TYPE and ignore CLASS (rover/boat/balancebot)
-        return Object.entries(ROVER_FRAME_TYPE).find((key, value) => value === frame_type)?.[1] as string
+        return Object.entries(ROVER_FRAME_CLASS).find((key, value) => value === frame_type)?.[1] as string
      default:
         break
     }
