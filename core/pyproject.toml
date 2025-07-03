@@ -33,7 +33,7 @@ dev = [
   "pytest-mock==3.10.0",
   "pytest-timeout==2.1.0",
   "pytest-xdist>=3.3.1",
-  "pyelftools==0.30",
+  "pyelftools==0.32",
 ]
 lint = [
   "black==22.3.0",
