@@ -2,12 +2,29 @@ import {
   getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
-import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import { MavAutopilot, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import { Message as M2R } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import store from '@/store'
 import Parameter from '@/types/autopilot/parameter'
 // eslint-disable-next-line import/no-cycle
 import ParameterFetcher from '@/types/autopilot/parameter-fetcher'
+
+
+import {
+  FRAME_CLASS as ROVER_FRAME_CLASS,
+  FRAME_TYPE as ROVER_FRAME_TYPE,
+} from '@/types/autopilot/parameter-rover-enums'
+
+import {
+  FRAME_CONFIG as SUB_FRAME_CONFIG,
+} from '@/types/autopilot/parameter-sub-enums'
+
+import autopilot_manager from './autopilot_manager'
+
+import { vehicle_folder } from '@/components/vehiclesetup/viewers/modelHelper'
+
+const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
+
 
 const parameterFetcher = new ParameterFetcher()
 
@@ -53,6 +70,50 @@ class AutopilotStore extends VuexModule {
     return (user_filter: (param: Parameter) => boolean) => this.parameters.filter(
       (param: Parameter) => user_filter(param),
     )
+  }
+
+
+  get vehicle_type(): string {
+    return autopilot_manager.vehicle_type
+  }
+
+  get frame_type(): number | undefined {
+    const mav_type = 'MAV_TYPE_' + autopilot_manager.vehicle_type?.toUpperCase().replace(' ', '_')
+    switch (mav_type) {
+      case MavType.MAV_TYPE_SUBMARINE:
+        return this.parameter('FRAME_CONFIG')?.value
+      case MavType.MAV_TYPE_SURFACE_BOAT:
+        return this.parameter('FRAME_CLASS')?.value
+        // TODO: other vehicles
+      default:
+        return undefined
+    }
+  }
+
+  get frame_name(): string | undefined {
+    switch (this.vehicle_type) {
+      case 'Submarine':
+        return Object.entries(SUB_FRAME_CONFIG).find((key, value) => value === this.frame_type)?.[1] as string
+      case 'Surface Boat':
+        // we already know it is a boat, so check only TYPE and ignore CLASS (rover/boat/balancebot)
+        return Object.entries(ROVER_FRAME_CLASS).find((key, value) => value === this.frame_type)?.[1] as string
+     default:
+        break
+    }
+    return undefined
+  }
+
+
+  get vehicle_model() {
+    const frame = this.frame_type
+    if (!this.vehicle_type || frame === undefined) {
+      return `assets/vehicles/models/rover/unknown.glb`
+    }
+    const release_path = `assets/vehicles/models/${vehicle_folder()}/${this.frame_name}.glb`
+    if (models[`/public/${release_path}`]) {
+      return `/assets/vehicles/models/${vehicle_folder()}/${this.frame_name}.glb`
+    }
+    return `assets/vehicles/models/rover/unknown.glb`
   }
 
   get is_safe() {
