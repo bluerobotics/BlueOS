@@ -131,8 +131,12 @@ def create_log_sink(service_name: str) -> Callable[[_handler.Message], None]:
             "file": record["file"].name,
             "line": record["line"],
         }
-        # fmt: on
 
-        session.put(topic, json.dumps(foxglove_log))
+        session.put(
+            topic,
+            json.dumps(foxglove_log),
+            encoding=zenoh.Encoding.APPLICATION_JSON.with_schema("foxglove.Log"),
+        )
+        # fmt: on
 
     return sink
