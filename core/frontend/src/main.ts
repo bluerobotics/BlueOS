@@ -16,6 +16,7 @@ import App from './App.vue'
 import DefaultTooltip from './components/common/DefaultTooltip.vue'
 import VStep from './components/vue-tour/src/components/VStep.vue'
 import VTour from './components/vue-tour/src/components/VTour.vue'
+import consoleLogger from '@/libs/console-logger'
 import vuetify from './plugins/vuetify'
 import router from './router'
 import store from './store'
@@ -57,6 +58,10 @@ if (version && isOfficialTag) {
     transport: Sentry.makeBrowserOfflineTransport(Sentry.makeFetchTransport),
   })
 }
+
+consoleLogger.initialize().catch((error) => {
+  console.error('Failed to initialize console logger:', error)
+})
 
 new Vue({
   router,
