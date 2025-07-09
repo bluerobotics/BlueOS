@@ -95,6 +95,7 @@ dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-
 python_files=$(git ls-files '*.py')
 
 echo "Running black.."
+echo $python_files
 black ${black_extra_args} $python_files
 
 # do not run the rest of the script if running for fixing

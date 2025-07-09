@@ -30,8 +30,7 @@ from typedefs import (
     Route,
 )
 
-# TODO: Replace this by `from pydantic import IPvAnyAddress, IPvAnyNetwork` once we update to pydantic v2
-from typedefs_pydantic_network_shin import IPvAnyAddress, IPvAnyNetwork
+from pydantic import IPvAnyAddress, IPvAnyNetwork
 
 __all__ = [
     "AddressMode",
