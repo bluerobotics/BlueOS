@@ -3,7 +3,7 @@ import errno
 import re
 import subprocess
 import time
-from ipaddress import ip_network, IPv4Address
+from ipaddress import ip_network, IPv4Address, IPv6Address
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -714,11 +714,14 @@ class EthernetManager:
             net = "0.0.0.0/0" if raw_route["family"] == AddressFamily.AF_INET else "::/0"
         else:
             net = f"{raw_destination}/{raw_prefixlen}"
-        destination = IPvAnyNetwork(ip_network(net))
+        destination = ip_network(net)
 
         # Parse gateway
         gateway = (
-            self.__class__._normalize_gateway(destination, IPvAnyAddress(raw_gateway))
+            self.__class__._normalize_gateway(
+                destination,
+                IPv4Address(raw_gateway) if raw_route["family"] == AddressFamily.AF_INET else IPv6Address(raw_gateway),
+            )
             if raw_gateway is not None
             else None
         )

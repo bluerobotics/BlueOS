@@ -17,6 +17,7 @@ SERVER_PORT = 27000
 COMPONENT_ID = 220
 SERVER_ADDR = (SERVER_HOST, SERVER_PORT)
 
+
 # pyfakefs fixture
 @pytest.fixture
 def fs() -> Generator[Optional[FakeFilesystem], None, None]:

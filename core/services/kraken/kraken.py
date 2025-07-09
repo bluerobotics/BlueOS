@@ -82,7 +82,7 @@ class Kraken:
                     )
 
                 try:
-                    await (Extension(ExtensionSource.from_settings(extension), digest)).start()
+                    await Extension(ExtensionSource.from_settings(extension), digest).start()
                 except Exception:
                     logger.warning(
                         f"Dead extension {extension.identifier}:{extension.tag} could not be started: {traceback.format_exc()}"
@@ -128,7 +128,7 @@ class Kraken:
         for extension in extensions:
             if not extension.is_valid():
                 try:
-                    await (Extension(ExtensionSource.from_settings(extension))).uninstall()
+                    await Extension(ExtensionSource.from_settings(extension)).uninstall()
                 except Exception as e:
                     logger.warning(
                         f"Invalid extension {extension.identifier}:{extension.tag} could not be uninstalled: {e}"

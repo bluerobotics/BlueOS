@@ -106,14 +106,15 @@ disable_error_code = [
 ]
 
 [tool.ruff]
-ignore = [
-  "A003", # BuiltinAttributeShadowing: Unnecessary restriction (not a source of confusion)
-  "E501", # LineTooLong: Let black take care of
-  "F401", # UnusedImport: We are using pylint 'ignore' comments for it
-  "F821", # UndefinedName: We are using pylint 'ignore' comments for it
-  "F841", # UnusedVariable: We are using pylint 'ignore' comments for it
-  "E402", # ModuleImportNotAtTopOfFile: noqa doesn't work and this is required at some places
-]
+  [tool.ruff.lint]
+  ignore = [
+    "A003", # BuiltinAttributeShadowing: Unnecessary restriction (not a source of confusion)
+    "E501", # LineTooLong: Let black take care of
+    "F401", # UnusedImport: We are using pylint 'ignore' comments for it
+    "F821", # UndefinedName: We are using pylint 'ignore' comments for it
+    "F841", # UnusedVariable: We are using pylint 'ignore' comments for it
+    "E402", # ModuleImportNotAtTopOfFile: noqa doesn't work and this is required at some places
+  ]
 
 [tool.pylint]
   [tool.pylint.master]
