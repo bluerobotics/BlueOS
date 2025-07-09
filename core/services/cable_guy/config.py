@@ -1,7 +1,7 @@
 # This file is used to define general configurations for the app
 
 from typedefs import AddressMode, InterfaceAddress, NetworkInterface, Route
-from typedefs_pydantic_network_shin import IPvAnyNetwork
+from pydantic import IPvAnyNetwork
 
 SERVICE_NAME = "cable-guy"
 

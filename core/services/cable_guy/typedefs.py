@@ -2,10 +2,7 @@ from enum import Enum
 from ipaddress import ip_network
 from typing import List, Optional
 
-from pydantic import BaseModel
-
-# TODO: Replace this by `from pydantic import IPvAnyAddress, IPvAnyNetwork` once we update to pydantic v2
-from typedefs_pydantic_network_shin import IPvAnyAddress, IPvAnyNetwork
+from pydantic import BaseModel, IPvAnyAddress, IPvAnyNetwork
 
 
 class AddressMode(str, Enum):
