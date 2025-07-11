@@ -173,7 +173,9 @@ import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
+import filebrowser from '@/libs/filebrowser'
 import bag from '@/store/bag'
+import { FilebrowserFile } from '@/types/filebrowser'
 import { InstalledExtensionData, RunningContainer } from '@/types/kraken'
 import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
@@ -190,6 +192,12 @@ const BLUEOS_CLOUD_JOIN_URL = `${BLUEOS_CLOUD_URL}/api/agent/join/`
 
 const BLUEOS_CLOUD_VEHICLES_URL = `${BLUEOS_CLOUD_URL}/vehicle/register/`
 
+const MAJOR_TOM_CLOUD_TOKEN_FILE = {
+  path: 'system_root/root/.majortom/token.key',
+  name: 'token.key',
+  extension: 'key',
+} as FilebrowserFile
+
 export default Vue.extend({
   name: 'CloudTrayMenu',
   components: {
@@ -199,7 +207,7 @@ export default Vue.extend({
   data() {
     return {
       token: '',
-      bag_token: '',
+      local_token: '',
       setting_token: false,
       menu_opened: false,
       operation_in_progress: false,
@@ -225,7 +233,7 @@ export default Vue.extend({
       )
     },
     is_token_set(): boolean {
-      return this.bag_token !== ''
+      return this.local_token !== ''
     },
     blueos_cloud_url(): string {
       return BLUEOS_CLOUD_URL
@@ -259,7 +267,7 @@ export default Vue.extend({
   methods: {
     async setUpTrayMenu() {
       await this.fetchExtensions()
-      await this.fetchMajorTomBagToken()
+      await this.fetchMajorTomToken()
 
       if (!this.once_opened && !this.is_major_tom_ready) {
         setTimeout(() => {
@@ -278,15 +286,50 @@ export default Vue.extend({
       this.operation_error_title = title
       this.operation_error_message = String(error)
     },
+    async cleanMajorTomToken(): Promise<void> {
+      const data = await bag.getData('major_tom')
+      if (data && data.token) {
+        delete data.token
+      }
+      await bag.setData('major_tom', { ...data })
+      await filebrowser.deleteFile(MAJOR_TOM_CLOUD_TOKEN_FILE)
+    },
     async fetchMajorTomData(): Promise<InstalledExtensionData> {
       const data = await axios.get(MAJOR_TOM_CLOUD_URL)
 
       return data.data as InstalledExtensionData
     },
-    async fetchMajorTomBagToken(): Promise<void> {
+    async fetchMajorTomFileToken(): Promise<string | undefined> {
+      try {
+        const response = await fetch(await filebrowser.singleFileRelativeURL(MAJOR_TOM_CLOUD_TOKEN_FILE))
+        return response.ok ? await response.text() : undefined
+      } catch {
+        return undefined
+      }
+    },
+    async fetchMajorTomBagToken(): Promise<string | undefined> {
       const tomData = await bag.getData('major_tom')
+      return tomData?.token ? String(tomData?.token) : undefined
+    },
+    async fetchMajorTomToken(): Promise<void> {
+      const fileToken = await this.fetchMajorTomFileToken()
+      let tokenToUse = fileToken
+      if (tokenToUse === undefined) {
+        tokenToUse = await this.fetchMajorTomBagToken()
+      }
 
-      this.bag_token = String(tomData?.token ?? '')
+      if (!await this.isMajorTomTokenValid(tokenToUse, true)) {
+        await this.cleanMajorTomToken()
+        tokenToUse = undefined
+      } else if (tokenToUse !== undefined && tokenToUse !== fileToken) {
+        await this.updateMajorTomToken(tokenToUse)
+      }
+
+      this.local_token = tokenToUse ?? ''
+    },
+    async updateMajorTomToken(token: string): Promise<void> {
+      await filebrowser.createFile(MAJOR_TOM_CLOUD_TOKEN_FILE.path, true)
+      await filebrowser.writeToFile(MAJOR_TOM_CLOUD_TOKEN_FILE.path, token)
     },
     async fetchExtensions(): Promise<void> {
       if (this.operation_in_progress) {
@@ -352,8 +395,11 @@ export default Vue.extend({
 
       await this.fetchExtensions()
     },
-    async isMajorTomTokenValid(token: string): Promise<boolean> {
-      let isValid = false
+    async isMajorTomTokenValid(token: string | undefined, ignoreOfflineError = false): Promise<boolean> {
+      if (token === undefined) {
+        return false
+      }
+
       try {
         await axios.put(
           BLUEOS_CLOUD_JOIN_URL,
@@ -364,12 +410,13 @@ export default Vue.extend({
             },
           },
         )
-      } catch (error) {
-        if (error.response && error.response.status === StatusCodes.BAD_REQUEST) {
-          isValid = true
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error) && error.response) {
+          return error.response.status === StatusCodes.BAD_REQUEST
         }
+        return ignoreOfflineError
       }
-      return isValid
+      return false
     },
     async setMajorTomToken() {
       if (this.operation_in_progress) {
@@ -381,8 +428,7 @@ export default Vue.extend({
 
       if (isTokenValid) {
         try {
-          const tomData = await bag.getData('major_tom')
-          await bag.setData('major_tom', { ...tomData, token: this.token })
+          await this.updateMajorTomToken(this.token)
 
           await back_axios({
             url: `${KRAKEN_API_URL}/extension/restart`,
@@ -408,7 +454,7 @@ export default Vue.extend({
       this.token = ''
       this.setting_token = false
 
-      await this.fetchMajorTomBagToken()
+      await this.fetchMajorTomToken()
     },
   },
 })
