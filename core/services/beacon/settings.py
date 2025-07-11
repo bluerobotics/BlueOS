@@ -7,6 +7,7 @@ import psutil
 from commonwealth.settings import settings
 from loguru import logger
 from pykson import (
+    BooleanField,
     IntegerField,
     JsonObject,
     ListField,
@@ -200,3 +201,21 @@ class SettingsV4(SettingsV3):
             super().migrate(data)
 
         data["VERSION"] = SettingsV4.VERSION
+
+
+class SettingsV5(SettingsV4):
+    VERSION = 5
+    use_tls = BooleanField()
+
+    def __init__(self, *args: str, **kwargs: int) -> None:
+        super().__init__(*args, **kwargs)
+        self.VERSION = SettingsV5.VERSION
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV5.VERSION:
+            return
+
+        if data["VERSION"] < SettingsV5.VERSION:
+            super().migrate(data)
+
+        data["VERSION"] = SettingsV5.VERSION
