@@ -57,7 +57,7 @@ class SITLFrame(str, Enum):
     AIRSIM = "airsim"
     SCRIMMAGE = "scrimmage"
     WEBOTS = "webots"
-    JSON = " JSON"
+    JSON = "JSON"
     UNDEFINED = " undefined"
 
 
