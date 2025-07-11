@@ -50,7 +50,7 @@
             v-once
             ref="extension_logo"
             contain
-            :src="extension.extension_logo"
+            :src="'https://corsproxy.io/?url=' + extension.extension_logo"
             height="150px"
             class="mt-3 mb-5 my-2 logo-img"
             @load="setDominantColor"
