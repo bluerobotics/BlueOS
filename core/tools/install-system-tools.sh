@@ -7,7 +7,6 @@ set -e
 TOOLS=(
     ardupilot_tools
     filebrowser
-    linux2rest
     logviewer
     scripts
     wifi
