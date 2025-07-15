@@ -12,6 +12,7 @@ TOOLS=(
     machineid
     mavlink2rest
     mavlink_server
+    recorder
     ttyd
     zenoh
 )
