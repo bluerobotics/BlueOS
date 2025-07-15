@@ -11,6 +11,7 @@ TOOLS=(
     linux2rest
     machineid
     mavlink2rest
+    mavlink_camera_manager
     mavlink_server
     ttyd
     zenoh
