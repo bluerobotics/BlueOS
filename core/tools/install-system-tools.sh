@@ -9,7 +9,6 @@ TOOLS=(
     filebrowser
     linux2rest
     logviewer
-    mavlink_camera_manager
     scripts
     wifi
 )
