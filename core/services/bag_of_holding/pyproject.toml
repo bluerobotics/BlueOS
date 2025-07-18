@@ -14,5 +14,8 @@ dependencies = [
     "uvicorn==0.18.0"
 ]
 
+[tool.uv]
+package = false
+
 [tool.uv.sources]
 commonwealth = { workspace = true }

@@ -22,5 +22,8 @@ dependencies = [
     "validators==0.18.2",
 ]
 
+[tool.uv]
+package = false
+
 [tool.uv.sources]
 commonwealth = { workspace = true }

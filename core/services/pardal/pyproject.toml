@@ -10,5 +10,8 @@ dependencies = [
     "loguru==0.5.3",
 ]
 
+[tool.uv]
+package = false
+
 [tool.uv.sources]
 commonwealth = { workspace = true }
