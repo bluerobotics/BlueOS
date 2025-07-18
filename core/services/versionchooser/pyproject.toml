@@ -15,5 +15,8 @@ dependencies = [
     "yarl==1.12.1",
 ]
 
+[tool.uv]
+package = false
+
 [tool.uv.sources]
 commonwealth = { workspace = true }
