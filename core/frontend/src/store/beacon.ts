@@ -37,6 +37,8 @@ class BeaconStore extends VuexModule {
 
   vehicle_name = ''
 
+  use_tls = false
+
   fetchAvailableDomainsTask = new OneMoreTime(
     { delay: 5000 },
   )
@@ -59,6 +61,12 @@ class BeaconStore extends VuexModule {
   @Mutation
   private _setVehicleName(vehicle_name: string): void {
     this.vehicle_name = vehicle_name
+  }
+
+  // eslint-disable-next-line
+  @Mutation
+  private _setUseTLS(use_tls: boolean): void {
+    this.use_tls = use_tls
   }
 
   @Mutation
@@ -247,6 +255,31 @@ class BeaconStore extends VuexModule {
         clearInterval(id)
       }
     }, 1000)
+  }
+
+  @Action
+  async setTLS(enable_tls: boolean): Promise<boolean> {
+    return back_axios({
+      method: 'post',
+      url: `${this.API_URL}/use_tls`,
+      timeout: 5000,
+      params: {
+        enable_tls: enable_tls,
+      },
+    })
+      .then(() => {
+        // eslint-disable-next-line
+        this._setUseTLS(enable_tls)
+        return true
+      })
+      .catch((error) => {
+        if (isBackendOffline(error)) {
+          return false
+        }
+        const message = `Could not set TLS option: ${error.response?.data ?? error.message}.`
+        notifier.pushError('BEACON_SET_TLS_FAIL', message, true)
+        return false
+      })
   }
 }
 
