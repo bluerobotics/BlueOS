@@ -1,11 +1,12 @@
 import base64
 import json
 import os
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, List
+from typing import Dict, List
 
-from aiohttp import web
+from commonwealth.utils.apis import PrettyJSONResponse
+from pydantic import BaseModel
 
+DEFAULT_DOCKER_REGISTRY = "https://index.docker.io/v1/"
 DOCKER_USER_CONFIG_DIR = "/home/pi/.docker"
 DOCKER_ROOT_CONFIG_DIR = "/root/.docker"
 
@@ -15,21 +16,11 @@ DOCKER_ROOT_CONFIG_FILE = os.path.join(DOCKER_ROOT_CONFIG_DIR, "config.json")
 DEFAULT_DOCKER_REGISTRY = "https://index.docker.io/v1/"
 
 
-@dataclass
-class DockerLoginInfo:
+class DockerLoginInfo(BaseModel):
     root: bool = True
-    registry: str = DEFAULT_DOCKER_REGISTRY
     username: str = ""
     password: str = ""
-
-    @staticmethod
-    def from_json(data: Dict[str, Any]) -> "DockerLoginInfo":
-        return DockerLoginInfo(
-            root=data.get("root", True),
-            registry=data.get("registry", DEFAULT_DOCKER_REGISTRY),
-            username=data.get("username", ""),
-            password=data.get("password", ""),
-        )
+    registry: str = DEFAULT_DOCKER_REGISTRY
 
 
 def get_accounts_from_file(file_path: str, root: bool) -> List[DockerLoginInfo]:
@@ -95,7 +86,7 @@ def logout_from_file(info: DockerLoginInfo, file_path: str) -> None:
         json.dump(config, file, indent=4)
 
 
-def get_docker_accounts() -> web.Response:
+def get_docker_accounts() -> PrettyJSONResponse:
     root_accounts = get_accounts_from_file(DOCKER_ROOT_CONFIG_FILE, True)
     user_accounts = get_accounts_from_file(DOCKER_USER_CONFIG_FILE, False)
 
@@ -105,7 +96,7 @@ def get_docker_accounts() -> web.Response:
 
     accounts = root_accounts + user_accounts
 
-    return web.json_response([asdict(account) for account in accounts])
+    return PrettyJSONResponse(content=[account.dict() for account in accounts])
 
 
 def make_docker_login(info: DockerLoginInfo) -> None:

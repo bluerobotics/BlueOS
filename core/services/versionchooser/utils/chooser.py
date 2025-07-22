@@ -3,22 +3,18 @@ import pathlib
 import sys
 from dataclasses import asdict
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
 
 import aiodocker
 import appdirs
 import docker
-from aiohttp import web
+from fastapi import Response
+from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 
 from utils.dockerhub import TagFetcher
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
-
-current_folder = pathlib.Path(__file__).parent.parent.absolute()
-# Folder for static files (mostly css/js)
-FRONTEND_FOLDER = pathlib.Path.joinpath(current_folder, "frontend")
-STATIC_FOLDER = pathlib.Path.joinpath(FRONTEND_FOLDER, "static")
 
 
 class VersionChooser:
@@ -36,11 +32,6 @@ class VersionChooser:
         client.images.prune({"dangling": True})
 
     @staticmethod
-    def index() -> web.FileResponse:
-        """Serve index.html"""
-        return web.FileResponse(str(FRONTEND_FOLDER) + "/index.html", headers={"cache-control": "no-cache"})
-
-    @staticmethod
     def get_current_image_and_tag() -> Optional[Tuple[str, str]]:
         with open(DOCKER_CONFIG_PATH, encoding="utf-8") as startup_file:
             try:
@@ -54,16 +45,18 @@ class VersionChooser:
                 logger.warning(f"Unable to load settings file: {e}")
         return None
 
-    async def get_version(self) -> web.Response:
+    async def get_version(self) -> JSONResponse:
         """Fetches current version from config file
 
         Returns:
-            web.Response: json with image name, tag, last modification date,
+            Response: json with image name, tag, last modification date,
             sha and architecture of the image
         """
         version = self.get_current_image_and_tag()
         if version is None:
-            return web.Response(status=500, text="Unable to load current version from settings. Check the log")
+            return JSONResponse(
+                status_code=500, content={"message": "Unable to load current version from settings. Check the log"}
+            )
         image_name, tag = version
         full_name = f"{image_name}:{tag}"
         image = await self.client.images.get(full_name)
@@ -74,16 +67,16 @@ class VersionChooser:
             "sha": image["Id"],
             "architecture": image["Architecture"],
         }
-        return web.json_response(output)
+        return JSONResponse(content=output)
 
-    async def load(self, data: bytes) -> web.Response:
+    async def load(self, data: bytes) -> JSONResponse:
         """Load a docker image file.
 
         Args:
             data (bytes): Tar file from `docker save` output
 
         Returns:
-            web.Response:
+            Response:
                 200 - OK
                 400 - Error while processing data
                 500 - Internal server error while processing docker import image
@@ -96,14 +89,14 @@ class VersionChooser:
             response = response_list[0]
         except Exception as error:
             logger.critical(f"Error: {type(error)}: {error}")
-            return web.Response(status=500, text=f"Error: {type(error)}: {error}")
+            return JSONResponse(status_code=500, content={"error": f"Error: {type(error)}: {error}"})
 
         if "errorDetail" in response:
-            return web.Response(status=500, text=response["errorDetail"]["message"])
+            return JSONResponse(status_code=500, content={"error": response["errorDetail"]["message"]})
         if "stream" in response:
-            return web.json_response(response)
+            return JSONResponse(content=response)
 
-        return web.Response(status=501, text=f"Response: {response}")
+        return JSONResponse(status_code=501, content={"error": f"Response: {response}"})
 
     async def is_valid_version(self, image: str) -> Tuple[bool, str]:
         """
@@ -128,34 +121,34 @@ class VersionChooser:
             logger.critical(error_msg)
             return False, error_msg
 
-    async def pull_version(self, request: web.Request, repository: str, tag: str) -> web.StreamResponse:
+    async def pull_version(self, repository: str, tag: str) -> StreamingResponse:
         """Applies a new version.
 
         Pulls the image from dockerhub, streaming the output as a StreamResponse
 
         Args:
-            request (web.Request): http request from aiohttp
             repository (str): name of the image, such as bluerobotics/blueos-core
             tag (str): image tag
 
         Returns:
-            web.StreamResponse: Streams the 'docker pull' output
+            StreamingResponse: Streams the 'docker pull' output
         """
-        response = web.StreamResponse()
-        response.headers["Content-Type"] = "application/x-www-form-urlencoded"
-        # This step actually starts the chunked response
-        await response.prepare(request)
 
-        # Stream every line of the output back to the client
-        try:
-            async for line in self.client.images.pull(f"{repository}:{tag}", repo=repository, tag=tag, stream=True):
-                await response.write(json.dumps(line).encode("utf-8"))
-        except Exception as e:
-            logger.error(f"pull of {repository}:{tag}  failed: {e}")
-            await response.write(json.dumps({"error": f"error while pulling image: {e}"}).encode("utf-8"))
-        await response.write_eof()
-        # TODO: restore pruning
-        return response
+        async def generate() -> AsyncGenerator[bytes, None]:
+            try:
+                async for line in self.client.images.pull(f"{repository}:{tag}", repo=repository, tag=tag, stream=True):
+                    yield json.dumps(line).encode("utf-8")
+            except Exception as e:
+                logger.error(f"pull of {repository}:{tag}  failed: {e}")
+                yield json.dumps({"error": f"error while pulling image: {e}"}).encode("utf-8")
+
+        return StreamingResponse(
+            generate(),
+            media_type="application/x-www-form-urlencoded",
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
 
     async def get_bootstrap_version(self) -> str:
         """Get the current bootstrap container image version.
@@ -173,7 +166,7 @@ class VersionChooser:
             logger.critical(f"unable to read bootstrap version: {e}")
             return "Unknown"
 
-    async def set_bootstrap_version(self, tag: str) -> web.StreamResponse:
+    async def set_bootstrap_version(self, tag: str) -> JSONResponse:
         """Set the bootstrap container to a new version.
 
         Stops the current bootstrap container, renames it to a backup,
@@ -184,7 +177,7 @@ class VersionChooser:
             tag (str): The image tag for the new bootstrap container.
 
         Returns:
-            web.StreamResponse: Response indicating success.
+            StreamingResponse: Response indicating success.
         """
 
         bootstrap = None
@@ -199,7 +192,7 @@ class VersionChooser:
 
         image_check = await self.is_valid_version(new_image_name)
         if not image_check[0]:
-            return web.Response(status=412, text=image_check[1])
+            return JSONResponse(status_code=412, content={"error": image_check[1]})
 
         backup_name = "bootstrap-backup"
         try:
@@ -241,9 +234,9 @@ class VersionChooser:
         container = await self.client.containers.create(bootstrap_config, name=self.bootstrap_name)  # type: ignore
         await container.start()
         logger.info(f"Bootstrap updated to {bootstrap_config['Image']}")
-        return web.Response(status=200, text=f"Bootstrap update to {tag}")
+        return JSONResponse(status_code=200, content={"message": f"Bootstrap update to {tag}"})
 
-    async def set_version(self, image: str, tag: str) -> web.StreamResponse:
+    async def set_version(self, image: str, tag: str) -> JSONResponse:
         """Sets the current version.
 
         Sets the version in startup.json()
@@ -253,7 +246,7 @@ class VersionChooser:
             tag (str): the desired tag
 
         Returns:
-            web.Response:
+            Response:
                 200 - OK
                 400 - Invalid image/tag
                 500 - Invalid settings file/Other internal error
@@ -261,7 +254,7 @@ class VersionChooser:
 
         image_check = await self.is_valid_version(f"{image}:{tag}")
         if not image_check[0]:
-            return web.Response(status=412, text=image_check[1])
+            return JSONResponse(status_code=412, content={"error": image_check[1]})
 
         with open(DOCKER_CONFIG_PATH, "r+", encoding="utf-8") as startup_file:
             try:
@@ -280,16 +273,18 @@ class VersionChooser:
                     await core.kill()
                     result = await core.wait()  # type: ignore
                     logger.info(f"Response after waiting for core to be killed: {result}")
-                return web.Response(status=200, text=f"Changed to version {image}:{tag}, restarting...")
+                return JSONResponse(
+                    status_code=200, content={"message": f"Changed to version {image}:{tag}, restarting..."}
+                )
 
             except KeyError:
-                return web.Response(status=500, text="Invalid version file")
+                return JSONResponse(status_code=500, content={"error": "Invalid version file"})
 
             except Exception as error:
                 logger.critical(f"Error: {type(error)}: {error}")
-                return web.Response(status=500, text=f"Error: {type(error)}: {error}")
+                return JSONResponse(status_code=500, content={"error": f"Error: {type(error)}: {error}"})
 
-    async def delete_version(self, image: str, tag: str) -> web.StreamResponse:
+    async def delete_version(self, image: str, tag: str) -> Response:
         """Deletes the selected version.
 
         Args:
@@ -297,7 +292,7 @@ class VersionChooser:
             tag (str): the desired tag
 
         Returns:
-            web.Response:
+            Response:
                 200 - OK
                 400 - Invalid image/tag
                 403 - image cannot be deleted
@@ -306,23 +301,25 @@ class VersionChooser:
         full_name = f"{image}:{tag}"
         # refuse if it is the current image
         if (image, tag) == self.get_current_image_and_tag():
-            return web.Response(status=500, text=f"Image {full_name} is in use and cannot be deleted.")
+            return JSONResponse(
+                status_code=500, content={"error": f"Image {full_name} is in use and cannot be deleted."}
+            )
         # check if image exists
         try:
             await self.client.images.get(full_name)
         except Exception as error:
             logger.warning(f"Image not found: {full_name} ({error})")
-            return web.Response(status=404, text=f"image '{full_name}' not found ({error})")
+            return JSONResponse(status_code=404, content={"error": f"image '{full_name}' not found ({error})"})
 
         # actually attempt to delete it
         logger.info(f"Deleting image {image}:{tag}...")
         try:
             await self.client.images.delete(full_name, force=True, noprune=False)
             logger.info("Image deleted successfully")
-            return web.Response(status=200)
+            return Response(status_code=200)
         except Exception as e:
             logger.warning(f"Error deleting image: {e}")
-            return web.Response(status=500, text=f"Unable do delete image: {e}")
+            return JSONResponse(status_code=500, content={"error": f"Unable do delete image: {e}"})
 
     async def set_local_versions(self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]]) -> None:
         for image in await self.client.images.list():
@@ -357,12 +354,12 @@ class VersionChooser:
         assert isinstance(output["remote"], list)
         output["remote"].extend([asdict(tag) for tag in online_tags])
 
-    async def get_available_local_versions(self) -> web.Response:
+    async def get_available_local_versions(self) -> JSONResponse:
         output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]] = {"local": [], "error": None}
         await self.set_local_versions(output)
-        return web.json_response(output)
+        return JSONResponse(content=output)
 
-    async def get_available_versions(self, repository: str) -> web.Response:
+    async def get_available_versions(self, repository: str) -> JSONResponse:
         """Returns versions available locally and in the remote
 
         Args:
@@ -370,19 +367,19 @@ class VersionChooser:
             tag (str): tag (such as "master" or "latest")
 
         Returns:
-            web.Response: json described in the openapi file
+            Response: json described in the openapi file
         """
         output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]] = {"local": [], "remote": [], "error": None}
         await self.set_local_versions(output)
         await self.set_remote_versions(output, repository)
-        return web.json_response(output)
+        return JSONResponse(content=output)
 
-    async def restart(self) -> web.Response:
+    async def restart(self) -> JSONResponse:
         """Returns versions available locally and in the remote
         Returns:
-            web.Response: always 200
+            Response: always 200
         """
         logger.info("Stopping core...")
         core = await self.client.containers.get("blueos-core")  # type: ignore
         await core.kill()
-        return web.Response(status=200, text="Restarting...")
+        return JSONResponse(status_code=200, content={"message": "Restarting..."})

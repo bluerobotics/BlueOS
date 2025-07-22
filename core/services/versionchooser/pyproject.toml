@@ -8,9 +8,11 @@ dependencies = [
     "aiohttp==3.7.4",
     "appdirs==1.4.4",
     "commonwealth==0.1.0",
-    "connexion[aiohttp,swagger-ui]==2.14.2",
+    "fastapi==0.105.0",
+    "fastapi-versioning==0.9.1",
     "docker==6.0.0",
     "loguru==0.5.3",
+    "uvicorn==0.18.0",
     # This dependency needs to be locked due to error in aiohttp
     "yarl==1.12.1",
 ]
