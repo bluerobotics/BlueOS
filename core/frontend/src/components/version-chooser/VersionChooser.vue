@@ -477,12 +477,14 @@ export default Vue.extend({
       const file = this.getInputFile()
       if (file) {
         this.disable_upload_controls = true
+        const formData = new FormData()
+        formData.append('file', file)
+
         await back_axios({
           method: 'POST',
-          url: '/version-chooser/v1.0/version/load/',
+          url: '/version-chooser/v1.0/version/load',
           timeout: 15 * 60 * 1000, // Wait for 15min
-          data: file,
-          headers: { 'Content-Type': 'undefined' },
+          data: formData,
           onUploadProgress: (event) => {
             this.upload_percentage = Math.round(100 * (event.loaded / event.total))
           },

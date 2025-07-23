@@ -66,9 +66,9 @@ async def test_get_version() -> None:
     with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
 
         response = await chooser.get_version()
-        if response.text is None:
+        if response.body is None:
             raise RuntimeError("text should be not None")
-        result = json.loads(response.text)
+        result = json.loads(response.body.decode())
         assert result["repository"] == "bluerobotics/blueos-core"
         assert result["tag"] == "master"
         assert len(client_mock.mock_calls) > 0
@@ -115,7 +115,7 @@ async def test_set_version(write_mock: AsyncMock) -> None:
 
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert await write_mock.called_once_with(EXPECTED_SET_VERSION_WRITE_CALL)
-        assert result.status == 200
+        assert result.status_code == 200
 
 
 @pytest.mark.asyncio
@@ -134,7 +134,7 @@ async def test_set_version_invalid_settings(json_mock: mock.MagicMock) -> None:
         request_mock = AsyncMock()
         request_mock.json = AsyncMock(return_value=version)
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
-        assert result.status in (412, 500)
+        assert result.status_code in (412, 500)
         assert len(json_mock.mock_calls) > 0
 
 
@@ -170,9 +170,9 @@ async def test_get_available_versions_dockerhub_unavailable(
     client_mock.configure_mock(**attrs)
     chooser = VersionChooser(client_mock)
     result = await chooser.get_available_versions("bluerobotics/blueos-core")
-    if result.text is None:
+    if result.body is None:
         raise RuntimeError("text should be not None")
-    data = json.loads(result.text)
+    data = json.loads(result.body.decode())
     assert "local" in data
     assert "remote" in data
     assert data["local"][0]["tag"] == "test1"
@@ -188,9 +188,9 @@ async def test_get_available_versions() -> None:
 
     chooser = VersionChooser(client_mock)
     result = await chooser.get_available_versions("bluerobotics/blueos-core")
-    if result.text is None:
+    if result.body is None:
         raise RuntimeError("text should be not None")
-    data = json.loads(result.text)
+    data = json.loads(result.body.decode())
     assert "local" in data
     assert "remote" in data
     assert data["local"][0]["tag"] == "test1"
@@ -204,7 +204,7 @@ async def test_get_version_invalid_file() -> None:
     with mock.patch("builtins.open", mock.mock_open(read_data="{}")):
         chooser = VersionChooser(client)
         response = await chooser.get_version()
-        assert response.status == 500
+        assert response.status_code == 500
 
 
 @pytest.mark.asyncio
@@ -215,7 +215,7 @@ async def test_get_version_json_exception(json_mock: mock.MagicMock) -> None:
     with mock.patch("builtins.open", mock.mock_open(read_data="")):
         chooser = VersionChooser(client)
         response = await chooser.get_version()
-        assert response.status == 500
+        assert response.status_code == 500
         assert len(json_mock.mock_calls) > 0
 
 
@@ -234,5 +234,5 @@ async def test_set_version_json_exception(json_mock: mock.MagicMock) -> None:
 
     with mock.patch("builtins.open", mock.mock_open(read_data="{}")):
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
-        assert result.status == 500
+        assert result.status_code == 500
         assert len(json_mock.mock_calls) > 0
