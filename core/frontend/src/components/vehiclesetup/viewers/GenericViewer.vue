@@ -1,15 +1,16 @@
 <template>
   <div>
     <model-viewer
-      v-if="model_path"
+      v-if="computed_model_path"
       id="modelviewer"
       ref="modelviewer"
-      :src="model_override_path || model_path"
+      :src="model_override_path || computed_model_path"
       :auto-rotate="autorotate"
       :camera-controls="cameracontrols"
       :orientation="orientation"
       shadow-intensity="0.3"
       interaction-prompt="none"
+      :camera-orbit="cameraOrbit"
     >
       <button
         v-for="annotation in filtered_annotations"
@@ -47,7 +48,7 @@
       </v-btn>
     </model-viewer>
     <div v-else class="d-flex flex-column align-center">
-      <SpinningLogo v-if="!model_path" size="40%" />
+      <SpinningLogo v-if="!computed_model_path" size="40%" />
       <div v-else>
         <v-icon
           style="height: 400px"
@@ -78,29 +79,17 @@ import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import autopilot_data from '@/store/autopilot'
-import autopilot from '@/store/autopilot_manager'
 import ping from '@/store/ping'
 import {
-  FRAME_TYPE as ROVER_FRAME_TYPE,
-} from '@/types/autopilot/parameter-rover-enums'
-import {
   BTN_FUNCTION as SUB_BTN_FUNCTION,
-  FRAME_CONFIG as SUB_FRAME_CONFIG,
   SERVO_FUNCTION as SUB_SERVO_FUNCTION,
 } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary, Indexed, Keyed } from '@/types/common'
 import { PingType } from '@/types/ping'
-import { sleep } from '@/utils/helper_functions'
+
+import { checkModelOverrides, frame_name, vehicle_folder } from './modelHelper'
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
-
-function get_model(vehicle_name: string, frame_name: string): undefined | string {
-  const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
-  if (models[`/public/${release_path}`]) {
-    return `/assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
-  }
-  return undefined
-}
 
 export default Vue.extend({
   name: 'GenericViewer',
@@ -135,6 +124,16 @@ export default Vue.extend({
       required: false,
       default: false,
     },
+    modelpath: {
+      type: String,
+      required: false,
+      default: undefined,
+    },
+    cameraOrbit: {
+      type: String,
+      required: false,
+      default: '45deg 70deg 0deg',
+    },
   },
   data() {
     return {
@@ -145,60 +144,17 @@ export default Vue.extend({
     }
   },
   computed: {
-    vehicle_type(): string | null {
-      return autopilot.vehicle_type
-    },
-    vehicle_folder(): string {
-      switch (this.vehicle_type) {
-        case 'Submarine':
-          return 'sub'
-        case 'Surface Boat':
-          return 'boat'
-        case 'Ground Rover':
-          return 'rover'
-        default:
-          return ''
+    computed_model_path(): string | undefined {
+      if (this.modelpath) {
+        return this.modelpath
       }
-    },
-    frame_type(): number | undefined {
-      switch (this.vehicle_type) {
-        case 'Submarine':
-          return autopilot_data.parameter('FRAME_CONFIG')?.value
-        case 'Surface Boat':
-          return autopilot_data.parameter('FRAME_TYPE')?.value
-          // TODO: other vehicles
-        default:
-          return undefined
-      }
-    },
-    frame_name(): string | undefined {
-      let result
-      switch (this.vehicle_type) {
-        case 'Submarine':
-          result = Object.entries(SUB_FRAME_CONFIG).find((key, value) => value === this.frame_type)?.[1] as string
-          break
-        case 'Surface Boat':
-          // we already know it is a boat, so check only TYPE and ignore CLASS (rover/boat/balancebot)
-          result = Object.entries(ROVER_FRAME_TYPE).find((key, value) => value === this.frame_type)?.[1] as string
-          break
-        case 'Ground Rover':
-          // TOOD: check FRAME_TYPE
-          result = 'unknown'
-          break
-          // TODO: other vehicles
-        default:
-          break
-      }
-      return result ? `${result}` : undefined
-    },
-    model_path(): string | undefined {
-      return get_model(this.vehicle_folder, this.frame_name)
+      return autopilot_data.vehicle_model
     },
     filtered_annotations(): (HotspotConfiguration & Indexed & Keyed)[] {
       if (this.noannotations) {
         return []
       }
-      if (this.frame_name === undefined) {
+      if (frame_name === undefined) {
         return []
       }
       // pick correct set
@@ -269,20 +225,13 @@ export default Vue.extend({
         this.forceRefreshAnnotations()
         return
       }
-      if (this.transparent) {
-        this.setAlphas(0.05)
-        for (const part of this.highlight) {
-          this.makeOpaque(part)
-        }
-      } else {
-        this.setAlphas(1)
-      }
+      this.redraw()
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
     },
-    async model_path() {
+    async computed_model_path() {
       this.reloadAnnotations()
-      this.model_override_path = await this.checkModelOverrides()
+      this.model_override_path = await checkModelOverrides()
       this.override_annotations = await this.loadAnnotationsOverride()
       this.forceRefreshAnnotations()
     },
@@ -309,17 +258,8 @@ export default Vue.extend({
     // eslint-disable-next-line no-extra-parens
     (this.$refs.modelviewer as ModelViewerElement)?.addEventListener('load', () => {
       this.redraw()
-      if (this.transparent) {
-        this.setAlphas(0.05)
-        for (const part of this.highlight) {
-          this.makeOpaque(part)
-        }
-      } else {
-        this.setAlphas(1)
-      }
       this.hideIrrelevantParts()
     })
-    this.model_override_path = await this.checkModelOverrides()
     this.override_annotations = await this.loadAnnotationsOverride()
     this.reloadAnnotations()
   },
@@ -361,36 +301,25 @@ export default Vue.extend({
       saveAs(file)
     },
     async reloadAnnotations() {
-      const json = await models[`./${this.vehicle_folder}/${this.frame_name}.json`]
+      const path = `/public/assets/vehicles/models/${vehicle_folder()}/${frame_name()}.json`
+      const json = await models[path]
       if (json) {
         this.annotations = json.annotations ?? {}
       }
     },
     redraw() {
-      this.setAlphas(1)
+      if (this.transparent) {
+        this.setAlphas(0.05)
+        for (const part of this.highlight) {
+          this.makeOpaque(part)
+        }
+      } else {
+        this.setAlphas(1)
+      }
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
     },
-    async checkModelOverrides() {
-      while (!this.vehicle_type || !this.frame_name) {
-        await sleep(100)
-      }
-      const master_override = '/userdata/modeloverrides/ALL.glb'
-      const vehicle_override = `/userdata/modeloverrides/${this.vehicle_folder}/${this.frame_name}.glb`
-      try {
-        await axios.head(master_override)
-        return master_override
-      } catch {
-        console.log(`master override model not found at ${master_override}`)
-      }
-      try {
-        await axios.head(vehicle_override)
-        return vehicle_override
-      } catch {
-        console.log(`vehicle override model not found at ${vehicle_override}`)
-      }
-      return undefined
-    },
+
     async loadAnnotationsOverride(): Promise<Dictionary<HotspotConfiguration>> {
       if (!this.model_override_path) {
         return {}
@@ -469,7 +398,7 @@ export default Vue.extend({
 
 <style scoped>
 model-viewer {
-  min-height: 500px;
+  height: 100%;
   width: 100%;
 }
 .HotspotAnnotation {
