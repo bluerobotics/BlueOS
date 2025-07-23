@@ -41,7 +41,11 @@ class PingDriver:
             ping = PingDevice()
             ping.connect_serial(self.ping.port.device, baud)
             for _ in range(attempts):
-                device_info = ping.request(COMMON_DEVICE_INFORMATION, timeout=0.1)
+                device_info = None
+                try:
+                    device_info = ping.request(COMMON_DEVICE_INFORMATION, timeout=0.1)
+                except Exception as e:
+                    logger.warning(f"Failed to request device information during baudrate detection: {e}")
                 if device_info is None:
                     failures += 1
                     if failures > max_failures:
