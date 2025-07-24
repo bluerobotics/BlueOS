@@ -589,6 +589,7 @@ class AutoPilotManager(metaclass=Singleton):
 
             if flight_controller.platform.type == PlatformType.Linux:
                 assert isinstance(flight_controller, LinuxFlightController)
+                flight_controller.setup()
                 await self.start_linux_board(flight_controller)
             elif flight_controller.platform.type == PlatformType.Serial:
                 await self.start_serial(flight_controller)
