@@ -1,7 +1,9 @@
 import asyncio
+import errno
 import re
 import subprocess
 import time
+from ipaddress import ip_network
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -12,6 +14,7 @@ from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, discover_dhcp_s
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pyroute2 import IW, NDB, IPRoute
+from pyroute2.netlink.exceptions import NetlinkError
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 
 from api import dns, settings
@@ -24,7 +27,11 @@ from typedefs import (
     NetworkInterface,
     NetworkInterfaceMetric,
     NetworkInterfaceMetricApi,
+    Route,
 )
+
+# TODO: Replace this by `from pydantic import IPvAnyAddress, IPvAnyNetwork` once we update to pydantic v2
+from typedefs_pydantic_network_shin import IPvAnyAddress, IPvAnyNetwork
 
 __all__ = [
     "AddressMode",
@@ -50,11 +57,11 @@ class EthernetManager:
 
     result: List[NetworkInterface] = []
 
-    _manager: PydanticManager = PydanticManager(SERVICE_NAME, settings.SettingsV1)
+    _manager: PydanticManager = PydanticManager(SERVICE_NAME, settings.SettingsV2)
 
     @property
-    def _settings(self) -> settings.SettingsV1:
-        return cast(settings.SettingsV1, self._manager.settings)
+    def _settings(self) -> settings.SettingsV2:
+        return cast(settings.SettingsV2, self._manager.settings)
 
     def __init__(self) -> None:
         self._dhcp_servers: List[DHCPServerManager] = []
@@ -127,6 +134,27 @@ class EthernetManager:
             if any(address.mode == AddressMode.Client for address in interface.addresses):
                 logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
                 self.trigger_dynamic_ip_acquisition(interface.name)
+
+            # Handle routes configuration
+            self._set_routes_configuration(interface)
+
+    def _set_routes_configuration(self, interface: NetworkInterface) -> None:
+        try:
+            current_routes = self.get_routes(interface.name, ignore_unmanaged=True)
+            desired_routes = interface.routes
+
+            # Remove old routes
+            for current_route in current_routes:
+                if current_route not in desired_routes:
+                    self.remove_route(interface.name, current_route)
+
+            # Add new routes
+            for desired_route in desired_routes:
+                if desired_route not in current_routes:
+                    self.add_route(interface.name, desired_route)
+
+        except Exception as error:
+            logger.error(f"Routes configuration failed: {error}")
 
     def _get_wifi_interfaces(self) -> List[str]:
         """Get wifi interface list
@@ -310,6 +338,7 @@ class EthernetManager:
             saved_interface = NetworkInterface(
                 name=interface_name,
                 addresses=[],
+                routes=[],
             )
 
         new_address = InterfaceAddress(ip=ip, mode=mode)
@@ -413,7 +442,11 @@ class EthernetManager:
                 if interface_metric:
                     priority = interface_metric.priority
 
-            interface_data = NetworkInterface(name=interface, addresses=valid_addresses, info=info, priority=priority)
+            routes = self.get_routes(interface, ignore_unmanaged=False)
+
+            interface_data = NetworkInterface(
+                name=interface, addresses=valid_addresses, info=info, priority=priority, routes=list(routes)
+            )
             # Check if it's valid and add to the result
             if self.validate_interface_data(interface_data, filter_wifi):
                 result += [interface_data]
@@ -507,7 +540,9 @@ class EthernetManager:
         for interface in interfaces:
             saved_interface = self.get_saved_interface_by_name(interface.name)
             if saved_interface is None:
-                saved_interface = NetworkInterface(name=interface.name, addresses=[], priority=interface.priority)
+                saved_interface = NetworkInterface(
+                    name=interface.name, addresses=[], priority=interface.priority, routes=[]
+                )
             saved_interface.priority = interface.priority
             self._update_interface_settings(interface.name, saved_interface)
 
@@ -564,6 +599,122 @@ class EthernetManager:
             number_of_disconnections=interface.carrier_down_count,
             priority=priority,
         )
+
+    def add_route(self, interface_name: str, route: Route) -> None:
+        self._execute_route("add", interface_name, route)
+
+    def remove_route(self, interface_name: str, route: Route) -> None:
+        self._execute_route("del", interface_name, route)
+
+    def _execute_route(self, action: str, interface_name: str, route: Route) -> None:
+        try:
+            interface_index = self._get_interface_index(interface_name)
+            gateway = self.__class__._normalize_gateway(route.destination_parsed, route.next_hop_parsed)
+
+            self.ipr.route(
+                action,
+                oif=interface_index,
+                dst=str(route.destination_parsed),
+                gateway=str(gateway) if gateway else None,
+                metrics={"metric": route.priority} if route.priority else None,
+            )
+
+            act = "Removed" if action == "del" else "Added" if action == "add" else action
+            logger.info(f"{act} route to {route.destination_parsed} via {gateway} on {interface_name}")
+        except NetlinkError as e:
+            if e.code == errno.EEXIST and action == "add":
+                logger.debug(
+                    f"Route {route.destination_parsed} via {gateway} on {interface_name} already exists, ignoring"
+                )
+                return
+
+        except Exception as e:
+            act = "Remove" if action == "del" else "Add" if action == "add" else action
+            logger.error(f"Failed to {act} route {route.destination_parsed} via {gateway} on {interface_name}: {e}")
+            raise
+
+        # Update settings
+        current_interface = self.get_interface_by_name(interface_name)
+        for current_route in current_interface.routes:
+            if current_route.destination_parsed == route.destination_parsed and current_route.gateway == route.gateway:
+                current_route.managed = route.managed
+        self._update_interface_settings(interface_name, current_interface)
+
+    def get_routes(self, interface_name: str, ignore_unmanaged: bool = True) -> Set[Route]:
+        try:
+            interface_index = self._get_interface_index(interface_name)
+            raw_routes = self.ipr.get_routes(oif=interface_index)
+        except Exception as err:
+            logger.error(f"Failed to get routes for {interface_name}: {err}")
+            return set()
+
+        saved_iface = self.get_saved_interface_by_name(interface_name)
+        saved_routes = saved_iface.routes if saved_iface is not None else []
+
+        routes: Set[Route] = set()
+        for raw_route in raw_routes:
+            try:
+                route = self._parse_route(raw_route)
+
+            except Exception as err:
+                logger.error(f"Failed to parse route record {raw_route}: {err}")
+                continue
+
+            # Synchronize the 'managed' attribute
+            for saved_route in saved_routes:
+                if saved_route == route:
+                    route.managed = saved_route.managed
+
+            if ignore_unmanaged and not route.managed:
+                continue
+
+            routes.add(route)
+
+        return routes
+
+    def _parse_route(
+        self,
+        raw_route: Any,
+    ) -> Route:
+        raw_destination: Optional[str] = raw_route.get_attr("RTA_DST")
+        raw_prefixlen: int = raw_route["dst_len"]
+        raw_gateway: Optional[str] = raw_route.get_attr("RTA_GATEWAY")
+        raw_priority: int = raw_route.get_attr("RTA_PRIORITY")
+
+        # Parse destination
+        if raw_destination is None:
+            net = "0.0.0.0/0" if raw_route["family"] == AddressFamily.AF_INET else "::/0"
+        else:
+            net = f"{raw_destination}/{raw_prefixlen}"
+        destination = IPvAnyNetwork(ip_network(net))
+
+        # Parse gateway
+        gateway = (
+            self.__class__._normalize_gateway(destination, IPvAnyAddress(raw_gateway))
+            if raw_gateway is not None
+            else None
+        )
+
+        route = Route(
+            destination=str(destination),
+            gateway=str(gateway) if gateway else None,
+            priority=raw_priority,
+        )
+
+        return route
+
+    @staticmethod
+    def _normalize_gateway(destination: IPvAnyNetwork, gateway: Optional[IPvAnyAddress]) -> Optional[IPvAnyAddress]:
+        if gateway is None:
+            return None
+
+        if destination.version == 4 and gateway.version != 4:
+            raise ValueError(f"Gateway {gateway} must be IPv4 for destination {destination}")
+
+        if destination.version == 6 and gateway.version != 6:
+            raise ValueError(f"Gateway {gateway} must be IPv6 for destination {destination}")
+
+        return gateway
 
     def _is_ip_on_interface(self, interface_name: str, ip_address: str) -> bool:
         interface = self.get_interface_by_name(interface_name)
@@ -653,7 +804,7 @@ class EthernetManager:
 
         saved_interface = self.get_saved_interface_by_name(interface_name)
         if saved_interface is None:
-            saved_interface = NetworkInterface(name=interface_name, addresses=[], priority=None)
+            saved_interface = NetworkInterface(name=interface_name, addresses=[], priority=None, routes=[])
 
         self._update_interface_settings(interface_name, saved_interface)
 

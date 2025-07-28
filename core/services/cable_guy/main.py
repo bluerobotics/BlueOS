@@ -17,6 +17,7 @@ from uvicorn import Config, Server
 from api.dns import DnsData
 from api.manager import EthernetManager, NetworkInterface, NetworkInterfaceMetricApi
 from config import SERVICE_NAME
+from typedefs import Route
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
@@ -116,6 +117,29 @@ def retrieve_host_dns() -> Any:
 def update_host_dns(dns_data: DnsData) -> Any:
     """REST API endpoint to update the host DNS configuration."""
     manager.dns.update_host_nameservers(dns_data)
+
+
+@app.post("/route", summary="Add route to interface.")
+@version(1, 0)
+def add_route(interface_name: str, route: Route) -> Any:
+    """REST API endpoint to add route."""
+    manager.add_route(interface_name, route)
+    manager.save()
+
+
+@app.delete("/route", summary="Remove route from interface.")
+@version(1, 0)
+def remove_route(interface_name: str, route: Route) -> Any:
+    """REST API endpoint remove route."""
+    manager.remove_route(interface_name, route)
+    manager.save()
+
+
+@app.get("/route", summary="Get the interface routes.")
+@version(1, 0)
+def get_route(interface_name: str) -> List[Route]:
+    """REST API endpoint to get routes."""
+    return list(manager.get_routes(interface_name, ignore_unmanaged=False))
 
 
 app = VersionedFastAPI(

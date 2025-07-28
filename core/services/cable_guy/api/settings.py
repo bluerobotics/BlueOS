@@ -1,11 +1,11 @@
 import json
 import pathlib
-from typing import Any, Dict, List
+from typing import Any, Dict, Sequence
 
 from commonwealth.settings.settings import PydanticSettings
 
 from config import DEFAULT_NETWORK_INTERFACES
-from typedefs import AddressMode, NetworkInterface
+from typedefs import AddressMode, NetworkInterface, NetworkInterfaceV1
 
 
 def sanitize_old_settings_file(path: pathlib.Path) -> None:
@@ -23,7 +23,7 @@ def sanitize_old_settings_file(path: pathlib.Path) -> None:
 
 
 class SettingsV1(PydanticSettings):
-    content: List[NetworkInterface] = DEFAULT_NETWORK_INTERFACES
+    content: Sequence[NetworkInterfaceV1] = DEFAULT_NETWORK_INTERFACES
 
     def migrate(self, data: Dict[str, Any]) -> None:
         if data["VERSION"] == SettingsV1.STATIC_VERSION:
@@ -35,7 +35,12 @@ class SettingsV1(PydanticSettings):
         data["VERSION"] = SettingsV1.STATIC_VERSION
 
     def on_settings_created(self, file_path: pathlib.Path) -> None:
-        if self.VERSION != SettingsV1.STATIC_VERSION:
+        if self.VERSION not in (SettingsV1.STATIC_VERSION, SettingsV1.STATIC_VERSION + 1):
+            return
+
+        settings_v1_file = file_path.parent / "settings-1.json"
+        if settings_v1_file.exists():
+            # If settings v1 already exist, we don't re initialize them
             return
 
         # If we have some old settings, let's try to use them
@@ -50,3 +55,21 @@ class SettingsV1(PydanticSettings):
             sanitize_old_settings_file(old_settings_file_path)
         except Exception:
             pass
+
+
+class SettingsV2(SettingsV1):
+    content: Sequence[NetworkInterface] = DEFAULT_NETWORK_INTERFACES
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
+            super().migrate(data)
+
+        data["VERSION"] = SettingsV2.STATIC_VERSION
+
+        # Transfer routes from default settings, falling back to empty list
+        default_routes_map = {net.name: net.routes for net in self.content}
+        for iface in data["content"]:
+            iface["routes"] = default_routes_map.get(iface["name"], [])
