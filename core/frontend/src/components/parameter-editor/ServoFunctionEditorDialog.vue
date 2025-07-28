@@ -492,6 +492,7 @@ export default Vue.extend({
   border-radius: 4px;
   font-size: 12px;
   white-space: nowrap;
+  user-select: none;
   text-align: center;
 }
 </style>
