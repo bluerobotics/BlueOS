@@ -178,7 +178,7 @@ export default Vue.extend({
   watch: {
     param(newParam) {
       this.internal_new_value = newParam?.value ?? 0
-      this.internal_new_value_as_string = this.internal_new_value.toString()
+      this.internal_new_value_as_string = String(this.internal_new_value)
     },
     is_form_valid(valid) {
       this.$emit('form-valid-change', valid)
@@ -200,6 +200,7 @@ export default Vue.extend({
       this.updateSelectedFlags()
       if (this.last_sent_value === undefined) {
         this.internal_new_value = this.param_value
+        this.internal_new_value_as_string = String(this.internal_new_value)
       }
     },
   },
