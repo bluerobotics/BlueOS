@@ -50,9 +50,7 @@
                   width="100%"
                   height="65"
                   class="ma-0 pa-0"
-                  @mouseover="highlight = [
-                    stringToUserFriendlyText(printParam(getParam(`SERVO${motor.servo}_FUNCTION`))),
-                  ]"
+                  @mouseover="highlightMotor(motor)"
                   @mouseleave="highlight = default_highlight"
                 >
                   <td width="20%">
@@ -399,6 +397,13 @@ export default Vue.extend({
     this.uninstallListeners()
   },
   methods: {
+    highlightMotor(motor: MotorTestTarget) {
+      if (this.is_rover) {
+        this.highlight = [this.stringToUserFriendlyText(printParam(this.getParam(`SERVO${motor.servo}_FUNCTION`)))]
+      } else {
+        this.highlight = [`Motor${motor.servo}`]
+      }
+    },
     convert_servo_name(name: string) {
       return name.replace('SERVO', 'Output ').replace('_FUNCTION', '')
     },
