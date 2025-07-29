@@ -114,6 +114,7 @@ COPY --from=download-binaries \
     /usr/bin/ttyd \
     /usr/bin/
 
+COPY tools/dump_journal/dump_journal.py /usr/bin/dump_journal.py
 # Copy frontend built on frontend-builder to this stage
 COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
