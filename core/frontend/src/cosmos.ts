@@ -1,3 +1,5 @@
+import { vec3 } from "gl-matrix";
+
 export {}
 
 declare global {
@@ -54,6 +56,19 @@ String.prototype.toTitle = function (this: string): string {
     return this.toUpperCase()
   }
   return this[0].toUpperCase() + this.substring(1)
+}
+
+/**
+ * Converts a hexadecimal color code to RGB values
+ * @param color - The hexadecimal color code (with or without '#' prefix)
+ * @returns A vec3 array containing the RGB values as integers [r, g, b] where each value is 0-255
+ */
+export const convertHexToRgbd = (color: string): vec3 => {
+  color = color.replace('#', '')
+  const r = parseInt(color.substring(0, 2), 16)
+  const g = parseInt(color.substring(2, 4), 16)
+  const b = parseInt(color.substring(4, 6), 16)
+  return [r, g, b]
 }
 
 

@@ -90,8 +90,8 @@
           <v-icon
             v-if="heartbeat_age() < time_limit_heartbeat"
             class="px-1"
-            :color="`rgba(255,255,255,${0.4 + (1000 - heartbeat_age()) / 1000}`"
-            title="MAVLink heartbeats arriving as expected"
+            :color="heartbeat_color()"
+            :title="heartbeat_message()"
           >
             mdi-heart-pulse
           </v-icon>
@@ -125,6 +125,22 @@
                 <td>Current:</td>
                 <td> {{ battery_current }} A</td>
               </tr>
+              <tr v-for="(calibrated, sensor_name,) in ardupilot_sensors.sensors" :key="sensor_name">
+                <td class="sensor-type">
+                  {{ sensor_name }}:
+                </td>
+                <td v-if="!calibrated">
+                  <v-btn
+                    x-small
+                    :to="{ name: 'Vehicle Setup', params: { tab: 'configure', subtab: sensor_name } }"
+                  >
+                    Calibrate
+                  </v-btn>
+                </td>
+                <td v-else>
+                  Calibrated
+                </td>
+              </tr>
             </table>
           </div>
         </v-container>
@@ -136,11 +152,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import { convertHexToRgbd } from '@/cosmos'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavModeFlag, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import ardupilot_sensors, { ArdupilotSensorsStore } from '@/store/ardupilot_sensors'
 import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
 import system_information from '@/store/system-information'
+import * as DEFAULT_COLORS from '@/style/colors/default'
 import { RaspberryEventType } from '@/types/system-information/platform'
 import { Disk } from '@/types/system-information/system'
 import mavlink_store_get from '@/utils/mavlink'
@@ -206,6 +225,9 @@ export default Vue.extend({
     disk_usage_high(): boolean {
       return this.disk_usage_percent > 85
     },
+    ardupilot_sensors(): ArdupilotSensorsStore {
+      return ardupilot_sensors
+    },
   },
   mounted() {
     mavlink2rest.startListening('HEARTBEAT').setCallback((message) => {
@@ -244,6 +266,20 @@ export default Vue.extend({
         'MAV_TYPE_VTOL_TAILSITTER',
       ].includes(type)
     },
+    heartbeat_color() : string {
+      const selected_color = ardupilot_sensors.all_sensors_calibrated
+        ? DEFAULT_COLORS.SHEET_LIGHT_BG : DEFAULT_COLORS.WARNING
+      const [r, g, b] = convertHexToRgbd(selected_color)
+      const opacity = Math.max(0.4, 1.4 - this.heartbeat_age() / 1000)
+
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`
+    },
+    heartbeat_message() : string {
+      if (ardupilot_sensors.all_sensors_calibrated) {
+        return 'MAVLink heartbeats arriving as expected'
+      }
+      return 'One or more sensors are not calibrated'
+    },
   },
 })
 </script>
@@ -260,5 +296,9 @@ export default Vue.extend({
 
 .white-shadow {
   text-shadow: 0 0 3px #FFF;
+}
+
+.sensor-type {
+  text-transform: capitalize;
 }
 </style>
