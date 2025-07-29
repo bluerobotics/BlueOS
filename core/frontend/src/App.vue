@@ -50,6 +50,19 @@
             Armed
           </v-card-title>
         </v-card>
+        <v-card
+          v-if="uncalibrated_sensors"
+          v-tooltip="'One or more sensors are not calibrated'"
+          class="d-flex align-center warning justify-center mr-5"
+          height="40"
+        >
+          <v-icon class="ml-3">
+            mdi-alert-outline
+          </v-icon>
+          <v-card-title>
+            Uncalibrated sensors
+          </v-card-title>
+        </v-card>
         <draggable v-model="selected_widgets" class="d-flex align-center justify-center">
           <component
             :is="getWidget(widget_name).component"
@@ -530,6 +543,9 @@ export default Vue.extend({
     },
     safe_mode(): boolean {
       return autopilot_data.is_safe
+    },
+    uncalibrated_sensors(): boolean {
+      return autopilot_data.uncalibrated_sensors
     },
     wifi_connected(): boolean {
       return wifi.current_network != null

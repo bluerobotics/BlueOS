@@ -293,13 +293,40 @@ export default Vue.extend({
       return results
     },
   },
+  watch: {
+    imu_is_calibrated: {
+      handler() {
+        this.updateUncalibratedSensorsStatus()
+      },
+      deep: true,
+      immediate: true,
+    },
+    compass_is_calibrated: {
+      handler() {
+        this.updateUncalibratedSensorsStatus()
+      },
+      deep: true,
+      immediate: true,
+    },
+  },
   mounted() {
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE2$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE3$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'VFR_HUD', refreshRate: 1 })
+
+    this.updateUncalibratedSensorsStatus()
   },
   methods: {
+    updateUncalibratedSensorsStatus() {
+      const imuUncalibrated = this.imu_is_calibrated
+        && Object.values(this.imu_is_calibrated).some((calibrated) => !calibrated)
+
+      const compassUncalibrated = this.compass_is_calibrated
+        && Object.values(this.compass_is_calibrated).some((calibrated) => !calibrated)
+
+      autopilot_data.setUncalibratedSensors(imuUncalibrated || compassUncalibrated)
+    },
     print_bus(bus: BUS_TYPE): string {
       return BUS_TYPE[bus]
     },
