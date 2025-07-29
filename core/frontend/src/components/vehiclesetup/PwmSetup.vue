@@ -408,7 +408,7 @@ export default Vue.extend({
       if (this.is_rover) {
         this.highlight = [this.stringToUserFriendlyText(printParam(this.getParam(`SERVO${motor.servo}_FUNCTION`)))]
       } else {
-        this.highlight = [`Motor${motor.motor}`]
+        this.highlight = [`Motor${motor.servo}`]
       }
     },
     convert_servo_name(name: string) {
