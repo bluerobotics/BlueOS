@@ -50,13 +50,14 @@
                   width="100%"
                   height="65"
                   class="ma-0 pa-0"
-                  @mouseover="highlight = [
-                    stringToUserFriendlyText(printParam(getParam(`SERVO${motor.servo}_FUNCTION`))),
-                  ]"
+                  @mouseover="highlightMotor(motor)"
                   @mouseleave="highlight = default_highlight"
                 >
                   <td width="20%">
                     {{ motor.name }}
+                    <span v-if="motor.servo !== motor.motor">
+                      (Output {{ motor.servo }})
+                    </span>
                   </td>
                   <td width="10%">
                     <parameterSwitch
@@ -177,6 +178,7 @@ import ParameterSwitch from '../common/ParameterSwitch.vue'
 
 interface MotorTestTarget {
   name: string
+  motor: number
   servo: number // target and servo differ in rover
   target: number
   direction: number
@@ -246,18 +248,20 @@ export default Vue.extend({
       return this.servo_function_parameters.filter(
         (parameter) => parameter.value >= SERVO_FUNCTION.MOTOR1 && parameter.value <= SERVO_FUNCTION.MOTOR8,
       ).map((parameter) => {
-        const number = parseInt(/\d+/g.exec(parameter.name)?.[0] ?? '0', 10)
-        const name = param_value_map.Submarine[parameter.name] ?? `Motor ${number}`
-        const direction_parameter = autopilot_data.parameterRegex(`MOT_${number}_DIRECTION`)?.[0]
-        const target = number - 1
+        const servo_number = parseInt(/\d+/g.exec(parameter.name)?.[0] ?? '0', 10)
+        const motor_number = parseInt(/\d+/g.exec(printParam(parameter))?.[0] ?? '0', 10)
+        const name = param_value_map.Submarine[parameter.name] ?? `Motor ${motor_number}`
+        const direction_parameter = autopilot_data.parameterRegex(`MOT_${motor_number}_DIRECTION`)?.[0]
+        const target = motor_number - 1
         return {
           name,
-          servo: number,
+          servo: servo_number,
+          motor: motor_number,
           target,
           direction: direction_parameter.value,
           reverse_parameter: direction_parameter,
         }
-      })
+      }).sort((a, b) => a.motor - b.motor)
     },
     available_motors(): MotorTestTarget[] {
       if (this.is_rover) {
@@ -290,6 +294,7 @@ export default Vue.extend({
         return {
           name,
           servo,
+          motor: servo,
           target,
           direction: reverse_parameter.value ? -1.0 : 1.0,
           reverse_parameter,
@@ -399,6 +404,13 @@ export default Vue.extend({
     this.uninstallListeners()
   },
   methods: {
+    highlightMotor(motor: MotorTestTarget) {
+      if (this.is_rover) {
+        this.highlight = [this.stringToUserFriendlyText(printParam(this.getParam(`SERVO${motor.servo}_FUNCTION`)))]
+      } else {
+        this.highlight = [`Motor${motor.motor}`]
+      }
+    },
     convert_servo_name(name: string) {
       return name.replace('SERVO', 'Output ').replace('_FUNCTION', '')
     },
