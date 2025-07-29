@@ -38,6 +38,8 @@ class AutopilotStore extends VuexModule {
 
   verhicle_armed = false
 
+  uncalibrated_sensors = false
+
   get parameter() {
     return (name: string): Parameter | undefined => this.parameters.find((parameter) => parameter.name === name)
   }
@@ -111,6 +113,11 @@ class AutopilotStore extends VuexModule {
   @Mutation
   setVehicleArmed(armed: boolean): void {
     this.verhicle_armed = armed
+  }
+
+  @Mutation
+  setUncalibratedSensors(uncalibrated: boolean): void {
+    this.uncalibrated_sensors = uncalibrated
   }
 }
 
