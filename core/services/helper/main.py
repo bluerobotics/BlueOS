@@ -130,6 +130,11 @@ class ServiceInfo(BaseModel):
             return self.port == other.port
         return False
 
+    def max_attempts_reached(self) -> bool:
+        if self.port not in Helper.attempts_left:
+            return False
+        return Helper.attempts_left[self.port] <= 0
+
 
 class SpeedtestServer(BaseModel):
     url: str
@@ -223,6 +228,9 @@ class Helper:
     PERIODICALLY_RESCAN_ALL_SERVICES = False
     # Wether or not we should rescan periodically just the 3rdparty services (extensions)
     PERIODICALLY_RESCAN_3RDPARTY_SERVICES = True
+
+    MAX_ATTEMPTS_LEFT = 3
+    attempts_left = {}
 
     @staticmethod
     # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
@@ -321,6 +329,13 @@ class Helper:
             "127.0.0.1", port=port, path="/", timeout=1.0, method="GET", follow_redirects=10
         )
         log_msg = f"Detecting service at port {port}"
+        if response.timeout:
+            service_attempts = Helper.attempts_left.get(port, Helper.MAX_ATTEMPTS_LEFT)
+            Helper.attempts_left[port] = service_attempts - 1
+
+            logger.debug(f"Timed out, attempting to detect service on port: {port}. Attempts left: {service_attempts}")
+
+            return info
         if response.status == http.client.BAD_REQUEST or response.decoded_data is None:
             # If not valid web server, documentation will not be available
             logger.debug(f"{log_msg}: Invalid: {response.status} - {response.decoded_data!r}")
@@ -426,8 +441,10 @@ class Helper:
             Helper.KNOWN_SERVICES = {service for service in Helper.KNOWN_SERVICES if service.port in ports}
 
         # Filter out ports we want to skip, as well as the ports from services we already know, assuming the services don't change,
-        known_ports = {service.port for service in Helper.KNOWN_SERVICES}
-        ports.difference_update(Helper.SKIP_PORTS, known_ports)
+        ignored_ports = {
+            service.port for service in Helper.KNOWN_SERVICES if service.valid or service.max_attempts_reached()
+        }
+        ports.difference_update(Helper.SKIP_PORTS, ignored_ports)
 
         # The detect_services run several of requests sequentially, so we are capping the amount of executors to lower the peaks on the CPU usage
         if get_cpu_type() == CpuType.PI3 or len(ports) == 0:
@@ -439,6 +456,8 @@ class Helper:
             tasks = [executor.submit(Helper.detect_service, port) for port in ports]
             services = {task.result() for task in futures.as_completed(tasks)}
 
+        # Remove the detected services from the known services set so we can add the updated entries
+        Helper.KNOWN_SERVICES = Helper.KNOWN_SERVICES.difference(services)
         # Update our known services cache
         Helper.KNOWN_SERVICES.update(services)
         Helper.update_nginx(services)
