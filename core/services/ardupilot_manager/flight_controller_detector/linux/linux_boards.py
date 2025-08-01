@@ -1,3 +1,5 @@
+import os
+
 from typing import List, Type
 
 from smbus2 import SMBus
@@ -25,6 +27,13 @@ class LinuxFlightController(FlightController):
             return True
         except OSError:
             return False
+
+    def setup(self) -> None:
+        os.makedirs("/root/.config/ardupilot-manager/firmware/scripts", exist_ok=True)
+        try:
+            os.symlink("/root/.config/ardupilot-manager/firmware/scripts", "/shortcuts/lua_scripts")
+        except FileExistsError:
+            pass
 
     @classmethod
     def get_all_boards(cls) -> List[Type["LinuxFlightController"]]:
