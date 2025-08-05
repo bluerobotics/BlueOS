@@ -93,14 +93,14 @@ export default Vue.extend({
         const suffix = index === 1 ? '' : index.toString()
         const gyrId = autopilot_data.parameter(`INS_GYR${suffix}_ID`)
         const offsets = ['X', 'Y', 'Z'].map((axis) => {
-          const rawValue = autopilot_data.parameter(`INS_GYROFFS${suffix}_${axis}`)?.value
+          const rawValue = autopilot_data.parameter(`INS_GYR${suffix}OFFS_${axis}`)?.value
           return rawValue ? rawValue * 1000 : null
         }) as [number, number, number]
 
         return {
           name: gyrId ? decode(gyrId.name, gyrId.value).deviceName ?? '?' : '?',
           param: gyrId,
-          value: this[`gyro_read${index}`],
+          value: [this.gyro_read1, this.gyro_read2, this.gyro_read3][index],
           offsets: vec3.fromValues(...offsets),
           calibration_temperature: autopilot_data.parameter(`INS_GYR${index}_CALTEMP`)?.value ?? 0,
         }

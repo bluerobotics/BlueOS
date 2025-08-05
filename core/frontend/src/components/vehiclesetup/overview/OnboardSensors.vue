@@ -27,18 +27,18 @@
           </thead>
           <tbody>
             <tr
-              v-for="imu in imus"
-              :key="imu.param"
+              v-for="accelerometer in ardupilot_sensors.accelerometers"
+              :key="accelerometer.param"
             >
-              <td><b>{{ imu.deviceName ?? 'UNKNOWN' }}</b></td>
+              <td><b>{{ accelerometer.deviceName ?? 'UNKNOWN' }}</b></td>
               <td v-tooltip="'Inertial Navigation Sensor'">
                 INS
               </td>
-              <td>{{ print_bus(imu.busType) }} {{ imu.bus }}</td>
-              <td>{{ `0x${imu.address}` }}</td>
+              <td>{{ print_bus(accelerometer.busType) }} {{ accelerometer.bus }}</td>
+              <td>{{ `0x${accelerometer.address}` }}</td>
               <td>
                 <v-icon
-                  v-if="imu_is_calibrated[imu.param]"
+                  v-if="ardupilot_sensors.accelerometers_calibrated[accelerometer.param]"
                   v-tooltip="'Sensor is callibrated and good to use'"
                   color="green"
                 >
@@ -52,7 +52,7 @@
                   mdi-emoticon-sad-outline
                 </v-icon>
                 <v-icon
-                  v-if="imu_temperature_is_calibrated[imu.param].calibrated"
+                  v-if="ardupilot_sensors.accelerometers_temperature_calibrated[accelerometer.param].calibrated"
                   v-tooltip="'Sensor thermometer is calibrated and good to use'"
                   color="green"
                 >
@@ -68,7 +68,7 @@
               </td>
             </tr>
             <tr
-              v-for="compass in compasses"
+              v-for="compass in ardupilot_sensors.compasses"
               :key="compass.param"
             >
               <td><b>{{ compass.deviceName ?? 'UNKNOWN' }}</b></td>
@@ -79,7 +79,7 @@
               <td>{{ `0x${compass.address}` }}</td>
               <td>
                 <v-icon
-                  v-if="compass_is_calibrated[compass.param]"
+                  v-if="ardupilot_sensors.compass_calibrated[compass.param]"
                   v-tooltip="'Sensor is callibrated and good to use'"
                   color="green"
                 >
@@ -95,7 +95,7 @@
               </td>
             </tr>
             <tr
-              v-for="baro in baros"
+              v-for="baro in ardupilot_sensors.baros"
               :key="baro.param"
             >
               <td><b>{{ baro.deviceName ?? 'UNKNOWN' }}</b></td>
@@ -128,34 +128,18 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import ardupilot_sensors, { ArdupilotSensorsStore } from '@/store/ardupilot_sensors'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
 import { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
-import decode, { BUS_TYPE, deviceId } from '@/utils/deviceid_decoder'
+import { BUS_TYPE, deviceId } from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
-
-import { imu_is_calibrated, imu_temperature_is_calibrated } from '../configuration/common'
 
 export default Vue.extend({
   name: 'OnboardSensors',
   computed: {
-    imus() : deviceId[] {
-      return autopilot_data.parameterRegex('^INS_ACC.*_ID')
-        .filter((param) => param.value !== 0)
-        .map((parameter) => decode(parameter.name, parameter.value))
-    },
-    compasses(): deviceId[] {
-      return autopilot_data.parameterRegex('^COMPASS_DEV_ID.*')
-        .filter((param) => param.value !== 0)
-        .map((parameter) => decode(parameter.name, parameter.value))
-    },
-    baros(): deviceId[] {
-      return autopilot_data.parameterRegex('^BARO.*_DEVID')
-        .filter((param) => param.value !== 0)
-        .map((parameter) => decode(parameter.name, parameter.value))
-    },
     // DEV_ID params do not exist yet for temperature sensors, so here we detect the incoming message instead
     celsius_temperature(): number | undefined {
       return mavlink_store_get(mavlink, 'SCALED_PRESSURE3.messageData.message.temperature') as number / 100.0
@@ -179,7 +163,7 @@ export default Vue.extend({
     },
     compass_description(): Dictionary<string> {
       const results = {} as Dictionary<string>
-      for (const compass of this.compasses) {
+      for (const compass of ardupilot_sensors.compasses) {
         // First we check the priority for this device
         let priority = 'Unused'
         let number_in_parameter = 0
@@ -211,50 +195,15 @@ export default Vue.extend({
       }
       return results
     },
-    compass_is_calibrated(): Dictionary<boolean> {
-      const results = {} as Dictionary<boolean>
-      for (const compass of this.compasses) {
-        const compass_number = compass.param.split('COMPASS_DEV_ID')[1]
-        const offset_params_names = [
-          `COMPASS_OFS${compass_number}_X`,
-          `COMPASS_OFS${compass_number}_Y`,
-          `COMPASS_OFS${compass_number}_Z`,
-        ]
-        const diagonal_params_names = [
-          `COMPASS_ODI${compass_number}_X`,
-          `COMPASS_ODI${compass_number}_Y`,
-          `COMPASS_ODI${compass_number}_Z`,
-        ]
-
-        const offset_params = offset_params_names.map(
-          (name) => autopilot_data.parameter(name),
-        )
-        const diagonal_params = diagonal_params_names.map(
-          (name) => autopilot_data.parameter(name),
-        )
-        if (offset_params.includes(undefined) || diagonal_params.includes(undefined)) {
-          results[compass.param] = false
-          continue
-        }
-        const is_at_default_offsets = offset_params.every((param) => param?.value === 0.0)
-        const is_at_default_diagonals = diagonal_params.every((param) => param?.value === 0.0)
-        results[compass.param] = !offset_params.isEmpty() && !diagonal_params.isEmpty()
-          && (!is_at_default_offsets || !is_at_default_diagonals)
-      }
-      return results
-    },
-    imu_is_calibrated(): Dictionary<boolean> {
-      return imu_is_calibrated(this.imus, autopilot_data)
-    },
-    imu_temperature_is_calibrated(): Dictionary<{ calibrated: boolean, calibrationTemperature: number }> {
-      return imu_temperature_is_calibrated(this.imus, autopilot_data)
+    ardupilot_sensors(): ArdupilotSensorsStore {
+      return ardupilot_sensors
     },
     external_i2c_bus(): number | undefined {
       return autopilot_data.parameter('BARO_EXT_BUS')?.value
     },
     is_water_baro(): Dictionary<boolean> {
       const results = {} as Dictionary<boolean>
-      for (const baro of this.baros) {
+      for (const baro of ardupilot_sensors.baros) {
         if (['MS5837_30BA', 'MS5837_02BA', 'MS5611', 'KELLERLD'].includes(baro.deviceName ?? '--')
         && autopilot.vehicle_type === 'Submarine' && baro.busType === BUS_TYPE.I2C
         && baro.bus === this.external_i2c_bus) {
@@ -267,7 +216,7 @@ export default Vue.extend({
     },
     baro_status(): Dictionary<string> {
       const results = {} as Dictionary<string>
-      for (const baro of this.baros) {
+      for (const baro of ardupilot_sensors.baros) {
         const radix = baro.param.replace('_DEVID', '')
         const number = parseInt(radix.replace('BARO', ''), 10)
         if (this.is_water_baro[baro.param]) {
@@ -282,7 +231,7 @@ export default Vue.extend({
     },
     get_pressure_type(): Dictionary<string> {
       const results = {} as Dictionary<string>
-      for (const barometer of this.baros) {
+      for (const barometer of ardupilot_sensors.baros) {
         if (!this.is_water_baro[barometer.param]) {
           results[barometer.param] = 'Barometric'
         } else {
