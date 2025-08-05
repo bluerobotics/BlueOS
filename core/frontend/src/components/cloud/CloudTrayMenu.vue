@@ -333,7 +333,11 @@ export default Vue.extend({
       this.local_token = tokenToUse ?? ''
     },
     async updateMajorTomToken(token: string): Promise<void> {
-      await this.cleanMajorTomFileToken()
+      try {
+        await this.cleanMajorTomFileToken()
+      } catch {
+        /** Do nothing */
+      }
       await filebrowser.createFile(MAJOR_TOM_CLOUD_TOKEN_FILE.path, true)
       await filebrowser.writeToFile(MAJOR_TOM_CLOUD_TOKEN_FILE.path, token)
     },
