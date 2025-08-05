@@ -45,11 +45,15 @@ export default Vue.extend({
       if (helper.services.length === 0) {
         return undefined
       }
-      return helper.services.filter(
-        (service) => service?.metadata?.sanitized_name === this.$route.params.name,
-      )[0]?.port ?? null
+      return this.service?.port ?? null
+    },
+    supports_v2(): boolean {
+      return this.service?.metadata?.works_in_relative_paths ?? false
     },
     service_path(): string {
+      if (this.supports_v2) {
+        return `/extensionv2/${this.$route.params.name}`
+      }
       return `${window.location.protocol}//${window.location.hostname}:${this.detected_port}`
       + `/${this.remaining_path ?? ''}`
       + `?time=${this.cache_busting_time}`

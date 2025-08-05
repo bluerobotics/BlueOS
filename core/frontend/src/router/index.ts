@@ -124,6 +124,11 @@ const routes: Array<RouteConfig> = [
     component: ExtensionView,
   },
   {
+    path: '/extensionv2/:name',
+    name: 'Named Extensions (v2)',
+    component: ExtensionView,
+  },
+  {
     path: '/tools/extensions-manager',
     name: 'Extension Manager',
     component: defineAsyncComponent(() => import('../views/ExtensionManagerView.vue')),
