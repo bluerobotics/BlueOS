@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import os
+import shlex
 import shutil
 import subprocess
 import time
@@ -68,6 +69,20 @@ async def command_host(command: str, i_know_what_i_am_doing: bool = False) -> An
         "return_code": output.returncode,
     }
     return message
+
+
+@app.post("/command/blueos", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def command_blueos(command: str, i_know_what_i_am_doing: bool = False) -> Any:
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    logger.debug(f"Running command: {command}")
+    return subprocess.run(
+        shlex.split(command),
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
 
 @app.post("/set_time", status_code=status.HTTP_200_OK)
