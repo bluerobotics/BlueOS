@@ -37,7 +37,7 @@
           <inline-parameter-editor
             v-if="ins_gyr_cal"
             :param="ins_gyr_cal"
-            :label="'Calibrate gyroscopes automaicallly'"
+            :label="'Calibrate gyroscopes automatically'"
           />
         </div>
       </v-card-text>
