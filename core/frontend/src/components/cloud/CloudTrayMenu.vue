@@ -286,12 +286,14 @@ export default Vue.extend({
       this.operation_error_title = title
       this.operation_error_message = String(error)
     },
-    async cleanMajorTomToken(): Promise<void> {
+    async cleanMajorTomBagToken(): Promise<void> {
       const data = await bag.getData('major_tom')
       if (data && data.token) {
         delete data.token
       }
       await bag.setData('major_tom', { ...data })
+    },
+    async cleanMajorTomFileToken(): Promise<void> {
       await filebrowser.deleteFile(MAJOR_TOM_CLOUD_TOKEN_FILE)
     },
     async fetchMajorTomData(): Promise<InstalledExtensionData> {
@@ -319,17 +321,34 @@ export default Vue.extend({
       }
 
       if (!await this.isMajorTomTokenValid(tokenToUse, true)) {
-        await this.cleanMajorTomToken()
+        /** We do not remove the token since it may be used in other parts as a developer token */
         tokenToUse = undefined
       } else if (tokenToUse !== undefined && tokenToUse !== fileToken) {
+        /** Copy bag token to file token, migrating to new token system */
         await this.updateMajorTomToken(tokenToUse)
       }
 
       this.local_token = tokenToUse ?? ''
     },
-    async updateMajorTomToken(token: string): Promise<void> {
+    async updateMajorTomBagToken(token: string): Promise<void> {
+      await this.cleanMajorTomBagToken()
+
+      const tomData = await bag.getData('major_tom')
+      await bag.setData('major_tom', { ...tomData, token })
+    },
+    async updateMajorTomFileToken(token: string): Promise<void> {
+      try {
+        await this.cleanMajorTomFileToken()
+      } catch {
+        /** When updating the token, the file may not exist so we can ignore the error */
+      }
+
       await filebrowser.createFile(MAJOR_TOM_CLOUD_TOKEN_FILE.path, true)
       await filebrowser.writeToFile(MAJOR_TOM_CLOUD_TOKEN_FILE.path, token)
+    },
+    async updateMajorTomToken(token: string): Promise<void> {
+      await this.updateMajorTomBagToken(token)
+      await this.updateMajorTomFileToken(token)
     },
     async fetchExtensions(): Promise<void> {
       if (this.operation_in_progress) {
