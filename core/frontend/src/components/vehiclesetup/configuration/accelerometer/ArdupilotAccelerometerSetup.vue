@@ -9,11 +9,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="imu in imus" :key="imu.deviceIdNumber">
-            <td>{{ imu.deviceName }}</td>
+          <tr v-for="accelerometer in ardupilot_sensors.accelerometers" :key="accelerometer.deviceIdNumber">
+            <td>{{ accelerometer.deviceName }}</td>
             <td>
               <v-icon
-                v-if="imu_is_calibrated[imu.param]"
+                v-if="ardupilot_sensors.accelerometers_calibrated[accelerometer.param]"
                 v-tooltip="'Sensor is calibrated and good to use'"
                 color="green"
               >
@@ -26,10 +26,12 @@
               >
                 mdi-emoticon-sad-outline
               </v-icon>
-              {{ imu_is_calibrated[imu.param] ? 'Calibrated' : 'Needs calibration' }}
+              {{ ardupilot_sensors.accelerometers_calibrated[accelerometer.param]
+                ? 'Calibrated'
+                : 'Needs calibration' }}
               <v-icon
-                v-if="imu_temperature_is_calibrated[imu.param].calibrated"
-                v-tooltip="`Sensor was calibrated at ${getCalibrationTemperature(imu)} ºC`"
+                v-if="ardupilot_sensors.accelerometers_temperature_calibrated[accelerometer.param].calibrated"
+                v-tooltip="`Sensor was calibrated at ${getCalibrationTemperature(accelerometer)} ºC`"
                 color="green"
               >
                 mdi-thermometer-check
@@ -57,11 +59,9 @@ import Vue from 'vue'
 
 // eslint-disable-next-line
 import FullAccelerometerCalibration from '@/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue'
-import autopilot_data from '@/store/autopilot'
-import { Dictionary } from '@/types/common'
-import decode, { deviceId } from '@/utils/deviceid_decoder'
+import ardupilot_sensors, { ArdupilotSensorsStore } from '@/store/ardupilot_sensors'
+import { deviceId } from '@/utils/deviceid_decoder'
 
-import { imu_is_calibrated, imu_temperature_is_calibrated } from '../common'
 import QuickAccelerometerCalibration from './QuickAccelerometerCalibration.vue'
 
 export default Vue.extend({
@@ -75,21 +75,13 @@ export default Vue.extend({
     }
   },
   computed: {
-    imus() : deviceId[] {
-      return autopilot_data.parameterRegex('^INS_ACC.*_ID')
-        .filter((param) => param.value !== 0)
-        .map((parameter) => decode(parameter.name, parameter.value))
-    },
-    imu_is_calibrated(): Dictionary<boolean> {
-      return imu_is_calibrated(this.imus, autopilot_data)
-    },
-    imu_temperature_is_calibrated(): Dictionary<{ calibrated: boolean, calibrationTemperature: number }> {
-      return imu_temperature_is_calibrated(this.imus, autopilot_data)
+    ardupilot_sensors(): ArdupilotSensorsStore {
+      return ardupilot_sensors
     },
   },
   methods: {
     getCalibrationTemperature(imu: deviceId) {
-      return this.imu_temperature_is_calibrated[imu.param].calibrationTemperature.toFixed(0)
+      return ardupilot_sensors.accelerometers_temperature_calibrated[imu.param].calibrationTemperature.toFixed(0)
     },
   },
 })
