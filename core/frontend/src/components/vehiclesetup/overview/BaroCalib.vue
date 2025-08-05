@@ -31,7 +31,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="baro in baros"
+                v-for="baro in ardupilot_sensors.baros"
                 :key="baro.param"
               >
                 <td><b>{{ baro.deviceName ?? 'UNKNOWN' }}</b></td>
@@ -67,12 +67,13 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import ardupilot_sensors, { ArdupilotSensorsStore } from '@/store/ardupilot_sensors'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
 import { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
-import decode, { BUS_TYPE, deviceId } from '@/utils/deviceid_decoder'
+import { BUS_TYPE } from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
 
 import { calibrator, PreflightCalibration } from '../calibration'
@@ -86,14 +87,9 @@ export default Vue.extend({
     }
   },
   computed: {
-    baros(): deviceId[] {
-      return autopilot_data.parameterRegex('^BARO.*_DEVID')
-        .filter((param) => param.value !== 0)
-        .map((parameter) => decode(parameter.name, parameter.value))
-    },
     baro_status(): Dictionary<string> {
       const results = {} as Dictionary<string>
-      for (const baro of this.baros) {
+      for (const baro of ardupilot_sensors.baros) {
         const radix = baro.param.replace('_DEVID', '')
         const number = parseInt(radix.replace('BARO', ''), 10)
         const msg = number === 1 ? 'SCALED_PRESSURE' : `SCALED_PRESSURE${number}`
@@ -104,7 +100,7 @@ export default Vue.extend({
     },
     baro_ground_pressure(): Dictionary<string> {
       const results = {} as Dictionary<string>
-      for (const baro of this.baros) {
+      for (const baro of ardupilot_sensors.baros) {
         const radix = baro.param.replace('_DEVID', '')
         const calibrated_param = autopilot_data.parameter(`${radix}_GND_PRESS`)
         const pretty_value = (printParam(calibrated_param) / 100).toFixed(2)
@@ -117,7 +113,7 @@ export default Vue.extend({
     },
     get_pressure_type(): Dictionary<string> {
       const results = {} as Dictionary<string>
-      for (const baro of this.baros) {
+      for (const baro of ardupilot_sensors.baros) {
         // BARO_SPEC_GRAV Only exist for underwater vehicles
         const spec_gravity_param = autopilot_data.parameter('BARO_SPEC_GRAV')
         const water = ['MS5837_30BA', 'MS5837_02BA', 'MS5611', 'KELLERLD'].includes(baro.deviceName ?? '--')
@@ -131,6 +127,14 @@ export default Vue.extend({
       }
       return results
     },
+    ardupilot_sensors(): ArdupilotSensorsStore {
+      return ardupilot_sensors
+    },
+  },
+  mounted() {
+    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE$', refreshRate: 1 })
+    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE2$', refreshRate: 1 })
+    mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE3$', refreshRate: 1 })
   },
   methods: {
     bus_name(bus: number): string {
