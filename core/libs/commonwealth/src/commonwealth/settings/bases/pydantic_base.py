@@ -109,7 +109,7 @@ class PydanticSettings(BaseModel):
         with open(file_path, "w", encoding="utf-8") as settings_file:
             logger.debug(f"Saving settings on: {file_path}")
 
-            json_data = self.dict()
+            json_data = self.model_dump()
             json.dump(json_data, settings_file, indent=4)
 
     def reset(self) -> None:

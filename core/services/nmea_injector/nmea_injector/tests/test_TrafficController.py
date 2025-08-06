@@ -115,4 +115,5 @@ async def test_endpoint_communication(fs: FakeFilesystem, monkeypatch: pytest.Mo
             original_msg = TrafficController.parse_mavlink_package(raw_sentence)
             args, _ = mock_send_mavlink_message.call_args
             forwarded_msg = args[0]
-            assert original_msg == forwarded_msg
+            # Convert original message to dict for comparison since forwarded_msg is a dict
+            assert original_msg.model_dump() == forwarded_msg
