@@ -69,6 +69,10 @@ class SystemInformationStore extends VuexModule {
     { delay: 1000 },
   )
 
+  fetchTemperatureTask = new OneMoreTime(
+    { delay: 2000 },
+  )
+
   @Mutation
   appendKernelMessage(kernel_message: [KernelMessage]): void {
     this.kernel_message = this.kernel_message.concat(kernel_message)
@@ -207,6 +211,11 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Action
+  async fetchTemperatureInformation(): Promise<void> {
+    await this.fetchSystemInformation(FetchType.SystemTemperatureType)
+  }
+
+  @Action
   async fetchSystemInformation(type: FetchType): Promise<void> {
     // Do not fetch system specific information if system is not populate yet
     // system type does not have optional fields, they need to be populate before fetching it
@@ -297,6 +306,7 @@ const system_information: SystemInformationStore = getModule(SystemInformationSt
 system_information.fetchSystem()
 system_information.fetchPlatformTask.setAction(system_information.fetchPlatform)
 system_information.fetchSystemNetworkTask.setAction(system_information.fetchNetworkInformation)
+system_information.fetchTemperatureTask.setAction(system_information.fetchTemperatureInformation)
 
 // It appears that the store is incompatible with websockets or callbacks.
 // Right now the only way to have it working is to have the websocket definition outside the store
