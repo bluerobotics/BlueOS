@@ -46,7 +46,7 @@ class AbstractNetworkHandler:
         # Check if IP already exists on the interface
         existing_addrs = self.ipr.get_addr(index=interface_index)
         for addr in existing_addrs:
-            if addr.get_attr("IFA_ADDRESS") == ip:
+            if str(addr.get_attr("IFA_ADDRESS")) == str(ip):
                 logger.info(f"IP '{ip}' already exists on interface '{interface_name}', skipping addition.")
                 return
 
