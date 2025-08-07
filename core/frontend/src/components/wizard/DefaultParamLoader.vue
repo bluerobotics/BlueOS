@@ -92,7 +92,7 @@ import { Dictionary } from 'vue-router'
 import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { Firmware, Vehicle } from '@/types/autopilot'
+import { Vehicle } from '@/types/autopilot'
 import { printParamWithUnit } from '@/types/autopilot/parameter'
 import { VForm } from '@/types/vuetify'
 
@@ -118,7 +118,7 @@ export default Vue.extend({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
     selected_param_set: {},
     selected_param_set_name: '' as string,
-    version: undefined as (undefined | SemVer),
+    version: undefined as (undefined | SemVer | string),
     fetch_retries: 0,
     is_loading_parameters: false,
     has_parameters_load_error: false,
@@ -126,6 +126,14 @@ export default Vue.extend({
   }),
   computed: {
     filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
+      const path = `params/ardupilot/Ardu${this.vehicle}`
+      if (this.version === 'DEV' || this.version === 'BETA') {
+        const keys = Object.keys(this.all_param_sets).filter(
+          (name) => name.toLocaleLowerCase().startsWith(path.toLowerCase()),
+        )
+        return Object.fromEntries(keys.map((key) => [key, this.all_param_sets[key]]))
+      }
+
       const fw_patch = `${this.vehicle}/${this.version}/${this.board}/`
       const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}/`
       const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}/`
@@ -145,6 +153,7 @@ export default Vue.extend({
           break
         }
       }
+
       return {
         ...fw_params,
         [this.not_load_default_params_option]: {},
@@ -153,8 +162,8 @@ export default Vue.extend({
     filtered_param_sets_names(): {full: string, sanitized: string}[] {
       return Object.keys(this.filtered_param_sets ?? {}).map((full) => ({
         full,
-        // e.g. "ArduSub/BlueROV2/4.0.3/BlueROV2.params" -> "BlueROV2"
-        sanitized: full.split('/').pop()?.split('.')[0] || '',
+        // e.g. "ArduSub/BlueROV2/4.0.3/BlueROV2.params" -> "4.0.3 BlueROV2"
+        sanitized: full.split('/').slice(-3).join('/').replace('.params', ''),
       }))
     },
     board(): string | undefined {
@@ -231,11 +240,28 @@ export default Vue.extend({
 
       return parameters
     },
-    async fetchLatestFirmwareVersion(): Promise<SemVer | undefined> {
+    async fetchLatestFirmwareVersion(): Promise<SemVer | undefined | string> {
       const firmwares = await availableFirmwares(this.vehicle as Vehicle)
-      const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+      const stable = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+      const beta = firmwares.find((firmware) => firmware.name.includes('BETA'))
+      const dev = firmwares.find((firmware) => firmware.name.includes('DEV'))
 
-      return found ? new SemVer(found.name.split('-')[1]) : undefined
+      if (stable) {
+        return new SemVer(stable.name.split('-')[1])
+      }
+
+      if (beta) {
+        console.warn('No stable firmware found, falling back to beta')
+        return 'BETA'
+      }
+
+      if (dev) {
+        console.warn('No stable or beta firmware found, falling back to dev')
+        return 'DEV'
+      }
+
+      console.error('No firmware found')
+      return undefined
     },
     setParamSet(paramSet: Dictionary<number>) {
       this.selected_param_set = paramSet
