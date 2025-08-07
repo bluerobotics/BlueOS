@@ -135,7 +135,6 @@ export default Vue.extend({
       system_information.fetchSystemInformation(FetchType.SystemCpuType)
       system_information.fetchSystemInformation(FetchType.SystemDiskType)
       system_information.fetchSystemInformation(FetchType.SystemMemoryType)
-      system_information.fetchSystemInformation(FetchType.SystemTemperatureType)
     }, 2000)
   },
   beforeDestroy() {
