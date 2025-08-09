@@ -190,15 +190,16 @@ export default Vue.extend({
       return this.has_update_available ? 'UPDATE' : 'INSTALLED'
     },
     architecture_list_style(): Record<string, string> {
-      const style: Record<string, string> = {
+      if (this.card_dominant_color === undefined) {
+        return {
+          color: this.$vuetify.theme.dark ? 'white' : 'black',
+        }
+      }
+
+      return {
         color: this.is_card_dominant_color_light ? 'black' : 'white',
+        backgroundColor: this.card_dominant_color,
       }
-
-      if (this.card_dominant_color) {
-        style.backgroundColor = this.card_dominant_color
-      }
-
-      return style
     },
     extension_company(): string {
       return getLatestVersion(this.extension.versions)?.company?.name ?? 'Unknown'
