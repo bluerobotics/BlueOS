@@ -118,8 +118,11 @@ def test_endpoint() -> None:
     assert endpoint.place == "0.0.0.0", "Connection place does not match."
     assert endpoint.argument == 14550, "Connection argument does not match."
     assert str(endpoint) == "udpout:0.0.0.0:14550", "Connection string does not match."
-    assert endpoint.as_dict() == {
-        "__pydantic_initialised__": True,
+    endpoint_dict = endpoint.as_dict()
+    # Remove any Pydantic internal fields that might be present
+    endpoint_dict.pop("__pydantic_initialised__", None)
+    endpoint_dict.pop("__initialised__", None)
+    assert endpoint_dict == {
         "name": "Test endpoint",
         "owner": "pytest",
         "connection_type": EndpointType.UDPClient.value,
