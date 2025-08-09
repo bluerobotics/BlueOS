@@ -13,6 +13,7 @@ TOOLS=(
     mavlink2rest
     mavlink_camera_manager
     mavlink_server
+    recorder
     ttyd
     zenoh
 )
