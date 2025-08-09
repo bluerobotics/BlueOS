@@ -242,6 +242,14 @@ export default Vue.extend({
       return prettifySize(bytes)
     },
     async download_service_log_files(): Promise<void> {
+      // TODO: this should probably be done more on the backend than here...
+      // This is currently done here as we are relying on the filebrowser's
+      // on-the-fly download feature.
+      const command = 'dump_journal.py'
+      await back_axios({
+        url: `${API_URL}/command/blueos?command=${command}&i_know_what_i_am_doing=true`,
+        method: 'post',
+      })
       const folder = await filebrowser.fetchFolder('system_logs')
       await filebrowser.downloadFolder(folder)
     },
