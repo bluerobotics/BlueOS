@@ -383,8 +383,8 @@ class EthernetManager:
 
         self._update_interface_settings(interface_name, saved_interface)
 
-    def get_interface_by_name(self, name: str) -> NetworkInterface:
-        for interface in self.get_ethernet_interfaces():
+    def get_interface_by_name(self, name: str, include_dhcp_markers: bool = False) -> NetworkInterface:
+        for interface in self.get_ethernet_interfaces(include_dhcp_markers):
             if interface.name == name:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
@@ -393,11 +393,13 @@ class EthernetManager:
         return next((i for i in self._settings.content if i.name == name), None)
 
     # pylint: disable=too-many-locals
-    def get_interfaces(self, filter_wifi: bool = False) -> List[NetworkInterface]:
+    def get_interfaces(self, filter_wifi: bool = False, include_dhcp_markers: bool = False) -> List[NetworkInterface]:
         """Get interfaces information
 
         Args:
             filter_wifi (boolean, optional): Enable wifi interface filtering
+            include_dhcp_markers (boolean, optional): DHCP marker is the IP 0.0.0.0 AddressMode.Client, used to
+            inform cable guy that a dynamic IP should be acquired if available.
 
         Returns:
             List of NetworkInterface instances available
@@ -431,6 +433,20 @@ class EthernetManager:
                 else:
                     mode = AddressMode.Unmanaged if is_static_ip and valid_ip else AddressMode.Client
                 valid_addresses.append(InterfaceAddress(ip=ip, mode=mode))
+            # Check if there is a 0.0.0.0 AddressMode.Client in current interface on self._settings.content and if not in valid_addresses add it
+            interface_settings = self.get_saved_interface_by_name(interface)
+            if (
+                include_dhcp_markers
+                and interface_settings
+                and any(
+                    str(address.ip) == "0.0.0.0" and address.mode == AddressMode.Client
+                    for address in interface_settings.addresses
+                )
+                and not any(
+                    str(address.ip) == "0.0.0.0" and address.mode == AddressMode.Client for address in valid_addresses
+                )
+            ):
+                valid_addresses.append(InterfaceAddress(ip="0.0.0.0", mode=AddressMode.Client))
             info = self.get_interface_info(interface)
             saved_interface = self.get_saved_interface_by_name(interface)
             # Get priority from saved interface or from current interface metrics, defaulting to None if neither exists
@@ -453,13 +469,17 @@ class EthernetManager:
 
         return result
 
-    def get_ethernet_interfaces(self) -> List[NetworkInterface]:
+    def get_ethernet_interfaces(self, include_dhcp_markers: bool = False) -> List[NetworkInterface]:
         """Get ethernet interfaces information
+
+        Args:
+            include_dhcp_markers (boolean, optional): DHCP marker is the IP 0.0.0.0 AddressMode.Client, used to
+            inform cable guy that a dynamic IP should be acquired if available.
 
         Returns:
             List of NetworkInterface instances available
         """
-        return self.get_interfaces(filter_wifi=True)
+        return self.get_interfaces(filter_wifi=True, include_dhcp_markers=include_dhcp_markers)
 
     def get_interface_ndb(self, interface_name: str) -> Any:
         """Get interface NDB information for interface
@@ -634,7 +654,7 @@ class EthernetManager:
             raise
 
         # Update settings
-        current_interface = self.get_interface_by_name(interface_name)
+        current_interface = self.get_interface_by_name(interface_name, include_dhcp_markers=True)
         for current_route in current_interface.routes:
             if current_route.destination_parsed == route.destination_parsed and current_route.gateway == route.gateway:
                 current_route.managed = route.managed
