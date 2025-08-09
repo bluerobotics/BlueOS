@@ -1,10 +1,17 @@
 #! /usr/bin/env python3
 import argparse
 import asyncio
+import datetime
 import itertools
 import logging
+import os
 import pathlib
+import re
+import shlex
+import shutil
+import signal
 import socket
+import subprocess
 from typing import Any, Dict, List, Optional
 
 import psutil
@@ -20,10 +27,18 @@ from uvicorn import Config, Server
 from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
-from settings import ServiceTypes, SettingsV4
+from settings import ServiceTypes, SettingsV5
 from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
+
+NGINX_ROOT_PATH = "/etc/blueos/nginx"
+NGINX_PID_PATH = "/run/nginx.pid"  # this is defined in the nginx config
+TLS_CERT_PATH = os.path.join(NGINX_ROOT_PATH, "blueos.crt")
+TLS_KEY_PATH = os.path.join(NGINX_ROOT_PATH, "blueos.key")
+
+BLUEOS_TOOLS_PATH = "/home/pi/tools"
+BLUEOS_TOOLS_NGINX_PATH = os.path.join(BLUEOS_TOOLS_PATH, "nginx")
 
 
 class AsyncRunner:
@@ -79,7 +94,7 @@ class Beacon:
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
         try:
-            self.manager = Manager(SERVICE_NAME, SettingsV4)
+            self.manager = Manager(SERVICE_NAME, SettingsV5)
         except Exception as e:
             logger.warning(f"failed to load configuration file ({e}), loading defaults")
             self.load_default_settings()
@@ -96,8 +111,8 @@ class Beacon:
         current_folder = pathlib.Path(__file__).parent.resolve()
         default_settings_file = current_folder / "default-settings.json"
         logger.debug("loading settings from ", default_settings_file)
-        self.manager = Manager(SERVICE_NAME, SettingsV4, load=False)
-        self.manager.settings = self.manager.load_from_file(SettingsV4, default_settings_file)
+        self.manager = Manager(SERVICE_NAME, SettingsV5, load=False)
+        self.manager.settings = self.manager.load_from_file(SettingsV5, default_settings_file)
         self.manager.save()
 
     def load_service_types(self) -> Dict[str, ServiceTypes]:
@@ -125,6 +140,12 @@ class Beacon:
                 case InterfaceType.HOTSPOT:
                     interface.domain_names = [f"{hostname}-hotspot"]
         self.manager.save()
+        # if the hostname is changed and we have TLS enabled we need to regenerate the cert
+        if self.get_enable_tls():
+            os.unlink(TLS_KEY_PATH)
+            os.unlink(TLS_CERT_PATH)
+            self.generate_cert()
+            self.reload_nginx_config()
 
     def get_hostname(self) -> str:
         try:
@@ -138,6 +159,147 @@ class Beacon:
 
     def get_vehicle_name(self) -> str:
         return self.manager.settings.vehicle_name or "BlueROV2"
+
+    def get_enable_tls(self) -> bool:
+        # TODO: return what's in settings or assume no...this may change in the future
+        return self.manager.settings.use_tls or False
+
+    def set_enable_tls(self, enable_tls: bool) -> None:
+        # handle enabling/disabling tls
+        if not enable_tls and self.get_enable_tls():
+            # tls is currently enabled and we need to disable
+            # change nginx config
+            self.generate_new_nginx_config(use_tls=False)
+            # validate config
+            if not self.nginx_config_is_valid():
+                raise SystemError("Unable to validate staged Nginx config")
+            # bounce nginx
+            self.nginx_promote_config(keep_backup=True)
+            # remove old cert
+            if os.path.exists(TLS_CERT_PATH):
+                os.unlink(TLS_CERT_PATH)
+            if os.path.exists(TLS_KEY_PATH):
+                os.unlink(TLS_KEY_PATH)
+        elif enable_tls and not self.get_enable_tls():
+            # tls is currently disabled and we need to enable
+            # generate cert
+            self.generate_cert()
+            # change nginx config
+            self.generate_new_nginx_config(use_tls=True)
+            # validate config
+            if not self.nginx_config_is_valid():
+                raise SystemError("Unable to validate staged Nginx config")
+            # bounce nginx
+            self.nginx_promote_config(keep_backup=True)
+        self.manager.settings.use_tls = enable_tls
+        self.manager.save()
+
+    def generate_cert(self) -> None:
+        """
+        Generates the TLS certificate for the current vehicle hostname and stores in persistent storage
+        """
+        # get the hostname
+        current_hostname = self.get_hostname()
+        alt_names = [
+            f"DNS:{current_hostname}",
+            f"DNS:{current_hostname}-wifi",
+            f"DNS:{current_hostname}-hotspot",
+            "IP:192.168.2.2",
+            "IP:192.168.3.1",
+        ]
+        # shell out to openssl to get the cert
+        try:
+            subprocess.check_call(
+                [
+                    "openssl",
+                    "req",
+                    "-x509",
+                    "-newkey",
+                    "rsa:4096",
+                    "-sha256",
+                    "-days",
+                    "1825",
+                    "-nodes",
+                    "-keyout",
+                    TLS_KEY_PATH,
+                    "-out",
+                    TLS_CERT_PATH,
+                    "-subj",
+                    shlex.quote(f"/CN={self.DEFAULT_HOSTNAME}"),
+                    "-addext",
+                    shlex.quote(f"subjectAltName={','.join(alt_names)}"),
+                ],
+                shell=False,
+            )
+        except subprocess.CalledProcessError as ex:
+            raise SystemError("Unable to generate certificates") from ex
+
+    def generate_new_nginx_config(
+        self, config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf.ondeck"), use_tls: bool = False
+    ) -> None:
+        """
+        Generates a new nginx config file at the path specified
+        """
+        # use the templates for simplicity now
+        # also, the templates are in core's tools directory but the live config lives in /etc/blueos/nginx
+        # TODO: the user may have changed the config, so we should parse and update as needed
+        if use_tls:
+            shutil.copy(
+                os.path.join(BLUEOS_TOOLS_NGINX_PATH, "nginx_tls.conf.template"), config_path, follow_symlinks=False
+            )
+        else:
+            shutil.copy(
+                os.path.join(BLUEOS_TOOLS_NGINX_PATH, "nginx.conf.template"), config_path, follow_symlinks=False
+            )
+
+    def nginx_config_is_valid(self, config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf.ondeck")) -> bool:
+        """
+        Returns true if the nginx config file is valid
+        """
+        try:
+            subprocess.check_call(["nginx", "-t", "-c", config_path], shell=False)
+            return True
+        except subprocess.CalledProcessError:
+            # got a non-zero return code indicating the config was not valid
+            return False
+
+    def nginx_promote_config(
+        self,
+        config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf"),
+        new_config_path: str = os.path.join(NGINX_ROOT_PATH, "nginx.conf.ondeck"),
+        keep_backup: bool = False,
+    ) -> None:
+        """
+        Moves the file at new_config_path to config_path and bounces nginx, optionally keeping a backup of config_path
+        """
+        # ensure new config exists
+        if not os.path.isfile(new_config_path):
+            raise FileNotFoundError("New config not found")
+        # old config may not exist (first-time setup), so do not raise if missing
+
+        if keep_backup:
+            shutil.copyfile(
+                config_path,
+                f"{config_path}_backup_{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+                follow_symlinks=False,
+            )
+
+        # move it
+        os.unlink(config_path)
+        os.rename(new_config_path, config_path)
+
+        # reload nginx config by getting the PID of the master process and sending a SIGHUP
+        self.reload_nginx_config()
+
+    def reload_nginx_config(self) -> None:
+        """
+        Sends a SIGHUP to the nginx master process to trigger a reload of the running config
+        """
+        if not os.path.exists(NGINX_PID_PATH):
+            raise SystemError("No nginx master PID found")
+        with open(NGINX_PID_PATH, "r", encoding="utf-8") as pidf:
+            nginx_pid = int(pidf.read())
+            os.kill(nginx_pid, signal.SIGHUP)
 
     def create_async_service_infos(
         self, interface: str, service_name: str, domain_name: str, ip: str
@@ -287,6 +449,13 @@ def get_services() -> Any:
 @app.post("/hostname", summary="Set the hostname for mDNS.")
 @version(1, 0)
 def set_hostname(hostname: str) -> Any:
+    # beacon.ts has a regex to validate hostname format, but we should check here too
+    # Hostname must not start or end with a hyphen, nor contain consecutive hyphens
+    hostname_regex = re.compile(r"^(?!-)[A-Za-z0-9-]+(?<!-)$")
+    if not hostname_regex.match(hostname) or "--" in hostname:
+        raise ValueError(
+            "Invalid hostname: must only contain alphanumeric characters and hyphens, cannot start or end with a hyphen, and cannot contain consecutive hyphens"
+        )
     return beacon.set_hostname(hostname)
 
 
@@ -317,6 +486,18 @@ def get_ip(request: Request) -> Any:
     except KeyError:
         # We're not going through Nginx for some reason
         return IpInfo(client_ip=request.scope["client"][0], interface_ip=request.scope["server"][0])
+
+
+@app.get("/use_tls", summary="Get whether TLS should be enabled")
+@version(1, 0)
+def get_enable_tls() -> bool:
+    return beacon.get_enable_tls()
+
+
+@app.post("/use_tls", summary="Set whether TLS should be enabled")
+@version(1, 0)
+def set_enable_tls(enable_tls: bool) -> Any:
+    return beacon.set_enable_tls(enable_tls)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
