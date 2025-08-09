@@ -1,7 +1,7 @@
 # This file is used to define general configurations for the app
 
+from ipaddress import ip_network
 from typedefs import AddressMode, InterfaceAddress, NetworkInterface, Route
-from typedefs_pydantic_network_shin import IPvAnyNetwork
 
 SERVICE_NAME = "cable-guy"
 
@@ -15,7 +15,7 @@ DEFAULT_NETWORK_INTERFACES = [
         ],
         routes=[
             Route(
-                destination=str(IPvAnyNetwork("224.0.0.0/4")),
+                destination=str(ip_network("224.0.0.0/4")),
                 gateway=None,
                 priority=None,
                 managed=True,
