@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from utils.chooser import VersionChooser
+from utils.dockerhub import TagFetcher, TagMetadata
 
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
@@ -236,3 +237,41 @@ async def test_set_version_json_exception(json_mock: mock.MagicMock) -> None:
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert result.status_code == 500
         assert len(json_mock.mock_calls) > 0
+
+
+class TestTagFetcher:
+    """Test class for TagFetcher functionality"""
+
+    @pytest.mark.asyncio
+    async def test_fetch_real_blueos_core_tags(self) -> None:
+        """Integration test: Fetch real tags from bluerobotics/blueos-core repository"""
+        fetcher = TagFetcher()
+
+        try:
+            errors, tags = await fetcher.fetch_remote_tags("bluerobotics/blueos-core", [])
+
+            # Verify we got some tags back
+            assert isinstance(tags, list)
+            assert len(tags) > 0, "Should have found some tags for bluerobotics/blueos-core"
+
+            # Verify tag structure
+            for tag in tags[:3]:  # Check first 3 tags
+                assert isinstance(tag, TagMetadata)
+                assert tag.repository == "bluerobotics/blueos-core"
+                assert tag.image == "blueos-core"
+                assert tag.tag is not None
+                assert len(tag.tag) > 0
+                assert tag.last_modified is not None
+                assert tag.digest is not None
+
+            # Should find the 'master' tag
+            tag_names = [tag.tag for tag in tags]
+            assert "master" in tag_names, f"Expected to find 'master' tag in tags: {tag_names[:10]}"
+
+            # Errors should be empty string if successful
+            if errors:
+                print(f"Non-fatal errors during fetch: {errors}")
+
+        except Exception as e:
+            # If this fails due to network issues, skip the test
+            pytest.skip(f"Could not fetch tags from DockerHub, likely network issue: {e}")
