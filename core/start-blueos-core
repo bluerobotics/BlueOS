@@ -125,7 +125,7 @@ SERVICES=(
     'iperf3',250," iperf3 --server --port 5201"
     'linux2rest',250,"linux2rest --log-path /var/logs/blueos/services/linux2rest --log-settings netstat=30,platform=10,serial-ports=10,system-cpu=10,system-disk=30,system-info=10,system-memory=10,system-network=10,system-process=60,system-temperature=10,system-unix-time-seconds=10"
     'filebrowser',250,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
-    'versionchooser',250,"$SERVICES_PATH/versionchooser/main.py"
+    'versionchooser',0,"$SERVICES_PATH/versionchooser/main.py"
     'pardal',250,"nice -19 $SERVICES_PATH/pardal/main.py"
     'ping',0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
     'user_terminal',0,"cat /etc/motd"
