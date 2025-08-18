@@ -19,12 +19,12 @@ export function vehicle_folder(): string {
   const mav_type = 'MAV_TYPE_' + autopilot.vehicle_type?.toUpperCase().replace(' ', '_')
   switch (mav_type) {
     case MavType.MAV_TYPE_SUBMARINE:
-    return 'sub'
+      return 'sub'
     case MavType.MAV_TYPE_SURFACE_BOAT:
-      case MavType.MAV_TYPE_GROUND_ROVER:
-    return 'rover'
+    case MavType.MAV_TYPE_GROUND_ROVER:
+      return 'rover'
     default:
-    return autopilot.vehicle_type?.toLowerCase() || 'unknown'
+      return autopilot.vehicle_type?.toLowerCase() || 'unknown'
   }
 }
 
