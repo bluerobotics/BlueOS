@@ -63,17 +63,19 @@ export function frame_name(vehicle_type: string, frame_type?: number, frame_subt
   }
 
 export async function checkModelOverrides() {
-    while (!autopilot.vehicle_type || !frame_type()) {
-      await sleep(100)
-    }
+    // Early return on global override
     const master_override = '/userdata/modeloverrides/ALL.glb'
-    const vehicle_override = `/userdata/modeloverrides/${vehicle_folder()}/${frame_name(autopilot.vehicle_type, frame_type())}.glb`
     try {
       await axios.head(master_override)
       return master_override
     } catch {
       console.log(`master override model not found at ${master_override}`)
     }
+    // See if there is a specific override for the connected vehicle type and frame
+    while (!autopilot.vehicle_type || !frame_type()) {
+      await sleep(100)
+    }
+    const vehicle_override = `/userdata/modeloverrides/${vehicle_folder()}/${frame_name(autopilot.vehicle_type, frame_type())}.glb`
     try {
       await axios.head(vehicle_override)
       return vehicle_override
