@@ -260,6 +260,7 @@ export default Vue.extend({
       this.redraw()
       this.hideIrrelevantParts()
     })
+    this.model_override_path = await checkModelOverrides()
     this.override_annotations = await this.loadAnnotationsOverride()
     this.reloadAnnotations()
   },
