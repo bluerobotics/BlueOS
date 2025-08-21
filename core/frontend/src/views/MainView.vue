@@ -137,7 +137,6 @@ export default Vue.extend({
             h: 1.2,
           },
           style: {
-            transform: 'translateY(-45%)',
             maxHeight: '300px',
           },
           props: {
