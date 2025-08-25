@@ -131,6 +131,7 @@
             <div class="d-flex flex-column align-center">
               <v-text-field v-model="vehicle_name" label="Vehicle Name" />
               <v-text-field v-model="mdns_name" label="MDNS Name" />
+              <v-checkbox v-model="enable_tls" label="Enable TLS" />
             </div>
             <ScriptLoader
               v-model="scripts"
@@ -344,6 +345,8 @@ export default Vue.extend({
       step_number: 0,
       sub_model: get_model('sub', 'bluerov'),
       vehicle_name: 'blueos',
+      // Allow the user to enable TLS on their vehicle
+      enable_tls: false,
       vehicle_type: '' as Vehicle | string,
       vehicle_image: null as string | null,
       // Allow us to check if the user is stuck in retry
@@ -453,6 +456,15 @@ export default Vue.extend({
           title: 'Set vehicle hostname',
           summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
           promise: () => this.setVehicleName(),
+          message: undefined,
+          done: false,
+          skip: false,
+          started: false,
+        },
+        {
+          title: 'Set TLS',
+          summary: `Enable TLS for the BlueOS web server: ${this.enable_tls}`,
+          promise: () => this.setTLS(),
           message: undefined,
           done: false,
           skip: false,
@@ -598,6 +610,11 @@ export default Vue.extend({
       return beacon.setVehicleName(this.vehicle_name)
         .then(() => undefined)
         .catch(() => 'Failed to set custom vehicle name')
+    },
+    async setTLS(): Promise<ConfigurationStatus> {
+      return beacon.setTLS(this.enable_tls)
+        .then(() => undefined)
+        .catch(() => 'Failed to change TLS configuration')
     },
     async disableWifiHotspot(): Promise<ConfigurationStatus> {
       return back_axios({
