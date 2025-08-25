@@ -5,9 +5,9 @@ description = "Web service to help with speed and latency tests."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiohttp==3.7.4",
+    "aiohttp==3.12.13",
     "commonwealth==0.1.0",
-    "loguru==0.5.3",
+    "loguru==0.7.3",
 ]
 
 [tool.uv]

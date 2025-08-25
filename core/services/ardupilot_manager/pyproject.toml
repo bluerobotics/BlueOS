@@ -7,19 +7,19 @@ requires-python = ">=3.11"
 dependencies = [
     "appdirs==1.4.4",
     "commonwealth==0.1.0",
-    "fastapi==0.105.0",
-    "fastapi-versioning==0.9.1",
-    "loguru==0.5.3",
-    "packaging==20.4",
-    "psutil==5.7.2",
-    "pydantic==1.10.12",
-    "pyelftools==0.30",
+    "fastapi==0.115.14",
+    "fastapi-versioning==0.10.0",
+    "loguru==0.7.3",
+    "packaging==25.0",
+    "psutil==7.0.0",
+    "pydantic==2.11.7",
+    "pyelftools==0.32",
     "pyserial==3.5",
     # This dependency needs to be locked since it is used by fastapi
-    "python-multipart==0.0.5",
-    "smbus2==0.3.0",
-    "uvicorn==0.18.0",
-    "validators==0.18.2",
+    "python-multipart==0.0.20",
+    "smbus2==0.5.0",
+    "uvicorn==0.35.0",
+    "validators==0.35.0",
 ]
 
 [tool.uv]
