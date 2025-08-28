@@ -74,7 +74,7 @@ class Filebrowser {
   }
 
   async createFile(folder_path: string, override: Boolean = false): Promise<void> {
-    back_axios({
+    await back_axios({
       method: 'post',
       url: `${filebrowser_url}/resources${folder_path}?override=${override}`,
       timeout: 10000,
@@ -88,7 +88,7 @@ class Filebrowser {
   }
 
   async writeToFile(file: string, content: string): Promise<void> {
-    back_axios({
+    await back_axios({
       method: 'put',
       url: `/file-browser/api/resources${file}`,
       timeout: 10000,
@@ -108,7 +108,7 @@ class Filebrowser {
    * @param file - FilebrowserFile object to be deleted
   * */
   async deleteFile(file: FilebrowserFile): Promise<void> {
-    back_axios({
+    await back_axios({
       method: 'delete',
       url: `/file-browser/api/resources${file.path}`,
       timeout: 10000,
