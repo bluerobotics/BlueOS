@@ -1,6 +1,7 @@
 <template>
   <v-sheet
-    class="d-flex flex-column align-center my-4 pa-4 flex-sm-row py-sm-0"
+    class="d-flex flex-column align-center my-1 pa-4 flex-sm-row py-sm-0"
+    :style="{ background: `linear-gradient(135deg in oklab, transparent 80%, ${backgroundColor} 100%)` }"
     :elevation="$vuetify.breakpoint.xs ? 1 : 0"
   >
     <div class="d-flex">
@@ -165,6 +166,7 @@ import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en.json'
 import Vue, { PropType } from 'vue'
 
+import { isBeta, isStable } from '@/components/kraken/Utils'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import { Dictionary } from '@/types/common'
@@ -260,6 +262,18 @@ export default Vue.extend({
       return this.settings.is_pirate_mode && this.current
         && !this.updateAvailable && this.isFromBR && this.allImagesLoaded
         && this.bootstrapVersion !== `${this.image.repository.split('/')[0]}/blueos-bootstrap:${this.image.tag}`
+    },
+    backgroundColor(): string {
+      if (isStable(this.image.tag)) {
+        return 'var(--v-success-base)'
+      }
+
+      // 1.4 or anything like is our latest beta
+      if (isBeta(this.image.tag) || /\d+\.\d+/.test(this.image.tag)) {
+        return 'var(--v-warning-lighten2)'
+      }
+
+      return 'var(--v-critical-base)'
     },
   },
   methods: {
