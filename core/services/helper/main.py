@@ -470,7 +470,7 @@ class Helper:
         port = int(str(site.value["port"]))
         path = str(site.value["path"])
 
-        response = Helper.simple_http_request(hostname, port=port, path=path, timeout=10, method="GET")
+        response = Helper.simple_http_request(hostname, port=port, path=path, timeout=5, method="GET")
         website_status = WebsiteStatus(site=site, online=False)
 
         log_msg = f"Running check_website for '{hostname}:{port}'"
