@@ -458,8 +458,8 @@ class Helper:
             logger.debug(f"{log_msg}: Online.")
             website_status.online = True
         else:
-            logger.warning(f"{log_msg}: Offline: {website_status.error}.")
             website_status.error = response.error
+            logger.warning(f"{log_msg}: Offline: {website_status.error}.")
 
         return website_status
 
