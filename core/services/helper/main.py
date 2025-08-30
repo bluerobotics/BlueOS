@@ -85,7 +85,7 @@ class Website(Enum):
     GitHub = {
         "hostname": "github.com",
         "path": "/",
-        "port": 80,
+        "port": 443,
     }
 
 
