@@ -82,7 +82,7 @@ class PydanticSettings(BaseModel):
 
             # Copy new content to settings class
             try:
-                new = self.parse_obj(result)
+                new = self.model_validate(result)
                 self.__dict__.update(new.__dict__)
             except ValidationError as e:
                 raise BadSettingsFile(f"Settings file contains invalid data: {e}") from e
@@ -109,7 +109,7 @@ class PydanticSettings(BaseModel):
         with open(file_path, "w", encoding="utf-8") as settings_file:
             logger.debug(f"Saving settings on: {file_path}")
 
-            json_data = self.dict()
+            json_data = self.model_dump()
             json.dump(json_data, settings_file, indent=4)
 
     def reset(self) -> None:
