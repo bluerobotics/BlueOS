@@ -217,6 +217,7 @@ export default defineConfig(({ command, mode }) => {
         },
         '^/version-chooser': {
           target: SERVER_ADDRESS,
+          changeOrigin: true,
           onProxyRes: (proxyRes, request, response) => {
             proxyRes.on('data', (data) => {
               response.write(data)
