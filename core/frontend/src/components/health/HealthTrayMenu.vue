@@ -133,6 +133,7 @@
                   <v-btn
                     x-small
                     :to="{ name: 'Vehicle Setup', params: { tab: 'configure', subtab: sensor_name } }"
+                    color="primary"
                   >
                     Calibrate
                   </v-btn>
