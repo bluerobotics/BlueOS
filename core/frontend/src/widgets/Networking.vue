@@ -7,7 +7,7 @@
         <span class="vertical-text">{{ interface }}</span>
       </div>
       <v-spacer />
-      <div class="d-flex flex-column stacked-text mr-2">
+      <div class="d-flex flex-column stacked-text mr-3">
         <div class="d-flex align-center text-caption bandwidth-row" style="margin-bottom: -8px">
           <div class="icon-label-group">
             <i class="arrow-icon-rx" v-html="arrowLeft" />
@@ -128,6 +128,7 @@ export default Vue.extend({
 
 .bandwidth-row {
   min-width: 110px;
+  margin-left: -10px;
 }
 
 .icon-label-group {
