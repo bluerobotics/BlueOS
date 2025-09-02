@@ -3,9 +3,10 @@ import errno
 import re
 import subprocess
 import time
+from functools import wraps
 from ipaddress import ip_network, IPv4Address
 from socket import AddressFamily
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, cast
 
 import psutil
 from commonwealth.settings.manager import PydanticManager
@@ -54,6 +55,21 @@ class EthernetManager:
     # Network handler for dhcpd and network manager
     network_handler: AbstractNetworkHandler
     config_mutex: asyncio.Lock = asyncio.Lock()
+
+    # Used by the API to block concurrent ops with Watchdog
+    operation_mutex: asyncio.Lock = asyncio.Lock()
+
+    @staticmethod
+    def operation(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            async with EthernetManager.operation_mutex:
+                return await func(*args, **kwargs)
+
+        if asyncio.iscoroutinefunction(func):
+            return wrapper
+        else:
+            raise TypeError("EthernetManager.operation decorator can only be used on async functions")
 
     result: List[NetworkInterface] = []
 
@@ -884,24 +900,24 @@ class EthernetManager:
         if there is a mismatch, it will apply the saved settings
         """
         while True:
-            try:
-                mismatches = self.config_mismatch()
-                if mismatches:
-                    logger.warning("Interface config mismatch, applying saved settings.")
-                    logger.debug(f"Mismatches: {mismatches}")
-                    for interface in mismatches:
-                        logger.info(f"Applying saved settings for {interface.name}")
-                        await self.set_configuration(interface, watchdog_call=True)
-                priority_mismatch = self.priorities_mismatch()
-                if priority_mismatch:
-                    logger.warning("Interface priorities mismatch, applying saved settings.")
-                    priorities = [
-                        NetworkInterfaceMetricApi(name=interface.name, priority=interface.priority)
-                        for interface in self._settings.content
-                        if interface.priority is not None
-                    ]
-                    self.set_interfaces_priority(priorities)
-                await asyncio.sleep(5)
-            except Exception as error:
-                logger.error(f"Error in watchdog: {error}")
-                await asyncio.sleep(5)
+            async with self.operation_mutex:
+                try:
+                    mismatches = self.config_mismatch()
+                    if mismatches:
+                        logger.warning("Interface config mismatch, applying saved settings.")
+                        logger.debug(f"Mismatches: {mismatches}")
+                        for interface in mismatches:
+                            logger.info(f"Applying saved settings for {interface.name}")
+                            await self.set_configuration(interface, watchdog_call=True)
+                    priority_mismatch = self.priorities_mismatch()
+                    if priority_mismatch:
+                        logger.warning("Interface priorities mismatch, applying saved settings.")
+                        priorities = [
+                            NetworkInterfaceMetricApi(name=interface.name, priority=interface.priority)
+                            for interface in self._settings.content
+                            if interface.priority is not None
+                        ]
+                        self.set_interfaces_priority(priorities)
+                except Exception as error:
+                    logger.error(f"Error in watchdog: {error}")
+            await asyncio.sleep(5)
