@@ -107,3 +107,13 @@ When restarting the development environment you may need to remove the volumes t
 ```bash
 docker compose -f core/compose/compose.yml down
 ```
+
+### Known issues
+
+Docker compose is not fully compatible with a standard installation of BlueOS.
+
+- MDNS may not work
+    - Access should be done via `0.0.0.0:80`
+- Some services are disabled
+    - cable_guy, wifi, commander
+    - This may result in errors on the frontend
