@@ -23,4 +23,16 @@ export default async function run() : Promise<void> {
 
       notifier.pushBackError('UPDATE_TIME_FAIL', error)
     })
+  let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  await back_axios({
+    url: '/commander/v1.0/set_timezone',
+    method: 'post',
+    params: {
+      timezone,
+    },
+  }).catch((error) => {
+    // this call is not expected to change the timezone often.
+    // We can tolerate some errors here.
+    console.warn('Failed to set timezone', error)
+  })
 }
