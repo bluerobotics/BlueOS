@@ -50,21 +50,21 @@ services:
   #     - "9134:9134"   # Kraken
   #     - "27353:27353" # Bridget
   #     - "49153:49153" # Cockpit
-  cloud-telemetry:
-    image: public.ecr.aws/blueos/bcloud-agent
-    container_name: blueos-cloud-telemetry
-    privileged: true
-    restart: always
-    network_mode: host
-    pid: "host"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /run/udev:/run/udev
-      - /etc/resolv.conf:/etc/resolv.conf
-      - /etc/machine-id:/host/etc/machine-id # cloud-agent binds host content to /host
-      - ./workspace/blueos:/host/etc/blueos
-      - ./workspace/logs:/var/logs/blueos
-      - ./workspace/config:/root/.config
-    extra_hosts:
-      - "blueos:host-gateway"
+  # cloud-telemetry:
+  #   image: public.ecr.aws/blueos/bcloud-agent
+  #   container_name: blueos-cloud-telemetry
+  #   privileged: true
+  #   restart: always
+  #   network_mode: host
+  #   pid: "host"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /run/udev:/run/udev
+  #     - /etc/resolv.conf:/etc/resolv.conf
+  #     - /etc/machine-id:/host/etc/machine-id # cloud-agent binds host content to /host
+  #     - ./workspace/blueos:/host/etc/blueos
+  #     - ./workspace/logs:/var/logs/blueos
+  #     - ./workspace/config:/root/.config
+  #   extra_hosts:
+  #     - "blueos:host-gateway"
 
