@@ -27,6 +27,10 @@ export function isStable(version: string): boolean {
   return stable.is(version)
 }
 
+export function isBeta(version: string): boolean {
+  return version.includes('beta')
+}
+
 export function updateAvailableTag(
   versions: Record<string, Version>,
   current: string,
