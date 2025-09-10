@@ -99,6 +99,10 @@ class PyksonManager:
     def load(self) -> None:
         """Load settings"""
 
+        # TODO: We could try to restore the settings from the temporary file if the main is not found or valid
+        # Clear temporary files that could be left from a previous operation
+        self._clear_temp_files()
+
         def get_settings_version_from_filename(filename: pathlib.Path) -> int:
             result = re.search(f"{PyksonManager.SETTINGS_NAME_PREFIX}(\\d+)", filename.name)
             assert result
@@ -124,3 +128,11 @@ class PyksonManager:
                 logger.debug("Invalid settings, going to try another file:", exception)
 
         self._settings = PyksonManager.load_from_file(self.settings_type, self.settings_file_path())
+
+    def _clear_temp_files(self) -> None:
+        """Clear temporary files"""
+        for temp_file in self.config_folder.glob("*.tmp"):
+            try:
+                temp_file.unlink()
+            except Exception as exception:
+                logger.debug(f"Failed to clear temporary file {temp_file}: {exception}")
