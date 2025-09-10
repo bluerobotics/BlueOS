@@ -6,7 +6,6 @@ import appdirs
 from loguru import logger
 
 from commonwealth.settings.bases.pydantic_base import PydanticSettings
-from commonwealth.settings.exceptions import SettingsFromTheFuture
 
 
 class PydanticManager:
@@ -128,10 +127,12 @@ class PydanticManager:
                 self._settings = PydanticManager.load_from_file(self.settings_type, valid_file)
                 logger.debug(f"Using {valid_file} as settings source")
                 return
-            except SettingsFromTheFuture as exception:
+            except Exception as exception:
                 logger.debug("Invalid settings, going to try another file:", exception)
 
-        self._settings = PydanticManager.load_from_file(self.settings_type, self.settings_file_path())
+        logger.debug("No valid settings found, using default settings")
+        self._settings = self.settings_type()
+        self.save()
 
     def _clear_temp_files(self) -> None:
         """Clear temporary files"""
