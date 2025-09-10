@@ -1,6 +1,7 @@
 import abc
 import json
 import pathlib
+import os
 from typing import Any, ClassVar, Dict, List
 
 from loguru import logger
@@ -106,11 +107,20 @@ class PydanticSettings(BaseModel):
             # We call this to allow users to initialize the settings from another source if needed
             self.on_settings_created(file_path)
 
-        with open(file_path, "w", encoding="utf-8") as settings_file:
-            logger.debug(f"Saving settings on: {file_path}")
+        # Prepare data prior to operation
+        logger.debug(f"Saving settings on: {file_path}")
+        json_data = self.dict()
 
-            json_data = self.dict()
+        # Create a temporary file in same directory, write and rename it to the original file
+        temp_file = file_path.with_suffix(".tmp")
+        with open(temp_file, "w", encoding="utf-8") as settings_file:
             json.dump(json_data, settings_file, indent=4)
+            # Ensure data is written to disk
+            settings_file.flush()
+            os.fsync(settings_file.fileno())
+        # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
+        # https://docs.python.org/3/library/os.html#os.replace
+        temp_file.replace(file_path)
 
     def reset(self) -> None:
         """Reset internal data to default values"""
