@@ -108,7 +108,8 @@ echo "Running pylint.."
 pylint $python_files
 
 echo "Running mypy.."
-git ls-files '*setup.py' | parallel 'mypy $(dirname {}) --cache-dir "$(dirname {})/__mypycache__"'
+git ls-files "$repository_path/core/*/pyproject.toml" | xargs -n1 dirname \
+  | parallel mypy --config-file $repository_path/core/pyproject.toml {} --cache-dir {}/__mypycache__
 
 echo "Running pytest.."
 pytest -n 10 --durations=0 --cov="$repository_path" --cov-report html
