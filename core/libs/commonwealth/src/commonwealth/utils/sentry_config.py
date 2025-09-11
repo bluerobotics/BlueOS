@@ -20,7 +20,7 @@ def _get_sentry_config() -> Optional[Dict[str, Any]]:
     git_describe_tag = os.environ.get("GIT_DESCRIBE_TAGS")
 
     if not git_describe_tag or not re.match(VALID_TAG_PATTERN, git_describe_tag):
-        return
+        return None
 
     release = f"{SENTRY_PROJECT}@{git_describe_tag}".replace("tags/", "").replace("/", ":")
 
