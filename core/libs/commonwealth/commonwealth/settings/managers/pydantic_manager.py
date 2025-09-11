@@ -29,7 +29,7 @@ class PydanticManager:
         )
         self.config_folder.mkdir(parents=True, exist_ok=True)
         self.settings_type = settings_type
-        self._settings = None
+        self._settings: Optional[PydanticSettings] = None
         logger.debug(
             f"Starting {project_name} settings with {settings_type.__name__}, configuration path: {config_folder}"
         )
