@@ -271,9 +271,12 @@ class ManifestManager:
             try:
                 return semver.VersionInfo.parse(string)
             except ValueError:
-                return []
+                return None
 
-        versions: List[semver.VersionInfo] = sorted([valid_semver(tag) for tag in ext.versions], reverse=True)
+        versions: List[semver.VersionInfo] = sorted(
+            [ver for ver in (valid_semver(tag) for tag in ext.versions) if ver is not None],
+            reverse=True,
+        )
         if stable:
             versions = [v for v in versions if not v.prerelease and not v.patch]
 
