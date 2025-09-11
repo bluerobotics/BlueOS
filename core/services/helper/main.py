@@ -133,7 +133,7 @@ class ServiceInfo(BaseModel):
     def max_attempts_reached(self) -> bool:
         if self.port not in Helper.attempts_left:
             return False
-        return Helper.attempts_left[self.port] <= 0
+        return bool(Helper.attempts_left[self.port] <= 0)
 
 
 class SpeedtestServer(BaseModel):
