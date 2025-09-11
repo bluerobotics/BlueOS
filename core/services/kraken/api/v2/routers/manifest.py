@@ -2,7 +2,6 @@ from functools import wraps
 from typing import Any, Callable, Tuple
 
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import Response
 from fastapi_versioning import versioned_api_route
 
 from manifest import ManifestManager
@@ -120,7 +119,7 @@ async def enable(identifier: str) -> None:
 
 @manifest_router_v2.post("/{identifier}/disable", status_code=status.HTTP_204_NO_CONTENT)
 @manifest_to_http_exception
-async def disable(identifier: str) -> Response:
+async def disable(identifier: str) -> None:
     """
     Disables a manifest source.
     """
@@ -156,7 +155,7 @@ async def reorder_by_identifier(identifier: str, order: int) -> None:
 
 @manifest_router_v2.delete("/{identifier}", status_code=status.HTTP_204_NO_CONTENT)
 @manifest_to_http_exception
-async def delete(identifier: str) -> Response:
+async def delete(identifier: str) -> None:
     """
     Deletes a manifest source.
     """
