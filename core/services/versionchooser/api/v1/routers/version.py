@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, AsyncGenerator
 
 import aiodocker
 from fastapi import APIRouter, Depends, File, UploadFile, status
@@ -20,7 +20,7 @@ class DockerImageIdentifier(BaseModel):
     tag: str
 
 
-async def get_docker_client():
+async def get_docker_client() -> AsyncGenerator[VersionChooser, None]:
     async with aiodocker.Docker() as docker_client:
         yield VersionChooser(docker_client)
 
