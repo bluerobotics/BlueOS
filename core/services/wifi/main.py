@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore
 from uvicorn import Config, Server
 
 from exceptions import BusyError
