@@ -64,6 +64,7 @@ class NetworkManagerWifi(AbstractWifiManager):
                 return True
 
             # Get physical interface name
+            assert self._device_path is not None
             device = NetworkDeviceWireless(self._device_path, self._bus)
             phys_name = await device.interface
 
@@ -124,6 +125,7 @@ class NetworkManagerWifi(AbstractWifiManager):
     async def _autoscan(self) -> None:
 
         while True:
+            assert self._device_path is not None
             device = NetworkDeviceWireless(self._device_path, self._bus)
             if await device.last_scan > 10000:
                 await device.request_scan({})
@@ -207,6 +209,7 @@ class NetworkManagerWifi(AbstractWifiManager):
         existing_connection = await self._find_existing_connection(credentials)
         if existing_connection:
             logger.info(f"Using existing connection for {credentials.ssid}")
+            assert self._device_path is not None
             await self._nm.activate_connection(existing_connection, self._device_path, "/")
 
             # If hotspot was running, restart it
@@ -240,6 +243,7 @@ class NetworkManagerWifi(AbstractWifiManager):
 
         # Add and activate connection
         conn_path = await self._nm_settings.add_connection(connection)
+        assert self._device_path is not None
         await self._nm.activate_connection(conn_path, self._device_path, "/")
 
         # If hotspot was running, restart it
@@ -540,6 +544,8 @@ class NetworkManagerWifi(AbstractWifiManager):
         assert self._nm is not None
         try:
             # Get active connection
+            assert self._device_path is not None
+            assert self._bus is not None
             active_connection = await NetworkDeviceWireless(self._device_path, self._bus).active_connection
             if active_connection:
                 # Deactivate the connection
