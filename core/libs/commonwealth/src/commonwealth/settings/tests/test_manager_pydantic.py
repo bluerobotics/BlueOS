@@ -173,3 +173,77 @@ def test_fallback_settings_save_load() -> None:
     assert settings_manager.settings.version_2_variable == 2
     assert settings_manager.settings.version_3_variable == 3
     assert settings_manager.settings.version_12_variable == 12
+
+
+def test_invalid_json_fallback_to_defaults_v1() -> None:
+    temporary_folder = tempfile.mkdtemp()
+    config_path = pathlib.Path(temporary_folder)
+
+    # Create a settings file with invalid JSON
+    settings_folder = config_path / "managertest"
+    settings_folder.mkdir(parents=True, exist_ok=True)
+    invalid_settings_file = settings_folder / "settings-1.json"
+    with open(invalid_settings_file, "w", encoding="utf-8") as f:
+        f.write('{"VERSION": 1, "version_1_variable": 999, "invalid_json": }')
+
+    settings_manager = PydanticManager("ManagerTest", SettingsV1, config_path)
+
+    # Verify that the manager falls back to default values
+    assert settings_manager.settings.VERSION == 1
+    assert settings_manager.settings.version_1_variable == 42
+
+    # Verify that a v1 settings will be replaced
+    settings_manager.save()
+    assert len(os.listdir(settings_folder)) == 1
+
+
+def test_invalid_json_fallback_to_defaults_v1_from_invalid_v2() -> None:
+    temporary_folder = tempfile.mkdtemp()
+    config_path = pathlib.Path(temporary_folder)
+    settings_folder = config_path / "managertest"
+    settings_folder.mkdir(parents=True, exist_ok=True)
+
+    # Create a valid JSON from settings V1
+    default_settings = SettingsV1()
+    default_settings.version_1_variable = 369
+    default_settings.save(settings_folder / "settings-1.json")
+
+    # Create a invalid JSON from settings V2
+    invalid_settings_file = settings_folder / "settings-2.json"
+    with open(invalid_settings_file, "w", encoding="utf-8") as f:
+        f.write('{"VERSION": 2, "version_2_variable": 999, "invalid_json": }')
+
+    settings_manager = PydanticManager("ManagerTest", SettingsV2, config_path)
+
+    # Verify that the manager falls back to default values
+    assert settings_manager.settings.VERSION == 2
+    assert settings_manager.settings.version_1_variable == 369
+    assert settings_manager.settings.version_2_variable == 66
+
+    # Verify that a v2 settings will be replaced
+    settings_manager.save()
+    assert len(os.listdir(settings_folder)) == 2
+
+
+def test_invalid_json_fallback_to_defaults_v2_from_invalid_v2_and_v1() -> None:
+    temporary_folder = tempfile.mkdtemp()
+    config_path = pathlib.Path(temporary_folder)
+    settings_folder = config_path / "managertest"
+    settings_folder.mkdir(parents=True, exist_ok=True)
+
+    # Create a invalid JSON from settings V1
+    invalid_settings_file = settings_folder / "settings-2.json"
+    with open(invalid_settings_file, "w", encoding="utf-8") as f:
+        f.write('{"VERSION": 1, "version_1_variable": 999, "invalid_json": }')
+
+    # Create a invalid JSON from settings V2
+    invalid_settings_file = settings_folder / "settings-2.json"
+    with open(invalid_settings_file, "w", encoding="utf-8") as f:
+        f.write('{"VERSION": 2, "version_2_variable": 999, "invalid_json": }')
+
+    settings_manager = PydanticManager("ManagerTest", SettingsV2, config_path)
+
+    # Verify that the manager falls back to default values
+    assert settings_manager.settings.VERSION == 2
+    assert settings_manager.settings.version_1_variable == 42
+    assert settings_manager.settings.version_2_variable == 66
