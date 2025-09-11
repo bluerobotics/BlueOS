@@ -7,7 +7,7 @@ from types import FrameType
 from typing import Any, Optional, TextIO, Union, Callable
 
 import zenoh
-from loguru import logger, _handler
+from loguru import logger, Message
 
 
 class LogRotator:
@@ -83,7 +83,7 @@ def stack_trace_message(error: BaseException) -> str:
     return message
 
 
-def create_log_sink(service_name: str) -> Callable[[_handler.Message], None]:
+def create_log_sink(service_name: str) -> Callable[[Message], None]:
     """Create a loguru sink that publishes logs to a zenoh topic.
 
     Args:
@@ -100,7 +100,7 @@ def create_log_sink(service_name: str) -> Callable[[_handler.Message], None]:
     session = zenoh.open(zenoh_config)
     topic = f"services/{service_name}/log"
 
-    def sink(message: _handler.Message) -> None:
+    def sink(message: Message) -> None:
         # Transform the message to the Foxglove log format
         # https://docs.foxglove.dev/docs/visualization/message-schemas/log
 
