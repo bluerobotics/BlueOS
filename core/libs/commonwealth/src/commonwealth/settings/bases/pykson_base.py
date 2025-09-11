@@ -1,7 +1,7 @@
 import abc
 import json
-import pathlib
 import os
+import pathlib
 from typing import Any, Dict
 
 import pykson  # type: ignore
