@@ -86,9 +86,9 @@ BlueOS provides generic support for a wide variety of terrestrial, aerial, and m
 
 BlueOS is designed to perform optimally across a wide range of systems. Our latest releases are automatically built for the following architectures:
 
-- **armv7:** This is a common architecture for embedded devices. Covers Raspberry Pi models up to and including the Raspberry Pi 3.
+- **armv7:** This is a common architecture for embedded devices. Covers Raspberry Pi models up to and including the **Raspberry Pi 3** and **Raspberry Pi 4**.
 
-- **armv8/arm64:** This is used by more recent, high-performance devices. You can run BlueOS on a Raspberry Pi 4, or in a computer with Apple Silicon.
+- **armv8/arm64:** This is used by more recent, high-performance devices. You can run BlueOS on a Raspberry Pi 4 (not recommended, use the armv7 image for a better experience), **Raspberry Pi 5**, or in a computer with Apple Silicon.
 
 - **amd64:** This is the architecture used by most desktop and laptop computers. A typical example is any modern PC running a 64-bit version of Linux. **Not fully supported.**
 
