@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 
 from bridges.bridges import Bridge
+from bridges.serialhelper import Baudrate
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
@@ -47,7 +48,8 @@ class Ping1DDriver(PingDriver):
                 assert self.bridge is not None
                 self.bridge.stop()
                 await asyncio.sleep(5)
-                self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", 0, self.port, automatic_disconnect=False)
+                baudrate = Baudrate.b115200 if self.baud is None else self.baud
+                self.bridge = Bridge(self.ping.port, baudrate, "0.0.0.0", 0, self.port, automatic_disconnect=False)
 
     def save_settings(self) -> None:
         self.manager.load()  # re-load as other sensors could have changed it
