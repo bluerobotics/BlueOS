@@ -230,7 +230,7 @@ class Helper:
     PERIODICALLY_RESCAN_3RDPARTY_SERVICES = True
 
     MAX_ATTEMPTS_LEFT = 3
-    attempts_left = {}
+    attempts_left: Dict[int, int] = {}
 
     @staticmethod
     # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
