@@ -19,8 +19,8 @@ if __name__ == "__main__":
             "docker run -it -v /var/run/docker.sock:/var/run/docker.sock"
             " -v $HOME/.config/blueos:"
             " -v /var/logs/blueos:/var/logs/blueos"
-            "/root/.config/blueos -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos"
-            "bluerobotics/blueos-bootstrap:master"
+            " /root/.config/blueos -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos"
+            " bluerobotics/blueos-bootstrap:master"
         )
         sys.exit(1)
 
