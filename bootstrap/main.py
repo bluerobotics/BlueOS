@@ -17,7 +17,7 @@ if __name__ == "__main__":
         logger.info("Example docker command line:")
         logger.info(
             "docker run -it -v /var/run/docker.sock:/var/run/docker.sock"
-            " -v $HOME/.config/blueos:"
+            " -v $HOME/.config/blueos:/root/.config/blueos"
             " -v /var/logs/blueos:/var/logs/blueos"
             " /root/.config/blueos -e BLUEOS_CONFIG_PATH=$HOME/.config/blueos"
             " bluerobotics/blueos-bootstrap:master"
