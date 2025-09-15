@@ -8,7 +8,15 @@ REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
 CMDLINE_FILE=/boot/cmdline.txt
 CONFIG_FILE=/boot/config.txt
+OVERLAYS_DIR=/boot/overlays
 alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
+
+# Uses /boot/firmware directory if exists
+if [ -d "/boot/firmware" ]; then
+    CONFIG_FILE=/boot/firmware/config.txt
+    CMDLINE_FILE=/boot/firmware/cmdline.txt
+    OVERLAYS_DIR=/boot/firmware/overlays
+fi
 
 # Download, compile, and install spi0 mosi-only device tree overlay for
 # neopixel LED on navigator board
@@ -16,7 +24,7 @@ echo "- compile spi0 device tree overlay."
 DTS_PATH="$ROOT/install/overlays"
 DTS_NAME="spi0-led"
 curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME.dts
-dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/$DTS_NAME.dtbo /tmp/$DTS_NAME
+dtc -@ -Hepapr -I dts -O dtb -o $OVERLAYS_DIR/$DTS_NAME.dtbo /tmp/$DTS_NAME
 
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
