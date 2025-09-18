@@ -26,6 +26,7 @@ BlueOS is a modular, robust, and efficient platform for managing a vehicle or ro
 ## Quick Links ⚡
 
 - [Official documentation](https://blueos.cloud/docs/)
+- [Installation](https://blueos.cloud/docs/stable/usage/installation/)
 - [Development documentation](https://blueos.cloud/docs/latest/development/overview/)
 - [Contributions](https://blueos.cloud/docs/latest/development/core/#contributions)
 - [Code of Conduct](./CoC.md)
@@ -85,9 +86,9 @@ BlueOS provides generic support for a wide variety of terrestrial, aerial, and m
 
 BlueOS is designed to perform optimally across a wide range of systems. Our latest releases are automatically built for the following architectures:
 
-- **armv7:** This is a common architecture for embedded devices. Covers Raspberry Pi models up to and including the Raspberry Pi 3.
+- **armv7:** This is a common architecture for embedded devices. Covers Raspberry Pi models up to and including the **Raspberry Pi 3** and **Raspberry Pi 4**.
 
-- **armv8/arm64:** This is used by more recent, high-performance devices. You can run BlueOS on a Raspberry Pi 4, or in a computer with Apple Silicon.
+- **armv8/arm64:** This is used by more recent, high-performance devices. You can run BlueOS on a Raspberry Pi 4, **Raspberry Pi 5** or in a computer with Apple Silicon.
 
 - **amd64:** This is the architecture used by most desktop and laptop computers. A typical example is any modern PC running a 64-bit version of Linux. **Not fully supported.**
 
