@@ -5,7 +5,7 @@ from pathlib import Path
 from platform import machine
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 
 class SITLFrame(str, Enum):
@@ -183,14 +183,14 @@ class Serial(BaseModel):
     port: str
     endpoint: str
 
-    @validator("port")
+    @field_validator("port")
     @classmethod
     def valid_letter(cls: Any, value: str) -> str:
         if value in "BCDEFGH" and len(value) == 1:
             return value
         raise ValueError(f"Invalid serial port: {value}. These must be between B and H. A is reserved.")
 
-    @validator("endpoint")
+    @field_validator("endpoint")
     @classmethod
     def valid_endpoint(cls: Any, value: str) -> str:
         if Path(value).exists():

@@ -102,7 +102,7 @@ black ${black_extra_args} $python_files
 
 # Faster than pylint to check for issues
 echo "Running ruff.."
-ruff $python_files
+ruff check $python_files
 
 echo "Running pylint.."
 pylint $python_files

@@ -5,7 +5,7 @@ description = "logrotate but better."
 requires-python = ">=3.11"
 dependencies = [
     "commonwealth==0.1.0",
-    "loguru==0.5.3",
+    "loguru==0.7.3",
 ]
 
 [tool.uv]

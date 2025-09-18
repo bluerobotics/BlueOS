@@ -1,4 +1,2 @@
-# pylint: disable=W0406
+# pylint: disable=import-self
 from .app import application
-
-__all__ = ["application"]
