@@ -47,22 +47,28 @@
         </v-icon>
       </v-btn>
     </model-viewer>
+    <div v-else-if="!show_model_not_found" class="d-flex flex-column align-center">
+      <SpinningLogo size="30%" />
+    </div>
     <div v-else class="d-flex flex-column align-center">
-      <SpinningLogo v-if="!computed_model_path" size="40%" />
-      <div v-else>
-        <v-icon
-          style="height: 400px"
-          size="256"
-          v-text="'mdi-sail-boat-sink'"
-        />
-        <div
-          class="text-h6"
-          :v-text="'Vehicle not found.'"
-        />
-        <p class="text-h6 text-center ma-4">
-          Vehicle not found
-        </p>
-      </div>
+      <v-icon
+        style="height: 170px"
+        size="200"
+        v-text="'mdi-sail-boat-sink'"
+      />
+      <p class="text-h6 ma-2">
+        Vehicle model not found
+      </p>
+      <p class="text-center text-body-2" style="max-width: 350px">
+        If you want to add a custom 3D model please follow the instructions in
+        <a
+          href="https://blueos.cloud/docs/latest/usage/advanced/#vehicle-model"
+          target="_blank"
+          class="text-decoration-none"
+        >
+          BlueOS Documentation
+        </a>
+      </p>
     </div>
   </div>
 </template>
@@ -141,6 +147,7 @@ export default Vue.extend({
       annotations: {} as Dictionary<HotspotConfiguration>,
       override_annotations: {} as Dictionary<HotspotConfiguration>,
       default_alphas: {} as Dictionary<number>,
+      show_model_not_found: false,
     }
   },
   computed: {
@@ -260,6 +267,13 @@ export default Vue.extend({
       this.redraw()
       this.hideIrrelevantParts()
     })
+
+    setTimeout(() => {
+      if (!this.computed_model_path) {
+        this.show_model_not_found = true
+      }
+    }, 5000)
+
     this.model_override_path = await checkModelOverrides()
     this.override_annotations = await this.loadAnnotationsOverride()
     this.reloadAnnotations()
