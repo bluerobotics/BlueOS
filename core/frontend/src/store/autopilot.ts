@@ -107,13 +107,13 @@ class AutopilotStore extends VuexModule {
   get vehicle_model() {
     const frame = this.frame_type
     if (!this.vehicle_type || frame === undefined) {
-      return `assets/vehicles/models/rover/unknown.glb`
+      return ''
     }
     const release_path = `assets/vehicles/models/${vehicle_folder()}/${this.frame_name}.glb`
     if (models[`/public/${release_path}`]) {
       return `/assets/vehicles/models/${vehicle_folder()}/${this.frame_name}.glb`
     }
-    return `assets/vehicles/models/rover/unknown.glb`
+    return ''
   }
 
   get is_safe() {
