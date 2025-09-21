@@ -64,34 +64,43 @@
         @change="toggleEndpointEnabled"
       />
     </div>
-    <v-btn
-      v-if="!endpoint.protected"
-      color="primary"
-      class="endpoint-edit-btn"
-      dark
-      fab
-      x-small
-      absolute
-      @click="openEditDialog"
-    >
-      <v-icon>
-        mdi-pencil
-      </v-icon>
-    </v-btn>
-    <v-btn
-      v-if="!endpoint.protected"
-      color="error"
-      class="endpoint-remove-btn"
-      dark
-      fab
-      x-small
-      absolute
-      @click="removeEndpoint"
-    >
-      <v-icon>
-        mdi-trash-can
-      </v-icon>
-    </v-btn>
+    <div class="endpoint-buttons">
+      <v-btn
+        v-if="!endpoint.protected"
+        color="primary"
+        dark
+        fab
+        x-small
+        @click="openEditDialog"
+      >
+        <v-icon>
+          mdi-pencil
+        </v-icon>
+      </v-btn>
+      <v-btn
+        color="primary"
+        dark
+        fab
+        x-small
+        @click="copyEndpoint"
+      >
+        <v-icon>
+          mdi-content-copy
+        </v-icon>
+      </v-btn>
+      <v-btn
+        v-if="!endpoint.protected"
+        color="error"
+        dark
+        fab
+        x-small
+        @click="removeEndpoint"
+      >
+        <v-icon>
+          mdi-trash-can
+        </v-icon>
+      </v-btn>
+    </div>
 
     <endpoint-creation-dialog
       v-model="show_edit_dialog"
@@ -105,6 +114,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import { copyToClipboard } from '@/cosmos'
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
 import { AutopilotEndpoint, userFriendlyEndpointType } from '@/types/autopilot'
@@ -149,6 +159,9 @@ export default Vue.extend({
     },
   },
   methods: {
+    async copyEndpoint(): Promise<void> {
+      await copyToClipboard(`${this.endpoint.connection_type}:${window.location.host}:${this.endpoint.argument}`)
+    },
     async removeEndpoint(): Promise<void> {
       autopilot.setUpdatingEndpoints(true)
       await back_axios({
@@ -187,12 +200,14 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.endpoint-edit-btn {
-  top: 20%;
+.endpoint-buttons {
+  gap: 8px;
+  display: flex;
+  position: absolute;
   right: -16px;
-}
-.endpoint-remove-btn {
-  bottom: 20%;
-  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
 }
 </style>
