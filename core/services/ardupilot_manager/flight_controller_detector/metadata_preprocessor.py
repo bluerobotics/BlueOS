@@ -19,7 +19,7 @@ class ManifestHandler:
 
     def __init__(self) -> None:
         """Initialize the manifest handler."""
-        self._usb_devices: Dict[str, list[str]] = {}
+        self._usb_devices: Dict[str, list[Dict[str, Any]]] = {}
         self.manifest_url = "https://firmware.ardupilot.org/manifest.json.gz"
 
     def is_file_valid(self, file_path: Path) -> bool:
@@ -52,7 +52,22 @@ class ManifestHandler:
         try:
             if self.is_file_valid(file_path):
                 with open(file_path, "r", encoding="utf-8") as f:
-                    self._usb_devices = json.load(f)
+                    loaded_data = json.load(f)
+                    # Check if this is the old format (list of strings) or new format (list of objects)
+                    if loaded_data and isinstance(next(iter(loaded_data.values())), list):
+                        first_item = next(iter(loaded_data.values()))[0] if next(iter(loaded_data.values())) else None
+                        if isinstance(first_item, str):
+                            # Old format - convert to new format
+                            self._usb_devices = {}
+                            for usb_id, board_names in loaded_data.items():
+                                self._usb_devices[usb_id] = [
+                                    {"board_name": name, "board_id": None} for name in board_names
+                                ]
+                        else:
+                            # New format
+                            self._usb_devices = loaded_data
+                    else:
+                        self._usb_devices = loaded_data
                 return True
         except (json.JSONDecodeError, OSError):
             pass
@@ -112,6 +127,7 @@ class ManifestHandler:
                 if "USBID" in node and "platform" in node:
                     usb_id = node["USBID"]
                     platform = node["platform"]
+                    board_id = node.get("board_id")
 
                     # Handle both single USB ID and lists of USB IDs
                     usb_ids = [usb_id] if isinstance(usb_id, str) else usb_id
@@ -120,8 +136,21 @@ class ManifestHandler:
                         formatted_uid = self._format_usb_id(uid)
                         self._usb_devices.setdefault(formatted_uid, [])
 
-                        if platform not in self._usb_devices[formatted_uid]:
-                            self._usb_devices[formatted_uid].append(platform)
+                        # Create board info object
+                        board_info = {"board_name": platform, "board_id": board_id}
+
+                        # Check if this board info already exists for this USB ID
+                        existing_board = next(
+                            (
+                                board
+                                for board in self._usb_devices[formatted_uid]
+                                if board["board_name"] == platform and board["board_id"] == board_id
+                            ),
+                            None,
+                        )
+
+                        if existing_board is None:
+                            self._usb_devices[formatted_uid].append(board_info)
 
                 # Recursively process all values in the dictionary
                 for value in node.values():
@@ -159,9 +188,9 @@ class ManifestHandler:
             logger.info(f"Using existing data from {output_file}")
             # Log summary of existing data
             device_count = len(self._usb_devices)
-            platform_count = sum(len(platforms) for platforms in self._usb_devices.values())
+            board_count = sum(len(boards) for boards in self._usb_devices.values())
             logger.info(f"Found {device_count} unique USB IDs")
-            logger.info(f"Total platform mappings: {platform_count}")
+            logger.info(f"Total board mappings: {board_count}")
             return
 
         # If file is invalid or too old, download and process new data
@@ -176,9 +205,9 @@ class ManifestHandler:
 
         # Log summary
         device_count = len(self._usb_devices)
-        platform_count = sum(len(platforms) for platforms in self._usb_devices.values())
+        board_count = sum(len(boards) for boards in self._usb_devices.values())
         logger.info(f"Found {device_count} unique USB IDs")
-        logger.info(f"Total platform mappings: {platform_count}")
+        logger.info(f"Total board mappings: {board_count}")
 
 
 def main() -> None:

@@ -140,6 +140,7 @@ class FlightController(BaseModel):
     name: str
     manufacturer: Optional[str]
     platform: Platform
+    ardupilot_board_id: Optional[int]
     path: Optional[str]
     flags: List[FlightControllerFlags] = []
 
