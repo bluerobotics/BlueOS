@@ -107,7 +107,7 @@ import {
 const defaultEndpointValue: AutopilotEndpoint = {
   name: 'My endpoint',
   owner: 'User',
-  connection_type: EndpointType.udpin,
+  connection_type: EndpointType.udpout,
   place: '0.0.0.0',
   argument: 14550,
   protected: false,
