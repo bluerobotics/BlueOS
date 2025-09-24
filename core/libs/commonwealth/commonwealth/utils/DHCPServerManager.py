@@ -2,6 +2,7 @@ import asyncio
 import pathlib
 import shutil
 import subprocess
+from datetime import datetime, timezone
 from ipaddress import IPv4Address, IPv4Interface, IPv4Network
 from typing import Any, List, Optional, Tuple
 
@@ -9,6 +10,31 @@ import psutil
 from loguru import logger
 
 from commonwealth.utils.DHCPDiscovery import discover_dhcp_servers
+from pydantic import BaseModel
+
+
+class DHCPServerLease(BaseModel):
+    mac: str
+    ip: IPv4Address
+    expires_epoch: Optional[int] = None
+    expires_at: Optional[datetime] = None
+    hostname: Optional[str] = None
+    client_id: Optional[str] = None
+
+    @property
+    def is_active(self) -> bool:
+        return self.expires_epoch > datetime.now(timezone.utc).timestamp() if self.expires_epoch else False
+
+
+class DHCPServerDetails(BaseModel):
+    interface: str
+    ipv4_gateway: IPv4Address
+    lease_range: Tuple[int, int]
+    lease_time: str
+    is_backup: bool
+    is_running: bool
+    leases: List[DHCPServerLease]
+    subnet_mask: Optional[IPv4Address] = None
 
 
 # pylint: disable=too-many-arguments
@@ -22,6 +48,7 @@ class Dnsmasq:
         lease_range: Tuple[int, int] = (101, 200),
         lease_time: str = "24h",
         backup: bool = False,
+        lease_dir: pathlib.Path = pathlib.Path("/var/lib/dnsmasq"),
     ) -> None:
         self._subprocess: Optional[Any] = None
 
@@ -49,6 +76,9 @@ class Dnsmasq:
         self._ipv4_lease_range = ipv4_lease_range
 
         self._lease_time = lease_time
+
+        lease_dir.mkdir(parents=True, exist_ok=True)
+        self._lease_file = lease_dir.joinpath(f"dnsmasq-{self._interface}.leases")
 
         binary_path = shutil.which(self.binary_name())
         if binary_path is None:
@@ -102,6 +132,7 @@ class Dnsmasq:
             "--no-poll",
             "--port=0",
             "--user=root",
+            f"--dhcp-leasefile={self._lease_file}",
         ]
 
     async def start(self) -> None:
@@ -140,6 +171,44 @@ class Dnsmasq:
     def is_running(self) -> bool:
         return self._subprocess is not None and self._subprocess.poll() is None
 
+    def _parse_lease_line(self, line: str) -> Tuple[Optional[int], str, IPv4Address, Optional[str], Optional[str]]:
+        # dnsmasq format:
+        # <expiry_epoch> <mac> <ip> <hostname> <client_id>
+        # hostname/client_id can be "*" or absent in odd cases
+
+        parts = line.split()
+        return (
+            int(parts[0]) if parts[0].isdigit() else None,
+            parts[1],
+            IPv4Address(parts[2]),
+            None if len(parts) >= 4 and parts[3] in ("*", "") else parts[3],
+            None if len(parts) >= 5 and parts[4] in ("*", "") else parts[4],
+        )
+
+    def _get_valid_leases_lines(self, lines: List[str]) -> List[str]:
+        return [line for line in lines if line.strip() and len(line.split()) >= 3]
+
+    def _parse_leases_lines(self, lines: List[str]) -> List[DHCPServerLease]:
+        out: List[DHCPServerLease] = []
+        for line in self._get_valid_leases_lines(lines):
+            try:
+                expires_epoch, mac, ip, hostname, client_id = self._parse_lease_line(line)
+
+                out.append(
+                    DHCPServerLease(
+                        expires_epoch=expires_epoch,
+                        expires_at=datetime.fromtimestamp(expires_epoch, tz=timezone.utc) if expires_epoch else None,
+                        mac=mac.lower(),
+                        ip=ip,
+                        hostname=hostname,
+                        client_id=client_id,
+                    )
+                )
+            except Exception as exc:
+                logger.debug(f"Skipping malformed lease line '{line}': {exc}")
+                continue
+        return out
+
     @property
     def is_backup_server(self) -> bool:
         return self._is_backup
@@ -159,6 +228,32 @@ class Dnsmasq:
     @property
     def ipv4_network(self) -> IPv4Network:
         return IPv4Interface(f"{self._ipv4_gateway}/{self._subnet_mask}").network
+
+    @property
+    def leases(self) -> List[DHCPServerLease]:
+        """Return all parsed leases from this instance's lease file."""
+        try:
+            lines = self._lease_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except FileNotFoundError:
+            return []
+        except Exception as exc:
+            logger.warning(f"Failed to read leases from {self._lease_file}: {exc}")
+            return []
+
+        return self._parse_leases_lines(lines)
+
+    @property
+    def details(self) -> DHCPServerDetails:
+        return DHCPServerDetails(
+            interface=self._interface,
+            ipv4_gateway=self._ipv4_gateway,
+            lease_range=self._ipv4_lease_range,
+            lease_time=self._lease_time,
+            is_backup=self._is_backup,
+            is_running=self.is_running(),
+            leases=self.leases,
+            subnet_mask=self._subnet_mask,
+        )
 
     def __del__(self) -> None:
         self.stop()
