@@ -22,3 +22,13 @@ export interface EthernetInterface {
     info?: InterfaceInfo,
     priority?: number,
 }
+
+export interface DHCPServerLease {
+    expires_epoch: number,
+    expires_at: Date,
+    mac: string,
+    ip: string,
+    hostname?: string,
+    client_id?: string,
+    is_active?: boolean,
+}

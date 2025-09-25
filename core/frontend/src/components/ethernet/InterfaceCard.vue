@@ -81,6 +81,77 @@
             </v-btn>
           </span>
         </v-row>
+
+        <!-- DHCP Leases Section -->
+        <v-row v-if="is_there_dhcp_server_already" class="mt-4">
+          <v-col cols="12">
+            <v-card flat>
+              <v-card-title
+                class="text-h6 py-2 cursor-pointer"
+                @click="toggleLeasesExpanded"
+              >
+                <v-icon
+                  :class="{ 'rotate-180': leases_expanded }"
+                  class="transition-transform mr-2"
+                >
+                  mdi-chevron-down
+                </v-icon>
+                DHCP Leases
+                <v-spacer />
+                <v-btn
+                  small
+                  icon
+                  :loading="loading_leases"
+                  @click.stop="refreshLeases"
+                >
+                  <v-icon>mdi-refresh</v-icon>
+                </v-btn>
+              </v-card-title>
+              <v-expand-transition>
+                <v-card-text v-show="leases_expanded" class="pt-0">
+                  <div style="max-height: 300px; overflow-y: auto;">
+                    <v-data-table
+                      :headers="lease_headers"
+                      :items="dhcp_leases"
+                      :loading="loading_leases"
+                      dense
+                      hide-default-footer
+                      class="elevation-0"
+                    >
+                      <template #item.ip="{ item }">
+                        <span class="font-weight-medium">{{ item.ip }}</span>
+                      </template>
+                      <template #item.mac="{ item }">
+                        <span class="font-family-monospace">{{ item.mac }}</span>
+                      </template>
+                      <template #item.hostname="{ item }">
+                        <span v-if="item.hostname">{{ item.hostname }}</span>
+                        <span v-else class="text--secondary">-</span>
+                      </template>
+                      <template #item.expires_at="{ item }">
+                        <span :class="getLeaseExpiryClass(item)">
+                          {{ formatLeaseExpiry(item.expires_at) }}
+                        </span>
+                      </template>
+                      <template #item.is_active="{ item }">
+                        <v-chip
+                          :color="item.is_active ? 'success' : 'error'"
+                          small
+                          text-color="white"
+                        >
+                          {{ item.is_active ? 'Active' : 'Expired' }}
+                        </v-chip>
+                      </template>
+                    </v-data-table>
+                  </div>
+                  <div v-if="dhcp_leases.length === 0 && !loading_leases" class="text-center py-4 text--secondary">
+                    No DHCP leases found
+                  </div>
+                </v-card-text>
+              </v-expand-transition>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-container>
     </v-expansion-panel-content>
     <dhcp-server-dialog
@@ -96,7 +167,7 @@ import Vue, { PropType } from 'vue'
 import Notifier from '@/libs/notifier'
 import beacon from '@/store/beacon'
 import ethernet from '@/store/ethernet'
-import { AddressMode, EthernetInterface } from '@/types/ethernet'
+import { AddressMode, DHCPServerLease, EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -126,6 +197,16 @@ export default Vue.extend({
       show_deletion_dialog: false,
       show_dhcp_server_dialog: false,
       deletion_dialog_type: '',
+      dhcp_leases: [] as DHCPServerLease[],
+      loading_leases: false,
+      leases_expanded: false,
+      lease_headers: [
+        { text: 'IP Address', value: 'ip', sortable: false },
+        { text: 'MAC Address', value: 'mac', sortable: false },
+        { text: 'Hostname', value: 'hostname', sortable: false },
+        { text: 'Expires', value: 'expires_at', sortable: false },
+        { text: 'Status', value: 'is_active', sortable: false },
+      ],
     }
   },
   computed: {
@@ -147,8 +228,23 @@ export default Vue.extend({
       return this.adapter.addresses.length === 1
     },
   },
+  watch: {
+    'adapter.name': {
+      handler() {
+        this.fetchLeases()
+      },
+      immediate: true,
+    },
+    is_there_dhcp_server_already: {
+      handler() {
+        this.fetchLeases()
+      },
+      immediate: true,
+    },
+  },
   mounted() {
     beacon.registerBeaconListener(this)
+    this.fetchLeases()
   },
   methods: {
     async fireConfirmDeletionModal(type: 'last-ip-address' | 'ip-being-used'): Promise<boolean> {
@@ -250,6 +346,81 @@ export default Vue.extend({
           notifier.pushError('DHCP_SERVER_REMOVE_FAIL', message)
         })
     },
+    async fetchLeases(): Promise<void> {
+      if (!this.is_there_dhcp_server_already) {
+        this.dhcp_leases = []
+        return
+      }
+
+      this.loading_leases = true
+      try {
+        const response = await back_axios({
+          method: 'get',
+          url: `${ethernet.API_URL}/dhcp/leases`,
+          timeout: 10000,
+        })
+
+        // Get leases for this specific interface
+        const interfaceLeases = response.data[this.adapter.name] ?? []
+        this.dhcp_leases = interfaceLeases.map((lease: DHCPServerLease) => ({
+          ...lease,
+          expires_at: new Date(lease.expires_at),
+          is_active: lease.expires_epoch > Date.now() / 1000,
+        }))
+      } catch (error) {
+        console.error('Failed to fetch DHCP leases:', error)
+        this.dhcp_leases = []
+      } finally {
+        this.loading_leases = false
+      }
+    },
+    async refreshLeases(): Promise<void> {
+      await this.fetchLeases()
+    },
+    toggleLeasesExpanded(): void {
+      this.leases_expanded = !this.leases_expanded
+    },
+    formatLeaseExpiry(expiresAt: Date): string {
+      const now = new Date()
+      const diffMs = expiresAt.getTime() - now.getTime()
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+      const diffMinutes = Math.floor(diffMs % (1000 * 60 * 60) / (1000 * 60))
+
+      if (diffMs < 0) {
+        return 'Expired'
+      }
+      if (diffHours > 0) {
+        return `${diffHours}h ${diffMinutes}m`
+      }
+      return `${diffMinutes}m`
+    },
+    getLeaseExpiryClass(lease: DHCPServerLease): string {
+      const now = new Date()
+      const diffMs = lease.expires_at.getTime() - now.getTime()
+      const diffHours = diffMs / (1000 * 60 * 60)
+
+      if (diffMs < 0) {
+        return 'error--text'
+      }
+      if (diffHours < 1) {
+        return 'warning--text'
+      }
+      return 'success--text'
+    },
   },
 })
 </script>
+
+<style scoped>
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.transition-transform {
+  transition: transform 0.2s ease;
+}
+</style>
