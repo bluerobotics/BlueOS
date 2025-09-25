@@ -81,6 +81,92 @@
             </v-btn>
           </span>
         </v-row>
+
+        <v-row v-if="is_there_dhcp_server_already && dhcp_server_details" class="mt-4">
+          <v-col cols="12">
+            <v-card v-if="dhcp_server_details?.leases.length === 0 && !loading_leases" flat>
+              <v-card-title
+                class="text-h6 py-2 not-selectable"
+              >
+                {{
+                  dhcp_server_details?.is_backup && !dhcp_server_details?.is_running
+                    ? 'DHCP Server in backup' : 'No DHCP leases found'
+                }}
+                <v-spacer />
+                <v-btn
+                  small
+                  icon
+                  :loading="loading_leases"
+                  @click.stop="refreshLeases"
+                >
+                  <v-icon>mdi-refresh</v-icon>
+                </v-btn>
+              </v-card-title>
+            </v-card>
+            <v-card v-else flat>
+              <v-card-title
+                class="text-h6 py-2 cursor-pointer not-selectable"
+                @click="toggleLeasesExpanded"
+              >
+                <v-icon
+                  :class="{ 'rotate-180': leases_expanded }"
+                  class="transition-transform mr-2"
+                >
+                  mdi-chevron-down
+                </v-icon>
+                DHCP leases
+                <v-spacer />
+                <v-btn
+                  small
+                  icon
+                  :loading="loading_leases"
+                  @click.stop="refreshLeases"
+                >
+                  <v-icon>mdi-refresh</v-icon>
+                </v-btn>
+              </v-card-title>
+              <v-expand-transition>
+                <v-card-text v-show="leases_expanded" class="pt-0">
+                  <div style="max-height: 300px; overflow-y: auto;">
+                    <v-data-table
+                      :headers="lease_headers"
+                      :items="dhcp_server_details?.leases"
+                      :loading="loading_leases"
+                      dense
+                      hide-default-footer
+                      class="elevation-0"
+                    >
+                      <template #item.ip="{ item }">
+                        <span class="font-weight-medium">{{ item.ip }}</span>
+                      </template>
+                      <template #item.mac="{ item }">
+                        <span class="font-family-monospace">{{ item.mac }}</span>
+                      </template>
+                      <template #item.hostname="{ item }">
+                        <span v-if="item.hostname">{{ item.hostname }}</span>
+                        <span v-else class="text--secondary">-</span>
+                      </template>
+                      <template #item.expires_at="{ item }">
+                        <span :class="getLeaseExpiryClass(item)">
+                          {{ formatLeaseExpiry(item.expires_at) }}
+                        </span>
+                      </template>
+                      <template #item.is_active="{ item }">
+                        <v-chip
+                          :color="item.is_active ? 'success' : 'error'"
+                          small
+                          text-color="white"
+                        >
+                          {{ item.is_active ? 'Active' : 'Expired' }}
+                        </v-chip>
+                      </template>
+                    </v-data-table>
+                  </div>
+                </v-card-text>
+              </v-expand-transition>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-container>
     </v-expansion-panel-content>
     <dhcp-server-dialog
@@ -91,18 +177,25 @@
 </template>
 
 <script lang="ts">
+import TimeAgo from 'javascript-time-ago'
+import en from 'javascript-time-ago/locale/en.json'
 import Vue, { PropType } from 'vue'
 
 import Notifier from '@/libs/notifier'
 import beacon from '@/store/beacon'
 import ethernet from '@/store/ethernet'
-import { AddressMode, EthernetInterface } from '@/types/ethernet'
+import {
+  AddressMode, DHCPServerDetails, DHCPServerLease, EthernetInterface,
+} from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 import AddressCreationDialog from './AddressCreationDialog.vue'
 import AddressDeletionDialog from './AddressDeletionDialog.vue'
 import DHCPServerDialog from './DHCPServerDialog.vue'
+
+TimeAgo.addDefaultLocale(en)
+const timeAgo = new TimeAgo('en-US')
 
 const notifier = new Notifier(ethernet_service)
 
@@ -126,6 +219,16 @@ export default Vue.extend({
       show_deletion_dialog: false,
       show_dhcp_server_dialog: false,
       deletion_dialog_type: '',
+      dhcp_server_details: undefined as DHCPServerDetails | undefined,
+      loading_leases: false,
+      leases_expanded: false,
+      lease_headers: [
+        { text: 'IP Address', value: 'ip', sortable: false },
+        { text: 'MAC Address', value: 'mac', sortable: false },
+        { text: 'Hostname', value: 'hostname', sortable: false },
+        { text: 'Expires', value: 'expires_at', sortable: false },
+        { text: 'Status', value: 'is_active', sortable: false },
+      ],
     }
   },
   computed: {
@@ -147,8 +250,23 @@ export default Vue.extend({
       return this.adapter.addresses.length === 1
     },
   },
+  watch: {
+    'adapter.name': {
+      handler() {
+        this.fetchLeases()
+      },
+      immediate: true,
+    },
+    is_there_dhcp_server_already: {
+      handler() {
+        this.fetchLeases()
+      },
+      immediate: true,
+    },
+  },
   mounted() {
     beacon.registerBeaconListener(this)
+    this.fetchLeases()
   },
   methods: {
     async fireConfirmDeletionModal(type: 'last-ip-address' | 'ip-being-used'): Promise<boolean> {
@@ -250,6 +368,83 @@ export default Vue.extend({
           notifier.pushError('DHCP_SERVER_REMOVE_FAIL', message)
         })
     },
+    async fetchLeases(): Promise<void> {
+      if (!this.is_there_dhcp_server_already) {
+        this.dhcp_server_details = undefined
+        return
+      }
+
+      this.loading_leases = true
+      try {
+        const response = await back_axios({
+          method: 'get',
+          url: `${ethernet.API_URL}/dhcp/details/${this.adapter.name}`,
+          timeout: 15000,
+        })
+
+        this.dhcp_server_details = response.data[this.adapter.name] as DHCPServerDetails
+        this.dhcp_server_details.leases = this.dhcp_server_details?.leases.map((lease: DHCPServerLease) => ({
+          ...lease,
+          expires_at: lease.expires_at ? new Date(lease.expires_at) : undefined,
+          is_active: lease.expires_epoch ? lease.expires_epoch > Date.now() / 1000 : false,
+        }))
+      } catch (error) {
+        console.error(`Failed to fetch DHCP Server details for interface: ${this.adapter.name}`, error)
+        this.dhcp_server_details = undefined
+      } finally {
+        this.loading_leases = false
+      }
+    },
+    async refreshLeases(): Promise<void> {
+      await this.fetchLeases()
+    },
+    toggleLeasesExpanded(): void {
+      this.leases_expanded = !this.leases_expanded
+    },
+    formatLeaseExpiry(expiresAt?: Date): string {
+      if (expiresAt === undefined) {
+        return 'Unknown'
+      }
+
+      const now = new Date()
+      const diffMs = expiresAt.getTime() - now.getTime()
+
+      if (diffMs < 0) {
+        return 'Expired'
+      }
+
+      return timeAgo.format(expiresAt, 'round')
+    },
+    getLeaseExpiryClass(lease: DHCPServerLease): string {
+      const now = new Date()
+      const diffMs = lease.expires_at ? lease.expires_at.getTime() - now.getTime() : 0
+
+      if (lease.expires_at === undefined || diffMs < 0) {
+        return 'error--text'
+      }
+      if (diffMs < 1000 * 60 * 60) {
+        return 'warning--text'
+      }
+      return 'success--text'
+    },
   },
 })
 </script>
+
+<style scoped>
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.not-selectable {
+  user-select: none;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.transition-transform {
+  transition: transform 0.2s ease;
+}
+</style>
