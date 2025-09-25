@@ -183,6 +183,33 @@ export async function setManifestSourceOrder(identifier: string, order: number):
   })
 }
 
+/**
+ * Update an extension to the latest version available
+ * @param {InstalledExtensionData} extension The extension to be updated
+ * @param {function} progressHandler The progress handler for the download
+ */
+export async function updateExtension(
+  extension: InstalledExtensionData,
+  progressHandler: (event: any) => void,
+): Promise<void> {
+  await back_axios({
+    url: `${KRAKEN_API_V2_URL}/extension/update`,
+    method: 'POST',
+    data: {
+      identifier: extension.identifier,
+      name: extension.name,
+      docker: extension.docker,
+      tag: extension.tag,
+      enabled: true,
+      permissions: extension?.permissions ?? '',
+      user_permissions: extension?.user_permissions ?? '',
+    },
+    timeout: 120000,
+    onDownloadProgress: progressHandler,
+  })
+}
+
+
 export default {
   fetchManifestSources,
   fetchManifestSource,
@@ -195,4 +222,5 @@ export default {
   disabledManifestSource,
   setManifestSourcesOrders,
   setManifestSourceOrder,
+  updateExtension,
 }
