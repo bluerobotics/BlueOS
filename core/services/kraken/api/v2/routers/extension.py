@@ -155,6 +155,16 @@ async def update_to_tag(identifier: str, tag: str, purge: bool = True) -> Respon
     return StreamingResponse(streamer(extension.update(purge)))
 
 
+@extension_router_v2.post("/update", status_code=status.HTTP_200_OK)
+@extension_to_http_exception
+async def update_extension(body: ExtensionSource) -> StreamingResponse:
+    """
+    Update a given extension defined by an ExtensionSource object. Used to update manually added extensions.
+    """
+    extension = Extension(body)
+    return StreamingResponse(streamer(extension.update(True)))
+
+
 @extension_router_v2.delete("/{identifier}", status_code=status.HTTP_202_ACCEPTED)
 @extension_to_http_exception
 async def uninstall(identifier: str) -> None:
