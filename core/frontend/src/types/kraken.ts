@@ -93,3 +93,9 @@ export interface Manifest extends ManifestSource {
   factory: boolean
   data?: [ExtensionData]
 }
+
+export interface ProgressEvent {
+    currentTarget: {
+        response: string
+    }
+}
