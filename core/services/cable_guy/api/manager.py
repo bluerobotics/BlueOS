@@ -11,7 +11,7 @@ import psutil
 from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, discover_dhcp_servers
-from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
+from commonwealth.utils.DHCPServerManager import DHCPServerDetails, Dnsmasq as DHCPServerManager, DHCPServerLease
 from loguru import logger
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.exceptions import NetlinkError
@@ -934,3 +934,19 @@ class EthernetManager:
             except Exception as error:
                 logger.error(f"Error in watchdog: {error}")
                 await asyncio.sleep(5)
+
+    def _get_dhcp_server_attribute(
+        self, interface_name: Optional[str] = None, attribute: str = "leases"
+    ) -> Dict[str, Any]:
+        if interface_name:
+            try:
+                return {interface_name: getattr(self._dhcp_server_on_interface(interface_name), attribute)}
+            except ValueError:
+                return {}
+        return {dhcp_server.interface: getattr(dhcp_server, attribute) for dhcp_server in self._dhcp_servers}
+
+    def get_dhcp_server_leases(self, interface_name: Optional[str] = None) -> Dict[str, List[DHCPServerLease]]:
+        return self._get_dhcp_server_attribute(interface_name, "leases")
+
+    def get_dhcp_server_details(self, interface_name: Optional[str] = None) -> Dict[str, DHCPServerDetails]:
+        return self._get_dhcp_server_attribute(interface_name, "details")

@@ -3,12 +3,13 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, List
+from typing import Any, Dict, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
+from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
 from fastapi import Body, FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -80,6 +81,20 @@ def delete_address(interface_name: str, ip_address: str) -> Any:
     """REST API endpoint to delete an IP address from an ethernet interface."""
     manager.remove_ip(interface_name, ip_address)
     manager.save()
+
+
+@app.get("/dhcp/details/{interface_name}", summary="Get all DHCP leases.")
+@version(1, 0)
+def get_dhcp_server_details(interface_name: Optional[str] = None) -> Dict[str, DHCPServerDetails]:
+    """REST API endpoint to get the DHCP server details."""
+    return manager.get_dhcp_server_details(interface_name)
+
+
+@app.get("/dhcp/leases/{interface_name}", summary="Get all DHCP leases.")
+@version(1, 0)
+def get_dhcp_server_leases(interface_name: Optional[str] = None) -> Dict[str, List[DHCPServerLease]]:
+    """REST API endpoint to get the DHCP leases."""
+    return manager.get_dhcp_server_leases(interface_name)
 
 
 @app.post("/dhcp", summary="Add local DHCP server to interface.")
