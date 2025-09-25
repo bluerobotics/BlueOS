@@ -205,11 +205,11 @@ import PullTracker from '@/utils/pull_tracker'
 import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
-  ExtensionData, InstalledExtensionData, RunningContainer,
+  ExtensionData, InstalledExtensionData, ProgressEvent,
+  RunningContainer,
 } from '../types/kraken'
 
 const API_URL = '/kraken/v1.0'
-const API_URL_V2 = '/kraken/v2.0'
 const notifier = new Notifier(kraken_service)
 const ansi = new AnsiUp()
 
@@ -319,18 +319,7 @@ export default Vue.extend({
     },
     async update(extension: InstalledExtensionData, version: string) {
       this.show_pull_output = true
-      const tracker = new PullTracker(
-        () => {
-          setTimeout(() => {
-            this.show_pull_output = false
-          }, 1000)
-        },
-        (error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-        },
-      )
+      const tracker = this.getTracker()
       back_axios({
         url: `${API_URL}/extension/update_to_version`,
         method: 'POST',
@@ -339,13 +328,7 @@ export default Vue.extend({
           new_version: version,
         },
         timeout: 120000,
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-        },
+        onDownloadProgress: (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
       })
         .then(() => {
           this.fetchInstalledExtensions()
@@ -356,12 +339,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
-          this.show_pull_output = false
-          this.show_dialog = false
-          this.pull_output = ''
-          this.download_percentage = 0
-          this.extraction_percentage = 0
-          this.status_text = ''
+          this.resetPullOutput()
         })
     },
     metricsFor(extension: InstalledExtensionData): { cpu: number, memory: number} | Record<string, never> {
@@ -375,15 +353,7 @@ export default Vue.extend({
       }
 
       if (this.edited_extension.editing) {
-        await this.update_local(
-          this.edited_extension.identifier,
-          this.edited_extension.name,
-          this.edited_extension.docker,
-          this.edited_extension.tag,
-          true,
-          this.edited_extension?.permissions ?? '',
-          this.edited_extension?.user_permissions ?? '',
-        )
+        await this.update_local(this.edited_extension)
       } else {
         await this.install(
           this.edited_extension.identifier,
@@ -549,19 +519,7 @@ export default Vue.extend({
     ) {
       this.show_dialog = false
       this.show_pull_output = true
-      const tracker = new PullTracker(
-        () => {
-          setTimeout(() => {
-            this.show_pull_output = false
-          }, 1000)
-        },
-        (error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-          this.show_pull_output = false
-        },
-      )
+      const tracker = this.getTracker()
 
       back_axios({
         url: `${API_URL}/extension/install`,
@@ -575,13 +533,7 @@ export default Vue.extend({
           permissions,
           user_permissions,
         },
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-        },
+        onDownloadProgress: (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
       })
         .then(() => {
           this.fetchInstalledExtensions()
@@ -592,60 +544,18 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
-          this.show_pull_output = false
-          this.show_dialog = false
-          this.pull_output = ''
-          this.download_percentage = 0
-          this.extraction_percentage = 0
-          this.status_text = ''
+          this.resetPullOutput()
         })
     },
-    async update_local(
-      identifier: string,
-      name: string,
-      docker: string,
-      tag: string,
-      enabled: boolean,
-      permissions: string,
-      user_permissions: string,
-    ) {
+    async update_local(extension: InstalledExtensionData) {
       this.show_dialog = false
       this.show_pull_output = true
-      const tracker = new PullTracker(
-        () => {
-          setTimeout(() => {
-            this.show_pull_output = false
-          }, 1000)
-        },
-        (error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-          this.show_pull_output = false
-        },
-      )
+      const tracker = this.getTracker()
 
-      back_axios({
-        url: `${API_URL_V2}/extension/update`,
-        method: 'POST',
-        data: {
-          identifier,
-          name,
-          docker,
-          tag,
-          enabled,
-          permissions,
-          user_permissions,
-        },
-        timeout: 120000,
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-        },
-      })
+      kraken.updateExtension(
+        extension,
+        (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
+      )
         .then(() => {
           this.fetchInstalledExtensions()
         })
@@ -655,12 +565,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
-          this.show_pull_output = false
-          this.show_dialog = false
-          this.pull_output = ''
-          this.download_percentage = 0
-          this.extraction_percentage = 0
-          this.status_text = ''
+          this.resetPullOutput()
         })
     },
     async performActionFromModal(
@@ -792,6 +697,36 @@ export default Vue.extend({
       const temp = { ...this.installed_extensions }
       temp[extension.identifier].loading = loading
       this.installed_extensions = temp
+    },
+    getTracker(): PullTracker {
+      return new PullTracker(
+        () => {
+          setTimeout(() => {
+            this.show_pull_output = false
+          }, 1000)
+        },
+        (error) => {
+          this.alerter = true
+          this.alerter_error = String(error)
+          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
+          this.show_pull_output = false
+        },
+      )
+    },
+    resetPullOutput() {
+      this.show_pull_output = false
+      this.show_dialog = false
+      this.pull_output = ''
+      this.download_percentage = 0
+      this.extraction_percentage = 0
+      this.status_text = ''
+    },
+    handleDownloadProgress(progressEvent: ProgressEvent, tracker: PullTracker) {
+      tracker.digestNewData(progressEvent)
+      this.pull_output = tracker.pull_output
+      this.download_percentage = tracker.download_percentage
+      this.extraction_percentage = tracker.extraction_percentage
+      this.status_text = tracker.overall_status
     },
   },
 })
