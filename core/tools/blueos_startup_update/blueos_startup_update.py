@@ -56,6 +56,7 @@ cmdline_file = None
 
 disabled_patches = [entry.strip() for entry in os.getenv("BLUEOS_DISABLE_PATCHES", "").split(",")]
 
+
 # Copyright 2016-2022 Paul Durivage
 # Licensed under the Apache License, Version 2.0 (the "License");
 # Based on: https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
@@ -256,7 +257,7 @@ def update_cgroups() -> bool:
         ("cgroup_memory", "1"),
         ("cgroup_enable", "memory"),
     ]
-    for (config_key, config_value) in cgroups:
+    for config_key, config_value in cgroups:
         boot_cmdline_add_config(cmdline_content, config_key, config_value)
 
     # Don't need to apply or restart if the content is the same
@@ -411,7 +412,7 @@ def update_navigator_overlays() -> bool:
     navigator_configs_with_match_patterns.reverse()
 
     pi4_section_name = "pi4"
-    for (config, config_match_pattern) in navigator_configs_with_match_patterns:
+    for config, config_match_pattern in navigator_configs_with_match_patterns:
         # Add each navigator configuration to pi4 section
         boot_config_add_configuration_at_section(config_content, config, pi4_section_name)
 
@@ -499,7 +500,7 @@ def ensure_ipv6_disabled() -> bool:
 
     # Make sure every required entry is in the file and uncommented
     needs_update = False
-    for (desired, pattern) in required_entries:
+    for desired, pattern in required_entries:
         entry_match = pattern.search(sysctl_config_file)
         if entry_match:
             line_result = entry_match.group(0)

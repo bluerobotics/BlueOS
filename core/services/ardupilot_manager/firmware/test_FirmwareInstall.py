@@ -37,7 +37,7 @@ def test_firmware_validation() -> None:
         if platform.system() != "Darwin":
             # there are no SITL builds for MacOS
             temporary_file = downloader.download(Vehicle.Sub, Platform.SITL, version="DEV")
-            board = FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL)
+            board = FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL, path=None)
             await installer.install_firmware(temporary_file, board, pathlib.Path(f"{temporary_file}_dest"))
 
     asyncio.run(firmware_validation_wrapper())
