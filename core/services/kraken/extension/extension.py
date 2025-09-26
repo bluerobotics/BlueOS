@@ -171,10 +171,18 @@ class Extension:
         except Exception as error:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
             if atomic:
-                await self.uninstall()
+                should_raise = False
+                if not running_ext or self.unique_entry != running_ext.unique_entry:
+                    should_raise = True
+                    await self.uninstall()
+
                 if running_ext:
                     await running_ext.enable()
-            raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
+
+                if should_raise:
+                    raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
+                # Reached only if the extensions are the same, the change is in permissions, not installation failure.
+                return
         finally:
             self.unlock(self.unique_entry)
             self.reset_start_attempt(self.unique_entry)
