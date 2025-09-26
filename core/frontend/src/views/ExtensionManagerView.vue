@@ -342,11 +342,8 @@ export default Vue.extend({
         return
       }
 
-      if (this.edited_extension.editing) {
-        await this.update_local(this.edited_extension)
-      } else {
-        await this.install(this.edited_extension)
-      }
+      await this.install(this.edited_extension)
+
       this.show_dialog = false
       this.edited_extension = null
     },
@@ -458,27 +455,6 @@ export default Vue.extend({
       const tracker = this.getTracker()
 
       kraken.installExtension(
-        extension,
-        (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
-      )
-        .then(() => {
-          this.fetchInstalledExtensions()
-        })
-        .catch((error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-        })
-        .finally(() => {
-          this.resetPullOutput()
-        })
-    },
-    async update_local(extension: InstalledExtensionData) {
-      this.show_dialog = false
-      this.show_pull_output = true
-      const tracker = this.getTracker()
-
-      kraken.updateExtension(
         extension,
         (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
       )
