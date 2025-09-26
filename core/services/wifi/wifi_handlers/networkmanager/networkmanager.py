@@ -466,7 +466,13 @@ class NetworkManagerWifi(AbstractWifiManager):
 
                     ssid = profile.wireless.ssid.decode("utf-8")
                     saved_networks.append(
-                        SavedWifiNetwork(networkid=0, ssid=ssid, bssid=profile.wireless.bssid, nm_id=conn_path)
+                        SavedWifiNetwork(
+                            networkid=0,
+                            ssid=ssid,
+                            bssid=profile.wireless.bssid,
+                            nm_id=conn_path,
+                            nm_uuid=profile.connection.uuid,
+                        )
                     )
                 except Exception as e:
                     logger.error(f"Error processing connection {conn_path}: {e}")
@@ -584,7 +590,11 @@ class NetworkManagerWifi(AbstractWifiManager):
         return self._settings_manager.settings.smart_hotspot_enabled is True
 
     async def remove_network(self, _network_id: str) -> None:
-        raise NotImplementedError
+        networks = await self.get_saved_wifi_network()
+        network = next(filter(lambda net: net.ssid == _network_id, networks), None)
+        if network is not None and network.nm_uuid is not None and self._nm_settings is not None:
+            logger.info(f"Forgetting network {network}")
+            await self._nm_settings.delete_connection_by_uuid(network.nm_uuid)
 
     async def hotspot_watchdog(self) -> None:
         """
