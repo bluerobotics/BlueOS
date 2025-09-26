@@ -855,10 +855,7 @@ export default Vue.extend({
       if (isUploadFlow) {
         // This is from a file upload, use finalize endpoint
         await this.finalizeUploadedExtension(this.edited_extension)
-      } else if (this.edited_extension.editing) {
-        await this.update_local(this.edited_extension)
       } else {
-        // This is a regular extension creation
         await this.install(this.edited_extension)
       }
 
@@ -976,27 +973,6 @@ export default Vue.extend({
       const tracker = this.getTracker()
 
       kraken.installExtension(
-        extension,
-        (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
-      )
-        .then(() => {
-          this.fetchInstalledExtensions()
-        })
-        .catch((error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-        })
-        .finally(() => {
-          this.resetPullOutput()
-        })
-    },
-    async update_local(extension: InstalledExtensionData) {
-      this.show_dialog = false
-      this.show_pull_output = true
-      const tracker = this.getTracker()
-
-      kraken.updateExtension(
         extension,
         (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
       )
