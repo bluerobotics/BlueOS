@@ -245,6 +245,7 @@ class NetworkManagerWifi(AbstractWifiManager):
         # If hotspot was running, restart it
         if not await wait_for_connection():
             logger.error(f"Connection timeout for {credentials.ssid}")
+            await self.remove_network(credentials.ssid)
             raise TimeoutError(f"Failed to connect to {credentials.ssid} within 30 seconds")
 
         if self._settings_manager.settings.hotspot_enabled:
