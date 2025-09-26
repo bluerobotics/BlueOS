@@ -43,6 +43,7 @@ class SavedWifiNetwork(BaseModel):
     bssid: Optional[str]
     flags: Optional[str]
     nm_id: Optional[str]
+    nm_uuid: Optional[str]
 
 
 class WifiCredentials(BaseModel):
