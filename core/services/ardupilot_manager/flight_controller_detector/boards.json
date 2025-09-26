@@ -1,0 +1,1998 @@
+{
+  "1209:5741": [
+    {
+      "board_name": "BeastH7",
+      "board_id": 1025
+    },
+    {
+      "board_name": "BeastH7v2",
+      "board_id": 1056
+    },
+    {
+      "board_name": "Here4FC",
+      "board_id": 1043
+    },
+    {
+      "board_name": "QioTekAdeptF407",
+      "board_id": 1065
+    },
+    {
+      "board_name": "ReaperF745",
+      "board_id": 1074
+    },
+    {
+      "board_name": "SpeedyBeeF405Mini",
+      "board_id": 1135
+    },
+    {
+      "board_name": "PixFlamingo",
+      "board_id": 1090
+    },
+    {
+      "board_name": "speedybeef4v4",
+      "board_id": 1136
+    },
+    {
+      "board_name": "AtomRCF405NAVI",
+      "board_id": 1078
+    },
+    {
+      "board_name": "KakuteF7",
+      "board_id": 123
+    },
+    {
+      "board_name": "ACNS-CM4Pilot",
+      "board_id": 1115
+    },
+    {
+      "board_name": "MatekF405-CAN",
+      "board_id": 1014
+    },
+    {
+      "board_name": "DevEBoxH7v2",
+      "board_id": 1061
+    },
+    {
+      "board_name": "MatekH7A3",
+      "board_id": 1149
+    },
+    {
+      "board_name": "KakuteH7Mini-Nand",
+      "board_id": 1058
+    },
+    {
+      "board_name": "Pixhawk1-1M",
+      "board_id": 9
+    },
+    {
+      "board_name": "SpeedyBeeF405AIO",
+      "board_id": 5271
+    },
+    {
+      "board_name": "OMNIBUSF7V2",
+      "board_id": 121
+    },
+    {
+      "board_name": "FlyingMoonF407",
+      "board_id": 1067
+    },
+    {
+      "board_name": "KakuteF4",
+      "board_id": 122
+    },
+    {
+      "board_name": "Pixhawk1-1M-bdshot",
+      "board_id": 9
+    },
+    {
+      "board_name": "KakuteH7",
+      "board_id": 1048
+    },
+    {
+      "board_name": "SDMODELH7V1",
+      "board_id": 1111
+    },
+    {
+      "board_name": "BeastF7v2",
+      "board_id": 1057
+    },
+    {
+      "board_name": "MatekF765-Wing-bdshot",
+      "board_id": 143
+    },
+    {
+      "board_name": "MicoAir405v2",
+      "board_id": 1150
+    },
+    {
+      "board_name": "Pixhawk1-bdshot",
+      "board_id": 9
+    },
+    {
+      "board_name": "Pixhawk1",
+      "board_id": 9
+    },
+    {
+      "board_name": "Aocoda-RC-H743Dual",
+      "board_id": 5210
+    },
+    {
+      "board_name": "revo-mini-i2c-bdshot",
+      "board_id": 124
+    },
+    {
+      "board_name": "BeastF7",
+      "board_id": 1026
+    },
+    {
+      "board_name": "TMotorH743",
+      "board_id": 1138
+    },
+    {
+      "board_name": "MatekF405-Wing",
+      "board_id": 127
+    },
+    {
+      "board_name": "SPRacingH7",
+      "board_id": 1060
+    },
+    {
+      "board_name": "fmuv2",
+      "board_id": 9
+    },
+    {
+      "board_name": "CSKY405",
+      "board_id": 1158
+    },
+    {
+      "board_name": "DrotekP3Pro",
+      "board_id": 13
+    },
+    {
+      "board_name": "speedybeef4",
+      "board_id": 134
+    },
+    {
+      "board_name": "MambaH743v4",
+      "board_id": 1073
+    },
+    {
+      "board_name": "BROTHERHOBBYF405v3",
+      "board_id": 5811
+    },
+    {
+      "board_name": "FlyingMoonH743",
+      "board_id": 1112
+    },
+    {
+      "board_name": "SPRacingH7RF",
+      "board_id": 1108
+    },
+    {
+      "board_name": "SequreH743",
+      "board_id": 1195
+    },
+    {
+      "board_name": "LongBowF405WING",
+      "board_id": 1422
+    },
+    {
+      "board_name": "BlitzF745AIO",
+      "board_id": 1117
+    },
+    {
+      "board_name": "SPEDIXF405",
+      "board_id": 1197
+    },
+    {
+      "board_name": "KakuteH7-bdshot",
+      "board_id": 1048
+    },
+    {
+      "board_name": "MatekF765-Wing",
+      "board_id": 143
+    },
+    {
+      "board_name": "MatekF405-STD",
+      "board_id": 125
+    },
+    {
+      "board_name": "KakuteH7v2",
+      "board_id": 1048
+    },
+    {
+      "board_name": "JHEM_JHEF405",
+      "board_id": 1081
+    },
+    {
+      "board_name": "mRoX21",
+      "board_id": 9
+    },
+    {
+      "board_name": "sparky2",
+      "board_id": 130
+    },
+    {
+      "board_name": "revo-mini",
+      "board_id": 124
+    },
+    {
+      "board_name": "PixPilot-V3",
+      "board_id": 1096
+    },
+    {
+      "board_name": "revo-mini-i2c",
+      "board_id": 124
+    },
+    {
+      "board_name": "PixSurveyA1",
+      "board_id": 1076
+    },
+    {
+      "board_name": "GEPRCF745BTHD",
+      "board_id": 1501
+    },
+    {
+      "board_name": "FlyingMoonF427",
+      "board_id": 1068
+    },
+    {
+      "board_name": "PixFlamingo-F767",
+      "board_id": 1131
+    },
+    {
+      "board_name": "TBS_LUCID_PRO",
+      "board_id": 5251
+    },
+    {
+      "board_name": "PixC4-Jetson",
+      "board_id": 1032
+    },
+    {
+      "board_name": "X-MAV-AP-H743v2",
+      "board_id": 1174
+    },
+    {
+      "board_name": "speedybeef4v3",
+      "board_id": 1082
+    },
+    {
+      "board_name": "Pixracer-bdshot",
+      "board_id": 11
+    },
+    {
+      "board_name": "MatekF405-Wing-bdshot",
+      "board_id": 127
+    },
+    {
+      "board_name": "FoxeerF405v2",
+      "board_id": 1157
+    },
+    {
+      "board_name": "OrqaF405Pro",
+      "board_id": 1155
+    },
+    {
+      "board_name": "Pixracer",
+      "board_id": 11
+    },
+    {
+      "board_name": "SpeedyBeeF405WING",
+      "board_id": 1106
+    },
+    {
+      "board_name": "FoxeerH743v1",
+      "board_id": 1089
+    },
+    {
+      "board_name": "luminousbee5",
+      "board_id": 1029
+    },
+    {
+      "board_name": "KakuteF4Mini",
+      "board_id": 1030
+    },
+    {
+      "board_name": "RADIX2HD",
+      "board_id": 1118
+    },
+    {
+      "board_name": "KakuteF7-bdshot",
+      "board_id": 123
+    },
+    {
+      "board_name": "fmuv3",
+      "board_id": 9
+    },
+    {
+      "board_name": "PixPilot-C3",
+      "board_id": 1140
+    },
+    {
+      "board_name": "MicoAir743-AIO",
+      "board_id": 1176
+    },
+    {
+      "board_name": "omnibusf4pro-bdshot",
+      "board_id": 131
+    },
+    {
+      "board_name": "MicoAir743",
+      "board_id": 1166
+    },
+    {
+      "board_name": "mini-pix",
+      "board_id": 3
+    },
+    {
+      "board_name": "ACNS-F405AIO",
+      "board_id": 1116
+    },
+    {
+      "board_name": "FlywooH743Pro",
+      "board_id": 1181
+    },
+    {
+      "board_name": "SDMODELH7V2",
+      "board_id": 1167
+    },
+    {
+      "board_name": "SPEDIXH743",
+      "board_id": 1196
+    },
+    {
+      "board_name": "mindpx-v2",
+      "board_id": 88
+    },
+    {
+      "board_name": "airbotf4",
+      "board_id": 128
+    },
+    {
+      "board_name": "FlywooF745",
+      "board_id": 1027
+    },
+    {
+      "board_name": "FlywooF405Pro",
+      "board_id": 1137
+    },
+    {
+      "board_name": "AnyleafH7",
+      "board_id": 1146
+    },
+    {
+      "board_name": "MicoAir405Mini",
+      "board_id": 1161
+    },
+    {
+      "board_name": "OmnibusNanoV6-bdshot",
+      "board_id": 133
+    },
+    {
+      "board_name": "revo-mini-bdshot",
+      "board_id": 124
+    },
+    {
+      "board_name": "AEDROXH7",
+      "board_id": 1198
+    },
+    {
+      "board_name": "PixSurveyA1-IND",
+      "board_id": 1107
+    },
+    {
+      "board_name": "MambaF405v2",
+      "board_id": 1019
+    },
+    {
+      "board_name": "omnibusf4",
+      "board_id": 1002
+    },
+    {
+      "board_name": "BlitzF745",
+      "board_id": 1164
+    },
+    {
+      "board_name": "MatekF405-TE-bdshot",
+      "board_id": 1054
+    },
+    {
+      "board_name": "R9Pilot",
+      "board_id": 1008
+    },
+    {
+      "board_name": "MambaF405-2022",
+      "board_id": 1038
+    },
+    {
+      "board_name": "F35Lightning",
+      "board_id": 135
+    },
+    {
+      "board_name": "SkystarsH7HD-bdshot",
+      "board_id": 1075
+    },
+    {
+      "board_name": "Airvolute-DCS2",
+      "board_id": 5200
+    },
+    {
+      "board_name": "OmnibusNanoV6",
+      "board_id": 133
+    },
+    {
+      "board_name": "MatekF405",
+      "board_id": 125
+    },
+    {
+      "board_name": "CubeRedSecondary",
+      "board_id": 1070
+    },
+    {
+      "board_name": "KakuteF7Mini",
+      "board_id": 145
+    },
+    {
+      "board_name": "MambaF405US-I2C",
+      "board_id": 1038
+    },
+    {
+      "board_name": "MicoAir743v2",
+      "board_id": 1179
+    },
+    {
+      "board_name": "BlitzMiniF745",
+      "board_id": 1163
+    },
+    {
+      "board_name": "omnibusf4v6",
+      "board_id": 137
+    },
+    {
+      "board_name": "CUAV-Pixhack-v3",
+      "board_id": 9
+    },
+    {
+      "board_name": "MatekF405-TE",
+      "board_id": 1054
+    },
+    {
+      "board_name": "FlywooF745Nano",
+      "board_id": 1042
+    },
+    {
+      "board_name": "KakuteF4-Wing",
+      "board_id": 5406
+    },
+    {
+      "board_name": "QioTekZealotF427",
+      "board_id": 1021
+    },
+    {
+      "board_name": "SuccexF4",
+      "board_id": 1011
+    },
+    {
+      "board_name": "MatekF405-bdshot",
+      "board_id": 125
+    },
+    {
+      "board_name": "omnibusf4pro",
+      "board_id": 131
+    },
+    {
+      "board_name": "KakuteH7Mini",
+      "board_id": 1058
+    },
+    {
+      "board_name": "NxtPX4v2",
+      "board_id": 1159
+    },
+    {
+      "board_name": "revo-mini-sd",
+      "board_id": 124
+    },
+    {
+      "board_name": "JHEMCU-GSF405A",
+      "board_id": 1059
+    },
+    {
+      "board_name": "FlywooF405S-AIO",
+      "board_id": 1099
+    },
+    {
+      "board_name": "BETAFPV-F405",
+      "board_id": 1125
+    },
+    {
+      "board_name": "JHEMCU-GSF405A-RX2",
+      "board_id": 1059
+    },
+    {
+      "board_name": "StellarH7V2",
+      "board_id": 1503
+    },
+    {
+      "board_name": "BOTWINGF405",
+      "board_id": 2501
+    },
+    {
+      "board_name": "DAKEFPVH743",
+      "board_id": 1193
+    },
+    {
+      "board_name": "JHEMCUF405WING",
+      "board_id": 1169
+    },
+    {
+      "board_name": "BrahmaF4",
+      "board_id": 1184
+    },
+    {
+      "board_name": "StellarF4",
+      "board_id": 1500
+    },
+    {
+      "board_name": "LumenierLUXF765-NDAA",
+      "board_id": 4500
+    },
+    {
+      "board_name": "CORVON405V2_1",
+      "board_id": 1187
+    },
+    {
+      "board_name": "DroneerF405",
+      "board_id": 5800
+    },
+    {
+      "board_name": "CORVON743V1",
+      "board_id": 1189
+    },
+    {
+      "board_name": "DAKEFPVF405",
+      "board_id": 1190
+    },
+    {
+      "board_name": "JHEMCUF405PRO",
+      "board_id": 1412
+    },
+    {
+      "board_name": "ORBITH743",
+      "board_id": 1191
+    },
+    {
+      "board_name": "ATOMRCF405NAVI-Deluxe",
+      "board_id": 1143
+    },
+    {
+      "board_name": "DAKEFPVH743Pro",
+      "board_id": 1194
+    },
+    {
+      "board_name": "StellarF4V2",
+      "board_id": 1504
+    },
+    {
+      "board_name": "GEPRC_TAKER_H743",
+      "board_id": 1502
+    },
+    {
+      "board_name": "SkystarsF405v2",
+      "board_id": 1201
+    },
+    {
+      "board_name": "CubeSolo",
+      "board_id": 9
+    },
+    {
+      "board_name": "skyviper-journey",
+      "board_id": 9
+    },
+    {
+      "board_name": "BETAFPV-F405-I2C",
+      "board_id": 1125
+    },
+    {
+      "board_name": "skyviper-v2450",
+      "board_id": 9
+    },
+    {
+      "board_name": "FlywooF405HD-AIOv2",
+      "board_id": 1180
+    },
+    {
+      "board_name": "crazyflie2",
+      "board_id": 12
+    },
+    {
+      "board_name": "MatekF765-SE",
+      "board_id": 143
+    },
+    {
+      "board_name": "MatekH743",
+      "board_id": 1013
+    },
+    {
+      "board_name": "CrazyF405",
+      "board_id": 1177
+    },
+    {
+      "board_name": "HEEWING-F405",
+      "board_id": 1119
+    },
+    {
+      "board_name": "HEEWING-F405v2",
+      "board_id": 1119
+    },
+    {
+      "board_name": "Sierra-F412",
+      "board_id": 1055
+    },
+    {
+      "board_name": "Sierra-F405",
+      "board_id": 1052
+    },
+    {
+      "board_name": "MatekL431-DShot",
+      "board_id": 1062
+    },
+    {
+      "board_name": "TBS-L431-PWM",
+      "board_id": 5252
+    },
+    {
+      "board_name": "MatekL431-Proximity",
+      "board_id": 1062
+    },
+    {
+      "board_name": "f303-PWM",
+      "board_id": 1004
+    },
+    {
+      "board_name": "Hitec-Airspeed",
+      "board_id": 1046
+    },
+    {
+      "board_name": "f303-GPS",
+      "board_id": 1004
+    },
+    {
+      "board_name": "f303-MatekGPS",
+      "board_id": 1004
+    },
+    {
+      "board_name": "MatekL431-RC",
+      "board_id": 1062
+    },
+    {
+      "board_name": "CubeNode",
+      "board_id": 1079
+    },
+    {
+      "board_name": "BirdCANdy",
+      "board_id": 1044
+    },
+    {
+      "board_name": "f405-MatekAirspeed",
+      "board_id": 1014
+    },
+    {
+      "board_name": "Nucleo-L476",
+      "board_id": 1051
+    },
+    {
+      "board_name": "mRo-M10095",
+      "board_id": 1041
+    },
+    {
+      "board_name": "HolybroGPS",
+      "board_id": 1035
+    },
+    {
+      "board_name": "CarbonixL496",
+      "board_id": 1053
+    },
+    {
+      "board_name": "CarbonixF405",
+      "board_id": 1064
+    },
+    {
+      "board_name": "Pixracer-periph",
+      "board_id": 1402
+    },
+    {
+      "board_name": "MatekL431-Periph",
+      "board_id": 1062
+    },
+    {
+      "board_name": "Here4AP",
+      "board_id": 1043
+    },
+    {
+      "board_name": "MatekL431-Serial",
+      "board_id": 1062
+    },
+    {
+      "board_name": "f103-GPS",
+      "board_id": 1000
+    },
+    {
+      "board_name": "rGNSS",
+      "board_id": 1103
+    },
+    {
+      "board_name": "f103-QiotekPeriph",
+      "board_id": 1000
+    },
+    {
+      "board_name": "MatekL431-HWTelem",
+      "board_id": 1062
+    },
+    {
+      "board_name": "BotBloxDroneNet",
+      "board_id": 1148
+    },
+    {
+      "board_name": "VM-L431-Periph-Pico",
+      "board_id": 1407
+    },
+    {
+      "board_name": "ARK_CANNODE",
+      "board_id": 83
+    },
+    {
+      "board_name": "Nucleo-G491",
+      "board_id": 1040
+    },
+    {
+      "board_name": "f303-Universal",
+      "board_id": 1004
+    },
+    {
+      "board_name": "ARK_RTK_GPS",
+      "board_id": 82
+    },
+    {
+      "board_name": "ARK_GPS",
+      "board_id": 81
+    },
+    {
+      "board_name": "MatekG474-Periph",
+      "board_id": 1170
+    },
+    {
+      "board_name": "Sierra-TrueNavPro-G4",
+      "board_id": 5301
+    },
+    {
+      "board_name": "Nucleo-L496",
+      "board_id": 1047
+    },
+    {
+      "board_name": "AR-F407SmartBat",
+      "board_id": 1134
+    },
+    {
+      "board_name": "sw-spar-f407",
+      "board_id": 6000
+    },
+    {
+      "board_name": "mRoCANPWM-M10126",
+      "board_id": 1098
+    },
+    {
+      "board_name": "MatekL431-APDTelem",
+      "board_id": 1062
+    },
+    {
+      "board_name": "f103-Airspeed",
+      "board_id": 1000
+    },
+    {
+      "board_name": "CUAV_GPS",
+      "board_id": 1001
+    },
+    {
+      "board_name": "TBS-L431-Airspeed",
+      "board_id": 5252
+    },
+    {
+      "board_name": "HitecMosaic",
+      "board_id": 1016
+    },
+    {
+      "board_name": "MFE_AirSpeed_CAN",
+      "board_id": 6103
+    },
+    {
+      "board_name": "f303-TempSensor",
+      "board_id": 1004
+    },
+    {
+      "board_name": "BotBloxSwitch",
+      "board_id": 1148
+    },
+    {
+      "board_name": "MatekL431-BatteryTag",
+      "board_id": 1062
+    },
+    {
+      "board_name": "HolybroF4_PMU",
+      "board_id": 5401
+    },
+    {
+      "board_name": "Sierra-TrueNavPro",
+      "board_id": 1091
+    },
+    {
+      "board_name": "MatekL431-BattMon",
+      "board_id": 1062
+    },
+    {
+      "board_name": "CubeNode-ETH",
+      "board_id": 1079
+    },
+    {
+      "board_name": "f303-M10070",
+      "board_id": 1004
+    },
+    {
+      "board_name": "f103-ADSB",
+      "board_id": 1000
+    },
+    {
+      "board_name": "MatekL431-MagHiRes",
+      "board_id": 1062
+    },
+    {
+      "board_name": "C-RTK2-HP",
+      "board_id": 1085
+    },
+    {
+      "board_name": "Sierra-TrueNavIC",
+      "board_id": 5302
+    },
+    {
+      "board_name": "MatekL431-EFI",
+      "board_id": 1062
+    },
+    {
+      "board_name": "CubePilot-PPPGW",
+      "board_id": 1079
+    },
+    {
+      "board_name": "Sierra-PrecisionPoint",
+      "board_id": 1095
+    },
+    {
+      "board_name": "MatekG474-GPS",
+      "board_id": 1170
+    },
+    {
+      "board_name": "MatekG474-DShot",
+      "board_id": 1170
+    },
+    {
+      "board_name": "kha_eth",
+      "board_id": 1315
+    },
+    {
+      "board_name": "AeroFox-GNSS_F9P",
+      "board_id": 1109
+    },
+    {
+      "board_name": "MatekL431-Rangefinder",
+      "board_id": 1062
+    },
+    {
+      "board_name": "MFE_POS3_CAN",
+      "board_id": 6101
+    },
+    {
+      "board_name": "AeroFox-Airspeed",
+      "board_id": 1077
+    },
+    {
+      "board_name": "TBS-L431-BattMon",
+      "board_id": 5252
+    },
+    {
+      "board_name": "MatekL431-bdshot",
+      "board_id": 1062
+    },
+    {
+      "board_name": "MatekL431-GPS",
+      "board_id": 1062
+    },
+    {
+      "board_name": "f405-MatekGPS",
+      "board_id": 1014
+    },
+    {
+      "board_name": "uav-dev_m10s",
+      "board_id": 5222
+    },
+    {
+      "board_name": "Sierra-TrueNorth",
+      "board_id": 1093
+    },
+    {
+      "board_name": "MatekL431-ADSB",
+      "board_id": 1062
+    },
+    {
+      "board_name": "FreeflyRTK",
+      "board_id": 1028
+    },
+    {
+      "board_name": "uav-dev-powermodule",
+      "board_id": 5233
+    },
+    {
+      "board_name": "AeroFox-Airspeed-DLVR",
+      "board_id": 1104
+    },
+    {
+      "board_name": "f103-RangeFinder",
+      "board_id": 1000
+    },
+    {
+      "board_name": "CubePilot-CANMod",
+      "board_id": 1079
+    },
+    {
+      "board_name": "mRoKitCANrevC",
+      "board_id": 1145
+    },
+    {
+      "board_name": "Sierra-F9P",
+      "board_id": 1034
+    },
+    {
+      "board_name": "Sierra-L431",
+      "board_id": 1050
+    },
+    {
+      "board_name": "AeroFox-PMU",
+      "board_id": 1080
+    },
+    {
+      "board_name": "Sierra-TrueSpeed",
+      "board_id": 1094
+    },
+    {
+      "board_name": "ZubaxGNSS",
+      "board_id": 1005
+    },
+    {
+      "board_name": "f303-M10025",
+      "board_id": 1004
+    },
+    {
+      "board_name": "TBS-L431-CurrMon",
+      "board_id": 5252
+    },
+    {
+      "board_name": "f303-HWESC",
+      "board_id": 1004
+    },
+    {
+      "board_name": "sw-boom-f407",
+      "board_id": 6001
+    },
+    {
+      "board_name": "HolybroG4_Airspeed",
+      "board_id": 5405
+    },
+    {
+      "board_name": "VM-L431-SRV-Hub-4CHP",
+      "board_id": 1407
+    },
+    {
+      "board_name": "HolybroG4_Compass",
+      "board_id": 1088
+    },
+    {
+      "board_name": "HolybroG4_GPS",
+      "board_id": 1053
+    },
+    {
+      "board_name": "MatekL431-Airspeed",
+      "board_id": 1062
+    },
+    {
+      "board_name": "sw-nav-f405",
+      "board_id": 6002
+    },
+    {
+      "board_name": "VM-L431-BatteryTag",
+      "board_id": 1407
+    },
+    {
+      "board_name": "MatekL431-AUAV",
+      "board_id": 1062
+    },
+    {
+      "board_name": "MFE_PDB_CAN",
+      "board_id": 6100
+    },
+    {
+      "board_name": "uav-dev-auav-g4",
+      "board_id": 5234
+    }
+  ],
+  "1209:5740": [
+    {
+      "board_name": "BlitzWingH743",
+      "board_id": 1168
+    },
+    {
+      "board_name": "KakuteH7-Wing",
+      "board_id": 1105
+    },
+    {
+      "board_name": "mRoControlZeroOEMH7",
+      "board_id": 1024
+    },
+    {
+      "board_name": "YJUAV_A6SE_H743",
+      "board_id": 1141
+    },
+    {
+      "board_name": "IFLIGHT_2RAW_H7",
+      "board_id": 1173
+    },
+    {
+      "board_name": "YJUAV_A6SE",
+      "board_id": 1127
+    },
+    {
+      "board_name": "ZeroOneX6",
+      "board_id": 5600
+    },
+    {
+      "board_name": "CUAV-Nora",
+      "board_id": 1009
+    },
+    {
+      "board_name": "QioTekZealotH743-bdshot",
+      "board_id": 1036
+    },
+    {
+      "board_name": "MFT-SEMA100",
+      "board_id": 2000
+    },
+    {
+      "board_name": "MatekF765-SE",
+      "board_id": 143
+    },
+    {
+      "board_name": "SkySakuraH743",
+      "board_id": 2714
+    },
+    {
+      "board_name": "TBS_LUCID_H7_WING",
+      "board_id": 5253
+    },
+    {
+      "board_name": "MUPilot",
+      "board_id": 1222
+    },
+    {
+      "board_name": "TBS_LUCID_H7",
+      "board_id": 5250
+    },
+    {
+      "board_name": "MatekH743",
+      "board_id": 1013
+    },
+    {
+      "board_name": "VUAV-V7pro",
+      "board_id": 7100
+    },
+    {
+      "board_name": "NarinFC-H7",
+      "board_id": 1183
+    },
+    {
+      "board_name": "fmuv5",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAVv5-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "Pixhawk6X-bdshot",
+      "board_id": 53
+    },
+    {
+      "board_name": "CUAVv5Nano",
+      "board_id": 50
+    },
+    {
+      "board_name": "CBU-H7-Stamp",
+      "board_id": 1156
+    },
+    {
+      "board_name": "mRoControlZeroClassic",
+      "board_id": 1022
+    },
+    {
+      "board_name": "CUAV-7-Nano",
+      "board_id": 7000
+    },
+    {
+      "board_name": "BROTHERHOBBYH743",
+      "board_id": 5810
+    },
+    {
+      "board_name": "MatekH743-bdshot",
+      "board_id": 1013
+    },
+    {
+      "board_name": "Pixhawk6X",
+      "board_id": 53
+    },
+    {
+      "board_name": "Pixhawk4",
+      "board_id": 50
+    },
+    {
+      "board_name": "mRoControlZeroH7-bdshot",
+      "board_id": 1023
+    },
+    {
+      "board_name": "CUAV-X7",
+      "board_id": 1010
+    },
+    {
+      "board_name": "JFB110",
+      "board_id": 1110
+    },
+    {
+      "board_name": "AIRLink",
+      "board_id": 55
+    },
+    {
+      "board_name": "TBS-Colibri-F7",
+      "board_id": 50
+    },
+    {
+      "board_name": "RadiolinkPIX6",
+      "board_id": 1410
+    },
+    {
+      "board_name": "mRoX21-777",
+      "board_id": 136
+    },
+    {
+      "board_name": "AEROFOX-H7",
+      "board_id": 7110
+    },
+    {
+      "board_name": "mRoNexus",
+      "board_id": 1015
+    },
+    {
+      "board_name": "PH4-mini-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "mRoControlZeroF7",
+      "board_id": 141
+    },
+    {
+      "board_name": "PH4-mini",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAVv5Nano-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "SkystarsH7HDv2",
+      "board_id": 1075
+    },
+    {
+      "board_name": "mRoPixracerPro-bdshot",
+      "board_id": 1017
+    },
+    {
+      "board_name": "QioTekZealotH743",
+      "board_id": 1036
+    },
+    {
+      "board_name": "mRoControlZeroH7",
+      "board_id": 1023
+    },
+    {
+      "board_name": "modalai_fc-v1",
+      "board_id": 41775
+    },
+    {
+      "board_name": "mRoPixracerPro",
+      "board_id": 1017
+    },
+    {
+      "board_name": "JFB100",
+      "board_id": 1084
+    },
+    {
+      "board_name": "Pixhawk4-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAV-X7-bdshot",
+      "board_id": 1010
+    },
+    {
+      "board_name": "YJUAV_A6Ultra",
+      "board_id": 1144
+    },
+    {
+      "board_name": "AET-H743-Basic",
+      "board_id": 2024
+    },
+    {
+      "board_name": "mRoCZeroOEMH7-bdshot",
+      "board_id": 1024
+    },
+    {
+      "board_name": "JHEMCU-H743HD",
+      "board_id": 1411
+    },
+    {
+      "board_name": "ARKV6X",
+      "board_id": 57
+    },
+    {
+      "board_name": "PixPilot-V6",
+      "board_id": 1083
+    },
+    {
+      "board_name": "BlitzH743Pro",
+      "board_id": 1162
+    },
+    {
+      "board_name": "YJUAV_A6",
+      "board_id": 1113
+    },
+    {
+      "board_name": "PixPilot-V6PRO",
+      "board_id": 1160
+    },
+    {
+      "board_name": "CUAVv5",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAV-Nora-bdshot",
+      "board_id": 1009
+    },
+    {
+      "board_name": "SIYI_N7",
+      "board_id": 1123
+    },
+    {
+      "board_name": "ZeroOneX6_Air",
+      "board_id": 5600
+    },
+    {
+      "board_name": "ARK_FPV",
+      "board_id": 59
+    },
+    {
+      "board_name": "YARIV6X",
+      "board_id": 1234
+    },
+    {
+      "board_name": "SVehicle-E2",
+      "board_id": 6110
+    },
+    {
+      "board_name": "CBU-H7-LC-Stamp",
+      "board_id": 1182
+    },
+    {
+      "board_name": "AcctonGodwit_GA1",
+      "board_id": 7120
+    },
+    {
+      "board_name": "SULILGH7-P1-P2",
+      "board_id": 2005
+    },
+    {
+      "board_name": "CUAV-X25-EVO",
+      "board_id": 7002
+    },
+    {
+      "board_name": "PixSurveyA2-IND",
+      "board_id": 6104
+    },
+    {
+      "board_name": "OrqaH743Pro",
+      "board_id": 1204
+    },
+    {
+      "board_name": "GreenSightUltraBlue",
+      "board_id": 1071
+    },
+    {
+      "board_name": "CUAV-V6X-v2",
+      "board_id": 7001
+    },
+    {
+      "board_name": "uav-dev-fc-um982",
+      "board_id": 5230
+    },
+    {
+      "board_name": "ARKV6X-bdshot",
+      "board_id": 57
+    },
+    {
+      "board_name": "NarinFC-H5",
+      "board_id": 1188
+    },
+    {
+      "board_name": "Swan-K1",
+      "board_id": 50
+    },
+    {
+      "board_name": "Pixhawk6X-PPPGW",
+      "board_id": 1408
+    },
+    {
+      "board_name": "MatekH743-periph",
+      "board_id": 1013
+    }
+  ],
+  "2dae:1058": [
+    {
+      "board_name": "CubeOrangePlus-bdshot",
+      "board_id": 1063
+    },
+    {
+      "board_name": "CubeOrangePlus",
+      "board_id": 1063
+    },
+    {
+      "board_name": "CubeOrangePlus-SimOnHardWare",
+      "board_id": 1063
+    }
+  ],
+  "2dae:1015": [
+    {
+      "board_name": "CubePurple",
+      "board_id": 9
+    }
+  ],
+  "26ac:0011": [
+    {
+      "board_name": "CubePurple",
+      "board_id": 9
+    },
+    {
+      "board_name": "Pixhawk1-1M",
+      "board_id": 9
+    },
+    {
+      "board_name": "Pixhawk1-1M-bdshot",
+      "board_id": 9
+    },
+    {
+      "board_name": "Pixhawk1-bdshot",
+      "board_id": 9
+    },
+    {
+      "board_name": "Pixhawk1",
+      "board_id": 9
+    },
+    {
+      "board_name": "CubeBlack",
+      "board_id": 9
+    },
+    {
+      "board_name": "fmuv2",
+      "board_id": 9
+    },
+    {
+      "board_name": "mRoX21",
+      "board_id": 9
+    },
+    {
+      "board_name": "fmuv3",
+      "board_id": 9
+    },
+    {
+      "board_name": "CUAV-Pixhack-v3",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "CubeSolo",
+      "board_id": 9
+    },
+    {
+      "board_name": "skyviper-journey",
+      "board_id": 9
+    },
+    {
+      "board_name": "skyviper-v2450",
+      "board_id": 9
+    },
+    {
+      "board_name": "CubeGreen-solo",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-v3",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-quad-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-octa-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-tri-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-hexa-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-octa-quad-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-heli-hil-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-quad-hil-v2",
+      "board_id": 9
+    },
+    {
+      "board_name": "PX4-y6-v2",
+      "board_id": 9
+    }
+  ],
+  "35a7:0001": [
+    {
+      "board_name": "thepeach-k1",
+      "board_id": 212
+    }
+  ],
+  "35a7:0002": [
+    {
+      "board_name": "thepeach-r1",
+      "board_id": 213
+    }
+  ],
+  "3162:004b": [
+    {
+      "board_name": "Durandal",
+      "board_id": 139
+    },
+    {
+      "board_name": "Durandal-bdshot",
+      "board_id": 139
+    }
+  ],
+  "2dae:1059": [
+    {
+      "board_name": "CubeRedPrimary",
+      "board_id": 1069
+    },
+    {
+      "board_name": "CubeRedPrimary-PPPGW",
+      "board_id": 1409
+    }
+  ],
+  "27ac:1154": [
+    {
+      "board_name": "VRBrain-v54",
+      "board_id": 1154
+    }
+  ],
+  "3162:0053": [
+    {
+      "board_name": "Pixhawk6C-bdshot",
+      "board_id": 56
+    },
+    {
+      "board_name": "Pixhawk6C",
+      "board_id": 56
+    }
+  ],
+  "3185:0038": [
+    {
+      "board_name": "Pixhawk6C-bdshot",
+      "board_id": 56
+    },
+    {
+      "board_name": "Pixhawk6C",
+      "board_id": 56
+    }
+  ],
+  "2dae:1011": [
+    {
+      "board_name": "CubeBlack",
+      "board_id": 9
+    },
+    {
+      "board_name": "CubeGreen-solo",
+      "board_id": 9
+    },
+    {
+      "board_name": "CubeBlack+",
+      "board_id": 1003
+    },
+    {
+      "board_name": "CubeBlack-periph",
+      "board_id": 1401
+    }
+  ],
+  "26ac:0013": [
+    {
+      "board_name": "DrotekP3Pro",
+      "board_id": 13
+    },
+    {
+      "board_name": "PX4-v4",
+      "board_id": 13
+    }
+  ],
+  "26ac:0032": [
+    {
+      "board_name": "fmuv5",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAVv5-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAVv5Nano",
+      "board_id": 50
+    },
+    {
+      "board_name": "Pixhawk4",
+      "board_id": 50
+    },
+    {
+      "board_name": "TBS-Colibri-F7",
+      "board_id": 50
+    },
+    {
+      "board_name": "PH4-mini-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "PH4-mini",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAVv5Nano-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "Pixhawk4-bdshot",
+      "board_id": 50
+    },
+    {
+      "board_name": "Pix32v5",
+      "board_id": 50
+    },
+    {
+      "board_name": "CUAVv5",
+      "board_id": 50
+    },
+    {
+      "board_name": "Swan-K1",
+      "board_id": 50
+    }
+  ],
+  "3185:0035": [
+    {
+      "board_name": "Pixhawk6X-bdshot",
+      "board_id": 53
+    },
+    {
+      "board_name": "Pixhawk6X",
+      "board_id": 53
+    }
+  ],
+  "2dae:1101": [
+    {
+      "board_name": "CubeBlack+",
+      "board_id": 1003
+    }
+  ],
+  "27ac:1351": [
+    {
+      "board_name": "VRUBrain-v51",
+      "board_id": 1351
+    }
+  ],
+  "2dae:1012": [
+    {
+      "board_name": "CubeYellow",
+      "board_id": 120
+    },
+    {
+      "board_name": "CubeYellow-bdshot",
+      "board_id": 120
+    }
+  ],
+  "26ac:0012": [
+    {
+      "board_name": "Pixracer-bdshot",
+      "board_id": 11
+    },
+    {
+      "board_name": "Pixracer",
+      "board_id": 11
+    },
+    {
+      "board_name": "fmuv4",
+      "board_id": 11
+    },
+    {
+      "board_name": "PX4-v4",
+      "board_id": 11
+    },
+    {
+      "board_name": "PX4-quad-v4",
+      "board_id": 11
+    },
+    {
+      "board_name": "PX4-octa-v4",
+      "board_id": 11
+    },
+    {
+      "board_name": "PX4-tri-v4",
+      "board_id": 11
+    },
+    {
+      "board_name": "PX4-hexa-v4",
+      "board_id": 11
+    },
+    {
+      "board_name": "PX4-octa-quad-v4",
+      "board_id": 11
+    },
+    {
+      "board_name": "PX4-y6-v4",
+      "board_id": 11
+    }
+  ],
+  "27ac:1152": [
+    {
+      "board_name": "VRBrain-v52",
+      "board_id": 1152
+    }
+  ],
+  "3162:0051": [
+    {
+      "board_name": "Pixhawk5X",
+      "board_id": 51
+    }
+  ],
+  "27ac:0201": [
+    {
+      "board_name": "F4BY",
+      "board_id": 20
+    },
+    {
+      "board_name": "F4BY_F427",
+      "board_id": 1530
+    }
+  ],
+  "27ac:1151": [
+    {
+      "board_name": "VRBrain-v51",
+      "board_id": 1151
+    }
+  ],
+  "26ac:0030": [
+    {
+      "board_name": "mindpx-v2",
+      "board_id": 88
+    }
+  ],
+  "2dae:1016": [
+    {
+      "board_name": "CubeOrange",
+      "board_id": 140
+    },
+    {
+      "board_name": "CubeOrange-bdshot",
+      "board_id": 140
+    },
+    {
+      "board_name": "CubeOrange-SimOnHardWare",
+      "board_id": 140
+    },
+    {
+      "board_name": "CubeOrange-periph",
+      "board_id": 1400
+    }
+  ],
+  "3162:004e": [
+    {
+      "board_name": "Pix32v5",
+      "board_id": 50
+    }
+  ],
+  "27ac:1910": [
+    {
+      "board_name": "VRCore-v10",
+      "board_id": 1910
+    }
+  ],
+  "26ac:1124": [
+    {
+      "board_name": "3DRControlZeroG",
+      "board_id": 1124
+    }
+  ],
+  "0483:5740": [
+    {
+      "board_name": "KakuteF7",
+      "board_id": 123
+    },
+    {
+      "board_name": "OMNIBUSF7V2",
+      "board_id": 121
+    },
+    {
+      "board_name": "KakuteF4",
+      "board_id": 122
+    },
+    {
+      "board_name": "Pixhawk1",
+      "board_id": 9
+    },
+    {
+      "board_name": "MatekF405-Wing",
+      "board_id": 127
+    },
+    {
+      "board_name": "fmuv2",
+      "board_id": 9
+    },
+    {
+      "board_name": "DrotekP3Pro",
+      "board_id": 13
+    },
+    {
+      "board_name": "fmuv5",
+      "board_id": 50
+    },
+    {
+      "board_name": "speedybeef4",
+      "board_id": 134
+    },
+    {
+      "board_name": "CUAVv5Nano",
+      "board_id": 50
+    },
+    {
+      "board_name": "fmuv4",
+      "board_id": 11
+    },
+    {
+      "board_name": "MatekF405-STD",
+      "board_id": 125
+    },
+    {
+      "board_name": "mRoX21",
+      "board_id": 9
+    },
+    {
+      "board_name": "TBS-Colibri-F7",
+      "board_id": 50
+    },
+    {
+      "board_name": "revo-mini",
+      "board_id": 124
+    },
+    {
+      "board_name": "mRoX21-777",
+      "board_id": 136
+    },
+    {
+      "board_name": "Pixracer",
+      "board_id": 11
+    },
+    {
+      "board_name": "fmuv3",
+      "board_id": 9
+    },
+    {
+      "board_name": "F4BY",
+      "board_id": 20
+    },
+    {
+      "board_name": "mini-pix",
+      "board_id": 3
+    },
+    {
+      "board_name": "mindpx-v2",
+      "board_id": 88
+    },
+    {
+      "board_name": "airbotf4",
+      "board_id": 128
+    },
+    {
+      "board_name": "F35Lightning",
+      "board_id": 135
+    },
+    {
+      "board_name": "OmnibusNanoV6",
+      "board_id": 133
+    },
+    {
+      "board_name": "MatekF405",
+      "board_id": 125
+    },
+    {
+      "board_name": "omnibusf4v6",
+      "board_id": 137
+    },
+    {
+      "board_name": "CUAVv5",
+      "board_id": 50
+    },
+    {
+      "board_name": "omnibusf4pro",
+      "board_id": 131
+    },
+    {
+      "board_name": "Pixhawk1-1M",
+      "board_id": 9
+    },
+    {
+      "board_name": "CubeSolo",
+      "board_id": 9
+    },
+    {
+      "board_name": "MatekF765-Wing",
+      "board_id": 143
+    },
+    {
+      "board_name": "skyviper-journey",
+      "board_id": 9
+    },
+    {
+      "board_name": "skyviper-v2450",
+      "board_id": 9
+    },
+    {
+      "board_name": "sparky2",
+      "board_id": 130
+    },
+    {
+      "board_name": "omnibusf4",
+      "board_id": 1002
+    },
+    {
+      "board_name": "KakuteF7Mini",
+      "board_id": 145
+    },
+    {
+      "board_name": "mRoControlZeroF7",
+      "board_id": 141
+    },
+    {
+      "board_name": "CubeBlack+",
+      "board_id": 1003
+    },
+    {
+      "board_name": "CubeGreen-solo",
+      "board_id": 9
+    },
+    {
+      "board_name": "KakuteF4",
+      "board_id": 70
+    },
+    {
+      "board_name": "sparky2",
+      "board_id": 70
+    },
+    {
+      "board_name": "revo-mini",
+      "board_id": 70
+    },
+    {
+      "board_name": "airbotf4",
+      "board_id": 70
+    },
+    {
+      "board_name": "MatekF405",
+      "board_id": 70
+    },
+    {
+      "board_name": "omnibusf4pro",
+      "board_id": 70
+    }
+  ],
+  "2dae:1005": [
+    {
+      "board_name": "CubePurple",
+      "board_id": 9
+    }
+  ],
+  "3162:0047": [
+    {
+      "board_name": "Pixhawk4",
+      "board_id": 50
+    }
+  ],
+  "2dae:1002": [
+    {
+      "board_name": "CubeYellow",
+      "board_id": 120
+    }
+  ],
+  "3162:0049": [
+    {
+      "board_name": "PH4-mini",
+      "board_id": 50
+    }
+  ],
+  "2dae:1017": [
+    {
+      "board_name": "CubeOrange",
+      "board_id": 140
+    }
+  ],
+  "26ac:0010": [
+    {
+      "board_name": "PX4-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-quad-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-octa-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-tri-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-hexa-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-octa-quad-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-heli-hil-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-quad-hil-v1",
+      "board_id": 5
+    },
+    {
+      "board_name": "PX4-y6-v1",
+      "board_id": 5
+    }
+  ]
+}
