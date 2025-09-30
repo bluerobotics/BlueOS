@@ -3,8 +3,10 @@ import {
   InstalledExtensionData,
   Manifest,
   ManifestSource,
+  RunningContainer,
 } from '@/types/kraken'
 import back_axios from '@/utils/api'
+import { CancelToken } from 'axios'
 
 const KRAKEN_BASE_URL = '/kraken'
 const KRAKEN_API_V2_URL = `${KRAKEN_BASE_URL}/v2.0`
@@ -209,6 +211,156 @@ export async function updateExtension(
   })
 }
 
+/**
+ * Install an extension to the latest version available
+ * @param {InstalledExtensionData} extension The extension to be installed
+ * @param {function} progressHandler The progress handler for the download
+ */
+export async function installExtension(
+  extension: InstalledExtensionData,
+  progressHandler: (event: any) => void,
+): Promise<void> {
+  await back_axios({
+    url: `${KRAKEN_API_V2_URL}/extension/install`,
+    method: 'POST',
+    data: {
+      identifier: extension.identifier,
+      name: extension.name,
+      docker: extension.docker,
+      tag: extension.tag,
+      enabled: true,
+      permissions: extension?.permissions ?? '',
+      user_permissions: extension?.user_permissions ?? '',
+    },
+    timeout: 120000,
+    onDownloadProgress: progressHandler,
+  })
+}
+
+/**
+ * Enable an extension by its identifier and tag, uses API v2
+ * @param {string} identifier The identifier of the extension
+ * @param {string} tag The tag of the extension
+ */
+export async function enableExtension(identifier: string, tag: string): Promise<void> {
+  await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/${identifier}/${tag}/enable`,
+    timeout: 10000,
+  })
+}
+
+/**
+ * Disable an extension by its identifier, uses API v2
+ * @param {string} identifier The identifier of the extension
+ */
+export async function disableExtension(identifier: string): Promise<void> {
+  await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/${identifier}/disable`,
+    timeout: 10000,
+  })
+}
+
+/**
+ * Uninstall an extension by its identifier, uses API v2
+ * @param {string} identifier The identifier of the extension
+ */
+export async function uninstallExtension(identifier: string): Promise<void> {
+  await back_axios({
+    method: 'DELETE',
+    url: `${KRAKEN_API_V2_URL}/extension/${identifier}`,
+  })
+}
+
+/**
+ * Restart an extension by its identifier, uses API v2
+ * @param {string} identifier The identifier of the extension
+ */
+export async function restartExtension(identifier: string): Promise<void> {
+  await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/${identifier}/restart`,
+    timeout: 10000,
+  })
+}
+
+/**
+ * Update an extension to a specific version, uses API v2
+ * @param {string} identifier The identifier of the extension
+ * @param {string} version The version of the extension
+ * @param {function} progressHandler The progress handler for the download
+ */
+export async function updateExtensionToVersion(
+  identifier: string,
+  version: string,
+  progressHandler: (event: any) => void,
+): Promise<void> {
+  await back_axios({
+    url: `${KRAKEN_API_V2_URL}/extension/${identifier}/${version}`,
+    method: 'PUT',
+    timeout: 120000,
+    onDownloadProgress: progressHandler,
+  })
+}
+
+/**
+ * List all installed extensions from kraken, uses API v2
+ */
+export async function getInstalledExtensions(): Promise<InstalledExtensionData[]> {
+  const response = await back_axios({
+    method: 'GET',
+    url: `${KRAKEN_API_V2_URL}/extension/`,
+    timeout: 30000,
+  })
+
+  return response.data as InstalledExtensionData[]
+}
+
+/**
+ * List all running containers from kraken, uses API v2
+ */
+export async function listContainers(): Promise<RunningContainer[]> {
+  const response = await back_axios({
+    method: 'GET',
+    url: `${KRAKEN_API_V2_URL}/container/`,
+    timeout: 30000,
+  })
+
+  return response.data as RunningContainer[]
+}
+
+/**
+ * List all stats of all running containers from kraken, uses API v2
+ */
+export async function getContainersStats(): Promise<any> {
+  const response = await back_axios({
+    method: 'GET',
+    url: `${KRAKEN_API_V2_URL}/container/stats`,
+    timeout: 20000,
+  })
+
+  return response.data
+}
+
+/**
+ * Fetch logs of a given container.
+ * @param {string} containerName The name of the container
+ * @param {function} progressHandler The progress handler for the download
+ * @param {CancelToken} cancelToken The cancel token for the request
+ */
+export async function getContainerLogs(
+  containerName: string,
+  progressHandler: (event: any) => void,
+  cancelToken: CancelToken | undefined,
+): Promise<any> {
+  await back_axios({
+    method: 'GET',
+    url: `${KRAKEN_API_V2_URL}/container/${containerName}/log`,
+    onDownloadProgress: progressHandler,
+    cancelToken: cancelToken,
+  })
+}
 
 export default {
   fetchManifestSources,
@@ -223,4 +375,14 @@ export default {
   setManifestSourcesOrders,
   setManifestSourceOrder,
   updateExtension,
+  updateExtensionToVersion,
+  installExtension,
+  getInstalledExtensions,
+  enableExtension,
+  disableExtension,
+  uninstallExtension,
+  restartExtension,
+  listContainers,
+  getContainersStats,
+  getContainerLogs,
 }
