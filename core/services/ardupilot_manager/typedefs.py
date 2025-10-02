@@ -101,10 +101,11 @@ class PlatformType(str, Enum):
 
 class Platform(BaseModel):
     """Valid Ardupilot platform types.
-    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
+    The Names are a 1:1 representation of the platforms available on the ArduPilot manifest."""
 
     name: str
     platform_type: PlatformType
+    board_id: Optional[int]
 
     @staticmethod
     def SITL() -> "Platform":

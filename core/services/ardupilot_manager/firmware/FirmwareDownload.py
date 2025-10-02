@@ -160,11 +160,10 @@ class FirmwareDownloader:
         logger.error("implement px4 stuff!", firmware_name)
         if not self._manifest_is_valid():
             raise InvalidManifest("Manifest file is invalid. Cannot use it to find available versions.")
-        if board.ardupilot_board_id is None:
-            if board.platform.platform_type != PlatformType.Serial:
-                return self._find_version_item(vehicletype=vehicle.value, platform=board.platform.name)
-            return self._find_version_item(vehicletype=vehicle.value, platform=board.name)
-        return self._find_version_item(vehicletype=vehicle.value, board_id=str(board.ardupilot_board_id))
+
+        # file format (elf/apj)
+        file_format = FirmwareDownloader._supported_firmware_formats[board.platform.platform_type].value
+        return self._find_version_item(vehicletype=vehicle.value, platform=board.platform.name, format=file_format)
 
     @temporary_cache(timeout_seconds=3600)
     def get_download_url(self, vehicle: Vehicle, board: FlightController, version: str = "") -> str:

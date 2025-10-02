@@ -77,7 +77,7 @@ async def target_board(board_name: Optional[str], board_id: Optional[int] = None
                 return next(
                     board for board in await autopilot.available_boards(True) if board.ardupilot_board_id == board_id
                 )
-            return next(board for board in await autopilot.available_boards(True) if board.name == board_name)
+            return next(board for board in await autopilot.available_boards(True) if board.platform.name == board_name)
         except StopIteration as error:
             raise ValueError("Chosen board not available.") from error
     if autopilot.current_board is None:
