@@ -1,42 +1,42 @@
-import serial
-import time
 from enum import Enum
 from dataclasses import dataclass
+import time
+import serial
 
 
 class PX4BootLoaderCommands(int, Enum):
     # Protocol Bytes
-    PROTO_INSYNC = 0x12 # 'in sync' byte sent before status
-    PROTO_BAD_SILICON_REV = 0x14 # Device is using silicon not suitable
-    PROTO_EOC = 0x20 # End of command
+    PROTO_INSYNC = 0x12  # 'in sync' byte sent before status
+    PROTO_BAD_SILICON_REV = 0x14  # Device is using silicon not suitable
+    PROTO_EOC = 0x20  # End of command
 
     # Reply bytes
-    PROTO_OK = 0x10 # 'ok' response
-    PROTO_FAILED = 0x11 # 'fail' response
-    PROTO_INVALID = 0x13 # 'invalid' response for bad commands
+    PROTO_OK = 0x10  # 'ok' response
+    PROTO_FAILED = 0x11  # 'fail' response
+    PROTO_INVALID = 0x13  # 'invalid' response for bad commands
 
     # Command bytes
-    PROTO_GET_SYNC = 0x21 # NOP for re-establishing sync
-    PROTO_GET_DEVICE = 0x22 # get device ID bytes
-    PROTO_CHIP_ERASE = 0x23 # erase program area and reset program address
-    PROTO_LOAD_ADDRESS = 0x24 # set next programming address
-    PROTO_PROG_MULTI = 0x27 # write bytes at program address and increment
-    PROTO_GET_CRC = 0x29 # compute & return a CRC
-    PROTO_BOOT = 0x30 # boot the application
+    PROTO_GET_SYNC = 0x21  # NOP for re-establishing sync
+    PROTO_GET_DEVICE = 0x22  # get device ID bytes
+    PROTO_CHIP_ERASE = 0x23  # erase program area and reset program address
+    PROTO_LOAD_ADDRESS = 0x24  # set next programming address
+    PROTO_PROG_MULTI = 0x27  # write bytes at program address and increment
+    PROTO_GET_CRC = 0x29  # compute & return a CRC
+    PROTO_BOOT = 0x30  # boot the application
 
     # Command bytes - Rev 2 boootloader only
-    PROTO_CHIP_VERIFY = 0x24 # begin verify mode
-    PROTO_READ_MULTI = 0x28 # read bytes at programm address and increment
+    PROTO_CHIP_VERIFY = 0x24  # begin verify mode
+    PROTO_READ_MULTI = 0x28  # read bytes at programm address and increment
 
-    INFO_BL_REV = 1 # bootloader protocol revision
-    BL_REV_MIN = 2 # Minimum supported bootlader protocol
-    BL_REV_MAX = 5 # Maximum supported bootloader protocol
-    INFO_BOARD_ID = 2 # board type
-    INFO_BOARD_REV = 3 # board revision
-    INFO_FLASH_SIZE = 4 # max firmware size in bytes
+    INFO_BL_REV = 1  # bootloader protocol revision
+    BL_REV_MIN = 2  # Minimum supported bootlader protocol
+    BL_REV_MAX = 5  # Maximum supported bootloader protocol
+    INFO_BOARD_ID = 2  # board type
+    INFO_BOARD_REV = 3  # board revision
+    INFO_FLASH_SIZE = 4  # max firmware size in bytes
 
-    PROG_MULTI_MAX = 64, # write size for PROTO_PROG_MULTI, must be multiple of 4
-    READ_MULTI_MAX = 0x28 # read size for PROTO_READ_MULTI, must be multiple of 4. Sik Radio max size is 0x28
+    PROG_MULTI_MAX = (64,)  # write size for PROTO_PROG_MULTI, must be multiple of 4
+    READ_MULTI_MAX = 0x28  # read size for PROTO_READ_MULTI, must be multiple of 4. Sik Radio max size is 0x28
 
 
 @dataclass
@@ -51,7 +51,7 @@ class PX4BootLoader:
     _board_id_px4_fmu_v2 = 9
     _board_id_px4_fmu_v3 = 255
     _board_flash_size_small = 1032192
-    _boot_loader_version_v2_correct_flash  = 5
+    _boot_loader_version_v2_correct_flash = 5
 
     def __init__(self, port: serial.Serial):
         self.port = port
@@ -64,10 +64,10 @@ class PX4BootLoader:
         bootloader_version = self._proto_get_device(PX4BootLoaderCommands.INFO_BL_REV)
 
         if (
-            bootloader_version < PX4BootLoaderCommands.BL_REV_MIN or
-            bootloader_version > PX4BootLoaderCommands.BL_REV_MAX
+            bootloader_version < PX4BootLoaderCommands.BL_REV_MIN
+            or bootloader_version > PX4BootLoaderCommands.BL_REV_MAX
         ):
-            raise Exception("Unsupported bootloader version")
+            raise ValueError("Unsupported bootloader version")
 
         # Get board ID
         board_id = self._proto_get_device(PX4BootLoaderCommands.INFO_BOARD_ID)
@@ -138,7 +138,7 @@ class PX4BootLoader:
             except Exception:
                 time.sleep(0.1)
 
-        raise Exception("Failed to sync with bootloader")
+        raise RuntimeError("Failed to sync with bootloader")
 
     def _proto_get_device(self, command: PX4BootLoaderCommands) -> int:
         buffer = bytearray([PX4BootLoaderCommands.PROTO_GET_DEVICE, command, PX4BootLoaderCommands.PROTO_EOC])

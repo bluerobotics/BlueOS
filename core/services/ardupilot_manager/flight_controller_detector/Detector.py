@@ -1,16 +1,17 @@
 import asyncio
-import fcntl
 from typing import List, Optional
 
 import serial
 
 
+from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import is_running_as_root
 from serial.tools.list_ports_linux import SysFS, comports
 
 from flight_controller_detector.bootloader.px4_bootloader import PX4BootLoader
 from flight_controller_detector.board_identification import load_board_identifiers
 from flight_controller_detector.linux.detector import LinuxFlightControllerDetector
+from flight_controller_detector.port_checker import is_port_in_use
 from typedefs import FlightController, FlightControllerFlags, Platform, PlatformType
 from loguru import logger
 
@@ -69,34 +70,33 @@ class Detector:
         if usb_id in identifiers:
             for board_platform in identifiers[usb_id]:
                 if board_id is None or board_id == identifiers[usb_id][board_platform]:
+                    logger.info(f"detected board {board_platform} with id {identifiers[usb_id][board_platform]}")
                     platforms.append(
-                        Platform(name=board_platform, platform_type=PlatformType.Serial, board_id=board_id)
+                        Platform(
+                            name=board_platform,
+                            platform_type=PlatformType.Serial,
+                            board_id=identifiers[usb_id][board_platform],
+                        )
                     )
         return platforms
 
     @staticmethod
+    @temporary_cache(
+        timeout_seconds=300
+    )  # what are the chances of someone switching between two boards in bootloader mode?
     def ask_bootloader_for_board_id(port: SysFS) -> Optional[int]:
         # Check if another process is already using this port
-        # Try to acquire an exclusive lock; if it fails, the port is in use
-        try:
-            # pylint: disable=consider-using-with
-            test_fd = open(port.device, "r", encoding="utf-8")
-            fcntl.flock(test_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            fcntl.flock(test_fd.fileno(), fcntl.LOCK_UN)
-            test_fd.close()
-        except (IOError, OSError) as e:
-            logger.warning(f"Port {port.device} is already in use by another process, skipping: {e}")
+        if is_port_in_use(port.device):
+            logger.warning(f"Port {port.device} is already in use, skipping")
             return None
-        except Exception as error:
-            logger.error(f"Failed to check if port {port.device} is in use: {error}")
-            return None
-
+        logger.info(f"asking bootloader for board id on {port.device}")
         with serial.Serial(port.device, 115200, timeout=1) as ser:
             bootloader = PX4BootLoader(ser)
             board_info = bootloader.get_board_info()
             return board_info.board_id
 
     @staticmethod
+    @temporary_cache(timeout_seconds=30)
     def detect_serial_flight_controllers() -> List[FlightController]:
         """Check if a standalone flight controller is connected via usb/serial.
 

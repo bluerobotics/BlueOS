@@ -1,4 +1,3 @@
-
 class PX4Board:
     boards_id_to_firmware_name_mapping = {
         9: "px4_fmu-v2_default",
@@ -51,14 +50,14 @@ class PX4Board:
         1110: "jfb_jfb110_default",
     }
 
-    def __init__(self, id: int, name: str) -> None:
-        self.id = id
+    def __init__(self, board_id: int, name: str) -> None:
+        self.id = board_id
         self.name = name
 
     @classmethod
-    def from_id(cls, id: int) -> "PX4Board":
-        board_name = cls.boards_id_to_firmware_name_mapping.get(id, None)
+    def from_id(cls, board_id: int) -> "PX4Board":
+        board_name = cls.boards_id_to_firmware_name_mapping.get(board_id, None)
         if board_name is None:
-            raise ValueError(f"Board with id {id} not found")
+            raise ValueError(f"Board with id {board_id} not found")
 
-        return cls(id, board_name)
+        return cls(board_id, board_name)
