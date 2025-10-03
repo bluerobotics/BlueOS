@@ -81,6 +81,14 @@
             "/var/run/dbus": {
                 "bind": "/var/run/dbus",
                 "mode": "rw"
+            },
+            "/var/log/journal": {
+                "bind": "/var/log/journal",
+                "mode": "ro"
+            },
+            "/run/log/journal": {
+                "bind": "/run/log/journal",
+                "mode": "ro"
             }
         },
         "privileged": true
