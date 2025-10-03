@@ -19,6 +19,7 @@ class Bootstrapper:
     DOCKER_CONFIG_PATH = pathlib.Path("/root/.config")
     DOCKER_CONFIG_FILE_PATH = DOCKER_CONFIG_PATH.joinpath("bootstrap/startup.json")
     HOST_CONFIG_PATH = os.environ.get("BLUEOS_CONFIG_PATH", "/tmp/blueos/.config")
+    BLUEOS_FACTORY_IMAGE = os.environ.get("BLUEOS_FACTORY_IMAGE", None)
     CORE_CONTAINER_NAME = "blueos-core"
     BOOTSTRAP_CONTAINER_NAME = "blueos-bootstrap"
     SETTINGS_NAME_CORE = "core"
@@ -76,6 +77,16 @@ class Bootstrapper:
             Bootstrapper.overwrite_config_file_with_defaults()
             with open(Bootstrapper.DEFAULT_FILE_PATH, encoding="utf-8") as config_file:
                 config = json.load(config_file)
+
+        if Bootstrapper.BLUEOS_FACTORY_IMAGE is not None:
+            factory_image = Bootstrapper.BLUEOS_FACTORY_IMAGE.split(":")
+            if len(factory_image) != 2:
+                logger.warning(f"BLUEOS_FACTORY_IMAGE is not a valid image: {Bootstrapper.BLUEOS_FACTORY_IMAGE}, should be like 'bluerobotics/blueos-core:factory'")
+            else:
+                image, tag = factory_image
+                config[Bootstrapper.SETTINGS_NAME_CORE]["image"] = image
+                config[Bootstrapper.SETTINGS_NAME_CORE]["tag"] = tag
+                logger.info(f"Using BLUEOS_FACTORY_IMAGE: {image}:{tag}")
 
         config[Bootstrapper.SETTINGS_NAME_CORE]["binds"][str(Bootstrapper.HOST_CONFIG_PATH)] = {
             "bind": str(Bootstrapper.DOCKER_CONFIG_PATH),
