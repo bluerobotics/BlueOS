@@ -24,6 +24,7 @@ from typedefs import (
     Firmware,
     FlightController,
     FlightControllerFlags,
+    FlightControllerV1,
     Parameters,
     Serial,
     SITLFrame,
@@ -60,7 +61,7 @@ def index_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
 # all the CRUD operations, we gonna keep ones that have less than 2 endpoints in the index router.
 
 
-async def target_board(board_name: Optional[str]) -> FlightController:
+async def target_board(board_name: Optional[str], board_id: Optional[int] = None) -> FlightController:
     """Returns the board that should be used to perform operations on.
 
     Most of the API routes that have operations related to board management will give the option to perform those
@@ -72,7 +73,11 @@ async def target_board(board_name: Optional[str]) -> FlightController:
     """
     if board_name is not None:
         try:
-            return next(board for board in await autopilot.available_boards(True) if board.name == board_name)
+            if board_id is not None:
+                return next(
+                    board for board in await autopilot.available_boards(True) if board.ardupilot_board_id == board_id
+                )
+            return next(board for board in await autopilot.available_boards(True) if board.platform.name == board_name)
         except StopIteration as error:
             raise ValueError("Chosen board not available.") from error
     if autopilot.current_board is None:
@@ -151,8 +156,13 @@ async def get_firmware_vehicle_type() -> Any:
     summary="Retrieve dictionary of available firmwares versions with their respective URL.",
 )
 @index_to_http_exception
-async def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) -> Any:
-    return autopilot.get_available_firmwares(vehicle, (await target_board(board_name)).platform)
+async def get_available_firmwares(
+    vehicle: Vehicle,
+    board_name: Optional[str] = None,
+    board_id: Optional[int] = None,
+    firmware: Optional[str] = "Ardupilot",
+) -> Any:
+    return autopilot.get_available_firmwares(vehicle, await target_board(board_name, board_id), firmware)
 
 
 @index_router_v1.post("/install_firmware_from_url", summary="Install firmware for given URL.")
@@ -211,11 +221,20 @@ async def install_firmware_from_file(
 
 
 @index_router_v1.get(
-    "/board", response_model=Optional[FlightController], summary="Check what is the current running board."
+    "/board", response_model=Optional[FlightControllerV1], summary="Check what is the current running board."
 )
 @index_to_http_exception
 def get_board() -> Any:
-    return autopilot.current_board
+    if autopilot.current_board is None:
+        return None
+    return {
+        "name": autopilot.current_board.name,
+        "manufacturer": autopilot.current_board.manufacturer,
+        "platform": autopilot.current_board.platform.name,
+        "platform_type": autopilot.current_board.platform.platform_type.value,
+        "ardupilot_board_id": autopilot.current_board.ardupilot_board_id,
+        "flags": autopilot.current_board.flags,
+    }
 
 
 @index_router_v1.post("/board", summary="Set board to be used.")

@@ -113,7 +113,7 @@
           label="Board"
           hint="If no board is chosen the system will try to flash the currently running board."
           class="ma-1 pa-0"
-          @change="chosen_vehicle = null"
+          @change="clearFirmwareSelection()"
         />
         <div
           v-if="upload_type === UploadType.Cloud"
@@ -126,12 +126,22 @@
             class="ma-1 pa-0"
             @change="updateAvailableFirmwares"
           />
+          <v-select
+            v-if="platforms_available.length > 1"
+            v-model="chosen_platform"
+            class="ma-1 pa-0"
+            :disabled="disable_firmware_selection"
+            :items="platforms_available"
+            :label="platform_selector_label"
+            :loading="loading_firmware_options"
+            required
+          />
           <div class="d-flex">
             <v-select
               v-model="chosen_firmware_url"
               class="ma-1 pa-0"
               :disabled="disable_firmware_selection"
-              :items="showable_firmwares"
+              :items="showable_firmware_deduplicated"
               :label="firmware_selector_label"
               :loading="loading_firmware_options"
               required
@@ -278,11 +288,18 @@ export default Vue.extend({
       available_firmwares: [] as Firmware[],
       firmware_file: null as (Blob | null),
       install_result_message: '',
+      chosen_platform: null as (string | null),
       rebootOnBoardComputer,
       requestOnBoardComputerReboot,
     }
   },
   computed: {
+    platforms_available(): string[] {
+      return Array.from(new Set(this.available_firmwares.map((firmware) => firmware.platform)))
+    },
+    platform_selector_label(): string {
+      return this.loading_firmware_options ? 'Fetching available platforms...' : 'Platform'
+    },
     firmware_selector_label(): string {
       return this.loading_firmware_options ? 'Fetching available firmware...' : 'Firmware'
     },
@@ -333,8 +350,9 @@ export default Vue.extend({
       return this.chosen_vehicle == null || this.loading_firmware_options
     },
     showable_firmwares(): {value: URL, text: string}[] {
-      return this.available_firmwares
-        .map((firmware) => ({ value: firmware.url, text: firmware.name }))
+      return this.available_firmwares.filter(
+        (firmware) => firmware.platform === this.chosen_platform,
+      ).map((firmware) => ({ value: firmware.url, text: firmware.name }))
         .filter((firmware) => firmware.text !== 'OFFICIAL')
         .sort((a, b) => {
           const release_show_order = ['dev', 'beta', 'stable']
@@ -343,6 +361,16 @@ export default Vue.extend({
           return prior_a > prior_b ? 1 : -1
         })
         .reverse()
+    },
+    showable_firmware_deduplicated(): {value: URL, text: string}[] {
+      // qdd the trailing filename from the url to the value of an entry if another entry has the same text
+      return this.showable_firmwares.map((firmware) => {
+        const same_text_entries = this.showable_firmwares.filter((f) => f.text === firmware.text)
+        if (same_text_entries.length > 1) {
+          return { value: firmware.value, text: `${firmware.text} (${firmware.value.toString().split('/').pop()})` }
+        }
+        return firmware
+      })
     },
     allow_installing(): boolean {
       if (this.install_status === InstallStatus.Installing) {
@@ -368,6 +396,12 @@ export default Vue.extend({
         this.requestOnBoardComputerReboot()
       }
     },
+    platforms_available(new_value: string[]): void {
+      if (new_value.length === 1) {
+        const [chosen_platform] = new_value
+        this.chosen_platform = chosen_platform
+      }
+    },
   },
   mounted(): void {
     if (this.only_bootloader_boards_available) {
@@ -375,18 +409,25 @@ export default Vue.extend({
     }
   },
   methods: {
+    clearFirmwareSelection(): void {
+      this.chosen_firmware_url = null
+      this.chosen_platform = null
+      this.available_firmwares = []
+    },
     setFirstNoSitlBoard(): void {
       const [first_board] = this.no_sitl_boards
       this.chosen_board = first_board
     },
     async updateAvailableFirmwares(): Promise<void> {
       this.chosen_firmware_url = null
+      this.chosen_platform = null
+      this.available_firmwares = []
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
       await back_axios({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 30000,
-        params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.name },
+        params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.platform.name },
       })
         .then((response) => {
           this.available_firmwares = response.data
@@ -412,13 +453,13 @@ export default Vue.extend({
         // Populate request with data for cloud install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_url`,
-          params: { url: this.chosen_firmware_url, board_name: this.chosen_board?.name },
+          params: { url: this.chosen_firmware_url, board_name: this.chosen_board?.platform.name },
         })
       } else if (this.upload_type === UploadType.Restore) {
         // Populate request with data for restore install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/restore_default_firmware`,
-          params: { board_name: this.chosen_board?.name },
+          params: { board_name: this.chosen_board?.platform.name },
         })
       } else {
         // Populate request with data for file install
@@ -432,7 +473,7 @@ export default Vue.extend({
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_file`,
           headers: { 'Content-Type': 'multipart/form-data' },
-          params: { board_name: this.chosen_board?.name },
+          params: { board_name: this.chosen_board?.platform.name },
           data: form_data,
         })
       }
