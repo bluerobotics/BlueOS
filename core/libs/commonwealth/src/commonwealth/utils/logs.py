@@ -1,28 +1,14 @@
 import json
 import logging
-from datetime import datetime, timezone
 from logging import LogRecord
-from pathlib import Path
 from types import FrameType
-from typing import Any, Optional, TextIO, TYPE_CHECKING, Union, Callable
+from typing import Optional, TYPE_CHECKING, Union, Callable
 
 import zenoh
 from loguru import logger
 
 if TYPE_CHECKING:
     from loguru import Message
-
-
-class LogRotator:
-    def __init__(self, period_seconds: int):
-        self._last_time = datetime.now(timezone.utc)
-        self._period_seconds = period_seconds
-
-    def should_rotate(self, message: Any, _file: TextIO) -> bool:
-        if (message.record["time"] - self._last_time).total_seconds() > self._period_seconds:
-            self._last_time = datetime.now(timezone.utc)
-            return True
-        return False
 
 
 class InterceptHandler(logging.Handler):
@@ -54,23 +40,9 @@ def validate_service_name(service_name: str) -> None:
         raise ValueError("Service name cannot contain extension-separation character ('.').")
 
 
-def get_new_log_path(service_name: str) -> Path:
-    """Get default Path to a new log for a given service."""
-
-    # Create folder for service logs if it doesn't exist yet
-    default_log_folder = Path("/var/logs/blueos/services")
-    service_log_folder = default_log_folder.joinpath(service_name)
-    service_log_folder.mkdir(parents=True, exist_ok=True)
-
-    # Returned log path are service-specific and store datetime information
-    datetime_now = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return service_log_folder.joinpath(f"logfile_{datetime_now}.log")
-
-
 def init_logger(service_name: str) -> None:
     try:
         validate_service_name(service_name)
-        logger.add(get_new_log_path(service_name), rotation="10 MB")
         logger.add(create_log_sink(service_name), serialize=True)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
