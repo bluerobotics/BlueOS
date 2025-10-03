@@ -18,7 +18,7 @@ echo "Installing project $PROJECT_NAME and friends with version $VERSION"
 ARCH="$(uname -m)"
 case "$ARCH" in
   x86_64 | amd64)
-    TOOLCHAIN="x86_64-unknown-linux-musl"
+    TOOLCHAIN="x86_64-unknown-linux-gnu"
     ;;
   armv7l | armhf)
     TOOLCHAIN="armv7-unknown-linux-gnueabihf"
