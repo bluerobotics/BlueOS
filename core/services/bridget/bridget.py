@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import Dict, List
 
 import requests
@@ -8,10 +7,9 @@ from bridges.serialhelper import Baudrate
 from commonwealth.settings.manager import Manager
 from pydantic import BaseModel, conint
 from serial.tools.list_ports_linux import SysFS
+from config import SERVICE_NAME
 
 from settings import BridgeSettingsSpecV2, SettingsV2
-
-USERDATA = Path("/usr/blueos/userdata/")
 
 
 class BridgeFrontendSpec(BaseModel):
@@ -47,9 +45,8 @@ class Bridget:
 
     def __init__(self) -> None:
         self._bridges: Dict[BridgeFrontendSpec, Bridge] = {}
-        # We use userdata because our regular settings folder is under /root, which regular users
-        # don't have access to.
-        self._settings_manager = Manager("bridget", SettingsV2, USERDATA / "settings" / "bridget")
+        # Following the standard BlueOS pattern: /root/.config/blueos/<service-name>/
+        self._settings_manager = Manager(SERVICE_NAME, SettingsV2)
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specsv2:
             try:
