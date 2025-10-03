@@ -146,8 +146,12 @@ class TrafficController:
     @staticmethod
     async def forward_message(message: MavlinkGpsInput, mavlink2rest: MavlinkMessenger) -> None:
         """Forward Mavlink message package to Mavlink2Rest, on the specified component ID."""
-        await mavlink2rest.send_mavlink_message(message.dict())
+        await mavlink2rest.send_mavlink_message(message.model_dump())
 
     def __del__(self) -> None:
-        for server_socket in self._socks.values():
-            server_socket.close()
+        try:
+            for server_socket in self._socks.values():
+                server_socket.close()
+        except RuntimeError:
+            # Event loop is closed, ignore the error
+            pass

@@ -26,9 +26,9 @@ class PortWatcher:
         self.known_ips: Set[str] = set()
 
         self.probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = probe_callback
-        self.ethernet_ping_found_callback: Callable[
-            [Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]
-        ] = found_callback
+        self.ethernet_ping_found_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = (
+            found_callback
+        )
         self.port_lost_callback: Optional[Callable[[SysFS], None]] = None
         self.probe_attempts_counter: Dict[SysFS, int] = {}
 

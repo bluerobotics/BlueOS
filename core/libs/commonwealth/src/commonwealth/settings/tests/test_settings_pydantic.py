@@ -23,7 +23,7 @@ class SettingsV1(PydanticSettings):
         name="bilica",
         animal_type="dog",
         parts=["finger", "eyes"],
-        animal_json=[JsonExample.parse_obj({"name": "Json!"})],
+        animal_json=[JsonExample.model_validate({"name": "Json!"})],
     )
     first_variable: int = 42
 
