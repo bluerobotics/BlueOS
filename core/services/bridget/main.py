@@ -13,8 +13,7 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 
 from bridget import BridgeFrontendSpec, Bridget
-
-SERVICE_NAME = "bridget"
+from config import SERVICE_NAME
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
