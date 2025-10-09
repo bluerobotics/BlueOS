@@ -1,8 +1,8 @@
 import ipaddress
-import re
-from enum import Enum, auto
-from pathlib import Path
 from platform import machine
+import re
+from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, validator
@@ -72,8 +72,13 @@ def get_sitl_platform_name(machine_arch: str) -> str:
 class Firmware(BaseModel):
     """Simplified representation of a firmware, as available on Ardupilot's manifest."""
 
+    board_id: Optional[int]
+    platform: str
     name: str
     url: str
+
+    def __hash__(self) -> int:
+        return hash(self.platform + self.name + str(self.board_id))
 
 
 class Vehicle(str, Enum):
@@ -86,52 +91,25 @@ class Vehicle(str, Enum):
     Copter = "Copter"
 
 
-# TODO: This class can be deprecated once we move to Python 3.11, which introduces the equivalent StrEnum
-class LowerStringEnum(str, Enum):
-    def __str__(self) -> str:
-        return self.name.lower()
-
-
-class PlatformType(LowerStringEnum):
-    Serial = auto()
-    Linux = auto()
-    SITL = auto()
-    Unknown = auto()
-    Manual = auto()
-
-
-class Platform(str, Enum):
-    """Valid Ardupilot platform types.
-    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
-
-    Pixhawk1 = "Pixhawk1"
-    Pixhawk4 = "Pixhawk4"
-    Pixhawk6X = "Pixhawk6X"
-    Pixhawk6C = "Pixhawk6C"
-    CubeOrange = "CubeOrange"
-    GenericSerial = "GenericSerial"
-    Navigator = "navigator"
-    Navigator64 = "navigator64"
-    Argonot = "argonot"
-    SITL = get_sitl_platform_name(machine())
+class PlatformType(str, Enum):
+    Serial = "Serial"
+    Linux = "Linux"
+    SITL = "SITL"
+    Unknown = "Unknown"
     Manual = "Manual"
 
-    @property
-    def type(self) -> PlatformType:
-        platform_types = {
-            Platform.Pixhawk1: PlatformType.Serial,
-            Platform.Pixhawk4: PlatformType.Serial,
-            Platform.Pixhawk6X: PlatformType.Serial,
-            Platform.Pixhawk6C: PlatformType.Serial,
-            Platform.CubeOrange: PlatformType.Serial,
-            Platform.GenericSerial: PlatformType.Serial,
-            Platform.Navigator: PlatformType.Linux,
-            Platform.Navigator64: PlatformType.Linux,
-            Platform.Argonot: PlatformType.Linux,
-            Platform.SITL: PlatformType.SITL,
-            Platform.Manual: PlatformType.Manual,
-        }
-        return platform_types.get(self, PlatformType.Unknown)
+
+class Platform(BaseModel):
+    """Valid Ardupilot platform types.
+    The Names are a 1:1 representation of the platforms available on the ArduPilot manifest."""
+
+    name: str
+    platform_type: PlatformType
+    board_id: Optional[int]
+
+    @staticmethod
+    def SITL() -> "Platform":
+        return Platform(name=get_sitl_platform_name(machine()), platform_type=PlatformType.SITL)
 
 
 class FlightControllerFlags(str, Enum):
@@ -147,15 +125,30 @@ class Parameters(BaseModel):
 class FlightController(BaseModel):
     """Flight-controller board."""
 
-    name: str
-    manufacturer: Optional[str]
-    platform: Platform
+    name: str  # Whatever we get on the usb description
+    manufacturer: Optional[str]  # Whatever we get on the usb description
+    platform: Platform  # The platform of the board according to the ardupilot's manifest.
+    ardupilot_board_id: Optional[int]
     path: Optional[str]
     flags: List[FlightControllerFlags] = []
 
     @property
     def type(self) -> PlatformType:
-        return self.platform.type
+        return self.platform.platform_type
+
+    def __hash__(self) -> int:
+        return hash(self.name + self.platform.name)
+
+
+class FlightControllerV1(BaseModel):
+    """Flight-controller board."""
+
+    name: str  # Whatever we get on the usb description
+    manufacturer: Optional[str]  # Whatever we get on the usb description
+    platform: str  # The platform of the board according to the ardupilot's manifest.
+    ardupilot_board_id: Optional[int]
+    path: Optional[str]
+    flags: List[FlightControllerFlags] = []
 
 
 class AvailableBoards(BaseModel):

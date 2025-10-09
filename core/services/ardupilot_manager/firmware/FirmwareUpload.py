@@ -2,6 +2,7 @@ import asyncio
 import pathlib
 import shutil
 import subprocess
+from typing import Awaitable, Callable, Optional
 
 from loguru import logger
 
@@ -43,7 +44,11 @@ class FirmwareUploader:
     def set_baudrate_flightstack(self, baudrate: int) -> None:
         self._baudrate_flightstack = baudrate
 
-    async def upload(self, firmware_path: pathlib.Path) -> None:
+    async def upload(
+        self,
+        firmware_path: pathlib.Path,
+        output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None,
+    ) -> None:
         logger.info("Starting upload of firmware to board.")
 
         process = await asyncio.create_subprocess_shell(
@@ -55,27 +60,34 @@ class FirmwareUploader:
             stderr=asyncio.subprocess.PIPE,
             shell=True,
         )
+        errors = []
 
-        async def monitor_uploader_process() -> None:
+        async def read_stdout() -> None:
             if process.stdout:
                 while True:
                     line = await process.stdout.readline()
                     if not line:
                         break
-                    logger.debug(line.decode().strip())
+                    decoded_line = line.decode().rstrip("\n")
+                    logger.debug(f"[stdout] {decoded_line}")
+                    if output_callback:
+                        await output_callback("stdout", decoded_line)
 
-            while True:
-                if process.returncode is not None:
-                    break
-                logger.debug("Waiting for upload process to finish.")
-                await asyncio.sleep(1)
+        async def read_stderr() -> None:
+            if process.stderr:
+                while True:
+                    line = await process.stderr.readline()
+                    if not line:
+                        break
+                    decoded_line = line.decode().rstrip("\n")
+                    logger.debug(f"[stderr] {decoded_line}")
+                    errors.append(decoded_line)
+                    if output_callback:
+                        await output_callback("stderr", decoded_line)
 
         try:
-            await asyncio.wait_for(monitor_uploader_process(), timeout=180)
-
-            return_code = await process.wait()
-            if return_code != 0:
-                raise FirmwareUploadFail(f"Upload process returned non-zero code {return_code}.")
+            # Run both stream readers and process wait concurrently with a single timeout
+            await asyncio.wait_for(asyncio.gather(read_stdout(), read_stderr(), process.wait()), timeout=180)
 
             logger.info("Successfully uploaded firmware to board.")
         except asyncio.TimeoutError as error:
@@ -85,5 +97,11 @@ class FirmwareUploader:
             process.kill()
             raise FirmwareUploadFail("Unable to upload firmware to board.") from error
         finally:
+            return_code = process.returncode
+            if errors and return_code != 0:
+                raise FirmwareUploadFail(f"Upload process returned errors: {errors} return code: {return_code}")
+            if return_code != 0:
+                raise FirmwareUploadFail(f"Upload process returned non-zero code {return_code}.")
+
             # Give some time for the board to reboot (preventing fail reconnecting to it)
             await asyncio.sleep(10)
