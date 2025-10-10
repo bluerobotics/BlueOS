@@ -1,28 +1,17 @@
+import gzip
 import json
 import logging
-from datetime import datetime, timezone
+import subprocess
 from logging import LogRecord
 from pathlib import Path
 from types import FrameType
-from typing import Any, Optional, TextIO, TYPE_CHECKING, Union, Callable
+from typing import Optional, TYPE_CHECKING, Union, Callable
 
 import zenoh
 from loguru import logger
 
 if TYPE_CHECKING:
     from loguru import Message
-
-
-class LogRotator:
-    def __init__(self, period_seconds: int):
-        self._last_time = datetime.now(timezone.utc)
-        self._period_seconds = period_seconds
-
-    def should_rotate(self, message: Any, _file: TextIO) -> bool:
-        if (message.record["time"] - self._last_time).total_seconds() > self._period_seconds:
-            self._last_time = datetime.now(timezone.utc)
-            return True
-        return False
 
 
 class InterceptHandler(logging.Handler):
@@ -62,15 +51,39 @@ def get_new_log_path(service_name: str) -> Path:
     service_log_folder = default_log_folder.joinpath(service_name)
     service_log_folder.mkdir(parents=True, exist_ok=True)
 
-    # Returned log path are service-specific and store datetime information
-    datetime_now = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return service_log_folder.joinpath(f"logfile_{datetime_now}.log")
+    # Returned log path are service-specific
+    return service_log_folder.joinpath(f"{service_name}.log")
+
+
+def custom_compression(path: str) -> None:
+    archive_path = f"{path}-{get_last_boot_timestamp()}.gz"
+    with open(path, "rb") as file:
+        with gzip.open(archive_path, "wb") as compressed:
+            compressed.writelines(file)
+
+
+def get_last_boot_timestamp() -> str:
+    boot_info = subprocess.check_output(["journalctl", "--list-boots"], encoding="utf-8").splitlines()
+    # if the bind has not occurred journalctl will be empty
+    if not boot_info or len(boot_info) < 2:
+        return ""
+    last_boot_info = boot_info[-2]
+    clean_info = last_boot_info.lstrip().split(" ")
+
+    try:
+        date = clean_info[3]
+        time = clean_info[4]
+        timezone = clean_info[-1]
+        # format: "YYYY-MM-DDTHH:MM:SSZ"
+        return f"{date}T{time}{timezone}"
+    except (IndexError, ValueError):
+        return ""
 
 
 def init_logger(service_name: str) -> None:
     try:
         validate_service_name(service_name)
-        logger.add(get_new_log_path(service_name), rotation="10 MB")
+        logger.add(get_new_log_path(service_name), compression=custom_compression)
         logger.add(create_log_sink(service_name), serialize=True)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
