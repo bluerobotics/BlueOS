@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 from typing import Optional
@@ -10,6 +11,8 @@ class MAVLinkServer(AbstractRouter):
     def __init__(self) -> None:
         super().__init__()
         self.log_path: Optional[str] = None
+        self.mavlink_system_id: Optional[int] = None
+        self.mavlink_component_id: Optional[int] = None
 
     def _get_version(self) -> Optional[str]:
         binary = self.binary()
@@ -43,8 +46,12 @@ class MAVLinkServer(AbstractRouter):
 
         if not self.log_path:
             self.log_path = "/var/logs/blueos/services/mavlink-server/"
+        if not self.mavlink_system_id:
+            self.mavlink_system_id = int(os.environ.get("MAV_SYSTEM_ID", 1))
+        if not self.mavlink_component_id:
+            self.mavlink_component_id = int(os.environ.get("MAV_COMPONENT_ID_ONBOARD_COMPUTER", 191))
 
-        return f"{self.binary()} {endpoints} --log-path={self.log_path}"
+        return f"{self.binary()} {endpoints} --mavlink-system-id={self.mavlink_system_id} --mavlink-component-id={self.mavlink_component_id} --log-path={self.log_path}"
 
     @staticmethod
     def name() -> str:
