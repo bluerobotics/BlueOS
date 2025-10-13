@@ -73,7 +73,7 @@ ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-0-g00000000}
 RUN <<-EOF
 set -e
 
-    if [[ ! $GIT_DESCRIBE_TAGS =~ -[0-9]+-g[a-f0-9]{8}$ ]]; then
+    if ! echo "$GIT_DESCRIBE_TAGS" | grep -Eq -- '-[0-9]+-g[a-f0-9]{8}$'; then
         echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)"
         exit 1
     fi
