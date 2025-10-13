@@ -10,7 +10,7 @@ SERVICES_PATH=$BLUEOS_PATH/services
 TOOLS_PATH=$BLUEOS_PATH/tools
 
 # MAVLink configuration
-MAV_SYSTEM_ID=1
+MAV_SYSTEM_ID=${MAV_SYSTEM_ID:-1}
 ## We use the last ID for the onboard computer component reserved address for our usage
 MAV_COMPONENT_ID_ONBOARD_COMPUTER4=194
 
