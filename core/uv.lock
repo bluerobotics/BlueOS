@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -665,6 +665,7 @@ dependencies = [
     { name = "loguru" },
     { name = "psutil" },
     { name = "pydantic" },
+    { name = "requests" },
     { name = "speedtest-cli" },
     { name = "uvicorn" },
 ]
@@ -678,6 +679,7 @@ requires-dist = [
     { name = "loguru", specifier = "==0.5.3" },
     { name = "psutil", specifier = "==5.7.2" },
     { name = "pydantic", specifier = "==1.10.12" },
+    { name = "requests", specifier = "==2.26.0" },
     { name = "speedtest-cli", specifier = "==2.1.3" },
     { name = "uvicorn", specifier = "==0.18.0" },
 ]
