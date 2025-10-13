@@ -19,7 +19,9 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 import psutil
+import requests
 from bs4 import BeautifulSoup
+from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
@@ -242,6 +244,8 @@ class Helper:
     website_executor = futures.ThreadPoolExecutor(max_workers=10)
     # Reused so a hung DNS lookup cannot queue a second worker for the same site.
     website_in_flight: Dict[Website, "futures.Future[WebsiteStatus]"] = {}
+
+    mavlink2rest = MavlinkMessenger()
 
     @staticmethod
     # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
@@ -564,6 +568,16 @@ class Helper:
             logging.info(f"file updated: {filename}")
         return True
 
+    @staticmethod
+    async def check_and_notify_factory_mode() -> None:
+        try:
+            response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10)
+            if response.status_code == 200 and response.json()["tag"] == "factory":
+                mav_message = Helper.mavlink2rest.command_statustext_message("BlueOS is in factory mode")
+                await Helper.mavlink2rest.send_mavlink_message(mav_message)
+        except Exception as e:
+            logger.info(f"Could not check factory mode: {e}.")
+
 
 fast_api_app = FastAPI(
     title="Helper API",
@@ -766,6 +780,8 @@ async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
 async def periodic() -> None:
     while True:
         await asyncio.sleep(60)
+
+        await Helper.check_and_notify_factory_mode()
 
         # Clear the known ports cache and re-scan it
         if Helper.PERIODICALLY_RESCAN_ALL_SERVICES:
