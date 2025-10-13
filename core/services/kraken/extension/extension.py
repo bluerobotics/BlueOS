@@ -1,13 +1,14 @@
 import asyncio
 import base64
 import json
+import os
 import time
-from typing import AsyncGenerator, Dict, List, Literal, Optional, Tuple, cast
+from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, Tuple, cast
 
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
-from config import SERVICE_NAME
+from config import DEFAULT_INJECTED_ENV_VARIABLES, SERVICE_NAME
 from extension.exceptions import (
     ExtensionInsufficientStorage,
     ExtensionNotFound,
@@ -102,6 +103,24 @@ class Extension:
         if extension:
             self._settings.extensions.append(extension)
         self._manager.save()
+
+    def _set_container_config_default_env_variables(self, config: Dict[str, Any]) -> None:
+        if "Env" not in config:
+            config["Env"] = []
+
+        existing_env_var_names = {entry.split("=", 1)[0] if "=" in entry else entry for entry in config["Env"]}
+
+        for variable in DEFAULT_INJECTED_ENV_VARIABLES:
+            env_val = os.getenv(variable)
+            if variable not in existing_env_var_names and env_val:
+                config["Env"].append(f"{variable}={env_val}")
+
+    def _set_container_config_host_config(self, config: Dict[str, Any]) -> None:
+        if "HostConfig" not in config:
+            config["HostConfig"] = {}
+        if "LogConfig" not in config["HostConfig"]:
+            config["HostConfig"]["LogConfig"] = {}
+        config["HostConfig"]["LogConfig"] = {"Type": "json-file", "Config": {"max-size": "20m", "max-file": "3"}}
 
     @classmethod
     async def remove(cls, container_name: str, delete_image: bool = True) -> None:
@@ -228,11 +247,8 @@ class Extension:
         img_name = ext.fullname()
         config["Image"] = img_name
 
-        if "HostConfig" not in config:
-            config["HostConfig"] = {}
-        if "LogConfig" not in config["HostConfig"]:
-            config["HostConfig"]["LogConfig"] = {}
-        config["HostConfig"]["LogConfig"] = {"Type": "json-file", "Config": {"max-size": "20m", "max-file": "3"}}
+        self._set_container_config_host_config(config)
+        self._set_container_config_default_env_variables(config)
 
         try:
             async with DockerCtx() as client:
