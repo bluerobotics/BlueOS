@@ -100,12 +100,12 @@
           </div>
         </v-btn>
         <v-dialog
+          v-if="showBootstrapUpdate"
           v-model="bootstrapDialog"
           width="500"
         >
           <template #activator="{ on, attrs }">
             <v-btn
-              v-if="showBootstrapUpdate"
               color="warning"
               class="mx-2 my-1"
               :disabled="working"
@@ -282,6 +282,10 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
+    allImagesLoaded: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -305,7 +309,8 @@ export default Vue.extend({
       if (!this.bootstrapVersion || !this.hasInternet) {
         return false
       }
-      return this.settings.is_pirate_mode && this.current && !this.updateAvailable && this.isFromBR
+      return this.settings.is_pirate_mode && this.current
+        && !this.updateAvailable && this.isFromBR && this.allImagesLoaded
         && this.bootstrapVersion !== `${this.image.repository.split('/')[0]}/blueos-bootstrap:${this.image.tag}`
     },
     showReleaseNotes(): boolean {
