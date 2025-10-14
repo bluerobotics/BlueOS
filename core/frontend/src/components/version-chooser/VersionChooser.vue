@@ -80,6 +80,7 @@
           :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(image)"
           :latest-stable="latest_stable"
+          :all-images-loaded="all_images_loaded"
           :deleting="isBeingDeleted(image)"
           :enable-delete="local_versions.result.local.length > 2"
           @delete="deleteVersion"
@@ -331,6 +332,7 @@ export default Vue.extend({
       deleting: '', // image currently being deleted, if any
       file_input_error: '',
       show_docker_login_dialog: false,
+      all_images_loaded: false,
     }
   },
   computed: {
@@ -592,6 +594,7 @@ export default Vue.extend({
       await VCU.loadAvailableVersions(this.selected_image)
         .then((versions_query) => {
           this.available_versions = versions_query
+          this.all_images_loaded = true
         })
         .finally(() => {
           this.loading_images = false
@@ -600,6 +603,7 @@ export default Vue.extend({
           this.latest_stable = VCU.getLatestStable(this.available_versions)?.tag
         })
         .catch((error) => {
+          this.all_images_loaded = false
           this.available_versions = {
             local: [],
             remote: [],
