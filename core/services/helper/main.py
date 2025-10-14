@@ -9,7 +9,6 @@ import re
 import socket
 import subprocess
 from concurrent import futures
-from datetime import datetime
 from enum import Enum
 from functools import cache
 from io import BytesIO
@@ -35,14 +34,11 @@ from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from pydantic import BaseModel
-from speedtest import Speedtest
 from uvicorn import Config, Server
 
 from nginx_parser import parse_nginx_file
 
 SERVICE_NAME = "helper"
-SPEED_TEST: Optional[Speedtest] = None
-SPEED_TEST_LOCK = asyncio.Lock()
 
 # Stay below the frontend's 10s Axios timeout. Cache covers overlapping UI polls (20s).
 # Website cache must outlive INTERNET_CHECK_CACHE_S so a late probe is still valid next poll.
@@ -57,12 +53,6 @@ except Exception as logger_e:
     print(f"Error: unable to set logger path: {logger_e}")
 
 logger.info("Starting Helper")
-
-try:
-    SPEED_TEST = Speedtest(secure=True)
-except Exception:
-    # When starting, the system may not be connected to the internet
-    pass
 
 
 class Website(Enum):
@@ -140,45 +130,6 @@ class ServiceInfo(BaseModel):
         if self.port not in Helper.attempts_left:
             return False
         return bool(Helper.attempts_left[self.port] <= 0)
-
-
-class SpeedtestServer(BaseModel):
-    url: str
-    lat: str
-    lon: str
-    name: str
-    country: str
-    cc: str
-    sponsor: str
-    id: str
-    host: str
-    d: float
-    latency: float
-
-
-class SpeedtestClient(BaseModel):
-    ip: str
-    lat: str
-    lon: str
-    isp: str
-    isprating: str
-    rating: str
-    ispdlavg: str
-    ispulavg: str
-    loggedin: str
-    country: str
-
-
-class SpeedTestResult(BaseModel):
-    download: float
-    upload: float
-    ping: float
-    server: SpeedtestServer
-    timestamp: datetime
-    bytes_sent: int
-    bytes_received: int
-    share: Optional[str] = None
-    client: SpeedtestClient
 
 
 class SimpleHttpResponse(BaseModel):
@@ -626,65 +577,6 @@ def software_id() -> Any:
         return str(uuid_obj)
     except Exception as exception:
         raise HTTPException(status_code=400, detail=f"Error: {exception}") from exception
-
-
-@fast_api_app.get(
-    "/internet_best_server",
-    response_model=SpeedTestResult,
-    summary="Check internet best server for test from BlueOS.",
-)
-@version(1, 0)
-async def internet_best_server(interface_addr: Optional[str] = None) -> Any:
-    # Since we are finding a new server, clear previous results
-    # pylint: disable=global-statement
-    global SPEED_TEST
-    async with SPEED_TEST_LOCK:
-        speed_test = await asyncio.to_thread(Speedtest, secure=True, source_address=interface_addr)
-        await asyncio.to_thread(speed_test.get_best_server)
-        SPEED_TEST = speed_test
-        return speed_test.results.dict()
-
-
-@fast_api_app.get(
-    "/internet_download_speed",
-    response_model=SpeedTestResult,
-    summary="Check internet download speed test from BlueOS.",
-)
-@version(1, 0)
-async def internet_download_speed() -> Any:
-    async with SPEED_TEST_LOCK:
-        speed_test = SPEED_TEST
-        if not speed_test:
-            raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
-        await asyncio.to_thread(speed_test.download)
-        return speed_test.results.dict()
-
-
-@fast_api_app.get(
-    "/internet_upload_speed",
-    response_model=SpeedTestResult,
-    summary="Check internet upload speed test from BlueOS.",
-)
-@version(1, 0)
-async def internet_upload_speed() -> Any:
-    async with SPEED_TEST_LOCK:
-        speed_test = SPEED_TEST
-        if not speed_test:
-            raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
-        await asyncio.to_thread(speed_test.upload, pre_allocate=False)
-        return speed_test.results.dict()
-
-
-@fast_api_app.get(
-    "/internet_test_previous_result",
-    response_model=Optional[SpeedTestResult],
-    summary="Return previous result of internet speed test.",
-)
-@version(1, 0)
-async def internet_test_previous_result() -> Any:
-    if not SPEED_TEST or not SPEED_TEST.results.server:
-        return None
-    return SPEED_TEST.results.dict()
 
 
 async def _tcp_reachable(host: str, ports: Tuple[int, ...], interface: Optional[str], timeout: float = 2.0) -> bool:

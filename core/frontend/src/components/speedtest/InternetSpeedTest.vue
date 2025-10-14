@@ -127,7 +127,9 @@
 import Vue from 'vue'
 
 import helper from '@/store/helper'
-import { InternetConnectionState, SpeedTestResult } from '@/types/helper'
+import pardal from '@/store/pardal'
+import { InternetConnectionState } from '@/types/helper'
+import { SpeedTestResult } from '@/types/pardal'
 
 export default Vue.extend({
   name: 'InternetSpeedTest',
@@ -175,7 +177,7 @@ export default Vue.extend({
     },
   },
   async mounted() {
-    this.result = await helper.checkPreviousInternetTestResult() ?? undefined
+    this.result = await pardal.checkPreviousInternetTestResult() ?? undefined
   },
   methods: {
     getRateIcon(index: number, rate: number): string {
@@ -193,11 +195,11 @@ export default Vue.extend({
       this.result = undefined
       this.started = true
       this.message = 'Starting.. Looking for best server..'
-      this.result = await helper.checkInternetBestServer() ?? this.result
+      this.result = await pardal.checkInternetBestServer() ?? this.result
       this.message = 'Checking download speed..'
-      this.result = await helper.checkInternetDownloadSpeed() ?? this.result
+      this.result = await pardal.checkInternetDownloadSpeed() ?? this.result
       this.message = 'Checking upload speed..'
-      this.result = await helper.checkInternetUploadSpeed() ?? this.result
+      this.result = await pardal.checkInternetUploadSpeed() ?? this.result
       this.message = 'Done!'
       this.started = false
     },
