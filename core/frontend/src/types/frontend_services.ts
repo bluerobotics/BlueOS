@@ -146,3 +146,10 @@ export const version_chooser_service: Service = {
   company: 'Blue Robotics',
   version: '0.1.0',
 }
+
+export const pardal_service: Service = {
+  name: 'Pardal service',
+  description: 'Service to manage Pardal',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
