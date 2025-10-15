@@ -490,7 +490,6 @@
 </template>
 
 <script lang="ts">
-import axios, { CancelTokenSource } from 'axios'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -534,7 +533,7 @@ export default Vue.extend({
       operation_error: undefined as undefined | string,
       deletion_in_progress: false,
       downloading: false,
-      deletion_log_abort_controller: null as null | CancelTokenSource,
+      deletion_log_abort_controller: null as null | AbortController,
       current_deletion_path: '',
       current_deletion_size: 0,
       current_deletion_total_size: 0,
@@ -683,7 +682,7 @@ export default Vue.extend({
     },
 
     async remove_service_log_files(): Promise<void> {
-      this.deletion_log_abort_controller = axios.CancelToken.source()
+      this.deletion_log_abort_controller = new AbortController()
       this.deletion_in_progress = true
       this.current_deletion_path = '...'
       this.current_deletion_size = 0
@@ -699,7 +698,7 @@ export default Vue.extend({
           },
           responseType: 'text',
           onDownloadProgress: (progressEvent) => {
-            let result = parseStreamingResponse(progressEvent.currentTarget.response)
+            let result = parseStreamingResponse(progressEvent.event.currentTarget.response)
             result = result.filter((fragment) => fragment.fragment !== -1)
             const last_fragment = result.last()
             const total_deleted = result
@@ -717,7 +716,7 @@ export default Vue.extend({
               }
             }
           },
-          cancelToken: this.deletion_log_abort_controller?.token,
+          signal: this.deletion_log_abort_controller?.signal,
         })
       } catch (error) {
         this.operation_error = String(error)
@@ -737,7 +736,7 @@ export default Vue.extend({
     },
 
     async remove_mavlink_log_files(): Promise<void> {
-      this.deletion_log_abort_controller = axios.CancelToken.source()
+      this.deletion_log_abort_controller = new AbortController()
       this.deletion_in_progress = true
       this.current_deletion_path = '...'
       this.current_deletion_size = 0
@@ -753,7 +752,7 @@ export default Vue.extend({
           },
           responseType: 'text',
           onDownloadProgress: (progressEvent) => {
-            let result = parseStreamingResponse(progressEvent.currentTarget.response)
+            let result = parseStreamingResponse(progressEvent.event.currentTarget.response)
             result = result.filter((fragment) => fragment.fragment !== -1)
             const last_fragment = result.last()
             const total_deleted = result
@@ -771,7 +770,7 @@ export default Vue.extend({
               }
             }
           },
-          cancelToken: this.deletion_log_abort_controller?.token,
+          signal: this.deletion_log_abort_controller?.signal,
         })
       } catch (error) {
         this.operation_error = String(error)
