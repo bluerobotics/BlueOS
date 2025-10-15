@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -19,7 +19,6 @@ members = [
     "commonwealth",
     "helper",
     "kraken",
-    "log-zipper",
     "nmea-injector",
     "pardal",
     "ping",
@@ -247,7 +246,6 @@ dependencies = [
     { name = "commonwealth" },
     { name = "helper" },
     { name = "kraken" },
-    { name = "log-zipper" },
     { name = "nmea-injector" },
     { name = "pardal" },
     { name = "ping" },
@@ -291,7 +289,6 @@ requires-dist = [
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "helper", virtual = "services/helper" },
     { name = "kraken", virtual = "services/kraken" },
-    { name = "log-zipper", virtual = "services/log_zipper" },
     { name = "nmea-injector", virtual = "services/nmea_injector" },
     { name = "pardal", virtual = "services/pardal" },
     { name = "ping", virtual = "services/ping" },
@@ -770,21 +767,6 @@ requires-dist = [
     { name = "pydantic", specifier = "==1.10.12" },
     { name = "semver", specifier = "==3.0.2" },
     { name = "uvicorn", specifier = "==0.18.0" },
-]
-
-[[package]]
-name = "log-zipper"
-version = "0.1.0"
-source = { virtual = "services/log_zipper" }
-dependencies = [
-    { name = "commonwealth" },
-    { name = "loguru" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "loguru", specifier = "==0.5.3" },
 ]
 
 [[package]]
