@@ -237,3 +237,7 @@ for TUPLE in "${SERVICES[@]}"; do
 done
 
 echo "BlueOS running!"
+
+
+# dump last boot journal logs to disk
+dump_journal.py -1
