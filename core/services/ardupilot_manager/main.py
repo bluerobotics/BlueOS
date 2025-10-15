@@ -22,7 +22,8 @@ autopilot = AutoPilotManager()
 from api import application
 
 if not is_running_as_root():
-    raise RuntimeError("AutoPilot manager needs to run with root privilege.")
+    logger.error("AutoPilot manager needs to run with root privilege.")
+    logger.error("expect issues")
 
 
 async def main() -> None:

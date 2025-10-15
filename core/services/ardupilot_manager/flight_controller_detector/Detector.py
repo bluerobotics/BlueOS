@@ -1,12 +1,19 @@
 import asyncio
 from typing import List, Optional
 
+import serial
+
+
+from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import is_running_as_root
 from serial.tools.list_ports_linux import SysFS, comports
 
-from flight_controller_detector.board_identification import identifiers
+from flight_controller_detector.bootloader.px4_bootloader import PX4BootLoader
+from flight_controller_detector.board_identification import load_board_identifiers
 from flight_controller_detector.linux.detector import LinuxFlightControllerDetector
-from typedefs import FlightController, FlightControllerFlags, Platform
+from flight_controller_detector.port_checker import is_port_in_use
+from typedefs import FlightController, FlightControllerFlags, Platform, PlatformType
+from loguru import logger
 
 
 class Detector:
@@ -33,18 +40,74 @@ class Detector:
     def is_serial_bootloader(port: SysFS) -> bool:
         return port.product is not None and "BL" in port.product
 
+    # todo: cache this
     @staticmethod
-    def detect_serial_platform(port: SysFS) -> Optional[Platform]:
-        for identifier in identifiers:
-            port_attr = getattr(port, identifier.attribute)
-            if port_attr is not None and identifier.id_value in port_attr:
-                return identifier.platform
+    def detect_serial_platform(port: SysFS) -> list[Platform]:
+        """
+        Detect the platform of a serial flight controller.
+        Returns a list of platforms that the board could be.
+        Tries to talk to the bootloader first, if that fails,
+        it will use the USB VID:PID to identify the board.
+        If there's a match of usb product name, we further filter the list.
+        """
+        vid = port.vid
+        pid = port.pid
 
-        return None
+        # Check if vid and pid are not None before formatting
+        if vid is None or pid is None:
+            return []
+
+        usb_id = f"{vid:04x}:{pid:04x}"
+        platforms: list[Platform] = []
+
+        board_id = None
+        if Detector.is_serial_bootloader(port):
+            board_id = Detector.ask_bootloader_for_board_id(port)
+            # https://github.com/mavlink/qgroundcontrol/blob/f68674f47b0ca03f23a50753280516b6fa129545/src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc#L43
+            if board_id == 255:
+                board_id = 9  # px4_fmu-v3_default edge case
+        identifiers = load_board_identifiers()
+
+        usb_name = port.product
+        if usb_id in identifiers:
+            for board_platform in identifiers[usb_id]:
+                if board_id is None or board_id == identifiers[usb_id][board_platform]:
+                    platforms.append(
+                        Platform(
+                            name=board_platform,
+                            platform_type=PlatformType.Serial,
+                            board_id=identifiers[usb_id][board_platform],
+                        )
+                    )
+
+            def partial_match(usb_name: str, board_platform: str) -> bool:
+
+                return usb_name.lower().startswith(board_platform.lower()) or board_platform.lower().startswith(
+                    usb_name.lower()
+                )
+
+        filtered_platforms = [platform for platform in platforms if partial_match(usb_name, platform.name)]
+        return filtered_platforms if filtered_platforms else platforms
 
     @staticmethod
+    @temporary_cache(
+        timeout_seconds=300
+    )  # what are the chances of someone switching between two boards in bootloader mode?
+    def ask_bootloader_for_board_id(port: SysFS) -> Optional[int]:
+        # Check if another process is already using this port
+        if is_port_in_use(port.device):
+            logger.warning(f"Port {port.device} is already in use, skipping")
+            return None
+        logger.info(f"asking bootloader for board id on {port.device}")
+        with serial.Serial(port.device, 115200, timeout=1) as ser:
+            bootloader = PX4BootLoader(ser)
+            board_info = bootloader.get_board_info()
+            return board_info.board_id
+
+    @staticmethod
+    @temporary_cache(timeout_seconds=30)
     def detect_serial_flight_controllers() -> List[FlightController]:
-        """Check if a Pixhawk1 or a Pixhawk4 is connected.
+        """Check if a standalone flight controller is connected via usb/serial.
 
         Returns:
             List[FlightController]: List with connected serial flight controller.
@@ -55,26 +118,34 @@ class Detector:
             # usb_device_path property will be the same for two serial connections using the same USB port
             if port.usb_device_path not in [device.usb_device_path for device in unique_serial_devices]:
                 unique_serial_devices.append(port)
-        boards = [
-            FlightController(
-                name=port.product or port.name,
-                manufacturer=port.manufacturer,
-                platform=Detector.detect_serial_platform(port)
-                or Platform(),  # this is just to make CI happy. check line 82
-                path=port.device,
-            )
-            for port in unique_serial_devices
-            if Detector.detect_serial_platform(port) is not None
-        ]
+
+        boards = []
         for port in unique_serial_devices:
-            for board in boards:
-                if board.path == port.device and Detector.is_serial_bootloader(port):
-                    board.flags.append(FlightControllerFlags.is_bootloader)
+            platforms = Detector.detect_serial_platform(port)
+            for platform in platforms:
+                board_name = port.product or port.name
+                board_id = platform.board_id
+                board = FlightController(
+                    name=board_name + f" ({platform.name})",
+                    manufacturer=port.manufacturer,
+                    platform=platform,
+                    path=port.device,
+                    ardupilot_board_id=board_id,
+                    flags=[FlightControllerFlags.is_bootloader] if Detector.is_serial_bootloader(port) else [],
+                )
+                boards.append(board)
+
+        # if we have multiple boards with the same name, lets keep the one with the shortest platform name
+        if len(boards) > 1:
+            names = [board.platform.name for board in boards]
+            logger.info(f"multiple board type candidates: ({names})")
+
+        logger.info(f"detected serial boards: {boards}")
         return boards
 
     @staticmethod
     def detect_sitl() -> FlightController:
-        return FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL)
+        return FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL())
 
     @classmethod
     async def detect(cls, include_sitl: bool = True, include_manual: bool = True) -> List[FlightController]:
@@ -87,12 +158,6 @@ class Detector:
             List[FlightController]: List of available flight controllers
         """
         available: List[FlightController] = []
-        if not is_running_as_root():
-            return available
-
-        linux_board = await cls.detect_linux_board()
-        if linux_board:
-            available.append(linux_board)
 
         available.extend(cls().detect_serial_flight_controllers())
 
@@ -100,6 +165,21 @@ class Detector:
             available.append(Detector.detect_sitl())
 
         if include_manual:
-            available.append(FlightController(name="Manual", manufacturer="Manual", platform=Platform.Manual))
+            available.append(
+                FlightController(
+                    name="Manual",
+                    manufacturer="Manual",
+                    platform=Platform(name="Manual", platform_type=PlatformType.Serial),
+                    path="",
+                    ardupilot_board_id=None,
+                )
+            )
+
+        if not is_running_as_root():
+            return available
+
+        linux_board = await cls.detect_linux_board()
+        if linux_board:
+            available.append(linux_board)
 
         return available
