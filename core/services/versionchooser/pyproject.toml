@@ -4,17 +4,15 @@ version = "0.1.0"
 description = "Blue Robotics Ardusub BlueOS Version Chooser."
 requires-python = ">=3.11"
 dependencies = [
-    "aiodocker==0.21.0",
-    "aiohttp==3.7.4",
+    "aiodocker==0.24.0",
+    "aiohttp==3.12.13",
     "appdirs==1.4.4",
-    "commonwealth==0.1.0",
-    "fastapi==0.105.0",
-    "fastapi-versioning==0.9.1",
+    "commonwealth==0.1.1",
+    "fastapi==0.115.14",
+    "fastapi-versioning==0.10.0",
     "docker==6.0.0",
-    "loguru==0.5.3",
-    "uvicorn==0.18.0",
-    # This dependency needs to be locked due to error in aiohttp
-    "yarl==1.12.1",
+    "loguru==0.7.3",
+    "uvicorn==0.35.0",
 ]
 
 [tool.uv]

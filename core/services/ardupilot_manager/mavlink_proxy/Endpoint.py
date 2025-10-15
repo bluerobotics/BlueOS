@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Dict, Iterable, Optional, Type
 
 import validators
-from pydantic import constr, root_validator
+from pydantic import constr, model_validator
 from pydantic.dataclasses import dataclass
 
 
@@ -32,10 +32,17 @@ class Endpoint:
     enabled: Optional[bool] = True
     overwrite_settings: Optional[bool] = False
 
-    @root_validator
+    @model_validator(mode="before")
     @classmethod
     def is_mavlink_endpoint(cls: Type["Endpoint"], values: Any) -> Any:
-        connection_type, place, argument = (values.get("connection_type"), values.get("place"), values.get("argument"))
+        if isinstance(values, dict):
+            connection_type, place, argument = (
+                values.get("connection_type"),
+                values.get("place"),
+                values.get("argument"),
+            )
+        else:
+            return values
 
         if connection_type in [
             EndpointType.UDPServer,
