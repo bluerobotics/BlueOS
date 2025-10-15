@@ -400,7 +400,7 @@
 
 <script lang="ts">
 import AnsiUp from 'ansi_up'
-import axios, { CancelTokenSource } from 'axios'
+import axios from 'axios'
 import { saveAs } from 'file-saver'
 import { t } from 'ttag'
 import Vue from 'vue'
@@ -507,7 +507,7 @@ export default Vue.extend({
       status_text: '',
       show_log: false,
       follow_logs: true,
-      log_abort_controller: null as null | CancelTokenSource,
+      log_abort_controller: null as null | AbortController,
       log_output: null as null | string,
       log_info_output: null as null | string,
       log_container_name: null as null | string,
@@ -633,7 +633,7 @@ export default Vue.extend({
     show_log: {
       handler(val) {
         if (!val) {
-          this.log_abort_controller?.cancel()
+          this.log_abort_controller?.abort()
         }
       },
       immediate: true,
@@ -827,7 +827,7 @@ export default Vue.extend({
       kraken.updateExtensionToVersion(
         extension.identifier,
         version,
-        (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
+        (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
       )
         .then(() => {
           this.fetchInstalledExtensions()
@@ -932,7 +932,7 @@ export default Vue.extend({
         })
     },
     async showLogs(extension: InstalledExtensionData) {
-      this.log_abort_controller = axios.CancelToken.source()
+      this.log_abort_controller = new AbortController()
       this.log_output = ''
       this.outputBuffer = ''
       this.log_info_output = `Awaiting logs for ${extension.name}`
@@ -942,8 +942,8 @@ export default Vue.extend({
       const fetchLogs = (): void => {
         kraken.getContainerLogs(
           this.log_container_name ?? '',
-          (progressEvent) => this.handleLogProgress(progressEvent, extension),
-          this.log_abort_controller?.token,
+          (progressEvent) => this.handleLogProgress(progressEvent.event, extension),
+          this.log_abort_controller?.signal,
         )
           .then(() => {
             this.log_info_output = `Reconnecting to ${extension.name}`
@@ -975,7 +975,7 @@ export default Vue.extend({
 
       kraken.installExtension(
         extension,
-        (progressEvent) => this.handleDownloadProgress(progressEvent, tracker),
+        (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
       )
         .then(() => {
           this.fetchInstalledExtensions()
