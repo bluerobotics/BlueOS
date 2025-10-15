@@ -545,7 +545,7 @@ export default Vue.extend({
             tag,
           },
           onDownloadProgress: (progressEvent) => {
-            tracker.digestNewData(progressEvent, false)
+            tracker.digestNewData(progressEvent.event, false)
             this.pull_output = tracker.pull_output
             this.download_percentage = tracker.download_percentage
             this.extraction_percentage = tracker.extraction_percentage

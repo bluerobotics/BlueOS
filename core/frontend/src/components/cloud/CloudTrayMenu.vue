@@ -402,7 +402,7 @@ export default Vue.extend({
           url: `${KRAKEN_API_URL}/extension/install`,
           data: majorTomData,
           onDownloadProgress: (progressEvent) => {
-            this.pull_tracker?.digestNewData(progressEvent)
+            this.pull_tracker?.digestNewData(progressEvent.event)
           },
         })
       } catch (error) {
