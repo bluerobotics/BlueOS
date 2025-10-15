@@ -6,7 +6,6 @@ import {
   RunningContainer,
 } from '@/types/kraken'
 import back_axios from '@/utils/api'
-import { CancelToken } from 'axios'
 
 const KRAKEN_BASE_URL = '/kraken'
 const KRAKEN_API_V2_URL = `${KRAKEN_BASE_URL}/v2.0`
@@ -321,18 +320,18 @@ export async function getContainersStats(): Promise<any> {
  * Fetch logs of a given container.
  * @param {string} containerName The name of the container
  * @param {function} progressHandler The progress handler for the download
- * @param {CancelToken} cancelToken The cancel token for the request
+ * @param {AbortSignal} cancelToken The cancel token for the request
  */
 export async function getContainerLogs(
   containerName: string,
   progressHandler: (event: any) => void,
-  cancelToken: CancelToken | undefined,
+  cancelToken: AbortSignal | undefined,
 ): Promise<any> {
   await back_axios({
     method: 'GET',
     url: `${KRAKEN_API_V2_URL}/container/${containerName}/log`,
     onDownloadProgress: progressHandler,
-    cancelToken: cancelToken,
+    signal: cancelToken,
   })
 }
 
