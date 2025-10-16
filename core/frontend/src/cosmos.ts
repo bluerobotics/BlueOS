@@ -83,6 +83,7 @@ export const convertHexToRgbd = (color: string): vec3 => {
  */
 const copyWithFallbackMethod = (text: string): boolean => {
   const temporaryInputElement = document.createElement('input')
+  temporaryInputElement.addEventListener('focusin', e => e.stopPropagation())
   temporaryInputElement.value = text
   document.body.appendChild(temporaryInputElement)
 
