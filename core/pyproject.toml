@@ -14,7 +14,6 @@ dependencies = [
   "commander",
   "helper",
   "kraken",
-  "log_zipper",
   "nmea_injector",
   "pardal",
   "ping",
@@ -60,7 +59,6 @@ cable_guy = { workspace = true }
 commander = { workspace = true }
 helper = { workspace = true }
 kraken = { workspace = true }
-log_zipper = { workspace = true }
 nmea_injector = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
