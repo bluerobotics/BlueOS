@@ -282,7 +282,8 @@ export default Vue.extend({
         name: this.new_extension.name,
         docker: this.new_extension.docker,
         tag: this.new_extension.tag,
-        permissions: this.new_extension.permissions,
+        permissions: this.new_extension.permissions !== '{}'
+          ? this.new_extension.permissions : this.new_extension.user_permissions,
       }
 
       const jsonString = JSON.stringify(config, null, 2)
