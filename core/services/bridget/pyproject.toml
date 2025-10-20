@@ -7,13 +7,13 @@ requires-python = ">=3.11"
 dependencies = [
     "bridges==0.1.0",
     "commonwealth==0.1.0",
-    "fastapi==0.105.0",
-    "fastapi-versioning==0.9.1",
-    "loguru==0.5.3",
-    "pydantic==1.10.12",
+    "fastapi==0.115.14",
+    "fastapi-versioning==0.10.0",
+    "loguru==0.7.3",
+    "pydantic==2.11.7",
     "pyserial==3.5",
-    "requests==2.26.0",
-    "uvicorn==0.18.0",
+    "requests==2.32.4",
+    "uvicorn==0.35.0",
 ]
 
 [tool.uv]

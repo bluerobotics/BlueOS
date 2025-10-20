@@ -1,11 +1,7 @@
 from enum import Enum
-from ipaddress import ip_network
-from typing import List, Optional
-
+from ipaddress import ip_network, ip_address, IPv4Network, IPv6Network, IPv4Address, IPv6Address
+from typing import List, Optional, Union
 from pydantic import BaseModel
-
-# TODO: Replace this by `from pydantic import IPvAnyAddress, IPvAnyNetwork` once we update to pydantic v2
-from typedefs_pydantic_network_shin import IPvAnyAddress, IPvAnyNetwork
 
 
 class AddressMode(str, Enum):
@@ -56,24 +52,24 @@ class Route(BaseModel):
 
     # TODO: Remove this once we update self.destination type
     @property
-    def destination_parsed(self) -> IPvAnyNetwork:
-        return IPvAnyNetwork(self.destination)
+    def destination_parsed(self) -> Union[IPv4Network, IPv6Network]:
+        return ip_network(self.destination)
 
     # TODO: Remove this once we update self.destination type
     @destination_parsed.setter
-    def destination_parsed(self, ip: IPvAnyNetwork) -> None:
+    def destination_parsed(self, ip: Union[IPv4Network, IPv6Network]) -> None:
         self.destination = str(ip)
 
     # TODO: Remove this once we update self.next_hop type
     @property
-    def next_hop_parsed(self) -> Optional[IPvAnyAddress]:
+    def next_hop_parsed(self) -> Optional[Union[IPv4Address, IPv6Address]]:
         if self.gateway is None:
             return None
-        return IPvAnyAddress(self.gateway)
+        return ip_address(self.gateway)
 
     # TODO: Remove this once we update self.next_hop type
     @next_hop_parsed.setter
-    def next_hop_parsed(self, ip: Optional[IPvAnyAddress]) -> None:
+    def next_hop_parsed(self, ip: Optional[Union[IPv4Address, IPv6Address]]) -> None:
         self.gateway = str(ip) if ip else None
 
     @property

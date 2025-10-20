@@ -6,10 +6,10 @@ requires-python = ">=3.11"
 dependencies = [
     "appdirs==1.4.4",
     "commonwealth==0.1.0",
-    "fastapi==0.105.0",
-    "fastapi-versioning==0.9.1",
-    "loguru==0.5.3",
-    "uvicorn==0.18.0",
+    "fastapi==0.115.14",
+    "fastapi-versioning==0.10.0",
+    "loguru==0.7.3",
+    "uvicorn==0.35.0",
 ]
 
 [tool.uv]
