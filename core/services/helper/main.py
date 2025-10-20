@@ -164,6 +164,7 @@ class Helper:
     SKIP_PORTS: Set[int] = {
         22,  # SSH
         80,  # BlueOS
+        443,  # BlueOS TLS
         5201,  # Iperf
         6021,  # Mavlink Camera Manager's WebRTC signaller
         7000,  # Major Tom does not have a public API yet
@@ -601,7 +602,7 @@ async def root() -> HTMLResponse:
     return HTMLResponse(content=html_content, status_code=200)
 
 
-port_to_service_map: Dict[int, str] = parse_nginx_file("/home/pi/tools/nginx/nginx.conf")
+port_to_service_map: Dict[int, str] = parse_nginx_file("/etc/blueos/nginx/nginx.conf")
 
 
 async def main() -> None:
