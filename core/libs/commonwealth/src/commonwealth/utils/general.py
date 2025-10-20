@@ -125,33 +125,49 @@ async def delete_everything_stream(path: Path) -> AsyncGenerator[dict[str, Any],
 
     items = await asyncio.to_thread(lambda: list(path.glob("*")))
 
-    for item in items:
+    async def delete_file(item: Path) -> dict[str, Any]:
+        """Delete a single file and return deletion info."""
         try:
-            if item.is_file() and not file_is_open(item):
+            if not file_is_open(item):
                 size = item.stat().st_size
                 await asyncio.to_thread(item.unlink)
                 # fmt: off
-                yield DeletionInfo(
+                return DeletionInfo(
                     path=str(item),
                     size=size,
                     type="file",
                     success=True
                 ).to_dict()
                 # fmt: on
-            if item.is_dir() and not item.is_symlink():
-                # Delete folder contents
-                async for info in delete_everything_stream(item):
-                    yield info
+            # File is open, skip it
+            return DeletionInfo(path=str(item), size=0, type="file", success=False).to_dict()
         except Exception as exception:
             logger.warning(f"Failed to delete: {item}, {exception}")
             # fmt: off
-            yield DeletionInfo(
+            return DeletionInfo(
                 path=str(item),
                 size=0,
-                type="directory" if item.is_dir() else "file",
+                type="file",
                 success=False
             ).to_dict()
             # fmt: on
+
+    # Separate files and directories
+    files = [item for item in items if item.is_file()]
+    directories = [item for item in items if item.is_dir() and not item.is_symlink()]
+
+    # Delete all files in parallel and yield results as they complete
+    if files:
+        file_tasks = [delete_file(file) for file in files]
+        for coro in asyncio.as_completed(file_tasks):
+            result = await coro
+            yield result
+
+    # Process directories (recursively) - these are still sequential to avoid
+    # excessive parallelism and potential resource exhaustion
+    for directory in directories:
+        async for info in delete_everything_stream(directory):
+            yield info
 
 
 def file_is_open(path: Path) -> bool:

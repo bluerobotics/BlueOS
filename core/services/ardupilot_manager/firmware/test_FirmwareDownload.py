@@ -4,7 +4,30 @@ import platform
 import pytest
 
 from firmware.FirmwareDownload import FirmwareDownloader
-from typedefs import Platform, Vehicle
+from typedefs import FlightController, Platform, PlatformType, Vehicle
+
+Pixhawk1 = FlightController(
+    name="Pixhawk1",
+    manufacturer="3DR",
+    platform=Platform(name="Pixhawk1", platform_type=PlatformType.Serial),
+    ardupilot_board_id=9,
+)
+Pixhawk4 = FlightController(
+    name="Pixhawk4",
+    manufacturer="Holybro",
+    platform=Platform(name="Pixhawk4", platform_type=PlatformType.Serial),
+    ardupilot_board_id=50,
+)
+SITL = FlightController(
+    name="SITL",
+    manufacturer="ArduPilot Team",
+    platform=Platform.SITL(),
+)
+Navigator = FlightController(
+    name="Navigator",
+    manufacturer="Blue Robotics",
+    platform=Platform(name="Navigator", platform_type=PlatformType.Linux),
+)
 
 
 def test_static() -> None:
@@ -21,17 +44,17 @@ def test_firmware_download() -> None:
     assert firmware_download.download_manifest(), "Failed to download/validate manifest file."
 
     versions = firmware_download._find_version_item(
-        vehicletype="Sub", format="apj", mav_firmware_version_type="STABLE-4.0.1", platform=Platform.Pixhawk1
+        vehicletype="Sub", format="apj", mav_firmware_version_type="STABLE-4.0.1", platform=Pixhawk1.name
     )
     assert len(versions) == 1, "Failed to find a single firmware."
 
     versions = firmware_download._find_version_item(
-        vehicletype="Sub", mav_firmware_version_type="STABLE-4.0.1", platform=Platform.Pixhawk1
+        vehicletype="Sub", mav_firmware_version_type="STABLE-4.0.1", platform=Pixhawk1.name
     )
     # There are two versions, one for the firmware and one with the bootloader
     assert len(versions) == 2, "Failed to find multiple versions."
 
-    available_versions = firmware_download.get_available_versions(Vehicle.Sub, Platform.Pixhawk1)
+    available_versions = firmware_download.get_available_versions(Vehicle.Sub, Pixhawk1)
     assert len(available_versions) == len(set(available_versions)), "Available versions are not unique."
 
     test_available_versions = ["STABLE-4.0.1", "STABLE-4.0.0", "OFFICIAL", "DEV", "BETA"]
@@ -40,21 +63,21 @@ def test_firmware_download() -> None:
     ), "Available versions are missing know versions."
 
     assert firmware_download.download(
-        Vehicle.Sub, Platform.Pixhawk1, "STABLE-4.0.1"
+        Vehicle.Sub, Pixhawk1, "STABLE-4.0.1"
     ), "Failed to download a valid firmware file."
 
-    assert firmware_download.download(Vehicle.Sub, Platform.Pixhawk1), "Failed to download latest valid firmware file."
+    assert firmware_download.download(Vehicle.Sub, Pixhawk1), "Failed to download latest valid firmware file."
 
-    assert firmware_download.download(Vehicle.Sub, Platform.Pixhawk4), "Failed to download latest valid firmware file."
+    assert firmware_download.download(Vehicle.Sub, Pixhawk4), "Failed to download latest valid firmware file."
 
-    assert firmware_download.download(Vehicle.Sub, Platform.SITL), "Failed to download SITL."
+    assert firmware_download.download(Vehicle.Sub, SITL), "Failed to download SITL."
 
     # skipt these tests for MacOS
     if platform.system() == "Darwin":
         pytest.skip("Skipping test for MacOS")
     # It'll fail if running in an arch different of ARM
     if "x86" in os.uname().machine:
-        assert firmware_download.download(Vehicle.Sub, Platform.Navigator), "Failed to download navigator binary."
+        assert firmware_download.download(Vehicle.Sub, Navigator), "Failed to download navigator binary."
     else:
         with pytest.raises(Exception):
-            firmware_download.download(Vehicle.Sub, Platform.Navigator)
+            firmware_download.download(Vehicle.Sub, Navigator)
