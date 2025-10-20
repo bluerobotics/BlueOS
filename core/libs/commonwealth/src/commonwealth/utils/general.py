@@ -127,7 +127,7 @@ async def delete_everything_stream(path: Path) -> AsyncGenerator[dict[str, Any],
 
     for item in items:
         try:
-            if item.is_file() and not file_is_open(item):
+            if item.is_file() and (item.suffix == ".gz" or not file_is_open(item)):
                 size = item.stat().st_size
                 await asyncio.to_thread(item.unlink)
                 # fmt: off
