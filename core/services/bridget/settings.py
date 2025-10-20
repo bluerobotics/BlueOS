@@ -1,14 +1,14 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-import pykson  # type: ignore
-from commonwealth.settings import settings
+from commonwealth.settings.settings import PydanticSettings
+from pydantic import BaseModel, Field
 
 
-class BridgeSettingsSpecV1(pykson.JsonObject):
-    serial_path = pykson.StringField()
-    baudrate = pykson.IntegerField()
-    ip = pykson.StringField()
-    udp_port = pykson.IntegerField()
+class BridgeSettingsSpecV1(BaseModel):
+    serial_path: str
+    baudrate: int
+    ip: str
+    udp_port: int
 
     @staticmethod
     def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV1":  # type: ignore
@@ -25,31 +25,25 @@ class BridgeSettingsSpecV1(pykson.JsonObject):
         return False
 
 
-class SettingsV1(settings.BaseSettings):
-    VERSION = 1
-    specs = pykson.ObjectListField(BridgeSettingsSpecV1)
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV1.VERSION
+class SettingsV1(PydanticSettings):
+    specs: List[BridgeSettingsSpecV1] = Field(default_factory=list)
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV1.VERSION:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV1.VERSION:
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
             super().migrate(data)
 
-        data["VERSION"] = SettingsV1.VERSION
+        data["VERSION"] = SettingsV1.STATIC_VERSION
 
 
-class BridgeSettingsSpecV2(pykson.JsonObject):
-    udp_target_port = pykson.IntegerField()
-    udp_listen_port = pykson.IntegerField()
-    serial_path = pykson.StringField()
-    baudrate = pykson.IntegerField()
-    ip = pykson.StringField()
+class BridgeSettingsSpecV2(BaseModel):
+    udp_target_port: int
+    udp_listen_port: int
+    serial_path: str
+    baudrate: int
+    ip: str
 
     @staticmethod
     def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV2":  # type: ignore
@@ -68,22 +62,16 @@ class BridgeSettingsSpecV2(pykson.JsonObject):
 
 
 class SettingsV2(SettingsV1):
-    VERSION = 2
-    specsv2 = pykson.ObjectListField(BridgeSettingsSpecV2)
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV2.VERSION
+    specsv2: List[BridgeSettingsSpecV2] = Field(default_factory=list)
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV2.VERSION:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV2.VERSION:
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
             super().migrate(data)
 
-            data["VERSION"] = SettingsV2.VERSION
+            data["VERSION"] = SettingsV2.STATIC_VERSION
             data["specsv2"] = []
             for spec in data["specs"]:
                 server = spec["ip"] == "0.0.0.0"

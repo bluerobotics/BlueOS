@@ -10,13 +10,9 @@ dependencies = [
     "eclipse-zenoh==1.4.0",
     "loguru==0.5.3",
     "psutil==5.7.2",
-    "pykson==1.0.2",
     "sentry-sdk==2.29.1",
     "starlette==0.27.0",
 ]
-
-[tool.uv.sources]
-pykson = { url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" }
 
 [build-system]
 requires = ["hatchling"]
