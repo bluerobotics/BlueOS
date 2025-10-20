@@ -1,19 +1,19 @@
 import json
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Sequence
 
-from commonwealth.settings import settings
-from pykson import BooleanField, IntegerField, JsonObject, ObjectListField, StringField
+from commonwealth.settings.settings import PydanticSettings
+from pydantic import BaseModel, Field
 
 
-class ExtensionSettings(JsonObject):
-    identifier = StringField()
-    name = StringField()
-    docker = StringField()
-    tag = StringField()
-    permissions = StringField()
-    enabled = BooleanField()
-    user_permissions = StringField()
+class ExtensionSettings(BaseModel):
+    identifier: str
+    name: str
+    docker: str
+    tag: str
+    permissions: str
+    enabled: bool
+    user_permissions: str
 
     def settings(self) -> Any:
         if self.user_permissions:
@@ -33,49 +33,37 @@ class ExtensionSettings(JsonObject):
         return "extension-" + regex.sub("", f"{self.docker}{self.tag}")
 
 
-class ManifestSettings(JsonObject):
-    identifier = StringField()
-    enabled = BooleanField()
-    priority = IntegerField()
-    factory = BooleanField()
-    name = StringField()
-    url = StringField()
+class ManifestSettings(BaseModel):
+    identifier: str
+    enabled: bool
+    priority: int
+    factory: bool
+    name: str
+    url: str
 
 
-class SettingsV1(settings.BaseSettings):
-    VERSION = 1
-    extensions = ObjectListField(ExtensionSettings)
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV1.VERSION
+class SettingsV1(PydanticSettings):
+    extensions: Sequence[ExtensionSettings] = Field(default_factory=list)
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV1.VERSION:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV1.VERSION:
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
             super().migrate(data)
 
-        data["VERSION"] = SettingsV1.VERSION
+        data["VERSION"] = SettingsV1.STATIC_VERSION
 
 
 class SettingsV2(SettingsV1):
-    VERSION = 2
-    manifests = ObjectListField(ManifestSettings)
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV2.VERSION
+    manifests: Sequence[ManifestSettings] = Field(default_factory=list)
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV2.VERSION:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV2.VERSION:
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
             super().migrate(data)
 
-            data["VERSION"] = SettingsV2.VERSION
+            data["VERSION"] = SettingsV2.STATIC_VERSION
             data["manifests"] = []

@@ -452,7 +452,6 @@ dependencies = [
     { name = "packaging" },
     { name = "psutil" },
     { name = "pydantic" },
-    { name = "pykson" },
     { name = "sentry-sdk" },
     { name = "starlette" },
 ]
@@ -466,7 +465,6 @@ requires-dist = [
     { name = "packaging", specifier = ">=20.4,<=25.0" },
     { name = "psutil", specifier = ">=5.7.2,<=7.1.3" },
     { name = "pydantic", specifier = ">=1.10.12,<=2.12.5" },
-    { name = "pykson", url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" },
     { name = "sentry-sdk", specifier = "==2.29.1" },
     { name = "starlette", specifier = ">=0.27.0" },
 ]
@@ -668,27 +666,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/31/8a/6f5449a7be67e4655069490f05fa3e190f5f5864e6ddee140f60fe5526dd/isort-5.8.0.tar.gz", hash = "sha256:0a943902919f65c5684ac4e0154b1ad4fac6dcaa5d9f3426b732f1c8b5419be6", size = 167927 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d9/47/0ec3ec948b7b3a0ba44e62adede4dca8b5985ba6aaee59998bed0916bd17/isort-5.8.0-py3-none-any.whl", hash = "sha256:2bb1680aad211e3c9944dbce1d4ba09a989f04e238296c87fe2139faa26d655d", size = 103227 },
-]
-
-[[package]]
-name = "jalali-core"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2b/3c/21e32e3444c572174a5d774643eb2aa8ab60ef68b99a4c3585a0a11428b4/jalali_core-1.0.0.tar.gz", hash = "sha256:f4287c70c630323dcf0a3ab26df905ba4d451e230ac1f65b3bb2f77797894a2b", size = 2752 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/20/a4e942f9685df720a106da292e29a53212b27903749cc563b86b612b113e/jalali_core-1.0.0-py3-none-any.whl", hash = "sha256:84e6f5090eadfb35234f24fad084be831d00da3c0b238ee001e8a1fd49bf7924", size = 3616 },
-]
-
-[[package]]
-name = "jdatetime"
-version = "5.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "jalali-core" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/9d/5ed59c36f3cbc68c01fab6442e6efb6d35a484ba4eec4f790264fce39f6c/jdatetime-5.2.0.tar.gz", hash = "sha256:c81d5898717b82b609a3ce2a73f8b8d3230b0c757e5c0de9d6b1acfdc224f551", size = 21663 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/39/0dd2676d08468692606645db5ea40091290dc20747ff59636c21c0567d3c/jdatetime-5.2.0-py3-none-any.whl", hash = "sha256:d4aa73543e4e6c0e6122b58743773168edee5efe5c5acf05d1dc8c90524ca71c", size = 12199 },
 ]
 
 [[package]]
@@ -1128,26 +1105,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pykson"
-version = "1.0.2"
-source = { url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" }
-dependencies = [
-    { name = "jdatetime" },
-    { name = "python-dateutil" },
-    { name = "pytz" },
-    { name = "six" },
-]
-sdist = { hash = "sha256:dbd3b8a3c6e8e874ccfc365551fff200a34893bee17f590b1e5f775cd83c9e8f" }
-
-[package.metadata]
-requires-dist = [
-    { name = "jdatetime", specifier = ">=3.6.2" },
-    { name = "python-dateutil", specifier = ">=2.8.0" },
-    { name = "pytz", specifier = ">=2019.3" },
-    { name = "six", specifier = ">=1.12.0" },
-]
-
-[[package]]
 name = "pylint"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1307,18 +1264,6 @@ wheels = [
 ]
 
 [[package]]
-name = "python-dateutil"
-version = "2.9.0.post0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892 },
-]
-
-[[package]]
 name = "python-multipart"
 version = "0.0.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1326,15 +1271,6 @@ dependencies = [
     { name = "six" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/46/40/a933ac570bf7aad12a298fc53458115cc74053474a72fbb8201d7dc06d3d/python-multipart-0.0.5.tar.gz", hash = "sha256:f7bb5f611fc600d15fa47b3974c8aa16e93724513b49b5f95c81e6624c83fa43", size = 32581 }
-
-[[package]]
-name = "pytz"
-version = "2025.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f8/bf/abbd3cdfb8fbc7fb3d4d38d320f2441b1e7cbe29be4f23797b4a2b5d8aac/pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3", size = 320884 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/c4/34e93fe5f5429d7570ec1fa436f1986fb1f00c3e0f43a589fe2bbcd22c3f/pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00", size = 509225 },
-]
 
 [[package]]
 name = "recorder-extractor"
