@@ -76,3 +76,8 @@ async def load(file: UploadFile = File(...), version_chooser: VersionChooser = D
 @version_router_v1.post("/restart", summary="Restart the currently running docker container")
 async def restart(version_chooser: VersionChooser = Depends(get_docker_client)) -> Any:
     return await version_chooser.restart()
+
+
+@version_router_v1.get("/factory", summary="Get factory version information")
+async def factory(version_chooser: VersionChooser = Depends(get_docker_client)) -> Any:
+    return await version_chooser.get_factory_version()
