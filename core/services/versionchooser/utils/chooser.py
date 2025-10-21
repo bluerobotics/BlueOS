@@ -150,6 +150,35 @@ class VersionChooser:
             },
         )
 
+    async def get_factory_version(self) -> str:
+        """Get the factory version from the blueos-core:factory image
+
+        Retrieves the GIT_DESCRIBE_TAGS environment variable from the factory
+        image and extracts the version tag.
+
+        Returns:
+            str: The factory version tag, or empty string if not found
+        """
+        try:
+            factory_details = await self.client.images.inspect("bluerobotics/blueos-core:factory")
+            env_info = factory_details["Config"]["Env"]
+
+            for info in env_info:
+                if "=" not in info:
+                    continue
+
+                key, val = info.split("=", maxsplit=1)
+                if key == "GIT_DESCRIBE_TAGS" and val:
+                    version = str(val).rsplit("-", maxsplit=2)[0]
+                    return version
+
+            logger.info("GIT_DESCRIBE_TAGS not found in factory image environment")
+            return ""
+
+        except Exception as e:
+            logger.error(f"Error getting factory version: {e}")
+            return ""
+
     async def get_bootstrap_version(self) -> str:
         """Get the current bootstrap container image version.
 
