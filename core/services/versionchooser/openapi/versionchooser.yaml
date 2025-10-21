@@ -61,6 +61,14 @@ paths:
                   type: string
                   example: master
 
+  /version/factory:
+    get:
+      operationId: main.get_factory_version
+      summary: Get factory version information
+      responses:
+        '200':
+          description: The BlueOS version of the factory image, empty if unknown
+
   /version/restart:
     post:
       operationId: main.restart
