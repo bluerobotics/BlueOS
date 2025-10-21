@@ -67,6 +67,10 @@ async def get_bootstrap_version() -> Any:
     return await versionChooser.get_bootstrap_version()
 
 
+async def get_factory_version() -> Any:
+    return await versionChooser.get_factory_version()
+
+
 async def set_bootstrap_version(request: web.Request) -> Any:
     data = await request.json()
     tag = data["tag"]
