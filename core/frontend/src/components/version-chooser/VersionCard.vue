@@ -8,14 +8,14 @@
         <v-list-item-avatar>
           <v-icon :class="current ? 'green' : 'grey'">
             {{ remote ? 'mdi-earth' : '' }}
-            {{ current ? 'mdi-checkbox-blank-circle' : 'mdi-checkbox-blank-circle-outline' }}
+            {{ displayIcon }}
           </v-icon>
         </v-list-item-avatar>
 
         <div>
           <p
             class="text-body-1 ma-0"
-            v-text="image.tag"
+            v-text="displayTag"
           />
           <p
             v-if="settings.is_pirate_mode"
@@ -210,7 +210,7 @@ import helper from '@/store/helper'
 import { Dictionary } from '@/types/common'
 import { InternetConnectionState } from '@/types/helper'
 import {
-  DEFAULT_REMOTE_IMAGE, getDocsUrl, isSemVer,
+  DEFAULT_REMOTE_IMAGE, getDocsUrl, getFactoryVersion, isSemVer,
 } from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
@@ -288,6 +288,7 @@ export default Vue.extend({
       bootstrapDialog: false,
       notesExpanded: false,
       settings,
+      factoryVersion: '',
     }
   },
   computed: {
@@ -318,6 +319,21 @@ export default Vue.extend({
     docsUrl(): string {
       return getDocsUrl(this.image.tag, this.latestStable)
     },
+    displayTag(): string {
+      if (this.image.tag === 'factory') {
+        return this.factoryVersion ? `factory [${this.factoryVersion}]` : 'factory'
+      }
+      return this.image.tag
+    },
+    displayIcon(): string {
+      if (this.image.tag === 'factory') {
+        return 'mdi-factory'
+      }
+      return this.current ? 'mdi-checkbox-blank-circle' : 'mdi-checkbox-blank-circle-outline'
+    },
+  },
+  async mounted() {
+    this.factoryVersion = await getFactoryVersion()
   },
   methods: {
     asTimeAgo(value: string) {
