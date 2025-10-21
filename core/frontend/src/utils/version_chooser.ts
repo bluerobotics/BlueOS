@@ -199,6 +199,15 @@ async function dockerAccounts(): Promise<DockerLoginInfo[]> {
   return data.data as DockerLoginInfo[]
 }
 
+async function getFactoryVersion(): Promise<string> {
+  const response = await back_axios({
+    method: 'get',
+    url: `${API_URL}/version/factory/`,
+  })
+
+  return response.data as string
+}
+
 export {
   DEFAULT_REMOTE_IMAGE,
   dockerAccounts,
@@ -216,4 +225,5 @@ export {
   loadLocalVersions,
   sortImages,
   sortVersions,
+  getFactoryVersion,
 }
