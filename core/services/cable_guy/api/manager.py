@@ -180,7 +180,7 @@ class EthernetManager:
         Returns:
             bool: True if valid, False if not
         """
-        blacklist = ["lo", "ham.*", "docker.*", "veth.*"]
+        blacklist = ["lo", "ham.*", "docker.*", "veth.*", "zt.*"]
         if filter_wifi:
             wifi_interfaces = self._get_wifi_interfaces()
             blacklist += wifi_interfaces
