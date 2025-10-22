@@ -54,7 +54,7 @@ def get_host_os() -> HostOs:
 
 
 def delete_everything(path: Path) -> None:
-    if path.is_file() and not file_is_open(path):
+    if path.is_file() and (path.suffix == ".gz" or not file_is_open(path)):
         path.unlink()
         return
 
