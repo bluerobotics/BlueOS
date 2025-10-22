@@ -105,13 +105,12 @@ class EthernetManager:
             watchdog_call: Whether this is a watchdog call
         """
         async with self.config_mutex:
-            if not watchdog_call:
-                await self.network_handler.cleanup_interface_connections(interface.name)
             interfaces = self.get_interfaces()
             valid_names = [interface.name for interface in interfaces]
             if interface.name not in valid_names:
                 raise ValueError(f"Invalid interface name ('{interface.name}'). Valid names are: {valid_names}")
-
+            if not watchdog_call:
+                await self.network_handler.cleanup_interface_connections(interface.name)
             logger.info(f"Setting configuration for interface '{interface.name}'.")
             if interface.addresses:
                 # bring interface up
