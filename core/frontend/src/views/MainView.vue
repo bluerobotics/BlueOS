@@ -6,7 +6,7 @@
       no-gutters
     >
       <v-alert
-        v-if="!current_network"
+        v-if="!has_internet"
         border="top"
         colored-border
         type="info"
@@ -95,8 +95,8 @@ import Vue from 'vue'
 
 import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
 import settings from '@/libs/settings'
-import wifi from '@/store/wifi'
-import { Network } from '@/types/wifi'
+import helper from '@/store/helper'
+import { InternetConnectionState } from '@/types/helper'
 
 import menus, { menuItem } from '../menus'
 
@@ -126,8 +126,8 @@ export default Vue.extend({
       }
       return items
     },
-    current_network(): Network | null {
-      return wifi.current_network
+    has_internet(): boolean {
+      return helper.has_internet !== InternetConnectionState.OFFLINE
     },
   },
 })
