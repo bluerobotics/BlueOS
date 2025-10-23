@@ -6,7 +6,7 @@
       no-gutters
     >
       <v-alert
-        v-if="!current_network"
+        v-if="!has_internet"
         border="top"
         colored-border
         type="info"
@@ -92,9 +92,9 @@ import Vue from 'vue'
 
 import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
 import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
+import helper from '@/store/helper'
 import mavlink from '@/store/mavlink'
-import wifi from '@/store/wifi'
-import { Network } from '@/types/wifi'
+import { InternetConnectionState } from '@/types/helper'
 import mavlink_store_get from '@/utils/mavlink'
 import CPUUsage from '@/widgets/CpuPie.vue'
 import Networking from '@/widgets/Networking.vue'
@@ -183,8 +183,8 @@ export default Vue.extend({
         },
       ]
     },
-    current_network(): Network | null {
-      return wifi.current_network
+    has_internet(): boolean {
+      return helper.has_internet !== InternetConnectionState.OFFLINE
     },
     orientation(): string {
       const msg = mavlink_store_get(mavlink, 'ATTITUDE.messageData.message') as
