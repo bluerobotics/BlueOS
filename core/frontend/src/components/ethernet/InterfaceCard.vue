@@ -181,14 +181,11 @@ import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en.json'
 import Vue, { PropType } from 'vue'
 
-import Notifier from '@/libs/notifier'
 import beacon from '@/store/beacon'
 import ethernet from '@/store/ethernet'
 import {
   AddressMode, DHCPServerDetails, DHCPServerLease, EthernetInterface,
 } from '@/types/ethernet'
-import { ethernet_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
 
 import AddressCreationDialog from './AddressCreationDialog.vue'
 import AddressDeletionDialog from './AddressDeletionDialog.vue'
@@ -196,8 +193,6 @@ import DHCPServerDialog from './DHCPServerDialog.vue'
 
 TimeAgo.addDefaultLocale(en)
 const timeAgo = new TimeAgo('en-US')
-
-const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'InterfaceCard',
@@ -325,31 +320,12 @@ export default Vue.extend({
         return
       }
 
-      ethernet.setUpdatingInterfaces(true)
-
-      await back_axios({
-        method: 'delete',
-        url: `${ethernet.API_URL}/address`,
-        timeout: 10000,
-        params: { interface_name: this.adapter.name, ip_address: ip },
-      })
-        .catch((error) => {
-          notifier.pushBackError('ETHERNET_ADDRESS_DELETE_FAIL', error)
-        })
+      await ethernet.deleteAddress({ interface_name: this.adapter.name, ip_address: ip })
     },
     async triggerForDynamicIP(): Promise<void> {
       ethernet.setUpdatingInterfaces(true)
 
-      await back_axios({
-        method: 'post',
-        url: `${ethernet.API_URL}/dynamic_ip`,
-        timeout: 10000,
-        params: { interface_name: this.adapter.name },
-      })
-        .catch((error) => {
-          const message = `Could not trigger for dynamic IP address on '${this.adapter.name}': ${error.message}.`
-          notifier.pushError('DYNAMIC_IP_TRIGGER_FAIL', message)
-        })
+      await ethernet.triggerDynamicIP(this.adapter.name)
     },
     openDHCPServerDialog(): void {
       this.show_dhcp_server_dialog = true
@@ -357,16 +333,7 @@ export default Vue.extend({
     async removeDHCPServer(): Promise<void> {
       ethernet.setUpdatingInterfaces(true)
 
-      await back_axios({
-        method: 'delete',
-        url: `${ethernet.API_URL}/dhcp`,
-        timeout: 10000,
-        params: { interface_name: this.adapter.name },
-      })
-        .catch((error) => {
-          const message = `Could not remove DHCP server from interface '${this.adapter.name}': ${error.message}.`
-          notifier.pushError('DHCP_SERVER_REMOVE_FAIL', message)
-        })
+      await ethernet.RemoveDHCPServer(this.adapter.name)
     },
     async fetchLeases(): Promise<void> {
       if (!this.is_there_dhcp_server_already) {
@@ -376,12 +343,7 @@ export default Vue.extend({
 
       this.loading_leases = true
       try {
-        const response = await back_axios({
-          method: 'get',
-          url: `${ethernet.API_URL}/dhcp/details/${this.adapter.name}`,
-          timeout: 15000,
-        })
-
+        const response = await ethernet.getDHCPServerDetails(this.adapter.name)
         this.dhcp_server_details = response.data[this.adapter.name] as DHCPServerDetails
         this.dhcp_server_details.leases = this.dhcp_server_details?.leases.map((lease: DHCPServerLease) => ({
           ...lease,

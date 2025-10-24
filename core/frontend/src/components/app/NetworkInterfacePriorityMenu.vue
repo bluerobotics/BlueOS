@@ -65,14 +65,9 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
 import helper from '@/store/helper'
 import { EthernetInterface } from '@/types/ethernet'
-import { ethernet_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
-
-const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'NetworkInterfacePriorityMenu',
@@ -143,33 +138,14 @@ export default Vue.extend({
         inter.priority = index * 1000
       })
       this.interfaces = []
-      await back_axios({
-        method: 'post',
-        url: `${ethernet.API_URL}/set_interfaces_priority`,
-        timeout: 10000,
-        data: interface_priorities,
-      })
-        .catch((error) => {
-          const message = `Could not set network interface priorities: ${interface_priorities}, error: ${error}`
-          notifier.pushError('INCREASE_NETWORK_INTERFACE_METRIC_FAIL', message)
-        })
+      await ethernet.setInterfacesPriority(interface_priorities)
         .then(() => {
-          notifier.pushSuccess(
-            'INCREASE_NETWORK_INTERFACE_METRIC_SUCCESS',
-            'Network interface priorities successfully updated!',
-            true,
-          )
           this.close()
         })
       await this.fetchAvailableInterfaces()
     },
     async fetchAvailableInterfaces(): Promise<void> {
-      await back_axios({
-        method: 'get',
-        url: `${ethernet.API_URL}/interfaces`,
-        // Necessary since the system can hang with dhclient timeouts
-        timeout: 10000,
-      })
+      await ethernet.getAvailableInterfaces()
         .then((response) => {
           const interfaces = response.data as EthernetInterface[]
           interfaces.sort((a, b) => {
@@ -178,10 +154,6 @@ export default Vue.extend({
             return priorityA - priorityB
           })
           this.interfaces = interfaces
-        })
-        .catch((error) => {
-          ethernet.setInterfaces([])
-          notifier.pushBackError('ETHERNET_AVAILABLE_INTERFACES_FETCH_FAIL', error)
         })
     },
   },
