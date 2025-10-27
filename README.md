@@ -31,7 +31,7 @@ BlueOS is a modular, robust, and efficient platform for managing a vehicle or ro
 - [Contributions](https://blueos.cloud/docs/latest/development/core/#contributions)
 - [Code of Conduct](./CoC.md)
 - [Registered Extensions](https://docs.bluerobotics.com/BlueOS-Extensions-Repository)
-- [Install directory](https://github.com/bluerobotics/BlueOS/blob/master/install) (for custom installations)
+- [Custom installation](#custom-installation)
 
 ## Principles and Goals 📖
 
@@ -81,6 +81,112 @@ ArduSub is the go-to control system for remotely operated underwater vehicles (R
 BlueOS provides generic support for a wide variety of terrestrial, aerial, and marine uncrewed vehicles that use ArduPilot and PX4 autopilots. This extends the range of vehicles that can be managed using our system, from drones to autonomous cars and more.
 
 >**Note:** Specific vehicle configuration may be necessary to ensure optimal performance with BlueOS.
+
+## Custom installation
+
+### Raspberry Pi and hardware preparation
+
+For installations that need hardware configuration and preparation of the operating system, it´s highly recommended to use [the installation script](https://github.com/bluerobotics/BlueOS/blob/master/install) and customize it as necessary to perform the necessary changes for your system.
+
+### Running BlueOS
+
+It's highly recommended to have debian, debian based (like ubuntu) or any linux distribution with similar services and tools to run BlueOS. This is necessary since BlueOS use specific components on the host computer to do software configuration and take control of the system.
+
+#### Running via Docker Compose (`docker compose`)
+
+1. Clone the repository with git
+      - `git clone --depth=1 --recurse-submodules --shallow-submodules https://github.com/bluerobotics/blueos`
+2. Modify [core/compose/compose.yml](core/compose/compose.yml) example file.
+      - `BLUEOS_DISABLE_SERVICES`: Comment or remove this line if you want BlueOS to have full access of the system, including wifi and ethernet configuration.
+      - `BLUEOS_DISABLE_MEMORY_LIMIT`: Comment or remove this line if running in a system with 4GB of RAM memory or less.
+      - `BLUEOS_DISABLE_STARTUP_UPDATE`: This environment variable is necessary, "startup update" procedure is only required when bootstrap is running to manage the system (not the case when using docker compose).
+      - `SSH_USER`: Uncomment and update the value for the SSH user, required for BlueOS to run commands and access the host computer if necessary.
+      - `SSH_PASSWORD`: Uncomment and update the value for the SSH user password.
+3. Run docker compose
+      - ```bash
+        cd core/compose/ && docker compose pull && cd - # Ensure that docker is up-to-date
+        docker compose -f core/compose/compose.yml up
+        ```
+
+In the end, your docker compose file should look like this
+
+```compose
+version: "3.7"
+services:
+  blueos-core:
+    container_name: blueos-core
+    image: bluerobotics/blueos-core:master
+    privileged: true
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    environment:
+      - BLUEOS_DISABLE_MEMORY_LIMIT=true
+      - BLUEOS_DISABLE_STARTUP_UPDATE=true
+      - SSH_USER=pi
+      - SSH_PASSWORD=raspberry
+    volumes:
+      - ./workspace/.config:/root/.config
+      - ./workspace/etc/blueos:/etc/blueos
+      - ./workspace/tmp/wpa_playground:/tmp/wpa_playground
+      - ./workspace/usr/blueos/bin:/usr/blueos/bin
+      - ./workspace/usr/blueos/extensions:/usr/blueos/extensions
+      - ./workspace/usr/blueos/userdata:/usr/blueos/userdata
+      - ./workspace/var/logs/blueos:/var/logs/blueos
+      - /dev:/dev
+      - /etc/dhcpcd.conf:/etc/dhcpcd.conf
+      - /etc/machine-id:/etc/machine-id:ro
+      - /etc/resolv.conf.host:/etc/resolv.conf.host:ro
+      - /run/udev:/run/udev:ro
+      - /sys:/sys
+      - /var/run/dbus:/var/run/dbus
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/wpa_supplicant:/var/run/wpa_supplicant
+      - /home/patrick/.ssh:/home/pi/.ssh
+```
+
+The system should be accessible now via `0.0.0.0:80` or via the network using the IP address of the device.
+
+
+#### Running via Docker (`docker run`)
+
+You can update the script to follow your board configuration. Here, we are creating temporary folders for the binds, but it's highly recommended to create a workspace environment where you can set the binds to be persistent.
+
+```bash
+# Prepare workspace
+mkdir -p /tmp/workspace/var/logs/blueos
+mkdir -p /tmp/workspace/.config
+mkdir -p /tmp/workspace/tmp/wpa_playground
+mkdir -p /tmp/workspace/etc/blueos
+mkdir -p /tmp/workspace/usr/blueos/{bin,extensions,userdata}
+
+# Docker command
+docker run --privileged --network=host --pid=host --name=blueos-core \
+  --mount type=bind,source=/dev/,target=/dev/,readonly=false \  # Required for hardware access
+  --mount type=bind,source=/sys/,target=/sys/,readonly=false \  # Required for system access
+  --mount type=bind,source=/var/run/wpa_supplicant,target=/var/run/wpa_supplicant,readonly=false \ # Required for wifi control
+  --mount type=bind,source=/tmp/workspace/tmp/wpa_playground,target=/tmp/wpa_playground,readonly=false \ # Required for wifi control
+  --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock,readonly=false \ # Required for docker control
+  --mount type=bind,source=/tmp/workspace/var/logs/blueos,target=/var/logs/blueos,readonly=false \ # Required for BlueOS log files
+  --mount type=bind,source=/run/udev,target=/run/udev,readonly=true \ # Required for hardware information
+  --mount type=bind,source=$HOME/.ssh,target=/home/pi/.ssh,readonly=false \ # Required for host computer access from BlueOS
+  --mount type=bind,source=/tmp/workspace/etc/blueos,target=/etc/blueos,readonly=false \ # Required for bash history and other files
+  --mount type=bind,source=/etc/machine-id,target=/etc/machine-id,readonly=true \ # Required for hardware / system information
+  --mount type=bind,source=/etc/dhcpcd.conf,target=/etc/dhcpcd.conf,readonly=false \ # Required for ethernet control
+  --mount type=bind,source=/tmp/workspace/usr/blueos/userdata,target=/usr/blueos/userdata,readonly=false \ # Required for extension data
+  --mount type=bind,source=/tmp/workspace/usr/blueos/extensions,target=/usr/blueos/extensions,readonly=false \ # Required for extension data
+  --mount type=bind,source=/tmp/workspace/usr/blueos/bin,target=/usr/blueos/bin,readonly=false \ # Required for custom binaries
+  --mount type=bind,source=/etc/resolv.conf.host,target=/etc/resolv.conf.host,readonly=true \ # Required for ethernet configuration
+  --mount type=bind,source=/var/run/dbus,target=/var/run/dbus,readonly=false \ # Required for wifi and others services access
+  --mount type=bind,source=/tmp/workspace/.config,target=/root/.config,readonly=false \ # Required for persistent BlueOS configuration
+  -e BLUEOS_DISABLE_MEMORY_LIMIT=true \
+  -e BLUEOS_DISABLE_STARTUP_UPDATE=true \
+  -e SSH_USER=pi \
+  -e SSH_PASSWORD=raspberry \
+  bluerobotics/blueos-core:master
+```
+
+After running BlueOS like this, the system should be accessible now via `0.0.0.0:80` or via the network using the IP address of the device.
 
 ## Supported Architectures 👨🏻‍💻
 
