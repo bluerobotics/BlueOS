@@ -93,6 +93,7 @@ else
 fi
 
 # Fix permissions for logging folders to allow other users to alter it
+mkdir -p /var/logs/blueos
 find /var/logs/blueos -type d -exec chmod a+rw {} \;
 mkdir -p /usr/blueos/userdata/settings
 find /usr/blueos/userdata -type d -exec chmod a+rw {} \;
