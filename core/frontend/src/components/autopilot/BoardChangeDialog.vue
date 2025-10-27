@@ -38,6 +38,7 @@
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { FlightController, FlightControllerFlags } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
@@ -98,6 +99,7 @@ export default Vue.extend({
       })
         .then(() => {
           this.form.reset()
+          autopilot_data.reset()
         })
         .catch((error) => {
           notifier.pushBackError('AUTOPILOT_BOARD_CHANGE_FAIL', error)
