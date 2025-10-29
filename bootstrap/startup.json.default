@@ -46,6 +46,14 @@
                 "bind": "/root/.docker",
                 "mode": "rw"
             },
+            "/run/log/journal": {
+                "bind": "/run/log/journal",
+                "mode": "ro"
+            },
+            "/var/log/journal": {
+                "bind": "/var/log/journal",
+                "mode": "ro"
+            },
             "/root/.majortom": {
                 "bind": "/root/.majortom",
                 "mode": "rw"
