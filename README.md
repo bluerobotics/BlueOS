@@ -142,6 +142,8 @@ services:
       - /var/run/dbus:/var/run/dbus
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/run/wpa_supplicant:/var/run/wpa_supplicant
+      - /run/log/journal:/run/log/journal:ro
+      - /var/log/journal:/var/log/journal:ro
       - /home/patrick/.ssh:/home/pi/.ssh
 ```
 
@@ -179,6 +181,8 @@ docker run --privileged --network=host --pid=host --name=blueos-core \
   --mount type=bind,source=/etc/resolv.conf.host,target=/etc/resolv.conf.host,readonly=true \ # Required for ethernet configuration
   --mount type=bind,source=/var/run/dbus,target=/var/run/dbus,readonly=false \ # Required for wifi and others services access
   --mount type=bind,source=/tmp/workspace/.config,target=/root/.config,readonly=false \ # Required for persistent BlueOS configuration
+  --mount type=bind,source=/run/log/journal,target=/run/log/journal,readonly=true \ # Required for readonly access to systemd logs
+  --mount type=bind,source=/var/log/journal,target=/var/log/journal,readonly=true \ # Required for readonly access to systemd logs
   -e BLUEOS_DISABLE_MEMORY_LIMIT=true \
   -e BLUEOS_DISABLE_STARTUP_UPDATE=true \
   -e SSH_USER=pi \
