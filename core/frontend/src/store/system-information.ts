@@ -11,6 +11,7 @@ import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { system_information_service } from '@/types/frontend_services'
 import { KernelMessage } from '@/types/system-information/kernel'
+import { JournalEntry, JournalResponse } from '@/types/system-information/journal'
 import { Model } from '@/types/system-information/model'
 import { Netstat } from '@/types/system-information/netstat'
 import { Platform } from '@/types/system-information/platform'
@@ -22,6 +23,7 @@ import back_axios, { isBackendOffline } from '@/utils/api'
 import { networkProbeRateBps } from '@/utils/networking'
 
 export enum FetchType {
+    JournalType = 'journal',
     ModelType = 'model',
     NetstatType = 'netstat',
     PlatformType = 'platform',
@@ -86,6 +88,8 @@ class SystemInformationStore extends VuexModule {
 
   kernel_message: KernelMessage[] = []
 
+  journal_entries: JournalEntry[] = []
+
   model: Model | null = null
 
   netstat: Netstat | null = null
@@ -127,10 +131,20 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Mutation
+  appendJournalEntries(response: JournalResponse): void {
+    this.journal_entries = this.journal_entries.concat(response.entries)
+  }
+
+  @Mutation
   updateModel(model: Model): void {
     this.model = model
   }
 
+
+  @Mutation
+  updateJournalEntries(response: JournalResponse): void {
+    this.journal_entries = response.entries
+  }
 
   @Mutation
   updateNetstat(netstat: Netstat): void {
@@ -321,6 +335,10 @@ class SystemInformationStore extends VuexModule {
     })
       .then((response) => {
         switch (type) {
+          case FetchType.JournalType: {
+            this.updateJournalEntries(response.data)
+            break
+          }
           case FetchType.ModelType:
             this.updateModel(response.data)
             break
@@ -421,5 +439,14 @@ export function unsubscribeKernelMessages(): void {
   kernel_socket = null
   system_information.clearKernelMessages()
 }
+
+const journalWebsocketUrl = `${protocol}://${window.location.host}${system_information.API_URL}/ws/journal`
+const journalSocket = new WebSocket(journalWebsocketUrl)
+journalSocket.onmessage = (message) => {
+  const payload = JSON.parse(message.data)
+  system_information.appendJournalEntries(payload)
+}
+
+system_information.fetchSystemInformation(FetchType.JournalType)
 
 export default system_information
