@@ -119,22 +119,22 @@ class SystemInformationStore extends VuexModule {
   updateSystemDisk(disk: [Disk]): void {
     if (this.system) {
       const now = Date.now()
-      
+
       for (const currentDisk of disk) {
         const previousDisk = this.system.disk?.find(d => d.name === currentDisk.name)
-        
+
         if (currentDisk.write_rate_Bps === undefined) {
           currentDisk.write_rate_Bps = previousDisk?.write_rate_Bps ?? 0
         }
 
         currentDisk.last_update = now
-        
+
         if (previousDisk && previousDisk.last_update) {
           const timeDelta = (now - previousDisk.last_update) / 1000
           const currentUsed = currentDisk.total_space_B - currentDisk.available_space_B
           const previousUsed = previousDisk.total_space_B - previousDisk.available_space_B
           const disk_delta = currentUsed - previousUsed
-          
+
           if (disk_delta !== 0) {
             currentDisk.write_rate_Bps = disk_delta / timeDelta
           }
