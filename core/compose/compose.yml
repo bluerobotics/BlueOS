@@ -13,6 +13,8 @@ services:
       - /run/udev:/run/udev
       - /etc/resolv.conf:/etc/resolv.conf
       - /etc/machine-id:/etc/machine-id
+      - /run/log/journal:/run/log/journal:ro
+      - /var/log/journal:/var/log/journal:ro
       - ./workspace/userdata:/usr/blueos/userdata
       - ./workspace/logs:/var/logs/blueos
       - ./workspace/config:/root/.config
