@@ -1,6 +1,9 @@
 <template>
   <v-row class="main-container">
-    <v-card class="card-container">
+    <v-card
+      v-if="settings.is_pirate_mode"
+      class="card-container"
+    >
       <v-card-title class="align-center">
         Reset Parameters to Firmware Defaults
       </v-card-title>
@@ -11,7 +14,7 @@
         </p>
       </v-card-text>
       <v-card-actions>
-        <v-btn :disabled="wipe_successful" :loading="erasing" color="primary" @click="wipe">
+        <v-btn :disabled="wipe_successful" :loading="erasing" color="primary" @click="show_warning = true">
           Reset All Parameters
         </v-btn>
         <v-btn
@@ -65,6 +68,40 @@
         />
       </v-card-actions>
     </v-card>
+
+    <v-dialog
+      v-model="show_warning"
+      width="fit-content"
+      persistent
+    >
+      <v-sheet
+        color="warning"
+        outlined
+      >
+        <v-card
+          variant="outlined"
+        >
+          <v-card-title class="align-center">
+            WARNING
+          </v-card-title>
+          <v-card-text
+            style="max-width: 30rem;"
+          >
+            You will lose ALL your parameters, vehicle setup, and calibrations.
+            Are you sure you want to reset?
+          </v-card-text>
+          <v-card-actions>
+            <v-btn align="end" color="primary" @click="show_warning = false">
+              Cancel
+            </v-btn>
+            <v-spacer />
+            <v-btn color="warning" @click="wipe()">
+              Yes, reset them
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-sheet>
+    </v-dialog>
   </v-row>
 </template>
 
@@ -80,6 +117,7 @@ import {
   MavCmd, MavResult,
 } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import Notifier from '@/libs/notifier'
+import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Dictionary } from '@/types/common'
@@ -101,6 +139,8 @@ export default Vue.extend({
     rebooting: false,
     done: false,
     erasing: false,
+    settings,
+    show_warning: false,
   }),
   computed: {
     board(): string | undefined {
@@ -180,6 +220,7 @@ export default Vue.extend({
         notifier.pushError('PARAM_RESET_FAIL', `Parameters Reset failed: ${e}`, true)
       } finally {
         this.erasing = false
+        this.show_warning = false
       }
     },
 
