@@ -894,8 +894,8 @@ class EthernetManager:
                     if not any(addr.mode == AddressMode.Client for addr in current_interface.addresses):
                         logger.info(f"Mismatch detected for {current_interface.name}: missing dhcp client address")
                         mismatches.add(saved_interface)
-                # Handle Server and Unmanaged modes
-                elif saved_address.mode in [AddressMode.Server, AddressMode.Unmanaged]:
+                # Handle Server/BackupServer and Unmanaged modes
+                elif saved_address.mode in [AddressMode.Server, AddressMode.BackupServer, AddressMode.Unmanaged]:
                     if saved_address not in current_interface.addresses:
                         logger.info(
                             f"Mismatch detected for {current_interface.name}: "
