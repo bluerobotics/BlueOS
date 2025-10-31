@@ -6,7 +6,7 @@ from commonwealth.utils.general import CpuType, get_cpu_type
 from elftools.elf.elffile import ELFFile
 
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
-from typedefs import Platform, Serial
+from typedefs import Platform, PlatformType, Serial
 
 
 class Navigator(LinuxFlightController):
@@ -14,7 +14,8 @@ class Navigator(LinuxFlightController):
 
     def __init__(self, **data: Any) -> None:
         name = "Navigator"
-        plat = Platform.Navigator
+        plat = Platform(name="Navigator", platform_type=PlatformType.Linux)
+        ardupilot_board_id = None
         if platform.machine() == "aarch64":
             # edge case for 64-bit kernel on 32-bit userland...
             # let's check the arch for /usr/bin/ls
@@ -24,8 +25,8 @@ class Navigator(LinuxFlightController):
                 # from https://github.com/eliben/pyelftools/blob/main/elftools/elf/elffile.py#L513
                 if firm_arch == "AArch64":
                     name = "Navigator64"
-                    plat = Platform.Navigator64
-        super().__init__(**data, name=name, platform=plat)
+                    plat = Platform(name="Navigator64", platform_type=PlatformType.Linux)
+        super().__init__(**data, name=name, platform=plat, ardupilot_board_id=ardupilot_board_id)
 
     def detect(self) -> bool:
         return False

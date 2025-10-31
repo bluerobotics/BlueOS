@@ -1,3 +1,4 @@
+import asyncio
 import time
 from functools import wraps
 from threading import Lock
@@ -10,6 +11,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
     """Decorator that creates a cache for specific inputs with a configured timeout in seconds.
 
+    Supports both synchronous and asynchronous functions.
+
     Args:
         timeout_seconds (float, optional): Timeout to be used for cache invalidation. Defaults to 10.
 
@@ -20,23 +23,40 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
     last_sample_time: Dict[Any, float] = {}
 
     def inner_function(function: F) -> F:
-        @wraps(function)
-        def wrapper(*args: Any) -> Any:
-            nonlocal last_sample_time
+        def is_cache_valid(args: Any) -> bool:
             current_time = time.time()
-            cache_is_valid = args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
+            return args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
 
+        # Check if the function is async
+        if asyncio.iscoroutinefunction(function):
+
+            @wraps(function)
+            async def async_wrapper(*args: Any) -> Any:
+                # The cache is still valid and we can return the value if exists
+                if is_cache_valid(args) and args in cache:
+                    return cache[args]
+
+                # The cache is invalid or argument does not exist in cache, update it!
+                last_sample_time[args] = time.time()
+                function_return = await function(*args)
+                cache[args] = function_return
+                return function_return
+
+            return async_wrapper  # type: ignore
+
+        @wraps(function)
+        def sync_wrapper(*args: Any) -> Any:
             # The cache is still valid and we can return the value if exists
-            if cache_is_valid and args in cache:
+            if is_cache_valid(args) and args in cache:
                 return cache[args]
 
             # The cache is invalid or argument does not exist in cache, update it!
-            last_sample_time[args] = current_time
+            last_sample_time[args] = time.time()
             function_return = function(*args)
             cache[args] = function_return
             return function_return
 
-        return wrapper  # type: ignore
+        return sync_wrapper  # type: ignore
 
     return inner_function
 

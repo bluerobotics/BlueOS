@@ -21,7 +21,7 @@ from exceptions import (
     NoCandidate,
     NoVersionAvailable,
 )
-from typedefs import FirmwareFormat, Platform, PlatformType, Vehicle
+from typedefs import Firmware, FirmwareFormat, FlightController, PlatformType, Vehicle
 
 # TODO: This should be not necessary
 # Disable SSL verification
@@ -105,7 +105,7 @@ class FirmwareDownloader:
 
         return True
 
-    def _find_version_item(self, **args: str) -> List[Dict[str, Any]]:
+    def _find_version_item(self, **args: str | int) -> List[Firmware]:
         """Find version objects in the manifest that match the specific case of **args
 
         The arguments should follow the same name described in the dictionary inside the manifest
@@ -117,6 +117,7 @@ class FirmwareDownloader:
         Returns:
             List[Dict[str, Any]]: A list of firmware items that match the arguments.
         """
+        logger.info(f"Searching for version item with args: {args}")
         if not self._manifest and not self.download_manifest():
             raise ManifestUnavailable("Manifest file is not available. Cannot use it to find firmware candidates.")
 
@@ -125,40 +126,60 @@ class FirmwareDownloader:
         # Make sure that the item matches all args value
         for item in self._manifest["firmware"]:
             for key, value in args.items():
-                real_key = key.replace("_", "-")
-                if real_key not in item or item[real_key] != value:
+                if key == "platform" and "board_id" in args:
+                    continue
+                real_key = key.replace("_", "-").lower() if key != "board_id" else "board_id"
+                if real_key not in item or str(item[real_key]).lower() != str(value).lower():
                     break
             else:
                 found_version_item.append(item)
 
-        return found_version_item
+        return [
+            Firmware(
+                board_id=item["board_id"] if "board_id" in item else None,
+                platform=item["platform"],
+                name=item["mav-firmware-version-type"],
+                url=item["url"],
+            )
+            for item in found_version_item
+        ]
 
     @temporary_cache(timeout_seconds=3600)
-    def get_available_versions(self, vehicle: Vehicle, platform: Platform) -> List[str]:
+    def get_available_versions(
+        self, vehicle: Vehicle, board: FlightController, firmware_name: Optional[str] = "Ardupilot"
+    ) -> List[Firmware]:
         """Get available firmware versions for the specific plataform and vehicle
 
         Args:
             vehicle (Vehicle): Desired vehicle.
-            platform (Platform): Desired platform.
+            board (FlightController): Desired Flight Controller.
+            firmware (Optional[str]): Desired firmware ("Ardupilot" or "PX4").
 
         Returns:
             List[str]: List of available versions that match the specific desired configuration.
         """
-        available_versions: List[str] = []
-
+        logger.info(f"Getting available versions for {vehicle=}, {board=}, {firmware_name=}")
+        logger.error("implement px4 stuff!", firmware_name)
         if not self._manifest_is_valid():
             raise InvalidManifest("Manifest file is invalid. Cannot use it to find available versions.")
 
-        items = self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
-
-        for item in items:
-            if item["format"] == FirmwareDownloader._supported_firmware_formats[platform.type]:
-                available_versions.append(item["mav-firmware-version-type"])
-
-        return available_versions
+        # file format (elf/apj)
+        file_format = FirmwareDownloader._supported_firmware_formats[board.platform.platform_type].value
+        if board.ardupilot_board_id is not None:
+            return self._find_version_item(
+                vehicletype=vehicle.value,
+                platform=board.platform.name,
+                format=file_format,
+                board_id=board.ardupilot_board_id,
+            )
+        return self._find_version_item(
+            vehicletype=vehicle.value,
+            platform=board.platform.name,
+            format=file_format,
+        )
 
     @temporary_cache(timeout_seconds=3600)
-    def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> str:
+    def get_download_url(self, vehicle: Vehicle, board: FlightController, version: str = "") -> str:
         """Find a specific firmware URL from manifest that matches the arguments.
 
         Args:
@@ -170,16 +191,16 @@ class FirmwareDownloader:
         Returns:
             str: URL of valid firmware.
         """
-        versions = self.get_available_versions(vehicle, platform)
-        logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
+        versions = self.get_available_versions(vehicle, board)
+        logger.debug(f"Got following versions for {vehicle} running {board}: {versions}")
 
         if not versions:
-            raise NoVersionAvailable(f"Could not find available firmware versions for {platform}/{vehicle}.")
+            raise NoVersionAvailable(f"Could not find available firmware versions for {board}/{vehicle}.")
 
-        if version and version not in versions:
-            raise NoVersionAvailable(f"Version {version} was not found for {platform}/{vehicle}.")
+        if version and not any(version == found_version.name for found_version in versions):
+            raise NoVersionAvailable(f"Version {version} was not found for {board}/{vehicle}.")
 
-        firmware_format = FirmwareDownloader._supported_firmware_formats[platform.type]
+        firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform.platform_type].value
 
         # Autodetect the latest supported version.
         # For .apj firmwares (e.g. Pixhawk), we use the latest STABLE version while for the others (e.g. SITL and
@@ -187,28 +208,37 @@ class FirmwareDownloader:
         # the BETA release allow us to track and fix introduced bugs faster.
         if not version:
             if firmware_format == FirmwareFormat.APJ:
-                supported_versions = [version for version in versions if "STABLE" in version]
+                supported_versions = [version for version in versions if "STABLE" in version.name]
                 newest_version: Optional[str] = None
                 for supported_version in supported_versions:
-                    semver_version = supported_version.split("-")[1]
+                    semver_version = supported_version.name.split("-")[1]
                     if not newest_version or Version(newest_version) < Version(semver_version):
                         newest_version = semver_version
                 if not newest_version:
-                    raise NoVersionAvailable(f"No firmware versions found for {platform}/{vehicle}.")
+                    raise NoVersionAvailable(f"No firmware versions found for {board}/{vehicle}.")
                 version = f"STABLE-{newest_version}"
             else:
                 version = "BETA"
-
-        items = self._find_version_item(
-            vehicletype=vehicle.value,
-            platform=platform.value,
-            mav_firmware_version_type=version,
-            format=firmware_format,
-        )
+        logger.debug(board)
+        if board.ardupilot_board_id is not None:
+            items = self._find_version_item(
+                vehicletype=vehicle.value,
+                mav_firmware_version_type=version,
+                format=firmware_format,
+                board_id=board.ardupilot_board_id,
+            )
+        else:
+            items = self._find_version_item(
+                vehicletype=vehicle.value,
+                platform=board.platform.name,
+                mav_firmware_version_type=version,
+                format=firmware_format,
+            )
 
         if len(items) == 0:
+            logger.error(f"Could not find any firmware for {vehicle=}, {board=}, {version=}, {firmware_format=}")
             raise NoCandidate(
-                f"Found no candidate for configuration: {vehicle=}, {platform=}, {version=}, {firmware_format=}"
+                f"Found no candidate for configuration: {vehicle=}, {board=}, {version=}, {firmware_format=}"
             )
 
         if len(items) != 1:
@@ -216,9 +246,9 @@ class FirmwareDownloader:
 
         item = items[0]
         logger.debug(f"Downloading following firmware: {item}")
-        return str(item["url"])
+        return item.url
 
-    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> pathlib.Path:
+    def download(self, vehicle: Vehicle, board: FlightController, version: str = "") -> pathlib.Path:
         """Download a specific firmware that matches the arguments.
 
         Args:
@@ -230,5 +260,5 @@ class FirmwareDownloader:
         Returns:
             pathlib.Path: Temporary path for the firmware file.
         """
-        url = self.get_download_url(vehicle, platform, version)
+        url = self.get_download_url(vehicle, board, version)
         return FirmwareDownloader._download(url)

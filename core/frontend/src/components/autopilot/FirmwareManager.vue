@@ -113,7 +113,7 @@
           label="Board"
           hint="If no board is chosen the system will try to flash the currently running board."
           class="ma-1 pa-0"
-          @change="chosen_vehicle = null"
+          @change="clearFirmwareSelection()"
         />
         <div
           v-if="upload_type === UploadType.Cloud"
@@ -126,12 +126,22 @@
             class="ma-1 pa-0"
             @change="updateAvailableFirmwares"
           />
+          <v-select
+            v-if="platforms_available.length > 1"
+            v-model="chosen_platform"
+            class="ma-1 pa-0"
+            :disabled="disable_firmware_selection"
+            :items="platforms_available"
+            :label="platform_selector_label"
+            :loading="loading_firmware_options"
+            required
+          />
           <div class="d-flex">
             <v-select
               v-model="chosen_firmware_url"
               class="ma-1 pa-0"
               :disabled="disable_firmware_selection"
-              :items="showable_firmwares"
+              :items="showable_firmware_deduplicated"
               :label="firmware_selector_label"
               :loading="loading_firmware_options"
               required
@@ -188,19 +198,34 @@
       v-model="show_install_progress"
       hide-overlay
       persistent
-      width="300"
+      width="600"
     >
       <v-card
         color="primary"
         dark
       >
+        <v-card-title>
+          Installing firmware
+        </v-card-title>
         <v-card-text>
-          Installing firmware. Please wait.
           <v-progress-linear
             indeterminate
             color="white"
-            class="mb-0"
+            class="mb-4"
           />
+          <div
+            v-if="install_logs.length > 0"
+            class="install-logs pa-2"
+          >
+            <div
+              v-for="(log, index) in install_logs"
+              :key="index"
+              :class="{ 'error-log': log.stream === 'stderr', 'info-log': log.stream === 'stdout' }"
+              class="log-line"
+            >
+              {{ log.data.replace(/\r/g, '\n') }}<br>
+            </div>
+          </div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -221,7 +246,6 @@
 </template>
 
 <script lang="ts">
-import { AxiosRequestConfig } from 'axios'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
@@ -236,7 +260,7 @@ import {
   Vehicle,
 } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
-import back_axios, { isBackendOffline } from '@/utils/api'
+import back_axios from '@/utils/api'
 
 const notifier = new Notifier(autopilot_service)
 
@@ -278,11 +302,19 @@ export default Vue.extend({
       available_firmwares: [] as Firmware[],
       firmware_file: null as (Blob | null),
       install_result_message: '',
+      chosen_platform: null as (string | null),
+      install_logs: [] as Array<{stream: string, data: string}>,
       rebootOnBoardComputer,
       requestOnBoardComputerReboot,
     }
   },
   computed: {
+    platforms_available(): string[] {
+      return Array.from(new Set(this.available_firmwares.map((firmware) => firmware.platform)))
+    },
+    platform_selector_label(): string {
+      return this.loading_firmware_options ? 'Fetching available platforms...' : 'Platform'
+    },
     firmware_selector_label(): string {
       return this.loading_firmware_options ? 'Fetching available firmware...' : 'Firmware'
     },
@@ -333,8 +365,9 @@ export default Vue.extend({
       return this.chosen_vehicle == null || this.loading_firmware_options
     },
     showable_firmwares(): {value: URL, text: string}[] {
-      return this.available_firmwares
-        .map((firmware) => ({ value: firmware.url, text: firmware.name }))
+      return this.available_firmwares.filter(
+        (firmware) => firmware.platform === this.chosen_platform,
+      ).map((firmware) => ({ value: firmware.url, text: firmware.name }))
         .filter((firmware) => firmware.text !== 'OFFICIAL')
         .sort((a, b) => {
           const release_show_order = ['dev', 'beta', 'stable']
@@ -343,6 +376,16 @@ export default Vue.extend({
           return prior_a > prior_b ? 1 : -1
         })
         .reverse()
+    },
+    showable_firmware_deduplicated(): {value: URL, text: string}[] {
+      // qdd the trailing filename from the url to the value of an entry if another entry has the same text
+      return this.showable_firmwares.map((firmware) => {
+        const same_text_entries = this.showable_firmwares.filter((f) => f.text === firmware.text)
+        if (same_text_entries.length > 1) {
+          return { value: firmware.value, text: `${firmware.text} (${firmware.value.toString().split('/').pop()})` }
+        }
+        return firmware
+      })
     },
     allow_installing(): boolean {
       if (this.install_status === InstallStatus.Installing) {
@@ -368,6 +411,12 @@ export default Vue.extend({
         this.requestOnBoardComputerReboot()
       }
     },
+    platforms_available(new_value: string[]): void {
+      if (new_value.length === 1) {
+        const [chosen_platform] = new_value
+        this.chosen_platform = chosen_platform
+      }
+    },
   },
   mounted(): void {
     if (this.only_bootloader_boards_available) {
@@ -375,18 +424,25 @@ export default Vue.extend({
     }
   },
   methods: {
+    clearFirmwareSelection(): void {
+      this.chosen_firmware_url = null
+      this.chosen_platform = null
+      this.available_firmwares = []
+    },
     setFirstNoSitlBoard(): void {
       const [first_board] = this.no_sitl_boards
       this.chosen_board = first_board
     },
     async updateAvailableFirmwares(): Promise<void> {
       this.chosen_firmware_url = null
+      this.chosen_platform = null
+      this.available_firmwares = []
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
       await back_axios({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 30000,
-        params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.name },
+        params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.platform.name },
       })
         .then((response) => {
           this.available_firmwares = response.data
@@ -405,21 +461,26 @@ export default Vue.extend({
     },
     async installFirmware(): Promise<void> {
       this.install_status = InstallStatus.Installing
-      const axios_request_config: AxiosRequestConfig = {
-        method: 'post',
+      this.install_logs = []
+
+      let url = ''
+      let requestOptions: RequestInit = {
+        method: 'POST',
       }
+
       if (this.upload_type === UploadType.Cloud) {
         // Populate request with data for cloud install
-        Object.assign(axios_request_config, {
-          url: `${autopilot.API_URL}/install_firmware_from_url`,
-          params: { url: this.chosen_firmware_url, board_name: this.chosen_board?.name },
+        const params = new URLSearchParams({
+          url: this.chosen_firmware_url?.toString() ?? '',
+          board_name: this.chosen_board?.platform.name ?? '',
         })
+        url = `${autopilot.API_URL}/install_firmware_from_url?${params}`
       } else if (this.upload_type === UploadType.Restore) {
         // Populate request with data for restore install
-        Object.assign(axios_request_config, {
-          url: `${autopilot.API_URL}/restore_default_firmware`,
-          params: { board_name: this.chosen_board?.name },
+        const params = new URLSearchParams({
+          board_name: this.chosen_board?.platform.name ?? '',
         })
+        url = `${autopilot.API_URL}/restore_default_firmware?${params}`
       } else {
         // Populate request with data for file install
         if (!this.firmware_file) {
@@ -429,32 +490,94 @@ export default Vue.extend({
         }
         const form_data = new FormData()
         form_data.append('binary', this.firmware_file)
-        Object.assign(axios_request_config, {
-          url: `${autopilot.API_URL}/install_firmware_from_file`,
-          headers: { 'Content-Type': 'multipart/form-data' },
-          params: { board_name: this.chosen_board?.name },
-          data: form_data,
+        const params = new URLSearchParams({
+          board_name: this.chosen_board?.platform.name ?? '',
         })
+        url = `${autopilot.API_URL}/install_firmware_from_file?${params}`
+        requestOptions = {
+          method: 'POST',
+          body: form_data,
+        }
       }
 
-      await back_axios(axios_request_config)
-        .then(() => {
+      try {
+        const response = await fetch(url, requestOptions)
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+
+        if (!reader) {
+          throw new Error('No response body')
+        }
+
+        let buffer = ''
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read()
+
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+
+          // Keep the last incomplete line in the buffer
+          buffer = lines.pop() ?? ''
+
+          // Process complete lines
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const log = JSON.parse(line)
+
+                // Check if backend sent "done" signal to close connection
+                if (log.stream === 'done') {
+                  // Close the progress dialog immediately
+                  this.install_status = InstallStatus.Succeeded
+                  this.install_result_message = 'Installation completed'
+                  return
+                }
+
+                this.install_logs.push(log)
+              } catch (e) {
+                console.error('Failed to parse log line:', line, e)
+              }
+            }
+          }
+        }
+
+        // Check if there were any error messages in the logs
+        const hasErrors = this.install_logs.some((log) => log.stream === 'stderr')
+
+        if (hasErrors) {
+          this.install_status = InstallStatus.Failed
+          // Get the last error message
+          const lastError = this.install_logs
+            .filter((log) => log.stream === 'stderr')
+            .pop()
+          this.install_result_message = lastError?.data || 'Installation failed'
+          const message = `Could not install firmware: ${this.install_result_message}.`
+          notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
+        } else {
           this.install_status = InstallStatus.Succeeded
           this.install_result_message = 'Successfully installed new firmware'
           autopilot_data.reset()
-        })
-        .catch((error) => {
-          this.install_status = InstallStatus.Failed
-          if (isBackendOffline(error)) { return }
-          // Catch Chrome's net:::ERR_UPLOAD_FILE_CHANGED error
-          if (error.message && error.message === 'Network Error') {
-            this.install_result_message = 'Upload fail. If the file was changed, clean the form and re-select it.'
-          } else {
-            this.install_result_message = error.response?.data?.detail ?? error.message
-          }
-          const message = `Could not install firmware: ${this.install_result_message}.`
-          notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
-        })
+        }
+      } catch (error) {
+        this.install_status = InstallStatus.Failed
+        // Catch Chrome's net:::ERR_UPLOAD_FILE_CHANGED error
+        if (error.message && error.message === 'Network Error') {
+          this.install_result_message = 'Upload fail. If the file was changed, clean the form and re-select it.'
+        } else {
+          this.install_result_message = error.response?.data?.detail ?? error.message
+        }
+        const message = `Could not install firmware: ${this.install_result_message}.`
+        notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
+      }
     },
   },
 })
@@ -497,5 +620,29 @@ export default Vue.extend({
     flex-direction: column;
     align-items: flex-end;
   }
+}
+
+.install-logs {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.log-line {
+  padding: 2px 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.info-log {
+  color: #ffffff;
+}
+
+.error-log {
+  color: #ff5252;
+  font-weight: bold;
 }
 </style>

@@ -3,6 +3,8 @@ import { SemVer } from 'semver'
 export interface Firmware {
     name: string
     url: URL
+    platform: string
+    board_id?: number
 }
 
 export enum Vehicle {
@@ -21,13 +23,18 @@ export enum FirmwareVehicleType {
   Other = 'Unknown',
 }
 
-export enum Platform {
-  Pixhawk1 = 'Pixhawk1',
-  Pixhawk4 = 'Pixhawk4',
-  GenericSerial = 'GenericSerial',
-  Navigator = 'navigator',
-  SITL_X86 = 'SITL_x86_64_linux_gnu',
-  SITL_ARM = 'SITL_arm_linux_gnueabihf',
+export interface Platform {
+  name: string
+  platform_type: PlatformType
+  board_id?: number
+}
+
+export enum PlatformType {
+  Serial = 'Serial',
+  Linux = 'Linux',
+  SITL = 'SITL',
+  Unknown = 'Unknown',
+  Manual = 'Manual',
 }
 
 export enum EndpointType {
