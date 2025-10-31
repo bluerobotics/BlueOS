@@ -23,6 +23,8 @@ export default class ParameterFetcher {
 
   min_update_interval_ms = 300
 
+  reset_timestamp = 0
+
   constructor() {
     this.setupWs()
   }
@@ -36,6 +38,7 @@ export default class ParameterFetcher {
     this.total_params_count = null
     this.watchdog_last_count = 0
     this.parameter_table.reset()
+    this.reset_timestamp = performance.now()
   }
 
   updateStore(): void {
@@ -89,6 +92,16 @@ export default class ParameterFetcher {
 
   setupWs(): void {
     this.listener.setCallback((receivedMessage) => {
+      // Ignore messages received after reset for 500ms
+      const message_age = performance.now() - this.reset_timestamp
+      if (this.reset_timestamp > 0) {
+        if (message_age < 500) {
+          return
+        }
+        // clear reset timestamp to avoid permanent blocking
+        this.reset_timestamp = 0
+      }
+
       const param_name = receivedMessage.message.param_id.join('').replace(/\0/g, '')
       const { param_index, param_value, param_type } = receivedMessage.message
       // We need this due to mismatches between js 64-bit floats and REAL32 in MAVLink
