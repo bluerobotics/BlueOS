@@ -145,18 +145,18 @@ class Extension:
         finally:
             cls.unlock(container_name)
 
-    async def install(self, clear_remaining_tags: bool = True, atomic: bool = False) -> AsyncGenerator[bytes, None]:
-        logger.info(f"Installing extension {self.identifier}:{self.tag}")
-
-        # First we should make sure no other tag is running
-        running_ext = None
+    async def _disable_running_extension(self) -> Optional["Extension"]:
+        """Disable any currently running extension with the same identifier."""
         try:
             running_ext = await self.from_running(self.identifier)
             if running_ext:
                 await running_ext.disable()
+            return running_ext
         except ExtensionNotRunning:
-            pass
+            return None
 
+    def _create_extension_settings(self) -> ExtensionSettings:
+        """Create and save extension settings."""
         new_extension = ExtensionSettings(
             identifier=self.identifier,
             name=self.source.name,
@@ -168,25 +168,48 @@ class Extension:
         )
         # Save in settings first, if the image fails to install it will try to fetch after in main kraken check loop
         self._save_settings(new_extension)
+        return new_extension
 
+    def _prepare_docker_auth(self) -> Optional[str]:
+        """Prepare Docker authentication string from source auth credentials."""
+        if self.source.auth is None:
+            return None
+        docker_auth = f"{self.source.auth.username}:{self.source.auth.password}"
+        return base64.b64encode(docker_auth.encode("utf-8")).decode("utf-8")
+
+    async def _pull_docker_image(self, docker_auth: Optional[str]) -> AsyncGenerator[bytes, None]:
+        """Pull Docker image and yield progress updates."""
+        tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
+        async with DockerCtx() as client:
+            async for line in client.images.pull(
+                tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
+            ):
+                # TODO - Plug Error detection from docker image here
+                yield json.dumps(line).encode("utf-8")
+            # Make sure to add correct tag if a digest was used since docker messes up the tag
+            if self.digest:
+                await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
+
+    async def _clear_remaining_tags(self) -> None:
+        """Uninstall all other tags for this extension."""
+        logger.info(f"Clearing remaining tags for extension {self.identifier}")
+        to_clear: List[Extension] = cast(List[Extension], await self.from_settings(self.identifier))
+        to_clear = [version for version in to_clear if version.source.tag != self.tag]
+        await asyncio.gather(*(version.uninstall() for version in to_clear))
+
+    async def install(self, clear_remaining_tags: bool = True, atomic: bool = False) -> AsyncGenerator[bytes, None]:
+        logger.info(f"Installing extension {self.identifier}:{self.tag}")
+
+        # First we should make sure no other tag is running
+        running_ext = await self._disable_running_extension()
+
+        self._create_extension_settings()
         try:
             self.lock(self.unique_entry)
 
-            docker_auth: Optional[str] = None
-            if self.source.auth is not None:
-                docker_auth = f"{self.source.auth.username}:{self.source.auth.password}"
-                docker_auth = base64.b64encode(docker_auth.encode("utf-8")).decode("utf-8")
-
-            tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
-            async with DockerCtx() as client:
-                async for line in client.images.pull(
-                    tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
-                ):
-                    # TODO - Plug Error detection from docker image here
-                    yield json.dumps(line).encode("utf-8")
-                # Make sure to add correct tag if a digest was used since docker messes up the tag
-                if self.digest:
-                    await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
+            docker_auth = self._prepare_docker_auth()
+            async for line in self._pull_docker_image(docker_auth):
+                yield line
         except Exception as error:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
             if atomic:
@@ -209,10 +232,7 @@ class Extension:
         logger.info(f"Extension {self.identifier}:{self.tag} installed")
         # Uninstall all other tags in case user wants to clear them
         if clear_remaining_tags:
-            logger.info(f"Clearing remaining tags for extension {self.identifier}")
-            to_clear: List[Extension] = cast(List[Extension], await self.from_settings(self.identifier))
-            to_clear = [version for version in to_clear if version.source.tag != self.tag]
-            await asyncio.gather(*(version.uninstall() for version in to_clear))
+            await self._clear_remaining_tags()
 
     async def update(self, clear_remaining_tags: bool) -> AsyncGenerator[bytes, None]:
         async for data in self.install(clear_remaining_tags):
