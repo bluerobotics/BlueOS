@@ -212,7 +212,9 @@ export default Vue.extend({
         payload: message.payload.toString(),
       }
 
-      if (message.encoding === Encoding.APPLICATION_JSON.toString()) {
+      if (message.encoding === Encoding.TEXT_PLAIN.toString()) {
+        formattedMessage.payload = message.payload.to_string()
+      } else if (message.encoding === Encoding.APPLICATION_JSON.toString()) {
         formattedMessage.payload = JSON.parse(message.payload.to_string())
       } else if (message.encoding === Encoding.ZENOH_BYTES.toString()) {
         try {
