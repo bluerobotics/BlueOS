@@ -11,6 +11,7 @@
       shadow-intensity="0.3"
       interaction-prompt="none"
       :camera-orbit="cameraOrbit"
+      camera-target="auto 0m auto"
     >
       <button
         v-for="annotation in filtered_annotations"
