@@ -416,6 +416,8 @@ export default Vue.extend({
 
     if (wizard?.version !== WIZARD_VERSION) {
       this.should_open = true
+    } else {
+      this.$emit('start-tour', true)
     }
   },
   methods: {
@@ -424,6 +426,7 @@ export default Vue.extend({
     },
     close() {
       this.should_open = false
+      this.$emit('start-tour')
       setTimeout(() => { window.location.reload() }, 500)
     },
     cancel() {
