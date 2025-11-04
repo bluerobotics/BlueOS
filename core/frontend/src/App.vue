@@ -375,7 +375,7 @@
     <ethernet-updater />
     <mavlink-updater />
     <new-version-notificator />
-    <Wizard />
+    <Wizard @start-tour="setStartTour" />
     <alerter />
     <VTour
       name="welcomeTour"
@@ -473,6 +473,7 @@ export default Vue.extend({
     selected_widgets: settings.user_top_widgets,
     bootstrap_version: undefined as string|undefined,
     build_clicks: 0,
+    start_tour: false,
   }),
   computed: {
     widgets(): TopBarWidget[] {
@@ -778,6 +779,9 @@ export default Vue.extend({
     settings_selected_widgets() {
       this.selected_widgets = this.settings_selected_widgets
     },
+    start_tour() {
+      this.checkTour()
+    },
   },
 
   async mounted() {
@@ -860,9 +864,13 @@ export default Vue.extend({
     },
     checkTour(): void {
       // Check the current page and tour version to be sure that we are in the correct place before starting
-      if (this.$route.name === this.$router.options.routes!.first()!.name) {
+      if (this.$route.name === this.$router.options.routes!.first()!.name
+        && this.start_tour) {
         settings.run_tour_version(2)
-          .then(() => this.$tours.welcomeTour.start())
+          .then(() => {
+            this.start_tour = false
+            this.$tours.welcomeTour.start()
+          })
           .catch((message) => console.log(message))
       }
     },
@@ -889,6 +897,9 @@ export default Vue.extend({
     bluePillClick(): void {
       this.build_clicks = 0
       settings.is_dev_mode = false
+    },
+    setStartTour(value: boolean): void {
+      this.start_tour = value
     },
   },
 })
