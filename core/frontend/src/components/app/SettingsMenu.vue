@@ -62,6 +62,7 @@
             <v-btn
               v-tooltip="'Download log for all services in BlueOS'"
               class="ma-2"
+              :disabled="system_folder_manager.inProgress || deletion_in_progress"
               @click="download_service_log_files"
             >
               <v-icon left>
@@ -73,7 +74,7 @@
             <v-btn
               v-tooltip="'Frees up space on the SD card'"
               class="ma-2"
-              :disabled="disable_remove || deletion_in_progress"
+              :disabled="disable_remove || deletion_in_progress || system_folder_manager.inProgress"
               @click="remove_service_log_files"
             >
               <v-icon left>
@@ -85,24 +86,22 @@
 
           <v-expand-transition>
             <div v-if="deletion_in_progress" class="pa-4">
-              <v-progress-linear
-                indeterminate
-                color="primary"
+              <progress-information
+                :type="'deletion'"
+                :current-size="current_deletion_size"
+                :total-size="current_deletion_total_size"
+                :current-path="current_deletion_path"
+                :status="current_deletion_status"
               />
-              <div class="mt-2">
-                <div class="text-subtitle-2">
-                  Deleting: {{ current_deletion_path }}
-                </div>
-                <div class="text-caption">
-                  Size: {{ formatSize(current_deletion_size / 1024) }}
-                </div>
-                <div class="text-caption">
-                  Total: {{ formatSize(current_deletion_total_size / 1024) }}
-                </div>
-                <div class="text-caption">
-                  Status: {{ current_deletion_status }}
-                </div>
-              </div>
+            </div>
+            <div v-else-if="system_folder_manager.inProgress" class="pa-4">
+              <progress-information
+                :type="'download'"
+                :operation="'Downloading system log files...'"
+                :current-size="system_folder_manager.downloadedBytes"
+                :total-size="system_folder_manager.totalBytes"
+                :download-speed="system_folder_manager.downloadSpeed"
+              />
             </div>
           </v-expand-transition>
 
@@ -116,6 +115,7 @@
             <v-btn
               v-tooltip="'Download logs from MAVLink'"
               class="ma-2"
+              :disabled="mavlink_folder_manager.inProgress || operation_in_progress"
               @click="download_mavlink_log_files"
             >
               <v-icon left>
@@ -127,7 +127,7 @@
             <v-btn
               v-tooltip="'Frees up space on the SD card deleting MAVLink logs'"
               class="ma-2"
-              :disabled="disable_remove_mavlink"
+              :disabled="disable_remove_mavlink || mavlink_folder_manager.inProgress"
               @click="remove_mavlink_log_files"
             >
               <v-icon left>
@@ -136,6 +136,18 @@
               Remove
             </v-btn>
           </v-card-actions>
+
+          <v-expand-transition>
+            <div v-if="mavlink_folder_manager.inProgress" class="pa-4">
+              <progress-information
+                :type="'download'"
+                :operation="'Downloading MAVLink log files...'"
+                :current-size="mavlink_folder_manager.downloadedBytes"
+                :total-size="mavlink_folder_manager.totalBytes"
+                :download-speed="mavlink_folder_manager.downloadSpeed"
+              />
+            </div>
+          </v-expand-transition>
 
           <v-divider />
 
@@ -175,12 +187,13 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import ProgressInformation from '@/components/common/ProgressInformation.vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
-import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import bag from '@/store/bag'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { FolderManager } from '@/utils/folder_manager'
 import { prettifySize } from '@/utils/helper_functions'
 import { parseStreamingResponse } from '@/utils/streaming'
 
@@ -192,6 +205,7 @@ export default Vue.extend({
   name: 'SettingsMenu',
   components: {
     SpinningLogo,
+    ProgressInformation,
   },
   data() {
     return {
@@ -210,6 +224,8 @@ export default Vue.extend({
       current_deletion_size: 0,
       current_deletion_total_size: 0,
       current_deletion_status: '',
+      system_folder_manager: new FolderManager(),
+      mavlink_folder_manager: new FolderManager(),
     }
   },
   computed: {
@@ -241,12 +257,10 @@ export default Vue.extend({
       return prettifySize(bytes)
     },
     async download_service_log_files(): Promise<void> {
-      const folder = await filebrowser.fetchFolder('system_logs')
-      await filebrowser.downloadFolder(folder)
+      await this.system_folder_manager.downloadFolder('system_logs')
     },
     async download_mavlink_log_files(): Promise<void> {
-      const folder = await filebrowser.fetchFolder('ardupilot_logs/logs')
-      await filebrowser.downloadFolder(folder)
+      await this.mavlink_folder_manager.downloadFolder('ardupilot_logs/logs')
     },
     async get_log_folder_size(): Promise<void> {
       this.prepare_operation('Checking system log size...')
