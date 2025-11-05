@@ -3,7 +3,7 @@
 # Immediately exit on errors
 set -e
 
-VERSION="0.0.2"
+VERSION="0.0.3"
 PROJECT_NAME="blueos-recorder"
 REPOSITORY_ORG="bluerobotics"
 REPOSITORY_NAME="$PROJECT_NAME"
