@@ -1,9 +1,11 @@
 import {
   ExtensionData,
+  ExtensionUploadResponse,
   InstalledExtensionData,
   Manifest,
   ManifestSource,
   RunningContainer,
+  UploadProgressEvent,
 } from '@/types/kraken'
 import back_axios from '@/utils/api'
 
@@ -335,6 +337,74 @@ export async function getContainerLogs(
   })
 }
 
+/**
+ * Upload a tar file containing a Docker image and extract metadata
+ * @param {File} file The tar file to upload
+ * @returns {Promise<{temp_tag: string, metadata: any, image_name: string}>}
+ */
+export async function uploadExtensionTarFile(
+  file: File,
+  progressHandler?: (event: UploadProgressEvent) => void,
+): Promise<ExtensionUploadResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/upload`,
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 120000,
+    onUploadProgress: progressHandler,
+  })
+
+  return response.data
+}
+
+/**
+ * Keep a temporary uploaded extension alive while the user configures metadata.
+ * @param {string} tempTag The temporary tag returned by the upload endpoint
+ * @returns {Promise<void>}
+ */
+export async function keepTemporaryExtensionAlive(tempTag: string): Promise<void> {
+  await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/upload/keep-alive?temp_tag=${tempTag}`,
+    timeout: 10000,
+  })
+}
+
+/**
+ * Finalize a temporary extension by assigning a valid identifier and installing it
+ * @param {InstalledExtensionData} extension The extension data to finalize
+ * @param {string} tempTag The temporary tag from upload response
+ * @param {function} progressHandler The progress handler for the download
+ * @returns {Promise<void>}
+ */
+export async function finalizeExtension(
+  extension: InstalledExtensionData,
+  tempTag: string,
+  progressHandler: (event: any) => void,
+): Promise<void> {
+  await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/upload/finalize?temp_tag=${tempTag}`,
+    data: {
+      identifier: extension.identifier,
+      name: extension.name,
+      docker: extension.docker,
+      tag: extension.tag,
+      enabled: true,
+      permissions: extension?.permissions ?? '',
+      user_permissions: extension?.user_permissions ?? '',
+    },
+    timeout: 120000,
+    onDownloadProgress: progressHandler,
+  })
+}
+
 export default {
   fetchManifestSources,
   fetchManifestSource,
@@ -357,4 +427,7 @@ export default {
   listContainers,
   getContainersStats,
   getContainerLogs,
+  uploadExtensionTarFile,
+  keepTemporaryExtensionAlive,
+  finalizeExtension,
 }
