@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import os
+import tempfile
 import time
 from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, Tuple, cast
 
@@ -379,3 +380,232 @@ class Extension:
             )
 
         return compatible_images[0].digest
+
+    @staticmethod
+    async def load_image_from_tar(tar_content: bytes) -> str:
+        """
+        Load a Docker image from tar file content and return the image name.
+
+        Args:
+            tar_content: The binary content of the tar file
+        """
+        async with DockerCtx() as client:
+            # Use import_image with stream=True to get async iterator
+            response = client.images.import_image(tar_content, stream=True)
+            # Response contains stream data with image info
+            # Extract image name from response
+            async for line in response:
+                if isinstance(line, dict) and "stream" in line:
+                    stream = line["stream"]
+                    if "Loaded image:" in stream or "Loaded image ID:" in stream:
+                        # Extract image name from stream
+                        parts = stream.strip().split()
+                        if len(parts) >= 3:
+                            image_name = parts[-1]
+                            return image_name
+                elif isinstance(line, dict) and "aux" in line:
+                    aux = line["aux"]
+                    if "Tag" in aux:
+                        return aux["Tag"]
+            # If we can't find it in stream, list images to find the newly loaded one
+            images = await client.images.list()
+            if images:
+                # Return the most recently loaded image (last in list)
+                return images[-1]["RepoTags"][0] if images[-1].get("RepoTags") else images[-1]["Id"]
+            raise ExtensionPullFailed("Failed to load image from tar file")
+
+    @staticmethod
+    async def inspect_image_labels(image_name: str) -> Dict[str, Any]:
+        """
+        Inspect a Docker image and extract metadata from LABELs.
+        Returns a dictionary with extracted metadata.
+        """
+        async with DockerCtx() as client:
+            try:
+                image_info = await client.images.inspect(image_name)
+                labels = image_info.get("Config", {}).get("Labels", {})
+
+                metadata: Dict[str, Any] = {}
+
+                # Extract version
+                if "version" in labels:
+                    metadata["version"] = labels["version"]
+
+                # Extract permissions (JSON string)
+                if "permissions" in labels:
+                    try:
+                        permissions = json.loads(labels["permissions"])
+                        metadata["permissions"] = json.dumps(permissions)
+                    except json.JSONDecodeError:
+                        metadata["permissions"] = labels["permissions"]
+
+                # Extract authors (JSON array)
+                if "authors" in labels:
+                    try:
+                        authors = json.loads(labels["authors"])
+                        metadata["authors"] = authors
+                    except json.JSONDecodeError:
+                        metadata["authors"] = []
+
+                # Extract company (JSON object)
+                if "company" in labels:
+                    try:
+                        company = json.loads(labels["company"])
+                        metadata["company"] = company
+                    except json.JSONDecodeError:
+                        metadata["company"] = {}
+
+                # Extract type
+                if "type" in labels:
+                    metadata["type"] = labels["type"]
+
+                # Extract readme URL
+                if "readme" in labels:
+                    metadata["readme"] = labels["readme"]
+
+                # Extract links (JSON object)
+                if "links" in labels:
+                    try:
+                        links = json.loads(labels["links"])
+                        metadata["links"] = links
+                    except json.JSONDecodeError:
+                        metadata["links"] = {}
+
+                # Extract requirements
+                if "requirements" in labels:
+                    metadata["requirements"] = labels["requirements"]
+
+                # Extract image repo and tag for docker field
+                repo_tags = image_info.get("RepoTags", [])
+                if repo_tags:
+                    repo_tag = repo_tags[0]
+                    if ":" in repo_tag:
+                        repo, tag = repo_tag.rsplit(":", 1)
+                        metadata["docker"] = repo
+                        metadata["tag"] = tag
+                    else:
+                        metadata["docker"] = repo_tag
+                        metadata["tag"] = "latest"
+                else:
+                    # Fallback to image ID
+                    image_id = image_info.get("Id", "")
+                    metadata["docker"] = image_id[:12] if image_id else "unknown"
+                    metadata["tag"] = "latest"
+
+                # Try to extract name from company or use a default
+                DEFAULT_EXTENSION_NAME = "Unknown Extension"
+                if "name" not in metadata:
+                    if "company" in metadata and isinstance(metadata["company"], dict):
+                        metadata["name"] = metadata["company"].get("name", DEFAULT_EXTENSION_NAME)
+                    else:
+                        metadata["name"] = metadata.get("docker", DEFAULT_EXTENSION_NAME).split("/")[-1]
+
+                return metadata
+            except Exception as error:
+                raise ExtensionPullFailed(f"Failed to inspect image {image_name}") from error
+
+    @classmethod
+    async def create_temporary_extension(cls, image_name: str, metadata: Dict[str, Any]) -> "Extension":
+        """
+        Create a temporary extension with empty identifier to track the uploaded image.
+        """
+        # Generate a unique tag for the temporary extension
+        import uuid
+
+        temp_tag = f"temp-{uuid.uuid4().hex[:8]}"
+
+        # Extract or set defaults
+        DEFAULT_EXTENSION_NAME = "Unknown Extension"
+        name = metadata.get("name", DEFAULT_EXTENSION_NAME)
+        docker = metadata.get("docker", image_name.split(":")[0] if ":" in image_name else image_name)
+        permissions = metadata.get("permissions", json.dumps({}))
+
+        # Create temporary extension with empty identifier
+        temp_source = ExtensionSource(
+            identifier="",  # Empty identifier marks it as temporary
+            tag=temp_tag,
+            name=name,
+            docker=docker,
+            enabled=False,
+            permissions=permissions,
+            user_permissions="",
+        )
+
+        extension = Extension(temp_source)
+
+        # Save temporary extension settings
+        # Use temp_tag for the settings entry, but docker points to actual loaded image
+        temp_settings = ExtensionSettings(
+            identifier="",
+            name=name,
+            docker=docker,  # This is the actual loaded image repo
+            tag=temp_tag,  # Use temp_tag to identify this temporary entry
+            permissions=permissions,
+            enabled=False,
+            user_permissions="",
+        )
+        extension._save_settings(temp_settings)
+
+        # Tag the loaded image with the temp_tag for reference
+        async with DockerCtx() as client:
+            try:
+                await client.images.tag(image_name, f"{docker}:{temp_tag}")
+            except Exception as error:
+                logger.warning(f"Failed to tag image with temp tag: {error}")
+
+        return extension
+
+    @classmethod
+    async def finalize_temporary_extension(
+        cls, temp_extension: "Extension", identifier: str, source: ExtensionSource
+    ) -> "Extension":
+        """
+        Finalize a temporary extension by assigning a valid identifier and updating settings.
+        """
+        old_settings = temp_extension.settings
+
+        # Create new extension with valid identifier
+        new_extension = Extension(source)
+
+        # Remove old temporary extension
+        temp_extension._save_settings()
+
+        # Save new extension
+        new_settings = ExtensionSettings(
+            identifier=identifier,
+            name=source.name,
+            docker=source.docker,
+            tag=source.tag,
+            permissions=source.permissions,
+            enabled=source.enabled,
+            user_permissions=source.user_permissions,
+        )
+        new_extension._save_settings(new_settings)
+
+        # Tag the image with the new identifier if needed
+        if old_settings.docker != source.docker or old_settings.tag != source.tag:
+            async with DockerCtx() as client:
+                try:
+                    await client.images.tag(
+                        f"{old_settings.docker}:{old_settings.tag}", f"{source.docker}:{source.tag}"
+                    )
+                except Exception as error:
+                    logger.warning(f"Failed to tag image: {error}")
+
+        return new_extension
+
+    @classmethod
+    async def cleanup_temporary_extensions(cls) -> None:
+        """
+        Clean up temporary extensions (those with empty identifiers) and their images.
+        """
+        extensions: List[ExtensionSettings] = cls._fetch_settings()
+        temp_extensions = [ext for ext in extensions if not ext.identifier or ext.identifier == ""]
+
+        for ext in temp_extensions:
+            try:
+                extension = Extension(ExtensionSource.from_settings(ext))
+                await extension.uninstall()
+                logger.info(f"Cleaned up temporary extension {ext.docker}:{ext.tag}")
+            except Exception as error:
+                logger.warning(f"Failed to cleanup temporary extension {ext.docker}:{ext.tag}: {error}")
