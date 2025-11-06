@@ -7,12 +7,14 @@ from extension.exceptions import (
     ExtensionInsufficientStorage,
     ExtensionNotFound,
     ExtensionNotRunning,
+    ExtensionPullFailed,
 )
 from extension.extension import Extension
 from extension.models import ExtensionSource
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import Response, StreamingResponse
 from fastapi_versioning import versioned_api_route
+from loguru import logger
 
 extension_router_v2 = APIRouter(
     prefix="/extension",
@@ -33,6 +35,8 @@ def extension_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., A
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
         except ExtensionInsufficientStorage as error:
             raise HTTPException(status_code=status.HTTP_507_INSUFFICIENT_STORAGE, detail=str(error)) from error
+        except ExtensionPullFailed as error:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
         except HTTPException as error:
             raise error
         except Exception as error:
@@ -48,7 +52,7 @@ async def fetch() -> list[ExtensionSource]:
     List details of all installed extensions.
     """
     extensions = cast(List[Extension], await Extension.from_settings())
-    return [ext.source for ext in extensions]
+    return [ext.source for ext in extensions if ext.source.identifier != ""]
 
 
 @extension_router_v2.get("/{identifier}/details", status_code=status.HTTP_200_OK)
@@ -172,3 +176,82 @@ async def uninstall_version(identifier: str, tag: str) -> None:
     """
     extension = cast(Extension, await Extension.from_settings(identifier, tag))
     await extension.uninstall()
+
+
+@extension_router_v2.post("/upload", status_code=status.HTTP_201_CREATED)
+@extension_to_http_exception
+async def upload_tar_file(file: UploadFile = File(...)) -> dict[str, Any]:
+    """
+    Upload a tar file containing a Docker image, load it, inspect it, and create a temporary extension.
+    Returns extracted metadata that can be edited before finalizing the installation.
+    """
+
+    if not file.filename or not file.filename.endswith(".tar"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File must be a .tar file")
+
+    # Read uploaded file content directly - no need for temp file since import_image accepts bytes
+    try:
+        content = await file.read()
+
+        # Load image from tar file
+        logger.info(f"Loading image from tar file: {file.filename}")
+        image_name = await Extension.load_image_from_tar(content)
+        logger.info(f"Image loaded: {image_name}")
+
+        # Inspect image to extract metadata
+        metadata = await Extension.inspect_image_labels(image_name)
+
+        # Create temporary extension
+        temp_extension = await Extension.create_temporary_extension(image_name, metadata)
+
+        # Return metadata for frontend editing
+        return {
+            "temp_tag": temp_extension.tag,
+            "metadata": metadata,
+            "image_name": image_name,
+        }
+    except Exception as error:
+        logger.error(f"Failed to process tar file: {error}")
+        raise
+
+
+@extension_router_v2.post("/upload/keep-alive", status_code=status.HTTP_204_NO_CONTENT)
+@extension_to_http_exception
+async def keep_uploaded_extension_alive(
+    temp_tag: str = Query(..., description="Temporary tag returned by the upload endpoint")
+) -> None:
+    """
+    Refresh the keep-alive timestamp for a temporary extension while the user is editing metadata.
+    """
+    Extension.keep_temporary_extension_alive(temp_tag)
+
+
+@extension_router_v2.post("/upload/finalize", status_code=status.HTTP_201_CREATED)
+@extension_to_http_exception
+async def finalize_extension(
+    body: ExtensionSource, temp_tag: str = Query(..., description="Temporary tag from upload response")
+) -> StreamingResponse:
+    """
+    Finalize a temporary extension by assigning a valid identifier and installing it.
+    The temp_tag identifies the temporary extension created from an uploaded tar file.
+    """
+    if not body.identifier:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Identifier is required")
+
+    # Use temp_tag from query param
+    search_tag = temp_tag
+
+    # Find temporary extension by temp_tag
+    extensions: List[Extension] = cast(List[Extension], await Extension.from_settings())
+    temp_extensions = [ext for ext in extensions if ext.tag == search_tag and not ext.identifier]
+
+    if not temp_extensions:
+        raise ExtensionNotFound(f"Temporary extension with tag {search_tag} not found")
+
+    temp_extension = temp_extensions[0]
+
+    # Finalize the extension
+    new_extension = await Extension.finalize_temporary_extension(temp_extension, body.identifier, body)
+
+    # Install the extension
+    return StreamingResponse(streamer(new_extension.install(atomic=True)))
