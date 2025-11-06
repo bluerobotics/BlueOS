@@ -24,6 +24,192 @@
       @refresh="fetchManifest"
     />
     <v-dialog
+      v-model="show_install_from_file_dialog"
+      max-width="900px"
+      scrollable
+    >
+      <v-card
+        class="tar-upload-card"
+        outlined
+      >
+        <v-card-title class="d-flex flex-column flex-sm-row justify-space-between align-start">
+          <div>
+            <div class="text-h6">
+              Install extension from file
+            </div>
+            <div class="subtitle-2 mt-1">
+              Upload a Kraken-compatible .tar archive to sideload an extension.
+            </div>
+          </div>
+          <div class="d-flex align-center mt-4 mt-sm-0">
+            <v-chip
+              v-if="install_from_file_phase === 'success'"
+              color="success"
+              label
+              small
+              class="mr-2"
+            >
+              Installed
+            </v-chip>
+            <v-btn icon @click="closeInstallFromFileDialog">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </div>
+        </v-card-title>
+        <v-divider />
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-file-input
+                v-model="selected_tar_file"
+                label="Select .tar file"
+                accept=".tar"
+                truncate-length="24"
+                prepend-icon="mdi-file-upload-outline"
+                :disabled="file_uploading || install_from_file_phase === 'installing'"
+                show-size
+                @change="onTarFileSelected"
+              />
+              <div class="tar-upload-actions mt-2">
+                <v-btn
+                  color="primary"
+                  :disabled="!canUploadSelectedFile"
+                  :loading="file_uploading"
+                  @click="uploadSelectedTarFile"
+                >
+                  Upload file
+                </v-btn>
+                <v-btn
+                  text
+                  :disabled="file_uploading || install_from_file_phase === 'installing'"
+                  @click="resetUploadFlow"
+                >
+                  Reset
+                </v-btn>
+                <v-btn
+                  color="secondary"
+                  :disabled="!canConfigureUploaded"
+                  @click="openCreationDialogFromUpload()"
+                >
+                  Configure & Install
+                </v-btn>
+              </div>
+              <v-alert
+                v-if="install_from_file_error"
+                type="error"
+                dense
+                class="mt-4"
+              >
+                {{ install_from_file_error }}
+              </v-alert>
+              <v-alert
+                v-else-if="install_from_file_phase === 'success'"
+                type="success"
+                dense
+                class="mt-4"
+              >
+                Extension installed successfully.
+              </v-alert>
+            </v-col>
+            <v-col cols="12" md="6">
+              <div class="upload-phase-list">
+                <div
+                  v-for="phase in uploadPhases"
+                  :key="phase.key"
+                  :class="['upload-phase', phase.status]"
+                >
+                  <div class="upload-phase__header">
+                    <v-icon
+                      small
+                      class="mr-2"
+                      :class="tarStepTextClass(phase.status)"
+                    >
+                      {{ phase.icon }}
+                    </v-icon>
+                    <div>
+                      <div
+                        class="upload-phase__title"
+                        :class="tarStepTextClass(phase.status)"
+                      >
+                        {{ phase.label }}
+                      </div>
+                      <div class="text-caption text--secondary">
+                        {{ phase.description }}
+                      </div>
+                    </div>
+                  </div>
+                  <v-progress-linear
+                    v-if="phase.showProgress"
+                    class="mt-2"
+                    :value="phase.indeterminate ? undefined : phase.progress"
+                    :indeterminate="phase.indeterminate"
+                    :color="tarStepColor(phase.status)"
+                    height="6"
+                  />
+                  <div
+                    v-if="phase.progressText"
+                    class="text-caption mt-1"
+                    :class="tarStepTextClass(phase.status)"
+                  >
+                    {{ phase.progressText }}
+                  </div>
+                </div>
+              </div>
+            </v-col>
+          </v-row>
+          <v-expand-transition>
+            <div
+              v-if="upload_metadata"
+              class="metadata-preview mt-4"
+            >
+              <div class="subtitle-2 mb-2">
+                Detected metadata
+              </div>
+              <div class="metadata-preview__grid">
+                <div>
+                  <div class="caption text--secondary">
+                    Identifier
+                  </div>
+                  <div class="body-2">
+                    {{ upload_metadata.identifier || 'Pending' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="caption text--secondary">
+                    Name
+                  </div>
+                  <div class="body-2">
+                    {{ upload_metadata.name || 'Pending' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="caption text--secondary">
+                    Docker
+                  </div>
+                  <div class="body-2">
+                    {{ upload_metadata.docker || 'Pending' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="caption text--secondary">
+                    Tag
+                  </div>
+                  <div class="body-2">
+                    {{ upload_metadata.tag || 'latest' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </v-expand-transition>
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn text @click="closeInstallFromFileDialog">
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog
       v-model="show_log"
       width="80%"
     >
@@ -154,24 +340,57 @@
         </template>
       </template>
       <v-fab-transition>
-        <v-btn
+        <v-speed-dial
           :key="'create_button'"
-          color="primary"
-          fab
-          large
-          dark
+          v-model="fab_menu"
           fixed
           bottom
           right
-          class="v-btn--example"
-          @click="openCreationDialog"
+          direction="top"
+          transition="slide-y-reverse-transition"
         >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
+          <template #activator>
+            <v-btn
+              v-model="fab_menu"
+              color="primary"
+              fab
+              large
+              dark
+            >
+              <v-icon v-if="fab_menu">
+                mdi-close
+              </v-icon>
+              <v-icon v-else>
+                mdi-plus
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-btn
+            v-tooltip="'Install from file'"
+            fab
+            dark
+            small
+            color="primary"
+            @click="openInstallFromFileDialog"
+          >
+            <v-icon>mdi-file-upload-outline</v-icon>
+          </v-btn>
+          <v-btn
+            v-tooltip="'Create from scratch'"
+            fab
+            dark
+            small
+            color="green"
+            @click="openCreationDialog"
+          >
+            <v-icon>mdi-code-braces</v-icon>
+          </v-btn>
+        </v-speed-dial>
       </v-fab-transition>
       <ExtensionCreationModal
         v-if="edited_extension"
         :extension="edited_extension"
+        :temp-tag="upload_temp_tag"
         @extensionChange="createOrUpdateExtension"
         @closed="clearEditedExtension"
       />
@@ -204,9 +423,51 @@ import PullTracker from '@/utils/pull_tracker'
 import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
-  ExtensionData, InstalledExtensionData, ProgressEvent,
-  RunningContainer,
+  ExtensionData, ExtensionUploadMetadata, InstalledExtensionData, RunningContainer,
+  StreamProgressEvent, UploadProgressEvent,
 } from '../types/kraken'
+
+type TarInstallPhase = 'idle' | 'selected' | 'uploading' | 'processing' | 'ready' | 'installing' | 'success' | 'error'
+type TarStepKey = 'upload' | 'load' | 'configure' | 'install'
+type TarStepStatus = 'pending' | 'active' | 'complete' | 'error'
+
+interface UploadPhaseDescriptor {
+  key: TarStepKey
+  label: string
+  description: string
+  icon: string
+  status: TarStepStatus
+  showProgress?: boolean
+  progress?: number
+  indeterminate?: boolean
+  progressText?: string
+}
+
+const TAR_PHASE_LEVEL: Record<Exclude<TarInstallPhase, 'error'>, number> = {
+  idle: -1,
+  selected: 0,
+  uploading: 0,
+  processing: 1,
+  ready: 2,
+  installing: 3,
+  success: 4,
+}
+
+const TAR_STEP_ORDER: TarStepKey[] = ['upload', 'load', 'configure', 'install']
+
+function currentStepForPhase(phase: TarInstallPhase): TarStepKey {
+  switch (phase) {
+    case 'processing':
+      return 'load'
+    case 'ready':
+      return 'configure'
+    case 'installing':
+    case 'success':
+      return 'install'
+    default:
+      return 'upload'
+  }
+}
 
 const notifier = new Notifier(kraken_service)
 const ansi = new AnsiUp()
@@ -232,6 +493,7 @@ export default Vue.extend({
       settings,
       show_dialog: false,
       show_settings: false,
+      show_install_from_file_dialog: false,
       installed_extensions: {} as Dictionary<InstalledExtensionData>,
       selected_extension: null as (null | ExtensionData),
       running_containers: [] as RunningContainer[],
@@ -256,6 +518,19 @@ export default Vue.extend({
       fetch_running_containers_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_containers_stats_task: new OneMoreTime({ delay: 25000, disposeWith: this }),
       outputBuffer: '',
+      fab_menu: false,
+      upload_temp_tag: null as null | string,
+      upload_metadata: null as null | ExtensionUploadMetadata,
+      upload_keep_alive_task: null as null | OneMoreTime,
+      selected_tar_file: null as null | File,
+      file_uploading: false,
+      install_from_file_phase: 'idle' as TarInstallPhase,
+      install_from_file_upload_progress: 0,
+      install_from_file_install_progress: 0,
+      install_from_file_status_text: '',
+      install_from_file_error: null as null | string,
+      install_from_file_failed_step: null as null | TarStepKey,
+      install_from_file_last_level: -1,
     }
   },
   computed: {
@@ -278,6 +553,77 @@ export default Vue.extend({
     html_log_output(): string {
       return ansi.ansi_to_html(this.log_output ?? '')
     },
+    canUploadSelectedFile(): boolean {
+      return Boolean(
+        this.selected_tar_file
+        && !this.file_uploading
+        && this.install_from_file_phase !== 'installing'
+        && this.install_from_file_phase !== 'processing',
+      )
+    },
+    canConfigureUploaded(): boolean {
+      return this.install_from_file_phase === 'ready' && Boolean(this.upload_metadata && this.upload_temp_tag)
+    },
+    uploadPhases(): UploadPhaseDescriptor[] {
+      const uploadStatus = this.getTarStepStatus('upload')
+      const loadStatus = this.getTarStepStatus('load')
+      const configureStatus = this.getTarStepStatus('configure')
+      const installStatus = this.getTarStepStatus('install')
+
+      const installProgress = Number.isFinite(this.install_from_file_install_progress)
+        ? this.install_from_file_install_progress
+        : 0
+
+      let uploadProgressText: string | undefined
+      if (uploadStatus === 'complete') {
+        uploadProgressText = 'Upload finished'
+      } else if (uploadStatus === 'active' && this.install_from_file_upload_progress > 0) {
+        uploadProgressText = `${Math.round(this.install_from_file_upload_progress)}%`
+      }
+
+      return [
+        {
+          key: 'upload',
+          label: 'Upload file',
+          description: 'Upload extension .tar file to onboard computer',
+          icon: 'mdi-upload',
+          status: uploadStatus,
+          showProgress: true,
+          progress: this.install_from_file_upload_progress,
+          indeterminate: uploadStatus === 'active' && !this.install_from_file_upload_progress,
+          progressText: uploadProgressText,
+        },
+        {
+          key: 'load',
+          label: 'Load Docker image',
+          description: 'Import extension image and inspect metadata',
+          icon: 'mdi-docker',
+          status: loadStatus,
+          showProgress: true,
+          progress: loadStatus === 'complete' ? 100 : 0,
+          indeterminate: loadStatus === 'active',
+          progressText: loadStatus === 'complete' ? 'Image ready' : undefined,
+        },
+        {
+          key: 'configure',
+          label: 'Configure metadata',
+          description: 'Review identifier, name, and permissions',
+          icon: 'mdi-clipboard-text-edit',
+          status: configureStatus,
+        },
+        {
+          key: 'install',
+          label: 'Install extension',
+          description: 'Finalize extension installation',
+          icon: 'mdi-progress-download',
+          status: installStatus,
+          showProgress: true,
+          progress: installStatus === 'complete' ? 100 : installProgress,
+          indeterminate: installStatus === 'active' && !installProgress,
+          progressText: this.install_from_file_status_text || undefined,
+        },
+      ]
+    },
   },
   watch: {
     show_log: {
@@ -298,6 +644,11 @@ export default Vue.extend({
         }
       },
     },
+    show_install_from_file_dialog(val: boolean) {
+      if (!val) {
+        this.resetUploadFlow()
+      }
+    },
   },
   mounted() {
     this.fetchManifest()
@@ -307,10 +658,164 @@ export default Vue.extend({
   },
   destroyed() {
     clearInterval(this.metrics_interval)
+    this.stopUploadKeepAlive()
   },
   methods: {
     clearEditedExtension() {
       this.edited_extension = null
+    },
+    setInstallFromFilePhase(phase: TarInstallPhase) {
+      this.install_from_file_phase = phase
+      if (phase !== 'error') {
+        this.install_from_file_error = null
+        this.install_from_file_failed_step = null
+        this.install_from_file_last_level = TAR_PHASE_LEVEL[phase]
+      }
+    },
+    getTarStepStatus(stepKey: TarStepKey): TarStepStatus {
+      if (this.install_from_file_phase === 'error' && this.install_from_file_failed_step === stepKey) {
+        return 'error'
+      }
+      const currentLevel = this.install_from_file_phase === 'error'
+        ? this.install_from_file_last_level
+        : TAR_PHASE_LEVEL[this.install_from_file_phase]
+      const stepIndex = TAR_STEP_ORDER.indexOf(stepKey)
+      if (currentLevel > stepIndex) {
+        return 'complete'
+      }
+      if (currentLevel === stepIndex && this.install_from_file_phase !== 'error') {
+        return 'active'
+      }
+      return 'pending'
+    },
+    tarStepColor(status: TarStepStatus): string {
+      switch (status) {
+        case 'complete':
+          return 'success'
+        case 'error':
+          return 'error'
+        case 'active':
+          return 'primary'
+        default:
+          return 'secondary'
+      }
+    },
+    tarStepTextClass(status: TarStepStatus): string {
+      switch (status) {
+        case 'complete':
+          return 'success--text'
+        case 'error':
+          return 'error--text'
+        case 'active':
+          return 'primary--text'
+        default:
+          return 'text--secondary'
+      }
+    },
+    currentTarStepKey(): TarStepKey {
+      return currentStepForPhase(this.install_from_file_phase)
+    },
+    applyInstallFromFileError(message: string) {
+      this.install_from_file_error = message
+      this.install_from_file_failed_step = this.currentTarStepKey()
+      this.install_from_file_status_text = ''
+      this.install_from_file_phase = 'error'
+    },
+    openInstallFromFileDialog(): void {
+      this.fab_menu = false
+      this.show_install_from_file_dialog = true
+    },
+    closeInstallFromFileDialog(): void {
+      this.show_install_from_file_dialog = false
+    },
+    startUploadKeepAlive(): void {
+      if (!this.upload_temp_tag) {
+        return
+      }
+
+      this.stopUploadKeepAlive()
+      this.upload_keep_alive_task = new OneMoreTime(
+        { delay: 5 * 60 * 1000, autostart: false, disposeWith: this },
+        () => this.sendUploadKeepAlive(),
+      )
+      this.upload_keep_alive_task.start()
+    },
+    stopUploadKeepAlive(): void {
+      if (this.upload_keep_alive_task) {
+        this.upload_keep_alive_task.stop()
+        this.upload_keep_alive_task = null
+      }
+    },
+    sendUploadKeepAlive(): Promise<void> | void {
+      if (!this.upload_temp_tag) {
+        return
+      }
+      kraken.keepTemporaryExtensionAlive(this.upload_temp_tag).catch((error) => {
+        notifier.pushBackError('EXTENSION_UPLOAD_KEEP_ALIVE_FAIL', error)
+      })
+    },
+    resetUploadFlow(options: { keepFile?: boolean } = {}) {
+      if (!options.keepFile) {
+        this.selected_tar_file = null
+      }
+      this.stopUploadKeepAlive()
+      this.upload_temp_tag = null
+      this.upload_metadata = null
+      this.install_from_file_upload_progress = 0
+      this.install_from_file_install_progress = 0
+      this.install_from_file_status_text = ''
+      this.install_from_file_error = null
+      this.install_from_file_failed_step = null
+      this.install_from_file_last_level = -1
+      this.setInstallFromFilePhase('idle')
+      this.file_uploading = false
+    },
+    onTarFileSelected(file: File | File[] | null) {
+      const selected = Array.isArray(file) ? file[0] : file
+      if (!selected) {
+        this.resetUploadFlow()
+        return
+      }
+      this.resetUploadFlow({ keepFile: true })
+      this.selected_tar_file = selected
+      this.setInstallFromFilePhase('selected')
+    },
+    handleFileUploadProgress(progressEvent: UploadProgressEvent) {
+      if (!progressEvent.total || progressEvent.total <= 0) {
+        this.setInstallFromFilePhase('uploading')
+        return
+      }
+      const ratio = progressEvent.loaded / progressEvent.total
+      const percent = Math.min(100, Math.round(ratio * 100))
+      this.install_from_file_upload_progress = percent
+      if (percent >= 100) {
+        this.setInstallFromFilePhase('processing')
+      } else if (this.install_from_file_phase !== 'uploading') {
+        this.setInstallFromFilePhase('uploading')
+      }
+    },
+    async uploadSelectedTarFile(): Promise<void> {
+      if (!this.selected_tar_file || this.file_uploading) {
+        return
+      }
+      this.install_from_file_upload_progress = 0
+      this.setInstallFromFilePhase('uploading')
+      this.file_uploading = true
+      try {
+        const response = await kraken.uploadExtensionTarFile(
+          this.selected_tar_file,
+          (progressEvent) => this.handleFileUploadProgress(progressEvent),
+        )
+        this.upload_temp_tag = response.temp_tag
+        this.upload_metadata = response.metadata
+        this.startUploadKeepAlive()
+        this.setInstallFromFilePhase('ready')
+      } catch (error) {
+        this.applyInstallFromFileError(String(error))
+        notifier.pushBackError('EXTENSION_UPLOAD_FAIL', error)
+      } finally {
+        this.file_uploading = false
+      }
     },
     async update(extension: InstalledExtensionData, version: string) {
       this.show_pull_output = true
@@ -342,10 +847,21 @@ export default Vue.extend({
         return
       }
 
-      await this.install(this.edited_extension)
+      const isUploadFlow = Boolean(this.upload_temp_tag)
+
+      if (isUploadFlow) {
+        // This is from a file upload, use finalize endpoint
+        await this.finalizeUploadedExtension(this.edited_extension)
+      } else {
+        // This is a regular extension creation
+        await this.install(this.edited_extension)
+      }
 
       this.show_dialog = false
       this.edited_extension = null
+      if (!isUploadFlow) {
+        this.upload_metadata = null
+      }
     },
     openEditDialog(extension: InstalledExtensionData): void {
       this.edited_extension = { ...extension, editing: true }
@@ -598,14 +1114,23 @@ export default Vue.extend({
       this.extraction_percentage = 0
       this.status_text = ''
     },
-    handleDownloadProgress(progressEvent: ProgressEvent, tracker: PullTracker) {
+    handleDownloadProgress(progressEvent: StreamProgressEvent, tracker: PullTracker) {
       tracker.digestNewData(progressEvent)
       this.pull_output = tracker.pull_output
       this.download_percentage = tracker.download_percentage
       this.extraction_percentage = tracker.extraction_percentage
       this.status_text = tracker.overall_status
+      if (this.install_from_file_phase === 'installing') {
+        const percent = Number.isFinite(tracker.download_percentage)
+          ? Math.min(100, Math.max(0, Math.round(tracker.download_percentage)))
+          : 0
+        this.install_from_file_install_progress = percent
+        if (tracker.overall_status) {
+          this.install_from_file_status_text = tracker.overall_status
+        }
+      }
     },
-    handleLogProgress(progressEvent: ProgressEvent, extension: InstalledExtensionData) {
+    handleLogProgress(progressEvent: StreamProgressEvent, extension: InstalledExtensionData) {
       const result = aggregateStreamingResponse(
         parseStreamingResponse(progressEvent.currentTarget.response),
         (_, buffer) => Boolean(buffer),
@@ -623,13 +1148,64 @@ export default Vue.extend({
         }
       })
     },
+    openCreationDialogFromUpload(metadata: ExtensionUploadMetadata | null = this.upload_metadata): void {
+      if (!metadata) {
+        return
+      }
+      const serializedPermissions = typeof metadata.permissions === 'string'
+        ? metadata.permissions
+        : JSON.stringify(metadata.permissions || {})
+
+      this.edited_extension = {
+        identifier: metadata.identifier || 'yourorganization.yourextension',
+        name: metadata.name || '',
+        docker: metadata.docker || '',
+        tag: metadata.tag || 'latest',
+        enabled: true,
+        permissions: serializedPermissions,
+        user_permissions: serializedPermissions,
+        editing: false,
+      }
+    },
+    async finalizeUploadedExtension(extension: InstalledExtensionData): Promise<void> {
+      if (!this.upload_temp_tag) {
+        return
+      }
+
+      this.show_pull_output = true
+      const tracker = this.getTracker()
+      this.setInstallFromFilePhase('installing')
+      this.install_from_file_install_progress = 0
+      this.install_from_file_status_text = 'Starting installation...'
+
+      try {
+        await kraken.finalizeExtension(
+          extension,
+          this.upload_temp_tag,
+          (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
+        )
+        this.setInstallFromFilePhase('success')
+        this.install_from_file_status_text = 'Extension installed successfully'
+        this.stopUploadKeepAlive()
+        this.upload_temp_tag = null
+        this.upload_metadata = null
+        this.fetchInstalledExtensions()
+      } catch (error) {
+        this.applyInstallFromFileError(String(error))
+        this.alerter = true
+        this.alerter_error = String(error)
+        notifier.pushBackError('EXTENSION_FINALIZE_FAIL', error)
+      } finally {
+        this.resetPullOutput()
+      }
+    },
   },
 })
 </script>
 
 <style>
 .main-container {
-  background-color: #135DA355 !important;
+  background-color: var(--v-sheet_bg-base) !important;
 }
 
 .installed-extensions-container {
@@ -656,8 +1232,8 @@ export default Vue.extend({
 }
 
 pre.logs {
-  color:white;
-  background: black;
+  color: rgba(var(--v-theme-on-surface), 0.9);
+  background: var(--v-sheet_bg_complement-base);
   padding: 10px;
   overflow-x: scroll;
 }
@@ -679,5 +1255,63 @@ pre.logs {
 .scrollable-content {
   max-height: calc(80vh - 64px);
   overflow-y: auto;
+}
+
+.tar-upload-card {
+  background-color: var(--v-sheet_bg-base) !important;
+}
+
+.tar-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.upload-phase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upload-phase {
+  border-radius: 12px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  padding: 12px 16px;
+  background-color: var(--v-sheet_bg-base);
+  transition: border-color 0.2s ease;
+}
+
+.upload-phase.active {
+  border-color: var(--v-primary-base);
+}
+
+.upload-phase.complete {
+  border-color: var(--v-success-base);
+}
+
+.upload-phase.error {
+  border-color: var(--v-error-base);
+}
+
+.upload-phase__header {
+  display: flex;
+  align-items: flex-start;
+}
+
+.upload-phase__title {
+  font-weight: 600;
+}
+
+.metadata-preview {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  border-radius: 8px;
+  padding: 12px 16px;
+  background-color: var(--v-sheet_bg-base);
+}
+
+.metadata-preview__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px 24px;
 }
 </style>
