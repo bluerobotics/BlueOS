@@ -154,27 +154,105 @@
         </template>
       </template>
       <v-fab-transition>
-        <v-btn
+        <v-speed-dial
           :key="'create_button'"
-          color="primary"
-          fab
-          large
-          dark
+          v-model="fab_menu"
           fixed
           bottom
           right
-          class="v-btn--example"
-          @click="openCreationDialog"
+          direction="top"
+          transition="slide-y-reverse-transition"
         >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
+          <template #activator>
+            <v-btn
+              v-model="fab_menu"
+              color="primary"
+              fab
+              large
+              dark
+            >
+              <v-icon v-if="fab_menu">
+                mdi-close
+              </v-icon>
+              <v-icon v-else>
+                mdi-plus
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-btn
+            v-tooltip="'Create from scratch'"
+            fab
+            dark
+            small
+            color="green"
+            @click="openCreationDialog"
+          >
+            <v-icon>mdi-code-braces</v-icon>
+          </v-btn>
+          <v-btn
+            v-tooltip="'Upload from file'"
+            fab
+            dark
+            small
+            color="blue"
+            @click="openFileUploadDialog"
+          >
+            <v-icon>mdi-file-upload</v-icon>
+          </v-btn>
+        </v-speed-dial>
       </v-fab-transition>
       <ExtensionCreationModal
         v-if="edited_extension"
         :extension="edited_extension"
+        :temp-tag="upload_temp_tag"
         @extensionChange="createOrUpdateExtension"
         @closed="clearEditedExtension"
       />
+      <v-dialog
+        v-model="show_file_upload"
+        max-width="500px"
+        persistent
+      >
+        <v-card>
+          <v-card-title class="d-flex align-center justify-space-between">
+            <span>Upload Extension File</span>
+            <v-btn
+              icon
+              @click="closeFileUploadDialog"
+            >
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-card-title>
+          <v-card-text>
+            <v-file-input
+              v-model="selected_file"
+              label="Select .tar file"
+              accept=".tar"
+              prepend-icon="mdi-file-upload"
+              show-size
+              :rules="[validateTarFile]"
+            />
+            <v-alert
+              v-if="upload_error"
+              type="error"
+              class="mt-3"
+            >
+              {{ upload_error }}
+            </v-alert>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn
+              color="primary"
+              :disabled="!selected_file || uploading"
+              :loading="uploading"
+              @click="uploadFile"
+            >
+              Upload
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-card>
   </v-container>
 </template>
@@ -204,7 +282,7 @@ import PullTracker from '@/utils/pull_tracker'
 import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
-  ExtensionData, InstalledExtensionData, ProgressEvent,
+  ExtensionData, ExtensionUploadMetadata, InstalledExtensionData, ProgressEvent,
   RunningContainer,
 } from '../types/kraken'
 
@@ -256,6 +334,13 @@ export default Vue.extend({
       fetch_running_containers_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_containers_stats_task: new OneMoreTime({ delay: 25000, disposeWith: this }),
       outputBuffer: '',
+      fab_menu: false,
+      show_file_upload: false,
+      upload_temp_tag: null as null | string,
+      upload_metadata: null as null | ExtensionUploadMetadata,
+      selected_file: null as null | File,
+      uploading: false,
+      upload_error: null as null | string,
     }
   },
   computed: {
@@ -342,10 +427,18 @@ export default Vue.extend({
         return
       }
 
-      await this.install(this.edited_extension)
+      if (this.upload_temp_tag) {
+        // This is from a file upload, use finalize endpoint
+        await this.finalizeUploadedExtension(this.edited_extension)
+      } else {
+        // This is a regular extension creation
+        await this.install(this.edited_extension)
+      }
 
       this.show_dialog = false
       this.edited_extension = null
+      this.upload_temp_tag = null
+      this.upload_metadata = null
     },
     openEditDialog(extension: InstalledExtensionData): void {
       this.edited_extension = { ...extension, editing: true }
@@ -622,6 +715,86 @@ export default Vue.extend({
           logContainer.scrollTop = logContainer.scrollHeight
         }
       })
+    },
+    openFileUploadDialog(): void {
+      this.show_file_upload = true
+      this.selected_file = null
+      this.upload_error = null
+      this.fab_menu = false
+    },
+    closeFileUploadDialog(): void {
+      this.show_file_upload = false
+      this.selected_file = null
+      this.upload_error = null
+    },
+    validateTarFile(file: File | null): boolean | string {
+      if (!file) {
+        return 'Please select a file'
+      }
+      if (!file.name.endsWith('.tar')) {
+        return 'File must be a .tar file'
+      }
+      return true
+    },
+    async uploadFile(): Promise<void> {
+      if (!this.selected_file) {
+        return
+      }
+
+      this.uploading = true
+      this.upload_error = null
+
+      try {
+        const response = await kraken.uploadExtensionTarFile(this.selected_file)
+        this.upload_temp_tag = response.temp_tag
+        this.upload_metadata = response.metadata
+
+        // Close upload dialog and open creation modal with pre-filled data
+        this.show_file_upload = false
+        this.openCreationDialogFromUpload(response.metadata)
+      } catch (error) {
+        this.upload_error = String(error)
+        notifier.pushBackError('EXTENSION_UPLOAD_FAIL', error)
+      } finally {
+        this.uploading = false
+      }
+    },
+    openCreationDialogFromUpload(metadata: ExtensionUploadMetadata): void {
+      this.edited_extension = {
+        identifier: metadata.identifier || 'yourorganization.yourextension',
+        name: metadata.name || '',
+        docker: metadata.docker || '',
+        tag: metadata.tag || 'latest',
+        enabled: true,
+        permissions: JSON.stringify(metadata.permissions || {}),
+        user_permissions: JSON.stringify(metadata.permissions || {}),
+        editing: false,
+      }
+    },
+    async finalizeUploadedExtension(extension: InstalledExtensionData): Promise<void> {
+      if (!this.upload_temp_tag) {
+        return
+      }
+
+      this.show_pull_output = true
+      const tracker = this.getTracker()
+
+      kraken.finalizeExtension(
+        extension,
+        this.upload_temp_tag,
+        (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
+      )
+        .then(() => {
+          this.fetchInstalledExtensions()
+        })
+        .catch((error) => {
+          this.alerter = true
+          this.alerter_error = String(error)
+          notifier.pushBackError('EXTENSION_FINALIZE_FAIL', error)
+        })
+        .finally(() => {
+          this.resetPullOutput()
+        })
     },
   },
 })
