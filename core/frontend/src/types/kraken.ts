@@ -93,3 +93,22 @@ export interface Manifest extends ManifestSource {
   factory: boolean
   data?: [ExtensionData]
 }
+
+export interface UploadProgressEvent {
+    loaded: number
+    total?: number
+}
+
+export interface ExtensionUploadMetadata {
+    identifier?: string
+    name?: string
+    docker?: string
+    tag?: string
+    permissions?: JSONValue
+}
+
+export interface ExtensionUploadResponse {
+    temp_tag: string
+    metadata: ExtensionUploadMetadata
+    image_name: string
+}

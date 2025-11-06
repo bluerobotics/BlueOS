@@ -9,7 +9,7 @@
   >
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
-        <span>{{ is_editing ? 'Edit' : 'Create' }} Extension</span>
+        <span>{{ is_editing ? 'Edit' : (is_from_upload ? 'Configure Uploaded' : 'Create') }} Extension</span>
         <v-btn
           icon
           x-small
@@ -85,7 +85,7 @@
             :disabled="!valid_permissions"
             @click="saveExtension"
           >
-            {{ is_editing ? 'Save' : 'Create' }}
+            {{ is_editing ? 'Save' : (is_from_upload ? 'Install' : 'Create') }}
           </v-btn>
         </v-form>
       </v-card-text>
@@ -115,6 +115,10 @@ export default Vue.extend({
       type: Object as PropType<InstalledExtensionData & { editing: boolean } | null>,
       default: null,
     },
+    tempTag: {
+      type: String,
+      default: null,
+    },
   },
 
   data() {
@@ -137,6 +141,9 @@ export default Vue.extend({
     },
     is_editing() {
       return this.extension?.editing ?? false
+    },
+    is_from_upload() {
+      return Boolean(this.tempTag)
     },
     is_reset_editing_permissions_visible() {
       return this.new_permissions !== this.extension?.permissions
