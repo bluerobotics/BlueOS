@@ -379,6 +379,9 @@ export default Vue.extend({
         .reverse()
     },
     allow_installing(): boolean {
+      if (!autopilot_data.is_safe) {
+        return false
+      }
       if (this.install_status === InstallStatus.Installing) {
         return false
       }

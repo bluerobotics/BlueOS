@@ -72,7 +72,7 @@
           color="secondary"
           :block="$vuetify.breakpoint.xs"
           class="ma-1"
-          :disabled="restarting"
+          :disabled="restarting || !is_safe"
           @click="openBoardChangeDialog"
         >
           Change board
@@ -233,6 +233,9 @@ export default Vue.extend({
     },
     restarting(): boolean {
       return autopilot.restarting
+    },
+    is_safe(): boolean {
+      return autopilot_data.is_safe
     },
   },
   mounted() {
