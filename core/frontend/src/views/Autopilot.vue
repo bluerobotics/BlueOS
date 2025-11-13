@@ -85,7 +85,7 @@
           color="secondary"
           :block="$vuetify.breakpoint.xs"
           class="ma-1"
-          :disabled="restarting || installing_firmware"
+          :disabled="restarting || installing_firmware || !is_safe"
           data-testid="change-board-button"
           @click="openBoardChangeDialog"
         >
@@ -256,6 +256,9 @@ export default Vue.extend({
     },
     installing_firmware(): boolean {
       return autopilot.installing_firmware
+    },
+    is_safe(): boolean {
+      return autopilot_data.is_safe
     },
   },
   mounted() {
