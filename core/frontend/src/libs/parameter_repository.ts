@@ -54,7 +54,7 @@ export async function fetchParamSets(): Promise<ParamSets> {
 // Directories are named after the platform, not the name, which is whatever the USB descriptor reports
 // ("PX4 FMU v2.x" for a Pixhawk1). SITL is the only platform carrying a host arch suffix the repository lacks.
 function boardDirectory(board: FlightController): string {
-  const platform = board.platform.toLowerCase()
+  const platform = board.platform.name.toLowerCase()
   return platform.startsWith('sitl') ? 'sitl' : platform
 }
 
