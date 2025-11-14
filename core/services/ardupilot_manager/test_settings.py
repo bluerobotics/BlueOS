@@ -20,7 +20,7 @@ from config import SERVICE_NAME
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from settings import SettingsV1, migrate_from_old_settings
-from typedefs import FlightController, Platform, Serial, SITLFrame
+from typedefs import FlightController, Platform, PlatformType, Serial, SITLFrame
 
 VALID_SERIAL_ENDPOINT = "udp:192.168.2.1:14550"
 
@@ -52,7 +52,7 @@ def _old_settings_payload() -> dict[str, Any]:
             "preferred_board": {
                 "name": "Navigator",
                 "manufacturer": "Blue Robotics",
-                "platform": Platform.Navigator.value,
+                "platform": "navigator",
                 "path": None,
                 "flags": [],
             },
@@ -94,7 +94,7 @@ def test_migrate_from_old_settings_copies_supported_fields(tmp_path: Path, monke
     assert target.sitl_frame == SITLFrame.VECTORED
     assert target.preferred_board is not None
     assert target.preferred_board.name == "Navigator"
-    assert target.preferred_board.platform == Platform.Navigator
+    assert target.preferred_board.platform == Platform(name="Navigator", platform_type=PlatformType.Linux)
     assert target.serials == [Serial(port="B", endpoint=VALID_SERIAL_ENDPOINT)]
     assert target.endpoints == {
         Endpoint.model_validate(_endpoint()),
@@ -226,7 +226,7 @@ def test_pydantic_manager_migrates_old_settings_on_first_save(tmp_path: Path, mo
 def test_pydantic_manager_roundtrip_preserves_typed_fields(tmp_path: Path) -> None:
     manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1, tmp_path)
     endpoint = Endpoint.model_validate(_endpoint())
-    board = FlightController(name="Navigator", platform=Platform.Navigator)
+    board = FlightController(name="Navigator", platform=Platform(name="Navigator", platform_type=PlatformType.Linux))
     manager.settings.start_on_boot = False
     manager.settings.preferred_router = "MAVP2P"
     manager.settings.sitl_frame = SITLFrame.VECTORED
@@ -268,7 +268,9 @@ def test_get_serials_prefers_saved_then_linux_board_defaults() -> None:
     assert manager.get_serials() == [Serial(port="B", endpoint=VALID_SERIAL_ENDPOINT)]
 
     settings.serials = []
-    manager._current_board = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1)
+    manager._current_board = FlightController(
+        name="Pixhawk1", platform=Platform(name="Pixhawk1", platform_type=PlatformType.Serial)
+    )
     assert not manager.get_serials()
 
     linux_board = MagicMock(spec=LinuxFlightController)

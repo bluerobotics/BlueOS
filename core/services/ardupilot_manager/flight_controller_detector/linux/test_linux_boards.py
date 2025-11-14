@@ -9,7 +9,7 @@ import psutil
 import pytest
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from loguru import logger
-from typedefs import Platform
+from typedefs import Platform, PlatformType
 
 BABEL = "/dev/serial/by-id/usb-CUAV_CUAV_CAN_Babel-if00"
 STTY = ["stty", "-F", BABEL, "3000000", "raw", "-echo", "-hupcl", "clocal"]
@@ -19,7 +19,7 @@ BITRATE_ARGUMENTS = ["type", "can", "bitrate", "1000000", "restart-ms", "100", "
 
 
 def make_board() -> LinuxFlightController:
-    return LinuxFlightController(name="Test", platform=Platform.Navigator)
+    return LinuxFlightController(name="Test", platform=Platform(name="Navigator", platform_type=PlatformType.Linux))
 
 
 def fake_sysfs(

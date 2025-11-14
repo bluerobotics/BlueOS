@@ -11,7 +11,7 @@ from typedefs import FlightController, Platform, PlatformType
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.timeout(5)]
 
-SITL = FlightController(name="SITL", platform=Platform.SITL)
+SITL = FlightController(name="SITL", platform=Platform.SITL())
 MASTER = Endpoint(name="Master", owner="Test", connection_type=EndpointType.UDPServer, place="0.0.0.0", argument=14551)
 
 
@@ -189,7 +189,9 @@ async def test_failed_router_restart_keeps_retrying(manager: AutoPilotManager) -
 async def test_serial_restart_holds_router_watchdog(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
     router = FakeRouterManager(lifecycle)
     manager.mavlink_manager = cast(Manager, router)
-    manager._current_board = FlightController(name="Pixhawk", platform=Platform.Pixhawk1, path="/dev/ttyACM0")
+    manager._current_board = FlightController(
+        name="Pixhawk", platform=Platform(name="Pixhawk1", platform_type=PlatformType.Serial), path="/dev/ttyACM0"
+    )
     assert manager._current_board.type == PlatformType.Serial
     manager.vehicle_manager = AsyncMock()
     board_dropped = asyncio.Event()
