@@ -324,15 +324,15 @@ lint = [
 
 [[package]]
 name = "bluerobotics-ping"
-version = "0.1.5"
+version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "future" },
     { name = "pyserial" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/33/20/729c798611f92f550a668b44fa4bac8eb0def6eea6a5388800a0b7d9e190/bluerobotics-ping-0.1.5.tar.gz", hash = "sha256:f577cacb8f1d0d42bca14dfa5ce2d0740d6afd437f9119b10e1dde751890fb4f", size = 20814, upload-time = "2023-09-07T16:16:13.936Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/a0/74067432f38d032765ef05b56bc74f3389e331c8ca3d7ae12b6e62f203dd/bluerobotics_ping-0.2.3.tar.gz", hash = "sha256:71a51cd8f4d831c9f3462b0b70edec19c1a7e8e31a7c6c2e2233c9ea7c39c67f", size = 37915, upload-time = "2025-10-31T20:36:10.829Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/d9/72cd1f5c2b3c8ed1255f6bf24304d586affd2cc3b838eb08be2aaf4874d1/bluerobotics_ping-0.1.5-py3-none-any.whl", hash = "sha256:d9b3ba8928ee21d73b7005058a324a71fbb88cec1e4997409adf0a98ae2b10fe", size = 24155, upload-time = "2023-09-07T16:16:12.344Z" },
+    { url = "https://files.pythonhosted.org/packages/29/98/316901832b672be7b8c97a8ae02f99b9d3c046e526601082bed14cd2dafd/bluerobotics_ping-0.2.3-py3-none-any.whl", hash = "sha256:caf342bc9b93e3a59e289d4d29fa6e5c99f0068dfc4123c78b35a9d61f5f3a50", size = 50697, upload-time = "2025-10-31T20:36:09.65Z" },
 ]
 
 [[package]]
@@ -999,7 +999,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bluerobotics-ping", specifier = "==0.1.5" },
+    { name = "bluerobotics-ping", specifier = "==0.2.3" },
     { name = "bridges", editable = "libs/bridges" },
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "fastapi", specifier = "==0.105.0" },
