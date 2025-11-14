@@ -232,6 +232,7 @@ dependencies = [
     { name = "pyelftools" },
     { name = "pyserial" },
     { name = "python-multipart" },
+    { name = "python-prctl" },
     { name = "smbus2" },
     { name = "uvicorn" },
     { name = "validators" },
@@ -251,6 +252,7 @@ requires-dist = [
     { name = "pyelftools", specifier = "==0.30" },
     { name = "pyserial", specifier = "==3.5" },
     { name = "python-multipart", specifier = "==0.0.21" },
+    { name = "python-prctl", specifier = "==1.8.1" },
     { name = "smbus2", specifier = "==0.6.1" },
     { name = "uvicorn", specifier = "==0.38.0" },
     { name = "validators", specifier = "==0.35.0" },
@@ -1827,6 +1829,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/78/96/804520d0850c7db98
 wheels = [
     { url = "https://files.pythonhosted.org/packages/aa/76/03af049af4dcee5d27442f71b6924f01f3efb5d2bd34f23fcd563f2cc5f5/python_multipart-0.0.21-py3-none-any.whl", hash = "sha256:cf7a6713e01c87aa35387f4774e812c4361150938d20d232800f75ffcf266090", size = 24541, upload-time = "2025-12-17T09:24:21.153Z" },
 ]
+
+[[package]]
+name = "python-prctl"
+version = "1.8.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/99/be5393cfe9c16376b4f515d90a68b11f1840143ac1890e9008bc176cf6a6/python-prctl-1.8.1.tar.gz", hash = "sha256:b4ca9a25a7d4f1ace4fffd1f3a2e64ef5208fe05f929f3edd5e27081ca7e67ce", size = 28033, upload-time = "2020-11-02T19:30:25.257Z" }
 
 [[package]]
 name = "pywin32"

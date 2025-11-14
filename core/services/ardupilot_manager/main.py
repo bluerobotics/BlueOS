@@ -16,12 +16,27 @@ logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 logger.info("Starting AutoPilot Manager.")
+
+# Drop CAP_SYS_ADMIN capability for the entire service as it's not needed
+# Serial port access, process management, and file operations don't require it
+try:
+    import prctl
+
+    prctl.cap_effective.drop(prctl.CAP_SYS_ADMIN)
+    prctl.cap_permitted.drop(prctl.CAP_SYS_ADMIN)
+    logger.info("Dropped CAP_SYS_ADMIN capability for security")
+except ImportError:
+    logger.warning("prctl module not available - cannot drop capabilities")
+except Exception as e:
+    logger.warning(f"Failed to drop CAP_SYS_ADMIN capability: {e}")
+
 autopilot = AutoPilotManager()
 
 from api import application
 
 if not is_running_as_root():
-    raise RuntimeError("AutoPilot manager needs to run with root privilege.")
+    logger.error("AutoPilot manager needs to run with root privilege.")
+    logger.error("expect issues")
 
 
 async def main() -> None:
