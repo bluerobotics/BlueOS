@@ -551,12 +551,20 @@ export default Vue.extend({
               try {
                 const log = JSON.parse(line)
 
-                // Check if backend sent "done" signal to close connection
-                if (log.stream.includes('Started autopilot')) {
-                  // Close the progress dialog immediately
-                  this.install_status = InstallStatus.Succeeded
-                  this.install_result_message = 'Installation completed'
-                  return
+                // Check if backend sent control message
+                if (log.stream === 'control') {
+                  if (log.data === 'done') {
+                    // Close the progress dialog immediately
+                    this.install_status = InstallStatus.Succeeded
+                    this.install_result_message = 'Installation completed'
+                    return
+                  }
+                  if (log.data === 'error') {
+                    // Mark as failed but continue processing remaining logs
+                    this.install_status = InstallStatus.Failed
+                  }
+                  // Don't add control messages to the log display
+                  continue
                 }
 
                 this.install_logs.push(log)
