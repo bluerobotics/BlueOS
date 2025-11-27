@@ -99,3 +99,17 @@ export interface ProgressEvent {
         response: string
     }
 }
+
+export interface ExtensionUploadMetadata {
+    identifier?: string
+    name?: string
+    docker?: string
+    tag?: string
+    permissions?: JSONValue
+}
+
+export interface ExtensionUploadResponse {
+    temp_tag: string
+    metadata: ExtensionUploadMetadata
+    image_name: string
+}

@@ -1,5 +1,6 @@
 import {
   ExtensionData,
+  ExtensionUploadResponse,
   InstalledExtensionData,
   Manifest,
   ManifestSource,
@@ -335,6 +336,57 @@ export async function getContainerLogs(
   })
 }
 
+/**
+ * Upload a tar file containing a Docker image and extract metadata
+ * @param {File} file The tar file to upload
+ * @returns {Promise<{temp_tag: string, metadata: any, image_name: string}>}
+ */
+export async function uploadExtensionTarFile(file: File): Promise<ExtensionUploadResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/upload`,
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 120000,
+  })
+
+  return response.data
+}
+
+/**
+ * Finalize a temporary extension by assigning a valid identifier and installing it
+ * @param {InstalledExtensionData} extension The extension data to finalize
+ * @param {string} tempTag The temporary tag from upload response
+ * @param {function} progressHandler The progress handler for the download
+ * @returns {Promise<void>}
+ */
+export async function finalizeExtension(
+  extension: InstalledExtensionData,
+  tempTag: string,
+  progressHandler: (event: any) => void,
+): Promise<void> {
+  await back_axios({
+    method: 'POST',
+    url: `${KRAKEN_API_V2_URL}/extension/finalize?temp_tag=${tempTag}`,
+    data: {
+      identifier: extension.identifier,
+      name: extension.name,
+      docker: extension.docker,
+      tag: extension.tag,
+      enabled: true,
+      permissions: extension?.permissions ?? '',
+      user_permissions: extension?.user_permissions ?? '',
+    },
+    timeout: 120000,
+    onDownloadProgress: progressHandler,
+  })
+}
+
 export default {
   fetchManifestSources,
   fetchManifestSource,
@@ -357,4 +409,6 @@ export default {
   listContainers,
   getContainersStats,
   getContainerLogs,
+  uploadExtensionTarFile,
+  finalizeExtension,
 }
