@@ -57,7 +57,9 @@
           <v-card-title class="align-center">
             System Log Files ({{ log_folder_size }})
           </v-card-title>
-
+          <v-alert v-if="status" dense type="info">
+            {{ status }}
+          </v-alert>
           <v-card-actions class="flex-row">
             <v-btn
               v-tooltip="'Download log for all services in BlueOS'"
@@ -210,6 +212,7 @@ export default Vue.extend({
       current_deletion_size: 0,
       current_deletion_total_size: 0,
       current_deletion_status: '',
+      status: '',
     }
   },
   computed: {
@@ -241,6 +244,24 @@ export default Vue.extend({
       return prettifySize(bytes)
     },
     async download_service_log_files(): Promise<void> {
+      // TODO: this should probably be done more on the backend than here...
+      // This is currently done here as we are relying on the filebrowser's
+      // on-the-fly download feature.
+      this.operation_in_progress = true
+      const command = 'dump_journal.py 0'
+      this.status = 'Dumping journal...'
+      await back_axios({
+        timeout: 60000,
+        url: `${API_URL}/command/blueos?command=${command}&i_know_what_i_am_doing=true`,
+        method: 'post',
+      }).then(() => {
+        this.status = ''
+      })
+        .catch((error) => {
+          this.status = String(error)
+        }).finally(() => {
+          this.operation_in_progress = false
+        })
       const folder = await filebrowser.fetchFolder('system_logs')
       await filebrowser.downloadFolder(folder)
     },
@@ -315,6 +336,7 @@ export default Vue.extend({
       this.current_deletion_status = 'Starting deletion...'
 
       try {
+        this.operation_in_progress = true
         await back_axios({
           url: `${API_URL}/services/remove_log_stream`,
           method: 'post',
