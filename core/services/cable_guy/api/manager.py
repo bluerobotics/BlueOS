@@ -635,6 +635,14 @@ class EthernetManager:
         self._execute_route("del", interface_name, route)
 
     def _execute_route(self, action: str, interface_name: str, route: Route) -> None:
+        if not self.is_valid_interface_name(interface_name, filter_wifi=True):
+            logger.debug(f"Ignoring route action '{action}' for forbidden interface '{interface_name}'.")
+            return
+
+        current_interface = self.get_saved_interface_by_name(interface_name)
+        if not current_interface:
+            raise ValueError(f"Interface {interface_name} not found")
+
         try:
             interface_index = self._get_interface_index(interface_name)
             gateway = self.__class__._normalize_gateway(route.destination_parsed, route.next_hop_parsed)
@@ -662,7 +670,7 @@ class EthernetManager:
             raise
 
         # Update settings
-        current_interface = self.get_interface_by_name(interface_name, include_dhcp_markers=True)
+        current_interface.routes = list(self.get_routes(interface_name, ignore_unmanaged=False))
         for current_route in current_interface.routes:
             if current_route.destination_parsed == route.destination_parsed and current_route.gateway == route.gateway:
                 current_route.managed = route.managed
