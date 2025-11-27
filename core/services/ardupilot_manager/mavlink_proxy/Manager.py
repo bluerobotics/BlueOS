@@ -10,7 +10,7 @@ import mavlink_proxy.MAVLinkRouter
 import mavlink_proxy.MAVLinkServer
 import mavlink_proxy.MAVP2P
 import mavlink_proxy.MAVProxy
-from mavlink_proxy.AbstractRouter import AbstractRouter
+from mavlink_proxy.AbstractRouter import AbstractRouter, TLogCondition
 from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.exceptions import (
     EndpointAlreadyExists,
@@ -176,6 +176,12 @@ class Manager:
 
     def set_logdir(self, log_dir: pathlib.Path) -> None:
         self.tool.set_logdir(log_dir)
+
+    def tlog_condition(self) -> TLogCondition:
+        return self.tool.tlog_condition()
+
+    def set_tlog_condition(self, tlog_condtion: TLogCondition) -> None:
+        self.tool.set_tlog_condition(tlog_condtion)
 
     async def auto_restart_router(self) -> None:
         """Auto-restart Mavlink router process if it dies."""
