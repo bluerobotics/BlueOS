@@ -1,16 +1,29 @@
 <template>
-  <v-card-text class="mt-3 pa-0">
-    <v-tooltip bottom>
-      <template #activator="{ on }">
-        <v-icon dense :color="mavlink_lat ? 'green' : 'orange'" v-on="on">
-          {{ mavlink_lat ? "mdi-check-circle" : "mdi-alert-circle" }}
-        </v-icon>
-      </template>
-      <span>{{ mavlink_lat ? "Valid GPS position" : "No valid GPS position" }}</span>
-    </v-tooltip>
-    <b>Vehicle coordinates:</b> {{ mavlink_lat?.toFixed(5) ?? "N/A" }} {{ mavlink_lon?.toFixed(5) ?? "N/A" }}
+  <div>
+    <v-alert v-if="!mavlink_lat" dense type="error" class="mt-4">
+      No valid GPS position!
+    </v-alert>
+
+    A valid (usually GPS) position is required for the calibration to estimate the local world magnetic field.
+    Estimation of the local magnetic field improves the calibration quality as it
+    allows a 3D fusion of the compass data.
     <br>
-    <template v-if="!mavlink_lat && supports_setting_position">
+    <br>
+    <div v-if="!warnonly">
+      <v-tooltip bottom>
+        <template #activator="{ on }">
+          <v-icon dense :color="mavlink_lat ? 'green' : 'orange'" v-on="on">
+            {{ mavlink_lat ? "mdi-check-circle" : "mdi-alert-circle" }}
+          </v-icon>
+        </template>
+        <span>{{ mavlink_lat ? "Valid GPS position" : "No valid GPS position" }}</span>
+      </v-tooltip>
+      <b>Current vehicle coordinates:</b>
+      <br>
+      {{ mavlink_lat?.toFixed(5) ?? "N/A" }} {{ mavlink_lon?.toFixed(5) ?? "N/A" }}
+      <br>
+    </div>
+    <template v-if="!mavlink_lat && supports_setting_position && !warnonly">
       <v-icon dense :color="geoip_lat ? 'green' : 'red'">
         {{ geoip_lat ? "mdi-check-circle" : "mdi-alert-circle" }}
       </v-icon>
@@ -22,41 +35,52 @@
         </template>
         <span>GeoIP coordinates are estimated based on your IP address.</span>
       </v-tooltip>
-      <b>GeoIP coordinates:</b> {{ geoip_lat ?? "N/A" }} {{ geoip_lon ?? "N/A" }}
+      <b>GeoIP coordinates:</b>
+      <br>
+      {{ geoip_lat ?? "N/A" }} {{ geoip_lon ?? "N/A" }}
       <br>
     </template>
-    <v-card v-if="!mavlink_lat && supports_setting_position" class="pa-4">
-      <v-card-text>
-        No valid GPS position!
-      </v-card-text>
-      <v-card-actions>
-        <v-btn v-if="!manual_coordinates" small color="primary" @click="setOrigin(geoip_lat ?? 0, geoip_lon ?? 0)">
+    <v-card v-if="!mavlink_lat && supports_setting_position && !warnonly" class="pa-4">
+      <div class="d-flex flex-column justify-space-between">
+        <v-btn
+          v-if="!manual_coordinates"
+          class="ma-1"
+          small
+          color="primary"
+          @click="setOrigin(geoip_lat ?? 0, geoip_lon ?? 0)"
+        >
           Use GeoIP coordinates
         </v-btn>
-        <v-btn v-if="!mavlink_lat && !manual_coordinates" small color="primary" @click="manual_coordinates = true">
+        <v-btn
+          v-if="!mavlink_lat && !manual_coordinates"
+          class="ma-1"
+          small
+          color="primary"
+          @click="manual_coordinates = true"
+        >
           Enter custom coordinate
         </v-btn>
-        <br>
-        <div v-if="manual_coordinates">
-          <v-text-field
-            v-model="manual_lat"
-            label="Latitude"
-            type="number"
-            required
-          />
-          <v-text-field
-            v-model="manual_lon"
-            label="Longitude"
-            type="number"
-            required
-          />
-          <v-btn small color="primary" @click="setOrigin(manual_lat ?? 0, manual_lon ?? 0)">
-            Use these coordinates
-          </v-btn>
-        </div>
-      </v-card-actions>
+      </div>
+
+      <div v-if="manual_coordinates">
+        <v-text-field
+          v-model="manual_lat"
+          label="Latitude"
+          type="number"
+          required
+        />
+        <v-text-field
+          v-model="manual_lon"
+          label="Longitude"
+          type="number"
+          required
+        />
+        <v-btn small color="primary" @click="setOrigin(manual_lat ?? 0, manual_lon ?? 0)">
+          Use these coordinates
+        </v-btn>
+      </div>
     </v-card>
-  </v-card-text>
+  </div>
 </template>
 
 <script lang="ts">
@@ -81,6 +105,11 @@ export default {
       type: Object as PropType<{ lat: number, lon: number } | undefined>,
       required: false,
       default: undefined,
+    },
+    warnonly: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
   },
   data() {
@@ -206,5 +235,7 @@ export default {
 </script>
 
 <style scoped>
-
+.position {
+  max-width: 300px;
+}
 </style>
