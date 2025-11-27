@@ -169,6 +169,21 @@ class EthernetStore extends VuexModule {
     })
       .catch((error) => {
         this.context.commit('setInterfaces', [])
+        notifier.pushBackError('AVAILABLE_INTERFACES_FETCH_FAIL', error)
+        throw error
+      })
+  }
+
+  @Action
+  async getAvailableEthernetInterfaces() {
+    return await back_axios({
+      method: 'get',
+      url: `${this.API_URL}/ethernet`,
+      // Necessary since the system can hang with dhclient timeouts
+      timeout: 10000,
+    })
+      .catch((error) => {
+        this.context.commit('setInterfaces', [])
         notifier.pushBackError('ETHERNET_AVAILABLE_INTERFACES_FETCH_FAIL', error)
         throw error
       })
