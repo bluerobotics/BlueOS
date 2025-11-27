@@ -19,6 +19,7 @@ from extension.exceptions import (
 from extension.models import ExtensionSource
 from harbor import ContainerManager, DockerCtx
 from harbor.exceptions import ContainerNotFound
+from aiodocker.exceptions import DockerError
 from manifest import ManifestManager
 from manifest.models import ExtensionVersion
 from settings import ExtensionSettings, SettingsV2
@@ -177,6 +178,16 @@ class Extension:
         docker_auth = f"{self.source.auth.username}:{self.source.auth.password}"
         return base64.b64encode(docker_auth.encode("utf-8")).decode("utf-8")
 
+    async def _image_is_available_locally(self) -> bool:
+        """Check if the Docker image is available locally."""
+        try:
+            image_ref = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
+            async with DockerCtx() as client:
+                await client.images.inspect(image_ref)
+                return True
+        except DockerError:
+            return False
+
     async def _pull_docker_image(self, docker_auth: Optional[str]) -> AsyncGenerator[bytes, None]:
         """Pull Docker image and yield progress updates."""
         tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
@@ -214,12 +225,14 @@ class Extension:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
             if atomic:
                 should_raise = False
-                if not running_ext or self.unique_entry != running_ext.unique_entry:
-                    should_raise = True
-                    await self.uninstall()
-
-                if running_ext:
-                    await running_ext.enable()
+                if await self._image_is_available_locally():
+                    logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
+                else:
+                    if not running_ext or self.unique_entry != running_ext.unique_entry:
+                        should_raise = True
+                        await self.uninstall()
+                    if running_ext:
+                        await running_ext.enable()
 
                 if should_raise:
                     raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
