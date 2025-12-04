@@ -43,7 +43,9 @@ ENV PATH="/root/.local/bin/:$PATH"
 # Project files
 COPY ./uv.lock /home/pi/uv.lock
 COPY ./pyproject.toml /home/pi/pyproject.toml
+COPY ./python-venv2 /home/pi/python-venv2
 COPY ./.python-version /home/pi/.python-version
+COPY ./.python-version /home/pi/python-venv2/.python-version
 
 COPY ./libs /home/pi/libs
 COPY ./services /home/pi/services
@@ -54,9 +56,22 @@ COPY ./tools /home/pi/tools
 WORKDIR /home/pi
 RUN uv venv && uv sync --frozen --no-default-groups
 
+WORKDIR /home/pi/python-venv2
+RUN <<-EOF
+set -e
+
+    uv venv /home/pi/.venv2
+    . /home/pi/.venv2/bin/activate
+    uv sync --frozen --no-default-groups --active
+
+EOF
+
 # Post install scripts
+RUN BLUEOS_PYTHON_ENVS="/home/pi/.venv /home/pi/.venv2" /home/pi/tools/install-python-libs.sh
+
+# Reset default workdir
+WORKDIR /home/pi
 ENV VIRTUAL_ENV=/home/pi/.venv
-RUN /home/pi/tools/install-python-libs.sh
 
 # BlueOS base image
 FROM base
@@ -120,6 +135,7 @@ COPY --from=download-binaries \
 # Copy frontend built on frontend-builder to this stage
 COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
+COPY --from=install-services-and-libs /home/pi/.venv2 /usr/blueos/venv2
 
 RUN <<-EOF
 set -e
@@ -134,7 +150,9 @@ set -e
     RCFILE_PATH="/etc/blueosrc"
     echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
     echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
-    echo "export PATH=/usr/blueos/venv/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
+    echo "export BLUEOS_VENV_PRIMARY=/usr/blueos/venv" >> $RCFILE_PATH
+    echo "export BLUEOS_VENV_SECONDARY=/usr/blueos/venv2" >> $RCFILE_PATH
+    echo "export PATH=/usr/blueos/venv/bin:/usr/blueos/venv2/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
     echo "export RUST_BACKTRACE=1" >> $RCFILE_PATH
 
     # Setup shortcuts

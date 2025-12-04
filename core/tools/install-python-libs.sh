@@ -8,4 +8,10 @@ TOOLS=(
     ardupilot_tools
 )
 
-parallel --halt now,fail=1 '/home/pi/tools/{}/setup-python-libs.sh' ::: "${TOOLS[@]}"
+TARGET_ENVS=("${BLUEOS_PYTHON_ENVS:-${VIRTUAL_ENV:-}}")
+
+for env in "${TARGET_ENVS[@]}"; do
+    [[ -n $env ]] && export VIRTUAL_ENV="$env" || unset VIRTUAL_ENV
+    echo "Installing python tools for ${env:-system python}"
+    parallel --halt now,fail=1 '/home/pi/tools/{}/setup-python-libs.sh' ::: "${TOOLS[@]}"
+done
