@@ -3,6 +3,7 @@ from typing import Any, Callable, Tuple
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi_versioning import versioned_api_route
+from commonwealth.utils.zenoh_helper import ZenohRouter, apply_route_decorator
 
 from manifest import ManifestManager
 from manifest.exceptions import (
@@ -19,14 +20,16 @@ from manifest.models import (
     UpdateManifestSource,
 )
 
-manifest_router_v2 = APIRouter(
+original_manifest_router_v2 = APIRouter(
     prefix="/manifest",
     tags=["manifest_v2"],
     route_class=versioned_api_route(2, 0),
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
-
+manifest_router_v2 = apply_route_decorator(original_manifest_router_v2)
 manifest_manager = ManifestManager.instance()
+
+zenoh_manifest_router = ZenohRouter("manifest")
 
 
 def manifest_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
@@ -46,6 +49,7 @@ def manifest_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., An
     return wrapper
 
 
+@zenoh_manifest_router.queryable()
 @manifest_router_v2.get("/", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch(data: bool = True, enabled: bool = False) -> list[Manifest]:
@@ -56,6 +60,7 @@ async def fetch(data: bool = True, enabled: bool = False) -> list[Manifest]:
     return await manifest_manager.fetch(data, enabled)
 
 
+@zenoh_manifest_router.queryable()
 @manifest_router_v2.get("/{identifier}/details", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch_by_identifier(identifier: str, data: bool = True) -> Manifest:
@@ -65,6 +70,7 @@ async def fetch_by_identifier(identifier: str, data: bool = True) -> Manifest:
     return await manifest_manager.fetch_by_identifier(identifier, data)
 
 
+@zenoh_manifest_router.queryable()
 @manifest_router_v2.get("/consolidated", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch_consolidated() -> list[RepositoryEntry]:
@@ -75,6 +81,7 @@ async def fetch_consolidated() -> list[RepositoryEntry]:
     return await manifest_manager.fetch_consolidated()
 
 
+@zenoh_manifest_router.queryable()
 @manifest_router_v2.get("/tags/{manifest_identifier}/{extension_identifier}/", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch_ext_tags_from_manifest(
@@ -88,6 +95,7 @@ async def fetch_ext_tags_from_manifest(
     return [str(version) for version in versions]
 
 
+@zenoh_manifest_router.queryable()
 @manifest_router_v2.get("/tags/{extension_identifier}", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch_ext_tags_from_consolidated(extension_identifier: str, stable: bool = False) -> list[str]:

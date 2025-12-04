@@ -2,6 +2,7 @@ from functools import wraps
 from typing import Any, Callable, Optional, Tuple
 
 from commonwealth.utils.streaming import streamer, timeout_streamer
+from commonwealth.utils.zenoh_helper import ZenohRouter, apply_route_decorator
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 from fastapi_versioning import versioned_api_route
@@ -10,12 +11,15 @@ from harbor import ContainerManager
 from harbor.exceptions import ContainerNotFound
 from harbor.models import ContainerModel, ContainerUsageModel
 
-container_router_v2 = APIRouter(
+original_container_router_v2 = APIRouter(
     prefix="/container",
     tags=["container_v2"],
     route_class=versioned_api_route(2, 0),
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
 )
+container_router_v2 = apply_route_decorator(original_container_router_v2)
+
+zenoh_container_router = ZenohRouter("container")
 
 
 def container_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
@@ -31,6 +35,7 @@ def container_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., A
     return wrapper
 
 
+@zenoh_container_router.queryable()
 @container_router_v2.get("/", status_code=status.HTTP_200_OK)
 @container_to_http_exception
 async def list_container() -> list[ContainerModel]:
@@ -40,6 +45,7 @@ async def list_container() -> list[ContainerModel]:
     return await ContainerManager.get_running_containers()
 
 
+@zenoh_container_router.queryable()
 @container_router_v2.get("/{container_name}/details", status_code=status.HTTP_200_OK)
 @container_to_http_exception
 async def fetch_container(container_name: str) -> ContainerModel:
@@ -49,6 +55,7 @@ async def fetch_container(container_name: str) -> ContainerModel:
     return await ContainerManager.get_running_container_by_name(container_name)
 
 
+@zenoh_container_router.queryable()
 @container_router_v2.get("/{container_name}/log", status_code=status.HTTP_200_OK)
 @container_to_http_exception
 async def fetch_log_by_container_name(container_name: str, timeout: Optional[int] = None) -> StreamingResponse:
@@ -64,6 +71,7 @@ async def fetch_log_by_container_name(container_name: str, timeout: Optional[int
     return StreamingResponse(streamer(stream, heartbeats=0.1), media_type="text/plain")
 
 
+@zenoh_container_router.queryable()
 @container_router_v2.get("/stats", status_code=status.HTTP_200_OK)
 @container_to_http_exception
 async def list_stats() -> dict[str, ContainerUsageModel]:
@@ -73,6 +81,7 @@ async def list_stats() -> dict[str, ContainerUsageModel]:
     return await ContainerManager.get_containers_stats()
 
 
+@zenoh_container_router.queryable()
 @container_router_v2.get("/{container_name}/stats", status_code=status.HTTP_200_OK)
 @container_to_http_exception
 async def fetch_stats_by_container_name(container_name: str) -> ContainerUsageModel:
