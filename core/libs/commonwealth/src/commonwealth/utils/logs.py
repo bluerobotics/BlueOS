@@ -4,6 +4,7 @@ from logging import LogRecord
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
+from commonwealth.utils.zenoh_helper import ZenohSession
 import zenoh
 from loguru import logger
 
@@ -67,12 +68,7 @@ def create_log_sink(service_name: str) -> Callable[["Message"], None]:
     Returns:
         A function that can be used as a loguru sink
     """
-    zenoh_config = zenoh.Config()
-    zenoh_config.insert_json5("adminspace", json.dumps({"enabled": True}))
-    zenoh_config.insert_json5("metadata", json.dumps({"name": service_name}))
-    zenoh_config.insert_json5("mode", json.dumps("client"))
-    zenoh_config.insert_json5("connect/endpoints", json.dumps(["tcp/127.0.0.1:7447"]))
-    session = zenoh.open(zenoh_config)
+    zenoh_session = ZenohSession(service_name)
     topic = f"services/{service_name}/log"
 
     def sink(message: "Message") -> None:
@@ -107,11 +103,15 @@ def create_log_sink(service_name: str) -> Callable[["Message"], None]:
             "line": record["line"],
         }
 
-        session.put(
-            topic,
-            json.dumps(foxglove_log),
-            encoding=zenoh.Encoding.APPLICATION_JSON.with_schema("foxglove.Log"),
-        )
+        try:
+            if zenoh_session.session is not None:
+                zenoh_session.session.put(
+                    topic,
+                    json.dumps(foxglove_log),
+                    encoding=zenoh.Encoding.APPLICATION_JSON.with_schema("foxglove.Log"),
+                )
+        except Exception as e:
+            logger.debug(f"Failed to publish log to zenoh session: {e}")
         # fmt: on
 
     return sink
