@@ -8,6 +8,10 @@ echo "BlueOS ${GIT_DESCRIBE_TAGS}"
 BLUEOS_PATH=/home/pi
 SERVICES_PATH=$BLUEOS_PATH/services
 TOOLS_PATH=$BLUEOS_PATH/tools
+BLUEOS_VENV_PRIMARY=${BLUEOS_VENV_PRIMARY:-/usr/blueos/venv}
+BLUEOS_VENV_SECONDARY=${BLUEOS_VENV_SECONDARY:-/usr/blueos/venv2}
+BLUEOS_PYTHON_BIN_PRIMARY="$BLUEOS_VENV_PRIMARY/bin/python3"
+BLUEOS_PYTHON_BIN_SECONDARY="$BLUEOS_VENV_SECONDARY/bin/python3"
 
 # MAVLink configuration
 MAV_SYSTEM_ID=${MAV_SYSTEM_ID:-1}
@@ -114,7 +118,7 @@ PRIORITY_SERVICES=(
 
 SERVICES=(
     # This services are not prioritized because they are not fundamental for the vehicle to work
-    'kraken',0,"nice -19 $SERVICES_PATH/kraken/main.py"
+    'kraken',0,"nice -19 $BLUEOS_PYTHON_BIN_PRIMARY $SERVICES_PATH/kraken/main.py"
     'wifi',0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
     'zenohd',0,"ZENOH_BACKEND_FS_ROOT=$TOOLS_PATH/zenoh zenohd -c $TOOLS_PATH/zenoh/blueos-zenoh.json5"
     # This services are not as important as the others
@@ -126,7 +130,7 @@ SERVICES=(
     'iperf3',250," iperf3 --server --port 5201"
     'linux2rest',250,"linux2rest --log-settings netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10"
     'filebrowser',250,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
-    'versionchooser',0,"$SERVICES_PATH/versionchooser/main.py"
+    'versionchooser',0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/versionchooser/main.py"
     'pardal',250,"nice -19 $SERVICES_PATH/pardal/main.py"
     'ping',0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
     'user_terminal',0,"cat /etc/motd"
