@@ -1,4 +1,6 @@
+from contextlib import asynccontextmanager
 from os import path
+from typing import AsyncGenerator
 
 # Routers
 from api.v1.routers import extension_router_v1, index_router_v1
@@ -10,14 +12,24 @@ from api.v2.routers import (
     manifest_router_v2,
 )
 from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.zenoh_helper import ZenohRouter, ZenohSession
+from config import SERVICE_NAME
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI
 
+
+@asynccontextmanager
+async def lifespan(fastapi_app: FastAPI) -> AsyncGenerator[None, None]:  # pylint: disable=unused-argument
+    yield
+    zenoh_session.close()
+
+
 application = FastAPI(
     title="Kraken API",
     description="Kraken is the BlueOS service responsible for installing and managing extensions.",
+    lifespan=lifespan,
 )
 application.router.route_class = GenericErrorHandlingRoute
 
@@ -32,7 +44,12 @@ application.include_router(extension_router_v2)
 application.include_router(jobs_router_v2)
 application.include_router(manifest_router_v2)
 
-application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True)
+# Zenoh
+zenoh_session = ZenohSession(SERVICE_NAME)
+zenoh_router = ZenohRouter(SERVICE_NAME)
+zenoh_router.add_routes_to_zenoh(application)
+
+application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True, lifespan=lifespan)
 
 
 @application.get("/", status_code=200)
