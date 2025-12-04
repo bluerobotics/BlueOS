@@ -8,6 +8,8 @@ echo "BlueOS ${GIT_DESCRIBE_TAGS}"
 BLUEOS_PATH=/home/pi
 SERVICES_PATH=$BLUEOS_PATH/services
 TOOLS_PATH=$BLUEOS_PATH/tools
+BLUEOS_VENV_SECONDARY=${BLUEOS_VENV_SECONDARY:-/usr/blueos/venv2}
+BLUEOS_PYTHON_BIN_SECONDARY="$BLUEOS_VENV_SECONDARY/bin/python3"
 
 # MAVLink configuration
 MAV_SYSTEM_ID=${MAV_SYSTEM_ID:-1}
@@ -126,7 +128,7 @@ SERVICES=(
     'iperf3',250," iperf3 --server --port 5201"
     'linux2rest',250,"linux2rest --log-settings netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10"
     'filebrowser',250,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
-    'versionchooser',0,"$SERVICES_PATH/versionchooser/main.py"
+    'versionchooser',0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/versionchooser/main.py"
     'pardal',250,"nice -19 $SERVICES_PATH/pardal/main.py"
     'ping',0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
     'user_terminal',0,"cat /etc/motd"

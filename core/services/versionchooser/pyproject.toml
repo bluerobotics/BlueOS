@@ -13,6 +13,7 @@ dependencies = [
     "docker==6.0.0",
     "loguru==0.5.3",
     "uvicorn==0.18.0",
+    "python-multipart==0.0.5",
     # This dependency needs to be locked due to error in aiohttp
     "yarl==1.12.1",
 ]
