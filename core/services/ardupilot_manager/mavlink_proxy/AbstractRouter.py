@@ -4,6 +4,7 @@ import pathlib
 import shlex
 import shutil
 import tempfile
+from enum import Enum
 from typing import Any, List, Optional, Set, Type
 
 from loguru import logger
@@ -18,6 +19,13 @@ from mavlink_proxy.exceptions import (
 )
 
 
+class TLogCondition(str, Enum):
+    """When to write tlog files."""
+
+    Always = "always"
+    WhileArmed = "while_armed"
+
+
 class AbstractRouter(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._endpoints: Set[Endpoint] = set()
@@ -28,6 +36,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         # to avoid any problem in __del__
         self._binary = shutil.which(self.binary_name())
         self._logdir = pathlib.Path(tempfile.gettempdir())
+        self._tlog_condition = TLogCondition.WhileArmed
         self._version = self._get_version()
 
     @staticmethod
@@ -186,6 +195,12 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         if not directory.exists():
             raise ValueError(f"Logging directory {directory} does not exist.")
         self._logdir = directory
+
+    def tlog_condition(self) -> TLogCondition:
+        return self._tlog_condition
+
+    def set_tlog_condition(self, tlog_condition: TLogCondition) -> None:
+        self._tlog_condition = tlog_condition
 
     def add_endpoint(self, endpoint: Endpoint) -> None:
         self._validate_endpoint(endpoint)
