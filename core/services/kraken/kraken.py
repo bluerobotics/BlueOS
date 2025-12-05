@@ -134,6 +134,13 @@ class Kraken:
                         f"Invalid extension {extension.identifier}:{extension.tag} could not be uninstalled: {e}"
                     )
 
+    async def cleanup_temporary_extensions(self) -> None:
+        """
+        Clean up temporary extensions (those with empty identifiers) that are older than 1 hour.
+        This helps prevent accumulation of abandoned temporary extensions from failed uploads.
+        """
+        await Extension.cleanup_temporary_extensions()
+
     async def kill_dangling_containers(self) -> None:
         # This can fail if docker daemon is not running
         try:
@@ -168,6 +175,7 @@ class Kraken:
             await self.setup_default_extensions()
             await self.kill_invalid_extensions()
             await self.kill_dangling_containers()
+            await self.cleanup_temporary_extensions()
 
             await asyncio.sleep(60)
 
