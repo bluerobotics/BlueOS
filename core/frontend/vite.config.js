@@ -133,6 +133,9 @@ export default defineConfig(({ command, mode }) => {
         '^/bag': {
           target: SERVER_ADDRESS,
         },
+        '^/odometer': {
+          target: SERVER_ADDRESS,
+        },
         '^/beacon': {
           target: SERVER_ADDRESS,
         },

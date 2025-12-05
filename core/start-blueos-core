@@ -133,6 +133,7 @@ SERVICES=(
     'ttyd',250,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
     'nginx',250,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
     'bag_of_holding',250,"$SERVICES_PATH/bag_of_holding/main.py"
+    'odometer',250,"$SERVICES_PATH/odometer/main.py"
     'recorder',250,"blueos-recorder --recorder-path /usr/blueos/userdata/recorder"
 )
 

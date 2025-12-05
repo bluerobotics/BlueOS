@@ -1,0 +1,21 @@
+[project]
+name = "odometer"
+version = "0.1.0"
+description = "Zenoh-powered odometer service for BlueOS."
+requires-python = ">=3.11"
+dependencies = [
+    "appdirs==1.4.4",
+    "commonwealth==0.1.0",
+    "eclipse-zenoh==1.4.0",
+    "fastapi==0.105.0",
+    "fastapi-versioning==0.9.1",
+    "loguru==0.5.3",
+    "pydantic==1.10.12",
+    "uvicorn==0.18.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+commonwealth = { workspace = true }

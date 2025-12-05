@@ -160,6 +160,7 @@ class Helper:
         9110,  # Ping Service
         9111,  # Beacon Service
         9120,  # Pardal
+        9127,  # Odometer
         9134,  # Kraken
         27353,  # Bridget
     }
