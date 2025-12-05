@@ -154,20 +154,74 @@ async def delete_everything_stream(path: Path) -> AsyncGenerator[dict[str, Any],
             # fmt: on
 
 
+def _file_is_open_command(path: Path) -> list[str]:
+    # fmt: off
+    return [
+        "lsof",
+        "-t",       # output only PIDs (terse)
+        "-n",       # do NOT resolve hostnames (faster, avoids DNS)
+        "-P",       # do NOT resolve ports to service names
+        "-S", "2",  # kernel function timeout = 2 seconds
+        "--",       # stop option parsing, treat next as path
+        str(path.resolve()),
+    ]
+    # fmt: on
+
+
+def _file_is_open_logic_lsof(returncode: int | None, stdout: str, stderr: str) -> bool:
+    if returncode == 0:
+        # Check if we have any PIDs in the output
+        return bool(stdout.strip())
+
+    if returncode == 1 and not stderr.strip():
+        return False
+
+    logger.error(f"lsof error checking: returncode={returncode}, stderr={stderr.strip()}")
+    return True
+
+
 def file_is_open(path: Path) -> bool:
+    cmd = _file_is_open_command(path)
+
     try:
-        kernel_functions_timeout = str(2)
         result = subprocess.run(
-            ["lsof", "-t", "-n", "-P", "-S", kernel_functions_timeout, path.resolve()],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False,
+            text=True,
             timeout=5,
+            check=False,
         )
-        return result.returncode == 0
     except Exception as error:
-        logger.error(f"Failed to check if file {path} is open, {error}")
+        logger.error(f"Failed to run lsof for {path}: {error}")
         return True
+
+    return _file_is_open_logic_lsof(result.returncode, result.stdout.strip(), result.stderr.strip())
+
+
+async def file_is_open_async(path: Path) -> bool:
+    cmd = _file_is_open_command(path)
+
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        try:
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=5)
+        except asyncio.TimeoutError:
+            process.kill()
+            await process.wait()
+            logger.error(f"Timeout running lsof for {path}")
+            return True
+
+    except Exception as error:
+        logger.error(f"Failed to run lsof for {path}: {error}")
+        return True
+
+    return _file_is_open_logic_lsof(process.returncode, stdout.decode().strip(), stderr.decode().strip())
 
 
 @cache
