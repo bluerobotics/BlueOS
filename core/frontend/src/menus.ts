@@ -125,6 +125,13 @@ const menus = [
     text: 'Manage your video devices and video streams.',
   },
   {
+    title: 'Records',
+    icon: 'mdi-filmstrip',
+    route: '/tools/records',
+    advanced: false,
+    text: 'Browse, preview, and download recorded MP4 sessions.',
+  },
+  {
     title: 'Zenoh Inspector',
     icon: 'mdi-chart-areaspline',
     route: '/tools/zenoh-inspector',
