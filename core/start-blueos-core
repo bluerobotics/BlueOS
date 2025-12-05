@@ -134,6 +134,7 @@ SERVICES=(
     'nginx',250,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
     'bag_of_holding',250,"$SERVICES_PATH/bag_of_holding/main.py"
     'recorder',250,"blueos-recorder --recorder-path /usr/blueos/userdata/recorder"
+    'recorder_extractor',250,"$SERVICES_PATH/recorder_extractor/main.py"
 )
 
 tmux -f /etc/tmux.conf start-server
