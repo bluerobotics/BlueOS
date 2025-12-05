@@ -13,11 +13,9 @@ dependencies = [
   "cable_guy",
   "commander",
   "helper",
-  "kraken",
   "nmea_injector",
   "pardal",
   "ping",
-  "versionchooser",
   "wifi",
 ]
 
