@@ -129,6 +129,14 @@ export default defineConfig(({ command, mode }) => {
         },
         '^/ardupilot-manager': {
           target: SERVER_ADDRESS,
+          onProxyRes: (proxyRes, request, response) => {
+            proxyRes.on('data', (data) => {
+              response.write(data)
+            })
+            proxyRes.on('end', () => {
+              response.end()
+            })
+          },
         },
         '^/bag': {
           target: SERVER_ADDRESS,

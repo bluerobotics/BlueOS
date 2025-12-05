@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "Ping service for BlueRobotics' Ping1D and Ping360."
 requires-python = ">=3.11"
 dependencies = [
-    "bluerobotics-ping==0.1.5",
+    "bluerobotics-ping==0.2.3",
     "bridges==0.1.0",
     "commonwealth==0.1.0",
     "fastapi==0.105.0",
