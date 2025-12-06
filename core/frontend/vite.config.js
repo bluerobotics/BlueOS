@@ -198,6 +198,9 @@ export default defineConfig(({ command, mode }) => {
         '^/ping': {
           target: SERVER_ADDRESS,
         },
+        '^/recorder-extractor': {
+          target: SERVER_ADDRESS,
+        },
         '^/system-information': {
           target: SERVER_ADDRESS,
           changeOrigin: true,
