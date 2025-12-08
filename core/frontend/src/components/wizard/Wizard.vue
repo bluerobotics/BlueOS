@@ -269,7 +269,6 @@
 <script lang="ts">
 import '@google/model-viewer/dist/model-viewer'
 
-import { SemVer } from 'semver'
 import Vue from 'vue'
 
 import {
@@ -281,11 +280,10 @@ import filebrowser from '@/libs/filebrowser'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import ardupilot_data from '@/store/autopilot'
-import autopilot from '@/store/autopilot_manager'
 import bag from '@/store/bag'
 import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
-import { Firmware, Vehicle, vehicleTypeFromString } from '@/types/autopilot'
+import { Firmware, Vehicle } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 import back_axios from '@/utils/api'
 import { sleep } from '@/utils/helper_functions'
@@ -660,18 +658,23 @@ export default Vue.extend({
 
       return availableFirmwares(vehicle)
         .then((firmwares: Firmware[]) => {
-          const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
-          if (found === undefined) {
-            return `Failed to find a stable version for vehicle (${vehicle})`
+          const stable = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+          const beta = firmwares.find((firmware) => firmware.name.includes('BETA'))
+          const dev = firmwares.find((firmware) => firmware.name.includes('DEV'))
+          let target
+          if (stable) {
+            target = stable
+          } else if (beta) {
+            console.warn('No stable firmware found, falling back to beta')
+            target = beta
+          } else if (dev) {
+            console.warn('No stable or beta firmware found, falling back to dev')
+            target = dev
+          } else {
+            console.error('No firmware found')
+            return 'No firmware found'
           }
-          const newVersion = new SemVer(found?.name.replace('STABLE-', '').trim())
-          const currentVersion = autopilot?.firmware_info?.version ?? new SemVer('0.0.0')
-          const vehicleType = vehicleTypeFromString(autopilot?.vehicle_type ?? '')
-          if (vehicleType === vehicle && newVersion <= currentVersion) {
-            // TODO: allow returning strings on success
-            return undefined // 'Firmware is already up to date.'
-          }
-          return installFirmwareFromUrl(found.url, true, this.params)
+          return installFirmwareFromUrl(target.url, true, this.params)
             .then(() => undefined)
             .catch((error) => `Failed to install firmware: ${error.message ?? error.response?.data}.`)
         })
