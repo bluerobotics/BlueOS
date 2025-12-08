@@ -23,7 +23,11 @@
           :param="param"
         />
 
-        <servo-function-range-editor :param="param" />
+        <component
+          :is="function_type"
+          v-if="function_type"
+          :param="param"
+        />
       </v-card-text>
 
       <v-card-actions>
@@ -40,11 +44,15 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { VueConstructor } from 'vue'
 
 import Parameter from '@/types/autopilot/parameter'
 
 import InlineParameterEditor from './InlineParameterEditor.vue'
+import ServoFunctionActuatorEditor from './ServoFunctionActuatorEditor.vue'
+import ServoFunctionGpioEditor from './ServoFunctionGpioEditor.vue'
+import ServoFunctionLightsEditor from './ServoFunctionLightsEditor.vue'
+import ServoFunctionMotorEditor from './ServoFunctionMotorEditor.vue'
 import ServoFunctionRangeEditor from './ServoFunctionRangeEditor.vue'
 
 export default Vue.extend({
@@ -52,6 +60,10 @@ export default Vue.extend({
   components: {
     InlineParameterEditor,
     ServoFunctionRangeEditor,
+    ServoFunctionMotorEditor,
+    ServoFunctionGpioEditor,
+    ServoFunctionActuatorEditor,
+    ServoFunctionLightsEditor,
   },
   model: {
     prop: 'value',
@@ -65,6 +77,27 @@ export default Vue.extend({
     param: {
       type: Object as () => Parameter,
       required: true,
+    },
+  },
+  computed: {
+    function_type(): VueConstructor<Vue> | undefined {
+      const name = this.param.options?.[this.param.value]
+      if (name?.toLowerCase().includes('motor')) {
+        return ServoFunctionMotorEditor
+      }
+      if (name?.toLowerCase().includes('gpio')) {
+        return ServoFunctionGpioEditor
+      }
+      if (name?.toLowerCase().includes('actuator')) {
+        return ServoFunctionActuatorEditor
+      }
+      if (name?.toLowerCase().includes('lights')) {
+        return ServoFunctionLightsEditor
+      }
+      if (name?.toLowerCase().includes('disabled')) {
+        return undefined
+      }
+      return ServoFunctionRangeEditor
     },
   },
 })
