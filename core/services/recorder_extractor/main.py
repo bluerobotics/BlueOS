@@ -29,6 +29,9 @@ PORT = 9150
 # Prevent thumbnails from being generated while MCAP extraction is running
 thumbnail_lock = asyncio.Lock()
 
+# Track MCAP files currently being processed
+processing_mcap_files: set[str] = set()
+
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 init_logger(SERVICE_NAME)
 logger.info("Starting Recorder Extractor service")
@@ -42,6 +45,15 @@ class RecordingFile(BaseModel):
     download_url: str
     stream_url: str
     thumbnail_url: str
+
+
+class ProcessingFile(BaseModel):
+    name: str
+    path: str
+
+
+class ProcessingStatus(BaseModel):
+    processing: List[ProcessingFile]
 
 
 def ensure_recorder_dir() -> Path:
@@ -183,16 +195,21 @@ async def extract_mcap_recordings() -> None:
                     str(output_dir),
                 ]
                 logger.info(f"Extracting MCAP video to {output_dir} with command: {' '.join(command)}")
-                async with thumbnail_lock:
-                    process = await asyncio.create_subprocess_exec(
-                        *command,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE,
-                        text=False,
-                    )
-                    stdout_bytes, stderr_bytes = await process.communicate()
-                    stdout = stdout_bytes.decode("utf-8", "ignore")
-                    stderr = stderr_bytes.decode("utf-8", "ignore")
+                mcap_relative = str(mcap_path.relative_to(base))
+                processing_mcap_files.add(mcap_relative)
+                try:
+                    async with thumbnail_lock:
+                        process = await asyncio.create_subprocess_exec(
+                            *command,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE,
+                            text=False,
+                        )
+                        stdout_bytes, stderr_bytes = await process.communicate()
+                        stdout = stdout_bytes.decode("utf-8", "ignore")
+                        stderr = stderr_bytes.decode("utf-8", "ignore")
+                finally:
+                    processing_mcap_files.discard(mcap_relative)
                 if process.returncode != 0:
                     logger.error(
                         f"MCAP extract failed for {mcap_path} (code={process.returncode}): {stderr}",
@@ -257,6 +274,19 @@ async def list_recordings() -> List[RecordingFile]:
             )
         )
     return files
+
+
+@recorder_router.get(
+    "/status",
+    response_model=ProcessingStatus,
+    summary="Get MCAP extraction processing status.",
+)
+@to_http_exception
+async def get_processing_status() -> ProcessingStatus:
+    """Return MCAP files currently being processed."""
+    # Snapshot the set with list to avoid RuntimeError from concurrent mutation
+    processing = [ProcessingFile(name=Path(path).name, path=path) for path in list(processing_mcap_files)]
+    return ProcessingStatus(processing=processing)
 
 
 @recorder_router.get(
