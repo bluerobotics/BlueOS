@@ -7,3 +7,12 @@ export interface RecordingFile {
   stream_url: string
   thumbnail_url: string
 }
+
+export interface ProcessingFile {
+  name: string
+  path: string
+}
+
+export interface ProcessingStatus {
+  processing: ProcessingFile[]
+}
