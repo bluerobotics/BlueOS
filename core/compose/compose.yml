@@ -23,6 +23,7 @@ services:
       - ../start-blueos-core:/usr/bin/start-blueos-core
       - ../tools/blueos_startup_update/blueos_startup_update.py:/usr/bin/blueos_startup_update.py
       - ../services:/home/pi/services
+      - ../libs:/home/pi/libs/
     pid: "host"
     environment:
       - BLUEOS_DISABLE_SERVICES=cable_guy,wifi,commander
