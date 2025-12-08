@@ -1,7 +1,7 @@
 <template>
   <div>
     <model-viewer
-      v-if="computed_model_path"
+      v-if="model_viewer_supported && model_viewer_ready && computed_model_path"
       id="modelviewer"
       ref="modelviewer"
       :src="model_override_path || computed_model_path"
@@ -12,6 +12,7 @@
       interaction-prompt="none"
       :camera-orbit="cameraOrbit"
       camera-target="auto 0m auto"
+      @load="onModelViewerLoad"
     >
       <button
         v-for="annotation in filtered_annotations"
@@ -48,6 +49,22 @@
         </v-icon>
       </v-btn>
     </model-viewer>
+    <div
+      v-else-if="!model_viewer_supported"
+      class="d-flex flex-column align-center text-center pa-4"
+    >
+      <v-icon
+        style="height: 170px"
+        size="200"
+        v-text="'mdi-cube-off-outline'"
+      />
+      <p class="text-h6 ma-2">
+        3D viewer unavailable
+      </p>
+      <p class="text-body-2" style="max-width: 350px">
+        This browser does not support the required WebGL features.
+      </p>
+    </div>
     <div v-else-if="!show_model_not_found" class="d-flex flex-column align-center">
       <SpinningLogo size="30%" />
     </div>
@@ -75,10 +92,8 @@
 </template>
 
 <script lang="ts">
-import '@google/model-viewer/dist/model-viewer'
-
-import { ModelViewerElement } from '@google/model-viewer/lib/model-viewer'
-import { HotspotConfiguration } from '@google/model-viewer/lib/three-components/Hotspot'
+import type { ModelViewerElement } from '@google/model-viewer/lib/model-viewer'
+import type { HotspotConfiguration } from '@google/model-viewer/lib/three-components/Hotspot'
 import axios from 'axios'
 import { saveAs } from 'file-saver'
 import Image from 'image-js'
@@ -93,8 +108,11 @@ import {
 } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary, Indexed, Keyed } from '@/types/common'
 import { PingType } from '@/types/ping'
+import { canUseModelViewer, ensureModelViewer } from '@/utils/model_viewer_support'
 
 import { checkModelOverrides, frame_name, vehicle_folder } from './modelHelper'
+
+const MODEL_VIEWER_SUPPORTED = canUseModelViewer()
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
 
@@ -149,6 +167,8 @@ export default Vue.extend({
       override_annotations: {} as Dictionary<HotspotConfiguration>,
       default_alphas: {} as Dictionary<number>,
       show_model_not_found: false,
+      model_viewer_supported: MODEL_VIEWER_SUPPORTED,
+      model_viewer_ready: false,
     }
   },
   computed: {
@@ -263,12 +283,11 @@ export default Vue.extend({
     },
   },
   async mounted() {
-    // eslint-disable-next-line no-extra-parens
-    (this.$refs.modelviewer as ModelViewerElement)?.addEventListener('load', () => {
-      this.redraw()
-      this.hideIrrelevantParts()
-    })
-
+    if (this.model_viewer_supported) {
+      const loaded = await ensureModelViewer()
+      this.model_viewer_ready = loaded
+      this.model_viewer_supported = loaded
+    }
     setTimeout(() => {
       if (!this.computed_model_path) {
         this.show_model_not_found = true
@@ -280,6 +299,10 @@ export default Vue.extend({
     this.reloadAnnotations()
   },
   methods: {
+    onModelViewerLoad() {
+      this.redraw()
+      this.hideIrrelevantParts()
+    },
     async download() {
       const viewer = this.$refs.modelviewer as ModelViewerElement
       const mimeType = 'image/png'
