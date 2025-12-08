@@ -245,7 +245,7 @@ class Mavlink2RestManager {
     while (param_name.length < 16) {
       param_name.push('\0')
     }
-
+    console.log('Setting param', name, value, sysid, type)
     this.sendMessageViaWebsocket({
       header: {
         system_id: 255,
