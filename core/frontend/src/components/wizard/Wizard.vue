@@ -85,6 +85,7 @@
           <v-stepper-content step="2">
             <div class="d-flex justify-space-between">
               <model-viewer
+                v-if="model_viewer_supported && model_viewer_ready"
                 v-tooltip="'ROV Setup'"
                 :src="sub_model"
                 :auto-rotate="false"
@@ -94,8 +95,22 @@
                 class="model-button ma-2"
                 @click="setupROV"
               />
+              <v-card
+                v-else
+                v-tooltip="'ROV Setup'"
+                width="300px"
+                class="model-button ma-2 d-flex flex-column align-center justify-center"
+                outlined
+                tile
+                @click="setupROV"
+              >
+                <v-icon size="64">
+                  mdi-submarine
+                </v-icon>
+              </v-card>
 
               <model-viewer
+                v-if="model_viewer_supported && model_viewer_ready"
                 v-tooltip="'Boat Setup'"
                 :src="boat_model"
                 :auto-rotate="false"
@@ -105,6 +120,19 @@
                 class="model-button ma-2"
                 @click="setupBoat"
               />
+              <v-card
+                v-else
+                v-tooltip="'Boat Setup'"
+                width="300px"
+                class="model-button ma-2 d-flex flex-column align-center justify-center"
+                outlined
+                tile
+                @click="setupBoat"
+              >
+                <v-icon size="64">
+                  mdi-ferry
+                </v-icon>
+              </v-card>
               <v-icon
                 v-tooltip="'Other Vehicle Setup'"
                 class="model-button ma-2 other-button"
@@ -267,8 +295,6 @@
 </template>
 
 <script lang="ts">
-import '@google/model-viewer/dist/model-viewer'
-
 import { SemVer } from 'semver'
 import Vue from 'vue'
 
@@ -289,6 +315,7 @@ import { Firmware, Vehicle, vehicleTypeFromString } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 import back_axios from '@/utils/api'
 import { sleep } from '@/utils/helper_functions'
+import { canUseModelViewer, ensureModelViewer } from '@/utils/model_viewer_support'
 
 import ActionStepper, { Configuration, ConfigurationStatus } from './ActionStepper.vue'
 import DefaultParamLoader from './DefaultParamLoader.vue'
@@ -300,6 +327,7 @@ const WIZARD_VERSION = 4
 const REPOSITORY_ROOT = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository'
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
+const MODEL_VIEWER_SUPPORTED = canUseModelViewer()
 
 function get_model(vehicle_name: string, frame_name: string): undefined | string {
   const release_path = `assets/vehicles/models/${vehicle_name}/${frame_name}.glb`
@@ -356,6 +384,8 @@ export default Vue.extend({
       // Vehicle configuration page logic
       vehicle_configuration_pages: [] as VehicleConfigurationPage[],
       configuration_page_index: 0,
+      model_viewer_supported: MODEL_VIEWER_SUPPORTED,
+      model_viewer_ready: false,
     }
   },
   computed: {
@@ -402,6 +432,14 @@ export default Vue.extend({
         }
       },
     },
+  },
+  created() {
+    if (this.model_viewer_supported) {
+      ensureModelViewer().then((loaded) => {
+        this.model_viewer_supported = loaded
+        this.model_viewer_ready = loaded
+      })
+    }
   },
   async mounted() {
     this.retry_count = 0
@@ -721,6 +759,10 @@ export default Vue.extend({
   text-align: center;
   user-select: none;
   transition: background-color 0.3s, color 0.3s;
+}
+
+.model-button.v-card {
+  background-color: transparent;
 }
 
 .model-button:hover {
