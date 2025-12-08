@@ -3,7 +3,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { RecordingFile } from '@/types/records'
+import { ProcessingFile, RecordingFile } from '@/types/records'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 @Module({ dynamic: true, store, name: 'records' })
@@ -11,6 +11,8 @@ class RecordsStore extends VuexModule {
   API_URL = '/recorder-extractor/v1.0/recorder'
 
   recordings: RecordingFile[] = []
+
+  processing_files: ProcessingFile[] = []
 
   loading = false
 
@@ -24,6 +26,11 @@ class RecordsStore extends VuexModule {
   @Mutation
   setRecordings(files: RecordingFile[]): void {
     this.recordings = files
+  }
+
+  @Mutation
+  setProcessingFiles(files: ProcessingFile[]): void {
+    this.processing_files = files
   }
 
   @Mutation
@@ -68,6 +75,24 @@ class RecordsStore extends VuexModule {
       this.setError(`Failed to delete recording: ${error.message}`)
     })
     await this.fetchRecordings()
+  }
+
+  @Action
+  async fetchProcessingStatus(): Promise<void> {
+    await back_axios({
+      method: 'get',
+      url: `${this.API_URL}/status`,
+      timeout: 10000,
+    })
+      .then((response) => {
+        this.setProcessingFiles(response.data.processing)
+      })
+      .catch((error) => {
+        if (isBackendOffline(error)) {
+          return
+        }
+        this.setProcessingFiles([])
+      })
   }
 }
 

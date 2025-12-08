@@ -10,7 +10,7 @@
     </v-alert>
 
     <v-alert
-      v-else-if="!loading && recordings.length === 0"
+      v-else-if="!loading && recordings.length === 0 && processingFiles.length === 0"
       type="info"
       dense
       class="mb-4"
@@ -19,6 +19,40 @@
     </v-alert>
 
     <v-row>
+      <v-col
+        v-for="processing in processingFiles"
+        :key="`processing-${processing.path}`"
+        cols="12"
+        sm="6"
+        md="4"
+        lg="3"
+      >
+        <v-card class="record-card d-flex flex-column processing-card">
+          <div class="thumbnail-wrapper">
+            <div class="processing-thumbnail grey lighten-3 d-flex flex-column align-center justify-center">
+              <v-progress-circular
+                indeterminate
+                color="primary"
+                size="48"
+              />
+              <span class="mt-2 caption grey--text text--darken-1">
+                Extracting video...
+              </span>
+            </div>
+          </div>
+          <v-card-title class="py-2">
+            <div class="text-truncate" :title="processing.name">
+              {{ processing.name }}
+            </div>
+          </v-card-title>
+          <v-card-subtitle class="py-0">
+            <v-chip x-small color="primary">
+              Processing
+            </v-chip>
+          </v-card-subtitle>
+          <v-spacer />
+        </v-card>
+      </v-col>
       <v-col
         v-for="file in recordings"
         :key="file.path"
@@ -36,21 +70,16 @@
               aspect-ratio="16/9"
               contain
               @error="onThumbnailError(file.path)"
+              @load="onThumbnailLoad(file.path)"
               @click="openPlayer(file)"
             >
-              <template #placeholder>
-                <div class="fill-height d-flex align-center justify-center">
-                  <v-progress-circular indeterminate color="primary" />
-                </div>
-              </template>
-
               <div v-if="brokenThumbnails[file.path]" class="fallback-icon d-flex align-center justify-center">
                 <v-icon large color="grey darken-1">
                   mdi-multimedia
                 </v-icon>
               </div>
 
-              <div class="thumbnail-actions">
+              <div v-if="!isThumbnailLoading(file.path)" class="thumbnail-actions">
                 <v-btn
                   icon
                   large
@@ -64,6 +93,19 @@
                 </v-btn>
               </div>
             </v-img>
+            <div
+              v-if="isThumbnailLoading(file.path)"
+              class="thumbnail-loading grey lighten-3 d-flex flex-column align-center justify-center"
+            >
+              <v-progress-circular
+                indeterminate
+                color="primary"
+                size="48"
+              />
+              <span class="mt-2 caption grey--text text--darken-1">
+                Processing video/thumbnail...
+              </span>
+            </div>
           </div>
           <v-card-title class="py-2">
             <div class="text-truncate" :title="file.name">
@@ -75,7 +117,7 @@
             <span class="caption">{{ formatDate(file.modified) }}</span>
           </v-card-subtitle>
           <v-spacer />
-          <v-card-actions class="pt-0">
+          <v-card-actions v-if="!isThumbnailLoading(file.path)" class="pt-0">
             <v-btn
               icon
               small
@@ -161,8 +203,9 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import { OneMoreTime } from '@/one-more-time'
 import records_store from '@/store/records'
-import { RecordingFile } from '@/types/records'
+import { ProcessingFile, RecordingFile } from '@/types/records'
 import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
@@ -172,12 +215,17 @@ export default Vue.extend({
       playerOpen: false,
       activeRecord: null as RecordingFile | null,
       brokenThumbnails: {} as Record<string, boolean>,
+      loadingThumbnails: {} as Record<string, boolean>,
       emptyCaptions: 'data:text/vtt,WEBVTT',
+      statusPoller: null as OneMoreTime | null,
     }
   },
   computed: {
     recordings(): RecordingFile[] {
       return records_store.recordings
+    },
+    processingFiles(): ProcessingFile[] {
+      return records_store.processing_files
     },
     loading(): boolean {
       return records_store.loading
@@ -188,10 +236,22 @@ export default Vue.extend({
   },
   mounted() {
     this.refresh()
+    this.statusPoller = new OneMoreTime(
+      { delay: 5000, disposeWith: this },
+      async () => {
+        await records_store.fetchProcessingStatus()
+        if (this.processingFiles.length > 0) {
+          await records_store.fetchRecordings()
+        }
+      },
+    )
   },
   methods: {
     async refresh(): Promise<void> {
-      await records_store.fetchRecordings()
+      await Promise.all([
+        records_store.fetchRecordings(),
+        records_store.fetchProcessingStatus(),
+      ])
     },
     async deleteRecording(file: RecordingFile): Promise<void> {
       await records_store.deleteRecording(file)
@@ -220,6 +280,13 @@ export default Vue.extend({
     },
     onThumbnailError(path: string): void {
       this.$set(this.brokenThumbnails, path, true)
+      this.$set(this.loadingThumbnails, path, false)
+    },
+    onThumbnailLoad(path: string): void {
+      this.$set(this.loadingThumbnails, path, false)
+    },
+    isThumbnailLoading(path: string): boolean {
+      return this.loadingThumbnails[path] !== false && !this.brokenThumbnails[path]
     },
   },
 })
@@ -291,5 +358,19 @@ export default Vue.extend({
 
 .mr-2 {
   margin-right: 8px;
+}
+
+.processing-card {
+  opacity: 0.85;
+}
+
+.processing-thumbnail {
+  height: 180px;
+}
+
+.thumbnail-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 </style>
