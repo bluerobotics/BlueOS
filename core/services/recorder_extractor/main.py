@@ -3,6 +3,8 @@
 import asyncio
 import contextlib
 import logging
+import shutil
+import tempfile
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
@@ -101,6 +103,93 @@ def parse_duration_ns(discover_output: str) -> int:
     return duration_ns
 
 
+# pylint: disable=too-many-locals
+async def check_and_recover_mcap(mcap_path: Path) -> None:
+    """
+    Check if mcap binary is available, run mcap doctor on the file,
+    and if it fails, run mcap recover to fix the file.
+    """
+    # Check if mcap binary exists
+    mcap_binary = shutil.which("mcap")
+    if not mcap_binary:
+        logger.warning("mcap binary not found, skipping doctor/recover check")
+        return
+
+    # Ensure path exists and is a file
+    if not mcap_path.exists() or not mcap_path.is_file():
+        logger.debug(f"MCAP file not found or not a file: {mcap_path}")
+        return
+
+    logger.info(f"Running mcap doctor on {mcap_path}")
+    # Run mcap doctor
+    doctor_cmd = [mcap_binary, "doctor", str(mcap_path)]
+    doctor_proc = await asyncio.create_subprocess_exec(
+        *doctor_cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        text=False,
+    )
+    stdout_bytes, stderr_bytes = await doctor_proc.communicate()
+    stdout = stdout_bytes.decode("utf-8", "ignore")
+    stderr = stderr_bytes.decode("utf-8", "ignore")
+
+    if doctor_proc.returncode == 0:
+        logger.info(f"mcap doctor passed for {mcap_path}: {stdout.strip()}")
+        return
+
+    logger.warning(f"mcap doctor failed for {mcap_path} (code={doctor_proc.returncode}): {stderr.strip()}")
+    logger.info(f"Attempting to recover {mcap_path}")
+
+    # Create a temporary file path in the same directory as the mcap file
+    # This ensures atomic replacement on the same filesystem
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, dir=mcap_path.parent, suffix=".recover") as tmpfile:
+            tmp_path = Path(tmpfile.name)
+
+        recover_cmd = [mcap_binary, "recover", str(mcap_path), "-o", str(tmp_path)]
+        recover_proc = await asyncio.create_subprocess_exec(
+            *recover_cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            text=False,
+        )
+        _, recover_stderr_bytes = await recover_proc.communicate()
+        recover_stderr = recover_stderr_bytes.decode("utf-8", "ignore")
+
+        # Check if recovery succeeded
+        if recover_proc.returncode != 0:
+            logger.error(
+                f"mcap recover command failed for {mcap_path} (code={recover_proc.returncode}): {recover_stderr.strip()}",
+            )
+            return
+
+        if not tmp_path.exists():
+            logger.error(f"mcap recover did not create output file: {tmp_path}")
+            return
+
+        if tmp_path.stat().st_size == 0:
+            logger.error(f"mcap recover produced empty file: {tmp_path}")
+            return
+
+        # Atomically replace the original file with the recovered one
+        # Using replace ensures atomic operation
+        tmp_path.replace(mcap_path)
+        logger.info(f"Successfully recovered {mcap_path} (recovered size: {mcap_path.stat().st_size} bytes)")
+        tmp_path = None  # Mark as successfully moved to prevent cleanup
+    except OSError as exception:
+        logger.error(f"Failed to replace original file after mcap recover: {exception}")
+    except Exception as exception:
+        logger.exception(f"Unexpected error during mcap recover: {exception}")
+    finally:
+        # Clean up temporary file if it still exists
+        if tmp_path is not None and tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except OSError as exception:
+                logger.error(f"Failed to clean up temporary file {tmp_path}: {exception}")
+
+
 @cached()
 async def build_thumbnail_bytes(path: Path) -> bytes:
     """
@@ -186,6 +275,9 @@ async def extract_mcap_recordings() -> None:
                 if await file_is_open_async(mcap_path):
                     logger.info(f"Skipping MCAP extract, file in use: {mcap_path}")
                     continue
+
+                # Check and recover MCAP file if mcap binary is available
+                await check_and_recover_mcap(mcap_path)
 
                 command = [
                     "mcap-foxglove-video-extract",
