@@ -3,7 +3,7 @@
     <v-card class="mt-4 mb-4">
       <v-card-text>
         <div class="d-flex align-center mb-4">
-          <span class="text-h6">Servo Range Configuration</span>
+          <span class="text-h6">{{ title }}</span>
           <v-tooltip bottom>
             <template #activator="{ on, attrs }">
               <v-icon
@@ -15,7 +15,7 @@
                 mdi-information
               </v-icon>
             </template>
-            <span>Adjust the minimum, trim, and maximum PWM values for this servo</span>
+            <span>{{ tooltip }}</span>
           </v-tooltip>
         </div>
         <div
@@ -37,6 +37,7 @@
           />
           <div
             v-for="(thumbType, index) in ['min', 'trim', 'max']"
+            v-show="thumbType !== 'trim' || trimParam"
             :key="thumbType"
             class="slider-thumb"
             :class="{ active: activeThumb === index }"
@@ -63,8 +64,27 @@
           <v-card-text class="py-2">
             <inline-parameter-editor
               :auto-set="true"
-              :label="min_param?.name"
-              :param="min_param"
+              :label="resolvedMinParam?.name"
+              :param="resolvedMinParam"
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col
+        cols="12"
+        sm="4"
+      >
+        <v-card
+          outlined
+          class="parameter-card"
+          :disabled="!trimParam"
+          :class="{ 'disabled-card': !trimParam }"
+        >
+          <v-card-text class="py-2">
+            <inline-parameter-editor
+              :auto-set="true"
+              :label="resolvedTrimParam?.name ?? 'Trim'"
+              :param="resolvedTrimParam"
             />
           </v-card-text>
         </v-card>
@@ -80,25 +100,8 @@
           <v-card-text class="py-2">
             <inline-parameter-editor
               :auto-set="true"
-              :label="trim_param?.name"
-              :param="trim_param"
-            />
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col
-        cols="12"
-        sm="4"
-      >
-        <v-card
-          outlined
-          class="parameter-card"
-        >
-          <v-card-text class="py-2">
-            <inline-parameter-editor
-              :auto-set="true"
-              :label="max_param?.name"
-              :param="max_param"
+              :label="resolvedMaxParam?.name"
+              :param="resolvedMaxParam"
             />
           </v-card-text>
         </v-card>
@@ -138,6 +141,26 @@ export default Vue.extend({
       type: Object as () => Parameter,
       required: true,
     },
+    minParam: {
+      type: Object as () => Parameter | undefined,
+      default: undefined,
+    },
+    trimParam: {
+      type: Object as () => Parameter | undefined,
+      default: undefined,
+    },
+    maxParam: {
+      type: Object as () => Parameter | undefined,
+      default: undefined,
+    },
+    title: {
+      type: String,
+      default: 'Servo Range Configuration',
+    },
+    tooltip: {
+      type: String,
+      default: 'Adjust the minimum, trim, and maximum PWM values for this servo',
+    },
   },
   data() {
     return {
@@ -149,14 +172,14 @@ export default Vue.extend({
     }
   },
   computed: {
-    trim_param(): Parameter | undefined {
-      return this.getParamByType('_TRIM')
+    resolvedTrimParam(): Parameter | undefined {
+      return this.trimParam ?? this.getParamByType('_TRIM')
     },
-    max_param(): Parameter | undefined {
-      return this.getParamByType('_MAX')
+    resolvedMaxParam(): Parameter | undefined {
+      return this.maxParam ?? this.getParamByType('_MAX')
     },
-    min_param(): Parameter | undefined {
-      return this.getParamByType('_MIN')
+    resolvedMinParam(): Parameter | undefined {
+      return this.minParam ?? this.getParamByType('_MIN')
     },
     minPercent(): number {
       return this.calculatePercentage(this.minValue)
@@ -176,13 +199,28 @@ export default Vue.extend({
       },
       immediate: true,
     },
-    'min_param.value': function onMinParamChange(newValue: number) {
+    minParam: {
+      handler() {
+        this.initializeSliderValues()
+      },
+    },
+    trimParam: {
+      handler() {
+        this.initializeSliderValues()
+      },
+    },
+    maxParam: {
+      handler() {
+        this.initializeSliderValues()
+      },
+    },
+    'resolvedMinParam.value': function onMinParamChange(newValue: number) {
       this.updateParamValue('min', newValue)
     },
-    'trim_param.value': function onTrimParamChange(newValue: number) {
+    'resolvedTrimParam.value': function onTrimParamChange(newValue: number) {
       this.updateParamValue('trim', newValue)
     },
-    'max_param.value': function onMaxParamChange(newValue: number) {
+    'resolvedMaxParam.value': function onMaxParamChange(newValue: number) {
       this.updateParamValue('max', newValue)
     },
   },
@@ -202,9 +240,9 @@ export default Vue.extend({
         max: 'maxValue',
       }
       const paramMap: ParamMap = {
-        min: 'min_param',
-        trim: 'trim_param',
-        max: 'max_param',
+        min: 'resolvedMinParam',
+        trim: 'resolvedTrimParam',
+        max: 'resolvedMaxParam',
       }
 
       const valueKey = valueMap[type]
@@ -219,10 +257,14 @@ export default Vue.extend({
       }
     },
     initializeSliderValues(): void {
-      if (this.min_param && this.trim_param && this.max_param) {
-        this.minValue = Number(this.min_param.value)
-        this.trimValue = Number(this.trim_param.value)
-        this.maxValue = Number(this.max_param.value)
+      if (this.resolvedMinParam) {
+        this.minValue = Number(this.resolvedMinParam.value)
+      }
+      if (this.resolvedTrimParam) {
+        this.trimValue = Number(this.resolvedTrimParam.value)
+      }
+      if (this.resolvedMaxParam) {
+        this.maxValue = Number(this.resolvedMaxParam.value)
       }
     },
     getThumbPosition(index: number): number {
@@ -255,7 +297,7 @@ export default Vue.extend({
     findClosestThumb(value: number): number {
       const distances = [
         Math.abs(value - this.minValue),
-        Math.abs(value - this.trimValue),
+        this.resolvedTrimParam ? Math.abs(value - this.trimValue) : Infinity,
         Math.abs(value - this.maxValue),
       ]
       return distances.indexOf(Math.min(...distances))
@@ -269,9 +311,9 @@ export default Vue.extend({
       if (!this.isDragging) return
 
       const paramMap = {
-        0: this.min_param,
-        1: this.trim_param,
-        2: this.max_param,
+        0: this.resolvedMinParam,
+        1: this.resolvedTrimParam,
+        2: this.resolvedMaxParam,
       }
       const valueMap = {
         0: this.minValue,
@@ -305,10 +347,11 @@ export default Vue.extend({
       this.updateValueBasedOnThumb(value)
     },
     updateValueBasedOnThumb(value: number): void {
+      const hasTrim = !!this.resolvedTrimParam
       const constraints = {
-        0: { min: MIN_PWM, max: this.trimValue - 1 },
+        0: { min: MIN_PWM, max: hasTrim ? this.trimValue - 1 : this.maxValue - 1 },
         1: { min: this.minValue + 1, max: this.maxValue - 1 },
-        2: { min: this.trimValue + 1, max: MAX_PWM },
+        2: { min: hasTrim ? this.trimValue + 1 : this.minValue + 1, max: MAX_PWM },
       }
 
       const updateFunctions = {
@@ -326,13 +369,21 @@ export default Vue.extend({
       }
     },
     updateMin(value: string): void {
-      this.updateParamWithConstraints(value, this.min_param, MIN_PWM, this.trimValue - 1, 'minValue')
+      const maxConstraint = this.resolvedTrimParam ? this.trimValue - 1 : this.maxValue - 1
+      this.updateParamWithConstraints(value, this.resolvedMinParam, MIN_PWM, maxConstraint, 'minValue')
     },
     updateTrim(value: string): void {
-      this.updateParamWithConstraints(value, this.trim_param, this.minValue + 1, this.maxValue - 1, 'trimValue')
+      this.updateParamWithConstraints(
+        value,
+        this.resolvedTrimParam,
+        this.minValue + 1,
+        this.maxValue - 1,
+        'trimValue',
+      )
     },
     updateMax(value: string): void {
-      this.updateParamWithConstraints(value, this.max_param, this.trimValue + 1, MAX_PWM, 'maxValue')
+      const minConstraint = this.resolvedTrimParam ? this.trimValue + 1 : this.minValue + 1
+      this.updateParamWithConstraints(value, this.resolvedMaxParam, minConstraint, MAX_PWM, 'maxValue')
     },
     updateParamWithConstraints(
       value: string,
@@ -381,6 +432,11 @@ export default Vue.extend({
 
 .parameter-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.parameter-card.disabled-card {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .servo-slider {
