@@ -5,7 +5,7 @@ set -e
 PROJECT_NAME="mcap"
 REPOSITORY_ORG="foxglove"
 REPOSITORY_NAME="mcap"
-VERSION="releases/mcap-cli/v0.0.56"
+VERSION="releases/mcap-cli/v0.0.58"
 
 echo "Installing project $PROJECT_NAME version $VERSION"
 
