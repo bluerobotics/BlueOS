@@ -42,6 +42,13 @@ const menus = [
     text: t`Browse all the files in BlueOS. Useful for fetching logs, tweaking configurations, and development.`,
   },
   {
+    title: t`Disk`,
+    icon: 'mdi-harddisk',
+    route: '/tools/disk',
+    advanced: true,
+    text: t`Visualize disk usage and delete files/folders.`,
+  },
+  {
     title: t`Log Browser`,
     icon: 'mdi-math-log',
     route: '/vehicle/logs',
