@@ -1,0 +1,19 @@
+[project]
+name = "disk_usage"
+version = "0.1.0"
+description = "Inspect disk usage via du and expose a REST API."
+requires-python = ">=3.11"
+dependencies = [
+    "commonwealth==0.1.0",
+    "fastapi==0.105.0",
+    "fastapi-versioning==0.9.1",
+    "loguru==0.5.3",
+    "pydantic==1.10.12",
+    "uvicorn==0.18.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+commonwealth = { workspace = true }
