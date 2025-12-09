@@ -12,6 +12,7 @@ dependencies = [
   "bridget",
   "cable_guy",
   "commander",
+  "disk_usage",
   "helper",
   "kraken",
   "nmea_injector",
@@ -57,6 +58,7 @@ beacon = { workspace = true }
 bridget = { workspace = true }
 cable_guy = { workspace = true }
 commander = { workspace = true }
+disk_usage = { workspace = true }
 helper = { workspace = true }
 kraken = { workspace = true }
 nmea_injector = { workspace = true }
