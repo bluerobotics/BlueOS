@@ -44,6 +44,13 @@ const menus = [
       + ' tweaking configurations, and development.',
   },
   {
+    title: 'Disk',
+    icon: 'mdi-harddisk',
+    route: '/tools/disk',
+    advanced: true,
+    text: 'Visualize disk usage and delete files/folders.',
+  },
+  {
     title: 'Log Browser',
     icon: 'mdi-math-log',
     route: '/vehicle/logs',
