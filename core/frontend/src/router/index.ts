@@ -44,6 +44,11 @@ const routes: Array<RouteConfig> = [
     component: defineAsyncComponent(() => import('../views/FileBrowserView.vue')),
   },
   {
+    path: '/tools/disk',
+    name: 'Disk',
+    component: defineAsyncComponent(() => import('../views/Disk.vue')),
+  },
+  {
     path: '/tools/web-terminal',
     name: 'Terminal',
     component: defineAsyncComponent(() => import('../views/TerminalView.vue')),

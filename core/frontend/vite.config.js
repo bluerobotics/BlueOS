@@ -145,6 +145,9 @@ export default defineConfig(({ command, mode }) => {
         '^/commander': {
           target: SERVER_ADDRESS,
         },
+        '^/disk-usage': {
+          target: SERVER_ADDRESS,
+        },
         '^/docker': {
           target: SERVER_ADDRESS,
         },
