@@ -3,7 +3,6 @@ import asyncio
 import json
 import logging
 import os
-import shutil
 import subprocess
 import time
 from enum import Enum
@@ -167,11 +166,13 @@ async def do_eeprom_update(i_know_what_i_am_doing: bool = False) -> Any:
 async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
     check_what_i_am_doing(i_know_what_i_am_doing)
     # Be sure to not delete bootstrap to avoid going back to factory image
-    bootstrap_config_path = "/root/.config/bootstrap/startup.json"
-    temporary_location = "/tmp/bootstrap_startup.json"
-    shutil.copy2(bootstrap_config_path, temporary_location)
-    delete_everything(Path(appdirs.user_config_dir()))
-    shutil.copy2(temporary_location, bootstrap_config_path)
+    ignore = [
+        Path("/root/.config/ardupilot-manager"),
+        Path("/root/.config/bag-of-holding"),
+        Path("/root/.config/bootstrap"),
+        Path("/root/.config/kraken"),
+    ]
+    delete_everything(Path(appdirs.user_config_dir()), ignore=ignore)
 
 
 @app.post("/services/remove_log", status_code=status.HTTP_200_OK)
