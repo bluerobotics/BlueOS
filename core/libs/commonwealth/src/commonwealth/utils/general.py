@@ -56,18 +56,42 @@ def get_host_os() -> HostOs:
     return HostOs.Other
 
 
-def delete_everything(path: Path) -> None:
+def delete_everything(path: Path, ignore: list[Path] | None = None) -> None:
+    if ignore is None:
+        ignore = []
+
+    def is_ignored(target: Path) -> bool:
+        for ignored_path in ignore:
+            try:
+                ignored_resolved = ignored_path.resolve()
+                target_resolved = target.resolve()
+                try:
+                    # If relative_to works, target is inside or equal to ignored_resolved
+                    target_resolved.relative_to(ignored_resolved)
+                    return True
+                except ValueError:
+                    # Not relative, so not in ignored path
+                    continue
+            except Exception:
+                continue
+        return False
+
+    if is_ignored(path):
+        return
+
     if path.is_file() and not file_is_open(path):
         path.unlink()
         return
 
     for item in path.glob("*"):
+        if is_ignored(item):
+            continue
         try:
             if item.is_file() and not file_is_open(item):
                 item.unlink()
             if item.is_dir() and not item.is_symlink():
                 # Delete folder contents
-                delete_everything(item)
+                delete_everything(item, ignore=ignore)
         except Exception as exception:
             logger.warning(f"Failed to delete: {item}, {exception}")
 
