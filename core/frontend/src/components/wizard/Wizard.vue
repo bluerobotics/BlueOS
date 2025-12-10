@@ -361,7 +361,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      boat_model: get_model('boat', 'UNDEFINED'),
+      boat_model: get_model('rover', 'BOAT'),
       scripts: [] as string[],
       configuration_failed: false,
       error_message: 'The operation failed!',
