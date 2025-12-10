@@ -8,6 +8,7 @@ set -e
 TOOLS=(
     blueos_startup_update
     bridges
+    disktest
     linux2rest
     machineid
     mavlink2rest
