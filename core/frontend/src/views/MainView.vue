@@ -92,9 +92,13 @@ import Vue from 'vue'
 
 import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
 import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
+import VideoThumbnail from '@/components/video-manager/VideoThumbnail.vue'
+import { OneMoreTime } from '@/one-more-time'
 import helper from '@/store/helper'
 import mavlink from '@/store/mavlink'
+import video from '@/store/video'
 import { InternetConnectionState } from '@/types/helper'
+import { StreamStatus } from '@/types/video'
 import mavlink_store_get from '@/utils/mavlink'
 import CPUUsage from '@/widgets/CpuPie.vue'
 import Networking from '@/widgets/Networking.vue'
@@ -123,9 +127,16 @@ export default Vue.extend({
   data: () => ({
     windowHeight: window.innerHeight,
     windowWidth: window.innerWidth,
+    fetch_streams_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
   }),
   computed: {
     apps(): AppItem[] {
+      return [
+        ...this.baseApps,
+        ...this.videoStreamWidgets,
+      ]
+    },
+    baseApps(): AppItem[] {
       return [
         {
           icon: 'mdi-view-dashboard',
@@ -183,6 +194,41 @@ export default Vue.extend({
         },
       ]
     },
+    videoStreamWidgets(): AppItem[] {
+      return this.video_streams.reduce<AppItem[]>((widgets, stream) => {
+        const source = this.streamSource(stream)
+        if (!source) {
+          return widgets
+        }
+
+        widgets.push({
+          icon: stream.running ? 'mdi-video-check' : 'mdi-video-off',
+          title: stream.video_and_stream.name,
+          route: '/vehicle/video-manager',
+          component: VideoThumbnail,
+          size: {
+            w: 0.4,
+            h: 1.2,
+          },
+          props: {
+            source,
+            register: stream.running,
+            width: 'auto',
+            height: '100%',
+          },
+          style: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        })
+
+        return widgets
+      }, [])
+    },
+    video_streams(): StreamStatus[] {
+      return video.available_streams
+    },
     has_internet(): boolean {
       return helper.has_internet !== InternetConnectionState.OFFLINE
     },
@@ -197,6 +243,7 @@ export default Vue.extend({
     window.addEventListener('resize', this.handleResize)
     this.handleResize()
     mavlink.setMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
+    this.fetch_streams_task.setAction(video.fetchStreams)
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.handleResize)
@@ -205,6 +252,22 @@ export default Vue.extend({
     handleResize() {
       this.windowHeight = window.innerHeight
       this.windowWidth = window.innerWidth
+    },
+    streamSource(stream: StreamStatus): string | undefined {
+      const source = stream.video_and_stream.video_source
+      if ('Local' in source) {
+        return source.Local.device_path
+      }
+      if ('Redirect' in source) {
+        return source.Redirect.source.Redirect
+      }
+      if ('Onvif' in source) {
+        return source.Onvif.source.Onvif
+      }
+      if ('Gst' in source) {
+        return source.Gst.source.Fake
+      }
+      return undefined
     },
   },
 })
