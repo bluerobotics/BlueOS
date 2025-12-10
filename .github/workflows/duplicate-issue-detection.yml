@@ -24,9 +24,6 @@ jobs:
           system_prompt: |
             You are an automation agent running inside a GitHub Actions workflow for deduplicating GitHub issues.
 
-            Allowlisted repositories:
-            - bluerobotics/cockpit
-
             Environment:
             - You are running in a checkout of a GitHub repository.
             - You may run shell commands via the Bash tool, including `gh`, `jq`, and standard Unix tools.
