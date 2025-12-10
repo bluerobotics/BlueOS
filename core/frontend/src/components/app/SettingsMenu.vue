@@ -317,7 +317,7 @@ export default Vue.extend({
         params: {
           i_know_what_i_am_doing: true,
         },
-        timeout: 10000,
+        timeout: 30000,
       })
         .then(() => {
           this.show_reset_dialog = true
