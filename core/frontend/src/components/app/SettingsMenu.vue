@@ -158,36 +158,12 @@
         </v-card>
       </v-card>
     </v-dialog>
-    <v-dialog
+    <WarningDialog
       v-model="show_reset_warning"
-      width="fit-content"
-      @click:outside="show_reset_warning = false"
-      @keydown.esc="show_reset_warning = false"
-    >
-      <v-sheet
-        color="warning"
-        outlined
-      >
-        <v-card variant="outlined">
-          <v-card-title class="align-center">
-            WARNING
-          </v-card-title>
-          <v-card-text class="reset-warning-text">
-            Resetting will restore BlueOS services to their default configurations.
-            This action cannot be undone. Proceed?
-          </v-card-text>
-          <v-card-actions>
-            <v-btn color="primary" @click="show_reset_warning = false">
-              Cancel
-            </v-btn>
-            <v-spacer />
-            <v-btn color="warning" @click="reset_settings(); show_reset_warning = false">
-              Yes, reset settings
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-sheet>
-    </v-dialog>
+      :message="resetWarningMessage"
+      confirm-label="Yes, reset settings"
+      @confirm="onConfirmResetSettings"
+    />
     <v-dialog
       width="380"
       :value="show_reset_dialog"
@@ -207,6 +183,7 @@ import axios, { CancelTokenSource } from 'axios'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import WarningDialog from '@/components/common/WarningDialog.vue'
 import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import bag from '@/store/bag'
@@ -223,6 +200,7 @@ export default Vue.extend({
   name: 'SettingsMenu',
   components: {
     SpinningLogo,
+    WarningDialog,
   },
   data() {
     return {
@@ -247,6 +225,12 @@ export default Vue.extend({
   computed: {
     has_operation_error(): boolean {
       return this.operation_error !== undefined
+    },
+    resetWarningMessage(): string {
+      return (
+        'Resetting will restore BlueOS services to their default configurations.\n'
+        + 'This action cannot be undone. Proceed?'
+      )
     },
   },
   watch: {
@@ -320,6 +304,10 @@ export default Vue.extend({
     },
     confirm_reset_settings(): void {
       this.show_reset_warning = true
+    },
+    onConfirmResetSettings(): void {
+      this.show_reset_warning = false
+      this.reset_settings()
     },
     async reset_settings(): Promise<void> {
       this.prepare_operation('Resetting settings...')
@@ -444,8 +432,5 @@ export default Vue.extend({
   height: 100%;
   backdrop-filter: blur(2px);
   z-index: 9999 !important;
-}
-.reset-warning-text {
-  max-width: 30rem;
 }
 </style>

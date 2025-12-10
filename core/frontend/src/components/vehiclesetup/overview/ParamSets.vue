@@ -69,39 +69,12 @@
       </v-card-actions>
     </v-card>
 
-    <v-dialog
+    <WarningDialog
       v-model="show_warning"
-      width="fit-content"
-      persistent
-    >
-      <v-sheet
-        color="warning"
-        outlined
-      >
-        <v-card
-          variant="outlined"
-        >
-          <v-card-title class="align-center">
-            WARNING
-          </v-card-title>
-          <v-card-text
-            style="max-width: 30rem;"
-          >
-            You will lose ALL your parameters, vehicle setup, and calibrations.
-            Are you sure you want to reset?
-          </v-card-text>
-          <v-card-actions>
-            <v-btn align="end" color="primary" @click="show_warning = false">
-              Cancel
-            </v-btn>
-            <v-spacer />
-            <v-btn color="warning" @click="wipe()">
-              Yes, reset them
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-sheet>
-    </v-dialog>
+      :message="warningMessage"
+      confirm-label="Yes, reset them"
+      @confirm="wipe"
+    />
   </v-row>
 </template>
 
@@ -111,6 +84,7 @@ import Vue from 'vue'
 
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
 import { fetchCurrentBoard } from '@/components/autopilot/AutopilotManagerUpdater'
+import WarningDialog from '@/components/common/WarningDialog.vue'
 import ParameterLoader from '@/components/parameter-editor/ParameterLoader.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import {
@@ -130,6 +104,7 @@ export default Vue.extend({
   name: 'ParamSets',
   components: {
     ParameterLoader,
+    WarningDialog,
   },
   data: () => ({
     all_param_sets: {} as Dictionary<Dictionary<number>>,
@@ -176,6 +151,9 @@ export default Vue.extend({
       return {
         ...fw_params,
       }
+    },
+    warningMessage(): string {
+      return 'You will lose ALL your parameters, vehicle setup, and calibrations. Are you sure you want to reset?'
     },
   },
   mounted() {
