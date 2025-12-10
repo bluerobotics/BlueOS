@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -82,6 +83,16 @@ async def set_time(unix_time_seconds: int, i_know_what_i_am_doing: bool = False)
 
     # It's necessary to stop ntp sync before setting time
     command = f"sudo timedatectl set-ntp false; sudo date -s '@{unix_time_seconds}'; sudo timedatectl set-ntp true"
+    return await command_host(command, i_know_what_i_am_doing)
+
+
+@app.post("/set_timezone", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def set_timezone(timezone: str, i_know_what_i_am_doing: bool = False) -> Any:
+    if not re.match(r"^[A-Za-z]+/[A-Za-z_]+$", timezone):
+        return {"message": "Invalid timezone format. Please use 'Region/City'."}
+
+    command = f"sudo timedatectl set-timezone {timezone}"
     return await command_host(command, i_know_what_i_am_doing)
 
 
