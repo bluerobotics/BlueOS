@@ -60,6 +60,7 @@
     "semver": "^7.3.8",
     "semver-stable": "^3.0.0",
     "simple-icons": "11",
+    "streamsaver": "^2.0.6",
     "three": "0.156.1",
     "util": "^0.12.5",
     "uuid": "^9.0.0",

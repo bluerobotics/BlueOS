@@ -2,6 +2,7 @@ import Notifier from '@/libs/notifier'
 import { FilebrowserCredentials, FilebrowserFile, FilebrowserFolder } from '@/types/filebrowser'
 import { filebrowser_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import streamSaver from 'streamsaver'
 
 const notifier = new Notifier(filebrowser_service)
 
@@ -168,10 +169,43 @@ class Filebrowser {
   /* Download folder */
   /**
    * @param folder - FilebrowserFolder
+   * @param progressHandler - The progress handler for the download
   * */
-  async downloadFolder(folder: FilebrowserFolder): Promise<void> {
+  async downloadFolder(
+    folder: FilebrowserFolder,
+    progressHandler: (event: any) => void,
+  ): Promise<void> {
     const url = `${filebrowser_url}/raw/${folder.path}/?algo=zip&auth=${await this.filebrowserToken()}`
-    window.open(url)
+    
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${await this.filebrowserToken()}` },
+    })
+    if (!response.ok || !response.body) throw new Error('Failed to download folder');
+    
+    const contentLength = Number(response.headers.get('content-length') ?? 0)
+    const fileStream = streamSaver.createWriteStream(`${folder.name}.zip`, {
+      size: contentLength || undefined,
+    })
+    const writer = fileStream.getWriter()
+    const reader = response.body.getReader()
+
+    let downloaded = 0
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        downloaded += value.length
+        progressHandler({ bytes: value.byteLength, loaded: downloaded, total: contentLength })
+        await writer.write(value)
+      }
+  
+      await writer.close()
+      notifier.pushSuccess('DOWNLOAD_COMPLETE', `Folder ${folder.path} downloaded successfully`)
+    } catch (err) {
+      await writer.abort(err)
+      notifier.pushError('DOWNLOAD_FAIL', `Could not download folder ${folder.path}`)
+      throw err
+    }
   }
 }
 
