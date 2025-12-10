@@ -21,8 +21,9 @@
     <v-row v-else>
       <v-col cols="12">
         <v-card outlined>
-          <v-card-title class="py-2 d-flex justify-space-between align-center">
+          <v-card-title class="py-2 d-flex align-center">
             <span>{{ path }} {{ totalSize ? ` (${totalSize})` : '' }}</span>
+            <v-spacer />
             <v-btn
               icon
               small
@@ -31,32 +32,46 @@
             >
               <v-icon>mdi-arrow-up</v-icon>
             </v-btn>
+            <v-spacer />
+            <v-btn
+              icon
+              small
+              color="red"
+              :disabled="selectedPaths.length === 0 || deleting"
+              :loading="deleting"
+              @click="confirmDeleteSelected"
+            >
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
           </v-card-title>
           <v-divider />
           <v-card-text class="pa-0">
             <v-simple-table dense>
               <thead>
                 <tr>
+                  <th class="text-center select-col">
+                    <v-checkbox
+                      :input-value="allSelected"
+                      :indeterminate="someSelected && !allSelected"
+                      hide-details
+                      dense
+                      @click.stop="toggleSelectAll"
+                    />
+                  </th>
                   <th class="text-left">
                     Name
                   </th>
-                  <th class="text-center" style="width: 150px;">
+                  <th class="text-center usage-col">
                     Usage
                   </th>
                   <th class="text-right">
                     Size
                   </th>
-                  <th class="text-center">
-                    Type
-                  </th>
-                  <th class="text-center">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="!usage || usage.root.children.length === 0">
-                  <td colspan="5" class="text-center grey--text text--darken-1">
+                  <td colspan="4" class="text-center grey--text text--darken-1">
                     No entries.
                   </td>
                 </tr>
@@ -66,13 +81,25 @@
                   :class="{ 'clickable-row': child.is_dir }"
                   @click="navigate(child)"
                 >
+                  <td class="text-center select-col" @click.stop>
+                    <v-checkbox
+                      :input-value="isSelected(child.path)"
+                      hide-details
+                      dense
+                      @click.stop="toggleSelection(child.path)"
+                    />
+                  </td>
                   <td>
-                    <v-icon left small>
+                    <v-icon
+                      left
+                      small
+                      :color="child.is_dir ? 'green darken-2' : 'amber darken-2'"
+                    >
                       {{ child.is_dir ? 'mdi-folder' : 'mdi-file' }}
                     </v-icon>
                     {{ child.name }}
                   </td>
-                  <td>
+                  <td class="usage-col">
                     <v-progress-linear
                       :value="getPercentage(child.size_bytes)"
                       height="16"
@@ -88,22 +115,6 @@
                   </td>
                   <td class="text-right">
                     {{ prettifySize(child.size_bytes / 1024) }}
-                  </td>
-                  <td class="text-center">
-                    {{ child.is_dir ? 'Dir' : 'File' }}
-                  </td>
-                  <td class="text-center">
-                    <v-btn
-                      icon
-                      small
-                      color="red"
-                      :loading="deleting"
-                      @click.stop="confirmDelete(child)"
-                    >
-                      <v-icon small>
-                        mdi-delete
-                      </v-icon>
-                    </v-btn>
                   </td>
                 </tr>
               </tbody>
@@ -129,6 +140,7 @@ export default Vue.extend({
       depth: 2,
       includeFiles: true,
       minSizeKb: 0,
+      selectedPaths: [] as string[],
     }
   },
   computed: {
@@ -160,6 +172,14 @@ export default Vue.extend({
       }
       return prettifySize(this.usage.root.size_bytes / 1024)
     },
+    allSelected(): boolean {
+      const children = this.sortedChildren
+      return children.length > 0 && children.every((child) => this.selectedPaths.includes(child.path))
+    },
+    someSelected(): boolean {
+      const children = this.sortedChildren
+      return children.some((child) => this.selectedPaths.includes(child.path))
+    },
   },
   mounted(): void {
     this.fetchUsage()
@@ -184,6 +204,7 @@ export default Vue.extend({
       const currentPath = this.path as string
       const trimmed = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath
       const parent = trimmed.substring(0, trimmed.lastIndexOf('/')) || '/'
+      this.clearSelection()
       this.path = parent
       this.fetchUsage()
     },
@@ -191,15 +212,48 @@ export default Vue.extend({
       if (!node.is_dir) {
         return
       }
+      this.clearSelection()
       this.path = node.path
       this.fetchUsage()
     },
-    async confirmDelete(node: DiskNode): Promise<void> {
-      const confirmed = window.confirm(`Delete ${node.path}? This cannot be undone.`)
+    async confirmDeleteSelected(): Promise<void> {
+      if (this.selectedPaths.length === 0) {
+        return
+      }
+      const confirmed = window.confirm(
+        `Delete the following paths?\n${this.selectedPaths.join('\n')}\nThis cannot be undone.`,
+      )
       if (!confirmed) {
         return
       }
-      await disk_store.deletePath(node.path)
+      const targets = [...this.selectedPaths]
+      const { succeeded } = await disk_store.deletePaths(targets)
+
+      if (succeeded.length > 0) {
+        this.selectedPaths = this.selectedPaths.filter((p) => !succeeded.includes(p))
+        await this.fetchUsage()
+      }
+    },
+    toggleSelection(path: string): void {
+      if (this.selectedPaths.includes(path)) {
+        this.selectedPaths = this.selectedPaths.filter((p) => p !== path)
+      } else {
+        this.selectedPaths = [...this.selectedPaths, path]
+      }
+    },
+    isSelected(path: string): boolean {
+      return this.selectedPaths.includes(path)
+    },
+    toggleSelectAll(): void {
+      const children = this.sortedChildren.map((child) => child.path)
+      if (this.allSelected) {
+        this.selectedPaths = []
+      } else {
+        this.selectedPaths = [...children]
+      }
+    },
+    clearSelection(): void {
+      this.selectedPaths = []
     },
     getPercentage(sizeBytes: number): number {
       const parentSize = this.usage?.root?.size_bytes ?? 0
@@ -219,5 +273,12 @@ export default Vue.extend({
 }
 .clickable-row:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+.select-col {
+  width: 60px;
+}
+.usage-col {
+  width: 220px;
+  min-width: 220px;
 }
 </style>
