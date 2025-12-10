@@ -43,7 +43,7 @@
             <v-btn
               v-tooltip="'Restores BlueOS services to default configurations'"
               class="ma-2"
-              @click="reset_settings"
+              @click="confirm_reset_settings"
             >
               <v-icon left>
                 mdi-cog-refresh
@@ -159,6 +159,36 @@
       </v-card>
     </v-dialog>
     <v-dialog
+      v-model="show_reset_warning"
+      width="fit-content"
+      @click:outside="show_reset_warning = false"
+      @keydown.esc="show_reset_warning = false"
+    >
+      <v-sheet
+        color="warning"
+        outlined
+      >
+        <v-card variant="outlined">
+          <v-card-title class="align-center">
+            WARNING
+          </v-card-title>
+          <v-card-text class="reset-warning-text">
+            Resetting will restore BlueOS services to their default configurations.
+            This action cannot be undone. Proceed?
+          </v-card-text>
+          <v-card-actions>
+            <v-btn color="primary" @click="show_reset_warning = false">
+              Cancel
+            </v-btn>
+            <v-spacer />
+            <v-btn color="warning" @click="reset_settings(); show_reset_warning = false">
+              Yes, reset settings
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-sheet>
+    </v-dialog>
+    <v-dialog
       width="380"
       :value="show_reset_dialog"
       @input="show_reset_dialog = false"
@@ -201,6 +231,7 @@ export default Vue.extend({
       mavlink_log_folder_size: null as null | string,
       show_dialog: false,
       show_reset_dialog: false,
+      show_reset_warning: false,
       operation_in_progress: false,
       operation_description: '',
       operation_error: undefined as undefined | string,
@@ -285,6 +316,9 @@ export default Vue.extend({
           notifier.pushBackError('GET_MAVLINK_LOG_SIZE', error)
         })
       this.operation_in_progress = false
+    },
+    confirm_reset_settings(): void {
+      this.show_reset_warning = true
     },
     async reset_settings(): Promise<void> {
       this.prepare_operation('Resetting settings...')
@@ -409,5 +443,8 @@ export default Vue.extend({
   height: 100%;
   backdrop-filter: blur(2px);
   z-index: 9999 !important;
+}
+.reset-warning-text {
+  max-width: 30rem;
 }
 </style>
