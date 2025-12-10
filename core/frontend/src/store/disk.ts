@@ -65,34 +65,49 @@ class DiskStore extends VuexModule {
   }
 
   @Action
-  async deletePath(path: string): Promise<void> {
+  async deletePaths(paths: string[]): Promise<{ succeeded: string[]; failed: { path: string; error: string }[] }> {
     this.setDeleting(true)
     this.setError(null)
-    await back_axios({
-      method: 'delete',
-      url: `${this.API_URL}/paths/${encodeURIComponent(path)}`,
-      timeout: 120000,
-    })
-      .then(async () => {
-        // Refresh after delete using the current usage query to reflect changes
-        if (this.usage) {
-          await this.fetchUsage({
-            path: this.usage.root.path,
-            depth: this.usage.depth,
-            include_files: this.usage.include_files,
-            min_size_bytes: this.usage.min_size_bytes,
-          })
-        }
-      })
-      .catch((error) => {
+
+    const deleteOne = async (path: string): Promise<void> => {
+      try {
+        await back_axios({
+          method: 'delete',
+          url: `${this.API_URL}/paths/${encodeURIComponent(path)}`,
+          timeout: 120000,
+        })
+      } catch (error: unknown) {
         if (isBackendOffline(error)) {
-          return
+          throw new Error('Backend is offline')
         }
-        this.setError(`Failed to delete path: ${error.response?.data?.detail || error.message}`)
-      })
-      .finally(() => {
-        this.setDeleting(false)
-      })
+        const axiosError = error as { response?: { data?: { detail?: string } }; message?: string }
+        const message = axiosError.response?.data?.detail || axiosError.message || 'Unknown error'
+        throw new Error(message)
+      }
+    }
+
+    const results = await Promise.allSettled(paths.map((path) => deleteOne(path)))
+
+    const succeeded: string[] = []
+    const failed: { path: string; error: string }[] = []
+
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        succeeded.push(paths[index])
+      } else {
+        failed.push({ path: paths[index], error: result.reason?.message || 'Unknown error' })
+      }
+    })
+
+    if (failed.length > 0) {
+      const errorMsg = failed.length === 1
+        ? `Failed to delete ${failed[0].path}: ${failed[0].error}`
+        : `Failed to delete ${failed.length} path(s): ${failed.map((f) => f.path).join(', ')}`
+      this.setError(errorMsg)
+    }
+
+    this.setDeleting(false)
+    return { succeeded, failed }
   }
 }
 
