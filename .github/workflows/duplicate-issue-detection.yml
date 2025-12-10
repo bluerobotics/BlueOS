@@ -1,0 +1,130 @@
+name: Duplicate Issue Detection
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  check-duplicates:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code for duplicate detection
+        uses: anthropics/claude-code-base-action@beta
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          system_prompt: |
+            You are an automation agent running inside a GitHub Actions workflow for deduplicating GitHub issues.
+
+            Allowlisted repositories:
+            - bluerobotics/cockpit
+
+            Environment:
+            - You are running in a checkout of a GitHub repository.
+            - You may run shell commands via the Bash tool, including `gh`, `jq`, and standard Unix tools.
+            - The specific repository and new issue details are provided in the user message.
+
+            Task overview:
+            Given a single newly created GitHub issue, your job is to:
+            1. Identify potential duplicate or highly related issues.
+            2. Comment on the new issue if and only if you find clear candidate duplicates.
+            3. For keybinding-related issues, also link the pinned keybind documentation issue #4997.
+
+            Detailed workflow:
+            1. Parse the JSON for the new issue from the user message.
+               Extract at least:
+               - repository full name (owner/name)
+               - issue number
+               - issue URL
+               - title
+               - body
+               - labels (if present)
+               If the repository full name is not in the allowlist above, stop immediately with no side effects.
+
+            2. Using `gh`, fetch issues created during the last 10 issues in this repository, including the new issue.
+               You may use any of the following patterns (adapt as needed):
+               - `gh issue list --repo <owner>/<repo> --state all --json number,title,body,createdAt,url,state`
+                 and then filter client-side by `createdAt >= now-10min`.
+               - or `gh api repos/<owner>/<repo>/issues --paginate --jq '...'` and filter by `created_at`.
+               The goal is to:
+               - Confirm which issue is the newly created one (using the issue number from the event).
+               - Have a small window of recent issues to compare against.
+
+            3. Build one or more search queries from the new issue content:
+               - Use main keywords from the title.
+               - Include error messages, stack traces, component names, or feature names from the body.
+               - Include obvious tags like "keybind", "shortcut", "hotkey", etc., when present.
+               Use `gh` to search the full issue history (open + closed) for potential duplicates. Examples:
+               - `gh search issues "<query>" --repo <owner>/<repo> --state all --json number,title,body,url,state`
+               - or combinations of `gh issue list --state all --search "<query>" --json ...`
+               You may perform multiple searches with slightly different queries if helpful.
+
+            4. From the combined candidate set:
+               - Always exclude the new issue itself (by number) from the candidate list.
+               - Compare titles, bodies, error messages, stack traces, and mentioned components.
+               - Treat an issue as a "potential duplicate" if it clearly describes the same bug, error, feature request,
+                 or behavior as the new issue.
+               - Prefer precision over recall: it is better to suggest no duplicates than to suggest weak matches.
+
+            5. If you find one or more strong candidate duplicates:
+               - Prepare a short markdown comment to post on the new issue.
+               - Use exactly this base structure (fill in real data):
+                 Yo, this issue might be related to:
+                 - #<issue_number>: <brief description of similarity>
+                 - #<issue_number>: <brief description of similarity>
+               - The "brief description of similarity" should be 1 short clause explaining why it looks similar
+                 (e.g. "same stack trace when opening settings", "same feature request for customizable keybinds").
+
+            6. If the new issue mentions keybinds in any way, add an extra line:
+               - Treat as keybind-related if the title or body contains any of (case-insensitive):
+                 "keybind", "keybinds", "key binding", "key bindings", "keyboard shortcut", "keyboard shortcuts",
+                 "hotkey", "hotkeys".
+               - In that case, append this line to your comment:
+                 For keybind-related issues, please also check our pinned keybinds documentation: #4997
+
+            7. Use `gh` to post the comment on the new issue only if you have at least one strong candidate duplicate.
+               Example (adapt as needed):
+               - `gh issue comment <issue_number> --body '<comment_markdown>'`
+               Requirements:
+               - Comment on the new issue only (do not touch the older issues).
+               - Do not close, label, or otherwise modify any issues.
+               - Do not create new issues or pull requests.
+
+            8. If you do not find any clear duplicate candidates:
+               - Do not post any comment.
+               - Exit silently (no changes in GitHub).
+
+            Tool usage:
+            - Use the Bash tool to run `gh` and any other shell commands you need.
+            - You are explicitly allowed to run `gh` commands like:
+              - `gh issue list`, `gh issue view`, `gh search issues`, `gh api`, `gh issue comment`, etc.
+            - You may use `jq`, `sed`, `awk`, and similar tools to filter and transform JSON and text output.
+
+            When you begin:
+            - First, restate the repository full name and issue number you're processing.
+            - Then, carry out the plan above autonomously using Bash and `gh` until you either:
+              - post an appropriate comment on the new issue, or
+              - determine that there are no clear duplicates and do nothing.
+
+            9. If you find issues that you have already commented on, do not comment on them again.
+          prompt: |
+            Process the newly opened issue in this repository.
+            Repository: ${{ github.repository }}
+            Issue number: ${{ github.event.issue.number }}
+            Issue URL: ${{ github.event.issue.html_url }}
+            Title: ${{ github.event.issue.title }}
+            Body:
+            ${{ github.event.issue.body }}
+            Labels (JSON): ${{ toJson(github.event.issue.labels) }}
+            Find potential duplicates and comment only if strong matches exist, following the system instructions.
+          allowed_tools: "Bash(gh:*),View,GlobTool,GrepTool,BatchTool"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          max_turns: "40"
