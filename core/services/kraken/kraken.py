@@ -5,8 +5,6 @@ from typing import Any, List
 
 import aiohttp
 from commonwealth.settings.manager import Manager
-from loguru import logger
-
 from config import DEFAULT_EXTENSIONS, SERVICE_NAME
 from extension.exceptions import IncompatibleExtension
 from extension.extension import Extension
@@ -14,6 +12,7 @@ from extension.models import ExtensionSource
 from harbor import ContainerManager
 from jobs import JobsManager
 from jobs.models import Job, JobMethod
+from loguru import logger
 from manifest import ManifestManager
 from manifest.exceptions import ManifestBackendOffline
 from settings import ExtensionSettings, SettingsV2
