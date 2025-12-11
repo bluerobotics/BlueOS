@@ -5,21 +5,20 @@ import os
 import sys
 from typing import Any, Dict, List, Optional
 
+from api.dns import DnsData
+from api.manager import EthernetManager, NetworkInterface, NetworkInterfaceMetricApi
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
+from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
-from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
+from config import SERVICE_NAME
 from fastapi import Body, FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from uvicorn import Config, Server
-
-from api.dns import DnsData
-from api.manager import EthernetManager, NetworkInterface, NetworkInterfaceMetricApi
-from config import SERVICE_NAME
 from typedefs import Route
+from uvicorn import Config, Server
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
