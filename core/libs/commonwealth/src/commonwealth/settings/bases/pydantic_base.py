@@ -4,9 +4,6 @@ import os
 import pathlib
 from typing import Any, ClassVar, Dict, List
 
-from loguru import logger
-from pydantic import BaseModel, ValidationError
-
 from commonwealth.settings.exceptions import (
     BadAttributes,
     BadSettingsClassNaming,
@@ -14,6 +11,8 @@ from commonwealth.settings.exceptions import (
     MigrationFail,
     SettingsFromTheFuture,
 )
+from loguru import logger
+from pydantic import BaseModel, ValidationError
 
 
 class PydanticSettings(BaseModel):
