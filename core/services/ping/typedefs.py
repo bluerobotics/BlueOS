@@ -1,8 +1,7 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from pingutils import PingDeviceDescriptor
+from pydantic import BaseModel
 
 
 class DriverStatus(BaseModel):
