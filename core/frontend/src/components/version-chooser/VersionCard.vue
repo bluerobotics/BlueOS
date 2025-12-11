@@ -76,54 +76,25 @@
           Update to latest {{ image.tag }}
         </div>
       </v-btn>
-      <v-dialog
+      <v-btn
+        v-if="showBootstrapUpdate"
+        color="warning"
+        class="mx-2 my-1"
+        :disabled="working"
+        dark
+        @click="bootstrapDialog = true"
+      >
+        Update Bootstrap
+      </v-btn>
+      <WarningDialog
         v-if="showBootstrapUpdate"
         v-model="bootstrapDialog"
-        width="500"
-      >
-        <template #activator="{ on, attrs }">
-          <v-btn
-            color="warning"
-            class="mx-2 my-1"
-            :disabled="working"
-            dark
-            v-bind="attrs"
-            v-on="on"
-          >
-            Update Bootstrap
-          </v-btn>
-        </template>
-
-        <v-card>
-          <v-card-title
-            class="text-h5 lighten-2"
-          >
-            Info
-          </v-card-title>
-
-          <v-card-text class="text-h6 text-center mt-6">
-            Updating bootstrap is only recommended between stable versions.
-          </v-card-text>
-
-          <v-divider />
-
-          <v-card-actions>
-            <v-btn
-              color="primary"
-              @click="bootstrapDialog = false"
-            >
-              Abort
-            </v-btn>
-            <v-spacer />
-            <v-btn
-              color="primary"
-              @click="updateBootstrap"
-            >
-              Update
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+        message="Updating bootstrap is only recommended between stable versions."
+        confirm-label="Yes, update bootstrap"
+        cancel-label="Abort"
+        confirm-color="primary"
+        @confirm="updateBootstrap"
+      />
       <v-btn
         v-if="newBetaAvailable"
         color="primary"
@@ -165,6 +136,7 @@ import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en.json'
 import Vue, { PropType } from 'vue'
 
+import WarningDialog from '@/components/common/WarningDialog.vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import { Dictionary } from '@/types/common'
@@ -180,6 +152,7 @@ export default Vue.extend({
   name: 'VersionCard',
   components: {
     SpinningLogo,
+    WarningDialog,
   },
   props: {
     current: {
