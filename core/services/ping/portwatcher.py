@@ -4,10 +4,9 @@ from warnings import warn
 
 import serial.tools.list_ports
 from loguru import logger
-from serial.tools.list_ports_linux import SysFS
-
 from ping360_ethernet_prober import find_ping360_ethernet
 from pingutils import PingDeviceDescriptor
+from serial.tools.list_ports_linux import SysFS
 
 MAX_ATTEMPTS = 3
 
