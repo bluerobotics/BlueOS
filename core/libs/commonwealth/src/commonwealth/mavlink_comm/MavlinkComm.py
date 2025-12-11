@@ -7,14 +7,13 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import aiohttp
-from loguru import logger
-
 from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
     MavlinkMessageReceiveFail,
     MavlinkMessageSendFail,
 )
 from commonwealth.mavlink_comm.typedefs import MavlinkVehicleType
+from loguru import logger
 
 
 class MavlinkMessenger:
