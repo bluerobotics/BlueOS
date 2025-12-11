@@ -5,15 +5,14 @@ import pathlib
 from typing import Any, Dict
 
 import pykson  # type: ignore
-from loguru import logger
-from pykson import Field, Pykson
-
 from commonwealth.settings.exceptions import (
     BadAttributes,
     BadSettingsFile,
     MigrationFail,
     SettingsFromTheFuture,
 )
+from loguru import logger
+from pykson import Field, Pykson
 
 
 class PyksonSettings(pykson.JsonObject):
