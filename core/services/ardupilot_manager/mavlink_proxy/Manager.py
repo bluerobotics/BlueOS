@@ -2,14 +2,13 @@ import asyncio
 import pathlib
 from typing import List, Optional, Set, Type
 
-from loguru import logger
-
 # Plugins
 # pylint: disable=unused-import
 import mavlink_proxy.MAVLinkRouter
 import mavlink_proxy.MAVLinkServer
 import mavlink_proxy.MAVP2P
 import mavlink_proxy.MAVProxy
+from loguru import logger
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.exceptions import (
