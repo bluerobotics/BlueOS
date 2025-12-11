@@ -44,7 +44,6 @@ jobs:
                - title
                - body
                - labels (if present)
-               If the repository full name is not in the allowlist above, stop immediately with no side effects.
 
             2. Using `gh`, fetch issues created during the last 10 issues in this repository, including the new issue.
                You may use any of the following patterns (adapt as needed):
