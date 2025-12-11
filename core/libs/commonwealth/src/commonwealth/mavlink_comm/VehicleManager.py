@@ -1,8 +1,6 @@
 import asyncio
 from typing import Any, Dict, List
 
-from loguru import logger
-
 from commonwealth.mavlink_comm.exceptions import VehicleDisarmFail
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.mavlink_comm.typedefs import (
@@ -11,6 +9,7 @@ from commonwealth.mavlink_comm.typedefs import (
     MavlinkMessageId,
     MavlinkVehicleType,
 )
+from loguru import logger
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
 
