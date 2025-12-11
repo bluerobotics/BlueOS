@@ -13,7 +13,6 @@ from sdbus_async.networkmanager import (
     NetworkManager,
     NetworkManagerSettings,
 )
-
 from typedefs import NetworkInterfaceMetricApi
 
 sdbus.set_default_bus(sdbus.sd_bus_open_system())
