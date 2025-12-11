@@ -4,10 +4,9 @@ from enum import IntEnum
 from typing import Optional
 
 import psutil
+from exceptions import InvalidDeviceDescriptor
 from loguru import logger
 from serial.tools.list_ports_linux import SysFS
-
-from exceptions import InvalidDeviceDescriptor
 
 
 class PingType(IntEnum):
