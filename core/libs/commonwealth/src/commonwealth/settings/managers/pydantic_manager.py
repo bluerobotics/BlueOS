@@ -3,9 +3,8 @@ import re
 from typing import Any, Optional, Type
 
 import appdirs
-from loguru import logger
-
 from commonwealth.settings.bases.pydantic_base import PydanticSettings
+from loguru import logger
 
 
 class PydanticManager:
