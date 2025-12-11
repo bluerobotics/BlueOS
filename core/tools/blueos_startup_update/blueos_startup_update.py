@@ -1,18 +1,18 @@
 #!/usr/bin/env python
+import configparser
 import copy
 import json
 import logging
 import os
 import re
-import time
 import subprocess
+import time
 from pathlib import Path
 from typing import List, Tuple
-import configparser
 
 import appdirs
-from commonwealth.utils.commands import run_command, save_file, locate_file, load_file
-from commonwealth.utils.general import HostOs, CpuType, get_cpu_type, get_host_os
+from commonwealth.utils.commands import load_file, locate_file, run_command, save_file
+from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
 
