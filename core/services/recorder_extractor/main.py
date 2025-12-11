@@ -9,7 +9,6 @@ from functools import wraps
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, List
-
 from urllib.parse import quote
 
 from aiocache import cached
