@@ -11,7 +11,6 @@ import docker
 from fastapi import Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
-
 from utils.dockerhub import TagFetcher
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
