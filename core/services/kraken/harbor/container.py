@@ -6,11 +6,10 @@ from aiodocker import Docker
 from aiodocker.containers import DockerContainer
 from commonwealth.utils.apis import StackedHTTPException
 from fastapi import status
-from loguru import logger
-
 from harbor.contexts import DockerCtx
 from harbor.exceptions import ContainerNotFound
 from harbor.models import ContainerModel, ContainerUsageModel
+from loguru import logger
 
 
 class ContainerManager:
