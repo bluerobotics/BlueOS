@@ -3,7 +3,6 @@ from typing import Any, Callable, Tuple
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi_versioning import versioned_api_route
-
 from manifest import ManifestManager
 from manifest.exceptions import (
     ManifestDataFetchFailed,
