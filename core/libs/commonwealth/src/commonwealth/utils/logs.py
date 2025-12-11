@@ -2,7 +2,7 @@ import json
 import logging
 from logging import LogRecord
 from types import FrameType
-from typing import Optional, TYPE_CHECKING, Union, Callable
+from typing import TYPE_CHECKING, Callable, Optional, Union
 
 import zenoh
 from loguru import logger
