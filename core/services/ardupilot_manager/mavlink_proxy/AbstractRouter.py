@@ -7,7 +7,6 @@ import tempfile
 from typing import Any, List, Optional, Set, Type
 
 from loguru import logger
-
 from mavlink_proxy.Endpoint import Endpoint
 from mavlink_proxy.exceptions import (
     DuplicateEndpointName,
