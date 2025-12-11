@@ -20,6 +20,7 @@ from loguru import logger
 
 from autopilot_manager import AutoPilotManager
 from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
+from mavlink_proxy.AbstractRouter import TLogCondition
 from typedefs import (
     Firmware,
     FlightController,
@@ -253,6 +254,18 @@ async def set_preferred_router(router: str) -> Any:
 @index_to_http_exception
 def preferred_router() -> Any:
     return autopilot.load_preferred_router()
+
+
+@index_router_v1.post("/tlog_condition", summary="Set the condition for when to write Tlog files.")
+def set_tlog_condition(condition: TLogCondition) -> Any:
+    logger.debug("Setting Tlog condition")
+    autopilot.set_tlog_condition(condition)
+    logger.debug(f"Tlog write condition set to {condition}")
+
+
+@index_router_v1.get("/tlog_condition", summary="Retrieve Tlog file write condition")
+def tlog_condition() -> Any:
+    return autopilot.get_tlog_condition()
 
 
 @index_router_v1.get("/available_routers", summary="Retrieve preferred router")
