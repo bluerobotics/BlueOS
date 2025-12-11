@@ -3,7 +3,6 @@ from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
 from commonwealth.settings.manager import Manager
-
 from settings import SettingsV1
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
 from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
