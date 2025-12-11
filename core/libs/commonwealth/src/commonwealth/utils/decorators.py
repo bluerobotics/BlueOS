@@ -1,8 +1,7 @@
 import time
 from functools import wraps
 from threading import Lock
-from typing import TypeVar
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, TypeVar
 
 F = TypeVar("F", bound=Callable[..., Any])
 
