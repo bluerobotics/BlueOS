@@ -20,7 +20,6 @@ from sdbus_async.networkmanager import (
     NetworkManagerSettings,
 )
 from sdbus_async.networkmanager.enums import AccessPointCapabilities, WpaSecurityFlags
-
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
 from wifi_handlers.AbstractWifiHandler import AbstractWifiManager
 
