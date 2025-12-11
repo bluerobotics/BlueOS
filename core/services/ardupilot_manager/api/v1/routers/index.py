@@ -5,6 +5,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Tuple
 
+from autopilot_manager import AutoPilotManager
 from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
     MavlinkMessageReceiveFail,
@@ -13,13 +14,11 @@ from commonwealth.mavlink_comm.exceptions import (
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import StackedHTTPException
 from commonwealth.utils.decorators import single_threaded
+from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
 from fastapi import APIRouter, Body, File, HTTPException, UploadFile, status
 from fastapi.responses import PlainTextResponse
 from fastapi_versioning import versioned_api_route
 from loguru import logger
-
-from autopilot_manager import AutoPilotManager
-from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
 from typedefs import (
     Firmware,
     FlightController,
