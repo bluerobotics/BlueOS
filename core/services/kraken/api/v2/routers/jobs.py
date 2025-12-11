@@ -4,7 +4,6 @@ from typing import Any, Callable, List, Tuple
 
 from fastapi import APIRouter, Body, HTTPException, status
 from fastapi_versioning import versioned_api_route
-
 from jobs import JobsManager
 from jobs.exceptions import JobNotFound
 from jobs.models import Job, JobMethod
