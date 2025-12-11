@@ -6,9 +6,8 @@ import time
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
-from loguru import logger
-
 from exceptions import BusyError, NetworkAddFail, SockCommError, WPAOperationFail
+from loguru import logger
 
 
 class WPASupplicant:
