@@ -5,11 +5,10 @@ from typing import Generator, Optional
 from unittest.mock import AsyncMock
 
 import pytest
+from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
 from nmeasim.simulator import Simulator
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pyfakefs.fake_filesystem_unittest import Patcher
-
-from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
 
 # Global test parameters
 SERVER_HOST = "127.0.0.1"
