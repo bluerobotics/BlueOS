@@ -2,16 +2,15 @@
 import asyncio
 import logging
 
+from args import CommandLineArgs
+from autopilot_manager import AutoPilotManager
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
-from loguru import logger
-from uvicorn import Config, Server
-
-from args import CommandLineArgs
-from autopilot_manager import AutoPilotManager
 from flight_controller_detector.Detector import Detector as BoardDetector
+from loguru import logger
 from settings import SERVICE_NAME
+from uvicorn import Config, Server
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
