@@ -5,8 +5,6 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional
 
-from loguru import logger
-
 from exceptions import (
     FirmwareInstallFail,
     NoDefaultFirmwareAvailable,
@@ -15,6 +13,7 @@ from exceptions import (
 )
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareInstall import FirmwareInstaller
+from loguru import logger
 from typedefs import (
     Firmware,
     FirmwareFormat,
