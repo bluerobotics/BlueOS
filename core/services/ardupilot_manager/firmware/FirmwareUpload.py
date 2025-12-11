@@ -3,9 +3,8 @@ import pathlib
 import shutil
 import subprocess
 
-from loguru import logger
-
 from exceptions import FirmwareUploadFail, InvalidUploadTool, UploadToolNotFound
+from loguru import logger
 
 
 class FirmwareUploader:
