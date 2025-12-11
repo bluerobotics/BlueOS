@@ -3,7 +3,6 @@ import pathlib
 import platform
 
 import pytest
-
 from exceptions import InvalidFirmwareFile
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareInstall import FirmwareInstaller
