@@ -3,9 +3,8 @@ from typing import Any, Callable, Coroutine, Optional
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION, PING1D_FIRMWARE_VERSION
 from loguru import logger
-from serial.tools.list_ports_linux import SysFS
-
 from pingutils import PingDeviceDescriptor, PingType
+from serial.tools.list_ports_linux import SysFS
 
 
 class PingProber:
