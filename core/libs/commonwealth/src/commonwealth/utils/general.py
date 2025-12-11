@@ -9,10 +9,9 @@ from pathlib import Path
 from typing import Any, AsyncGenerator
 
 import psutil
-from loguru import logger
-
 from commonwealth.utils.commands import load_file
 from commonwealth.utils.decorators import temporary_cache
+from loguru import logger
 
 
 class CpuType(str, Enum):
