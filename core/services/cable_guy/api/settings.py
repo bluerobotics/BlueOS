@@ -3,7 +3,6 @@ import pathlib
 from typing import Any, Dict, Sequence
 
 from commonwealth.settings.settings import PydanticSettings
-
 from config import DEFAULT_NETWORK_INTERFACES
 from typedefs import AddressMode, NetworkInterface, NetworkInterfaceV1
 
