@@ -1,15 +1,13 @@
 from typing import Any
 
-from fastapi import APIRouter, status
-from fastapi_versioning import versioned_api_route
-
-
 from docker_login import (
     DockerLoginInfo,
     get_docker_accounts,
     make_docker_login,
     make_docker_logout,
 )
+from fastapi import APIRouter, status
+from fastapi_versioning import versioned_api_route
 
 docker_router_v1 = APIRouter(
     prefix="/docker",
