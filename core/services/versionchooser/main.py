@@ -2,13 +2,12 @@
 import asyncio
 import logging
 
+from api import application
+from args import CommandLineArgs
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from loguru import logger
 from uvicorn import Config, Server
-
-from args import CommandLineArgs
-from api import application
 
 SERVICE_NAME = "version-chooser"
 
