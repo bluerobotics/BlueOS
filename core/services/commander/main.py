@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, AsyncGenerator
 
 import appdirs
-from uvicorn import Config, Server
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.general import delete_everything, delete_everything_stream
@@ -21,6 +20,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from uvicorn import Config, Server
 
 SERVICE_NAME = "commander"
 LOG_FOLDER_PATH = os.environ.get("BLUEOS_LOG_FOLDER_PATH", "/var/logs/blueos")
