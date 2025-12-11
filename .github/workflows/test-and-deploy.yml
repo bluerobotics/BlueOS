@@ -331,7 +331,7 @@ jobs:
         timeout-minutes: 120
         with:
           name: BlueOS-raspberry-${{ env.GITHUB_REF_NAME }}${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}
-          path: deploy/pimod/blueos.img
+          path: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip
           if-no-files-found: error
           retention-days: 7
 
