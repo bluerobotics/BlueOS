@@ -1,10 +1,11 @@
+from dataclasses import asdict
 import json
 import pathlib
 import sys
-from dataclasses import asdict
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
 
+import aiohttp
 import aiodocker
 import appdirs
 import docker
@@ -12,7 +13,7 @@ from fastapi import Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 
-from utils.dockerhub import TagFetcher
+from utils.dockerhub import get_current_arch, TagFetcher
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
 
@@ -368,20 +369,49 @@ class VersionChooser:
                     }
                 )
 
-    async def set_remote_versions(
-        self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]], repository: str
-    ) -> None:
+    async def get_remote_versions_from_blueos_registry(self, index: str, repository: str) -> List[Dict[str, Any]]:
+        arch = get_current_arch()
         try:
-            assert isinstance(output["local"], list)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"http://logtools.cloud:8080/GetImages?repository={repository}&arch={arch}&index={index}"
+                ) as resp:
+                    if resp.status != 200:
+                        logger.warning(f"Error status {resp.status}")
+                    data = await resp.json(content_type=None)
+                    return data["tags"]
+        except Exception as error:
+            logger.critical(f"error fetching online tags: {error}")
+            return []
+
+    def get_selected_index(self) -> str:
+        return "dockerhub"
+
+    async def set_remote_versions_from_dockerhub(
+        self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]], repository: str
+    ) -> Dict[str, Optional[Union[str, List[Dict[str, Any]]]]]:
+        try:
             output["error"], online_tags = await TagFetcher().fetch_remote_tags(
                 repository, [image["tag"] for image in output["local"]]
             )
+            online_tags = [asdict(tag) for tag in online_tags]
+            output["remote"] = online_tags
         except Exception as error:
             logger.critical(f"error fetching online tags: {error}")
-            online_tags = []
             output["error"] = f"error fetching online tags: {error}"
+        return output
+
+    async def set_remote_versions(
+        self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]], repository: str
+    ) -> None:
+        index = self.get_selected_index()
+        online_tags = await self.get_remote_versions_from_blueos_registry(index, repository)
+        if len(online_tags) == 0:
+            logger.warning(f"No tags found using BlueOS registry cache for {repository}, fetching from DockerHub!")
+            output = await self.set_remote_versions_from_dockerhub(output, repository)
         assert isinstance(output["remote"], list)
-        output["remote"].extend([asdict(tag) for tag in online_tags])
+        output["remote"].extend(online_tags)
+        return output
 
     async def get_available_local_versions(self) -> JSONResponse:
         output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]] = {"local": [], "error": None}
