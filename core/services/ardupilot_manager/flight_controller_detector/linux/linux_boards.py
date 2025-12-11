@@ -1,9 +1,7 @@
 import os
-
 from typing import List, Type
 
 from smbus2 import SMBus
-
 from typedefs import FlightController, PlatformType, Serial
 
 
