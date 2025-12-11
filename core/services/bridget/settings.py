@@ -1,14 +1,18 @@
-from typing import Any, Dict
+import json
+import pathlib
+from typing import Any, Dict, List
 
-import pykson  # type: ignore
-from commonwealth.settings import settings
+from commonwealth.settings.settings import PydanticSettings
+from pydantic import BaseModel
+
+OLD_SETTINGS_DIR = "/usr/blueos/userdata/settings/bridget/bridget"
 
 
-class BridgeSettingsSpecV1(pykson.JsonObject):
-    serial_path = pykson.StringField()
-    baudrate = pykson.IntegerField()
-    ip = pykson.StringField()
-    udp_port = pykson.IntegerField()
+class BridgeSettingsSpecV1(BaseModel):
+    serial_path: str
+    baudrate: int
+    ip: str
+    udp_port: int
 
     @staticmethod
     def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV1":  # type: ignore
@@ -24,32 +28,12 @@ class BridgeSettingsSpecV1(pykson.JsonObject):
             return self.serial_path == other.serial_path
         return False
 
-
-class SettingsV1(settings.BaseSettings):
-    VERSION = 1
-    specs = pykson.ObjectListField(BridgeSettingsSpecV1)
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV1.VERSION
-
-    def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV1.VERSION:
-            return
-
-        if data["VERSION"] < SettingsV1.VERSION:
-            super().migrate(data)
-
-        data["VERSION"] = SettingsV1.VERSION
-
-
-class BridgeSettingsSpecV2(pykson.JsonObject):
-    udp_target_port = pykson.IntegerField()
-    udp_listen_port = pykson.IntegerField()
-    serial_path = pykson.StringField()
-    baudrate = pykson.IntegerField()
-    ip = pykson.StringField()
+class BridgeSettingsSpecV2(BaseModel):
+    udp_target_port: int
+    udp_listen_port: int
+    serial_path: str
+    baudrate: int
+    ip: str
 
     @staticmethod
     def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV2":  # type: ignore
@@ -67,23 +51,66 @@ class BridgeSettingsSpecV2(pykson.JsonObject):
         return False
 
 
-class SettingsV2(SettingsV1):
-    VERSION = 2
-    specsv2 = pykson.ObjectListField(BridgeSettingsSpecV2)
+def migrate_from_old_settings(version: int, target_settings: "SettingsV1") -> None:
+    """Common method to migrate settings from the old location."""
+    old_settings_file_path = pathlib.Path(OLD_SETTINGS_DIR) / f"settings-{version}.json"
 
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
+    if not old_settings_file_path.exists():
+        return
 
-        self.VERSION = SettingsV2.VERSION
+    try:
+        with open(old_settings_file_path, "r", encoding="utf-8") as file:
+            old_data = json.load(file)
+
+        if version == 1 and "specs" in old_data:
+            target_settings.specs = [BridgeSettingsSpecV1.parse_obj(spec) for spec in old_data["specs"]]
+        elif version == 2 and "specsv2" in old_data:
+            # For V2, we need to cast to SettingsV2 to access specsv2
+            if hasattr(target_settings, 'specsv2'):
+                target_settings.specsv2 = [BridgeSettingsSpecV2.parse_obj(spec) for spec in old_data["specsv2"]]
+
+    except Exception:
+        # If migration fails, just continue with empty settings
+        pass
+
+
+class SettingsV1(PydanticSettings):
+    specs: List[BridgeSettingsSpecV1] = []
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV2.VERSION:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV2.VERSION:
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
             super().migrate(data)
 
-            data["VERSION"] = SettingsV2.VERSION
+        data["VERSION"] = SettingsV1.STATIC_VERSION
+
+    def on_settings_created(self, file_path: pathlib.Path) -> None:
+        """Handle migration from old settings location when creating new settings."""
+        if self.VERSION not in (SettingsV1.STATIC_VERSION, SettingsV1.STATIC_VERSION + 1):
+            return
+
+        settings_v1_file = file_path.parent / "settings-1.json"
+        if settings_v1_file.exists():
+            # If settings v1 already exist, we don't re initialize them
+            return
+
+        # Use common migration method
+        migrate_from_old_settings(1, self)
+
+
+class SettingsV2(SettingsV1):
+    specsv2: List[BridgeSettingsSpecV2] = []
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
+            super().migrate(data)
+
+            data["VERSION"] = SettingsV2.STATIC_VERSION
             data["specsv2"] = []
             for spec in data["specs"]:
                 server = spec["ip"] == "0.0.0.0"
@@ -96,3 +123,16 @@ class SettingsV2(SettingsV1):
                         "udp_listen_port": spec["udp_port"] if server else 0,
                     }
                 )
+
+    def on_settings_created(self, file_path: pathlib.Path) -> None:
+        """Handle migration from old settings location when creating new settings."""
+        if self.VERSION not in (SettingsV2.STATIC_VERSION, SettingsV2.STATIC_VERSION + 1):
+            return
+
+        settings_v2_file = file_path.parent / "settings-2.json"
+        if settings_v2_file.exists():
+            # If settings v2 already exist, we don't re initialize them
+            return
+
+        # Use common migration method
+        migrate_from_old_settings(2, self)
