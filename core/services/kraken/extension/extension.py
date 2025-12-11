@@ -5,9 +5,8 @@ import os
 import time
 from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, Tuple, cast
 
+from aiodocker.exceptions import DockerError
 from commonwealth.settings.manager import Manager
-from loguru import logger
-
 from config import DEFAULT_INJECTED_ENV_VARIABLES, SERVICE_NAME
 from extension.exceptions import (
     ExtensionInsufficientStorage,
@@ -19,7 +18,7 @@ from extension.exceptions import (
 from extension.models import ExtensionSource
 from harbor import ContainerManager, DockerCtx
 from harbor.exceptions import ContainerNotFound
-from aiodocker.exceptions import DockerError
+from loguru import logger
 from manifest import ManifestManager
 from manifest.models import ExtensionVersion
 from settings import ExtensionSettings, SettingsV2
