@@ -1,9 +1,8 @@
 from typing import Any, Dict, List, Set
 
+from autopilot_manager import AutoPilotManager
 from fastapi import APIRouter, Body, status
 from fastapi_versioning import versioned_api_route
-
-from autopilot_manager import AutoPilotManager
 from mavlink_proxy.Endpoint import Endpoint
 
 endpoints_router_v1 = APIRouter(
