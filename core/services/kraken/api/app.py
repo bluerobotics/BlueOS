@@ -1,11 +1,5 @@
 from os import path
 
-from commonwealth.utils.apis import GenericErrorHandlingRoute
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi_versioning import VersionedFastAPI
-
 # Routers
 from api.v1.routers import extension_router_v1, index_router_v1
 from api.v2.routers import (
@@ -15,6 +9,11 @@ from api.v2.routers import (
     jobs_router_v2,
     manifest_router_v2,
 )
+from commonwealth.utils.apis import GenericErrorHandlingRoute
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi_versioning import VersionedFastAPI
 
 application = FastAPI(
     title="Kraken API",
