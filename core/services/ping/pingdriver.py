@@ -4,9 +4,8 @@ from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate, set_low_latency
 from brping import PingDevice
 from brping.definitions import COMMON_DEVICE_INFORMATION
-from loguru import logger
-
 from exceptions import InvalidDeviceDescriptor, NoUDPPortAssignedToPingDriver
+from loguru import logger
 from pingutils import PingDeviceDescriptor
 from typedefs import DriverStatus
 
