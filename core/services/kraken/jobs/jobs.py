@@ -2,10 +2,9 @@ import asyncio
 from typing import List, Optional
 
 import aiohttp
-from loguru import logger
-
 from jobs.exceptions import JobNotFound
 from jobs.models import Job
+from loguru import logger
 
 
 class JobsManager:
