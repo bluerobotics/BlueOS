@@ -3,10 +3,6 @@ from functools import wraps
 from typing import Any, Callable, List, Tuple, cast
 
 from commonwealth.utils.streaming import streamer
-from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import Response, StreamingResponse
-from fastapi_versioning import versioned_api_route
-
 from extension.exceptions import (
     ExtensionInsufficientStorage,
     ExtensionNotFound,
@@ -14,6 +10,9 @@ from extension.exceptions import (
 )
 from extension.extension import Extension
 from extension.models import ExtensionSource
+from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import Response, StreamingResponse
+from fastapi_versioning import versioned_api_route
 
 extension_router_v2 = APIRouter(
     prefix="/extension",
