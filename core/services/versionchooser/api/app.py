@@ -1,18 +1,17 @@
 from os import path
 
+# Routers
+from api.v1.routers import (
+    bootstrap_router_v1,
+    docker_router_v1,
+    index_router_v1,
+    version_router_v1,
+)
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI
-
-# Routers
-from api.v1.routers import (
-    index_router_v1,
-    docker_router_v1,
-    version_router_v1,
-    bootstrap_router_v1,
-)
 
 application = FastAPI(
     title="Version Chooser API",
