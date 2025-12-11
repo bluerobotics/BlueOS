@@ -3,23 +3,23 @@ import errno
 import re
 import subprocess
 import time
-from ipaddress import ip_network, IPv4Address
+from ipaddress import IPv4Address, ip_network
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import psutil
+from api import dns, settings
 from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, discover_dhcp_servers
-from commonwealth.utils.DHCPServerManager import DHCPServerDetails, Dnsmasq as DHCPServerManager, DHCPServerLease
+from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
+from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
+from config import SERVICE_NAME
 from loguru import logger
+from networksetup import AbstractNetworkHandler, NetworkHandlerDetector
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.exceptions import NetlinkError
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
-
-from api import dns, settings
-from config import SERVICE_NAME
-from networksetup import AbstractNetworkHandler, NetworkHandlerDetector
 from typedefs import (
     AddressMode,
     InterfaceAddress,
