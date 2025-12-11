@@ -11,9 +11,6 @@ from urllib.parse import urlparse
 from urllib.request import urlopen, urlretrieve
 
 from commonwealth.utils.decorators import temporary_cache
-from loguru import logger
-from packaging.version import Version
-
 from exceptions import (
     FirmwareDownloadFail,
     InvalidManifest,
@@ -21,6 +18,8 @@ from exceptions import (
     NoCandidate,
     NoVersionAvailable,
 )
+from loguru import logger
+from packaging.version import Version
 from typedefs import FirmwareFormat, Platform, PlatformType, Vehicle
 
 # TODO: This should be not necessary
