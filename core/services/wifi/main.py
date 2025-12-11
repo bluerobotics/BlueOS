@@ -13,20 +13,19 @@ from commonwealth.utils.apis import (
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
+from exceptions import BusyError
 from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from tabulate import tabulate  # type: ignore
-from uvicorn import Config, Server
-
-from exceptions import BusyError
 from typedefs import (
     HotspotStatus,
     SavedWifiNetwork,
     ScannedWifiNetwork,
     WifiCredentials,
 )
+from uvicorn import Config, Server
 from wifi_handlers.AbstractWifiHandler import AbstractWifiManager
 from wifi_handlers.networkmanager.networkmanager import NetworkManagerWifi
 from wifi_handlers.wpa_supplicant.WifiManager import WifiManager
