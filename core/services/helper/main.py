@@ -24,8 +24,8 @@ from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
-    blueos_version,
     CpuType,
+    blueos_version,
     get_cpu_type,
     local_hardware_identifier,
     local_unique_identifier,
@@ -36,10 +36,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from nginx_parser import parse_nginx_file
 from pydantic import BaseModel
 from uvicorn import Config, Server
-
-from nginx_parser import parse_nginx_file
 
 SERVICE_NAME = "helper"
 
