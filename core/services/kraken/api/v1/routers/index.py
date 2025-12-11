@@ -1,12 +1,11 @@
 from typing import Any, List, Optional, cast
 
 from commonwealth.utils.streaming import streamer, timeout_streamer
+from extension.extension import Extension
+from extension.models import ExtensionSource
 from fastapi import APIRouter, status
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi_versioning import versioned_api_route
-
-from extension.extension import Extension
-from extension.models import ExtensionSource
 from harbor import ContainerManager
 from manifest import ManifestManager
 from manifest.models import RepositoryEntry
