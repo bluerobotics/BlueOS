@@ -8,11 +8,10 @@ from typing import Optional, Union
 
 from ardupilot_fw_decoder import BoardSubType, BoardType, Decoder
 from elftools.elf.elffile import ELFFile
-from loguru import logger
-
 from exceptions import FirmwareInstallFail, InvalidFirmwareFile, UnsupportedPlatform
 from firmware.FirmwareDownload import FirmwareDownloader
 from firmware.FirmwareUpload import FirmwareUploader
+from loguru import logger
 from typedefs import FirmwareFormat, FlightController, Platform, PlatformType
 
 
