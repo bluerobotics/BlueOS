@@ -8,7 +8,6 @@ from bridges.serialhelper import Baudrate
 from commonwealth.settings.manager import Manager
 from pydantic import BaseModel, conint
 from serial.tools.list_ports_linux import SysFS
-
 from settings import BridgeSettingsSpecV2, SettingsV2
 
 USERDATA = Path("/usr/blueos/userdata/")
