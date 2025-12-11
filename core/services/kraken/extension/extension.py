@@ -5,7 +5,7 @@ import os
 import time
 from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, Tuple, cast
 
-from commonwealth.settings.manager import Manager
+from commonwealth.settings.manager import PydanticManager
 from loguru import logger
 
 from config import DEFAULT_INJECTED_ENV_VARIABLES, SERVICE_NAME
@@ -36,7 +36,7 @@ class Extension:
     locked_entries: Dict[str, Literal[True]] = {}
     start_attempts: Dict[str, Tuple[int, int]] = {}
 
-    _manager: Manager = Manager(SERVICE_NAME, SettingsV2)
+    _manager: PydanticManager = PydanticManager(SERVICE_NAME, SettingsV2)
     _settings = _manager.settings
 
     def __init__(self, source: ExtensionSource, digest: Optional[str] = None) -> None:
@@ -80,9 +80,7 @@ class Extension:
         cls.start_attempts.pop(key, None)
 
     @classmethod
-    def _fetch_settings(
-        cls, identifier: Optional[str] = None, tag: Optional[str] = None
-    ) -> List[ExtensionSettings] | ExtensionSettings:
+    def _fetch_settings(cls, identifier: Optional[str] = None, tag: Optional[str] = None) -> List[ExtensionSettings]:
         extensions: List[ExtensionSettings] = [
             ext
             for ext in cast(List[ExtensionSettings], cls._settings.extensions)
@@ -92,7 +90,7 @@ class Extension:
         if identifier is not None and tag is not None:
             if not extensions:
                 raise ExtensionNotFound(f"Extension {identifier}:{tag} not found")
-            return extensions[0]
+            return [extensions[0]]
         return extensions
 
     def _save_settings(self, extension: Optional[ExtensionSettings] = None) -> None:
