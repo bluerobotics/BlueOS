@@ -7,7 +7,6 @@ import aiohttp
 import semver
 from aiocache import cached
 from commonwealth.settings.manager import Manager
-
 from config import DEFAULT_MANIFESTS, SERVICE_NAME
 from manifest.exceptions import (
     ManifestBackendOffline,
