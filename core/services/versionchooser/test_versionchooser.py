@@ -4,7 +4,6 @@ from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
-
 from utils.chooser import VersionChooser
 from utils.dockerhub import TagFetcher, TagMetadata
 
