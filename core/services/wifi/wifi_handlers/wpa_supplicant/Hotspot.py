@@ -15,7 +15,6 @@ from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from commonwealth.utils.general import HostOs, device_id, get_host_os
 from loguru import logger
 from pyroute2 import IW, IPRoute
-
 from typedefs import WifiCredentials
 
 
