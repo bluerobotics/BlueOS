@@ -320,7 +320,6 @@ jobs:
         run: echo "SANITIZED_PLATFORM=$(echo ${{ matrix.platform }} | tr '/' '-')" >> $GITHUB_ENV
 
       - name: Zip image
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           sudo apt install zip
           zip -9 BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip deploy/pimod/blueos.img
