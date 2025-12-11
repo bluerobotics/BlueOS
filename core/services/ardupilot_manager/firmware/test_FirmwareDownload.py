@@ -2,7 +2,6 @@ import os
 import platform
 
 import pytest
-
 from firmware.FirmwareDownload import FirmwareDownloader
 from typedefs import Platform, Vehicle
 
