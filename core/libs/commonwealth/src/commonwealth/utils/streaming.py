@@ -4,9 +4,8 @@ import json
 from dataclasses import asdict, dataclass
 from typing import AsyncGenerator, Optional, Tuple
 
-from fastapi import status
-
 from commonwealth.utils.apis import StackedHTTPException
+from fastapi import status
 
 
 @dataclass
