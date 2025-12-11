@@ -11,12 +11,11 @@ from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from uvicorn import Config, Server
-
 from pingmanager import PingManager
 from pingprober import PingProber
 from portwatcher import PortWatcher
 from typedefs import PingDeviceDescriptorModel
+from uvicorn import Config, Server
 
 SERVICE_NAME = "ping"
 
