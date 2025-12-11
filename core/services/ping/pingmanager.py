@@ -2,13 +2,12 @@ import asyncio
 from typing import Any, Dict, List, Set
 
 from loguru import logger
-from serial.tools.list_ports_linux import SysFS
-
 from ping1d_driver import Ping1DDriver
 from ping360_driver import Ping360Driver
 from ping360_ethernet_driver import Ping360EthernetDriver
 from pingdriver import PingDriver
 from pingutils import PingDeviceDescriptor, PingType, udp_port_is_in_use
+from serial.tools.list_ports_linux import SysFS
 
 
 class PingManager:
