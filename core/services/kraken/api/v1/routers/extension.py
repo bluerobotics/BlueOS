@@ -1,14 +1,13 @@
 import asyncio
 from typing import Any, List, cast
 
+from api.v2.routers.extension import extension_to_http_exception
 from commonwealth.utils.streaming import streamer
+from extension.extension import Extension
+from extension.models import ExtensionSource
 from fastapi import APIRouter, status
 from fastapi.responses import StreamingResponse
 from fastapi_versioning import versioned_api_route
-
-from api.v2.routers.extension import extension_to_http_exception
-from extension.extension import Extension
-from extension.models import ExtensionSource
 
 extension_router_v1 = APIRouter(
     prefix="/extension",
