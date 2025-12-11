@@ -4,7 +4,6 @@ from typing import Any, List
 from commonwealth.utils.commands import load_file
 from commonwealth.utils.general import CpuType, get_cpu_type
 from elftools.elf.elffile import ELFFile
-
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from typedefs import Platform, Serial
 
