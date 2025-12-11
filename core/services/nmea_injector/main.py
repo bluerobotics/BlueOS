@@ -11,9 +11,8 @@ from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from uvicorn import Config, Server
-
 from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
+from uvicorn import Config, Server
 
 SERVICE_NAME = "nmea-injector"
 
