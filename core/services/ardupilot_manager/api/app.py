@@ -1,14 +1,13 @@
 from os import path
 
+# Routers
+from api.v1.routers import endpoints_router_v1, index_router_v1
+from api.v2.routers import index_router_v2
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI
-
-# Routers
-from api.v1.routers import endpoints_router_v1, index_router_v1
-from api.v2.routers import index_router_v2
 
 application = FastAPI(
     title="AutoPilot Manager API",
