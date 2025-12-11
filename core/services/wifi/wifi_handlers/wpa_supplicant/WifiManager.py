@@ -9,10 +9,9 @@ from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
 from commonwealth.utils.general import HostOs, get_host_os
+from exceptions import FetchError, ParseError
 from fastapi import status
 from loguru import logger
-
-from exceptions import FetchError, ParseError
 from typedefs import (
     ConnectionStatus,
     SavedWifiNetwork,
