@@ -2,9 +2,8 @@ from enum import IntEnum, IntFlag
 from typing import Any, Dict, Optional
 
 import pynmea2
-from pydantic import BaseModel
-
 from nmea_injector.exceptions import UnsupportedSentenceType
+from pydantic import BaseModel
 
 
 class GPS_FIX_TYPE(IntEnum):
