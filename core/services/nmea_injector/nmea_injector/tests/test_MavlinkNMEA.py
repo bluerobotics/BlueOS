@@ -1,10 +1,9 @@
 import pynmea2
 import pytest
-from nmeasim.simulator import Simulator
-from pynmea2.nmea_utils import dm_to_sd
-
 from nmea_injector.exceptions import UnsupportedSentenceType
 from nmea_injector.MavlinkNMEA import parse_mavlink_from_sentence
+from nmeasim.simulator import Simulator
+from pynmea2.nmea_utils import dm_to_sd
 
 
 class TestMavlinkNMEA:
