@@ -3,7 +3,7 @@ import asyncio
 import logging
 from typing import Any, List
 
-from uvicorn import Config, Server
+from bridget import BridgeFrontendSpec, Bridget
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
@@ -11,8 +11,7 @@ from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-
-from bridget import BridgeFrontendSpec, Bridget
+from uvicorn import Config, Server
 
 SERVICE_NAME = "bridget"
 
