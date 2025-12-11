@@ -16,12 +16,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
+from settings import ServiceTypes, SettingsV4
+from typedefs import InterfaceType, IpInfo, MdnsEntry
 from uvicorn import Config, Server
 from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
-
-from settings import ServiceTypes, SettingsV4
-from typedefs import InterfaceType, IpInfo, MdnsEntry
 
 SERVICE_NAME = "beacon"
 
