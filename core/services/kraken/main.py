@@ -2,13 +2,12 @@
 import asyncio
 import logging
 
+from args import CommandLineArgs
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
+from config import SERVICE_NAME
 from loguru import logger
 from uvicorn import Config, Server
-
-from args import CommandLineArgs
-from config import SERVICE_NAME
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
