@@ -1,9 +1,8 @@
 import json
 from typing import Optional
 
-from pydantic import BaseModel
-
 from manifest.models import ExtensionVersion, RepositoryEntry
+from pydantic import BaseModel
 from settings import ExtensionSettings
 
 
