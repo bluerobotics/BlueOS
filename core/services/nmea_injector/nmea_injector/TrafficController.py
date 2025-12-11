@@ -8,11 +8,10 @@ import pynmea2
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.settings.manager import Manager
 from loguru import logger
-from pydantic import BaseModel, conint
-
 from nmea_injector.exceptions import UnsupportedSocketKind
 from nmea_injector.MavlinkNMEA import MavlinkGpsInput, parse_mavlink_from_sentence
 from nmea_injector.settings import NmeaInjectorSettingsSpecV1, SettingsV1
+from pydantic import BaseModel, conint
 
 
 class SocketKind(str, Enum):
