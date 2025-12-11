@@ -67,6 +67,7 @@
       </div>
     </div>
 
+    <v-divider v-if="show_advanced_checkbox || show_custom_checkbox" class="my-2" />
     <v-checkbox
       v-if="show_advanced_checkbox"
       v-model="forcing_input"
