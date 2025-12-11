@@ -4,7 +4,6 @@ import aiodocker
 from fastapi import APIRouter, Depends, status
 from fastapi_versioning import versioned_api_route
 from pydantic import BaseModel
-
 from utils.chooser import VersionChooser
 
 bootstrap_router_v1 = APIRouter(
