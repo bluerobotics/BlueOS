@@ -4,9 +4,8 @@ import time
 from shutil import which
 from subprocess import PIPE, Popen
 
-from serial.tools.list_ports_linux import SysFS
-
 from bridges.serialhelper import Baudrate
+from serial.tools.list_ports_linux import SysFS
 
 
 # pylint: disable=too-many-arguments
