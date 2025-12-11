@@ -2,10 +2,9 @@ import asyncio
 from typing import List, Optional
 
 from commonwealth.utils.general import is_running_as_root
-from serial.tools.list_ports_linux import SysFS, comports
-
 from flight_controller_detector.board_identification import identifiers
 from flight_controller_detector.linux.detector import LinuxFlightControllerDetector
+from serial.tools.list_ports_linux import SysFS, comports
 from typedefs import FlightController, FlightControllerFlags, Platform
 
 
