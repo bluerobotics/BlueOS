@@ -342,6 +342,13 @@ jobs:
             echo "ASSET_NAME_SUFFIX=-pi4" >> $GITHUB_ENV
           fi
 
+      - name: Install pip and AWS CLI via pip
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip
+          pip3 install awscli --break-system-packages
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         if: startsWith(github.ref, 'refs/tags/')
