@@ -287,15 +287,15 @@ jobs:
           sudo apt update
           sudo apt install -y python3-pip
 
-      # We have self-hosted runners for both arm and arm64, so we need to install awscli for both architectures
-      # Some of them, does not require --break-system-packages...
-      - name: Install awscli
-        run: pip3 install awscli --break-system-packages || pip3 install awscli
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      # We have self-hosted runners for both arm and arm64, so we need to install awscli for both architectures
+      # Some of them, does not require --break-system-packages...
+      - name: Install awscli
+        run: pip3 install awscli --break-system-packages || pip3 install awscli
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
