@@ -376,9 +376,21 @@ jobs:
         run: |
           aws s3 cp BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip s3://blueos-downloads/releases/${{ github.ref_name }}/
 
+      - name: Check file size
+        id: check_size
+        run: |
+          FILE_SIZE=$(stat -c%s "BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip")
+          echo "File size: $FILE_SIZE bytes"
+          if [ "$FILE_SIZE" -lt 2147483648 ]; then
+            echo "upload_allowed=true" >> $GITHUB_OUTPUT
+          else
+            echo "upload_allowed=false" >> $GITHUB_OUTPUT
+            echo "::warning::File size ($FILE_SIZE bytes) exceeds 2GB limit, skipping GitHub release upload"
+          fi
+
       - name: Upload raspberry image for release
         uses: svenstaro/upload-release-action@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && steps.check_size.outputs.upload_allowed == 'true'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip
