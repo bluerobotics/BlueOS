@@ -1,141 +1,252 @@
 <template>
-  <v-container fluid>
-    <v-row v-if="error">
-      <v-col cols="12">
-        <v-alert type="error" dense outlined>
-          {{ error }}
-        </v-alert>
-      </v-col>
-    </v-row>
-    <v-row v-if="loading">
-      <v-col cols="12">
-        <v-progress-linear
-          color="primary"
-          indeterminate
-          height="6"
-          rounded
-          class="mb-2"
-        />
-      </v-col>
-    </v-row>
-    <v-row v-else>
-      <v-col cols="12">
-        <v-card outlined>
-          <v-card-title class="py-2 d-flex align-center">
-            <span>{{ path }} {{ totalSize ? ` (${totalSize})` : '' }}</span>
-            <v-spacer />
-            <v-btn
-              icon
-              small
-              :disabled="!canGoUp"
-              @click="goUp"
-            >
-              <v-icon>mdi-arrow-up</v-icon>
-            </v-btn>
-            <v-spacer />
-            <v-btn
-              icon
-              small
-              color="red"
-              :disabled="selectedPaths.length === 0 || deleting"
-              :loading="deleting"
-              @click="confirmDeleteSelected"
-            >
-              <v-icon>mdi-delete</v-icon>
-            </v-btn>
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-0">
-            <v-simple-table dense>
-              <thead>
-                <tr>
-                  <th class="text-center select-col">
-                    <v-checkbox
-                      :input-value="allSelected"
-                      :indeterminate="someSelected && !allSelected"
-                      hide-details
-                      dense
-                      @click.stop="toggleSelectAll"
-                    />
-                  </th>
-                  <th class="text-left">
-                    Name
-                  </th>
-                  <th class="text-center usage-col">
-                    Usage
-                  </th>
-                  <th class="text-right">
-                    Size
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="!usage || usage.root.children.length === 0">
-                  <td colspan="4" class="text-center grey--text text--darken-1">
-                    No entries.
-                  </td>
-                </tr>
-                <tr
-                  v-for="child in sortedChildren"
-                  :key="child.path"
-                  :class="{ 'clickable-row': child.is_dir }"
-                  @click="navigate(child)"
+  <v-card height="100%">
+    <v-tabs
+      v-model="activeTab"
+      centered
+      icons-and-text
+      show-arrows
+    >
+      <v-tabs-slider />
+      <v-tab>
+        Disk Usage
+        <v-icon>mdi-harddisk</v-icon>
+      </v-tab>
+      <v-tab>
+        Speed Test
+        <v-icon>mdi-speedometer</v-icon>
+      </v-tab>
+    </v-tabs>
+    <v-tabs-items v-model="activeTab">
+      <!-- Disk Usage Tab -->
+      <v-tab-item>
+        <v-container fluid>
+          <v-row v-if="error">
+            <v-col cols="12">
+              <v-alert type="error" dense outlined>
+                {{ error }}
+              </v-alert>
+            </v-col>
+          </v-row>
+          <v-row v-if="loading">
+            <v-col cols="12">
+              <v-progress-linear
+                color="primary"
+                indeterminate
+                height="6"
+                rounded
+                class="mb-2"
+              />
+            </v-col>
+          </v-row>
+          <v-row v-else>
+            <v-col cols="12">
+              <v-card outlined>
+                <v-card-title class="py-2 d-flex align-center">
+                  <span>{{ path }} {{ totalSize ? ` (${totalSize})` : '' }}</span>
+                  <v-spacer />
+                  <v-btn
+                    icon
+                    small
+                    :disabled="!canGoUp"
+                    @click="goUp"
+                  >
+                    <v-icon>mdi-arrow-up</v-icon>
+                  </v-btn>
+                  <v-spacer />
+                  <v-btn
+                    icon
+                    small
+                    color="red"
+                    :disabled="selectedPaths.length === 0 || deleting"
+                    :loading="deleting"
+                    @click="confirmDeleteSelected"
+                  >
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </v-card-title>
+                <v-divider />
+                <v-card-text class="pa-0">
+                  <v-simple-table dense>
+                    <thead>
+                      <tr>
+                        <th class="text-center select-col">
+                          <v-checkbox
+                            :input-value="allSelected"
+                            :indeterminate="someSelected && !allSelected"
+                            hide-details
+                            dense
+                            @click.stop="toggleSelectAll"
+                          />
+                        </th>
+                        <th class="text-left">
+                          Name
+                        </th>
+                        <th class="text-center usage-col">
+                          Usage
+                        </th>
+                        <th class="text-right">
+                          Size
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="!usage || usage.root.children.length === 0">
+                        <td colspan="4" class="text-center grey--text text--darken-1">
+                          No entries.
+                        </td>
+                      </tr>
+                      <tr
+                        v-for="child in sortedChildren"
+                        :key="child.path"
+                        :class="{ 'clickable-row': child.is_dir }"
+                        @click="navigate(child)"
+                      >
+                        <td class="text-center select-col" @click.stop>
+                          <v-checkbox
+                            :input-value="isSelected(child.path)"
+                            hide-details
+                            dense
+                            @click.stop="toggleSelection(child.path)"
+                          />
+                        </td>
+                        <td>
+                          <v-icon
+                            left
+                            small
+                            :color="child.is_dir ? 'green darken-2' : 'amber darken-2'"
+                          >
+                            {{ child.is_dir ? 'mdi-folder' : 'mdi-file' }}
+                          </v-icon>
+                          {{ child.name }}
+                        </td>
+                        <td class="usage-col">
+                          <v-progress-linear
+                            :value="getPercentage(child.size_bytes)"
+                            height="16"
+                            rounded
+                            color="primary"
+                          >
+                            <template #default>
+                              <span class="text-caption white--text">
+                                {{ getPercentage(child.size_bytes).toFixed(1) }}%
+                              </span>
+                            </template>
+                          </v-progress-linear>
+                        </td>
+                        <td class="text-right">
+                          {{ prettifySize(child.size_bytes / 1024) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </v-simple-table>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-tab-item>
+
+      <!-- Speed Test Tab -->
+      <v-tab-item>
+        <v-container class="d-flex flex-row align-center justify-center fluid">
+          <v-card min-width="390px" class="ma-5">
+            <v-card-title class="justify-center">
+              Disk Speed Test
+            </v-card-title>
+
+            <v-divider />
+
+            <v-col>
+              <v-col class="d-flex justify-center">
+                <v-progress-circular
+                  v-if="speedTesting"
+                  :rotate="90"
+                  :width="15"
+                  :indeterminate="speedTesting"
+                  ratio="1"
+                  color="primary"
+                  size="200"
                 >
-                  <td class="text-center select-col" @click.stop>
-                    <v-checkbox
-                      :input-value="isSelected(child.path)"
-                      hide-details
-                      dense
-                      @click.stop="toggleSelection(child.path)"
-                    />
-                  </td>
-                  <td>
-                    <v-icon
-                      left
-                      small
-                      :color="child.is_dir ? 'green darken-2' : 'amber darken-2'"
-                    >
-                      {{ child.is_dir ? 'mdi-folder' : 'mdi-file' }}
-                    </v-icon>
-                    {{ child.name }}
-                  </td>
-                  <td class="usage-col">
-                    <v-progress-linear
-                      :value="getPercentage(child.size_bytes)"
-                      height="16"
-                      rounded
-                      color="primary"
-                    >
-                      <template #default>
-                        <span class="text-caption white--text">
-                          {{ getPercentage(child.size_bytes).toFixed(1) }}%
-                        </span>
-                      </template>
-                    </v-progress-linear>
-                  </td>
-                  <td class="text-right">
-                    {{ prettifySize(child.size_bytes / 1024) }}
-                  </td>
-                </tr>
-              </tbody>
-            </v-simple-table>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+                  <span v-if="speedTesting">Testing...</span>
+                  <span v-else>Click to start</span>
+                </v-progress-circular>
+
+                <v-list v-else>
+                  <v-list-item>
+                    <v-list-item-icon>
+                      <v-icon v-tooltip="'Write speed'">
+                        mdi-alpha-w-box-outline
+                      </v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-subtitle>
+                      {{ speedResult?.write_speed_mbps ? speedResult.write_speed_mbps.toFixed(2) : '...' }} MiB/s
+                    </v-list-item-subtitle>
+                  </v-list-item>
+
+                  <v-list-item>
+                    <v-list-item-icon>
+                      <v-icon v-tooltip="'Read speed'">
+                        mdi-alpha-r-box-outline
+                      </v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-subtitle>
+                      {{ speedResult?.read_speed_mbps ? speedResult.read_speed_mbps.toFixed(2) : '...' }} MiB/s
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                </v-list>
+              </v-col>
+
+              <v-alert v-if="speedError" type="error" dense outlined class="ma-4">
+                {{ speedError }}
+              </v-alert>
+
+              <v-alert
+                v-if="speedResult && !speedResult.success"
+                type="warning"
+                dense
+                outlined
+                class="ma-4"
+              >
+                Test failed: {{ speedResult.error }}
+              </v-alert>
+
+              <div
+                class="transition-swing pa-6"
+                align="center"
+                v-text="state"
+              />
+
+              <v-card-actions class="justify-center">
+                <v-btn
+                  color="primary"
+                  :disabled="speedTesting"
+                  @click="runSpeedTest"
+                >
+                  <v-icon>
+                    mdi-play
+                  </v-icon>
+                </v-btn>
+              </v-card-actions>
+            </v-col>
+          </v-card>
+        </v-container>
+      </v-tab-item>
+    </v-tabs-items>
+  </v-card>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
 import disk_store from '@/store/disk'
-import { DiskNode } from '@/types/disk'
+import { DiskNode, DiskSpeedResult } from '@/types/disk'
 import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
+  name: 'DiskView',
   data() {
     return {
+      activeTab: 0,
       path: '/',
       depth: 2,
       includeFiles: true,
@@ -155,6 +266,15 @@ export default Vue.extend({
     },
     error(): string | null {
       return disk_store.error
+    },
+    speedResult(): DiskSpeedResult | null {
+      return disk_store.speedResult
+    },
+    speedTesting(): boolean {
+      return disk_store.speedTesting
+    },
+    speedError(): string | null {
+      return disk_store.speedError
     },
     sortedChildren(): DiskNode[] {
       if (!this.usage) {
@@ -179,6 +299,18 @@ export default Vue.extend({
     someSelected(): boolean {
       const children = this.sortedChildren
       return children.some((child) => this.selectedPaths.includes(child.path))
+    },
+    state(): string {
+      if (this.speedTesting) {
+        return 'Running test...'
+      }
+      if (this.speedResult?.success) {
+        return 'Test complete'
+      }
+      if (this.speedResult && !this.speedResult.success) {
+        return 'Test failed'
+      }
+      return 'Click to start'
     },
   },
   mounted(): void {
@@ -261,6 +393,9 @@ export default Vue.extend({
         return 0
       }
       return sizeBytes / parentSize * 100
+    },
+    async runSpeedTest(): Promise<void> {
+      await disk_store.runSpeedTest(1024 * 1024 * 1024)
     },
     prettifySize,
   },
