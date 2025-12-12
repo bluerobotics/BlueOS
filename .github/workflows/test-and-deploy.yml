@@ -287,6 +287,10 @@ jobs:
           sudo apt update
           sudo apt install -y python3-pip
 
+      # Clean up leftover directories from previous runs that may have restrictive permissions
+      - name: Pre-checkout cleanup
+        run: sudo rm -rf unfor19-awscli .cache || true
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
