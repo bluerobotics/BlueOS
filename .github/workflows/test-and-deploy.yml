@@ -259,17 +259,14 @@ jobs:
         include:
           - runner: blueos-ci
             platform: "linux/arm/v7"
-            aws_arch: "arm"
             os: "bookworm"
             image: "raspios_lite_armhf/images/raspios_lite_armhf-2024-07-04/2024-07-04-raspios-bookworm-armhf-lite.img.xz"
           - runner: pi4-builder2
             platform: "linux/arm/v7"
-            aws_arch: "arm"
             os: "bullseye"
             image: "raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip"
           - runner: pi5-builder
             platform: "linux/arm64/v8"
-            aws_arch: "arm64"
             os: "bookworm"
             image: "raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
 
@@ -284,16 +281,24 @@ jobs:
       - name: Install git
         run: sudo apt install -y git
 
+      - name: Install pip
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip
+
+      - name: Install awscli for bullseye
+        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'bullseye'
+        run: pip3 install awscli
+
+      - name: Install awscli for bookworm
+        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'bookworm'
+        run: pip3 install awscli --break-system-packages
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - id: install-aws-cli
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: unfor19/install-aws-cli-action@v1
-        with:
-          arch: ${{ matrix.aws_arch }}
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
