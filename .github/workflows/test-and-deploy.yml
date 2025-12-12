@@ -293,7 +293,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: unfor19/install-aws-cli-action@v1
         with:
-          arch: matrix.aws_arch
+          arch: ${{ matrix.aws_arch }}
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
