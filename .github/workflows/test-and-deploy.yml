@@ -347,7 +347,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y python3-pip
-          pip3 install awscli --break-system-packages
+          pip3 install awscli
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
