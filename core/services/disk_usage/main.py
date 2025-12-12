@@ -29,19 +29,28 @@ logger.info("Starting Disk Usage service")
 
 
 class DiskNode(BaseModel):
-    name: str
-    path: str
-    size_bytes: int
-    is_dir: bool
-    children: List["DiskNode"] = Field(default_factory=list)
+    name: str = Field(..., description="Name of the file or directory")
+    path: str = Field(..., description="Full path of the file or directory")
+    size_bytes: int = Field(..., description="Size of the file or directory in bytes")
+    is_dir: bool = Field(..., description="Whether this node is a directory")
+    children: List["DiskNode"] = Field(default_factory=list, description="Child nodes (for directories only)")
 
 
 class DiskUsageResponse(BaseModel):
-    root: DiskNode
-    generated_at: float
-    depth: int
-    include_files: bool
-    min_size_bytes: int
+    root: DiskNode = Field(..., description="Root node of the disk usage tree")
+    generated_at: float = Field(..., description="Timestamp when this data was generated (epoch time in seconds)")
+    depth: int = Field(..., description="Depth traversed in the directory tree")
+    include_files: bool = Field(..., description="Whether individual files are included in the tree")
+    min_size_bytes: int = Field(..., description="Minimum size (in bytes) for a node to be included")
+
+
+class DiskSpeedResult(BaseModel):
+    write_speed_mbps: Optional[float] = Field(None, description="Write speed in MiB/s")
+    read_speed_mbps: Optional[float] = Field(None, description="Read/verify speed in MiB/s")
+    bytes_tested: int = Field(..., description="Number of bytes tested")
+    seed: str = Field(..., description="Seed used for the test")
+    success: bool = Field(..., description="Whether the test completed successfully")
+    error: Optional[str] = Field(None, description="Error message if test failed")
 
 
 DiskNode.update_forward_refs()
