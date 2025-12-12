@@ -3,7 +3,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { DiskUsageQuery, DiskUsageResponse } from '@/types/disk'
+import { DiskSpeedResult, DiskUsageQuery, DiskUsageResponse } from '@/types/disk'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 @Module({ dynamic: true, store, name: 'disk' })
@@ -17,6 +17,12 @@ class DiskStore extends VuexModule {
   deleting = false
 
   error: string | null = null
+
+  speedResult: DiskSpeedResult | null = null
+
+  speedTesting = false
+
+  speedError: string | null = null
 
   @Mutation
   setUsage(value: DiskUsageResponse | null): void {
@@ -36,6 +42,21 @@ class DiskStore extends VuexModule {
   @Mutation
   setError(message: string | null): void {
     this.error = message
+  }
+
+  @Mutation
+  setSpeedResult(value: DiskSpeedResult | null): void {
+    this.speedResult = value
+  }
+
+  @Mutation
+  setSpeedTesting(value: boolean): void {
+    this.speedTesting = value
+  }
+
+  @Mutation
+  setSpeedError(message: string | null): void {
+    this.speedError = message
   }
 
   @Action
@@ -108,6 +129,34 @@ class DiskStore extends VuexModule {
 
     this.setDeleting(false)
     return { succeeded, failed }
+  }
+
+  @Action
+  async runSpeedTest(sizeBytes: number): Promise<void> {
+    this.setSpeedTesting(true)
+    this.setSpeedError(null)
+    this.setSpeedResult(null)
+
+    await back_axios({
+      method: 'get',
+      url: `${this.API_URL}/speed`,
+      params: { size_bytes: sizeBytes },
+      timeout: 600000,
+    })
+      .then((response) => {
+        this.setSpeedResult(response.data as DiskSpeedResult)
+      })
+      .catch((error) => {
+        if (isBackendOffline(error)) {
+          return
+        }
+        const axiosError = error as { response?: { data?: { detail?: string } }; message?: string }
+        const message = axiosError.response?.data?.detail || axiosError.message || 'Unknown error'
+        this.setSpeedError(`Speed test failed: ${message}`)
+      })
+      .finally(() => {
+        this.setSpeedTesting(false)
+      })
   }
 }
 
