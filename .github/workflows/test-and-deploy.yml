@@ -287,13 +287,10 @@ jobs:
           sudo apt update
           sudo apt install -y python3-pip
 
-      - name: Install awscli for bullseye
-        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'bullseye'
-        run: pip3 install awscli
-
-      - name: Install awscli for bookworm
-        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'bookworm'
-        run: pip3 install awscli --break-system-packages
+      # We have self-hosted runners for both arm and arm64, so we need to install awscli for both architectures
+      # Some of them, does not require --break-system-packages...
+      - name: Install awscli
+        run: pip3 install awscli --break-system-packages || pip3 install awscli
 
       - name: Checkout
         uses: actions/checkout@v4
