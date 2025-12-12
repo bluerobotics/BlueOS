@@ -289,7 +289,10 @@ jobs:
 
       # Clean up leftover directories from previous runs that may have restrictive permissions
       - name: Pre-checkout cleanup
-        run: sudo rm -rf unfor19-awscli .cache || true
+        run: |
+          sudo rm -rf unfor19-awscli .cache deploy || true
+          # Clean up any leftover loop devices from previous failed runs
+          sudo losetup -D || true
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -402,4 +405,6 @@ jobs:
       # This is required because docker has root permissions, which means the runner is unable to clear this cache normally
       - name: Cleanup
         if: ${{ always() }}
-        run: sudo rm -rf .cache
+        run: |
+          sudo rm -rf .cache deploy || true
+          sudo losetup -D || true
