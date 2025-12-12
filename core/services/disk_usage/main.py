@@ -2,11 +2,14 @@
 
 import asyncio
 import logging
+import os
+import re
 import shutil
+import tempfile
 import time
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
@@ -268,6 +271,141 @@ async def delete_path(target_path: str) -> None:
         shutil.rmtree(resolved_path)
     else:
         resolved_path.unlink()
+
+
+def parse_disktest_speed(output: str) -> tuple[Optional[float], Optional[float], Optional[str]]:
+    """Parse disktest output to extract write speed, read speed, and seed."""
+    write_speed: Optional[float] = None
+    read_speed: Optional[float] = None
+    seed: Optional[str] = None
+
+    # Match final write speed: "Done. Wrote 1.00 GiB (1.07 GB, 1073741824 bytes) @ 19.7 MiB/s."
+    write_match = re.search(r"Done\. Wrote .* @ ([\d.]+) MiB/s", output)
+    if write_match:
+        write_speed = float(write_match.group(1))
+
+    # Match final verify speed: "Done. Verified 1.00 GiB (1.07 GB, 1073741824 bytes) @ 86.7 MiB/s."
+    read_match = re.search(r"Done\. Verified .* @ ([\d.]+) MiB/s", output)
+    if read_match:
+        read_speed = float(read_match.group(1))
+
+    # Match seed: "Generated --seed sUCObPGeFIRYeW2VnxzpmRLse3Hf3pODoWSpvozJ"
+    seed_match = re.search(r"Generated --seed (\S+)", output)
+    if seed_match:
+        seed = seed_match.group(1)
+
+    # Also try to match seed from "The generated --seed is:" format
+    if not seed:
+        seed_match = re.search(r"--seed is:\s*(\S+)", output)
+        if seed_match:
+            seed = seed_match.group(1)
+
+    return write_speed, read_speed, seed
+
+
+# pylint: disable=too-many-locals
+@disk_router.get(
+    "/speed",
+    response_model=DiskSpeedResult,
+    summary="Run disk speed test using disktest binary.",
+)
+@to_http_exception
+async def disk_speed(
+    size_bytes: int = Query(
+        1024 * 1024 * 1024,
+        ge=1024 * 1024,
+        description="Number of bytes to test (default 1 GiB).",
+    ),
+) -> DiskSpeedResult:
+    disktest_binary = "disktest"
+    temp_file_path: Optional[Path] = None
+
+    # Check if disktest binary is available
+    if not shutil.which(disktest_binary):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"'{disktest_binary}' binary not found in PATH.",
+        )
+
+    # Check available disk space in temp directory
+    temp_dir = Path(tempfile.gettempdir())
+    disk_stats = shutil.disk_usage(temp_dir)
+    required_space = size_bytes + (500 * 1024 * 1024)  # Add 500 MiB buffer
+
+    if disk_stats.free < required_space:
+        raise HTTPException(
+            status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
+            detail=f"Insufficient disk space. Required: {required_space} bytes, Available: {disk_stats.free} bytes.",
+        )
+
+    try:
+        # Create temporary file
+        fd, temp_file = tempfile.mkstemp(prefix="disktest_", suffix=".tmp")
+        temp_file_path = Path(temp_file)
+        # Close the file descriptor as disktest will write to it
+        os.close(fd)
+
+        # Run disktest
+        args = [
+            disktest_binary,
+            "--write",
+            "--verify",
+            f"--bytes={size_bytes}",
+            str(temp_file_path),
+        ]
+
+        logger.info(f"Running disk speed test: {' '.join(args)}")
+
+        process = await asyncio.create_subprocess_exec(
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        stdout_bytes, _ = await process.communicate()
+        output = stdout_bytes.decode("utf-8", "ignore")
+
+        logger.debug(f"disktest output: {output}")
+
+        if process.returncode != 0:
+            logger.warning(f"disktest returned {process.returncode}: {output}")
+            return DiskSpeedResult(
+                write_speed_mbps=None,
+                read_speed_mbps=None,
+                bytes_tested=size_bytes,
+                seed="",
+                success=False,
+                error=f"disktest failed with return code {process.returncode}: {output}",
+            )
+
+        write_speed, read_speed, seed = parse_disktest_speed(output)
+
+        return DiskSpeedResult(
+            write_speed_mbps=write_speed,
+            read_speed_mbps=read_speed,
+            bytes_tested=size_bytes,
+            seed=seed or "",
+            success=True,
+            error=None,
+        )
+
+    except Exception as e:
+        logger.exception("Disk speed test failed")
+        return DiskSpeedResult(
+            write_speed_mbps=None,
+            read_speed_mbps=None,
+            bytes_tested=size_bytes,
+            seed="",
+            success=False,
+            error=str(e),
+        )
+    finally:
+        # Clean up temporary file
+        if temp_file_path and temp_file_path.exists():
+            try:
+                temp_file_path.unlink()
+                logger.debug(f"Cleaned up temporary file: {temp_file_path}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up temporary file {temp_file_path}: {e}")
 
 
 fast_api_app = FastAPI(
