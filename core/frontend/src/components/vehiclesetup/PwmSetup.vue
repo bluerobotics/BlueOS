@@ -136,7 +136,7 @@
                   <td v-tooltip="item.name">
                     {{ convert_servo_name(item.name) }}
                   </td>
-                  <td>{{ stringToUserFriendlyText(printParam(item)) }}</td>
+                  <td>{{ parameterToUserFriendlyText(item) }}</td>
                   <td>{{ servo_output[index] }}</td>
                 </tr>
               </tbody>
@@ -156,6 +156,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import { fetchCurrentBoard } from '@/components/autopilot/AutopilotManagerUpdater'
 import ServoFunctionEditorDialog from '@/components/parameter-editor/ServoFunctionEditorDialog.vue'
 import MotorDetection from '@/components/vehiclesetup/MotorDetection.vue'
 import VehicleViewer from '@/components/vehiclesetup/viewers/VehicleViewer.vue'
@@ -376,6 +377,30 @@ export default Vue.extend({
       return output
         .map((_, i) => data[`servo${i + 1}_raw`])
     },
+    board_name(): string | undefined {
+      return autopilot.current_board?.name
+    },
+    gpio_to_parameter(): Record<number, Parameter> {
+      return Object.fromEntries(
+        autopilot_data.parameterRegex('^.*_PIN$')
+          .map((param) => [param.value, param]),
+      )
+    },
+    servo_to_gpio(): Record<number, number> {
+      const isNavigator = this.board_name?.includes('Navigator')
+      return Object.fromEntries(
+        Array.from({ length: 16 }, (_, i) => {
+          const servo = i + 1
+          if (isNavigator) {
+            return [servo, servo]
+          }
+          if (servo <= 8) {
+            return [servo, servo + 100]
+          }
+          return [servo, servo - 9 + 50]
+        }),
+      )
+    },
   },
   watch: {
     is_armed() {
@@ -392,6 +417,8 @@ export default Vue.extend({
   mounted() {
     this.motor_zeroer_interval = setInterval(this.zero_motors, 300)
     this.motor_writer_interval = setInterval(this.write_motors, 100)
+    fetchCurrentBoard()
+
     mavlink.setMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 10 })
     this.desired_armed_state = this.is_armed
     this.installListeners()
@@ -455,13 +482,25 @@ export default Vue.extend({
       this.selected_param = param
       this.edit_param_dialog = true
     },
+    parameterToUserFriendlyText(param: Parameter): string {
+      if (param.value === -1) { // GPIO
+        const servo_number = parseInt(/\d+/g.exec(param.name)?.[0] ?? '0', 10)
+        const gpio = this.servo_to_gpio[servo_number]
+        const param_using_this_gpio = this.gpio_to_parameter[gpio]
+        if (param_using_this_gpio) {
+          const pretty_name = param_using_this_gpio.name.split('_')[0].toLowerCase().toTitle()
+          return `GPIO [${pretty_name}]`
+        }
+        return `GPIO ${gpio} (Unknown)`
+      }
+      return this.stringToUserFriendlyText(printParam(param))
+    },
     stringToUserFriendlyText(text: string) {
       return param_value_map?.[this.vehicle_type ?? '']?.[text] ?? text
     },
     getParam(param: string): Parameter | undefined {
       return autopilot_data.parameter(param)
     },
-    printParam,
     zero_motors() {
       if (!this.is_manual) {
         return

@@ -1,27 +1,38 @@
 <template>
   <div class="align-center">
-    GPIOs can be used for Relays, Leak detection, and other functions not yet supported by this UI.
-    This servo ({{ servo_number }}) gpio is {{ this_servo_gpio }}.
-
-    In use by {{ function_type_using_this_gpio?.name }}
-
+    <p>
+      Some flight controller servo channels are capable of digital (GPIO) functionalities.
+      Available options include relays, leak detection (input-capable pins only),
+      and other functions not yet supported by this UI.
+    </p>
+    <p>
+      This servo's GPIO (<strong>{{ this_servo_gpio }}</strong>) is currently in use by
+      <strong>{{ function_type_using_this_gpio?.name ?? 'nothing' }}</strong>.
+    </p>
     <v-row align="end">
-        <v-col cols="6">
-            <span style="font-size: 1.0rem;">Change function for this servo's GPIO</span>
-        </v-col>
-        <v-col cols="6">
-            <v-select
-                v-model="selected_function_type"
-                :items="options"
-                item-text="text"
-                item-value="value"
-                return-object
-                hide-details
-                @change="onChange"
-            />
-        </v-col>
+      <v-col cols="6">
+        <span style="font-size: 1.0rem;">GPIO Function:</span>
+      </v-col>
+      <v-col cols="6">
+        <v-select
+          v-model="selected_function_type"
+          :items="options"
+          item-text="text"
+          item-value="value"
+          return-object
+          hide-details
+          @change="onChange"
+        />
+      </v-col>
     </v-row>
-
+    <relay-setup
+      v-if="function_type_using_this_gpio?.name?.includes('RELAY')"
+      :relay-parameter="function_type_using_this_gpio"
+    />
+    <leak-setup
+      v-if="function_type_using_this_gpio?.name?.includes('LEAK')"
+      :leak-parameter="function_type_using_this_gpio"
+    />
   </div>
 </template>
 
