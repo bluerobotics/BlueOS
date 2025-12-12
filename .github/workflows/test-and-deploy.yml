@@ -301,6 +301,12 @@ jobs:
       - name: Install awscli
         run: pip3 install awscli --break-system-packages || pip3 install awscli
 
+      # Clean up Docker to free disk space on self-hosted runners
+      - name: Docker cleanup
+        run: |
+          docker system prune -af --volumes || true
+          docker image prune -af || true
+
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
         run: |
