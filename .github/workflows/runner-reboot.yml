@@ -1,0 +1,23 @@
+name: Reboot Self-Hosted Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner to reboot'
+        required: true
+        type: choice
+        options:
+          - blueos-ci
+          - pi4-builder2
+          - pi5-builder
+
+jobs:
+  reboot:
+    if: github.repository_owner == 'bluerobotics'
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Reboot runner
+        run: |
+          echo "Rebooting ${{ inputs.runner }} in 5 seconds..."
+          sudo shutdown -r +0 "GitHub Actions triggered reboot"
