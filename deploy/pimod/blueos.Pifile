@@ -1,6 +1,6 @@
 FROM https://downloads.raspberrypi.org/${BASE_IMAGE}
 
-PUMP 3500M
+PUMP 3000M
 
 # expand_fs
 INSTALL deploy/expand_fs.sh /usr/bin/expand_fs.sh
