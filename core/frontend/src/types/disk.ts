@@ -20,3 +20,12 @@ export interface DiskUsageQuery {
   include_files?: boolean
   min_size_bytes?: number
 }
+
+export interface DiskSpeedResult {
+  write_speed_mbps: number | null
+  read_speed_mbps: number | null
+  bytes_tested: number
+  seed: string
+  success: boolean
+  error: string | null
+}
