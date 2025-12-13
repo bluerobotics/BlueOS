@@ -300,9 +300,9 @@ jobs:
           submodules: recursive
 
       # We have self-hosted runners for both arm and arm64, so we need to install awscli for both architectures
-      # Some of them, does not require --break-system-packages...
+      # Install system-wide to ensure aws is accessible in PATH at /usr/local/bin
       - name: Install awscli
-        run: pip3 install awscli --break-system-packages || pip3 install awscli
+        run: sudo pip3 install awscli --break-system-packages || sudo pip3 install awscli
 
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
