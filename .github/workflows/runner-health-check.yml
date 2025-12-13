@@ -1,0 +1,299 @@
+name: Self-Hosted Runner Health Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    if: github.repository_owner == 'bluerobotics'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: blueos-ci
+            name: "BlueOS CI (ARM32)"
+          - runner: pi4-builder2
+            name: "Pi4 Builder 2 (ARM32)"
+          - runner: pi5-builder
+            name: "Pi5 Builder (ARM64)"
+
+    runs-on: ${{ matrix.runner }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - name: System Information
+        run: |
+          echo "## System Information" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Hostname | $(hostname) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Kernel | $(uname -r) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Architecture | $(uname -m) |" >> $GITHUB_STEP_SUMMARY
+          echo "| OS | $(cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Uptime | $(uptime -p) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Date | $(date) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Disk Usage
+        run: |
+          echo "## Disk Usage" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          df -h | grep -E "^/dev|Filesystem" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if disk usage is critical (>85%)
+          DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+          if [ "$DISK_USAGE" -gt 85 ]; then
+            echo "::warning::Disk usage is at ${DISK_USAGE}% - consider cleaning up"
+            echo "⚠️ **WARNING: Disk usage is at ${DISK_USAGE}%**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Disk usage is at ${DISK_USAGE}%" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Memory Usage
+        run: |
+          echo "## Memory Usage" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          free -h >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check memory usage
+          MEM_TOTAL=$(free | grep Mem | awk '{print $2}')
+          MEM_USED=$(free | grep Mem | awk '{print $3}')
+          MEM_PERCENT=$((MEM_USED * 100 / MEM_TOTAL))
+          if [ "$MEM_PERCENT" -gt 85 ]; then
+            echo "::warning::Memory usage is at ${MEM_PERCENT}%"
+            echo "⚠️ **WARNING: Memory usage is at ${MEM_PERCENT}%**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Memory usage is at ${MEM_PERCENT}%" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: CPU Information
+        run: |
+          echo "## CPU Information" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CPU Model | $(cat /proc/cpuinfo | grep 'model name\|Model' | head -1 | cut -d':' -f2 | xargs) |" >> $GITHUB_STEP_SUMMARY
+          echo "| CPU Cores | $(nproc) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Load Average | $(cat /proc/loadavg | cut -d' ' -f1-3) |" >> $GITHUB_STEP_SUMMARY
+
+          # Check CPU temperature if available
+          if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
+            TEMP=$(cat /sys/class/thermal/thermal_zone0/temp)
+            TEMP_C=$((TEMP / 1000))
+            echo "| CPU Temperature | ${TEMP_C}°C |" >> $GITHUB_STEP_SUMMARY
+            if [ "$TEMP_C" -gt 70 ]; then
+              echo "::warning::CPU temperature is ${TEMP_C}°C - consider improving cooling"
+            fi
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Docker Status
+        run: |
+          echo "## Docker Status" >> $GITHUB_STEP_SUMMARY
+
+          # Check if Docker is running
+          if systemctl is-active --quiet docker; then
+            echo "✅ Docker service is running" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Docker service is NOT running**" >> $GITHUB_STEP_SUMMARY
+            echo "::error::Docker service is not running"
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Docker Version" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          docker version --format '{{.Server.Version}}' 2>/dev/null || echo "Unable to get Docker version"
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Docker Disk Usage" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          docker system df 2>/dev/null || echo "Unable to get Docker disk usage"
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Running Containers" >> $GITHUB_STEP_SUMMARY
+          CONTAINERS=$(docker ps -q 2>/dev/null | wc -l)
+          echo "Running containers: $CONTAINERS" >> $GITHUB_STEP_SUMMARY
+          if [ "$CONTAINERS" -gt 0 ]; then
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Size}}" 2>/dev/null
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Docker Images" >> $GITHUB_STEP_SUMMARY
+          IMAGES=$(docker images -q 2>/dev/null | wc -l)
+          echo "Total images: $IMAGES" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: QEMU/binfmt Status
+        run: |
+          echo "## QEMU/binfmt Status" >> $GITHUB_STEP_SUMMARY
+
+          # Check binfmt_misc mount
+          if mount | grep -q binfmt_misc; then
+            echo "✅ binfmt_misc is mounted" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **binfmt_misc is NOT mounted**" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::binfmt_misc is not mounted - cross-architecture builds may fail"
+          fi
+
+          # List registered binfmt handlers
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Registered Handlers" >> $GITHUB_STEP_SUMMARY
+          if [ -d /proc/sys/fs/binfmt_misc ]; then
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            ls -la /proc/sys/fs/binfmt_misc/ 2>/dev/null | grep -v "^total" | head -20
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+            # Check for qemu-arm specifically
+            if [ -f /proc/sys/fs/binfmt_misc/qemu-arm ]; then
+              echo "✅ qemu-arm handler is registered" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ qemu-arm handler is NOT registered" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "binfmt_misc directory not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Loop Devices Status
+        run: |
+          echo "## Loop Devices" >> $GITHUB_STEP_SUMMARY
+          LOOP_COUNT=$(losetup -l 2>/dev/null | grep -v "^NAME" | wc -l)
+          echo "Active loop devices: $LOOP_COUNT" >> $GITHUB_STEP_SUMMARY
+          if [ "$LOOP_COUNT" -gt 0 ]; then
+            echo "::warning::Found $LOOP_COUNT active loop devices - may indicate incomplete cleanup"
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            losetup -l 2>/dev/null
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No stale loop devices" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Runner Work Directory
+        run: |
+          echo "## Runner Work Directory" >> $GITHUB_STEP_SUMMARY
+
+          # Check for leftover directories that could cause issues
+          WORK_DIR="${GITHUB_WORKSPACE}/.."
+          echo "Work directory: $WORK_DIR" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Directory Contents" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -la "$WORK_DIR" 2>/dev/null | head -20
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for problematic directories
+          for dir in unfor19-awscli .cache deploy; do
+            if [ -d "$WORK_DIR/BlueOS/$dir" ]; then
+              echo "⚠️ Found leftover directory: $dir" >> $GITHUB_STEP_SUMMARY
+              echo "::warning::Found leftover directory: $dir"
+            fi
+          done
+
+      - name: Network Connectivity
+        run: |
+          echo "## Network Connectivity" >> $GITHUB_STEP_SUMMARY
+
+          # Test connectivity to key services
+          declare -A ENDPOINTS=(
+            ["GitHub"]="github.com"
+            ["Docker Hub"]="hub.docker.com"
+            ["AWS S3"]="s3.us-east-2.amazonaws.com"
+            ["Raspberry Pi Downloads"]="downloads.raspberrypi.org"
+          )
+
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          for name in "GitHub" "Docker Hub" "AWS S3" "Raspberry Pi Downloads"; do
+            host="${ENDPOINTS[$name]}"
+            if ping -c 1 -W 5 "$host" > /dev/null 2>&1; then
+              echo "| $name | ✅ Reachable |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $name | ❌ Unreachable |" >> $GITHUB_STEP_SUMMARY
+              echo "::warning::Cannot reach $name ($host)"
+            fi
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Python Environment
+        run: |
+          echo "## Python Environment" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Python Version | $(python3 --version 2>/dev/null || echo 'Not found') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pip Version | $(pip3 --version 2>/dev/null | cut -d' ' -f2 || echo 'Not found') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pip Location | $(which pip3 2>/dev/null || echo 'Not found') |" >> $GITHUB_STEP_SUMMARY
+
+          # Check if awscli is installed
+          if command -v aws &> /dev/null; then
+            echo "| AWS CLI | $(aws --version 2>/dev/null | cut -d' ' -f1) |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| AWS CLI | Not installed |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Recent Errors in System Log
+        run: |
+          echo "## Recent System Errors (last 50 lines)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          sudo journalctl -p err -n 50 --no-pager 2>/dev/null | tail -30 || echo "Unable to read system journal"
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Test Docker Pull
+        run: |
+          echo "## Docker Pull Test" >> $GITHUB_STEP_SUMMARY
+
+          # Try to pull a small test image
+          if docker pull hello-world > /dev/null 2>&1; then
+            echo "✅ Docker pull works correctly" >> $GITHUB_STEP_SUMMARY
+            docker rmi hello-world > /dev/null 2>&1 || true
+          else
+            echo "❌ **Docker pull failed**" >> $GITHUB_STEP_SUMMARY
+            echo "::error::Docker pull test failed"
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Test QEMU Emulation
+        run: |
+          echo "## QEMU Emulation Test" >> $GITHUB_STEP_SUMMARY
+
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ]; then
+            # On ARM64, test ARM32 emulation
+            TEST_PLATFORM="linux/arm/v7"
+            TEST_DESC="ARM32 on ARM64"
+          else
+            # On ARM32, we don't need emulation for ARM32
+            TEST_PLATFORM="linux/arm/v7"
+            TEST_DESC="ARM32 native"
+          fi
+
+          echo "Testing: $TEST_DESC" >> $GITHUB_STEP_SUMMARY
+
+          if docker run --rm --platform $TEST_PLATFORM alpine:latest echo "QEMU test passed" > /dev/null 2>&1; then
+            echo "✅ Platform emulation works ($TEST_PLATFORM)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Platform emulation may have issues ($TEST_PLATFORM)" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::QEMU emulation test failed for $TEST_PLATFORM"
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Health Summary
+        run: |
+          echo "## Health Check Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Runner: **${{ matrix.name }}** (${{ matrix.runner }})" >> $GITHUB_STEP_SUMMARY
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
