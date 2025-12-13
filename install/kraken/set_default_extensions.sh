@@ -41,7 +41,7 @@ BLUEROBOTICS_COCKPIT_EXT="bluerobotics/cockpit:$cockpit_tag_name"
 BLUEROBOTICS_MAJOR_TOM_EXT="$major_tom_docker:$major_tom_tag"
 
 docker pull $BLUEROBOTICS_COCKPIT_EXT
-docker pull $BLUEROBOTICS_MAJOR_TOM_EXT
+echo "Skipping Major Tom image pull (${BLUEROBOTICS_MAJOR_TOM_EXT})"
 
 # Settings creation
 
@@ -70,7 +70,6 @@ cat > "${SETTINGS_BASE_DIR}/settings-2.json" <<EOF
       "tag": "$cockpit_tag_name",
       "user_permissions": ""
     },
-    $major_tom_install_data
   ],
   "manifests": []
 }
