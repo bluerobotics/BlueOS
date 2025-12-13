@@ -1,0 +1,19 @@
+[project]
+name = "blueos-core-venv2"
+version = "1.4.0"
+description = "Runtime workspace for BlueOS services that require newer dependencies."
+requires-python = ">=3.11"
+dependencies = [
+  "commonwealth",
+  "versionchooser",
+]
+
+[tool.uv.sources]
+commonwealth = { workspace = true }
+versionchooser = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+  "../libs/commonwealth",
+  "../services/versionchooser",
+]

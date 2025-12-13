@@ -17,11 +17,13 @@ members = [
     "cable-guy",
     "commander",
     "commonwealth",
+    "disk-usage",
     "helper",
     "kraken",
     "nmea-injector",
     "pardal",
     "ping",
+    "recorder-extractor",
     "versionchooser",
     "wifi",
 ]
@@ -244,12 +246,12 @@ dependencies = [
     { name = "cable-guy" },
     { name = "commander" },
     { name = "commonwealth" },
+    { name = "disk-usage" },
     { name = "helper" },
     { name = "kraken" },
     { name = "nmea-injector" },
     { name = "pardal" },
     { name = "ping" },
-    { name = "versionchooser" },
     { name = "wifi" },
 ]
 
@@ -287,12 +289,12 @@ requires-dist = [
     { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commander", virtual = "services/commander" },
     { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "disk-usage", virtual = "services/disk_usage" },
     { name = "helper", virtual = "services/helper" },
     { name = "kraken", virtual = "services/kraken" },
     { name = "nmea-injector", virtual = "services/nmea_injector" },
     { name = "pardal", virtual = "services/pardal" },
     { name = "ping", virtual = "services/ping" },
-    { name = "versionchooser", virtual = "services/versionchooser" },
     { name = "wifi", virtual = "services/wifi" },
 ]
 
@@ -543,6 +545,29 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/12/80/630b4b88364e9a8c8c5797f4602d0f76ef820909ee32f0bacb9f90654042/dill-0.4.0.tar.gz", hash = "sha256:0633f1d2df477324f53a895b02c901fb961bdbf65a17122586ea7019292cbcf0", size = 186976, upload-time = "2025-04-16T00:41:48.867Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/50/3d/9373ad9c56321fdab5b41197068e1d8c25883b3fea29dd361f9b55116869/dill-0.4.0-py3-none-any.whl", hash = "sha256:44f54bf6412c2c8464c14e8243eb163690a9800dbe2c367330883b19c7561049", size = 119668, upload-time = "2025-04-16T00:41:47.671Z" },
+]
+
+[[package]]
+name = "disk-usage"
+version = "0.1.0"
+source = { virtual = "services/disk_usage" }
+dependencies = [
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "fastapi", specifier = "==0.105.0" },
+    { name = "fastapi-versioning", specifier = "==0.9.1" },
+    { name = "loguru", specifier = "==0.5.3" },
+    { name = "pydantic", specifier = "==1.10.12" },
+    { name = "uvicorn", specifier = "==0.18.0" },
 ]
 
 [[package]]
@@ -1296,6 +1321,31 @@ wheels = [
 ]
 
 [[package]]
+name = "recorder-extractor"
+version = "0.1.0"
+source = { virtual = "services/recorder_extractor" }
+dependencies = [
+    { name = "aiocache" },
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiocache", specifier = "==0.12.2" },
+    { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "fastapi", specifier = "==0.105.0" },
+    { name = "fastapi-versioning", specifier = "==0.9.1" },
+    { name = "loguru", specifier = "==0.5.3" },
+    { name = "pydantic", specifier = "==1.10.12" },
+    { name = "uvicorn", specifier = "==0.18.0" },
+]
+
+[[package]]
 name = "requests"
 version = "2.26.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1568,6 +1618,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "fastapi-versioning" },
     { name = "loguru" },
+    { name = "python-multipart" },
     { name = "uvicorn" },
     { name = "yarl" },
 ]
@@ -1582,6 +1633,7 @@ requires-dist = [
     { name = "fastapi", specifier = "==0.105.0" },
     { name = "fastapi-versioning", specifier = "==0.9.1" },
     { name = "loguru", specifier = "==0.5.3" },
+    { name = "python-multipart", specifier = "==0.0.5" },
     { name = "uvicorn", specifier = "==0.18.0" },
     { name = "yarl", specifier = "==1.12.1" },
 ]

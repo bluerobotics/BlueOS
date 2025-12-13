@@ -18,7 +18,6 @@ dependencies = [
   "nmea_injector",
   "pardal",
   "ping",
-  "versionchooser",
   "wifi",
 ]
 
