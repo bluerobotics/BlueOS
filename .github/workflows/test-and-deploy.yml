@@ -286,9 +286,10 @@ jobs:
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
         run: |
+          PIMOD_VERSION=v0.7.0
           VERSION=$GITHUB_REPOSITORY
           VERSION=${VERSION:-master}
-          wget https://raw.githubusercontent.com//Nature40/pimod/master/pimod.sh && chmod +x pimod.sh
+          wget https://raw.githubusercontent.com/Nature40/pimod/${PIMOD_VERSION}/pimod.sh && chmod +x pimod.sh
           docker run --rm --privileged \
             -v $PWD:/files \
             -e PATH=/pimod:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
@@ -296,7 +297,7 @@ jobs:
             -e VERSION=$GITHUB_REF_NAME \
             -e BASE_IMAGE=${{ matrix.image }} \
             --workdir=/files \
-            --platform ${{ matrix.platform }} nature40/pimod:latest pimod.sh deploy/pimod/blueos.Pifile
+            --platform ${{ matrix.platform }} nature40/pimod:${PIMOD_VERSION} pimod.sh deploy/pimod/blueos.Pifile
 
       - name: Add /boot additions
         run: |
