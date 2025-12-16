@@ -76,7 +76,7 @@
         <internet-tray-menu />
         <wifi-tray-menu />
         <ethernet-tray-menu />
-        <cloud-tray-menu v-if="settings.is_dev_mode" />
+        <cloud-tray-menu v-if="is_cloud_tray_menu_visible" />
         <notification-tray-button />
       </v-app-bar>
     </v-card>
@@ -386,6 +386,7 @@
 </template>
 
 <script lang="ts">
+import stable from 'semver-stable'
 import Vue, { defineAsyncComponent } from 'vue'
 
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
@@ -394,7 +395,7 @@ import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
-import { convertGitDescribeToUrl } from '@/utils/helper_functions'
+import { convertGitDescribeToTag, convertGitDescribeToUrl } from '@/utils/helper_functions'
 import updateTime from '@/utils/update_time'
 import * as VCU from '@/utils/version_chooser'
 
@@ -703,6 +704,11 @@ export default Vue.extend({
     },
     blueos_logo(): string {
       return settings.is_dark_theme ? blueos_white : blueos_blue
+    },
+    is_cloud_tray_menu_visible(): boolean {
+      // Keep tray menu visible in everything except stable versions
+      const tag = convertGitDescribeToTag(this.git_info)
+      return !tag || !stable.is(tag) || settings.is_dev_mode
     },
   },
 
