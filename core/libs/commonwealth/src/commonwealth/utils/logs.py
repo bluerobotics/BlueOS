@@ -4,8 +4,8 @@ from logging import LogRecord
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
-from commonwealth.utils.zenoh_helper import ZenohSession
 import zenoh
+from commonwealth.utils.zenoh_helper import ZenohSession
 from loguru import logger
 
 if TYPE_CHECKING:
