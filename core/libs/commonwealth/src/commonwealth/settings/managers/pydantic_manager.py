@@ -1,9 +1,10 @@
 import pathlib
 import re
-from typing import Any, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 import appdirs
 from commonwealth.settings.bases.pydantic_base import PydanticSettings
+from commonwealth.utils.events import events
 from loguru import logger
 
 
@@ -29,6 +30,7 @@ class PydanticManager:
         self.config_folder.mkdir(parents=True, exist_ok=True)
         self.settings_type = settings_type
         self._settings: Optional[PydanticSettings] = None
+        self._initial_event_emitted = False
         logger.debug(
             f"Starting {project_name} settings with {settings_type.__name__}, configuration path: {config_folder}"
         )
@@ -97,6 +99,7 @@ class PydanticManager:
     def save(self) -> None:
         """Save settings"""
         self.settings.save(self.settings_file_path())
+        self._publish_settings_snapshot("save")
 
     def load(self) -> None:
         """Load settings"""
@@ -125,6 +128,7 @@ class PydanticManager:
             try:
                 self._settings = PydanticManager.load_from_file(self.settings_type, valid_file)
                 logger.debug(f"Using {valid_file} as settings source")
+                self._emit_initial_settings_event()
                 return
             except Exception as exception:
                 logger.debug("Invalid settings, going to try another file:", exception)
@@ -132,6 +136,7 @@ class PydanticManager:
         logger.debug("No valid settings found, using default settings")
         self._settings = self.settings_type()
         self.save()
+        self._emit_initial_settings_event()
 
     def _clear_temp_files(self) -> None:
         """Clear temporary files"""
@@ -140,3 +145,30 @@ class PydanticManager:
                 temp_file.unlink()
             except Exception as exception:
                 logger.debug(f"Failed to clear temporary file {temp_file}: {exception}")
+
+    def _serialize_settings(self) -> Optional[Dict[str, Any]]:
+        if not self._settings:
+            return None
+        try:
+            if hasattr(self._settings, "model_dump"):
+                return self._settings.model_dump()
+            return self._settings.dict()
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.debug(f"Failed to serialize settings for event publishing: {exc}")
+            return None
+
+    def _publish_settings_snapshot(self, reason: str) -> None:
+        serialized = self._serialize_settings()
+        if not serialized:
+            return
+        metadata = {"project": self.project_name, "reason": reason}
+        try:
+            events.publish_settings(serialized, metadata)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.debug(f"Unable to publish settings event: {exc}")
+
+    def _emit_initial_settings_event(self) -> None:
+        if self._initial_event_emitted:
+            return
+        self._initial_event_emitted = True
+        self._publish_settings_snapshot("initial-load")

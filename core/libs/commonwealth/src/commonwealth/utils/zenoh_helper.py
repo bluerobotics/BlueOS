@@ -2,7 +2,7 @@ import asyncio
 import json
 import re
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import fastapi
 import zenoh
@@ -18,6 +18,7 @@ class ZenohSession(metaclass=Singleton):
     session: zenoh.Session | None = None
     config: zenoh.Config
     _executor: ThreadPoolExecutor | None = None
+    _session_id: Optional[str] = None
 
     def __init__(self, service_name: str) -> None:
         if self.session is not None:
@@ -47,6 +48,83 @@ class ZenohSession(metaclass=Singleton):
         if self._executor:
             self._executor.shutdown(wait=False, cancel_futures=True)
             self._executor = None
+
+    def get_session_id(self) -> Optional[str]:
+        """Return the Zenoh session ID (zid) if available."""
+        if self._session_id:
+            return self._session_id
+        if self.session is None:
+            return None
+        try:
+            info_attr = getattr(self.session, "info", None)
+            if info_attr is None:
+                logger.debug("Zenoh session does not expose info attribute.")
+                return None
+            info = info_attr() if callable(info_attr) else info_attr
+        except Exception as exc:  # pragma: no cover - best effort logging
+            logger.debug(f"Could not fetch zenoh session info: {exc}")
+            return None
+
+        session_id = self._extract_session_id(info)
+        if session_id:
+            self._session_id = session_id
+        return session_id
+
+    def format_source_name(self, process_name: str) -> str:
+        """Compose the `<zid>/<process>` identifier requested by the logging spec."""
+        session_id = self.get_session_id()
+        return f"{session_id}/{process_name}" if session_id else process_name
+
+    @staticmethod
+    def _extract_session_id(info: Any) -> Optional[str]:
+        if isinstance(info, dict):
+            for key in ("zid", "session_id", "id"):
+                value = info.get(key)
+                if value:
+                    return str(value)
+
+        candidate = getattr(info, "zid", None)
+        if candidate:
+            try:
+                candidate = candidate() if callable(candidate) else candidate
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.debug(f"Failed to call zid accessor: {exc}")
+                candidate = None
+            if candidate:
+                return str(candidate)
+
+        if isinstance(info, str):
+            parsed = ZenohSession._parse_session_id_string(info)
+            if parsed:
+                return parsed
+
+        try:
+            as_str = str(info)
+        except Exception:
+            as_str = None
+        if as_str:
+            parsed = ZenohSession._parse_session_id_string(as_str)
+            if parsed:
+                return parsed
+
+        return None
+
+    @staticmethod
+    def _parse_session_id_string(data: str) -> Optional[str]:
+        try:
+            decoded = json.loads(data)
+            if isinstance(decoded, dict):
+                for key in ("zid", "session_id", "id"):
+                    value = decoded.get(key)
+                    if value:
+                        return str(value)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            pass
+
+        match = re.search(r"(?:zid|session[_ ]?id|id)\s*[:=]\s*\"?([0-9A-Fa-fx\.\-:]+)\"?", data)
+        if match:
+            return match.group(1)
+        return None
 
     def zenoh_config(self, service_name: str) -> None:
         configuration = {
