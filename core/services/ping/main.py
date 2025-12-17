@@ -5,6 +5,7 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, status
@@ -21,6 +22,7 @@ SERVICE_NAME = "ping"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 app = FastAPI(
     title="Ping Manager API",
@@ -85,6 +87,10 @@ async def main() -> None:
     # Running uvicorn with log disabled so loguru can handle it
     config = Config(app=app, host="0.0.0.0", port=9110, log_config=None)
     server = Server(config)
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 9110})
 
     asyncio.create_task(sensor_manager())
     await server.serve()
