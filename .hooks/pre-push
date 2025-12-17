@@ -2,119 +2,106 @@
 
 set -e
 
-# Check if uv is installed
-command -v uv >/dev/null 2>&1 || {
-    echo >&2 "uv is not installed. Aborting. Please install it and try again."
-    exit 1
-}
+ROOT_DIR=$(git rev-parse --show-toplevel)
+cd "$ROOT_DIR"
 
-# Check if poetry is installed
-command -v poetry >/dev/null 2>&1 || {
-    echo >&2 "poetry is not installed. Aborting. Please install it and try again."
-    exit 1
-}
+CORE_DIR="$ROOT_DIR/core"
+PRIMARY_PROJECT_DIR="$CORE_DIR"
+SECONDARY_PROJECT_DIR="$CORE_DIR/python-venv2"
+declare -a SECONDARY_SCOPE_PATHS=()
+# shellcheck disable=SC2034
+declare -a EMPTY_PATHS=()
+SECONDARY_COVERAGE_THRESHOLD="${SECONDARY_COVERAGE_THRESHOLD:-65}"
 
-# Check if shellcheck is installed
-command -v shellcheck >/dev/null 2>&1 || {
-    echo >&2 "shellcheck is not installed. Aborting. Please install it and try again."
-    exit 1
-}
+source "$ROOT_DIR/.hooks/lib/common.sh"
+source "$ROOT_DIR/.hooks/lib/python_checks.sh"
 
-# Check if parallel is installed
-command -v parallel >/dev/null 2>&1 || {
-    echo >&2 "parallel is not installed. Aborting. Please install it and try again."
-    exit 1
-}
+declare -a ISORT_CONFIG_ARGS=(--settings-path "$CORE_DIR/pyproject.toml")
+declare -a BLACK_CONFIG_ARGS=(--config "$CORE_DIR/pyproject.toml")
+declare -a ISORT_CHECK_ARGS=(--check-only --diff)
+declare -a BLACK_CHECK_ARGS=(--check --diff)
 
-nginxVersion=1.22.1
-docker run --rm -v ${PWD}/core/tools/nginx/:/nginx/:ro nginx:$nginxVersion nginx -c /nginx/nginx.conf -t
+# shellcheck disable=SC2034
+isort_args=("${ISORT_CONFIG_ARGS[@]}" "${ISORT_CHECK_ARGS[@]}")
+# shellcheck disable=SC2034
+black_args=("${BLACK_CONFIG_ARGS[@]}" "${BLACK_CHECK_ARGS[@]}")
+fixing=false
+fix_primary=false
+fix_secondary=false
+should_run_primary=true
+should_run_secondary=true
 
-# Install required python packages and activate the virtual environment
-uv sync --all-groups --project ${PWD}/core && source ${PWD}/core/.venv/bin/activate
-export VIRTUAL_ENV=${PWD}/core/.venv
-export PATH="${VIRTUAL_ENV}/bin:$PATH"
-
-# download some required files if they are not present
-echo "installing mavlink-server"
-./core/tools/mavlink_server/bootstrap.sh
-echo "installing ardupilot_tools"
-NOSUDO=1 ./core/tools/ardupilot_tools/bootstrap.sh && ./core/tools/ardupilot_tools/setup-python-libs.sh
-
-isort_extra_args="--check-only --diff"
-black_extra_args="--check --diff"
-fixing="false"
+load_secondary_scope_paths
+if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 0 ]; then
+    echo "No secondary scope paths found; forcing secondary environment check to be skipped."
+    should_run_secondary=false
+fi
 
 for arg in "$@"; do
-  case $arg in
-    --fix)
-      isort_extra_args=""
-      black_extra_args=""
-      fixing="true"
-      ;;
-    *)
-      echo "Unknown argument: $arg"
-      exit 1
-      ;;
-  esac
+    case $arg in
+        --fix)
+            # shellcheck disable=SC2034
+            isort_args=("${ISORT_CONFIG_ARGS[@]}")
+            # shellcheck disable=SC2034
+            black_args=("${BLACK_CONFIG_ARGS[@]}")
+            fixing=true
+            fix_primary=true
+            fix_secondary=true
+            ;;
+        --fix-primary)
+            # shellcheck disable=SC2034
+            isort_args=("${ISORT_CONFIG_ARGS[@]}")
+            # shellcheck disable=SC2034
+            black_args=("${BLACK_CONFIG_ARGS[@]}")
+            fixing=true
+            fix_primary=true
+            ;;
+        --fix-secondary)
+            # shellcheck disable=SC2034
+            isort_args=("${ISORT_CONFIG_ARGS[@]}")
+            # shellcheck disable=SC2034
+            black_args=("${BLACK_CONFIG_ARGS[@]}")
+            fixing=true
+            fix_secondary=true
+            ;;
+        -h|--help)
+            print_usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg"
+            print_usage
+            exit 1
+            ;;
+    esac
 done
 
+if [ "$fixing" = true ]; then
+    should_run_primary=$fix_primary
+    should_run_secondary=$fix_secondary
+    if [ "$should_run_primary" = false ] && [ "$should_run_secondary" = false ]; then
+        should_run_primary=true
+        should_run_secondary=true
+    fi
+    echo "Fix mode enabled. Running isort/black only in the selected environments."
+fi
+
+check_required_tools
+run_nginx_validation
+
 echo "Running pre push hook!"
-repository_path=$(git rev-parse --show-toplevel)
-tag_name=$(git tag --points-at=HEAD | head -n 1)
+verify_tag_if_needed
+run_shellcheck_suite
 
-[ -n "$tag_name" ] && {
-    echo "Current reference has the following tag: ${tag_name}"
-    dialog --defaultno --yesno "Are you pushing a tag ?" 20 60 && {
-        echo "Checking tag name.."
-        # Check if tag follows our semver convention
-        # MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-SOMETHING.VERSION
-        $(echo "$tag_name" | grep -Po "^\d+\.\d+\.\d+(\-[A-z]+\.\d+)?$|^\d+\.\d+\.\d+$" > /dev/null) || {
-            echo "Invalid tag name!"
-            exit 1
-        }
-        echo "Tag name is valid, congratulations for the new release!"
-    }
-}
-
-echo "Running shellcheck..."
-#SC2005: Allow us to break line while running command
-#SC2015: Allow us to use short circuit
-#SC2046: Allow word splitting
-#SC2048: Allow word splitting
-#SC2086: Allow word splitting
-git ls-files '*.sh' | xargs -L 1 shellcheck --exclude=SC2005,SC2015,SC2046,SC2048,SC2086
-
-# Goes to the core directory
-cd core
-
-echo "Running isort.."
-# Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" ${isort_extra_args} "{}"
-
-# This will only get the python files track by git, not including submodules
-python_files=$(git ls-files '*.py')
-
-echo "Running black.."
-black ${black_extra_args} $python_files
-
-# do not run the rest of the script if running for fixing
-[ "$fixing" = true ] && exit 0
-
-# Faster than pylint to check for issues
-echo "Running ruff.."
-ruff $python_files
-
-echo "Running pylint.."
-pylint $python_files
-
-echo "Running mypy.."
-git ls-files "$repository_path/core/*/pyproject.toml" | xargs -n1 dirname \
-  | parallel mypy --config-file $repository_path/core/pyproject.toml {} --cache-dir {}/__mypycache__
-
-echo "Running pytest.."
-pytest -n 10 --durations=0 --cov="$repository_path" --cov-report html
-
-# Return to the original directory
-cd -
+if [ "$should_run_primary" = true ]; then
+    run_environment_phase "primary" "$PRIMARY_PROJECT_DIR" "primary" SECONDARY_SCOPE_PATHS EMPTY_PATHS true
+fi
+if [ "$should_run_secondary" = true ]; then
+    if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 0 ]; then
+        echo "No services assigned to the secondary environment; skipping secondary run."
+    else
+        run_environment_phase "secondary" "$SECONDARY_PROJECT_DIR" "secondary" EMPTY_PATHS SECONDARY_SCOPE_PATHS false "$SECONDARY_COVERAGE_THRESHOLD"
+    fi
+fi
 
 exit 0
