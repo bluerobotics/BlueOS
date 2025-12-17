@@ -22,7 +22,7 @@ require_commands() {
 }
 
 check_required_tools() {
-  require_commands python3 parallel uv poetry shellcheck
+  require_commands docker python3 parallel uv poetry shellcheck
 }
 
 run_nginx_validation() {
