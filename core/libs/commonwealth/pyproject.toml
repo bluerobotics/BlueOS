@@ -5,14 +5,15 @@ description = "BlueOS library to share common code."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiohttp==3.7.4",
+    "aiohttp>=3.7.4,<=3.13.2",
     "appdirs==1.4.4",
     "eclipse-zenoh==1.4.0",
-    "loguru==0.5.3",
+    "loguru>=0.5.3,<=0.7.3",
     "psutil==5.7.2",
+    "pydantic>=1.10.12,<=2.12.5",
     "pykson==1.0.2",
     "sentry-sdk==2.29.1",
-    "starlette==0.27.0",
+    "starlette>=0.27.0",
 ]
 
 [tool.uv.sources]
