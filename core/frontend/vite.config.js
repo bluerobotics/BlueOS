@@ -255,6 +255,14 @@ export default defineConfig(({ command, mode }) => {
           target: SERVER_ADDRESS,
           changeOrigin: true,
           autoRewrite: true,
+          onProxyRes: (proxyRes, request, response) => {
+            proxyRes.on('data', (data) => {
+              response.write(data)
+            })
+            proxyRes.on('end', () => {
+              response.end()
+            })
+          },
         },
         '^/bag': {
           target: SERVER_ADDRESS,
