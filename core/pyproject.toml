@@ -63,11 +63,11 @@ kraken = { workspace = true }
 nmea_injector = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
-versionchooser = { workspace = true }
 wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
+exclude = ["services/versionchooser"]
 
 # ------------------ Tooling Configurations ------------------
 
