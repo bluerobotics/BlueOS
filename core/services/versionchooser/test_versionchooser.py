@@ -68,7 +68,7 @@ async def test_get_version() -> None:
         response = await chooser.get_version()
         if response.body is None:
             raise RuntimeError("text should be not None")
-        result = json.loads(response.body.decode())
+        result = json.loads(bytes(response.body).decode())
         assert result["repository"] == "bluerobotics/blueos-core"
         assert result["tag"] == "master"
         assert len(client_mock.mock_calls) > 0
@@ -172,7 +172,7 @@ async def test_get_available_versions_dockerhub_unavailable(
     result = await chooser.get_available_versions("bluerobotics/blueos-core")
     if result.body is None:
         raise RuntimeError("text should be not None")
-    data = json.loads(result.body.decode())
+    data = json.loads(bytes(result.body).decode())
     assert "local" in data
     assert "remote" in data
     assert data["local"][0]["tag"] == "test1"
@@ -190,7 +190,7 @@ async def test_get_available_versions() -> None:
     result = await chooser.get_available_versions("bluerobotics/blueos-core")
     if result.body is None:
         raise RuntimeError("text should be not None")
-    data = json.loads(result.body.decode())
+    data = json.loads(bytes(result.body).decode())
     assert "local" in data
     assert "remote" in data
     assert data["local"][0]["tag"] == "test1"
