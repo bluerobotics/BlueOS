@@ -17,6 +17,7 @@ dependencies = [
   "nmea_injector",
   "pardal",
   "ping",
+  "recorder_extractor",
   "wifi",
 ]
 
@@ -61,6 +62,7 @@ helper = { workspace = true }
 nmea_injector = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
+recorder_extractor = { workspace = true }
 wifi = { workspace = true }
 
 [tool.uv.workspace]
