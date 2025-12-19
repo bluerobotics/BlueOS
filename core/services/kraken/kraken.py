@@ -9,6 +9,7 @@ from config import DEFAULT_EXTENSIONS, SERVICE_NAME
 from extension.exceptions import IncompatibleExtension
 from extension.extension import Extension
 from extension.models import ExtensionSource
+from extension_logs import ExtensionLogPublisher
 from harbor import ContainerManager
 from jobs import JobsManager
 from jobs.models import Job, JobMethod
@@ -24,6 +25,7 @@ class Kraken:
         self._settings = self._manager.settings
         self.is_running = True
         self.manifest = ManifestManager.instance()
+        self.extension_log_publisher = ExtensionLogPublisher()
 
     def _extension_start_try_valid(self, extension: ExtensionSettings) -> bool:
         unique_entry = f"{extension.identifier}{extension.tag}"
@@ -178,5 +180,14 @@ class Kraken:
 
             await asyncio.sleep(60)
 
+    async def start_extension_logs_task(self) -> None:
+        while self.is_running:
+            try:
+                await self.extension_log_publisher.sync_with_running_extensions()
+            except Exception as error:
+                logger.debug(f"Failed to sync extension log streams: {error}")
+            await asyncio.sleep(2)
+
     async def stop(self) -> None:
         self.is_running = False
+        await self.extension_log_publisher.shutdown()
