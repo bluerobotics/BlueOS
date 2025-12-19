@@ -49,6 +49,11 @@ const routes: Array<RouteConfig> = [
     component: defineAsyncComponent(() => import('../views/Disk.vue')),
   },
   {
+    path: '/tools/health-monitor',
+    name: 'Health Monitor',
+    component: defineAsyncComponent(() => import('../views/HealthMonitor.vue')),
+  },
+  {
     path: '/tools/web-terminal',
     name: 'Terminal',
     component: defineAsyncComponent(() => import('../views/TerminalView.vue')),
