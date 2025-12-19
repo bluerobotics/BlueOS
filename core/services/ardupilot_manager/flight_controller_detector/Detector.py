@@ -52,7 +52,9 @@ class Detector:
         unique_serial_devices: List[SysFS] = []
         for port in sorted_serial_ports:
             # usb_device_path property will be the same for two serial connections using the same USB port
-            if port.usb_device_path not in [device.usb_device_path for device in unique_serial_devices]:
+            if (port.usb_device_path or port.name) not in [
+                (device.usb_device_path or device.name) for device in unique_serial_devices
+            ]:
                 unique_serial_devices.append(port)
         boards = [
             FlightController(
