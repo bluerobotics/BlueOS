@@ -138,6 +138,7 @@ SERVICES=(
     'recorder',250,"blueos-recorder --recorder-path /usr/blueos/userdata/recorder"
     'recorder_extractor',250,"$SERVICES_PATH/recorder_extractor/main.py"
     'disk_usage',250,"$SERVICES_PATH/disk_usage/main.py"
+    'health_monitor',250,"$SERVICES_PATH/health_monitor/main.py"
 )
 
 tmux -f /etc/tmux.conf start-server
