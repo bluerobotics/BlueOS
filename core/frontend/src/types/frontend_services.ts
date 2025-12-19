@@ -119,6 +119,13 @@ export const kraken_service: Service = {
   version: '0.1.0',
 }
 
+export const health_monitor_service: Service = {
+  name: 'Health Monitor',
+  description: 'Service to monitor system and vehicle health warnings.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
+
 export const parameters_service: Service = {
   name: 'Parameters service',
   description: 'Service to manage vehicle Parameters',

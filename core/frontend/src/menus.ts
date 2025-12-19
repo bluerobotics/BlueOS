@@ -51,6 +51,13 @@ const menus = [
     text: 'Visualize disk usage and delete files/folders.',
   },
   {
+    title: 'Health Monitor',
+    icon: 'mdi-heart-pulse',
+    route: '/tools/health-monitor',
+    advanced: false,
+    text: 'Monitor system and vehicle health warnings.',
+  },
+  {
     title: 'Log Browser',
     icon: 'mdi-math-log',
     route: '/vehicle/logs',

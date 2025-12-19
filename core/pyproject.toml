@@ -13,6 +13,7 @@ dependencies = [
   "cable_guy",
   "commander",
   "disk_usage",
+  "health_monitor",
   "helper",
   "kraken",
   "nmea_injector",
@@ -58,6 +59,7 @@ bridget = { workspace = true }
 cable_guy = { workspace = true }
 commander = { workspace = true }
 disk_usage = { workspace = true }
+health_monitor = { workspace = true }
 helper = { workspace = true }
 kraken = { workspace = true }
 nmea_injector = { workspace = true }

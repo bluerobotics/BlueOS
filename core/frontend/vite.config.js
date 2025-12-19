@@ -148,6 +148,9 @@ export default defineConfig(({ command, mode }) => {
         '^/disk-usage': {
           target: SERVER_ADDRESS,
         },
+        '^/health-monitor': {
+          target: SERVER_ADDRESS,
+        },
         '^/docker': {
           target: SERVER_ADDRESS,
         },
