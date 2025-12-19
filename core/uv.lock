@@ -18,6 +18,7 @@ members = [
     "commander",
     "commonwealth",
     "disk-usage",
+    "health-monitor",
     "helper",
     "kraken",
     "nmea-injector",
