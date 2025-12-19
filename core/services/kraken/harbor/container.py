@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncGenerator, Dict, List, cast
+from typing import AsyncGenerator, Dict, List
 
 import psutil
 from aiodocker import Docker
@@ -19,7 +19,7 @@ class ContainerManager:
         if not containers:
             raise ContainerNotFound(f"Container {container_name} not found in running containers")
 
-        return cast(DockerContainer, containers[0])
+        return containers[0]
 
     @staticmethod
     async def kill_all_by_name(client: Docker, container_name: str) -> None:

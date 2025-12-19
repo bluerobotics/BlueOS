@@ -2,7 +2,7 @@ import platform as sys_platform
 from enum import StrEnum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, RootModel, validator
 
 # Manifest data source models
 
@@ -117,8 +117,8 @@ class RepositoryEntry(ExtensionMetadata):
 # Local Manifest models
 
 
-class ManifestData(BaseModel):
-    __root__: List[RepositoryEntry]
+class ManifestData(RootModel[List[RepositoryEntry]]):
+    pass
 
 
 class ManifestSource(BaseModel):

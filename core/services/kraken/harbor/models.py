@@ -11,4 +11,4 @@ class ContainerModel(BaseModel):
 class ContainerUsageModel(BaseModel):
     cpu: float
     memory: float | str
-    disk: int | str
+    disk: float | str
