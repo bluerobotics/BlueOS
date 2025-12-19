@@ -38,6 +38,7 @@ async def main() -> None:
     # Launch background tasks
     asyncio.create_task(kraken.start_cleaner_task())
     asyncio.create_task(kraken.start_starter_task())
+    asyncio.create_task(kraken.start_extension_logs_task())
     asyncio.create_task(jobs.start())
 
     await server.serve()
