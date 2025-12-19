@@ -359,7 +359,7 @@ requires-dist = [
     { name = "appdirs", specifier = "==1.4.4" },
     { name = "eclipse-zenoh", specifier = "==1.4.0" },
     { name = "loguru", specifier = ">=0.5.3,<=0.7.3" },
-    { name = "packaging", specifier = "==25.0" },
+    { name = "packaging", specifier = ">=20.4,<=25.0" },
     { name = "psutil", specifier = ">=5.7.2,<=7.1.3" },
     { name = "pydantic", specifier = ">=1.10.12,<=2.12.5" },
     { name = "pykson", url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" },
