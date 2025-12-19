@@ -234,11 +234,21 @@ export default Vue.extend({
     },
     filteredActive(): HealthProblem[] {
       const issues = this.summary?.active ?? []
-      return issues.filter((issue) => this.matchesFilters(issue, this.selectedSeverity, this.selectedSource, this.search))
+      return issues.filter((issue) => this.matchesFilters(
+        issue,
+        this.selectedSeverity,
+        this.selectedSource,
+        this.search,
+      ))
     },
     filteredHistory(): HealthEvent[] {
       const events = this.history?.events ?? []
-      return events.filter((event) => this.matchesFilters(event, this.historySeverity, this.historySource, this.historySearch))
+      return events.filter((event) => this.matchesFilters(
+        event,
+        this.historySeverity,
+        this.historySource,
+        this.historySearch,
+      ))
     },
   },
   mounted() {
