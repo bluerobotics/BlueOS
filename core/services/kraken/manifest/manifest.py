@@ -96,7 +96,7 @@ class ManifestManager:
                             )
 
                         try:
-                            return ManifestData.parse_obj(await resp.json(content_type=None)).__root__
+                            return ManifestData.model_validate(await resp.json(content_type=None)).root
                         except Exception as e:
                             raise ManifestDataParseFailed(f"Failed to parse manifest data from {url}") from e
                 except aiohttp.InvalidURL as e:

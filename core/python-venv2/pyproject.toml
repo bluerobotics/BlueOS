@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
   "commonwealth",
   "versionchooser",
+  "kraken",
 ]
 
 [dependency-groups]
@@ -38,9 +39,11 @@ default-groups = ["dev", "lint"]
 [tool.uv.sources]
 commonwealth = { workspace = true }
 versionchooser = { workspace = true }
+kraken = { workspace = true }
 
 [tool.uv.workspace]
 members = [
   "../libs/commonwealth",
   "../services/versionchooser",
+  "../services/kraken",
 ]

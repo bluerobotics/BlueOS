@@ -478,7 +478,7 @@ class Extension:
         """
         async with DockerCtx() as client:
             try:
-                image_info = cast(Dict[str, Any], await client.images.inspect(image_name))
+                image_info: Dict[str, Any] = await client.images.inspect(image_name)
                 config = cast(Dict[str, Any], image_info.get("Config", {}) or {})
                 labels = cast(Dict[str, Any], config.get("Labels", {}) or {})
 
