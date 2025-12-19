@@ -66,16 +66,21 @@ class FirmwareInstaller:
             with open(firmware_path, "r", encoding="utf-8") as firmware_file:
                 firmware_data = firmware_file.read()
                 firm_board_id = int(json.loads(firmware_data).get("board_id", -1))
-            expected_board_id = get_board_id(platform)
-            if expected_board_id == -1:
-                raise UnsupportedPlatform("Firmware validation is not implemented for this board yet.")
-            if firm_board_id == -1:
-                raise InvalidFirmwareFile("Could not find board_id specification in the firmware file.")
-            if firm_board_id != expected_board_id:
-                raise InvalidFirmwareFile(f"Expected board_id {expected_board_id}, found {firm_board_id}.")
+        except (OSError, json.JSONDecodeError) as error:
+            raise InvalidFirmwareFile(f"Could not load firmware file for validation: {firmware_path}") from error
+
+        if platform == Platform.GenericSerial:
+            logger.warning("Skipping board_id validation for GenericSerial platform.")
             return
-        except Exception as error:
-            raise InvalidFirmwareFile("Could not load firmware file for validation.") from error
+
+        expected_board_id = get_board_id(platform)
+        if expected_board_id == -1:
+            raise UnsupportedPlatform("Firmware validation is not implemented for this board yet.")
+        if firm_board_id == -1:
+            raise InvalidFirmwareFile("Could not find board_id specification in the firmware file.")
+        if firm_board_id != expected_board_id:
+            raise InvalidFirmwareFile(f"Expected board_id {expected_board_id}, found {firm_board_id}.")
+        return
 
     @staticmethod
     def _validate_elf(firmware_path: pathlib.Path, platform: Platform) -> None:
