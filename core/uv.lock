@@ -19,7 +19,6 @@ members = [
     "commonwealth",
     "disk-usage",
     "helper",
-    "kraken",
     "nmea-injector",
     "pardal",
     "ping",
@@ -34,19 +33,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/38/46/5c76e8f6dc3a550c93785c0daaff8140e3515e0ac089d47ef9c9f0ad0288/aiocache-0.12.2.tar.gz", hash = "sha256:b41c9a145b050a5dcbae1599f847db6dd445193b1f3bd172d8e0fe0cb9e96684", size = 131851, upload-time = "2023-08-06T20:31:22.478Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3c/ce/d7dccae884f2840d0df9ea4103a3f50d87ac6c9399d2f6f0a2f1208ac063/aiocache-0.12.2-py2.py3-none-any.whl", hash = "sha256:9b6fa30634ab0bfc3ecc44928a91ff07c6ea16d27d55469636b296ebc6eb5918", size = 28055, upload-time = "2023-08-06T20:31:21.205Z" },
-]
-
-[[package]]
-name = "aiodocker"
-version = "0.21.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/f5/5fb3a17fcdd31d3cce9afa82c306da869e2b36c5ca1477224396e5e1f31b/aiodocker-0.21.0.tar.gz", hash = "sha256:1f2e6db6377195962bb676d4822f6e3a0c525e1b5d60b8ebbab68230bff3d227", size = 483246, upload-time = "2021-07-23T09:51:27.181Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/86/97638ef9d0e54a86d389ded8ccf27cc1ecabf7ce27ae873636a5c1e46d89/aiodocker-0.21.0-py3-none-any.whl", hash = "sha256:6fe00135bb7dc40a407669d3157ecdfd856f3737d939df54f40a479d40cf7bdc", size = 34132, upload-time = "2021-07-23T09:51:25.212Z" },
 ]
 
 [[package]]
@@ -247,7 +233,6 @@ dependencies = [
     { name = "commonwealth" },
     { name = "disk-usage" },
     { name = "helper" },
-    { name = "kraken" },
     { name = "nmea-injector" },
     { name = "pardal" },
     { name = "ping" },
@@ -290,7 +275,6 @@ requires-dist = [
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "disk-usage", virtual = "services/disk_usage" },
     { name = "helper", virtual = "services/helper" },
-    { name = "kraken", virtual = "services/kraken" },
     { name = "nmea-injector", virtual = "services/nmea_injector" },
     { name = "pardal", virtual = "services/pardal" },
     { name = "ping", virtual = "services/ping" },
@@ -477,6 +461,7 @@ dependencies = [
     { name = "appdirs" },
     { name = "eclipse-zenoh" },
     { name = "loguru" },
+    { name = "packaging" },
     { name = "psutil" },
     { name = "pydantic" },
     { name = "pykson" },
@@ -490,7 +475,8 @@ requires-dist = [
     { name = "appdirs", specifier = "==1.4.4" },
     { name = "eclipse-zenoh", specifier = "==1.4.0" },
     { name = "loguru", specifier = ">=0.5.3,<=0.7.3" },
-    { name = "psutil", specifier = "==5.7.2" },
+    { name = "packaging", specifier = ">=20.4,<=25.0" },
+    { name = "psutil", specifier = ">=5.7.2,<=7.1.3" },
     { name = "pydantic", specifier = ">=1.10.12,<=2.12.5" },
     { name = "pykson", url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" },
     { name = "sentry-sdk", specifier = "==2.29.1" },
@@ -746,39 +732,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6e/9d/5ed59c36f3cbc68c01fab6442e6efb6d35a484ba4eec4f790264fce39f6c/jdatetime-5.2.0.tar.gz", hash = "sha256:c81d5898717b82b609a3ce2a73f8b8d3230b0c757e5c0de9d6b1acfdc224f551", size = 21663, upload-time = "2025-01-26T09:29:16.802Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/16/39/0dd2676d08468692606645db5ea40091290dc20747ff59636c21c0567d3c/jdatetime-5.2.0-py3-none-any.whl", hash = "sha256:d4aa73543e4e6c0e6122b58743773168edee5efe5c5acf05d1dc8c90524ca71c", size = 12199, upload-time = "2025-01-26T09:29:15.038Z" },
-]
-
-[[package]]
-name = "kraken"
-version = "0.1.0"
-source = { virtual = "services/kraken" }
-dependencies = [
-    { name = "aiocache" },
-    { name = "aiodocker" },
-    { name = "aiohttp" },
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "psutil" },
-    { name = "pydantic" },
-    { name = "semver" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiocache", specifier = "==0.12.2" },
-    { name = "aiodocker", specifier = "==0.21.0" },
-    { name = "aiohttp", specifier = "==3.7.4" },
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "psutil", specifier = "==5.7.2" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "semver", specifier = "==3.0.2" },
-    { name = "uvicorn", specifier = "==0.18.0" },
 ]
 
 [[package]]
@@ -1374,15 +1327,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/31/ab/e864c6c2eb778c194cfb56cd9d98b5594dc00573210fdf6b44904745a0bf/sdbus-networkmanager-2.0.0.tar.gz", hash = "sha256:3572ac3a8189c683ec0416acb148761773a8f0881ad3d78b6d6f6864eff9c50b", size = 165071, upload-time = "2023-06-04T10:50:16.09Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/0c/6a67ebd967f3816022d04ab93db5f3d998a55d79c138af11feb1f59a6f10/sdbus_networkmanager-2.0.0-py3-none-any.whl", hash = "sha256:710a5ccfb1c3267016c990023ca76ad6210b13ab63aa5dad3a20e590b291b08f", size = 248349, upload-time = "2023-06-04T10:50:13.355Z" },
-]
-
-[[package]]
-name = "semver"
-version = "3.0.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/41/6c/a536cc008f38fd83b3c1b98ce19ead13b746b5588c9a0cb9dd9f6ea434bc/semver-3.0.2.tar.gz", hash = "sha256:6253adb39c70f6e51afed2fa7152bcd414c411286088fb4b9effb133885ab4cc", size = 214988, upload-time = "2023-10-09T11:58:25.975Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/77/0cc7a8a3bc7e53d07e8f47f147b92b0960e902b8254859f4aee5c4d7866b/semver-3.0.2-py3-none-any.whl", hash = "sha256:b1ea4686fe70b981f85359eda33199d60c53964284e0cfb4977d243e37cf4bf4", size = 17099, upload-time = "2023-10-09T11:58:24.128Z" },
 ]
 
 [[package]]
