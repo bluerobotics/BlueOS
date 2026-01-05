@@ -566,7 +566,6 @@ export default Vue.extend({
           route: '/tools/extensions-manager',
           advanced: false,
           text: 'Manage BlueOS extensions',
-          beta: true,
         },
         ...foundExtensions,
       ] as menuItem[]
