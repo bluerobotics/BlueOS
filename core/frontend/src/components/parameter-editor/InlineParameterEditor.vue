@@ -89,6 +89,7 @@ import Vue, { PropType } from 'vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import Parameter from '@/types/autopilot/parameter'
+import { Dictionary } from '@/types/common'
 
 import ParameterLabel from './ParameterLabel.vue'
 
@@ -122,6 +123,10 @@ export default Vue.extend({
       type: Boolean,
       default: false,
     },
+    metadataOverrides: {
+      type: Object as PropType<Dictionary<string>>,
+      default: () => ({}),
+    },
   },
   data() {
     return {
@@ -140,6 +145,13 @@ export default Vue.extend({
       const entries = Object.entries(this.param?.options ?? [])
       const value_is_known = Object.keys(this.param?.options ?? []).map(parseFloat).includes(this.param?.value)
       const options = entries.map(([value, name]) => ({ text: name, value: parseFloat(value), disabled: false }))
+      // replace entries in metadataOverrides
+      for (const [value, _name] of entries) {
+        if (value in this.metadataOverrides) {
+          const index = options.findIndex((option) => option.value === parseFloat(value))
+          options[index].text = this.metadataOverrides[value]
+        }
+      }
       if (!value_is_known) {
         options.push({ text: `Custom: ${this.param?.value}`, value: this.param?.value, disabled: false })
       }
