@@ -3,7 +3,7 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-VERSION="t3.22.2"
+VERSION="t3.22.3"
 REPOSITORY_ORG="mavlink"
 REPOSITORY_NAME="mavlink-camera-manager"
 PROJECT_NAME="$REPOSITORY_NAME"
