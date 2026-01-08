@@ -2,7 +2,7 @@ name: Duplicate Issue Detection
 
 on:
   issues:
-    types: [opened]
+    types: [opened, reopened]
 
 jobs:
   check-duplicates:
