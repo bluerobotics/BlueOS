@@ -2,23 +2,23 @@
   <v-sheet
     width="100%"
     height="100%"
-    style="overflow: hidden;"
+    style="overflow: hidden; position: relative;"
   >
     <spinning-logo
       v-if="!gl_compatible && !iframe_loaded"
+      class="full-overlay overlay"
       size="15%"
       subtitle="Loading external application..."
     />
     <canvas
       v-if="gl_compatible && !iframe_loaded"
       ref="webglCanvas"
+      class="full-overlay overlay"
     />
     <iframe
-      v-show="iframe_loaded"
       :title="`iframe-${source}`"
       :src="source"
-      height="100%"
-      width="100%"
+      class="full-overlay"
       frameBorder="0"
       allowfullscreen
       @load="loadFinished"
@@ -242,6 +242,19 @@ export default Vue.extend({
 })
 </script>
 <style scoped>
+.full-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.overlay {
+  z-index: 2;
+}
+
 iframe {
   display: block;
 }
