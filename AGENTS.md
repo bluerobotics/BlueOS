@@ -46,6 +46,8 @@ When writing code:
 - No docstrings unless the function is non-obvious
 - No comments unless explaining "why", never "what"
 - Prefer editing existing files over creating new ones
+- Use optional chaining (`?.`) when possible in typescript
+- Use `v-tooltip` over `title` in vue2 components
 
 When explaining:
 - Be concise and direct
@@ -75,6 +77,8 @@ gh pr view <number> --repo bluerobotics/BlueOS
 gh pr diff <number> --repo bluerobotics/BlueOS
 gh issue list --repo bluerobotics/BlueOS
 ```
+
+### 3. Use yarn over npm
 
 ## Creating a New Service
 
