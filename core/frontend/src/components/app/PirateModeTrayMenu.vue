@@ -16,7 +16,10 @@
         v-bind="attrs"
         v-on="on"
       >
-        <v-icon color="white">
+        <v-icon
+          v-tooltip="pirate_mode_tooltip"
+          color="white"
+        >
           {{ settings.is_pirate_mode ? 'mdi-skull-crossbones' : 'mdi-robot-happy' }}
         </v-icon>
       </v-card>
@@ -43,6 +46,11 @@ export default Vue.extend({
     show_menu: false,
     settings,
   }),
+  computed: {
+    pirate_mode_tooltip(): string {
+      return `Pirate Mode ${settings.is_pirate_mode ? 'enabled' : 'disabled'}. Click to change.`
+    },
+  },
   methods: {
     showMenu(show: boolean): void {
       this.show_menu = show
