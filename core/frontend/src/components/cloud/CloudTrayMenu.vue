@@ -23,6 +23,7 @@
           v-on="on"
         >
           <v-icon
+            v-tooltip="'Cloud sync status'"
             class="px-1"
             color="white"
           >
