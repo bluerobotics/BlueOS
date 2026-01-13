@@ -18,6 +18,7 @@
         v-on="on"
       >
         <v-icon
+          v-tooltip="'On-board computer reboot required. Click to reboot.'"
           class="blinking"
         >
           mdi-restart-alert
