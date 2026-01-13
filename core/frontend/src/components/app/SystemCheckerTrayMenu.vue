@@ -17,6 +17,7 @@
         v-on="on"
       >
         <v-icon
+          v-tooltip="'System problems detected. Click to view details.'"
           class="blinking"
         >
           mdi-alert
