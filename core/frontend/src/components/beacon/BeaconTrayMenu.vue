@@ -15,8 +15,8 @@
         v-on="on"
       >
         <v-icon
+          v-tooltip="tooltip_text"
           class="px-1 white-shadow"
-          :v-tooltip="tooltip_text"
           :color="should_warn_user ? 'yellow' : 'white'"
         >
           mdi-ethernet-cable
