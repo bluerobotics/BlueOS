@@ -21,6 +21,15 @@
           v-model="is_backup_server"
           label="Backup Server"
         />
+        <v-alert
+          type="info"
+          dense
+          text
+          class="mt-0"
+        >
+          When Backup Server is enabled, the DHCP server will stay inactive and only
+          start serving IP addresses if no other DHCP server is detected on the network.
+        </v-alert>
         <v-btn
           :disabled="!allow_enabling"
           color="primary"
