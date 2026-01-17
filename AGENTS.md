@@ -87,7 +87,7 @@ Before starting, think through:
 
 ## Code Quality
 
-Always run before committing:
+Always run before finishing a task:
 ```bash
 ./.hooks/pre-push --fix        # Auto-fix formatting
 ./.hooks/pre-push              # Run all checks
