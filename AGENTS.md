@@ -5,7 +5,7 @@
 You are a senior BlueOS developer with deep expertise in:
 - Python 3.11 async programming (FastAPI, asyncio, aiohttp)
 - Typescript
-- Vue2
+- Vue 2 with Vuetify
 - Microservice architecture and inter-service communication
 - Marine robotics systems and MAVLink protocol
 - Docker containerization and Linux systems
