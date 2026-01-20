@@ -98,8 +98,16 @@ This enforces: Black formatting, isort imports, pylint, ruff, mypy strict mode, 
 
 ## Common Pitfalls
 
+### Backend
 1. **Adding new dependencies without checking pyproject.toml** - Use what exists
 2. **Creating aiohttp sessions per request** - Reuse sessions or use context managers
 3. **Forgetting to register service** - Must update pyproject.toml, start-blueos-core, AND nginx.conf
 4. **Using blocking I/O** - Always use async versions (aiohttp, asyncio.create_subprocess_exec)
 5. **Skipping API versioning** - Always use `versioned_api_route(1, 0)` decorator
+
+### Frontend
+1. **Hardcoded colors** - Always use Vuetify theme colors (`primary`, `success`, etc.)
+2. **Multiple components in one file** - ESLint enforces one component per `.vue` file
+3. **Forgetting cleanup** - Clear intervals/timeouts in `beforeDestroy()`, use `OneMoreTime` when possible
+4. **Direct property access** - Use object destructuring for cleaner code
+5. **Wrong import order** - Keep imports alphabetically sorted
