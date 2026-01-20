@@ -100,6 +100,8 @@ yarn --cwd core/frontend lint --fix  # Lint and fix frontend code
 
 This enforces: Black formatting, isort imports, pylint, ruff, mypy strict mode, pytest with coverage.
 
+> **Important:** Always use `yarn` for frontend commands, never `npx`, `npm` or others.
+
 ## Common Pitfalls
 
 1. **Adding new dependencies without checking pyproject.toml** - Use what exists
