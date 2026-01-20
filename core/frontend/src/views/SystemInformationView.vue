@@ -22,6 +22,7 @@
     <processes v-if="current_page === 'process'" />
     <system-condition v-else-if="current_page === 'system_condition'" />
     <network v-else-if="current_page === 'network'" />
+    <usb v-else-if="current_page === 'usb'" />
     <kernel v-else-if="current_page === 'kernel'" />
     <journal v-else-if="current_page === 'journal'" />
     <firmware v-else-if="current_page === 'firmware'" />
@@ -39,6 +40,7 @@ import Kernel from '@/components/system-information/Kernel.vue'
 import Network from '@/components/system-information/Network.vue'
 import Processes from '@/components/system-information/Processes.vue'
 import SystemCondition from '@/components/system-information/SystemCondition.vue'
+import Usb from '@/components/system-information/Usb.vue'
 import settings from '@/libs/settings'
 
 export interface Item {
@@ -58,6 +60,7 @@ export default Vue.extend({
     Network,
     Processes,
     SystemCondition,
+    Usb,
   },
   data() {
     return {
@@ -66,6 +69,7 @@ export default Vue.extend({
         { title: 'System Monitor', icon: 'mdi-speedometer', value: 'system_condition' },
         { title: 'Processes', icon: 'mdi-view-dashboard', value: 'process' },
         { title: 'Network', icon: 'mdi-ip-network-outline', value: 'network' },
+        { title: 'USB', icon: 'mdi-usb', value: 'usb' },
         {
           title: 'Kernel', icon: 'mdi-text-long', value: 'kernel', is_pirate: true,
         },
