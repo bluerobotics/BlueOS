@@ -43,6 +43,10 @@ class HotspotManager:
         self.iw = IW()
         self.ipr = IPRoute()
 
+        if base_interface not in psutil.net_if_stats():
+            raise ValueError(f"Base interface '{base_interface}' not found.")
+        self._base_interface = base_interface
+
         self._ap_interface_name = ap_interface_name
         self.supports_hotspot = self.check_hotspot_support()
         try:
@@ -55,10 +59,6 @@ class HotspotManager:
         self._ap_passphrase = ap_passphrase or "blueosap"
 
         self._subprocess: Optional[Any] = None
-
-        if base_interface not in psutil.net_if_stats():
-            raise ValueError(f"Base interface '{base_interface}' not found.")
-        self._base_interface = base_interface
 
         self._ipv4_gateway = ipv4_gateway
 
@@ -82,7 +82,87 @@ class HotspotManager:
 
     def check_hotspot_support(self) -> bool:
         # Support for Bookworm should arrive with NetworkManager support
-        return bool(get_host_os() == HostOs.Bullseye)
+        if get_host_os() != HostOs.Bullseye:
+            return False
+
+        # Check if the interface's hardware supports AP mode + interface combinations
+        return self._check_interface_ap_support()
+
+    # pylint: disable=too-many-return-statements,too-many-branches
+    def _check_interface_ap_support(self) -> bool:
+        """Check if the underlying hardware supports AP mode with interface combinations.
+
+        Some adapters support AP mode but can't create virtual interfaces while connected.
+        We need to check for "valid interface combinations" that include both managed and AP.
+        """
+        try:
+            # Get the phy name for this interface
+            result = subprocess.run(
+                ["iw", "dev", self._base_interface, "info"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                return False
+
+            # Parse phy name from output (e.g., "wiphy 0" -> "phy0")
+            phy_name = None
+            for line in result.stdout.split("\n"):
+                if "wiphy" in line:
+                    phy_num = line.strip().split()[-1]
+                    phy_name = f"phy{phy_num}"
+                    break
+
+            if not phy_name:
+                return False
+
+            # Check phy capabilities
+            result = subprocess.run(
+                ["iw", "phy", phy_name, "info"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                return False
+
+            phy_info = result.stdout
+
+            # Check 1: Must support AP mode
+            supports_ap = False
+            in_modes_section = False
+            for line in phy_info.split("\n"):
+                if "Supported interface modes:" in line:
+                    in_modes_section = True
+                    continue
+                if in_modes_section:
+                    if line.strip().startswith("*"):
+                        if "AP" in line and "AP/VLAN" not in line:
+                            supports_ap = True
+                            break
+                    else:
+                        break
+
+            if not supports_ap:
+                return False
+
+            # Check 2: Must support interface combinations (managed + AP simultaneously)
+            if "interface combinations are not supported" in phy_info:
+                logger.info(f"{self._base_interface}: AP mode supported but interface combinations not supported")
+                return False
+
+            # Check 3: Look for valid combinations that include both managed and AP
+            if "valid interface combinations:" in phy_info:
+                combo_section = phy_info.split("valid interface combinations:")[1]
+                combo_section = combo_section.split("Device supports")[0]
+                if "managed" in combo_section and "AP" in combo_section:
+                    return True
+
+            return False
+        except Exception as e:
+            logger.warning(f"Failed to check AP mode support for {self._base_interface}: {e}")
+            return False
 
     def set_credentials(self, credentials: WifiCredentials) -> None:
         logger.debug(f"Changing hotspot ssid to '{credentials.ssid}' and passphrase to '{credentials.password}'.")
