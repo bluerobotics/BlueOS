@@ -4,7 +4,8 @@ import {
 
 import store from '@/store'
 import {
-  Network, NetworkCredentials, SavedNetwork, WifiStatus, HotspotStatus
+  Network, NetworkCredentials, SavedNetwork, WifiStatus, HotspotStatus,
+  WifiInterface, WifiInterfaceList, WifiInterfaceScanResult, WifiInterfaceStatus,
 } from '@/types/wifi'
 import { sorted_networks } from '@/utils/wifi'
 
@@ -16,6 +17,8 @@ import { sorted_networks } from '@/utils/wifi'
 
 class WifiStore extends VuexModule {
   API_URL = '/wifi-manager/v1.0'
+
+  API_URL_V2 = '/wifi-manager/v2.0'
 
   current_network: Network | null = null
 
@@ -32,6 +35,13 @@ class WifiStore extends VuexModule {
   hotspot_credentials: NetworkCredentials | null = null
 
   is_loading: boolean = true
+
+  // Multi-interface support (v2 API)
+  wifi_interfaces: WifiInterface[] = []
+
+  interface_scan_results: Map<string, Network[]> = new Map()
+
+  interface_status: Map<string, WifiInterfaceStatus> = new Map()
 
   @Mutation
   setCurrentNetwork(network: Network | null): void {
@@ -93,12 +103,46 @@ class WifiStore extends VuexModule {
     this.is_loading = loading
   }
 
+  // Multi-interface mutations
+
+  @Mutation
+  setWifiInterfaces(interfaces: WifiInterface[]): void {
+    this.wifi_interfaces = interfaces
+  }
+
+  @Mutation
+  setInterfaceScanResults(payload: { interface_name: string; networks: Network[] }): void {
+    this.interface_scan_results = new Map(this.interface_scan_results)
+    this.interface_scan_results.set(payload.interface_name, payload.networks)
+  }
+
+  @Mutation
+  setInterfaceStatus(payload: { interface_name: string; status: WifiInterfaceStatus }): void {
+    this.interface_status = new Map(this.interface_status)
+    this.interface_status.set(payload.interface_name, payload.status)
+  }
+
   get connectable_networks(): Network[] | null {
     if (this.available_networks === null) {
       return null
     }
     return sorted_networks(this.available_networks
       .filter((network: Network) => network.ssid !== this.current_network?.ssid))
+  }
+
+  // Get interface by name
+  getInterface(name: string): WifiInterface | undefined {
+    return this.wifi_interfaces.find((iface) => iface.name === name)
+  }
+
+  // Get scan results for a specific interface
+  getInterfaceNetworks(name: string): Network[] {
+    return this.interface_scan_results.get(name) ?? []
+  }
+
+  // Get status for a specific interface
+  getInterfaceConnectionStatus(name: string): WifiInterfaceStatus | undefined {
+    return this.interface_status.get(name)
   }
 }
 
