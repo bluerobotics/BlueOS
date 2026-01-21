@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
 from commonwealth.settings.manager import Manager
-from settings import SettingsV1
+from settings import SettingsV2
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
 from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
 
@@ -12,7 +12,7 @@ class AbstractWifiManager:
     wpa = WPASupplicant()
 
     def __init__(self) -> None:
-        self._settings_manager = Manager("wifi-manager", SettingsV1)
+        self._settings_manager = Manager("wifi-manager", SettingsV2)
         self._settings_manager.load()
 
     @abc.abstractmethod
