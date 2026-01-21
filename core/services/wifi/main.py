@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, List, Optional
 
+from api.v2.routers import index_router_v2, interfaces_router_v2, wifi_router_v2
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
@@ -162,6 +163,11 @@ def get_hotspot_credentials() -> Any:
     assert wifi_manager is not None
     return wifi_manager.hotspot_credentials()
 
+
+# API v2 endpoints (multi-interface support)
+app.include_router(index_router_v2)
+app.include_router(interfaces_router_v2)
+app.include_router(wifi_router_v2)
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
