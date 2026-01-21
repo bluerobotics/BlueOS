@@ -77,14 +77,14 @@ class FirmwareManager:
 
         raise UnsupportedPlatform("Install check is not implemented for this platform.")
 
-    def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
+    async def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
         firmwares = []
-        versions = self.firmware_download.get_available_versions(vehicle, platform)
+        versions = await self.firmware_download.get_available_versions(vehicle, platform)
         if not versions:
             raise NoVersionAvailable(f"Failed to find any version for vehicle {vehicle}.")
         for version in versions:
             try:
-                url = self.firmware_download.get_download_url(vehicle, platform, version)
+                url = await self.firmware_download.get_download_url(vehicle, platform, version)
                 firmware = Firmware(name=version, url=url)
                 firmwares.append(firmware)
             except Exception as error:
@@ -149,7 +149,7 @@ class FirmwareManager:
         makeDefault: bool = False,
         default_parameters: Optional[Parameters] = None,
     ) -> None:
-        temporary_file = self.firmware_download._download(url.strip())
+        temporary_file = await self.firmware_download._download(url.strip())
         if default_parameters is not None:
             if board.platform.type == PlatformType.Serial:
                 self.embed_params_into_apj(temporary_file, default_parameters)
@@ -160,7 +160,7 @@ class FirmwareManager:
         await self.install_firmware_from_file(temporary_file, board, default_parameters)
 
     async def install_firmware_from_params(self, vehicle: Vehicle, board: FlightController, version: str = "") -> None:
-        url = self.firmware_download.get_download_url(vehicle, board.platform, version)
+        url = await self.firmware_download.get_download_url(vehicle, board.platform, version)
         await self.install_firmware_from_url(url, board)
 
     async def restore_default_firmware(self, board: FlightController) -> None:

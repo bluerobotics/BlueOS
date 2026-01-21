@@ -655,8 +655,8 @@ class AutoPilotManager(metaclass=Singleton):
         self._save_current_endpoints()
         await self.mavlink_manager.restart()
 
-    def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
-        return self.firmware_manager.get_available_firmwares(vehicle, platform)
+    async def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
+        return await self.firmware_manager.get_available_firmwares(vehicle, platform)
 
     async def install_firmware_from_file(
         self, firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
