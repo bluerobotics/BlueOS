@@ -97,8 +97,10 @@ import { OneMoreTime } from '@/one-more-time'
 import helper from '@/store/helper'
 import mavlink from '@/store/mavlink'
 import video from '@/store/video'
+import wifi from '@/store/wifi'
 import { InternetConnectionState } from '@/types/helper'
 import { StreamStatus } from '@/types/video'
+import { WifiInterface } from '@/types/wifi'
 import mavlink_store_get from '@/utils/mavlink'
 import CPUUsage from '@/widgets/CpuPie.vue'
 import Networking from '@/widgets/Networking.vue'
@@ -133,7 +135,43 @@ export default Vue.extend({
     apps(): AppItem[] {
       return [
         ...this.baseApps,
+        ...this.wifiWidgets,
         ...this.videoStreamWidgets,
+      ]
+    },
+    wifi_interfaces(): WifiInterface[] {
+      return wifi.wifi_interfaces
+    },
+    wifiWidgets(): AppItem[] {
+      // If we have detected interfaces from v2 API, show them dynamically
+      if (this.wifi_interfaces.length > 0) {
+        return this.wifi_interfaces.map((iface) => ({
+          icon: 'mdi-wifi',
+          title: `WiFi - ${iface.name}`,
+          component: Networking,
+          size: {
+            w: 0.1,
+            h: 0.4,
+          },
+          props: {
+            interface: iface.name,
+          },
+        }))
+      }
+      // Fallback to wlan0 if no interfaces detected yet
+      return [
+        {
+          icon: 'mdi-wifi',
+          title: 'WiFi Status',
+          component: Networking,
+          size: {
+            w: 0.1,
+            h: 0.4,
+          },
+          props: {
+            interface: 'wlan0',
+          },
+        },
       ]
     },
     baseApps(): AppItem[] {
@@ -178,18 +216,6 @@ export default Vue.extend({
           },
           props: {
             interface: 'eth0',
-          },
-        },
-        {
-          icon: 'mdi-wifi',
-          title: 'WiFi Status',
-          component: Networking,
-          size: {
-            w: 0.1,
-            h: 0.4,
-          },
-          props: {
-            interface: 'wlan0',
           },
         },
       ]
