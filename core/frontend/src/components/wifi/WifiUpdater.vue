@@ -9,7 +9,9 @@ import Notifier from '@/libs/notifier'
 import { OneMoreTime } from '@/one-more-time'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
-import { SavedNetwork, WPANetwork } from '@/types/wifi'
+import {
+  Network, SavedNetwork, WifiInterfaceList, WifiInterfaceScanResult, WifiInterfaceStatus, WPANetwork,
+} from '@/types/wifi'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(wifi_service)
@@ -23,6 +25,10 @@ export default Vue.extend({
       fetch_hotspot_status_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_available_networks_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
       fetch_hotspot_credentials_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      // Multi-interface v2 API tasks
+      fetch_interfaces_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_interface_scans_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
+      fetch_interface_status_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
     }
   },
   mounted() {
@@ -31,6 +37,10 @@ export default Vue.extend({
     this.fetch_hotspot_status_task.setAction(this.fetchHotspotStatus)
     this.fetch_available_networks_task.setAction(this.fetchAvailableNetworks)
     this.fetch_hotspot_credentials_task.setAction(this.fetchHotspotCredentials)
+    // Multi-interface v2 API
+    this.fetch_interfaces_task.setAction(this.fetchInterfaces)
+    this.fetch_interface_scans_task.setAction(this.fetchInterfaceScans)
+    this.fetch_interface_status_task.setAction(this.fetchInterfaceStatus)
   },
   methods: {
     async fetchNetworkStatus(): Promise<void> {
@@ -145,6 +155,80 @@ export default Vue.extend({
           if (isBackendOffline(error)) { return }
           const message = `Could not fetch saved networks: ${error.message}.`
           notifier.pushError('WIFI_SAVED_FETCH_FAIL', message)
+        })
+    },
+    // Multi-interface v2 API methods
+    async fetchInterfaces(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL_V2}/interfaces/`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          const data = response.data as WifiInterfaceList
+          wifi.setWifiInterfaces(data.interfaces)
+        })
+        .catch((error) => {
+          // Silently fail - v2 API might not be available
+          if (!isBackendOffline(error)) {
+            console.debug('v2 interfaces API not available:', error.message)
+          }
+        })
+    },
+    async fetchInterfaceScans(): Promise<void> {
+      // Fetch scan results for all interfaces
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL_V2}/wifi/scan`,
+        timeout: 30000,
+      })
+        .then((response) => {
+          const results = response.data as WifiInterfaceScanResult[]
+          const saved_networks_ssids = wifi.saved_networks?.map((network: SavedNetwork) => network.ssid) || []
+
+          for (const result of results) {
+            const networks: Network[] = result.networks.map((network: WPANetwork) => ({
+              ssid: network.ssid,
+              signal: network.signallevel,
+              locked: network.flags.includes('WPA'),
+              saved: saved_networks_ssids.includes(network.ssid),
+              bssid: network.bssid,
+              frequency: network.frequency,
+            }))
+            wifi.setInterfaceScanResults({
+              interface_name: result.interface,
+              networks,
+            })
+          }
+        })
+        .catch((error) => {
+          // Silently fail - v2 API might not be available
+          if (!isBackendOffline(error)) {
+            console.debug('v2 scan API not available:', error.message)
+          }
+        })
+    },
+    async fetchInterfaceStatus(): Promise<void> {
+      // Fetch connection status for all interfaces (includes bssid)
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL_V2}/wifi/status`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          const results = response.data as WifiInterfaceStatus[]
+          for (const status of results) {
+            wifi.setInterfaceStatus({
+              interface_name: status.interface,
+              status,
+            })
+          }
+        })
+        .catch((error) => {
+          // Silently fail - v2 API might not be available
+          if (!isBackendOffline(error)) {
+            console.debug('v2 status API not available:', error.message)
+          }
         })
     },
   },
