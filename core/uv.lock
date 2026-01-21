@@ -75,6 +75,7 @@ name = "ardupilot-manager"
 version = "0.0.1"
 source = { virtual = "services/ardupilot_manager" }
 dependencies = [
+    { name = "aiocache" },
     { name = "appdirs" },
     { name = "commonwealth" },
     { name = "fastapi" },
@@ -93,6 +94,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiocache", specifier = "==0.12.2" },
     { name = "appdirs", specifier = "==1.4.4" },
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "fastapi", specifier = "==0.105.0" },
