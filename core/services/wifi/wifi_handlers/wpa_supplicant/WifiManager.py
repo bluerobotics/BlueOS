@@ -391,7 +391,13 @@ class WifiManager(AbstractWifiManager):
 
     def trigger_dhcp_client(self) -> None:
         """Trigger dhclient to get an IP address."""
-        subprocess.run(["dhcpcd", "-n", "wlan0"], check=False)
+        # Use the configured socket name (interface) instead of hardcoded wlan0
+        interface = getattr(self, "args", None) and getattr(self.args, "socket_name", None)
+        if interface:
+            subprocess.run(["dhcpcd", "-n", interface], check=False)
+        else:
+            # Fallback to wlan0 for backward compatibility
+            subprocess.run(["dhcpcd", "-n", "wlan0"], check=False)
 
     async def auto_reconnect(self, seconds_before_reconnecting: float) -> None:
         """Re-enable all saved networks if disconnected for more than specified time.

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -59,3 +59,58 @@ class ConnectionStatus(str, Enum):
     JUST_CONNECTED = "JUST_CONNECTED"
     STILL_CONNECTED = "STILL_CONNECTED"
     UNKNOWN = "UNKNOWN"
+
+
+# API v2 models for multi-interface support
+
+
+class WifiInterface(BaseModel):
+    """Represents a WiFi interface on the system."""
+
+    name: str
+    connected: bool
+    ssid: Optional[str]
+    signal_strength: Optional[int]
+    ip_address: Optional[str]
+    mac_address: Optional[str]
+
+
+class WifiInterfaceStatus(BaseModel):
+    """Extended status for a specific WiFi interface."""
+
+    interface: str
+    state: str
+    ssid: Optional[str]
+    bssid: Optional[str]
+    ip_address: Optional[str]
+    signal_strength: Optional[int]
+    frequency: Optional[int]
+    key_mgmt: Optional[str]
+
+
+class WifiInterfaceScanResult(BaseModel):
+    """Scan results for a specific interface."""
+
+    interface: str
+    networks: List[ScannedWifiNetwork]
+
+
+class ConnectRequest(BaseModel):
+    """Request to connect to a network on a specific interface."""
+
+    interface: str
+    credentials: WifiCredentials
+    hidden: bool = False
+
+
+class DisconnectRequest(BaseModel):
+    """Request to disconnect a specific interface."""
+
+    interface: str
+
+
+class WifiInterfaceList(BaseModel):
+    """List of available WiFi interfaces."""
+
+    interfaces: List[WifiInterface]
+    hotspot_interface: str = "wlan0"
