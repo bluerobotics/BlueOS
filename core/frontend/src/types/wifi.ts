@@ -10,7 +10,7 @@ export interface Network {
 export interface HotspotStatus {
     enabled: boolean
     supported: boolean
-  }
+}
 
 export interface WifiStatus {
     bssid: string
@@ -47,4 +47,46 @@ export interface SavedNetwork {
 export interface NetworkCredentials {
     ssid: string
     password: string
+}
+
+// API v2 types for multi-interface support
+
+export interface WifiInterface {
+    name: string
+    connected: boolean
+    ssid: string | null
+    signal_strength: number | null
+    ip_address: string | null
+    mac_address: string | null
+}
+
+export interface WifiInterfaceList {
+    interfaces: WifiInterface[]
+    hotspot_interface: string
+}
+
+export interface WifiInterfaceStatus {
+    interface: string
+    state: string
+    ssid: string | null
+    bssid: string | null
+    ip_address: string | null
+    signal_strength: number | null
+    frequency: number | null
+    key_mgmt: string | null
+}
+
+export interface WifiInterfaceScanResult {
+    interface: string
+    networks: WPANetwork[]
+}
+
+export interface ConnectRequest {
+    interface: string
+    credentials: NetworkCredentials
+    hidden: boolean
+}
+
+export interface DisconnectRequest {
+    interface: string
 }
