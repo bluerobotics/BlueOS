@@ -124,7 +124,7 @@ SERVICES=(
     'bridget',0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/bridget/main.py $RUN_AS_REGULAR_USER_END"
     'commander',250,"$SERVICES_PATH/commander/main.py"
     'nmea_injector',250,"nice -19 $SERVICES_PATH/nmea_injector/main.py"
-    'helper',250,"$SERVICES_PATH/helper/main.py"
+    'helper',250,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/helper/main.py"
     'iperf3',250," iperf3 --server --port 5201"
     'linux2rest',250,"linux2rest --log-settings netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10,usb=60"
     'filebrowser',250,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
