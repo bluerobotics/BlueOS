@@ -10,8 +10,9 @@ import dpath
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, Depends, FastAPI, HTTPException
 from fastapi import Path as FastPath
+from fastapi import Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -62,6 +63,17 @@ def write_db(data: Dict[str, Any]) -> None:
         json.dump(data, f)
 
 
+async def parse_nullable_body(request: Request) -> Any:
+    body = await request.body()
+    if not body:
+        return None
+
+    try:
+        return json.loads(body)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {e}") from e
+
+
 @app.post("/overwrite")
 async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
     logger.debug(f"Overwrite: {json.dumps(payload)}")
@@ -71,7 +83,10 @@ async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
 
 @app.post("/set/{path:path}")
 @version(1, 0)
-async def write_data(path: str = FastPath(..., regex=r"^.*$"), payload: Any = Body(...)) -> JSONResponse:
+async def write_data(
+    path: str = FastPath(..., pattern=r"^.*$"),
+    payload: Any = Depends(parse_nullable_body),
+) -> JSONResponse:
     logger.debug(f"Write path: {path}, {json.dumps(payload)}")
     current_data = read_db()
     dpath.new(current_data, path, payload)
