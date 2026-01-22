@@ -149,6 +149,8 @@
           <json-viewer
             :value="JSON.parse(extension.permissions ?? '{}')"
             :expand-depth="5"
+            :show-array-index="false"
+            :show-double-quotes="true"
           />
         </v-expansion-panel-content>
       </v-expansion-panel>
@@ -166,6 +168,8 @@
           <json-viewer
             :value="JSON.parse(extension.user_permissions ?? '{}')"
             :expand-depth="5"
+            :show-array-index="false"
+            :show-double-quotes="true"
           />
         </v-expansion-panel-content>
       </v-expansion-panel>
