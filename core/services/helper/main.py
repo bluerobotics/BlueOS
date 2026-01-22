@@ -112,7 +112,7 @@ class ServiceInfo(BaseModel):
     versions: List[str]
     port: int
     path: Optional[str]
-    metadata: Optional[ServiceMetadata]
+    metadata: Optional[ServiceMetadata] = None
 
     def __hash__(self) -> int:
         return hash(self.port)
