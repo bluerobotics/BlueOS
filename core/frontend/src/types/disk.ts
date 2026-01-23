@@ -29,3 +29,10 @@ export interface DiskSpeedResult {
   success: boolean
   error: string | null
 }
+
+export interface DiskSpeedTestPoint {
+  size_mb: number
+  write_speed: number | null
+  read_speed: number | null
+  total_tests?: number
+}
