@@ -34,11 +34,6 @@
           Parameters reset <b>successful</b>. <span v-if="!done"> Please reboot the vehicle to apply changes. </span>
         </v-alert>
       </v-card-actions>
-      <ParameterLoader
-        v-if="selected_paramset"
-        :parameters="selected_paramset"
-        @done="selected_paramset = {}"
-      />
     </v-card>
     <v-card class="card-container">
       <v-card-title class="align-center">
@@ -61,13 +56,13 @@
         <p v-if="(Object.keys(filtered_param_sets).length === 0)">
           No parameters available for this setup
         </p>
-        <ParameterLoader
-          v-if="selected_paramset"
-          :parameters="selected_paramset"
-          @done="selected_paramset = {}"
-        />
       </v-card-actions>
     </v-card>
+    <ParameterLoader
+      v-if="selected_paramset"
+      :parameters="selected_paramset"
+      @done="selected_paramset = {}"
+    />
 
     <WarningDialog
       v-model="show_warning"
