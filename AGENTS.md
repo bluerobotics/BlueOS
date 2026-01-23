@@ -46,6 +46,7 @@ When writing code:
 - Use 120 character line length
 - No docstrings unless the function is non-obvious
 - No comments unless explaining "why", never "what"
+- Preserve existing comments when refactoring code. Do not delete comments from code you haven't logically changed
 - Prefer editing existing files over creating new ones
 - Use optional chaining (`?.`) when possible in typescript
 - Use `v-tooltip` over `title` in vue2 components
