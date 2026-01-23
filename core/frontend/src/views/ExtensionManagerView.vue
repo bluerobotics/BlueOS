@@ -1237,7 +1237,7 @@ export default Vue.extend({
 }
 
 pre.logs {
-  color: rgba(var(--v-theme-on-surface), 0.9);
+  color: var(--v-sheet_bg-base);
   background: var(--v-sheet_bg_complement-base);
   padding: 10px;
   overflow-x: scroll;
