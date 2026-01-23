@@ -149,7 +149,7 @@
       <!-- Speed Test Tab -->
       <v-tab-item>
         <v-container class="d-flex flex-row align-center justify-center fluid">
-          <v-card min-width="390px" class="ma-5">
+          <v-card max-width="500px" class="ma-5">
             <v-card-title class="justify-center">
               Disk Speed Test
             </v-card-title>
@@ -159,55 +159,53 @@
             <v-col>
               <v-col class="d-flex justify-center">
                 <v-progress-circular
-                  v-if="speedTesting"
                   :rotate="90"
                   :width="15"
-                  :indeterminate="speedTesting"
+                  :value="totalTests > 0 ? speedResults.length * 100 / totalTests : 0"
+                  :indeterminate="speedTesting && speedResults.length === 0"
                   ratio="1"
                   color="primary"
                   size="200"
                 >
-                  <span v-if="speedTesting">Testing...</span>
+                  <span v-if="speedTesting">{{ speedTestProgress }}</span>
+                  <span v-else-if="hasResults">{{ speedResults.length }}/{{ totalTests }}</span>
                   <span v-else>Click to start</span>
                 </v-progress-circular>
 
-                <v-list v-else>
+                <v-list>
                   <v-list-item>
                     <v-list-item-icon>
-                      <v-icon v-tooltip="'Write speed'">
-                        mdi-alpha-w-box-outline
+                      <v-icon v-tooltip="'Write speed (avg)'">
+                        mdi-pencil
                       </v-icon>
                     </v-list-item-icon>
                     <v-list-item-subtitle>
-                      {{ speedResult?.write_speed_mbps ? speedResult.write_speed_mbps.toFixed(2) : '...' }} MiB/s
+                      {{ avgWriteSpeed }} MiB/s
                     </v-list-item-subtitle>
                   </v-list-item>
 
                   <v-list-item>
                     <v-list-item-icon>
-                      <v-icon v-tooltip="'Read speed'">
-                        mdi-alpha-r-box-outline
+                      <v-icon v-tooltip="'Read speed (avg)'">
+                        mdi-book-open-page-variant
                       </v-icon>
                     </v-list-item-icon>
                     <v-list-item-subtitle>
-                      {{ speedResult?.read_speed_mbps ? speedResult.read_speed_mbps.toFixed(2) : '...' }} MiB/s
+                      {{ avgReadSpeed }} MiB/s
                     </v-list-item-subtitle>
                   </v-list-item>
                 </v-list>
               </v-col>
 
+              <v-col v-if="hasResults">
+                <disk-speed-graph
+                  style="width: 100%"
+                  :data="speedResults"
+                />
+              </v-col>
+
               <v-alert v-if="speedError" type="error" dense outlined class="ma-4">
                 {{ speedError }}
-              </v-alert>
-
-              <v-alert
-                v-if="speedResult && !speedResult.success"
-                type="warning"
-                dense
-                outlined
-                class="ma-4"
-              >
-                Test failed: {{ speedResult.error }}
               </v-alert>
 
               <div
@@ -238,12 +236,16 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import DiskSpeedGraph from '@/components/disk/DiskSpeedGraph.vue'
 import disk_store from '@/store/disk'
-import { DiskNode, DiskSpeedResult } from '@/types/disk'
+import { DiskNode, DiskSpeedTestPoint } from '@/types/disk'
 import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'DiskView',
+  components: {
+    DiskSpeedGraph,
+  },
   data() {
     return {
       activeTab: 0,
@@ -267,11 +269,14 @@ export default Vue.extend({
     error(): string | null {
       return disk_store.error
     },
-    speedResult(): DiskSpeedResult | null {
-      return disk_store.speedResult
+    speedResults(): DiskSpeedTestPoint[] {
+      return disk_store.speedResults
     },
     speedTesting(): boolean {
       return disk_store.speedTesting
+    },
+    speedTestProgress(): string {
+      return disk_store.speedTestProgress
     },
     speedError(): string | null {
       return disk_store.speedError
@@ -302,15 +307,33 @@ export default Vue.extend({
     },
     state(): string {
       if (this.speedTesting) {
-        return 'Running test...'
+        return this.speedTestProgress || 'Running test...'
       }
-      if (this.speedResult?.success) {
+      if (this.totalTests > 0 && this.speedResults.length === this.totalTests) {
         return 'Test complete'
       }
-      if (this.speedResult && !this.speedResult.success) {
+      if (this.speedError) {
         return 'Test failed'
       }
       return 'Click to start'
+    },
+    hasResults(): boolean {
+      return this.speedResults.length > 0
+    },
+    totalTests(): number {
+      return this.speedResults[0]?.total_tests ?? 0
+    },
+    avgWriteSpeed(): string {
+      const speeds = this.speedResults.map((r) => r.write_speed).filter((s): s is number => s !== null)
+      if (speeds.length === 0) return '...'
+      const avg = speeds.reduce((a, b) => a + b, 0) / speeds.length
+      return avg.toFixed(2)
+    },
+    avgReadSpeed(): string {
+      const speeds = this.speedResults.map((r) => r.read_speed).filter((s): s is number => s !== null)
+      if (speeds.length === 0) return '...'
+      const avg = speeds.reduce((a, b) => a + b, 0) / speeds.length
+      return avg.toFixed(2)
     },
   },
   mounted(): void {
@@ -395,7 +418,7 @@ export default Vue.extend({
       return sizeBytes / parentSize * 100
     },
     async runSpeedTest(): Promise<void> {
-      await disk_store.runSpeedTest(1024 * 1024 * 1024)
+      await disk_store.runMultiSizeSpeedTest()
     },
     prettifySize,
   },
