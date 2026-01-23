@@ -3,8 +3,9 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { DiskSpeedResult, DiskUsageQuery, DiskUsageResponse } from '@/types/disk'
+import { DiskSpeedResult, DiskSpeedTestPoint, DiskUsageQuery, DiskUsageResponse } from '@/types/disk'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { parseStreamingResponse } from '@/utils/streaming'
 
 @Module({ dynamic: true, store, name: 'disk' })
 class DiskStore extends VuexModule {
@@ -20,7 +21,11 @@ class DiskStore extends VuexModule {
 
   speedResult: DiskSpeedResult | null = null
 
+  speedResults: DiskSpeedTestPoint[] = []
+
   speedTesting = false
+
+  speedTestProgress = ''
 
   speedError: string | null = null
 
@@ -50,8 +55,23 @@ class DiskStore extends VuexModule {
   }
 
   @Mutation
+  setSpeedResults(value: DiskSpeedTestPoint[]): void {
+    this.speedResults = value
+  }
+
+  @Mutation
+  addSpeedResult(point: DiskSpeedTestPoint): void {
+    this.speedResults = [...this.speedResults, point]
+  }
+
+  @Mutation
   setSpeedTesting(value: boolean): void {
     this.speedTesting = value
+  }
+
+  @Mutation
+  setSpeedTestProgress(value: string): void {
+    this.speedTestProgress = value
   }
 
   @Mutation
@@ -157,6 +177,57 @@ class DiskStore extends VuexModule {
       .finally(() => {
         this.setSpeedTesting(false)
       })
+  }
+
+  @Action
+  async runMultiSizeSpeedTest(): Promise<void> {
+    this.setSpeedTesting(true)
+    this.setSpeedError(null)
+    this.setSpeedResults([])
+    this.setSpeedTestProgress('Starting tests...')
+
+    let processedFragments = 0
+
+    try {
+      await back_axios({
+        method: 'get',
+        url: `${this.API_URL}/speed/stream`,
+        timeout: 600000,
+        onDownloadProgress: (progressEvent: { event?: { currentTarget?: { response?: string } } }) => {
+          const response = progressEvent.event?.currentTarget?.response
+          if (!response) return
+
+          const fragments = parseStreamingResponse(response)
+          const validFragments = fragments.filter((f) => f.fragment >= 0 && f.status === 200 && f.data)
+
+          for (let i = processedFragments; i < validFragments.length; i++) {
+            const fragment = validFragments[i]
+            if (!fragment.data) continue
+
+            try {
+              const point = JSON.parse(fragment.data) as DiskSpeedTestPoint
+              this.addSpeedResult(point)
+              this.setSpeedTestProgress(`Tested ${point.size_mb} MB`)
+            } catch (e) {
+              console.error('Failed to parse speed test point:', e)
+            }
+          }
+          processedFragments = validFragments.length
+        },
+      })
+
+      this.setSpeedTestProgress('Test complete')
+    } catch (error) {
+      if (isBackendOffline(error)) {
+        this.setSpeedTesting(false)
+        return
+      }
+      const axiosError = error as { response?: { data?: { detail?: string } }; message?: string }
+      const message = axiosError.response?.data?.detail || axiosError.message || 'Unknown error'
+      this.setSpeedError(`Speed test failed: ${message}`)
+    } finally {
+      this.setSpeedTesting(false)
+    }
   }
 }
 
