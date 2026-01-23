@@ -610,8 +610,13 @@ export default Vue.extend({
       this.status_text = tracker.overall_status
     },
     handleLogProgress(progressEvent: ProgressEvent, extension: InstalledExtensionData) {
+      const response = progressEvent?.currentTarget?.response
+      if (!response) {
+        return
+      }
+
       const result = aggregateStreamingResponse(
-        parseStreamingResponse(progressEvent.currentTarget.response),
+        parseStreamingResponse(response),
         (_, buffer) => Boolean(buffer),
       )
 
