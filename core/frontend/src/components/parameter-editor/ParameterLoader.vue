@@ -8,6 +8,17 @@
     <v-card>
       <v-card-title class="pt-6">
         Loading Parameters
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-icon small color="warning" v-bind="attrs" v-on="on">
+              mdi-information-variant-box
+            </v-icon>
+          </template>
+          <span>
+            Yellow parameters are not available on your vehicle.
+            They may not exist in your firmware version or may be disabled by a corresponding _ENABLE parameter.
+          </span>
+        </v-tooltip>
       </v-card-title>
       <v-card-text v-if="different_param_set_length !== 0" height="80%">
         <v-row class="virtual-table-row">
