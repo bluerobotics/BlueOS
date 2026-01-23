@@ -1131,8 +1131,13 @@ export default Vue.extend({
       }
     },
     handleLogProgress(progressEvent: StreamProgressEvent, extension: InstalledExtensionData) {
+      const response = progressEvent?.currentTarget?.response
+      if (!response) {
+        return
+      }
+
       const result = aggregateStreamingResponse(
-        parseStreamingResponse(progressEvent.currentTarget.response),
+        parseStreamingResponse(response),
         (_, buffer) => Boolean(buffer),
       )
 
