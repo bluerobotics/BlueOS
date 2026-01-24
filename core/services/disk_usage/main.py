@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -9,12 +10,14 @@ import tempfile
 import time
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
+from commonwealth.utils.streaming import streamer
 from fastapi import APIRouter, FastAPI, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from fastapi_versioning import VersionedFastAPI, versioned_api_route
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -54,6 +57,13 @@ class DiskSpeedResult(BaseModel):
     seed: str = Field(..., description="Seed used for the test")
     success: bool = Field(..., description="Whether the test completed successfully")
     error: Optional[str] = Field(None, description="Error message if test failed")
+
+
+class DiskSpeedTestPoint(BaseModel):
+    size_mb: int = Field(..., description="Test size in MB")
+    write_speed: Optional[float] = Field(None, description="Write speed in MiB/s")
+    read_speed: Optional[float] = Field(None, description="Read speed in MiB/s")
+    total_tests: Optional[int] = Field(None, description="Total number of tests in the sequence")
 
 
 DiskNode.update_forward_refs()
@@ -304,19 +314,8 @@ def parse_disktest_speed(output: str) -> tuple[Optional[float], Optional[float],
 
 
 # pylint: disable=too-many-locals
-@disk_router.get(
-    "/speed",
-    response_model=DiskSpeedResult,
-    summary="Run disk speed test using disktest binary.",
-)
-@to_http_exception
-async def disk_speed(
-    size_bytes: int = Query(
-        1024 * 1024 * 1024,
-        ge=1024 * 1024,
-        description="Number of bytes to test (default 1 GiB).",
-    ),
-) -> DiskSpeedResult:
+async def run_single_speed_test(size_bytes: int) -> DiskSpeedResult:
+    """Run a single disk speed test and return the result."""
     disktest_binary = "disktest"
     temp_file_path: Optional[Path] = None
 
@@ -406,6 +405,57 @@ async def disk_speed(
                 logger.debug(f"Cleaned up temporary file: {temp_file_path}")
             except Exception as e:
                 logger.warning(f"Failed to clean up temporary file {temp_file_path}: {e}")
+
+
+@disk_router.get(
+    "/speed",
+    response_model=DiskSpeedResult,
+    summary="Run disk speed test using disktest binary.",
+)
+@to_http_exception
+async def disk_speed(
+    size_bytes: int = Query(
+        1024 * 1024 * 1024,
+        ge=1024 * 1024,
+        description="Number of bytes to test (default 1 GiB).",
+    ),
+) -> DiskSpeedResult:
+    return await run_single_speed_test(size_bytes)
+
+
+async def multi_size_speed_test_generator() -> AsyncGenerator[str, None]:
+    """Generator that runs speed tests at multiple sizes and yields JSON results."""
+    test_sizes_mb = [10, 50, 100, 200]
+    total_tests = len(test_sizes_mb)
+
+    for size_mb in test_sizes_mb:
+        size_bytes = size_mb * 1024 * 1024
+        result = await run_single_speed_test(size_bytes)
+
+        point = DiskSpeedTestPoint(
+            size_mb=size_mb,
+            write_speed=result.write_speed_mbps,
+            read_speed=result.read_speed_mbps,
+            total_tests=total_tests,
+        )
+        yield json.dumps(point.dict())
+
+
+@disk_router.get(
+    "/speed/stream",
+    summary="Run multi-size disk speed test with streaming results.",
+)
+async def disk_speed_stream() -> StreamingResponse:
+    return StreamingResponse(
+        streamer(multi_size_speed_test_generator(), heartbeats=1.0),
+        media_type="application/x-ndjson",
+        headers={
+            "Content-Type": "application/x-ndjson",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 fast_api_app = FastAPI(
