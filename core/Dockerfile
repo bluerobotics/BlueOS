@@ -33,7 +33,7 @@ RUN /home/pi/tools/install-static-binaries.sh
 # Generation of python virtual environment for our libraries and services
 FROM base AS install-services-and-libs
 
-RUN apt update && apt install -y --no-install-recommends g++
+RUN apt update && apt install -y --no-install-recommends g++ libcap-dev
 
 # UV installation
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
