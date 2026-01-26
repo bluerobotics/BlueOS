@@ -147,7 +147,7 @@
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
-            :value="JSON.parse(extension.permissions ?? '{}')"
+            :value="parsed_permissions"
             :expand-depth="5"
             :show-array-index="false"
             :show-double-quotes="true"
@@ -166,7 +166,7 @@
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
-            :value="JSON.parse(extension.user_permissions ?? '{}')"
+            :value="parsed_user_permissions"
             :expand-depth="5"
             :show-array-index="false"
             :show-double-quotes="true"
@@ -243,6 +243,7 @@ import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import WarningDialog from '@/components/common/WarningDialog.vue'
 import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
+import { JSONValue } from '@/types/common'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 import { Disk } from '@/types/system-information/system'
 import { prettifySize } from '@/utils/helper_functions'
@@ -330,6 +331,12 @@ export default Vue.extend({
     },
     is_extension_major_tom(): boolean {
       return this.extension.identifier === 'blueos.major_tom'
+    },
+    parsed_user_permissions(): JSONValue {
+      return JSON.parse(this.extension.user_permissions ?? '{}')
+    },
+    parsed_permissions(): JSONValue {
+      return JSON.parse(this.extension.permissions ?? '{}')
     },
   },
   methods: {
