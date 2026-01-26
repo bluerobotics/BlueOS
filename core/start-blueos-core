@@ -91,7 +91,7 @@ if [ -f "$HOST_RESOLV_CONF" ]; then
     rm /etc/resolv.conf
     ln -s $HOST_RESOLV_CONF /etc/resolv.conf
 else
-    echo "Waring: Using dockers's resolv.conf, this may cause DNS issues if the host's network configuration changes."
+    echo "Warning: Using Docker's resolv.conf, this may cause DNS issues if the host's network configuration changes."
 fi
 
 # Fix permissions for logging folders to allow other users to alter it
