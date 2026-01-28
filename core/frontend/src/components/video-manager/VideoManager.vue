@@ -136,6 +136,11 @@ export default Vue.extend({
         if (device.name === 'Fake source') {
           return has_active_stream(device) || settings.is_pirate_mode
         }
+
+        // Do not show RadCam's secondary stream
+        if (device.name === 'UnderwaterCam - IPCamera (UnderwaterCam)' && device.source.endsWith('/stream_1')) {
+          return has_active_stream(device) || settings.is_pirate_mode
+        }
         return true
       }
 
