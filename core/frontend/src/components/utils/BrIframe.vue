@@ -2,7 +2,7 @@
   <v-sheet
     width="100%"
     height="100%"
-    style="overflow: hidden; position: relative;"
+    style="overflow: hidden; position: absolute;"
   >
     <spinning-logo
       v-if="!gl_compatible && !iframe_loaded"
