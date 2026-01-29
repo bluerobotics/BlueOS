@@ -290,7 +290,7 @@ class ManifestManager:
 
         versions = await self.fetch_extension_versions(extension_id, stable, manifest_id)
 
-        return ext.versions.get(str(versions[0])) if versions else None
+        return (ext.versions.get(str(versions[0])) or ext.versions.get(f"v{versions[0]}")) if versions else None
 
     async def fetch_extension_version(self, extension_id: str, tag: str) -> Optional[ExtensionVersion]:
         ext = await self.fetch_extension(extension_id)
