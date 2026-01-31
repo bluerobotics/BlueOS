@@ -62,7 +62,7 @@ export interface WifiInterface {
 
 export interface WifiInterfaceList {
     interfaces: WifiInterface[]
-    hotspot_interface: string
+    hotspot_interface: string | null
 }
 
 export interface WifiInterfaceStatus {
@@ -89,4 +89,21 @@ export interface ConnectRequest {
 
 export interface DisconnectRequest {
     interface: string
+}
+
+export interface HotspotRequest {
+    interface: string
+}
+
+export interface HotspotCredentialsRequest {
+    interface: string
+    credentials: NetworkCredentials
+}
+
+export interface InterfaceHotspotStatus {
+    interface: string
+    supported: boolean
+    enabled: boolean
+    ssid: string | null
+    password: string | null
 }

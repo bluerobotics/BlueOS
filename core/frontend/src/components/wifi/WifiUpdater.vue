@@ -167,6 +167,7 @@ export default Vue.extend({
         .then((response) => {
           const data = response.data as WifiInterfaceList
           wifi.setWifiInterfaces(data.interfaces)
+          wifi.setCurrentHotspotInterface(data.hotspot_interface)
         })
         .catch((error) => {
           // Silently fail - v2 API might not be available

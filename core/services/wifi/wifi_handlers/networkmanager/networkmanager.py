@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import re
 import select
 import signal
 import subprocess
@@ -40,8 +41,15 @@ class InvalidConfigurationError(Exception):
     pass
 
 
-HOTSPOT_INTERFACE = "wlan0"
 VIRTUAL_AP_INTERFACE = "uap0"
+
+
+def get_virtual_ap_name(physical_interface: str) -> str:
+    """Generate virtual AP interface name from physical interface name."""
+    match = re.search(r"\d+$", physical_interface)
+    if match:
+        return f"uap{match.group()}"
+    return VIRTUAL_AP_INTERFACE
 
 
 # pylint: disable=too-many-instance-attributes
@@ -62,8 +70,13 @@ class NetworkManagerWifi(AbstractWifiManager):
         self._device_paths: Dict[str, str] = {}
         # Primary device for backward compatibility (first WiFi device found)
         self._device_path: Optional[str] = None
+        # Hotspot processes per interface
+        self._create_ap_processes: Dict[str, subprocess.Popen[str]] = {}
+        # For backward compatibility
         self._create_ap_process: Optional[subprocess.Popen[str]] = None
         self._ap_interface = VIRTUAL_AP_INTERFACE
+        # Track which interface is running hotspot
+        self._hotspot_interface: Optional[str] = None
         self._tasks: List[asyncio.Task[Any]] = []
         self._nm = NetworkManager(self._bus)
         self._nm_settings = NetworkManagerSettings(self._bus)
@@ -80,8 +93,8 @@ class NetworkManagerWifi(AbstractWifiManager):
                 device = NetworkDeviceWireless(device_path, self._bus)
                 if await device.device_type == DeviceType.WIFI:
                     interface_name = await device.interface
-                    # Filter out the virtual AP interface (uap0)
-                    if interface_name != VIRTUAL_AP_INTERFACE:
+                    # Filter out virtual AP interfaces (uap0, uap1, etc.)
+                    if not interface_name.startswith("uap"):
                         devices[interface_name] = device_path
             except Exception as e:
                 logger.debug(f"Error checking device {device_path}: {e}")
@@ -89,59 +102,72 @@ class NetworkManagerWifi(AbstractWifiManager):
 
         return devices
 
-    async def _create_virtual_interface(self) -> bool:
-        """Create virtual AP interface using iw"""
+    async def _create_virtual_interface_for(self, physical_interface: str) -> Optional[str]:
+        """Create virtual AP interface for a specific physical interface."""
+        virtual_ap_name = get_virtual_ap_name(physical_interface)
+
         try:
             # Check if interface already exists
-            existing = subprocess.run(["ip", "link", "show", self._ap_interface], capture_output=True, check=False)
+            existing = subprocess.run(["ip", "link", "show", virtual_ap_name], capture_output=True, check=False)
             if existing.returncode == 0:
-                logger.info(f"Interface {self._ap_interface} already exists")
-                return True
+                logger.info(f"Interface {virtual_ap_name} already exists")
+                return virtual_ap_name
 
-            # Get physical interface name - always use wlan0 for hotspot
-            hotspot_device_path = self._device_paths.get(HOTSPOT_INTERFACE)
-            if not hotspot_device_path:
-                logger.warning(f"Hotspot interface {HOTSPOT_INTERFACE} not found, trying primary device")
-                if not self._device_path:
-                    logger.error("No WiFi device available for hotspot")
-                    return False
-                hotspot_device_path = self._device_path
+            device_path = self._device_paths.get(physical_interface)
+            if not device_path:
+                logger.error(f"Physical interface {physical_interface} not found")
+                return None
 
-            device = NetworkDeviceWireless(hotspot_device_path, self._bus)
+            device = NetworkDeviceWireless(device_path, self._bus)
             phys_name = await device.interface
 
             # Create virtual interface
-            subprocess.run(["iw", "dev", phys_name, "interface", "add", self._ap_interface, "type", "__ap"], check=True)
-            logger.info(f"Created virtual AP interface {self._ap_interface}")
+            subprocess.run(["iw", "dev", phys_name, "interface", "add", virtual_ap_name, "type", "__ap"], check=True)
+            logger.info(f"Created virtual AP interface {virtual_ap_name} from {phys_name}")
 
             # Set interface up
-            subprocess.run(["ip", "link", "set", self._ap_interface, "up"], check=True)
+            subprocess.run(["ip", "link", "set", virtual_ap_name, "up"], check=True)
 
             # Disable power save on both interfaces
             subprocess.run(["iw", phys_name, "set", "power_save", "off"], check=True)
-            subprocess.run(["iw", self._ap_interface, "set", "power_save", "off"], check=True)
+            subprocess.run(["iw", virtual_ap_name, "set", "power_save", "off"], check=True)
 
-            return True
+            return virtual_ap_name
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to create virtual interface: {e}")
+            logger.error(f"Failed to create virtual interface for {physical_interface}: {e}")
+            return None
+
+    async def _create_virtual_interface(self) -> bool:
+        """Create virtual AP interface using iw (backward compatible - uses first available interface)."""
+        # Use first available interface for backward compatibility
+        if not self._device_paths:
+            logger.error("No WiFi device available for hotspot")
             return False
 
-    async def _cleanup_virtual_interface(self) -> None:
-        """Remove virtual AP interface"""
-        try:
-            # Check if interface exists
-            existing = subprocess.run(["ip", "link", "show", self._ap_interface], capture_output=True, check=True)
+        physical_interface = next(iter(self._device_paths.keys()))
+        result = await self._create_virtual_interface_for(physical_interface)
+        if result:
+            self._ap_interface = result
+            return True
+        return False
 
+    async def _cleanup_virtual_interface_for(self, virtual_ap_name: str) -> None:
+        """Remove a specific virtual AP interface."""
+        try:
+            existing = subprocess.run(["ip", "link", "show", virtual_ap_name], capture_output=True, check=False)
             if existing.returncode != 0:
                 return
 
-            # Remove interface
-            subprocess.run(["iw", "dev", self._ap_interface, "del"], check=True)
-            logger.info(f"Removed virtual AP interface {self._ap_interface}")
+            subprocess.run(["iw", "dev", virtual_ap_name, "del"], check=True)
+            logger.info(f"Removed virtual AP interface {virtual_ap_name}")
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to remove virtual interface: {e}")
+            logger.error(f"Failed to remove virtual interface {virtual_ap_name}: {e}")
+
+    async def _cleanup_virtual_interface(self) -> None:
+        """Remove virtual AP interface (backward compatible)."""
+        await self._cleanup_virtual_interface_for(self._ap_interface)
 
     async def start(self) -> None:
         """Start NetworkManagerWifi with signal handlers"""
@@ -157,8 +183,8 @@ class NetworkManagerWifi(AbstractWifiManager):
         # Set primary device for backward compatibility
         if self._device_paths:
             # Prefer wlan0 if available, otherwise use first device
-            if HOTSPOT_INTERFACE in self._device_paths:
-                self._device_path = self._device_paths[HOTSPOT_INTERFACE]
+            if "wlan0" in self._device_paths:
+                self._device_path = self._device_paths["wlan0"]
             else:
                 self._device_path = next(iter(self._device_paths.values()))
 
@@ -538,7 +564,7 @@ class NetworkManagerWifi(AbstractWifiManager):
                 break
 
         if not primary_interface:
-            primary_interface = HOTSPOT_INTERFACE
+            primary_interface = "wlan0"
 
         await self.connect_interface(primary_interface, credentials, hidden)
 
@@ -579,19 +605,20 @@ class NetworkManagerWifi(AbstractWifiManager):
             logger.error(f"Error finding existing connection: {e}")
             return None
 
-    # pylint: disable=too-many-branches
-    async def enable_hotspot(self, save_settings: bool = True) -> bool:
-        if not await self._create_virtual_interface():
-            logger.error("Failed to create virtual interface for AP")
+    # pylint: disable=too-many-branches,too-many-statements
+    async def enable_hotspot_on_interface(self, interface: str, save_settings: bool = True) -> bool:
+        """Enable hotspot on a specific interface."""
+        virtual_ap_name = await self._create_virtual_interface_for(interface)
+        if not virtual_ap_name:
+            logger.error(f"Failed to create virtual interface for {interface}")
             return False
 
         credentials = self.hotspot_credentials()
 
-        # Build create_ap command - always use uap0 for hotspot
         cmd = [
             "create_ap",
             "-n",
-            VIRTUAL_AP_INTERFACE,
+            virtual_ap_name,
             "-g",
             "192.168.42.1",
             "--redirect-to-localhost",
@@ -600,13 +627,17 @@ class NetworkManagerWifi(AbstractWifiManager):
         ]
 
         try:
-            if self._create_ap_process:
-                logger.info("create_ap process already running, cleaning up...")
-                self._create_ap_process.terminate()
-                self._create_ap_process.wait()
-                logger.info("Stopped existing create_ap process")
+            # Stop existing hotspot on this interface if running
+            if interface in self._create_ap_processes:
+                existing_process = self._create_ap_processes[interface]
+                if existing_process.poll() is None:
+                    logger.info(f"Stopping existing hotspot on {interface}...")
+                    existing_process.terminate()
+                    existing_process.wait()
+                del self._create_ap_processes[interface]
+
             # pylint: disable=consider-using-with
-            self._create_ap_process = subprocess.Popen(
+            process = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, bufsize=1
             )
             # pylint: enable=consider-using-with
@@ -614,49 +645,60 @@ class NetworkManagerWifi(AbstractWifiManager):
             success = False
             start_time = asyncio.get_event_loop().time()
             timeout = 30
-            assert self._create_ap_process is not None
             while True:
-                if self._create_ap_process.stdout is not None:
-                    line = self._create_ap_process.stdout.readline()
-                    if not line and self._create_ap_process.poll() is not None:
+                if process.stdout is not None:
+                    line = process.stdout.readline()
+                    if not line and process.poll() is not None:
                         break
 
                     line = line.strip()
                     if line:
-                        logger.info(f"create_ap: {line}")
+                        logger.info(f"create_ap ({interface}): {line}")
                         if "Done" in line or "AP-ENABLED" in line:
                             success = True
                             break
                         if "ERROR" in line:
-                            logger.error(f"create_ap error: {line}")
-                            raise CreateAPException(f"Failed to start create_ap: {line}")
+                            logger.error(f"create_ap error on {interface}: {line}")
+                            raise CreateAPException(f"Failed to start create_ap on {interface}: {line}")
 
                     if asyncio.get_event_loop().time() - start_time > timeout:
-                        logger.error("Timeout waiting for create_ap to start")
+                        logger.error(f"Timeout waiting for create_ap on {interface}")
                         return success
 
                     await asyncio.sleep(0.1)
 
             if not success:
-                logger.error("Failed to start create_ap")
+                logger.error(f"Failed to start create_ap on {interface}")
                 return success
 
-            logger.info(f"Successfully started create_ap with PID {self._create_ap_process.pid}")
+            logger.info(f"Successfully started create_ap on {interface} with PID {process.pid}")
+            self._create_ap_processes[interface] = process
+            self._hotspot_interface = interface
+            # For backward compatibility
+            self._create_ap_process = process
+            self._ap_interface = virtual_ap_name
 
-            self._tasks.append(
-                asyncio.get_event_loop().create_task(self._monitor_create_ap_output(self._create_ap_process))
-            )
+            self._tasks.append(asyncio.get_event_loop().create_task(self._monitor_create_ap_output(process)))
 
             if save_settings:
                 self._settings_manager.settings.hotspot_enabled = True
                 self._settings_manager.save()
-            logger.info("Hotspot enabled")
+            logger.info(f"Hotspot enabled on {interface}")
 
         except CreateAPException as e:
             raise e
         except Exception as e:
-            logger.error(f"Error starting create_ap: {e}")
+            logger.error(f"Error starting create_ap on {interface}: {e}")
         return success
+
+    async def enable_hotspot(self, save_settings: bool = True) -> bool:
+        """Enable hotspot (backward compatible - uses first available interface)."""
+        if not self._device_paths:
+            logger.error("No WiFi device available for hotspot")
+            return False
+
+        interface = next(iter(self._device_paths.keys()))
+        return await self.enable_hotspot_on_interface(interface, save_settings)
 
     async def _monitor_create_ap_output(self, process: subprocess.Popen[str]) -> None:
         """Monitor create_ap process output non-blockingly using select"""
@@ -678,12 +720,38 @@ class NetworkManagerWifi(AbstractWifiManager):
             if process == self._create_ap_process:
                 self._create_ap_process = None
 
+    async def disable_hotspot_on_interface(self, interface: str, save_settings: bool = True) -> None:
+        """Disable hotspot on a specific interface."""
+        if interface in self._create_ap_processes:
+            process = self._create_ap_processes[interface]
+            if process.poll() is None:
+                process.terminate()
+                process.wait()
+            del self._create_ap_processes[interface]
+            logger.info(f"Stopped create_ap process on {interface}")
+
+        virtual_ap_name = get_virtual_ap_name(interface)
+        await self._cleanup_virtual_interface_for(virtual_ap_name)
+
+        if self._hotspot_interface == interface:
+            self._hotspot_interface = None
+            self._create_ap_process = None
+
+        if save_settings and not self._create_ap_processes:
+            self._settings_manager.settings.hotspot_enabled = False
+            self._settings_manager.save()
+
     async def disable_hotspot(self, save_settings: bool = True) -> None:
+        """Disable hotspot (backward compatible - stops all hotspots)."""
+        for interface in list(self._create_ap_processes.keys()):
+            await self.disable_hotspot_on_interface(interface, save_settings=False)
+
+        # Also handle legacy single process
         if self._create_ap_process:
             self._create_ap_process.terminate()
             self._create_ap_process.wait()
             self._create_ap_process = None
-            logger.info("Stopped create_ap process")
+            logger.info("Stopped legacy create_ap process")
 
         await self._cleanup_virtual_interface()
 
@@ -691,11 +759,32 @@ class NetworkManagerWifi(AbstractWifiManager):
             self._settings_manager.settings.hotspot_enabled = False
             self._settings_manager.save()
 
+    async def hotspot_is_running_on_interface(self, interface: str) -> bool:
+        """Check if hotspot is running on a specific interface."""
+        if interface in self._create_ap_processes:
+            return self._create_ap_processes[interface].poll() is None
+        return False
+
     async def hotspot_is_running(self) -> bool:
+        """Check if any hotspot is running (backward compatible)."""
+        for process in self._create_ap_processes.values():
+            if process.poll() is None:
+                return True
         return self._create_ap_process is not None and self._create_ap_process.poll() is None
+
+    async def get_hotspot_interface(self) -> Optional[str]:
+        """Get the interface currently running hotspot, or None if no hotspot is running."""
+        for interface, process in self._create_ap_processes.items():
+            if process.poll() is None:
+                return interface
+        return None
 
     async def supports_hotspot(self) -> bool:
         return True
+
+    async def supports_hotspot_on_interface(self, interface: str) -> bool:
+        """Check if hotspot is supported on a specific interface."""
+        return interface in self._device_paths
 
     async def status(self) -> WifiStatus:
         """Get status of primary interface (backward compatible)."""

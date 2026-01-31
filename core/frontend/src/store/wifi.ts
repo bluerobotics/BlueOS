@@ -4,8 +4,13 @@ import {
 
 import store from '@/store'
 import {
-  Network, NetworkCredentials, SavedNetwork, WifiStatus, HotspotStatus,
-  WifiInterface, WifiInterfaceList, WifiInterfaceScanResult, WifiInterfaceStatus,
+  HotspotStatus,
+  Network,
+  NetworkCredentials,
+  SavedNetwork,
+  WifiInterface,
+  WifiInterfaceStatus,
+  WifiStatus,
 } from '@/types/wifi'
 import { sorted_networks } from '@/utils/wifi'
 
@@ -34,7 +39,7 @@ class WifiStore extends VuexModule {
 
   hotspot_credentials: NetworkCredentials | null = null
 
-  is_loading: boolean = true
+  is_loading = true
 
   // Multi-interface support (v2 API)
   wifi_interfaces: WifiInterface[] = []
@@ -42,6 +47,8 @@ class WifiStore extends VuexModule {
   interface_scan_results: Map<string, Network[]> = new Map()
 
   interface_status: Map<string, WifiInterfaceStatus> = new Map()
+
+  current_hotspot_interface: string | null = null
 
   @Mutation
   setCurrentNetwork(network: Network | null): void {
@@ -120,6 +127,11 @@ class WifiStore extends VuexModule {
   setInterfaceStatus(payload: { interface_name: string; status: WifiInterfaceStatus }): void {
     this.interface_status = new Map(this.interface_status)
     this.interface_status.set(payload.interface_name, payload.status)
+  }
+
+  @Mutation
+  setCurrentHotspotInterface(interface_name: string | null): void {
+    this.current_hotspot_interface = interface_name
   }
 
   get connectable_networks(): Network[] | null {

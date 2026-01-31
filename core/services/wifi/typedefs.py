@@ -109,8 +109,31 @@ class DisconnectRequest(BaseModel):
     interface: str
 
 
+class HotspotRequest(BaseModel):
+    """Request to start/stop hotspot on a specific interface."""
+
+    interface: str
+
+
+class HotspotCredentialsRequest(BaseModel):
+    """Request to update hotspot credentials for a specific interface."""
+
+    interface: str
+    credentials: WifiCredentials
+
+
+class InterfaceHotspotStatus(BaseModel):
+    """Hotspot status for a specific interface."""
+
+    interface: str
+    supported: bool
+    enabled: bool
+    ssid: Optional[str]
+    password: Optional[str]
+
+
 class WifiInterfaceList(BaseModel):
     """List of available WiFi interfaces."""
 
     interfaces: List[WifiInterface]
-    hotspot_interface: str = "wlan0"
+    hotspot_interface: Optional[str] = None

@@ -12,7 +12,7 @@
       </v-toolbar-title>
       <v-spacer />
       <v-btn
-        v-if="is_hotspot_interface"
+        v-if="is_hotspot_running_on_this_interface"
         v-tooltip="'Hotspot settings'"
         icon
         @click="show_settings_dialog = true"
@@ -20,13 +20,12 @@
         <v-icon>mdi-cog</v-icon>
       </v-btn>
       <v-btn
-        v-if="is_hotspot_interface"
-        v-tooltip="'Toggle hotspot'"
+        v-tooltip="hotspot_status ? 'Disable hotspot' : 'Enable hotspot'"
         icon
         :color="hotspot_status ? 'success' : 'gray'"
         hide-details="auto"
         :loading="hotspot_status_loading"
-        :disabled="hotspot_supported === false"
+        :disabled="!hotspot_supported"
         @click="toggleHotspot"
       >
         <v-icon>{{ hotspot_status ? 'mdi-access-point' : 'mdi-access-point-off' }}</v-icon>
@@ -94,8 +93,8 @@ import Vue from 'vue'
 import Notifier from '@/libs/notifier'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
-import { Network, WifiInterfaceStatus } from '@/types/wifi'
-import back_axios from '@/utils/api'
+import { InterfaceHotspotStatus, Network, WifiInterfaceStatus } from '@/types/wifi'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import InterfaceConnectionDialog from './InterfaceConnectionDialog.vue'
@@ -125,6 +124,7 @@ export default Vue.extend({
       show_settings_dialog: false,
       hotspot_status_loading: false,
       ssid_filter: undefined as string | undefined,
+      interface_hotspot_status: null as InterfaceHotspotStatus | null,
     }
   },
   computed: {
@@ -148,15 +148,18 @@ export default Vue.extend({
         (network) => network.ssid.toLowerCase().includes(filter),
       )
     },
-    is_hotspot_interface(): boolean {
-      return this.interfaceName === 'wlan0'
+    is_hotspot_running_on_this_interface(): boolean {
+      return wifi.current_hotspot_interface === this.interfaceName
     },
-    hotspot_status(): boolean | null {
-      return wifi.hotspot_status?.enabled ?? null
+    hotspot_status(): boolean {
+      return this.interface_hotspot_status?.enabled ?? false
     },
-    hotspot_supported(): boolean | null {
-      return wifi.hotspot_status?.supported ?? null
+    hotspot_supported(): boolean {
+      return this.interface_hotspot_status?.supported ?? true
     },
+  },
+  mounted() {
+    this.fetchHotspotStatus()
   },
   methods: {
     isNetworkConnected(network: Network): boolean {
@@ -180,19 +183,56 @@ export default Vue.extend({
     forgetNetwork(network: Network): void {
       wifi.forgettNetwork(network)
     },
-    async toggleHotspot(): Promise<void> {
-      this.hotspot_status_loading = true
+    async fetchHotspotStatus(): Promise<void> {
       await back_axios({
-        method: 'post',
-        url: `${wifi.API_URL}/hotspot`,
-        params: { enable: !this.hotspot_status },
-        timeout: 20000,
+        method: 'get',
+        url: `${wifi.API_URL_V2}/wifi/hotspot/${this.interfaceName}`,
+        timeout: 10000,
       })
-        .then(() => {
-          notifier.pushSuccess('HOTSPOT_STATUS_TOGGLE_SUCCESS', 'Successfully toggled hotspot state.')
+        .then((response) => {
+          this.interface_hotspot_status = response.data
         })
         .catch((error) => {
-          notifier.pushBackError('HOTSPOT_STATUS_TOGGLE_FAIL', error, true)
+          if (isBackendOffline(error)) return
+          // Fallback to v1 API for backward compatibility
+          this.interface_hotspot_status = {
+            interface: this.interfaceName,
+            supported: wifi.hotspot_status?.supported ?? true,
+            enabled: wifi.hotspot_status?.enabled ?? false,
+            ssid: null,
+            password: null,
+          }
+        })
+    },
+    async toggleHotspot(): Promise<void> {
+      this.hotspot_status_loading = true
+      const action = this.hotspot_status ? 'disable' : 'enable'
+
+      await back_axios({
+        method: 'post',
+        url: `${wifi.API_URL_V2}/wifi/hotspot/${action}`,
+        data: { interface: this.interfaceName },
+        timeout: 30000,
+      })
+        .then(() => {
+          notifier.pushSuccess('HOTSPOT_STATUS_TOGGLE_SUCCESS', `Hotspot ${action}d on ${this.interfaceName}.`)
+          this.fetchHotspotStatus()
+        })
+        .catch((error) => {
+          if (isBackendOffline(error)) return
+          // Fallback to v1 API
+          back_axios({
+            method: 'post',
+            url: `${wifi.API_URL}/hotspot`,
+            params: { enable: !this.hotspot_status },
+            timeout: 20000,
+          })
+            .then(() => {
+              notifier.pushSuccess('HOTSPOT_STATUS_TOGGLE_SUCCESS', 'Successfully toggled hotspot state.')
+            })
+            .catch((fallbackError) => {
+              notifier.pushBackError('HOTSPOT_STATUS_TOGGLE_FAIL', fallbackError, true)
+            })
         })
         .finally(() => {
           this.hotspot_status_loading = false

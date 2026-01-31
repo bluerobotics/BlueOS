@@ -1,13 +1,17 @@
 import sys
-from typing import List, cast
+from typing import Dict, List, Optional, cast
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi_versioning import versioned_api_route
 from typedefs import (
     ConnectRequest,
     DisconnectRequest,
+    HotspotCredentialsRequest,
+    HotspotRequest,
+    InterfaceHotspotStatus,
     SavedWifiNetwork,
     ScannedWifiNetwork,
+    WifiCredentials,
     WifiInterfaceScanResult,
     WifiInterfaceStatus,
 )
@@ -222,3 +226,120 @@ async def remove_saved_network(ssid: str) -> dict[str, str]:
         ) from error
 
     return {"status": "removed", "ssid": ssid}
+
+
+# Hotspot endpoints
+
+
+@wifi_router_v2.get(
+    "/hotspot/{interface_name}",
+    response_model=InterfaceHotspotStatus,
+    summary="Get hotspot status for a specific interface.",
+)
+async def get_hotspot_status(interface_name: str) -> InterfaceHotspotStatus:
+    """Get hotspot status for a specific WiFi interface."""
+    manager = get_wifi_manager()
+
+    supported = True
+    enabled = False
+    credentials: Optional[WifiCredentials] = None
+
+    if hasattr(manager, "supports_hotspot_on_interface"):
+        supported = await manager.supports_hotspot_on_interface(interface_name)
+    elif hasattr(manager, "supports_hotspot"):
+        supported = await manager.supports_hotspot()
+
+    if hasattr(manager, "hotspot_is_running_on_interface"):
+        enabled = await manager.hotspot_is_running_on_interface(interface_name)
+    elif hasattr(manager, "get_hotspot_interface"):
+        # Check if hotspot is running on this specific interface
+        current_hotspot_iface = await manager.get_hotspot_interface()
+        enabled = current_hotspot_iface == interface_name
+    elif hasattr(manager, "hotspot_is_running"):
+        # Legacy fallback - can only tell if hotspot is running, not on which interface
+        # Assume first interface for backward compatibility
+        enabled = await manager.hotspot_is_running() and interface_name == "wlan0"
+
+    if hasattr(manager, "hotspot_credentials"):
+        credentials = manager.hotspot_credentials()
+
+    return InterfaceHotspotStatus(
+        interface=interface_name,
+        supported=supported,
+        enabled=enabled,
+        ssid=credentials.ssid if credentials else None,
+        password=credentials.password if credentials else None,
+    )
+
+
+@wifi_router_v2.post(
+    "/hotspot/enable",
+    summary="Enable hotspot on a specific interface.",
+)
+async def enable_hotspot(request: HotspotRequest) -> Dict[str, str]:
+    """Enable hotspot on a specific WiFi interface.
+
+    This allows running a hotspot on any available WiFi interface,
+    not just the default one.
+    """
+    manager = get_wifi_manager()
+
+    try:
+        if hasattr(manager, "enable_hotspot_on_interface"):
+            success = await manager.enable_hotspot_on_interface(request.interface)
+        else:
+            success = await manager.enable_hotspot()
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to enable hotspot on {request.interface}",
+            )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+    return {"status": "enabled", "interface": request.interface}
+
+
+@wifi_router_v2.post(
+    "/hotspot/disable",
+    summary="Disable hotspot on a specific interface.",
+)
+async def disable_hotspot(request: HotspotRequest) -> Dict[str, str]:
+    """Disable hotspot on a specific WiFi interface."""
+    manager = get_wifi_manager()
+
+    try:
+        if hasattr(manager, "disable_hotspot_on_interface"):
+            await manager.disable_hotspot_on_interface(request.interface)
+        else:
+            await manager.disable_hotspot()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+    return {"status": "disabled", "interface": request.interface}
+
+
+@wifi_router_v2.post(
+    "/hotspot/credentials",
+    summary="Update hotspot credentials.",
+)
+async def set_hotspot_credentials(request: HotspotCredentialsRequest) -> Dict[str, str]:
+    """Update the hotspot SSID and password.
+
+    Note: Changes take effect on next hotspot enable.
+    """
+    manager = get_wifi_manager()
+
+    try:
+        if hasattr(manager, "set_hotspot_credentials"):
+            await manager.set_hotspot_credentials(request.credentials)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Hotspot credential management not supported by this handler",
+            )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+    return {"status": "updated", "ssid": request.credentials.ssid}

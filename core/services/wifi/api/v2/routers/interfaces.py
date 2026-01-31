@@ -29,10 +29,8 @@ async def list_interfaces() -> WifiInterfaceList:
     """Get list of all available WiFi interfaces on the system.
 
     Returns interface name, connection status, connected SSID (if any),
-    signal strength, and IP address.
-
-    Note: The hotspot interface (wlan0) is included but hotspot operations
-    are always bound to wlan0 regardless of which interface is used for client connections.
+    signal strength, and IP address. Also indicates which interface (if any)
+    is currently running the hotspot.
     """
     manager = get_wifi_manager()
 
@@ -53,10 +51,12 @@ async def list_interfaces() -> WifiInterfaceList:
         except Exception as e:
             logger.error(f"Error getting interface status: {e}")
             interfaces = []
+        hotspot_interface = "wlan0" if await manager.hotspot_is_running() else None
     else:
         interfaces = await manager.get_wifi_interfaces()
+        hotspot_interface = await manager.get_hotspot_interface() if hasattr(manager, "get_hotspot_interface") else None
 
-    return WifiInterfaceList(interfaces=interfaces, hotspot_interface="wlan0")
+    return WifiInterfaceList(interfaces=interfaces, hotspot_interface=hotspot_interface)
 
 
 @interfaces_router_v2.get("/{interface_name}", response_model=WifiInterface, summary="Get specific interface status.")
