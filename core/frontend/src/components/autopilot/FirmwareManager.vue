@@ -231,6 +231,7 @@ import autopilot from '@/store/autopilot_manager'
 import commander from '@/store/commander'
 import {
   Firmware,
+  FirmwareVehicleType,
   FlightController,
   FlightControllerFlags,
   Vehicle,
@@ -267,6 +268,7 @@ export default Vue.extend({
     const { current_board } = autopilot
     const { rebootOnBoardComputer, requestOnBoardComputerReboot } = commander
     return {
+      autopilot,
       settings,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
       install_status: InstallStatus.NotStarted,
@@ -371,6 +373,14 @@ export default Vue.extend({
         this.requestOnBoardComputerReboot()
       }
     },
+    'autopilot.firmware_vehicle_type': {
+      handler(new_value: FirmwareVehicleType | null): void {
+        if (this.chosen_vehicle === null && new_value !== null) {
+          this.setVehicleFromFirmware(new_value)
+        }
+      },
+      immediate: true,
+    },
   },
   mounted(): void {
     if (this.only_bootloader_boards_available) {
@@ -381,6 +391,20 @@ export default Vue.extend({
     setFirstNoSitlBoard(): void {
       const [first_board] = this.no_sitl_boards
       this.chosen_board = first_board
+    },
+    setVehicleFromFirmware(firmware_vehicle_type: FirmwareVehicleType): void {
+      const mapping: Record<FirmwareVehicleType, Vehicle | null> = {
+        [FirmwareVehicleType.ArduSub]: Vehicle.Sub,
+        [FirmwareVehicleType.ArduRover]: Vehicle.Rover,
+        [FirmwareVehicleType.ArduPlane]: Vehicle.Plane,
+        [FirmwareVehicleType.ArduCopter]: Vehicle.Copter,
+        [FirmwareVehicleType.Other]: null,
+      }
+      const vehicle = mapping[firmware_vehicle_type]
+      if (vehicle !== null) {
+        this.chosen_vehicle = vehicle
+        this.updateAvailableFirmwares()
+      }
     },
     async updateAvailableFirmwares(): Promise<void> {
       this.chosen_firmware_url = null
