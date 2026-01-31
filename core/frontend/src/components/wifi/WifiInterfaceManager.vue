@@ -11,6 +11,45 @@
         WiFi - {{ interfaceName }}
       </v-toolbar-title>
       <v-spacer />
+      <!-- Mode selector -->
+      <v-menu
+        v-if="supports_mode_switching"
+        offset-y
+      >
+        <template #activator="{ on, attrs }">
+          <v-btn
+            v-tooltip="'Interface mode'"
+            text
+            small
+            v-bind="attrs"
+            :loading="mode_loading"
+            v-on="on"
+          >
+            <v-icon left small>
+              {{ mode_icon }}
+            </v-icon>
+            {{ mode_label }}
+            <v-icon right small>
+              mdi-chevron-down
+            </v-icon>
+          </v-btn>
+        </template>
+        <v-list dense>
+          <v-list-item
+            v-for="mode in available_modes"
+            :key="mode"
+            :disabled="mode === current_mode"
+            @click="setInterfaceMode(mode)"
+          >
+            <v-list-item-icon>
+              <v-icon small>
+                {{ getModeIcon(mode) }}
+              </v-icon>
+            </v-list-item-icon>
+            <v-list-item-title>{{ getModeLabel(mode) }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
       <v-btn
         v-if="is_hotspot_running_on_this_interface"
         v-tooltip="'Hotspot settings'"
@@ -20,6 +59,7 @@
         <v-icon>mdi-cog</v-icon>
       </v-btn>
       <v-btn
+        v-if="current_mode !== 'hotspot'"
         v-tooltip="hotspot_status ? 'Disable hotspot' : 'Enable hotspot'"
         icon
         :color="hotspot_status ? 'success' : 'gray'"
@@ -93,7 +133,13 @@ import Vue from 'vue'
 import Notifier from '@/libs/notifier'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
-import { InterfaceHotspotStatus, Network, WifiInterfaceStatus } from '@/types/wifi'
+import {
+  InterfaceHotspotStatus,
+  Network,
+  WifiInterfaceCapabilities,
+  WifiInterfaceMode,
+  WifiInterfaceStatus,
+} from '@/types/wifi'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
@@ -125,6 +171,8 @@ export default Vue.extend({
       hotspot_status_loading: false,
       ssid_filter: undefined as string | undefined,
       interface_hotspot_status: null as InterfaceHotspotStatus | null,
+      interface_capabilities: null as WifiInterfaceCapabilities | null,
+      mode_loading: false,
     }
   },
   computed: {
@@ -157,9 +205,35 @@ export default Vue.extend({
     hotspot_supported(): boolean {
       return this.interface_hotspot_status?.supported ?? true
     },
+    current_mode(): WifiInterfaceMode {
+      return this.interface_capabilities?.current_mode ?? WifiInterfaceMode.NORMAL
+    },
+    available_modes(): WifiInterfaceMode[] {
+      return this.interface_capabilities?.available_modes ?? [WifiInterfaceMode.NORMAL]
+    },
+    supports_mode_switching(): boolean {
+      return this.available_modes.length > 1
+    },
+    mode_label(): string {
+      const labels: Record<WifiInterfaceMode, string> = {
+        [WifiInterfaceMode.NORMAL]: 'Client',
+        [WifiInterfaceMode.HOTSPOT]: 'Hotspot',
+        [WifiInterfaceMode.DUAL]: 'Dual',
+      }
+      return labels[this.current_mode] || 'Client'
+    },
+    mode_icon(): string {
+      const icons: Record<WifiInterfaceMode, string> = {
+        [WifiInterfaceMode.NORMAL]: 'mdi-wifi',
+        [WifiInterfaceMode.HOTSPOT]: 'mdi-access-point',
+        [WifiInterfaceMode.DUAL]: 'mdi-wifi-plus',
+      }
+      return icons[this.current_mode] || 'mdi-wifi'
+    },
   },
   mounted() {
     this.fetchHotspotStatus()
+    this.fetchInterfaceCapabilities()
   },
   methods: {
     isNetworkConnected(network: Network): boolean {
@@ -202,6 +276,71 @@ export default Vue.extend({
             ssid: null,
             password: null,
           }
+        })
+    },
+    async fetchInterfaceCapabilities(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL_V2}/wifi/mode/${this.interfaceName}`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          this.interface_capabilities = response.data
+        })
+        .catch((error) => {
+          if (isBackendOffline(error)) return
+          // Fallback - assume normal mode only
+          this.interface_capabilities = {
+            interface: this.interfaceName,
+            supports_ap_mode: false,
+            supports_dual_mode: false,
+            current_mode: WifiInterfaceMode.NORMAL,
+            available_modes: [WifiInterfaceMode.NORMAL],
+          }
+        })
+    },
+    getModeIcon(mode: WifiInterfaceMode): string {
+      const icons: Record<WifiInterfaceMode, string> = {
+        [WifiInterfaceMode.NORMAL]: 'mdi-wifi',
+        [WifiInterfaceMode.HOTSPOT]: 'mdi-access-point',
+        [WifiInterfaceMode.DUAL]: 'mdi-wifi-plus',
+      }
+      return icons[mode] || 'mdi-wifi'
+    },
+    getModeLabel(mode: WifiInterfaceMode): string {
+      const labels: Record<WifiInterfaceMode, string> = {
+        [WifiInterfaceMode.NORMAL]: 'Client Only',
+        [WifiInterfaceMode.HOTSPOT]: 'Hotspot Only',
+        [WifiInterfaceMode.DUAL]: 'Dual (Client + Hotspot)',
+      }
+      return labels[mode] || 'Client Only'
+    },
+    async setInterfaceMode(mode: WifiInterfaceMode): Promise<void> {
+      if (mode === this.current_mode) return
+
+      this.mode_loading = true
+      await back_axios({
+        method: 'post',
+        url: `${wifi.API_URL_V2}/wifi/mode`,
+        data: { interface: this.interfaceName, mode },
+        timeout: 30000,
+      })
+        .then(() => {
+          const labels: Record<WifiInterfaceMode, string> = {
+            [WifiInterfaceMode.NORMAL]: 'Client',
+            [WifiInterfaceMode.HOTSPOT]: 'Hotspot',
+            [WifiInterfaceMode.DUAL]: 'Dual',
+          }
+          notifier.pushSuccess('MODE_CHANGE_SUCCESS', `${this.interfaceName} switched to ${labels[mode]} mode.`)
+          this.fetchInterfaceCapabilities()
+          this.fetchHotspotStatus()
+        })
+        .catch((error) => {
+          if (isBackendOffline(error)) return
+          notifier.pushBackError('MODE_CHANGE_FAIL', error, true)
+        })
+        .finally(() => {
+          this.mode_loading = false
         })
     },
     async toggleHotspot(): Promise<void> {

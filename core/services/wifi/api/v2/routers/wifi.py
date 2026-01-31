@@ -11,7 +11,10 @@ from typedefs import (
     InterfaceHotspotStatus,
     SavedWifiNetwork,
     ScannedWifiNetwork,
+    SetInterfaceModeRequest,
     WifiCredentials,
+    WifiInterfaceCapabilities,
+    WifiInterfaceMode,
     WifiInterfaceScanResult,
     WifiInterfaceStatus,
 )
@@ -343,3 +346,85 @@ async def set_hotspot_credentials(request: HotspotCredentialsRequest) -> Dict[st
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
     return {"status": "updated", "ssid": request.credentials.ssid}
+
+
+# Interface mode endpoints
+
+
+@wifi_router_v2.get(
+    "/mode/{interface_name}",
+    response_model=WifiInterfaceCapabilities,
+    summary="Get interface capabilities and current mode.",
+)
+async def get_interface_mode(interface_name: str) -> WifiInterfaceCapabilities:
+    """Get the current operating mode and capabilities for an interface.
+
+    Returns information about:
+    - Current mode (normal, hotspot, dual)
+    - Whether AP mode is supported
+    - Whether dual mode (managed + AP simultaneously) is supported
+    - Available modes for this interface
+    """
+    manager = get_wifi_manager()
+
+    if hasattr(manager, "get_interface_capabilities"):
+        result: WifiInterfaceCapabilities = await manager.get_interface_capabilities(interface_name)
+        return result
+
+    # Fallback for handlers that don't support mode management
+    supports_dual = False
+    supports_ap = False
+    if hasattr(manager, "supports_hotspot_on_interface"):
+        supports_dual = await manager.supports_hotspot_on_interface(interface_name)
+        supports_ap = supports_dual  # Legacy check only tested dual mode
+
+    available = [WifiInterfaceMode.NORMAL]
+    if supports_ap:
+        available.append(WifiInterfaceMode.HOTSPOT)
+    if supports_dual:
+        available.append(WifiInterfaceMode.DUAL)
+
+    return WifiInterfaceCapabilities(
+        interface=interface_name,
+        supports_ap_mode=supports_ap,
+        supports_dual_mode=supports_dual,
+        current_mode=WifiInterfaceMode.NORMAL,
+        available_modes=available,
+    )
+
+
+@wifi_router_v2.post(
+    "/mode",
+    summary="Set interface operating mode.",
+)
+async def set_interface_mode(request: SetInterfaceModeRequest) -> Dict[str, str]:
+    """Set the operating mode for a WiFi interface.
+
+    Available modes:
+    - **normal**: Client mode only - connect to WiFi networks
+    - **hotspot**: AP mode only - interface becomes an access point (disconnects from network)
+    - **dual**: Both simultaneously - requires hardware support for interface combinations
+
+    Note: Not all modes are available on all hardware. Check get_interface_mode first.
+    """
+    manager = get_wifi_manager()
+
+    if not hasattr(manager, "set_interface_mode"):
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Interface mode management not supported by this handler",
+        )
+
+    try:
+        success = await manager.set_interface_mode(request.interface, request.mode)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to set mode {request.mode} on {request.interface}",
+            )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+    return {"status": "success", "interface": request.interface, "mode": request.mode.value}

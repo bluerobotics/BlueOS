@@ -61,6 +61,14 @@ class ConnectionStatus(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class WifiInterfaceMode(str, Enum):
+    """Operating mode for a WiFi interface."""
+
+    NORMAL = "normal"  # Client mode only - connect to networks
+    HOTSPOT = "hotspot"  # AP mode only - become an access point
+    DUAL = "dual"  # Both simultaneously (requires hardware support)
+
+
 # API v2 models for multi-interface support
 
 
@@ -73,6 +81,9 @@ class WifiInterface(BaseModel):
     signal_strength: Optional[int]
     ip_address: Optional[str]
     mac_address: Optional[str]
+    mode: WifiInterfaceMode = WifiInterfaceMode.NORMAL
+    supports_hotspot: bool = False
+    supports_dual_mode: bool = False
 
 
 class WifiInterfaceStatus(BaseModel):
@@ -137,3 +148,20 @@ class WifiInterfaceList(BaseModel):
 
     interfaces: List[WifiInterface]
     hotspot_interface: Optional[str] = None
+
+
+class WifiInterfaceCapabilities(BaseModel):
+    """Hardware capabilities of a WiFi interface."""
+
+    interface: str
+    supports_ap_mode: bool
+    supports_dual_mode: bool  # Can run AP + managed simultaneously
+    current_mode: WifiInterfaceMode
+    available_modes: List[WifiInterfaceMode]
+
+
+class SetInterfaceModeRequest(BaseModel):
+    """Request to set interface operating mode."""
+
+    interface: str
+    mode: WifiInterfaceMode

@@ -51,6 +51,12 @@ export interface NetworkCredentials {
 
 // API v2 types for multi-interface support
 
+export enum WifiInterfaceMode {
+    NORMAL = 'normal',
+    HOTSPOT = 'hotspot',
+    DUAL = 'dual',
+}
+
 export interface WifiInterface {
     name: string
     connected: boolean
@@ -58,6 +64,9 @@ export interface WifiInterface {
     signal_strength: number | null
     ip_address: string | null
     mac_address: string | null
+    mode: WifiInterfaceMode
+    supports_hotspot: boolean
+    supports_dual_mode: boolean
 }
 
 export interface WifiInterfaceList {
@@ -106,4 +115,17 @@ export interface InterfaceHotspotStatus {
     enabled: boolean
     ssid: string | null
     password: string | null
+}
+
+export interface WifiInterfaceCapabilities {
+    interface: string
+    supports_ap_mode: boolean
+    supports_dual_mode: boolean
+    current_mode: WifiInterfaceMode
+    available_modes: WifiInterfaceMode[]
+}
+
+export interface SetInterfaceModeRequest {
+    interface: string
+    mode: WifiInterfaceMode
 }

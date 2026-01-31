@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import asyncio
 import hashlib
 import re
@@ -26,6 +27,8 @@ from typedefs import (
     ScannedWifiNetwork,
     WifiCredentials,
     WifiInterface,
+    WifiInterfaceCapabilities,
+    WifiInterfaceMode,
     WifiInterfaceScanResult,
     WifiInterfaceStatus,
     WifiStatus,
@@ -77,6 +80,10 @@ class NetworkManagerWifi(AbstractWifiManager):
         self._ap_interface = VIRTUAL_AP_INTERFACE
         # Track which interface is running hotspot
         self._hotspot_interface: Optional[str] = None
+        # Track current mode per interface
+        self._interface_modes: Dict[str, WifiInterfaceMode] = {}
+        # Cache for interface capabilities (supports_dual_mode)
+        self._interface_capabilities: Dict[str, bool] = {}
         self._tasks: List[asyncio.Task[Any]] = []
         self._nm = NetworkManager(self._bus)
         self._nm_settings = NetworkManagerSettings(self._bus)
@@ -248,6 +255,11 @@ class NetworkManagerWifi(AbstractWifiManager):
                     except Exception:
                         pass
 
+                # Get mode and capability info
+                current_mode = self._interface_modes.get(interface_name, WifiInterfaceMode.NORMAL)
+                supports_ap = await self._check_interface_supports_ap_mode(interface_name)
+                supports_dual = await self._check_interface_supports_dual_mode(interface_name)
+
                 interfaces.append(
                     WifiInterface(
                         name=interface_name,
@@ -256,6 +268,9 @@ class NetworkManagerWifi(AbstractWifiManager):
                         signal_strength=signal_strength,
                         ip_address=ip_address,
                         mac_address=mac_address,
+                        mode=current_mode,
+                        supports_hotspot=supports_ap,
+                        supports_dual_mode=supports_dual,
                     )
                 )
             except Exception as e:
@@ -304,6 +319,11 @@ class NetworkManagerWifi(AbstractWifiManager):
                 except Exception:
                     pass
 
+            # Get mode and capability info
+            current_mode = self._interface_modes.get(interface_name, WifiInterfaceMode.NORMAL)
+            supports_ap = await self._check_interface_supports_ap_mode(interface_name)
+            supports_dual = await self._check_interface_supports_dual_mode(interface_name)
+
             return WifiInterface(
                 name=interface_name,
                 connected=connected,
@@ -311,6 +331,9 @@ class NetworkManagerWifi(AbstractWifiManager):
                 signal_strength=signal_strength,
                 ip_address=ip_address,
                 mac_address=mac_address,
+                mode=current_mode,
+                supports_hotspot=supports_ap,
+                supports_dual_mode=supports_dual,
             )
         except Exception as e:
             logger.error(f"Error getting status for {interface_name}: {e}")
@@ -782,9 +805,239 @@ class NetworkManagerWifi(AbstractWifiManager):
     async def supports_hotspot(self) -> bool:
         return True
 
+    # pylint: disable=too-many-return-statements
     async def supports_hotspot_on_interface(self, interface: str) -> bool:
-        """Check if hotspot is supported on a specific interface."""
-        return interface in self._device_paths
+        """Check if hotspot is supported on a specific interface.
+
+        Verifies the interface exists, supports AP mode, AND can run AP + managed simultaneously.
+        Some adapters support AP mode but can't create virtual interfaces while connected.
+        """
+        if interface not in self._device_paths:
+            return False
+
+        try:
+            # Get the phy name for this interface
+            result = subprocess.run(
+                ["iw", "dev", interface, "info"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                return False
+
+            # Parse phy name from output (e.g., "wiphy 0" -> "phy0")
+            phy_name = None
+            for line in result.stdout.split("\n"):
+                if "wiphy" in line:
+                    phy_num = line.strip().split()[-1]
+                    phy_name = f"phy{phy_num}"
+                    break
+
+            if not phy_name:
+                return False
+
+            # Check phy capabilities
+            result = subprocess.run(
+                ["iw", "phy", phy_name, "info"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode != 0:
+                return False
+
+            phy_info = result.stdout
+
+            # Check 1: Must support AP mode
+            supports_ap = False
+            in_modes_section = False
+            for line in phy_info.split("\n"):
+                if "Supported interface modes:" in line:
+                    in_modes_section = True
+                    continue
+                if in_modes_section:
+                    if line.strip().startswith("*"):
+                        if "AP" in line and "AP/VLAN" not in line:
+                            supports_ap = True
+                            break
+                    else:
+                        break
+
+            if not supports_ap:
+                return False
+
+            # Check 2: Must support interface combinations (managed + AP simultaneously)
+            # If "interface combinations are not supported" is present, can't run virtual AP
+            if "interface combinations are not supported" in phy_info:
+                logger.info(f"{interface}: AP mode supported but interface combinations not supported")
+                return False
+
+            # Check 3: Look for valid combinations that include both managed and AP
+            # e.g., "#{ managed } <= 1, #{ AP } <= 1"
+            if "valid interface combinations:" in phy_info:
+                # Has interface combinations - check if managed + AP is allowed
+                combo_section = phy_info.split("valid interface combinations:")[1]
+                combo_section = combo_section.split("Device supports")[0]  # End at next section
+                if "managed" in combo_section and "AP" in combo_section:
+                    return True
+
+            return False
+        except Exception as e:
+            logger.warning(f"Failed to check AP mode support for {interface}: {e}")
+            return False
+
+    async def _check_interface_supports_ap_mode(self, interface: str) -> bool:
+        """Check if interface hardware supports AP mode (regardless of dual mode support)."""
+        if interface not in self._device_paths:
+            return False
+
+        try:
+            result = subprocess.run(["iw", "dev", interface, "info"], capture_output=True, text=True, check=False)
+            if result.returncode != 0:
+                return False
+
+            phy_name = None
+            for line in result.stdout.split("\n"):
+                if "wiphy" in line:
+                    phy_num = line.strip().split()[-1]
+                    phy_name = f"phy{phy_num}"
+                    break
+
+            if not phy_name:
+                return False
+
+            result = subprocess.run(["iw", "phy", phy_name, "info"], capture_output=True, text=True, check=False)
+            if result.returncode != 0:
+                return False
+
+            in_modes_section = False
+            for line in result.stdout.split("\n"):
+                if "Supported interface modes:" in line:
+                    in_modes_section = True
+                    continue
+                if in_modes_section:
+                    if line.strip().startswith("*"):
+                        if "AP" in line and "AP/VLAN" not in line:
+                            return True
+                    else:
+                        break
+
+            return False
+        except Exception:
+            return False
+
+    async def _check_interface_supports_dual_mode(self, interface: str) -> bool:
+        """Check if interface can run managed + AP simultaneously (requires virtual interface support)."""
+        # This is the same as supports_hotspot_on_interface for now
+        return await self.supports_hotspot_on_interface(interface)
+
+    async def get_interface_capabilities(self, interface: str) -> WifiInterfaceCapabilities:
+        """Get hardware capabilities for an interface."""
+        supports_ap = await self._check_interface_supports_ap_mode(interface)
+        supports_dual = await self._check_interface_supports_dual_mode(interface)
+        current_mode = self._interface_modes.get(interface, WifiInterfaceMode.NORMAL)
+
+        available_modes = [WifiInterfaceMode.NORMAL]
+        if supports_ap:
+            available_modes.append(WifiInterfaceMode.HOTSPOT)
+        if supports_dual:
+            available_modes.append(WifiInterfaceMode.DUAL)
+
+        return WifiInterfaceCapabilities(
+            interface=interface,
+            supports_ap_mode=supports_ap,
+            supports_dual_mode=supports_dual,
+            current_mode=current_mode,
+            available_modes=available_modes,
+        )
+
+    async def get_interface_mode(self, interface: str) -> WifiInterfaceMode:
+        """Get current operating mode for an interface."""
+        return self._interface_modes.get(interface, WifiInterfaceMode.NORMAL)
+
+    async def set_interface_mode(self, interface: str, mode: WifiInterfaceMode) -> bool:
+        """Set the operating mode for an interface.
+
+        - NORMAL: Client mode only, disable hotspot if running
+        - HOTSPOT: AP mode only, disconnect from any network, use interface directly as AP
+        - DUAL: Both simultaneously using virtual interface (requires hardware support)
+        """
+        if interface not in self._device_paths:
+            logger.error(f"Interface {interface} not found")
+            return False
+
+        caps = await self.get_interface_capabilities(interface)
+        if mode not in caps.available_modes:
+            logger.error(f"Mode {mode} not supported on {interface}. Available: {caps.available_modes}")
+            return False
+
+        current_mode = self._interface_modes.get(interface, WifiInterfaceMode.NORMAL)
+        if current_mode == mode:
+            logger.info(f"{interface} already in {mode} mode")
+            return True
+
+        logger.info(f"Switching {interface} from {current_mode} to {mode}")
+
+        # Disable hotspot if currently running on this interface
+        if await self.hotspot_is_running_on_interface(interface):
+            await self.disable_hotspot_on_interface(interface, save_settings=False)
+
+        if mode == WifiInterfaceMode.NORMAL:
+            # Just disable hotspot (already done above), interface returns to normal
+            self._interface_modes[interface] = mode
+            return True
+
+        if mode == WifiInterfaceMode.HOTSPOT:
+            # Disconnect from any network first
+            await self.disconnect_interface(interface)
+            # Enable hotspot in "direct" mode (no virtual interface)
+            success = await self._enable_hotspot_direct(interface)
+            if success:
+                self._interface_modes[interface] = mode
+            return success
+
+        # mode == WifiInterfaceMode.DUAL
+        # Enable hotspot using virtual interface (existing behavior)
+        success = await self.enable_hotspot_on_interface(interface, save_settings=True)
+        if success:
+            self._interface_modes[interface] = mode
+        return success
+
+    async def _enable_hotspot_direct(self, interface: str, save_settings: bool = True) -> bool:
+        """Enable hotspot directly on the interface (not using virtual interface).
+
+        This is used for adapters that support AP mode but not interface combinations.
+        The interface itself becomes the AP, so it cannot be connected to a network.
+        """
+        if save_settings:
+            self._settings_manager.settings.hotspot_enabled = True
+            self._settings_manager.save()
+
+        credentials = self._settings_manager.settings.hotspot_credentials
+
+        # Use create_ap directly on the physical interface (no virtual interface)
+        try:
+            cmd = [
+                "create_ap",
+                "--daemon",
+                "-n",  # No internet sharing
+                "--freq-band",
+                "2.4",
+                interface,  # Use physical interface directly
+                credentials.ssid,
+                credentials.password,
+            ]
+            # pylint: disable-next=consider-using-with
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            self._create_ap_processes[interface] = process
+            self._hotspot_interface = interface
+            self._create_ap_process = process  # Backward compatibility
+            logger.info(f"Started hotspot directly on {interface} with SSID {credentials.ssid}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to start direct hotspot on {interface}: {e}")
+            return False
 
     async def status(self) -> WifiStatus:
         """Get status of primary interface (backward compatible)."""
