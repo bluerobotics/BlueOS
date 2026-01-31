@@ -429,7 +429,20 @@ class NetworkManagerWifi(AbstractWifiManager):
 
         if state == DeviceState.ACTIVATED:
             try:
-                ap = AccessPoint(await device.active_access_point, self._bus)
+                ap_path = await device.active_access_point
+                if not ap_path or ap_path == "/":
+                    logger.warning(f"No active access point for {interface_name} despite ACTIVATED state")
+                    return WifiInterfaceStatus(
+                        interface=interface_name,
+                        state="connecting",
+                        ssid=None,
+                        bssid=None,
+                        ip_address=None,
+                        signal_strength=None,
+                        frequency=None,
+                        key_mgmt=None,
+                    )
+                ap = AccessPoint(ap_path, self._bus)
                 ssid_bytes: bytes = await ap.ssid
                 ip4_conf_path = await device.ip4_config
                 ip_address = None
@@ -1014,7 +1027,7 @@ class NetworkManagerWifi(AbstractWifiManager):
             self._settings_manager.settings.hotspot_enabled = True
             self._settings_manager.save()
 
-        credentials = self._settings_manager.settings.hotspot_credentials
+        credentials = self.hotspot_credentials()
 
         # Use create_ap directly on the physical interface (no virtual interface)
         try:
@@ -1049,7 +1062,10 @@ class NetworkManagerWifi(AbstractWifiManager):
 
         if state == DeviceState.ACTIVATED:
             try:
-                ap = AccessPoint(await device.active_access_point, self._bus)
+                ap_path = await device.active_access_point
+                if not ap_path or ap_path == "/":
+                    return WifiStatus(state="connecting")
+                ap = AccessPoint(ap_path, self._bus)
                 ssid: bytes = await ap.ssid
                 ip4_conf_path = await device.ip4_config
 

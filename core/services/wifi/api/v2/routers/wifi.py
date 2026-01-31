@@ -247,7 +247,11 @@ async def get_hotspot_status(interface_name: str) -> InterfaceHotspotStatus:
     enabled = False
     credentials: Optional[WifiCredentials] = None
 
-    if hasattr(manager, "supports_hotspot_on_interface"):
+    # Check if interface can run a hotspot (either dedicated or dual mode)
+    if hasattr(manager, "get_interface_capabilities"):
+        caps = await manager.get_interface_capabilities(interface_name)
+        supported = caps.supports_ap_mode
+    elif hasattr(manager, "supports_hotspot_on_interface"):
         supported = await manager.supports_hotspot_on_interface(interface_name)
     elif hasattr(manager, "supports_hotspot"):
         supported = await manager.supports_hotspot()
