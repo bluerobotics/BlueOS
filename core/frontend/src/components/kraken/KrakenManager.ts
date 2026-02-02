@@ -205,7 +205,7 @@ export async function installExtension(
       permissions: extension?.permissions ?? '',
       user_permissions: extension?.user_permissions ?? '',
     },
-    timeout: 120000,
+    timeout: 600000,
     onDownloadProgress: progressHandler,
   })
 }
