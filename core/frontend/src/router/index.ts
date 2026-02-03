@@ -139,6 +139,11 @@ const routes: Array<RouteConfig> = [
     component: defineAsyncComponent(() => import('../views/ZenohInspectorView.vue')),
   },
   {
+    path: '/settings',
+    name: 'Settings',
+    component: defineAsyncComponent(() => import('../views/SettingsView.vue')),
+  },
+  {
     path: '*',
     name: '404',
     component: PageNotFound,
