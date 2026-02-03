@@ -54,9 +54,31 @@ export default defineConfig(({ command, mode }) => {
         authToken: process.env.SENTRY_AUTH_TOKEN,
         org: "blue-robotics-c7",
         project: "blueos",
-      })
+      }),
+      // Remove non-JSON files from ArduPilot parameter repository to reduce image size
+      {
+        name: 'cleanup-ardupilot-files',
+        apply: 'build',
+        closeBundle() {
+          const fs = require('fs')
+          const repoPath = path.resolve(__dirname, 'dist/assets/ArduPilot-Parameter-Repository')
+          if (!fs.existsSync(repoPath)) return
+
+          const removeNonJson = (dir) => {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const fullPath = path.join(dir, entry.name)
+              if (entry.isDirectory()) {
+                removeNonJson(fullPath)
+              } else if (!entry.name.endsWith('.json') && !entry.name.endsWith('.json.gz')) {
+                fs.unlinkSync(fullPath)
+              }
+            }
+          }
+          removeNonJson(repoPath)
+        }
+      },
     ],
-    assetsInclude: ['**/*.gif', '**/*.glb', '**/*.png', '**/*.svg', '**/assets/ArduPilot-Parameter-Repository**.json'],
+    assetsInclude: ['**/*.gif', '**/*.glb', '**/*.png', '**/*.svg'],
     resolve: {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
       alias: {
