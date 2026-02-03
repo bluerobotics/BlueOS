@@ -82,6 +82,8 @@ gh issue list --repo bluerobotics/BlueOS
 
 ### 3. Use yarn over npm
 
+### 4. Use `jq` to parse json
+
 ## Creating a New Service
 
 **Reference implementation:** [PR #3669](https://github.com/bluerobotics/BlueOS/pull/3669) (disk_usage service)
