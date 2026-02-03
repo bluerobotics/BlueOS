@@ -19,7 +19,6 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from tabulate import tabulate  # type: ignore
 from typedefs import (
     HotspotStatus,
     SavedWifiNetwork,
@@ -55,10 +54,7 @@ app.router.route_class = GenericErrorHandlingRoute
 @version(1, 0)
 async def network_status() -> Any:
     assert wifi_manager is not None
-    wifi_status = await wifi_manager.status()
-    for line in tabulate(list(vars(wifi_status).items())).splitlines():
-        logger.info(line)
-    return wifi_status
+    return await wifi_manager.status()
 
 
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
