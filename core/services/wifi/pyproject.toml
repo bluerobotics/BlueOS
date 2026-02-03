@@ -12,7 +12,6 @@ dependencies = [
     "pydantic==1.10.12",
     "pyroute2==0.8.1",
     "sdbus-networkmanager==2.0.0",
-    "tabulate==0.8.9",
     "uvicorn==0.18.0",
 ]
 
