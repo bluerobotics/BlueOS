@@ -46,6 +46,7 @@ When writing code:
 - Use 120 character line length
 - No docstrings unless the function is non-obvious
 - No comments unless explaining "why", never "what"
+- Don't do parrot comments. Do not comment something that just repeat what the code already says
 - Preserve existing comments when refactoring code. Do not delete comments from code you haven't logically changed
 - Prefer editing existing files over creating new ones
 - Use optional chaining (`?.`) when possible in typescript
