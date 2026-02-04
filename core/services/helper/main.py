@@ -37,7 +37,7 @@ from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from nginx_parser import parse_nginx_file
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uvicorn import Config, Server
 
 SERVICE_NAME = "helper"
@@ -95,14 +95,14 @@ class ServiceMetadata(BaseModel):
     company: str
     version: str
     webpage: str
-    route: Optional[str]
-    new_page: Optional[bool]
-    extra_query: Optional[str]
-    avoid_iframes: Optional[bool]
     api: str
-    sanitized_name: Optional[str]
-    works_in_relative_paths: Optional[bool]
-    extras: Optional[Dict[str, str]]
+    route: Optional[str] = Field(default=None)
+    new_page: Optional[bool] = Field(default=None)
+    extra_query: Optional[str] = Field(default=None)
+    avoid_iframes: Optional[bool] = Field(default=None)
+    sanitized_name: Optional[str] = Field(default=None)
+    works_in_relative_paths: Optional[bool] = Field(default=None)
+    extras: Optional[Dict[str, str]] = Field(default=None)
 
 
 class ServiceInfo(BaseModel):
@@ -319,7 +319,7 @@ class Helper:
         response_as_json = response.as_json
         if response.status == http.client.OK and response_as_json is not None and isinstance(response_as_json, dict):
             try:
-                info.metadata = ServiceMetadata.parse_obj(response_as_json)
+                info.metadata = ServiceMetadata.model_validate(response_as_json)
                 info.metadata.sanitized_name = re.sub(r"[^a-z0-9]", "", info.metadata.name.lower())
             except Exception as e:
                 logger.warning(f"Failed parsing the received JSON as ServiceMetadata object: {e}")
