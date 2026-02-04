@@ -36,7 +36,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from speedtest import Speedtest
 from uvicorn import Config, Server
 
@@ -111,14 +111,14 @@ class ServiceMetadata(BaseModel):
     company: str
     version: str
     webpage: str
-    route: Optional[str]
-    new_page: Optional[bool]
-    extra_query: Optional[str]
-    avoid_iframes: Optional[bool]
     api: str
-    sanitized_name: Optional[str]
-    works_in_relative_paths: Optional[bool]
-    extras: Optional[Dict[str, str]]
+    route: Optional[str] = Field(default=None)
+    new_page: Optional[bool] = Field(default=None)
+    extra_query: Optional[str] = Field(default=None)
+    avoid_iframes: Optional[bool] = Field(default=None)
+    sanitized_name: Optional[str] = Field(default=None)
+    works_in_relative_paths: Optional[bool] = Field(default=None)
+    extras: Optional[Dict[str, str]] = Field(default=None)
 
 
 class ServiceInfo(BaseModel):
