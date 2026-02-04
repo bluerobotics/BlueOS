@@ -113,7 +113,7 @@ class ContainerManager:
 
     @classmethod
     async def get_container_log_by_name(cls, container_name: str) -> AsyncGenerator[str, None]:
-        async with DockerCtx() as client:
+        async with DockerCtx(timeout=0) as client:
             try:
                 container = await cls.get_raw_container_by_name(client, container_name)
             except ContainerNotFound as error:
