@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import stat
 import subprocess
 import time
@@ -105,6 +106,8 @@ class WifiManager(AbstractWifiManager):
 
         try:
             self._hotspot: Optional[HotspotManager] = None
+            self._hotspot_managers: Dict[str, HotspotManager] = {}
+            self._hotspot_interface: Optional[str] = None
             ssid, password = (
                 self._settings_manager.settings.hotspot_ssid,
                 self._settings_manager.settings.hotspot_password,
@@ -180,11 +183,43 @@ class WifiManager(AbstractWifiManager):
 
         return output
 
+    @staticmethod
+    def _get_virtual_ap_name(physical_interface: str) -> str:
+        """Generate virtual AP interface name from physical interface name."""
+        match = re.search(r"\d+$", physical_interface)
+        if match:
+            return f"uap{match.group()}"
+        return "uap0"
+
+    def _get_hotspot_manager(self, interface: str) -> HotspotManager:
+        """Get or create a hotspot manager for a specific interface."""
+        if interface not in self._hotspot_managers:
+            try:
+                virtual_ap_name = self._get_virtual_ap_name(interface)
+                self._hotspot_managers[interface] = HotspotManager(
+                    interface, IPv4Address("192.168.42.1"), ap_interface_name=virtual_ap_name
+                )
+            except Exception as error:
+                raise error
+        return self._hotspot_managers[interface]
+
+    def _get_interface_name_from_path(self) -> str:
+        """Extract interface name from wpa_supplicant socket path."""
+        if self.wpa_path:
+            # wpa_path is like /var/run/wpa_supplicant/wlan0
+            return os.path.basename(self.wpa_path)
+        return "wlan0"
+
     @property
     def hotspot(self) -> HotspotManager:
+        """Get hotspot manager for default interface (backward compatible)."""
         if self._hotspot is None:
             try:
-                self._hotspot = HotspotManager("wlan0", IPv4Address("192.168.42.1"))
+                default_interface = self._get_interface_name_from_path()
+                virtual_ap_name = self._get_virtual_ap_name(default_interface)
+                self._hotspot = HotspotManager(
+                    default_interface, IPv4Address("192.168.42.1"), ap_interface_name=virtual_ap_name
+                )
             except Exception as error:
                 self._hotspot = None
                 raise error
@@ -391,7 +426,13 @@ class WifiManager(AbstractWifiManager):
 
     def trigger_dhcp_client(self) -> None:
         """Trigger dhclient to get an IP address."""
-        subprocess.run(["dhcpcd", "-n", "wlan0"], check=False)
+        # Use the configured socket name (interface) instead of hardcoded wlan0
+        interface = getattr(self, "args", None) and getattr(self.args, "socket_name", None)
+        if interface:
+            subprocess.run(["dhcpcd", "-n", interface], check=False)
+        else:
+            # Fallback to wlan0 for backward compatibility
+            subprocess.run(["dhcpcd", "-n", "wlan0"], check=False)
 
     async def auto_reconnect(self, seconds_before_reconnecting: float) -> None:
         """Re-enable all saved networks if disconnected for more than specified time.
@@ -500,6 +541,53 @@ class WifiManager(AbstractWifiManager):
             self._settings_manager.save()
 
         self.hotspot.stop()
+
+    async def enable_hotspot_on_interface(self, interface: str, save_settings: bool = True) -> bool:
+        """Enable hotspot on a specific interface."""
+        if save_settings:
+            self._settings_manager.settings.hotspot_enabled = True
+            self._settings_manager.save()
+
+        hotspot_manager = self._get_hotspot_manager(interface)
+        if hotspot_manager.is_running():
+            logger.warning(f"Hotspot already running on {interface}.")
+        await hotspot_manager.start()
+        self._hotspot_interface = interface
+        return True
+
+    async def disable_hotspot_on_interface(self, interface: str, save_settings: bool = True) -> None:
+        """Disable hotspot on a specific interface."""
+        if interface in self._hotspot_managers:
+            self._hotspot_managers[interface].stop()
+            if self._hotspot_interface == interface:
+                self._hotspot_interface = None
+
+        if save_settings and not any(m.is_running() for m in self._hotspot_managers.values()):
+            self._settings_manager.settings.hotspot_enabled = False
+            self._settings_manager.save()
+
+    async def hotspot_is_running_on_interface(self, interface: str) -> bool:
+        """Check if hotspot is running on a specific interface."""
+        if interface in self._hotspot_managers:
+            return self._hotspot_managers[interface].is_running()
+        return False
+
+    async def get_hotspot_interface(self) -> Optional[str]:
+        """Get the interface currently running hotspot, or None if no hotspot is running."""
+        for interface, manager in self._hotspot_managers.items():
+            if manager.is_running():
+                return interface
+        if self._hotspot is not None and self._hotspot.is_running():
+            return self._get_interface_name_from_path()
+        return None
+
+    async def supports_hotspot_on_interface(self, interface: str) -> bool:
+        """Check if hotspot is supported on a specific interface."""
+        try:
+            hotspot_manager = self._get_hotspot_manager(interface)
+            return hotspot_manager.supports_hotspot
+        except Exception:
+            return False
 
     def enable_smart_hotspot(self) -> None:
         self._settings_manager.settings.smart_hotspot_enabled = True
