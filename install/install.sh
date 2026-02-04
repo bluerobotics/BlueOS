@@ -100,11 +100,41 @@ command -v rfkill && (
     rfkill unblock all
 )
 
-# Get the number of free blocks and the block size in bytes, and calculate the value in GB
-echo "Checking for available space."
+# Get the number of free blocks and the block size in bytes, and calculate the value in MB
+get_available_space_mb()
+{
+    local free_blocks block_size
+    free_blocks=$(stat -f / --format="%a")
+    block_size=$(stat -f / --format="%S")
+    echo $(( free_blocks * block_size / (1024 * 1024) ))
+}
 
-AVAILABLE_SPACE_MB=$(($(stat -f / --format="%a*%S/1024**2")))
+echo "Checking for available space."
 NECESSARY_SPACE_MB=1024
+AVAILABLE_SPACE_MB=$(get_available_space_mb)
+
+echo "Available space: ${AVAILABLE_SPACE_MB}MB, required: ${NECESSARY_SPACE_MB}MB"
+echo "Attempting to free up disk space..."
+
+[ -d /var/cache/apt ] && (
+    echo "Cleaning ($(du -sh /var/cache/apt))"
+    apt-get clean 2>/dev/null || true
+)
+
+[ -d /var/lib/apt/lists ] && (
+    echo "Cleaning ($(du -sh /var/lib/apt/lists))"
+    rm -rf /var/lib/apt/lists/* 2>/dev/null || true
+)
+
+[ -d /usr/share/locale ] && (
+    echo "Cleaning not english files ($(du -sh /usr/share/locale))"
+    find /usr/share/locale -mindepth 1 -maxdepth 1 -type d ! -name 'en*' -exec rm -rf {} \; 2>/dev/null || true
+)
+
+echo "Disk cleanup complete."
+AVAILABLE_SPACE_MB=$(get_available_space_mb)
+echo "Available space after cleanup: ${AVAILABLE_SPACE_MB}MB"
+
 (( AVAILABLE_SPACE_MB < NECESSARY_SPACE_MB )) && (
     echo "Not enough free space to install blueos, at least ${NECESSARY_SPACE_MB}MB required"
     exit 1
