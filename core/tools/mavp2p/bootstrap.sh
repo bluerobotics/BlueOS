@@ -55,6 +55,7 @@ wget -q "$REMOTE_URL" -O - | tar -zxf - -C "$TMP_DIR"
 mv "$TMP_DIR/$PROJECT_NAME" "$BINARY_PATH"
 rm -rf "$TMP_DIR"
 chmod +x "$BINARY_PATH"
+strip "$BINARY_PATH"
 
 echo "Installed binary type: $(file "$(which "$BINARY_PATH")")"
 
