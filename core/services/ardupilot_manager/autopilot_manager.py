@@ -149,6 +149,8 @@ class AutoPilotManager(metaclass=Singleton):
             self.settings.firmware_folder, self.settings.defaults_folder, self.settings.user_firmware_folder
         )
         self.vehicle_manager = VehicleManager()
+        self._heartbeat_fail_count = 0  # Consecutive heartbeat failures
+        self._max_heartbeat_failures = 10  # Threshold for restarting Ardupilot after consecutive heartbeat failures
 
         self.should_be_running = False
         self.remove_old_logs()
@@ -200,6 +202,32 @@ class AutoPilotManager(metaclass=Singleton):
                     await self.start_ardupilot()
                 except Exception as error:
                     logger.warning(f"Could not start Ardupilot: {error}")
+
+            # Monitor MAVLink heartbeat while autopilot is supposed to be running
+            if self.should_be_running and self.is_running():
+                try:
+                    alive = await self.vehicle_manager.is_heart_beating()
+                    if alive:
+                        self._heartbeat_fail_count = 0
+                    else:
+                        self._heartbeat_fail_count += 1
+                        logger.warning(
+                            f"Heartbeat check False ({self._heartbeat_fail_count}/{self._max_heartbeat_failures})"
+                        )
+                except Exception as error:
+                    self._heartbeat_fail_count += 1
+                    logger.warning(
+                        f"heartbeat check failed ({self._heartbeat_fail_count}/{self._max_heartbeat_failures}): {error}"
+                    )
+
+                if self._heartbeat_fail_count >= self._max_heartbeat_failures:
+                    logger.warning("Consecutive heartbeat failures threshold reached — restarting Ardupilot.")
+                    try:
+                        await self.restart_ardupilot()
+                    except Exception as error:
+                        logger.warning(f"Failed to restart Ardupilot after heartbeat failures: {error}")
+                    self._heartbeat_fail_count = 0
+
             await asyncio.sleep(5.0)
 
     async def start_mavlink_manager_watchdog(self) -> None:
@@ -560,8 +588,14 @@ class AutoPilotManager(metaclass=Singleton):
         # TODO: Add shutdown command on HAL_SITL and HAL_LINUX, changing terminate/prune
         # logic with a simple "self.vehicle_manager.shutdown_vehicle()"
         logger.info("Terminating Ardupilot subprocess.")
-        await self.terminate_ardupilot_subprocess()
-        logger.info("Ardupilot subprocess terminated.")
+        try:
+            await self.terminate_ardupilot_subprocess()
+            logger.info("Ardupilot subprocess terminated.")
+        except AutoPilotProcessKillFail as error:
+            # If we cannot control the process, we should force kill to get a clean slate
+            # This would ensure we don't sit with a zombie process, or have lost track of the process
+            logger.error(f"Failed to terminate Ardupilot subprocess: {error}")
+
         logger.info("Pruning Ardupilot's system processes.")
         await self.prune_ardupilot_processes()
         logger.info("Ardupilot's system processes pruned.")
