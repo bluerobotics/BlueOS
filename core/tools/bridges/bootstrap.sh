@@ -51,6 +51,7 @@ echo "Installing to $BINARY_PATH"
 
 wget -q "$REMOTE_URL" -O "$BINARY_PATH"
 chmod +x "$BINARY_PATH"
+upx "$BINARY_PATH"
 
 echo "Installed binary type: $(file "$(which "$BINARY_PATH")")"
 

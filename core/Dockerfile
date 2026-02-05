@@ -28,6 +28,7 @@ FROM bluerobotics/blueos-base:0.2.2 AS base
 # Download binaries
 FROM base AS download-binaries
 COPY tools /home/pi/tools
+RUN apt update && apt install -y --no-install-recommends upx
 RUN /home/pi/tools/install-static-binaries.sh
 
 # Generation of python virtual environment for our libraries and services
