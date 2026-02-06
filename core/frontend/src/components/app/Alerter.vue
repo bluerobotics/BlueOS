@@ -1,7 +1,7 @@
 <template>
   <v-snackbar
     v-model="show"
-    timeout="-1"
+    :timeout="timeout"
   >
     {{ message }}
 
@@ -47,6 +47,17 @@ export default Vue.extend({
           return 'critical'
         default:
           return 'info'
+      }
+    },
+    timeout(): number {
+      switch (this.level) {
+        case MessageLevel.Success:
+        case MessageLevel.Info:
+          return 5000
+        case MessageLevel.Warning:
+          return 7000
+        default:
+          return -1
       }
     },
   },
