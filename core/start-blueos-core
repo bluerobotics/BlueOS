@@ -107,37 +107,44 @@ find /usr/blueos/userdata -type f -exec chmod a+rw {} \;
 # and ~1min30s using this strategy.
 # From that 1min30s, the startup time is about ~25s, and originally, ~37s, meaning that the
 # remaining (~65 seconds) is the docker shutting down, and the Linux booting up.
+#
+# Service tuple format:
+#   NAME,MEMORY_MB,CPU_PERCENT,IO_READ_MBPS,IO_WRITE_MBPS,COMMAND
+#   - MEMORY_MB: Memory limit in MB (0 = no limit)
+#   - CPU_PERCENT: CPU limit as percentage (100 = 1 core, 200 = 2 cores, 0 = no limit)
+#   - IO_READ_MBPS: I/O read limit in MB/s (0 = no limit)
+#   - IO_WRITE_MBPS: I/O write limit in MB/s (0 = no limit)
 PRIORITY_SERVICES=(
-    'autopilot',0,"nice --19 $SERVICES_PATH/ardupilot_manager/main.py"
-    'cable_guy',0,"$SERVICES_PATH/cable_guy/main.py"
-    'video',0,"nice --19 mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --mavlink-system-id $MAV_SYSTEM_ID --mavlink-camera-component-id-range=100-105 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --stun-server stun://stun.l.google.com:19302 --zenoh --verbose"
-    'mavlink2rest',0,"mavlink2rest --connect=udpout:127.0.0.1:14001 --server [::]:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
+    'autopilot',0,0,0,0,"nice --19 $SERVICES_PATH/ardupilot_manager/main.py"
+    'cable_guy',0,0,0,0,"$SERVICES_PATH/cable_guy/main.py"
+    'video',0,0,0,0,"nice --19 mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --mavlink-system-id $MAV_SYSTEM_ID --mavlink-camera-component-id-range=100-105 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --stun-server stun://stun.l.google.com:19302 --zenoh --verbose"
+    'mavlink2rest',0,0,0,0,"mavlink2rest --connect=udpout:127.0.0.1:14001 --server [::]:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
 )
 
 SERVICES=(
     # This services are not prioritized because they are not fundamental for the vehicle to work
-    'kraken',0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/kraken/main.py"
-    'wifi',0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
-    'zenohd',0,"ZENOH_BACKEND_FS_ROOT=$TOOLS_PATH/zenoh zenohd -c $TOOLS_PATH/zenoh/blueos-zenoh.json5"
+    'kraken',0,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/kraken/main.py"
+    'wifi',0,0,0,0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
+    'zenohd',0,0,0,0,"ZENOH_BACKEND_FS_ROOT=$TOOLS_PATH/zenoh zenohd -c $TOOLS_PATH/zenoh/blueos-zenoh.json5"
     # This services are not as important as the others
-    'beacon',250,"$SERVICES_PATH/beacon/main.py"
-    'bridget',0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/bridget/main.py $RUN_AS_REGULAR_USER_END"
-    'commander',250,"$SERVICES_PATH/commander/main.py"
-    'nmea_injector',250,"nice -19 $SERVICES_PATH/nmea_injector/main.py"
-    'helper',250,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/helper/main.py"
-    'iperf3',250," iperf3 --server --port 5201"
-    'linux2rest',250,"linux2rest --log-settings netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10,usb=60"
-    'filebrowser',250,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
-    'versionchooser',0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/versionchooser/main.py"
-    'pardal',250,"nice -19 $SERVICES_PATH/pardal/main.py"
-    'ping',0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
-    'user_terminal',0,"cat /etc/motd"
-    'ttyd',250,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
-    'nginx',250,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
-    'bag_of_holding',250,"$SERVICES_PATH/bag_of_holding/main.py"
-    'recorder',250,"blueos-recorder --recorder-path /usr/blueos/userdata/recorder"
-    'recorder_extractor',250,"$SERVICES_PATH/recorder_extractor/main.py"
-    'disk_usage',250,"$SERVICES_PATH/disk_usage/main.py"
+    'beacon',250,0,0,0,"$SERVICES_PATH/beacon/main.py"
+    'bridget',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/bridget/main.py $RUN_AS_REGULAR_USER_END"
+    'commander',250,0,0,0,"$SERVICES_PATH/commander/main.py"
+    'nmea_injector',250,0,0,0,"nice -19 $SERVICES_PATH/nmea_injector/main.py"
+    'helper',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/helper/main.py"
+    'iperf3',250,0,0,0," iperf3 --server --port 5201"
+    'linux2rest',250,0,0,0,"linux2rest --log-settings netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10,usb=60"
+    'filebrowser',250,0,0,0,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
+    'versionchooser',0,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/versionchooser/main.py"
+    'pardal',250,0,0,0,"nice -19 $SERVICES_PATH/pardal/main.py"
+    'ping',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
+    'user_terminal',0,0,0,0,"cat /etc/motd"
+    'ttyd',250,0,0,0,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
+    'nginx',250,0,0,0,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
+    'bag_of_holding',250,0,0,0,"$SERVICES_PATH/bag_of_holding/main.py"
+    'recorder',250,0,0,0,"blueos-recorder --recorder-path /usr/blueos/userdata/recorder"
+    'recorder_extractor',250,0,0,0,"$SERVICES_PATH/recorder_extractor/main.py"
+    'disk_usage',250,0,0,0,"$SERVICES_PATH/disk_usage/main.py"
 )
 
 tmux -f /etc/tmux.conf start-server
@@ -147,10 +154,29 @@ function create_service {
     SESSION_NAME="$1:0"
     SERVICE_NAME="$1"
     local command="$2"  # Store the command as a string
-    local memory_limit_mb=$3
+    local memory_limit_mb=${3:-0}
+    local cpu_limit_percent=${4:-0}
+    local io_read_mbps=${5:-0}
+    local io_write_mbps=${6:-0}
+
+    if [ -n "${BLUEOS_DISABLE_RESOURCE_LIMITS}" ]; then
+        memory_limit_mb=0
+        cpu_limit_percent=0
+        io_read_mbps=0
+        io_write_mbps=0
+    fi
 
     if [ -n "${BLUEOS_DISABLE_MEMORY_LIMIT}" ]; then
-        memory_limit_mb=$TOTAL_RAM_MB
+        memory_limit_mb=0
+    fi
+
+    if [ -n "${BLUEOS_DISABLE_CPU_LIMIT}" ]; then
+        cpu_limit_percent=0
+    fi
+
+    if [ -n "${BLUEOS_DISABLE_IO_LIMIT}" ]; then
+        io_read_mbps=0
+        io_write_mbps=0
     fi
 
     # Check if the service is disabled
@@ -159,16 +185,18 @@ function create_service {
         tmux send-keys -t $SESSION_NAME "echo 'Service $1 is disabled'; sleep infinity" C-m
         return
     fi
-    echo "Service: $NAME: $EXECUTABLE with memory limit: $memory_limit_mb MB"
+    echo "Service: $SERVICE_NAME: mem=${memory_limit_mb}MB cpu=${cpu_limit_percent}% io_r=${io_read_mbps}MB/s io_w=${io_write_mbps}MB/s"
 
     # Set all necessary environment variables for the new tmux session
     for NAME in $(compgen -v | grep -e MAV_ -e BLUEOS_); do
         VALUE=${!NAME}
         tmux setenv -t "$SESSION_NAME" -g "$NAME" "$VALUE"
     done
+    # Pass DOCKER_CGROUP for cgroup path resolution in run-service
+    tmux setenv -t "$SESSION_NAME" -g "DOCKER_CGROUP" "$DOCKER_CGROUP"
 
-    # Use run_service to start the service with the memory limit
-    tmux send-keys -t $SESSION_NAME "run-service '$SERVICE_NAME' '$command' $memory_limit_mb " C-m
+    # Use run_service to start the service with resource limits
+    tmux send-keys -t $SESSION_NAME "run-service '$SERVICE_NAME' '$command' $memory_limit_mb $cpu_limit_percent $io_read_mbps $io_write_mbps" C-m
 }
 
 SSH_USER=${SSH_USER:-pi}
@@ -220,24 +248,24 @@ prepare_cgroups() {
     cat $DOCKER_CGROUP_PATH/cgroup.procs
   fi
 
-  echo "Enabling subtree_control..."
-  echo "+memory" > $DOCKER_CGROUP_PATH/cgroup.subtree_control && echo "subtree_control enabled"
+  echo "Enabling subtree_control for memory, cpu, and io on container cgroup..."
+  echo "+memory +cpu +io" > $DOCKER_CGROUP_PATH/cgroup.subtree_control && echo "subtree_control enabled on container cgroup"
 }
 
 prepare_cgroups
 
 echo "Starting high priority services.."
 for TUPLE in "${PRIORITY_SERVICES[@]}"; do
-    IFS=',' read -r NAME MEMORY_LIMIT_MB EXECUTABLE <<< "$TUPLE"
-    create_service "$NAME" "$EXECUTABLE" "$MEMORY_LIMIT_MB"
+    IFS=',' read -r NAME MEMORY_MB CPU_PERCENT IO_READ_MBPS IO_WRITE_MBPS EXECUTABLE <<< "$TUPLE"
+    create_service "$NAME" "$EXECUTABLE" "$MEMORY_MB" "$CPU_PERCENT" "$IO_READ_MBPS" "$IO_WRITE_MBPS"
 done
 
 sleep 5
 
 echo "Starting other services.."
 for TUPLE in "${SERVICES[@]}"; do
-    IFS=',' read -r NAME MEMORY_LIMIT_MB EXECUTABLE <<< "$TUPLE"
-    create_service "$NAME" "$EXECUTABLE" "$MEMORY_LIMIT_MB"
+    IFS=',' read -r NAME MEMORY_MB CPU_PERCENT IO_READ_MBPS IO_WRITE_MBPS EXECUTABLE <<< "$TUPLE"
+    create_service "$NAME" "$EXECUTABLE" "$MEMORY_MB" "$CPU_PERCENT" "$IO_READ_MBPS" "$IO_WRITE_MBPS"
 done
 
 echo "BlueOS running!"
