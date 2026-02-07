@@ -65,7 +65,7 @@ wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
-exclude = ["services/versionchooser", "services/kraken", "services/helper"]
+exclude = ["services/helper", "services/kraken", "services/service_manager", "services/versionchooser"]
 
 # ------------------ Tooling Configurations ------------------
 

@@ -1,0 +1,23 @@
+[project]
+name = "service_manager"
+version = "0.1.0"
+description = "Linux service supervisor with cgroups v2 resource control"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.125.0",
+    "httpx>=0.27.0",
+    "pydantic==2.12.5",
+    "uvicorn==0.38.0",
+]
+
+[project.scripts]
+service-manager = "service_manager.__main__:main"
+svcmgr = "service_manager.client.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["service_manager"]
+

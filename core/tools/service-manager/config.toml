@@ -1,0 +1,238 @@
+# BlueOS Service Manager Configuration
+# This file defines all BlueOS services and their resource limits
+
+[agent]
+host = "127.0.0.1"
+port = 9876
+pid_file = "/run/service-manager/agent.pid"
+# cgroup_root is set via BLUEOS_CGROUP_ROOT env var by start-blueos-core
+metrics_interval_sec = 1.0
+log_buffer_lines = 10000
+
+# Priority services - fundamental for vehicle operation
+# These are started first to reduce time users have to wait to control the vehicle
+
+[[service]]
+name = "autopilot"
+command = ["/home/pi/services/ardupilot_manager/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+stop_timeout_sec = 30.0
+
+[[service]]
+name = "cable_guy"
+command = ["/home/pi/services/cable_guy/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "video"
+command = [
+    "nice", "--19", "mavlink-camera-manager",
+    "--default-settings", "BlueROVUDP",
+    "--mavlink", "tcpout:127.0.0.1:5777",
+    "--mavlink-system-id", "1",
+    "--mavlink-camera-component-id-range=100-105",
+    "--gst-feature-rank", "omxh264enc=0,v4l2h264enc=250,x264enc=260",
+    "--log-path", "/var/logs/blueos/services/mavlink-camera-manager",
+    "--stun-server", "stun://stun.l.google.com:19302",
+    "--zenoh",
+    "--verbose"
+]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "mavlink2rest"
+command = [
+    "mavlink2rest",
+    "--connect=udpout:127.0.0.1:14001",
+    "--server", "[::]:6040",
+    "--system-id", "1",
+    "--component-id", "194"
+]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+# Regular services - not fundamental but still important
+
+[[service]]
+name = "kraken"
+command = ["nice", "-19", "/usr/blueos/venv2/bin/python3", "/home/pi/services/kraken/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "wifi"
+command = ["nice", "-19", "/home/pi/services/wifi/main.py", "--socket", "wlan0"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "zenohd"
+command = ["zenohd", "-c", "/home/pi/tools/zenoh/blueos-zenoh.json5"]
+env = { ZENOH_BACKEND_FS_ROOT = "/home/pi/tools/zenoh" }
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "beacon"
+command = ["/home/pi/services/beacon/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "bridget"
+command = ["/home/pi/services/bridget/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "commander"
+command = ["/home/pi/services/commander/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "nmea_injector"
+command = ["nice", "-19", "/home/pi/services/nmea_injector/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "helper"
+command = ["/usr/blueos/venv2/bin/python3", "/home/pi/services/helper/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "iperf3"
+command = ["iperf3", "--server", "--port", "5201"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "linux2rest"
+command = [
+    "linux2rest",
+    "--log-settings",
+    "netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10,usb=60"
+]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "filebrowser"
+command = ["nice", "-19", "filebrowser", "--database", "/etc/filebrowser/filebrowser.db", "--baseurl", "/file-browser"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "versionchooser"
+command = ["/usr/blueos/venv2/bin/python3", "/home/pi/services/versionchooser/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "pardal"
+command = ["nice", "-19", "/home/pi/services/pardal/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "ping"
+command = ["nice", "-19", "/home/pi/services/ping/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+
+[[service]]
+name = "ttyd"
+command = [
+    "nice", "-19", "ttyd", "-p", "8088",
+    "sh", "-c", "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"
+]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "nginx"
+command = ["nice", "-18", "nginx", "-g", "daemon off;", "-c", "/home/pi/tools/nginx/nginx.conf"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "bag_of_holding"
+command = ["/home/pi/services/bag_of_holding/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "recorder"
+command = ["blueos-recorder", "--recorder-path", "/usr/blueos/userdata/recorder"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "recorder_extractor"
+command = ["/home/pi/services/recorder_extractor/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
+[[service]]
+name = "disk_usage"
+command = ["/home/pi/services/disk_usage/main.py"]
+enabled = true
+restart = true
+restart_delay_sec = 5.0
+[service.limits]
+memory_mb = 250
+
