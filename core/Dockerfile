@@ -114,7 +114,6 @@ COPY configuration/motd /etc/motd
 
 # Copy configuration files
 COPY start-blueos-core /usr/bin/start-blueos-core
-COPY run-service.sh /usr/bin/run-service
 
 # Copy binaries and necessary folders from download-binaries to this stage
 COPY --from=download-binaries \
