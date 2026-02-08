@@ -1,9 +1,10 @@
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Generator, List
 from unittest.mock import MagicMock, patch
-import time
+
 import pytest
 from docker.errors import NotFound
 from pyfakefs.fake_filesystem_unittest import TestCase
