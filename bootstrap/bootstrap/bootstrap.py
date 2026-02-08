@@ -5,7 +5,7 @@ import pathlib
 import shutil
 import sys
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from warnings import warn
 
 import docker
@@ -24,7 +24,7 @@ class Bootstrapper:
     SETTINGS_NAME_CORE = "core"
     core_last_response_time = time.monotonic()
 
-    def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
+    def __init__(self, client: docker.DockerClient, low_level_api: Optional[docker.APIClient] = None) -> None:
         self.version_chooser_is_online = False
         self.client: docker.DockerClient = client
         self.core_last_response_time = time.monotonic()
