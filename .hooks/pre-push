@@ -93,8 +93,43 @@ echo "Running pre push hook!"
 verify_tag_if_needed
 run_shellcheck_suite
 
+run_bootstrap_checks() {
+    echo "Running bootstrap checks..."
+    local bootstrap_dir="$ROOT_DIR/bootstrap"
+    local bootstrap_files=()
+    mapfile -t bootstrap_files < <(find "$bootstrap_dir" -name "*.py" -type f)
+
+    if [ "${#bootstrap_files[@]}" -eq 0 ]; then
+        echo "No bootstrap Python files found, skipping."
+        return
+    fi
+
+    echo "Running isort (bootstrap).."
+    isort "${isort_args[@]}" "${bootstrap_files[@]}"
+
+    echo "Running black (bootstrap).."
+    black "${black_args[@]}" "${bootstrap_files[@]}"
+
+    if [ "$fixing" = true ]; then
+        return
+    fi
+
+    echo "Running ruff (bootstrap).."
+    ruff check --config "$CORE_DIR/pyproject.toml" "${bootstrap_files[@]}"
+
+    echo "Running pylint (bootstrap).."
+    pylint --rcfile "$CORE_DIR/pyproject.toml" "${bootstrap_files[@]}"
+
+    echo "Running mypy (bootstrap).."
+    mypy --config-file "$CORE_DIR/pyproject.toml" "$bootstrap_dir"
+}
+
 if [ "$should_run_primary" = true ]; then
     run_environment_phase "primary" "$PRIMARY_PROJECT_DIR" "primary" SECONDARY_SCOPE_PATHS EMPTY_PATHS true
+    # Bootstrap checks reuse the primary venv (run_environment_phase runs in a subshell so we re-activate)
+    # shellcheck disable=SC1091
+    source "$PRIMARY_PROJECT_DIR/.venv/bin/activate"
+    run_bootstrap_checks
 fi
 if [ "$should_run_secondary" = true ]; then
     if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 0 ]; then
