@@ -89,6 +89,7 @@ line-length = 120
 
 [tool.isort]
 profile = "black"
+known_first_party = ["bootstrap"]
 
 [tool.mypy]
 allow_untyped_decorators = true
