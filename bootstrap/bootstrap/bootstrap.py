@@ -297,7 +297,7 @@ class Bootstrapper:
                 if time.monotonic() - self.core_last_response_time < 300:
                     continue
 
-                # Version choose failed, time to restarted core
+                # Version chooser failed, time to restart core
                 self.core_last_response_time = time.monotonic()
                 logger.warning("Core has not responded in 5 minutes, resetting to factory...")
                 self.overwrite_config_file_with_defaults()
