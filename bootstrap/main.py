@@ -5,8 +5,8 @@ import sys
 
 import docker
 from loguru import logger
-from bootstrap.bootstrap import Bootstrapper
 
+from bootstrap.bootstrap import Bootstrapper
 
 if __name__ == "__main__":
     version = os.environ.get("GIT_DESCRIBE_TAGS", None)
