@@ -5,7 +5,7 @@ import pathlib
 import shutil
 import sys
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from warnings import warn
 
 import docker
@@ -24,7 +24,7 @@ class Bootstrapper:
     SETTINGS_NAME_CORE = "core"
     core_last_response_time = time.monotonic()
 
-    def __init__(self, client: docker.DockerClient, low_level_api: docker.APIClient = None) -> None:
+    def __init__(self, client: docker.DockerClient, low_level_api: Optional[docker.APIClient] = None) -> None:
         self.version_chooser_is_online = False
         self.client: docker.DockerClient = client
         self.core_last_response_time = time.monotonic()
@@ -48,8 +48,7 @@ class Bootstrapper:
                 Bootstrapper.DOCKER_CONFIG_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH.with_suffix(".json.bak")
             )
         except FileNotFoundError:
-            # we don't mind if the file is already there
-            pass
+            logger.warning(f"File {Bootstrapper.DOCKER_CONFIG_FILE_PATH} not found, creating backup...")
         shutil.copy(Bootstrapper.DEFAULT_FILE_PATH, Bootstrapper.DOCKER_CONFIG_FILE_PATH)
 
     @staticmethod
@@ -298,7 +297,7 @@ class Bootstrapper:
                 if time.monotonic() - self.core_last_response_time < 300:
                     continue
 
-                # Version choose failed, time to restarted core
+                # Version chooser failed, time to restart core
                 self.core_last_response_time = time.monotonic()
                 logger.warning("Core has not responded in 5 minutes, resetting to factory...")
                 self.overwrite_config_file_with_defaults()
