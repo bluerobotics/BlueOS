@@ -250,7 +250,7 @@ class Helper:
                 else:
                     decompressed_data = response.read()
 
-                request_response.decoded_data = decompressed_data.decode(encoding)
+                request_response.decoded_data = decompressed_data.decode(encoding, errors="replace")
 
                 # Interpret it as json
                 if try_json:
@@ -261,13 +261,21 @@ class Helper:
             request_response.timeout = True
             request_response.error = str(e)
 
-        except (http.client.HTTPException, socket.error, json.JSONDecodeError) as e:
-            logger.warning(e)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to decode JSON response: {e.msg} (pos {e.pos})")
             request_response.error = str(e)
 
+        except (http.client.HTTPException, socket.error) as e:
+            # Binary data from non-HTTP services can end up in exception messages
+            error_msg = str(e) if str(e).isascii() else type(e).__name__
+            logger.warning(error_msg)
+            request_response.error = error_msg
+
         except Exception as e:
-            logger.exception(e)
-            request_response.error = str(e)
+            # Binary data from non-HTTP services can end up in exception messages
+            error_msg = str(e) if str(e).isascii() else type(e).__name__
+            logger.exception(error_msg)
+            request_response.error = error_msg
 
         finally:
             if conn:
