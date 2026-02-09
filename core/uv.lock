@@ -1482,15 +1482,6 @@ wheels = [
 ]
 
 [[package]]
-name = "tabulate"
-version = "0.8.9"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ae/3d/9d7576d94007eaf3bb685acbaaec66ff4cdeb0b18f1bf1f17edbeebffb0a/tabulate-0.8.9.tar.gz", hash = "sha256:eb1d13f25760052e8931f2ef80aaf6045a6cceb47514db8beab24cded16f13a7", size = 53482 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/80/7c0cad11bd99985cfe7c09427ee0b4f9bd6b048bd13d4ffb32c6db237dfb/tabulate-0.8.9-py3-none-any.whl", hash = "sha256:d7c013fe7abbc5e491394e10fa845f8f32fe54f8dc60c6622c6cf482d25d47e4", size = 25123 },
-]
-
-[[package]]
 name = "tomli"
 version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1631,7 +1622,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyroute2" },
     { name = "sdbus-networkmanager" },
-    { name = "tabulate" },
     { name = "uvicorn" },
 ]
 
@@ -1645,7 +1635,6 @@ requires-dist = [
     { name = "pydantic", specifier = "==1.10.12" },
     { name = "pyroute2", specifier = "==0.8.1" },
     { name = "sdbus-networkmanager", specifier = "==2.0.0" },
-    { name = "tabulate", specifier = "==0.8.9" },
     { name = "uvicorn", specifier = "==0.18.0" },
 ]
 
