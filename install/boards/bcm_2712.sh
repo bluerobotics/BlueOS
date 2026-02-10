@@ -61,7 +61,7 @@ for STRING in \
     "dtoverlay=spi1-3cs" \
     "gpio=11,24,25=op,pu,dh" \
     "gpio=37=op,pd,dl" \
-    "dtoverlay=dwc2,dr_mode=otg" \
+    "dtoverlay=dwc2,dr_mode=peripheral" \
     ; do \
     sed -i "$line_number r /dev/stdin" $CONFIG_FILE <<< "$STRING"
 done
