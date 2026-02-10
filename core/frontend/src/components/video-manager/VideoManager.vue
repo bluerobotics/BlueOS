@@ -199,7 +199,7 @@ export default Vue.extend({
   background-color: transparent;
 }
 .videos-list {
-  margin: 0px 15px;
+  margin: 0 15px;
   margin-bottom: 100px !important;
   background-color: transparent;
 }
