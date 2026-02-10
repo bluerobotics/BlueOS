@@ -236,7 +236,7 @@ export default Vue.extend({
 <style scoped>
   #main {
     display: inline-flex;
-    margin: 0px;
+    margin: 0;
     object-fit: contain;
     position: relative;
   }
