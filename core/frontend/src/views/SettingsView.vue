@@ -240,6 +240,7 @@
                     class="mr-2"
                     outlined
                     small
+                    :disabled="deletion_in_progress"
                     @click="download_service_log_files"
                   >
                     <v-icon left small>
@@ -251,7 +252,7 @@
                     v-tooltip="'Free up space by removing old logs'"
                     outlined
                     small
-                    :disabled="disable_remove || deletion_in_progress"
+                    :disabled="disable_remove || deletion_in_progress || downloading"
                     color="error"
                     @click="show_log_clear_confirm = true; pending_log_clear_type = 'service'"
                   >
@@ -532,6 +533,7 @@ export default Vue.extend({
       operation_description: '',
       operation_error: undefined as undefined | string,
       deletion_in_progress: false,
+      downloading: false,
       deletion_log_abort_controller: null as null | CancelTokenSource,
       current_deletion_path: '',
       current_deletion_size: 0,
@@ -588,7 +590,12 @@ export default Vue.extend({
     },
 
     async download_service_log_files(): Promise<void> {
-      window.open(`${commander.API_URL}/services/download_system_logs`, '_blank')
+      this.downloading = true
+      try {
+        window.open(`${commander.API_URL}/services/download_system_logs`, '_blank')
+      } finally {
+        this.downloading = false
+      }
     },
 
     async download_mavlink_log_files(): Promise<void> {
