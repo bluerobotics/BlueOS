@@ -3,7 +3,7 @@
 # Immediately exit on errors
 set -e
 
-VERSION="0.7.0"
+VERSION="0.7.2"
 PROJECT_NAME="mavlink-server"
 REPOSITORY_ORG="bluerobotics"
 REPOSITORY_NAME="$PROJECT_NAME"
