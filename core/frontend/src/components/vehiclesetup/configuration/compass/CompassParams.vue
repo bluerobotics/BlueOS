@@ -92,9 +92,6 @@ table {
 th, td {
   border: 1px solid #ddd;
   padding: 8px;
-}
-
-th, td {
   cursor: pointer;
 }
 
