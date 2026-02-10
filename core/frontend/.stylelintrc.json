@@ -1,0 +1,45 @@
+{
+  "extends": [
+    "stylelint-config-standard",
+    "stylelint-config-recommended-vue"
+  ],
+  "ignoreFiles": [
+    "src/components/vue-tour/**"
+  ],
+  "overrides": [
+    {
+      "files": ["**/*.scss"],
+      "extends": [
+        "stylelint-config-standard-scss",
+        "stylelint-config-recommended-vue/scss"
+      ]
+    }
+  ],
+  "rules": {
+    "at-rule-empty-line-before": null,
+    "at-rule-no-vendor-prefix": null,
+    "alpha-value-notation": null,
+    "color-function-alias-notation": null,
+    "color-function-notation": null,
+    "comment-empty-line-before": null,
+    "comment-whitespace-inside": null,
+    "custom-property-pattern": null,
+    "declaration-block-single-line-max-declarations": null,
+    "declaration-empty-line-before": null,
+    "declaration-property-value-keyword-no-deprecated": null,
+    "declaration-property-value-no-unknown": true,
+    "length-zero-no-unit": true,
+    "media-feature-range-notation": null,
+    "no-descending-specificity": null,
+    "no-empty-source": true,
+    "number-max-precision": null,
+    "property-no-deprecated": null,
+    "property-no-vendor-prefix": null,
+    "rule-empty-line-before": null,
+    "selector-class-pattern": null,
+    "selector-pseudo-element-colon-notation": null,
+    "shorthand-property-no-redundant-values": null,
+    "declaration-block-no-redundant-longhand-properties": null,
+    "value-no-vendor-prefix": null
+  }
+}
