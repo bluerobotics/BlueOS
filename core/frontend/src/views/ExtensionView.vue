@@ -84,6 +84,6 @@ export default Vue.extend({
 
 <style>
 .fullpage {
-  position:absolute; left: 0; right: 0; bottom: 0; top: 0px;
+  position:absolute; left: 0; right: 0; bottom: 0; top: 0;
 }
 </style>
