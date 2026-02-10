@@ -771,7 +771,7 @@ export default Vue.extend({
 }
 
 .step-label {
-  text-shadow: 0px 0px 0px !important;
+  text-shadow: 0 0 0 !important;
 }
 .other-button {
   width: 300px;
