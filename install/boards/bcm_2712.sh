@@ -71,7 +71,7 @@ for STRING in \
     "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0" \
     "dtoverlay=spi0-led" \
     "dtoverlay=spi1-3cs" \
-    "dtoverlay=dwc2,dr_mode=otg" \
+    "dtoverlay=dwc2,dr_mode=peripheral" \
     "enable_uart=1" \
     "gpio=11,24,25=op,pu,dh" \
     "gpio=37=op,pd,dl" \
