@@ -443,7 +443,7 @@ model-viewer {
 .HotspotAnnotation {
     background: rgb(255, 255, 255);
     border-radius: 4px;
-    box-shadow: rgb(0 0 0 / 25%) 0px 2px 4px;
+    box-shadow: rgb(0 0 0 / 25%) 0 2px 4px;
     color: rgba(0, 0, 0, 0.8);
     display: block;
     font-family: Futura, "Helvetica Neue", sans-serif;
@@ -468,8 +468,8 @@ model-viewer {
 .Hotspot {
     background: rgb(255, 255, 255);
     border-radius: 32px;
-    border: 0px;
-    box-shadow: rgba(0, 0, 0, 0.25) 0px 2px 4px;
+    border: 0;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 2px 4px;
     box-sizing: border-box;
     cursor: pointer;
     height: 24px;
