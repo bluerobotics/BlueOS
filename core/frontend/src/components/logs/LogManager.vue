@@ -18,7 +18,7 @@
           v-tooltip="'Download selected logs'"
           icon
           color="success"
-          :disabled="disable_batch_operations"
+          :disabled="disable_batch_operations || deleting"
           @click="downloadSelectedLogs"
         >
           <v-icon>mdi-download-multiple</v-icon>
@@ -27,7 +27,7 @@
           v-tooltip="'Delete selected logs'"
           icon
           color="error"
-          :disabled="disable_batch_operations"
+          :disabled="disable_batch_operations || downloading"
           @click="removeLogs"
         >
           <v-icon>mdi-trash-can</v-icon>
@@ -58,6 +58,7 @@
             <v-btn
               v-tooltip="'Download log'"
               icon
+              :disabled="deleting"
               @click="downloadLogs([item])"
             >
               <v-icon>mdi-download</v-icon>
@@ -97,6 +98,8 @@ export default Vue.extend({
       available_logs: [] as FilebrowserFile[],
       logs_fetched: false,
       selected_logs: [] as FilebrowserFile[],
+      deleting: false,
+      downloading: false,
       headers: [
         {
           text: 'Name',
@@ -156,12 +159,18 @@ export default Vue.extend({
         (log) => ['.bin', '.tlog'].includes(log.extension.toLowerCase()) && log.size > 100,
       )
     },
-    downloadSelectedLogs(): void {
-      this.downloadLogs(this.selected_logs)
+    async downloadSelectedLogs(): Promise<void> {
+      await this.downloadLogs(this.selected_logs)
       this.selected_logs = []
     },
-    downloadLogs(logs: FilebrowserFile[]): void {
-      filebrowser.downloadFiles(logs)
+    async downloadLogs(logs: FilebrowserFile[]): Promise<void> {
+      if (this.downloading) return
+      this.downloading = true
+      try {
+        await filebrowser.downloadFiles(logs)
+      } finally {
+        this.downloading = false
+      }
     },
     printSize(size_bytes: number): string {
       return prettifySize(size_bytes / 1024)
@@ -169,10 +178,14 @@ export default Vue.extend({
     async removeLogs(): Promise<void> {
       if (this.selected_logs.isEmpty()) return
 
-      await filebrowser.deleteFiles(this.selected_logs)
-
-      await this.fetchAvailableLogs()
-      this.selected_logs = []
+      this.deleting = true
+      try {
+        await filebrowser.deleteFiles(this.selected_logs)
+        await this.fetchAvailableLogs()
+        this.selected_logs = []
+      } finally {
+        this.deleting = false
+      }
     },
     async replay_log(log: FilebrowserFile): Promise<void> {
       const log_url = encodeURIComponent(await filebrowser.singleFileRelativeURL(log))
