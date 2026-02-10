@@ -318,7 +318,7 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
             ),
             ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
             ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
-            ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
+            ("dtoverlay=dwc2,dr_mode=peripheral", "^[#]*dtoverlay=dwc2.*$"),
             ("enable_uart=1", "^enable_uart=.*"),
             ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
             ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
