@@ -282,7 +282,7 @@ div.pirate-marker {
   position: absolute;
   width: 35px;
   right: 0;
-  top: 0px;
+  top: 0;
   opacity: 0.7;
 }
 
