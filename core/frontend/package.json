@@ -11,7 +11,9 @@
     "dev": "vite --host",
     "build": "NODE_ENV=production vite build",
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
-    "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src"
+    "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src && stylelint 'src/**/*.{vue,css,scss}'",
+    "lint:css": "stylelint 'src/**/*.{vue,css,scss}'",
+    "lint:css:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix"
   },
   "dependencies": {
     "@eclipse-zenoh/zenoh-ts": "1.3.4",
