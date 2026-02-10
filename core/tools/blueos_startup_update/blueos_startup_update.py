@@ -349,9 +349,16 @@ def update_dwc2() -> bool:
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
-    # Add dwc2 overlay in pi4 section if it doesn't exist
-    dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=otg"
     section_name = "pi4" if get_cpu_type() == CpuType.PI4 else "pi5"
+    # Add dwc2 overlay in pi4 or pi5 section if it doesn't exist
+    if get_cpu_type() == CpuType.PI4:
+        dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=otg"
+    elif get_cpu_type() == CpuType.PI5:
+        dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=peripheral"
+    else:
+        logger.error("Unsupported CPU type for dwc2 update")
+        return False
+
     boot_config_add_configuration_at_section(config_content, dwc2_overlay_config, section_name)
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
