@@ -539,7 +539,7 @@ export default Vue.extend({
       return wifi.current_network != null
     },
     toolbar_height(): number {
-      return settings.is_pirate_mode && this.backend_offline ? 66 : 56
+      return 56
     },
     full_page_requested(): boolean {
       return this.$router.currentRoute.query.full_page === 'true'
