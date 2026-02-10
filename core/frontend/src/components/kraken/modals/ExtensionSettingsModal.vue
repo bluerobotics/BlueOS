@@ -416,7 +416,7 @@ export default Vue.extend({
   left: 0;
   right: 0;
   top: 50%;
-  border-top: 0.15rem solid currentColor;
+  border-top: 0.15rem solid currentcolor;
   z-index: 0;
 }
 </style>
