@@ -88,7 +88,7 @@ export default Vue.extend({
 
 <style scoped>
 .step-label {
-  text-shadow: 0px 0px 0px !important;
+  text-shadow: 0 0 0 !important;
 }
 
 .step-container {
