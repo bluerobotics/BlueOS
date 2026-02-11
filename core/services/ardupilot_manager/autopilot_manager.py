@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import Any, List, Optional, Set
 
 import psutil
+from commonwealth.mavlink_comm.typedefs import MavlinkFirmwareType
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
 from commonwealth.utils.Singleton import Singleton
 from elftools.elf.elffile import ELFFile
@@ -151,6 +152,7 @@ class AutoPilotManager(metaclass=Singleton):
         self.vehicle_manager = VehicleManager()
         self._heartbeat_fail_count = 0  # Consecutive heartbeat failures
         self._max_heartbeat_failures = 10  # Threshold for restarting Ardupilot after consecutive heartbeat failures
+        self._firmware_vehicle_type: Optional[MavlinkFirmwareType] = None
 
         self.should_be_running = False
         self.remove_old_logs()
@@ -203,7 +205,7 @@ class AutoPilotManager(metaclass=Singleton):
                 except Exception as error:
                     logger.warning(f"Could not start Ardupilot: {error}")
 
-            # Monitor MAVLink heartbeat while autopilot is supposed to be running
+            # Monitor MAVLink heartbeat and restart only for ROVs (Sub)
             if self.should_be_running and self.is_running():
                 try:
                     alive = await self.vehicle_manager.is_heart_beating()
@@ -223,7 +225,14 @@ class AutoPilotManager(metaclass=Singleton):
                 if self._heartbeat_fail_count >= self._max_heartbeat_failures:
                     logger.warning("Consecutive heartbeat failures threshold reached — restarting Ardupilot.")
                     try:
-                        await self.restart_ardupilot()
+                        if self._firmware_vehicle_type is None:
+                            try:
+                                vehicle_type = await self.vehicle_manager.get_vehicle_type()
+                                self._firmware_vehicle_type = vehicle_type.mavlink_firmware_type()
+                            except Exception:
+                                pass
+                        if self._firmware_vehicle_type == MavlinkFirmwareType.ArduSub:
+                            await self.restart_ardupilot()
                     except Exception as error:
                         logger.warning(f"Failed to restart Ardupilot after heartbeat failures: {error}")
                     self._heartbeat_fail_count = 0
