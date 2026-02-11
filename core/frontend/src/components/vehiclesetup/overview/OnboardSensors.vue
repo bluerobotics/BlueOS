@@ -1,5 +1,5 @@
 <template>
-  <v-card class="ma-2">
+  <v-card class="mt-6">
     <v-card-title class="align-center">
       Autopilot Sensors
     </v-card-title>

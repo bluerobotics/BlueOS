@@ -1,5 +1,5 @@
 <template>
-  <v-card class="ma-2 pa-2">
+  <v-card class="pa-2">
     <v-card-title class="align-center">
       Lights
     </v-card-title>
