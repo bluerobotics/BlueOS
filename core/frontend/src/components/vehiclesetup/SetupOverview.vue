@@ -1,17 +1,19 @@
 <template>
-  <div>
+  <div class="mx-2">
     <v-row class="mt-5">
       <v-col
         cols="12"
         sm="7"
+        class="d-flex"
       >
-        <v-card class="pa-5 ma-2">
+        <v-card class="pa-5 flex-grow-1 d-flex flex-column">
           <vehicle-viewer
             :highlight="highlight"
             noannotations
             :autorotate="true"
+            class="flex-grow-1"
             :style="{
-              height: '500px',
+              'min-height': '400px',
               width: '100%',
             }"
           />
@@ -25,14 +27,20 @@
         <onboard-sensors />
       </v-col>
     </v-row>
-    <v-sheet class="d-flex">
-      <ping-info />
-      <video-overview />
-      <lights-info />
-      <gripper-info />
-      <leak-info />
-      <power-info />
-    </v-sheet>
+    <v-row class="mt-5 mb-5">
+      <v-col
+        v-for="component in bottomComponents"
+        :key="component"
+        cols="12"
+        sm="6"
+        md="4"
+      >
+        <component
+          :is="component"
+          class="fill-height"
+        />
+      </v-col>
+    </v-row>
   </div>
 </template>
 
@@ -66,6 +74,14 @@ export default Vue.extend({
   data() {
     return {
       highlight: null as string | null,
+      bottomComponents: [
+        'ping-info',
+        'video-overview',
+        'lights-info',
+        'gripper-info',
+        'leak-info',
+        'power-info',
+      ],
     }
   },
 })

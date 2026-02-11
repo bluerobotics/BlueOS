@@ -1,5 +1,5 @@
 <template>
-  <v-card class="ma-2">
+  <v-card>
     <v-card-title class="align-center">
       Vehicle
     </v-card-title>

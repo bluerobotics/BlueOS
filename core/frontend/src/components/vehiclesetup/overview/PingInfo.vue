@@ -1,5 +1,5 @@
 <template>
-  <v-card class="ma-2 pa-2 pinginfo">
+  <v-card class="pa-2">
     <v-card-title class="justify-center">
       Ping Sensors
     </v-card-title>
@@ -55,8 +55,5 @@ export default Vue.extend({
 i.ping360 {
     transform: rotate(180deg);
     margin: 15px;
-}
-.pinginfo {
-  width: fit-content;
 }
 </style>
