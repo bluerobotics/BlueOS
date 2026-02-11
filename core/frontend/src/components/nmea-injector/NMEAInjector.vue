@@ -148,7 +148,8 @@ export default Vue.extend({
       this.show_creation_dialog = true
     },
     createLink(sentence: string): string {
-      return `<a href="http://aprs.gids.nl/nmea/#${sentence.toLowerCase().substring(2)}">${sentence}</a>`
+      const id = sentence.toLowerCase().substring(2)
+      return `<a href="http://aprs.gids.nl/nmea/#${id}" target="_blank" rel="noopener noreferrer">${sentence}</a>`
     },
   },
 })
