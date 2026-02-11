@@ -88,7 +88,7 @@
           Change board
         </v-btn>
         <v-btn
-          v-if="settings.is_pirate_mode && board_supports_start_stop"
+          v-if="settings.is_pirate_mode"
           class="ma-1"
           :block="$vuetify.breakpoint.xs"
           color="secondary"
@@ -98,7 +98,7 @@
           Start autopilot
         </v-btn>
         <v-btn
-          v-if="settings.is_pirate_mode && board_supports_start_stop"
+          v-if="settings.is_pirate_mode"
           class="ma-1"
           :block="$vuetify.breakpoint.xs"
           color="secondary"
@@ -174,9 +174,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    board_supports_start_stop(): boolean {
-      return this.current_board?.name !== 'Manual'
-    },
     board_supports_restart(): boolean {
       // this is a mavlink command, all boards should support it
       return true
