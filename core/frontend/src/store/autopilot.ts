@@ -55,6 +55,8 @@ class AutopilotStore extends VuexModule {
 
   verhicle_armed = false
 
+  last_heartbeat_date: Date = new Date()
+
   get parameter() {
     return (name: string): Parameter | undefined => this.parameters.find((parameter) => parameter.name === name)
   }
@@ -71,7 +73,6 @@ class AutopilotStore extends VuexModule {
       (param: Parameter) => user_filter(param),
     )
   }
-
 
   get vehicle_type(): string {
     return autopilot_manager.vehicle_type
