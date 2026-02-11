@@ -190,6 +190,45 @@ class AutoPilotManager(metaclass=Singleton):
         # Serial or others that are not processes based
         return self.should_be_running
 
+    async def _detect_firmware_vehicle_type(self) -> None:
+        if self._firmware_vehicle_type is not None:
+            return
+        try:
+            vehicle_type = await self.vehicle_manager.get_vehicle_type()
+            self._firmware_vehicle_type = vehicle_type.mavlink_firmware_type()
+        except Exception:
+            pass
+
+    async def _monitor_heartbeat(self) -> None:
+        """Monitor MAVLink heartbeat and restart only for ROVs (Sub)."""
+        if not self.should_be_running or not self.is_running():
+            return
+
+        try:
+            alive = await self.vehicle_manager.is_heart_beating()
+            if alive:
+                self._heartbeat_fail_count = 0
+            else:
+                self._heartbeat_fail_count += 1
+                logger.warning(f"Heartbeat check False ({self._heartbeat_fail_count}/{self._max_heartbeat_failures})")
+        except Exception as error:
+            self._heartbeat_fail_count += 1
+            logger.warning(
+                f"heartbeat check failed ({self._heartbeat_fail_count}/{self._max_heartbeat_failures}): {error}"
+            )
+
+        if self._heartbeat_fail_count < self._max_heartbeat_failures:
+            return
+
+        logger.warning("Consecutive heartbeat failures threshold reached — restarting Ardupilot.")
+        try:
+            await self._detect_firmware_vehicle_type()
+            if self._firmware_vehicle_type == MavlinkFirmwareType.ArduSub:
+                await self.restart_ardupilot()
+        except Exception as error:
+            logger.warning(f"Failed to restart Ardupilot after heartbeat failures: {error}")
+        self._heartbeat_fail_count = 0
+
     async def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot when it's not running but was supposed to."""
         while True:
@@ -205,38 +244,7 @@ class AutoPilotManager(metaclass=Singleton):
                 except Exception as error:
                     logger.warning(f"Could not start Ardupilot: {error}")
 
-            # Monitor MAVLink heartbeat and restart only for ROVs (Sub)
-            if self.should_be_running and self.is_running():
-                try:
-                    alive = await self.vehicle_manager.is_heart_beating()
-                    if alive:
-                        self._heartbeat_fail_count = 0
-                    else:
-                        self._heartbeat_fail_count += 1
-                        logger.warning(
-                            f"Heartbeat check False ({self._heartbeat_fail_count}/{self._max_heartbeat_failures})"
-                        )
-                except Exception as error:
-                    self._heartbeat_fail_count += 1
-                    logger.warning(
-                        f"heartbeat check failed ({self._heartbeat_fail_count}/{self._max_heartbeat_failures}): {error}"
-                    )
-
-                if self._heartbeat_fail_count >= self._max_heartbeat_failures:
-                    logger.warning("Consecutive heartbeat failures threshold reached — restarting Ardupilot.")
-                    try:
-                        if self._firmware_vehicle_type is None:
-                            try:
-                                vehicle_type = await self.vehicle_manager.get_vehicle_type()
-                                self._firmware_vehicle_type = vehicle_type.mavlink_firmware_type()
-                            except Exception:
-                                pass
-                        if self._firmware_vehicle_type == MavlinkFirmwareType.ArduSub:
-                            await self.restart_ardupilot()
-                    except Exception as error:
-                        logger.warning(f"Failed to restart Ardupilot after heartbeat failures: {error}")
-                    self._heartbeat_fail_count = 0
-
+            await self._monitor_heartbeat()
             await asyncio.sleep(5.0)
 
     async def start_mavlink_manager_watchdog(self) -> None:
