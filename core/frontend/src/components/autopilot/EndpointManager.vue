@@ -65,14 +65,36 @@
         subtitle="Fetching available endpoints..."
       />
     </v-container>
-    <v-card
+    <v-container
       v-else
       class="d-flex align-center justify-center pa-6"
     >
-      <p class="text-h6">
-        No endpoints available.
-      </p>
-    </v-card>
+      <v-card
+        v-if="!autopilot_board_is_running"
+        class="d-flex align-center justify-center pa-6"
+      >
+        <div class="d-flex flex-column align-center justify-center">
+          <p class="mb-2">
+            Autopilot must be running to create endpoints.
+          </p>
+          <p class="mb-0">
+            You can start it in the
+            <router-link to="autopilot">
+              Autopilot Firmware
+            </router-link>
+            tab.
+          </p>
+        </div>
+      </v-card>
+      <v-card
+        v-else
+        class="d-flex align-center justify-center pa-6"
+      >
+        <p class="text-h6">
+          No endpoints available.
+        </p>
+      </v-card>
+    </v-container>
 
     <v-fab-transition>
       <v-btn
@@ -85,6 +107,7 @@
         bottom
         right
         class="v-btn--example"
+        :disabled="!autopilot_board_is_running"
         @click="openCreationDialog"
       >
         <v-icon>mdi-plus</v-icon>
@@ -103,13 +126,14 @@ import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
 import { OneMoreTime } from '@/one-more-time'
+import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { AutopilotEndpoint } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
-import { fetchAvailableEndpoints } from './AutopilotManagerUpdater'
+import { fetchAvailableEndpoints, fetchCurrentBoard } from './AutopilotManagerUpdater'
 import EndpointCard from './EndpointCard.vue'
 import CreationDialog from './EndpointCreationDialog.vue'
 
@@ -128,7 +152,10 @@ export default Vue.extend({
       selected_router: '',
       available_routers: [] as string[],
       updating_router: false,
+      heartbeat_expired: false,
+      heartbeat_timeout: null as number | null,
       fetch_available_endpoints_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_current_board_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
     }
   },
   computed: {
@@ -141,9 +168,29 @@ export default Vue.extend({
     are_endpoints_available(): boolean {
       return !this.available_endpoints.isEmpty()
     },
+    autopilot_board_is_running(): boolean {
+      return autopilot.current_board !== null && !this.heartbeat_expired && this.heartbeat_age() < 3000
+    },
+  },
+  watch: {
+    'autopilot_data.last_heartbeat_date': function onHeartbeatDateChange() {
+      if (this.heartbeat_timeout) {
+        clearTimeout(this.heartbeat_timeout)
+      }
+      this.heartbeat_expired = false
+      this.heartbeat_timeout = setTimeout(() => {
+        this.heartbeat_expired = true
+      }, 3000)
+    },
+  },
+  beforeDestroy() {
+    if (this.heartbeat_timeout) {
+      clearTimeout(this.heartbeat_timeout)
+    }
   },
   mounted() {
     this.fetch_available_endpoints_task.setAction(fetchAvailableEndpoints)
+    this.fetch_current_board_task.setAction(fetchCurrentBoard)
     this.fetchAvailableRouters()
     this.fetchCurrentRouter()
   },
@@ -205,6 +252,9 @@ export default Vue.extend({
         .catch((error) => {
           notifier.pushBackError('AUTOPILOT_ENDPOINT_CREATE_FAIL', error, true)
         })
+    },
+    heartbeat_age(): number {
+      return new Date().valueOf() - autopilot_data.last_heartbeat_date.getTime()
     },
   },
 })

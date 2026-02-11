@@ -174,6 +174,11 @@ class AutopilotStore extends VuexModule {
   setVehicleArmed(armed: boolean): void {
     this.verhicle_armed = armed
   }
+
+  @Mutation
+  setLastHeartbeatDate(date: Date): void {
+    this.last_heartbeat_date = date
+  }
 }
 
 export { AutopilotStore }
