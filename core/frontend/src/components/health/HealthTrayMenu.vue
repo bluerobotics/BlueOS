@@ -170,7 +170,6 @@ export default Vue.extend({
   data() {
     return {
       time_limit_heartbeat: 3000,
-      last_heartbeat_date: new Date(),
     }
   },
   computed: {
@@ -238,12 +237,12 @@ export default Vue.extend({
       autopilot_data.setSystemId(message?.header.system_id)
       autopilot_data.setAutopilotType(message?.message.autopilot.type)
       autopilot_data.setVehicleArmed(Boolean(message?.message.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED))
-      this.last_heartbeat_date = new Date()
+      autopilot_data.setLastHeartbeatDate(new Date())
     }).setFrequency(0)
   },
   methods: {
     heartbeat_age(): number {
-      return new Date().valueOf() - this.last_heartbeat_date.getTime()
+      return new Date().valueOf() - autopilot_data.last_heartbeat_date.getTime()
     },
     is_vehicle(type: string) {
       return [
