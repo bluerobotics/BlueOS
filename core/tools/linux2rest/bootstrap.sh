@@ -3,7 +3,7 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-VERSION="v0.6.2"
+VERSION="v0.9.4"
 REPOSITORY_ORG="patrickelectric"
 REPOSITORY_NAME="linux2rest"
 PROJECT_NAME="$REPOSITORY_NAME"
