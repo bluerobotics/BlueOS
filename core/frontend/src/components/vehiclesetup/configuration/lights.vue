@@ -47,8 +47,10 @@
 
 <script lang="ts">
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import ardupilot_capabilities from '@/store/ardupilot_capabilities'
 import autopilot_data from '@/store/autopilot'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
+import { SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
 
 enum Lights {
   Lights1 = 59, // RCIN9
@@ -66,6 +68,9 @@ export default {
     }
   },
   computed: {
+    supports_light_functions(): boolean {
+      return ardupilot_capabilities.firmware_supports_light_functions
+    },
     light_steps(): Parameter | undefined {
       return autopilot_data.parameter('JS_LIGHTS_STEPS')
     },
@@ -77,6 +82,12 @@ export default {
     },
     lights2_param(): Parameter | undefined {
       return this.servo_params.filter((param) => param.value === Lights.Lights2)[0]
+    },
+    new_lights1_value(): SERVO_FUNCTION {
+      return this.supports_light_functions ? SERVO_FUNCTION.LIGHTS1 : SERVO_FUNCTION.RCIN9
+    },
+    new_lights2_value(): SERVO_FUNCTION {
+      return this.supports_light_functions ? SERVO_FUNCTION.LIGHTS2 : SERVO_FUNCTION.RCIN10
     },
   },
   watch: {
@@ -99,10 +110,10 @@ export default {
       this.lights2_new_param = new_value?.name
     },
     lights1_new_param(new_param_name: string | undefined) {
-      this.setLights(new_param_name, Lights.Lights1)
+      this.setLights(new_param_name, this.new_lights1_value)
     },
     lights2_new_param(new_param_name: string | undefined) {
-      this.setLights(new_param_name, Lights.Lights2)
+      this.setLights(new_param_name, this.new_lights2_value)
     },
   },
   mounted() {
@@ -111,7 +122,7 @@ export default {
     this.steps_new_value = this.light_steps?.value ?? 0
   },
   methods: {
-    setLights(new_param_name: string | undefined, lights: Lights) {
+    setLights(new_param_name: string | undefined, lights: SERVO_FUNCTION) {
       if (new_param_name) {
         // reset any other parameter using lights1 to undefined
         for (const old_param of this.servo_params) {
