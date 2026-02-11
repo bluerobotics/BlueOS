@@ -103,6 +103,12 @@ import mavlink_store_get from '@/utils/mavlink'
 import CPUUsage from '@/widgets/CpuPie.vue'
 import Networking from '@/widgets/Networking.vue'
 
+interface Orientation {
+  roll: number
+  pitch: number
+  yaw: number
+}
+
 interface AppItem {
   icon?: string
   title?: string
@@ -128,6 +134,7 @@ export default Vue.extend({
     windowHeight: window.innerHeight,
     windowWidth: window.innerWidth,
     fetch_streams_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+    lastOrientation: { roll: 0, pitch: 0, yaw: 0 } as Orientation,
   }),
   computed: {
     apps(): AppItem[] {
@@ -232,11 +239,26 @@ export default Vue.extend({
     has_internet(): boolean {
       return helper.has_internet !== InternetConnectionState.OFFLINE
     },
+    attitudeMessage(): Orientation | undefined {
+      return mavlink_store_get(mavlink, 'ATTITUDE.messageData.message') as Orientation | undefined
+    },
     orientation(): string {
-      const msg = mavlink_store_get(mavlink, 'ATTITUDE.messageData.message') as
-        { roll: number; pitch: number; yaw: number } | undefined
-      if (!msg) return '0deg 0deg 0deg'
-      return `${msg.roll}rad ${-msg.pitch}rad ${-msg.yaw}rad`
+      const { roll, pitch, yaw } = this.lastOrientation
+      return `${roll}rad ${-pitch}rad ${-yaw}rad`
+    },
+  },
+  watch: {
+    attitudeMessage(msg: Orientation | undefined): void {
+      if (!msg) return
+      const { roll, pitch, yaw } = msg
+      const last = this.lastOrientation
+      // Only update if any axis changed by more than 3 degrees
+      const threshold = 3 * (Math.PI / 180)
+      if (Math.abs(roll - last.roll) > threshold
+        || Math.abs(pitch - last.pitch) > threshold
+        || Math.abs(yaw - last.yaw) > threshold) {
+        this.lastOrientation = { roll, pitch, yaw }
+      }
     },
   },
   mounted() {
