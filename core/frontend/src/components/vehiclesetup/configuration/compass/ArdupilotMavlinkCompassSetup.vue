@@ -1,30 +1,13 @@
 <template>
   <div class="pa-3">
     <v-card>
-      <div class="main-container d-flex flex-col">
-        <v-card outline class="mr-2 mb-2 flex-shrink-1">
+      <div class="main-container d-flex flex-row">
+        <v-card outline class="mr-2 mb-2 flex-shrink-1 d-flex flex-col">
           <div class="compass-container">
             <compass-display :compasses="reordered_compasses" :colors="compass_colors" />
           </div>
-          <v-card class="pa-2 ma-2" width="300px">
-            <v-card-title>
-              Declination
-            </v-card-title>
-            <v-card-text class="flex-shrink-1">
-              <parameter-switch label="Auto Declination" :parameter="compass_autodec" />
-              <p>
-                If you enable this option, the autopilot will automatically set the declination based on your current
-                location. A GPS or other absolute positioning system is required.
-              </p>
-              <v-text-field
-                label="Current Declination"
-                :disabled="compass_autodec?.value !== 0"
-                :value="printParam(compass_dec)"
-                @click="openParameterEditor(compass_dec)"
-              />
-            </v-card-text>
-          </v-card>
         </v-card>
+
         <v-card outline class="compass-calib-container mb-2">
           <v-card-title>
             <h3>Compass Calibration</h3>
@@ -91,6 +74,45 @@
               </v-expansion-panels>
             </div>
           </v-card-text>
+        </v-card>
+        <v-card outline class="mr-2 ml-2 mb-2">
+          <div class="d-block ma-3" style="width: 400px;">
+            <v-expansion-panels focusable>
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  <b>Declination</b> ({{ declination_short }})
+                  <v-spacer />
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <parameter-switch label="Auto Declination" :parameter="compass_autodec" />
+                  <p>
+                    If you enable this option, the autopilot will automatically set the
+                    declination based on your current location.
+                    A GPS or other absolute positioning system is required.
+                  </p>
+                  <InlineParameterEditor v-if="compass_autodec?.value === 0" auto-set :param="compass_dec" />
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  <template #actions>
+                    <v-icon v-if="coordinates_valid" color="success">
+                      mdi-check-circle
+                    </v-icon>
+                    <v-icon v-else color="error">
+                      mdi-alert
+                    </v-icon>
+                  </template>
+
+                  <b>Global Position</b>
+                  <v-spacer />
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <auto-coordinate-detector v-model="coordinates" />
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+            </v-expansion-panels>
+          </div>
         </v-card>
       </div>
       <div class="compass-reorder-container d-flex flex-row">
@@ -199,13 +221,15 @@
 import Vue from 'vue'
 import draggable from 'vuedraggable'
 import {
-  VCardText, VExpansionPanel, VTextField,
+  VCardText, VExpansionPanel,
 } from 'vuetify/lib'
 
 import ParameterSwitch from '@/components/common/ParameterSwitch.vue'
+import InlineParameterEditor from '@/components/parameter-editor/InlineParameterEditor.vue'
 import CompassDisplay from '@/components/vehiclesetup/configuration/compass/CompassDisplay.vue'
 import CompassParams from '@/components/vehiclesetup/configuration/compass/CompassParams.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import Listener from '@/libs/MAVLink2Rest/Listener'
 import autopilot_data from '@/store/autopilot'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
@@ -238,20 +262,23 @@ export default Vue.extend({
     CompassLearn,
     CompassParams,
     draggable,
-    VTextField,
     LargeVehicleCompassCalibrator,
     ParameterSwitch,
     VCardText,
     VExpansionPanel,
     FullCompassCalibrator,
+    InlineParameterEditor,
   },
   data() {
     return {
       tab: 0,
       color_options: ['green', 'blue', 'purple', 'red', 'orange', 'brown', 'grey', 'black'],
+      coordinates: undefined as { lat: number, lon: number } | undefined,
+      coordinates_valid: false,
       reordered_compasses: [] as deviceId[],
       edited_param: undefined as (undefined | Parameter),
       edit_param_dialog: false,
+      gps_listener: undefined as Listener | undefined,
     }
   },
   computed: {
@@ -265,6 +292,12 @@ export default Vue.extend({
       results.GPS1 = 'grey'
       results.GPS2 = 'black'
       return results
+    },
+    declination_short(): string {
+      if (this.compass_autodec?.value === 1) {
+        return 'Automatic Declination'
+      }
+      return `${this.compass_dec?.value.toFixed(2) ?? 'N/A'} rad`
     },
     compass_autodec(): Parameter | undefined {
       return autopilot_data.parameter('COMPASS_AUTODEC')
@@ -438,6 +471,15 @@ export default Vue.extend({
   },
   mounted() {
     this.reordered_compasses = this.compasses
+    this.gps_listener = mavlink2rest.startListening('GLOBAL_POSITION_INT').setCallback((receivedMessage) => {
+      if (receivedMessage.message.lat !== 0 || receivedMessage.message.lon !== 0) {
+        this.coordinates_valid = true
+      }
+    }).setFrequency(0)
+    mavlink2rest.requestMessageRate('GLOBAL_POSITION_INT', 1, autopilot_data.system_id)
+  },
+  beforeDestroy() {
+    this.gps_listener?.discard()
   },
   methods: {
     printParam,
