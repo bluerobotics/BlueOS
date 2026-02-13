@@ -115,44 +115,6 @@ export default {
           ],
         },
         {
-          name: 'Excess Internal Pressure',
-          generalDescription: 'Triggers when the internal pressure is too high. This may help to detect a leak, '
-          + 'and to avoid rapid unplanned disassembly.',
-          image: (await import('@/assets/img/configuration/failsafes/pressure.svg')).default as string,
-          params: [
-
-            {
-              replacementTitle: 'Maximum internal pressure',
-              icon: 'mdi-gauge-full',
-              name: 'FS_PRESS_MAX',
-            },
-            {
-              replacementTitle: 'Action',
-              icon: 'mdi-lightning-bolt',
-              name: 'FS_PRESS_ENABLE',
-            },
-          ],
-        },
-        {
-          name: 'Excess Internal Temperature',
-          generalDescription: 'Triggers when the internal temperature is too high. This may help to prevent '
-          + 'damage to electronics due to overheating.',
-          image: (await import('@/assets/img/configuration/failsafes/temperature.svg')).default as string,
-          params: [
-
-            {
-              replacementTitle: 'Maximum internal temperature',
-              icon: 'mdi-thermometer-high',
-              name: 'FS_TEMP_MAX',
-            },
-            {
-              replacementTitle: 'Action',
-              icon: 'mdi-lightning-bolt',
-              name: 'FS_TEMP_ENABLE',
-            },
-          ],
-        },
-        {
           name: 'Low Battery',
           generalDescription: 'Triggers when the voltage goes below specified thresholds.\n This can help to avoid '
           + 'damage to the battery and potentially loss of the vehicle.',
@@ -188,6 +150,44 @@ export default {
               replacementTitle: 'Action when battery is critical',
               icon: 'mdi-skull-crossbones-outline',
               name: 'BATT_FS_CRT_ACT',
+            },
+          ],
+        },
+        {
+          name: 'Excess Internal Pressure',
+          generalDescription: 'Triggers when the internal pressure is too high. This may help to detect a leak, '
+          + 'and to avoid rapid unplanned disassembly.',
+          image: (await import('@/assets/img/configuration/failsafes/pressure.svg')).default as string,
+          params: [
+
+            {
+              replacementTitle: 'Maximum internal pressure',
+              icon: 'mdi-gauge-full',
+              name: 'FS_PRESS_MAX',
+            },
+            {
+              replacementTitle: 'Action',
+              icon: 'mdi-lightning-bolt',
+              name: 'FS_PRESS_ENABLE',
+            },
+          ],
+        },
+        {
+          name: 'Excess Internal Temperature',
+          generalDescription: 'Triggers when the internal temperature is too high. This may help to prevent '
+          + 'damage to electronics due to overheating.',
+          image: (await import('@/assets/img/configuration/failsafes/temperature.svg')).default as string,
+          params: [
+
+            {
+              replacementTitle: 'Maximum internal temperature',
+              icon: 'mdi-thermometer-high',
+              name: 'FS_TEMP_MAX',
+            },
+            {
+              replacementTitle: 'Action',
+              icon: 'mdi-lightning-bolt',
+              name: 'FS_TEMP_ENABLE',
             },
           ],
         },
