@@ -17,7 +17,7 @@ import autopilot_data from '@/store/autopilot'
 import { FailsafeDefinition } from './types'
 
 export default {
-  name: 'FailsafesConfigration',
+  name: 'FailsafesConfiguration',
   components: {
     failsafeCard,
   },
