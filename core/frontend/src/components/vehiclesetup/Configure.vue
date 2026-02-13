@@ -114,6 +114,6 @@ export default Vue.extend({
 
 <style scoped>
 .main-container {
-  background-color: #135DA3AA !important;
+  background-color: var(--v-mariner_blue-base) !important;
 }
 </style>
