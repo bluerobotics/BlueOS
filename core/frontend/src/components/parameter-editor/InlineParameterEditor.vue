@@ -17,6 +17,7 @@
             :loading="waiting_for_param_update"
             :label="key"
             :value="2 ** keyvalue"
+            :disabled="disabled"
           />
         </template>
 
@@ -27,6 +28,7 @@
           variant="solo"
           :loading="waiting_for_param_update"
           :items="as_select_items"
+          :disabled="disabled"
         >
           <template #label>
             <parameter-label :label="label ?? 'Select an option'" :param="param" :format-options="formatOptions" />
@@ -38,6 +40,7 @@
           v-else-if="!custom_input && param?.options"
           v-model.number="internal_new_value"
           dense
+          :disabled="disabled"
           :items="as_select_items"
           :indeterminate="waiting_for_param_update"
           @change="updateVariables"
@@ -57,6 +60,7 @@
           :suffix="param.units"
           :rules="forcing_input ? [] : [isInRange, isValidType]"
           :loading="waiting_for_param_update"
+          :disabled="disabled"
           @blur="updateVariables"
           @input="internal_new_value = parseFloat(internal_new_value_as_string)"
         >
@@ -119,6 +123,10 @@ export default Vue.extend({
       default: undefined,
     },
     autoRefreshParams: {
+      type: Boolean,
+      default: false,
+    },
+    disabled: {
       type: Boolean,
       default: false,
     },
