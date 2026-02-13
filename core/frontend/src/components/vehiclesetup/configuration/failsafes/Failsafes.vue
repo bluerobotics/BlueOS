@@ -1,6 +1,6 @@
 <template>
   <div v-if="params_finished_loaded" class="pt-1 pb-1">
-    <div class="ma-3 pa-1 d-flex flex-row flex-wrap flex-grow-0 justify-center">
+    <div class="ma-3 pa-1 d-flex flex-row flex-wrap flex-grow-0 justify-center failsafes-container">
       <failsafe-card
         v-for="failsafeDefinition in failsafes"
         :key="failsafeDefinition.name"
@@ -232,5 +232,9 @@ export default {
   display: flex;
   column-gap: 10px;
   padding: 10px;
+}
+
+.failsafes-container {
+  gap: 8px;
 }
 </style>
