@@ -44,7 +44,7 @@ import ArdupilotAccelerometerSetup from './configuration/accelerometer/Ardupilot
 import ArdupilotVehicleBodySetup from './configuration/ArdupilotVehicleBodySetup.vue'
 import Camera from './configuration/camera.vue'
 import ArdupilotMavlinkCompassSetup from './configuration/compass/ArdupilotMavlinkCompassSetup.vue'
-import FailsafesConfigration from './configuration/failsafes/Failsafes.vue'
+import FailsafesConfiguration from './configuration/failsafes/Failsafes.vue'
 import LightsConfigration from './configuration/lights.vue'
 import BaroCalib from './overview/BaroCalib.vue'
 import GripperInfo from './overview/gripper.vue'
@@ -77,7 +77,7 @@ export default Vue.extend({
     SpinningLogo,
     GyroCalib,
     BaroCalib,
-    FailsafesConfigration,
+    FailsafesConfiguration,
     Camera,
     NotSafeOverlay,
   },
@@ -96,7 +96,7 @@ export default Vue.extend({
           component: LightsConfigration,
           filter: () => autopilot.vehicle_type === 'Submarine',
         },
-        { title: 'Failsafes', value: 'failsafes', component: FailsafesConfigration },
+        { title: 'Failsafes', value: 'failsafes', component: FailsafesConfiguration },
         { title: 'Camera Gimbal', value: 'camera', component: Camera },
       ] as Item[],
     }
