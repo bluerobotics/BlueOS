@@ -91,6 +91,7 @@
 import Vue from 'vue'
 
 import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
+import MiniMap from '@/components/map/MiniMap.vue'
 import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
 import VideoThumbnail from '@/components/video-manager/VideoThumbnail.vue'
 import { OneMoreTime } from '@/one-more-time'
@@ -123,6 +124,7 @@ export default Vue.extend({
   components: {
     SelfHealthTest,
     GenericViewer,
+    MiniMap,
   },
   data: () => ({
     windowHeight: window.innerHeight,
@@ -154,6 +156,15 @@ export default Vue.extend({
             autorotate: false,
             cameracontrols: false,
             orientation: this.orientation,
+          },
+        },
+        {
+          icon: 'mdi-map-marker',
+          title: 'Vehicle Position',
+          component: MiniMap,
+          size: {
+            w: 0.4,
+            h: 1.2,
           },
         },
         {
