@@ -4,6 +4,7 @@ import logging
 
 from args import CommandLineArgs
 from autopilot_manager import AutoPilotManager
+from commonwealth.utils.events import events
 from commonwealth.utils.general import is_running_as_root
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
@@ -14,6 +15,7 @@ from uvicorn import Config, Server
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 logger.info("Starting AutoPilot Manager.")
 autopilot = AutoPilotManager()
@@ -45,6 +47,16 @@ async def main() -> None:
 
     asyncio.create_task(autopilot.auto_restart_ardupilot())
     asyncio.create_task(autopilot.start_mavlink_manager_watchdog())
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health(
+        "ready",
+        {
+            "endpoint": f"{args.host}:{args.port}",
+            "sitl": args.sitl,
+        },
+    )
 
     await server.serve()
     await autopilot.kill_ardupilot()

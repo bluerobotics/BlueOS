@@ -11,6 +11,7 @@ from commonwealth.utils.apis import (
     PrettyJSONResponse,
     StackedHTTPException,
 )
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from exceptions import BusyError
@@ -35,6 +36,7 @@ SERVICE_NAME = "wifi-manager"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 logger.info("Starting Wifi Manager.")
 wpa_manager = WifiManager()
@@ -194,6 +196,10 @@ async def main() -> None:
             await implementation.start()
             wifi_manager = implementation
             break
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 9000})
 
     await server.serve()
 
