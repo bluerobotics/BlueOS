@@ -180,7 +180,7 @@ export default Vue.extend({
       if (!this.current_message?.payload || !this.video_reader) {
         return null
       }
-      const msg: { data: Uint8Array } = this.video_reader.readMessage(this.current_message.payload.to_bytes())
+      const msg: { data: Uint8Array } = this.video_reader.readMessage(this.current_message.payload.toBytes())
       return msg.data
     },
   },
@@ -213,12 +213,12 @@ export default Vue.extend({
       }
 
       if (message.encoding === Encoding.TEXT_PLAIN.toString()) {
-        formattedMessage.payload = message.payload.to_string()
+        formattedMessage.payload = message.payload.toString()
       } else if (message.encoding === Encoding.APPLICATION_JSON.toString()) {
-        formattedMessage.payload = JSON.parse(message.payload.to_string())
+        formattedMessage.payload = JSON.parse(message.payload.toString())
       } else if (message.encoding === Encoding.ZENOH_BYTES.toString()) {
         try {
-          formattedMessage.payload = JSON.parse(message.payload.to_string())
+          formattedMessage.payload = JSON.parse(message.payload.toString())
         } catch (exception) {
           // Keep the raw payload if it's not valid JSON
           formattedMessage.payload = message.payload.toString()
@@ -235,7 +235,7 @@ export default Vue.extend({
         this.session = await Session.open(config)
 
         // Setup regular message subscriber
-        this.subscriber = await this.session.declare_subscriber('**', {
+        this.subscriber = await this.session.declareSubscriber('**', {
           handler: async (sample: Sample) => {
             const topic = sample.keyexpr().toString()
             const payload = sample.payload()
@@ -262,7 +262,7 @@ export default Vue.extend({
         // Setup liveliness subscriber
         const lv_ke = '@/**/@ros2_lv/**'
 
-        this.liveliness_subscriber = await this.session.liveliness().declare_subscriber(lv_ke, {
+        this.liveliness_subscriber = await this.session.liveliness().declareSubscriber(lv_ke, {
           handler: (sample: Sample) => {
             // Parse the liveliness token using regex
             // eslint-disable-next-line max-len

@@ -4,7 +4,7 @@
 set -e
 
 PROJECT_NAME="zenoh"
-VERSION="1.3.4"
+VERSION="1.7.2"
 BINARIES=(
   "zenoh"
   "zenoh-plugin-webserver"
