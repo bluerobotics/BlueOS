@@ -5,6 +5,7 @@ from typing import Any, List
 
 from bridget import BridgeFrontendSpec, Bridget
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, status
@@ -17,6 +18,7 @@ SERVICE_NAME = "bridget"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 app = FastAPI(
     title="Bridget API",
@@ -82,6 +84,10 @@ async def main() -> None:
     # Running uvicorn with log disabled so loguru can handle it
     config = Config(app=app, host="0.0.0.0", port=27353, log_config=None)
     server = Server(config)
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 27353})
 
     await server.serve()
 
