@@ -14,7 +14,7 @@
     "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src"
   },
   "dependencies": {
-    "@eclipse-zenoh/zenoh-ts": "1.3.4",
+    "@eclipse-zenoh/zenoh-ts": "1.7.2",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@foxglove/rosmsg": "^5.0.4",
