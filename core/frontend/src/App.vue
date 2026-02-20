@@ -1005,7 +1005,7 @@ div.pirate-marker.v-icon {
 
 <style>
 .v-list-group__header__append-icon {
-  margin-left: 0px !important;
+  margin-left: 0 !important;
   min-width: 24px !important;
 }
 

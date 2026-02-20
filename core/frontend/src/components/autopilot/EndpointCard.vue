@@ -202,7 +202,6 @@ export default Vue.extend({
 <style scoped>
 .endpoint-buttons {
   gap: 8px;
-  display: flex;
   position: absolute;
   right: -16px;
   top: 50%;

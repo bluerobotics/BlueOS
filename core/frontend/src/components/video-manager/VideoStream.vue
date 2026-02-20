@@ -350,7 +350,7 @@ export default Vue.extend({
 .actions-container {
     position: absolute;
     top: -28px;
-    right: 0px;
+    right: 0;
     display: flex;
     flex-direction: row;
   }

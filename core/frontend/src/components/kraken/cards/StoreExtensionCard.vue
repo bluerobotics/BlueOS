@@ -342,8 +342,8 @@ export default Vue.extend({
 
 .img-background {
   position: absolute;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 75%;
   z-index: 0;
@@ -415,8 +415,8 @@ export default Vue.extend({
   height: 2.4em;
   color: white;
   font-size: 12px;
-  box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.5);
-  border-radius: 8px 0px 10px 0px !important;
+  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.5);
+  border-radius: 8px 0 10px 0 !important;
   z-index: 4 !important;
 }
 
