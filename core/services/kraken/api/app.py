@@ -11,6 +11,7 @@ from api.v2.routers import (
     jobs_router_v2,
     manifest_router_v2,
 )
+from api.zenoh_handlers import ZenohHandlers
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.zenoh_helper import ZenohRouter, ZenohSession
 from config import SERVICE_NAME
@@ -48,6 +49,10 @@ application.include_router(manifest_router_v2)
 zenoh_session = ZenohSession(SERVICE_NAME)
 zenoh_router = ZenohRouter(SERVICE_NAME)
 zenoh_router.add_routes_to_zenoh(application)
+
+# Register zenoh queryables
+zenoh_handlers = ZenohHandlers(zenoh_router)
+zenoh_handlers.register_queryables()
 
 application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True, lifespan=lifespan)
 
