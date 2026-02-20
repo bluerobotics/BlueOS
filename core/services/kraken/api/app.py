@@ -49,6 +49,7 @@ zenoh_session = ZenohSession(SERVICE_NAME)
 zenoh_router = ZenohRouter(SERVICE_NAME)
 zenoh_router.add_routes_to_zenoh(application)
 
+
 application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True, lifespan=lifespan)
 
 
