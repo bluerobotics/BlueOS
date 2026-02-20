@@ -319,25 +319,6 @@ export async function getContainersStats(): Promise<any> {
 }
 
 /**
- * Fetch logs of a given container.
- * @param {string} containerName The name of the container
- * @param {function} progressHandler The progress handler for the download
- * @param {AbortSignal} cancelToken The cancel token for the request
- */
-export async function getContainerLogs(
-  containerName: string,
-  progressHandler: (event: any) => void,
-  cancelToken: AbortSignal | undefined,
-): Promise<any> {
-  await back_axios({
-    method: 'GET',
-    url: `${KRAKEN_API_V2_URL}/container/${containerName}/log`,
-    onDownloadProgress: progressHandler,
-    signal: cancelToken,
-  })
-}
-
-/**
  * Upload a tar file containing a Docker image and extract metadata
  * @param {File} file The tar file to upload
  * @returns {Promise<{temp_tag: string, metadata: any, image_name: string}>}
@@ -426,7 +407,6 @@ export default {
   restartExtension,
   listContainers,
   getContainersStats,
-  getContainerLogs,
   uploadExtensionTarFile,
   keepTemporaryExtensionAlive,
   finalizeExtension,
