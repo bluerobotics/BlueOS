@@ -124,6 +124,16 @@ class ContainerManager:
             logger.info(f"Finished streaming logs for {container_name}")
 
     @classmethod
+    async def get_container_historical_logs(cls, container_name: str) -> List[str]:
+        async with DockerCtx() as client:
+            try:
+                container = await cls.get_raw_container_by_name(client, container_name)
+            except ContainerNotFound as error:
+                raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
+
+            return await container.log(stdout=True, stderr=True, follow=False, stream=False)  # type: ignore
+
+    @classmethod
     async def get_containers_stats(cls) -> Dict[str, ContainerUsageModel]:
         async with DockerCtx() as client:
             containers = await client.containers.list()  # type: ignore
