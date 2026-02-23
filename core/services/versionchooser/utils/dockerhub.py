@@ -103,7 +103,7 @@ class TagFetcher:
             ) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
-                    raise RuntimeError("Failed getting tags from DockerHub!")
+                    raise RuntimeError(f"Failed getting tags from DockerHub! {resp.status} {await resp.text()}")
                 data = await resp.json(content_type=None)
                 tags = data["results"]
 
