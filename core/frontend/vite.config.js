@@ -170,6 +170,9 @@ export default defineConfig(({ command, mode }) => {
         '^/bridget': {
           target: SERVER_ADDRESS,
         },
+        '^/cache': {
+          target: SERVER_ADDRESS,
+        },
         '^/cable-guy': {
           target: SERVER_ADDRESS,
         },
