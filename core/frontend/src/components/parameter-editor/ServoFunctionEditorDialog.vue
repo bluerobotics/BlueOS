@@ -15,14 +15,26 @@
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-
       <v-card-text>
-        <inline-parameter-editor
-          :auto-set="true"
-          :label="param.name"
-          :param="param"
-        />
-
+        <v-row>
+          <v-col cols="6">
+            <inline-parameter-editor
+              :auto-set="true"
+              :label="param.name"
+              :param="param"
+            />
+          </v-col>
+          <v-col cols="6">
+            <parameter-checkbox
+              :param="reverse_param"
+              label="Reverse Direction"
+              :checked-value="1"
+              :unchecked-value="0"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-card-text>
         <v-card class="mt-4 mb-4">
           <v-card-text>
             <div class="d-flex align-center mb-4">
@@ -150,6 +162,7 @@ import autopilot from '@/store/autopilot'
 import Parameter from '@/types/autopilot/parameter'
 
 import InlineParameterEditor from './InlineParameterEditor.vue'
+import ParameterCheckbox from './ParameterCheckbox.vue'
 
 type ParamType = 'min' | 'trim' | 'max'
 type ParamValueKey = 'minValue' | 'trimValue' | 'maxValue'
@@ -167,6 +180,7 @@ export default Vue.extend({
   name: 'ServoFunctionEditorDialog',
   components: {
     InlineParameterEditor,
+    ParameterCheckbox,
   },
   model: {
     prop: 'value',
@@ -201,6 +215,9 @@ export default Vue.extend({
     },
     min_param(): Parameter | undefined {
       return this.getParamByType('_MIN')
+    },
+    reverse_param(): Parameter | undefined {
+      return this.getParamByType('_REVERSED')
     },
     minPercent(): number {
       return this.calculatePercentage(this.minValue)
