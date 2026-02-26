@@ -1,3 +1,4 @@
+import axios from 'axios'
 import {
   Action,
   getModule, Module, Mutation, VuexModule,
@@ -9,6 +10,16 @@ import store from '@/store'
 import { Domain } from '@/types/beacon'
 import { beacon_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
+
+interface DiscoveredServices {
+  [ip: string]: string[]
+}
+
+export interface Vehicle {
+  ips: string[]
+  hostname: string
+  imagePath?: string
+}
 
 const notifier = new Notifier(beacon_service)
 
@@ -36,6 +47,12 @@ class BeaconStore extends VuexModule {
   hostname = ''
 
   vehicle_name = ''
+
+  available_vehicles: Vehicle[] = []
+
+  vehicles_loading = false
+
+  vehicles_error: string | null = null
 
   fetchAvailableDomainsTask = new OneMoreTime(
     { delay: 5000 },
@@ -88,6 +105,21 @@ class BeaconStore extends VuexModule {
       return
     }
     this.listeners_count -= 1
+  }
+
+  @Mutation
+  setAvailableVehicles(vehicles: Vehicle[]): void {
+    this.available_vehicles = vehicles
+  }
+
+  @Mutation
+  setVehiclesLoading(loading: boolean): void {
+    this.vehicles_loading = loading
+  }
+
+  @Mutation
+  setVehiclesError(error: string | null): void {
+    this.vehicles_error = error
   }
 
   @Action
@@ -231,6 +263,71 @@ class BeaconStore extends VuexModule {
 
     if (this.hostname !== undefined && this.vehicle_name !== '') {
       prefetched_names = true
+    }
+  }
+
+  @Action
+  async fetchDiscoveredServices(): Promise<void> {
+    this.setVehiclesLoading(true)
+    this.setVehiclesError(null)
+    this.setAvailableVehicles([])
+
+    try {
+      const response = await back_axios({
+        method: 'get',
+        url: `${this.API_URL}/discovered_services`,
+        timeout: 10000,
+      })
+
+      const discoveredServices: DiscoveredServices = response.data
+      const ips = Object.keys(discoveredServices)
+
+      if (ips.length === 0) {
+        this.setVehiclesError('No vehicles discovered')
+        this.setVehiclesLoading(false)
+        return
+      }
+
+      const vehicles: Vehicle[] = []
+
+      await Promise.all(ips.map(async (ip) => {
+        try {
+          const hostnameResponse = await axios.get(`http://${ip}/beacon/v1.0/hostname`, {
+            timeout: 5000,
+          })
+
+          let imagePath: string | undefined
+          try {
+            const imageResponse = await axios.get(`http://${ip}/bag/v1.0/get/vehicle.image_path`, {
+              timeout: 3000,
+            })
+            imagePath = `http://${ip}${imageResponse.data.url}`
+          } catch {
+            // Image not available, use fallback
+          }
+
+          vehicles.push({
+            ips: [ip],
+            hostname: hostnameResponse.data,
+            imagePath,
+          })
+        } catch (error) {
+          console.warn(`Failed to fetch hostname for ${ip}:`, error)
+        }
+      }))
+
+      vehicles.sort((a, b) => a.hostname.localeCompare(b.hostname))
+      this.setAvailableVehicles(vehicles)
+
+      if (vehicles.length === 0) {
+        this.setVehiclesError('No accessible vehicles found')
+      }
+    } catch (error) {
+      console.error('Failed to fetch discovered services:', error)
+      this.setVehiclesError('Failed to discover vehicles')
+      this.setAvailableVehicles([])
+    } finally {
+      this.setVehiclesLoading(false)
     }
   }
 
