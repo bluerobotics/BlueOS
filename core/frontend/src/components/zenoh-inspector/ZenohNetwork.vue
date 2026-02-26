@@ -57,10 +57,10 @@
 
 <script lang="ts">
 import {
-  Config, QueryTarget, Receiver, RecvErr, ReplyError,
+  ChannelReceiver, Config, QueryTarget, Reply, ReplyError,
   Sample, Session,
 } from '@eclipse-zenoh/zenoh-ts'
-import cytoscape, { Core } from 'cytoscape'
+import cytoscape, { Core, StylesheetJsonBlock } from 'cytoscape'
 import fcose, { FcoseLayoutOptions } from 'cytoscape-fcose'
 import Vue from 'vue'
 
@@ -117,9 +117,6 @@ export default Vue.extend({
           container,
           boxSelectionEnabled: false,
           elements,
-          ready: () => {
-            this.makeEvents(this.cy)
-          },
           layout: {
             name: 'fcose',
             animationDuration: 1500,
@@ -128,7 +125,7 @@ export default Vue.extend({
             idealEdgeLength: 140,
             packComponents: false,
             nodeRepulsion: 25000,
-          },
+          } as FcoseLayoutOptions,
           style: this.getCytoscapeStyle(),
         })
 
@@ -138,8 +135,8 @@ export default Vue.extend({
       }
     },
 
-    prepareCytoscapeElements() {
-      const elements: { data: (NetworkNode | NetworkEdge) }[] = []
+    prepareCytoscapeElements(): cytoscape.ElementDefinition[] {
+      const elements: cytoscape.ElementDefinition[] = []
 
       // Add nodes
       this.networkData.nodes.forEach((node) => {
@@ -149,7 +146,7 @@ export default Vue.extend({
             whatami: node.whatami,
             name: node.name,
             metadata: node.metadata,
-            label: node.name || node.id, // Use name if available, otherwise use id
+            label: node.name || node.id,
           },
         })
       })
@@ -169,7 +166,7 @@ export default Vue.extend({
       return elements
     },
 
-    getCytoscapeStyle() {
+    getCytoscapeStyle(): StylesheetJsonBlock[] {
       return [
         {
           selector: 'node',
@@ -297,84 +294,79 @@ export default Vue.extend({
     },
     async queryRouters() {
       try {
-        const receiver: void | Receiver = this.session!.get('@/*/router', {
-          target: QueryTarget.BestMatching,
+        const receiver: ChannelReceiver<Reply> | undefined = await this.session!.get('@/*/router', {
+          target: QueryTarget.BEST_MATCHING,
         })
 
-        if (!(receiver instanceof Receiver)) {
+        if (!receiver) {
           console.warn('[Zenoh Network] Router query returned void')
           return
         }
 
-        let reply = await receiver.receive()
         let responseCount = 0
+        for await (const reply of receiver) {
+          if (responseCount >= 10) break
 
-        while (reply !== RecvErr.Disconnected && responseCount < 10) { // Limit responses to prevent infinite loops
-          if (reply === RecvErr.MalformedReply) {
-            console.warn('[Zenoh Network] MalformedReply from router query')
-          } else {
-            const resp = reply.result()
-            if (resp instanceof Sample) {
-              const sample: Sample = resp
-              responseCount += 1
+          const resp = reply.result()
+          if (resp instanceof Sample) {
+            const sample: Sample = resp
+            responseCount += 1
 
-              try {
-                const payload = sample.payload().to_string()
-                console.debug('[Zenoh Network] Router payload:', payload)
+            try {
+              const payload = sample.payload().toString()
+              console.debug('[Zenoh Network] Router payload:', payload)
 
-                const data = JSON.parse(payload)
+              const data = JSON.parse(payload)
 
-                // Add router node
-                const zid = data.zid || 'unknown-router'
-                const metadata = data.metadata || {}
-                this.networkData.nodes.push({
-                  id: zid,
-                  whatami: 'router',
-                  metadata,
-                })
+              // Add router node
+              const zid = data.zid || 'unknown-router'
+              const metadata = data.metadata || {}
+              this.networkData.nodes.push({
+                id: zid,
+                whatami: 'router',
+                metadata,
+              })
 
-                // Add connected sessions
-                if (data.sessions && Array.isArray(data.sessions)) {
-                  for (const sess of data.sessions) {
-                    const peer = sess.peer || 'unknown-peer'
-                    const whatami = sess.whatami || 'unknown'
+              // Add connected sessions
+              if (data.sessions && Array.isArray(data.sessions)) {
+                for (const sess of data.sessions) {
+                  const peer = sess.peer || 'unknown-peer'
+                  const whatami = sess.whatami || 'unknown'
 
-                    let linkProtocols = 'unknown'
-                    try {
-                      if (sess.links && Array.isArray(sess.links)) {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        linkProtocols = sess.links.map((link: any) => {
-                          if (typeof link === 'string') {
-                            return link.split('/')[0]
-                          }
-                          return link.src?.split('/')[0] || 'unknown'
-                        }).join(',')
-                      }
-                    } catch (error) {
-                      console.warn('Error parsing link protocols:', error)
+                  let linkProtocols = 'unknown'
+                  try {
+                    if (sess.links && Array.isArray(sess.links)) {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      linkProtocols = sess.links.map((link: any) => {
+                        if (typeof link === 'string') {
+                          return link.split('/')[0]
+                        }
+                        return link.src?.split('/')[0] || 'unknown'
+                      }).join(',')
                     }
-
-                    this.networkData.nodes.push({
-                      id: peer,
-                      whatami,
-                    })
-
-                    this.networkData.edges.push({
-                      source: zid,
-                      target: peer,
-                      protocol: linkProtocols,
-                    })
+                  } catch (error) {
+                    console.warn('Error parsing link protocols:', error)
                   }
+
+                  this.networkData.nodes.push({
+                    id: peer,
+                    whatami,
+                  })
+
+                  this.networkData.edges.push({
+                    source: zid,
+                    target: peer,
+                    protocol: linkProtocols,
+                  })
                 }
-              } catch (parseError) {
-                console.error('[Zenoh Network] Error parsing router response:', parseError)
               }
-            } else {
-              const replyError: ReplyError = resp
-              console.error('[Zenoh Network] Router query error:', replyError.payload().to_string())
+            } catch (parseError) {
+              console.error('[Zenoh Network] Error parsing router response:', parseError)
             }
+          } else {
+            const replyError: ReplyError = resp
+            console.error('[Zenoh Network] Router query error:', replyError.payload().toString())
           }
-          reply = await receiver.receive()
         }
       } catch (error) {
         console.warn('[Zenoh Network] Router query failed:', error)
@@ -382,46 +374,41 @@ export default Vue.extend({
     },
     async queryPeers() {
       try {
-        const receiver: void | Receiver = this.session!.get('@/*/peer', {
-          target: QueryTarget.BestMatching,
+        const receiver: ChannelReceiver<Reply> | undefined = await this.session!.get('@/*/peer', {
+          target: QueryTarget.BEST_MATCHING,
         })
 
-        if (!(receiver instanceof Receiver)) {
+        if (!receiver) {
           console.warn('[Zenoh Network] Peer query returned void')
           return
         }
 
-        let reply = await receiver.receive()
         let responseCount = 0
+        for await (const reply of receiver) {
+          if (responseCount >= 10) break
 
-        while (reply !== RecvErr.Disconnected && responseCount < 10) { // Limit responses
-          if (reply === RecvErr.MalformedReply) {
-            console.warn('[Zenoh Network] MalformedReply from peer query')
-          } else {
-            const resp = reply.result()
-            if (resp instanceof Sample) {
-              const sample: Sample = resp
-              responseCount += 1
+          const resp = reply.result()
+          if (resp instanceof Sample) {
+            const sample: Sample = resp
+            responseCount += 1
 
-              try {
-                const payload = sample.payload().to_string()
-                const data = JSON.parse(payload)
-                const peerId = data.zid || data.id || 'unknown-peer'
-                if (!this.networkData.nodes.find((n) => n.id === peerId)) {
-                  this.networkData.nodes.push({
-                    id: peerId,
-                    whatami: 'peer',
-                  })
-                }
-              } catch (parseError) {
-                console.error('[Zenoh Network] Error parsing peer response:', parseError)
+            try {
+              const payload = sample.payload().toString()
+              const data = JSON.parse(payload)
+              const peerId = data.zid || data.id || 'unknown-peer'
+              if (!this.networkData.nodes.find((n) => n.id === peerId)) {
+                this.networkData.nodes.push({
+                  id: peerId,
+                  whatami: 'peer',
+                })
               }
-            } else {
-              const replyError: ReplyError = resp
-              console.error('[Zenoh Network] Peer query error:', replyError.payload().to_string())
+            } catch (parseError) {
+              console.error('[Zenoh Network] Error parsing peer response:', parseError)
             }
+          } else {
+            const replyError: ReplyError = resp
+            console.error('[Zenoh Network] Peer query error:', replyError.payload().toString())
           }
-          reply = await receiver.receive()
         }
       } catch (error) {
         console.warn('[Zenoh Network] Peer query failed:', error)
@@ -432,31 +419,21 @@ export default Vue.extend({
       try {
         const keyexpr = `@/${zid}/${whatami}`
 
-        const receiver: void | Receiver = this.session!.get(keyexpr, {
-          target: QueryTarget.BestMatching,
+        const receiver: ChannelReceiver<Reply> | undefined = await this.session!.get(keyexpr, {
+          target: QueryTarget.BEST_MATCHING,
         })
 
-        if (!(receiver instanceof Receiver)) {
+        if (!receiver) {
           console.warn(`[Zenoh Network] Specific node query for ${keyexpr} returned void`)
           return null
         }
 
         const reply = await receiver.receive()
-        if (reply === RecvErr.Disconnected) {
-          console.debug(`[Zenoh Network] No response for ${keyexpr}`)
-          return null
-        }
-
-        if (reply === RecvErr.MalformedReply) {
-          console.warn(`[Zenoh Network] MalformedReply from ${keyexpr}`)
-          return null
-        }
-
         const resp = reply.result()
         if (resp instanceof Sample) {
           const sample: Sample = resp
           try {
-            const payload = sample.payload().to_string()
+            const payload = sample.payload().toString()
             console.debug(`[Zenoh Network] Specific node response for ${keyexpr}:`, payload)
             const data = JSON.parse(payload)
 
@@ -469,11 +446,11 @@ export default Vue.extend({
             console.error(`[Zenoh Network] Error parsing specific node response for ${keyexpr}:`, parseError)
             return null
           }
-        } else {
-          const replyError: ReplyError = resp
-          console.error(`[Zenoh Network] Specific node query error for ${keyexpr}:`, replyError.payload().to_string())
-          return null
         }
+
+        const replyError: ReplyError = resp
+        console.error(`[Zenoh Network] Specific node query error for ${keyexpr}:`, replyError.payload().toString())
+        return null
       } catch (error) {
         console.warn(`[Zenoh Network] Specific node query failed for ${zid}/${whatami}:`, error)
         return null
