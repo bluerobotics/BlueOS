@@ -1,54 +1,14 @@
 <template>
   <v-row style="display: contents;">
-    <v-menu
-      :close-on-content-click="false"
-      nudge-left="150"
-      nudge-bottom="25"
+    <v-icon
+      v-if="disk_usage_high"
+      v-tooltip="`High disk usage! (${disk_usage_percent.toFixed(1)}%) please clean up the disk`"
+      class="px-1 blinking white-shadow"
+      color="red"
+      @click="$router.push('/tools/disk')"
     >
-      <template
-        #activator="{ on, attrs }"
-      >
-        <v-card
-          elevation="0"
-          color="transparent"
-          v-bind="attrs"
-          v-on="on"
-        >
-          <v-icon
-            v-if="disk_usage_high"
-            class="px-1 blinking white-shadow"
-            color="red"
-            :title="`High disk usage high! (${disk_usage_percent.toFixed(1)}%) please clean up the disk`"
-          >
-            mdi-content-save-alert
-          </v-icon>
-        </v-card>
-      </template>
-
-      <v-card
-        elevation="1"
-        width="350"
-      >
-        <v-container>
-          <div>
-            <table style="width: 100%">
-              <tr>
-                <td>Percentage (Full):</td>
-                <td>{{ disk_usage_percent.toFixed(1) }} %</td>
-              </tr>
-              <tr>
-                <td>Free:</td>
-                <td> {{ disk_free_friendly }}</td>
-              </tr>
-              <tr>
-                <td>Total:</td>
-                <td> {{ disk_size_friendly }}</td>
-              </tr>
-            </table>
-          </div>
-        </v-container>
-      </v-card>
-    </v-menu>
+      mdi-content-save-alert
+    </v-icon>
     <v-icon
       v-if="cpu_temperature_limit_reached"
       class="px-1 blinking white-shadow"
@@ -213,14 +173,6 @@ export default Vue.extend({
     },
     disk_usage_percent(): number {
       return this.main_disk ? 100 - this.main_disk.available_space_B / this.main_disk.total_space_B / 0.01 : 0
-    },
-    disk_size_friendly(): string {
-      const total_GB = (this.main_disk?.total_space_B ?? 0) / 2 ** 30
-      return `${total_GB.toFixed(3)} GB`
-    },
-    disk_free_friendly(): string {
-      const free_GB = (this.main_disk?.available_space_B ?? 0) / 2 ** 30
-      return `${free_GB.toFixed(3)} GB`
     },
     disk_usage_high(): boolean {
       return this.disk_usage_percent > 85
