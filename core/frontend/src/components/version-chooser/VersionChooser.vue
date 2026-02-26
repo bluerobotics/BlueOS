@@ -579,7 +579,7 @@ export default Vue.extend({
         })
       this.updating_bootstrap = false
     },
-    async setBootstrapVersion(version: string) {
+    async setBootstrapVersion(version: string, reload = true) {
       await back_axios({
         method: 'post',
         url: '/version-chooser/v1.0/bootstrap/current',
@@ -601,12 +601,19 @@ export default Vue.extend({
           `Successfully updated bootstrap version to ${version}`,
           true,
         )
-        window.location.reload()
+        if (reload) {
+          window.location.reload()
+        }
       })
     },
     async setVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
       const [repository, tag] = fullname.split(':')
+
+      if (this.isStable(tag)) {
+        await this.setBootstrapVersion(tag, false)
+      }
+
       await back_axios({
         method: 'post',
         url: '/version-chooser/v1.0/version/current',
@@ -675,6 +682,9 @@ export default Vue.extend({
     },
     isBeingDeleted(image: Version) {
       return this.deleting === `${image.repository}:${image.tag}`
+    },
+    isStable(tag: string) {
+      return VCU.isSemVer(tag) && !tag.includes('beta')
     },
   },
 })
