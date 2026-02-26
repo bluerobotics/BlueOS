@@ -288,6 +288,27 @@ sudo ln --force /etc/resolv.conf /etc/resolv.conf.host
 echo "disabling NetworkManager-wait-online.service"
 systemctl disable NetworkManager-wait-online.service || true
 
+# Update swap size if there is enough space available
+echo "Checking and updating swap size..."
+SWAP_CONF_FILE="/etc/dphys-swapfile"
+
+# Set swap size to 1024MB
+echo "Setting swap size to 1024MB"
+echo "CONF_SWAPSIZE=1024" > "$SWAP_CONF_FILE"
+
+# Disable IPv6
+echo "Disabling IPv6..."
+SYSCTL_CONF="/etc/sysctl.conf"
+
+# Add IPv6 disable entries to sysctl.conf
+cat >> "$SYSCTL_CONF" << EOF
+
+# Disable IPv6
+net.ipv6.conf.all.disable_ipv6=1
+net.ipv6.conf.default.disable_ipv6=1
+net.ipv6.conf.lo.disable_ipv6=1
+EOF
+
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
 echo "- The computer webpage: http://blueos-avahi.local"
