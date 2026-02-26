@@ -1,12 +1,12 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-import pykson  # type: ignore
-from commonwealth.settings import settings
+from commonwealth.settings.settings import PydanticSettings
+from pydantic import BaseModel, Field
 
 
-class Ping1dSettingsSpecV1(pykson.JsonObject):
-    port = pykson.StringField()
-    mavlink_enabled = pykson.BooleanField()
+class Ping1dSettingsSpecV1(BaseModel):
+    port: str
+    mavlink_enabled: bool
 
     def __str__(self) -> str:
         return f"{self.port} - {self.mavlink_enabled}"
@@ -16,21 +16,15 @@ class Ping1dSettingsSpecV1(pykson.JsonObject):
         return Ping1dSettingsSpecV1(port=port, mavlink_enabled=enabled)
 
 
-class SettingsV1(settings.BaseSettings):
-    VERSION = 1
-    ping1d_specs = pykson.ObjectListField(Ping1dSettingsSpecV1)
+class SettingsV1(PydanticSettings):
+    ping1d_specs: List[Ping1dSettingsSpecV1] = Field(default_factory=list)
     # no settings for ping360 as of V1
 
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV1.VERSION
-
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV1.VERSION:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV1.VERSION:
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
             super().migrate(data)
 
-        data["VERSION"] = SettingsV1.VERSION
+        data["VERSION"] = SettingsV1.STATIC_VERSION

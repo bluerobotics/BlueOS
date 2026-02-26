@@ -1,37 +1,29 @@
 import json
 import re
 import socket
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal, Optional
 
 import psutil
-from commonwealth.settings import settings
+from commonwealth.settings.settings import PydanticSettings
 from loguru import logger
-from pykson import (
-    IntegerField,
-    JsonObject,
-    ListField,
-    MultipleChoiceStringField,
-    ObjectField,
-    ObjectListField,
-    StringField,
-)
+from pydantic import BaseModel, Field
 
 
 class InvalidIpAddress(Exception):
     pass
 
 
-class DefaultSettings(JsonObject):
-    domain_names = ListField(item_type=str)
-    advertise = ListField(item_type=str)
-    ip = StringField()
+class DefaultSettings(BaseModel):
+    domain_names: List[str]
+    advertise: List[str]
+    ip: str
 
 
-class Interface(JsonObject):
-    name = StringField()
-    domain_names = ListField(item_type=str)
-    advertise = ListField(item_type=str)
-    ip = StringField()
+class Interface(BaseModel):
+    name: str
+    domain_names: List[str]
+    advertise: List[str]
+    ip: str
 
     def get_phys(self) -> List[psutil._common.snicaddr]:
         """
@@ -83,11 +75,11 @@ class Interface(JsonObject):
         return str(self.name)
 
 
-class ServiceTypes(JsonObject):
-    name = StringField()
-    protocol = MultipleChoiceStringField(options=["_udp", "_tcp"], null=False)
-    port = IntegerField()
-    properties = StringField()
+class ServiceTypes(BaseModel):
+    name: str
+    protocol: Literal["_udp", "_tcp"]
+    port: int
+    properties: Optional[str] = None
 
     def get_properties(self) -> Dict[str, Any]:
         if self.properties is None:
@@ -95,26 +87,20 @@ class ServiceTypes(JsonObject):
         return json.loads(self.properties)  # type: ignore
 
 
-class SettingsV1(settings.BaseSettings):
-    VERSION = 1
-    default = ObjectField(DefaultSettings)
-    blacklist = ListField(item_type=str)
-    interfaces = ObjectListField(Interface)
-    advertisement_types = ObjectListField(ServiceTypes)
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV1.VERSION
+class SettingsV1(PydanticSettings):
+    default: DefaultSettings = Field(default_factory=lambda: DefaultSettings(domain_names=[], advertise=[], ip=""))
+    blacklist: List[str] = Field(default_factory=list)
+    interfaces: List[Interface] = Field(default_factory=list)
+    advertisement_types: List[ServiceTypes] = Field(default_factory=list)
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV1.VERSION:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV1.VERSION:
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
             super().migrate(data)
 
-        data["VERSION"] = SettingsV1.VERSION
+        data["VERSION"] = SettingsV1.STATIC_VERSION
 
     def get_interface_or_create_default(self, name: str) -> Interface:
         """
@@ -133,17 +119,11 @@ class SettingsV1(settings.BaseSettings):
 
 
 class SettingsV2(SettingsV1):
-    VERSION = 2
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-        self.VERSION = SettingsV2.VERSION
-
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV2.VERSION:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV2.VERSION:
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
             super().migrate(data)
 
         data["default"]["domain_names"] = [domain for domain in data["default"]["domain_names"] if domain != "blueos"]
@@ -156,47 +136,36 @@ class SettingsV2(SettingsV1):
         except Exception as e:
             logger.error(f"unable to update SettingsV1 to SettingsV2: {e}")
 
-        data["VERSION"] = SettingsV2.VERSION
+        data["VERSION"] = SettingsV2.STATIC_VERSION
 
 
 class SettingsV3(SettingsV2):
-    VERSION = 3
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-        self.VERSION = SettingsV3.VERSION
-
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV3.VERSION:
+        if data["VERSION"] == SettingsV3.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV3.VERSION:
+        if data["VERSION"] < SettingsV3.STATIC_VERSION:
             super().migrate(data)
 
         try:
             if not any(interface["name"] == "uap0" for interface in data["interfaces"]):
                 data["interfaces"].append(
-                    Interface(name="uap0", domain_names=["blueos-hotspot"], advertise=["_http"], ip="ips[0]")._data
+                    Interface(name="uap0", domain_names=["blueos-hotspot"], advertise=["_http"], ip="ips[0]").dict()
                 )
         except Exception as e:
             logger.error(f"unable to update SettingsV2 to SettingsV3: {e}")
 
-        data["VERSION"] = SettingsV3.VERSION
+        data["VERSION"] = SettingsV3.STATIC_VERSION
 
 
 class SettingsV4(SettingsV3):
-    VERSION = 4
-    vehicle_name = StringField()
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-        self.VERSION = SettingsV4.VERSION
+    vehicle_name: str = ""
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV4.VERSION:
+        if data["VERSION"] == SettingsV4.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV4.VERSION:
+        if data["VERSION"] < SettingsV4.STATIC_VERSION:
             super().migrate(data)
 
-        data["VERSION"] = SettingsV4.VERSION
+        data["VERSION"] = SettingsV4.STATIC_VERSION
