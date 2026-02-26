@@ -287,8 +287,10 @@ class AutoPilotManager(metaclass=Singleton):
                 logger.error(e)
         return serials
 
-    def get_serial_cmdline(self) -> str:
-        return " ".join([f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()])
+    def get_serial_cmdline(self, supports_new_serial_mapping: bool) -> str:
+        if supports_new_serial_mapping:
+            return " ".join([f"--serial{entry.port} {entry.endpoint}" for entry in self.get_serials()])
+        return " ".join([f"-{entry.port_as_letter} {entry.endpoint}" for entry in self.get_serials()])
 
     def get_default_params_cmdline(self, platform: Platform) -> str:
         # check if file exists and return it's path as --defaults parameter
@@ -296,6 +298,17 @@ class AutoPilotManager(metaclass=Singleton):
         if default_params_path.is_file():
             return f"--defaults {default_params_path}"
         return ""
+
+    def check_supports_new_serial_mapping(self, firmware: pathlib.Path) -> bool:
+        """
+        check if the firmware supports --serialN instead of --uartX by checking the output of --help
+        """
+        try:
+            output = subprocess.check_output([firmware, "--help"], encoding="utf-8")
+            return "--serial" in output
+        except Exception as e:
+            logger.warning(f"Failed to check if firmware supports new serial mapping: {e}")
+            return False
 
     async def start_linux_board(self, board: LinuxFlightController) -> None:
         self._current_board = board
@@ -343,12 +356,20 @@ class AutoPilotManager(metaclass=Singleton):
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
+        supports_new_serial_mapping = self.check_supports_new_serial_mapping(firmware_path)
+
+        master_endpoint_str = (
+            f" --serial0 udp:{master_endpoint.place}:{master_endpoint.argument}"
+            if supports_new_serial_mapping
+            else f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
+        )
+
         command_line = (
             f"{firmware_path}"
-            f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
+            f"{master_endpoint_str}"
             f" --log-directory {self.settings.firmware_folder}/logs/"
             f" --storage-directory {self.settings.firmware_folder}/storage/"
-            f" {self.get_serial_cmdline()}"
+            f" {self.get_serial_cmdline(supports_new_serial_mapping)}"
             f" {self.get_default_params_cmdline(board.platform)}"
         )
 

@@ -3,7 +3,7 @@ import re
 from enum import Enum, auto
 from pathlib import Path
 from platform import machine
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, validator
 
@@ -183,15 +183,22 @@ class Serial(BaseModel):
     --serial5 /dev/ttyAMA3
     """
 
-    port: str
+    port: int
     endpoint: str
 
     @validator("port")
     @classmethod
-    def valid_letter(cls: Any, value: str) -> str:
-        if value in "BCDEFGH" and len(value) == 1:
-            return value
-        raise ValueError(f"Invalid serial port: {value}. These must be between B and H. A is reserved.")
+    def valid_letter(cls: Any, value: Union[str, int]) -> int:
+        letters = ["A", "C", "D", "B", "E", "F", "G", "H", "I", "J"]
+        if isinstance(value, str) and value in letters and len(value) == 1:
+            return letters.index(value)
+        try:
+            port = int(value)
+            if port in range(1, 10):
+                return port
+        except (ValueError, TypeError):
+            pass
+        raise ValueError(f"Invalid serial port: {value}. These must be between B(1) and J(9). A(0) is reserved.")
 
     @validator("endpoint")
     @classmethod
@@ -208,4 +215,9 @@ class Serial(BaseModel):
         raise ValueError(f"Invalid endpoint configuration: {value}")
 
     def __hash__(self) -> int:  # make hashable BaseModel subclass
-        return hash(self.port + self.endpoint)
+        return hash(str(self.port) + self.endpoint)
+
+    @property
+    def port_as_letter(self) -> str:
+        letters = ["A", "C", "D", "B", "E", "F", "G", "H", "I", "J"]
+        return letters[self.port]
