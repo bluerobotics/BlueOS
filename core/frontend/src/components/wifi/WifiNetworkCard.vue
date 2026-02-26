@@ -11,7 +11,7 @@
       <v-col :cols="1" />
 
       <v-col
-        :cols="7"
+        :cols="6"
         class="d-flex flex-column justify-center"
       >
         <span>{{ network_name }}</span>
@@ -21,6 +21,20 @@
         >
           {{ ipAddress }}
         </span>
+      </v-col>
+
+      <v-col
+        :cols="1"
+        class="d-flex justify-center"
+      >
+        <v-chip
+          small
+          :color="frequency_band_color"
+          class="frequency-chip"
+          label
+        >
+          {{ frequency_band }}
+        </v-chip>
       </v-col>
 
       <v-col :cols="1">
@@ -86,6 +100,18 @@ export default Vue.extend({
     signal_strength_icon(): string {
       return wifi_strenght_icon(this.network.signal)
     },
+    frequency_band(): string {
+      const freq = this.network.frequency
+      if (freq >= 5925) return '6G'
+      if (freq >= 5000) return '5G'
+      return '2.4G'
+    },
+    frequency_band_color(): string {
+      const freq = this.network.frequency
+      if (freq >= 5925) return 'purple'
+      if (freq >= 5000) return 'green'
+      return 'orange'
+    },
   },
   methods: {
     emitClick(): void {
@@ -99,5 +125,13 @@ export default Vue.extend({
   .network-card:hover {
     cursor: pointer;
     background-color: #2174aa;
+  }
+  .frequency-chip {
+    font-size: 11px !important;
+    height: 20px !important;
+    min-width: 32px !important;
+    padding: 0 4px !important;
+    font-weight: 600;
+    justify-content: center;
   }
 </style>

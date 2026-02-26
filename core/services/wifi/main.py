@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, List, Optional
 
+from api.v2.routers import index_router_v2, interfaces_router_v2, wifi_router_v2
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
@@ -18,7 +19,6 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from tabulate import tabulate  # type: ignore
 from typedefs import (
     HotspotStatus,
     SavedWifiNetwork,
@@ -54,10 +54,7 @@ app.router.route_class = GenericErrorHandlingRoute
 @version(1, 0)
 async def network_status() -> Any:
     assert wifi_manager is not None
-    wifi_status = await wifi_manager.status()
-    for line in tabulate(list(vars(wifi_status).items())).splitlines():
-        logger.info(line)
-    return wifi_status
+    return await wifi_manager.status()
 
 
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
@@ -162,6 +159,11 @@ def get_hotspot_credentials() -> Any:
     assert wifi_manager is not None
     return wifi_manager.hotspot_credentials()
 
+
+# API v2 endpoints (multi-interface support)
+app.include_router(index_router_v2)
+app.include_router(interfaces_router_v2)
+app.include_router(wifi_router_v2)
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
