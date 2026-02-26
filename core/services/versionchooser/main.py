@@ -4,6 +4,7 @@ import logging
 
 from api import application
 from args import CommandLineArgs
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from loguru import logger
@@ -13,6 +14,7 @@ SERVICE_NAME = "version-chooser"
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 logger.info("Starting Version Chooser")
 
@@ -28,6 +30,10 @@ async def main() -> None:
 
     config = Config(app=application, host=args.host, port=args.port)
     server = Server(config)
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"endpoint": f"{args.host}:{args.port}"})
 
     await server.serve()
 

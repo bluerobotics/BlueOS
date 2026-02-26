@@ -8,6 +8,7 @@ from typing import Generator, Optional
 
 import aiohttp
 from aiohttp import web
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from loguru import logger
@@ -23,6 +24,7 @@ args = parser.parse_args()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 logger.info("Starting Pardal")
 
@@ -154,6 +156,10 @@ async def main() -> None:
 
     site = web.TCPSite(runner, host="0.0.0.0", port=args.port)
     await site.start()
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": args.port})
 
     # Wait forever
     await asyncio.Event().wait()

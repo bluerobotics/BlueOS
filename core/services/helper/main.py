@@ -30,6 +30,7 @@ from commonwealth.utils.general import (
     local_hardware_identifier,
     local_unique_identifier,
 )
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, HTTPException
@@ -45,6 +46,7 @@ SERVICE_NAME = "helper"
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 try:
     init_logger(SERVICE_NAME)
+    events.publish_start()
 except Exception as logger_e:
     print(f"Error: unable to set logger path: {logger_e}")
 
@@ -633,6 +635,10 @@ async def main() -> None:
 
     config = Config(app=app, host="0.0.0.0", port=Helper.PORT, log_config=None)
     server = Server(config)
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": Helper.PORT})
 
     asyncio.create_task(periodic())
 
