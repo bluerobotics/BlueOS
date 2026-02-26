@@ -209,35 +209,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog
+    <ExtensionLogsModal
       v-model="show_log"
-      width="80%"
-    >
-      <v-card>
-        <v-app-bar dense>
-          <v-spacer />
-          <v-toolbar-title>
-            {{ log_info_output }}
-          </v-toolbar-title>
-          <v-spacer />
-          <v-checkbox
-            v-model="follow_logs"
-            label="Follow Logs"
-            hide-details
-          />
-          <v-btn class="ml-3" icon @click="downloadCurrentLog">
-            <v-icon>mdi-download</v-icon>
-          </v-btn>
-        </v-app-bar>
-        <v-sheet>
-          <v-card-text ref="logContainer" class="scrollable-content">
-            <!-- eslint-disable -->
-            <pre class="logs" v-html="html_log_output" />
-            <!-- eslint-enable -->
-          </v-card-text>
-        </v-sheet>
-      </v-card>
-    </v-dialog>
+      :extension-identifier="selected_log_extension_identifier"
+      :extension-name="selected_log_extension_name"
+      :zenoh-session="zenoh_session"
+    />
     <v-toolbar>
       <v-spacer />
       <v-tabs
@@ -399,9 +376,9 @@
 </template>
 
 <script lang="ts">
-import AnsiUp from 'ansi_up'
-import axios from 'axios'
-import { saveAs } from 'file-saver'
+import {
+  Config, Session,
+} from '@eclipse-zenoh/zenoh-ts'
 import Vue from 'vue'
 
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
@@ -412,6 +389,7 @@ import InstalledExtensionCard from '@/components/kraken/cards/InstalledExtension
 import kraken from '@/components/kraken/KrakenManager'
 import ExtensionCreationModal from '@/components/kraken/modals/ExtensionCreationModal.vue'
 import ExtensionDetailsModal from '@/components/kraken/modals/ExtensionDetailsModal.vue'
+import ExtensionLogsModal from '@/components/kraken/modals/ExtensionLogsModal.vue'
 import ExtensionSettingsModal from '@/components/kraken/modals/ExtensionSettingsModal.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
@@ -420,7 +398,6 @@ import { OneMoreTime } from '@/one-more-time'
 import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
 import PullTracker from '@/utils/pull_tracker'
-import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
   ExtensionData, ExtensionUploadMetadata, InstalledExtensionData, RunningContainer,
@@ -470,7 +447,6 @@ function currentStepForPhase(phase: TarInstallPhase): TarStepKey {
 }
 
 const notifier = new Notifier(kraken_service)
-const ansi = new AnsiUp()
 
 export default Vue.extend({
   name: 'ExtensionManagerView',
@@ -479,6 +455,7 @@ export default Vue.extend({
     BackAlleyTab,
     InstalledExtensionCard,
     ExtensionDetailsModal,
+    ExtensionLogsModal,
     ExtensionSettingsModal,
     PullProgress,
     ExtensionCreationModal,
@@ -506,18 +483,14 @@ export default Vue.extend({
       extraction_percentage: 0,
       status_text: '',
       show_log: false,
-      follow_logs: true,
-      log_abort_controller: null as null | AbortController,
-      log_output: null as null | string,
-      log_info_output: null as null | string,
-      log_container_name: null as null | string,
+      selected_log_extension_identifier: '',
+      selected_log_extension_name: '',
       metrics: {} as Dictionary<{ cpu: number, memory: number}>,
       metrics_interval: 0,
       edited_extension: null as null | InstalledExtensionData & { editing: boolean },
       fetch_installed_ext_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_running_containers_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_containers_stats_task: new OneMoreTime({ delay: 25000, disposeWith: this }),
-      outputBuffer: '',
       fab_menu: false,
       upload_temp_tag: null as null | string,
       upload_metadata: null as null | ExtensionUploadMetadata,
@@ -531,6 +504,7 @@ export default Vue.extend({
       install_from_file_error: null as null | string,
       install_from_file_failed_step: null as null | TarStepKey,
       install_from_file_last_level: -1,
+      zenoh_session: null as Session | null,
     }
   },
   computed: {
@@ -549,9 +523,6 @@ export default Vue.extend({
       }
 
       return this.manifest as ExtensionData[]
-    },
-    html_log_output(): string {
-      return ansi.ansi_to_html(this.log_output ?? '')
     },
     canUploadSelectedFile(): boolean {
       return Boolean(
@@ -626,41 +597,41 @@ export default Vue.extend({
     },
   },
   watch: {
-    show_log: {
-      handler(val) {
-        if (!val) {
-          this.log_abort_controller?.abort()
-        }
-      },
-      immediate: true,
-    },
-    follow_logs: {
-      handler(val) {
-        if (val) {
-          const logContainer = this.$refs.logContainer as HTMLElement
-          if (logContainer) {
-            logContainer.scrollTop = logContainer.scrollHeight
-          }
-        }
-      },
-    },
     show_install_from_file_dialog(val: boolean) {
       if (!val) {
         this.resetUploadFlow()
       }
     },
   },
-  mounted() {
+  async mounted() {
     this.fetchManifest()
     this.fetch_installed_ext_task.setAction(this.fetchInstalledExtensions)
     this.fetch_running_containers_task.setAction(this.fetchRunningContainers)
     this.fetch_containers_stats_task.setAction(this.fetchContainersStats)
+    await this.initializeZenohSession()
   },
   destroyed() {
     clearInterval(this.metrics_interval)
     this.stopUploadKeepAlive()
+    if (this.zenoh_session) {
+      this.zenoh_session.close()
+      this.zenoh_session = null
+    }
   },
   methods: {
+    async initializeZenohSession() {
+      if (this.zenoh_session) {
+        return
+      }
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+        const url = `${protocol}://${window.location.host}/zenoh-api/`
+        const config = new Config(url)
+        this.zenoh_session = await Session.open(config)
+      } catch (error) {
+        console.error('[ExtensionManagerView] Failed to connect to zenoh:', error)
+      }
+    },
     clearEditedExtension() {
       this.edited_extension = null
     },
@@ -928,38 +899,10 @@ export default Vue.extend({
           this.dockers_fetch_done = true
         })
     },
-    async showLogs(extension: InstalledExtensionData) {
-      this.log_abort_controller = new AbortController()
-      this.log_output = ''
-      this.outputBuffer = ''
-      this.log_info_output = `Awaiting logs for ${extension.name}`
+    showLogs(extension: InstalledExtensionData) {
+      this.selected_log_extension_identifier = extension.identifier
+      this.selected_log_extension_name = extension.name || extension.identifier
       this.show_log = true
-
-      this.log_container_name = `extension-${(extension.docker + extension.tag).replace(/[^a-zA-Z0-9]/g, '')}`
-      const fetchLogs = (): void => {
-        kraken.getContainerLogs(
-          this.log_container_name ?? '',
-          (progressEvent) => this.handleLogProgress(progressEvent.event, extension),
-          this.log_abort_controller?.signal,
-        )
-          .then(() => {
-            this.log_info_output = `Reconnecting to ${extension.name}`
-            setTimeout(fetchLogs, 500)
-          })
-          .catch((error) => {
-            if (axios.isCancel(error)) {
-              return
-            }
-
-            notifier.pushBackError('EXTENSIONS_LOGS_FETCH_FAIL', error)
-          })
-      }
-
-      fetchLogs()
-    },
-    async downloadCurrentLog() {
-      const file = new File([this.log_output ?? ''], `${this.log_container_name}.log`, { type: 'text/plain' })
-      saveAs(file)
     },
     showModal(extension: ExtensionData) {
       this.show_dialog = true
@@ -1129,29 +1072,6 @@ export default Vue.extend({
           this.install_from_file_status_text = tracker.overall_status
         }
       }
-    },
-    handleLogProgress(progressEvent: StreamProgressEvent, extension: InstalledExtensionData) {
-      const response = progressEvent?.currentTarget?.response
-      if (!response) {
-        return
-      }
-
-      const result = aggregateStreamingResponse(
-        parseStreamingResponse(response),
-        (_, buffer) => Boolean(buffer),
-      )
-
-      if (result) {
-        this.outputBuffer += result
-        this.log_info_output = `Logs for ${extension.name}`
-        this.$set(this, 'log_output', this.outputBuffer)
-      }
-      this.$nextTick(() => {
-        const logContainer = this.$refs.logContainer as HTMLElement
-        if (this.follow_logs && logContainer) {
-          logContainer.scrollTop = logContainer.scrollHeight
-        }
-      })
     },
     openCreationDialogFromUpload(metadata: ExtensionUploadMetadata | null = this.upload_metadata): void {
       if (!metadata) {
