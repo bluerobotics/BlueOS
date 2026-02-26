@@ -116,6 +116,8 @@ COPY configuration/motd /etc/motd
 COPY start-blueos-core /usr/bin/start-blueos-core
 COPY run-service.sh /usr/bin/run-service
 
+COPY ./.vscode /home/pi/.vscode
+
 # Copy binaries and necessary folders from download-binaries to this stage
 COPY --from=download-binaries \
     /usr/bin/blueos_startup_update.py \
