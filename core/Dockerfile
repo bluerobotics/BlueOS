@@ -1,3 +1,6 @@
+# Override with --build-arg BASE_IMAGE=blueos-base:dev for local builds
+ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.4
+
 # Build frontend
 FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontend-builder
 
@@ -23,7 +26,7 @@ set -e
 
 EOF
 
-FROM bluerobotics/blueos-base:0.2.4 AS base
+FROM ${BASE_IMAGE} AS base
 
 # Download binaries
 FROM base AS download-binaries
