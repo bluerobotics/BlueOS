@@ -220,6 +220,65 @@ prepare_cgroups() {
 
 prepare_cgroups
 
+# Runtime performance tuning (applied every container start via /sys/ bind mount)
+tune_performance() {
+  echo "Applying runtime performance tuning..."
+
+  # Network buffer tuning for high-bandwidth WebRTC streaming (55Mbps+)
+  # Maximum send buffer size per socket. The Pi's default was 180KB.
+  # WebRTC/SRTP sends ~55Mbps of UDP traffic. When the socket's send buffer is
+  # too small, the kernel drops outgoing packets during CPU load spikes. 16MB
+  # gives GStreamer/WebRTC headroom to queue bursts without drops. This is the
+  # single most impactful change for preventing video stutters.
+  echo $((16 * 1024 * 1024)) > /proc/sys/net/core/wmem_max 2>/dev/null || true
+  echo "wmem_max: $(cat /proc/sys/net/core/wmem_max 2>/dev/null || echo N/A)"
+
+  # Maximum receive buffer size per socket. Same logic but for incoming traffic
+  # (STUN/TURN negotiation, RTCP feedback, MAVLink). Less critical than wmem
+  # for outbound-heavy streaming, but prevents receive-side drops during
+  # inbound bursts.
+  echo $((16 * 1024 * 1024)) > /proc/sys/net/core/rmem_max 2>/dev/null || true
+  echo "rmem_max: $(cat /proc/sys/net/core/rmem_max 2>/dev/null || echo N/A)"
+
+  # Default buffer sizes for newly created sockets (when the application
+  # doesn't explicitly set SO_SNDBUF/SO_RCVBUF). The Pi default is ~180KB. If
+  # MCM or any BlueOS service opens a socket without tuning its buffers, it
+  # inherits this default. 1MB is a reasonable baseline that prevents casual
+  # sockets from starving under load.
+  echo $((1024 * 1024))  > /proc/sys/net/core/wmem_default 2>/dev/null || true
+  echo "wmem_default: $(cat /proc/sys/net/core/wmem_default 2>/dev/null || echo N/A)"
+  echo $((1024 * 1024))  > /proc/sys/net/core/rmem_default 2>/dev/null || true
+  echo "rmem_default: $(cat /proc/sys/net/core/rmem_default 2>/dev/null || echo N/A)"
+
+  # Per-CPU input queue length for incoming packets. When the network driver
+  # delivers packets faster than the kernel's softirq can process them, they
+  # queue here. Default is 1000. During dual-camera streaming, CPU0 was seeing
+  # time_squeeze events (softirq ran out of its time budget and packets backed
+  # up). A deeper queue reduces drops during those transient spikes. This pairs
+  # with the IRQ affinity changes that spread eth0 across CPU1/CPU2.
+  echo 5000     > /proc/sys/net/core/netdev_max_backlog 2>/dev/null || true
+  echo "netdev_max_backlog: $(cat /proc/sys/net/core/netdev_max_backlog 2>/dev/null || echo N/A)"
+
+  # How aggressively the kernel swaps anonymous pages to disk (the SD card). At
+  # the default of 60, under memory pressure, the kernel proactively swaps out
+  # process memory to free RAM for file cache. On an SD card, swap I/O is
+  # extremely slow (~10MB/s) and creates latency spikes for any swapped-out
+  # process. During our baseline measurements, kswapd was spiking to 8-12% CPU
+  # during streaming. At swappiness=10, the kernel strongly prefers reclaiming
+  # file cache over swapping, which eliminated kswapd activity and freed ~113MB
+  # of RAM.
+  echo 10       > /proc/sys/vm/swappiness 2>/dev/null || true
+  echo "swappiness: $(cat /proc/sys/vm/swappiness 2>/dev/null || echo N/A)"
+
+  # Prevent SCHED_RR/SCHED_FIFO threads from starving the rest of the system.
+  # Setting to -1 would disable the safety net entirely.
+  # 950000/1000000 = 95% RT, leaving 50ms/s per core for non-RT threads.
+  echo 950000 > /proc/sys/kernel/sched_rt_runtime_us 2>/dev/null || true
+  echo "RT throttle: $(cat /proc/sys/kernel/sched_rt_runtime_us 2>/dev/null || echo N/A)us per $(cat /proc/sys/kernel/sched_rt_period_us 2>/dev/null || echo N/A)us period"
+}
+
+tune_performance
+
 echo "Starting high priority services.."
 for TUPLE in "${PRIORITY_SERVICES[@]}"; do
     IFS=',' read -r NAME MEMORY_LIMIT_MB EXECUTABLE <<< "$TUPLE"
