@@ -338,21 +338,6 @@ jobs:
       - name: Sanitize platform name
         run: echo "SANITIZED_PLATFORM=$(echo ${{ matrix.platform }} | tr '/' '-')" >> $GITHUB_ENV
 
-      - name: Zip image
-        run: |
-          sudo apt install zip
-          zip -9 BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip deploy/pimod/blueos.img
-          ls -lah BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        timeout-minutes: 120
-        with:
-          name: BlueOS-raspberry-${{ env.GITHUB_REF_NAME }}${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}
-          path: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip
-          if-no-files-found: error
-          retention-days: 7
-
       - name: Set asset name
         run: |
           if [[ ${{ matrix.runner }} == 'pi5-builder' ]]; then
@@ -360,6 +345,21 @@ jobs:
           elif [[ ${{ matrix.os }} == 'bullseye' ]]; then
             echo "ASSET_NAME_SUFFIX=-pi4" >> $GITHUB_ENV
           fi
+
+      - name: Zip image
+        run: |
+          sudo apt install zip
+          zip -9 -s 2000m BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}.zip deploy/pimod/blueos.img
+          ls -lah BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 120
+        with:
+          name: BlueOS-raspberry-${{ env.GITHUB_REF_NAME }}${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}
+          path: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}.z*
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -372,27 +372,16 @@ jobs:
       - name: Upload to S3
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          aws s3 cp BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip s3://blueos-downloads/releases/${{ github.ref_name }}/
-
-      - name: Check file size
-        id: check_size
-        run: |
-          FILE_SIZE=$(stat -c%s "BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip")
-          echo "File size: $FILE_SIZE bytes"
-          if [ "$FILE_SIZE" -lt 2147483648 ]; then
-            echo "upload_allowed=true" >> $GITHUB_OUTPUT
-          else
-            echo "upload_allowed=false" >> $GITHUB_OUTPUT
-            echo "::warning::File size ($FILE_SIZE bytes) exceeds 2GB limit, skipping GitHub release upload"
-          fi
+          aws s3 cp deploy/pimod/blueos.img s3://blueos-downloads/releases/${{ github.ref_name }}/BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}.img
 
       - name: Upload raspberry image for release
         uses: svenstaro/upload-release-action@v2
-        if: startsWith(github.ref, 'refs/tags/') && steps.check_size.outputs.upload_allowed == 'true'
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}.zip
-          asset_name: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}.zip
+          # Matches single .zip or multi-volume .z01, .z02, ..., .zip
+          file: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}.z*
+          file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
           prerelease: true
