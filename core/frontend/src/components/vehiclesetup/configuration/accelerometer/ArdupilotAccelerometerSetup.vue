@@ -50,6 +50,7 @@
       <v-card-actions class="justify-center">
         <FullAccelerometerCalibration />
         <QuickAccelerometerCalibration />
+        <LevelHorizonCalibration />
       </v-card-actions>
     </v-card>
   </div>
@@ -62,6 +63,7 @@ import FullAccelerometerCalibration from '@/components/vehiclesetup/configuratio
 import ardupilot_sensors, { ArdupilotSensorsStore } from '@/store/ardupilot_sensors'
 import { deviceId } from '@/utils/deviceid_decoder'
 
+import LevelHorizonCalibration from '../compass/LevelHorizonCalibration.vue'
 import QuickAccelerometerCalibration from './QuickAccelerometerCalibration.vue'
 
 export default Vue.extend({
@@ -69,6 +71,7 @@ export default Vue.extend({
   components: {
     FullAccelerometerCalibration,
     QuickAccelerometerCalibration,
+    LevelHorizonCalibration,
   },
   data() {
     return {
