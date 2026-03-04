@@ -5,9 +5,10 @@ description = "Runtime workspace for BlueOS services that require newer dependen
 requires-python = ">=3.11"
 dependencies = [
   "commonwealth",
-  "versionchooser",
-  "kraken",
   "helper",
+  "kraken",
+  "service_manager",
+  "versionchooser",
 ]
 
 [dependency-groups]
@@ -39,14 +40,16 @@ default-groups = ["dev", "lint"]
 
 [tool.uv.sources]
 commonwealth = { workspace = true }
-versionchooser = { workspace = true }
-kraken = { workspace = true }
 helper = { workspace = true }
+kraken = { workspace = true }
+service_manager = { workspace = true }
+versionchooser = { workspace = true }
 
 [tool.uv.workspace]
 members = [
   "../libs/commonwealth",
-  "../services/versionchooser",
-  "../services/kraken",
   "../services/helper",
+  "../services/kraken",
+  "../services/service_manager",
+  "../services/versionchooser",
 ]

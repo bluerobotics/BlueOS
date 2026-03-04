@@ -104,6 +104,13 @@ const menus = [
       + ' devices from your Control Station Computer.',
   },
   {
+    title: 'Service Manager',
+    icon: 'mdi-cogs',
+    route: '/tools/service-manager',
+    advanced: true,
+    text: 'View and manage BlueOS services. Monitor logs, metrics, and control service lifecycle.',
+  },
+  {
     title: 'System Information',
     icon: 'mdi-chart-pie',
     route: '/tools/system-information',
