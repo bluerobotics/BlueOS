@@ -235,6 +235,9 @@ export default defineConfig(({ command, mode }) => {
         '^/recorder-extractor': {
           target: SERVER_ADDRESS,
         },
+        '^/service-manager': {
+          target: SERVER_ADDRESS,
+        },
         '^/system-information': {
           target: SERVER_ADDRESS,
           changeOrigin: true,
