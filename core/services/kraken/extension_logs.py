@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from typing import Callable, Dict, List, Optional, Tuple, cast
+from typing import Callable, Dict, Optional, Tuple
 
 from commonwealth.utils.zenoh_helper import ZenohSession
 from config import SERVICE_NAME
@@ -51,7 +51,7 @@ class ExtensionLogPublisher:
             return None
 
         running_names = {container.name.lstrip("/") for container in running_containers}
-        extensions = cast(List[ExtensionSettings], Extension._fetch_settings())
+        extensions = Extension._fetch_settings()
 
         desired: Dict[str, ExtensionSettings] = {}
         for extension in extensions:
