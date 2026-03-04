@@ -64,7 +64,7 @@ Before adding ANY dependency, check all `pyproject.toml` files. Use exact versio
 
 ```toml
 aiohttp>=3.7.4,<=3.13.2
-eclipse-zenoh==1.4.0
+eclipse-zenoh==1.7.2
 fastapi-versioning==0.9.1
 fastapi==0.105.0
 loguru==0.5.3
