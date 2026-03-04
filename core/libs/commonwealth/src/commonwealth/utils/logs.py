@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from logging import LogRecord
 from types import FrameType
 from typing import TYPE_CHECKING, Callable, Optional, Union
@@ -44,6 +45,15 @@ def validate_service_name(service_name: str) -> None:
 def init_logger(service_name: str) -> None:
     try:
         validate_service_name(service_name)
+        # From the docs: https://loguru.readthedocs.io/en/stable/api/logger.html
+        # "logs are emitted to sys.stderr by default"
+        # So we need to remove the default handler and add our own
+        logger.remove()
+        # https://github.com/Delgan/loguru/blob/8c7d33c4cd349f5b03992973a6b564b01a055359/loguru/_logger.py#L455
+        info_names = ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING"]
+        logger.add(sys.stdout, filter=lambda record: record["level"].name in info_names)
+        error_names = ["ERROR", "CRITICAL", "FATAL"]
+        logger.add(sys.stderr, level="ERROR", filter=lambda record: record["level"].name in error_names)
         logger.add(create_log_sink(service_name), serialize=True)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
