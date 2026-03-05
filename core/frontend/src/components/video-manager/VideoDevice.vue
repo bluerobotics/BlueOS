@@ -8,7 +8,7 @@
               <v-icon
                 small
                 class="mr-2 mt-sm-2"
-                :color="!are_video_streams_available ? 'grey' : has_running_streams ? 'success' : 'error'"
+                :color="status_color"
                 v-bind="attrs"
                 v-on="on"
               >
@@ -18,11 +18,11 @@
             <span v-if="!are_video_streams_available">
               No streams added to this video source
             </span>
-            <span v-else-if="has_running_streams">
-              All streams running
+            <span v-else-if="has_healthy_streams">
+              Streams active
             </span>
             <span v-else>
-              Streams not running, see the errors for more information
+              Streams stopped, see the errors for more information
             </span>
           </v-tooltip>
           <p class="font-weigth-medium text-sm-h6 ma-0">
@@ -53,10 +53,10 @@
       </div>
       <div>
         <video-thumbnail
-          height="auto"
           width="280"
           :source="device.source"
-          :register="are_video_streams_available && has_running_streams"
+          :register="are_video_streams_available && has_healthy_streams && !thumbnails_disabled"
+          :disabled="thumbnails_disabled"
         />
       </div>
     </div>
@@ -89,7 +89,8 @@
     <video-controls-dialog
       v-model="show_controls_dialog"
       :device="device"
-      :thumbnail-register="are_video_streams_available && has_running_streams"
+      :thumbnail-register="are_video_streams_available && has_healthy_streams && !thumbnails_disabled"
+      :thumbnail-disabled="thumbnails_disabled"
     />
     <video-stream-creation-dialog
       v-model="show_stream_creation_dialog"
@@ -151,8 +152,22 @@ export default Vue.extend({
     has_configs(): boolean {
       return !this.device.controls.isEmpty()
     },
-    has_running_streams(): boolean {
-      return this.device_streams.some((stream) => stream.running)
+    has_healthy_streams(): boolean {
+      return this.device_streams.some((stream) => stream.state !== 'stopped')
+    },
+    thumbnails_disabled(): boolean {
+      return this.device_streams.some(
+        (stream) => stream.video_and_stream.stream_information?.extended_configuration?.disable_thumbnails === true,
+      )
+    },
+    status_color(): string {
+      if (!this.are_video_streams_available) {
+        return 'grey'
+      }
+      if (this.has_healthy_streams) {
+        return 'success'
+      }
+      return 'error'
     },
   },
   methods: {
