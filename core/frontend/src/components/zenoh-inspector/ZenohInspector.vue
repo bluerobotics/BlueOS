@@ -122,12 +122,14 @@
 
 <script lang="ts">
 import {
-  Config, Encoding, Sample, SampleKind, Session, Subscriber, ZBytes,
+  Encoding, Sample, SampleKind, Session, Subscriber, ZBytes,
 } from '@eclipse-zenoh/zenoh-ts'
 import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
 import { MessageReader } from '@foxglove/rosmsg2-serialization'
 import axios from 'axios'
 import Vue from 'vue'
+
+import zenoh from '@/libs/zenoh'
 
 import RawVideoPlayer from './RawVideoPlayer.vue'
 
@@ -229,10 +231,7 @@ export default Vue.extend({
 
     async setupZenoh() {
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-        const url = `${protocol}://${window.location.host}/zenoh-api/`
-        const config = new Config(url)
-        this.session = await Session.open(config)
+        this.session = await zenoh.getSession()
 
         // Setup regular message subscriber
         this.subscriber = await this.session.declare_subscriber('**', {
@@ -300,10 +299,8 @@ export default Vue.extend({
       }
     },
     async disconnectZenoh() {
-      await this.session?.close()
       this.subscriber?.undeclare()
       this.liveliness_subscriber?.undeclare()
-
       this.session = null
       this.subscriber = null
       this.liveliness_subscriber = null
