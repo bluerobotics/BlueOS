@@ -115,7 +115,10 @@ export interface CaptureConfiguration {
 
 export interface ExtendedConfiguration {
   thermal: boolean
+  disable_lazy: boolean
   disable_mavlink: boolean
+  disable_thumbnails: boolean
+  disable_zenoh: boolean
 }
 
 export interface StreamInformation {
@@ -194,9 +197,12 @@ export interface VideoAndStreamInformation {
   video_source: VideoSourceLocal | VideoSourceGst | VideoSourceRedirect | VideoSourceOnvif
 }
 
+export type StreamStatusState = 'running' | 'idle' | 'stopped'
+
 export interface StreamStatus {
   id: string
   running: boolean
+  state: StreamStatusState
   error: string | null
   video_and_stream: VideoAndStreamInformation
 }
@@ -213,5 +219,8 @@ export interface StreamPrototype {
   interval?: FrameInterval
   endpoints: string[]
   thermal: boolean
+  disable_lazy: boolean
   disable_mavlink: boolean
+  disable_thumbnails: boolean
+  disable_zenoh: boolean
 }
