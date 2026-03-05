@@ -174,7 +174,7 @@
 
 <script lang="ts">
 import {
-  Config, QueryTarget, Receiver, RecvErr, ReplyError, Sample, Session, Subscriber,
+  QueryTarget, Receiver, RecvErr, ReplyError, Sample, Session, Subscriber,
 } from '@eclipse-zenoh/zenoh-ts'
 import axios from 'axios'
 import { StatusCodes } from 'http-status-codes'
@@ -191,6 +191,7 @@ import {
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import filebrowser from '@/libs/filebrowser'
+import zenoh from '@/libs/zenoh'
 import bag from '@/store/bag'
 import { FilebrowserFile } from '@/types/filebrowser'
 import { InstalledExtensionData, RunningContainer } from '@/types/kraken'
@@ -247,7 +248,6 @@ export default Vue.extend({
       running_containers: [] as RunningContainer[],
       once_opened: false,
       file_sync_session: null as Session | null,
-      file_sync_session_promise: null as Promise<Session> | null,
       uploading_subscriber: null as Subscriber | null,
       cloud_pending_uploads: [] as FileSyncEntry[],
       cloud_completed_uploads: [] as FileSyncEntry[],
@@ -420,28 +420,12 @@ export default Vue.extend({
         return true
       }
 
-      if (this.file_sync_session_promise) {
-        try {
-          await this.file_sync_session_promise
-          return this.file_sync_session !== null
-        } catch {
-          return false
-        }
-      }
-
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-        const url = `${protocol}://${window.location.host}/zenoh-api/`
-        const config = new Config(url)
-        const sessionPromise = Session.open(config)
-        this.file_sync_session_promise = sessionPromise
-        this.file_sync_session = await sessionPromise
+        this.file_sync_session = await zenoh.getSession()
         return true
       } catch (error) {
         console.error('[CloudTrayMenu] Failed to open Zenoh session for file sync tracking:', error)
         return false
-      } finally {
-        this.file_sync_session_promise = null
       }
     },
     async fetchFileSyncQueues(): Promise<void> {
@@ -627,16 +611,7 @@ export default Vue.extend({
           this.uploading_subscriber = null
         }
 
-        try {
-          if (this.file_sync_session) {
-            await this.file_sync_session.close()
-          }
-        } catch (error) {
-          console.warn('[CloudTrayMenu] Failed to close file sync session:', error)
-        } finally {
-          this.file_sync_session = null
-          this.file_sync_session_promise = null
-        }
+        this.file_sync_session = null
 
         this.cloud_pending_uploads = []
         this.cloud_completed_uploads = []

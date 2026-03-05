@@ -1,6 +1,7 @@
-import { Config, Encoding, Session } from '@eclipse-zenoh/zenoh-ts'
+import { Encoding, Session } from '@eclipse-zenoh/zenoh-ts'
 
 import frontend from '@/store/frontend'
+import zenoh from '@/libs/zenoh'
 
 /**
  * Compliant with FoxGlove LogLevel
@@ -61,11 +62,7 @@ class ConsoleLogger {
     }
 
     try {
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const url = `${protocol}://${window.location.host}/zenoh-api/`
-      const config = new Config(url)
-      this.session = await Session.open(config)
-
+      this.session = await zenoh.getSession()
       this.interceptConsole()
       this.interceptWindow()
     } catch (error) {
@@ -223,11 +220,7 @@ class ConsoleLogger {
 
     window.removeEventListener('error', this.onError)
     window.removeEventListener('unhandledrejection', this.onUnhandledRejection)
-
-    if (this.session) {
-      await this.session.close()
-      this.session = null
-    }
+    this.session = null
   }
 }
 
