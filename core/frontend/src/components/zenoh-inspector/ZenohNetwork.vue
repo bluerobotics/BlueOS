@@ -57,12 +57,13 @@
 
 <script lang="ts">
 import {
-  Config, QueryTarget, Receiver, RecvErr, ReplyError,
-  Sample, Session,
+  QueryTarget, Receiver, RecvErr, ReplyError, Sample, Session,
 } from '@eclipse-zenoh/zenoh-ts'
 import cytoscape, { Core } from 'cytoscape'
 import fcose, { FcoseLayoutOptions } from 'cytoscape-fcose'
 import Vue from 'vue'
+
+import zenoh from '@/libs/zenoh'
 
 interface NetworkNode {
   id: string
@@ -261,10 +262,7 @@ export default Vue.extend({
 
     async setupZenoh() {
       try {
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-        const url = `${protocol}://${window.location.host}/zenoh-api/`
-        const config = new Config(url)
-        this.session = await Session.open(config)
+        this.session = await zenoh.getSession()
 
         await this.discoverNetworkTopology()
       } catch (innerError: unknown) {
@@ -567,13 +565,6 @@ export default Vue.extend({
         this.networkData.nodes = []
         this.networkData.edges = []
 
-        // Close existing session and create a new one
-        if (this.session) {
-          await this.session.close()
-          this.session = null
-        }
-
-        // Setup new Zenoh connection
         await this.setupZenoh()
 
         // Ensure Cytoscape is initialized and update the graph
@@ -591,10 +582,7 @@ export default Vue.extend({
     },
 
     async disconnectZenoh() {
-      if (this.session) {
-        await this.session.close()
-        this.session = null
-      }
+      this.session = null
     },
 
     getNodeCount(whatami: string) {
