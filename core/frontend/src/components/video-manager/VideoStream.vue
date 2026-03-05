@@ -44,10 +44,10 @@
           Status:
         </div>
         <div class="info-value">
-          {{ stream.running ? 'Running' : 'Not running' }}
+          {{ stream_state_text }}
         </div>
 
-        <template v-if="(!stream.running) && stream.error">
+        <template v-if="stream.state === 'stopped' && stream.error">
           <div class="info-label error--text font-weight-bold">
             Errors:
           </div>
@@ -209,6 +209,14 @@ export default Vue.extend({
     }
   },
   computed: {
+    stream_state_text(): string {
+      const stateMap: Record<string, string> = {
+        running: 'Running',
+        idle: 'Idle',
+        stopped: 'Stopped',
+      }
+      return stateMap[this.stream.state] || 'Unknown'
+    },
     stream_prototype(): StreamPrototype {
       let dimensions
       if (this.stream.video_and_stream.stream_information.configuration.width
@@ -218,15 +226,18 @@ export default Vue.extend({
           height: this.stream.video_and_stream.stream_information.configuration.height,
         }
       }
+      const ext = this.stream.video_and_stream.stream_information?.extended_configuration
       return {
         name: this.stream.video_and_stream.name,
         encode: this.stream.video_and_stream.stream_information.configuration.encode,
         dimensions,
         interval: this.stream.video_and_stream.stream_information.configuration.frame_interval,
         endpoints: this.stream.video_and_stream.stream_information.endpoints,
-        thermal: this.stream.video_and_stream.stream_information?.extended_configuration?.thermal ?? false,
-        disable_mavlink:
-          this.stream.video_and_stream.stream_information?.extended_configuration?.disable_mavlink ?? false,
+        thermal: ext?.thermal ?? false,
+        disable_lazy: ext?.disable_lazy ?? false,
+        disable_mavlink: ext?.disable_mavlink ?? false,
+        disable_thumbnails: ext?.disable_thumbnails ?? false,
+        disable_zenoh: ext?.disable_zenoh ?? false,
       }
     },
     format(): string {
