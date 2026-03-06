@@ -797,9 +797,27 @@ export default Vue.extend({
 
     const body = document.querySelector('body')
     body?.addEventListener('click', (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+
       const target = event.target as HTMLElement
       if (target.offsetParent !== this.$refs.contextMenu) {
         this.context_menu_visible = false
+      }
+
+      // Force all external links to open in a new tab
+      const anchor = target.closest('a')
+      if (!anchor || anchor.target === '_blank') return
+      const href = anchor.getAttribute('href')
+      if (!href) return
+      try {
+        const url = new URL(href, window.location.origin)
+        if (!['http:', 'https:'].includes(url.protocol)) return
+        if (url.origin !== window.location.origin) {
+          event.preventDefault()
+          window.open(href, '_blank', 'noopener,noreferrer')
+        }
+      } catch {
+        // Invalid URL, ignore
       }
     })
     this.bootstrap_version = await VCU.loadBootstrapCurrentVersion()
