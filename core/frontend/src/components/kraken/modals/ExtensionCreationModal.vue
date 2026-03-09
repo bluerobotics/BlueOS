@@ -6,6 +6,7 @@
     persistent
     @input="showDialog"
     @click:outside="closeDialog"
+    @keydown.ctrl.enter.prevent="saveExtension"
   >
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
