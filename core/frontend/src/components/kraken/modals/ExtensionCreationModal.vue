@@ -58,6 +58,7 @@
             v-model="new_extension.tag"
             label="Docker tag"
             :rules="[validate_tag]"
+            @paste="handleTagPaste"
           />
 
           <json-editor
@@ -307,6 +308,16 @@ export default Vue.extend({
         setTimeout(() => {
           this.copySuccess = false
         }, 2000) // Reset after 2 seconds
+      }
+    },
+    handleTagPaste(event: ClipboardEvent) {
+      const pastedText = event.clipboardData?.getData('text')?.trim()
+      if (!pastedText) return
+
+      const colonIdx = pastedText.lastIndexOf(':')
+      if (colonIdx >= 0 && colonIdx < pastedText.length - 1) {
+        event.preventDefault()
+        this.new_extension.tag = pastedText.slice(colonIdx + 1)
       }
     },
     handlePaste(event: ClipboardEvent) {
