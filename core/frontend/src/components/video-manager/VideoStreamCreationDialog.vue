@@ -246,6 +246,13 @@ export default Vue.extend({
       settings,
     }
   },
+  watch: {
+    show(newVal: boolean) {
+      if (newVal) {
+        this.resetFormFromStream()
+      }
+    },
+  },
   computed: {
     form(): VForm {
       return this.$refs.form as VForm
