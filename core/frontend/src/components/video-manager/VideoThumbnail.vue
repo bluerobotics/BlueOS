@@ -63,6 +63,7 @@ export default Vue.extend({
     return {
       thumbnail: undefined as undefined | Thumbnail,
       update_task: new OneMoreTime({ delay: 1000, disposeWith: this, autostart: true }),
+      stopDebounceTimer: undefined as ReturnType<typeof setTimeout> | undefined,
     }
   },
   computed: {
@@ -76,8 +77,15 @@ export default Vue.extend({
   watch: {
     register(newValue, oldValue) {
       if (!newValue && oldValue) {
-        video.stopGetThumbnailForDevice(this.source)
+        clearTimeout(this.stopDebounceTimer)
+        this.stopDebounceTimer = setTimeout(() => {
+          if (!this.register) {
+            video.stopGetThumbnailForDevice(this.source)
+          }
+        }, 15000)
       } else if (newValue && !oldValue) {
+        clearTimeout(this.stopDebounceTimer)
+        this.stopDebounceTimer = undefined
         video.startGetThumbnailForDevice(this.source)
       }
     },
@@ -89,6 +97,11 @@ export default Vue.extend({
     this.update_task.setAction(this.updateThumbnail)
   },
   beforeDestroy() {
+    clearTimeout(this.stopDebounceTimer)
+    const blobUrl = video.thumbnails.get(this.source)?.source
+    if (blobUrl !== undefined) {
+      URL.revokeObjectURL(blobUrl)
+    }
     video.stopGetThumbnailForDevice(this.source)
   },
   methods: {
