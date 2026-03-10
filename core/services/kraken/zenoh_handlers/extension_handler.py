@@ -1,11 +1,10 @@
-from typing import Any, List, cast
+from typing import Any
 
 from commonwealth.utils.zenoh_helper import ZenohRouter
-from extension.extension import Extension
 from extension_logs import ExtensionLogPublisher
 from harbor import ContainerManager
 from loguru import logger
-from settings import ExtensionSettings
+from settings import get_extension_settings
 
 
 class ExtensionHandlers:
@@ -17,7 +16,7 @@ class ExtensionHandlers:
             return {"error": "extension_name parameter is required"}
 
         try:
-            extensions = cast(List[ExtensionSettings], Extension._fetch_settings())
+            extensions = get_extension_settings()
             extension = next((ext for ext in extensions if extension_name in (ext.identifier, ext.name)), None)
 
             if not extension:
