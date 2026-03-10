@@ -198,10 +198,16 @@ export default Vue.extend({
     },
     param_value() {
       this.updateSelectedFlags()
-      if (this.last_sent_value === undefined) {
-        this.internal_new_value = this.param_value
-        this.internal_new_value_as_string = String(this.internal_new_value)
+      if (
+        this.last_sent_value !== undefined
+         && this.internal_new_value !== this.last_sent_value
+         && this.param_value === this.last_sent_value
+         && this.param_value === this.last_sent_value
+      ) {
+        return
       }
+      this.internal_new_value = this.param_value
+      this.internal_new_value_as_string = String(this.internal_new_value)
     },
   },
   mounted() {
