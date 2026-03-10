@@ -117,8 +117,20 @@
                   label="Thermal camera"
                 />
                 <v-checkbox
+                  v-model="is_disable_lazy"
+                  label="Disable Lazy"
+                />
+                <v-checkbox
                   v-model="is_disable_mavlink"
                   label="Disable Mavlink"
+                />
+                <v-checkbox
+                  v-model="is_disable_thumbnails"
+                  label="Disable Thumbnails"
+                />
+                <v-checkbox
+                  v-model="is_disable_zenoh"
+                  label="Disable Zenoh"
                 />
               </v-expansion-panel-content>
             </v-expansion-panel>
@@ -206,7 +218,10 @@ export default Vue.extend({
           interval: undefined,
           endpoints: [''],
           thermal: false,
+          disable_lazy: false,
           disable_mavlink: false,
+          disable_thumbnails: false,
+          disable_zenoh: false,
         }
       },
     },
@@ -224,7 +239,10 @@ export default Vue.extend({
       selected_interval: this.stream.interval,
       stream_endpoints: this.stream.endpoints,
       is_thermal: this.stream.thermal,
+      is_disable_lazy: this.stream.disable_lazy,
       is_disable_mavlink: this.stream.disable_mavlink,
+      is_disable_thumbnails: this.stream.disable_thumbnails,
+      is_disable_zenoh: this.stream.disable_zenoh,
       settings,
     }
   },
@@ -259,7 +277,10 @@ export default Vue.extend({
           },
           extended_configuration: {
             thermal: this.is_thermal,
+            disable_lazy: this.is_disable_lazy,
             disable_mavlink: this.is_disable_mavlink,
+            disable_thumbnails: this.is_disable_thumbnails,
+            disable_zenoh: this.is_disable_zenoh,
           },
         },
       }
@@ -311,10 +332,36 @@ export default Vue.extend({
       return this.stream_name.replace(/[^a-z0-9]/gi, '_').toLowerCase()
     },
   },
+  watch: {
+    show(newVal: boolean) {
+      if (newVal) {
+        this.resetFormFromStream()
+      }
+    },
+  },
   mounted() {
     this.set_default_configurations()
   },
   methods: {
+    resetFormFromStream(): void {
+      const format_match = this.device.formats
+        .find((format) => format.encode === this.stream.encode)
+      const size_match = format_match?.sizes
+        .find((size) => size.width === this.stream.dimensions?.width
+          && size.height === this.stream.dimensions?.height)
+
+      this.stream_name = this.stream.name
+      this.selected_encode = this.stream.encode
+      this.selected_size = size_match || null
+      this.selected_interval = this.stream.interval
+      this.stream_endpoints = this.stream.endpoints
+      this.is_thermal = this.stream.thermal
+      this.is_disable_lazy = this.stream.disable_lazy
+      this.is_disable_mavlink = this.stream.disable_mavlink
+      this.is_disable_thumbnails = this.stream.disable_thumbnails
+      this.is_disable_zenoh = this.stream.disable_zenoh
+      this.set_default_configurations()
+    },
     validate_required_field(input: string | null): (true | string) {
       if (!this.format_required) {
         return true
