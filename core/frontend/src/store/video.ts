@@ -16,9 +16,27 @@ import back_axios, { isBackendOffline } from '@/utils/api'
 export interface Thumbnail {
   source: string | undefined
   status: number | undefined
+  roundtripMs: number | undefined
 }
 
 const notifier = new Notifier(video_manager_service)
+
+interface ThumbnailFetchState {
+  task: OneMoreTime
+  sources: Set<string>
+  busy: Set<string>
+  inProgress: boolean
+}
+
+const THUMBNAIL_STATE_KEY = '__blueos_video_thumbnail_state__'
+const thumbnailState: ThumbnailFetchState = (window as any)[THUMBNAIL_STATE_KEY] ??= {
+  task: new OneMoreTime({ delay: 1000, autostart: false }),
+  sources: new Set<string>(),
+  busy: new Set<string>(),
+  inProgress: false,
+}
+;(window as any)[THUMBNAIL_STATE_KEY] = thumbnailState
+thumbnailState.task.setDelay(1000)
 
 @Module({
   dynamic: true,
@@ -42,14 +60,6 @@ class VideoStore extends VuexModule {
   fetch_devices_error: string | null = null
 
   thumbnails: Map<string, Thumbnail> = new Map()
-
-  private sources_to_request_thumbnail: Set<string> = new Set()
-
-  private busy_sources: Set<string> = new Set()
-
-  fetchThumbnailsTask = new OneMoreTime(
-    { delay: 1000, autostart: false },
-  )
 
   @Mutation
   setUpdatingStreams(updating: boolean): void {
@@ -174,17 +184,21 @@ class VideoStore extends VuexModule {
 
   @Action
   async fetchThumbnails(): Promise<void> {
+    if (thumbnailState.inProgress) return
+    thumbnailState.inProgress = true
+
     const target_height = 150
     const quality = 75
 
     const requests: Promise<void>[] = []
 
-    this.sources_to_request_thumbnail.forEach(async (source: string) => {
-      if (this.busy_sources.has(source)) {
+    thumbnailState.sources.forEach(async (source: string) => {
+      if (thumbnailState.busy.has(source)) {
         return
       }
-      this.busy_sources.add(source)
+      thumbnailState.busy.add(source)
 
+      const requestStart = Date.now()
       const request = back_axios({
         method: 'get',
         url: `${this.API_URL}/thumbnail?source=${source}&quality=${quality}&target_height=${target_height}`,
@@ -193,29 +207,42 @@ class VideoStore extends VuexModule {
       })
         .then((response) => {
           if (response.status === 200) {
+            const roundtripMs = Date.now() - requestStart
             const old_thumbnail_source = this.thumbnails.get(source)?.source
             if (old_thumbnail_source !== undefined) {
               URL.revokeObjectURL(old_thumbnail_source)
             }
 
-            this.thumbnails.set(source, { source: URL.createObjectURL(response.data), status: response.status })
+            this.thumbnails.set(source, {
+              source: URL.createObjectURL(response.data), status: response.status, roundtripMs,
+            })
           }
         })
         .catch((error) => {
+          const roundtripMs = Date.now() - requestStart
           if (error?.response?.status === StatusCodes.SERVICE_UNAVAILABLE) {
-            this.thumbnails.set(source, { source: undefined, status: error.response.status })
+            const existing = this.thumbnails.get(source)
+            if (existing?.source) {
+              this.thumbnails.set(source, { source: existing.source, status: error.response.status, roundtripMs })
+            } else {
+              this.thumbnails.set(source, { source: undefined, status: error.response.status, roundtripMs })
+            }
           } else {
             this.thumbnails.delete(source)
           }
         })
         .finally(() => {
-          this.busy_sources.delete(source)
+          thumbnailState.busy.delete(source)
         })
 
       requests.push(request)
     })
 
-    await Promise.allSettled(requests)
+    try {
+      await Promise.allSettled(requests)
+    } finally {
+      thumbnailState.inProgress = false
+    }
   }
 
   @Action
@@ -236,26 +263,25 @@ class VideoStore extends VuexModule {
       })
   }
 
+  // eslint-disable-next-line class-methods-use-this
   @Action
   startGetThumbnailForDevice(source: string): void {
-    if (this.sources_to_request_thumbnail.size > 0) {
-      this.fetchThumbnailsTask.resume()
-    } else {
-      this.fetchThumbnailsTask.start()
+    thumbnailState.sources.add(source)
+    const task = thumbnailState.task as any
+    if (task.isPaused) {
+      thumbnailState.task.resume()
+    } else if (!task.isRunning && !task.timeoutId) {
+      thumbnailState.task.start()
     }
-    this.sources_to_request_thumbnail.add(source)
   }
 
+  // eslint-disable-next-line class-methods-use-this
   @Action
   stopGetThumbnailForDevice(source: string): void {
-    const old_thumbnail_source = this.thumbnails.get(source)?.source
-    if (old_thumbnail_source !== undefined) {
-      URL.revokeObjectURL(old_thumbnail_source)
-    }
-    this.sources_to_request_thumbnail.delete(source)
+    thumbnailState.sources.delete(source)
 
-    if (this.sources_to_request_thumbnail.size === 0) {
-      this.fetchThumbnailsTask.stop()
+    if (thumbnailState.sources.size === 0) {
+      thumbnailState.task.stop()
     }
   }
 }
@@ -264,6 +290,6 @@ export { VideoStore }
 
 const video: VideoStore = getModule(VideoStore)
 
-video.fetchThumbnailsTask.setAction(video.fetchThumbnails)
+thumbnailState.task.setAction(video.fetchThumbnails)
 
 export default video
