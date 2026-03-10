@@ -15,9 +15,9 @@
       >
         <v-card-text>
           <video-thumbnail
-            height="auto"
             width="280"
             :register="thumbnailRegister"
+            :disabled="thumbnailDisabled"
             :source="device.source"
           />
           <v-container v-if="are_controllers_available">
@@ -125,6 +125,10 @@ export default Vue.extend({
     thumbnailRegister: {
       type: Boolean,
       default: true,
+    },
+    thumbnailDisabled: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
