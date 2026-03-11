@@ -186,6 +186,7 @@
         Uninstall
       </v-btn>
       <v-btn
+        v-if="extension.enabled"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('showlogs', extension)"
       >
