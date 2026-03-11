@@ -253,7 +253,7 @@
                     small
                     :disabled="disable_remove || deletion_in_progress"
                     color="error"
-                    @click="remove_service_log_files"
+                    @click="show_log_clear_confirm = true; pending_log_clear_type = 'service'"
                   >
                     <v-icon left small>
                       mdi-trash-can
@@ -322,7 +322,7 @@
                     small
                     :disabled="disable_remove_mavlink"
                     color="error"
-                    @click="remove_mavlink_log_files"
+                    @click="show_log_clear_confirm = true; pending_log_clear_type = 'mavlink'"
                   >
                     <v-icon left small>
                       mdi-trash-can
@@ -453,6 +453,14 @@
         @confirm="onConfirmResetSettings"
       />
 
+      <warning-dialog
+        v-model="show_log_clear_confirm"
+        :title="log_clear_confirm_title"
+        :message="log_clear_confirm_message"
+        confirm-label="Clear logs"
+        @confirm="onConfirmClearLogs"
+      />
+
       <v-dialog width="400" :value="show_reset_dialog" @input="show_reset_dialog = false">
         <v-card>
           <v-card-title class="text-h6">
@@ -511,6 +519,8 @@ export default Vue.extend({
       mavlink_log_folder_size: null as null | string,
       show_reset_dialog: false,
       show_reset_warning: false,
+      show_log_clear_confirm: false,
+      pending_log_clear_type: null as null | 'service' | 'mavlink',
       show_error: false,
       operation_in_progress: false,
       operation_description: '',
@@ -533,6 +543,15 @@ export default Vue.extend({
         'Resetting will restore BlueOS services to their default configurations.\n'
         + 'This action cannot be undone. Proceed?'
       )
+    },
+    log_clear_confirm_title(): string {
+      return this.pending_log_clear_type === 'mavlink' ? 'Clear MAVLink logs?' : 'Clear system logs?'
+    },
+    log_clear_confirm_message(): string {
+      if (this.pending_log_clear_type === 'mavlink') {
+        return 'All MAVLink (autopilot flight) logs will be permanently deleted. This action cannot be undone.'
+      }
+      return 'All BlueOS service logs will be permanently deleted. This action cannot be undone.'
     },
     log_size_warning(): boolean {
       const one_hundred_MB = 100 * 2 ** 20
@@ -617,6 +636,14 @@ export default Vue.extend({
       this.reset_settings()
     },
 
+    onConfirmClearLogs(): void {
+      if (this.pending_log_clear_type === 'service') {
+        this.remove_service_log_files()
+      } else if (this.pending_log_clear_type === 'mavlink') {
+        this.remove_mavlink_log_files()
+      }
+    },
+
     async reset_settings(): Promise<void> {
       this.prepare_operation('Resetting settings...')
 
@@ -686,6 +713,8 @@ export default Vue.extend({
         this.current_deletion_path = ''
         this.current_deletion_size = 0
         this.current_deletion_status = ''
+        this.show_log_clear_confirm = false
+        this.pending_log_clear_type = null
       }
 
       this.get_log_folder_size()
@@ -710,7 +739,11 @@ export default Vue.extend({
           this.show_error = true
           notifier.pushBackError('REMOVE_MAVLINK_LOG_FAIL', error)
         })
-      this.operation_in_progress = false
+        .finally(() => {
+          this.operation_in_progress = false
+          this.show_log_clear_confirm = false
+          this.pending_log_clear_type = null
+        })
     },
 
     async enable_wizard(): Promise<void> {
