@@ -1,4 +1,4 @@
-import { Config, Session } from '@eclipse-zenoh/zenoh-ts'
+import { Config, QueryTarget, Receiver, RecvErr, Sample, Session, Subscriber } from '@eclipse-zenoh/zenoh-ts'
 
 class ZenohManager {
   private static instance: ZenohManager
@@ -29,6 +29,61 @@ class ZenohManager {
       })
     }
     return this.sessionPromise
+  }
+
+  public async query(key: string, target: QueryTarget, timeout: number = 30000) : Promise<any | null> {
+    const session = await this.getSession()
+    if (!session) {
+      console.error('Zenoh session not initialized')
+      return null
+    }
+
+    const receiver: Receiver | void = session.get(key, {
+      target,
+    })
+
+    if (!(receiver instanceof Receiver)) {
+      console.error('Failed to create query receiver. No queryable found or connection error.')
+      return null
+    }
+
+    const timeoutPromise = new Promise<null>((resolve) => {
+      setTimeout(() => resolve(null), timeout)
+    })
+
+    const replyPromise = receiver.receive()
+    const reply = await Promise.race([replyPromise, timeoutPromise])
+
+    if (reply === null || reply === RecvErr.Disconnected) {
+      console.error('Query timeout: No response from zenoh queryable. '
+        + 'The service may be unavailable or the extension may not exist.')
+      return null
+    }
+
+    if (!reply || typeof (reply as any).result !== 'function') {
+      console.error('Unexpected reply from zenoh queryable:', reply)
+      return null
+    }
+
+    const payload = (reply as { result: () => Sample }).result()
+    try {
+      return JSON.parse(payload.payload().to_string())
+    } catch (error) {
+      console.error('Error parsing response:', error)
+      return null
+    }
+  }
+
+  public async subscriber(topic: string, handler: (sample: Sample) => Promise<void>) : Promise<Subscriber | null> {
+    const session = await this.getSession()
+    if (!session) {
+      console.error('Zenoh session not initialized')
+      return null
+    }
+
+    return session.declare_subscriber(topic, {
+      handler,
+    })
   }
 }
 
