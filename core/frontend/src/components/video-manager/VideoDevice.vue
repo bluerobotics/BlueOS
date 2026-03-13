@@ -15,7 +15,10 @@
                 mdi-circle
               </v-icon>
             </template>
-            <span v-if="!are_video_streams_available">
+            <span v-if="device.blocked">
+              Video source is blocked
+            </span>
+            <span v-else-if="!are_video_streams_available">
               No streams added to this video source
             </span>
             <span v-else-if="has_healthy_streams">
@@ -43,12 +46,21 @@
           </v-btn>
           <v-btn
             class="my-1"
-            :disabled="!is_redirect_source && (are_video_streams_available || updating_streams)"
+            :disabled="device.blocked || (!is_redirect_source && (are_video_streams_available || updating_streams))"
             @click="openStreamCreationDialog"
           >
             <v-icon>mdi-plus</v-icon>
             Add stream
           </v-btn>
+          <v-switch
+            v-if="is_pirate_mode"
+            :input-value="device.blocked"
+            dense
+            hide-details
+            class="mt-2"
+            label="Block source"
+            @change="toggleBlocked"
+          />
         </div>
       </div>
       <div>
@@ -104,6 +116,7 @@
 import Vue, { PropType } from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import settings from '@/libs/settings'
 import video from '@/store/video'
 import {
   CreatedStream, Device, StreamStatus,
@@ -160,7 +173,13 @@ export default Vue.extend({
         (stream) => stream.video_and_stream.stream_information?.extended_configuration?.disable_thumbnails === true,
       )
     },
+    is_pirate_mode(): boolean {
+      return settings.is_pirate_mode
+    },
     status_color(): string {
+      if (this.device.blocked) {
+        return 'warning'
+      }
       if (!this.are_video_streams_available) {
         return 'grey'
       }
@@ -176,6 +195,14 @@ export default Vue.extend({
     },
     openStreamCreationDialog(): void {
       this.show_stream_creation_dialog = true
+    },
+
+    async toggleBlocked(): Promise<void> {
+      if (this.device.blocked) {
+        await video.unblockSource(this.device.source)
+      } else {
+        await video.blockSource(this.device.source)
+      }
     },
 
     async createNewStream(stream: CreatedStream): Promise<void> {
