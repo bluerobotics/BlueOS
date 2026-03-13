@@ -246,6 +246,42 @@ class VideoStore extends VuexModule {
   }
 
   @Action
+  async blockSource(source: string): Promise<void> {
+    await back_axios({
+      method: 'post',
+      url: `${this.API_URL}/block_source`,
+      timeout: 10000,
+      params: { source_string: source },
+    })
+      .then(() => {
+        this.fetchDevices()
+        this.fetchStreams()
+      })
+      .catch((error) => {
+        const message = `Could not block video source: ${error.message}.`
+        notifier.pushError('VIDEO_SOURCE_BLOCK_FAIL', message)
+      })
+  }
+
+  @Action
+  async unblockSource(source: string): Promise<void> {
+    await back_axios({
+      method: 'post',
+      url: `${this.API_URL}/unblock_source`,
+      timeout: 10000,
+      params: { source_string: source },
+    })
+      .then(() => {
+        this.fetchDevices()
+        this.fetchStreams()
+      })
+      .catch((error) => {
+        const message = `Could not unblock video source: ${error.message}.`
+        notifier.pushError('VIDEO_SOURCE_UNBLOCK_FAIL', message)
+      })
+  }
+
+  @Action
   async resetSettings(): Promise<void> {
     await back_axios({
       url: `${this.API_URL}/reset_settings`,
