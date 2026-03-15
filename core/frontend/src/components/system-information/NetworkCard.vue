@@ -88,7 +88,7 @@
       </v-list-item-icon>
       <v-list-item-subtitle>Bytes received:</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.total_received_B }}
+        {{ formatSize(network.total_received_B) }}
       </v-list-item-subtitle>
     </v-list-item>
 
@@ -100,7 +100,7 @@
       </v-list-item-icon>
       <v-list-item-subtitle>Bytes transmitted:</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.total_transmitted_B }}
+        {{ formatSize(network.total_transmitted_B) }}
       </v-list-item-subtitle>
     </v-list-item>
   </v-card>
@@ -110,6 +110,7 @@
 import { PropType } from 'vue'
 
 import { Network } from '@/types/system-information/system'
+import { prettifySize } from '@/utils/helper_functions'
 
 export default {
   name: 'NetworkCard',
@@ -124,6 +125,11 @@ export default {
       show_mac: false,
       show_ipv6: false,
     }
+  },
+  methods: {
+    formatSize(bytes: number): string {
+      return prettifySize(bytes / 1024)
+    },
   },
 }
 </script>
