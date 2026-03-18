@@ -113,6 +113,15 @@
           dark
         >
           {{ available_versions.error }}
+          <br><br>
+          You can download BlueOS versions (`BlueOS-core-docker-image` files) directly from the Assets in
+          <a
+            href="https://github.com/bluerobotics/BlueOS/releases"
+            target="_blank"
+            class="white--text"
+            rel="noopener noreferrer"
+          >
+            GitHub Releases</a> and upload them using the "Manual Upload" section below.
         </v-alert>
         <spinning-logo
           v-if="loading_images"
@@ -153,13 +162,36 @@
       max-width="900"
       class="mx-auto pa-4"
     >
-      <h2>Manual upload</h2>
-      Use this to upload a .tar docker image. These can be downloaded from
+      <h2>
+        Manual Upload
+        <v-tooltip top>
+          <template #activator="{ on }">
+            <v-icon
+              small
+              v-on="on"
+            >
+              mdi-information-outline
+            </v-icon>
+          </template>
+          <span>
+            When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)
+          </span>
+        </v-tooltip>
+      </h2>
+      Use this to upload a .tar docker image. These can be downloaded from the BlueOS
+      <a
+        href="https://github.com/bluerobotics/BlueOS/releases"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Releases</a> Assets, or
       <a
         href="https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml"
         target="_blank"
-      >Github's CI</a>
-      or generated locally using "docker save"
+        rel="noopener noreferrer"
+      >
+        CI</a>
+      Artifacts (GitHub account required), or generated locally using <code>docker save</code>.
       <v-file-input
         v-if="!disable_upload_controls"
         id="file"
