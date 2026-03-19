@@ -56,6 +56,7 @@ export interface ExtensionData {
     extension_logo?: string
     company_logo: string
     is_compatible?: boolean
+    website?: string
     repo_info?: {
         downloads: number,
         last_updated?: string,
