@@ -98,6 +98,7 @@ export interface Device {
   source: string
   formats: Format[]
   controls: Control[]
+  blocked?: boolean
 }
 
 export enum VideoCaptureType {
