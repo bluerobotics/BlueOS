@@ -341,6 +341,10 @@ div.readme ul {
   margin-left: 20px;
 }
 
+div.readme img {
+  max-width: 100%;
+}
+
 .editor-control {
   margin: 0;
   opacity: 0.7;
