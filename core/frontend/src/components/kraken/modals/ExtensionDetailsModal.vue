@@ -15,6 +15,18 @@
           <strong>{{ compatible_version_archs.join(', ') }}</strong>
         </div>
       </div>
+      <v-btn
+        v-if="extension.website"
+        v-tooltip="'Homepage'"
+        icon
+        :href="extension.website"
+        target="_blank"
+        rel="noopener"
+      >
+        <v-icon small>
+          mdi-web
+        </v-icon>
+      </v-btn>
     </v-card-subtitle>
     <div class="px-4 pt-4 d-flex justify-space-between align-start">
       <v-select
