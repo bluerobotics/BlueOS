@@ -124,7 +124,7 @@ PRIORITY_SERVICES=(
 SERVICES=(
     # This services are not prioritized because they are not fundamental for the vehicle to work
     'kraken',0,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/kraken/main.py"
-    'wifi',0,0,0,0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
+    'wifi',0,0,0,0,"nice -19 $SERVICES_PATH/wifi/main.py"
     'zenohd',0,0,0,0,"ZENOH_BACKEND_FS_ROOT=$TOOLS_PATH/zenoh zenohd -c $TOOLS_PATH/zenoh/blueos-zenoh.json5"
     # This services are not as important as the others
     'beacon',250,0,0,0,"$SERVICES_PATH/beacon/main.py"
