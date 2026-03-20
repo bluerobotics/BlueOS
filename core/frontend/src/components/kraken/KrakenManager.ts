@@ -1,3 +1,4 @@
+import zenoh from '@/libs/zenoh'
 import {
   ExtensionData,
   ExtensionUploadResponse,
@@ -8,6 +9,7 @@ import {
   UploadProgressEvent,
 } from '@/types/kraken'
 import back_axios from '@/utils/api'
+import { QueryTarget, Receiver, RecvErr, Sample, Session, Subscriber } from '@eclipse-zenoh/zenoh-ts'
 
 const KRAKEN_BASE_URL = '/kraken'
 const KRAKEN_API_V2_URL = `${KRAKEN_BASE_URL}/v2.0`
@@ -319,25 +321,6 @@ export async function getContainersStats(): Promise<any> {
 }
 
 /**
- * Fetch logs of a given container.
- * @param {string} containerName The name of the container
- * @param {function} progressHandler The progress handler for the download
- * @param {AbortSignal} cancelToken The cancel token for the request
- */
-export async function getContainerLogs(
-  containerName: string,
-  progressHandler: (event: any) => void,
-  cancelToken: AbortSignal | undefined,
-): Promise<any> {
-  await back_axios({
-    method: 'GET',
-    url: `${KRAKEN_API_V2_URL}/container/${containerName}/log`,
-    onDownloadProgress: progressHandler,
-    signal: cancelToken,
-  })
-}
-
-/**
  * Upload a tar file containing a Docker image and extract metadata
  * @param {File} file The tar file to upload
  * @returns {Promise<{temp_tag: string, metadata: any, image_name: string}>}
@@ -405,6 +388,31 @@ export async function finalizeExtension(
   })
 }
 
+/**
+ * Request historical logs for an extension
+ * @param {string} identifier The identifier of the extension
+ * @param {number} timeout The timeout for the query
+ * @returns {Promise<any | null>}
+ */
+export async function getHistoricalLogsForExtension(identifier: string, timeout: number): Promise<any | null> {
+  const queryKey = `kraken/extension/logs/request?extension_name=${identifier}`
+  return await zenoh.query(queryKey, QueryTarget.BestMatching, timeout)
+}
+
+/**
+ * Create a new subscriber for a given topic
+ * @param {string} extensionIdentifier The extension identifier to subscribe to
+ * @param {function} subscriberHandler The handler for the topic
+ * @returns {Promise<Subscriber | null>}
+ */
+export async function createExtensionLogsSubscriber(
+  extensionIdentifier: string,
+  subscriberHandler: (sample: Sample) => Promise<void>,
+) : Promise<Subscriber | null> {
+  const topic = `extensions/logs/${extensionIdentifier}`
+  return await zenoh.subscriber(topic, subscriberHandler)
+}
+
 export default {
   fetchManifestSources,
   fetchManifestSource,
@@ -426,8 +434,9 @@ export default {
   restartExtension,
   listContainers,
   getContainersStats,
-  getContainerLogs,
   uploadExtensionTarFile,
   keepTemporaryExtensionAlive,
   finalizeExtension,
+  getHistoricalLogsForExtension,
+  createExtensionLogsSubscriber,
 }
