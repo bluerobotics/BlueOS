@@ -97,6 +97,7 @@
             small
             class="ml-1"
             :color="is_installed ? 'success' : 'primary'"
+            :disabled="is_installing"
             v-bind="attrs"
             v-on="on"
             @click="performActionClick"
@@ -135,6 +136,14 @@ export default Vue.extend({
       type: Array as PropType<InstalledExtensionData[]>,
       required: true,
     },
+    activeOperationIdentifier: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    activeOperationType: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
     imgsProcessed: {
       type: Object as PropType<Record<string, ImgProcessedResult>>,
       required: true,
@@ -156,6 +165,9 @@ export default Vue.extend({
     },
     is_installed(): boolean {
       return this.installed_extension !== undefined
+    },
+    is_installing(): boolean {
+      return this.extension.identifier === this.activeOperationIdentifier
     },
     update_available_tag(): undefined | string {
       if (this.is_installed && this.installed_extension?.tag) {
@@ -183,6 +195,9 @@ export default Vue.extend({
       return archs.join(', ')
     },
     action_button_text(): string {
+      if (this.is_installing) {
+        return this.activeOperationType === 'update' ? 'UPDATING...' : 'INSTALLING...'
+      }
       if (!this.is_installed) {
         return 'GET'
       }

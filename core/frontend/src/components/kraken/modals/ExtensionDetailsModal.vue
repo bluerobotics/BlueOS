@@ -32,6 +32,7 @@
       <v-select
         v-model="selected_version"
         :items="available_tags"
+        :disabled="isInstalling"
         label="Version"
         outlined
         dense
@@ -61,16 +62,16 @@
       <v-tooltip :disabled="extension.is_compatible" bottom>
         <template #activator="{ on, attrs }">
           <v-btn
-            :disabled="!extension.is_compatible || !is_version_compatible"
+            :disabled="!extension.is_compatible || !is_version_compatible || isInstalling"
+            :loading="isInstalling"
             width="120px"
             height="40px"
             :color="is_installed ? 'error' : 'primary'"
-
             v-bind="attrs"
             v-on="on"
             @click="performAction"
           >
-            {{ is_installed ? 'Uninstall' : 'Install' }}
+            {{ is_installed ? 'Uninstall' : (isInstalling ? 'Installing...' : 'Install') }}
           </v-btn>
         </template>
         <span>No versions available for this architecture</span>
@@ -206,6 +207,10 @@ export default Vue.extend({
       type: Object as PropType<InstalledExtensionData>,
       default: null,
       required: false,
+    },
+    isInstalling: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {

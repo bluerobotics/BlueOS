@@ -255,6 +255,8 @@
             :key="extension.identifier + extension.name"
             :extension="extension"
             :installed="installed_extensions"
+            :active-operation-identifier="activeOperationIdentifier"
+            :active-operation-type="activeOperationType"
             :imgs-processed="imgs_processed"
             @selected="$emit('clicked', extension)"
             @update="update"
@@ -308,6 +310,14 @@ export default Vue.extend({
       type: Object as PropType<undefined | Record<string, InstalledExtensionData>>,
       required: false,
       default: undefined,
+    },
+    activeOperationIdentifier: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    activeOperationType: {
+      type: String as PropType<string | null>,
+      default: null,
     },
   },
   data() {
