@@ -1049,9 +1049,10 @@ export default Vue.extend({
       kraken.uninstallExtension(extension.identifier)
         .then(() => {
           this.fetchInstalledExtensions()
+          notifier.pushSuccess('EXTENSION_UNINSTALL_SUCCESS', `${extension.name} uninstalled successfully.`, true)
         })
         .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_UNINSTALL_FAIL', error)
+          notifier.pushBackError('EXTENSION_UNINSTALL_FAIL', error)
         })
         .finally(() => {
           this.setLoading(extension, false)
