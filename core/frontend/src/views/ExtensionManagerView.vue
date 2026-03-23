@@ -16,6 +16,7 @@
         :extension="selected_extension"
         :installed="installedVersion()"
         :installed-extension="installedExtension()"
+        :is-installing="active_operation_identifier !== null"
         @clicked="performActionFromModal"
       />
     </v-dialog>
@@ -290,6 +291,8 @@
       v-show="is_back_alley_tab"
       :manifest="manifest"
       :installed-extensions="installed_extensions"
+      :active-operation-identifier="active_operation_identifier"
+      :active-operation-type="active_operation_type"
       @clicked="showModal"
       @update="update"
       @refresh="fetchManifest"
@@ -471,6 +474,8 @@ function currentStepForPhase(phase: TarInstallPhase): TarStepKey {
 
 const notifier = new Notifier(kraken_service)
 const ansi = new AnsiUp()
+const ACTIVE_OPERATION_KEY = 'blueos-extension-operation'
+const ACTIVE_OPERATION_TYPE_KEY = 'blueos-extension-operation-type'
 
 export default Vue.extend({
   name: 'ExtensionManagerView',
@@ -531,6 +536,8 @@ export default Vue.extend({
       install_from_file_error: null as null | string,
       install_from_file_failed_step: null as null | TarStepKey,
       install_from_file_last_level: -1,
+      active_operation_identifier: localStorage.getItem(ACTIVE_OPERATION_KEY) as null | string,
+      active_operation_type: (localStorage.getItem(ACTIVE_OPERATION_TYPE_KEY) ?? null) as null | 'install' | 'update',
     }
   },
   computed: {
@@ -818,6 +825,7 @@ export default Vue.extend({
       }
     },
     async update(extension: InstalledExtensionData, version: string) {
+      this.setInstallingState(extension.identifier, 'update')
       this.show_pull_output = true
       const tracker = this.getTracker()
       kraken.updateExtensionToVersion(
@@ -827,13 +835,15 @@ export default Vue.extend({
       )
         .then(() => {
           this.fetchInstalledExtensions()
+          notifier.pushSuccess('EXTENSION_UPDATE_SUCCESS', `${extension.name} updated successfully.`, true)
         })
         .catch((error) => {
           this.alerter = true
           this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
+          notifier.pushBackError('EXTENSION_UPDATE_FAIL', error)
         })
         .finally(() => {
+          this.clearInstallingState()
           this.resetPullOutput()
         })
     },
@@ -886,8 +896,22 @@ export default Vue.extend({
     async fetchRunningContainers(): Promise<void> {
       try {
         this.running_containers = await kraken.listContainers()
+        this.clearStaleInstallingState()
       } catch (error) {
         notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
+      }
+    },
+    clearStaleInstallingState(): void {
+      if (!this.active_operation_identifier || this.show_pull_output) return
+      const ext = this.installed_extensions[this.active_operation_identifier]
+      if (!ext) return
+      const is_running = this.running_containers.some(
+        (container) => container.image === `${ext.docker}:${ext.tag}`,
+      )
+      if (is_running) {
+        const action = this.active_operation_type === 'update' ? 'updated' : 'installed'
+        notifier.pushSuccess('EXTENSION_OPERATION_SUCCESS', `${ext.name} ${action} successfully.`, true)
+        this.clearInstallingState()
       }
     },
     async fetchContainersStats(): Promise<void> {
@@ -966,6 +990,7 @@ export default Vue.extend({
       this.selected_extension = extension
     },
     async install(extension: InstalledExtensionData) {
+      this.setInstallingState(extension.identifier, 'install')
       this.show_dialog = false
       this.show_pull_output = true
       const tracker = this.getTracker()
@@ -976,6 +1001,7 @@ export default Vue.extend({
       )
         .then(() => {
           this.fetchInstalledExtensions()
+          notifier.pushSuccess('EXTENSION_INSTALL_SUCCESS', `${extension.name} installed successfully.`, true)
         })
         .catch((error) => {
           this.alerter = true
@@ -983,6 +1009,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
+          this.clearInstallingState()
           this.resetPullOutput()
         })
     },
@@ -1203,6 +1230,18 @@ export default Vue.extend({
       } finally {
         this.resetPullOutput()
       }
+    },
+    setInstallingState(identifier: string, action: 'install' | 'update'): void {
+      this.active_operation_identifier = identifier
+      this.active_operation_type = action
+      localStorage.setItem(ACTIVE_OPERATION_KEY, identifier)
+      localStorage.setItem(ACTIVE_OPERATION_TYPE_KEY, action)
+    },
+    clearInstallingState(): void {
+      this.active_operation_identifier = null
+      this.active_operation_type = null
+      localStorage.removeItem(ACTIVE_OPERATION_KEY)
+      localStorage.removeItem(ACTIVE_OPERATION_TYPE_KEY)
     },
   },
 })
