@@ -220,8 +220,7 @@ export default Vue.extend({
           props: {
             source,
             register: stream.running,
-            width: 'auto',
-            height: '100%',
+            width: '100%',
           },
           style: {
             display: 'flex',
