@@ -25,7 +25,7 @@
               v-if="value"
               width="280"
               :source="device.source"
-              register
+              :register="streams_for_device[device.name] !== undefined"
               autoplay
             />
           </template>
@@ -76,7 +76,8 @@ export default Vue.extend({
       const valid_devices = devices.filter(
         (device) => !device.name.toLocaleLowerCase().startsWith('fake')
           && !device.name.toLocaleLowerCase().startsWith('bcm')
-          && has_supported_encode(device),
+          && has_supported_encode(device)
+          && !available_streams_from_device(video.available_streams, device).isEmpty(),
       )
       return valid_devices
     },
