@@ -313,7 +313,7 @@ export default Vue.extend({
           .map((value) => parseFloat(value))
           .includes(this.internal_new_value)
       }
-      if (this.param?.value) {
+      if (this.param != null) {
         this.internal_new_value_as_string = this.internal_new_value.toString()
       }
 
