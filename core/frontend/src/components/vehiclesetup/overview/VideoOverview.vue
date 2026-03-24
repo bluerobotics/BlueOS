@@ -23,9 +23,10 @@
           <template #default="{ value }">
             <video-thumbnail
               v-if="value"
-              width="280px"
+              width="280"
               :source="device.source"
               register
+              autoplay
             />
           </template>
         </v-tooltip>
