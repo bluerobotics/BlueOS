@@ -131,6 +131,7 @@ export default Vue.extend({
     },
     register: Boolean,
     disabled: Boolean,
+    autoplay: Boolean,
   },
   data() {
     return {
@@ -180,6 +181,10 @@ export default Vue.extend({
   },
   mounted() {
     this.update_task.setAction(this.updateThumbnail)
+    if (this.autoplay && this.register) {
+      this.continuous_mode = true
+      video.startGetThumbnailForDevice(this.source)
+    }
   },
   beforeDestroy() {
     clearTimeout(this.stopDebounceTimer)
