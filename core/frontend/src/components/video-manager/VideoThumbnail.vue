@@ -60,6 +60,7 @@
       <div
         v-if="register"
         class="thumbnail-controls d-flex align-center"
+        @click.stop.prevent
       >
         <v-tooltip bottom>
           <template #activator="{ on, attrs }">
