@@ -33,7 +33,7 @@
       <img
         v-else
         :src="thumbnail?.source"
-        style="width: 100%; height: 100%; object-fit: cover;"
+        style="width: 100%; height: 100%; object-fit: contain;"
       >
       <div
         v-if="is_pirate_mode && register"
@@ -235,6 +235,7 @@ export default Vue.extend({
   overflow: hidden;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.08);
+  max-height: 100%;
 }
 
 .thumbnail-overlay {
