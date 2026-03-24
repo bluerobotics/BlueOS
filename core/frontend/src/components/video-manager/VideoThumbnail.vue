@@ -2,7 +2,7 @@
   <v-container class="d-flex flex-column align-center justify-space-between">
     <div
       class="thumbnail-frame d-flex align-center justify-center"
-      :style="{ width: width + 'px', aspectRatio: '16 / 9' }"
+      :style="{ width: parsedWidth, aspectRatio: '16 / 9' }"
     >
       <span
         v-if="disabled"
@@ -155,6 +155,9 @@ export default Vue.extend({
     idle_placeholder(): boolean {
       return this.register && this.thumbnail === undefined
         && !this.continuous_mode && !this.snapshot_in_progress
+    },
+    parsedWidth(): string {
+      return /^\d+$/.test(this.width) ? `${this.width}px` : this.width
     },
     is_pirate_mode(): boolean {
       return settings.is_pirate_mode
