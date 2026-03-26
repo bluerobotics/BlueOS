@@ -89,7 +89,7 @@
               class="ma-2"
               dense
             >
-              No flight controller detected.
+              {{ board_detection_message }}
             </v-alert>
             <div class="d-flex justify-space-between">
               <model-viewer
@@ -396,6 +396,7 @@ export default Vue.extend({
       model_viewer_supported: MODEL_VIEWER_SUPPORTED,
       model_viewer_ready: false,
       board_not_detected: false,
+      board_detection_message: 'No flight controller detected.',
     }
   },
   computed: {
@@ -537,12 +538,9 @@ export default Vue.extend({
       this.retry_count += 1
     },
     async setupBoat() {
-      await fetchCurrentBoard()
-      if (!autopilot.current_board) {
-        this.board_not_detected = true
+      if (!await this.isBoardDetected()) {
         return
       }
-      this.board_not_detected = false
       this.vehicle_type = Vehicle.Rover
       this.vehicle_name = 'BlueBoat'
       this.vehicle_image = '/assets/vehicles/images/bb120.png'
@@ -603,12 +601,9 @@ export default Vue.extend({
       }
     },
     async setupROV() {
-      await fetchCurrentBoard()
-      if (!autopilot.current_board) {
-        this.board_not_detected = true
+      if (!await this.isBoardDetected()) {
         return
       }
-      this.board_not_detected = false
       this.vehicle_type = Vehicle.Sub
       this.vehicle_name = 'BlueROV'
       this.vehicle_image = '/assets/vehicles/images/bluerov2.png'
@@ -683,8 +678,7 @@ export default Vue.extend({
         .catch((error) => `Failed to disable smart wifi hotspot: ${error.message ?? error.response?.data}.`)
     },
     async installLatestStableFirmware(vehicle: Vehicle): Promise<ConfigurationStatus> {
-      await fetchCurrentBoard()
-      if (!autopilot.current_board) {
+      if (!await this.isBoardDetected()) {
         return 'No flight controller board detected.'
       }
 
@@ -772,6 +766,22 @@ export default Vue.extend({
     },
     validateParams(): boolean {
       return this.$refs.param_loader?.validateParams()
+    },
+    async isBoardDetected(): Promise<boolean> {
+      try {
+        await fetchCurrentBoard()
+      } catch (error) {
+        this.board_not_detected = true
+        this.board_detection_message = `Failed to communicate with autopilot manager: ${error}`
+        return false
+      }
+      if (!autopilot.current_board) {
+        this.board_not_detected = true
+        this.board_detection_message = 'No flight controller detected.'
+        return false
+      }
+      this.board_not_detected = false
+      return true
     },
   },
 })
