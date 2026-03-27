@@ -43,10 +43,10 @@ class NavigatorPi5(Navigator):
 
     def get_serials(self) -> List[Serial]:
         return [
-            Serial(port="C", endpoint="/dev/ttyAMA0"),
-            Serial(port="B", endpoint="/dev/ttyAMA2"),
-            Serial(port="E", endpoint="/dev/ttyAMA3"),
-            Serial(port="F", endpoint="/dev/ttyAMA4"),
+            Serial(port=1, endpoint="/dev/ttyAMA0"),
+            Serial(port=3, endpoint="/dev/ttyAMA2"),
+            Serial(port=4, endpoint="/dev/ttyAMA3"),
+            Serial(port=5, endpoint="/dev/ttyAMA4"),
         ]
 
     def detect(self) -> bool:
@@ -72,17 +72,17 @@ class NavigatorPi4(Navigator):
         match release:
             case "Bullseye":
                 return [
-                    Serial(port="C", endpoint="/dev/ttyS0"),
-                    Serial(port="B", endpoint="/dev/ttyAMA1"),
-                    Serial(port="E", endpoint="/dev/ttyAMA2"),
-                    Serial(port="F", endpoint="/dev/ttyAMA3"),
+                    Serial(port="1", endpoint="/dev/ttyS0"),
+                    Serial(port="3", endpoint="/dev/ttyAMA1"),
+                    Serial(port="4", endpoint="/dev/ttyAMA2"),
+                    Serial(port="5", endpoint="/dev/ttyAMA3"),
                 ]
             case "Bookworm":
                 return [
-                    Serial(port="C", endpoint="/dev/ttyS0"),
-                    Serial(port="B", endpoint="/dev/ttyAMA3"),
-                    Serial(port="E", endpoint="/dev/ttyAMA4"),
-                    Serial(port="F", endpoint="/dev/ttyAMA5"),
+                    Serial(port="1", endpoint="/dev/ttyS0"),
+                    Serial(port="3", endpoint="/dev/ttyAMA3"),
+                    Serial(port="4", endpoint="/dev/ttyAMA4"),
+                    Serial(port="5", endpoint="/dev/ttyAMA5"),
                 ]
         raise RuntimeError("Unknown release, unable to map ports")
 
