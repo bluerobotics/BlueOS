@@ -171,7 +171,7 @@ class Extension:
         except ExtensionNotRunning:
             return None
 
-    def _create_extension_settings(self) -> ExtensionSettings:
+    def _create_extension_settings(self, should_enable: bool = True) -> ExtensionSettings:
         """Create and save extension settings."""
         new_extension = ExtensionSettings(
             identifier=self.identifier,
@@ -179,7 +179,7 @@ class Extension:
             docker=self.source.docker,
             tag=self.tag,
             permissions=self.source.permissions,
-            enabled=True,
+            enabled=should_enable,
             user_permissions=self.source.user_permissions,
         )
         # Save in settings first, if the image fails to install it will try to fetch after in main kraken check loop
@@ -223,13 +223,15 @@ class Extension:
         to_clear = [version for version in to_clear if version.source.tag != self.tag]
         await asyncio.gather(*(version.uninstall() for version in to_clear))
 
-    async def install(self, clear_remaining_tags: bool = True, atomic: bool = False) -> AsyncGenerator[bytes, None]:
+    async def install(
+        self, clear_remaining_tags: bool = True, atomic: bool = False, should_enable: bool = True
+    ) -> AsyncGenerator[bytes, None]:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
 
         # First we should make sure no other tag is running
         running_ext = await self._disable_running_extension()
 
-        self._create_extension_settings()
+        self._create_extension_settings(should_enable)
         try:
             self.lock(self.unique_entry)
 
@@ -262,8 +264,8 @@ class Extension:
         if clear_remaining_tags:
             await self._clear_remaining_tags()
 
-    async def update(self, clear_remaining_tags: bool) -> AsyncGenerator[bytes, None]:
-        async for data in self.install(clear_remaining_tags):
+    async def update(self, clear_remaining_tags: bool, should_enable: bool = True) -> AsyncGenerator[bytes, None]:
+        async for data in self.install(clear_remaining_tags, should_enable=should_enable):
             yield data
 
     async def uninstall(self) -> None:
