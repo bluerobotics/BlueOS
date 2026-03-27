@@ -4,7 +4,7 @@ import traceback
 from typing import Any, List
 
 import aiohttp
-from commonwealth.settings.manager import Manager
+from commonwealth.settings.manager import PydanticManager
 from config import DEFAULT_EXTENSIONS, SERVICE_NAME
 from extension.exceptions import IncompatibleExtension
 from extension.extension import Extension
@@ -21,7 +21,7 @@ from settings import ExtensionSettings, SettingsV2
 
 class Kraken:
     def __init__(self) -> None:
-        self._manager: Manager = Manager(SERVICE_NAME, SettingsV2)
+        self._manager: PydanticManager = PydanticManager(SERVICE_NAME, SettingsV2)
         self._settings = self._manager.settings
         self.is_running = True
         self.manifest = ManifestManager.instance()
