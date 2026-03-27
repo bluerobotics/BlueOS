@@ -1,9 +1,15 @@
 import json
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from commonwealth.settings import settings
+from commonwealth.settings.manager import Manager
+from config import SERVICE_NAME
 from pykson import BooleanField, IntegerField, JsonObject, ObjectListField, StringField
+
+
+def get_extension_settings() -> List["ExtensionSettings"]:
+    return list(Manager(SERVICE_NAME, SettingsV2).settings.extensions)
 
 
 class ExtensionSettings(JsonObject):
