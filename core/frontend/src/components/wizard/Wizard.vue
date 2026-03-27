@@ -83,6 +83,14 @@
             </v-row>
           </v-stepper-content>
           <v-stepper-content step="2">
+            <v-alert
+              v-if="board_not_detected"
+              type="warning"
+              class="ma-2"
+              dense
+            >
+              {{ board_detection_message }}
+            </v-alert>
             <div class="d-flex justify-space-between">
               <model-viewer
                 v-if="model_viewer_supported && model_viewer_ready"
@@ -300,6 +308,7 @@ import Vue from 'vue'
 
 import {
   availableFirmwares,
+  fetchCurrentBoard,
   fetchFirmwareInfo,
   installFirmwareFromUrl,
 } from '@/components/autopilot/AutopilotManagerUpdater'
@@ -386,6 +395,8 @@ export default Vue.extend({
       configuration_page_index: 0,
       model_viewer_supported: MODEL_VIEWER_SUPPORTED,
       model_viewer_ready: false,
+      board_not_detected: false,
+      board_detection_message: 'No flight controller detected.',
     }
   },
   computed: {
@@ -526,7 +537,10 @@ export default Vue.extend({
         ? ApplyStatus.Done : ApplyStatus.Failed
       this.retry_count += 1
     },
-    setupBoat() {
+    async setupBoat() {
+      if (!await this.isBoardDetected()) {
+        return
+      }
       this.vehicle_type = Vehicle.Rover
       this.vehicle_name = 'BlueBoat'
       this.vehicle_image = '/assets/vehicles/images/bb120.png'
@@ -586,7 +600,10 @@ export default Vue.extend({
         this.finalConfigurations()
       }
     },
-    setupROV() {
+    async setupROV() {
+      if (!await this.isBoardDetected()) {
+        return
+      }
       this.vehicle_type = Vehicle.Sub
       this.vehicle_name = 'BlueROV'
       this.vehicle_image = '/assets/vehicles/images/bluerov2.png'
@@ -661,6 +678,10 @@ export default Vue.extend({
         .catch((error) => `Failed to disable smart wifi hotspot: ${error.message ?? error.response?.data}.`)
     },
     async installLatestStableFirmware(vehicle: Vehicle): Promise<ConfigurationStatus> {
+      if (!await this.isBoardDetected()) {
+        return 'No flight controller board detected.'
+      }
+
       if (this.retry_count) {
         console.debug('Going to reboot flight controller on retry.')
         mavlink2rest.sendMessage(
@@ -745,6 +766,22 @@ export default Vue.extend({
     },
     validateParams(): boolean {
       return this.$refs.param_loader?.validateParams()
+    },
+    async isBoardDetected(): Promise<boolean> {
+      try {
+        await fetchCurrentBoard()
+      } catch (error) {
+        this.board_not_detected = true
+        this.board_detection_message = `Failed to communicate with autopilot manager: ${error}`
+        return false
+      }
+      if (!autopilot.current_board) {
+        this.board_not_detected = true
+        this.board_detection_message = 'No flight controller detected.'
+        return false
+      }
+      this.board_not_detected = false
+      return true
     },
   },
 })
