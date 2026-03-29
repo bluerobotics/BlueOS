@@ -19,10 +19,50 @@ from loguru import logger
 from settings import ServiceTypes, SettingsV4
 from typedefs import InterfaceType, IpInfo, MdnsEntry
 from uvicorn import Config, Server
-from zeroconf import IPVersion
+from zeroconf import IPVersion, ServiceBrowser, ServiceListener, Zeroconf
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
 SERVICE_NAME = "beacon"
+
+
+class BeaconServiceListener(ServiceListener):
+    """
+    Custom ServiceListener for the Beacon service to discover and track mDNS services
+    """
+
+    def __init__(self) -> None:
+        self.discovered_services: Dict[str, str] = {}
+
+    def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        logger.info(f"Service {name} updated")
+        self._process_service(zc, type_, name)
+
+    def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        logger.info(f"Service {name} removed")
+        if name in self.discovered_services:
+            del self.discovered_services[name]
+
+    def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        logger.info(f"Service {name} added")
+        self._process_service(zc, type_, name)
+
+    def _process_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+        """Process a service and extract its IP address"""
+        try:
+            info = zc.get_service_info(type_, name)
+            if info and info.addresses:
+                # Convert the first IP address from bytes to string
+                ip_address = socket.inet_ntoa(info.addresses[0])
+                self.discovered_services[name] = ip_address
+                logger.info(f"Service {name} at {ip_address}")
+            else:
+                logger.warning(f"No address info available for service {name}")
+        except Exception as e:
+            logger.warning(f"Error processing service {name}: {e}")
+
+    def get_discovered_services(self) -> Dict[str, str]:
+        """Return a copy of the discovered services dictionary"""
+        return self.discovered_services.copy()
 
 
 class AsyncRunner:
@@ -77,6 +117,11 @@ class Beacon:
 
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
+        # Initialize zeroconf listener components
+        self.zeroconf: Optional[Zeroconf] = None
+        self.service_listener: Optional[BeaconServiceListener] = None
+        self.service_browser: Optional[ServiceBrowser] = None
+
         try:
             self.manager = Manager(SERVICE_NAME, SettingsV4)
         except Exception as e:
@@ -227,10 +272,50 @@ class Beacon:
                     runners[f"{interface_name}-{domain}-{ip}"] = runner
         return runners
 
+    def start_zeroconf_listener(self) -> None:
+        """
+        Start the zeroconf listener to discover services on the network
+        """
+        if self.zeroconf is None:
+            try:
+                self.zeroconf = Zeroconf()
+                self.service_listener = BeaconServiceListener()
+                self.service_browser = ServiceBrowser(self.zeroconf, "_http._tcp.local.", self.service_listener)
+                logger.info("Zeroconf listener started, discovering _http._tcp.local. services")
+            except Exception as e:
+                logger.warning(f"Failed to start zeroconf listener: {e}")
+
+    def stop_zeroconf_listener(self) -> None:
+        """
+        Stop the zeroconf listener and clean up resources
+        """
+        if self.zeroconf is not None:
+            try:
+                if self.service_browser is not None:
+                    self.service_browser.cancel()
+                    self.service_browser = None
+                self.zeroconf.close()
+                self.zeroconf = None
+                self.service_listener = None
+                logger.info("Zeroconf listener stopped")
+            except Exception as e:
+                logger.warning(f"Error stopping zeroconf listener: {e}")
+
+    def get_discovered_services(self) -> Dict[str, str]:
+        """
+        Get the dictionary of discovered services (service_name: ip_address)
+        """
+        if self.service_listener is not None:
+            return self.service_listener.get_discovered_services()
+        return {}
+
     async def run(self) -> None:
         """
         This is the "main loop" from Beacon.
         """
+        # Start the zeroconf listener when the beacon starts running
+        self.start_zeroconf_listener()
+
         while True:
             # re-load settings in case something changed
             self.manager.load()
@@ -262,6 +347,8 @@ class Beacon:
 
     async def stop(self) -> None:
         await asyncio.gather(*[runner.unregister_services() for runner in self.runners.values()])
+        # Stop the zeroconf listener when the beacon stops
+        self.stop_zeroconf_listener()
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -316,6 +403,30 @@ def get_ip(request: Request) -> Any:
     except KeyError:
         # We're not going through Nginx for some reason
         return IpInfo(client_ip=request.scope["client"][0], interface_ip=request.scope["server"][0])
+
+
+@app.get("/discovered_services", response_model=Dict[str, List[str]], summary="Discovered mDNS services")
+@version(1, 0)
+def get_discovered_services() -> Any:
+    """Returns a dictionary with IP addresses as keys and lists of service names as values"""
+    services = {
+        service.replace("_http._tcp.local.", ""): ip for service, ip in beacon.get_discovered_services().items()
+    }
+
+    # Group services by IP address
+    ip_to_services: Dict[str, List[str]] = {}
+
+    for service_name, ip in services.items():
+        # Remove trailing dot if present
+        clean_name = service_name.rstrip(".")
+
+        # Initialize the IP list if it doesn't exist
+        if ip not in ip_to_services:
+            ip_to_services[ip] = []
+
+        ip_to_services[ip].append(clean_name)
+
+    return ip_to_services
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
