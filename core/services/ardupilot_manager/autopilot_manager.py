@@ -61,7 +61,7 @@ class AutoPilotManager(metaclass=Singleton):
                 place="0.0.0.0",
                 argument=14550,
                 persistent=True,
-                enabled=False,
+                enabled=True,
             ),
             Endpoint(
                 name="GCS Client Link",
