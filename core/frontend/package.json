@@ -88,6 +88,7 @@
     "@vue/eslint-config-typescript": "^11.0.2",
     "eslint": "^8.33.0",
     "eslint-import-resolver-typescript": "^3.5.3",
+    "eslint-import-resolver-vite": "^2.1.0",
     "eslint-plugin-html": "^7.1.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-simple-import-sort": "^10.0.0",
