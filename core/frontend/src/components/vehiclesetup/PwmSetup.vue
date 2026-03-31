@@ -154,6 +154,7 @@
 </template>
 
 <script lang="ts">
+import { lte as sem_ver_lte } from 'semver'
 import Vue from 'vue'
 
 import { fetchCurrentBoard } from '@/components/autopilot/AutopilotManagerUpdater'
@@ -197,11 +198,16 @@ const rover_function_map = {
 
 const param_value_map = {
   Submarine: {
-    RCIN9: 'Lights 1',
-    RCIN10: 'Lights 2',
     RCIN11: 'Video Switch',
   },
 } as Dictionary<Dictionary<string>>
+
+// ArduSub <= 4.5.5 used RCIN9/RCIN10 for lights control; newer versions handle lights natively
+const LEGACY_SUB_LIGHTS_MAX_VERSION = '4.5.5'
+const legacy_sub_param_value_map: Dictionary<string> = {
+  RCIN9: 'Lights 1',
+  RCIN10: 'Lights 2',
+}
 
 export default Vue.extend({
   name: 'PwmSetup',
@@ -229,6 +235,14 @@ export default Vue.extend({
     }
   },
   computed: {
+    effective_param_value_map(): Dictionary<Dictionary<string>> {
+      const map = { ...param_value_map }
+      const version = autopilot.firmware_info?.version
+      if (this.is_sub && version && sem_ver_lte(version, LEGACY_SUB_LIGHTS_MAX_VERSION)) {
+        map.Submarine = { ...legacy_sub_param_value_map, ...map.Submarine }
+      }
+      return map
+    },
     servo_function_parameters(): Parameter[] {
       const params = autopilot_data.parameterRegex('^SERVO(\\d+)_FUNCTION$')
       // Sort parameters using the servo number instead of alphabetically
@@ -252,7 +266,7 @@ export default Vue.extend({
       ).map((parameter) => {
         const servo_number = parseInt(/\d+/g.exec(parameter.name)?.[0] ?? '0', 10)
         const motor_number = parseInt(/\d+/g.exec(printParam(parameter))?.[0] ?? '0', 10)
-        const name = param_value_map.Submarine[parameter.name] ?? `Motor ${motor_number}`
+        const name = this.effective_param_value_map.Submarine?.[parameter.name] ?? `Motor ${motor_number}`
         const direction_parameter = autopilot_data.parameterRegex(`MOT_${motor_number}_DIRECTION`)?.[0]
         const target = motor_number - 1
         return {
@@ -493,7 +507,7 @@ export default Vue.extend({
       return this.stringToUserFriendlyText(printParam(param))
     },
     stringToUserFriendlyText(text: string) {
-      return param_value_map?.[this.vehicle_type ?? '']?.[text] ?? text
+      return this.effective_param_value_map?.[this.vehicle_type ?? '']?.[text] ?? text
     },
     getParam(param: string): Parameter | undefined {
       return autopilot_data.parameter(param)
