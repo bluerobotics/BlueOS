@@ -5,7 +5,7 @@ set -e
 PROJECT_NAME="mcap-foxglove-video-extract"
 REPOSITORY_ORG="bluerobotics"
 REPOSITORY_NAME="mcap-foxglove-video-extract"
-VERSION="0.1.2"
+VERSION="0.1.3"
 
 echo "Installing project $PROJECT_NAME version $VERSION"
 
