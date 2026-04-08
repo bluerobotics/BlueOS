@@ -461,7 +461,7 @@
         @confirm="onConfirmClearLogs"
       />
 
-      <v-dialog width="400" :value="show_reset_dialog" @input="show_reset_dialog = false">
+      <v-dialog width="400" :value="show_reset_dialog" persistent @input="show_reset_dialog = false">
         <v-card>
           <v-card-title class="text-h6">
             <v-icon left color="success">
