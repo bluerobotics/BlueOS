@@ -216,10 +216,17 @@
       :extension-name="selected_log_extension_name"
     />
     <v-toolbar>
-      <v-spacer />
+      <v-btn
+        icon
+        class="extension-toolbar-spacer"
+        aria-hidden="true"
+        tabindex="-1"
+      />
       <v-tabs
         v-model="tab"
         fixed-tabs
+        show-arrows
+        class="extension-tabs flex-grow-1"
       >
         <v-tab key="0" href="#0" class="tab-text">
           <v-icon class="mr-3">
@@ -240,11 +247,9 @@
           Installed
         </v-tab>
       </v-tabs>
-      <v-spacer />
       <v-btn
         v-tooltip="'Settings'"
         icon
-        hide-details="auto"
         @click="show_settings = true"
       >
         <v-icon>mdi-cog</v-icon>
@@ -1212,6 +1217,15 @@ pre.logs {
 
 .tab-text {
   white-space: nowrap !important;
+}
+
+.extension-tabs {
+  min-width: 0;
+}
+
+.extension-toolbar-spacer {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .scrollable-content {
