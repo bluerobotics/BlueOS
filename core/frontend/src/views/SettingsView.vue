@@ -474,8 +474,11 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer />
-            <v-btn color="primary" text @click="show_reset_dialog = false">
-              Close
+            <v-btn color="primary" @click="reboot_system">
+              <v-icon left>
+                mdi-restart-alert
+              </v-icon>
+              Reboot
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -494,6 +497,8 @@ import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
 import { OneMoreTime } from '@/one-more-time'
 import bag from '@/store/bag'
+import commander from '@/store/commander'
+import { ShutdownType } from '@/types/commander'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { prettifySize } from '@/utils/helper_functions'
@@ -664,6 +669,10 @@ export default Vue.extend({
           notifier.pushBackError('RESET_SETTINGS_FAIL', error)
         })
       this.operation_in_progress = false
+    },
+
+    reboot_system(): void {
+      commander.shutdown(ShutdownType.Reboot)
     },
 
     async remove_service_log_files(): Promise<void> {
