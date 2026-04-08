@@ -87,7 +87,11 @@
       </div>
       <div class="compass-reorder-container d-flex flex-row">
         <v-tabs v-model="tab" vertical color="primary">
-          <draggable v-model="reordered_compasses" handle=".drag-handle">
+          <draggable
+            v-model="reordered_compasses"
+            handle=".drag-handle"
+            @end="onDragEnd"
+          >
             <v-tab
               v-for="compass in reordered_compasses"
               :key="compass.deviceIdNumber"
@@ -119,14 +123,14 @@
             {{ t`Click-and-drag the dots to change the priority of the compass options. Adjusted compass priorities are applied once the autopilot restarts.` }}
           </v-card>
           <v-tab-item
-            v-for="(compass, index) in compasses"
+            v-for="(compass, index) in reordered_compasses"
             v-show="tab === index"
-            :key="index"
+            :key="compass.deviceIdNumber"
             transition="v-scroll-y-transition"
           >
             <v-card outlined class="pa-2 mt-4 compass-settings">
               <v-card-title>
-                <h3>{{ compass.deviceName }}</h3>
+                <h3>{{ compass.deviceName }} (ID: {{ compass.paramValue }})</h3>
               </v-card-title>
               <v-row>
                 <v-col cols="12" md="6">
@@ -136,32 +140,42 @@
                     </v-alert>
                     <p />
                     <h4>{{ t`Settings` }}</h4>
-                    <div v-if="compass_use_param[index]">
+                    <div v-if="compass_use_param[compass.deviceIdNumber - 1]">
                       <parameter-switch
                         :label="t`Use Compass`"
-                        :parameter="compass_use_param[index]"
+                        :parameter="compass_use_param[compass.deviceIdNumber - 1]"
                       />
                     </div>
                     <div v-else>
                       {{ t`This Compass is not in use, drag it higher (by the dots) to be able to use it.` }}
                     </div>
                     <b>{{ t`External/Internal:` }}</b>
-                    <v-btn class="ml-8 mb-4 mt-2" fab x-small @click="openParameterEditor(compass_extern_param[index])">
+                    <v-btn
+                      class="ml-8 mb-4 mt-2"
+                      fab
+                      x-small
+                      @click="openParameterEditor(compass_extern_param[compass.deviceIdNumber - 1])"
+                    >
                       <v-icon>
                         mdi-cog
                       </v-icon>
                     </v-btn>
-                    {{ printParam(compass_extern_param[index]) }}
+                    {{ printParam(compass_extern_param[compass.deviceIdNumber - 1]) }}
                     <br />
 
-                    <template v-if="compass_extern_param[index]?.value ?? 0 === 0">
+                    <template v-if="compass_extern_param[compass.deviceIdNumber - 1]?.value ?? 0 === 0">
                       <b>{{ t`Mounting Rotation:` }}</b>
-                      <v-btn class="ml-4" fab x-small @click="openParameterEditor(compass_orient_param[index])">
+                      <v-btn
+                        class="ml-4"
+                        fab
+                        x-small
+                        @click="openParameterEditor(compass_orient_param[compass.deviceIdNumber - 1])"
+                      >
                         <v-icon>
                           mdi-cog
                         </v-icon>
                       </v-btn>
-                      {{ printParam(compass_orient_param[index]) }}
+                      {{ printParam(compass_orient_param[compass.deviceIdNumber - 1]) }}
                     </template>
                     <template v-else>
                       {{ t`Same as the Autopilot's` }}
@@ -173,7 +187,7 @@
                   </v-card>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <compass-params :index="index + 1" />
+                  <compass-params :index="compass.deviceIdNumber" />
                 </v-col>
               </v-row>
             </v-card>
@@ -413,10 +427,25 @@ export default Vue.extend({
       return results
     },
   },
-  watch: {
-    reordered_compasses() {
-      const compasses = this.reordered_compasses
-      for (const [index, compass] of compasses.entries()) {
+  mounted() {
+    const prio_order = [1, 2, 3].map((i) => autopilot_data.parameter(`COMPASS_PRIO${i}_ID`)?.value)
+    this.reordered_compasses = [...this.compasses].sort((a, b) => {
+      const a_prio = prio_order.indexOf(a.paramValue)
+      const b_prio = prio_order.indexOf(b.paramValue)
+      // Compasses not in any PRIO slot go to the end
+      return (a_prio === -1 ? Infinity : a_prio) - (b_prio === -1 ? Infinity : b_prio)
+    })
+  },
+  methods: {
+    printParam,
+    onDragEnd(evt: { newIndex: number }) {
+      this.$nextTick(() => {
+        this.applyCompassPriority()
+        this.tab = evt.newIndex
+      })
+    },
+    applyCompassPriority() {
+      for (const [index, compass] of this.reordered_compasses.entries()) {
         const param_name = `COMPASS_PRIO${index + 1}_ID`
         const param = autopilot_data.parameter(param_name)
         if (param && param?.value !== compass.paramValue) {
@@ -425,12 +454,6 @@ export default Vue.extend({
         }
       }
     },
-  },
-  mounted() {
-    this.reordered_compasses = this.compasses
-  },
-  methods: {
-    printParam,
     openParameterEditor(parameter: Parameter | undefined) {
       if (parameter) {
         this.edited_param = parameter
