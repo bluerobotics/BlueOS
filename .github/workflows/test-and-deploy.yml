@@ -20,10 +20,10 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Python ${{ env.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.python-version }}
 
@@ -34,14 +34,14 @@ jobs:
         pip install poetry
 
     - name: Install the latest version of uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v8.0.0
 
     - name: Run tests
       run: |
         .hooks/pre-push
 
     - name: Upload coverage
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: coverage
         path: ./core/htmlcov
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -89,7 +89,7 @@ jobs:
           swap-storage: true
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 #Number of commits to fetch. 0 indicates all history for all branches and tags.
           submodules: recursive
@@ -122,17 +122,17 @@ jobs:
             --file ${{ matrix.docker }}/Dockerfile ./${{ matrix.docker }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: all
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         with:
           version: latest
 
       - name: Cache Docker layers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache
         with:
           path: /tmp/.buildx-cache
@@ -165,7 +165,7 @@ jobs:
 
       - name: Login to DockerHub
         if: success() && github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
@@ -196,7 +196,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
 
       - name: Upload artifact arm64-v8
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm64-v8
@@ -214,7 +214,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
 
       - name: Upload artifact arm-v7
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-arm-v7
@@ -232,7 +232,7 @@ jobs:
             --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
 
       - name: Upload artifact amd64
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: success() && matrix.docker == 'core'
         with:
           name: BlueOS-core-docker-image-amd64
@@ -295,7 +295,7 @@ jobs:
           sudo losetup -D || true
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -353,7 +353,7 @@ jobs:
           ls -lah BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}*
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         timeout-minutes: 120
         with:
           name: BlueOS-raspberry-${{ env.GITHUB_REF_NAME }}${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}
@@ -362,7 +362,7 @@ jobs:
           retention-days: 7
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         if: startsWith(github.ref, 'refs/tags/')
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
