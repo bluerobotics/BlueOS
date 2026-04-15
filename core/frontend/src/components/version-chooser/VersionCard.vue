@@ -201,8 +201,7 @@
 </template>
 
 <script lang="ts">
-import TimeAgo from 'javascript-time-ago'
-import en from 'javascript-time-ago/locale/en.json'
+import { formatDistanceToNow } from 'date-fns'
 import Vue, { PropType } from 'vue'
 
 import settings from '@/libs/settings'
@@ -215,9 +214,6 @@ import {
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import ReleaseNotes from './ReleaseNotes.vue'
-
-TimeAgo.addDefaultLocale(en)
-const timeAgo = new TimeAgo('en-US')
 
 export default Vue.extend({
   name: 'VersionCard',
@@ -321,7 +317,7 @@ export default Vue.extend({
   },
   methods: {
     asTimeAgo(value: string) {
-      return timeAgo.format(new Date(Date.parse(value)), 'round')
+      return formatDistanceToNow(new Date(Date.parse(value)), { addSuffix: true })
     },
     shortSha(value: string) {
       if (value === null) {
