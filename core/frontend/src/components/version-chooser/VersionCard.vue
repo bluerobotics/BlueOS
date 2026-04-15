@@ -132,8 +132,7 @@
 </template>
 
 <script lang="ts">
-import TimeAgo from 'javascript-time-ago'
-import en from 'javascript-time-ago/locale/en.json'
+import { formatDistanceToNow } from 'date-fns'
 import Vue, { PropType } from 'vue'
 
 import WarningDialog from '@/components/common/WarningDialog.vue'
@@ -144,9 +143,6 @@ import { InternetConnectionState } from '@/types/helper'
 import { DEFAULT_REMOTE_IMAGE, getFactoryVersion } from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
-
-TimeAgo.addDefaultLocale(en)
-const timeAgo = new TimeAgo('en-US')
 
 export default Vue.extend({
   name: 'VersionCard',
@@ -253,7 +249,7 @@ export default Vue.extend({
   },
   methods: {
     asTimeAgo(value: string) {
-      return timeAgo.format(new Date(Date.parse(value)), 'round')
+      return formatDistanceToNow(new Date(Date.parse(value)), { addSuffix: true })
     },
     shortSha(value: string) {
       if (value === null) {
