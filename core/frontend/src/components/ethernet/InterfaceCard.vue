@@ -177,8 +177,7 @@
 </template>
 
 <script lang="ts">
-import TimeAgo from 'javascript-time-ago'
-import en from 'javascript-time-ago/locale/en.json'
+import { formatDistanceToNow } from 'date-fns'
 import Vue, { PropType } from 'vue'
 
 import beacon from '@/store/beacon'
@@ -190,9 +189,6 @@ import {
 import AddressCreationDialog from './AddressCreationDialog.vue'
 import AddressDeletionDialog from './AddressDeletionDialog.vue'
 import DHCPServerDialog from './DHCPServerDialog.vue'
-
-TimeAgo.addDefaultLocale(en)
-const timeAgo = new TimeAgo('en-US')
 
 export default Vue.extend({
   name: 'InterfaceCard',
@@ -375,7 +371,7 @@ export default Vue.extend({
         return 'Expired'
       }
 
-      return timeAgo.format(expiresAt, 'round')
+      return formatDistanceToNow(expiresAt, { addSuffix: true })
     },
     getLeaseExpiryClass(lease: DHCPServerLease): string {
       const now = new Date()
