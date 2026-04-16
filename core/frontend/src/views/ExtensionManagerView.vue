@@ -223,11 +223,11 @@
       >
         <v-tab key="0" href="#0" class="tab-text">
           <v-icon class="mr-3">
-            {{ settings.is_dev_mode ? 'mdi-incognito' : 'mdi-store-search' }}
+            {{ is_bazaar_enabled ? 'mdi-incognito' : 'mdi-store-search' }}
           </v-icon>
-          {{ settings.is_dev_mode ? 'Back Alley' : 'Store' }}
+          {{ is_bazaar_enabled ? 'Back Alley' : 'Store' }}
         </v-tab>
-        <v-tab v-if="settings.is_dev_mode" key="1" href="#1" class="tab-text">
+        <v-tab v-if="is_bazaar_enabled" key="1" href="#1" class="tab-text">
           <v-icon class="mr-3">
             mdi-package-variant
           </v-icon>
@@ -521,6 +521,10 @@ export default Vue.extend({
     },
     is_installed_tab(): boolean {
       return this.tab === '2'
+    },
+    is_bazaar_enabled(): boolean {
+      /** NOTE: Force disable of bazaar for now */
+      return this.settings.is_dev_mode && false
     },
     manifest_as_data(): ExtensionData[] {
       if (this.manifest === undefined || typeof this.manifest === 'string') {
