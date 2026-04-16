@@ -23,8 +23,8 @@ class LinuxFlightController(FlightController):
 
     def check_for_i2c_device(self, bus_number: int, address: int) -> bool:
         try:
-            bus = SMBus(bus_number)
-            bus.read_byte_data(address, 0)
+            with SMBus(bus_number) as bus:
+                bus.read_byte_data(address, 0)
             return True
         except OSError:
             return False
