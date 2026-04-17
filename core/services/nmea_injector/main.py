@@ -5,6 +5,7 @@ import logging
 from typing import Any, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, status
@@ -24,6 +25,7 @@ args = parser.parse_args()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 
 app = FastAPI(
@@ -94,6 +96,10 @@ async def main() -> None:
         asyncio.create_task(controller.add_sock(NMEASocket(kind=SocketKind.UDP, port=args.udp, component_id=220)))
     if args.tcp:
         asyncio.create_task(controller.add_sock(NMEASocket(kind=SocketKind.TCP, port=args.tcp, component_id=221)))
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 2748, "udp_input": args.udp, "tcp_input": args.tcp})
 
     await server.serve()
 
