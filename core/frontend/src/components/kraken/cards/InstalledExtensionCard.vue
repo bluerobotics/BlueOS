@@ -8,28 +8,27 @@
         size="150"
       />
     </div>
-    <v-icon
-      v-if="extension.enabled && !container && !loading"
-      v-tooltip="'This extension is enabled but the container is not running.'"
-      class="container-not-up-alert"
-      color="warning"
-      size="35"
-    >
-      mdi-robot-dead
-    </v-icon>
     <v-card-title class="pb-1 d-flex justify-space-between align-center flex-nowrap card-title">
       <div class="d-flex align-center title-info">
-        <v-avatar
+        <v-badge
           v-if="extensionData && extensionData.extension_logo"
-          size="60"
-          class="mr-3 flex-shrink-0"
-          rounded="0"
+          v-tooltip="container_not_up && 'This extension is enabled but the container is not running.'"
+          :value="container_not_up"
+          overlap
+          color="warning"
+          icon="mdi-robot-dead"
+          class="mr-3 flex-shrink-0 container-not-up-badge"
         >
-          <v-img
-            :src="extensionData.extension_logo"
-            :alt="extension.name"
-          />
-        </v-avatar>
+          <v-avatar
+            size="60"
+            rounded="0"
+          >
+            <v-img
+              :src="extensionData.extension_logo"
+              :alt="extension.name"
+            />
+          </v-avatar>
+        </v-badge>
         <div class="title-text">
           <div
             v-tooltip="extension.name"
@@ -300,6 +299,9 @@ export default Vue.extend({
     buttonBgColor() {
       return settings.is_dark_theme ? '#20455e' : '#BDE0F0'
     },
+    container_not_up(): boolean {
+      return this.extension.enabled && !this.container && !this.loading
+    },
     update_available() : false | string {
       if (!this.extensionData) {
         return false
@@ -445,9 +447,22 @@ export default Vue.extend({
   z-index: 9999 !important;
 }
 
-.container-not-up-alert {
-  position: absolute;
-  right: 13px;
-  top: 13px;
+.container-not-up-badge ::v-deep .v-badge__badge {
+  min-width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: translate(50%, -50%);
+}
+
+.container-not-up-badge ::v-deep .v-badge__badge .v-icon {
+  font-size: 18px;
+  margin: 0;
+  line-height: 1;
+  transform: translateY(0.25em);
 }
 </style>
