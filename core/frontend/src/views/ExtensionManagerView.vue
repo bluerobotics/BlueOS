@@ -7,6 +7,8 @@
       :download="download_percentage"
       :extraction="extraction_percentage"
       :statustext="status_text"
+      :cancelable="!!active_abort_controller"
+      @cancel="cancelInstallOperation"
     />
     <v-dialog
       v-model="show_dialog"
@@ -510,6 +512,7 @@ export default Vue.extend({
       active_operation_identifier: localStorage.getItem(ACTIVE_OPERATION_KEY) as null | string,
       active_operation_type: (localStorage.getItem(ACTIVE_OPERATION_TYPE_KEY) ?? null) as null | 'install' | 'update',
       session: null as Session | null,
+      active_abort_controller: null as null | AbortController,
     }
   },
   computed: {
@@ -623,6 +626,8 @@ export default Vue.extend({
     clearInterval(this.metrics_interval)
     this.stopUploadKeepAlive()
     this.session = null
+    this.active_abort_controller?.abort()
+    this.active_abort_controller = null
   },
   methods: {
     async initializeZenohSession() {
@@ -638,6 +643,25 @@ export default Vue.extend({
     },
     clearEditedExtension() {
       this.edited_extension = null
+    },
+    beginInstallOperation(): AbortController {
+      this.active_abort_controller?.abort()
+      const controller = new AbortController()
+      this.active_abort_controller = controller
+      return controller
+    },
+    cancelInstallOperation(): void {
+      this.active_abort_controller?.abort()
+    },
+    showAlertError(error: unknown): void {
+      this.alerter = true
+      this.alerter_error = String(error)
+    },
+    finishInstallOperation(): void {
+      this.active_abort_controller = null
+      this.clearInstallingState()
+      this.resetPullOutput()
+      this.fetchInstalledExtensions()
     },
     setInstallFromFilePhase(phase: TarInstallPhase) {
       this.install_from_file_phase = phase
@@ -795,24 +819,30 @@ export default Vue.extend({
     async update(extension: InstalledExtensionData, version: string) {
       this.setInstallingState(extension.identifier, 'update')
       this.show_pull_output = true
-      const tracker = this.getTracker()
+      const controller = this.beginInstallOperation()
+      const tracker = this.getTracker(controller.signal)
       kraken.updateExtensionToVersion(
         extension.identifier,
         version,
         (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
+        controller.signal,
       )
         .then(() => {
-          this.fetchInstalledExtensions()
           notifier.pushSuccess('EXTENSION_UPDATE_SUCCESS', `${extension.name} updated successfully.`, true)
         })
-        .catch((error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
+        .catch(async (error) => {
+          if (axios.isCancel(error)) {
+            if (controller !== this.active_abort_controller) return
+            await kraken.uninstallExtensionVersion(extension.identifier, version)
+              .catch(() => { /* version may not be registered yet */ })
+            notifier.pushInfo('EXTENSION_UPDATE_CANCELLED', 'Extension update was cancelled.', true)
+            return
+          }
+          this.showAlertError(error)
           notifier.pushBackError('EXTENSION_UPDATE_FAIL', error)
         })
         .finally(() => {
-          this.clearInstallingState()
-          this.resetPullOutput()
+          if (controller === this.active_abort_controller) this.finishInstallOperation()
         })
     },
     metricsFor(extension: InstalledExtensionData): { cpu: number, memory: number} | Record<string, never> {
@@ -933,24 +963,30 @@ export default Vue.extend({
       this.setInstallingState(extension.identifier, 'install')
       this.show_dialog = false
       this.show_pull_output = true
-      const tracker = this.getTracker()
+      const controller = this.beginInstallOperation()
+      const tracker = this.getTracker(controller.signal)
 
       kraken.installExtension(
         extension,
         (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
+        controller.signal,
       )
         .then(() => {
-          this.fetchInstalledExtensions()
           notifier.pushSuccess('EXTENSION_INSTALL_SUCCESS', `${extension.name} installed successfully.`, true)
         })
-        .catch((error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
+        .catch(async (error) => {
+          if (axios.isCancel(error)) {
+            if (controller !== this.active_abort_controller) return
+            await kraken.uninstallExtensionVersion(extension.identifier, extension.tag)
+              .catch(() => { /* version may not be registered yet */ })
+            notifier.pushInfo('EXTENSION_INSTALL_CANCELLED', 'Extension install was cancelled.', true)
+            return
+          }
+          this.showAlertError(error)
+          notifier.pushBackError('EXTENSION_INSTALL_FAIL', error)
         })
         .finally(() => {
-          this.clearInstallingState()
-          this.resetPullOutput()
+          if (controller === this.active_abort_controller) this.finishInstallOperation()
         })
     },
     async performActionFromModal(
@@ -1059,7 +1095,7 @@ export default Vue.extend({
       temp[extension.identifier].loading = loading
       this.installed_extensions = temp
     },
-    getTracker(): PullTracker {
+    getTracker(signal: AbortSignal): PullTracker {
       return new PullTracker(
         () => {
           setTimeout(() => {
@@ -1067,9 +1103,9 @@ export default Vue.extend({
           }, 1000)
         },
         (error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
+          if (signal.aborted) return
+          this.showAlertError(error)
+          notifier.pushBackError('EXTENSION_INSTALL_FAIL', error)
           this.show_pull_output = false
         },
       )
@@ -1123,7 +1159,8 @@ export default Vue.extend({
       }
 
       this.show_pull_output = true
-      const tracker = this.getTracker()
+      const controller = this.beginInstallOperation()
+      const tracker = this.getTracker(controller.signal)
       this.setInstallFromFilePhase('installing')
       this.install_from_file_install_progress = 0
       this.install_from_file_status_text = 'Starting installation...'
@@ -1133,20 +1170,29 @@ export default Vue.extend({
           extension,
           this.upload_temp_tag,
           (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
+          controller.signal,
         )
         this.setInstallFromFilePhase('success')
         this.install_from_file_status_text = 'Extension installed successfully'
         this.stopUploadKeepAlive()
         this.upload_temp_tag = null
         this.upload_metadata = null
-        this.fetchInstalledExtensions()
       } catch (error) {
-        this.applyInstallFromFileError(String(error))
-        this.alerter = true
-        this.alerter_error = String(error)
-        notifier.pushBackError('EXTENSION_FINALIZE_FAIL', error)
+        if (axios.isCancel(error)) {
+          if (controller === this.active_abort_controller) {
+            this.setInstallFromFilePhase('ready')
+            this.install_from_file_status_text = ''
+            await kraken.uninstallExtensionVersion(extension.identifier, extension.tag)
+              .catch(() => { /* version may not be registered yet */ })
+            notifier.pushInfo('EXTENSION_INSTALL_CANCELLED', 'Installation from file was cancelled.', true)
+          }
+        } else {
+          this.applyInstallFromFileError(String(error))
+          this.showAlertError(error)
+          notifier.pushBackError('EXTENSION_FINALIZE_FAIL', error)
+        }
       } finally {
-        this.resetPullOutput()
+        if (controller === this.active_abort_controller) this.finishInstallOperation()
       }
     },
     setInstallingState(identifier: string, action: 'install' | 'update'): void {

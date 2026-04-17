@@ -50,6 +50,11 @@
           </v-expansion-panel>
         </v-expansion-panels>
       </v-card-text>
+      <v-card-actions v-if="cancelable" class="justify-end">
+        <v-btn color="primary" @click="$emit('cancel')">
+          Cancel
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
@@ -79,6 +84,10 @@ export default Vue.extend({
     statustext: {
       type: String,
       required: true,
+    },
+    cancelable: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {

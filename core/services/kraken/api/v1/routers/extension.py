@@ -21,7 +21,7 @@ extension_router_v1 = APIRouter(
 @extension_to_http_exception
 async def install_extension(body: ExtensionSource) -> StreamingResponse:
     extension = Extension(body)
-    return StreamingResponse(streamer(extension.install(atomic=True)))
+    return StreamingResponse(streamer(extension.install()))
 
 
 @extension_router_v1.post("/uninstall", status_code=status.HTTP_200_OK)

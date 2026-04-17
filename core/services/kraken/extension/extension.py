@@ -171,7 +171,7 @@ class Extension:
         except ExtensionNotRunning:
             return None
 
-    def _create_extension_settings(self) -> ExtensionSettings:
+    def _create_extension_settings(self, should_enable: bool = True) -> ExtensionSettings:
         """Create and save extension settings."""
         new_extension = ExtensionSettings(
             identifier=self.identifier,
@@ -179,10 +179,9 @@ class Extension:
             docker=self.source.docker,
             tag=self.tag,
             permissions=self.source.permissions,
-            enabled=True,
+            enabled=should_enable,
             user_permissions=self.source.user_permissions,
         )
-        # Save in settings first, if the image fails to install it will try to fetch after in main kraken check loop
         self._save_settings(new_extension)
         return new_extension
 
@@ -216,6 +215,10 @@ class Extension:
             if self.digest:
                 await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
 
+    @staticmethod
+    def _status_message(message: str) -> bytes:
+        return json.dumps({"status": message}).encode("utf-8")
+
     async def _clear_remaining_tags(self) -> None:
         """Uninstall all other tags for this extension."""
         logger.info(f"Clearing remaining tags for extension {self.identifier}")
@@ -223,13 +226,11 @@ class Extension:
         to_clear = [version for version in to_clear if version.source.tag != self.tag]
         await asyncio.gather(*(version.uninstall() for version in to_clear))
 
-    async def install(self, clear_remaining_tags: bool = True, atomic: bool = False) -> AsyncGenerator[bytes, None]:
+    async def install(
+        self, clear_remaining_tags: bool = True, should_enable: bool = True
+    ) -> AsyncGenerator[bytes, None]:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
 
-        # First we should make sure no other tag is running
-        running_ext = await self._disable_running_extension()
-
-        self._create_extension_settings()
         try:
             self.lock(self.unique_entry)
 
@@ -237,33 +238,27 @@ class Extension:
             async for line in self._pull_docker_image(docker_auth):
                 yield line
         except Exception as error:
-            # In case of some external installs kraken shouldn't try to install it again so we remove from settings
-            if atomic:
-                should_raise = False
-                if await self._image_is_available_locally():
-                    logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
-                else:
-                    if not running_ext or self.unique_entry != running_ext.unique_entry:
-                        should_raise = True
-                        await self.uninstall()
-                    if running_ext:
-                        await running_ext.enable()
-
-                if should_raise:
-                    raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
-                # Reached only if the extensions are the same, the change is in permissions, not installation failure.
-                return
+            if await self._image_is_available_locally():
+                logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
+            else:
+                raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
         finally:
             self.unlock(self.unique_entry)
             self.reset_start_attempt(self.unique_entry)
 
-        logger.info(f"Extension {self.identifier}:{self.tag} installed")
+        await self._disable_running_extension()
+        self._create_extension_settings(should_enable)
+        yield self._status_message(f"Extension {self.identifier}:{self.tag} registered")
+
         # Uninstall all other tags in case user wants to clear them
         if clear_remaining_tags:
             await self._clear_remaining_tags()
+            yield self._status_message(f"Previous versions of {self.identifier} cleared")
 
-    async def update(self, clear_remaining_tags: bool) -> AsyncGenerator[bytes, None]:
-        async for data in self.install(clear_remaining_tags):
+        logger.info(f"Extension {self.identifier}:{self.tag} installed")
+
+    async def update(self, clear_remaining_tags: bool, should_enable: bool = True) -> AsyncGenerator[bytes, None]:
+        async for data in self.install(clear_remaining_tags, should_enable=should_enable):
             yield data
 
     async def uninstall(self) -> None:
