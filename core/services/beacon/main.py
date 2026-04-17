@@ -8,7 +8,7 @@ import socket
 from typing import Any, Dict, List, Optional
 
 import psutil
-from commonwealth.settings.manager import Manager
+from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.apis import PrettyJSONResponse
 from commonwealth.utils.logs import init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
@@ -78,7 +78,7 @@ class Beacon:
     def __init__(self) -> None:
         self.runners: Dict[str, AsyncRunner] = {}
         try:
-            self.manager = Manager(SERVICE_NAME, SettingsV4)
+            self.manager: PydanticManager = PydanticManager(SERVICE_NAME, SettingsV4)
         except Exception as e:
             logger.warning(f"failed to load configuration file ({e}), loading defaults")
             self.load_default_settings()
@@ -95,7 +95,7 @@ class Beacon:
         current_folder = pathlib.Path(__file__).parent.resolve()
         default_settings_file = current_folder / "default-settings.json"
         logger.debug("loading settings from ", default_settings_file)
-        self.manager = Manager(SERVICE_NAME, SettingsV4, load=False)
+        self.manager = PydanticManager(SERVICE_NAME, SettingsV4, load=False)
         self.manager.settings = self.manager.load_from_file(SettingsV4, default_settings_file)
         self.manager.save()
 
