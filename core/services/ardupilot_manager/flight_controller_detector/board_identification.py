@@ -22,6 +22,8 @@ identifiers: List[SerialBoardIdentifier] = [
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v3.x", platform=Platform.Pixhawk1),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="Pixhawk4", platform=Platform.Pixhawk4),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v5.x", platform=Platform.Pixhawk4),
+    SerialBoardIdentifier(attribute=SerialAttr.product, id_value="CUAVv5", platform=Platform.Pixhawk4),
+    SerialBoardIdentifier(attribute=SerialAttr.product, id_value="Pixhawk6X", platform=Platform.Pixhawk6X),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v6X.x", platform=Platform.Pixhawk6X),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="FMU v6C.x", platform=Platform.Pixhawk6C),
     SerialBoardIdentifier(attribute=SerialAttr.product, id_value="CubeOrange", platform=Platform.CubeOrange),
