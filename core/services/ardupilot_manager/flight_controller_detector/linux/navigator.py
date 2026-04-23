@@ -38,11 +38,15 @@ class Navigator(LinuxFlightController):
 
 
 class NavigatorPi5(Navigator):
-    devices = {
+    required_devices = {
         "ADS1115": (0x48, 1),
-        "AK09915": (0x0C, 1),
         "BME280": (0x76, 1),
         "PCA9685": (0x40, 3),
+    }
+
+    magnetometer_devices = {
+        "AK09915": (0x0C, 1),
+        "IIS2MDC_0x1E": (0x1E, 1),
     }
 
     def get_serials(self) -> List[Serial]:
@@ -56,15 +60,23 @@ class NavigatorPi5(Navigator):
     def detect(self) -> bool:
         if not self.is_pi5():
             return False
-        return all(self.check_for_i2c_device(bus, address) for address, bus in self.devices.values())
+        required_ok = all(self.check_for_i2c_device(bus, address) for address, bus in self.required_devices.values())
+        magnetometer_ok = any(
+            self.check_for_i2c_device(bus, address) for address, bus in self.magnetometer_devices.values()
+        )
+        return required_ok and magnetometer_ok
 
 
 class NavigatorPi4(Navigator):
-    devices = {
+    required_devices = {
         "ADS1115": (0x48, 1),
-        "AK09915": (0x0C, 1),
         "BME280": (0x76, 1),
         "PCA9685": (0x40, 4),
+    }
+
+    magnetometer_devices = {
+        "AK09915": (0x0C, 1),
+        "IIS2MDC_0x1E": (0x1E, 1),
     }
 
     def get_serials(self) -> List[Serial]:
@@ -93,4 +105,8 @@ class NavigatorPi4(Navigator):
     def detect(self) -> bool:
         if self.is_pi5():
             return False
-        return all(self.check_for_i2c_device(bus, address) for address, bus in self.devices.values())
+        required_ok = all(self.check_for_i2c_device(bus, address) for address, bus in self.required_devices.values())
+        magnetometer_ok = any(
+            self.check_for_i2c_device(bus, address) for address, bus in self.magnetometer_devices.values()
+        )
+        return required_ok and magnetometer_ok
