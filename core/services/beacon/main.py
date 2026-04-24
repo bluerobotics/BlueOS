@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 import psutil
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, Request
@@ -23,7 +24,6 @@ from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
 SERVICE_NAME = "beacon"
-
 
 class AsyncRunner:
     def __init__(self, ip_version: IPVersion, interface: str, interface_name: str) -> None:
@@ -266,6 +266,7 @@ class Beacon:
 
 logging.basicConfig(level=logging.DEBUG)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 app = FastAPI(
     title="Beacon API",
@@ -347,6 +348,10 @@ async def main() -> None:
 
     config = Config(app=app, host="0.0.0.0", port=9111, log_config=None)
     server = Server(config)
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 9111})
 
     asyncio.create_task(beacon.run())
     await server.serve()
