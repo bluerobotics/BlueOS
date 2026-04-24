@@ -13,7 +13,8 @@
         elevation="2"
         dismissible
       >
-        It looks like there's no video stream accessible from your device's detected IP address ({{ user_ip_address }}).
+        It looks like no available video streams are configured to reach your device's detected IP address
+        ({{ user_ip_address }}).
         <span v-if="is_connected_to_wifi">
           That should be fine if you are using this wi-fi connection for something other than piloting.
         </span>
