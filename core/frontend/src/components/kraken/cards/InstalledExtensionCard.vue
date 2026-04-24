@@ -17,12 +17,12 @@
     >
       mdi-robot-dead
     </v-icon>
-    <v-card-title class="pb-1 d-flex justify-space-between align-center">
-      <div class="d-flex align-center">
+    <v-card-title class="pb-1 d-flex justify-space-between align-center flex-nowrap card-title">
+      <div class="d-flex align-center title-info">
         <v-avatar
           v-if="extensionData && extensionData.extension_logo"
           size="60"
-          class="mr-3"
+          class="mr-3 flex-shrink-0"
           rounded="0"
         >
           <v-img
@@ -30,10 +30,16 @@
             :alt="extension.name"
           />
         </v-avatar>
-        <div>
-          <div>{{ extension.name }}</div>
+        <div class="title-text">
+          <div
+            v-tooltip="extension.name"
+            class="text-truncate"
+          >
+            {{ extension.name }}
+          </div>
           <span
-            class="d-block"
+            v-tooltip="extension.tag"
+            class="d-block text-truncate"
             style="color: grey;"
           >
             {{ extension.tag }}
@@ -42,8 +48,10 @@
       </div>
       <v-btn
         v-if="update_available"
-        class="card-update-button"
+        v-tooltip="`Update to ${update_available}`"
+        class="card-update-button ml-2 flex-shrink-0"
         color="primary"
+        small
         @click="$emit('update', extension, update_available)"
       >
         Update to {{ update_available }}
@@ -394,22 +402,33 @@ export default Vue.extend({
   max-width: 300px;
 }
 
+.card-title {
+  gap: 8px;
+}
+
+.title-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.title-text {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .card-update-button {
-  width: 200px;
   font-size: 0.8rem;
+  max-width: 100%;
+}
+
+.card-update-button :deep(.v-btn__content) {
+  white-space: nowrap;
 }
 
 @media (max-width: 994px) {
   .main-card {
     width: 600px;
     min-width: 400px;
-  }
-}
-
-@media (max-width: 545px) {
-  .card-update-button {
-    margin-top: 5px;
-    width: 100%;
   }
 }
 
