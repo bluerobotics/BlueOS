@@ -38,10 +38,14 @@ async def main() -> None:
 
     if args.sitl:
         autopilot.set_preferred_board(BoardDetector.detect_sitl())
-    try:
-        await autopilot.start_ardupilot()
-    except Exception as start_error:
-        logger.exception(start_error)
+
+    if autopilot.should_start_on_boot():
+        try:
+            await autopilot.start_ardupilot()
+        except Exception as start_error:
+            logger.exception(start_error)
+    else:
+        logger.info("Autopilot was stopped by the user, skipping auto-start on boot.")
 
     asyncio.create_task(autopilot.auto_restart_ardupilot())
     asyncio.create_task(autopilot.start_mavlink_manager_watchdog())
