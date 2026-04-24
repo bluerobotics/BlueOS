@@ -414,6 +414,21 @@ class AutoPilotManager(metaclass=Singleton):
         except KeyError:
             return None
 
+    def set_start_on_boot(self, enabled: bool) -> None:
+        # self.configuration is only created in setup(), fall back to building
+        # off self.settings.content when called pre-setup.
+        # e.g. /start right after a boot where auto-start was disabled
+        if not hasattr(self, "configuration"):
+            content = dict(self.settings.content)
+            content["start_on_boot"] = enabled
+            self.settings.save(content)
+            return
+        self.configuration["start_on_boot"] = enabled
+        self.settings.save(self.configuration)
+
+    def should_start_on_boot(self) -> bool:
+        return bool(self.settings.content.get("start_on_boot", True))
+
     def get_available_routers(self) -> List[str]:
         return [router.name() for router in self.mavlink_manager.available_interfaces()]
 

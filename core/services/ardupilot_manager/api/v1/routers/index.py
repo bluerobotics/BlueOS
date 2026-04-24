@@ -236,6 +236,7 @@ async def restart() -> Any:
 @index_to_http_exception
 async def start() -> Any:
     logger.debug("Starting ardupilot...")
+    autopilot.set_start_on_boot(True)
     await autopilot.start_ardupilot()
     logger.debug("Ardupilot successfully started.")
 
@@ -264,6 +265,7 @@ def available_routers() -> Any:
 @index_to_http_exception
 async def stop() -> Any:
     logger.debug("Stopping ardupilot...")
+    autopilot.set_start_on_boot(False)
     await autopilot.kill_ardupilot()
     logger.debug("Ardupilot successfully stopped.")
 
