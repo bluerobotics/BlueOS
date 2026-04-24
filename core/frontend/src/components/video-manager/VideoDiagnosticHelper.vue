@@ -44,7 +44,14 @@ export default Vue.extend({
       return video.available_streams.map((x) => x.video_and_stream.stream_information.endpoints).flat(1)
     },
     has_accessible_rtsp_streams(): boolean {
-      return !this.all_streams.filter((x) => x.toLowerCase().startsWith(`rtsp://${this.vehicle_ip_address}`)).isEmpty()
+      return !this.all_streams
+        .filter((x) => {
+          const route = x.toLowerCase()
+          return (
+            route.startsWith(`rtsp://${this.vehicle_ip_address}`) || route.startsWith('rtsp://0.0.0.0')
+          )
+        })
+        .isEmpty()
     },
     has_accessible_udp_streams(): boolean {
       return !this.all_streams.filter((x) => x.toLowerCase().startsWith(`udp://${this.user_ip_address}`)).isEmpty()
