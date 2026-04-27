@@ -636,6 +636,10 @@ export default Vue.extend({
         console.error('[ExtensionManagerView] Failed to open Zenoh session:', error)
       }
     },
+    applyRunningContainers(containers: RunningContainer[]): void {
+      this.running_containers = containers
+      this.clearStaleInstallingState()
+    },
     clearEditedExtension() {
       this.edited_extension = null
     },
@@ -863,12 +867,16 @@ export default Vue.extend({
     },
     async fetchRunningContainers(): Promise<void> {
       try {
-        this.running_containers = await kraken.listContainers()
-        this.clearStaleInstallingState()
+        const containers = await kraken.listContainers()
+        if (!Array.isArray(containers)) {
+          throw new Error('Unexpected response while fetching running containers')
+        }
+        this.applyRunningContainers(containers)
       } catch (error) {
         notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
       }
     },
+
     clearStaleInstallingState(): void {
       if (!this.active_operation_identifier || this.show_pull_output) return
       const ext = this.installed_extensions[this.active_operation_identifier]
@@ -883,13 +891,15 @@ export default Vue.extend({
       }
     },
     async fetchContainersStats(): Promise<void> {
-      kraken.getContainersStats()
-        .then((response) => {
-          this.metrics = response
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
-        })
+      try {
+        const stats = await kraken.getContainersStats()
+        if (!stats || typeof stats !== 'object' || stats.error) {
+          throw new Error(stats?.error ?? 'Unexpected response while fetching container stats')
+        }
+        this.metrics = stats
+      } catch (error) {
+        notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
+      }
     },
     getContainerName(extension: InstalledExtensionData): string | null {
       return this.getContainer(extension)?.name ?? null

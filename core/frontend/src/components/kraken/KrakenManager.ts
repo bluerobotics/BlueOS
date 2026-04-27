@@ -13,6 +13,8 @@ import { QueryTarget, Sample, Subscriber } from '@eclipse-zenoh/zenoh-ts'
 
 const KRAKEN_BASE_URL = '/kraken'
 const KRAKEN_API_V2_URL = `${KRAKEN_BASE_URL}/v2.0`
+const KRAKEN_BASE_ZENOH = 'kraken'
+const ZENOH_QUERY_STANDARD_TIMEOUT = 10000
 
 /**
  * List details of all installed extensions.
@@ -295,29 +297,25 @@ export async function getInstalledExtensions(): Promise<InstalledExtensionData[]
 }
 
 /**
- * List all running containers from kraken, uses API v2
+ * List all running containers from kraken, uses zenoh.
  */
-export async function listContainers(): Promise<RunningContainer[]> {
-  const response = await back_axios({
-    method: 'GET',
-    url: `${KRAKEN_API_V2_URL}/container/`,
-    timeout: 30000,
-  })
-
-  return response.data as RunningContainer[]
+export async function listContainers(): Promise<RunningContainer[] | null> {
+  return zenoh.query(
+    `${KRAKEN_BASE_ZENOH}/container/fetch`,
+    QueryTarget.BestMatching,
+    ZENOH_QUERY_STANDARD_TIMEOUT,
+  )
 }
 
 /**
- * List all stats of all running containers from kraken, uses API v2
+ * List all stats of all running containers from kraken, uses zenoh.
  */
-export async function getContainersStats(): Promise<any> {
-  const response = await back_axios({
-    method: 'GET',
-    url: `${KRAKEN_API_V2_URL}/container/stats`,
-    timeout: 20000,
-  })
-
-  return response.data
+export async function getContainersStats(): Promise<any | null> {
+  return zenoh.query(
+    `${KRAKEN_BASE_ZENOH}/container/stats`,
+    QueryTarget.BestMatching,
+    ZENOH_QUERY_STANDARD_TIMEOUT,
+  )
 }
 
 /**
@@ -395,7 +393,7 @@ export async function finalizeExtension(
  * @returns {Promise<any | null>}
  */
 export async function getHistoricalLogsForExtension(identifier: string, timeout: number): Promise<any | null> {
-  const queryKey = `kraken/extension/logs/request?extension_name=${identifier}`
+  const queryKey = `${KRAKEN_BASE_ZENOH}/container/logs/request?extension_name=${identifier}`
   return await zenoh.query(queryKey, QueryTarget.BestMatching, timeout)
 }
 
