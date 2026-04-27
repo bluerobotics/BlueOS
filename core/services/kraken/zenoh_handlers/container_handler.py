@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 from commonwealth.utils.zenoh_helper import ZenohRouter
 from extension_logs import ExtensionLogPublisher
@@ -7,7 +7,7 @@ from loguru import logger
 from settings import get_extension_settings
 
 
-class ExtensionHandlers:
+class ContainerHandlers:
     def __init__(self, router: ZenohRouter) -> None:
         self.router = router
 
@@ -17,7 +17,10 @@ class ExtensionHandlers:
 
         try:
             extensions = get_extension_settings()
-            extension = next((ext for ext in extensions if extension_name in (ext.identifier, ext.name)), None)
+            extension = next(
+                (ext for ext in extensions if extension_name in (ext.identifier, ext.name)),
+                None,
+            )
 
             if not extension:
                 return {"error": f"Extension {extension_name} not found"}
@@ -49,5 +52,21 @@ class ExtensionHandlers:
             logger.exception(f"Error handling logs request for {extension_name}")
             return {"error": str(e), "error_type": type(e).__name__}
 
+    async def list_containers_handler(self) -> List[dict[str, Any]]:
+        """
+        List all running containers.
+        """
+        containers = await ContainerManager.get_running_containers()
+        return [container.dict() for container in containers]
+
+    async def container_stats_handler(self) -> dict[str, dict[str, Any]]:
+        """
+        List stats of all running containers.
+        """
+        stats = await ContainerManager.get_containers_stats()
+        return {name: usage.dict() for name, usage in stats.items()}
+
     def register_queryables(self) -> None:
-        self.router.add_queryable("extension/logs/request", self.logs_request_handler)
+        self.router.add_queryable("container/logs/request", self.logs_request_handler)
+        self.router.add_queryable("container/fetch", self.list_containers_handler)
+        self.router.add_queryable("container/stats", self.container_stats_handler)
