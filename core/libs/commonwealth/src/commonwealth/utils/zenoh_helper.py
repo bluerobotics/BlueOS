@@ -1,8 +1,9 @@
 import asyncio
 import json
 import re
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable
+import threading
+from concurrent.futures import Future
+from typing import Any, Callable, Coroutine
 
 import fastapi
 import zenoh
@@ -12,12 +13,17 @@ from loguru import logger
 from .Singleton import Singleton
 
 PARAM_REGEX = r"{[a-zA-Z0-9_]+}"
+_LOOP_START_TIMEOUT_S = 5.0
+_LOOP_JOIN_TIMEOUT_S = 2.0
 
 
 class ZenohSession(metaclass=Singleton):
     session: zenoh.Session | None = None
     config: zenoh.Config
-    _executor: ThreadPoolExecutor | None = None
+    _loop: asyncio.AbstractEventLoop | None = None
+    _loop_thread: threading.Thread | None = None
+    _loop_ready: threading.Event
+    _loop_start_error: Exception | None = None
 
     def __init__(self, service_name: str) -> None:
         if self.session is not None:
@@ -26,27 +32,83 @@ class ZenohSession(metaclass=Singleton):
         self.zenoh_config(service_name)
         self.session = zenoh.open(self.config)
 
-        self._executor = ThreadPoolExecutor(
-            max_workers=4,
-            thread_name_prefix="zenoh-",
+        self._loop_ready = threading.Event()
+        self._loop_start_error = None
+        self._loop_thread = threading.Thread(
+            target=self._run_loop,
+            name="zenoh-loop",
+            daemon=True,
         )
+        self._loop_thread.start()
+        if not self._loop_ready.wait(timeout=_LOOP_START_TIMEOUT_S):
+            raise RuntimeError(f"Zenoh event loop did not signal readiness within {_LOOP_START_TIMEOUT_S}s")
+        if self._loop_start_error is not None:
+            raise RuntimeError(
+                f"Zenoh event loop failed to start: {self._loop_start_error}"
+            ) from self._loop_start_error
 
-    def submit_to_executor(self, func: Callable[..., Any]) -> None:
-        if self._executor is None:
-            logger.warning("Zenoh session executor is not available, task will not be initialized.")
-            return
+    def _run_loop(self) -> None:
         try:
-            self._executor.submit(func)
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            self._loop = loop
         except Exception as e:
-            logger.error(f"Error submitting task to zenoh session executor: {e}")
+            self._loop_start_error = e
+            self._loop_ready.set()
+            logger.exception("Failed to initialize Zenoh event loop")
+            return
+        self._loop_ready.set()
+        try:
+            loop.run_forever()
+        finally:
+            try:
+                pending = asyncio.all_tasks(loop)
+                for task in pending:
+                    task.cancel()
+                if pending:
+                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                loop.run_until_complete(loop.shutdown_asyncgens())
+                loop.run_until_complete(loop.shutdown_default_executor())
+            finally:
+                loop.close()
+
+    def submit_coroutine(self, coroutine: Coroutine[Any, Any, Any]) -> Future[Any] | None:
+
+        loop = self._loop
+        if loop is None or not loop.is_running():
+            logger.warning("Zenoh session loop is not available, task will not be scheduled.")
+            coroutine.close()
+            return None
+        try:
+            future = asyncio.run_coroutine_threadsafe(coroutine, loop)
+        except RuntimeError as e:
+            logger.warning(f"Could not schedule coroutine on Zenoh loop: {e}")
+            coroutine.close()
+            return None
+
+        def _log_if_failed(fut: Future[Any]) -> None:
+            if fut.cancelled():
+                return
+            exc = fut.exception()
+            if exc is not None:
+                logger.opt(exception=exc).error("Unhandled error in Zenoh background task")
+
+        future.add_done_callback(_log_if_failed)
+        return future
 
     def close(self) -> None:
         if self.session:
             self.session.close()  # type: ignore[no-untyped-call]
             self.session = None
-        if self._executor:
-            self._executor.shutdown(wait=False, cancel_futures=True)
-            self._executor = None
+        loop = self._loop
+        if loop is not None and loop.is_running():
+            loop.call_soon_threadsafe(loop.stop)
+        if self._loop_thread is not None:
+            self._loop_thread.join(timeout=_LOOP_JOIN_TIMEOUT_S)
+            if self._loop_thread.is_alive():
+                logger.warning(f"Zenoh loop thread did not terminate within {_LOOP_JOIN_TIMEOUT_S}")
+            self._loop_thread = None
+        self._loop = None
 
     def zenoh_config(self, service_name: str) -> None:
         configuration = {
@@ -78,24 +140,28 @@ class ZenohRouter:
 
         def wrapper(query: zenoh.Query) -> None:
             params = dict(query.parameters)  # type: ignore
+            key_expr = query.selector.key_expr
 
             async def _handle_async() -> None:
                 try:
                     response = await func(**params)
                     if response is not None:
-                        query.reply(query.selector.key_expr, json.dumps(response, default=str))
+                        query.reply(key_expr, json.dumps(response, default=str))
                 except Exception as e:
-                    logger.exception(f"Error in zenoh query handler: {query.selector.key_expr}")
+                    logger.exception(f"Error in zenoh query handler: {key_expr}")
                     error_response = {
                         "error": str(e),
                         "error_type": type(e).__name__,
                     }
-                    query.reply(query.selector.key_expr, json.dumps(error_response))
+                    try:
+                        query.reply(key_expr, json.dumps(error_response))
+                    except Exception:
+                        logger.exception(f"Failed to send error reply for {key_expr}")
+                finally:
+                    query.drop()  # type: ignore[no-untyped-call]
 
-            def run_async() -> None:
-                asyncio.run(_handle_async())
-
-            self.zenoh_session.submit_to_executor(run_async)
+            if self.zenoh_session.submit_coroutine(_handle_async()) is None:
+                query.drop()  # type: ignore[no-untyped-call]
 
         if self.zenoh_session.session:
             self.zenoh_session.session.declare_queryable(full_path, wrapper)
