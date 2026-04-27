@@ -3,7 +3,7 @@ import json
 import re
 import threading
 from concurrent.futures import Future
-from typing import Any, Callable, Coroutine
+from typing import Any, AsyncGenerator, Callable, Coroutine, Optional
 
 import fastapi
 import zenoh
@@ -128,43 +128,89 @@ class ZenohSession(metaclass=Singleton):
 class ZenohRouter:
     prefix: str
     zenoh_session: ZenohSession
+    _publishers: dict[str, zenoh.Publisher]
 
     def __init__(self, service_name: str):
         self.prefix = service_name
         self.zenoh_session = ZenohSession(service_name)
+        self._publishers = {}
+
+    def close(self) -> None:
+        for publisher in self._publishers.values():
+            try:
+                publisher.undeclare()  # type: ignore[no-untyped-call]
+            except Exception:
+                logger.exception(f"Failed to undeclare publisher {publisher.key_expr}.")
+        self._publishers.clear()
+
+    def ensure_publisher(self, path: str) -> None:
+        full_path = self.get_path(path)
+
+        if self.zenoh_session.session is None:
+            logger.warning(f"Zenoh session unavailable, cannot declare publisher for {full_path}")
+            return
+
+        if full_path not in self._publishers:
+            self._publishers[full_path] = self.zenoh_session.session.declare_publisher(full_path)
+
+    def get_publisher(self, path: str) -> zenoh.Publisher | None:
+        full_path = self.get_path(path)
+        return self._publishers.get(full_path)
 
     def add_queryable(self, path: str, func: Callable[..., Any]) -> None:
-        full_path = self.prefix
-        if path:
-            full_path += f"/{path}"
+        full_path = self.get_path(path)
 
         def wrapper(query: zenoh.Query) -> None:
             params = dict(query.parameters)  # type: ignore
             key_expr = query.selector.key_expr
 
-            async def _handle_async() -> None:
-                try:
-                    response = await func(**params)
-                    if response is not None:
-                        query.reply(key_expr, json.dumps(response, default=str))
-                except Exception as e:
-                    logger.exception(f"Error in zenoh query handler: {key_expr}")
-                    error_response = {
-                        "error": str(e),
-                        "error_type": type(e).__name__,
-                    }
+            async def _handle_async(q: zenoh.Query) -> None:
+                with q:
                     try:
-                        query.reply(key_expr, json.dumps(error_response))
-                    except Exception:
-                        logger.exception(f"Failed to send error reply for {key_expr}")
-                finally:
-                    query.drop()  # type: ignore[no-untyped-call]
+                        response = await func(**params)
+                        if response is not None:
+                            q.reply(key_expr, json.dumps(response, default=str))
+                    except Exception as e:
+                        logger.exception(f"Error in zenoh query handler: {key_expr}")
+                        error_response = {
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                        }
+                        try:
+                            q.reply(key_expr, json.dumps(error_response))
+                        except Exception:
+                            logger.exception(f"Failed to send error reply for {key_expr}")
 
-            if self.zenoh_session.submit_coroutine(_handle_async()) is None:
+            if self.zenoh_session.submit_coroutine(_handle_async(query)) is None:
                 query.drop()  # type: ignore[no-untyped-call]
 
         if self.zenoh_session.session:
             self.zenoh_session.session.declare_queryable(full_path, wrapper)
+
+    def publish_from_generator(
+        self,
+        topic: str,
+        generator: AsyncGenerator[str, None],
+        on_complete: Optional[str] = None,
+    ) -> None:
+        async def _run() -> None:
+            publisher = self.get_publisher(topic)
+            if publisher is None:
+                logger.warning(f"Publisher for {topic} not found, dropping generator")
+                async for _ in generator:
+                    pass
+                return
+
+            try:
+                async for chunk in generator:
+                    publisher.put(chunk)
+            except Exception:
+                logger.exception(f"Error while publishing from generator on {topic}")
+            finally:
+                if on_complete is not None:
+                    publisher.put(on_complete)
+
+        self.zenoh_session.submit_coroutine(_run())
 
     def add_routes_to_zenoh(self, app: fastapi.FastAPI) -> None:
         queryables = []
@@ -180,6 +226,12 @@ class ZenohRouter:
 
         for path, func in queryables:
             self.add_queryable(path, func)
+
+    def get_path(self, path: str) -> str:
+        full_path = self.prefix
+        if path:
+            full_path += f"/{path}"
+        return full_path
 
 
 def clean_path(path: str) -> str:
