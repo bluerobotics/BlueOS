@@ -675,6 +675,10 @@ class NetworkManagerWifi(AbstractWifiManager):
         existing_connection = await self._find_existing_connection(credentials)
         if existing_connection:
             logger.info(f"Using existing connection for {credentials.ssid} on {interface_name}")
+            # Profiles created on older single-interface setups (or auto-bound by NetworkManager)
+            # may have `interface-name` pinned to a specific device. Clear it so the same profile
+            # can be activated on any interface, otherwise NM rejects with "mismatching interface name".
+            await self._unbind_connection_from_interface(existing_connection)
             await self._nm.activate_connection(existing_connection, device_path, "/")
 
             # If hotspot was running, restart it
@@ -796,6 +800,22 @@ class NetworkManagerWifi(AbstractWifiManager):
         except Exception as e:
             logger.error(f"Error finding existing connection: {e}")
             return None
+
+    async def _unbind_connection_from_interface(self, conn_path: str) -> None:
+        """Clear the `interface-name` binding from a connection profile so it can be activated
+        on any compatible device. Older profiles (or those auto-bound by NetworkManager) often
+        pin themselves to a specific interface, which causes activation failures on others."""
+        try:
+            settings = NetworkConnectionSettings(conn_path, self._bus)
+            profile = await settings.get_profile()
+            bound = profile.connection.interface_name if profile.connection else None
+            if not bound:
+                return
+            logger.info(f"Clearing interface-name binding ('{bound}') from connection profile {conn_path}")
+            profile.connection.interface_name = None
+            await settings.update_profile(profile, save_to_disk=True)
+        except Exception as e:
+            logger.warning(f"Failed to clear interface-name binding from {conn_path}: {e}")
 
     # pylint: disable=too-many-branches,too-many-statements
     async def enable_hotspot_on_interface(self, interface: str, save_settings: bool = True) -> bool:
