@@ -79,6 +79,38 @@ export default defineConfig(({ command, mode }) => {
           })
         }
       },
+      // Expose the list of ArduPilot parameter JSON paths without bundling their contents.
+      // Using import.meta.glob would pull every (multi-MB) file into the module graph and blow up
+      // build memory; we only need the paths, the contents are fetched at runtime from public/.
+      {
+        name: 'ardupilot-param-index',
+        resolveId(id) {
+          if (id === 'virtual:ardupilot-param-index') {
+            return '\0virtual:ardupilot-param-index'
+          }
+          return null
+        },
+        load(id) {
+          if (id !== '\0virtual:ardupilot-param-index') return null
+          const fs = require('fs')
+          const publicDir = path.resolve(__dirname, 'public')
+          const repoDir = path.resolve(publicDir, 'assets/ArduPilot-Parameter-Repository')
+          const paths = []
+          const walk = (dir) => {
+            if (!fs.existsSync(dir)) return
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const fullPath = path.join(dir, entry.name)
+              if (entry.isDirectory()) {
+                walk(fullPath)
+              } else if (entry.name.endsWith('.json')) {
+                paths.push(`/public/${path.relative(publicDir, fullPath).split(path.sep).join('/')}`)
+              }
+            }
+          }
+          walk(repoDir)
+          return `export default ${JSON.stringify(paths)}`
+        },
+      },
       // Remove non-JSON files from ArduPilot parameter repository to reduce image size
       {
         name: 'cleanup-ardupilot-files',

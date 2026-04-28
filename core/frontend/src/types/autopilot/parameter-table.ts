@@ -1,4 +1,5 @@
 import { isNumber } from 'lodash'
+import ardupilotParamPaths from 'virtual:ardupilot-param-index'
 
 import { fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
 import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
@@ -108,7 +109,7 @@ export default class ParametersTable {
       console.debug(`Metadata override not present`)
     }
     await fetchFirmwareVehicleType() // required to populate autopilot.vehicle_type
-    const jsons = Object.keys(await import.meta.glob('/public/assets/ArduPilot-Parameter-Repository/**/*.json')) as string[]
+    const jsons = ardupilotParamPaths
     let folder = "Copter"
     switch (autopilot.firmware_vehicle_type) {
       case FirmwareVehicleType.ArduSub:
