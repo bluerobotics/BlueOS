@@ -1,0 +1,5 @@
+# Disable USB autosuspend for all USB devices.
+# Power management can suspend USB peripherals which causes them to disappear
+# or move to the `interface_disabled` state, breaking hotspots, cameras and
+# other functionality.
+ACTION=="add", SUBSYSTEM=="usb", TEST=="power/control", ATTR{power/control}="on"
