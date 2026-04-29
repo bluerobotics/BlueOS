@@ -6,7 +6,7 @@ class MessageManager {
   private static instance: MessageManager
 
   callbacks: ((level: MessageLevel, message: string) => void)[] = [
-    (message, level) => {
+    (level, message) => {
       switch (level) {
         case MessageLevel.Success:
           console.log(message)
