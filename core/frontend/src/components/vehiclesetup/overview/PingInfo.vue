@@ -1,6 +1,9 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="justify-center">
+      <v-icon left>
+        mdi-radar
+      </v-icon>
       Ping Sensors
     </v-card-title>
     <v-card-text class="d-flex justify-space-between">
