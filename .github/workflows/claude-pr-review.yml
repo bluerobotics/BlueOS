@@ -18,7 +18,6 @@ jobs:
           && github.event.pull_request.user.type != 'Bot' }}
     permissions:
       contents: read
-      id-token: write
       pull-requests: write
     steps:
       # SECURITY: do not pass `ref:` here. `pull_request_target` checks out the
@@ -53,6 +52,7 @@ jobs:
           REPO: ${{ github.repository }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
             --model claude-opus-4-7
             --max-turns 40
