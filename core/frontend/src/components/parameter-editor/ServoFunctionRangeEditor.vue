@@ -494,16 +494,29 @@ export default Vue.extend({
 
 .thumb-label {
   position: absolute;
-  top: -25px;
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--v-primary-base);
   color: white;
-  padding: 2px 4px;
+  padding: 3px 6px;
   border-radius: 4px;
   font-size: 12px;
   white-space: nowrap;
   user-select: none;
   text-align: center;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.thumb-label::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0 5px;
+  border-style: solid;
+  border-color: var(--v-primary-base) transparent transparent transparent;
 }
 </style>
