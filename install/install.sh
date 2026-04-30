@@ -204,6 +204,7 @@ echo "Going to install BlueOS version ${VERSION}."
 
 echo "Downloading and installing udev rules."
 curl -fsSL $ROOT/install/udev/100.autopilot.rules -o /etc/udev/rules.d/100.autopilot.rules
+curl -fsSL $ROOT/install/udev/110.usb-power.rules -o /etc/udev/rules.d/110.usb-power.rules
 
 if [ -f /etc/dhcpcd.conf ]
 then
