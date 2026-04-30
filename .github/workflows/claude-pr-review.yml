@@ -51,6 +51,14 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         with:
+          # WARNING: keep `show_full_output` disabled on public repositories.
+          # When enabled, ALL Claude messages (tool outputs, file reads, env dumps)
+          # are written to the public Actions log. Anything Claude reads while
+          # reviewing a PR — including any secret accidentally committed in that
+          # PR — would be exposed. Only flip to "true" temporarily for debugging,
+          # and never on a run that touches untrusted PR content.
+          # See: https://github.com/anthropics/claude-code-action/blob/main/docs/security.md#full-output-security-warning
+          show_full_output: "false"
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
