@@ -149,6 +149,78 @@
           />
         </v-card-actions>
       </v-card>
+      <v-card
+        v-if="settings.is_pirate_mode"
+        max-width="900"
+        class="mx-auto my-12 pa-4"
+      >
+        <h2>
+          Manual Upload
+          <v-tooltip top>
+            <template #activator="{ on }">
+              <v-icon
+                small
+                v-on="on"
+              >
+                mdi-information-outline
+              </v-icon>
+            </template>
+            <span>
+              When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)
+            </span>
+          </v-tooltip>
+        </h2>
+        Use this to upload a .tar docker image. These can be downloaded from the BlueOS
+        <a
+          href="https://github.com/bluerobotics/BlueOS/releases"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Releases</a> Assets, or
+        <a
+          href="https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          CI</a>
+        Artifacts (GitHub account required), or generated locally using <code>docker save</code>.
+        <v-file-input
+          v-if="!disable_upload_controls"
+          id="file"
+          show-size
+          accept=".tar"
+          :rules="[isFileInputNotEmpty]"
+          :error-messages="file_input_error"
+          label="File input"
+        />
+        <v-progress-linear
+          v-if="disable_upload_controls && upload_percentage !== 100"
+          class="mb-4 mt-4"
+          :value="upload_percentage"
+        />
+        <v-btn
+          v-if="!disable_upload_controls"
+          color="primary"
+          class="mr-2 mb-4 mt-1"
+          @click="validateInputFileForm() && upload()"
+          v-text="'Upload'"
+        />
+
+        <v-alert
+          v-if="upload_percentage == 100"
+          border="bottom"
+          colored-border
+          type="info"
+          elevation="2"
+        >
+          Decompressing file, this usually takes up to one minute, please stand by...
+          <spinning-logo
+            v-if="upload_percentage == 100"
+            size="15%"
+            subtitle="Decompressing file..."
+          />
+        </v-alert>
+      </v-card>
     </v-col>
     <pull-progress
       :progress="pull_output"
@@ -157,78 +229,6 @@
       :extraction="extraction_percentage"
       :statustext="status_text"
     />
-    <v-card
-      v-if="settings.is_pirate_mode"
-      max-width="900"
-      class="mx-auto pa-4"
-    >
-      <h2>
-        Manual Upload
-        <v-tooltip top>
-          <template #activator="{ on }">
-            <v-icon
-              small
-              v-on="on"
-            >
-              mdi-information-outline
-            </v-icon>
-          </template>
-          <span>
-            When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)
-          </span>
-        </v-tooltip>
-      </h2>
-      Use this to upload a .tar docker image. These can be downloaded from the BlueOS
-      <a
-        href="https://github.com/bluerobotics/BlueOS/releases"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Releases</a> Assets, or
-      <a
-        href="https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        CI</a>
-      Artifacts (GitHub account required), or generated locally using <code>docker save</code>.
-      <v-file-input
-        v-if="!disable_upload_controls"
-        id="file"
-        show-size
-        accept=".tar"
-        :rules="[isFileInputNotEmpty]"
-        :error-messages="file_input_error"
-        label="File input"
-      />
-      <v-progress-linear
-        v-if="disable_upload_controls && upload_percentage !== 100"
-        class="mb-4 mt-4"
-        :value="upload_percentage"
-      />
-      <v-btn
-        v-if="!disable_upload_controls"
-        color="primary"
-        class="mr-2 mb-4 mt-1"
-        @click="validateInputFileForm() && upload()"
-        v-text="'Upload'"
-      />
-
-      <v-alert
-        v-if="upload_percentage == 100"
-        border="bottom"
-        colored-border
-        type="info"
-        elevation="2"
-      >
-        Decompressing file, this usually takes up to one minute, please stand by...
-        <spinning-logo
-          v-if="upload_percentage == 100"
-          size="15%"
-          subtitle="Decompressing file..."
-        />
-      </v-alert>
-    </v-card>
     <v-overlay
       :z-index="10"
       :value="waiting"
