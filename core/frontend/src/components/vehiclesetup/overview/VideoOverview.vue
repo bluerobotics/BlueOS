@@ -7,6 +7,9 @@
       Video
     </v-card-title>
 
+    <v-card-text v-if="devices.length === 0">
+      Not detected or configured
+    </v-card-text>
     <v-card-text
       v-for="device in devices"
       :key="device.source"
