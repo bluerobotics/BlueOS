@@ -1,6 +1,9 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="align-center">
+      <v-icon left>
+        mdi-battery
+      </v-icon>
       {{ t`Battery Monitor` }}
     </v-card-title>
     <v-card-text>
