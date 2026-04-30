@@ -378,7 +378,6 @@
 </template>
 
 <script lang="ts">
-import { Session } from '@eclipse-zenoh/zenoh-ts'
 import Vue from 'vue'
 
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
@@ -394,7 +393,6 @@ import ExtensionSettingsModal from '@/components/kraken/modals/ExtensionSettings
 import PullProgress from '@/components/utils/PullProgress.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
-import zenoh from '@/libs/zenoh'
 import { OneMoreTime } from '@/one-more-time'
 import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
@@ -509,7 +507,6 @@ export default Vue.extend({
       install_from_file_last_level: -1,
       active_operation_identifier: localStorage.getItem(ACTIVE_OPERATION_KEY) as null | string,
       active_operation_type: (localStorage.getItem(ACTIVE_OPERATION_TYPE_KEY) ?? null) as null | 'install' | 'update',
-      session: null as Session | null,
     }
   },
   computed: {
@@ -612,29 +609,26 @@ export default Vue.extend({
       }
     },
   },
-  async mounted() {
+  mounted() {
     this.fetchManifest()
     this.fetch_installed_ext_task.setAction(this.fetchInstalledExtensions)
     this.fetch_running_containers_task.setAction(this.fetchRunningContainers)
     this.fetch_containers_stats_task.setAction(this.fetchContainersStats)
-    await this.initializeZenohSession()
   },
   destroyed() {
     clearInterval(this.metrics_interval)
     this.stopUploadKeepAlive()
-    this.session = null
   },
   methods: {
-    async initializeZenohSession() {
-      if (this.session) {
-        return
+    applyInstalledExtensions(extensions: InstalledExtensionData[]): void {
+      const map: Dictionary<InstalledExtensionData> = {}
+      for (const extension of extensions) {
+        if (!extension?.identifier) continue
+        map[extension.identifier] = extension
       }
-
-      try {
-        this.session = await zenoh.getSession()
-      } catch (error) {
-        console.error('[ExtensionManagerView] Failed to open Zenoh session:', error)
-      }
+      this.installed_extensions = map
+      this.dockers_fetch_failed = false
+      this.dockers_fetch_done = true
     },
     applyRunningContainers(containers: RunningContainer[]): void {
       this.running_containers = containers
@@ -799,12 +793,8 @@ export default Vue.extend({
     async update(extension: InstalledExtensionData, version: string) {
       this.setInstallingState(extension.identifier, 'update')
       this.show_pull_output = true
-      const tracker = this.getTracker()
-      kraken.updateExtensionToVersion(
-        extension.identifier,
-        version,
-        (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
-      )
+
+      this.installWithTracker(extension.identifier, version)
         .then(() => {
           this.fetchInstalledExtensions()
           notifier.pushSuccess('EXTENSION_UPDATE_SUCCESS', `${extension.name} updated successfully.`, true)
@@ -876,7 +866,6 @@ export default Vue.extend({
         notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
       }
     },
-
     clearStaleInstallingState(): void {
       if (!this.active_operation_identifier || this.show_pull_output) return
       const ext = this.installed_extensions[this.active_operation_identifier]
@@ -914,21 +903,18 @@ export default Vue.extend({
       }
     },
     async fetchInstalledExtensions(): Promise<void> {
-      kraken.getInstalledExtensions()
-        .then((response) => {
-          this.installed_extensions = {}
-          for (const extension of response) {
-            this.installed_extensions[extension.identifier] = extension
-          }
-          this.dockers_fetch_failed = false
-        })
-        .catch((error) => {
-          notifier.pushBackError('EXTENSIONS_INSTALLED_FETCH_FAIL', error)
-          this.dockers_fetch_failed = true
-        })
-        .finally(() => {
-          this.dockers_fetch_done = true
-        })
+      try {
+        const extensions = await kraken.fetchInstalledExtensions()
+        if (!Array.isArray(extensions)) {
+          throw new Error('Unexpected response while fetching installed extensions')
+        }
+        this.applyInstalledExtensions(extensions)
+      } catch (error) {
+        this.dockers_fetch_failed = true
+        notifier.pushBackError('EXTENSIONS_INSTALLED_FETCH_FAIL', error)
+      } finally {
+        this.dockers_fetch_done = true
+      }
     },
     showLogs(extension: InstalledExtensionData) {
       this.selected_log_extension_identifier = extension.identifier
@@ -943,12 +929,8 @@ export default Vue.extend({
       this.setInstallingState(extension.identifier, 'install')
       this.show_dialog = false
       this.show_pull_output = true
-      const tracker = this.getTracker()
 
-      kraken.installExtension(
-        extension,
-        (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
-      )
+      this.installWithTracker(extension.identifier, extension.tag)
         .then(() => {
           this.fetchInstalledExtensions()
           notifier.pushSuccess('EXTENSION_INSTALL_SUCCESS', `${extension.name} installed successfully.`, true)
@@ -1068,6 +1050,16 @@ export default Vue.extend({
       const temp = { ...this.installed_extensions }
       temp[extension.identifier].loading = loading
       this.installed_extensions = temp
+    },
+    installWithTracker(identifier: string, tag?: string): Promise<void> {
+      const tracker = this.getTracker()
+      return kraken.installExtension(identifier, (fragment: string) => {
+        tracker.digestStreamFragment(fragment)
+        this.pull_output = tracker.pull_output
+        this.download_percentage = tracker.download_percentage
+        this.extraction_percentage = tracker.extraction_percentage
+        this.status_text = tracker.overall_status
+      }, tag)
     },
     getTracker(): PullTracker {
       return new PullTracker(
