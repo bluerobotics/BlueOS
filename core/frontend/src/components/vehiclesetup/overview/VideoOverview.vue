@@ -1,6 +1,9 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="align-center">
+      <v-icon left>
+        mdi-video
+      </v-icon>
       {{ t`Video` }}
     </v-card-title>
 
