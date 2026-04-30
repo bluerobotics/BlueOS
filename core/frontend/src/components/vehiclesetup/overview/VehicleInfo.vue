@@ -1,6 +1,9 @@
 <template>
   <v-card>
     <v-card-title class="align-center">
+      <v-icon left>
+        mdi-robot-industrial
+      </v-icon>
       Vehicle
     </v-card-title>
     <v-card-text>
