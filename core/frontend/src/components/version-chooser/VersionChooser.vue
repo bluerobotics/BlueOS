@@ -114,7 +114,7 @@
             name="BlueOS Remote Repository"
             label="Remote repository"
             :append-icon="selected_image != default_repository ? 'mdi-restore' : undefined"
-            @click:append="selected_image = default_repository"
+            @click:append="resetToDefaultRepository()"
           />
         </v-form>
         <v-alert
@@ -712,6 +712,10 @@ export default Vue.extend({
     },
     isBeingDeleted(image: Version) {
       return this.deleting === `${image.repository}:${image.tag}`
+    },
+    resetToDefaultRepository() {
+      this.selected_image = this.default_repository
+      this.loadAvailableVersions()
     },
   },
 })
