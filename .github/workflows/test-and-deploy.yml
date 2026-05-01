@@ -346,6 +346,9 @@ jobs:
             echo "ASSET_NAME_SUFFIX=-pi4" >> $GITHUB_ENV
           fi
 
+      - name: Print image checksum
+        run: sha256sum deploy/pimod/blueos.img
+
       - name: Zip image
         run: |
           sudo apt install zip
