@@ -32,7 +32,6 @@ class EthernetStore extends VuexModule {
   @Mutation
   setInterfaces(ethernet_interfaces: EthernetInterface[]): void {
     this.available_interfaces = ethernet_interfaces
-    this.updating_interfaces = false
   }
 
   @Action
@@ -52,6 +51,10 @@ class EthernetStore extends VuexModule {
         notifier.pushBackError('ETHERNET_ADDRESS_CREATION_FAIL', error)
         throw error
       })
+      .finally(async () => {
+        await this.context.dispatch('refreshInterfaces')
+        this.context.commit('setUpdatingInterfaces', false)
+      })
   }
 
   @Action
@@ -70,6 +73,10 @@ class EthernetStore extends VuexModule {
       .catch((error) => {
         notifier.pushError('ETHERNET_ADDRESS_DELETE_FAIL', error)
         throw error
+      })
+      .finally(async () => {
+        await this.context.dispatch('refreshInterfaces')
+        this.context.commit('setUpdatingInterfaces', false)
       })
   }
 
@@ -91,13 +98,16 @@ class EthernetStore extends VuexModule {
         notifier.pushBackError('DHCP_SERVER_ADD_FAIL', error)
         throw error
       })
-      .finally(() => {
+      .finally(async () => {
+        await this.context.dispatch('refreshInterfaces')
         this.context.commit('setUpdatingInterfaces', false)
       })
   }
 
   @Action
   async RemoveDHCPServer(interface_name: string): Promise<void> {
+    this.context.commit('setUpdatingInterfaces', true)
+
     await back_axios({
       method: 'delete',
       url: `${this.API_URL}/dhcp`,
@@ -109,6 +119,10 @@ class EthernetStore extends VuexModule {
       .catch((error) => {
         const message = `Could not remove DHCP server from interface '${interface_name}': ${error.message}.`
         notifier.pushError('DHCP_SERVER_REMOVE_FAIL', message)
+      })
+      .finally(async () => {
+        await this.context.dispatch('refreshInterfaces')
+        this.context.commit('setUpdatingInterfaces', false)
       })
   }
 
@@ -190,6 +204,16 @@ class EthernetStore extends VuexModule {
   }
 
   @Action
+  async refreshInterfaces(): Promise<void> {
+    try {
+      const response = await this.context.dispatch('getAvailableEthernetInterfaces')
+      this.context.commit('setInterfaces', response.data)
+    } catch {
+      // Errors are already pushed to the notifier by getAvailableEthernetInterfaces.
+    }
+  }
+
+  @Action
   async setInterfacesPriority(interfaces: { name: string, priority: number }[]): Promise<void> {
     await back_axios({
       method: 'post',
@@ -213,6 +237,8 @@ class EthernetStore extends VuexModule {
 
   @Action
   async triggerDynamicIP(interface_name: string): Promise<void> {
+    this.context.commit('setUpdatingInterfaces', true)
+
     await back_axios({
       method: 'post',
       url: `${this.API_URL}/dynamic_ip`,
@@ -224,6 +250,10 @@ class EthernetStore extends VuexModule {
       .catch((error) => {
         const message = `Could not trigger for dynamic IP address on '${interface_name}': ${error.message}.`
         notifier.pushError('DYNAMIC_IP_TRIGGER_FAIL', message)
+      })
+      .finally(async () => {
+        await this.context.dispatch('refreshInterfaces')
+        this.context.commit('setUpdatingInterfaces', false)
       })
   }
 }
