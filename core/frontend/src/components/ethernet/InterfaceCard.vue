@@ -319,16 +319,12 @@ export default Vue.extend({
       await ethernet.deleteAddress({ interface_name: this.adapter.name, ip_address: ip })
     },
     async triggerForDynamicIP(): Promise<void> {
-      ethernet.setUpdatingInterfaces(true)
-
       await ethernet.triggerDynamicIP(this.adapter.name)
     },
     openDHCPServerDialog(): void {
       this.show_dhcp_server_dialog = true
     },
     async removeDHCPServer(): Promise<void> {
-      ethernet.setUpdatingInterfaces(true)
-
       await ethernet.RemoveDHCPServer(this.adapter.name)
     },
     async fetchLeases(): Promise<void> {
