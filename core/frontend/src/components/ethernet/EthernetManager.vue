@@ -3,20 +3,20 @@
     elevation="1"
     width="400"
   >
-    <v-expansion-panels v-if="are_interfaces_available && !updating_interfaces">
+    <v-expansion-panels v-show="are_interfaces_available && !updating_interfaces">
       <interface-card
         v-for="(ethernet_interface, key) in available_interfaces"
         :key="key"
         :adapter="ethernet_interface"
       />
     </v-expansion-panels>
-    <v-container v-else-if="updating_interfaces">
+    <v-container v-if="updating_interfaces">
       <spinning-logo
         size="30%"
         subtitle="Fetching available ethernet interfaces..."
       />
     </v-container>
-    <v-container v-else>
+    <v-container v-else-if="!are_interfaces_available">
       <div>
         No ethernet interfaces available
       </div>
