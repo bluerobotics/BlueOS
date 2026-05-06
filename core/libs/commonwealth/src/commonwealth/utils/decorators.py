@@ -9,6 +9,9 @@ F = TypeVar("F", bound=Callable[..., Any])
 def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
     """Decorator that creates a cache for specific inputs with a configured timeout in seconds.
 
+    The wrapped function exposes an `invalidate()` attribute that drops every cached entry,
+    forcing the next call to re-execute the function.
+
     Args:
         timeout_seconds (float, optional): Timeout to be used for cache invalidation. Defaults to 10.
 
@@ -35,6 +38,11 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
             cache[args] = function_return
             return function_return
 
+        def invalidate() -> None:
+            cache.clear()
+            last_sample_time.clear()
+
+        wrapper.invalidate = invalidate  # type: ignore[attr-defined]
         return wrapper  # type: ignore
 
     return inner_function
