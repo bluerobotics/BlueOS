@@ -176,6 +176,9 @@ export default defineConfig(({ command, mode }) => {
         '^/commander': {
           target: SERVER_ADDRESS,
         },
+        '^/customization': {
+          target: SERVER_ADDRESS,
+        },
         '^/disk-usage': {
           target: SERVER_ADDRESS,
         },
