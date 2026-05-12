@@ -1,7 +1,7 @@
 <template>
   <div>
     <model-viewer
-      v-if="model_viewer_supported && model_viewer_ready && computed_model_path"
+      v-if="model_viewer_supported && model_viewer_ready && (computed_model_path || model_override_path)"
       id="modelviewer"
       ref="modelviewer"
       :src="model_override_path || computed_model_path"
@@ -289,7 +289,7 @@ export default Vue.extend({
       this.model_viewer_supported = loaded
     }
     setTimeout(() => {
-      if (!this.computed_model_path) {
+      if (!this.computed_model_path && !this.model_override_path) {
         this.show_model_not_found = true
       }
     }, 5000)
