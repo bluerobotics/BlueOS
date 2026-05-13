@@ -368,9 +368,13 @@ export default Vue.extend({
       if (!this.model_override_path) {
         return {}
       }
-      const candidate_path = this.model_override_path?.replace('glb', 'json')
-      const response = await axios.get(candidate_path)
-      return response.data?.annotations ?? {}
+      const candidate_path = this.model_override_path.replace('glb', 'json')
+      try {
+        const response = await axios.get(candidate_path)
+        return response.data?.annotations ?? {}
+      } catch {
+        return {}
+      }
     },
     setAlphas(new_color: number, text = ''): void {
       const lower_text = text.toLowerCase()
