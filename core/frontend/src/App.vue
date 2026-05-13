@@ -398,6 +398,7 @@ import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
 import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import consoleLogger from '@/libs/console-logger'
 import settings from '@/libs/settings'
+import customization_store from '@/store/customization'
 import helper from '@/store/helper'
 import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
@@ -760,7 +761,7 @@ export default Vue.extend({
       return import.meta.env.VITE_BUILD_DATE
     },
     blueos_logo(): string {
-      return settings.is_dark_theme ? blueos_white : blueos_blue
+      return customization_store.logoUrl ?? (settings.is_dark_theme ? blueos_white : blueos_blue)
     },
     is_cloud_tray_menu_visible(): boolean {
       // Keep tray menu visible in everything except stable versions
@@ -795,6 +796,7 @@ export default Vue.extend({
     this.setupCallbacks()
     this.checkTour()
     updateTime()
+    customization_store.refreshAll()
 
     const body = document.querySelector('body')
     body?.addEventListener('click', (event) => {
