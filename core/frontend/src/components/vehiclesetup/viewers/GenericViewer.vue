@@ -101,12 +101,14 @@ import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import autopilot_data from '@/store/autopilot'
+import customization_store from '@/store/customization'
 import ping from '@/store/ping'
 import {
   BTN_FUNCTION as SUB_BTN_FUNCTION,
   SERVO_FUNCTION as SUB_SERVO_FUNCTION,
 } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary, Indexed, Keyed } from '@/types/common'
+import { ModelEntry } from '@/types/customization'
 import { PingType } from '@/types/ping'
 import { canUseModelViewer, ensureModelViewer } from '@/utils/model_viewer_support'
 
@@ -177,6 +179,9 @@ export default Vue.extend({
         return this.modelpath
       }
       return autopilot_data.vehicle_model
+    },
+    override_models(): ModelEntry[] {
+      return customization_store.models
     },
     filtered_annotations(): (HotspotConfiguration & Indexed & Keyed)[] {
       if (this.noannotations) {
@@ -280,6 +285,9 @@ export default Vue.extend({
     },
     lights2_are_present() {
       this.redraw()
+    },
+    override_models() {
+      this.refresh_model_override()
     },
   },
   async mounted() {
