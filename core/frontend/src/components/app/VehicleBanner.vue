@@ -72,6 +72,7 @@ import Vue from 'vue'
 import ardupilot_data from '@/store/autopilot'
 import bag from '@/store/bag'
 import beacon from '@/store/beacon'
+import customization_store from '@/store/customization'
 
 import ImagePicker from './ImagePicker.vue'
 
@@ -83,7 +84,7 @@ export default Vue.extend({
   data() {
     return {
       vehicle_name_input: '',
-      vehicle_image: undefined as string | undefined,
+      bag_vehicle_image: undefined as string | undefined,
       logo_image: null as string | null,
       mdns_hostname_input: '',
       dialog: false,
@@ -98,6 +99,9 @@ export default Vue.extend({
     },
     system_id() {
       return ardupilot_data.system_id
+    },
+    vehicle_image(): string | undefined {
+      return customization_store.vehicleImageUrl ?? this.bag_vehicle_image
     },
   },
   watch: {
@@ -114,7 +118,7 @@ export default Vue.extend({
   },
   mounted() {
     beacon.registerBeaconListener(this)
-    this.load_vehicle_image()
+    this.load_bag_vehicle_image()
     this.vehicle_name_input = this.vehicle_name
     this.mdns_hostname_input = this.mdns_hostname
     this.load_company_logo()
@@ -148,7 +152,7 @@ export default Vue.extend({
       })
     },
     save_vehicle_image(image: string) {
-      this.vehicle_image = image
+      this.bag_vehicle_image = image
       bag.setData('vehicle.image_path', {
         url: image,
       })
