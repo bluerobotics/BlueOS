@@ -374,6 +374,11 @@ export default Vue.extend({
     this.reloadAnnotations()
   },
   methods: {
+    async refresh_model_override(): Promise<void> {
+      this.model_override_path = await checkModelOverrides()
+      this.override_annotations = await this.loadAnnotationsOverride()
+      this.forceRefreshAnnotations()
+    },
     onModelViewerLoad() {
       this.default_alphas = {}
       this.default_base_colors = {}
