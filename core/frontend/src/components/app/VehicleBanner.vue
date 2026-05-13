@@ -120,10 +120,10 @@ export default Vue.extend({
     this.load_company_logo()
   },
   methods: {
-    async load_vehicle_image() {
-      this.vehicle_image = (await bag.getData('vehicle.image_path'))?.url as (string | undefined)
-      if (this.vehicle_image && !this.vehicle_image.startsWith('/')) {
-        this.vehicle_image = `/${this.vehicle_image}`
+    async load_bag_vehicle_image() {
+      this.bag_vehicle_image = (await bag.getData('vehicle.image_path'))?.url as (string | undefined)
+      if (this.bag_vehicle_image && !this.bag_vehicle_image.startsWith('/')) {
+        this.bag_vehicle_image = `/${this.bag_vehicle_image}`
       }
     },
     async load_company_logo() {
