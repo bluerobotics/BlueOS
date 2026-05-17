@@ -261,6 +261,14 @@ def available_routers() -> Any:
     return autopilot.get_available_routers()
 
 
+@index_router_v1.post("/exec_arguments", summary="Set arguments to be passed to autopilot executable")
+@index_to_http_exception
+async def set_exec_arguments(firmware: str, arguments: dict[str, str]) -> Any:
+    logger.info(f"Setting execution arguments of {firmware} to {arguments}")
+    await autopilot.set_exec_arguments(firmware, arguments)
+    logger.info("Execution arguments successfully set")
+
+
 @index_router_v1.post("/stop", summary="Stop the autopilot.")
 @index_to_http_exception
 async def stop() -> Any:
