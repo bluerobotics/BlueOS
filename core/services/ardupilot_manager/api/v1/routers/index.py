@@ -263,14 +263,13 @@ def available_routers() -> Any:
 
 @index_router_v1.post("/set_exec_arguments", summary="Set arguments to be passed to autopilot executable")
 @index_to_http_exception
-def set_exec_arguments(firmware: str, board: str, arguments: dict[str, str]) -> Any:
+def set_exec_arguments(firmware: str, board: str, arguments: dict[str, str | dict[str, str]]) -> Any:
     logger.info(f"Setting execution arguments of {firmware} on board {board} to {arguments}")
     autopilot.set_exec_arguments(firmware, board, arguments)
 
 
 @index_router_v1.post(
     "/get_exec_arguments",
-    response_model=dict[str, str],
     summary="Get arguments to be passed to specified autopilot executable",
 )
 @index_to_http_exception

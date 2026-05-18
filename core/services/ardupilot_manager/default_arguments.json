@@ -1,0 +1,25 @@
+{
+    "SITL" : {
+        "endpoint" : {
+            "name" : "Master",
+            "owner" : "Ardupilot Manager",
+            "connection_type" : "tcpout",
+            "place" : "127.0.0.1",
+            "argument" : "5760",
+            "protected" : "True"
+        },
+        "--model" : "vectored",
+        "--home" : "-27.563,-48.459,0.0,270.0"
+    },
+    "Linux" : {
+        "endpoint" : {
+            "name" : "Master",
+            "owner" : "Ardupilot Manager",
+            "connection_type" : "udpin",
+            "place" : "127.0.0.1",
+            "argument" : "8852",
+            "protected" : "True"
+        },
+        "use_defaults" : "True"
+    }
+}
