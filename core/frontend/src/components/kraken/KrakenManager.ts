@@ -339,7 +339,7 @@ export async function uploadExtensionTarFile(
     headers: {
       'Content-Type': 'multipart/form-data',
     },
-    timeout: 120000,
+    timeout: 30 * 60 * 1000,
     onUploadProgress: progressHandler,
   })
 
