@@ -136,6 +136,12 @@ async def set_sitl_frame(frame: SITLFrame) -> Any:
     return autopilot.set_sitl_frame(frame)
 
 
+@index_router_v1.get("/sitl_frame", response_model=SITLFrame, summary="Get current SITL Frame type.")
+@index_to_http_exception
+async def get_sitl_frame() -> Any:
+    return autopilot.current_sitl_frame
+
+
 @index_router_v1.get("/firmware_vehicle_type", response_model=str, summary="Get firmware vehicle type.")
 @index_to_http_exception
 async def get_firmware_vehicle_type() -> Any:
