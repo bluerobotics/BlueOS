@@ -54,6 +54,16 @@
             </v-expansion-panel-content>
           </v-expansion-panel>
         </v-expansion-panels>
+        <v-expansion-panels v-if="is_sitl">
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              SITL configuration
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <sitl-configuration />
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
         <v-expansion-panels v-if="settings.is_pirate_mode && isLinuxFlightController">
           <v-expansion-panel>
             <v-expansion-panel-header>
@@ -131,6 +141,7 @@ import {
 import AutopilotSerialConfiguration from '@/components/autopilot/AutopilotSerialConfiguration.vue'
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
+import SitlConfiguration from '@/components/autopilot/SitlConfiguration.vue'
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
 import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import Notifier from '@/libs/notifier'
@@ -152,6 +163,7 @@ export default Vue.extend({
     FirmwareManager,
     AutopilotSerialConfiguration,
     NotSafeOverlay,
+    SitlConfiguration,
   },
   data() {
     return {
@@ -215,6 +227,9 @@ export default Vue.extend({
         return false
       }
       return ['Navigator', 'Navigator64', 'SITL'].includes(boardname)
+    },
+    is_sitl(): boolean {
+      return autopilot.current_board?.name === 'SITL'
     },
     current_board(): FlightController | null {
       return autopilot.current_board
