@@ -5,7 +5,7 @@ import {
 import store from '@/store'
 import {
   AutopilotEndpoint, FirmwareInfo, FirmwareVehicleType,
-  FlightController, SerialEndpoint,
+  FlightController, SerialEndpoint, SITLFrame,
 } from '@/types/autopilot'
 
 @Module({
@@ -28,6 +28,8 @@ class AutopilotManagerStore extends VuexModule {
   vehicle_type: string | null = null
 
   firmware_vehicle_type: FirmwareVehicleType | null = null
+
+  sitl_frame: SITLFrame | null = null
 
   updating_endpoints = true
 
@@ -70,6 +72,13 @@ class AutopilotManagerStore extends VuexModule {
   @Mutation
   setFirmwareVehicleType(firmware_vehicle_type: FirmwareVehicleType | null): void {
     this.firmware_vehicle_type = firmware_vehicle_type
+  }
+
+  @Mutation
+  setSitlFrame(sitl_frame: SITLFrame | null): void {
+    // UNDEFINED means "no frame selected" — collapse it to null so consumers
+    // (e.g. the SITL <v-select>) have a single sentinel to handle.
+    this.sitl_frame = sitl_frame === SITLFrame.UNDEFINED ? null : sitl_frame
   }
 
   @Mutation
