@@ -100,6 +100,25 @@ class ZenohRouter:
         if self.zenoh_session.session:
             self.zenoh_session.session.declare_queryable(full_path, wrapper)
 
+    def add_publisher(
+        self,
+        path: str,
+        *,
+        absolute: bool = False,
+        publisher_options: dict[str, Any] | None = None,
+    ) -> zenoh.Publisher | None:
+        if absolute:
+            full_path = path
+        else:
+            full_path = self.prefix
+            if path:
+                full_path += f"/{path}"
+
+        if self.zenoh_session.session is None:
+            return None
+
+        return self.zenoh_session.session.declare_publisher(full_path, **(publisher_options or {}))
+
     def add_routes_to_zenoh(self, app: fastapi.FastAPI) -> None:
         queryables = []
         for route in app.router.routes:
