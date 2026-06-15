@@ -2,14 +2,20 @@ import json
 import logging
 from logging import LogRecord
 from types import FrameType
-from typing import TYPE_CHECKING, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import zenoh
-from commonwealth.utils.zenoh_helper import ZenohSession
+from commonwealth.utils.zenoh_helper import ZenohRouter
 from loguru import logger
 
 if TYPE_CHECKING:
     from loguru import Message
+
+LOG_PUBLISHER_OPTIONS: dict[str, Any] = {
+    "encoding": zenoh.Encoding.APPLICATION_JSON.with_schema("foxglove.Log"),
+    "congestion_control": zenoh.CongestionControl.BLOCK,
+    "priority": zenoh.Priority.DATA,
+}
 
 
 class InterceptHandler(logging.Handler):
@@ -68,8 +74,13 @@ def create_log_sink(service_name: str) -> Callable[["Message"], None]:
     Returns:
         A function that can be used as a loguru sink
     """
-    zenoh_session = ZenohSession(service_name)
+    zenoh_router = ZenohRouter(service_name)
     topic = f"services/{service_name}/log"
+    publisher = zenoh_router.add_publisher(
+        topic,
+        absolute=True,
+        publisher_options=LOG_PUBLISHER_OPTIONS,
+    )
 
     def sink(message: "Message") -> None:
         # Transform the message to the Foxglove log format
@@ -104,14 +115,10 @@ def create_log_sink(service_name: str) -> Callable[["Message"], None]:
         }
 
         try:
-            if zenoh_session.session is not None:
-                zenoh_session.session.put(
-                    topic,
-                    json.dumps(foxglove_log),
-                    encoding=zenoh.Encoding.APPLICATION_JSON.with_schema("foxglove.Log"),
-                )
+            if publisher is not None:
+                publisher.put(json.dumps(foxglove_log))
         except Exception as e:
-            logger.debug(f"Failed to publish log to zenoh session: {e}")
+            logger.debug(f"Failed to publish log to {topic}: {e}")
         # fmt: on
 
     return sink
