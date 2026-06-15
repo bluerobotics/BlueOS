@@ -145,7 +145,12 @@ class ConsoleLogger {
       const topic = `frontend/${frontend.frontend_id}/logs`
       const payload = JSON.stringify(message)
 
+      // put() is async in zenoh 1.9; swallow rejections via `originalConsole` so a failed publish
+      // cannot surface as an `unhandledrejection` and re-enter `publishMessage` (infinite feedback loop).
       this.session.put(topic, payload, { encoding: ConsoleLogger.LOG_ENCODING })
+        .catch((publishError) => {
+          this.originalConsole.error('[ConsoleLogger] Failed to publish message:', publishError)
+        })
     } catch (error) {
       this.originalConsole.error('[ConsoleLogger] Failed to publish message:', error)
     }
