@@ -1,4 +1,20 @@
-import { Config, QueryTarget, Receiver, RecvErr, Sample, Session, Subscriber } from '@eclipse-zenoh/zenoh-ts'
+import { ChannelReceiver, Config, QueryTarget, Reply, Sample, Session, Subscriber } from '@eclipse-zenoh/zenoh-ts'
+
+// zenoh-ts 1.9 no longer exports Receiver/RecvErr; the get() channel rejects receive() on close
+// (and the query has its own timeout), so we just map that rejection to Disconnected.
+export enum RecvErr {
+  Disconnected,
+}
+
+export type Receiver = ChannelReceiver<Reply>
+
+export async function receiveQueryReply(receiver: Receiver): Promise<Reply | RecvErr> {
+  try {
+    return await receiver.receive()
+  } catch {
+    return RecvErr.Disconnected
+  }
+}
 
 class ZenohManager {
   private static instance: ZenohManager
@@ -38,11 +54,11 @@ class ZenohManager {
       return null
     }
 
-    const receiver: Receiver | void = session.get(key, {
+    const receiver = await session.get(key, {
       target,
     })
 
-    if (!(receiver instanceof Receiver)) {
+    if (!receiver) {
       console.error('Failed to create query receiver. No queryable found or connection error.')
       return null
     }
@@ -51,7 +67,7 @@ class ZenohManager {
       setTimeout(() => resolve(null), timeout)
     })
 
-    const replyPromise = receiver.receive()
+    const replyPromise = receiveQueryReply(receiver)
     const reply = await Promise.race([replyPromise, timeoutPromise])
 
     if (reply === null || reply === RecvErr.Disconnected) {
@@ -67,7 +83,7 @@ class ZenohManager {
 
     const payload = (reply as { result: () => Sample }).result()
     try {
-      return JSON.parse(payload.payload().to_string())
+      return JSON.parse(payload.payload().toString())
     } catch (error) {
       console.error('Error parsing response:', error)
       return null
@@ -81,7 +97,7 @@ class ZenohManager {
       return null
     }
 
-    return session.declare_subscriber(topic, {
+    return session.declareSubscriber(topic, {
       handler,
     })
   }

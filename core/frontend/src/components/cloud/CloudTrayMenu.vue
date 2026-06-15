@@ -174,7 +174,7 @@
 
 <script lang="ts">
 import {
-  QueryTarget, Receiver, RecvErr, ReplyError, Sample, Session, Subscriber,
+  QueryTarget, ReplyError, Sample, Session, Subscriber,
 } from '@eclipse-zenoh/zenoh-ts'
 import axios from 'axios'
 import { StatusCodes } from 'http-status-codes'
@@ -191,7 +191,7 @@ import {
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import PullProgress from '@/components/utils/PullProgress.vue'
 import filebrowser from '@/libs/filebrowser'
-import zenoh from '@/libs/zenoh'
+import zenoh, { receiveQueryReply, RecvErr } from '@/libs/zenoh'
 import bag from '@/store/bag'
 import { FilebrowserFile } from '@/types/filebrowser'
 import { InstalledExtensionData, RunningContainer } from '@/types/kraken'
@@ -447,30 +447,26 @@ export default Vue.extend({
       }
 
       try {
-        const receiver: void | Receiver = this.file_sync_session.get(topic, {
+        const receiver = await this.file_sync_session.get(topic, {
           target: QueryTarget.BestMatching,
         })
 
-        if (!(receiver instanceof Receiver)) {
+        if (!receiver) {
           console.warn(`[CloudTrayMenu] Query for ${topic} returned void receiver.`)
           return null
         }
 
-        let reply = await receiver.receive()
+        let reply = await receiveQueryReply(receiver)
         while (reply !== RecvErr.Disconnected) {
-          if (reply === RecvErr.MalformedReply) {
-            console.warn(`[CloudTrayMenu] Malformed reply while querying ${topic}.`)
-          } else {
-            const response = reply.result()
-            if (response instanceof Sample) {
-              const payload = response.payload().to_string()
-              return this.parseFileSyncQueue(payload)
-            }
-            const errorResponse: ReplyError = response
-            console.warn(`[CloudTrayMenu] Query error for ${topic}:`, errorResponse.payload().to_string())
+          const response = reply.result()
+          if (response instanceof Sample) {
+            const payload = response.payload().toString()
+            return this.parseFileSyncQueue(payload)
           }
+          const errorResponse: ReplyError = response
+          console.warn(`[CloudTrayMenu] Query error for ${topic}:`, errorResponse.payload().toString())
 
-          reply = await receiver.receive()
+          reply = await receiveQueryReply(receiver)
         }
       } catch (error) {
         console.error(`[CloudTrayMenu] Failed to query ${topic}:`, error)
@@ -518,13 +514,12 @@ export default Vue.extend({
       }
 
       try {
-        this.uploading_subscriber = await this.file_sync_session.declare_subscriber(
+        this.uploading_subscriber = await this.file_sync_session.declareSubscriber(
           MAJOR_TOM_FILE_SYNC_UPLOADING_TOPIC,
           {
             handler: (sample: Sample) => {
               this.handleUploadingSample(sample)
             },
-            history: true,
           },
         )
       } catch (error) {
@@ -533,7 +528,7 @@ export default Vue.extend({
     },
     handleUploadingSample(sample: Sample): void {
       try {
-        const payload = sample.payload().to_string()
+        const payload = sample.payload().toString()
         const event = JSON.parse(payload) as FileSyncUploadingEvent
         const transfer = this.normalizeUploadingEvent(event)
         if (!transfer) {

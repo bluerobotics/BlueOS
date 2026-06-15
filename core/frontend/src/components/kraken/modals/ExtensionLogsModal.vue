@@ -214,7 +214,7 @@ export default Vue.extend({
       this.modal_subscriber = await kraken.createExtensionLogsSubscriber(topic, this.handleSubscriber)
     },
     async handleSubscriber(sample: Sample) {
-      const payloadString = sample.payload().to_string()
+      const payloadString = sample.payload().toString()
 
       let message = payloadString
       try {
