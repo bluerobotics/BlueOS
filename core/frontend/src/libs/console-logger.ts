@@ -34,7 +34,9 @@ class ConsoleLogger {
 
   private static readonly STACK_LINE_REGEX = /\(?([^\s()]+):(\d+):\d+\)?/
 
-  private static readonly LOG_ENCODING = Encoding.from_string(Encoding.APPLICATION_JSON.toString())
+  private static readonly LOG_ENCODING = Encoding.fromString(
+    Encoding.APPLICATION_JSON.toString(),
+  ).withSchema('foxglove.Log')
 
   readonly originalConsole: {
     log: typeof console.log
@@ -52,8 +54,6 @@ class ConsoleLogger {
       error: console.error,
       debug: console.debug,
     }
-
-    ConsoleLogger.LOG_ENCODING.with_schema('foxglove.Log')
   }
 
   async initialize(): Promise<void> {
