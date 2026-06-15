@@ -118,9 +118,6 @@ export default Vue.extend({
           container,
           boxSelectionEnabled: false,
           elements,
-          ready: () => {
-            this.makeEvents(this.cy)
-          },
           layout: {
             name: 'fcose',
             animationDuration: 1500,
