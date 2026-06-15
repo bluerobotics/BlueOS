@@ -114,7 +114,10 @@ export default Vue.extend({
         const elements = this.prepareCytoscapeElements()
         cytoscape.use(fcose)
 
-        this.cy = cytoscape({
+        // Object.freeze keeps Vue 2 from making the cytoscape Core deeply reactive; without it the
+        // fcose layout's per-frame position mutations trigger reactivity over the whole Core and
+        // peg the CPU/freeze the tab.
+        this.cy = Object.freeze(cytoscape({
           container,
           boxSelectionEnabled: false,
           elements,
@@ -128,7 +131,7 @@ export default Vue.extend({
             nodeRepulsion: 25000,
           },
           style: this.getCytoscapeStyle(),
-        })
+        }))
 
         console.log('[Zenoh Network] Cytoscape initialized successfully')
       } catch (error) {
