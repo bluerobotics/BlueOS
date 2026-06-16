@@ -77,8 +77,8 @@
         <v-card
           outlined
           class="parameter-card"
-          :disabled="!trimParam"
-          :class="{ 'disabled-card': !trimParam }"
+          :disabled="!resolvedTrimParam?.name"
+          :class="{ 'disabled-card': !resolvedTrimParam?.name }"
         >
           <v-card-text class="py-2">
             <inline-parameter-editor
