@@ -323,7 +323,7 @@ import wifi from '@/store/wifi'
 import { Firmware, Vehicle, vehicleTypeFromString } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 import back_axios from '@/utils/api'
-import { sleep } from '@/utils/helper_functions'
+import { fetchWithVehicleFallback, sleep } from '@/utils/helper_functions'
 import { canUseModelViewer, ensureModelViewer } from '@/utils/model_viewer_support'
 
 import ActionStepper, { Configuration, ConfigurationStatus } from './ActionStepper.vue'
@@ -761,7 +761,7 @@ export default Vue.extend({
       }
     },
     async fetchScript(script: string): Promise<string> {
-      const response = await fetch(`${REPOSITORY_ROOT}/scripts/ardupilot/${script}`)
+      const response = await fetchWithVehicleFallback(`${REPOSITORY_ROOT}/scripts/ardupilot/${script}`)
       return response.text()
     },
     validateParams(): boolean {
