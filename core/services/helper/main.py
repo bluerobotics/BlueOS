@@ -161,6 +161,7 @@ class Helper:
         9120,  # Pardal
         9134,  # Kraken
         9150,  # Recorder Extractor
+        9152,  # Customization
         27353,  # Bridget
     }
     SKIP_PORTS: Set[int] = {
