@@ -16,6 +16,7 @@ members = [
     "cable-guy",
     "commander",
     "commonwealth",
+    "customization",
     "disk-usage",
     "nmea-injector",
     "pardal",
@@ -219,6 +220,7 @@ dependencies = [
     { name = "cable-guy" },
     { name = "commander" },
     { name = "commonwealth" },
+    { name = "customization" },
     { name = "disk-usage" },
     { name = "nmea-injector" },
     { name = "pardal" },
@@ -261,6 +263,7 @@ requires-dist = [
     { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commander", virtual = "services/commander" },
     { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "customization", virtual = "services/customization" },
     { name = "disk-usage", virtual = "services/disk_usage" },
     { name = "nmea-injector", virtual = "services/nmea_injector" },
     { name = "pardal", virtual = "services/pardal" },
@@ -502,6 +505,31 @@ wheels = [
 [package.optional-dependencies]
 toml = [
     { name = "tomli", marker = "python_full_version <= '3.11'" },
+]
+
+[[package]]
+name = "customization"
+version = "0.1.0"
+source = { virtual = "services/customization" }
+dependencies = [
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "python-multipart" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "fastapi", specifier = "==0.105.0" },
+    { name = "fastapi-versioning", specifier = "==0.9.1" },
+    { name = "loguru", specifier = "==0.5.3" },
+    { name = "pydantic", specifier = "==1.10.12" },
+    { name = "python-multipart", specifier = "==0.0.5" },
+    { name = "uvicorn", specifier = "==0.18.0" },
 ]
 
 [[package]]
