@@ -11,25 +11,25 @@
     </v-icon>
     <v-icon
       v-if="cpu_temperature_limit_reached"
+      v-tooltip="`CPU temperature too high (${cpu_temperature} ºC), please cool down your vehicle!`"
       class="px-1 blinking white-shadow"
       color="error"
-      :title="`CPU temperature too high (${cpu_temperature} ºC), please cool down your vehicle!`"
     >
       mdi-thermometer
     </v-icon>
     <v-icon
       v-if="cpu_throttled"
+      v-tooltip="`CPU is throttled. Performance may be affected. Please check your power supply and cooling!`"
       class="px-1 blinking white-shadow"
       color="error"
-      :title="`CPU is throttled. Performance may be affected. Please check your power supply and cooling!`"
     >
       mdi-gauge-empty
     </v-icon>
     <v-icon
       v-if="cpu_undervoltage"
+      v-tooltip="`CPU has reported low voltage. Please check your power supply!`"
       class="px-1 blinking white-shadow"
       color="error"
-      :title="`CPU has reported low voltage. Please check your power supply!`"
     >
       mdi-lightning-bolt
     </v-icon>
@@ -49,17 +49,17 @@
         >
           <v-icon
             v-if="heartbeat_age() < time_limit_heartbeat"
+            v-tooltip="heartbeat_message()"
             class="px-1"
             :color="heartbeat_color()"
-            :title="heartbeat_message()"
           >
             mdi-heart-pulse
           </v-icon>
           <v-icon
             v-if="heartbeat_age() >= time_limit_heartbeat"
+            v-tooltip="`MAVLink heartbeat lost`"
             class="px-1 white-shadow"
             color="error"
-            title="MAVLink heartbeat lost"
           >
             mdi-heart-broken
           </v-icon>
