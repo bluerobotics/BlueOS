@@ -19,6 +19,7 @@ members = [
     "cable-guy",
     "commander",
     "commonwealth",
+    "customization",
     "filebrowser",
     "helper",
     "kraken",
@@ -266,6 +267,7 @@ dependencies = [
     { name = "cable-guy" },
     { name = "commander" },
     { name = "commonwealth" },
+    { name = "customization" },
     { name = "filebrowser" },
     { name = "helper" },
     { name = "kraken" },
@@ -287,6 +289,7 @@ requires-dist = [
     { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commander", virtual = "services/commander" },
     { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "customization", virtual = "services/customization" },
     { name = "filebrowser", editable = "libs/filebrowser" },
     { name = "helper", virtual = "services/helper" },
     { name = "kraken", virtual = "services/kraken" },
@@ -504,6 +507,31 @@ aiohttp = [
 ]
 swagger-ui = [
     { name = "swagger-ui-bundle" },
+]
+
+[[package]]
+name = "customization"
+version = "0.1.0"
+source = { virtual = "services/customization" }
+dependencies = [
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "python-multipart" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "fastapi", specifier = "==0.105.0" },
+    { name = "fastapi-versioning", specifier = "==0.9.1" },
+    { name = "loguru", specifier = "==0.5.3" },
+    { name = "pydantic", specifier = "==1.10.12" },
+    { name = "python-multipart", specifier = "==0.0.5" },
+    { name = "uvicorn", specifier = "==0.13.4" },
 ]
 
 [[package]]
