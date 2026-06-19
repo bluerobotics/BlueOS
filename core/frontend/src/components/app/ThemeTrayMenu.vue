@@ -1,8 +1,8 @@
 <template>
   <v-icon
+    v-tooltip="`Change theme between dark and light mode.`"
     height="100%"
     color="white"
-    title="Change theme between dark and light mode."
     @click="toggleDarkTheme"
   >
     {{ settings.is_dark_theme ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}
