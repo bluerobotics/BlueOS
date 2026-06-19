@@ -185,8 +185,8 @@ export default {
           },
           message: {
             type: 'SET_GPS_GLOBAL_ORIGIN',
-            latitude: lat * 1e7,
-            longitude: lon * 1e7,
+            latitude: Math.round(lat * 1e7),
+            longitude: Math.round(lon * 1e7),
             altitude: 0,
             target_system: autopilot_data.system_id,
             time_usec: 0,
