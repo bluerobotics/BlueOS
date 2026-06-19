@@ -14,7 +14,6 @@ from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, Depends, FastAPI, HTTPException
 from fastapi import Path as FastPath
-from fastapi import Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -95,15 +94,8 @@ def flush_now() -> None:
     write_db()
 
 
-async def parse_nullable_body(request: Request) -> Any:
-    body = await request.body()
-    if not body:
-        return None
-
-    try:
-        return json.loads(body)
-    except json.JSONDecodeError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid JSON: {e}") from e
+async def parse_nullable_body(payload: Any | None = Body(None)) -> Any:
+    return payload
 
 
 @app.post("/overwrite")
