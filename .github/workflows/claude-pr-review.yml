@@ -13,9 +13,16 @@ jobs:
     name: Claude PR Review
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Outside collaborators without write access cannot be reviewed: the
+    # claude-code-action performs its own actor-permission check and hard-fails
+    # on a `read`-only actor. Only OWNER/MEMBER/COLLABORATOR authors normally
+    # have write access, so gate on author_association to cleanly SKIP
+    # the review (neutral) for outside contributors instead of failing the run.
     if: >-
       ${{ !github.event.pull_request.draft
-          && github.event.pull_request.user.type != 'Bot' }}
+          && github.event.pull_request.user.type != 'Bot'
+          && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'),
+                      github.event.pull_request.author_association) }}
     permissions:
       contents: read
       pull-requests: write
