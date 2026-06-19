@@ -15,9 +15,9 @@
       >
         <v-badge
           v-if="gps_connected"
+          v-tooltip="`${connection_description} (Number of satellites: ${satellites_number})`"
           :content="satellites_number"
           :value="satellites_number"
-          :title="`${connection_description} (Number of satellites: ${satellites_number})`"
           :color="number_color"
           :dot="!mouse_hover"
           v-bind="attrs"
