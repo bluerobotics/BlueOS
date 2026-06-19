@@ -17,8 +17,8 @@
         v-on="on"
       >
         <v-icon
+          v-tooltip="tooltip"
           color="white"
-          :title="tooltip"
         >
           {{ icon }}
         </v-icon>
