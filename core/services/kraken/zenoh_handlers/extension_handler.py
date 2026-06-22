@@ -1,53 +1,101 @@
-from typing import Any
+import asyncio
+import json
+from typing import Any, AsyncGenerator, List, cast
 
 from commonwealth.utils.zenoh_helper import ZenohRouter
-from extension_logs import ExtensionLogPublisher
-from harbor import ContainerManager
+from extension.extension import Extension
 from loguru import logger
-from settings import get_extension_settings
 
 
 class ExtensionHandlers:
+    INSTALL_PROGRESS_TOPIC = "extension/install/progress"
+
     def __init__(self, router: ZenohRouter) -> None:
         self.router = router
+        self.router.ensure_publisher(self.INSTALL_PROGRESS_TOPIC)
 
-    async def logs_request_handler(self, extension_name: str) -> dict[str, Any]:
-        if not extension_name:
-            return {"error": "extension_name parameter is required"}
-
+    @staticmethod
+    async def _install_progress_stream(identifier: str, extension: Extension) -> AsyncGenerator[str, None]:
         try:
-            extensions = get_extension_settings()
-            extension = next((ext for ext in extensions if extension_name in (ext.identifier, ext.name)), None)
+            async for chunk in extension.install():
+                try:
+                    payload = json.loads(chunk)
+                except (TypeError, ValueError) as e:
+                    logger.debug(f"Failed to parse install progress chunk: {e}")
+                    continue
+                payload["identifier"] = identifier
+                yield json.dumps(payload, default=str)
+        except Exception as error:
+            logger.exception(f"Install of {identifier} failed")
+            yield json.dumps({"identifier": identifier, "error": str(error)}, default=str)
 
-            if not extension:
-                return {"error": f"Extension {extension_name} not found"}
+    async def install_handler(self, identifier: str, tag: str = "", stable: str = "true") -> dict[str, str]:
+        """
+        Install an extension by its identifier and tag, if tag is not provided it will install the latest stable version.
+        """
+        if tag:
+            extension = cast(Extension, await Extension.from_manifest(identifier, tag))
+        else:
+            extension = await Extension.from_latest(identifier, stable.lower() == "true")
 
-            if not extension.enabled:
-                return {"error": f"Extension {extension_name} is not enabled"}
+        on_complete = json.dumps({"identifier": identifier, "status": "complete"})
+        self.router.publish_from_generator(
+            self.INSTALL_PROGRESS_TOPIC,
+            self._install_progress_stream(identifier, extension),
+            on_complete=on_complete,
+        )
+        return {"status": "started", "identifier": identifier}
 
-            topic = ExtensionLogPublisher._topic_for(extension)
+    async def uninstall_handler(self, identifier: str, tag: str = "") -> None:
+        """
+        Uninstall all versions of an extension by its identifier or just a specific version if a tag is provided.
+        """
+        if tag:
+            extension = cast(Extension, await Extension.from_settings(identifier, tag))
+            await extension.uninstall()
+        else:
+            extensions = cast(List[Extension], await Extension.from_settings(identifier))
+            await asyncio.gather(*[ext.uninstall() for ext in extensions])
 
-            container_name = extension.container_name()
+    async def enable_handler(self, identifier: str, tag: str) -> None:
+        """
+        Enables an extension by its identifier and tag.
+        """
+        extension = cast(Extension, await Extension.from_settings(identifier, tag))
+        await extension.enable()
 
-            raw_logs = await ContainerManager.get_container_historical_logs(container_name)
-            formatted_messages = []
-            for raw_line in raw_logs:
-                level, _ = ExtensionLogPublisher._extract_level(raw_line)
-                formatted_messages.append(
-                    {
-                        "level": level,
-                        "message": raw_line,
-                    }
-                )
-            return {
-                "status": "success",
-                "messages": formatted_messages,
-                "total_lines": len(formatted_messages),
-                "topic": topic,
-            }
-        except Exception as e:
-            logger.exception(f"Error handling logs request for {extension_name}")
-            return {"error": str(e), "error_type": type(e).__name__}
+    async def disable_handler(self, identifier: str) -> None:
+        """
+        Disables current running extension by its identifier.
+        """
+        extension = await Extension.from_running(identifier)
+        await extension.disable()
+
+    async def restart_handler(self, identifier: str) -> None:
+        """
+        Restart current running extension by its identifier.
+        """
+        extension = await Extension.from_running(identifier)
+        await extension.restart()
+
+    async def fetch_handler(self) -> list[dict[str, Any]]:
+        """
+        List details of all installed extensions.
+        """
+        extensions = cast(List[Extension], await Extension.from_settings())
+        return [ext.source.model_dump() for ext in extensions if ext.source.identifier != ""]
+
+    async def keep_uploaded_extension_alive_handler(self, temp_tag: str) -> None:
+        """
+        Refresh the keep-alive timestamp for a temporary extension while the user is editing metadata.
+        """
+        Extension.keep_temporary_extension_alive(temp_tag)
 
     def register_queryables(self) -> None:
-        self.router.add_queryable("extension/logs/request", self.logs_request_handler)
+        self.router.add_queryable("extension/fetch", self.fetch_handler)
+        self.router.add_queryable("extension/install", self.install_handler)
+        self.router.add_queryable("extension/uninstall", self.uninstall_handler)
+        self.router.add_queryable("extension/enable", self.enable_handler)
+        self.router.add_queryable("extension/disable", self.disable_handler)
+        self.router.add_queryable("extension/restart", self.restart_handler)
+        self.router.add_queryable("extension/upload/keep-alive", self.keep_uploaded_extension_alive_handler)
