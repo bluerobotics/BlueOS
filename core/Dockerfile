@@ -1,5 +1,5 @@
 # Override with --build-arg BASE_IMAGE=blueos-base:dev for local builds
-ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.5
+ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.6
 
 # Build frontend
 FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontend-builder
