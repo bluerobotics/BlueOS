@@ -13,6 +13,7 @@ from urllib.parse import quote
 
 from aiocache import cached
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.events import events
 from commonwealth.utils.general import file_is_open_async
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
@@ -35,6 +36,7 @@ processing_mcap_files: set[str] = set()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 init_logger(SERVICE_NAME)
+events.publish_start()
 logger.info("Starting Recorder Extractor service")
 
 
@@ -456,6 +458,8 @@ async def main() -> None:
         config = Config(app=app, host="0.0.0.0", port=PORT, log_config=None)
         server = Server(config)
 
+        events.publish_running()
+        events.publish_health("ready", {"port": PORT})
         await server.serve()
     finally:
         extractor_task.cancel()

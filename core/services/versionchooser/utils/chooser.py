@@ -249,7 +249,6 @@ class VersionChooser:
                 "Binds": [
                     f"{HOME}/.config/blueos/bootstrap:/root/.config/bootstrap",
                     "/var/run/docker.sock:/var/run/docker.sock",
-                    "/var/logs/blueos:/var/logs/blueos",
                 ],
                 "LogConfig": {
                     "Type": "json-file",

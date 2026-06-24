@@ -12,6 +12,7 @@ from typing import Any, AsyncGenerator
 import appdirs
 from commonwealth.utils.apis import GenericErrorHandlingRoute
 from commonwealth.utils.commands import run_command
+from commonwealth.utils.events import events
 from commonwealth.utils.general import delete_everything, delete_everything_stream
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
@@ -23,11 +24,12 @@ from loguru import logger
 from uvicorn import Config, Server
 
 SERVICE_NAME = "commander"
-LOG_FOLDER_PATH = os.environ.get("BLUEOS_LOG_FOLDER_PATH", "/var/logs/blueos")
+LOG_FOLDER_PATH = os.environ.get("BLUEOS_LOG_FOLDER_PATH", "/usr/blueos/system_logs")
 MAVLINK_LOG_FOLDER_PATH = os.environ.get("BLUEOS_MAVLINK_LOG_FOLDER_PATH", "/shortcuts/ardupilot_logs/logs/")
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 app = FastAPI(
     title="Commander API",
@@ -298,6 +300,11 @@ async def main() -> None:
     # Running uvicorn with log disabled so loguru can handle it
     config = Config(app=app, host="0.0.0.0", port=9100, log_config=None)
     server = Server(config)
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 9100})
+
     await server.serve()
 
 

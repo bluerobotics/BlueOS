@@ -10,6 +10,7 @@ from api.manager import EthernetManager, NetworkInterface, NetworkInterfaceMetri
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from config import SERVICE_NAME
@@ -22,6 +23,7 @@ from uvicorn import Config, Server
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 manager = EthernetManager()
 
@@ -185,6 +187,10 @@ async def main() -> None:
 
     await manager.initialize()
     asyncio.create_task(manager.watchdog())
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 9090})
 
     await server.serve()
 

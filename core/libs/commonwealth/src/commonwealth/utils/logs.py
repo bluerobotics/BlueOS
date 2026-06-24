@@ -5,6 +5,8 @@ from types import FrameType
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
 import zenoh
+from commonwealth.utils.events import events
+from commonwealth.utils.process import get_process_name
 from commonwealth.utils.zenoh_helper import ZenohSession
 from loguru import logger
 
@@ -44,6 +46,7 @@ def validate_service_name(service_name: str) -> None:
 def init_logger(service_name: str) -> None:
     try:
         validate_service_name(service_name)
+        events.initialize(service_name)
         logger.add(create_log_sink(service_name), serialize=True)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
@@ -70,6 +73,7 @@ def create_log_sink(service_name: str) -> Callable[["Message"], None]:
     """
     zenoh_session = ZenohSession(service_name)
     topic = f"services/{service_name}/log"
+    process_name = get_process_name()
 
     def sink(message: "Message") -> None:
         # Transform the message to the Foxglove log format
@@ -98,7 +102,7 @@ def create_log_sink(service_name: str) -> Callable[["Message"], None]:
             },
             "level": LEVEL_MAP.get(record["level"].name.upper(), LEVEL_MAP["UNKNOWN"]),
             "message": record["message"],
-            "name": record["name"],
+            "name": zenoh_session.format_source_name(process_name),
             "file": record["file"].name,
             "line": record["line"],
         }

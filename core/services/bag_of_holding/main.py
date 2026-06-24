@@ -8,6 +8,7 @@ from typing import Any, Dict
 import appdirs
 import dpath
 from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.events import events
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import Body, Depends, FastAPI, HTTPException
@@ -24,6 +25,7 @@ FILE_PATH = Path(appdirs.user_config_dir(SERVICE_NAME, "db.json"))
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
+events.publish_start()
 
 app = FastAPI(
     title="Bag of Holding API",
@@ -131,6 +133,10 @@ async def main() -> None:
     # Running uvicorn with log disabled so loguru can handle it
     config = Config(app=app, host="0.0.0.0", port=9101, log_config=None)
     server = Server(config)
+
+    # Publish running event when service is ready
+    events.publish_running()
+    events.publish_health("ready", {"port": 9101})
 
     await server.serve()
 
