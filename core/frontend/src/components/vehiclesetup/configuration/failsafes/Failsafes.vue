@@ -119,6 +119,13 @@ export default {
           generalDescription: 'Triggers when the voltage goes below specified thresholds.\n This can help to avoid '
           + 'damage to the battery and potentially loss of the vehicle.',
           image: (await import('@/assets/img/configuration/failsafes/battery.svg')).default as string,
+          dependsOn: {
+            paramName: 'BATT_MONITOR',
+            disabledValue: 0,
+            message: 'Battery monitoring is disabled (BATT_MONITOR = 0). '
+              + 'Enable a battery monitor on the Power configuration page '
+              + 'to use the low-battery failsafe.',
+          },
           params: [
             // TODO: add support for the MAH params and coloumb counting
             {
