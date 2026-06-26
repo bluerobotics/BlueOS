@@ -1,8 +1,11 @@
 <template>
   <v-card
-    v-if="all_required_params_are_available"
+    v-if="failsafe_valid_for_current_vehicle"
     elevation="2"
-    :class="{ 'disabled-failsafe': is_disabled }"
+    :class="{
+      'disabled-failsafe': is_disabled && !dependency_unmet,
+      'unavailable-failsafe': dependency_unmet,
+    }"
     class="mb-4 mt-4 pa-4 d-flex flex-row  flex-grow-0 justify-left failsafe-card"
   >
     <div class="ma-4">
@@ -15,8 +18,17 @@
       <v-card-text>
         {{ failsafeDefinition.generalDescription }}
       </v-card-text>
+      <v-alert
+        v-if="dependency_unmet || !all_required_params_are_available"
+        type="warning"
+        text
+        dense
+        class="mx-4 mb-2"
+      >
+        {{ dependency_message }}
+      </v-alert>
       <div>
-        <div v-for="param in available_params" :key="param.name">
+        <div v-for="param in failsafeDefinition.params" :key="param.name">
           <v-row class="justify-right">
             <v-col :key="param.name" class="action-col" cols="7">
               <v-icon v-if="param.icon">
@@ -31,6 +43,13 @@
                 :disabled="is_disabled && param.name !== actionParamName"
                 :param="params[param.name]"
               />
+              <template v-else>
+                <v-text-field
+                  disabled
+                  class="caption"
+                  :value="`${param.name} not found`"
+                />
+              </template>
             </v-col>
           </v-row>
         </div>
@@ -87,6 +106,33 @@ export default Vue.extend({
       }
       return this.params[controlParam.name].value === 0
     },
+    dependency_unmet(): boolean {
+      const dep = this.failsafeDefinition.dependsOn
+      if (!dep) {
+        return false
+      }
+      // If the dependency parameter itself hasn't loaded yet, don't show a
+      // spurious notice; once params load, this re-evaluates to the truth.
+      const depParam = autopilot_data.parameter(dep.paramName)
+      if (!depParam) {
+        return false
+      }
+      return depParam.value === dep.disabledValue
+    },
+    failsafe_valid_for_current_vehicle(): boolean {
+      const supported = this.failsafeDefinition.supportedVehicles
+      if (!supported) {
+        return true
+      }
+      const { firmware_vehicle_type } = autopilot
+      if (firmware_vehicle_type == null) {
+        return false
+      }
+      return supported.includes(firmware_vehicle_type)
+    },
+    dependency_message(): string {
+      return this.failsafeDefinition.dependsOn?.message ?? ''
+    },
     actionParamName(): string | undefined {
       return this.findControlParam()?.name
     },
@@ -135,18 +181,20 @@ i.svg-icon svg {
   margin: auto;
 }
 
-.disabled-failsafe {
+.disabled-failsafe,
+.unavailable-failsafe {
   border: 1px solid var(--v-warning-base) !important;
   position: relative;
 }
 
-.disabled-failsafe:hover {
+.disabled-failsafe:hover,
+.unavailable-failsafe:hover {
   border-color: var(--v-warning-lighten1) !important;
   box-shadow: 0 2px 8px rgba(224, 166, 0, 0.2);
 }
 
-.disabled-failsafe::after {
-  content: 'DISABLED';
+.disabled-failsafe::after,
+.unavailable-failsafe::after {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -161,7 +209,16 @@ i.svg-icon svg {
   pointer-events: none;
 }
 
-.disabled-failsafe .svg-icon {
+.disabled-failsafe::after {
+  content: 'DISABLED';
+}
+
+.unavailable-failsafe::after {
+  content: 'UNAVAILABLE';
+}
+
+.disabled-failsafe .svg-icon,
+.unavailable-failsafe .svg-icon {
   opacity: 0.7;
   filter: grayscale(30%);
 }
