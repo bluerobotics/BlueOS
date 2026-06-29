@@ -159,31 +159,30 @@
               Adjust if the vehicle reports current draw when there is none flowing.
             </v-alert>
           </div>
-
-          <v-row v-if="capacityParam" dense align="center">
-            <v-col cols="5" class="label-col">
-              <parameter-label label="Battery Capacity" :param="capacityParam" />
-            </v-col>
-            <v-col cols="7">
-              <inline-parameter-editor
-                :param="capacityParam"
-                :auto-set="true"
-              />
-            </v-col>
-          </v-row>
-
-          <v-row v-if="armVoltParam" dense align="center">
-            <v-col cols="5" class="label-col">
-              <parameter-label label="Min Arming Voltage" :param="armVoltParam" />
-            </v-col>
-            <v-col cols="7">
-              <inline-parameter-editor
-                :param="armVoltParam"
-                :auto-set="true"
-              />
-            </v-col>
-          </v-row>
         </v-expand-transition>
+        <v-row v-if="capacityParam" dense align="center">
+          <v-col cols="5" class="label-col">
+            <parameter-label label="Battery Capacity" :param="capacityParam" />
+          </v-col>
+          <v-col cols="7">
+            <inline-parameter-editor
+              :param="capacityParam"
+              :auto-set="true"
+            />
+          </v-col>
+        </v-row>
+
+        <v-row v-if="armVoltParam" dense align="center">
+          <v-col cols="5" class="label-col">
+            <parameter-label label="Min Arming Voltage" :param="armVoltParam" />
+          </v-col>
+          <v-col cols="7">
+            <inline-parameter-editor
+              :param="armVoltParam"
+              :auto-set="true"
+            />
+          </v-col>
+        </v-row>
 
         <v-dialog v-model="show_voltage_calc" max-width="400">
           <v-card class="pa-4">
