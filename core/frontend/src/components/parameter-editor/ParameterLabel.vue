@@ -1,24 +1,28 @@
 <template>
   <div class="d-flex align-center">
-    <span>{{ label }}</span>
+    <span :class="{ 'text--disabled': !param }">{{ label }}</span>
     <v-tooltip bottom>
       <template #activator="{ on, attrs }">
         <v-icon
           small
           class="ml-2"
+          :color="param ? undefined : 'warning'"
           v-bind="attrs"
           v-on="on"
         >
-          mdi-information
+          {{ param ? 'mdi-information' : 'mdi-alert-circle-outline' }}
         </v-icon>
       </template>
-      <div>
-        <strong>{{ param?.name }}</strong><br>
-        <span v-if="param?.description">Description: {{ param.description }}<br></span>
-        <span v-if="param?.range">Range: {{ param.range.low }} to {{ param.range.high }}<br></span>
-        <span v-if="param?.units">Units: {{ param.units }}<br></span>
-        <span v-if="param?.options">Options: {{ formatOptions ?? formattedOptions }}<br></span>
-        <span v-if="param?.rebootRequired">Requires reboot</span>
+      <div v-if="param">
+        <strong>{{ param.name }}</strong><br>
+        <span v-if="param.description">Description: {{ param.description }}<br></span>
+        <span v-if="param.range">Range: {{ param.range.low }} to {{ param.range.high }}<br></span>
+        <span v-if="param.units">Units: {{ param.units }}<br></span>
+        <span v-if="param.options">Options: {{ formatOptions ?? formattedOptions }}<br></span>
+        <span v-if="param.rebootRequired">Requires reboot</span>
+      </div>
+      <div v-else>
+        Parameter not found. It may not be available on this vehicle or firmware version.
       </div>
     </v-tooltip>
   </div>
@@ -37,8 +41,9 @@ export default Vue.extend({
       required: true,
     },
     param: {
-      type: Object as PropType<Parameter>,
-      required: true,
+      type: Object as PropType<Parameter | undefined>,
+      default: undefined,
+      required: false,
     },
     formatOptions: {
       type: String as PropType<string | null>,
