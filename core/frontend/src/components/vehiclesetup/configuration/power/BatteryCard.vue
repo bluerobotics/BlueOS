@@ -11,15 +11,33 @@
       </span>
     </v-card-title>
     <v-card-text>
+      <v-alert
+        v-if="reboot_required"
+        type="warning"
+        dense
+        text
+        class="mb-3 caption"
+      >
+        <div class="d-flex align-center">
+          <span class="flex-grow-1">
+            Some changes require a reboot of the autopilot before they take effect.
+            Parameters may stay unavailable until the autopilot reboots.
+          </span>
+          <reboot-button class="ml-2" />
+        </div>
+      </v-alert>
+
       <v-row dense align="center">
         <v-col cols="5" class="label-col">
           <parameter-label label="Battery Monitor" :param="monitorParam" />
         </v-col>
         <v-col cols="7">
           <inline-parameter-editor
+            v-if="monitorParam"
             :param="monitorParam"
             :auto-set="true"
           />
+          <span v-else class="caption text--disabled">Not available</span>
         </v-col>
       </v-row>
 
@@ -32,12 +50,14 @@
           </v-col>
           <v-col cols="7">
             <v-select
+              v-if="sensor_params_available"
               v-model="selected_sensor"
               :items="sensor_options"
               dense
               hide-details
               @change="applySensorPreset"
             />
+            <span v-else class="caption text--disabled">Not available</span>
           </v-col>
         </v-row>
 
@@ -57,43 +77,49 @@
           <div v-if="show_advanced">
             <v-divider class="my-2" />
 
-            <v-row v-if="voltPinParam" dense align="center">
+            <v-row dense align="center">
               <v-col cols="5" class="label-col">
                 <parameter-label label="Voltage Pin" :param="voltPinParam" />
               </v-col>
               <v-col cols="7">
                 <inline-parameter-editor
+                  v-if="voltPinParam"
                   :param="voltPinParam"
                   :auto-set="true"
                 />
+                <span v-else class="caption text--disabled">Not available</span>
               </v-col>
             </v-row>
 
-            <v-row v-if="currPinParam" dense align="center">
+            <v-row dense align="center">
               <v-col cols="5" class="label-col">
                 <parameter-label label="Current Pin" :param="currPinParam" />
               </v-col>
               <v-col cols="7">
                 <inline-parameter-editor
+                  v-if="currPinParam"
                   :param="currPinParam"
                   :auto-set="true"
                 />
+                <span v-else class="caption text--disabled">Not available</span>
               </v-col>
             </v-row>
 
-            <v-row v-if="voltMultParam" dense align="center">
+            <v-row dense align="center">
               <v-col cols="5" class="label-col">
                 <parameter-label label="Voltage Multiplier" :param="voltMultParam" />
               </v-col>
               <v-col cols="7" class="d-flex align-center">
                 <div class="flex-grow-1">
                   <inline-parameter-editor
+                    v-if="voltMultParam"
                     :param="voltMultParam"
                     :auto-set="true"
                   />
+                  <span v-else class="caption text--disabled">Not available</span>
                 </div>
                 <v-btn
-                  v-if="voltage != null"
+                  v-if="voltMultParam && voltage != null"
                   x-small
                   color="primary"
                   class="ml-2"
@@ -114,19 +140,21 @@
               If the reported voltage differs from a voltmeter reading, adjust the multiplier.
             </v-alert>
 
-            <v-row v-if="ampPerVoltParam" dense align="center">
+            <v-row dense align="center">
               <v-col cols="5" class="label-col">
                 <parameter-label label="Amps per Volt" :param="ampPerVoltParam" />
               </v-col>
               <v-col cols="7" class="d-flex align-center">
                 <div class="flex-grow-1">
                   <inline-parameter-editor
+                    v-if="ampPerVoltParam"
                     :param="ampPerVoltParam"
                     :auto-set="true"
                   />
+                  <span v-else class="caption text--disabled">Not available</span>
                 </div>
                 <v-btn
-                  v-if="voltage != null"
+                  v-if="ampPerVoltParam && voltage != null"
                   x-small
                   color="primary"
                   class="ml-2"
@@ -137,15 +165,17 @@
               </v-col>
             </v-row>
 
-            <v-row v-if="ampOffsetParam" dense align="center">
+            <v-row dense align="center">
               <v-col cols="5" class="label-col">
                 <parameter-label label="Amps Offset" :param="ampOffsetParam" />
               </v-col>
               <v-col cols="7">
                 <inline-parameter-editor
+                  v-if="ampOffsetParam"
                   :param="ampOffsetParam"
                   :auto-set="true"
                 />
+                <span v-else class="caption text--disabled">Not available</span>
               </v-col>
             </v-row>
 
@@ -160,27 +190,31 @@
             </v-alert>
           </div>
         </v-expand-transition>
-        <v-row v-if="capacityParam" dense align="center">
+        <v-row dense align="center">
           <v-col cols="5" class="label-col">
             <parameter-label label="Battery Capacity" :param="capacityParam" />
           </v-col>
           <v-col cols="7">
             <inline-parameter-editor
+              v-if="capacityParam"
               :param="capacityParam"
               :auto-set="true"
             />
+            <span v-else class="caption text--disabled">Not available</span>
           </v-col>
         </v-row>
 
-        <v-row v-if="armVoltParam" dense align="center">
+        <v-row dense align="center">
           <v-col cols="5" class="label-col">
             <parameter-label label="Min Arming Voltage" :param="armVoltParam" />
           </v-col>
           <v-col cols="7">
             <inline-parameter-editor
+              v-if="armVoltParam"
               :param="armVoltParam"
               :auto-set="true"
             />
+            <span v-else class="caption text--disabled">Not available</span>
           </v-col>
         </v-row>
 
@@ -336,6 +370,7 @@ export default Vue.extend({
   components: {
     'inline-parameter-editor': () => import('@/components/parameter-editor/InlineParameterEditor.vue'),
     ParameterLabel: () => import('@/components/parameter-editor/ParameterLabel.vue'),
+    'reboot-button': () => import('@/components/utils/RebootButton.vue'),
   },
   props: {
     title: { type: String, required: true },
@@ -361,8 +396,20 @@ export default Vue.extend({
     }
   },
   computed: {
+    reboot_required(): boolean {
+      return autopilot_data.reboot_required
+    },
     monitor_enabled(): boolean {
       return this.monitorParam != null && this.monitorParam.value !== 0
+    },
+    sensor_params_available(): boolean {
+      return [
+        this.voltPinParam,
+        this.currPinParam,
+        this.voltMultParam,
+        this.ampPerVoltParam,
+        this.ampOffsetParam,
+      ].every((param) => param != null)
     },
     sensor_options(): string[] {
       return [...SENSOR_PRESETS.map((p) => p.text), 'Other']
