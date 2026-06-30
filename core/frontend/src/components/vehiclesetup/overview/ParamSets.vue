@@ -44,18 +44,68 @@
           These are the recommended parameter sets for your vehicle and firmware version. Curated by Blue Robotics
         </p>
       </v-card-text>
-      <v-card-actions>
-        <v-btn
-          v-for="(paramSet, name) in filtered_param_sets"
-          :key="name"
-          color="primary"
-          @click="loadParams(name, paramSet)"
-        >
-          {{ name.split('/').pop() }}
-        </v-btn>
-        <p v-if="(Object.keys(filtered_param_sets).length === 0)">
+      <v-card-actions class="flex-wrap">
+        <p v-if="filtered_param_sets.length === 0">
           No parameters available for this setup
         </p>
+
+        <v-btn
+          v-for="item in current_param_sets"
+          :key="item.name"
+          color="primary"
+          @click="loadParams(item.name, item.paramset)"
+        >
+          {{ displayName(item.name) }}
+          <span class="version-tag ml-2">v{{ item.version_label }}</span>
+        </v-btn>
+
+        <p
+          v-if="current_param_sets.length === 0 && outdated_param_sets.length > 0"
+          class="ma-2 text--secondary full-row"
+        >
+          No parameter sets match your firmware version. Older sets are shown below.
+        </p>
+
+        <v-btn
+          v-if="current_param_sets.length > 0 && outdated_param_sets.length > 0"
+          text
+          small
+          @click="show_older = !show_older"
+        >
+          {{ show_older ? 'Hide' : 'Show' }}
+          {{ outdated_param_sets.length }}
+          older set{{ outdated_param_sets.length === 1 ? '' : 's' }}
+        </v-btn>
+
+        <template v-if="show_older || current_param_sets.length === 0">
+          <v-tooltip
+            v-for="item in outdated_param_sets"
+            :key="item.name"
+            bottom
+          >
+            <template #activator="{ on }">
+              <v-btn
+                color="warning"
+                outlined
+                @click="loadParams(item.name, item.paramset)"
+                v-on="on"
+              >
+                <v-icon
+                  left
+                  small
+                >
+                  mdi-alert
+                </v-icon>
+                {{ displayName(item.name) }}
+                <span class="version-tag ml-2">v{{ item.version_label }}</span>
+              </v-btn>
+            </template>
+            <span>
+              Outdated: built for firmware {{ item.version_label }}
+              (current is {{ current_version_label }})
+            </span>
+          </v-tooltip>
+        </template>
       </v-card-actions>
     </v-card>
     <ParameterLoader
@@ -95,6 +145,20 @@ import { frontend_service } from '@/types/frontend_services'
 const notifier = new Notifier(frontend_service)
 const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
+interface FilteredParamSet {
+  name: string
+  paramset: Dictionary<number>
+  version: SemVer
+  version_label: string
+  outdated: boolean
+}
+
+type Candidate = Omit<FilteredParamSet, 'outdated'> & { has_patch: boolean }
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 export default Vue.extend({
   name: 'ParamSets',
   components: {
@@ -111,6 +175,7 @@ export default Vue.extend({
     erasing: false,
     settings,
     show_warning: false,
+    show_older: false,
   }),
   computed: {
     board(): string | undefined {
@@ -122,30 +187,83 @@ export default Vue.extend({
     version(): SemVer | undefined {
       return autopilot.firmware_info?.version
     },
-    filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
-      const fw_patch = `${this.vehicle}/${this.version}/${this.board}`
-      const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}`
-      const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}`
+    filtered_param_sets(): FilteredParamSet[] {
+      if (!this.vehicle || !this.board || !this.version) {
+        return []
+      }
 
-      // returns a new dict where the keys start with the fullname
-      // e.g. "ArduSub/BlueROV2/4.0.3" -> "ArduSub/BlueROV2/4.0.3/BlueROV2"
+      // Match keys shaped like ".../<vehicle>/<X.Y[.Z]>/<board>/..."
+      // Trailing slash on the board avoids matching Navigator vs Navigator64, etc.
+      const pattern = new RegExp(
+        `/${escapeRegex(this.vehicle)}/(\\d+\\.\\d+(?:\\.\\d+)?)/${escapeRegex(this.board)}/`,
+        'i',
+      )
 
-      let fw_params = {}
-      // try to find a paramset that matches the firmware version, starting from patch and walking up to major
-      for (const string of [fw_patch, fw_minor, fw_major]) {
-        fw_params = Object.fromEntries(
-          Object.entries(this.all_param_sets).filter(
-            // We add a trailing slash to avoid matching Navigator and Navigator64, or any board with suffix
-            ([name]) => name.toLocaleLowerCase().includes(`${string.toLowerCase()}/`),
-          ),
-        )
-        if (Object.keys(fw_params).length > 0) {
-          break
+      const current = this.version
+      const candidates: Candidate[] = []
+
+      for (const [name, paramset] of Object.entries(this.all_param_sets)) {
+        const match = name.match(pattern)
+        if (!match) {
+          continue
         }
+
+        const version_label = match[1]
+        const has_patch = version_label.split('.').length === 3
+        let version: SemVer
+        try {
+          // Normalize "4.5" -> "4.5.0" so SemVer can parse it
+          version = new SemVer(has_patch ? version_label : `${version_label}.0`)
+        } catch {
+          continue
+        }
+
+        // Skip paramsets targeting a newer firmware than the one currently installed
+        if (version.compare(current) > 0) {
+          continue
+        }
+
+        candidates.push({
+          name, paramset, version, version_label, has_patch,
+        })
       }
-      return {
-        ...fw_params,
+
+      // Specificity: 2 = exact patch match, 1 = same major.minor, 0 = older
+      function specificity(c: Candidate): number {
+        if (c.has_patch && c.version.compare(current) === 0) return 2
+        if (c.version.major === current.major && c.version.minor === current.minor) return 1
+        return 0
       }
+      const scored = candidates.map((c) => ({ candidate: c, score: specificity(c) }))
+      const best = scored.reduce((max, s) => Math.max(max, s.score), 0)
+
+      const result: FilteredParamSet[] = scored.map(({ candidate, score }) => ({
+        name: candidate.name,
+        paramset: candidate.paramset,
+        version: candidate.version,
+        version_label: candidate.version_label,
+        outdated: best === 0 || score < best,
+      }))
+
+      // Current paramsets first, then outdated ones sorted newest-first
+      result.sort((a, b) => {
+        if (a.outdated !== b.outdated) {
+          return a.outdated ? 1 : -1
+        }
+        return b.version.compare(a.version)
+      })
+
+      return result
+    },
+    current_param_sets(): FilteredParamSet[] {
+      return this.filtered_param_sets.filter((p) => !p.outdated)
+    },
+    outdated_param_sets(): FilteredParamSet[] {
+      return this.filtered_param_sets.filter((p) => p.outdated)
+    },
+    current_version_label(): string {
+      if (!this.version) return 'unknown'
+      return `${this.version.major}.${this.version.minor}.${this.version.patch}`
     },
     warningMessage(): string {
       return 'You will lose ALL your parameters, vehicle setup, and calibrations. Are you sure you want to reset?'
@@ -164,6 +282,10 @@ export default Vue.extend({
     async loadParams(name: string, paramset: Dictionary<number>) {
       this.selected_paramset_name = name
       this.selected_paramset = paramset
+    },
+    displayName(name: string): string {
+      const basename = name.split('/').pop() ?? name
+      return basename.replace(/\.params$/i, '')
     },
     async restartAutopilot(): Promise<void> {
       this.rebooting = true
@@ -235,5 +357,15 @@ button {
 
 .checkbox-label label {
   font-weight: 700;
+}
+
+.version-tag {
+  font-size: 0.75em;
+  font-weight: normal;
+  opacity: 0.7;
+}
+
+.full-row {
+  flex-basis: 100%;
 }
 </style>
