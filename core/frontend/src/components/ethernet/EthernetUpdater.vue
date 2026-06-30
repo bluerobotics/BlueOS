@@ -12,11 +12,17 @@ export default Vue.extend({
   name: 'EthernetUpdater',
   data() {
     return {
-      fetch_available_interfaces_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+      fetch_available_interfaces_task: new OneMoreTime({ delay: 5000, disposeWith: this, autostart: false }),
     }
   },
-  mounted() {
-    this.fetch_available_interfaces_task.setAction(this.fetchAvailableEthernetInterfaces)
+  async mounted() {
+    try {
+      await this.fetchAvailableEthernetInterfaces()
+    } finally {
+      ethernet.setUpdatingInterfaces(false)
+      this.fetch_available_interfaces_task.setAction(this.fetchAvailableEthernetInterfaces)
+      this.fetch_available_interfaces_task.start()
+    }
   },
   methods: {
     async fetchAvailableEthernetInterfaces(): Promise<void> {
