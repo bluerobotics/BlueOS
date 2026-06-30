@@ -12,8 +12,14 @@ export const isBackendOffline = (error: any): boolean => {
   return false;
 }
 
+const minimum_backend_status_check_interval = 2000
+
 const axios_backend_instance: AxiosInstance = axios.create()
 axios_backend_instance.interceptors.request.use(async (config) => {
+  const online_recently = frontend.last_backend_online_time.getTime() + minimum_backend_status_check_interval > new Date().getTime()
+  if (online_recently) {
+    return config
+  }
   // Check if there's already a backend status request running. If yes, use it. If not, start one.
   if (frontend.backend_status_request === null) {
     frontend.setBackendStatusRequest(axios.get(frontend.backend_status_url, { timeout: 5000 }))

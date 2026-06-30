@@ -17,6 +17,8 @@ class FrontendStore extends VuexModule {
 
   backend_status_request = null as Promise<AxiosResponse> | null
 
+  last_backend_online_time: Date = new Date()
+
   backend_offline = false
 
   frontend_id = (() => {
@@ -32,6 +34,9 @@ class FrontendStore extends VuexModule {
 
   @Mutation
   setBackendOffline(offline: boolean): void {
+    if (!offline) {
+      this.last_backend_online_time = new Date()
+    }
     this.backend_offline = offline
   }
 }
