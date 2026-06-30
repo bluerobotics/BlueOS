@@ -176,7 +176,8 @@ class HotspotManager:
                 await asyncio.sleep(3)
                 if not self.is_running():
                     exit_code = self._subprocess.returncode
-                    raise RuntimeError(f"Failed to initialize Hostapd ({exit_code}).")
+                    stdout, _ = self._subprocess.communicate()
+                    raise RuntimeError(f"Failed to initialize Hostapd ({exit_code}). Output: {stdout}")
             if not self._dhcp_server:
                 self._dhcp_server = DHCPServerManager(self._ap_interface_name, self._ipv4_gateway)
                 return
