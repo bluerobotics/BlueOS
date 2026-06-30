@@ -26,12 +26,13 @@ module.exports = {
     'func-style': ['error', 'declaration'],
     'import/extensions': 'off',
     'import/order': 'off',
+    'import/no-unresolved': 'error',
     'max-len': ['error', { code: 120 }],
     'no-alert': 'off',
     'no-bitwise': 'off',
     'no-console': 'off',
     'no-continue': 'off',
-    "no-else-return": ["error", { "allowElseIf": false }],
+    'no-else-return': ['error', { allowElseIf: false }],
     'no-extra-parens': ['error', 'all'],
     'no-mixed-operators': 'off',
     // modified https://github.com/airbnb/javascript/blob/master/packages/eslint-config-airbnb-base/rules/style.js#L339
@@ -101,6 +102,9 @@ module.exports = {
       },
       node: {
         extensions: ['.js', '.json', '.jsx', '.ts', '.tsx', '.vue'],
+      },
+      vite: {
+        viteConfig: require('./vite.config').viteConfigObj, // named export of the Vite config object.
       },
     },
   },

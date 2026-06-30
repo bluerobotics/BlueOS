@@ -19,6 +19,14 @@ const assert = require('assert');
 // TODO: check if it works with https once we have something that does
 assert.ok(SERVER_ADDRESS.startsWith('http://'), 'SERVER_ADDRESS must start with http://');
 
+export const viteConfigObj = {
+  resolve: {
+    alias: {
+      _: path.resolve(__dirname, 'src'),
+    },
+  },
+}
+
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
