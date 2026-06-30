@@ -190,15 +190,21 @@ export default class ParametersTable {
     this.parametersDict[param.id] = param
   }
 
-  updateParam(param_name: string, param_value: number): void {
+  updateParam(param_name: string, param_value: number): { oldValue: number } | null {
     const index = Object.entries(this.parametersDict).find(([_key, value]) => value.name === param_name)
     if (!index) {
       // This is benign and will happen if we receive a parameter update before the parameters table
       // is fully populated. We can safely ignore it.
       console.info(`Unable to update param in store: ${param_name}. Parameter not yet loaded into ParametersTable.`)
-      return
+      return null
     }
-    this.parametersDict[parseInt(index[0], 10)].value = param_value
+    const paramKey = parseInt(index[0], 10)
+    const oldValue = this.parametersDict[paramKey].value
+    this.parametersDict[paramKey].value = param_value
+    if (oldValue !== param_value) {
+      return { oldValue }
+    }
+    return null
   }
 
   parameters(): Parameter[] {
