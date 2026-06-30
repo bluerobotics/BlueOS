@@ -209,3 +209,12 @@ class Serial(BaseModel):
 
     def __hash__(self) -> int:  # make hashable BaseModel subclass
         return hash(self.port + self.endpoint)
+
+
+class EndpointDefinition(BaseModel):
+    name: str = "Master"
+    owner: str = "Ardupilot Manager"
+    connection_type: str = "tcpout"
+    place: str = "127.0.0.1"
+    argument: Optional[int] = 5760
+    protected: Optional[bool] = True
