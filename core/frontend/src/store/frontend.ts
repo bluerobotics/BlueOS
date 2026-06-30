@@ -6,6 +6,8 @@ import {
 
 import store from '@/store'
 
+export type PageState = 'focused' | 'blurred' | 'hidden'
+
 @Module({
   dynamic: true,
   store,
@@ -18,6 +20,8 @@ class FrontendStore extends VuexModule {
   backend_status_request = null as Promise<AxiosResponse> | null
 
   backend_offline = false
+
+  page_state: PageState = 'focused'
 
   frontend_id = (() => {
     const id = nanoid(9)
@@ -34,9 +38,28 @@ class FrontendStore extends VuexModule {
   setBackendOffline(offline: boolean): void {
     this.backend_offline = offline
   }
+
+  @Mutation
+  setPageState(state: PageState): void {
+    this.page_state = state
+  }
 }
 
 export { FrontendStore }
 
 const frontend: FrontendStore = getModule(FrontendStore)
 export default frontend
+
+function detectPageState(): PageState {
+  if (document.hidden) return 'hidden'
+  if (document.hasFocus()) return 'focused'
+  return 'blurred'
+}
+
+if (typeof document !== 'undefined') {
+  frontend.setPageState(detectPageState())
+  const update = () => frontend.setPageState(detectPageState())
+  document.addEventListener('visibilitychange', update)
+  window.addEventListener('focus', update)
+  window.addEventListener('blur', update)
+}
