@@ -6,9 +6,16 @@ export interface ParamDefinitions {
   icon?: string
 }
 
+export interface FailsafeDependency {
+  paramName: string,
+  disabledValue: number,
+  message: string,
+}
+
 export interface FailsafeDefinition {
   name: string,
   generalDescription: string,
   params: ParamDefinitions[],
   image: string,
+  dependsOn?: FailsafeDependency,
 }

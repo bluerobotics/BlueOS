@@ -306,7 +306,7 @@ export default Vue.extend({
         return
       }
       if (this.param?.rebootRequired) {
-        autopilot_data.setRebootRequired(false)
+        autopilot_data.setRebootRequired(true)
       }
       this.last_sent_value = value
       mavlink2rest.setParam(this.param.name, value, autopilot_data.system_id, this.param.paramType.type)
