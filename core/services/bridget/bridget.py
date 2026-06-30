@@ -5,7 +5,7 @@ from typing import Dict, List
 import requests
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate
-from commonwealth.settings.manager import Manager
+from commonwealth.settings.manager import PydanticManager
 from pydantic import BaseModel, conint
 from serial.tools.list_ports_linux import SysFS
 from settings import BridgeSettingsSpecV2, SettingsV2
@@ -48,7 +48,9 @@ class Bridget:
         self._bridges: Dict[BridgeFrontendSpec, Bridge] = {}
         # We use userdata because our regular settings folder is under /root, which regular users
         # don't have access to.
-        self._settings_manager = Manager("bridget", SettingsV2, USERDATA / "settings" / "bridget")
+        self._settings_manager: PydanticManager = PydanticManager(
+            "bridget", SettingsV2, USERDATA / "settings" / "bridget"
+        )
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specsv2:
             try:

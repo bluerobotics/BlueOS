@@ -1,5 +1,4 @@
 from commonwealth.settings.bases.pydantic_base import PydanticSettings
-from commonwealth.settings.bases.pykson_base import PyksonSettings as BaseSettings
 from commonwealth.settings.exceptions import (
     BadAttributes,
     BadSettingsFile,
@@ -8,7 +7,6 @@ from commonwealth.settings.exceptions import (
 )
 
 __all__ = [
-    "BaseSettings",
     "BadAttributes",
     "BadSettingsFile",
     "MigrationFail",

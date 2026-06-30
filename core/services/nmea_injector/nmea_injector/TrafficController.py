@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Union
 
 import pynmea2
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
-from commonwealth.settings.manager import Manager
+from commonwealth.settings.manager import PydanticManager
 from loguru import logger
 from nmea_injector.exceptions import UnsupportedSocketKind
 from nmea_injector.MavlinkNMEA import MavlinkGpsInput, parse_mavlink_from_sentence
@@ -96,7 +96,7 @@ class TrafficController:
 
     def __init__(self) -> None:
         self._socks: Dict[NMEASocket, Union[asyncio.AbstractServer, asyncio.BaseTransport]] = {}
-        self._settings_manager = Manager("nmea-injector", SettingsV1)
+        self._settings_manager: PydanticManager = PydanticManager("nmea-injector", SettingsV1)
 
     async def load_socks_from_settings(self) -> None:
         self._settings_manager.load()

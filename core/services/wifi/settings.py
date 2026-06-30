@@ -1,26 +1,19 @@
 from typing import Any, Dict
 
-import pykson  # type: ignore
-from commonwealth.settings import settings
+from commonwealth.settings.settings import PydanticSettings
 
 
-class SettingsV1(settings.BaseSettings):
-    VERSION = 1
-    hotspot_enabled = pykson.BooleanField()
-    hotspot_ssid = pykson.StringField()
-    hotspot_password = pykson.StringField()
-    smart_hotspot_enabled = pykson.BooleanField()
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV1.VERSION
+class SettingsV1(PydanticSettings):
+    hotspot_enabled: bool = False
+    hotspot_ssid: str = "BlueOS"
+    hotspot_password: str = "blueosap"
+    smart_hotspot_enabled: bool = False
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV1.VERSION:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV1.VERSION:
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
             super().migrate(data)
 
-        data["VERSION"] = SettingsV1.VERSION
+        data["VERSION"] = SettingsV1.STATIC_VERSION
