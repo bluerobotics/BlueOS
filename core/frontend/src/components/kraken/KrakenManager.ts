@@ -196,6 +196,7 @@ export async function setManifestSourceOrder(identifier: string, order: number):
 export async function installExtension(
   extension: InstalledExtensionData,
   progressHandler: (event: any) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   await back_axios({
     url: `${KRAKEN_API_V2_URL}/extension/install`,
@@ -211,6 +212,7 @@ export async function installExtension(
     },
     timeout: 600000,
     onDownloadProgress: progressHandler,
+    signal,
   })
 }
 
@@ -251,6 +253,18 @@ export async function uninstallExtension(identifier: string): Promise<void> {
 }
 
 /**
+ * Uninstall a specific version of an extension by its identifier and tag, uses API v2
+ * @param {string} identifier The identifier of the extension
+ * @param {string} tag The tag of the version to uninstall
+ */
+export async function uninstallExtensionVersion(identifier: string, tag: string): Promise<void> {
+  await back_axios({
+    method: 'DELETE',
+    url: `${KRAKEN_API_V2_URL}/extension/${identifier}/${tag}`,
+  })
+}
+
+/**
  * Restart an extension by its identifier, uses API v2
  * @param {string} identifier The identifier of the extension
  */
@@ -272,12 +286,14 @@ export async function updateExtensionToVersion(
   identifier: string,
   version: string,
   progressHandler: (event: any) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   await back_axios({
     url: `${KRAKEN_API_V2_URL}/extension/${identifier}/${version}`,
     method: 'PUT',
     timeout: 120000,
     onDownloadProgress: progressHandler,
+    signal,
   })
 }
 
@@ -370,6 +386,7 @@ export async function finalizeExtension(
   extension: InstalledExtensionData,
   tempTag: string,
   progressHandler: (event: any) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   await back_axios({
     method: 'POST',
@@ -385,6 +402,7 @@ export async function finalizeExtension(
     },
     timeout: 120000,
     onDownloadProgress: progressHandler,
+    signal,
   })
 }
 
@@ -430,6 +448,7 @@ export default {
   enableExtension,
   disableExtension,
   uninstallExtension,
+  uninstallExtensionVersion,
   restartExtension,
   listContainers,
   getContainersStats,
