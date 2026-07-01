@@ -93,6 +93,7 @@ export enum EndpointType {
     tcpout = 'tcpout',
     serial = 'serial',
     zenoh = 'zenoh',
+    zenohraw = 'zenohraw',
 }
 
 export function vehicleTypeFromString(vehicle_type: string): Vehicle {
@@ -111,6 +112,7 @@ export function userFriendlyEndpointType(type: EndpointType): string {
     case EndpointType.tcpout: return 'TCP Client'
     case EndpointType.serial: return 'Serial'
     case EndpointType.zenoh: return 'Zenoh'
+    case EndpointType.zenohraw: return 'Zenoh Raw'
     default: return 'Undefined type'
   }
 }
