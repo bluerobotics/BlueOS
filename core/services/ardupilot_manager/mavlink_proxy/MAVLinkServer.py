@@ -39,6 +39,8 @@ class MAVLinkServer(AbstractRouter):
                 return f"udpc:{endpoint.place}:{endpoint.argument}"
             if endpoint.connection_type == EndpointType.Zenoh:
                 return f"zenoh:{endpoint.place}:{endpoint.argument}"
+            if endpoint.connection_type == EndpointType.ZenohRaw:
+                return f"zenohraw:{endpoint.place}:{endpoint.argument}"
             raise ValueError(f"Endpoint of type {endpoint.connection_type} not supported on MAVLink-Server.")
 
         filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
@@ -70,6 +72,7 @@ class MAVLinkServer(AbstractRouter):
             EndpointType.TCPClient,
             EndpointType.Serial,
             EndpointType.Zenoh,
+            EndpointType.ZenohRaw,
         ]
         if endpoint.connection_type not in valid_connection_types:
             raise ValueError(f"Connection_type '{endpoint.connection_type}' not supported by {MAVLinkServer.name()}.")

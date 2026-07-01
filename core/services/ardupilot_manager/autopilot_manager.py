@@ -100,6 +100,15 @@ class AutoPilotManager(metaclass=Singleton):
                 protected=True,
             ),
             Endpoint(
+                name="ZenohRaw",
+                owner=self.settings.app_name,
+                connection_type=EndpointType.ZenohRaw,
+                place="0.0.0.0",
+                argument=7117,
+                persistent=True,
+                protected=True,
+            ),
+            Endpoint(
                 name="Internal Link",
                 owner=self.settings.app_name,
                 connection_type=EndpointType.TCPServer,
