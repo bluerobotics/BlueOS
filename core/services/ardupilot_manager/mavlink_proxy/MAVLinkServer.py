@@ -27,19 +27,24 @@ class MAVLinkServer(AbstractRouter):
     def assemble_command(self, master_endpoint: Endpoint) -> str:
         # Convert endpoint format to mavlink-router format
         def convert_endpoint(endpoint: Endpoint) -> str:
+            endpoint_str = None
+
             if endpoint.connection_type == EndpointType.Serial:
-                return f"serial:{endpoint.place}:{endpoint.argument}"
+                endpoint_str = f"serial:{endpoint.place}:{endpoint.argument}"
             if endpoint.connection_type == EndpointType.TCPServer:
-                return f"tcps:{endpoint.place}:{endpoint.argument}"
+                endpoint_str = f"tcps:{endpoint.place}:{endpoint.argument}"
             if endpoint.connection_type == EndpointType.TCPClient:
-                return f"tcpc:{endpoint.place}:{endpoint.argument}"
+                endpoint_str = f"tcpc:{endpoint.place}:{endpoint.argument}"
             if endpoint.connection_type == EndpointType.UDPServer:
-                return f"udps:{endpoint.place}:{endpoint.argument}"
+                endpoint_str = f"udps:{endpoint.place}:{endpoint.argument}"
             if endpoint.connection_type == EndpointType.UDPClient:
-                return f"udpc:{endpoint.place}:{endpoint.argument}"
+                endpoint_str = f"udpc:{endpoint.place}:{endpoint.argument}"
             if endpoint.connection_type == EndpointType.Zenoh:
-                return f"zenoh:{endpoint.place}:{endpoint.argument}"
-            raise ValueError(f"Endpoint of type {endpoint.connection_type} not supported on MAVLink-Server.")
+                endpoint_str = f"zenoh:{endpoint.place}:{endpoint.argument}"
+
+            if endpoint_str is None:
+                raise ValueError(f"Endpoint of type {endpoint.connection_type} not supported on MAVLink-Server.")
+            return endpoint_str
 
         filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *filtered_endpoints]])
