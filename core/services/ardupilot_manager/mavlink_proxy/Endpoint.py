@@ -15,6 +15,7 @@ class EndpointType(str, Enum):
     TCPClient = "tcpout"
     Serial = "serial"
     Zenoh = "zenoh"
+    ZenohRaw = "zenohraw"
 
 
 @dataclass
@@ -43,6 +44,7 @@ class Endpoint:
             EndpointType.TCPServer,
             EndpointType.TCPClient,
             EndpointType.Zenoh,
+            EndpointType.ZenohRaw,
         ]:
             if not (validators.domain(place) or validators.ipv4(place) or validators.ipv6(place)):
                 raise ValueError(f"Invalid network address: {place}")
