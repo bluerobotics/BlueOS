@@ -1,0 +1,49 @@
+name: Block AI Commits
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: block-ai-commits-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-ai-authorship:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check commits for AI authorship
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # Exact AI-tool identities against commit author/committer emails and against Co-authored-by trailers.
+          signatures=(
+            'cursoragent@cursor\.com'                   # Cursor
+            'cursoragent@users\.noreply\.github\.com'   # Cursor
+            'noreply@anthropic\.com'                    # Claude Code
+            'claude-code@anthropic\.com'                # Claude Code
+            'noreply@openai\.com'                       # OpenAI Codex / ChatGPT Codex
+            'codex@openai\.com'                         # OpenAI Codex / ChatGPT Codex
+            'copilot@github\.com'                       # GitHub Copilot
+          )
+          pattern="$(IFS='|'; echo "${signatures[*]}")"
+
+          if git log --no-merges \
+               --format='%h %ae %ce %(trailers:key=Co-authored-by,valueonly,unfold)' \
+               "${BASE_SHA}..${HEAD_SHA}" | grep -iE "$pattern"; then
+            echo "::error::This pull request contains commits authored or co-authored by AI tools."
+            exit 1
+          fi
+
+          echo "No AI-authored or AI-co-authored commits found."
