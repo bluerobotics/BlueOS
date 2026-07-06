@@ -1,7 +1,7 @@
 <template>
   <div class="main-container">
     <v-card>
-      <v-card-title> Lights 1 (RCIN9) </v-card-title>
+      <v-card-title> Lights 1 </v-card-title>
       <v-card-text>
         The output pin for the primary set of lights:
         <v-select
@@ -14,7 +14,7 @@
       </v-card-text>
     </v-card>
     <v-card>
-      <v-card-title> Lights 2 (RCIN10) </v-card-title>
+      <v-card-title> Lights 2 </v-card-title>
       <v-card-text>
         The output pin for the secondary set of lights:
         <v-select
@@ -48,13 +48,10 @@
 <script lang="ts">
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
+import autopilot from '@/store/autopilot_manager'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
 
-enum Lights {
-  Lights1 = 59, // RCIN9
-  Lights2 = 60, // RCIN10
-  DISABLED = 0,
-}
+const DISABLED = 0
 
 export default {
   name: 'LightsConfigration',
@@ -66,6 +63,12 @@ export default {
     }
   },
   computed: {
+    lights1_value(): number {
+      return autopilot.lights1_servo_function
+    },
+    lights2_value(): number {
+      return autopilot.lights2_servo_function
+    },
     light_steps(): Parameter | undefined {
       return autopilot_data.parameter('JS_LIGHTS_STEPS')
     },
@@ -73,10 +76,10 @@ export default {
       return autopilot_data.parameterRegex('SERVO[0-9]+_FUNCTION')
     },
     lights1_param(): Parameter | undefined {
-      return this.servo_params.filter((param) => param.value === Lights.Lights1)[0]
+      return this.servo_params.filter((param) => param.value === this.lights1_value)[0]
     },
     lights2_param(): Parameter | undefined {
-      return this.servo_params.filter((param) => param.value === Lights.Lights2)[0]
+      return this.servo_params.filter((param) => param.value === this.lights2_value)[0]
     },
   },
   watch: {
@@ -99,10 +102,10 @@ export default {
       this.lights2_new_param = new_value?.name
     },
     lights1_new_param(new_param_name: string | undefined) {
-      this.setLights(new_param_name, Lights.Lights1)
+      this.setLights(new_param_name, this.lights1_value)
     },
     lights2_new_param(new_param_name: string | undefined) {
-      this.setLights(new_param_name, Lights.Lights2)
+      this.setLights(new_param_name, this.lights2_value)
     },
   },
   mounted() {
@@ -111,7 +114,7 @@ export default {
     this.steps_new_value = this.light_steps?.value ?? 0
   },
   methods: {
-    setLights(new_param_name: string | undefined, lights: Lights) {
+    setLights(new_param_name: string | undefined, lights: number) {
       if (new_param_name) {
         // reset any other parameter using lights1 to undefined
         for (const old_param of this.servo_params) {
@@ -119,8 +122,7 @@ export default {
             continue
           }
           if (old_param.value === lights) {
-            // set the old parameter to DISABLED
-            mavlink2rest.setParam(old_param.name, Lights.DISABLED, autopilot_data.system_id)
+            mavlink2rest.setParam(old_param.name, DISABLED, autopilot_data.system_id)
           }
         }
         mavlink2rest.setParam(new_param_name, lights, autopilot_data.system_id)
