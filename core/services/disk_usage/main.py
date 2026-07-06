@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.general import run_subprocess
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from commonwealth.utils.streaming import streamer
@@ -214,16 +215,10 @@ async def collect_disk_usage(
     if depth >= 0:
         args.extend(["-d", str(depth)])
 
-    process = await asyncio.create_subprocess_exec(
-        *args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        text=False,
-    )
-    stdout_bytes, stderr_bytes = await process.communicate()
-    if process.returncode not in (0, 1):
+    returncode, stdout_bytes, stderr_bytes = await run_subprocess(args)
+    if returncode not in (0, 1):
         stderr = stderr_bytes.decode("utf-8", "ignore")
-        logger.warning(f"du command returned {process.returncode}: {stderr}")
+        logger.warning(f"du command returned {returncode}: {stderr}")
 
     entries = parse_du_output(stdout_bytes)
     tree = build_tree(entries, path, min_size_bytes)
@@ -355,25 +350,20 @@ async def run_single_speed_test(size_bytes: int) -> DiskSpeedResult:
 
         logger.info(f"Running disk speed test: {' '.join(args)}")
 
-        process = await asyncio.create_subprocess_exec(
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-        stdout_bytes, _ = await process.communicate()
+        returncode, stdout_bytes, _stderr_bytes = await run_subprocess(args, merge_stderr=True)
         output = stdout_bytes.decode("utf-8", "ignore")
 
         logger.debug(f"disktest output: {output}")
 
-        if process.returncode != 0:
-            logger.warning(f"disktest returned {process.returncode}: {output}")
+        if returncode != 0:
+            logger.warning(f"disktest returned {returncode}: {output}")
             return DiskSpeedResult(
                 write_speed_mbps=None,
                 read_speed_mbps=None,
                 bytes_tested=size_bytes,
                 seed="",
                 success=False,
-                error=f"disktest failed with return code {process.returncode}: {output}",
+                error=f"disktest failed with return code {returncode}: {output}",
             )
 
         write_speed, read_speed, seed = parse_disktest_speed(output)
