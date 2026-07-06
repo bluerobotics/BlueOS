@@ -65,6 +65,7 @@ import Vue, { PropType } from 'vue'
 
 import { FailsafeDefinition, ParamDefinitions } from '@/components/vehiclesetup/configuration/failsafes/types'
 import autopilot_data from '@/store/autopilot'
+import autopilot from '@/store/autopilot_manager'
 import Parameter from '@/types/autopilot/parameter'
 
 export default Vue.extend({

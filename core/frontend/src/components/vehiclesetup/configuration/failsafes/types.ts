@@ -1,3 +1,5 @@
+import { FirmwareVehicleType } from "@/types/autopilot";
+
 export interface ParamDefinitions {
   name: string,
   replacementTitle?: string,

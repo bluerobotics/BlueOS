@@ -13,6 +13,7 @@
 <script lang="ts">
 import failsafeCard from '@/components/vehiclesetup/configuration/failsafes/FailsafeCard.vue'
 import autopilot_data from '@/store/autopilot'
+import { FirmwareVehicleType } from '@/types/autopilot'
 
 import { FailsafeDefinition } from './types'
 
@@ -46,7 +47,7 @@ export default {
           generalDescription: 'Triggers when the vehicle does not receive a heartbeat from the GCS '
           + 'within the timeout (default 3 seconds).',
           image: (await import('@/assets/img/configuration/failsafes/heartbeat.svg')).default as string,
-
+          supportedVehicles: undefined,
           params: [
             {
               replacementTitle: 'Timeout',
@@ -74,6 +75,7 @@ export default {
           generalDescription: 'Triggers when the vehicle does not receive any pilot input for a given '
           + 'amount of time.',
           image: (await import('@/assets/img/configuration/failsafes/pilot-input.svg')).default as string,
+          supportedVehicles: undefined,
           params: [
             {
               replacementTitle: 'Timeout',
@@ -92,6 +94,7 @@ export default {
           name: 'Leak Detection',
           generalDescription: 'Triggers when a leak is detected. We recommend keeping control electronics dry.',
           image: (await import('@/assets/img/configuration/failsafes/leak.svg')).default as string,
+          supportedVehicles: [FirmwareVehicleType.ArduSub],
           params: [
             {
               replacementTitle: 'Leak probe 1 type',
@@ -166,6 +169,7 @@ export default {
           generalDescription: 'Triggers when the internal pressure is too high. This may help to detect a leak, '
           + 'and to avoid rapid unplanned disassembly.',
           image: (await import('@/assets/img/configuration/failsafes/pressure.svg')).default as string,
+          supportedVehicles: [FirmwareVehicleType.ArduSub],
           params: [
 
             {
@@ -185,6 +189,7 @@ export default {
           generalDescription: 'Triggers when the internal temperature is too high. This may help to prevent '
           + 'damage to electronics due to overheating.',
           image: (await import('@/assets/img/configuration/failsafes/temperature.svg')).default as string,
+          supportedVehicles: [FirmwareVehicleType.ArduSub],
           params: [
 
             {
@@ -204,6 +209,7 @@ export default {
           generalDescription: 'Triggers when the EKF variances surpass a given threshold, '
           + 'so it loses trust in its state estimates.',
           image: (await import('@/assets/img/configuration/failsafes/ekf.svg')).default as string,
+          supportedVehicles: undefined,
           params: [
             {
               replacementTitle: 'Variance threshold',
@@ -221,6 +227,11 @@ export default {
           name: 'Crash Detection',
           generalDescription: 'Triggers when a crash has occurred.',
           image: (await import('@/assets/img/configuration/failsafes/crash.svg')).default as string,
+          supportedVehicles: [
+            FirmwareVehicleType.ArduCopter,
+            FirmwareVehicleType.ArduRover,
+            FirmwareVehicleType.ArduSub,
+          ],
           params: [
             {
               replacementTitle: 'Action',
