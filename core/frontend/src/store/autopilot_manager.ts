@@ -1,3 +1,4 @@
+import { lte as sem_ver_lte } from 'semver'
 import {
   getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
@@ -7,6 +8,12 @@ import {
   AutopilotEndpoint, FirmwareInfo, FirmwareVehicleType,
   FlightController, SerialEndpoint, SITLFrame,
 } from '@/types/autopilot'
+import { SERVO_FUNCTION as SUB_SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
+
+// ArduSub <= 4.5.5 used RCIN9/RCIN10 for lights control; newer versions handle lights natively
+const LEGACY_SUB_LIGHTS_MAX_VERSION = '4.5.5'
+const LEGACY_SUB_LIGHTS1 = 59 // RCIN9
+const LEGACY_SUB_LIGHTS2 = 60 // RCIN10
 
 @Module({
   dynamic: true,
@@ -38,6 +45,25 @@ class AutopilotManagerStore extends VuexModule {
   restarting = false
 
   autopilot_serials: SerialEndpoint[] = []
+
+  // All vehicle types include the values ArduSub overloaded for legacy lights support, so we need to filter by it
+  get lights1_servo_function(): number {
+    const is_sub = this.firmware_vehicle_type === FirmwareVehicleType.ArduSub
+    const version = this.firmware_info?.version
+    if (is_sub && version && sem_ver_lte(version, LEGACY_SUB_LIGHTS_MAX_VERSION)) {
+      return LEGACY_SUB_LIGHTS1
+    }
+    return SUB_SERVO_FUNCTION.LIGHTS1
+  }
+
+  get lights2_servo_function(): number {
+    const is_sub = this.firmware_vehicle_type === FirmwareVehicleType.ArduSub
+    const version = this.firmware_info?.version
+    if (is_sub && version && sem_ver_lte(version, LEGACY_SUB_LIGHTS_MAX_VERSION)) {
+      return LEGACY_SUB_LIGHTS2
+    }
+    return SUB_SERVO_FUNCTION.LIGHTS2
+  }
 
   @Mutation
   setAutopilotSerialConfigurations(serials: SerialEndpoint[]): void {

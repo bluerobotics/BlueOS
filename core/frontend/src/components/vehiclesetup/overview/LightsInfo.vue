@@ -30,7 +30,6 @@ import Vue from 'vue'
 
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
 
 import toBoardFriendlyChannel from './common'
 
@@ -42,8 +41,10 @@ export default Vue.extend({
     },
     lights() {
       const servo_params = autopilot_data.parameterRegex('SERVO.*_FUNCTION')
+      const lights1 = autopilot.lights1_servo_function
+      const lights2 = autopilot.lights2_servo_function
       const light_params = servo_params.filter(
-        (parameter) => parameter.value === SERVO_FUNCTION.RCIN9 || parameter.value === SERVO_FUNCTION.RCIN10,
+        (parameter) => parameter.value === lights1 || parameter.value === lights2,
       )
       return light_params.map((parameter) => parameter.name)
     },

@@ -154,7 +154,6 @@
 </template>
 
 <script lang="ts">
-import { lte as sem_ver_lte } from 'semver'
 import Vue from 'vue'
 
 import { fetchCurrentBoard } from '@/components/autopilot/AutopilotManagerUpdater'
@@ -202,8 +201,7 @@ const param_value_map = {
   },
 } as Dictionary<Dictionary<string>>
 
-// ArduSub <= 4.5.4 used RCIN9/RCIN10 for lights control; newer versions handle lights natively
-const LEGACY_SUB_LIGHTS_MAX_VERSION = '4.5.5'
+// Legacy ArduSub versions used RCIN9/RCIN10 for lights control; newer versions handle lights natively
 const legacy_sub_param_value_map: Dictionary<string> = {
   RCIN9: 'Lights 1',
   RCIN10: 'Lights 2',
@@ -237,8 +235,9 @@ export default Vue.extend({
   computed: {
     effective_param_value_map(): Dictionary<Dictionary<string>> {
       const map = { ...param_value_map }
-      const version = autopilot.firmware_info?.version
-      if (this.is_sub && version && sem_ver_lte(version, LEGACY_SUB_LIGHTS_MAX_VERSION)) {
+      // Apply legacy RCIN9/RCIN10 -> Lights labels only when the store resolves
+      // to the legacy ArduSub function numbers.
+      if (autopilot.lights1_servo_function !== SERVO_FUNCTION.LIGHTS1) {
         map.Submarine = { ...legacy_sub_param_value_map, ...map.Submarine }
       }
       return map
