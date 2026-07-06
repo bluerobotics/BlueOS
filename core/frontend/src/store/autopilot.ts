@@ -72,11 +72,6 @@ class AutopilotStore extends VuexModule {
     )
   }
 
-
-  get vehicle_type(): string {
-    return autopilot_manager.vehicle_type
-  }
-
   get frame_type(): number | undefined {
     const mav_type = 'MAV_TYPE_' + autopilot_manager.vehicle_type?.toUpperCase().replace(' ', '_')
     switch (mav_type) {
@@ -91,7 +86,7 @@ class AutopilotStore extends VuexModule {
   }
 
   get frame_name(): string | undefined {
-    switch (this.vehicle_type) {
+    switch (autopilot_manager.vehicle_type) {
       case 'Submarine':
         return Object.entries(SUB_FRAME_CONFIG).find((key, value) => value === this.frame_type)?.[1] as string
       case 'Surface Boat':
@@ -106,7 +101,7 @@ class AutopilotStore extends VuexModule {
 
   get vehicle_model() {
     const frame = this.frame_type
-    if (!this.vehicle_type || frame === undefined) {
+    if (!autopilot_manager.vehicle_type || frame === undefined) {
       return ''
     }
     const release_path = `assets/vehicles/models/${vehicle_folder()}/${this.frame_name}.glb`
