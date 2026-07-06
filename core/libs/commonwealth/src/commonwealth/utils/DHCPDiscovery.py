@@ -4,6 +4,7 @@ import re
 import sys
 from typing import List
 
+from commonwealth.utils.general import run_subprocess
 from loguru import logger
 
 
@@ -40,15 +41,11 @@ async def discover_dhcp_servers(iface: str, timeout: int = 15) -> List[str]:
 
         # Run nmap asynchronously
         logger.info(f"Running nmap command: {' '.join(cmd)}")
-        process = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
+        returncode, stdout_bytes, stderr_bytes = await run_subprocess(cmd)
+        output = stdout_bytes.decode()
+        error = stderr_bytes.decode()
 
-        stdout, stderr = await process.communicate()
-        output = stdout.decode()
-        error = stderr.decode()
-
-        if process.returncode != 0:
+        if returncode != 0:
             logger.info(f"nmap output: {output}")
             logger.info(f"nmap error: {error}")
             raise DHCPDiscoveryError(f"nmap failed: {error}")
