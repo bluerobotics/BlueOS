@@ -3,7 +3,7 @@
 # Immediately exit on errors
 set -e
 
-VERSION="t0.11.24"
+VERSION="t0.11.25"
 REPOSITORY_ORG="mavlink"
 REPOSITORY_NAME="mavlink2rest"
 PROJECT_NAME="$REPOSITORY_NAME"
