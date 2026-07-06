@@ -29,6 +29,7 @@ from commonwealth.utils.general import (
     get_cpu_type,
     local_hardware_identifier,
     local_unique_identifier,
+    run_subprocess,
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
@@ -582,11 +583,8 @@ def software_id() -> Any:
 @version(1, 0)
 async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
     iface = ["-I", interface_addr] if interface_addr else []
-    process = await asyncio.create_subprocess_exec(
-        "ping", "-c", "1", *iface, host, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-    )
-    await process.communicate()
-    return process.returncode == 0
+    returncode, _stdout, _stderr = await run_subprocess(["ping", "-c", "1", *iface, host])
+    return returncode == 0
 
 
 async def periodic() -> None:
