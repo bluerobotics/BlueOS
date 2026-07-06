@@ -13,7 +13,7 @@ from urllib.parse import quote
 
 from aiocache import cached
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.general import file_is_open_async
+from commonwealth.utils.general import file_is_open_async, run_subprocess
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import APIRouter, FastAPI, HTTPException, status
@@ -122,21 +122,15 @@ async def check_and_recover_mcap(mcap_path: Path) -> None:
     logger.info(f"Running mcap doctor on {mcap_path}")
     # Run mcap doctor
     doctor_cmd = [mcap_binary, "doctor", str(mcap_path)]
-    doctor_proc = await asyncio.create_subprocess_exec(
-        *doctor_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        text=False,
-    )
-    stdout_bytes, stderr_bytes = await doctor_proc.communicate()
+    doctor_returncode, stdout_bytes, stderr_bytes = await run_subprocess(doctor_cmd)
     stdout = stdout_bytes.decode("utf-8", "ignore")
     stderr = stderr_bytes.decode("utf-8", "ignore")
 
-    if doctor_proc.returncode == 0:
+    if doctor_returncode == 0:
         logger.info(f"mcap doctor passed for {mcap_path}: {stdout.strip()}")
         return
 
-    logger.warning(f"mcap doctor failed for {mcap_path} (code={doctor_proc.returncode}): {stderr.strip()}")
+    logger.warning(f"mcap doctor failed for {mcap_path} (code={doctor_returncode}): {stderr.strip()}")
     logger.info(f"Attempting to recover {mcap_path}")
 
     # Create a temporary file path in the same directory as the mcap file
@@ -147,19 +141,13 @@ async def check_and_recover_mcap(mcap_path: Path) -> None:
             tmp_path = Path(tmpfile.name)
 
         recover_cmd = [mcap_binary, "recover", str(mcap_path), "-o", str(tmp_path)]
-        recover_proc = await asyncio.create_subprocess_exec(
-            *recover_cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            text=False,
-        )
-        _, recover_stderr_bytes = await recover_proc.communicate()
+        recover_returncode, _stdout_bytes, recover_stderr_bytes = await run_subprocess(recover_cmd)
         recover_stderr = recover_stderr_bytes.decode("utf-8", "ignore")
 
         # Check if recovery succeeded
-        if recover_proc.returncode != 0:
+        if recover_returncode != 0:
             logger.error(
-                f"mcap recover command failed for {mcap_path} (code={recover_proc.returncode}): {recover_stderr.strip()}",
+                f"mcap recover command failed for {mcap_path} (code={recover_returncode}): {recover_stderr.strip()}",
             )
             return
 
@@ -199,16 +187,10 @@ async def build_thumbnail_bytes(path: Path) -> bytes:
     """
     # 1) Discover duration (nanoseconds) using gst-discoverer
     discover_cmd = ["gst-discoverer-1.0", f"file://{path}"]
-    discover_proc = await asyncio.create_subprocess_exec(
-        *discover_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        text=False,
-    )
-    stdout_bytes, stderr_bytes = await discover_proc.communicate()
+    discover_returncode, stdout_bytes, stderr_bytes = await run_subprocess(discover_cmd)
     stdout = stdout_bytes.decode("utf-8", "ignore")
     stderr = stderr_bytes.decode("utf-8", "ignore")
-    if discover_proc.returncode != 0:
+    if discover_returncode != 0:
         logger.error(f"gst-discoverer-1.0 failed for {path}: {stderr.strip()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -240,16 +222,10 @@ async def build_thumbnail_bytes(path: Path) -> bytes:
         f"Thumbnail target: duration_ns={duration_ns} target_ns={target_ns} target_sec={target_sec:.3f} file={path}"
     )
     logger.info(f"Thumbnail command: {' '.join(play_cmd)}")
-    play_proc = await asyncio.create_subprocess_exec(
-        *play_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        text=False,
-    )
-    stdout_bytes, stderr_bytes = await play_proc.communicate()
+    play_returncode, stdout_bytes, stderr_bytes = await run_subprocess(play_cmd)
     stderr = stderr_bytes.decode("utf-8", "ignore")
-    if play_proc.returncode != 0 or not stdout:
-        logger.error(f"gst-play-1.0 failed for {path} (code={play_proc.returncode}): {stderr}")
+    if play_returncode != 0 or not stdout_bytes:
+        logger.error(f"gst-play-1.0 failed for {path} (code={play_returncode}): {stderr}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate thumbnail.",
@@ -290,20 +266,14 @@ async def extract_mcap_recordings() -> None:
                 processing_mcap_files.add(mcap_relative)
                 try:
                     async with thumbnail_lock:
-                        process = await asyncio.create_subprocess_exec(
-                            *command,
-                            stdout=asyncio.subprocess.PIPE,
-                            stderr=asyncio.subprocess.PIPE,
-                            text=False,
-                        )
-                        stdout_bytes, stderr_bytes = await process.communicate()
+                        extract_returncode, stdout_bytes, stderr_bytes = await run_subprocess(command)
                         stdout = stdout_bytes.decode("utf-8", "ignore")
                         stderr = stderr_bytes.decode("utf-8", "ignore")
                 finally:
                     processing_mcap_files.discard(mcap_relative)
-                if process.returncode != 0:
+                if extract_returncode != 0:
                     logger.error(
-                        f"MCAP extract failed for {mcap_path} (code={process.returncode}): {stderr}",
+                        f"MCAP extract failed for {mcap_path} (code={extract_returncode}): {stderr}",
                     )
                 else:
                     logger.info(f"MCAP extract completed for {mcap_path}: {stdout.strip()}")
