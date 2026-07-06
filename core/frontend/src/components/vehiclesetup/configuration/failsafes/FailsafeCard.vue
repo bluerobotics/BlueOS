@@ -38,10 +38,11 @@
             </v-col>
             <v-col :key="`${param.name}-editor`" cols="5" class="pt-1 pb-1">
               <inline-parameter-editor
+                v-if="params[param.name] != null"
                 :key="failsafeDefinition.name"
                 :auto-set="true"
                 :disabled="is_disabled && param.name !== actionParamName"
-                :param="params[param.name]"
+                :param="params[param.name] ?? undefined"
               />
               <template v-else>
                 <v-text-field
@@ -84,27 +85,26 @@ export default Vue.extend({
     }
   },
   computed: {
-    params(): Record<string, Parameter> {
-      return autopilot_data.parameters
-        .filter((param) => this.failsafeDefinition.params.map((parameter) => parameter.name)
-          .includes(param.name))
-        .reduce((dict: Record<string, Parameter>, param: Parameter) => {
-          dict[param.name] = param
+    params(): Record<string, Parameter | null> {
+      return this.failsafeDefinition.params.reduce(
+        (dict: Record<string, Parameter | null>, param: ParamDefinitions) => {
+          dict[param.name] = autopilot_data.parameter(param.name) ?? null
           return dict
-        }, {})
+        },
+        {},
+      )
     },
     all_required_params_are_available(): boolean {
-      return this.failsafeDefinition.params.every((param) => param.name in this.params || param.optional)
-    },
-    available_params(): ParamDefinitions[] {
-      return this.failsafeDefinition.params.filter((param) => param.name in this.params)
+      return this.failsafeDefinition.params.every(
+        (param) => autopilot_data.parameter(param.name) != null || param.optional,
+      )
     },
     is_disabled(): boolean {
       const controlParam = this.findControlParam()
-      if (!controlParam || !(controlParam.name in this.params)) {
+      if (!controlParam || this.params[controlParam.name] == null) {
         return false
       }
-      return this.params[controlParam.name].value === 0
+      return this.params[controlParam.name]?.value === 0
     },
     dependency_unmet(): boolean {
       const dep = this.failsafeDefinition.dependsOn
