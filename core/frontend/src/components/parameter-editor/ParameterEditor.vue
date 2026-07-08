@@ -17,8 +17,8 @@
       :sort-by="'name'"
       disable-sort
       :custom-filter="() => true"
-      :item-class="(value) => value.item?.readonly ? undefined : 'hand-cursor'"
-      @click:row="(value) => editParam(value.item)"
+      :item-class="rowClass"
+      @click:row="onRowClick"
     >
       <v-progress-linear
         slot="progress"
@@ -246,6 +246,12 @@ export default Vue.extend({
       }
       this.edited_param = param
       this.edit_dialog = true
+    },
+    rowClass(value: { item?: Parameter }): string | undefined {
+      return value.item?.readonly ? undefined : 'hand-cursor'
+    },
+    onRowClick(value: { item: Parameter }) {
+      this.editParam(value.item)
     },
     printMark(item: Fuse.FuseResult<Record<string, string>>, key: string): string {
       const name = item.item[key]
