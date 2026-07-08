@@ -11,7 +11,6 @@
     <v-card>
       <v-skeleton-loader
         v-if="networks.isEmpty()"
-        v-bind="attrs"
         class="mx-auto"
         min-width="400"
         type="article, list-item@5"
