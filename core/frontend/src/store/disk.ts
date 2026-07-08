@@ -1,5 +1,5 @@
 import {
-  Action, Module, Mutation, VuexModule, getModule,
+  Action, Mutation, VuexModule, getModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'

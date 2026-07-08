@@ -1,6 +1,6 @@
 import {
   Action, getModule,
-  Module, Mutation, VuexModule,
+  Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import Notifier from '@/libs/notifier'

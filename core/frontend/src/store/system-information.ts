@@ -1,7 +1,6 @@
 import {
   Action,
   getModule,
-  Module,
   Mutation,
   VuexModule,
 } from 'vuex-module-decorators'

@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import {
-  Action, getModule, Module, Mutation, VuexModule,
+  Action, getModule, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
