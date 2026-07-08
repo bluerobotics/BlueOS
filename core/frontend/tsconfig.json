@@ -6,7 +6,6 @@
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "bundler",
-    "moduleDetection": "force",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
