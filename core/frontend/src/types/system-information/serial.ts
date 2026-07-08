@@ -1,4 +1,4 @@
-import { JSONValue } from '@/types/common'
+export type UdevProperties = Record<string, string | undefined>
 
 export interface UsbPortInfo {
     /// Vendor ID
@@ -23,7 +23,7 @@ export interface SerialPortInfo {
     // Time since the device was created,
     by_path_created_ms_ago: number | null
     // Udev information from the device
-    udev_properties: JSONValue | null,
+    udev_properties: UdevProperties | null,
     // Is the port in use? by whom?
     current_user: string | null,
 }

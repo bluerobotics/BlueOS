@@ -94,7 +94,8 @@ import { OneMoreTime } from '@/one-more-time'
 import autopilot from '@/store/autopilot_manager'
 import system_information from '@/store/system-information'
 import { SerialEndpoint } from '@/types/autopilot'
-import { Dictionary, JSONValue } from '@/types/common'
+import { Dictionary } from '@/types/common'
+import { UdevProperties } from '@/types/system-information/serial'
 import back_axios from '@/utils/api'
 import { isIpAddress } from '@/utils/pattern_validators'
 
@@ -119,7 +120,7 @@ export default Vue.extend({
         G: 'Serial 6',
         H: 'Serial 7',
         I: 'Serial 8',
-      },
+      } as Record<string, string>,
       ports: {} as Dictionary<string | undefined>,
       fetch_autopilot_serial_config_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_serial_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
@@ -166,7 +167,7 @@ export default Vue.extend({
       const names = [device, driver, serial].filter((name) => name !== undefined)
       return names.join(' - ')
     },
-    deviceInfo(path: string): JSONValue {
+    deviceInfo(path: string): UdevProperties {
       return system_information.serial?.ports?.find((port) => port.by_path === path)?.udev_properties ?? {}
     },
     update_ports(new_ports: SerialEndpoint[]) {

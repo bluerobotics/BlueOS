@@ -43,9 +43,9 @@
             </p>
             <p class="subtitle-1 text-center ma-0">
               Info:
-              {{ bridgeSerialInfo.serial_info.udev_properties["ID_VENDOR"] }}
+              {{ bridgeSerialInfo.serial_info.udev_properties?.["ID_VENDOR"] }}
               /
-              {{ bridgeSerialInfo.serial_info.udev_properties["ID_MODEL"] }}
+              {{ bridgeSerialInfo.serial_info.udev_properties?.["ID_MODEL"] }}
             </p>
           </div></span>
       </v-tooltip>
