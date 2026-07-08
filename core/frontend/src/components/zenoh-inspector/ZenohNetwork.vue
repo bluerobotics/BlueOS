@@ -59,7 +59,7 @@
 import {
   QueryTarget, ReplyError, Sample, Session,
 } from '@eclipse-zenoh/zenoh-ts'
-import cytoscape, { Core } from 'cytoscape'
+import cytoscape, { Core, ElementDefinition } from 'cytoscape'
 import fcose, { FcoseLayoutOptions } from 'cytoscape-fcose'
 import Vue from 'vue'
 
@@ -129,8 +129,8 @@ export default Vue.extend({
             idealEdgeLength: 140,
             packComponents: false,
             nodeRepulsion: 25000,
-          },
-          style: this.getCytoscapeStyle(),
+          } as FcoseLayoutOptions,
+          style: this.getCytoscapeStyle() as cytoscape.CytoscapeOptions['style'],
         }))
 
         console.log('[Zenoh Network] Cytoscape initialized successfully')
@@ -140,7 +140,7 @@ export default Vue.extend({
     },
 
     prepareCytoscapeElements() {
-      const elements: { data: (NetworkNode | NetworkEdge) }[] = []
+      const elements: ElementDefinition[] = []
 
       // Add nodes
       this.networkData.nodes.forEach((node) => {
