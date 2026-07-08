@@ -210,7 +210,7 @@ export default Vue.extend({
 
       return record
     },
-    banner(): string {
+    banner(): string | undefined {
       switch (autopilot_data.autopilot_type) {
         case MavAutopilot.MAV_AUTOPILOT_ARDUPILOTMEGA:
           return ArduPilotBanner

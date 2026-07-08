@@ -82,8 +82,8 @@ export class OneMoreTime {
 
       const id = setInterval(() => {
         // Check if object does not exist anymore or if it was destroyed by vue
-        // eslint-disable-next-line
-        if (!ref.deref() || ref.deref()._isDestroyed) {
+        const instance = ref.deref() as { _isDestroyed?: boolean } | undefined
+        if (!instance || instance._isDestroyed) {
           this.isDisposed = true
           this.killTask()
           clearInterval(id)
