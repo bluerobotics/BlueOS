@@ -1103,7 +1103,8 @@ export default Vue.extend({
         }
       }
     },
-    openCreationDialogFromUpload(metadata: ExtensionUploadMetadata | null = this.upload_metadata): void {
+    openCreationDialogFromUpload(metadata: ExtensionUploadMetadata | null = null): void {
+      metadata ??= this.upload_metadata
       if (!metadata) {
         return
       }
