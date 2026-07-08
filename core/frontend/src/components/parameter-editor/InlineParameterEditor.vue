@@ -11,13 +11,14 @@
           <v-checkbox
             v-for="(key, keyvalue) in param.bitmask"
             :key="keyvalue"
-            v-model="selected_bitflags"
+            :input-value="selected_bitflags"
             dense
             hide-details
             :loading="waiting_for_param_update"
             :label="key"
             :value="2 ** keyvalue"
             :disabled="disabled"
+            @change="selected_bitflags = $event"
           />
         </template>
 
