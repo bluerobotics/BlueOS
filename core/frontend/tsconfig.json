@@ -22,6 +22,12 @@
       ],
       "vue/types/vue": [
         "node_modules/vue/types/vue.d.ts"
+      ],
+      "vuex": [
+        "node_modules/vuex/types/index.d.ts"
+      ],
+      "three/examples/jsm/*": [
+        "node_modules/@types/three/examples/jsm/*"
       ]
     },
     "lib": [
