@@ -138,8 +138,8 @@ import Vue, { PropType } from 'vue'
 import WarningDialog from '@/components/common/WarningDialog.vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
-import { Dictionary } from '@/types/common'
 import { InternetConnectionState } from '@/types/helper'
+import { Version } from '@/types/version-chooser'
 import { DEFAULT_REMOTE_IMAGE, getFactoryVersion } from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
@@ -180,8 +180,12 @@ export default Vue.extend({
       default: false,
     },
     image: {
-      type: Object as PropType<Dictionary<string>>,
-      default() { return {} },
+      type: Object as PropType<Version>,
+      default(): Version {
+        return {
+          repository: '', tag: '', last_modified: '', sha: null,
+        }
+      },
     },
     remote: {
       type: Boolean,
