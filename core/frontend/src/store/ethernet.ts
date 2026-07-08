@@ -131,12 +131,13 @@ class EthernetStore extends VuexModule {
   }
 
   @Action
-  async getDHCPServerDetails(interface_name: string): Promise<DHCPServerDetails> {
-    return await back_axios({
+  async getDHCPServerDetails(interface_name: string): Promise<Record<string, DHCPServerDetails>> {
+    const response = await back_axios({
       method: 'get',
       url: `${this.API_URL}/dhcp/details/${interface_name}`,
       timeout: 15000,
     })
+    return response.data
   }
 
   @Action
