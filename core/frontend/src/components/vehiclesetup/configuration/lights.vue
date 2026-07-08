@@ -31,7 +31,7 @@
       <v-card-text>
         Number of button presses to step from 0% to 100% brightness:
         <br>
-        {{ light_steps?.value }} steps result in a {{ (100 / light_steps?.value).toFixed(1) }}%
+        {{ light_steps?.value }} steps result in a {{ (100 / (light_steps?.value ?? 1)).toFixed(1) }}%
         increase per button press.
         <v-text-field
           ref="steps_input"

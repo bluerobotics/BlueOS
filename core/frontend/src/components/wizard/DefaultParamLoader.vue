@@ -125,7 +125,7 @@ export default Vue.extend({
     fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
   }),
   computed: {
-    filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
+    filtered_param_sets(): Dictionary<Dictionary<number>> {
       const fw_patch = `${this.vehicle}/${this.version}/${this.board}/`
       const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}/`
       const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}/`
