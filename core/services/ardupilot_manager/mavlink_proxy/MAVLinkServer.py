@@ -26,6 +26,7 @@ class MAVLinkServer(AbstractRouter):
 
     def assemble_command(self, master_endpoint: Endpoint) -> str:
         # Convert endpoint format to mavlink-router format
+        # pylint: disable=too-many-return-statements
         def convert_endpoint(endpoint: Endpoint) -> str:
             if endpoint.connection_type == EndpointType.Serial:
                 return f"serial:{endpoint.place}:{endpoint.argument}"
