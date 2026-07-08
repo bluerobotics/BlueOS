@@ -1,9 +1,10 @@
 import { lte as sem_ver_lte } from 'semver'
 import {
-  getModule, Module, Mutation, VuexModule,
+  getModule, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'
+import { DynamicModule as Module } from '@/utils/vuex'
 import {
   AutopilotEndpoint, FirmwareInfo, FirmwareVehicleType,
   FlightController, SerialEndpoint, SITLFrame,

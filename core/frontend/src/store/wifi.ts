@@ -1,6 +1,8 @@
 import {
-  getModule, Module, Mutation, VuexModule,
+  getModule, Mutation, VuexModule,
 } from 'vuex-module-decorators'
+
+import { DynamicModule as Module } from '@/utils/vuex'
 
 import store from '@/store'
 import {

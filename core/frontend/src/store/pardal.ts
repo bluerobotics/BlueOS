@@ -1,9 +1,10 @@
 import { 
     Action,
     getModule,
-    Module,
     VuexModule,
 } from "vuex-module-decorators"
+
+import { DynamicModule as Module } from "@/utils/vuex"
 
 import Notifier from "@/libs/notifier"
 import store from "@/store"

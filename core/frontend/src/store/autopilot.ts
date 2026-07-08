@@ -1,6 +1,8 @@
 import {
-  getModule, Module, Mutation, VuexModule,
+  getModule, Mutation, VuexModule,
 } from 'vuex-module-decorators'
+
+import { DynamicModule as Module } from '@/utils/vuex'
 
 import { MavAutopilot, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import { Message as M2R } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
