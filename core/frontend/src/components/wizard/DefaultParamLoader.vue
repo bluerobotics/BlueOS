@@ -87,13 +87,13 @@
 <script lang="ts">
 import { SemVer } from 'semver'
 import Vue, { PropType } from 'vue'
-import { Dictionary } from 'vue-router'
 
 import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { printParamWithUnit } from '@/types/autopilot/parameter'
+import { Dictionary } from '@/types/common'
 import { VForm } from '@/types/vuetify'
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'

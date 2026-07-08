@@ -159,12 +159,12 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue'
-import { Dictionary } from 'vue-router'
 
 import RebootButton from '@/components/utils/RebootButton.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import { printParamWithUnit } from '@/types/autopilot/parameter'
+import { Dictionary } from '@/types/common'
 
 export default Vue.extend({
   name: 'ParameterLoader',

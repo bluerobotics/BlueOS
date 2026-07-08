@@ -83,11 +83,7 @@ import Vue, { markRaw } from 'vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'
 import { GpsFixType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import {
-  GlobalPositionInt,
-  Gps2Raw,
-  GpsRawInt,
-} from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
+import { Message } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import autopilot_data from '@/store/autopilot'
 
 export default Vue.extend({
@@ -104,8 +100,8 @@ export default Vue.extend({
       time_limit_message: 20000,
       last_message_date: undefined as undefined | Date,
       gps_detected: false,
-      global_position_int: undefined as undefined | GlobalPositionInt,
-      gps_raw_int: undefined as undefined | GpsRawInt,
+      global_position_int: undefined as undefined | Message.GlobalPositionInt,
+      gps_raw_int: undefined as undefined | Message.GpsRawInt,
       listeners: [] as Listener[],
     }
   },
@@ -276,7 +272,7 @@ export default Vue.extend({
         }
 
         this.last_message_date = new Date()
-        this.global_position_int = message?.message as GlobalPositionInt
+        this.global_position_int = message?.message as Message.GlobalPositionInt
       }).setFrequency(0)),
     )
 
@@ -288,7 +284,7 @@ export default Vue.extend({
         }
 
         this.last_message_date = new Date()
-        this.gps_raw_int = message?.message as GpsRawInt | Gps2Raw
+        this.gps_raw_int = message?.message as Message.GpsRawInt | Message.Gps2Raw
         this.gps_detected = this.gps_raw_int?.fix_type?.type !== GpsFixType.GPS_FIX_TYPE_NO_GPS
       }).setFrequency(0)),
     )
