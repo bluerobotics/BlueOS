@@ -19,6 +19,9 @@
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "vue/types/vue": [
+        "node_modules/vue/types/vue.d.ts"
       ]
     },
     "lib": [
