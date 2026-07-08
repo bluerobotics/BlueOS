@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import {
-  Action, getModule, Module, Mutation, VuexModule,
+  Action, getModule, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import message_manager, { MessageLevel } from '@/libs/message-manager'
@@ -43,7 +43,6 @@ thumbnailState.task.setDelay(1000)
   store,
   name: 'video',
 })
-@Module
 class VideoStore extends VuexModule {
   API_URL = '/mavlink-camera-manager'
 

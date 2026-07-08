@@ -1,8 +1,7 @@
 import { vec3 } from 'gl-matrix'
 import { every } from 'lodash'
 import {
-  getModule,
-  Module, VuexModule,
+  getModule, VuexModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'
