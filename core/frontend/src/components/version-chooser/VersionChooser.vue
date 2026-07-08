@@ -522,7 +522,7 @@ export default Vue.extend({
           timeout: 15 * 60 * 1000, // Wait for 15min
           data: formData,
           onUploadProgress: (event) => {
-            this.upload_percentage = Math.round(100 * (event.loaded / event.total))
+            this.upload_percentage = event.total ? Math.round(100 * (event.loaded / event.total)) : 0
           },
         }).finally(() => {
           this.disable_upload_controls = false
@@ -678,7 +678,7 @@ export default Vue.extend({
         })
         .finally(() => { this.deleting = '' })
     },
-    imageIsAvailableLocally(sha: string) : boolean {
+    imageIsAvailableLocally(sha: string | null) : boolean {
       if (!('local' in this.available_versions)) {
         return false
       }
