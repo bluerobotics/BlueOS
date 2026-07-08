@@ -296,7 +296,7 @@ export default Vue.extend({
     async queryRouters() {
       try {
         const receiver = await this.session!.get('@/*/router', {
-          target: QueryTarget.BestMatching,
+          target: QueryTarget.BEST_MATCHING,
         })
 
         if (!receiver) {
@@ -377,7 +377,7 @@ export default Vue.extend({
     async queryPeers() {
       try {
         const receiver = await this.session!.get('@/*/peer', {
-          target: QueryTarget.BestMatching,
+          target: QueryTarget.BEST_MATCHING,
         })
 
         if (!receiver) {
@@ -423,7 +423,7 @@ export default Vue.extend({
         const keyexpr = `@/${zid}/${whatami}`
 
         const receiver = await this.session!.get(keyexpr, {
-          target: QueryTarget.BestMatching,
+          target: QueryTarget.BEST_MATCHING,
         })
 
         if (!receiver) {

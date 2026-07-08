@@ -448,7 +448,7 @@ export default Vue.extend({
 
       try {
         const receiver = await this.file_sync_session.get(topic, {
-          target: QueryTarget.BestMatching,
+          target: QueryTarget.BEST_MATCHING,
         })
 
         if (!receiver) {
