@@ -6,6 +6,7 @@ set -e
 
 TOOLS=(
     ardupilot_tools
+    chrony
     filebrowser
     logviewer
     scripts
