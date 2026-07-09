@@ -1,0 +1,528 @@
+{
+  "meta": {
+    "baselineFileVersion": 1,
+    "ignoreMessages": true
+  },
+  "errors": {
+    "db6ef290a6ff292e14fbdf97d2ffb2b8a76af01c": {
+      "file": "src/App.vue",
+      "code": "TS1117",
+      "count": 1
+    },
+    "4a269a76cf9903b6c378c5ef7344f0b04d47e719": {
+      "file": "src/App.vue",
+      "code": "TS2339",
+      "count": 9
+    },
+    "5eea9b288e40277eb764f21fb025cb05ecda2bfb": {
+      "file": "src/App.vue",
+      "code": "TS2591",
+      "count": 1
+    },
+    "8f0d07bfbad959361bf9258122b51545babc5599": {
+      "file": "src/components/app/ReportMenu.vue",
+      "code": "TS2353",
+      "count": 1
+    },
+    "d7bd2afff8572479a710dc743b393f46d31403df": {
+      "file": "src/components/app/SettingsMenu.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "74934772b6618cf4e491b0b9334569b0a09b5478": {
+      "file": "src/components/app/VehicleBanner.vue",
+      "code": "TS2591",
+      "count": 2
+    },
+    "fd190738ec79d96a6bb2a514783a2371adec7c45": {
+      "file": "src/components/app/VehicleBanner.vue",
+      "code": "TS2322",
+      "count": 1
+    },
+    "8dab63a29a80670a4746d3a8ac979d26245af707": {
+      "file": "src/components/autopilot/AutopilotSerialConfiguration.vue",
+      "code": "TS7053",
+      "count": 1
+    },
+    "4a31ed8bf20cfbd1a7d2064e699182c368d2da0b": {
+      "file": "src/components/autopilot/AutopilotSerialConfiguration.vue",
+      "code": "TS2339",
+      "count": 11
+    },
+    "739c6f278a4e18c13a0dc4e9d8c26ca9039ed97a": {
+      "file": "src/components/autopilot/EndpointCreationDialog.vue",
+      "code": "TS2345",
+      "count": 2
+    },
+    "97ee2ef021e9597e2f893428de5514cc2229d99b": {
+      "file": "src/components/autopilot/MasterEndpointManager.vue",
+      "code": "TS2345",
+      "count": 2
+    },
+    "ac03a78962bb863dd4c7691ef7bab0b44b4f211e": {
+      "file": "src/components/bridges/BridgeCard.vue",
+      "code": "TS18047",
+      "count": 2
+    },
+    "03a3f7c35b8283fd31f0e0494ae79d4ffb7cd6fb": {
+      "file": "src/components/bridges/BridgeCard.vue",
+      "code": "TS7053",
+      "count": 2
+    },
+    "b652eff663ecb27f810c4512b24d029ea09c704c": {
+      "file": "src/components/bridges/BridgeCreationDialog.vue",
+      "code": "TS7006",
+      "count": 2
+    },
+    "6068ea46f8604d0ab0a327fe94f273bb17bf3c2e": {
+      "file": "src/components/cloud/CloudTrayMenu.vue",
+      "code": "TS2551",
+      "count": 1
+    },
+    "5cf2ef33812941eec1afa852e6971a636d73ed7b": {
+      "file": "src/components/common/SpinningLogo.vue",
+      "code": "TS2591",
+      "count": 1
+    },
+    "6d67759b13893ec29f9c526b55c9b1b32049d57e": {
+      "file": "src/components/ethernet/InterfaceCard.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "82a58b1850ff14e44ea66bf309c229f9bdf399de": {
+      "file": "src/components/health/GpsTrayMenu.vue",
+      "code": "TS2305",
+      "count": 3
+    },
+    "18298f6565d93f908b28e7fadc1bac14b416703d": {
+      "file": "src/components/health/HealthTrayMenu.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "45240559e0110b07757ade14ead770d02656f63b": {
+      "file": "src/components/health/HealthTrayMenu.vue",
+      "code": "TS7016",
+      "count": 1
+    },
+    "3fe6f78f45db48aaddf652b8978c0eade2b76366": {
+      "file": "src/components/kraken/BackAlleyTab.vue",
+      "code": "TS1117",
+      "count": 4
+    },
+    "4e3d3efc8c09d9ae2239e4313ec19614707cd4c0": {
+      "file": "src/components/kraken/KrakenManager.ts",
+      "code": "TS2551",
+      "count": 1
+    },
+    "7cfa673a4b08aa6864bb2e6233245b68cf1efee6": {
+      "file": "src/components/kraken/cards/InstalledExtensionCard.vue",
+      "code": "TS2551",
+      "count": 2
+    },
+    "b78ee07961ac653dc21560aaf67a57049c39c920": {
+      "file": "src/components/kraken/cards/InstalledExtensionCard.vue",
+      "code": "TS2362",
+      "count": 2
+    },
+    "54f0da7fc6cdb55789353932deed44bd52183ebf": {
+      "file": "src/components/kraken/cards/InstalledExtensionCard.vue",
+      "code": "TS2532",
+      "count": 2
+    },
+    "9e70d2257a7cec018815c192228053f48de33553": {
+      "file": "src/components/kraken/cards/InstalledExtensionCard.vue",
+      "code": "TS18048",
+      "count": 1
+    },
+    "b2a581f3dcae4d2fcbf60ef777e82d5069bc6965": {
+      "file": "src/components/kraken/cards/InstalledExtensionCard.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "01284cc7b6aa563fbb3281cf972a461de4321df6": {
+      "file": "src/components/kraken/cards/StoreExtensionCard.vue",
+      "code": "TS7016",
+      "count": 1
+    },
+    "f256b203e761e3bb99f85c5e19fbce175836cdd8": {
+      "file": "src/components/kraken/cards/StoreExtensionCard.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "8d964521d257dac25739867ddba9029a9c1e9830": {
+      "file": "src/components/kraken/modals/ExtensionSettingsModal.vue",
+      "code": "TS18046",
+      "count": 2
+    },
+    "9318e3915f8cb7c6d82de4b5bfe8fa378d8a7309": {
+      "file": "src/components/parameter-editor/InlineParameterEditor.vue",
+      "code": "TS1117",
+      "count": 1
+    },
+    "67d0606142a17ed9b0c3386de126594c8e33e852": {
+      "file": "src/components/parameter-editor/ParameterEditor.vue",
+      "code": "TS7006",
+      "count": 2
+    },
+    "229ea2698a6dcce70da72fda4dee235c0e8bdf1a": {
+      "file": "src/components/parameter-editor/ParameterLoader.vue",
+      "code": "TS2614",
+      "count": 1
+    },
+    "97a5852c6afb1d6d30208663c17c2401902865c6": {
+      "file": "src/components/parameter-editor/ParameterLoader.vue",
+      "code": "TS2345",
+      "count": 1
+    },
+    "ddf130bf7ae87824f3c6fd436b664ae05a18b7b2": {
+      "file": "src/components/parameter-editor/ParameterLoader.vue",
+      "code": "TS18046",
+      "count": 1
+    },
+    "fb52c7264a0e3ade9d0e01436d9de498fc0f49ef": {
+      "file": "src/components/parameter-editor/ServoFunctionRangeEditor.vue",
+      "code": "TS7053",
+      "count": 1
+    },
+    "60d26b2a8d2e57ce84cfb2d1d35b41294f6fb551": {
+      "file": "src/components/speedtest/NetworkSpeedTest.vue",
+      "code": "TS18048",
+      "count": 2
+    },
+    "67ef4eb306f846b7b7f01008bd7ba0fe546808f1": {
+      "file": "src/components/system-information/Network.vue",
+      "code": "TS2551",
+      "count": 1
+    },
+    "b8bbf2fd498fd71299422ba8e3d70c4b1d8b6e39": {
+      "file": "src/components/system-information/Processes.vue",
+      "code": "TS1117",
+      "count": 1
+    },
+    "a5df6e3c47b75860cff33a94cf343a0cdb99adb7": {
+      "file": "src/components/vehiclesetup/Configure.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "cf83d83553b9f59c75108c15b4101bed409fa68b": {
+      "file": "src/components/vehiclesetup/OrientationPicker.vue",
+      "code": "TS7016",
+      "count": 1
+    },
+    "8a7fc83aeed7d49475ced0c4ddae7abc94af1a54": {
+      "file": "src/components/vehiclesetup/OrientationPicker.vue",
+      "code": "TS2307",
+      "count": 3
+    },
+    "2b6bbe2cd7a8571ab75d0c450bc73faa9e161d4a": {
+      "file": "src/components/vehiclesetup/calibration.ts",
+      "code": "TS2339",
+      "count": 58
+    },
+    "ea44530963871dce1b2da7806984fab46375cb8a": {
+      "file": "src/components/vehiclesetup/configuration/compass/CompassCalibrationProgressGrid.vue",
+      "code": "TS7016",
+      "count": 1
+    },
+    "73fa202c3d47dbe1f8547bb260b1dbf8cda83ce2": {
+      "file": "src/components/vehiclesetup/configuration/compass/CompassCalibrationProgressGrid.vue",
+      "code": "TS2307",
+      "count": 1
+    },
+    "84a7a7311c3ccfc3fe2d48e5747dd3f52c5c4a71": {
+      "file": "src/components/vehiclesetup/configuration/lights.vue",
+      "code": "TS18048",
+      "count": 1
+    },
+    "4465d6d535c76eeedc394ec85ab732adf99e1890": {
+      "file": "src/components/vehiclesetup/overview/BaroCalib.vue",
+      "code": "TS2362",
+      "count": 1
+    },
+    "81f167f85dfaf5ff4be83d6de80e014eb1325624": {
+      "file": "src/components/vehiclesetup/overview/ParamSets.vue",
+      "code": "TS2345",
+      "count": 2
+    },
+    "68f1bd04cc5cd843beb38dde15dbffb3f194fa85": {
+      "file": "src/components/vehiclesetup/overview/ParamSets.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "03e406361f87eb770ae4c36d40fb6b5d3fdee1b7": {
+      "file": "src/components/vehiclesetup/overview/PingInfo.vue",
+      "code": "TS2591",
+      "count": 2
+    },
+    "9ac3c957a6cf60e7b2fa88993ed7610327f7c840": {
+      "file": "src/components/vehiclesetup/viewers/GenericViewer.vue",
+      "code": "TS2339",
+      "count": 2
+    },
+    "9f935c55079babf31075240b482cdb4438b01f75": {
+      "file": "src/components/vehiclesetup/viewers/GenericViewer.vue",
+      "code": "TS2554",
+      "count": 1
+    },
+    "e0fb2c0a2f7b2f0f24e7355fd7209914efcf091e": {
+      "file": "src/components/vehiclesetup/viewers/modelHelper.ts",
+      "code": "TS2307",
+      "count": 2
+    },
+    "108b7670fce576042027b6a213fc6aea983ad130": {
+      "file": "src/components/version-chooser/VersionCard.vue",
+      "code": "TS2339",
+      "count": 26
+    },
+    "77d0fb94d3be18a25d414586e09aff878837c55d": {
+      "file": "src/components/version-chooser/VersionChooser.vue",
+      "code": "TS2345",
+      "count": 1
+    },
+    "65c436c9f93aa607e6c0f99bcee8aa9cf53ccd58": {
+      "file": "src/components/version-chooser/VersionChooser.vue",
+      "code": "TS18048",
+      "count": 1
+    },
+    "809f0fb51056514a7c18e29dfdc1f9684ff9c399": {
+      "file": "src/components/wifi/WifiManager.vue",
+      "code": "TS18047",
+      "count": 1
+    },
+    "4e4deb327cdf8655250d04b8a7d46b473315ae03": {
+      "file": "src/components/wifi/WifiManager.vue",
+      "code": "TS18048",
+      "count": 1
+    },
+    "ac59f95a8fde9727ffb50af4548433cc390880db": {
+      "file": "src/components/wizard/DefaultParamLoader.vue",
+      "code": "TS2614",
+      "count": 1
+    },
+    "b5c1d40a829fa4279253ab1e602475a0d8c369f1": {
+      "file": "src/components/wizard/Wizard.vue",
+      "code": "TS2698",
+      "count": 1
+    },
+    "d64bb8322fa0f72be8ff816cea600039076e9efd": {
+      "file": "src/components/wizard/Wizard.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "70216596d99bcfe7bfbad09dc10f650dfea5540d": {
+      "file": "src/components/zenoh-inspector/ZenohNetwork.vue",
+      "code": "TS2353",
+      "count": 2
+    },
+    "e271b57245fcfbc4b437578e76d49f3a11b7f444": {
+      "file": "src/components/zenoh-inspector/ZenohNetwork.vue",
+      "code": "TS2322",
+      "count": 1
+    },
+    "24c7985437d1681a8c11e4af152d026b9afc779c": {
+      "file": "src/components/zenoh-inspector/ZenohNetwork.vue",
+      "code": "TS2551",
+      "count": 3
+    },
+    "4eb79b3bef92719f4466c565baacc087dfae4cba": {
+      "file": "src/main.ts",
+      "code": "TS7016",
+      "count": 1
+    },
+    "e72075de35003c53185ee30bb0d4af0b9ea23697": {
+      "file": "src/main.ts",
+      "code": "TS2769",
+      "count": 1
+    },
+    "0a50d801dfb5792dece694409755c2139af102e0": {
+      "file": "src/one-more-time.ts",
+      "code": "TS2532",
+      "count": 1
+    },
+    "059d18bd29ecd27852f47662e38c97243f9f8ee1": {
+      "file": "src/one-more-time.ts",
+      "code": "TS2339",
+      "count": 1
+    },
+    "4d9654c951606a31f6a20eedc66264b8dc90793b": {
+      "file": "src/plugins/vuetify.ts",
+      "code": "TS7016",
+      "count": 2
+    },
+    "47da06027e2c5c58c974833a22ada10dde9144b0": {
+      "file": "src/store/ardupilot_sensors.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "52a5770585fc9f67a11882734e5b38aab5a1831e": {
+      "file": "src/store/autopilot.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "423d3d63d8ac7ad5d1e210e2a342a96d4c21e1df": {
+      "file": "src/store/autopilot_manager.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "36036be610cbc60a872d38d16e2d3680d8659062": {
+      "file": "src/store/beacon.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "ac48b97e7de1883d64d1addd47acb64c3e3507e2": {
+      "file": "src/store/bridget.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "9ef12d870c792f52ba3e8e337ec66e57a298d05e": {
+      "file": "src/store/commander.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "d537e7166c0eee8470a22ccb4a497e87c6b4abff": {
+      "file": "src/store/customization.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "9cc2e9956c55a600e090ab3ba04c7472f0f18840": {
+      "file": "src/store/disk.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "60b4c522889614986e88a70251fc1a867ed05249": {
+      "file": "src/store/ethernet.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "947748d7008388b921611a2bdbebaf78a101480a": {
+      "file": "src/store/frontend.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "87244000f0aaad7cf42ecc5d6ed0eeec8b0f4049": {
+      "file": "src/store/helper.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "27e3a3d1d9e457157fccacc25970ba53ae2a3472": {
+      "file": "src/store/index.ts",
+      "code": "TS7016",
+      "count": 1
+    },
+    "69c473b44bee579ecd79bfd184efc2096be4908c": {
+      "file": "src/store/mavlink.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "80711edb172717af80b47019107d35e81ab12b8e": {
+      "file": "src/store/nmea-injector.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "a4110e5a6fd7adc92d31c4d02eed8628619b7604": {
+      "file": "src/store/notifications.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "036ab8216e33255ed43f333b9fa26d09a0b48efc": {
+      "file": "src/store/pardal.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "7f571a9f55e61878c19d5cf54e56658fb630242f": {
+      "file": "src/store/ping.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "0555c9e8401c6f527e2e4cdc67c7b9caa5488c69": {
+      "file": "src/store/records.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "b0164876963d451e603fe7ec3fc9acaa8db4ca14": {
+      "file": "src/store/settings.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "611b1810bd987ae6de92cf2cca5d8ba3dba486e9": {
+      "file": "src/store/system-information.ts",
+      "code": "TS2305",
+      "count": 1
+    },
+    "96edd9a6c6cc10c33509441bdf7216929f8fbae5": {
+      "file": "src/store/system-information.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "cd1e921c26ac202a989cb48f5a155340427d9f40": {
+      "file": "src/store/video.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "5c89cb653b3d4c93ec9c955e66306b3e8d85f24e": {
+      "file": "src/store/wifi.ts",
+      "code": "TS1238",
+      "count": 1
+    },
+    "e73ba8cda23ee226029f77c423cd1dc8ddc9bcd2": {
+      "file": "src/types/autopilot/parameter-table.ts",
+      "code": "TS2322",
+      "count": 1
+    },
+    "ca031ff05b37fd89e8e39bbbca9d4299fee9e71b": {
+      "file": "src/types/shims-general.ts",
+      "code": "TS2666",
+      "count": 3
+    },
+    "c26f46958bbfec8989cdbf21623fda41cb38aefa": {
+      "file": "src/types/shims-general.ts",
+      "code": "TS2300",
+      "count": 3
+    },
+    "e9959ef2e26d5c35973a2e1d4c140449e7c5f3ea": {
+      "file": "src/types/shims-general.ts",
+      "code": "TS2664",
+      "count": 4
+    },
+    "1625fb41c2711fa3bdf05e03a3ce30152f777b46": {
+      "file": "src/types/shims-general.ts",
+      "code": "TS2665",
+      "count": 1
+    },
+    "19896ac0b9d9bac5e3e4afcf52a930d4fdc40929": {
+      "file": "src/views/Autopilot.vue",
+      "code": "TS2339",
+      "count": 5
+    },
+    "ab7f7df09752d23b7f6f8a8301d862d1439adf29": {
+      "file": "src/views/Autopilot.vue",
+      "code": "TS2322",
+      "count": 1
+    },
+    "3e952b1ebb3729e18bfe73508cab6a7456b778a5": {
+      "file": "src/views/ExtensionManagerView.vue",
+      "code": "TS2683",
+      "count": 1
+    },
+    "3d64d746c122142e6f49e007498be158d013dd0a": {
+      "file": "src/views/ExtensionView.vue",
+      "code": "TS2339",
+      "count": 4
+    },
+    "62ee13a1573080512dadcd1c12d893a7ff1d63fb": {
+      "file": "src/views/FileBrowserView.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "81f6f0450e66a66189ad7ce67611c435e0e710fb": {
+      "file": "src/views/SettingsView.vue",
+      "code": "TS2339",
+      "count": 1
+    },
+    "cb4dc2ffedad9de594a9c28cc2e88e0f8d32b59d": {
+      "file": "src/views/VehicleSetupView.vue",
+      "code": "TS2339",
+      "count": 2
+    }
+  }
+}

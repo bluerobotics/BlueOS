@@ -65,6 +65,9 @@ jobs:
       - name: Bun lint
         run: bun --cwd ./core/frontend lint
 
+      - name: Bun type-check
+        run: bun run --cwd ./core/frontend type-check
+
       - name: Bun build
         run: NODE_OPTIONS=--max-old-space-size=8192 bun run --cwd ./core/frontend build
 
