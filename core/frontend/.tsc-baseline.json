@@ -349,119 +349,14 @@
       "code": "TS7016",
       "count": 2
     },
-    "47da06027e2c5c58c974833a22ada10dde9144b0": {
-      "file": "src/store/ardupilot_sensors.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "52a5770585fc9f67a11882734e5b38aab5a1831e": {
-      "file": "src/store/autopilot.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "423d3d63d8ac7ad5d1e210e2a342a96d4c21e1df": {
-      "file": "src/store/autopilot_manager.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "36036be610cbc60a872d38d16e2d3680d8659062": {
-      "file": "src/store/beacon.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "ac48b97e7de1883d64d1addd47acb64c3e3507e2": {
-      "file": "src/store/bridget.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "9ef12d870c792f52ba3e8e337ec66e57a298d05e": {
-      "file": "src/store/commander.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "d537e7166c0eee8470a22ccb4a497e87c6b4abff": {
-      "file": "src/store/customization.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "9cc2e9956c55a600e090ab3ba04c7472f0f18840": {
-      "file": "src/store/disk.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "60b4c522889614986e88a70251fc1a867ed05249": {
-      "file": "src/store/ethernet.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "947748d7008388b921611a2bdbebaf78a101480a": {
-      "file": "src/store/frontend.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "87244000f0aaad7cf42ecc5d6ed0eeec8b0f4049": {
-      "file": "src/store/helper.ts",
-      "code": "TS1238",
-      "count": 1
-    },
     "27e3a3d1d9e457157fccacc25970ba53ae2a3472": {
       "file": "src/store/index.ts",
       "code": "TS7016",
       "count": 1
     },
-    "69c473b44bee579ecd79bfd184efc2096be4908c": {
-      "file": "src/store/mavlink.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "80711edb172717af80b47019107d35e81ab12b8e": {
-      "file": "src/store/nmea-injector.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "a4110e5a6fd7adc92d31c4d02eed8628619b7604": {
-      "file": "src/store/notifications.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "036ab8216e33255ed43f333b9fa26d09a0b48efc": {
-      "file": "src/store/pardal.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "7f571a9f55e61878c19d5cf54e56658fb630242f": {
-      "file": "src/store/ping.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "0555c9e8401c6f527e2e4cdc67c7b9caa5488c69": {
-      "file": "src/store/records.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "b0164876963d451e603fe7ec3fc9acaa8db4ca14": {
-      "file": "src/store/settings.ts",
-      "code": "TS1238",
-      "count": 1
-    },
     "611b1810bd987ae6de92cf2cca5d8ba3dba486e9": {
       "file": "src/store/system-information.ts",
       "code": "TS2305",
-      "count": 1
-    },
-    "96edd9a6c6cc10c33509441bdf7216929f8fbae5": {
-      "file": "src/store/system-information.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "cd1e921c26ac202a989cb48f5a155340427d9f40": {
-      "file": "src/store/video.ts",
-      "code": "TS1238",
-      "count": 1
-    },
-    "5c89cb653b3d4c93ec9c955e66306b3e8d85f24e": {
-      "file": "src/store/wifi.ts",
-      "code": "TS1238",
       "count": 1
     },
     "e73ba8cda23ee226029f77c423cd1dc8ddc9bcd2": {
