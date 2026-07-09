@@ -65,7 +65,7 @@ export default Vue.extend({
       return autopilot_data.parameter('FRAME_CONFIG') || autopilot_data.parameter('FRAME_CLASS')
     },
     frame_type_parameter(): Parameter | undefined {
-      switch (autopilot_data.vehicle_type) {
+      switch (autopilot.vehicle_type) {
         case 'Submarine':
         case 'Surface Boat':
           return autopilot_data.parameter('FRAME_TYPE')
