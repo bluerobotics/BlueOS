@@ -267,6 +267,23 @@ def available_routers() -> Any:
     return autopilot.get_available_routers()
 
 
+@index_router_v1.post("/set_exec_arguments", summary="Set arguments to be passed to autopilot executable")
+@index_to_http_exception
+def set_exec_arguments(firmware: str, board: str, arguments: dict[str, str | dict[str, str]]) -> Any:
+    logger.info(f"Setting execution arguments of {firmware} on board {board} to {arguments}")
+    autopilot.set_exec_arguments(firmware, board, arguments)
+
+
+@index_router_v1.post(
+    "/get_exec_arguments",
+    summary="Get arguments to be passed to specified autopilot executable",
+)
+@index_to_http_exception
+async def get_exec_arguments(firmware: str, board: str) -> Any:
+    logger.info(f"Getting execution arguments for firmware {firmware} on board {board}")
+    return autopilot.get_exec_arguments(firmware, board)
+
+
 @index_router_v1.post("/stop", summary="Stop the autopilot.")
 @index_to_http_exception
 async def stop() -> Any:
