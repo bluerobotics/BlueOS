@@ -5,6 +5,7 @@ import subprocess
 import time
 from copy import deepcopy
 from typing import Any, List, Optional, Set
+from uuid import uuid4
 
 import psutil
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
@@ -472,11 +473,23 @@ class AutoPilotManager(metaclass=Singleton):
         # The default spawn location (Florianópolis) is provided as SIM_OPOS_* parameter
         # defaults instead of --home, which would lock the location and prevent users
         # from overriding it with the SIM_OPOS_* parameters.
+        sitl_defaults = "SIM_OPOS_LAT -27.563\nSIM_OPOS_LNG -48.459\nSIM_OPOS_ALT 0.0\nSIM_OPOS_HDG 270.0\n"
         sitl_defaults_path = pathlib.Path(self.settings.firmware_folder, "sitl_defaults.parm")
-        sitl_defaults_path.write_text(
-            "SIM_OPOS_LAT -27.563\nSIM_OPOS_LNG -48.459\nSIM_OPOS_ALT 0.0\nSIM_OPOS_HDG 270.0\n",
-            encoding="utf-8",
-        )
+        try:
+            current_defaults = sitl_defaults_path.read_text(encoding="utf-8") if sitl_defaults_path.is_file() else None
+            if current_defaults != sitl_defaults:
+                # Unique temporary name plus atomic replace so concurrent calls cannot
+                # race each other or expose a partially written file.
+                temp_defaults_path = sitl_defaults_path.with_name(f"sitl_defaults.parm.{uuid4().hex}.tmp")
+                temp_defaults_path.write_text(sitl_defaults, encoding="utf-8")
+                os.replace(temp_defaults_path, sitl_defaults_path)
+            defaults_args = ["--defaults", str(sitl_defaults_path)]
+        except OSError as error:
+            logger.warning(
+                f"Failed to write SITL defaults file, falling back to --home "
+                f"(SIM_OPOS_* position overrides will not apply): {error}"
+            )
+            defaults_args = ["--home", "-27.563,-48.459,0.0,270.0"]
 
         # pylint: disable=consider-using-with
         self.ardupilot_subprocess = subprocess.Popen(
@@ -486,8 +499,7 @@ class AutoPilotManager(metaclass=Singleton):
                 self.current_sitl_frame.value,
                 "--base-port",
                 str(master_endpoint.argument),
-                "--defaults",
-                str(sitl_defaults_path),
+                *defaults_args,
             ],
             shell=False,
             encoding="utf-8",
