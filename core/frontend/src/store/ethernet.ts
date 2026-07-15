@@ -24,6 +24,8 @@ class EthernetStore extends VuexModule {
 
   updating_interfaces = true
 
+  latest_refresh_id = 0
+
   @Mutation
   setUpdatingInterfaces(updating: boolean): void {
     this.updating_interfaces = updating
@@ -205,9 +207,14 @@ class EthernetStore extends VuexModule {
 
   @Action
   async refreshInterfaces(): Promise<void> {
+    const refresh_id = this.latest_refresh_id + 1
+    this.context.commit('setLatestRefreshId', refresh_id)
+
     try {
       const response = await this.context.dispatch('getAvailableEthernetInterfaces')
-      this.context.commit('setInterfaces', response.data)
+      if (refresh_id === this.latest_refresh_id) {
+        this.context.commit('setInterfaces', response.data)
+      }
     } catch {
       // Errors are already pushed to the notifier by getAvailableEthernetInterfaces.
     }
@@ -255,6 +262,11 @@ class EthernetStore extends VuexModule {
         await this.context.dispatch('refreshInterfaces')
         this.context.commit('setUpdatingInterfaces', false)
       })
+  }
+
+  @Mutation
+  setLatestRefreshId(refresh_id: number): void {
+    this.latest_refresh_id = refresh_id
   }
 }
 
