@@ -17,20 +17,12 @@ export default Vue.extend({
   },
   async mounted() {
     try {
-      await this.fetchAvailableEthernetInterfaces()
+      await ethernet.refreshInterfaces()
     } finally {
       ethernet.setUpdatingInterfaces(false)
-      this.fetch_available_interfaces_task.setAction(this.fetchAvailableEthernetInterfaces)
+      this.fetch_available_interfaces_task.setAction(() => ethernet.refreshInterfaces())
       this.fetch_available_interfaces_task.start()
     }
-  },
-  methods: {
-    async fetchAvailableEthernetInterfaces(): Promise<void> {
-      await ethernet.getAvailableEthernetInterfaces()
-        .then((response) => {
-          ethernet.setInterfaces(response.data)
-        })
-    },
   },
 })
 </script>
