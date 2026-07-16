@@ -247,7 +247,7 @@ async def download_system_logs() -> StreamingResponse:
 
     filename = time.strftime("blueos-system-logs-%Y%m%d-%H%M%S.zip", time.gmtime())
     return StreamingResponse(
-        filebrowser.download_folder("system_logs"),
+        filebrowser.download_folder("system_root/var/logs/blueos"),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
