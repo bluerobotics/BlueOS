@@ -197,13 +197,15 @@ import { FilebrowserFile } from '@/types/filebrowser'
 import { InstalledExtensionData, RunningContainer } from '@/types/kraken'
 import back_axios from '@/utils/api'
 import { prettifySize } from '@/utils/helper_functions'
+import {
+  installOrUpdateMajorTom,
+  MAJOR_TOM_IDENTIFIER,
+} from '@/utils/major_tom'
 import PullTracker from '@/utils/pull_tracker'
 
 const KRAKEN_API_URL = '/kraken/v1.0'
 
-const MAJOR_TOM_CLOUD_URL = 'https://blueos.cloud/major_tom/install'
-
-const MAJOR_TOM_EXTENSION_IDENTIFIER = 'blueos.major_tom'
+const MAJOR_TOM_EXTENSION_IDENTIFIER = MAJOR_TOM_IDENTIFIER
 
 const BLUEOS_CLOUD_URL = 'https://app.blueos.cloud'
 
@@ -711,11 +713,6 @@ export default Vue.extend({
     async cleanMajorTomFileToken(): Promise<void> {
       await filebrowser.deleteFile(MAJOR_TOM_CLOUD_TOKEN_FILE)
     },
-    async fetchMajorTomData(): Promise<InstalledExtensionData> {
-      const data = await axios.get(MAJOR_TOM_CLOUD_URL)
-
-      return data.data as InstalledExtensionData
-    },
     async fetchMajorTomFileToken(): Promise<string | undefined> {
       try {
         const response = await fetch(await filebrowser.singleFileRelativeURL(MAJOR_TOM_CLOUD_TOKEN_FILE))
@@ -808,17 +805,10 @@ export default Vue.extend({
       )
 
       try {
-        const majorTomData = await this.fetchMajorTomData()
-
         this.pull_show_modal = true
 
-        await back_axios({
-          method: 'POST',
-          url: `${KRAKEN_API_URL}/extension/install`,
-          data: majorTomData,
-          onDownloadProgress: (progressEvent) => {
-            this.pull_tracker?.digestNewData(progressEvent.event)
-          },
+        await installOrUpdateMajorTom((progressEvent) => {
+          this.pull_tracker?.digestNewData(progressEvent.event)
         })
       } catch (error) {
         this.setOperationError('Failed to install Major Tom.', error)
