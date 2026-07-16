@@ -16,9 +16,11 @@ from commonwealth.utils.general import delete_everything, delete_everything_stre
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from commonwealth.utils.streaming import streamer
+from dump_host_logs import prepare_system_logs
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
+from filebrowser.filebrowser import filebrowser
 from loguru import logger
 from uvicorn import Config, Server
 
@@ -221,6 +223,34 @@ async def check_log_folder_size() -> Any:
     log_path = Path(LOG_FOLDER_PATH)
     # Return the total size in bytes
     return sum(file.stat().st_size for file in log_path.glob("**/*") if file.is_file())
+
+
+@app.get("/services/download_system_logs", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def download_system_logs() -> StreamingResponse:
+    """Dump host diagnostics, then stream filebrowser's on-the-fly zip of system_logs."""
+    try:
+        await prepare_system_logs()
+    except Exception as error:
+        logger.exception(f"Failed to prepare system logs diagnostics: {error}")
+
+    try:
+        # Fresh token every download so a cached JWT cannot expire mid-stream.
+        # Fail before StreamingResponse so auth errors return 502, not a broken zip.
+        await filebrowser.update_filebrowser_token()
+    except Exception as error:
+        logger.exception(f"Failed to authenticate with filebrowser: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to authenticate with filebrowser: {error}",
+        ) from error
+
+    filename = time.strftime("blueos-system-logs-%Y%m%d-%H%M%S.zip", time.gmtime())
+    return StreamingResponse(
+        filebrowser.download_folder("system_logs"),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/services/check_mavlink_log_folder_size", status_code=status.HTTP_200_OK)
