@@ -510,7 +510,6 @@ import back_axios from '@/utils/api'
 import { prettifySize } from '@/utils/helper_functions'
 import { parseStreamingResponse } from '@/utils/streaming'
 
-const API_URL = '/commander/v1.0'
 const notifier = new Notifier(commander_service)
 
 export default Vue.extend({
@@ -597,8 +596,7 @@ export default Vue.extend({
     async download_service_log_files(): Promise<void> {
       this.downloading = true
       try {
-        const folder = await filebrowser.fetchFolder('system_logs')
-        await filebrowser.downloadFolder(folder)
+        window.open(`${commander.API_URL}/services/download_system_logs`, '_blank')
       } finally {
         this.downloading = false
       }
