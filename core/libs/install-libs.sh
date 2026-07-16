@@ -30,6 +30,7 @@ CURRENT_PATH=$(dirname "$0")
 pip3 install https://codeload.github.com/patrickelectric/pykson/zip/fcab71c1eadd6c6b730ca21a5eecb3bf9c374507
 pip3 install -e $CURRENT_PATH/bridges
 pip3 install -e $CURRENT_PATH/commonwealth
+pip3 install -e $CURRENT_PATH/filebrowser
 
 apt -y remove ${BUILD_PACKAGES[*]}
 apt -y autoremove
