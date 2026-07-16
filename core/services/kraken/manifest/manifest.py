@@ -6,7 +6,7 @@ from typing import Any, Callable, List, Optional, Set, Tuple, cast
 import aiohttp
 import semver
 from aiocache import cached
-from commonwealth.settings.manager import Manager
+from commonwealth.settings.manager import PydanticManager
 from config import DEFAULT_MANIFESTS, SERVICE_NAME
 from manifest.exceptions import (
     ManifestBackendOffline,
@@ -33,7 +33,7 @@ class ManifestManager:
     """
 
     _instance: Optional["ManifestManager"] = None
-    _manager: Manager = Manager(SERVICE_NAME, SettingsV2)
+    _manager: PydanticManager = PydanticManager(SERVICE_NAME, SettingsV2)
     _settings = _manager.settings
 
     def __init__(self) -> None:
