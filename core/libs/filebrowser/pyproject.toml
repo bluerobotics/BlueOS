@@ -1,0 +1,13 @@
+[project]
+name = "filebrowser"
+version = "0.1.0"
+description = "BlueOS Python client for the filebrowser API."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.7.4,<=3.13.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

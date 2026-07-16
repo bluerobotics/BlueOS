@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
   "bridges",
   "commonwealth",
+  "filebrowser",
   "ardupilot_manager",
   "bag_of_holding",
   "beacon",
@@ -51,6 +52,7 @@ default-groups = ["dev", "lint"]
 [tool.uv.sources]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
+filebrowser = { workspace = true }
 ardupilot_manager = { workspace = true }
 bag_of_holding = { workspace = true }
 beacon = { workspace = true }
