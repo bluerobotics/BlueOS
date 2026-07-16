@@ -34,7 +34,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import filebrowser from '@/libs/filebrowser'
+import commander from '@/store/commander'
 import * as VCU from '@/utils/version_chooser'
 
 export default Vue.extend({
@@ -51,9 +51,8 @@ export default Vue.extend({
       })
   },
   methods: {
-    async downloadLogs(): Promise<void> {
-      const folder = await filebrowser.fetchFolder('system_logs')
-      await filebrowser.downloadFolder(folder)
+    downloadLogs(): void {
+      window.open(`${commander.API_URL}/services/download_system_logs`, '_blank')
     },
   },
 })

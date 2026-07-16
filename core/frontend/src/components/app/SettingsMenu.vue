@@ -187,6 +187,7 @@ import WarningDialog from '@/components/common/WarningDialog.vue'
 import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import bag from '@/store/bag'
+import commander from '@/store/commander'
 import { commander_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { prettifySize } from '@/utils/helper_functions'
@@ -257,8 +258,7 @@ export default Vue.extend({
       return prettifySize(bytes)
     },
     async download_service_log_files(): Promise<void> {
-      const folder = await filebrowser.fetchFolder('system_logs')
-      await filebrowser.downloadFolder(folder)
+      window.open(`${commander.API_URL}/services/download_system_logs`, '_blank')
     },
     async download_mavlink_log_files(): Promise<void> {
       const folder = await filebrowser.fetchFolder('ardupilot_logs/logs')
