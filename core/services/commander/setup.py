@@ -15,6 +15,7 @@ setuptools.setup(
         # Enforce anyio fastapi subdependency to avoid conflict with starlette
         "anyio == 3.7.1",
         "fastapi-versioning == 0.9.1",
+        "filebrowser == 0.1.0",
         "loguru == 0.5.3",
         "uvicorn == 0.13.4",
     ],
