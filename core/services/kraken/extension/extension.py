@@ -72,7 +72,7 @@ class Extension:
 
     @property
     def settings(self) -> ExtensionSettings:
-        return cast(ExtensionSettings, self._fetch_settings(self.identifier, self.tag))
+        return self._fetch_settings(self.identifier, self.tag)
 
     @classmethod
     def lock(cls, key: str) -> None:
@@ -95,20 +95,19 @@ class Extension:
         cls.start_attempts.pop(key, None)
 
     @classmethod
-    def _fetch_settings(
-        cls, identifier: Optional[str] = None, tag: Optional[str] = None
-    ) -> List[ExtensionSettings] | ExtensionSettings:
-        extensions: List[ExtensionSettings] = [
+    def _list_settings(cls, identifier: Optional[str] = None, tag: Optional[str] = None) -> List[ExtensionSettings]:
+        return [
             ext
             for ext in cast(List[ExtensionSettings], cls._settings.extensions)
             if (identifier is None or ext.identifier == identifier) and (tag is None or ext.tag == tag)
         ]
 
-        if identifier is not None and tag is not None:
-            if not extensions:
-                raise ExtensionNotFound(f"Extension {identifier}:{tag} not found")
-            return extensions[0]
-        return extensions
+    @classmethod
+    def _fetch_settings(cls, identifier: str, tag: str) -> ExtensionSettings:
+        extensions = cls._list_settings(identifier, tag)
+        if not extensions:
+            raise ExtensionNotFound(f"Extension {identifier}:{tag} not found")
+        return extensions[0]
 
     def _save_settings(self, extension: Optional[ExtensionSettings] = None) -> None:
         self._settings.extensions = [
@@ -353,13 +352,11 @@ class Extension:
     async def from_settings(
         cls, identifier: Optional[str] = None, tag: Optional[str] = None
     ) -> List["Extension"] | "Extension":
-        extensions: List[ExtensionSettings] | ExtensionSettings = cls._fetch_settings(identifier, tag)
-
-        if isinstance(extensions, ExtensionSettings):
-            return Extension(ExtensionSource.from_settings(extensions))
+        if identifier is not None and tag is not None:
+            return Extension(ExtensionSource.from_settings(cls._fetch_settings(identifier, tag)))
 
         return sorted(
-            [Extension(ExtensionSource.from_settings(ext)) for ext in extensions],
+            [Extension(ExtensionSource.from_settings(ext)) for ext in cls._list_settings(identifier, tag)],
             key=lambda ext: ext.source.name,
         )
 
@@ -671,7 +668,7 @@ class Extension:
         """
         Refresh the keep-alive timestamp for a temporary extension identified by temp_tag.
         """
-        temp_settings = cast(ExtensionSettings, cls._fetch_settings("", temp_tag))
+        temp_settings = cls._fetch_settings("", temp_tag)
         if temp_settings.identifier:
             raise ExtensionNotFound(f"Extension with tag {temp_tag} is not temporary")
 
@@ -684,7 +681,7 @@ class Extension:
         """
         Clean up temporary extensions (those with empty identifiers) and their images when expired.
         """
-        extensions: List[ExtensionSettings] = cls._fetch_settings()
+        extensions: List[ExtensionSettings] = cls._list_settings()
         temp_extensions = [ext for ext in extensions if not ext.identifier or ext.identifier == ""]
         active_temp_refs: Set[str] = {f"{ext.docker}:{ext.tag}" for ext in temp_extensions}
 

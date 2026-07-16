@@ -54,7 +54,7 @@ class Kraken:
             logger.error(f"Unable to list docker containers: {e}")
             return
 
-        extensions: List[ExtensionSettings] = Extension._fetch_settings()
+        extensions: List[ExtensionSettings] = Extension._list_settings()
 
         for extension in extensions:
             if not self._extension_start_try_valid(extension):
@@ -104,7 +104,7 @@ class Kraken:
         return True
 
     async def setup_default_extensions(self) -> None:
-        extensions: List[ExtensionSettings] = Extension._fetch_settings()
+        extensions: List[ExtensionSettings] = Extension._list_settings()
         for ext in [
             ext
             for ext in DEFAULT_EXTENSIONS
@@ -124,7 +124,7 @@ class Kraken:
                 logger.info(f"Created job to install default extension {ext['identifier']}")
 
     async def kill_invalid_extensions(self) -> None:
-        extensions: List[ExtensionSettings] = Extension._fetch_settings()
+        extensions: List[ExtensionSettings] = Extension._list_settings()
 
         for extension in extensions:
             if not extension.is_valid():
@@ -150,7 +150,7 @@ class Kraken:
             logger.error(f"Unable to list docker containers: {e}")
             return
 
-        extensions: List[ExtensionSettings] = Extension._fetch_settings()
+        extensions: List[ExtensionSettings] = Extension._list_settings()
 
         for container in containers:
             container_name = container.name[1:]
