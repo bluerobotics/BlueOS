@@ -609,7 +609,7 @@ export default Vue.extend({
 
     async get_log_folder_size(): Promise<void> {
       await back_axios({
-        url: `${API_URL}/services/check_log_folder_size`,
+        url: `${commander.API_URL}/services/check_log_folder_size`,
         method: 'get',
         timeout: 30000,
       })
@@ -627,7 +627,7 @@ export default Vue.extend({
 
     async get_mavlink_log_folder_size(): Promise<void> {
       await back_axios({
-        url: `${API_URL}/services/check_mavlink_log_folder_size`,
+        url: `${commander.API_URL}/services/check_mavlink_log_folder_size`,
         method: 'get',
         timeout: 30000,
       })
@@ -664,7 +664,7 @@ export default Vue.extend({
       this.prepare_operation('Resetting settings...')
 
       await back_axios({
-        url: `${API_URL}/settings/reset`,
+        url: `${commander.API_URL}/settings/reset`,
         method: 'post',
         params: {
           i_know_what_i_am_doing: true,
@@ -696,7 +696,7 @@ export default Vue.extend({
 
       try {
         await back_axios({
-          url: `${API_URL}/services/remove_log_stream`,
+          url: `${commander.API_URL}/services/remove_log_stream`,
           method: 'post',
           params: {
             i_know_what_i_am_doing: true,
@@ -744,7 +744,7 @@ export default Vue.extend({
       this.prepare_operation('Removing MAVLink log files...')
 
       await back_axios({
-        url: `${API_URL}/services/remove_mavlink_log`,
+        url: `${commander.API_URL}/services/remove_mavlink_log`,
         method: 'post',
         params: {
           i_know_what_i_am_doing: true,
