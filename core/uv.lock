@@ -18,6 +18,7 @@ members = [
     "commonwealth",
     "customization",
     "disk-usage",
+    "filebrowser",
     "nmea-injector",
     "pardal",
     "ping",
@@ -222,6 +223,7 @@ dependencies = [
     { name = "commonwealth" },
     { name = "customization" },
     { name = "disk-usage" },
+    { name = "filebrowser" },
     { name = "nmea-injector" },
     { name = "pardal" },
     { name = "ping" },
@@ -265,6 +267,7 @@ requires-dist = [
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "customization", virtual = "services/customization" },
     { name = "disk-usage", virtual = "services/disk_usage" },
+    { name = "filebrowser", editable = "libs/filebrowser" },
     { name = "nmea-injector", virtual = "services/nmea_injector" },
     { name = "pardal", virtual = "services/pardal" },
     { name = "ping", virtual = "services/ping" },
@@ -429,6 +432,7 @@ dependencies = [
     { name = "commonwealth" },
     { name = "fastapi" },
     { name = "fastapi-versioning" },
+    { name = "filebrowser" },
     { name = "loguru" },
     { name = "uvicorn" },
 ]
@@ -439,6 +443,7 @@ requires-dist = [
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "fastapi", specifier = "==0.105.0" },
     { name = "fastapi-versioning", specifier = "==0.9.1" },
+    { name = "filebrowser", editable = "libs/filebrowser" },
     { name = "loguru", specifier = "==0.5.3" },
     { name = "uvicorn", specifier = "==0.18.0" },
 ]
@@ -634,6 +639,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/cd/4e/e1723f8e0cdf14aee
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/f9/4437ada3e8bbdb2d2dcfc59db4256b44fccda19611b9cb76f64f29b3b45b/fastapi_versioning-0.9.1-py3-none-any.whl", hash = "sha256:bc46dd973214a82edb6a2effd660825285261e906ee1d4f72c61944ffd4fa491", size = 4854 },
 ]
+
+[[package]]
+name = "filebrowser"
+version = "0.1.0"
+source = { editable = "libs/filebrowser" }
+dependencies = [
+    { name = "aiohttp" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "aiohttp", specifier = ">=3.7.4,<=3.13.2" }]
 
 [[package]]
 name = "future"
