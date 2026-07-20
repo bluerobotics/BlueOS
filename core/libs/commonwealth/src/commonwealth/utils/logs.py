@@ -1,5 +1,6 @@
 import json
 import logging
+import traceback
 from logging import LogRecord
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
@@ -102,13 +103,22 @@ def create_log_sink(service_name: str) -> Callable[["Message"], None]:
         record = message.record
         total_ns = record["time"].timestamp() * 1e9
 
+        # Foxglove Log has no exception field — append the traceback to the message.
+        log_message = record["message"]
+        exception = record["exception"]
+        if exception is not None:
+            log_message = (
+                f"{log_message}\n"
+                f"{''.join(traceback.format_exception(exception.type, exception.value, exception.traceback))}"
+            )
+
         foxglove_log = {
             "timestamp": {
                 "sec": total_ns // 1_000_000_000,
                 "nsec": total_ns % 1_000_000_000
             },
             "level": LEVEL_MAP.get(record["level"].name.upper(), LEVEL_MAP["UNKNOWN"]),
-            "message": record["message"],
+            "message": log_message,
             "name": record["name"],
             "file": record["file"].name,
             "line": record["line"],
