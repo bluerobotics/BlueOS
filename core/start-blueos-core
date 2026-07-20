@@ -114,6 +114,11 @@ find /usr/blueos/userdata -type f -exec chmod a+rw {} \;
 #   - CPU_PERCENT: CPU limit as percentage (100 = 1 core, 200 = 2 cores, 0 = no limit)
 #   - IO_READ_MBPS: I/O read limit in MB/s (0 = no limit)
 #   - IO_WRITE_MBPS: I/O write limit in MB/s (0 = no limit)
+INFRA_SERVICES=(
+    'zenohd',0,0,0,0,"ZENOH_BACKEND_FS_ROOT=$TOOLS_PATH/zenoh zenohd -c $TOOLS_PATH/zenoh/blueos-zenoh.json5"
+    'recorder',250,0,0,0,"blueos-recorder --recorder-path /usr/blueos/userdata/recorder"
+)
+
 PRIORITY_SERVICES=(
     'autopilot',0,0,0,0,"nice --19 $SERVICES_PATH/ardupilot_manager/main.py"
     'cable_guy',0,0,0,0,"$SERVICES_PATH/cable_guy/main.py"
@@ -125,7 +130,6 @@ SERVICES=(
     # This services are not prioritized because they are not fundamental for the vehicle to work
     'kraken',0,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/kraken/main.py"
     'wifi',0,0,0,0,"nice -19 $SERVICES_PATH/wifi/main.py --socket wlan0"
-    'zenohd',0,0,0,0,"ZENOH_BACKEND_FS_ROOT=$TOOLS_PATH/zenoh zenohd -c $TOOLS_PATH/zenoh/blueos-zenoh.json5"
     # This services are not as important as the others
     'beacon',250,0,0,0,"$SERVICES_PATH/beacon/main.py"
     'bridget',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/bridget/main.py $RUN_AS_REGULAR_USER_END"
@@ -142,7 +146,6 @@ SERVICES=(
     'ttyd',250,0,0,0,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
     'nginx',250,0,0,0,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
     'bag_of_holding',250,0,0,0,"$SERVICES_PATH/bag_of_holding/main.py"
-    'recorder',250,0,0,0,"blueos-recorder --recorder-path /usr/blueos/userdata/recorder"
     'recorder_extractor',250,0,0,0,"$SERVICES_PATH/recorder_extractor/main.py"
     'disk_usage',250,0,0,0,"$SERVICES_PATH/disk_usage/main.py"
     'customization',250,0,0,0,"$SERVICES_PATH/customization/main.py"
@@ -313,6 +316,14 @@ tune_performance() {
 }
 
 tune_performance
+
+echo "Starting infrastructure services.."
+for TUPLE in "${INFRA_SERVICES[@]}"; do
+    IFS=',' read -r NAME MEMORY_MB CPU_PERCENT IO_READ_MBPS IO_WRITE_MBPS EXECUTABLE <<< "$TUPLE"
+    create_service "$NAME" "$EXECUTABLE" "$MEMORY_MB" "$CPU_PERCENT" "$IO_READ_MBPS" "$IO_WRITE_MBPS"
+done
+
+sleep 1
 
 echo "Starting high priority services.."
 for TUPLE in "${PRIORITY_SERVICES[@]}"; do
