@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 import psutil
 from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.logs import init_logger
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -264,7 +264,7 @@ class Beacon:
         await asyncio.gather(*[runner.unregister_services() for runner in self.runners.values()])
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 app = FastAPI(
