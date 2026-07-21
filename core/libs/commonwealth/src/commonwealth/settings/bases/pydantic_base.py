@@ -2,6 +2,7 @@ import abc
 import json
 import os
 import pathlib
+import threading
 from typing import Any, ClassVar, Dict, List, Type, TypeVar, cast
 
 from commonwealth.settings.exceptions import (
@@ -13,6 +14,8 @@ from commonwealth.settings.exceptions import (
 )
 from loguru import logger
 from pydantic import BaseModel, ValidationError
+
+_save_lock = threading.Lock()
 
 try:
     from pydantic.version import VERSION as PYDANTIC_VERSION
@@ -120,18 +123,22 @@ class PydanticSettings(BaseModel):
 
         # Prepare data prior to operation
         logger.debug(f"Saving settings on: {file_path}")
-        json_data = self._model_dump()
 
-        # Create a temporary file in same directory, write and rename it to the original file
-        temp_file = file_path.with_suffix(".tmp")
-        with open(temp_file, "w", encoding="utf-8") as settings_file:
-            json.dump(json_data, settings_file, indent=4)
-            # Ensure data is written to disk
-            settings_file.flush()
-            os.fsync(settings_file.fileno())
-        # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
-        # https://docs.python.org/3/library/os.html#os.replace
-        temp_file.replace(file_path)
+        # Serialize inside the lock so the write section runs by a single thread at a time. This keeps the
+        # temporary file from colliding and ensures the last writer serializes every mutation made before it.
+        with _save_lock:
+            json_data = self._model_dump()
+
+            # Create a temporary file in same directory, write and rename it to the original file
+            temp_file = file_path.with_suffix(".tmp")
+            with open(temp_file, "w", encoding="utf-8") as settings_file:
+                json.dump(json_data, settings_file, indent=4)
+                # Ensure data is written to disk
+                settings_file.flush()
+                os.fsync(settings_file.fileno())
+            # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
+            # https://docs.python.org/3/library/os.html#os.replace
+            temp_file.replace(file_path)
 
     def reset(self) -> None:
         """Reset internal data to default values"""
