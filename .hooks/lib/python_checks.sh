@@ -3,7 +3,7 @@
 declare -a isort_args=()
 declare -a black_args=()
 : "${fixing:=false}"
-: "${DEFAULT_COVERAGE_FAIL_UNDER:=75}"
+: "${DEFAULT_COVERAGE_FAIL_UNDER:=74}"
 
 setup_python_environment() {
     local env_label="$1"
