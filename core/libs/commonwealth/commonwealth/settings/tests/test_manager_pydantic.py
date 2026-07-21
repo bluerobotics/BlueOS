@@ -1,6 +1,7 @@
 import os
 import pathlib
 import tempfile
+import threading
 from typing import Any, Dict
 
 from ..bases.pydantic_base import PydanticSettings
@@ -247,3 +248,41 @@ def test_invalid_json_fallback_to_defaults_v2_from_invalid_v2_and_v1() -> None:
     assert settings_manager.settings.VERSION == 2
     assert settings_manager.settings.version_1_variable == 42
     assert settings_manager.settings.version_2_variable == 66
+
+
+def test_concurrent_saves_preserve_all_updates() -> None:
+    # Regression test for https://github.com/bluerobotics/BlueOS/issues/3998: two requests mutating and saving
+    # the same settings object at once must not crash on the temporary file and must both end up persisted.
+    temporary_folder = tempfile.mkdtemp()
+    config_path = pathlib.Path(temporary_folder)
+
+    settings_manager = PydanticManager("ManagerTest", SettingsV2, config_path)
+
+    errors: list[Exception] = []
+    start = threading.Barrier(2)
+
+    def mutate_and_save(variable: str, value: int) -> None:
+        try:
+            start.wait()
+            for _ in range(100):
+                setattr(settings_manager.settings, variable, value)
+                settings_manager.save()
+        except Exception as error:  # noqa: BLE001 - collect to assert on the main thread
+            errors.append(error)
+
+    threads = [
+        threading.Thread(target=mutate_and_save, args=("version_1_variable", 111)),
+        threading.Thread(target=mutate_and_save, args=("version_2_variable", 222)),
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert not errors, f"Concurrent saves raised: {errors}"
+
+    # Both updates must survive, and only the versioned settings file should remain (no leftover temp files).
+    reloaded = PydanticManager("ManagerTest", SettingsV2, config_path)
+    assert reloaded.settings.version_1_variable == 111
+    assert reloaded.settings.version_2_variable == 222
+    assert os.listdir(config_path.joinpath("managertest")) == ["settings-2.json"]
