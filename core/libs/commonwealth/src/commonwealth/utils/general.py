@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import cache
 from pathlib import Path
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, List, Optional, Tuple
 
 import psutil
 from commonwealth.utils.commands import load_file
@@ -220,6 +220,27 @@ def file_is_open(path: Path) -> bool:
         return True
 
     return _file_is_open_logic_lsof(result.returncode, result.stdout.strip(), result.stderr.strip())
+
+
+async def run_subprocess(command: List[str], merge_stderr: bool = False) -> Tuple[Optional[int], bytes, bytes]:
+    """Run a command asynchronously and wait for it to finish.
+
+    Args:
+        command: Command and arguments to execute.
+        merge_stderr: If True, redirect stderr into stdout (mirrors `subprocess.STDOUT`).
+            The returned stderr is empty bytes in this case.
+
+    Returns:
+        Tuple of (returncode, stdout, stderr) as raw bytes. Callers that expect text output
+        are responsible for decoding it themselves.
+    """
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT if merge_stderr else asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate()
+    return process.returncode, stdout, stderr or b""
 
 
 async def file_is_open_async(path: Path) -> bool:
