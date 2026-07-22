@@ -9,6 +9,7 @@ dependencies = [
   "versionchooser",
   "kraken",
   "helper",
+  "pardal",
   "ping",
 ]
 
@@ -45,6 +46,7 @@ commonwealth = { workspace = true }
 versionchooser = { workspace = true }
 kraken = { workspace = true }
 helper = { workspace = true }
+pardal = { workspace = true }
 ping = { workspace = true }
 
 [tool.uv.workspace]
@@ -54,5 +56,6 @@ members = [
   "../services/versionchooser",
   "../services/kraken",
   "../services/helper",
+  "../services/pardal",
   "../services/ping",
 ]
