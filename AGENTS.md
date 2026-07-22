@@ -96,12 +96,16 @@ Before starting, think through:
 
 ## Code Quality
 
-Always run before finishing a task:
+CI runs `./.hooks/pre-push` (full suite). `git push` does **not**, unless you install it once:
+
 ```bash
-./.hooks/pre-push --fix        # Auto-fix formatting
-./.hooks/pre-push              # Run all checks
-yarn --cwd core/frontend lint --fix  # Lint and fix frontend code
+./.hooks/install              # wire git pre-push -> .hooks/pre-push
+./.hooks/pre-push --fix      # format only (skips pylint/mypy/pytest)
+./.hooks/pre-push             # same checks as CI
+yarn --cwd core/frontend lint --fix
 ```
+
+`--fix` only runs isort/black. Always run without `--fix` (or just push with the hook installed) before relying on green CI.
 
 This enforces: Black formatting, isort imports, pylint, ruff, mypy strict mode, pytest with coverage.
 

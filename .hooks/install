@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Install .hooks/pre-push as the repo's git pre-push hook (shared across worktrees).
+set -euo pipefail
+
+HOOKS_DIR=$(git rev-parse --git-common-dir)/hooks
+mkdir -p "$HOOKS_DIR"
+
+cat >"$HOOKS_DIR/pre-push" <<'EOF'
+#!/usr/bin/env bash
+exec "$(git rev-parse --show-toplevel)/.hooks/pre-push" "$@"
+EOF
+chmod +x "$HOOKS_DIR/pre-push"
+
+echo "Installed git pre-push -> \$(git rev-parse --show-toplevel)/.hooks/pre-push"
+echo "Note: .hooks/pre-push --fix only runs isort/black; push/CI runs the full suite."

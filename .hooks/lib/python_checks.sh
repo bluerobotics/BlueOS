@@ -64,9 +64,13 @@ collect_python_files() {
         *) echo "${FUNCNAME[0]}: scope must be 'primary' or 'secondary'" >&2; return 1;;
     esac
 
-    git -C "$CORE_DIR" ls-files '*.py' |
+    # LC_ALL=C so local and CI agree on order — pylint import-self is order-sensitive
+    # when several services/*/api packages collapse to the same short module name.
+    git -C "$CORE_DIR" ls-files '*.py' | LC_ALL=C sort |
     while read -r file; do
         [[ -z "$file" ]] && continue
+        # Skip index entries deleted in the worktree (mid-refactor / unstaged rm).
+        [[ -f "$CORE_DIR/$file" ]] || continue
         if path_matches_any "$file" "${SECONDARY_SCOPE_PATHS[@]}"; then
             [[ "$scope" == secondary ]] && echo "$file"
         else
@@ -145,7 +149,8 @@ run_python_checks() {
             echo "mypy executable not found in virtualenv or PATH." >&2
             exit 1
         fi
-        printf '%s\n' "${mypy_targets[@]}" | parallel "$mypy_bin" --config-file "$CORE_DIR/pyproject.toml" {} --cache-dir {}/__mypycache__
+        printf '%s\n' "${mypy_targets[@]}" | parallel --halt soon,fail=1 \
+            "$mypy_bin" --config-file "$CORE_DIR/pyproject.toml" {} --cache-dir {}/__mypycache__
     fi
 
     echo "Running pytest (${env_label}).."
