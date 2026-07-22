@@ -21,7 +21,6 @@ members = [
     "disk-usage",
     "filebrowser",
     "nmea-injector",
-    "pardal",
     "recorder-extractor",
     "wifi",
 ]
@@ -225,7 +224,6 @@ dependencies = [
     { name = "disk-usage" },
     { name = "filebrowser" },
     { name = "nmea-injector" },
-    { name = "pardal" },
     { name = "recorder-extractor" },
     { name = "wifi" },
 ]
@@ -268,7 +266,6 @@ requires-dist = [
     { name = "disk-usage", virtual = "services/disk_usage" },
     { name = "filebrowser", editable = "libs/filebrowser" },
     { name = "nmea-injector", virtual = "services/nmea_injector" },
-    { name = "pardal", virtual = "services/pardal" },
     { name = "recorder-extractor", virtual = "services/recorder_extractor" },
     { name = "wifi", virtual = "services/wifi" },
 ]
@@ -906,25 +903,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pardal"
-version = "0.1.0"
-source = { virtual = "services/pardal" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "commonwealth" },
-    { name = "loguru" },
-    { name = "speedtest-cli" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = "==3.7.4" },
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "speedtest-cli", specifier = "==2.1.3" },
-]
-
-[[package]]
 name = "pathspec"
 version = "1.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1383,15 +1361,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc", size = 20372, upload-time = "2024-02-25T23:20:04.057Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2", size = 10235, upload-time = "2024-02-25T23:20:01.196Z" },
-]
-
-[[package]]
-name = "speedtest-cli"
-version = "2.1.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/85/d2/32c8a30768b788d319f94cde3a77e0ccc1812dca464ad8062d3c4d703e06/speedtest-cli-2.1.3.tar.gz", hash = "sha256:5e2773233cedb5fa3d8120eb7f97bcc4974b5221b254d33ff16e2f1d413d90f0", size = 24721, upload-time = "2021-04-08T13:51:33.627Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/39/65259b7054368b370d3183762484fa2c779ddc41633894d895f9d1720f45/speedtest_cli-2.1.3-py2.py3-none-any.whl", hash = "sha256:75ff32c91af9ac1ce2b905476d6e92bd9eb2c0783f9e7d1939d74605c7d0b9ea", size = 23973, upload-time = "2021-04-08T13:51:32.028Z" },
 ]
 
 [[package]]

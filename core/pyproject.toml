@@ -16,7 +16,6 @@ dependencies = [
   "customization",
   "disk_usage",
   "nmea_injector",
-  "pardal",
   "recorder_extractor",
   "wifi",
 ]
@@ -61,13 +60,12 @@ commander = { workspace = true }
 customization = { workspace = true }
 disk_usage = { workspace = true }
 nmea_injector = { workspace = true }
-pardal = { workspace = true }
 recorder_extractor = { workspace = true }
 wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
-exclude = ["services/versionchooser", "services/kraken", "services/helper", "services/ping"]
+exclude = ["services/versionchooser", "services/kraken", "services/helper", "services/ping", "services/pardal"]
 
 # ------------------ Tooling Configurations ------------------
 
