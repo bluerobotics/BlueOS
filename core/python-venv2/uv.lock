@@ -9,9 +9,11 @@ resolution-markers = [
 [manifest]
 members = [
     "blueos-core-venv2",
+    "bridges",
     "commonwealth",
     "helper",
     "kraken",
+    "ping",
     "versionchooser",
 ]
 
@@ -251,9 +253,11 @@ name = "blueos-core-venv2"
 version = "1.4.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "bridges" },
     { name = "commonwealth" },
     { name = "helper" },
     { name = "kraken" },
+    { name = "ping" },
     { name = "versionchooser" },
 ]
 
@@ -283,9 +287,11 @@ lint = [
 
 [package.metadata]
 requires-dist = [
+    { name = "bridges", editable = "../libs/bridges" },
     { name = "commonwealth", editable = "../libs/commonwealth" },
     { name = "helper", virtual = "../services/helper" },
     { name = "kraken", virtual = "../services/kraken" },
+    { name = "ping", virtual = "../services/ping" },
     { name = "versionchooser", virtual = "../services/versionchooser" },
 ]
 
@@ -312,6 +318,24 @@ lint = [
     { name = "ruff", specifier = "==0.0.288" },
     { name = "types-requests", specifier = "==2.31.0.2" },
 ]
+
+[[package]]
+name = "bluerobotics-ping"
+version = "0.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "future" },
+    { name = "pyserial" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/33/20/729c798611f92f550a668b44fa4bac8eb0def6eea6a5388800a0b7d9e190/bluerobotics-ping-0.1.5.tar.gz", hash = "sha256:f577cacb8f1d0d42bca14dfa5ce2d0740d6afd437f9119b10e1dde751890fb4f", size = 20814, upload-time = "2023-09-07T16:16:13.936Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/d9/72cd1f5c2b3c8ed1255f6bf24304d586affd2cc3b838eb08be2aaf4874d1/bluerobotics_ping-0.1.5-py3-none-any.whl", hash = "sha256:d9b3ba8928ee21d73b7005058a324a71fbb88cec1e4997409adf0a98ae2b10fe", size = 24155, upload-time = "2023-09-07T16:16:12.344Z" },
+]
+
+[[package]]
+name = "bridges"
+version = "0.1.0"
+source = { editable = "../libs/bridges" }
 
 [[package]]
 name = "certifi"
@@ -364,7 +388,6 @@ dependencies = [
     { name = "packaging" },
     { name = "psutil" },
     { name = "pydantic" },
-    { name = "pykson" },
     { name = "sentry-sdk" },
     { name = "starlette" },
 ]
@@ -378,7 +401,6 @@ requires-dist = [
     { name = "packaging", specifier = ">=20.4,<=25.0" },
     { name = "psutil", specifier = ">=5.7.2,<=7.1.3" },
     { name = "pydantic", specifier = ">=1.10.12,<=2.12.5" },
-    { name = "pykson", url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" },
     { name = "sentry-sdk", specifier = "==2.29.1" },
     { name = "starlette", specifier = ">=0.27.0" },
 ]
@@ -598,6 +620,15 @@ wheels = [
 ]
 
 [[package]]
+name = "future"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a7/b2/4140c69c6a66432916b26158687e821ba631a4c9273c474343badf84d3ba/future-1.0.0.tar.gz", hash = "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05", size = 1228490, upload-time = "2024-02-21T11:52:38.461Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/da/71/ae30dadffc90b9006d77af76b393cb9dfbfc9629f339fc1574a1c52e6806/future-1.0.0-py3-none-any.whl", hash = "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216", size = 491326, upload-time = "2024-02-21T11:52:35.956Z" },
+]
+
+[[package]]
 name = "geographiclib"
 version = "2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -628,7 +659,6 @@ dependencies = [
     { name = "psutil" },
     { name = "pydantic" },
     { name = "requests" },
-    { name = "speedtest-cli" },
     { name = "uvicorn" },
 ]
 
@@ -642,7 +672,6 @@ requires-dist = [
     { name = "psutil", specifier = "==7.1.3" },
     { name = "pydantic", specifier = "==2.12.5" },
     { name = "requests", specifier = "==2.32.5" },
-    { name = "speedtest-cli", specifier = "==2.1.3" },
     { name = "uvicorn", specifier = "==0.38.0" },
 ]
 
@@ -671,27 +700,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/31/8a/6f5449a7be67e4655069490f05fa3e190f5f5864e6ddee140f60fe5526dd/isort-5.8.0.tar.gz", hash = "sha256:0a943902919f65c5684ac4e0154b1ad4fac6dcaa5d9f3426b732f1c8b5419be6", size = 167927, upload-time = "2021-03-21T06:04:11.782Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d9/47/0ec3ec948b7b3a0ba44e62adede4dca8b5985ba6aaee59998bed0916bd17/isort-5.8.0-py3-none-any.whl", hash = "sha256:2bb1680aad211e3c9944dbce1d4ba09a989f04e238296c87fe2139faa26d655d", size = 103227, upload-time = "2021-03-21T06:04:09.685Z" },
-]
-
-[[package]]
-name = "jalali-core"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2b/3c/21e32e3444c572174a5d774643eb2aa8ab60ef68b99a4c3585a0a11428b4/jalali_core-1.0.0.tar.gz", hash = "sha256:f4287c70c630323dcf0a3ab26df905ba4d451e230ac1f65b3bb2f77797894a2b", size = 2752, upload-time = "2024-03-25T09:36:14.934Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/20/a4e942f9685df720a106da292e29a53212b27903749cc563b86b612b113e/jalali_core-1.0.0-py3-none-any.whl", hash = "sha256:84e6f5090eadfb35234f24fad084be831d00da3c0b238ee001e8a1fd49bf7924", size = 3616, upload-time = "2024-03-25T09:36:13.133Z" },
-]
-
-[[package]]
-name = "jdatetime"
-version = "5.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "jalali-core" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/9d/5ed59c36f3cbc68c01fab6442e6efb6d35a484ba4eec4f790264fce39f6c/jdatetime-5.2.0.tar.gz", hash = "sha256:c81d5898717b82b609a3ce2a73f8b8d3230b0c757e5c0de9d6b1acfdc224f551", size = 21663, upload-time = "2025-01-26T09:29:16.802Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/39/0dd2676d08468692606645db5ea40091290dc20747ff59636c21c0567d3c/jdatetime-5.2.0-py3-none-any.whl", hash = "sha256:d4aa73543e4e6c0e6122b58743773168edee5efe5c5acf05d1dc8c90524ca71c", size = 12199, upload-time = "2025-01-26T09:29:15.038Z" },
 ]
 
 [[package]]
@@ -886,6 +894,37 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ca/bc/f35b8446f4531a7cb215605d100cd88b7ac6f44ab3fc94870c120ab3adbf/pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712", size = 51043, upload-time = "2023-12-10T22:30:45Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08", size = 31191, upload-time = "2023-12-10T22:30:43.14Z" },
+]
+
+[[package]]
+name = "ping"
+version = "0.2.0"
+source = { virtual = "../services/ping" }
+dependencies = [
+    { name = "bluerobotics-ping" },
+    { name = "bridges" },
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "psutil" },
+    { name = "pydantic" },
+    { name = "pyserial" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bluerobotics-ping", specifier = "==0.1.5" },
+    { name = "bridges", specifier = "==0.1.0" },
+    { name = "commonwealth", specifier = "==0.1.0" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "psutil", specifier = "==7.1.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "pyserial", specifier = "==3.5" },
+    { name = "uvicorn", specifier = "==0.38.0" },
 ]
 
 [[package]]
@@ -1162,26 +1201,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pykson"
-version = "1.0.2"
-source = { url = "https://github.com/patrickelectric/pykson/archive/refs/tags/1.0.2.tar.gz" }
-dependencies = [
-    { name = "jdatetime" },
-    { name = "python-dateutil" },
-    { name = "pytz" },
-    { name = "six" },
-]
-sdist = { hash = "sha256:dbd3b8a3c6e8e874ccfc365551fff200a34893bee17f590b1e5f775cd83c9e8f" }
-
-[package.metadata]
-requires-dist = [
-    { name = "jdatetime", specifier = ">=3.6.2" },
-    { name = "python-dateutil", specifier = ">=2.8.0" },
-    { name = "pytz", specifier = ">=2019.3" },
-    { name = "six", specifier = ">=1.12.0" },
-]
-
-[[package]]
 name = "pylint"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1311,33 +1330,12 @@ wheels = [
 ]
 
 [[package]]
-name = "python-dateutil"
-version = "2.9.0.post0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432, upload-time = "2024-03-01T18:36:20.211Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
-]
-
-[[package]]
 name = "python-multipart"
 version = "0.0.21"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/78/96/804520d0850c7db98e5ccb70282e29208723f0964e88ffd9d0da2f52ea09/python_multipart-0.0.21.tar.gz", hash = "sha256:7137ebd4d3bbf70ea1622998f902b97a29434a9e8dc40eb203bbcf7c2a2cba92", size = 37196, upload-time = "2025-12-17T09:24:22.446Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/aa/76/03af049af4dcee5d27442f71b6924f01f3efb5d2bd34f23fcd563f2cc5f5/python_multipart-0.0.21-py3-none-any.whl", hash = "sha256:cf7a6713e01c87aa35387f4774e812c4361150938d20d232800f75ffcf266090", size = 24541, upload-time = "2025-12-17T09:24:21.153Z" },
-]
-
-[[package]]
-name = "pytz"
-version = "2025.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f8/bf/abbd3cdfb8fbc7fb3d4d38d320f2441b1e7cbe29be4f23797b4a2b5d8aac/pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3", size = 320884, upload-time = "2025-03-25T02:25:00.538Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/c4/34e93fe5f5429d7570ec1fa436f1986fb1f00c3e0f43a589fe2bbcd22c3f/pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00", size = 509225, upload-time = "2025-03-25T02:24:58.468Z" },
 ]
 
 [[package]]
@@ -1418,15 +1416,6 @@ wheels = [
 ]
 
 [[package]]
-name = "six"
-version = "1.17.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
-]
-
-[[package]]
 name = "sniffio"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1442,15 +1431,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7b/ae/2d9c981590ed9999a0d91755b47fc74f74de286b0f5cee14c9269041e6c4/soupsieve-2.8.3.tar.gz", hash = "sha256:3267f1eeea4251fb42728b6dfb746edc9acaffc4a45b27e19450b676586e8349", size = 118627, upload-time = "2026-01-20T04:27:02.457Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/46/2c/1462b1d0a634697ae9e55b3cecdcb64788e8b7d63f54d923fcd0bb140aed/soupsieve-2.8.3-py3-none-any.whl", hash = "sha256:ed64f2ba4eebeab06cc4962affce381647455978ffc1e36bb79a545b91f45a95", size = 37016, upload-time = "2026-01-20T04:27:01.012Z" },
-]
-
-[[package]]
-name = "speedtest-cli"
-version = "2.1.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/85/d2/32c8a30768b788d319f94cde3a77e0ccc1812dca464ad8062d3c4d703e06/speedtest-cli-2.1.3.tar.gz", hash = "sha256:5e2773233cedb5fa3d8120eb7f97bcc4974b5221b254d33ff16e2f1d413d90f0", size = 24721, upload-time = "2021-04-08T13:51:33.627Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/39/65259b7054368b370d3183762484fa2c779ddc41633894d895f9d1720f45/speedtest_cli-2.1.3-py2.py3-none-any.whl", hash = "sha256:75ff32c91af9ac1ce2b905476d6e92bd9eb2c0783f9e7d1939d74605c7d0b9ea", size = 23973, upload-time = "2021-04-08T13:51:32.028Z" },
 ]
 
 [[package]]
