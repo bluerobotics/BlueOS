@@ -4,8 +4,17 @@ import socket
 from typing import Generator, Optional
 from unittest.mock import AsyncMock
 
+import pynmea2
 import pytest
-from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
+from commonwealth.service.service import Service
+from nmea_injector.adapters import (
+    AsyncioSockListener,
+    MavlinkMessengerSink,
+    PydanticSockSettingsStore,
+)
+from nmea_injector.commands import AddSock, RemoveSock, SocketKind
+from nmea_injector.MavlinkNMEA import parse_mavlink_from_sentence
+from nmea_injector.TrafficController import NMEASocket, TrafficController
 from nmeasim.simulator import Simulator
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pyfakefs.fake_filesystem_unittest import Patcher
@@ -29,15 +38,23 @@ def fs() -> Generator[Optional[FakeFilesystem], None, None]:
 # pylint: disable=redefined-outer-name
 
 
+def _controller() -> TrafficController:
+    return TrafficController(PydanticSockSettingsStore(), AsyncioSockListener(MavlinkMessengerSink()))
+
+
 @pytest.mark.asyncio
 async def test_endpoint_management_pipeline(fs: FakeFilesystem) -> None:
     for sock_kind in [SocketKind.UDP, SocketKind.TCP]:
-        controller = TrafficController()
+        controller = _controller()
+        service = Service("nmea-injector-test", controller)
         test_sock = NMEASocket(kind=sock_kind, port=SERVER_PORT, component_id=COMPONENT_ID)
+        cmd = AddSock(kind=test_sock.kind, port=test_sock.port, component_id=test_sock.component_id)
 
         for _ in range(10):
             try:
-                await controller.add_sock(test_sock)
+                listener = await controller.listen(test_sock)
+                with service.write() as state:
+                    state.apply_add(cmd, listener)
                 break
             except OSError:
                 # Port already in use, wait
@@ -45,33 +62,32 @@ async def test_endpoint_management_pipeline(fs: FakeFilesystem) -> None:
 
         available_socks = controller.get_socks()
         assert len(available_socks) == 1
-        controller._settings_manager.load()
-        assert test_sock.to_settings_spec() in controller._settings_manager.settings.specs
+        assert cmd in controller._settings.load()
 
         assert available_socks[0].kind == test_sock.kind
         assert available_socks[0].port == test_sock.port
         assert available_socks[0].component_id == test_sock.component_id
 
-        controller.remove_sock(test_sock)
+        with service.write() as state:
+            state.apply_remove(
+                RemoveSock(kind=test_sock.kind, port=test_sock.port, component_id=test_sock.component_id)
+            )
         available_socks = controller.get_socks()
         assert len(available_socks) == 0
-        controller._settings_manager.load()
-        assert test_sock.to_settings_spec() not in controller._settings_manager.settings.specs
+        assert cmd not in controller._settings.load()
 
 
 @pytest.mark.asyncio
 async def test_endpoint_communication(fs: FakeFilesystem, monkeypatch: pytest.MonkeyPatch) -> None:
     mock_send_mavlink_message = AsyncMock()
 
-    monkeypatch.setattr(
-        "nmea_injector.TrafficController.MavlinkMessenger.send_mavlink_message", mock_send_mavlink_message
-    )
+    monkeypatch.setattr("nmea_injector.adapters.MavlinkMessenger.send_mavlink_message", mock_send_mavlink_message)
 
     for sock_kind in [SocketKind.UDP, SocketKind.TCP]:
         controller: Optional[TrafficController] = None
         for _ in range(10):
             try:
-                controller = TrafficController()
+                controller = _controller()
                 break
             except json.decoder.JSONDecodeError:
                 await asyncio.sleep(1)
@@ -110,7 +126,9 @@ async def test_endpoint_communication(fs: FakeFilesystem, monkeypatch: pytest.Mo
 
             # Wait to make sure async protocol transfer has been completed
             await asyncio.sleep(0.1)
-            original_msg = TrafficController.parse_mavlink_package(raw_sentence)
+            original_msg = parse_mavlink_from_sentence(pynmea2.parse(raw_sentence))
             args, _ = mock_send_mavlink_message.call_args
             forwarded_msg = args[0]
             assert original_msg == forwarded_msg
+
+        controller.remove_sock(test_sock)

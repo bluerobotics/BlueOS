@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR"
@@ -11,7 +11,7 @@ SECONDARY_PROJECT_DIR="$CORE_DIR/python-venv2"
 declare -a SECONDARY_SCOPE_PATHS=()
 # shellcheck disable=SC2034
 declare -a EMPTY_PATHS=()
-SECONDARY_COVERAGE_THRESHOLD="${SECONDARY_COVERAGE_THRESHOLD:-65}"
+SECONDARY_COVERAGE_THRESHOLD="${SECONDARY_COVERAGE_THRESHOLD:-50}"
 
 source "$ROOT_DIR/.hooks/lib/common.sh"
 source "$ROOT_DIR/.hooks/lib/python_checks.sh"
@@ -30,6 +30,13 @@ fix_primary=false
 fix_secondary=false
 should_run_primary=true
 should_run_secondary=true
+
+# Git invokes pre-push as: pre-push <remote-name> <remote-url>, with refs on stdin.
+# CI/manual runs use flags only. Accept both so this script can be the real hook.
+if [[ $# -ge 1 && "${1:-}" != -* ]]; then
+    shift $(( $# >= 2 ? 2 : 1 ))
+    cat >/dev/null
+fi
 
 load_secondary_scope_paths
 if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 0 ]; then

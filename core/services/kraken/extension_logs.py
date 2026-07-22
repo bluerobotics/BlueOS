@@ -3,9 +3,8 @@ import json
 import time
 from typing import Callable, Dict, Optional, Tuple
 
-import zenoh
 from commonwealth.utils.logs import LOG_PUBLISHER_OPTIONS
-from commonwealth.utils.zenoh_helper import ZenohRouter
+from commonwealth.utils.zenoh_helper import DeferredPublisher, ZenohRouter
 from config import SERVICE_NAME
 from harbor import ContainerManager
 from loguru import logger
@@ -27,7 +26,7 @@ class ExtensionLogPublisher:
 
     def __init__(self) -> None:
         self._zenoh_router = ZenohRouter(SERVICE_NAME)
-        self._publishers: Dict[str, zenoh.Publisher] = {}
+        self._publishers: Dict[str, DeferredPublisher] = {}
         self._tasks: Dict[str, asyncio.Task[None]] = {}
 
     async def sync_with_running_extensions(self) -> None:
@@ -98,9 +97,6 @@ class ExtensionLogPublisher:
         logger.debug(f"Starting extension log stream for {container_name} -> {topic}")
 
         publisher = self._declare_publisher(container_name, extension)
-        if publisher is None:
-            logger.debug(f"Unable to declare extension log publisher for {container_name}")
-            return
 
         try:
             async for raw_line in ContainerManager.get_container_log_by_name(container_name):
@@ -114,13 +110,13 @@ class ExtensionLogPublisher:
         finally:
             self._undeclare_publisher(container_name)
 
-    def _publish(self, publisher: zenoh.Publisher, topic: str, log_line: str) -> None:
+    def _publish(self, publisher: DeferredPublisher, topic: str, log_line: str) -> None:
         try:
             publisher.put(log_line)
         except Exception as error:
             logger.debug(f"Failed to publish extension log to {topic}: {error}")
 
-    def _declare_publisher(self, container_name: str, extension: ExtensionSettings) -> zenoh.Publisher | None:
+    def _declare_publisher(self, container_name: str, extension: ExtensionSettings) -> DeferredPublisher:
         if container_name in self._publishers:
             return self._publishers[container_name]
 
@@ -129,8 +125,7 @@ class ExtensionLogPublisher:
             absolute=True,
             publisher_options=LOG_PUBLISHER_OPTIONS,
         )
-        if publisher is not None:
-            self._publishers[container_name] = publisher
+        self._publishers[container_name] = publisher
         return publisher
 
     def _undeclare_publisher(self, container_name: str) -> None:

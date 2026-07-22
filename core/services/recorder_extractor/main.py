@@ -102,7 +102,6 @@ def parse_duration_ns(discover_output: str) -> int:
     return duration_ns
 
 
-# pylint: disable=too-many-locals
 async def check_and_recover_mcap(mcap_path: Path) -> None:
     """
     Check if mcap binary is available, run mcap doctor on the file,

@@ -1,102 +1,74 @@
-#! /usr/bin/env python3
 import argparse
-import asyncio
-import logging
-from typing import Any, List
+from collections.abc import Awaitable, Callable
 
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler, init_logger
-from commonwealth.utils.sentry_config import init_sentry_async
-from fastapi import FastAPI, status
-from fastapi.responses import HTMLResponse
-from fastapi_versioning import VersionedFastAPI, version
-from loguru import logger
-from nmea_injector.TrafficController import NMEASocket, SocketKind, TrafficController
-from uvicorn import Config, Server
+from commonwealth.service.runtime import Runtime
+from commonwealth.service.service import Service
+from nmea_injector.adapters import (
+    AsyncioSockListener,
+    MavlinkMessengerSink,
+    PydanticSockSettingsStore,
+)
+from nmea_injector.commands import AddSock, SocketKind
+from nmea_injector.routes import build_nmea_router
+from nmea_injector.TrafficController import NMEASocket, TrafficController
 
 SERVICE_NAME = "nmea-injector"
 
-parser = argparse.ArgumentParser(description="NMEA Injector service for Blue Robotics BlueOS")
-parser.add_argument("-u", "--udp", type=int, help="change the default UDP input port")
-parser.add_argument("-t", "--tcp", type=int, help="change the default TCP input port")
 
-args = parser.parse_args()
+def _make_on_start(
+    controller: TrafficController, *, udp: int | None = None, tcp: int | None = None
+) -> Callable[[Service[TrafficController]], Awaitable[None]]:
+    async def _on_start(service: Service[TrafficController]) -> None:
+        with service.write() as state:
+            pending = state.settings_socks()
 
-logging.basicConfig(handlers=[InterceptHandler()], level=0)
-init_logger(SERVICE_NAME)
+        for sock in pending:
+            cmd = AddSock(kind=sock.kind, port=sock.port, component_id=sock.component_id)
+            server = await controller.listen(sock)
+            with service.write() as state:
+                if state.has_sock(sock):
+                    server.close()
+                else:
+                    state.apply_add(cmd, server, emit=False)
 
+        if udp:
+            cmd = AddSock(kind=SocketKind.UDP, port=udp, component_id=220)
+            server = await controller.listen(NMEASocket.from_command(cmd))
+            with service.write() as state:
+                state.apply_add(cmd, server)
+        if tcp:
+            cmd = AddSock(kind=SocketKind.TCP, port=tcp, component_id=221)
+            server = await controller.listen(NMEASocket.from_command(cmd))
+            with service.write() as state:
+                state.apply_add(cmd, server)
 
-app = FastAPI(
-    title="NMEA Injector API",
-    description="NMEA Injector is a service responsible for injecting external NMEA data on the Mavlink stream.",
-    default_response_class=PrettyJSONResponse,
-    debug=True,
-)
-app.router.route_class = GenericErrorHandlingRoute
-logger.info("Starting NMEA Injector.")
-controller = TrafficController()
-
-
-@app.get("/socks", response_model=List[NMEASocket])
-@version(1, 0)
-def get_socks() -> Any:
-    socks = controller.get_socks()
-    logger.debug(f"Available NMEA sockets: {[str(sock) for sock in socks]}.")
-    return socks
-
-
-@app.post(
-    "/socks",
-    status_code=status.HTTP_201_CREATED,
-    summary="Add new NMEA socket.",
-    description="Component ID refers to the Mavlink specification. Usual for GPS units are 220 and 221.",
-)
-@version(1, 0)
-async def add_sock(sock: NMEASocket) -> Any:
-    await controller.add_sock(sock)
+    return _on_start
 
 
-@app.delete(
-    "/socks",
-    status_code=status.HTTP_200_OK,
-    summary="Remove existing NMEA socket.",
-)
-@version(1, 0)
-def remove_sock(sock: NMEASocket) -> Any:
-    controller.remove_sock(sock)
+def build_service(*, udp: int | None = None, tcp: int | None = None) -> Service[TrafficController]:
+    controller = TrafficController(PydanticSockSettingsStore(), AsyncioSockListener(MavlinkMessengerSink()))
+    return (
+        Service.builder(SERVICE_NAME)
+        .state(controller)
+        .routes(lambda service: build_nmea_router(service, controller))
+        .on_start(_make_on_start(controller, udp=udp, tcp=tcp))
+        .http(
+            2748,
+            title="NMEA Injector API",
+            description="NMEA Injector is a service responsible for injecting external NMEA data on the Mavlink stream.",
+        )
+        .logging()
+        .build()
+    )
 
 
-app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
-
-
-@app.get("/")
-async def read_items() -> Any:
-    html_content = """
-    <html>
-        <head>
-            <title>NMEA Injector</title>
-        </head>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
-
-
-async def main() -> None:
-    await init_sentry_async(SERVICE_NAME)
-
-    # # Running uvicorn with log disabled so loguru can handle it
-    config = Config(app=app, host="0.0.0.0", port=2748, log_config=None)
-    server = Server(config)
-
-    asyncio.create_task(controller.load_socks_from_settings())
-
-    if args.udp:
-        asyncio.create_task(controller.add_sock(NMEASocket(kind=SocketKind.UDP, port=args.udp, component_id=220)))
-    if args.tcp:
-        asyncio.create_task(controller.add_sock(NMEASocket(kind=SocketKind.TCP, port=args.tcp, component_id=221)))
-
-    await server.serve()
+def main() -> None:
+    parser = argparse.ArgumentParser(description="NMEA Injector service for Blue Robotics BlueOS")
+    parser.add_argument("-u", "--udp", type=int, help="change the default UDP input port")
+    parser.add_argument("-t", "--tcp", type=int, help="change the default TCP input port")
+    args = parser.parse_args()
+    Runtime().sentry().add_service(build_service(udp=args.udp, tcp=args.tcp)).run()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

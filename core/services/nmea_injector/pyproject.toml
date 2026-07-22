@@ -11,7 +11,6 @@ dependencies = [
     "loguru==0.5.3",
     "pydantic==1.10.12",
     "pynmea2==1.18.0",
-    "uvicorn==0.18.0",
 ]
 
 [tool.uv]

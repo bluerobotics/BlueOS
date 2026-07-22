@@ -3,6 +3,9 @@
 print_usage() {
     cat <<'EOF'
 Usage: .hooks/pre-push [options]
+       .hooks/pre-push <remote> <url>   # also valid when installed as a git hook
+
+CI always runs this script (no flags). git push only runs it after .hooks/install.
 
 Options:
   --fix                   Run formatters (isort/black) for both environments and skip other checks.

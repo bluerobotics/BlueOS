@@ -1,90 +1,45 @@
-#! /usr/bin/env python3
-import asyncio
-import logging
-from typing import Any, List
+from pathlib import Path
 
-from bridget import BridgeFrontendSpec, Bridget
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.logs import InterceptHandler, init_logger
-from commonwealth.utils.sentry_config import init_sentry_async
-from fastapi import FastAPI, status
-from fastapi.responses import HTMLResponse
-from fastapi_versioning import VersionedFastAPI, version
-from loguru import logger
-from uvicorn import Config, Server
+from adapters import (
+    BridgesLibRuntime,
+    Linux2RestSerialCatalog,
+    PydanticBridgeSettingsStore,
+)
+from commonwealth.service.runtime import Runtime
+from commonwealth.service.service import Service
+from routes import build_bridget_router
+from service import BridgetState
 
 SERVICE_NAME = "bridget"
-
-logging.basicConfig(handlers=[InterceptHandler()], level=0)
-init_logger(SERVICE_NAME)
-
-app = FastAPI(
-    title="Bridget API",
-    description="Bridget is a BlueOS service responsible for managing 'bridges' links.",
-    default_response_class=PrettyJSONResponse,
-)
-app.router.route_class = GenericErrorHandlingRoute
-logger.info("Starting Bridget!.")
-
-controller = Bridget()
+# We use userdata because our regular settings folder is under /root, which regular users
+# don't have access to.
+USERDATA = Path("/usr/blueos/userdata/")
 
 
-@app.get("/serial_ports", response_model=List[str])
-@version(1, 0)
-def get_serial_ports() -> Any:
-    ports = controller.available_serial_ports()
-    logger.debug(f"Available serial ports found: {ports}.")
-    return ports
+def build_service() -> Service[BridgetState]:
+    catalog = Linux2RestSerialCatalog()
+    return (
+        Service.builder(SERVICE_NAME)
+        .state(
+            BridgetState(
+                BridgesLibRuntime(),
+                PydanticBridgeSettingsStore(USERDATA / "settings" / "bridget"),
+            )
+        )
+        .routes(lambda service: build_bridget_router(service, catalog))
+        .http(
+            27353,
+            title="Bridget API",
+            description="Bridget is a BlueOS service responsible for managing 'bridges' links.",
+        )
+        .logging()
+        .build()
+    )
 
 
-@app.get("/bridges", response_model=List[BridgeFrontendSpec])
-@version(1, 0)
-def get_bridges() -> Any:
-    bridges = controller.get_bridges()
-    logger.debug(bridges)
-    return bridges
-
-
-@app.post("/bridges", status_code=status.HTTP_201_CREATED)
-@version(1, 0)
-def add_bridge(bridge: BridgeFrontendSpec) -> Any:
-    logger.debug(f"Adding bridge '{bridge}'.")
-    controller.add_bridge(bridge)
-    logger.debug(f"Bridge '{bridge}' added.")
-
-
-@app.delete("/bridges", status_code=status.HTTP_200_OK)
-@version(1, 0)
-def remove_bridge(bridge: BridgeFrontendSpec) -> Any:
-    logger.debug(f"Removing bridge '{bridge}'.")
-    controller.remove_bridge(bridge)
-    logger.debug(f"Bridge '{bridge}' removed.")
-
-
-app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
-
-
-@app.get("/")
-async def read_items() -> Any:
-    html_content = """
-    <html>
-        <head>
-            <title>Bridget</title>
-        </head>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
-
-
-async def main() -> None:
-    await init_sentry_async(SERVICE_NAME)
-
-    # Running uvicorn with log disabled so loguru can handle it
-    config = Config(app=app, host="0.0.0.0", port=27353, log_config=None)
-    server = Server(config)
-
-    await server.serve()
+def main() -> None:
+    Runtime().sentry().add_service(build_service()).run()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
