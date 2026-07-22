@@ -4,10 +4,12 @@ version = "1.4.0"
 description = "Runtime workspace for BlueOS services that require newer dependencies."
 requires-python = ">=3.11"
 dependencies = [
+  "bridges",
   "commonwealth",
   "versionchooser",
   "kraken",
   "helper",
+  "ping",
 ]
 
 [dependency-groups]
@@ -38,15 +40,19 @@ lint = [
 default-groups = ["dev", "lint"]
 
 [tool.uv.sources]
+bridges = { workspace = true }
 commonwealth = { workspace = true }
 versionchooser = { workspace = true }
 kraken = { workspace = true }
 helper = { workspace = true }
+ping = { workspace = true }
 
 [tool.uv.workspace]
 members = [
+  "../libs/bridges",
   "../libs/commonwealth",
   "../services/versionchooser",
   "../services/kraken",
   "../services/helper",
+  "../services/ping",
 ]
