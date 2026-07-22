@@ -46,7 +46,7 @@ application.include_router(manifest_router_v2)
 
 # Zenoh
 zenoh_session = ZenohSession(SERVICE_NAME)
-zenoh_router = ZenohRouter(SERVICE_NAME)
+zenoh_router = ZenohRouter(SERVICE_NAME, session=zenoh_session)
 zenoh_router.add_routes_to_zenoh(application)
 
 
