@@ -77,12 +77,19 @@ exclude = ["services/versionchooser", "services/kraken", "services/helper"]
 markers = [
   "timeout",
 ]
+pythonpath = [
+  "services/nmea_injector",
+]
 
 [tool.coverage.run]
 branch = true
+# Omit tests/mains so totals reflect production code (secondary threshold is 50% in .hooks/pre-push).
 omit = [
   "*/setup.py",
   "*/__init__.py",
+  "*/test_*.py",
+  "*/tests/*",
+  "services/*/main.py",
 ]
 
 [tool.coverage.report]
@@ -126,6 +133,7 @@ ignore = [
     "broad-except",
     "duplicate-code",
     "import-error",
+    "import-self", # False positive: several services/*/api (no parent __init__) share module name "api"
     "inconsistent-return-statements",
     "invalid-name",
     "line-too-long", # We already have this in black.
