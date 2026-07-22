@@ -11,7 +11,7 @@ class BridgeSettingsSpecV1(BaseModel):
     udp_port: int
 
     @staticmethod
-    def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV1":  # type: ignore
+    def from_spec(spec: "BridgeIdentity") -> "BridgeSettingsSpecV1":  # type: ignore
         return BridgeSettingsSpecV1(
             serial_path=spec.serial_path,
             baudrate=spec.baud,
@@ -46,7 +46,7 @@ class BridgeSettingsSpecV2(BaseModel):
     ip: str
 
     @staticmethod
-    def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV2":  # type: ignore
+    def from_spec(spec: "BridgeIdentity") -> "BridgeSettingsSpecV2":  # type: ignore
         return BridgeSettingsSpecV2(
             serial_path=spec.serial_path,
             baudrate=spec.baud,
