@@ -19,7 +19,6 @@ members = [
     "customization",
     "disk-usage",
     "filebrowser",
-    "nmea-injector",
     "recorder-extractor",
     "wifi",
 ]
@@ -221,7 +220,6 @@ dependencies = [
     { name = "customization" },
     { name = "disk-usage" },
     { name = "filebrowser" },
-    { name = "nmea-injector" },
     { name = "recorder-extractor" },
     { name = "wifi" },
 ]
@@ -262,7 +260,6 @@ requires-dist = [
     { name = "customization", virtual = "services/customization" },
     { name = "disk-usage", virtual = "services/disk_usage" },
     { name = "filebrowser", editable = "libs/filebrowser" },
-    { name = "nmea-injector", virtual = "services/nmea_injector" },
     { name = "recorder-extractor", virtual = "services/recorder_extractor" },
     { name = "wifi", virtual = "services/wifi" },
 ]
@@ -811,31 +808,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nmea-injector"
-version = "0.1.0"
-source = { virtual = "services/nmea_injector" }
-dependencies = [
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "pydantic" },
-    { name = "pynmea2" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "pynmea2", specifier = "==1.18.0" },
-    { name = "uvicorn", specifier = "==0.18.0" },
-]
-
-[[package]]
 name = "nmeasim"
 version = "1.1.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1071,15 +1043,6 @@ dependencies = [
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/11/80/34b429c6534be99ef3d6d20bd794b26fda0682d38e2d57f85df258beaac2/pylint_pydantic-0.3.2-py3-none-any.whl", hash = "sha256:e5cec02370aa68ac8eff138e5d573b0ac049bab864e9a6c3a9057cf043440aa1", size = 15951, upload-time = "2023-12-18T08:31:54.946Z" },
-]
-
-[[package]]
-name = "pynmea2"
-version = "1.18.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/88/b9/a0fed4563f5c73eb8f4d7bb115a455863c5327ae824ac1772e2a4b1b95ee/pynmea2-1.18.0.tar.gz", hash = "sha256:e340d3327ebf09683d09466a52541dfcccb98bde9cb661cab2d3eeb72ea424ad", size = 32950, upload-time = "2021-04-13T03:17:30.947Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/13/6117f735c3e8083bfce0ccd31a1d561fc2adb0e0e2d1ab3ace12256a3513/pynmea2-1.18.0-py3-none-any.whl", hash = "sha256:098f9ffd89c4a6c5e137b8b59e5b38194888d4a557c50b003ebcf2c3c15ec22e", size = 29738, upload-time = "2021-04-13T03:17:29.869Z" },
 ]
 
 [[package]]

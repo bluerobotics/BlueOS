@@ -2,7 +2,7 @@
 
 import asyncio
 from enum import Enum
-from typing import Dict, List, Tuple, Union
+from typing import Annotated, Dict, List, Tuple, Union
 
 import pynmea2
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
@@ -11,7 +11,7 @@ from loguru import logger
 from nmea_injector.exceptions import UnsupportedSocketKind
 from nmea_injector.MavlinkNMEA import MavlinkGpsInput, parse_mavlink_from_sentence
 from nmea_injector.settings import NmeaInjectorSettingsSpecV1, SettingsV1
-from pydantic import BaseModel, conint
+from pydantic import BaseModel, Field
 
 
 class SocketKind(str, Enum):
@@ -26,8 +26,8 @@ class NMEASocket(BaseModel):
     Serializable model containing the necessary information (network and mavlink-wise) used to specify a socket."""
 
     kind: SocketKind
-    port: conint(gt=1023, lt=65536)  # type: ignore
-    component_id: conint(gt=25, lt=250)  # type: ignore
+    port: Annotated[int, Field(gt=1023, lt=65536)]
+    component_id: Annotated[int, Field(gt=25, lt=250)]
 
     def __str__(self) -> str:
         return f"{self.kind}:{self.port}"
@@ -145,7 +145,7 @@ class TrafficController:
     @staticmethod
     async def forward_message(message: MavlinkGpsInput, mavlink2rest: MavlinkMessenger) -> None:
         """Forward Mavlink message package to Mavlink2Rest, on the specified component ID."""
-        await mavlink2rest.send_mavlink_message(message.dict())
+        await mavlink2rest.send_mavlink_message(message.model_dump())
 
     def __del__(self) -> None:
         for server_socket in self._socks.values():
