@@ -1,5 +1,7 @@
 # This file is used to define general configurations for the app
 
+from typing import Dict, List
+
 SERVICE_NAME = "kraken"
 
 DEFAULT_MANIFESTS = [
@@ -10,12 +12,7 @@ DEFAULT_MANIFESTS = [
     },
 ]
 
-DEFAULT_EXTENSIONS = [
-    {
-        "identifier": "blueos.major_tom",
-        "url": "https://blueos.cloud/major_tom/install",
-    },
-]
+DEFAULT_EXTENSIONS: List[Dict[str, str]] = []
 
 DEFAULT_INJECTED_ENV_VARIABLES = [
     "MAV_SYSTEM_ID",
