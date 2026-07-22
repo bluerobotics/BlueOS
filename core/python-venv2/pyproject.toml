@@ -10,6 +10,7 @@ dependencies = [
   "versionchooser",
   "kraken",
   "helper",
+  "nmea_injector",
   "pardal",
   "ping",
 ]
@@ -48,6 +49,7 @@ bridget = { workspace = true }
 versionchooser = { workspace = true }
 kraken = { workspace = true }
 helper = { workspace = true }
+nmea_injector = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
 
@@ -59,6 +61,7 @@ members = [
   "../services/versionchooser",
   "../services/kraken",
   "../services/helper",
+  "../services/nmea_injector",
   "../services/pardal",
   "../services/ping",
 ]

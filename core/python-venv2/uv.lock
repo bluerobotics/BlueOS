@@ -14,6 +14,7 @@ members = [
     "commonwealth",
     "helper",
     "kraken",
+    "nmea-injector",
     "pardal",
     "ping",
     "versionchooser",
@@ -260,6 +261,7 @@ dependencies = [
     { name = "commonwealth" },
     { name = "helper" },
     { name = "kraken" },
+    { name = "nmea-injector" },
     { name = "pardal" },
     { name = "ping" },
     { name = "versionchooser" },
@@ -296,6 +298,7 @@ requires-dist = [
     { name = "commonwealth", editable = "../libs/commonwealth" },
     { name = "helper", virtual = "../services/helper" },
     { name = "kraken", virtual = "../services/kraken" },
+    { name = "nmea-injector", virtual = "../services/nmea_injector" },
     { name = "pardal", virtual = "../services/pardal" },
     { name = "ping", virtual = "../services/ping" },
     { name = "versionchooser", virtual = "../services/versionchooser" },
@@ -901,6 +904,31 @@ wheels = [
 ]
 
 [[package]]
+name = "nmea-injector"
+version = "0.1.0"
+source = { virtual = "../services/nmea_injector" }
+dependencies = [
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "pynmea2" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "commonwealth", specifier = "==0.1.0" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "pynmea2", specifier = "==1.19.0" },
+    { name = "uvicorn", specifier = "==0.38.0" },
+]
+
+[[package]]
 name = "nmeasim"
 version = "1.1.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1295,6 +1323,15 @@ dependencies = [
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/11/80/34b429c6534be99ef3d6d20bd794b26fda0682d38e2d57f85df258beaac2/pylint_pydantic-0.3.2-py3-none-any.whl", hash = "sha256:e5cec02370aa68ac8eff138e5d573b0ac049bab864e9a6c3a9057cf043440aa1", size = 15951, upload-time = "2023-12-18T08:31:54.946Z" },
+]
+
+[[package]]
+name = "pynmea2"
+version = "1.19.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/d7/5d0e36d00cd8aa19a6e717bcd1216ca805d86865501dfebdd18667c9edbd/pynmea2-1.19.0.tar.gz", hash = "sha256:1daa79b93279f887d1c235e5cc5c79e32644564138ce46989ab0f4a2fc970d7c", size = 36240, upload-time = "2023-01-19T20:52:56.289Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/24/1f575eb17a8135e54b3c243ff87e2f4d6b2389942836021d0628ed837559/pynmea2-1.19.0-py3-none-any.whl", hash = "sha256:5138558b4fb5daa587b2c17de99eb43df0297039de1c98010c996624abfb00eb", size = 30016, upload-time = "2023-01-19T20:52:54.38Z" },
 ]
 
 [[package]]

@@ -14,7 +14,6 @@ dependencies = [
   "commander",
   "customization",
   "disk_usage",
-  "nmea_injector",
   "recorder_extractor",
   "wifi",
 ]
@@ -57,13 +56,12 @@ cable_guy = { workspace = true }
 commander = { workspace = true }
 customization = { workspace = true }
 disk_usage = { workspace = true }
-nmea_injector = { workspace = true }
 recorder_extractor = { workspace = true }
 wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
-exclude = ["services/bridget", "services/versionchooser", "services/kraken", "services/helper", "services/ping", "services/pardal"]
+exclude = ["services/bridget", "services/versionchooser", "services/kraken", "services/helper", "services/nmea_injector", "services/ping", "services/pardal"]
 
 # ------------------ Tooling Configurations ------------------
 
