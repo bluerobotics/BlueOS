@@ -23,7 +23,6 @@ import back_axios, { isBackendOffline } from '@/utils/api'
 import { networkProbeRateBps } from '@/utils/networking'
 
 export enum FetchType {
-    JournalType = 'journal',
     ModelType = 'model',
     NetstatType = 'netstat',
     PlatformType = 'platform',
@@ -145,11 +144,6 @@ class SystemInformationStore extends VuexModule {
     this.model = model
   }
 
-
-  @Mutation
-  updateJournalEntries(response: JournalResponse): void {
-    this.journal_entries = response.entries
-  }
 
   @Mutation
   updateNetstat(netstat: Netstat): void {
@@ -340,10 +334,6 @@ class SystemInformationStore extends VuexModule {
     })
       .then((response) => {
         switch (type) {
-          case FetchType.JournalType: {
-            this.updateJournalEntries(response.data)
-            break
-          }
           case FetchType.ModelType:
             this.updateModel(response.data)
             break
