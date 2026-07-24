@@ -22,8 +22,6 @@ import {
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 export enum FetchType {
-    KernelType = 'kernel_buffer',
-    JournalType = 'journal',
     ModelType = 'model',
     NetstatType = 'netstat',
     PlatformType = 'platform',
@@ -107,16 +105,6 @@ class SystemInformationStore extends VuexModule {
   @Mutation
   updateModel(model: Model): void {
     this.model = model
-  }
-
-  @Mutation
-  updateKernelMessage(kernel_message: KernelMessage[]): void {
-    this.kernel_message = kernel_message
-  }
-
-  @Mutation
-  updateJournalEntries(response: JournalResponse): void {
-    this.journal_entries = response.entries
   }
 
   @Mutation
@@ -229,11 +217,6 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Action
-  async fetchKernelMessage(): Promise<void> {
-    await this.fetchSystemInformation(FetchType.KernelType)
-  }
-
-  @Action
   async fetchModel(): Promise<void> {
     await this.fetchSystemInformation(FetchType.ModelType)
   }
@@ -335,13 +318,6 @@ class SystemInformationStore extends VuexModule {
     })
       .then((response) => {
         switch (type) {
-          case FetchType.KernelType:
-            this.updateKernelMessage(response.data)
-            break
-          case FetchType.JournalType: {
-            this.updateJournalEntries(response.data)
-            break
-          }
           case FetchType.ModelType:
             this.updateModel(response.data)
             break
