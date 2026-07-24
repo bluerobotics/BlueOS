@@ -12,8 +12,47 @@ export const isBackendOffline = (error: any): boolean => {
   return false;
 }
 
+// Every back_axios call used to hit /status first, which piled up under normal polling.
+// Cache a recent "online" result for 3s (same cadence as BackendStatusChecker.vue's UI poll;
+// that component only reads frontend.backend_offline -- it does not hit /status itself).
+// Offline is never cached.
+const STATUS_TTL_MS = 3000
+
+let last_online_at = 0
+
+function applyStatusResult(backend_offline: boolean): void {
+  frontend.setBackendOffline(backend_offline)
+  if (!backend_offline) {
+    last_online_at = Date.now()
+  }
+}
+
 const axios_backend_instance: AxiosInstance = axios.create()
 axios_backend_instance.interceptors.request.use(async (config) => {
+  const is_recently_online = last_online_at > 0 && !frontend.backend_offline
+  if (is_recently_online && (Date.now() - last_online_at) < STATUS_TTL_MS) {
+    return config
+  }
+
+  // Still recently online: refresh /status in the background, but do not block this request.
+  if (is_recently_online) {
+    if (frontend.backend_status_request === null) {
+      const request = axios.get(frontend.backend_status_url, { timeout: 5000 })
+      frontend.setBackendStatusRequest(request)
+      request
+        .then((response) => {
+          applyStatusResult(response.status !== 204)
+        })
+        .catch(() => {
+          applyStatusResult(true)
+        })
+        .finally(() => {
+          frontend.setBackendStatusRequest(null)
+        })
+    }
+    return config
+  }
+
   // Check if there's already a backend status request running. If yes, use it. If not, start one.
   if (frontend.backend_status_request === null) {
     frontend.setBackendStatusRequest(axios.get(frontend.backend_status_url, { timeout: 5000 }))
@@ -26,7 +65,7 @@ axios_backend_instance.interceptors.request.use(async (config) => {
       .catch(() => true)
 
     // Update backend status and reset status-request variable
-    frontend.setBackendOffline(backend_offline)
+    applyStatusResult(backend_offline)
     frontend.setBackendStatusRequest(null)
 
     if (backend_offline) {
