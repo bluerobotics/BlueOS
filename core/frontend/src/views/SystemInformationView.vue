@@ -89,7 +89,7 @@ export default Vue.extend({
         },
         { title: 'About', icon: 'mdi-information', value: 'about' },
       ] as Item[],
-      page_selected: null as string | null,
+      page_selected: 0 as number,
     }
   },
   computed: {
