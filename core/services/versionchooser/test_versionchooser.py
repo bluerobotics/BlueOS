@@ -1,10 +1,11 @@
 import json
+from pathlib import Path
+from runpy import run_path
 from typing import Tuple
 from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
-from api.v1.routers.index import root as api_root
 from utils.chooser import VersionChooser
 from utils.dockerhub import TagFetcher, TagMetadata
 
@@ -47,6 +48,7 @@ SAMPLE_IMAGE = json.loads(
 
 
 async def test_api_root_redirects_to_relative_docs() -> None:
+    api_root = run_path(str(Path(__file__).parent / "api/v1/routers/index.py"))["root"]
     response = await api_root()
 
     assert response.headers["location"] == "docs"
