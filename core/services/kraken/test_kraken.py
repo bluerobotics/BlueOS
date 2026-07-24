@@ -9,7 +9,7 @@ import pytest
 @pytest.mark.parametrize("version", ["v1", "v2"])
 def test_api_root_redirects_to_relative_docs(version: str, tmp_path: Path) -> None:
     service_path = Path(__file__).parent
-    environment = os.environ | {
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("COV_CORE_")} | {
         "PYTHONPATH": str(service_path / "api" / version / "routers"),
         "XDG_CONFIG_HOME": str(tmp_path),
     }
