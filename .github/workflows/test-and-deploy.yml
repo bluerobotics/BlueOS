@@ -79,7 +79,10 @@ jobs:
       matrix:
         docker: [bootstrap, core]
         project: [blueos]
-        platforms: ["linux/arm/v7,linux/arm64/v8,linux/amd64"]
+        # joaoantoniocardoso/blueos-base:move_to_vendored_libcamera only publishes
+        # linux/arm/v7 + linux/arm64 (no amd64). Building amd64 fails with:
+        # "no match for platform in manifest: not found"
+        platforms: ["linux/arm/v7,linux/arm64/v8"]
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
@@ -223,8 +226,9 @@ jobs:
           name: BlueOS-core-docker-image-arm-v7
           path: '*arm-v7.tar'
 
+      # Skipped while the core base image has no linux/amd64 (see matrix.platforms).
       - name: Create image artifact
-        if: success() && matrix.docker == 'core'
+        if: success() && matrix.docker == 'core' && contains(matrix.platforms, 'linux/amd64')
         run: |
           DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
@@ -236,7 +240,7 @@ jobs:
 
       - name: Upload artifact amd64
         uses: actions/upload-artifact@v7
-        if: success() && matrix.docker == 'core'
+        if: success() && matrix.docker == 'core' && contains(matrix.platforms, 'linux/amd64')
         with:
           name: BlueOS-core-docker-image-amd64
           path: '*amd64.tar'
