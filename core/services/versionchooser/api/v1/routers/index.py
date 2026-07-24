@@ -14,4 +14,4 @@ async def root() -> RedirectResponse:
     """
     Root endpoint for the Version Chooser API V1.
     """
-    return RedirectResponse(url="/v1.0/docs")
+    return RedirectResponse(url="docs")
