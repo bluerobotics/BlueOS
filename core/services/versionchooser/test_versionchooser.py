@@ -4,6 +4,7 @@ from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
+from api.v1.routers.index import root as api_root
 from utils.chooser import VersionChooser
 from utils.dockerhub import TagFetcher, TagMetadata
 
@@ -43,6 +44,12 @@ SAMPLE_IMAGE = json.loads(
    "id":"856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57"
 }"""
 )
+
+
+async def test_api_root_redirects_to_relative_docs() -> None:
+    response = await api_root()
+
+    assert response.headers["location"] == "docs"
 
 
 @pytest.mark.asyncio
