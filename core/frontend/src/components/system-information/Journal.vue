@@ -38,7 +38,10 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import system_information, { FetchType } from '@/store/system-information'
+import system_information, {
+  subscribeJournalEntries,
+  unsubscribeJournalEntries,
+} from '@/store/system-information'
 import { JournalEntry } from '@/types/system-information/journal'
 
 export default Vue.extend({
@@ -48,8 +51,11 @@ export default Vue.extend({
       return system_information?.journal_entries ?? []
     },
   },
-  created() {
-    system_information.fetchSystemInformation(FetchType.JournalType)
+  mounted() {
+    subscribeJournalEntries()
+  },
+  beforeDestroy() {
+    unsubscribeJournalEntries()
   },
   methods: {
     formatTimestamp(value?: string): string {

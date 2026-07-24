@@ -41,7 +41,10 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import system_information from '@/store/system-information'
+import system_information, {
+  subscribeKernelMessages,
+  unsubscribeKernelMessages,
+} from '@/store/system-information'
 import { Dictionary } from '@/types/common'
 import { KernelMessage } from '@/types/system-information/kernel'
 
@@ -55,6 +58,12 @@ export default Vue.extend({
     messages() {
       return system_information?.kernel_message
     },
+  },
+  mounted() {
+    subscribeKernelMessages()
+  },
+  beforeDestroy() {
+    unsubscribeKernelMessages()
   },
   methods: {
     getClass(message: KernelMessage): string {
