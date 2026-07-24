@@ -136,6 +136,11 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Mutation
+  clearJournalEntries(): void {
+    this.journal_entries = []
+  }
+
+  @Mutation
   updateModel(model: Model): void {
     this.model = model
   }
@@ -400,11 +405,13 @@ system_information.fetchPlatformTask.setAction(system_information.fetchPlatform)
 system_information.fetchSubscribedSystemInformationTask.setAction(system_information.fetchSubscribedSystemInformation)
 
 // Vuex store modules are a poor fit for WebSocket callbacks; keep sockets outside the store and
-// open them only while a UI consumer is mounted (Kernel tab).
+// open them only while a UI consumer is mounted (Kernel / Journal tabs).
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
 
 let kernel_socket: WebSocket | null = null
+let journal_socket: WebSocket | null = null
 let kernel_subscribers = 0
+let journal_subscribers = 0
 
 function closeSocket(socket: WebSocket | null): void {
   if (!socket) {
@@ -440,13 +447,26 @@ export function unsubscribeKernelMessages(): void {
   system_information.clearKernelMessages()
 }
 
-const journalWebsocketUrl = `${protocol}://${window.location.host}${system_information.API_URL}/ws/journal`
-const journalSocket = new WebSocket(journalWebsocketUrl)
-journalSocket.onmessage = (message) => {
-  const payload = JSON.parse(message.data)
-  system_information.appendJournalEntries(payload)
+export function subscribeJournalEntries(): void {
+  journal_subscribers += 1
+  if (journal_socket) {
+    return
+  }
+  const socket = new WebSocket(`${protocol}://${window.location.host}${system_information.API_URL}/ws/journal`)
+  socket.onmessage = (message) => {
+    system_information.appendJournalEntries(JSON.parse(message.data))
+  }
+  journal_socket = socket
 }
 
-system_information.fetchSystemInformation(FetchType.JournalType)
+export function unsubscribeJournalEntries(): void {
+  journal_subscribers = Math.max(0, journal_subscribers - 1)
+  if (journal_subscribers > 0) {
+    return
+  }
+  closeSocket(journal_socket)
+  journal_socket = null
+  system_information.clearJournalEntries()
+}
 
 export default system_information
