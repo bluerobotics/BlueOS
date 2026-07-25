@@ -21,15 +21,17 @@ import system_information, { FetchType } from '@/store/system-information'
 import { Disk } from '@/types/system-information/system'
 import { prettifySize } from '@/utils/helper_functions'
 
+const FETCH_TYPES = [
+  FetchType.SystemCpuType,
+  FetchType.SystemMemoryType,
+  FetchType.SystemDiskType,
+  FetchType.SystemTemperatureType,
+]
+
 export default Vue.extend({
   name: 'SystemCondition',
   components: {
     SystemConditionCard,
-  },
-  data() {
-    return {
-      timer: 0,
-    }
   },
   // TODO: move to computeds
   computed: {
@@ -131,15 +133,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => {
-      system_information.fetchSystemInformation(FetchType.SystemCpuType)
-      system_information.fetchSystemInformation(FetchType.SystemDiskType)
-      system_information.fetchSystemInformation(FetchType.SystemMemoryType)
-      system_information.fetchSystemInformation(FetchType.SystemTemperatureType)
-    }, 2000)
+    system_information.subscribeSystemInformation(FETCH_TYPES)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
 })
 </script>
