@@ -98,8 +98,8 @@ async def read_data(path: str) -> JSONResponse:
     try:
         result = dpath.get(current_data, path)
         return JSONResponse(result)
-    except KeyError:
-        raise HTTPException(status_code=400, detail="Invalid path") from KeyError
+    except KeyError as error:
+        raise HTTPException(status_code=400, detail="Invalid path") from error
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
