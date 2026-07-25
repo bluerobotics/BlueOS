@@ -79,15 +79,16 @@ export interface Network {
      * @param name - Name of the interface, E.g: "lo", "eth0"
      * @param packets_received - Number of packages received since last probe
      * @param packets_transmitted - Number of packages transmitted since last probe
-     * @param received_B - Number of bytes received since last probe
+     * @param received_B - Bytes received since last linux2rest/sysinfo probe
      * @param total_errors_on_received - Total number of errors when receiving packages
      * @param total_errors_on_transmitted - Total number of errors when transmitting packages
      * @param total_packets_received - Total number of packages received
      * @param total_packets_transmitted - Total number of packages transmitted
      * @param total_received_B - Total number of bytes received
      * @param total_transmitted_B - Total number of bytes transmitted
-     * @param transmitted_B - Number of bytes received since last probe
-     * @param last_update - Unix time in seconds
+     * @param transmitted_B - Bytes transmitted since last linux2rest/sysinfo probe
+     * @param upload_speed - Frontend: transmitted_B / linux2rest sample interval (B/s)
+     * @param download_speed - Frontend: received_B / linux2rest sample interval (B/s)
     * */
     description: string,
     errors_on_received: number,
@@ -107,7 +108,6 @@ export interface Network {
     total_received_B: number,
     total_transmitted_B: number,
     transmitted_B: number
-    last_update?: number
     upload_speed?: number
     download_speed?: number
 }
