@@ -33,20 +33,19 @@ class MavlinkStore extends VuexModule {
     const { messageName, refreshRate } = rate
     if (refreshRate < 0) {
       console.warn(`Invalid request rate requested for message ${messageName}@${refreshRate}Hz`)
+      return
     }
 
-    mavlink2rest.requestMessageRate(messageName, refreshRate, autopilot_data.system_id)
-    // Remove any listener that has a lower frequency than requested
+    // Equal rate: keep existing listener and skip the wire request.
+    // Any other rate change discards the listener and creates a replacement.
     if (messageName in this.message_listeners) {
-      const currentRate = this.message_listeners[messageName].frequency
-      if (currentRate > refreshRate) {
-        console.warn(
-          `Request with higher rate already registered for message ${messageName}@${currentRate}Hz vs ${refreshRate}Hz`,
-        )
+      if (this.message_listeners[messageName].frequency === refreshRate) {
         return
       }
       this.message_listeners[messageName].discard()
     }
+
+    mavlink2rest.requestMessageRate(messageName, refreshRate, autopilot_data.system_id)
 
     // Create a new listener
     this.message_listeners[messageName] = mavlink2rest.startListening(messageName).setCallback((receivedMessage) => {
