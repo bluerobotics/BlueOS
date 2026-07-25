@@ -41,6 +41,13 @@ export enum FetchType {
 
 const notifier = new Notifier(system_information_service)
 
+const system_information_subscribers: Partial<Record<FetchType, number>> = {
+  [FetchType.SystemCpuType]: 0,
+  [FetchType.SystemMemoryType]: 0,
+  [FetchType.SystemDiskType]: 0,
+  [FetchType.SystemTemperatureType]: 0,
+}
+
 @Module({
   dynamic: true,
   store,
@@ -70,11 +77,11 @@ class SystemInformationStore extends VuexModule {
   )
 
   fetchSystemNetworkTask = new OneMoreTime(
-    { delay: 1000 },
+    { delay: 2000 },
   )
 
-  fetchTemperatureTask = new OneMoreTime(
-    { delay: 2000 },
+  fetchSubscribedSystemInformationTask = new OneMoreTime(
+    { delay: 2000, autostart: false },
   )
 
   @Mutation
@@ -247,8 +254,46 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Action
-  async fetchTemperatureInformation(): Promise<void> {
-    await this.fetchSystemInformation(FetchType.SystemTemperatureType)
+  async fetchSubscribedSystemInformation(): Promise<void> {
+    const fetches = (Object.keys(system_information_subscribers) as FetchType[])
+      .filter((type) => (system_information_subscribers[type] ?? 0) > 0)
+      .map((type) => this.fetchSystemInformation(type))
+    if (fetches.length === 0) {
+      return
+    }
+    await Promise.all(fetches)
+  }
+
+  @Action
+  subscribeSystemInformation(types: FetchType[]): void {
+    types.forEach((type) => {
+      if (system_information_subscribers[type] === undefined) {
+        return
+      }
+      system_information_subscribers[type]! += 1
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const task = this.fetchSubscribedSystemInformationTask as any
+    if (task.isPaused) {
+      this.fetchSubscribedSystemInformationTask.resume()
+    } else if (!task.isRunning && !task.timeoutId) {
+      this.fetchSubscribedSystemInformationTask.start()
+    }
+  }
+
+  @Action
+  unsubscribeSystemInformation(types: FetchType[]): void {
+    types.forEach((type) => {
+      if (system_information_subscribers[type] === undefined) {
+        return
+      }
+      system_information_subscribers[type] = Math.max(0, system_information_subscribers[type]! - 1)
+    })
+    const has_subscribers = (Object.keys(system_information_subscribers) as FetchType[])
+      .some((type) => (system_information_subscribers[type] ?? 0) > 0)
+    if (!has_subscribers) {
+      this.fetchSubscribedSystemInformationTask.stop()
+    }
   }
 
   @Action
@@ -346,7 +391,7 @@ const system_information: SystemInformationStore = getModule(SystemInformationSt
 system_information.fetchSystem()
 system_information.fetchPlatformTask.setAction(system_information.fetchPlatform)
 system_information.fetchSystemNetworkTask.setAction(system_information.fetchNetworkInformation)
-system_information.fetchTemperatureTask.setAction(system_information.fetchTemperatureInformation)
+system_information.fetchSubscribedSystemInformationTask.setAction(system_information.fetchSubscribedSystemInformation)
 
 // It appears that the store is incompatible with websockets or callbacks.
 // Right now the only way to have it working is to have the websocket definition outside the store
