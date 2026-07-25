@@ -52,8 +52,8 @@
         <draggable v-model="selected_widgets" class="d-flex align-center justify-center">
           <component
             :is="getWidget(widget_name).component"
-            v-for="(widget_name, i) in selected_widgets"
-            :key="i"
+            v-for="widget_name in selected_widgets"
+            :key="widget_name"
             v-bind="getWidget(widget_name).props"
             class="mr-2"
             ripple
@@ -483,21 +483,18 @@ export default Vue.extend({
           props: {},
         },
       ]
-      // lets filter out docker, veth, and zerotier interfaces
-      if (!system_information.system?.network) {
-        return widgets
-      }
-      const extra_interfaces = system_information.system?.network?.filter(
-        (iface) => !['docker', 'lo', 'veth'].some((prefix) => iface.name.startsWith(prefix)),
+      // Use the stable name list so speed polls do not rebuild this computed every 2s
+      const extra_interfaces = system_information.network_interface_names.filter(
+        (name) => !['docker', 'lo', 'veth'].some((prefix) => name.startsWith(prefix)),
       )
-      for (const iface of extra_interfaces) {
+      for (const name of extra_interfaces) {
         widgets.push({
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           component: Networking as any,
           props: {
-            interface: iface.name,
+            interface: name,
           },
-          name: `${iface.name} Networking`,
+          name: `${name} Networking`,
         })
       }
       return widgets

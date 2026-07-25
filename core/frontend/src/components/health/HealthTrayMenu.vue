@@ -145,7 +145,11 @@ import { RaspberryEventType } from '@/types/system-information/platform'
 import { Disk } from '@/types/system-information/system'
 import mavlink_store_get from '@/utils/mavlink'
 
-const FETCH_TYPES = [FetchType.SystemTemperatureType, FetchType.SystemDiskType]
+const FETCH_TYPES = [
+  FetchType.SystemTemperatureType,
+  FetchType.SystemDiskType,
+  FetchType.PlatformType,
+]
 
 export default Vue.extend({
   name: 'HealthTrayMenu',

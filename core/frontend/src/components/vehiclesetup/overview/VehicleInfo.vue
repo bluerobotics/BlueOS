@@ -35,7 +35,9 @@ import { fetchCurrentBoard, fetchFirmwareInfo } from '@/components/autopilot/Aut
 import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
+
+const FETCH_TYPES = [FetchType.PlatformType]
 
 export default Vue.extend({
   name: 'VehicleInfo',
@@ -64,8 +66,12 @@ export default Vue.extend({
     },
   },
   mounted() {
+    system_information.subscribeSystemInformation(FETCH_TYPES)
     this.fetch_firmware_info_task.setAction(fetchCurrentBoard)
     this.fetch_current_board_task.setAction(fetchFirmwareInfo)
+  },
+  beforeDestroy() {
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
 })
 </script>

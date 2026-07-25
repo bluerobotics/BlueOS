@@ -39,8 +39,10 @@ import navigator_image from '@/assets/img/devicePathHelper/navigator.svg'
 import raspberry_pi3_image from '@/assets/img/devicePathHelper/rpi3b.svg'
 import raspberry_pi4_image from '@/assets/img/devicePathHelper/rpi4b.svg'
 import raspberry_pi5_image from '@/assets/img/devicePathHelper/rpi5.svg'
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 import { Dictionary } from '@/types/common'
+
+const FETCH_TYPES = [FetchType.PlatformType]
 
 enum BoardType {
   Rpi4B = 'Rpi4B',
@@ -180,6 +182,7 @@ export default Vue.extend({
     },
   },
   mounted() {
+    system_information.subscribeSystemInformation(FETCH_TYPES)
     // Wait for svg element to be loaded to set object
     let id = 0
     const name = `.${this.svgName}${this.inline ? '-inline' : ''}`
@@ -198,6 +201,9 @@ export default Vue.extend({
         clearInterval(id)
       }
     }, 500)
+  },
+  beforeDestroy() {
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
   methods: {
     updateImgObjectFromElement(element: HTMLEmbedElement) {

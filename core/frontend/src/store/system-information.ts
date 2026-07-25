@@ -43,6 +43,36 @@ const system_information_subscribers: Partial<Record<FetchType, number>> = {
   [FetchType.SystemMemoryType]: 0,
   [FetchType.SystemDiskType]: 0,
   [FetchType.SystemTemperatureType]: 0,
+  [FetchType.SystemNetworkType]: 0,
+  [FetchType.PlatformType]: 0,
+}
+
+function subscribedSystemFetchTypes(): FetchType[] {
+  return (Object.keys(system_information_subscribers) as FetchType[])
+    .filter((type) => type !== FetchType.PlatformType && (system_information_subscribers[type] ?? 0) > 0)
+}
+
+function hasSystemSubscribers(): boolean {
+  return subscribedSystemFetchTypes().length > 0
+}
+
+/** Return a new name list only when the set of interface names changed (keeps App tray stable). */
+function nextNetworkInterfaceNames(previous: string[], networks: Network[] | undefined): string[] | undefined {
+  const names = networks?.map(({ name }) => name) ?? []
+  const same_set = previous.length === names.length
+    && previous.every((name) => names.includes(name))
+    && names.every((name) => previous.includes(name))
+  return same_set ? undefined : names
+}
+
+function resumeOrStart(task: OneMoreTime): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const state = task as any
+  if (state.isPaused) {
+    task.resume()
+  } else if (!state.isRunning && !state.timeoutId) {
+    task.start()
+  }
 }
 
 @Module({
@@ -67,12 +97,11 @@ class SystemInformationStore extends VuexModule {
 
   serial: Serial | null = null
 
-  fetchPlatformTask = new OneMoreTime(
-    { delay: 5000 },
-  )
+  // Stable interface name list for App tray widgets — updated only when the set of names changes.
+  network_interface_names: string[] = []
 
-  fetchSystemNetworkTask = new OneMoreTime(
-    { delay: 2000 },
+  fetchPlatformTask = new OneMoreTime(
+    { delay: 5000, autostart: false },
   )
 
   fetchSubscribedSystemInformationTask = new OneMoreTime(
@@ -113,6 +142,10 @@ class SystemInformationStore extends VuexModule {
   @Mutation
   updateSystem(system: System): void {
     this.system = system
+    const names = nextNetworkInterfaceNames(this.network_interface_names, system.network)
+    if (names) {
+      this.network_interface_names = names
+    }
   }
 
   @Mutation
@@ -158,6 +191,10 @@ class SystemInformationStore extends VuexModule {
         }
       }
       this.system.network = networks
+      const names = nextNetworkInterfaceNames(this.network_interface_names, networks)
+      if (names) {
+        this.network_interface_names = names
+      }
     }
   }
 
@@ -209,15 +246,8 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Action
-  async fetchNetworkInformation(): Promise<void> {
-    await this.fetchSystemInformation(FetchType.SystemNetworkType)
-  }
-
-  @Action
   async fetchSubscribedSystemInformation(): Promise<void> {
-    const fetches = (Object.keys(system_information_subscribers) as FetchType[])
-      .filter((type) => (system_information_subscribers[type] ?? 0) > 0)
-      .map((type) => this.fetchSystemInformation(type))
+    const fetches = subscribedSystemFetchTypes().map((type) => this.fetchSystemInformation(type))
     if (fetches.length === 0) {
       return
     }
@@ -232,12 +262,12 @@ class SystemInformationStore extends VuexModule {
       }
       system_information_subscribers[type]! += 1
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const task = this.fetchSubscribedSystemInformationTask as any
-    if (task.isPaused) {
-      this.fetchSubscribedSystemInformationTask.resume()
-    } else if (!task.isRunning && !task.timeoutId) {
-      this.fetchSubscribedSystemInformationTask.start()
+
+    if (hasSystemSubscribers()) {
+      resumeOrStart(this.fetchSubscribedSystemInformationTask)
+    }
+    if ((system_information_subscribers[FetchType.PlatformType] ?? 0) > 0) {
+      resumeOrStart(this.fetchPlatformTask)
     }
   }
 
@@ -249,10 +279,12 @@ class SystemInformationStore extends VuexModule {
       }
       system_information_subscribers[type] = Math.max(0, system_information_subscribers[type]! - 1)
     })
-    const has_subscribers = (Object.keys(system_information_subscribers) as FetchType[])
-      .some((type) => (system_information_subscribers[type] ?? 0) > 0)
-    if (!has_subscribers) {
+
+    if (!hasSystemSubscribers()) {
       this.fetchSubscribedSystemInformationTask.stop()
+    }
+    if ((system_information_subscribers[FetchType.PlatformType] ?? 0) === 0) {
+      this.fetchPlatformTask.stop()
     }
   }
 
@@ -343,7 +375,6 @@ const system_information: SystemInformationStore = getModule(SystemInformationSt
 
 system_information.fetchSystem()
 system_information.fetchPlatformTask.setAction(system_information.fetchPlatform)
-system_information.fetchSystemNetworkTask.setAction(system_information.fetchNetworkInformation)
 system_information.fetchSubscribedSystemInformationTask.setAction(system_information.fetchSubscribedSystemInformation)
 
 // Vuex store modules are a poor fit for WebSocket callbacks; keep sockets outside the store and
