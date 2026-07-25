@@ -62,9 +62,9 @@
           mdi-package-down
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>Received package:</v-list-item-subtitle>
+      <v-list-item-subtitle>Packets received:</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.total_packets_received }}
+        {{ network.packets_received }} / {{ network.total_packets_received }} total
       </v-list-item-subtitle>
     </v-list-item>
 
@@ -74,21 +74,9 @@
           mdi-package-up
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>Transmitted package:</v-list-item-subtitle>
+      <v-list-item-subtitle>Packets transmitted:</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.total_packets_transmitted }}
-      </v-list-item-subtitle>
-    </v-list-item>
-
-    <v-list-item>
-      <v-list-item-icon>
-        <v-icon>
-          mdi-cloud-upload
-        </v-icon>
-      </v-list-item-icon>
-      <v-list-item-subtitle>Bytes received:</v-list-item-subtitle>
-      <v-list-item-subtitle class="text-right">
-        {{ formatSize(network.total_received_B) }}
+        {{ network.packets_transmitted }} / {{ network.total_packets_transmitted }} total
       </v-list-item-subtitle>
     </v-list-item>
 
@@ -98,9 +86,21 @@
           mdi-cloud-download
         </v-icon>
       </v-list-item-icon>
+      <v-list-item-subtitle>Bytes received:</v-list-item-subtitle>
+      <v-list-item-subtitle class="text-right">
+        {{ formatSize(network.received_B) }} / {{ formatSize(network.total_received_B) }} total
+      </v-list-item-subtitle>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-icon>
+        <v-icon>
+          mdi-cloud-upload
+        </v-icon>
+      </v-list-item-icon>
       <v-list-item-subtitle>Bytes transmitted:</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ formatSize(network.total_transmitted_B) }}
+        {{ formatSize(network.transmitted_B) }} / {{ formatSize(network.total_transmitted_B) }} total
       </v-list-item-subtitle>
     </v-list-item>
   </v-card>

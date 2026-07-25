@@ -20,6 +20,7 @@ import {
   CPU, Disk, Info, Memory, Network, Process, System, Temperature,
 } from '@/types/system-information/system'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { networkProbeRateBps } from '@/utils/networking'
 
 export enum FetchType {
     ModelType = 'model',
@@ -213,16 +214,12 @@ class SystemInformationStore extends VuexModule {
   @Mutation
   updateSystemNetwork(networks: [Network]): void {
     if (this.system) {
-      // derivate interface upload and download speeds from the previous values
-      const now = Date.now()
-      for(let network of networks) {
-        const previousNetwork = this.system.network.find(n => n.name === network.name)
-        const dt = (now - (previousNetwork?.last_update ?? 5)) / 1000
-        network.last_update = now
-        if (previousNetwork) {
-          network.download_speed = (network.total_received_B - previousNetwork.total_received_B) / dt
-          network.upload_speed = (network.total_transmitted_B - previousNetwork.total_transmitted_B) / dt
-        }
+      // Use linux2rest/sysinfo per-sample deltas (received_B / transmitted_B), not a
+      // frontend re-diff of total_*. Those deltas are already saturating and match the
+      // Sampler window (LINUX2REST_SYSTEM_SAMPLE_INTERVAL_S).
+      for (const network of networks) {
+        network.download_speed = networkProbeRateBps(network.received_B)
+        network.upload_speed = networkProbeRateBps(network.transmitted_B)
       }
       this.system.network = networks
       const names = nextNetworkInterfaceNames(this.network_interface_names, networks)
