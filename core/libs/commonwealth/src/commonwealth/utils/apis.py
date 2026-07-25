@@ -29,7 +29,8 @@ class GenericErrorHandlingRoute(APIRoute):
             try:
                 return await original_route_handler(request)
             except HTTPException as error:
-                logger.exception(error)
+                if error.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+                    logger.exception(error)
                 raise error
             except Exception as error:
                 logger.error("Unhandled service exception.")
