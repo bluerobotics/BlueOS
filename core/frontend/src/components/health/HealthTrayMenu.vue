@@ -140,10 +140,12 @@ import mavlink2rest from '@/libs/MAVLink2Rest'
 import { MavModeFlag, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 import { RaspberryEventType } from '@/types/system-information/platform'
 import { Disk } from '@/types/system-information/system'
 import mavlink_store_get from '@/utils/mavlink'
+
+const FETCH_TYPES = [FetchType.SystemTemperatureType, FetchType.SystemDiskType]
 
 export default Vue.extend({
   name: 'HealthTrayMenu',
@@ -208,6 +210,7 @@ export default Vue.extend({
     },
   },
   mounted() {
+    system_information.subscribeSystemInformation(FETCH_TYPES)
     mavlink2rest.startListening('HEARTBEAT').setCallback((message) => {
       if (!this.is_vehicle(message?.message.mavtype.type) || message?.header.component_id !== 1) {
         return
@@ -217,6 +220,9 @@ export default Vue.extend({
       autopilot_data.setVehicleArmed(Boolean(message?.message.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED))
       this.last_heartbeat_date = new Date()
     }).setFrequency(0)
+  },
+  beforeDestroy() {
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
   methods: {
     heartbeat_age(): number {
