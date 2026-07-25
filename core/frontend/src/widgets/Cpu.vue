@@ -45,13 +45,10 @@ import Vue from 'vue'
 
 import system_information, { FetchType } from '@/store/system-information'
 
+const FETCH_TYPES = [FetchType.SystemCpuType, FetchType.SystemTemperatureType]
+
 export default Vue.extend({
   name: 'CpuWidget',
-  data() {
-    return {
-      timer: 0,
-    }
-  },
   computed: {
     cpus_usage(): number[] {
       const cpus = system_information.system?.cpu
@@ -97,10 +94,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemCpuType), 5000)
+    system_information.subscribeSystemInformation(FETCH_TYPES)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
   methods: {
     getBarColor(usage: number): string {
