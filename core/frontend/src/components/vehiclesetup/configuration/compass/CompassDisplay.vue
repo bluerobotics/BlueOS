@@ -38,6 +38,8 @@ const mainAngles = {
   315: 'NW',
 }
 
+const COMPASS_REFRESH_MESSAGES = ['ATTITUDE', 'RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'GPS_RAW_INT', 'GPS2_RAW']
+
 export default Vue.extend({
   name: 'CompassDisplay',
   components: {
@@ -59,6 +61,7 @@ export default Vue.extend({
       renderVariables: {
         yawAngleDegrees: [0, 0, 0, 0, 0, 0],
       },
+      render_interval: 0,
     }
   },
   computed: {
@@ -131,8 +134,15 @@ export default Vue.extend({
       this.canvas.height = this.canvasSize
     })
     this.initializeCanvas()
-    for (const msg of ['ATTITUDE', 'RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'GPS_RAW_INT', 'GPS2_RAW']) {
+    for (const msg of COMPASS_REFRESH_MESSAGES) {
       mavlink.setMessageRefreshRate({ messageName: msg, refreshRate: 10 })
+    }
+  },
+  beforeDestroy() {
+    clearInterval(this.render_interval)
+    gsap.killTweensOf(this.renderVariables.yawAngleDegrees)
+    for (const msg of COMPASS_REFRESH_MESSAGES) {
+      mavlink.setMessageRefreshRate({ messageName: msg, refreshRate: 1 })
     }
   },
   methods: {
@@ -289,7 +299,7 @@ export default Vue.extend({
       }
     },
     initializeCanvas() {
-      setInterval(() => {
+      this.render_interval = window.setInterval(() => {
         for (const [index, _value] of this.renderVariables.yawAngleDegrees.entries()) {
           const angle = this.headings[index]
           const angleDegrees = this.headings[index]

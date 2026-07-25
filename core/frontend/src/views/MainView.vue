@@ -268,6 +268,7 @@ export default Vue.extend({
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.handleResize)
+    mavlink.setMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 1 })
   },
   methods: {
     handleResize() {

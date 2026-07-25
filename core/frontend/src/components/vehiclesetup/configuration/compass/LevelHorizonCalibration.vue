@@ -123,6 +123,8 @@ export default Vue.extend({
       if (open) {
         mavlink.setMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
       } else {
+        // Do not ratchet ATTITUDE down here: CompassDisplay may still be mounted
+        // (Vuetify keeps visited tabs alive) and needs 10 Hz.
         this.status_text = undefined
         this.status_type = undefined
       }
