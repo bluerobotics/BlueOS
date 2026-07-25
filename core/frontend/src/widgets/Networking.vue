@@ -29,8 +29,10 @@
 import axios from 'axios'
 import Vue from 'vue'
 
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 import { formatBandwidth } from '@/utils/networking'
+
+const FETCH_TYPES = [FetchType.SystemNetworkType]
 
 export default Vue.extend({
   name: 'ETh0Widget',
@@ -42,7 +44,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      timer: 0,
       image: '',
       arrowLeft: '',
       arrowRight: '',
@@ -59,10 +60,11 @@ export default Vue.extend({
     },
   },
   async mounted() {
+    system_information.subscribeSystemInformation(FETCH_TYPES)
     this.loadImages()
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
   methods: {
     formatBandwidth(bytesPerSecond: number): string {

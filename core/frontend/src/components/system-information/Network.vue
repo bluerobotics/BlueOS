@@ -24,26 +24,28 @@
 import Vue from 'vue'
 
 import NetworkCard from '@/components/system-information/NetworkCard.vue'
-import system_information from '@/store/system-information'
+import system_information, { FetchType } from '@/store/system-information'
 import { Network } from '@/types/system-information/system'
+
+const FETCH_TYPES = [FetchType.SystemNetworkType]
 
 export default Vue.extend({
   name: 'Network',
   components: {
     NetworkCard,
   },
-  data() {
-    return {
-      timer: 0,
-    }
-  },
   computed: {
     networks(): Network[] {
-      return system_information.system?.network.sort((first, second) => first.name.localeCompare(second.name)) ?? []
+      // Copy before sort — do not mutate the Vuex network array in place.
+      const networks = system_information.system?.network ?? []
+      return [...networks].sort((first, second) => first.name.localeCompare(second.name))
     },
   },
+  mounted() {
+    system_information.subscribeSystemInformation(FETCH_TYPES)
+  },
   beforeDestroy() {
-    clearInterval(this.timer)
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
 })
 </script>
