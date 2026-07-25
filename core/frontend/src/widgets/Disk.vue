@@ -12,13 +12,10 @@ import Vue from 'vue'
 import system_information, { FetchType } from '@/store/system-information'
 import { Disk } from '@/types/system-information/system'
 
+const FETCH_TYPES = [FetchType.SystemDiskType]
+
 export default Vue.extend({
   name: 'DiskWidget',
-  data() {
-    return {
-      timer: 0,
-    }
-  },
   computed: {
     main_disk(): undefined | Disk {
       const disks = system_information.system?.disk
@@ -30,10 +27,10 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer = setInterval(() => system_information.fetchSystemInformation(FetchType.SystemDiskType), 30000)
+    system_information.subscribeSystemInformation(FETCH_TYPES)
   },
   beforeDestroy() {
-    clearInterval(this.timer)
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
   },
 })
 </script>
