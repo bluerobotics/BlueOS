@@ -139,10 +139,21 @@ export default Vue.extend({
     this.websocket?.close()
   },
   mounted() {
-    this.openWebSocket()
+    this.connectWebSocket()
+    this.interval = window.setInterval(() => {
+      if (this.websocket === undefined || this.websocket.readyState === WebSocket.CLOSED) {
+        this.connectWebSocket()
+        return
+      }
+
+      if (this.websocket.readyState === WebSocket.OPEN) {
+        this.websocket.send(window.performance.now().toString())
+      }
+    }, 200)
   },
   methods: {
-    openWebSocket() {
+    connectWebSocket() {
+      this.websocket?.close()
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
       this.websocket = new WebSocket(`${protocol}://${window.location.host}/network-test/ws`)
       this.websocket.onmessage = (message: MessageEvent): void => {
@@ -151,16 +162,6 @@ export default Vue.extend({
       this.websocket.onerror = () => {
         this.latency_ms = -1
       }
-
-      this.interval = setInterval(() => {
-        if (this.websocket === undefined || this.websocket?.readyState === WebSocket.CLOSED) {
-          this.openWebSocket()
-        }
-
-        if (this.websocket?.readyState === WebSocket.OPEN) {
-          this.websocket?.send(window.performance.now().toString())
-        }
-      }, 200)
     },
     start(): void {
       // eslint-disable-next-line
