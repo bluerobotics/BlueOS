@@ -78,9 +78,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { markRaw } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import Listener from '@/libs/MAVLink2Rest/Listener'
 import { GpsFixType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import {
   GlobalPositionInt,
@@ -105,6 +106,7 @@ export default Vue.extend({
       gps_detected: false,
       global_position_int: undefined as undefined | GlobalPositionInt,
       gps_raw_int: undefined as undefined | GpsRawInt,
+      listeners: [] as Listener[],
     }
   },
   computed: {
@@ -266,25 +268,33 @@ export default Vue.extend({
     },
   },
   mounted() {
-    mavlink2rest.startListening('GLOBAL_POSITION_INT').setCallback((message) => {
-      if (message?.header.system_id !== autopilot_data.system_id || message?.header.component_id !== 1) {
-        return
-      }
+    // markRaw: Listener → Endpoint.latestData must not be deep-observed per GPS frame.
+    this.listeners.push(
+      markRaw(mavlink2rest.startListening('GLOBAL_POSITION_INT').setCallback((message) => {
+        if (message?.header.system_id !== autopilot_data.system_id || message?.header.component_id !== 1) {
+          return
+        }
 
-      this.last_message_date = new Date()
-      this.global_position_int = message?.message as GlobalPositionInt
-    }).setFrequency(0)
+        this.last_message_date = new Date()
+        this.global_position_int = message?.message as GlobalPositionInt
+      }).setFrequency(0)),
+    )
 
     const message_name = this.instance === 1 ? 'GPS_RAW_INT' : 'GPS2_RAW'
-    mavlink2rest.startListening(message_name).setCallback((message) => {
-      if (message?.header.system_id !== autopilot_data.system_id || message?.header.component_id !== 1) {
-        return
-      }
+    this.listeners.push(
+      markRaw(mavlink2rest.startListening(message_name).setCallback((message) => {
+        if (message?.header.system_id !== autopilot_data.system_id || message?.header.component_id !== 1) {
+          return
+        }
 
-      this.last_message_date = new Date()
-      this.gps_raw_int = message?.message as GpsRawInt | Gps2Raw
-      this.gps_detected = this.gps_raw_int?.fix_type?.type !== GpsFixType.GPS_FIX_TYPE_NO_GPS
-    }).setFrequency(0)
+        this.last_message_date = new Date()
+        this.gps_raw_int = message?.message as GpsRawInt | Gps2Raw
+        this.gps_detected = this.gps_raw_int?.fix_type?.type !== GpsFixType.GPS_FIX_TYPE_NO_GPS
+      }).setFrequency(0)),
+    )
+  },
+  beforeDestroy() {
+    this.listeners.forEach((listener) => listener.discard())
   },
 })
 </script>

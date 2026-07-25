@@ -134,9 +134,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { markRaw } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import Listener from '@/libs/MAVLink2Rest/Listener'
 import { MavModeFlag, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
@@ -153,6 +154,7 @@ export default Vue.extend({
     return {
       time_limit_heartbeat: 3000,
       last_heartbeat_date: new Date(),
+      heartbeat_listener: undefined as Listener | undefined,
     }
   },
   computed: {
@@ -211,7 +213,8 @@ export default Vue.extend({
   },
   mounted() {
     system_information.subscribeSystemInformation(FETCH_TYPES)
-    mavlink2rest.startListening('HEARTBEAT').setCallback((message) => {
+    // markRaw: Listener → Endpoint.latestData must not be deep-observed per HEARTBEAT.
+    this.heartbeat_listener = markRaw(mavlink2rest.startListening('HEARTBEAT').setCallback((message) => {
       if (!this.is_vehicle(message?.message.mavtype.type) || message?.header.component_id !== 1) {
         return
       }
@@ -219,10 +222,11 @@ export default Vue.extend({
       autopilot_data.setAutopilotType(message?.message.autopilot.type)
       autopilot_data.setVehicleArmed(Boolean(message?.message.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED))
       this.last_heartbeat_date = new Date()
-    }).setFrequency(0)
+    }).setFrequency(0))
   },
   beforeDestroy() {
     system_information.unsubscribeSystemInformation(FETCH_TYPES)
+    this.heartbeat_listener?.discard()
   },
   methods: {
     heartbeat_age(): number {
