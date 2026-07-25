@@ -3,13 +3,13 @@
 
 import axios from 'axios'
 
+import autopilot_data from '@/store/autopilot'
 import { Dictionary } from '@/types/common'
 
 import Endpoint from './Endpoint'
 import Listener from './Listener'
+import { MavCmd, MAVLinkType } from './mavlink2rest-ts/messages/mavlink2rest-enum'
 import messageId from './MessageID'
-import autopilot_data from '@/store/autopilot'
-import { MAVLinkType, MavCmd } from './mavlink2rest-ts/messages/mavlink2rest-enum'
 
 class Mavlink2RestManager {
   baseUrl: string
@@ -20,6 +20,10 @@ class Mavlink2RestManager {
   baseUrlCandidates: Array<string>
 
   private socket: WebSocket | undefined = undefined
+
+  private intentionalClose = false
+
+  private reconnectTimeout: number | null = null
 
   private static instance: Mavlink2RestManager
 
@@ -76,6 +80,7 @@ class Mavlink2RestManager {
       endpoint.updateUrl(`${url}?filter=${name}`)
     })
 
+    this.closeSendSocket()
     this.socket = this.createSocket(`${url}?filter=THIS_SHOULD_ONLY_SEND`)
   }
 
@@ -85,9 +90,14 @@ class Mavlink2RestManager {
    * @returns WebSocket
    */
   createSocket(url: string): WebSocket {
+    this.intentionalClose = false
     const socket = new WebSocket(url)
     socket.onclose = () => {
-      setTimeout(() => {
+      if (this.intentionalClose) {
+        return
+      }
+      this.reconnectTimeout = window.setTimeout(() => {
+        this.reconnectTimeout = null
         this.socket = this.createSocket(url)
       }, 5000)
     }
@@ -97,9 +107,26 @@ class Mavlink2RestManager {
     return socket
   }
 
+  private closeSendSocket(): void {
+    if (!this.socket) {
+      return
+    }
+    this.intentionalClose = true
+    if (this.reconnectTimeout !== null) {
+      clearTimeout(this.reconnectTimeout)
+      this.reconnectTimeout = null
+    }
+    this.socket.onclose = null
+    this.socket.onerror = null
+    if (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING) {
+      this.socket.close()
+    }
+    this.socket = undefined
+  }
+
   /**
    * Helper for COMMAND_LONG messages
-   * @param command 
+   * @param command
    */
 
   sendCommandLong(
@@ -110,7 +137,7 @@ class Mavlink2RestManager {
     param4: number | undefined = undefined,
     param5: number | undefined = undefined,
     param6: number | undefined = undefined,
-    param7: number | undefined = undefined
+    param7: number | undefined = undefined,
   ) {
     mavlink2rest.sendMessage({
       header: {
@@ -137,8 +164,7 @@ class Mavlink2RestManager {
     })
   }
 
-
-  waitForAck(command: MavCmd, timeout_seconds: number = 3): Promise<any> {
+  waitForAck(command: MavCmd, timeout_seconds = 3): Promise<any> {
     return new Promise((resolve, reject) => {
       const listener = this.startListening(MAVLinkType.COMMAND_ACK).setCallback(
         (content) => {
@@ -149,12 +175,12 @@ class Mavlink2RestManager {
           if (message.command.type === command) {
             resolve(message)
           }
-        }
+        },
       ).setFrequency(0)
       setTimeout(() => {
         listener.discard()
         reject(new Error(`timed out waiting for answer for ${command}`))
-      }, timeout_seconds*1000)
+      }, timeout_seconds * 1000)
     })
   }
 
