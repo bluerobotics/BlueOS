@@ -10,7 +10,14 @@ export default class Endpoint {
 
   latestData: any = null
 
+  private intentionalClose = false
+
+  private reconnectTimeout: number | null = null
+
+  private url: string
+
   constructor(url: string) {
+    this.url = url
     this.socket = this.createSocket(url)
   }
 
@@ -19,7 +26,8 @@ export default class Endpoint {
    * @param  {string} url
    */
   updateUrl(url: string): void {
-    this.socket.close()
+    this.url = url
+    this.closeIntentionally()
     this.socket = this.createSocket(url)
   }
 
@@ -29,6 +37,7 @@ export default class Endpoint {
    * @returns WebSocket
    */
   createSocket(url: string): WebSocket {
+    this.intentionalClose = false
     const socket = new WebSocket(url)
     socket.onmessage = (message: MessageEvent): void => {
       this.latestData = JSON.parse(message.data)
@@ -37,8 +46,12 @@ export default class Endpoint {
       }
     }
     socket.onclose = () => {
-      setTimeout(() => {
-        this.socket = this.createSocket(url)
+      if (this.intentionalClose) {
+        return
+      }
+      this.reconnectTimeout = window.setTimeout(() => {
+        this.reconnectTimeout = null
+        this.socket = this.createSocket(this.url)
       }, 5000)
     }
     return socket
@@ -59,5 +72,18 @@ export default class Endpoint {
    */
   removeListener(listener: Listener): void {
     this.listeners = this.listeners.filter((item) => item !== listener)
+  }
+
+  private closeIntentionally(): void {
+    this.intentionalClose = true
+    if (this.reconnectTimeout !== null) {
+      clearTimeout(this.reconnectTimeout)
+      this.reconnectTimeout = null
+    }
+    this.socket.onclose = null
+    this.socket.onmessage = null
+    if (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING) {
+      this.socket.close()
+    }
   }
 }
