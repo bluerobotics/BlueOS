@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "blueos-core-venv2",
     "bridges",
+    "bridget",
     "commonwealth",
     "helper",
     "kraken",
@@ -255,6 +256,7 @@ version = "1.4.0"
 source = { virtual = "." }
 dependencies = [
     { name = "bridges" },
+    { name = "bridget" },
     { name = "commonwealth" },
     { name = "helper" },
     { name = "kraken" },
@@ -290,6 +292,7 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "bridges", editable = "../libs/bridges" },
+    { name = "bridget", virtual = "../services/bridget" },
     { name = "commonwealth", editable = "../libs/commonwealth" },
     { name = "helper", virtual = "../services/helper" },
     { name = "kraken", virtual = "../services/kraken" },
@@ -339,6 +342,35 @@ wheels = [
 name = "bridges"
 version = "0.1.0"
 source = { editable = "../libs/bridges" }
+
+[[package]]
+name = "bridget"
+version = "0.1.0"
+source = { virtual = "../services/bridget" }
+dependencies = [
+    { name = "bridges" },
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "pyserial" },
+    { name = "requests" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bridges", specifier = "==0.1.0" },
+    { name = "commonwealth", specifier = "==0.1.0" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "pyserial", specifier = "==3.5" },
+    { name = "requests", specifier = "==2.32.5" },
+    { name = "uvicorn", specifier = "==0.38.0" },
+]
 
 [[package]]
 name = "certifi"

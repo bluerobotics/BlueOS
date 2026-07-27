@@ -1,12 +1,12 @@
 import logging
 from pathlib import Path
-from typing import Dict, List
+from typing import Annotated, Dict, List
 
 import requests
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate
 from commonwealth.settings.manager import PydanticManager
-from pydantic import BaseModel, conint
+from pydantic import BaseModel, Field
 from serial.tools.list_ports_linux import SysFS
 from settings import BridgeSettingsSpecV2, SettingsV2
 
@@ -19,8 +19,8 @@ class BridgeFrontendSpec(BaseModel):
     serial_path: str
     baud: Baudrate
     ip: str
-    udp_target_port: conint(ge=0, lt=65536)  # type: ignore
-    udp_listen_port: conint(ge=0, lt=65536)  # type: ignore
+    udp_target_port: Annotated[int, Field(ge=0, lt=65536)]
+    udp_listen_port: Annotated[int, Field(ge=0, lt=65536)]
 
     def __str__(self) -> str:
         if self.ip == "0.0.0.0":

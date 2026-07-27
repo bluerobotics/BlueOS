@@ -10,7 +10,6 @@ dependencies = [
   "ardupilot_manager",
   "bag_of_holding",
   "beacon",
-  "bridget",
   "cable_guy",
   "commander",
   "customization",
@@ -54,7 +53,6 @@ filebrowser = { workspace = true }
 ardupilot_manager = { workspace = true }
 bag_of_holding = { workspace = true }
 beacon = { workspace = true }
-bridget = { workspace = true }
 cable_guy = { workspace = true }
 commander = { workspace = true }
 customization = { workspace = true }
@@ -65,7 +63,7 @@ wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
-exclude = ["services/versionchooser", "services/kraken", "services/helper", "services/ping", "services/pardal"]
+exclude = ["services/bridget", "services/versionchooser", "services/kraken", "services/helper", "services/ping", "services/pardal"]
 
 # ------------------ Tooling Configurations ------------------
 

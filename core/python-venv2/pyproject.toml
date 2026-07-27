@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
   "bridges",
   "commonwealth",
+  "bridget",
   "versionchooser",
   "kraken",
   "helper",
@@ -43,6 +44,7 @@ default-groups = ["dev", "lint"]
 [tool.uv.sources]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
+bridget = { workspace = true }
 versionchooser = { workspace = true }
 kraken = { workspace = true }
 helper = { workspace = true }
@@ -53,6 +55,7 @@ ping = { workspace = true }
 members = [
   "../libs/bridges",
   "../libs/commonwealth",
+  "../services/bridget",
   "../services/versionchooser",
   "../services/kraken",
   "../services/helper",
