@@ -24,6 +24,7 @@ setup(
         "anyio == 3.7.1",
         "fastapi-versioning == 0.9.1",
         "loguru == 0.5.3",
+        "psutil == 5.7.2",
         "pyserial == 3.5",
         "starlette == 0.27.0",
         "uvicorn == 0.13.4",

@@ -24,7 +24,7 @@ def list_ips() -> Set[str]:
     for interface in available_networks:
         ips.extend(
             phys.address
-            for phys in network_interface_addresses[interface]
+            for phys in network_interface_addresses.get(interface, [])
             if phys.family == socket.AF_INET and phys.address != "127.0.0.1"
         )
     return set(ips)  # make sure there are not duplicated entries
