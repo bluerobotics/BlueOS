@@ -12,6 +12,7 @@ members = [
     "bridges",
     "bridget",
     "commonwealth",
+    "customization",
     "helper",
     "kraken",
     "nmea-injector",
@@ -259,6 +260,7 @@ dependencies = [
     { name = "bridges" },
     { name = "bridget" },
     { name = "commonwealth" },
+    { name = "customization" },
     { name = "helper" },
     { name = "kraken" },
     { name = "nmea-injector" },
@@ -296,6 +298,7 @@ requires-dist = [
     { name = "bridges", editable = "../libs/bridges" },
     { name = "bridget", virtual = "../services/bridget" },
     { name = "commonwealth", editable = "../libs/commonwealth" },
+    { name = "customization", virtual = "../services/customization" },
     { name = "helper", virtual = "../services/helper" },
     { name = "kraken", virtual = "../services/kraken" },
     { name = "nmea-injector", virtual = "../services/nmea_injector" },
@@ -474,6 +477,31 @@ wheels = [
 [package.optional-dependencies]
 toml = [
     { name = "tomli", marker = "python_full_version <= '3.11'" },
+]
+
+[[package]]
+name = "customization"
+version = "0.1.0"
+source = { virtual = "../services/customization" }
+dependencies = [
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "python-multipart" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "commonwealth", specifier = "==0.1.0" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "python-multipart", specifier = "==0.0.21" },
+    { name = "uvicorn", specifier = "==0.38.0" },
 ]
 
 [[package]]
