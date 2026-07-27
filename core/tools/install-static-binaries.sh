@@ -8,6 +8,7 @@ set -e
 TOOLS=(
     blueos_startup_update
     bridges
+    chrony
     disktest
     linux2rest
     machineid

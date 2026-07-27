@@ -134,6 +134,7 @@ SERVICES=(
     'beacon',250,0,0,0,"$SERVICES_PATH/beacon/main.py"
     'bridget',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $SERVICES_PATH/bridget/main.py $RUN_AS_REGULAR_USER_END"
     'commander',250,0,0,0,"$SERVICES_PATH/commander/main.py"
+    'chronyd',0,0,0,0,"chronyd -d -f $TOOLS_PATH/chrony/chrony.conf"
     'nmea_injector',250,0,0,0,"nice -19 $SERVICES_PATH/nmea_injector/main.py"
     'helper',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/helper/main.py"
     'iperf3',250,0,0,0," iperf3 --server --port 5201"
