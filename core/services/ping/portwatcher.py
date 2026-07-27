@@ -78,20 +78,23 @@ class PortWatcher:
         """Start watching for plugged/unplugged serial devices in the system."""
         # TODO: try https://pypi.org/project/inotify/
         while True:
-            ports = serial.tools.list_ports.comports()
-            ports_description = [f"{port.subsystem}:{port.name}" for port in ports]
-            logger.debug(f"Currently detected ports: {ports_description}")
-            found_ports = set()
-            for port in ports:
-                if self.port_should_be_probed(port):
-                    await self.probe_port(port)
-                found_ports.add(port)
+            try:
+                ports = serial.tools.list_ports.comports()
+                ports_description = [f"{port.subsystem}:{port.name}" for port in ports]
+                logger.debug(f"Currently detected ports: {ports_description}")
+                found_ports = set()
+                for port in ports:
+                    if self.port_should_be_probed(port):
+                        await self.probe_port(port)
+                    found_ports.add(port)
 
-            missing = self.known_ports - found_ports
-            for port in missing:
-                logger.info(f"Port lost: {port.hwid}")
-                self.known_ports.remove(port)
-                if self.port_lost_callback is not None:
-                    self.port_lost_callback(port)
-            await self.add_ping360()
+                missing = self.known_ports - found_ports
+                for port in missing:
+                    logger.info(f"Port lost: {port.hwid}")
+                    self.known_ports.remove(port)
+                    if self.port_lost_callback is not None:
+                        self.port_lost_callback(port)
+                await self.add_ping360()
+            except Exception as error:
+                logger.exception(f"Error while watching ports/devices: {error}")
             await asyncio.sleep(1)
