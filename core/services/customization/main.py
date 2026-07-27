@@ -94,7 +94,7 @@ def load_theme_config() -> ThemeConfig:
 
 def save_theme_config(config: ThemeConfig) -> None:
     ensure_dirs()
-    THEME_CONFIG_FILE.write_text(json.dumps(config.dict(), indent=2), encoding="utf-8")
+    THEME_CONFIG_FILE.write_text(json.dumps(config.model_dump(), indent=2), encoding="utf-8")
 
 
 def write_theme_css(primary: str) -> None:

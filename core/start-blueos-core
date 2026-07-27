@@ -148,7 +148,7 @@ SERVICES=(
     'bag_of_holding',250,0,0,0,"$SERVICES_PATH/bag_of_holding/main.py"
     'recorder_extractor',250,0,0,0,"$SERVICES_PATH/recorder_extractor/main.py"
     'disk_usage',250,0,0,0,"$SERVICES_PATH/disk_usage/main.py"
-    'customization',250,0,0,0,"$SERVICES_PATH/customization/main.py"
+    'customization',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/customization/main.py"
 )
 
 tmux -f /etc/tmux.conf start-server
