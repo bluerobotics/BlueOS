@@ -145,7 +145,7 @@ SERVICES=(
     'user_terminal',0,0,0,0,"cat /etc/motd"
     'ttyd',250,0,0,0,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
     'nginx',250,0,0,0,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
-    'bag_of_holding',250,0,0,0,"$SERVICES_PATH/bag_of_holding/main.py"
+    'bag_of_holding',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/bag_of_holding/main.py"
     'recorder_extractor',250,0,0,0,"$SERVICES_PATH/recorder_extractor/main.py"
     'disk_usage',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/disk_usage/main.py"
     'customization',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/customization/main.py"
