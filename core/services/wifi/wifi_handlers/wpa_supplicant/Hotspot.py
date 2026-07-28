@@ -125,6 +125,10 @@ class HotspotManager:
     def desired_channel_frequency(self) -> int:
         return self.base_interface_channel_frequency()
 
+    def _ap_interface_flags(self) -> List[str]:
+        stats = psutil.net_if_stats().get(self._ap_interface_name)
+        return str(stats.flags).split(",") if stats else []
+
     def _create_virtual_interface(self) -> None:
         logger.debug("Deleting virtual access point interface (if exists).")
         wireless_interfaces = self.iw.get_interfaces_dict()
@@ -156,7 +160,8 @@ class HotspotManager:
         # virtual_interface_index = int(self.ipr.link_lookup(ifname=self._ap_interface_name)[0])
         # self.ipr.link("set", index=virtual_interface_index, state="up")
         self._reach_condition_or_timeout(
-            lambda self: self._ap_interface_name in psutil.net_if_stats() and psutil.net_if_stats()[self._ap_interface_name][0],  # fmt: skip
+            # psutil's isup means IFF_RUNNING, which uap0 only gets once hostapd beacons on it.
+            lambda self: "up" in self._ap_interface_flags(),
             "Could not start virtual interface. Timeout exceeded.",
         )
 
