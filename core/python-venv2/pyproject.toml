@@ -6,9 +6,11 @@ requires-python = ">=3.11"
 dependencies = [
   "bridges",
   "commonwealth",
+  "filebrowser",
   "bag_of_holding",
   "beacon",
   "bridget",
+  "commander",
   "customization",
   "disk_usage",
   "versionchooser",
@@ -49,9 +51,11 @@ default-groups = ["dev", "lint"]
 [tool.uv.sources]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
+filebrowser = { workspace = true }
 bag_of_holding = { workspace = true }
 beacon = { workspace = true }
 bridget = { workspace = true }
+commander = { workspace = true }
 customization = { workspace = true }
 disk_usage = { workspace = true }
 versionchooser = { workspace = true }
@@ -63,11 +67,11 @@ ping = { workspace = true }
 
 [tool.uv.workspace]
 members = [
-  "../libs/bridges",
-  "../libs/commonwealth",
+  "../libs/*",
   "../services/bag_of_holding",
   "../services/beacon",
   "../services/bridget",
+  "../services/commander",
   "../services/customization",
   "../services/disk_usage",
   "../services/versionchooser",
