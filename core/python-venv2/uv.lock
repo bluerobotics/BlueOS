@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "beacon",
     "blueos-core-venv2",
     "bridges",
     "bridget",
@@ -225,6 +226,33 @@ wheels = [
 ]
 
 [[package]]
+name = "beacon"
+version = "0.1.0"
+source = { virtual = "../services/beacon" }
+dependencies = [
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "psutil" },
+    { name = "pydantic" },
+    { name = "uvicorn" },
+    { name = "zeroconf" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "commonwealth", specifier = "==0.1.0" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "psutil", specifier = "==7.1.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "uvicorn", specifier = "==0.38.0" },
+    { name = "zeroconf", specifier = "==0.38.4" },
+]
+
+[[package]]
 name = "beautifulsoup4"
 version = "4.14.3"
 source = { registry = "https://pypi.org/simple" }
@@ -257,6 +285,7 @@ name = "blueos-core-venv2"
 version = "1.4.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "beacon" },
     { name = "bridges" },
     { name = "bridget" },
     { name = "commonwealth" },
@@ -295,6 +324,7 @@ lint = [
 
 [package.metadata]
 requires-dist = [
+    { name = "beacon", virtual = "../services/beacon" },
     { name = "bridges", editable = "../libs/bridges" },
     { name = "bridget", virtual = "../services/bridget" },
     { name = "commonwealth", editable = "../libs/commonwealth" },
@@ -748,6 +778,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9", size = 190490, upload-time = "2024-09-15T18:07:39.745Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3", size = 70442, upload-time = "2024-09-15T18:07:37.964Z" },
+]
+
+[[package]]
+name = "ifaddr"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/ac/fb4c578f4a3256561548cd825646680edcadb9440f3f68add95ade1eb791/ifaddr-0.2.0.tar.gz", hash = "sha256:cc0cbfcaabf765d44595825fb96a99bb12c79716b73b44330ea38ee2b0c4aed4", size = 10485, upload-time = "2022-06-15T21:40:27.561Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9c/1f/19ebc343cc71a7ffa78f17018535adc5cbdd87afb31d7c34874680148b32/ifaddr-0.2.0-py3-none-any.whl", hash = "sha256:085e0305cfe6f16ab12d72e2024030f5d52674afad6911bb1eee207177b8a748", size = 12314, upload-time = "2022-06-15T21:40:25.756Z" },
 ]
 
 [[package]]
@@ -1846,4 +1885,16 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f9/86/0f0dccb6e59a9e7f122c5afd43568b1d31b8ab7dda5f1b01fb5c7025c9a9/yarl-1.22.0-cp314-cp314t-win_amd64.whl", hash = "sha256:9fb17ea16e972c63d25d4a97f016d235c78dd2344820eb35bc034bc32012ee27", size = 96292, upload-time = "2025-10-06T14:12:15.398Z" },
     { url = "https://files.pythonhosted.org/packages/48/b7/503c98092fb3b344a179579f55814b613c1fbb1c23b3ec14a7b008a66a6e/yarl-1.22.0-cp314-cp314t-win_arm64.whl", hash = "sha256:9f6d73c1436b934e3f01df1e1b21ff765cd1d28c77dfb9ace207f746d4610ee1", size = 85171, upload-time = "2025-10-06T14:12:16.935Z" },
     { url = "https://files.pythonhosted.org/packages/73/ae/b48f95715333080afb75a4504487cbe142cae1268afc482d06692d605ae6/yarl-1.22.0-py3-none-any.whl", hash = "sha256:1380560bdba02b6b6c90de54133c81c9f2a453dee9912fe58c1dcced1edb7cff", size = 46814, upload-time = "2025-10-06T14:12:53.872Z" },
+]
+
+[[package]]
+name = "zeroconf"
+version = "0.38.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ifaddr" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a9/af/d5a16dc6081dc41507b65ed0d499e3c71728a3fbec4c14df6b2ec8eae1a7/zeroconf-0.38.4.tar.gz", hash = "sha256:080c540ea4b8b9defa9f3ac05823c1725ea2c8aacda917bfc0193f6758b95aeb", size = 106558, upload-time = "2022-02-28T23:32:58.449Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/8d/feb017d71b322a3a243ccaf5e1d1c87a6aa5b84be7aa69542453e7d338a5/zeroconf-0.38.4-py3-none-any.whl", hash = "sha256:f5dd86d12d06d1eec9fad05778d3c5787c2bcc03df4de4728b938df6bff70129", size = 106143, upload-time = "2022-02-28T23:32:56.376Z" },
 ]
