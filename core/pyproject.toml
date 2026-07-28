@@ -9,7 +9,6 @@ dependencies = [
   "filebrowser",
   "ardupilot_manager",
   "bag_of_holding",
-  "beacon",
   "cable_guy",
   "commander",
   "disk_usage",
@@ -50,7 +49,6 @@ commonwealth = { workspace = true }
 filebrowser = { workspace = true }
 ardupilot_manager = { workspace = true }
 bag_of_holding = { workspace = true }
-beacon = { workspace = true }
 cable_guy = { workspace = true }
 commander = { workspace = true }
 disk_usage = { workspace = true }
@@ -60,6 +58,7 @@ wifi = { workspace = true }
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
 exclude = [
+  "services/beacon",
   "services/bridget",
   "services/customization",
   "services/versionchooser",
