@@ -9,7 +9,6 @@ resolution-markers = [
 [manifest]
 members = [
     "ardupilot-manager",
-    "bag-of-holding",
     "blueos-core",
     "bridges",
     "cable-guy",
@@ -134,33 +133,6 @@ wheels = [
 ]
 
 [[package]]
-name = "bag-of-holding"
-version = "0.1.0"
-source = { virtual = "services/bag_of_holding" }
-dependencies = [
-    { name = "appdirs" },
-    { name = "commonwealth" },
-    { name = "dpath" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "pydantic" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "appdirs", specifier = "==1.4.4" },
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "dpath", specifier = "==2.1.5" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "uvicorn", specifier = "==0.18.0" },
-]
-
-[[package]]
 name = "black"
 version = "22.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -181,7 +153,6 @@ version = "1.4.0"
 source = { virtual = "." }
 dependencies = [
     { name = "ardupilot-manager" },
-    { name = "bag-of-holding" },
     { name = "bridges" },
     { name = "cable-guy" },
     { name = "commander" },
@@ -218,7 +189,6 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "ardupilot-manager", virtual = "services/ardupilot_manager" },
-    { name = "bag-of-holding", virtual = "services/bag_of_holding" },
     { name = "bridges", editable = "libs/bridges" },
     { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commander", virtual = "services/commander" },
@@ -428,15 +398,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/81/e1/56027a71e31b02ddc53c7d65b01e68edf64dea2932122fe7746a516f75d5/dill-0.4.1.tar.gz", hash = "sha256:423092df4182177d4d8ba8290c8a5b640c66ab35ec7da59ccfa00f6fa3eea5fa", size = 187315, upload-time = "2026-01-19T02:36:56.85Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/77/dc8c558f7593132cf8fefec57c4f60c83b16941c574ac5f619abb3ae7933/dill-0.4.1-py3-none-any.whl", hash = "sha256:1e1ce33e978ae97fcfcff5638477032b801c46c7c65cf717f95fbc2248f79a9d", size = 120019, upload-time = "2026-01-19T02:36:55.663Z" },
-]
-
-[[package]]
-name = "dpath"
-version = "2.1.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e2/c6/560d012e89b10b440d9f796ac0f97d2fbdcb5095d22442e1fc0d58c8387a/dpath-2.1.5.tar.gz", hash = "sha256:ccd964db839baad4aa820612b4b8731b09f40a245d401b723156ce4ef45b22b7", size = 28128, upload-time = "2023-03-25T18:08:16.882Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/4f/b1f2da869ac4f64a05e623e8809edef3fafc735219fcc92bebaa8128605a/dpath-2.1.5-py3-none-any.whl", hash = "sha256:559edcbfc806ca2f9ad9e63566f22e5d41c000e4215bbce9dbf1ca4c859f5e0b", size = 17470, upload-time = "2023-03-25T18:08:14.871Z" },
 ]
 
 [[package]]

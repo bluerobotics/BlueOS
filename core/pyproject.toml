@@ -8,7 +8,6 @@ dependencies = [
   "commonwealth",
   "filebrowser",
   "ardupilot_manager",
-  "bag_of_holding",
   "cable_guy",
   "commander",
   "recorder_extractor",
@@ -47,7 +46,6 @@ bridges = { workspace = true }
 commonwealth = { workspace = true }
 filebrowser = { workspace = true }
 ardupilot_manager = { workspace = true }
-bag_of_holding = { workspace = true }
 cable_guy = { workspace = true }
 commander = { workspace = true }
 recorder_extractor = { workspace = true }
@@ -56,6 +54,7 @@ wifi = { workspace = true }
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
 exclude = [
+  "services/bag_of_holding",
   "services/beacon",
   "services/bridget",
   "services/customization",

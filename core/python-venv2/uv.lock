@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "bag-of-holding",
     "beacon",
     "blueos-core-venv2",
     "bridges",
@@ -227,6 +228,33 @@ wheels = [
 ]
 
 [[package]]
+name = "bag-of-holding"
+version = "0.1.0"
+source = { virtual = "../services/bag_of_holding" }
+dependencies = [
+    { name = "appdirs" },
+    { name = "commonwealth" },
+    { name = "dpath" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "appdirs", specifier = "==1.4.4" },
+    { name = "commonwealth", specifier = "==0.1.0" },
+    { name = "dpath", specifier = "==2.2.0" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "uvicorn", specifier = "==0.38.0" },
+]
+
+[[package]]
 name = "beacon"
 version = "0.1.0"
 source = { virtual = "../services/beacon" }
@@ -286,6 +314,7 @@ name = "blueos-core-venv2"
 version = "1.4.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "bag-of-holding" },
     { name = "beacon" },
     { name = "bridges" },
     { name = "bridget" },
@@ -326,6 +355,7 @@ lint = [
 
 [package.metadata]
 requires-dist = [
+    { name = "bag-of-holding", virtual = "../services/bag_of_holding" },
     { name = "beacon", virtual = "../services/beacon" },
     { name = "bridges", editable = "../libs/bridges" },
     { name = "bridget", virtual = "../services/bridget" },
@@ -581,6 +611,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/91/9b/4a2ea29aeba62471211598dac5d96825bb49348fa07e906ea930394a83ce/docker-7.1.0.tar.gz", hash = "sha256:ad8c70e6e3f8926cb8a92619b832b4ea5299e2831c14284663184e200546fa6c", size = 117834, upload-time = "2024-05-23T11:13:57.216Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e3/26/57c6fb270950d476074c087527a558ccb6f4436657314bfb6cdf484114c4/docker-7.1.0-py3-none-any.whl", hash = "sha256:c96b93b7f0a746f9e77d325bcfb87422a3d8bd4f03136ae8a85b37f1898d5fc0", size = 147774, upload-time = "2024-05-23T11:13:55.01Z" },
+]
+
+[[package]]
+name = "dpath"
+version = "2.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/ce/e1fd64d36e4a5717bd5e6b2ad188f5eaa2e902fde871ea73a79875793fc9/dpath-2.2.0.tar.gz", hash = "sha256:34f7e630dc55ea3f219e555726f5da4b4b25f2200319c8e6902c394258dd6a3e", size = 28266, upload-time = "2024-06-12T22:08:03.686Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/d1/8952806fbf9583004ab479d8f58a9496c3d35f6b6009ddd458bdd9978eaf/dpath-2.2.0-py3-none-any.whl", hash = "sha256:b330a375ded0a0d2ed404440f6c6a715deae5313af40bbb01c8a41d891900576", size = 17618, upload-time = "2024-06-12T22:08:01.881Z" },
 ]
 
 [[package]]
