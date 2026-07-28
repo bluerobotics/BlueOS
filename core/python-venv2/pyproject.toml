@@ -17,6 +17,7 @@ dependencies = [
   "kraken",
   "helper",
   "nmea_injector",
+  "recorder_extractor",
   "pardal",
   "ping",
 ]
@@ -62,6 +63,7 @@ versionchooser = { workspace = true }
 kraken = { workspace = true }
 helper = { workspace = true }
 nmea_injector = { workspace = true }
+recorder_extractor = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
 
@@ -78,6 +80,7 @@ members = [
   "../services/kraken",
   "../services/helper",
   "../services/nmea_injector",
+  "../services/recorder_extractor",
   "../services/pardal",
   "../services/ping",
 ]

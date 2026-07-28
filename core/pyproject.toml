@@ -8,7 +8,6 @@ dependencies = [
   "commonwealth",
   "ardupilot_manager",
   "cable_guy",
-  "recorder_extractor",
   "wifi",
 ]
 
@@ -44,7 +43,6 @@ bridges = { workspace = true }
 commonwealth = { workspace = true }
 ardupilot_manager = { workspace = true }
 cable_guy = { workspace = true }
-recorder_extractor = { workspace = true }
 wifi = { workspace = true }
 
 [tool.uv.workspace]
@@ -60,6 +58,7 @@ exclude = [
   "services/kraken",
   "services/helper",
   "services/nmea_injector",
+  "services/recorder_extractor",
   "services/ping",
   "services/pardal",
 ]

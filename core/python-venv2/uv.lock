@@ -23,6 +23,7 @@ members = [
     "nmea-injector",
     "pardal",
     "ping",
+    "recorder-extractor",
     "versionchooser",
 ]
 
@@ -330,6 +331,7 @@ dependencies = [
     { name = "nmea-injector" },
     { name = "pardal" },
     { name = "ping" },
+    { name = "recorder-extractor" },
     { name = "versionchooser" },
 ]
 
@@ -373,6 +375,7 @@ requires-dist = [
     { name = "nmea-injector", virtual = "../services/nmea_injector" },
     { name = "pardal", virtual = "../services/pardal" },
     { name = "ping", virtual = "../services/ping" },
+    { name = "recorder-extractor", virtual = "../services/recorder_extractor" },
     { name = "versionchooser", virtual = "../services/versionchooser" },
 ]
 
@@ -1617,6 +1620,31 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/1c/09/9c1b978ffc4ae53999e89c19c77ba882d9fce476729f23ef55211ea1c034/pywin32-310-cp313-cp313-win32.whl", hash = "sha256:5d241a659c496ada3253cd01cfaa779b048e90ce4b2b38cd44168ad555ce74ab", size = 8794384, upload-time = "2025-03-17T00:56:04.383Z" },
     { url = "https://files.pythonhosted.org/packages/45/3c/b4640f740ffebadd5d34df35fecba0e1cfef8fde9f3e594df91c28ad9b50/pywin32-310-cp313-cp313-win_amd64.whl", hash = "sha256:667827eb3a90208ddbdcc9e860c81bde63a135710e21e4cb3348968e4bd5249e", size = 9503039, upload-time = "2025-03-17T00:56:06.207Z" },
     { url = "https://files.pythonhosted.org/packages/b4/f4/f785020090fb050e7fb6d34b780f2231f302609dc964672f72bfaeb59a28/pywin32-310-cp313-cp313-win_arm64.whl", hash = "sha256:e308f831de771482b7cf692a1f308f8fca701b2d8f9dde6cc440c7da17e47b33", size = 8458152, upload-time = "2025-03-17T00:56:07.819Z" },
+]
+
+[[package]]
+name = "recorder-extractor"
+version = "0.1.0"
+source = { virtual = "../services/recorder_extractor" }
+dependencies = [
+    { name = "aiocache" },
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiocache", specifier = "==0.12.3" },
+    { name = "commonwealth", specifier = "==0.1.0" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "uvicorn", specifier = "==0.38.0" },
 ]
 
 [[package]]
