@@ -14,7 +14,6 @@ members = [
     "cable-guy",
     "commonwealth",
     "filebrowser",
-    "recorder-extractor",
     "wifi",
 ]
 
@@ -155,7 +154,6 @@ dependencies = [
     { name = "bridges" },
     { name = "cable-guy" },
     { name = "commonwealth" },
-    { name = "recorder-extractor" },
     { name = "wifi" },
 ]
 
@@ -189,7 +187,6 @@ requires-dist = [
     { name = "bridges", editable = "libs/bridges" },
     { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "recorder-extractor", virtual = "services/recorder_extractor" },
     { name = "wifi", virtual = "services/wifi" },
 ]
 
@@ -998,31 +995,6 @@ dependencies = [
     { name = "six" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/46/40/a933ac570bf7aad12a298fc53458115cc74053474a72fbb8201d7dc06d3d/python-multipart-0.0.5.tar.gz", hash = "sha256:f7bb5f611fc600d15fa47b3974c8aa16e93724513b49b5f95c81e6624c83fa43", size = 32581, upload-time = "2018-10-12T08:36:41.595Z" }
-
-[[package]]
-name = "recorder-extractor"
-version = "0.1.0"
-source = { virtual = "services/recorder_extractor" }
-dependencies = [
-    { name = "aiocache" },
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "pydantic" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiocache", specifier = "==0.12.2" },
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "uvicorn", specifier = "==0.18.0" },
-]
 
 [[package]]
 name = "ruff"
