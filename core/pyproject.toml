@@ -11,7 +11,6 @@ dependencies = [
   "bag_of_holding",
   "cable_guy",
   "commander",
-  "disk_usage",
   "recorder_extractor",
   "wifi",
 ]
@@ -51,7 +50,6 @@ ardupilot_manager = { workspace = true }
 bag_of_holding = { workspace = true }
 cable_guy = { workspace = true }
 commander = { workspace = true }
-disk_usage = { workspace = true }
 recorder_extractor = { workspace = true }
 wifi = { workspace = true }
 
@@ -61,6 +59,7 @@ exclude = [
   "services/beacon",
   "services/bridget",
   "services/customization",
+  "services/disk_usage",
   "services/versionchooser",
   "services/kraken",
   "services/helper",
