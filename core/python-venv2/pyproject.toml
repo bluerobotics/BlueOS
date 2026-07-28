@@ -8,6 +8,7 @@ dependencies = [
   "commonwealth",
   "bridget",
   "customization",
+  "disk_usage",
   "versionchooser",
   "kraken",
   "helper",
@@ -48,6 +49,7 @@ bridges = { workspace = true }
 commonwealth = { workspace = true }
 bridget = { workspace = true }
 customization = { workspace = true }
+disk_usage = { workspace = true }
 versionchooser = { workspace = true }
 kraken = { workspace = true }
 helper = { workspace = true }
@@ -61,6 +63,7 @@ members = [
   "../libs/commonwealth",
   "../services/bridget",
   "../services/customization",
+  "../services/disk_usage",
   "../services/versionchooser",
   "../services/kraken",
   "../services/helper",

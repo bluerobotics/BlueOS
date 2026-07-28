@@ -66,7 +66,7 @@ class DiskSpeedTestPoint(BaseModel):
     total_tests: Optional[int] = Field(None, description="Total number of tests in the sequence")
 
 
-DiskNode.update_forward_refs()
+DiskNode.model_rebuild()
 
 
 def to_http_exception(endpoint: Any) -> Any:
@@ -438,7 +438,7 @@ async def multi_size_speed_test_generator() -> AsyncGenerator[str, None]:
             read_speed=result.read_speed_mbps,
             total_tests=total_tests,
         )
-        yield json.dumps(point.dict())
+        yield json.dumps(point.model_dump())
 
 
 @disk_router.get(

@@ -16,7 +16,6 @@ members = [
     "cable-guy",
     "commander",
     "commonwealth",
-    "disk-usage",
     "filebrowser",
     "recorder-extractor",
     "wifi",
@@ -216,7 +215,6 @@ dependencies = [
     { name = "cable-guy" },
     { name = "commander" },
     { name = "commonwealth" },
-    { name = "disk-usage" },
     { name = "filebrowser" },
     { name = "recorder-extractor" },
     { name = "wifi" },
@@ -255,7 +253,6 @@ requires-dist = [
     { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commander", virtual = "services/commander" },
     { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "disk-usage", virtual = "services/disk_usage" },
     { name = "filebrowser", editable = "libs/filebrowser" },
     { name = "recorder-extractor", virtual = "services/recorder_extractor" },
     { name = "wifi", virtual = "services/wifi" },
@@ -461,29 +458,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/81/e1/56027a71e31b02ddc53c7d65b01e68edf64dea2932122fe7746a516f75d5/dill-0.4.1.tar.gz", hash = "sha256:423092df4182177d4d8ba8290c8a5b640c66ab35ec7da59ccfa00f6fa3eea5fa", size = 187315, upload-time = "2026-01-19T02:36:56.85Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/77/dc8c558f7593132cf8fefec57c4f60c83b16941c574ac5f619abb3ae7933/dill-0.4.1-py3-none-any.whl", hash = "sha256:1e1ce33e978ae97fcfcff5638477032b801c46c7c65cf717f95fbc2248f79a9d", size = 120019, upload-time = "2026-01-19T02:36:55.663Z" },
-]
-
-[[package]]
-name = "disk-usage"
-version = "0.1.0"
-source = { virtual = "services/disk_usage" }
-dependencies = [
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "pydantic" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "uvicorn", specifier = "==0.18.0" },
 ]
 
 [[package]]
