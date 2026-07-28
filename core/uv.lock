@@ -12,7 +12,6 @@ members = [
     "blueos-core",
     "bridges",
     "cable-guy",
-    "commander",
     "commonwealth",
     "filebrowser",
     "recorder-extractor",
@@ -155,9 +154,7 @@ dependencies = [
     { name = "ardupilot-manager" },
     { name = "bridges" },
     { name = "cable-guy" },
-    { name = "commander" },
     { name = "commonwealth" },
-    { name = "filebrowser" },
     { name = "recorder-extractor" },
     { name = "wifi" },
 ]
@@ -191,9 +188,7 @@ requires-dist = [
     { name = "ardupilot-manager", virtual = "services/ardupilot_manager" },
     { name = "bridges", editable = "libs/bridges" },
     { name = "cable-guy", virtual = "services/cable_guy" },
-    { name = "commander", virtual = "services/commander" },
     { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "filebrowser", editable = "libs/filebrowser" },
     { name = "recorder-extractor", virtual = "services/recorder_extractor" },
     { name = "wifi", virtual = "services/wifi" },
 ]
@@ -293,31 +288,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697, upload-time = "2022-10-25T02:36:22.414Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
-]
-
-[[package]]
-name = "commander"
-version = "0.1.0"
-source = { virtual = "services/commander" }
-dependencies = [
-    { name = "appdirs" },
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "filebrowser" },
-    { name = "loguru" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "appdirs", specifier = "==1.4.4" },
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "filebrowser", editable = "libs/filebrowser" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "uvicorn", specifier = "==0.18.0" },
 ]
 
 [[package]]

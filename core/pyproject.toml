@@ -6,10 +6,8 @@ requires-python = ">=3.11"
 dependencies = [
   "bridges",
   "commonwealth",
-  "filebrowser",
   "ardupilot_manager",
   "cable_guy",
-  "commander",
   "recorder_extractor",
   "wifi",
 ]
@@ -44,10 +42,8 @@ default-groups = ["dev", "lint"]
 [tool.uv.sources]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
-filebrowser = { workspace = true }
 ardupilot_manager = { workspace = true }
 cable_guy = { workspace = true }
-commander = { workspace = true }
 recorder_extractor = { workspace = true }
 wifi = { workspace = true }
 
@@ -57,6 +53,7 @@ exclude = [
   "services/bag_of_holding",
   "services/beacon",
   "services/bridget",
+  "services/commander",
   "services/customization",
   "services/disk_usage",
   "services/versionchooser",
