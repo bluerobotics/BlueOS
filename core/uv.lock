@@ -14,7 +14,6 @@ members = [
     "cable-guy",
     "commonwealth",
     "filebrowser",
-    "wifi",
 ]
 
 [[package]]
@@ -154,7 +153,6 @@ dependencies = [
     { name = "bridges" },
     { name = "cable-guy" },
     { name = "commonwealth" },
-    { name = "wifi" },
 ]
 
 [package.dev-dependencies]
@@ -187,7 +185,6 @@ requires-dist = [
     { name = "bridges", editable = "libs/bridges" },
     { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "wifi", virtual = "services/wifi" },
 ]
 
 [package.metadata.requires-dev]
@@ -1093,15 +1090,6 @@ wheels = [
 ]
 
 [[package]]
-name = "tabulate"
-version = "0.8.9"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ae/3d/9d7576d94007eaf3bb685acbaaec66ff4cdeb0b18f1bf1f17edbeebffb0a/tabulate-0.8.9.tar.gz", hash = "sha256:eb1d13f25760052e8931f2ef80aaf6045a6cceb47514db8beab24cded16f13a7", size = 53482, upload-time = "2021-02-22T07:34:14.585Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/80/7c0cad11bd99985cfe7c09427ee0b4f9bd6b048bd13d4ffb32c6db237dfb/tabulate-0.8.9-py3-none-any.whl", hash = "sha256:d7c013fe7abbc5e491394e10fa845f8f32fe54f8dc60c6622c6cf482d25d47e4", size = 25123, upload-time = "2021-02-22T07:34:12.229Z" },
-]
-
-[[package]]
 name = "tomli"
 version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1227,37 +1215,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/33/1a/4e4c12982b093796c1ceaff49cbc5998fb3a7866da755f8e7a1a40b8fda4/validators-0.18.2.tar.gz", hash = "sha256:37cd9a9213278538ad09b5b9f9134266e7c226ab1fede1d500e29e0a8fbb9ea6", size = 30299, upload-time = "2020-12-18T10:27:30.059Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/db/2f/7fed3ee94ad665ad2c1de87f858f10a7785251ff75b4fd47987888d07ef1/validators-0.18.2-py3-none-any.whl", hash = "sha256:0143dcca8a386498edaf5780cbd5960da1a4c85e0719f3ee5c9b41249c4fefbd", size = 19419, upload-time = "2020-12-18T10:27:27.933Z" },
-]
-
-[[package]]
-name = "wifi"
-version = "0.1.0"
-source = { virtual = "services/wifi" }
-dependencies = [
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "psutil" },
-    { name = "pydantic" },
-    { name = "pyroute2" },
-    { name = "sdbus-networkmanager" },
-    { name = "tabulate" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "psutil", specifier = "==5.7.2" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "pyroute2", specifier = "==0.8.1" },
-    { name = "sdbus-networkmanager", specifier = "==2.0.0" },
-    { name = "tabulate", specifier = "==0.8.9" },
-    { name = "uvicorn", specifier = "==0.18.0" },
 ]
 
 [[package]]

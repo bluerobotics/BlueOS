@@ -20,6 +20,7 @@ dependencies = [
   "recorder_extractor",
   "pardal",
   "ping",
+  "wifi",
 ]
 
 [dependency-groups]
@@ -66,6 +67,7 @@ nmea_injector = { workspace = true }
 recorder_extractor = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
+wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -83,4 +85,5 @@ members = [
   "../services/recorder_extractor",
   "../services/pardal",
   "../services/ping",
+  "../services/wifi",
 ]

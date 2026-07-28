@@ -8,7 +8,6 @@ dependencies = [
   "commonwealth",
   "ardupilot_manager",
   "cable_guy",
-  "wifi",
 ]
 
 [dependency-groups]
@@ -43,7 +42,6 @@ bridges = { workspace = true }
 commonwealth = { workspace = true }
 ardupilot_manager = { workspace = true }
 cable_guy = { workspace = true }
-wifi = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
@@ -61,6 +59,7 @@ exclude = [
   "services/recorder_extractor",
   "services/ping",
   "services/pardal",
+  "services/wifi",
 ]
 
 # ------------------ Tooling Configurations ------------------

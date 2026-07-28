@@ -10,27 +10,27 @@ class HotspotStatus(BaseModel):
 
 
 class WifiStatus(BaseModel):
-    bssid: Optional[str]
-    freq: Optional[str]
-    ssid: Optional[str]
-    id: Optional[str]
-    mode: Optional[str]
-    wifi_generation: Optional[str]
-    pairwise_cipher: Optional[str]
-    group_cipher: Optional[str]
-    key_mgmt: Optional[str]
-    wpa_state: Optional[str]
-    ip_address: Optional[str]
-    p2p_device_address: Optional[str]
-    address: Optional[str]
-    uuid: Optional[str]
-    ieee80211ac: Optional[str]
-    state: Optional[str]
-    disabled: Optional[str]
+    bssid: Optional[str] = None
+    freq: Optional[str] = None
+    ssid: Optional[str] = None
+    id: Optional[str] = None
+    mode: Optional[str] = None
+    wifi_generation: Optional[str] = None
+    pairwise_cipher: Optional[str] = None
+    group_cipher: Optional[str] = None
+    key_mgmt: Optional[str] = None
+    wpa_state: Optional[str] = None
+    ip_address: Optional[str] = None
+    p2p_device_address: Optional[str] = None
+    address: Optional[str] = None
+    uuid: Optional[str] = None
+    ieee80211ac: Optional[str] = None
+    state: Optional[str] = None
+    disabled: Optional[str] = None
 
 
 class ScannedWifiNetwork(BaseModel):
-    ssid: Optional[str]
+    ssid: Optional[str] = None
     bssid: str
     flags: str
     frequency: int
@@ -40,10 +40,10 @@ class ScannedWifiNetwork(BaseModel):
 class SavedWifiNetwork(BaseModel):
     networkid: int
     ssid: str
-    bssid: Optional[str]
-    flags: Optional[str]
-    nm_id: Optional[str]
-    nm_uuid: Optional[str]
+    bssid: Optional[str] = None
+    flags: Optional[str] = None
+    nm_id: Optional[str] = None
+    nm_uuid: Optional[str] = None
 
 
 class WifiCredentials(BaseModel):
