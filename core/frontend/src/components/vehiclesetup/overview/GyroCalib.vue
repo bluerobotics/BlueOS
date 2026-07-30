@@ -70,6 +70,8 @@ import mavlink_store_get from '@/utils/mavlink'
 
 import { calibrator, PreflightCalibration } from '../calibration'
 
+const GYRO_REFRESH_MESSAGES = ['RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3']
+
 interface CalibrationStatus {
     param?: Parameter
     name: string
@@ -129,8 +131,13 @@ export default Vue.extend({
     },
   },
   mounted() {
-    for (const msg of ['RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3']) {
-      mavlink.setMessageRefreshRate({ messageName: msg, refreshRate: 10 })
+    for (const msg of GYRO_REFRESH_MESSAGES) {
+      mavlink.subscribeMessageRefreshRate({ messageName: msg, refreshRate: 10 })
+    }
+  },
+  beforeDestroy() {
+    for (const msg of GYRO_REFRESH_MESSAGES) {
+      mavlink.unsubscribeMessageRefreshRate({ messageName: msg, refreshRate: 10 })
     }
   },
   methods: {
