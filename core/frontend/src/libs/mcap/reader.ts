@@ -21,6 +21,12 @@ const TAIL_READ_SIZE = 4096
  * that indexing a whole hour long recording would cost.
  */
 const CHUNK_INDEX_WINDOW_SIZE = 256 * 1024
+/**
+ * Decompressed chunk bytes to keep around. A chunk holds every channel recorded in its time span, so
+ * caching lets all the video streams of a recording play from a single download. The limit only has
+ * to cover the lag between the stream that is furthest ahead and the one furthest behind.
+ */
+const CHUNK_CACHE_LIMIT_BYTES = 32 * 1024 * 1024
 
 enum Opcode {
   SCHEMA = 0x03,
@@ -103,6 +109,30 @@ function hasMagic(bytes: Uint8Array, offset: number): boolean {
   return MAGIC.every((byte, index) => bytes[offset + index] === byte)
 }
 
+function abortError(): Error {
+  const error = new Error('The read was aborted.')
+  error.name = 'AbortError'
+  return error
+}
+
+/**
+ * Waits for work that is shared between callers. Aborting only gives up waiting, since cancelling the
+ * download would take it away from the other streams reading the same chunk.
+ */
+function whileWaiting<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) {
+    return work
+  }
+  if (signal.aborted) {
+    return Promise.reject(abortError())
+  }
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = (): void => reject(abortError())
+    signal.addEventListener('abort', onAbort, { once: true })
+    work.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort))
+  })
+}
+
 function decompressChunk(compression: string, compressed: Uint8Array, uncompressedSize: number): Uint8Array {
   switch (compression) {
     case '':
@@ -119,6 +149,13 @@ export class McapIndexedReader {
   private chunkIndexCursor: number | null
 
   private pendingLoad: Promise<boolean> = Promise.resolve(false)
+
+  /** Decompressed chunks, in least recently used order. */
+  private chunkCache = new Map<number, Uint8Array>()
+
+  private chunkCacheBytes = 0
+
+  private chunkLoads = new Map<number, Promise<Uint8Array>>()
 
   private constructor(
     public readonly source: ByteSource,
@@ -444,23 +481,7 @@ export class McapIndexedReader {
   }
 
   async readChunkMessages(chunkIndex: number, channelId: number, signal?: AbortSignal): Promise<McapMessage[]> {
-    const index = this.summary.chunkIndexes[chunkIndex]
-    if (!index) {
-      throw new Error(`Chunk ${chunkIndex} is out of range.`)
-    }
-
-    const record = await this.source.read(index.offset, index.length, signal)
-    const reader = new RecordReader(record)
-    if (reader.uint8() !== Opcode.CHUNK) {
-      throw new Error(`Expected a chunk record at offset ${index.offset}.`)
-    }
-    reader.size()
-    reader.skip(8 + 8) // message_start_time, message_end_time
-    const uncompressedSize = reader.size()
-    reader.skip(4) // uncompressed_crc
-    const compression = reader.string()
-    const compressed = reader.bytes(reader.size())
-    const data = decompressChunk(compression, compressed, uncompressedSize)
+    const data = await this.readChunkData(chunkIndex, signal)
 
     const messages: McapMessage[] = []
     forEachRecord(data, (opcode, message, end) => {
@@ -475,5 +496,62 @@ export class McapIndexedReader {
 
     messages.sort((left, right) => Number(left.logTime - right.logTime))
     return messages
+  }
+
+  /**
+   * Decompressed contents of a chunk. Downloads in flight are shared, so several streams asking for
+   * the same chunk at the same time cost one request, and recently used chunks are kept in memory for
+   * the streams that are still catching up.
+   */
+  private async readChunkData(chunkIndex: number, signal?: AbortSignal): Promise<Uint8Array> {
+    const cached = this.chunkCache.get(chunkIndex)
+    if (cached) {
+      this.chunkCache.delete(chunkIndex)
+      this.chunkCache.set(chunkIndex, cached)
+      return cached
+    }
+
+    let load = this.chunkLoads.get(chunkIndex)
+    if (!load) {
+      load = this.downloadChunk(chunkIndex)
+        .then((data) => {
+          this.cacheChunk(chunkIndex, data)
+          return data
+        })
+        .finally(() => this.chunkLoads.delete(chunkIndex))
+      this.chunkLoads.set(chunkIndex, load)
+    }
+    return whileWaiting(load, signal)
+  }
+
+  private async downloadChunk(chunkIndex: number): Promise<Uint8Array> {
+    const index = this.summary.chunkIndexes[chunkIndex]
+    if (!index) {
+      throw new Error(`Chunk ${chunkIndex} is out of range.`)
+    }
+
+    const record = await this.source.read(index.offset, index.length)
+    const reader = new RecordReader(record)
+    if (reader.uint8() !== Opcode.CHUNK) {
+      throw new Error(`Expected a chunk record at offset ${index.offset}.`)
+    }
+    reader.size()
+    reader.skip(8 + 8) // message_start_time, message_end_time
+    const uncompressedSize = reader.size()
+    reader.skip(4) // uncompressed_crc
+    const compression = reader.string()
+    return decompressChunk(compression, reader.bytes(reader.size()), uncompressedSize)
+  }
+
+  private cacheChunk(chunkIndex: number, data: Uint8Array): void {
+    this.chunkCache.set(chunkIndex, data)
+    this.chunkCacheBytes += data.length
+    for (const [key, value] of this.chunkCache) {
+      if (this.chunkCacheBytes <= CHUNK_CACHE_LIMIT_BYTES || key === chunkIndex) {
+        break
+      }
+      this.chunkCache.delete(key)
+      this.chunkCacheBytes -= value.length
+    }
   }
 }
