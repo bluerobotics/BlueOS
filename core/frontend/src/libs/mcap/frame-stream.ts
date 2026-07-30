@@ -112,7 +112,9 @@ export default class VideoFrameStream {
       const positions = this.positions()
       if (this.cursor >= positions.length) {
         // eslint-disable-next-line no-await-in-loop
-        if (!await this.reader.loadMoreChunkIndexes(signal)) {
+        const loaded = await this.reader.loadMoreChunkIndexes(signal)
+        // Another stream of the same recording may have loaded the index we were waiting for.
+        if (!loaded && this.cursor >= this.positions().length) {
           return null
         }
         continue

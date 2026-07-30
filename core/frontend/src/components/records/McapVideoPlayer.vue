@@ -9,51 +9,33 @@
       {{ error }}
     </v-alert>
 
-    <div class="player-wrapper">
-      <video
-        ref="player"
-        controls
-        autoplay
-        class="player"
-      >
-        <track
-          kind="captions"
-          srclang="en"
-          label="Captions not available"
-          :src="empty_captions"
-          default
-        >
-      </video>
-      <div v-if="loading && !error" class="player-overlay">
-        <v-progress-circular indeterminate color="primary" size="48" />
-        <span class="mt-2 caption white--text">
-          {{ loading_message }}
-        </span>
-      </div>
+    <div v-if="opening" class="d-flex flex-column align-center py-8">
+      <v-progress-circular indeterminate color="primary" size="48" />
+      <span class="mt-2 caption grey--text">Reading recording index...</span>
     </div>
 
-    <div class="d-flex align-center flex-wrap mt-2">
-      <v-select
-        v-if="tracks.length > 1"
-        v-model="selected_channel"
-        :items="track_items"
-        label="Video stream"
-        dense
-        hide-details
-        outlined
-        class="stream-select mr-4"
+    <div :class="['stream-grid', `columns-${columns}`]">
+      <mcap-video-stream
+        v-for="(track, index) in tracks"
+        :key="track.channelId"
+        :recording="recording"
+        :track="track"
+        :controls="index === 0"
+        @ready="onStreamReady(index, $event)"
+        @stats="onStats"
       />
-      <div class="caption grey--text text--darken-1">
-        <span v-if="resolution" class="mr-3">{{ resolution }}</span>
-        <span v-if="stats.codec" class="mr-3">{{ stats.codec }}</span>
-        <span
-          v-tooltip="'Only the parts of the recording you watch are downloaded from the vehicle'"
-          class="mr-3"
-        >
-          {{ downloaded }} downloaded
-        </span>
-        <span v-if="stats.bufferedAheadSeconds > 0">{{ stats.bufferedAheadSeconds.toFixed(1) }} s buffered</span>
-      </div>
+    </div>
+
+    <div v-if="bytes_downloaded > 0" class="caption grey--text text--darken-1 mt-2">
+      <span
+        v-tooltip="'Only the parts of the recording you watch are downloaded from the vehicle'"
+        class="mr-3"
+      >
+        {{ downloaded }} downloaded
+      </span>
+      <span v-if="tracks.length > 1">
+        {{ tracks.length }} streams playing together, sharing the same download
+      </span>
     </div>
   </div>
 </template>
@@ -61,18 +43,23 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import McapVideoStream from '@/components/records/McapVideoStream.vue'
 import {
-  isMediaSourceSupported,
-  McapVideoPlayer,
-  McapVideoRecording,
-  McapVideoStats,
-  openMcapVideoRecording,
+  isMediaSourceSupported, McapVideoRecording, McapVideoStats, openMcapVideoRecording,
 } from '@/libs/mcap/player'
 import { VideoTrack } from '@/libs/mcap/video-track'
 import { prettifySize } from '@/utils/helper_functions'
 
+/** How far a stream may drift from the one being controlled before it is nudged back into place. */
+const SYNC_TOLERANCE_SECONDS = 0.5
+/** `HTMLMediaElement.HAVE_CURRENT_DATA`: the element has a frame for its current position. */
+const HAVE_CURRENT_DATA = 2
+
 export default Vue.extend({
   name: 'McapVideoPlayer',
+  components: {
+    McapVideoStream,
+  },
   props: {
     url: {
       type: String,
@@ -82,117 +69,107 @@ export default Vue.extend({
   data() {
     return {
       recording: null as McapVideoRecording | null,
-      player: null as McapVideoPlayer | null,
       tracks: [] as VideoTrack[],
-      selected_channel: null as number | null,
-      stats: { bytesDownloaded: 0, bufferedAheadSeconds: 0 } as Partial<McapVideoStats>,
+      videos: [] as HTMLVideoElement[],
+      bytes_downloaded: 0,
       error: null as string | null,
-      loading: true,
-      loading_message: 'Reading recording index...',
-      empty_captions: 'data:text/vtt,WEBVTT',
+      opening: true,
     }
   },
   computed: {
-    track_items(): { text: string, value: number }[] {
-      return this.tracks.map((track) => ({ text: track.name, value: track.channelId }))
-    },
-    resolution(): string {
-      const { width, height } = this.stats
-      return width && height ? `${width}x${height}` : ''
+    columns(): number {
+      return Math.min(this.tracks.length, 2)
     },
     downloaded(): string {
-      return prettifySize((this.stats.bytesDownloaded ?? 0) / 1024)
-    },
-  },
-  watch: {
-    selected_channel(): void {
-      this.startPlayback()
+      return prettifySize(this.bytes_downloaded / 1024)
     },
   },
   async mounted() {
     if (!isMediaSourceSupported()) {
       this.error = 'This browser cannot play recordings, as it does not support Media Source Extensions.'
-      this.loading = false
+      this.opening = false
       return
     }
-    await this.openRecording()
+
+    try {
+      this.recording = await openMcapVideoRecording(this.url)
+      // Biggest stream first: it gets the playback controls the others follow.
+      this.tracks = [...this.recording.tracks].sort((left, right) => right.frameCount - left.frameCount)
+      if (this.tracks.length === 0) {
+        this.error = 'This recording does not contain any video stream.'
+      }
+    } catch (error) {
+      this.error = error instanceof Error ? error.message : String(error)
+    }
+    this.opening = false
   },
   beforeDestroy() {
-    this.player?.destroy()
+    this.detachSync()
   },
   methods: {
-    async openRecording(): Promise<void> {
-      try {
-        this.recording = await openMcapVideoRecording(this.url)
-        this.tracks = this.recording.tracks
-        if (this.tracks.length === 0) {
-          this.error = 'This recording does not contain any video stream.'
-          this.loading = false
-          return
-        }
-        // Selecting the channel triggers playback through its watcher
-        const [main_track] = [...this.tracks].sort((left, right) => right.frameCount - left.frameCount)
-        this.selected_channel = main_track.channelId
-      } catch (error) {
-        this.reportError(error)
+    onStreamReady(index: number, video: HTMLVideoElement): void {
+      this.videos[index] = video
+      if (index === 0) {
+        video.addEventListener('play', this.syncFollowers)
+        video.addEventListener('pause', this.syncFollowers)
+        video.addEventListener('seeked', this.syncFollowers)
+        video.addEventListener('timeupdate', this.syncFollowers)
+        video.addEventListener('ratechange', this.syncFollowers)
       }
     },
-    startPlayback(): void {
-      const track = this.tracks.find((item) => item.channelId === this.selected_channel)
-      if (!this.recording || !track) {
+    detachSync(): void {
+      const [leader] = this.videos
+      if (!leader) {
         return
       }
-
-      this.player?.destroy()
-      this.loading = true
-      this.loading_message = 'Looking for a keyframe...'
-      this.error = null
-
-      const video = this.$refs.player as HTMLVideoElement
-      this.player = new McapVideoPlayer(video, this.recording, track, {
-        onStats: (stats) => {
-          this.stats = stats
-          this.loading = stats.loading
-        },
-        onError: (error) => this.reportError(error),
-      })
-      this.player.start().catch((error) => this.reportError(error))
+      leader.removeEventListener('play', this.syncFollowers)
+      leader.removeEventListener('pause', this.syncFollowers)
+      leader.removeEventListener('seeked', this.syncFollowers)
+      leader.removeEventListener('timeupdate', this.syncFollowers)
+      leader.removeEventListener('ratechange', this.syncFollowers)
     },
-    reportError(error: unknown): void {
-      this.loading = false
-      this.error = error instanceof Error ? error.message : String(error)
+    /**
+     * Keeps the other streams on the time of the one being controlled. All streams share the
+     * recording clock, since fragments are timestamped from the MCAP log time, so their positions can
+     * be compared directly.
+     */
+    syncFollowers(): void {
+      const [leader, ...followers] = this.videos
+      // While the leader is still settling its own position, nudging the others only makes them
+      // restart their reads for a time that is about to change again.
+      if (!leader || leader.seeking || leader.readyState < HAVE_CURRENT_DATA) {
+        return
+      }
+      for (const follower of followers) {
+        if (follower.playbackRate !== leader.playbackRate) {
+          follower.playbackRate = leader.playbackRate
+        }
+        const drifted = Math.abs(follower.currentTime - leader.currentTime) > SYNC_TOLERANCE_SECONDS
+        if (drifted && !follower.seeking) {
+          follower.currentTime = leader.currentTime
+        }
+        if (leader.paused && !follower.paused) {
+          follower.pause()
+        } else if (!leader.paused && follower.paused) {
+          follower.play().catch(() => undefined)
+        }
+      }
+    },
+    onStats(stats: McapVideoStats): void {
+      // Every stream reports the same figure, since they read the recording through one reader.
+      this.bytes_downloaded = stats.bytesDownloaded
     },
   },
 })
 </script>
 
 <style scoped>
-.player-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%;
-  background: #111827;
+.stream-grid {
+  display: grid;
+  gap: 12px;
 }
 
-.player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.player-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.stream-select {
-  max-width: 260px;
+.stream-grid.columns-2 {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 </style>
