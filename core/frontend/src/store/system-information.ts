@@ -21,7 +21,6 @@ import {
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 export enum FetchType {
-    KernelType = 'kernel_buffer',
     ModelType = 'model',
     NetstatType = 'netstat',
     PlatformType = 'platform',
@@ -86,14 +85,15 @@ class SystemInformationStore extends VuexModule {
   }
 
   @Mutation
+  clearKernelMessages(): void {
+    this.kernel_message = []
+  }
+
+  @Mutation
   updateModel(model: Model): void {
     this.model = model
   }
 
-  @Mutation
-  updateKernelMessage(kernel_message: KernelMessage[]): void {
-    this.kernel_message = kernel_message
-  }
 
   @Mutation
   updateNetstat(netstat: Netstat): void {
@@ -182,10 +182,6 @@ class SystemInformationStore extends VuexModule {
     }
   }
 
-  @Action
-  async fetchKernelMessage(): Promise<void> {
-    await this.fetchSystemInformation(FetchType.KernelType)
-  }
 
   @Action
   async fetchModel(): Promise<void> {
@@ -289,9 +285,6 @@ class SystemInformationStore extends VuexModule {
     })
       .then((response) => {
         switch (type) {
-          case FetchType.KernelType:
-            this.updateKernelMessage(response.data)
-            break
           case FetchType.ModelType:
             this.updateModel(response.data)
             break
@@ -353,13 +346,45 @@ system_information.fetchPlatformTask.setAction(system_information.fetchPlatform)
 system_information.fetchSystemNetworkTask.setAction(system_information.fetchNetworkInformation)
 system_information.fetchSubscribedSystemInformationTask.setAction(system_information.fetchSubscribedSystemInformation)
 
-// It appears that the store is incompatible with websockets or callbacks.
-// Right now the only way to have it working is to have the websocket definition outside the store
+// Vuex store modules are a poor fit for WebSocket callbacks; keep sockets outside the store and
+// open them only while a UI consumer is mounted (Kernel tab).
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-const websocketUrl = `${protocol}://${window.location.host}${system_information.API_URL}/ws/kernel_buffer`
-const socket = new WebSocket(websocketUrl)
-socket.onmessage = (message) => {
-  system_information.appendKernelMessage(JSON.parse(message.data))
+
+let kernel_socket: WebSocket | null = null
+let kernel_subscribers = 0
+
+function closeSocket(socket: WebSocket | null): void {
+  if (!socket) {
+    return
+  }
+  socket.onmessage = null
+  socket.onerror = null
+  socket.onclose = null
+  if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+    socket.close()
+  }
+}
+
+export function subscribeKernelMessages(): void {
+  kernel_subscribers += 1
+  if (kernel_socket) {
+    return
+  }
+  const socket = new WebSocket(`${protocol}://${window.location.host}${system_information.API_URL}/ws/kernel_buffer`)
+  socket.onmessage = (message) => {
+    system_information.appendKernelMessage(JSON.parse(message.data))
+  }
+  kernel_socket = socket
+}
+
+export function unsubscribeKernelMessages(): void {
+  kernel_subscribers = Math.max(0, kernel_subscribers - 1)
+  if (kernel_subscribers > 0) {
+    return
+  }
+  closeSocket(kernel_socket)
+  kernel_socket = null
+  system_information.clearKernelMessages()
 }
 
 export default system_information
