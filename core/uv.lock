@@ -11,7 +11,6 @@ members = [
     "ardupilot-manager",
     "blueos-core",
     "bridges",
-    "cable-guy",
     "commonwealth",
     "filebrowser",
 ]
@@ -151,7 +150,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "ardupilot-manager" },
     { name = "bridges" },
-    { name = "cable-guy" },
     { name = "commonwealth" },
 ]
 
@@ -183,7 +181,6 @@ lint = [
 requires-dist = [
     { name = "ardupilot-manager", virtual = "services/ardupilot_manager" },
     { name = "bridges", editable = "libs/bridges" },
-    { name = "cable-guy", virtual = "services/cable_guy" },
     { name = "commonwealth", editable = "libs/commonwealth" },
 ]
 
@@ -215,35 +212,6 @@ lint = [
 name = "bridges"
 version = "0.1.0"
 source = { editable = "libs/bridges" }
-
-[[package]]
-name = "cable-guy"
-version = "0.1.0"
-source = { virtual = "services/cable_guy" }
-dependencies = [
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "psutil" },
-    { name = "pydantic" },
-    { name = "pyroute2" },
-    { name = "sdbus-networkmanager" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "psutil", specifier = "==5.7.2" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "pyroute2", specifier = "==0.8.1" },
-    { name = "sdbus-networkmanager", specifier = "==2.0.0" },
-    { name = "uvicorn", specifier = "==0.18.0" },
-]
 
 [[package]]
 name = "certifi"
@@ -887,18 +855,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyroute2"
-version = "0.8.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "win-inet-pton", marker = "sys_platform == 'win32'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/4d/04/c9060b6cb024d05467e17ea93d3ca4bd2f3b05deb2372b7f79321640e8ad/pyroute2-0.8.1.tar.gz", hash = "sha256:b91f4a1f7abb9824637b1fe67e6e4a0a071d98d4a1a1b47ef792304ff3adad11", size = 435829, upload-time = "2024-12-20T14:41:19.138Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/cb/0b7a8009a577eba01ea54556c921f3cbf67a52931da17b4dd97472d0e694/pyroute2-0.8.1-py3-none-any.whl", hash = "sha256:f339be8acffc46cd87bca19217b559ea5838810b4b08836301a52cb2cb4c054b", size = 474302, upload-time = "2024-12-20T14:41:15.448Z" },
-]
-
-[[package]]
 name = "pyserial"
 version = "3.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1015,29 +971,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/23/3e49a38bb66ead4b92cffe720b183544ecb4fb81fc70a3d89b1f815544ed/ruff-0.0.288-py3-none-win32.whl", hash = "sha256:7534da2f1e724b87a5041615652bca7c6e721f90ae3a01d1d8e965d08a615038", size = 5685097, upload-time = "2023-09-11T16:56:33.456Z" },
     { url = "https://files.pythonhosted.org/packages/6e/71/b1a6b42aa01bddd61ff67600c5ae6e339fafbbd59c881092e5c8237cf936/ruff-0.0.288-py3-none-win_amd64.whl", hash = "sha256:73066b1da66b3d4942cce8c90fd6e09108851e0867a5f7071255d1b99aee3e75", size = 6041872, upload-time = "2023-09-11T16:56:35.62Z" },
     { url = "https://files.pythonhosted.org/packages/78/3f/312ec452a57cf91c18e9ffdb3e76fdecfd60977a3875ac31f25abd952b34/ruff-0.0.288-py3-none-win_arm64.whl", hash = "sha256:6ca84861bf046e4365e20f4d664dc0aa02b377a6896a393dad716e033ac47a65", size = 5822913, upload-time = "2023-09-11T16:56:38.327Z" },
-]
-
-[[package]]
-name = "sdbus"
-version = "0.14.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7c/0f/0cf6b2fb0338fb3ab564cb8a8d68aa1c6de767851f5f9de9a3c83dbabeab/sdbus-0.14.2.tar.gz", hash = "sha256:4f5d13b196e1e1de35311ebb2563a32de791451a30f5b9a4894528ba98766412", size = 89923, upload-time = "2025-12-21T20:22:32.683Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/e0/43d2c3e0cc6f6c345df5f3230e2a9c62bd8ae8608d401f582ccf943da14d/sdbus-0.14.2-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:fbed8db91668ad537089c42a71d30e2472faa2e6616a461441ab0d51344a461c", size = 769099, upload-time = "2025-12-21T20:22:27.773Z" },
-    { url = "https://files.pythonhosted.org/packages/3a/0b/043869e8e53fe267b0fc9a98688f8ec9131ae2761a1665ee7c553b67ba69/sdbus-0.14.2-cp39-abi3-manylinux_2_28_armv7l.whl", hash = "sha256:019871c00d9c2eeb5b40c3f3c94ff1d6579a49e245d6ecaf3bd9e245c4b248bc", size = 698023, upload-time = "2025-12-21T20:22:29.518Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/f8/416467419d3345763372aaa51ef389fc95d0bd210679561edb63daa49933/sdbus-0.14.2-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:8a64bbb6280104efeb24a9632a9ebd5504e9c9c1349594142bbe50e734f16c83", size = 742236, upload-time = "2025-12-21T20:22:31.207Z" },
-]
-
-[[package]]
-name = "sdbus-networkmanager"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "sdbus" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/31/ab/e864c6c2eb778c194cfb56cd9d98b5594dc00573210fdf6b44904745a0bf/sdbus-networkmanager-2.0.0.tar.gz", hash = "sha256:3572ac3a8189c683ec0416acb148761773a8f0881ad3d78b6d6f6864eff9c50b", size = 165071, upload-time = "2023-06-04T10:50:16.09Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/0c/6a67ebd967f3816022d04ab93db5f3d998a55d79c138af11feb1f59a6f10/sdbus_networkmanager-2.0.0-py3-none-any.whl", hash = "sha256:710a5ccfb1c3267016c990023ca76ad6210b13ab63aa5dad3a20e590b291b08f", size = 248349, upload-time = "2023-06-04T10:50:13.355Z" },
 ]
 
 [[package]]
@@ -1215,15 +1148,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/33/1a/4e4c12982b093796c1ceaff49cbc5998fb3a7866da755f8e7a1a40b8fda4/validators-0.18.2.tar.gz", hash = "sha256:37cd9a9213278538ad09b5b9f9134266e7c226ab1fede1d500e29e0a8fbb9ea6", size = 30299, upload-time = "2020-12-18T10:27:30.059Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/db/2f/7fed3ee94ad665ad2c1de87f858f10a7785251ff75b4fd47987888d07ef1/validators-0.18.2-py3-none-any.whl", hash = "sha256:0143dcca8a386498edaf5780cbd5960da1a4c85e0719f3ee5c9b41249c4fefbd", size = 19419, upload-time = "2020-12-18T10:27:27.933Z" },
-]
-
-[[package]]
-name = "win-inet-pton"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d9/da/0b1487b5835497dea00b00d87c2aca168bb9ca2e2096981690239e23760a/win_inet_pton-1.1.0.tar.gz", hash = "sha256:dd03d942c0d3e2b1cf8bab511844546dfa5f74cb61b241699fa379ad707dea4f", size = 2949, upload-time = "2019-02-19T17:46:23.925Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/31/ff772a44aa56319df8afbb0b34f1a856f66f05b9d5f1fed917849e47fdae/win_inet_pton-1.1.0-py2.py3-none-any.whl", hash = "sha256:eaf0193cbe7152ac313598a0da7313fb479f769343c0c16c5308f64887dc885b", size = 4848, upload-time = "2019-02-19T17:46:22.182Z" },
 ]
 
 [[package]]

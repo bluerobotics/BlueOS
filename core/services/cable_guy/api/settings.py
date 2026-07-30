@@ -47,7 +47,7 @@ class SettingsV1(PydanticSettings):
             old_settings_file_path = file_path.parent / "settings.json"
 
             with open(old_settings_file_path, "r", encoding="utf-8") as file:
-                self.content = [NetworkInterface.parse_obj(iface) for iface in json.load(file)["content"]]
+                self.content = [NetworkInterface.model_validate(iface) for iface in json.load(file)["content"]]
 
             # TODO: Remove the patch bellow around BlueOS 1.5.0 since it's purpose is only sanitizing the settings
             # that may have been corrupted by 1.4.0-beta.17 and 1.4.0-beta.18

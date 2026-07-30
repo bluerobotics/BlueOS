@@ -3,7 +3,7 @@ import errno
 import re
 import subprocess
 import time
-from ipaddress import IPv4Address, ip_network
+from ipaddress import IPv4Address
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -17,6 +17,7 @@ from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from config import SERVICE_NAME
 from loguru import logger
 from networksetup import AbstractNetworkHandler, NetworkHandlerDetector
+from pydantic import IPvAnyAddress, IPvAnyNetwork
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.exceptions import NetlinkError
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
@@ -29,9 +30,6 @@ from typedefs import (
     NetworkInterfaceMetricApi,
     Route,
 )
-
-# TODO: Replace this by `from pydantic import IPvAnyAddress, IPvAnyNetwork` once we update to pydantic v2
-from typedefs_pydantic_network_shin import IPvAnyAddress, IPvAnyNetwork
 
 __all__ = [
     "AddressMode",
@@ -648,34 +646,32 @@ class EthernetManager:
 
         try:
             interface_index = self._get_interface_index(interface_name)
-            gateway = self.__class__._normalize_gateway(route.destination_parsed, route.next_hop_parsed)
+            gateway = self.__class__._normalize_gateway(route.destination, route.gateway)
 
             self.ipr.route(
                 action,
                 oif=interface_index,
-                dst=str(route.destination_parsed),
+                dst=str(route.destination),
                 gateway=str(gateway) if gateway else None,
                 metrics={"metric": route.priority} if route.priority else None,
             )
 
             act = "Removed" if action == "del" else "Added" if action == "add" else action
-            logger.info(f"{act} route to {route.destination_parsed} via {gateway} on {interface_name}")
+            logger.info(f"{act} route to {route.destination} via {gateway} on {interface_name}")
         except NetlinkError as e:
             if e.code == errno.EEXIST and action == "add":
-                logger.debug(
-                    f"Route {route.destination_parsed} via {gateway} on {interface_name} already exists, ignoring"
-                )
+                logger.debug(f"Route {route.destination} via {gateway} on {interface_name} already exists, ignoring")
                 return
 
         except Exception as e:
             act = "Remove" if action == "del" else "Add" if action == "add" else action
-            logger.error(f"Failed to {act} route {route.destination_parsed} via {gateway} on {interface_name}: {e}")
+            logger.error(f"Failed to {act} route {route.destination} via {gateway} on {interface_name}: {e}")
             raise
 
         # Update settings
         current_interface.routes = list(self.get_routes(interface_name, ignore_unmanaged=False))
         for current_route in current_interface.routes:
-            if current_route.destination_parsed == route.destination_parsed and current_route.gateway == route.gateway:
+            if current_route.destination == route.destination and current_route.gateway == route.gateway:
                 current_route.managed = route.managed
         self._update_interface_settings(interface_name, current_interface)
 
@@ -725,20 +721,14 @@ class EthernetManager:
             net = "0.0.0.0/0" if raw_route["family"] == AddressFamily.AF_INET else "::/0"
         else:
             net = f"{raw_destination}/{raw_prefixlen}"
-        destination = IPvAnyNetwork(ip_network(net))
-
-        # Parse gateway
-        gateway = (
-            self.__class__._normalize_gateway(destination, IPvAnyAddress(raw_gateway))
-            if raw_gateway is not None
-            else None
-        )
 
         route = Route(
-            destination=str(destination),
-            gateway=str(gateway) if gateway else None,
+            destination=net,
+            gateway=raw_gateway,
             priority=raw_priority,
         )
+        # Parse gateway
+        route.gateway = self.__class__._normalize_gateway(route.destination, route.gateway)
 
         return route
 
