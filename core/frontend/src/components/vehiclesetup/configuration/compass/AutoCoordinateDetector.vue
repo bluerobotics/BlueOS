@@ -61,9 +61,10 @@
 
 <script lang="ts">
 
-import { PropType } from 'vue'
+import { markRaw, PropType } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import Listener from '@/libs/MAVLink2Rest/Listener'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import { FirmwareVehicleType } from '@/types/autopilot'
@@ -93,6 +94,7 @@ export default {
       manual_lat: this.inputcoordinates?.lat,
       manual_lon: this.inputcoordinates?.lon,
       original_ekf_src: undefined as number | undefined,
+      position_listener: undefined as Listener | undefined,
     }
   },
   computed: {
@@ -136,12 +138,18 @@ export default {
   },
   mounted() {
     this.original_ekf_src = this.current_ekf_src
-    mavlink2rest.startListening('GLOBAL_POSITION_INT').setCallback((receivedMessage) => {
-      this.mavlink_lat = receivedMessage.message.lat !== 0 ? receivedMessage.message.lat * 1e-7 : undefined
-      this.mavlink_lon = receivedMessage.message.lon !== 0 ? receivedMessage.message.lon * 1e-7 : undefined
-    }).setFrequency(0)
+    // markRaw: Listener -> Endpoint.latestData must not be deep-observed.
+    this.position_listener = markRaw(
+      mavlink2rest.startListening('GLOBAL_POSITION_INT').setCallback((receivedMessage) => {
+        this.mavlink_lat = receivedMessage.message.lat !== 0 ? receivedMessage.message.lat * 1e-7 : undefined
+        this.mavlink_lon = receivedMessage.message.lon !== 0 ? receivedMessage.message.lon * 1e-7 : undefined
+      }).setFrequency(0),
+    )
     mavlink2rest.requestMessageRate('GLOBAL_POSITION_INT', 1, autopilot_data.system_id)
     this.getGeoIp()
+  },
+  beforeDestroy() {
+    this.position_listener?.discard()
   },
   methods: {
     async waitFor(func: () => boolean, raise = false): Promise<void> {
