@@ -1,5 +1,5 @@
 import platform
-from typing import Any, List
+from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 from commonwealth.utils.commands import load_file
 from commonwealth.utils.general import CpuType, get_cpu_type
@@ -9,7 +9,7 @@ from typedefs import Platform, Serial
 
 
 class Navigator(LinuxFlightController):
-    manufacturer = "Blue Robotics"
+    manufacturer: Optional[str] = "Blue Robotics"
 
     def __init__(self, **data: Any) -> None:
         name = "Navigator"
@@ -34,13 +34,13 @@ class Navigator(LinuxFlightController):
 
 
 class NavigatorPi5(Navigator):
-    required_devices = {
+    required_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
         "ADS1115": (0x48, 1),
         "BME280": (0x76, 1),
         "PCA9685": (0x40, 3),
     }
 
-    magnetometer_devices = {
+    magnetometer_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
         "AK09915": (0x0C, 1),
         "IIS2MDC_0x1E": (0x1E, 1),
     }
@@ -64,13 +64,13 @@ class NavigatorPi5(Navigator):
 
 
 class NavigatorPi4(Navigator):
-    required_devices = {
+    required_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
         "ADS1115": (0x48, 1),
         "BME280": (0x76, 1),
         "PCA9685": (0x40, 4),
     }
 
-    magnetometer_devices = {
+    magnetometer_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
         "AK09915": (0x0C, 1),
         "IIS2MDC_0x1E": (0x1E, 1),
     }

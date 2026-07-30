@@ -8,20 +8,10 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "ardupilot-manager",
     "blueos-core",
     "bridges",
     "commonwealth",
     "filebrowser",
-]
-
-[[package]]
-name = "aiocache"
-version = "0.12.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/38/46/5c76e8f6dc3a550c93785c0daaff8140e3515e0ac089d47ef9c9f0ad0288/aiocache-0.12.2.tar.gz", hash = "sha256:b41c9a145b050a5dcbae1599f847db6dd445193b1f3bd172d8e0fe0cb9e96684", size = 131851, upload-time = "2023-08-06T20:31:22.478Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/ce/d7dccae884f2840d0df9ea4103a3f50d87ac6c9399d2f6f0a2f1208ac063/aiocache-0.12.2-py2.py3-none-any.whl", hash = "sha256:9b6fa30634ab0bfc3ecc44928a91ff07c6ea16d27d55469636b296ebc6eb5918", size = 28055, upload-time = "2023-08-06T20:31:21.205Z" },
 ]
 
 [[package]]
@@ -58,47 +48,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d7/d8/05696357e0311f5b5c316d7b95f46c669dd9c15aaeecbb48c7d0aeb88c40/appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41", size = 13470, upload-time = "2020-05-11T07:59:51.037Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/00/2344469e2084fb287c2e0b57b72910309874c3245463acd6cf5e3db69324/appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128", size = 9566, upload-time = "2020-05-11T07:59:49.499Z" },
-]
-
-[[package]]
-name = "ardupilot-manager"
-version = "0.0.1"
-source = { virtual = "services/ardupilot_manager" }
-dependencies = [
-    { name = "aiocache" },
-    { name = "appdirs" },
-    { name = "commonwealth" },
-    { name = "fastapi" },
-    { name = "fastapi-versioning" },
-    { name = "loguru" },
-    { name = "packaging" },
-    { name = "psutil" },
-    { name = "pydantic" },
-    { name = "pyelftools" },
-    { name = "pyserial" },
-    { name = "python-multipart" },
-    { name = "smbus2" },
-    { name = "uvicorn" },
-    { name = "validators" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiocache", specifier = "==0.12.2" },
-    { name = "appdirs", specifier = "==1.4.4" },
-    { name = "commonwealth", editable = "libs/commonwealth" },
-    { name = "fastapi", specifier = "==0.105.0" },
-    { name = "fastapi-versioning", specifier = "==0.9.1" },
-    { name = "loguru", specifier = "==0.5.3" },
-    { name = "packaging", specifier = "==20.4" },
-    { name = "psutil", specifier = "==5.7.2" },
-    { name = "pydantic", specifier = "==1.10.12" },
-    { name = "pyelftools", specifier = "==0.30" },
-    { name = "pyserial", specifier = "==3.5" },
-    { name = "python-multipart", specifier = "==0.0.5" },
-    { name = "smbus2", specifier = "==0.3.0" },
-    { name = "uvicorn", specifier = "==0.18.0" },
-    { name = "validators", specifier = "==0.18.2" },
 ]
 
 [[package]]
@@ -148,7 +97,6 @@ name = "blueos-core"
 version = "1.4.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "ardupilot-manager" },
     { name = "bridges" },
     { name = "commonwealth" },
 ]
@@ -179,7 +127,6 @@ lint = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ardupilot-manager", virtual = "services/ardupilot_manager" },
     { name = "bridges", editable = "libs/bridges" },
     { name = "commonwealth", editable = "libs/commonwealth" },
 ]
@@ -312,15 +259,6 @@ wheels = [
 [package.optional-dependencies]
 toml = [
     { name = "tomli", marker = "python_full_version <= '3.11'" },
-]
-
-[[package]]
-name = "decorator"
-version = "5.2.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/43/fa/6d96a0978d19e17b68d634497769987b16c8f4cd0a7a05048bec693caa6b/decorator-5.2.1.tar.gz", hash = "sha256:65f266143752f734b0a7cc83c46f4618af75b8c5911b00ccb61d0ac9b6da0360", size = 56711, upload-time = "2025-02-24T04:41:34.073Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/8c/f3147f5c4b73e7550fe5f9352eaa956ae838d5c51eb58e7a25b9f3e2643b/decorator-5.2.1-py3-none-any.whl", hash = "sha256:d316bb415a2d9e2d2b3abcc4084c6502fc09240e292cd76a76afc106a1c8e04a", size = 9190, upload-time = "2025-02-24T04:41:32.565Z" },
 ]
 
 [[package]]
@@ -941,15 +879,6 @@ wheels = [
 ]
 
 [[package]]
-name = "python-multipart"
-version = "0.0.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/46/40/a933ac570bf7aad12a298fc53458115cc74053474a72fbb8201d7dc06d3d/python-multipart-0.0.5.tar.gz", hash = "sha256:f7bb5f611fc600d15fa47b3974c8aa16e93724513b49b5f95c81e6624c83fa43", size = 32581, upload-time = "2018-10-12T08:36:41.595Z" }
-
-[[package]]
 name = "ruff"
 version = "0.0.288"
 source = { registry = "https://pypi.org/simple" }
@@ -994,12 +923,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
 ]
-
-[[package]]
-name = "smbus2"
-version = "0.3.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6a/06/80a6928e5cbfd40c77c08e06ae9975c2a50109586ce66435bd8166ce6bb3/smbus2-0.3.0.tar.gz", hash = "sha256:210e66eebe4d0b1fe836b3ec2751841942e1c4918c0b429b20a0e20a222228b4", size = 10693, upload-time = "2019-09-07T11:19:51.536Z" }
 
 [[package]]
 name = "sniffio"
@@ -1135,19 +1058,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/93/2c/2308cdfc45cd95a4623d927a0f9623d013af227c47adf03615042e1708e7/uvicorn-0.18.0.tar.gz", hash = "sha256:fde065bc11c05025fbb33f7602826e7520237c45a67ffa040993ae04ad4d7ab3", size = 41529, upload-time = "2022-06-23T07:39:25.853Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/a9/4f048270539ebdeeb058c37599ecf68c83681a8455fe870d4d5eea95ef53/uvicorn-0.18.0-py3-none-any.whl", hash = "sha256:ba66bccb012a1662ef0de7d8c5ec416a6dcf5d9f64c274f8df67d2df44a4b0b1", size = 57018, upload-time = "2022-06-23T07:39:23.964Z" },
-]
-
-[[package]]
-name = "validators"
-version = "0.18.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "decorator" },
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/33/1a/4e4c12982b093796c1ceaff49cbc5998fb3a7866da755f8e7a1a40b8fda4/validators-0.18.2.tar.gz", hash = "sha256:37cd9a9213278538ad09b5b9f9134266e7c226ab1fede1d500e29e0a8fbb9ea6", size = 30299, upload-time = "2020-12-18T10:27:30.059Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/2f/7fed3ee94ad665ad2c1de87f858f10a7785251ff75b4fd47987888d07ef1/validators-0.18.2-py3-none-any.whl", hash = "sha256:0143dcca8a386498edaf5780cbd5960da1a4c85e0719f3ee5c9b41249c4fefbd", size = 19419, upload-time = "2020-12-18T10:27:27.933Z" },
 ]
 
 [[package]]

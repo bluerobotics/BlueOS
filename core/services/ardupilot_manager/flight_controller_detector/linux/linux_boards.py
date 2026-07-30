@@ -1,5 +1,5 @@
 import os
-from typing import List, Type
+from typing import ClassVar, List, Type
 
 from smbus2 import SMBus
 from typedefs import FlightController, PlatformType, Serial
@@ -8,8 +8,8 @@ from typedefs import FlightController, PlatformType, Serial
 class LinuxFlightController(FlightController):
     """Linux-based Flight-controller board."""
 
-    STANDARD_SCRIPT_DIRECTORY_PATH = "/root/.config/ardupilot-manager/firmware/scripts"
-    LUA_SCRIPT_DIRECTORY_PATH = "/shortcuts/lua_scripts"
+    STANDARD_SCRIPT_DIRECTORY_PATH: ClassVar[str] = "/root/.config/ardupilot-manager/firmware/scripts"
+    LUA_SCRIPT_DIRECTORY_PATH: ClassVar[str] = "/shortcuts/lua_scripts"
 
     @property
     def type(self) -> PlatformType:
