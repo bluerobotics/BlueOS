@@ -19,15 +19,18 @@
     </v-tabs>
     <v-tabs-items v-model="page_selected">
       <v-tab-item
-        v-for="page in pages"
+        v-for="(page, index) in pages"
         :key="page.value"
       >
-        <processes v-if="page.value === 'process'" />
-        <system-condition v-else-if="page.value === 'system_condition'" />
-        <network v-else-if="page.value === 'network'" />
-        <kernel v-else-if="page.value === 'kernel'" />
-        <firmware v-else-if="page.value === 'firmware'" />
-        <about-this-system v-else-if="page.value === 'about'" />
+        <!-- Only mount the active tab so heavy consumers (kernel WS) tear down when leaving -->
+        <template v-if="page_selected === index">
+          <processes v-if="page.value === 'process'" />
+          <system-condition v-else-if="page.value === 'system_condition'" />
+          <network v-else-if="page.value === 'network'" />
+          <kernel v-else-if="page.value === 'kernel'" />
+          <firmware v-else-if="page.value === 'firmware'" />
+          <about-this-system v-else-if="page.value === 'about'" />
+        </template>
       </v-tab-item>
     </v-tabs-items>
   </v-card>
@@ -76,7 +79,7 @@ export default Vue.extend({
         },
         { title: 'About', icon: 'mdi-information', value: 'about' },
       ] as Item[],
-      page_selected: null as string | null,
+      page_selected: 0 as number,
     }
   },
   computed: {
