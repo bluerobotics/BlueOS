@@ -263,11 +263,12 @@ export default Vue.extend({
   mounted() {
     window.addEventListener('resize', this.handleResize)
     this.handleResize()
-    mavlink.setMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
+    mavlink.subscribeMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
     this.fetch_streams_task.setAction(video.fetchStreams)
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.handleResize)
+    mavlink.unsubscribeMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
   },
   methods: {
     handleResize() {

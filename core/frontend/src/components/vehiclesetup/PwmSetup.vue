@@ -426,7 +426,7 @@ export default Vue.extend({
     this.motor_writer_interval = setInterval(this.write_motors, 100)
     fetchCurrentBoard()
 
-    mavlink.setMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 10 })
+    mavlink.subscribeMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 10 })
     this.desired_armed_state = this.is_armed
     this.installListeners()
     this.updateReversionValues()
@@ -434,7 +434,7 @@ export default Vue.extend({
   beforeDestroy() {
     clearInterval(this.motor_zeroer_interval)
     clearInterval(this.motor_writer_interval)
-    mavlink.setMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 1 })
+    mavlink.unsubscribeMessageRefreshRate({ messageName: 'SERVO_OUTPUT_RAW', refreshRate: 10 })
     this.uninstallListeners()
   },
   methods: {
