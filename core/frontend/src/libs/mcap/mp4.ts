@@ -1,11 +1,16 @@
 /**
- * Minimal fragmented MP4 writer. Produces an initialization segment plus `moof`/`mdat` fragments,
- * which is exactly what Media Source Extensions consumes, and is also a valid MP4 file when the
- * pieces are concatenated.
+ * Minimal MP4 writer. Produces an initialization segment plus `moof`/`mdat` fragments, which is
+ * exactly what Media Source Extensions consumes, and also the sample tables that turn the same
+ * frames into an ordinary MP4 file for saving.
  */
 import { CodecConfig } from './codec'
 
 export const MP4_TIMESCALE = 1_000_000
+export const MINIMUM_SAMPLE_DURATION_US = 1_000
+/** Frames spanning a recording gap keep the last picture on screen instead of leaving a hole. */
+export const MAXIMUM_SAMPLE_DURATION_US = 10_000_000
+/** Bytes of `mdat` header before its first sample. */
+export const MDAT_HEADER_SIZE = 8
 
 const TRACK_ID = 1
 const KEYFRAME_FLAGS = 0x02000000
@@ -16,6 +21,17 @@ export interface Mp4Sample {
   /** Duration in `MP4_TIMESCALE` units. */
   duration: number
   isKeyframe: boolean
+}
+
+/** Where the samples of a finished file ended up, gathered while its media was written out. */
+export interface Mp4SampleTable {
+  /** Sample durations in `MP4_TIMESCALE` units, in decode order. */
+  durations: number[]
+  sizes: number[]
+  /** Numbers of the samples that can be decoded on their own, counting from one. */
+  syncSamples: number[]
+  /** Byte offset in the file of each group of samples, with how many samples the group holds. */
+  chunks: { offset: number, samples: number }[]
 }
 
 function concat(parts: Uint8Array[]): Uint8Array {
@@ -90,6 +106,29 @@ const UNITY_MATRIX = new Writer()
   .uint32(0x40000000)
   .build()
 
+const FTYP = box(
+  'ftyp',
+  new Writer().ascii('isom').uint32(0x200).ascii('isom')
+    .ascii('iso2')
+    .ascii('avc1')
+    .ascii('mp41')
+    .build(),
+)
+
+const HDLR = box('hdlr', new Writer()
+  .uint32(0)
+  .uint32(0)
+  .ascii('vide')
+  .zeros(12)
+  .ascii('VideoHandler')
+  .zeros(1)
+  .build())
+
+const VMHD = box('vmhd', new Writer().uint32(0x00000001).zeros(8).build())
+
+const DINF = box('dinf', box('dref', new Writer().uint32(0).uint32(1).build(),
+  box('url ', new Writer().uint32(1).build())))
+
 function sampleEntry(config: CodecConfig): Uint8Array {
   const configurationBox = config.sampleEntry === 'hvc1' ? 'hvcC' : 'avcC'
   const header = new Writer()
@@ -110,15 +149,6 @@ function sampleEntry(config: CodecConfig): Uint8Array {
 }
 
 export function buildInitSegment(config: CodecConfig): Uint8Array {
-  const ftyp = box(
-    'ftyp',
-    new Writer().ascii('isom').uint32(0x200).ascii('isom')
-      .ascii('iso2')
-      .ascii('avc1')
-      .ascii('mp41')
-      .build(),
-  )
-
   const mvhd = box('mvhd', new Writer()
     .uint32(0) // version + flags
     .uint32(0).uint32(0) // creation + modification time
@@ -157,15 +187,6 @@ export function buildInitSegment(config: CodecConfig): Uint8Array {
     .uint16(0)
     .build())
 
-  const hdlr = box('hdlr', new Writer()
-    .uint32(0)
-    .uint32(0)
-    .ascii('vide')
-    .zeros(12)
-    .ascii('VideoHandler')
-    .zeros(1)
-    .build())
-
   const stbl = box(
     'stbl',
     box('stsd', new Writer().uint32(0).uint32(1).build(), sampleEntry(config)),
@@ -176,14 +197,7 @@ export function buildInitSegment(config: CodecConfig): Uint8Array {
     box('stco', new Writer().uint32(0).uint32(0).build()),
   )
 
-  const minf = box(
-    'minf',
-    box('vmhd', new Writer().uint32(0x00000001).zeros(8).build()),
-    box('dinf', box('dref', new Writer().uint32(0).uint32(1).build(), box('url ', new Writer().uint32(1).build()))),
-    stbl,
-  )
-
-  const trak = box('trak', tkhd, box('mdia', mdhd, hdlr, minf))
+  const trak = box('trak', tkhd, box('mdia', mdhd, HDLR, box('minf', VMHD, DINF, stbl)))
   const mvex = box('mvex', box('trex', new Writer()
     .uint32(0)
     .uint32(TRACK_ID)
@@ -193,7 +207,7 @@ export function buildInitSegment(config: CodecConfig): Uint8Array {
     .uint32(0)
     .build()))
 
-  return concat([ftyp, box('moov', mvhd, trak, mvex)])
+  return concat([FTYP, box('moov', mvhd, trak, mvex)])
 }
 
 /**
@@ -231,4 +245,132 @@ export function buildFragment(samples: Mp4Sample[], baseMediaDecodeTime: number,
   const moof = moofFor(moofFor(0).length + 8)
   const mdat = box('mdat', concat(samples.map((sample) => sample.data)))
   return concat([moof, mdat])
+}
+
+/** Start of a file that is not fragmented, whose media follows in `mdat` boxes. */
+export function buildFileHeader(): Uint8Array {
+  return FTYP
+}
+
+export function buildMdat(payloads: Uint8Array[]): Uint8Array {
+  return box('mdat', concat(payloads))
+}
+
+function stts(durations: number[]): Uint8Array {
+  const entries: { count: number, duration: number }[] = []
+  for (const duration of durations) {
+    const last = entries[entries.length - 1]
+    if (last?.duration === duration) {
+      last.count += 1
+    } else {
+      entries.push({ count: 1, duration })
+    }
+  }
+  const writer = new Writer().uint32(0).uint32(entries.length)
+  for (const entry of entries) {
+    writer.uint32(entry.count).uint32(entry.duration)
+  }
+  return box('stts', writer.build())
+}
+
+function stsc(chunks: Mp4SampleTable['chunks']): Uint8Array {
+  const entries: { first: number, samples: number }[] = []
+  chunks.forEach((chunk, index) => {
+    if (entries[entries.length - 1]?.samples !== chunk.samples) {
+      entries.push({ first: index + 1, samples: chunk.samples })
+    }
+  })
+  const writer = new Writer().uint32(0).uint32(entries.length)
+  for (const entry of entries) {
+    writer.uint32(entry.first).uint32(entry.samples).uint32(1)
+  }
+  return box('stsc', writer.build())
+}
+
+function chunkOffsetBox(chunks: Mp4SampleTable['chunks']): Uint8Array {
+  const last = chunks[chunks.length - 1]?.offset ?? 0
+  // Recordings can be big enough to push samples past the reach of 32 bit offsets.
+  if (last > 0xffffffff) {
+    const writer = new Writer().uint32(0).uint32(chunks.length)
+    for (const chunk of chunks) {
+      writer.uint64(chunk.offset)
+    }
+    return box('co64', writer.build())
+  }
+  const writer = new Writer().uint32(0).uint32(chunks.length)
+  for (const chunk of chunks) {
+    writer.uint32(chunk.offset)
+  }
+  return box('stco', writer.build())
+}
+
+/**
+ * Trailer of a file that is not fragmented: the sample tables a player needs to find and time every
+ * frame. It goes after the media, since the offsets it holds are only known once everything is
+ * written, which is also where `ffmpeg` puts it unless asked to move it to the front.
+ */
+export function buildMoov(config: CodecConfig, table: Mp4SampleTable): Uint8Array {
+  const duration = table.durations.reduce((total, value) => total + value, 0)
+
+  const mvhd = box('mvhd', new Writer()
+    .uint32(0x01000000) // version 1, so that long recordings still fit
+    .uint64(0).uint64(0) // creation + modification time
+    .uint32(MP4_TIMESCALE)
+    .uint64(duration)
+    .uint32(0x00010000) // rate
+    .uint16(0x0100) // volume
+    .zeros(10)
+    .raw(UNITY_MATRIX)
+    .zeros(24) // pre_defined
+    .uint32(TRACK_ID + 1)
+    .build())
+
+  const tkhd = box('tkhd', new Writer()
+    .uint32(0x01000007) // version 1, track enabled + in movie + in preview
+    .uint64(0).uint64(0)
+    .uint32(TRACK_ID)
+    .uint32(0)
+    .uint64(duration)
+    .zeros(8)
+    .uint16(0) // layer
+    .uint16(0) // alternate_group
+    .uint16(0) // volume
+    .uint16(0)
+    .raw(UNITY_MATRIX)
+    .uint32(config.width * 0x10000)
+    .uint32(config.height * 0x10000)
+    .build())
+
+  const mdhd = box('mdhd', new Writer()
+    .uint32(0x01000000)
+    .uint64(0).uint64(0)
+    .uint32(MP4_TIMESCALE)
+    .uint64(duration)
+    .uint16(0x55c4) // 'und' language
+    .uint16(0)
+    .build())
+
+  const sizes = new Writer().uint32(0).uint32(0).uint32(table.sizes.length)
+  for (const size of table.sizes) {
+    sizes.uint32(size)
+  }
+
+  const tables = [
+    box('stsd', new Writer().uint32(0).uint32(1).build(), sampleEntry(config)),
+    stts(table.durations),
+    stsc(table.chunks),
+    box('stsz', sizes.build()),
+    chunkOffsetBox(table.chunks),
+  ]
+  // A stream of nothing but keyframes needs no list of which samples they are.
+  if (table.syncSamples.length < table.sizes.length) {
+    const writer = new Writer().uint32(0).uint32(table.syncSamples.length)
+    for (const sample of table.syncSamples) {
+      writer.uint32(sample)
+    }
+    tables.splice(2, 0, box('stss', writer.build()))
+  }
+
+  const trak = box('trak', tkhd, box('mdia', mdhd, HDLR, box('minf', VMHD, DINF, box('stbl', ...tables))))
+  return box('moov', mvhd, trak)
 }

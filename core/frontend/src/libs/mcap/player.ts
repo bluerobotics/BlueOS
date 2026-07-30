@@ -9,24 +9,15 @@
 import {
   CodecConfig, ParameterSetCache, toMp4Sample, VideoFormat,
 } from './codec'
-import VideoFrameStream from './frame-stream'
-import { buildFragment, buildInitSegment, Mp4Sample } from './mp4'
+import VideoFrameStream, { scanParameterSets, UNDECODABLE_FRAMES_BEFORE_SKIP } from './frame-stream'
+import {
+  buildFragment, buildInitSegment, MAXIMUM_SAMPLE_DURATION_US, MINIMUM_SAMPLE_DURATION_US, Mp4Sample,
+} from './mp4'
 import { McapIndexedReader } from './reader'
 import { HttpByteSource } from './source'
 import { listVideoTracks, VideoTrack } from './video-track'
 
-const MINIMUM_SAMPLE_DURATION_US = 1_000
-/** Frames spanning a recording gap keep the last picture on screen instead of leaving a hole. */
-const MAXIMUM_SAMPLE_DURATION_US = 10_000_000
 const RESUME_TOLERANCE_SECONDS = 0.25
-/** Frames to inspect at the start of a stream when a keyframe arrives without parameter sets. */
-const PARAMETER_SET_SCAN_FRAMES = 60
-/**
- * Undecodable frames to download before asking the message index where the next keyframe is.
- * Recordings that begin in the middle of a group of pictures would otherwise download megabytes of
- * frames that cannot be shown.
- */
-const UNDECODABLE_FRAMES_BEFORE_SKIP = 30
 
 export interface McapVideoStats {
   bytesDownloaded: number
@@ -353,30 +344,11 @@ export class McapVideoPlayer {
     return Number(last - first) / 1e9
   }
 
-  /** Reads the beginning of the stream, where recordings that only send parameter sets once put them. */
-  private async loadParameterSetsFromStart(): Promise<void> {
-    if (this.scannedForParameterSets) {
-      return
-    }
-    this.scannedForParameterSets = true
-    const scout = new VideoFrameStream(this.recording.reader, this.track)
-    for (let index = 0; index < PARAMETER_SET_SCAN_FRAMES; index += 1) {
-      // eslint-disable-next-line no-await-in-loop
-      const frame = await scout.next(this.controller.signal)
-      if (!frame) {
-        return
-      }
-      this.parameterSets.observeFrame(frame.data, frame.format)
-      if (this.parameterSets.complete) {
-        return
-      }
-    }
-  }
-
   /** Creates or updates the source buffer from the parameter sets seen so far. */
   private async configure(format: VideoFormat): Promise<void> {
-    if (!this.parameterSets.complete) {
-      await this.loadParameterSetsFromStart()
+    if (!this.parameterSets.complete && !this.scannedForParameterSets) {
+      this.scannedForParameterSets = true
+      await scanParameterSets(this.recording.reader, this.track, this.parameterSets, this.controller.signal)
     }
     const config = this.parameterSets.buildConfig(format)
     if (!config) {
