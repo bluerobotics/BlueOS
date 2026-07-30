@@ -10,6 +10,7 @@ dependencies = [
   "bag_of_holding",
   "beacon",
   "bridget",
+  "cable_guy",
   "commander",
   "customization",
   "disk_usage",
@@ -57,6 +58,7 @@ filebrowser = { workspace = true }
 bag_of_holding = { workspace = true }
 beacon = { workspace = true }
 bridget = { workspace = true }
+cable_guy = { workspace = true }
 commander = { workspace = true }
 customization = { workspace = true }
 disk_usage = { workspace = true }
@@ -75,6 +77,7 @@ members = [
   "../services/bag_of_holding",
   "../services/beacon",
   "../services/bridget",
+  "../services/cable_guy",
   "../services/commander",
   "../services/customization",
   "../services/disk_usage",

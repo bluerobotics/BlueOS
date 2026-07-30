@@ -154,5 +154,5 @@ class PydanticSettings(BaseModel):
 
     def _model_dump(self) -> Dict[str, Any]:
         if PYDANTIC_V2:
-            return cast(Dict[str, Any], self.model_dump())  # type: ignore[attr-defined]
+            return cast(Dict[str, Any], self.model_dump(mode="json"))  # type: ignore[attr-defined]
         return self.dict()
