@@ -20,9 +20,11 @@
         :key="track.channelId"
         :recording="recording"
         :track="track"
+        :name="name"
         :controls="index === 0"
         @ready="onStreamReady(index, $event)"
         @stats="onStats"
+        @export-error="onExportError"
       />
     </div>
 
@@ -82,6 +84,10 @@ export default Vue.extend({
     },
     downloaded(): string {
       return prettifySize(this.bytes_downloaded / 1024)
+    },
+    /** Recording name, used to name the video files saved out of it. */
+    name(): string {
+      return decodeURIComponent(this.url.split('/').pop() ?? 'recording').replace(/\.mcap$/, '')
     },
   },
   async mounted() {
@@ -154,6 +160,9 @@ export default Vue.extend({
           follower.play().catch(() => undefined)
         }
       }
+    },
+    onExportError(error: unknown): void {
+      this.error = error instanceof Error ? error.message : String(error)
     },
     onStats(stats: McapVideoStats): void {
       // Every stream reports the same figure, since they read the recording through one reader.

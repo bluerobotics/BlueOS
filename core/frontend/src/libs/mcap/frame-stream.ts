@@ -2,12 +2,42 @@
  * Sequential frame reader for a single video channel. It downloads one MCAP chunk at a time, so
  * memory and bandwidth stay proportional to what is actually being watched.
  */
+import { ParameterSetCache } from './codec'
 import { KeyframeLocator } from './keyframe-index'
 import { McapIndexedReader } from './reader'
 import { VideoFrame, VideoFrameDecoder, VideoTrack } from './video-track'
 
 /** Chunks worth of message index to inspect while looking for a keyframe around a seek target. */
 const KEYFRAME_SEARCH_CHUNKS = 64
+/** Frames to inspect at the start of a stream when a keyframe arrives without parameter sets. */
+const PARAMETER_SET_SCAN_FRAMES = 60
+/**
+ * Undecodable frames to read before asking the message index where the next keyframe is. Recordings
+ * that begin in the middle of a group of pictures would otherwise read megabytes of frames that
+ * cannot be decoded.
+ */
+export const UNDECODABLE_FRAMES_BEFORE_SKIP = 30
+
+/** Reads the beginning of a stream, where recordings that only send parameter sets once put them. */
+export async function scanParameterSets(
+  reader: McapIndexedReader,
+  track: VideoTrack,
+  parameterSets: ParameterSetCache,
+  signal?: AbortSignal,
+): Promise<void> {
+  const scout = new VideoFrameStream(reader, track)
+  for (let index = 0; index < PARAMETER_SET_SCAN_FRAMES; index += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const frame = await scout.next(signal)
+    if (!frame) {
+      return
+    }
+    parameterSets.observeFrame(frame.data, frame.format)
+    if (parameterSets.complete) {
+      return
+    }
+  }
+}
 
 export default class VideoFrameStream {
   private chunkPositions: number[] = []

@@ -29,11 +29,46 @@
       </div>
     </div>
 
+    <v-progress-linear
+      v-if="export_progress"
+      :value="export_percentage"
+      height="3"
+      color="primary"
+    />
+
     <div class="d-flex align-center caption grey--text text--darken-1 mt-1">
       <span class="font-weight-medium text-truncate">{{ track.name }}</span>
       <v-spacer />
-      <span v-if="resolution" class="ml-3">{{ resolution }}</span>
-      <span v-if="stats.codec" class="ml-3">{{ stats.codec }}</span>
+      <template v-if="export_progress">
+        <span>saving {{ export_percentage }}% · {{ export_size }}</span>
+        <v-btn
+          v-tooltip="'Stop saving'"
+          icon
+          x-small
+          class="ml-1"
+          @click="cancelExport"
+        >
+          <v-icon small>
+            mdi-close
+          </v-icon>
+        </v-btn>
+      </template>
+      <template v-else>
+        <span v-if="resolution" class="ml-3">{{ resolution }}</span>
+        <span v-if="stats.codec" class="ml-3">{{ stats.codec }}</span>
+        <v-btn
+          v-if="!error"
+          v-tooltip="'Save this stream as an MP4 file'"
+          icon
+          x-small
+          class="ml-2"
+          @click="saveMp4"
+        >
+          <v-icon small>
+            mdi-download
+          </v-icon>
+        </v-btn>
+      </template>
     </div>
   </div>
 </template>
@@ -41,10 +76,15 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
+import { exportTrackAsMp4, Mp4ExportProgress, saveBlob } from '@/libs/mcap/export'
 import {
   McapVideoPlayer, McapVideoRecording, McapVideoStats,
 } from '@/libs/mcap/player'
 import { VideoTrack } from '@/libs/mcap/video-track'
+import { prettifySize } from '@/utils/helper_functions'
+
+/** Time between progress updates, so that saving does not repaint the page on every frame. */
+const PROGRESS_INTERVAL_MS = 200
 
 export default Vue.extend({
   name: 'McapVideoStream',
@@ -55,6 +95,10 @@ export default Vue.extend({
     },
     track: {
       type: Object as PropType<VideoTrack>,
+      required: true,
+    },
+    name: {
+      type: String,
       required: true,
     },
     controls: {
@@ -70,12 +114,22 @@ export default Vue.extend({
       loading: true,
       loading_message: 'Loading video...',
       empty_captions: 'data:text/vtt,WEBVTT',
+      export_progress: null as Mp4ExportProgress | null,
+      export_controller: null as AbortController | null,
+      last_progress_at: 0,
     }
   },
   computed: {
     resolution(): string {
       const { width, height } = this.stats
       return width && height ? `${width}x${height}` : ''
+    },
+    export_percentage(): number {
+      const { seconds, durationSeconds } = this.export_progress ?? { seconds: 0, durationSeconds: 0 }
+      return durationSeconds > 0 ? Math.min(100, Math.round(seconds / durationSeconds * 100)) : 0
+    },
+    export_size(): string {
+      return prettifySize((this.export_progress?.bytes ?? 0) / 1024)
     },
   },
   mounted() {
@@ -100,6 +154,37 @@ export default Vue.extend({
   },
   beforeDestroy() {
     this.player?.destroy()
+    this.export_controller?.abort()
+  },
+  methods: {
+    async saveMp4(): Promise<void> {
+      const controller = new AbortController()
+      this.export_controller = controller
+      this.export_progress = { seconds: 0, durationSeconds: this.recording.durationSeconds, bytes: 0 }
+      try {
+        const file = await exportTrackAsMp4(this.recording, this.track, {
+          signal: controller.signal,
+          onProgress: (progress) => {
+            const now = Date.now()
+            if (now - this.last_progress_at >= PROGRESS_INTERVAL_MS) {
+              this.last_progress_at = now
+              this.export_progress = progress
+            }
+          },
+        })
+        saveBlob(file, `${this.name}-${this.track.name}.mp4`)
+      } catch (error) {
+        if (!(error instanceof Error) || error.name !== 'AbortError') {
+          this.$emit('export-error', error)
+        }
+      } finally {
+        this.export_controller = null
+        this.export_progress = null
+      }
+    },
+    cancelExport(): void {
+      this.export_controller?.abort()
+    },
   },
 })
 </script>
