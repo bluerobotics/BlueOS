@@ -16,6 +16,18 @@ interface messsageRefreshRate {
   refreshRate: number
 }
 
+// Per-message requested rates from live consumers; wire rate is max(claims), or 1 Hz when empty.
+const message_rate_claims: Dictionary<number[]> = {}
+const IDLE_MESSAGE_RATE_HZ = 1
+
+function claimedRefreshRate(messageName: string): number {
+  const claims = message_rate_claims[messageName]
+  if (!claims?.length) {
+    return IDLE_MESSAGE_RATE_HZ
+  }
+  return Math.max(...claims)
+}
+
 @Module({
   dynamic: true,
   store,
@@ -24,31 +36,64 @@ interface messsageRefreshRate {
 
 class MavlinkStore extends VuexModule {
   available_messages: Dictionary<MavlinkMessage> = {}
+
   available_identified_messages: Dictionary<Dictionary<MavlinkMessage>> = {}
 
   message_listeners: Dictionary<Listener> = {}
 
-  @Action({ commit: 'updateMessage' })
-  setMessageRefreshRate(rate: messsageRefreshRate): void {
+  @Action
+  subscribeMessageRefreshRate(rate: messsageRefreshRate): void {
     const { messageName, refreshRate } = rate
     if (refreshRate < 0) {
       console.warn(`Invalid request rate requested for message ${messageName}@${refreshRate}Hz`)
+      return
     }
 
-    mavlink2rest.requestMessageRate(messageName, refreshRate, autopilot_data.system_id)
-    // Remove any listener that has a lower frequency than requested
+    if (!message_rate_claims[messageName]) {
+      message_rate_claims[messageName] = []
+    }
+    message_rate_claims[messageName].push(refreshRate)
+    this.applyMessageRefreshRate(messageName)
+  }
+
+  @Action
+  unsubscribeMessageRefreshRate(rate: messsageRefreshRate): void {
+    const { messageName, refreshRate } = rate
+    const claims = message_rate_claims[messageName]
+    if (!claims?.length) {
+      return
+    }
+
+    const index = claims.indexOf(refreshRate)
+    if (index < 0) {
+      console.warn(`No ${refreshRate}Hz claim to release for message ${messageName}`)
+      return
+    }
+    claims.splice(index, 1)
+    this.applyMessageRefreshRate(messageName)
+  }
+
+  /** Lifetime / one-shot claim. Prefer subscribe/unsubscribe when the consumer leaves. */
+  @Action
+  setMessageRefreshRate(rate: messsageRefreshRate): void {
+    this.subscribeMessageRefreshRate(rate)
+  }
+
+  @Action
+  applyMessageRefreshRate(messageName: string): void {
+    const refreshRate = claimedRefreshRate(messageName)
+
+    // Equal rate: keep existing listener and skip the wire request.
+    // Any other rate change discards the listener and creates a replacement.
     if (messageName in this.message_listeners) {
-      const currentRate = this.message_listeners[messageName].frequency
-      if (currentRate > refreshRate) {
-        console.warn(
-          `Request with higher rate already registered for message ${messageName}@${currentRate}Hz vs ${refreshRate}Hz`,
-        )
+      if (this.message_listeners[messageName].frequency === refreshRate) {
         return
       }
       this.message_listeners[messageName].discard()
     }
 
-    // Create a new listener
+    mavlink2rest.requestMessageRate(messageName, refreshRate, autopilot_data.system_id)
+
     this.message_listeners[messageName] = mavlink2rest.startListening(messageName).setCallback((receivedMessage) => {
       this.updateMessage({
         messageName,
