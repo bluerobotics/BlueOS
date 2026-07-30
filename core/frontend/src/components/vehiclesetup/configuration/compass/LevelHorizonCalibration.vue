@@ -97,6 +97,7 @@ export default Vue.extend({
   data() {
     return {
       dialog: false,
+      attitude_subscribed: false,
       calibrating: false,
       status_type: undefined as string | undefined,
       status_text: undefined as string | undefined,
@@ -121,14 +122,32 @@ export default Vue.extend({
   watch: {
     dialog(open: boolean) {
       if (open) {
-        mavlink.setMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
+        this.subscribeAttitude()
       } else {
+        this.unsubscribeAttitude()
         this.status_text = undefined
         this.status_type = undefined
       }
     },
   },
+  beforeDestroy() {
+    this.unsubscribeAttitude()
+  },
   methods: {
+    subscribeAttitude() {
+      if (this.attitude_subscribed) {
+        return
+      }
+      mavlink.subscribeMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
+      this.attitude_subscribed = true
+    },
+    unsubscribeAttitude() {
+      if (!this.attitude_subscribed) {
+        return
+      }
+      mavlink.unsubscribeMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
+      this.attitude_subscribed = false
+    },
     calibrationFinished() {
       this.status_type = 'success'
       this.status_text = 'Calibration finished'
