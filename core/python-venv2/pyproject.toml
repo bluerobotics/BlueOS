@@ -7,6 +7,7 @@ dependencies = [
   "bridges",
   "commonwealth",
   "filebrowser",
+  "ardupilot_manager",
   "bag_of_holding",
   "beacon",
   "bridget",
@@ -55,6 +56,7 @@ default-groups = ["dev", "lint"]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
 filebrowser = { workspace = true }
+ardupilot_manager = { workspace = true }
 bag_of_holding = { workspace = true }
 beacon = { workspace = true }
 bridget = { workspace = true }
@@ -74,6 +76,7 @@ wifi = { workspace = true }
 [tool.uv.workspace]
 members = [
   "../libs/*",
+  "../services/ardupilot_manager",
   "../services/bag_of_holding",
   "../services/beacon",
   "../services/bridget",

@@ -9,6 +9,7 @@ import warnings
 from typing import List, Set
 
 import pytest
+from pydantic import ValidationError
 
 # import local library
 sys.path.append(str(pathlib.Path(__file__).absolute().parent.parent))
@@ -119,7 +120,6 @@ def test_endpoint() -> None:
     assert endpoint.argument == 14550, "Connection argument does not match."
     assert str(endpoint) == "udpout:0.0.0.0:14550", "Connection string does not match."
     assert endpoint.as_dict() == {
-        "__pydantic_initialised__": True,
         "name": "Test endpoint",
         "owner": "pytest",
         "connection_type": EndpointType.UDPClient.value,
@@ -132,21 +132,29 @@ def test_endpoint() -> None:
     }, "Endpoint dict does not match."
 
 
+def _bad_endpoint(**kwargs: object) -> Endpoint:
+    data = {
+        "name": "Test endpoint",
+        "owner": "pytest",
+        "connection_type": EndpointType.UDPServer,
+        "place": "0.0.0.0",
+        "argument": 14550,
+        **kwargs,
+    }
+    return Endpoint(**data)  # type: ignore[arg-type]
+
+
 def test_endpoint_validators() -> None:
-    with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": EndpointType.UDPServer, "place": "0.0.0.0", "argument": -30})
-    with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": EndpointType.UDPServer, "place": "42", "argument": 14555})
-    with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint(
-            {"connection_type": EndpointType.Serial, "place": "dev/autopilot", "argument": 115200}
-        )
-    with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint(
-            {"connection_type": EndpointType.Serial, "place": serial_port_name, "argument": 100000}
-        )
-    with pytest.raises(ValueError):
-        Endpoint.is_mavlink_endpoint({"connection_type": "potato", "place": serial_port_name, "argument": 100})
+    with pytest.raises(ValidationError):
+        _bad_endpoint(argument=-30)
+    with pytest.raises(ValidationError):
+        _bad_endpoint(place="42")
+    with pytest.raises(ValidationError):
+        _bad_endpoint(connection_type=EndpointType.Serial, place="dev/autopilot", argument=115200)
+    with pytest.raises(ValidationError):
+        _bad_endpoint(connection_type=EndpointType.Serial, place=serial_port_name, argument=100000)
+    with pytest.raises(ValidationError):
+        _bad_endpoint(connection_type="potato", place=serial_port_name, argument=100)
 
 
 @pytest.mark.skip(

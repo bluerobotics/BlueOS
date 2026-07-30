@@ -539,7 +539,7 @@ class AutoPilotManager(metaclass=Singleton):
 
     def set_preferred_board(self, board: FlightController) -> None:
         logger.info(f"Setting {board.name} as preferred flight-controller.")
-        self.configuration["preferred_board"] = board.dict(exclude={"path"})
+        self.configuration["preferred_board"] = board.model_dump(exclude={"path"})
         self.settings.save(self.configuration)
 
     def get_preferred_board(self) -> FlightController:
@@ -555,7 +555,7 @@ class AutoPilotManager(metaclass=Singleton):
             logger.debug(f"Preferred flight-controller is {preferred_board.name}.")
             for board in boards:
                 # Compare connected boards with saved board, excluding path (which can change between sessions)
-                if preferred_board.dict(exclude={"path"}).items() <= board.dict().items():
+                if preferred_board.model_dump(exclude={"path"}).items() <= board.model_dump().items():
                     return board
             logger.debug(f"Flight-controller {preferred_board.name} not connected.")
         except NoPreferredBoardSet as error:

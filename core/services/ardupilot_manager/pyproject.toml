@@ -5,26 +5,23 @@ description = "AutoPilot service manager."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiocache==0.12.2",
+    "aiocache==0.12.3",
     "appdirs==1.4.4",
     "commonwealth==0.1.0",
-    "fastapi==0.105.0",
-    "fastapi-versioning==0.9.1",
-    "loguru==0.5.3",
-    "packaging==20.4",
-    "psutil==5.7.2",
-    "pydantic==1.10.12",
+    "fastapi==0.125.0",
+    "fastapi-versioning==0.10.0",
+    "loguru==0.7.3",
+    "packaging==25.0",
+    "psutil==7.1.3",
+    "pydantic==2.12.5",
     "pyelftools==0.30",
     "pyserial==3.5",
     # This dependency needs to be locked since it is used by fastapi
-    "python-multipart==0.0.5",
-    "smbus2==0.3.0",
-    "uvicorn==0.18.0",
-    "validators==0.18.2",
+    "python-multipart==0.0.21",
+    "smbus2==0.6.1",
+    "uvicorn==0.38.0",
+    "validators==0.35.0",
 ]
 
 [tool.uv]
 package = false
-
-[tool.uv.sources]
-commonwealth = { workspace = true }

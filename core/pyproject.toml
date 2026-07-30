@@ -6,7 +6,6 @@ requires-python = ">=3.11"
 dependencies = [
   "bridges",
   "commonwealth",
-  "ardupilot_manager",
 ]
 
 [dependency-groups]
@@ -39,11 +38,11 @@ default-groups = ["dev", "lint"]
 [tool.uv.sources]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
-ardupilot_manager = { workspace = true }
 
 [tool.uv.workspace]
 members = ["services/*", "libs/*"]
 exclude = [
+  "services/ardupilot_manager",
   "services/bag_of_holding",
   "services/beacon",
   "services/bridget",

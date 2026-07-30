@@ -1,9 +1,10 @@
 from enum import Enum
-from typing import Any, Dict, Iterable, Optional, Type
+from typing import Annotated, Any, Dict, Iterable, Optional, Type
 
 import validators
-from pydantic import constr, root_validator
+from pydantic import StringConstraints, model_validator
 from pydantic.dataclasses import dataclass
+from pydantic_core import ArgsKwargs
 
 
 class EndpointType(str, Enum):
@@ -21,8 +22,8 @@ class EndpointType(str, Enum):
 @dataclass
 # pylint: disable=too-many-instance-attributes
 class Endpoint:
-    name: constr(strip_whitespace=True, min_length=3, max_length=50)  # type: ignore
-    owner: constr(strip_whitespace=True, min_length=3, max_length=50)  # type: ignore
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=50)]
+    owner: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=50)]
 
     connection_type: str
     place: str
@@ -33,9 +34,12 @@ class Endpoint:
     enabled: Optional[bool] = True
     overwrite_settings: Optional[bool] = False
 
-    @root_validator
+    @model_validator(mode="before")
     @classmethod
     def is_mavlink_endpoint(cls: Type["Endpoint"], values: Any) -> Any:
+        if isinstance(values, ArgsKwargs):
+            values = dict(values.kwargs or {})
+
         connection_type, place, argument = (values.get("connection_type"), values.get("place"), values.get("argument"))
 
         if connection_type in [
@@ -71,7 +75,17 @@ class Endpoint:
         return ":".join([self.connection_type, self.place, str(self.argument)])
 
     def as_dict(self) -> Dict[str, Any]:
-        return dict(filter(lambda field: field[0] != "__initialised__", self.__dict__.items()))
+        return {
+            "name": self.name,
+            "owner": self.owner,
+            "connection_type": self.connection_type,
+            "place": self.place,
+            "argument": self.argument,
+            "persistent": self.persistent,
+            "protected": self.protected,
+            "enabled": self.enabled,
+            "overwrite_settings": self.overwrite_settings,
+        }
 
     def __hash__(self) -> int:
         return hash(str(self))
