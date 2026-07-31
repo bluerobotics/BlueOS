@@ -126,8 +126,11 @@ const HDLR = box('hdlr', new Writer()
 
 const VMHD = box('vmhd', new Writer().uint32(0x00000001).zeros(8).build())
 
-const DINF = box('dinf', box('dref', new Writer().uint32(0).uint32(1).build(),
-  box('url ', new Writer().uint32(1).build())))
+const DINF = box('dinf', box(
+  'dref',
+  new Writer().uint32(0).uint32(1).build(),
+  box('url ', new Writer().uint32(1).build()),
+))
 
 function sampleEntry(config: CodecConfig): Uint8Array {
   const configurationBox = config.sampleEntry === 'hvc1' ? 'hvcC' : 'avcC'

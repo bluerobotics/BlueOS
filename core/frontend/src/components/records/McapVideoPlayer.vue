@@ -22,14 +22,16 @@
         :track="track"
         :name="name"
         :controls="index === 0"
+        :statistics="statistics"
         @ready="onStreamReady(index, $event)"
         @stats="onStats"
         @export-error="onExportError"
       />
     </div>
 
-    <div v-if="bytes_downloaded > 0" class="caption grey--text text--darken-1 mt-2">
+    <div v-if="tracks.length > 0" class="d-flex align-center caption grey--text text--darken-1 mt-2">
       <span
+        v-if="bytes_downloaded > 0"
         v-tooltip="'Only the parts of the recording you watch are downloaded from the vehicle'"
         class="mr-3"
       >
@@ -38,6 +40,18 @@
       <span v-if="tracks.length > 1">
         {{ tracks.length }} streams playing together, sharing the same download
       </span>
+      <v-spacer />
+      <v-btn
+        v-tooltip="statistics ? 'Hide stream statistics' : 'Show stream statistics'"
+        icon
+        x-small
+        :color="statistics ? 'primary' : undefined"
+        @click="statistics = !statistics"
+      >
+        <v-icon small>
+          mdi-chart-box-outline
+        </v-icon>
+      </v-btn>
     </div>
   </div>
 </template>
@@ -76,6 +90,7 @@ export default Vue.extend({
       bytes_downloaded: 0,
       error: null as string | null,
       opening: true,
+      statistics: false,
     }
   },
   computed: {

@@ -27,6 +27,23 @@ export interface McapVideoStats {
   height: number
   format: VideoFormat | null
   loading: boolean
+  /** Frames read out of the recording, and how many of them started a group of pictures. */
+  framesRead: number
+  keyframes: number
+  /** Frames the recorder never wrote, seen as gaps in its sequence numbers. */
+  framesLost: number
+  /** Frames read but not handed to the decoder, which is what happens before the first keyframe. */
+  framesSkipped: number
+  /** Frames holding no readable video data, so either truncated or corrupted in the recording. */
+  framesCorrupt: number
+  /** Frames the browser decoder handled and let go of, as it counts them itself. */
+  framesDecoded: number
+  framesDropped: number
+  /** Times the browser refused the video data or failed to decode it. */
+  decodeErrors: number
+  /** Frame rate and bitrate of the frames being read, measured from their recorded timestamps. */
+  frameRate: number
+  bitrate: number
 }
 
 export interface McapVideoPlayerOptions {
@@ -113,6 +130,14 @@ export class McapVideoPlayer {
 
   private skippedFrames = 0
 
+  private keyframes = 0
+
+  private framesSkipped = 0
+
+  private framesCorrupt = 0
+
+  private decodeErrors = 0
+
   private lastSampleDuration = MINIMUM_SAMPLE_DURATION_US
 
   private sequence = 1
@@ -152,6 +177,7 @@ export class McapVideoPlayer {
     this.video.addEventListener('seeking', this.onSeeking)
     this.video.addEventListener('timeupdate', this.onTimeUpdate)
     this.video.addEventListener('waiting', this.onWaiting)
+    this.video.addEventListener('error', this.onMediaError)
 
     const opened = new Promise<void>((resolve) => {
       this.mediaSource.addEventListener('sourceopen', () => resolve(), { once: true })
@@ -169,6 +195,7 @@ export class McapVideoPlayer {
     this.video.removeEventListener('seeking', this.onSeeking)
     this.video.removeEventListener('timeupdate', this.onTimeUpdate)
     this.video.removeEventListener('waiting', this.onWaiting)
+    this.video.removeEventListener('error', this.onMediaError)
     this.video.pause()
     this.video.removeAttribute('src')
     this.video.load()
@@ -176,6 +203,10 @@ export class McapVideoPlayer {
   }
 
   get stats(): McapVideoStats {
+    const {
+      framesRead, framesLost, frameRate, bitrate,
+    } = this.stream.stats
+    const quality = this.video.getVideoPlaybackQuality?.()
     return {
       bytesDownloaded: this.stream.bytesRead,
       bufferedAheadSeconds: this.bufferedAhead(),
@@ -184,6 +215,16 @@ export class McapVideoPlayer {
       height: this.config?.height ?? 0,
       format: this.pending[0]?.format ?? null,
       loading: this.loading,
+      framesRead,
+      keyframes: this.keyframes,
+      framesLost,
+      framesSkipped: this.framesSkipped,
+      framesCorrupt: this.framesCorrupt,
+      framesDecoded: quality?.totalVideoFrames ?? 0,
+      framesDropped: quality?.droppedVideoFrames ?? 0,
+      decodeErrors: this.decodeErrors,
+      frameRate,
+      bitrate,
     }
   }
 
@@ -213,6 +254,14 @@ export class McapVideoPlayer {
 
   private onTimeUpdate = (): void => {
     this.scheduleFill()
+    this.emitStats()
+  }
+
+  private onMediaError = (): void => {
+    if (this.video.error?.code === MediaError.MEDIA_ERR_DECODE) {
+      this.decodeErrors += 1
+      this.emitStats()
+    }
   }
 
   private onWaiting = (): void => {
@@ -236,6 +285,8 @@ export class McapVideoPlayer {
     if (this.destroyed || error instanceof Error && error.name === 'AbortError') {
       return
     }
+    // Reading stops here, so this is the last chance to report what it cost and got through.
+    this.emitStats()
     this.options.onError?.(error instanceof Error ? error : new Error(String(error)))
   }
 
@@ -311,8 +362,18 @@ export class McapVideoPlayer {
       }
 
       const sample = toMp4Sample(frame.data, frame.format, this.parameterSets)
+      // Nothing the muxer can do with a frame that holds no NAL unit, and the decoder would only
+      // choke on the empty sample.
+      if (sample.data.length === 0) {
+        this.framesCorrupt += 1
+        continue
+      }
+      if (sample.isKeyframe) {
+        this.keyframes += 1
+      }
       if (this.needsKeyframe) {
         if (!sample.isKeyframe) {
+          this.framesSkipped += 1
           this.skippedFrames += 1
           if (this.skippedFrames >= UNDECODABLE_FRAMES_BEFORE_SKIP) {
             this.skippedFrames = 0

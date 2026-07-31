@@ -18,6 +18,17 @@ const PARAMETER_SET_SCAN_FRAMES = 60
  */
 export const UNDECODABLE_FRAMES_BEFORE_SKIP = 30
 
+/** What reading a stream has come across. Totals cover the whole session, rates only the run. */
+export interface VideoStreamStats {
+  framesRead: number
+  /** Frames missing from the recording, counted from gaps in the recorder sequence numbers. */
+  framesLost: number
+  /** Frame rate of the frames read since reading last moved, 0 until two frames are known. */
+  frameRate: number
+  /** Recorded bitrate in bits per second, measured over the same frames. */
+  bitrate: number
+}
+
 /** Reads the beginning of a stream, where recordings that only send parameter sets once put them. */
 export async function scanParameterSets(
   reader: McapIndexedReader,
@@ -53,6 +64,22 @@ export default class VideoFrameStream {
 
   private locator: KeyframeLocator
 
+  /** Sequence of the previous frame, or null when reading just moved and continuity is unknown. */
+  private lastSequence: number | null = null
+
+  private framesRead = 0
+
+  private framesLost = 0
+
+  /** Frames of the current run, kept apart from the totals so seeking does not skew the rates. */
+  private runFrames = 0
+
+  private runBytes = 0
+
+  private runFirstLogTime: bigint | null = null
+
+  private runLastLogTime = 0n
+
   constructor(private reader: McapIndexedReader, public readonly track: VideoTrack) {
     const channel = reader.summary.channels.get(track.channelId)
     if (!channel) {
@@ -83,6 +110,42 @@ export default class VideoFrameStream {
     return this.reader.source.bytesRead
   }
 
+  get stats(): VideoStreamStats {
+    const span = this.runFirstLogTime === null ? 0 : Number(this.runLastLogTime - this.runFirstLogTime) / 1e9
+    return {
+      framesRead: this.framesRead,
+      framesLost: this.framesLost,
+      frameRate: span > 0 ? (this.runFrames - 1) / span : 0,
+      bitrate: span > 0 ? this.runBytes * 8 / span : 0,
+    }
+  }
+
+  /** Reading moved, so neither sequence continuity nor the rate window carry over. */
+  private restartRun(): void {
+    this.lastSequence = null
+    this.runFrames = 0
+    this.runBytes = 0
+    this.runFirstLogTime = null
+    this.runLastLogTime = 0n
+  }
+
+  private account(frame: VideoFrame): void {
+    if (this.lastSequence !== null) {
+      const missed = frame.sequence - this.lastSequence - 1
+      if (missed > 0) {
+        this.framesLost += missed
+      }
+    }
+    this.lastSequence = frame.sequence
+    this.framesRead += 1
+    this.runFrames += 1
+    this.runBytes += frame.data.length
+    if (this.runFirstLogTime === null) {
+      this.runFirstLogTime = frame.logTime
+    }
+    this.runLastLogTime = frame.logTime
+  }
+
   toSeconds(logTime: bigint): number {
     return Number(logTime - this.startTime) / 1e9
   }
@@ -109,6 +172,7 @@ export default class VideoFrameStream {
       ?? await this.locator.findForward(position, KEYFRAME_SEARCH_CHUNKS, signal)
     this.queue = []
     this.cursor = hint?.position ?? position
+    this.restartRun()
   }
 
   /**
@@ -119,6 +183,7 @@ export default class VideoFrameStream {
   seekToStart(): void {
     this.queue = []
     this.cursor = 0
+    this.restartRun()
   }
 
   /**
@@ -134,6 +199,7 @@ export default class VideoFrameStream {
     }
     this.queue = []
     this.cursor = hint.position
+    this.restartRun()
     return true
   }
 
@@ -155,6 +221,10 @@ export default class VideoFrameStream {
       const messages = await this.reader.readChunkMessages(chunkIndex, this.track.channelId, signal)
       this.queue = messages.map((message) => this.decoder.decode(message))
     }
-    return this.queue.shift() ?? null
+    const frame = this.queue.shift() ?? null
+    if (frame) {
+      this.account(frame)
+    }
+    return frame
   }
 }

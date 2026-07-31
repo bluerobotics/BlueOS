@@ -27,6 +27,16 @@
         </v-icon>
         <span class="mt-2 caption text-center white--text">{{ error }}</span>
       </div>
+      <table v-if="statistics && !error" class="stats-overlay grey--text text--lighten-3">
+        <tr v-for="row in stat_rows" :key="row.label">
+          <td class="stats-label">
+            {{ row.label }}
+          </td>
+          <td :class="['stats-value', row.tone]">
+            {{ row.value }}
+          </td>
+        </tr>
+      </table>
     </div>
 
     <v-progress-linear
@@ -86,6 +96,24 @@ import { prettifySize } from '@/utils/helper_functions'
 /** Time between progress updates, so that saving does not repaint the page on every frame. */
 const PROGRESS_INTERVAL_MS = 200
 
+interface StatRow {
+  label: string
+  value: string
+  /** Vuetify text colour class, used to point out the counters that indicate trouble. */
+  tone?: string
+}
+
+function share(value: number, total: number): string {
+  return value > 0 && total > 0 ? ` (${(value / total * 100).toFixed(1)}%)` : ''
+}
+
+function prettifyBitrate(bitsPerSecond: number): string {
+  if (bitsPerSecond >= 1e6) {
+    return `${(bitsPerSecond / 1e6).toFixed(1)} Mbps`
+  }
+  return `${Math.round(bitsPerSecond / 1e3)} kbps`
+}
+
 export default Vue.extend({
   name: 'McapVideoStream',
   props: {
@@ -102,6 +130,10 @@ export default Vue.extend({
       required: true,
     },
     controls: {
+      type: Boolean,
+      default: false,
+    },
+    statistics: {
       type: Boolean,
       default: false,
     },
@@ -130,6 +162,42 @@ export default Vue.extend({
     },
     export_size(): string {
       return prettifySize((this.export_progress?.bytes ?? 0) / 1024)
+    },
+    stat_rows(): StatRow[] {
+      const {
+        framesRead = 0, keyframes = 0, framesLost = 0, framesSkipped = 0, framesCorrupt = 0,
+        framesDecoded = 0, framesDropped = 0, decodeErrors = 0, frameRate = 0, bitrate = 0,
+        bufferedAheadSeconds = 0, codec = '',
+      } = this.stats
+      return [
+        { label: 'stream', value: [this.resolution, codec].filter((part) => part).join(' ') || '-' },
+        { label: 'frames', value: `${framesRead} of ${this.track.frameCount} read` },
+        { label: 'keyframes', value: `${keyframes}` },
+        {
+          label: 'lost',
+          value: `${framesLost}${share(framesLost, framesRead + framesLost)}`,
+          tone: framesLost > 0 ? 'warning--text' : undefined,
+        },
+        { label: 'skipped', value: `${framesSkipped}` },
+        {
+          label: 'corrupt',
+          value: `${framesCorrupt}`,
+          tone: framesCorrupt > 0 ? 'error--text' : undefined,
+        },
+        { label: 'decoded', value: `${framesDecoded}` },
+        {
+          label: 'dropped',
+          value: `${framesDropped}${share(framesDropped, framesDecoded)}`,
+          tone: framesDropped > 0 ? 'warning--text' : undefined,
+        },
+        {
+          label: 'decode errors',
+          value: `${decodeErrors}`,
+          tone: decodeErrors > 0 ? 'error--text' : undefined,
+        },
+        { label: 'rate', value: `${frameRate.toFixed(1)} fps · ${prettifyBitrate(bitrate)}` },
+        { label: 'buffered', value: `${bufferedAheadSeconds.toFixed(1)} s` },
+      ]
     },
   },
   mounted() {
@@ -217,5 +285,31 @@ export default Vue.extend({
 
 .stream-error {
   background: rgba(17, 24, 39, 0.85);
+}
+
+.stats-overlay {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  border-collapse: collapse;
+  background: rgba(17, 24, 39, 0.7);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.stats-label {
+  padding-right: 8px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.stats-value {
+  text-align: right;
+  white-space: nowrap;
 }
 </style>

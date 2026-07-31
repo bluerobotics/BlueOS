@@ -91,6 +91,8 @@ export interface McapOpenOptions {
 
 export interface McapMessage {
   channelId: number
+  /** Per-channel counter written by the recorder, used to notice messages that never made it. */
+  sequence: number
   logTime: bigint
   data: Uint8Array
 }
@@ -127,7 +129,9 @@ function whileWaiting<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
     return Promise.reject(abortError())
   }
   return new Promise<T>((resolve, reject) => {
-    const onAbort = (): void => reject(abortError())
+    function onAbort(): void {
+      reject(abortError())
+    }
     signal.addEventListener('abort', onAbort, { once: true })
     work.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort))
   })
@@ -194,7 +198,8 @@ export class McapIndexedReader {
     }
 
     const summaryEnd = size - MAGIC_SIZE - FOOTER_RECORD_SIZE
-    const groups = await McapIndexedReader.readSummaryOffsets(source, summaryOffsetStart, summaryEnd, tail, size, signal)
+    const groups = await McapIndexedReader
+      .readSummaryOffsets(source, summaryOffsetStart, summaryEnd, tail, size, signal)
     const statistics = groups?.get(Opcode.STATISTICS)
     const chunkIndex = groups?.get(Opcode.CHUNK_INDEX)
 
@@ -488,10 +493,12 @@ export class McapIndexedReader {
       if (opcode !== Opcode.MESSAGE || message.uint16() !== channelId) {
         return
       }
-      message.skip(4) // sequence
+      const sequence = message.uint32()
       const logTime = message.uint64()
       message.skip(8) // publish_time
-      messages.push({ channelId, logTime, data: message.bytes(end - message.offset) })
+      messages.push({
+        channelId, sequence, logTime, data: message.bytes(end - message.offset),
+      })
     })
 
     messages.sort((left, right) => Number(left.logTime - right.logTime))
