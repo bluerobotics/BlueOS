@@ -135,7 +135,7 @@ if [ "$should_run_secondary" = true ]; then
     if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 0 ]; then
         echo "No services assigned to the secondary environment; skipping secondary run."
     else
-        run_environment_phase "secondary" "$SECONDARY_PROJECT_DIR" "secondary" EMPTY_PATHS SECONDARY_SCOPE_PATHS false "$SECONDARY_COVERAGE_THRESHOLD"
+        run_environment_phase "secondary" "$SECONDARY_PROJECT_DIR" "secondary" EMPTY_PATHS SECONDARY_SCOPE_PATHS true "$SECONDARY_COVERAGE_THRESHOLD"
     fi
 fi
 
