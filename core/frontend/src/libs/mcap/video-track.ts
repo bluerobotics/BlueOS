@@ -26,6 +26,8 @@ export interface VideoTrack {
 export interface VideoFrame {
   /** MCAP log time in nanoseconds, which is also the time base used by the chunk index. */
   logTime: bigint
+  /** Recorder counter for this channel. Gaps mean frames that never reached the recording. */
+  sequence: number
   format: VideoFormat
   data: Uint8Array
 }
@@ -64,6 +66,8 @@ export class VideoFrameDecoder {
     if (!SUPPORTED_FORMATS.includes(format as VideoFormat)) {
       throw new Error(`Unsupported video format '${format}'. Only ${SUPPORTED_FORMATS.join(' and ')} can be played.`)
     }
-    return { logTime: message.logTime, format: format as VideoFormat, data }
+    return {
+      logTime: message.logTime, sequence: message.sequence, format: format as VideoFormat, data,
+    }
   }
 }
