@@ -148,7 +148,7 @@ class MavlinkMessenger:
         return {
             "type": "STATUSTEXT",
             "severity": {"type": "MAV_SEVERITY_NOTICE"},
-            "text": list(text),
+            "text": text,
             "id": 0,
             "chunk_seq": 0,
         }
