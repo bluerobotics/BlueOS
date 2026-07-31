@@ -11,6 +11,8 @@
     "dev": "vite --host",
     "build": "NODE_ENV=production vite build",
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
+    "test:parameter-metadata": "esbuild tests/parameter-metadata.spec.ts --bundle --platform=node --format=cjs --outfile=/tmp/blueos-parameter-metadata-test.cjs && node --test /tmp/blueos-parameter-metadata-test.cjs",
+    "test:mavlink2rest-compat": "esbuild tests/mavlink2rest-compat.spec.ts --bundle --platform=node --format=cjs --outfile=/tmp/blueos-mavlink2rest-compat-test.cjs && node --test /tmp/blueos-mavlink2rest-compat-test.cjs",
     "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src && stylelint 'src/**/*.{vue,css,scss}'",
     "lint:css": "stylelint 'src/**/*.{vue,css,scss}'",
     "lint:css:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix"
