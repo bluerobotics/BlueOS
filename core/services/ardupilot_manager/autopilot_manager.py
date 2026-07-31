@@ -23,6 +23,7 @@ from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
+from parameter_metadata import ParameterMetadataManager
 from settings import Settings
 from typedefs import (
     Firmware,
@@ -45,6 +46,7 @@ class AutoPilotManager(metaclass=Singleton):
         self._current_board: Optional[FlightController] = None
         self.should_be_running = False
         self.mavlink_manager = MavlinkManager()
+        self.parameter_metadata_manager: Optional[ParameterMetadataManager] = None
 
         # Load settings and do the initial configuration
         if self.settings.load():
@@ -159,6 +161,7 @@ class AutoPilotManager(metaclass=Singleton):
             self.settings.firmware_folder, self.settings.defaults_folder, self.settings.user_firmware_folder
         )
         self.vehicle_manager = VehicleManager()
+        self.parameter_metadata_manager = ParameterMetadataManager(self.vehicle_manager)
         self._heartbeat_fail_count = 0  # Consecutive heartbeat failures
         self._max_heartbeat_failures = 10  # Threshold for restarting Ardupilot after consecutive heartbeat failures
 
@@ -622,6 +625,8 @@ class AutoPilotManager(metaclass=Singleton):
 
     async def kill_ardupilot(self) -> None:
         self.should_be_running = False
+        if self.parameter_metadata_manager is not None:
+            self.parameter_metadata_manager.reset_for_boot()
         if not self.current_board or self.current_board.platform != Platform.SITL:
             try:
                 logger.info("Disarming vehicle.")
@@ -681,11 +686,23 @@ class AutoPilotManager(metaclass=Singleton):
             self.should_be_running = True
 
     async def restart_ardupilot(self) -> None:
+        if self.parameter_metadata_manager is not None:
+            self.parameter_metadata_manager.reset_for_boot()
         if self.current_board is None or self.current_board.type in [PlatformType.SITL, PlatformType.Linux]:
             await self.kill_ardupilot()
             await self.start_ardupilot()
             return
         await self.vehicle_manager.reboot_vehicle()
+
+    async def update_parameter_metadata(self) -> None:
+        while True:
+            manager = self.parameter_metadata_manager
+            if manager is not None:
+                try:
+                    await manager.refresh(allow_request=self.should_be_running)
+                except Exception as error:
+                    logger.warning(f"Parameter metadata update failed: {error}")
+            await asyncio.sleep(1.0)
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
