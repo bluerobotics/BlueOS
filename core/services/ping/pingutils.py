@@ -4,8 +4,8 @@ from enum import IntEnum
 from typing import Optional
 
 import psutil
-from exceptions import InvalidDeviceDescriptor
 from loguru import logger
+from ping_exceptions import InvalidDeviceDescriptor
 from serial.tools.list_ports_linux import SysFS
 
 
