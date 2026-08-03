@@ -62,6 +62,7 @@
     "semver-stable": "^3.0.0",
     "simple-icons": "11",
     "three": "0.156.1",
+    "tslib": "^2.8.1",
     "util": "^0.12.5",
     "uuid": "^9.0.0",
     "vue": "^2.6.11",
