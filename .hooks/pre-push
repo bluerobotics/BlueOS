@@ -6,12 +6,8 @@ ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR"
 
 CORE_DIR="$ROOT_DIR/core"
-PRIMARY_PROJECT_DIR="$CORE_DIR"
-SECONDARY_PROJECT_DIR="$CORE_DIR/python-venv2"
-declare -a SECONDARY_SCOPE_PATHS=()
 # shellcheck disable=SC2034
 declare -a EMPTY_PATHS=()
-SECONDARY_COVERAGE_THRESHOLD="${SECONDARY_COVERAGE_THRESHOLD:-65}"
 
 source "$ROOT_DIR/.hooks/lib/common.sh"
 source "$ROOT_DIR/.hooks/lib/python_checks.sh"
@@ -26,16 +22,6 @@ isort_args=("${ISORT_CONFIG_ARGS[@]}" "${ISORT_CHECK_ARGS[@]}")
 # shellcheck disable=SC2034
 black_args=("${BLACK_CONFIG_ARGS[@]}" "${BLACK_CHECK_ARGS[@]}")
 fixing=false
-fix_primary=false
-fix_secondary=false
-should_run_primary=true
-should_run_secondary=true
-
-load_secondary_scope_paths
-if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 0 ]; then
-    echo "No secondary scope paths found; forcing secondary environment check to be skipped."
-    should_run_secondary=false
-fi
 
 for arg in "$@"; do
     case $arg in
@@ -45,24 +31,6 @@ for arg in "$@"; do
             # shellcheck disable=SC2034
             black_args=("${BLACK_CONFIG_ARGS[@]}")
             fixing=true
-            fix_primary=true
-            fix_secondary=true
-            ;;
-        --fix-primary)
-            # shellcheck disable=SC2034
-            isort_args=("${ISORT_CONFIG_ARGS[@]}")
-            # shellcheck disable=SC2034
-            black_args=("${BLACK_CONFIG_ARGS[@]}")
-            fixing=true
-            fix_primary=true
-            ;;
-        --fix-secondary)
-            # shellcheck disable=SC2034
-            isort_args=("${ISORT_CONFIG_ARGS[@]}")
-            # shellcheck disable=SC2034
-            black_args=("${BLACK_CONFIG_ARGS[@]}")
-            fixing=true
-            fix_secondary=true
             ;;
         -h|--help)
             print_usage
@@ -77,13 +45,7 @@ for arg in "$@"; do
 done
 
 if [ "$fixing" = true ]; then
-    should_run_primary=$fix_primary
-    should_run_secondary=$fix_secondary
-    if [ "$should_run_primary" = false ] && [ "$should_run_secondary" = false ]; then
-        should_run_primary=true
-        should_run_secondary=true
-    fi
-    echo "Fix mode enabled. Running isort/black only in the selected environments."
+    echo "Fix mode enabled. Running isort/black only."
 fi
 
 check_required_tools
@@ -124,19 +86,10 @@ run_bootstrap_checks() {
     mypy --config-file "$CORE_DIR/pyproject.toml" "$bootstrap_dir"
 }
 
-if [ "$should_run_primary" = true ]; then
-    run_environment_phase "primary" "$PRIMARY_PROJECT_DIR" "primary" SECONDARY_SCOPE_PATHS EMPTY_PATHS true
-    # Bootstrap checks reuse the primary venv (run_environment_phase runs in a subshell so we re-activate)
-    # shellcheck disable=SC1091
-    source "$PRIMARY_PROJECT_DIR/.venv/bin/activate"
-    run_bootstrap_checks
-fi
-if [ "$should_run_secondary" = true ]; then
-    if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 0 ]; then
-        echo "No services assigned to the secondary environment; skipping secondary run."
-    else
-        run_environment_phase "secondary" "$SECONDARY_PROJECT_DIR" "secondary" EMPTY_PATHS SECONDARY_SCOPE_PATHS true "$SECONDARY_COVERAGE_THRESHOLD"
-    fi
-fi
+run_environment_phase "core" "$CORE_DIR" EMPTY_PATHS EMPTY_PATHS true
+# Bootstrap checks reuse the venv (run_environment_phase runs in a subshell so we re-activate)
+# shellcheck disable=SC1091
+source "$CORE_DIR/.venv/bin/activate"
+run_bootstrap_checks
 
 exit 0

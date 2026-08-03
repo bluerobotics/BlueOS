@@ -5,9 +5,7 @@ print_usage() {
 Usage: .hooks/pre-push [options]
 
 Options:
-  --fix                   Run formatters (isort/black) for both environments and skip other checks.
-  --fix-primary           Same as --fix but limited to the primary environment.
-  --fix-secondary         Same as --fix but limited to the secondary environment.
+  --fix                   Run formatters (isort/black) and skip other checks.
   -h, --help              Show this help message.
 EOF
 }
