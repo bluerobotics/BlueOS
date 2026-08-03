@@ -28,6 +28,15 @@ class FileSource implements ByteSource {
   }
 }
 
+/** Part of the recording to save, as the player would mark it: FROM=90 TO=120 saves those seconds. */
+function wantedRange(): { startSeconds: number, endSeconds: number } | undefined {
+  const { FROM, TO } = process.env
+  if (!FROM && !TO) {
+    return undefined
+  }
+  return { startSeconds: Number(FROM ?? 0), endSeconds: TO ? Number(TO) : Infinity }
+}
+
 /** Exports every wanted track. With TRACK=all they run together, sharing one reader. */
 async function run(path: string, output: string): Promise<void> {
   const source = new FileSource(path)
@@ -46,9 +55,11 @@ async function run(path: string, output: string): Promise<void> {
     startTime: reader.summary.startTime,
   } as Awaited<ReturnType<typeof openMcapVideoRecording>>
 
+  const range = wantedRange()
   await Promise.all(chosen.map(async (track) => {
     let reported = 0
     const blob = await exportTrackAsMp4(recording, track, {
+      range,
       onProgress: (progress) => {
         if (progress.seconds - reported >= 30) {
           reported = progress.seconds
