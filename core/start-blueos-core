@@ -8,8 +8,8 @@ echo "BlueOS ${GIT_DESCRIBE_TAGS}"
 BLUEOS_PATH=/home/pi
 SERVICES_PATH=$BLUEOS_PATH/services
 TOOLS_PATH=$BLUEOS_PATH/tools
-BLUEOS_VENV_SECONDARY=${BLUEOS_VENV_SECONDARY:-/usr/blueos/venv2}
-BLUEOS_PYTHON_BIN_SECONDARY="$BLUEOS_VENV_SECONDARY/bin/python3"
+BLUEOS_VENV=${BLUEOS_VENV:-/usr/blueos/venv}
+BLUEOS_PYTHON_BIN="$BLUEOS_VENV/bin/python3"
 
 # MAVLink configuration
 MAV_SYSTEM_ID=${MAV_SYSTEM_ID:-1}
@@ -120,35 +120,35 @@ INFRA_SERVICES=(
 )
 
 PRIORITY_SERVICES=(
-    'autopilot',0,0,0,0,"nice --19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/ardupilot_manager/main.py"
-    'cable_guy',0,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/cable_guy/main.py"
+    'autopilot',0,0,0,0,"nice --19 $BLUEOS_PYTHON_BIN $SERVICES_PATH/ardupilot_manager/main.py"
+    'cable_guy',0,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/cable_guy/main.py"
     'video',0,0,0,0,"nice --19 mavlink-camera-manager --default-settings BlueROVUDP --mavlink tcpout:127.0.0.1:5777 --mavlink-system-id $MAV_SYSTEM_ID --mavlink-camera-component-id-range=100-105 --gst-feature-rank omxh264enc=0,v4l2h264enc=250,x264enc=260 --log-path /var/logs/blueos/services/mavlink-camera-manager --stun-server stun://stun.l.google.com:19302 --enable-realtime-threads --recorder=external --zenoh --verbose"
     'mavlink2rest',0,0,0,0,"mavlink2rest --connect=udpout:127.0.0.1:14001 --server [::]:6040 --system-id $MAV_SYSTEM_ID --component-id $MAV_COMPONENT_ID_ONBOARD_COMPUTER4"
 )
 
 SERVICES=(
     # This services are not prioritized because they are not fundamental for the vehicle to work
-    'kraken',0,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/kraken/main.py"
-    'wifi',0,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/wifi/main.py --socket wlan0"
+    'kraken',0,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN $SERVICES_PATH/kraken/main.py"
+    'wifi',0,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN $SERVICES_PATH/wifi/main.py --socket wlan0"
     # This services are not as important as the others
-    'beacon',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/beacon/main.py"
-    'bridget',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/bridget/main.py $RUN_AS_REGULAR_USER_END"
-    'commander',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/commander/main.py"
-    'nmea_injector',250,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/nmea_injector/main.py"
-    'helper',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/helper/main.py"
+    'beacon',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/beacon/main.py"
+    'bridget',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $BLUEOS_PYTHON_BIN $SERVICES_PATH/bridget/main.py $RUN_AS_REGULAR_USER_END"
+    'commander',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/commander/main.py"
+    'nmea_injector',250,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN $SERVICES_PATH/nmea_injector/main.py"
+    'helper',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/helper/main.py"
     'iperf3',250,0,0,0," iperf3 --server --port 5201"
     'linux2rest',250,0,0,0,"linux2rest --log-settings netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10,usb=60"
     'filebrowser',250,0,0,0,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
-    'versionchooser',0,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/versionchooser/main.py"
-    'pardal',250,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/pardal/main.py"
-    'ping',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
+    'versionchooser',0,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/versionchooser/main.py"
+    'pardal',250,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN $SERVICES_PATH/pardal/main.py"
+    'ping',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $BLUEOS_PYTHON_BIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"
     'user_terminal',0,0,0,0,"cat /etc/motd"
     'ttyd',250,0,0,0,'nice -19 ttyd -p 8088 sh -c "/usr/bin/tmux attach -t user_terminal || /usr/bin/tmux new -s user_terminal"'
     'nginx',250,0,0,0,"nice -18 nginx -g \"daemon off;\" -c $TOOLS_PATH/nginx/nginx.conf"
-    'bag_of_holding',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/bag_of_holding/main.py"
-    # [Disabled] 'recorder_extractor',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/recorder_extractor/main.py"
-    'disk_usage',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/disk_usage/main.py"
-    'customization',250,0,0,0,"$BLUEOS_PYTHON_BIN_SECONDARY $SERVICES_PATH/customization/main.py"
+    'bag_of_holding',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/bag_of_holding/main.py"
+    # [Disabled] 'recorder_extractor',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/recorder_extractor/main.py"
+    'disk_usage',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/disk_usage/main.py"
+    'customization',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/customization/main.py"
 )
 
 tmux -f /etc/tmux.conf start-server
