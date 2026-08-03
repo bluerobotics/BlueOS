@@ -669,7 +669,13 @@ export default Vue.extend({
           (element) => element.repository !== repository || element.tag !== tag,
         )
       })
-        .catch((error) => { alert(error.response?.data ?? error.message) })
+        .catch((error) => {
+          notifier.pushError(
+            'VERSION_CHOOSER_DELETE_FAIL',
+            error.response?.data?.error ?? error.message,
+            true,
+          )
+        })
         .finally(() => { this.deleting = '' })
     },
     imageIsAvailableLocally(sha: string) : boolean {
