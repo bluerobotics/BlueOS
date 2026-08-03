@@ -3,7 +3,7 @@ import json
 import os
 import pathlib
 import threading
-from typing import Any, ClassVar, Dict, List, Type, TypeVar, cast
+from typing import Any, ClassVar, Dict, List
 
 from commonwealth.settings.exceptions import (
     BadAttributes,
@@ -16,18 +16,6 @@ from loguru import logger
 from pydantic import BaseModel, ValidationError
 
 _save_lock = threading.Lock()
-
-try:
-    from pydantic.version import VERSION as PYDANTIC_VERSION
-except ImportError:  # pragma: no cover - fallback for very old pydantic versions
-    from pydantic import __version__ as PYDANTIC_VERSION
-
-
-from packaging.version import Version
-
-PYDANTIC_V2 = Version(PYDANTIC_VERSION) >= Version("2.0.0")
-
-SettingsType = TypeVar("SettingsType", bound="PydanticSettings")
 
 
 class PydanticSettings(BaseModel):
@@ -97,7 +85,7 @@ class PydanticSettings(BaseModel):
 
             # Copy new content to settings class
             try:
-                new = self._model_validate(result)
+                new = self.__class__.model_validate(result)
                 self.__dict__.update(new.__dict__)
             except ValidationError as e:
                 raise BadSettingsFile(f"Settings file contains invalid data: {e}") from e
@@ -127,7 +115,7 @@ class PydanticSettings(BaseModel):
         # Serialize inside the lock so the write section runs by a single thread at a time. This keeps the
         # temporary file from colliding and ensures the last writer serializes every mutation made before it.
         with _save_lock:
-            json_data = self._model_dump()
+            json_data = self.model_dump(mode="json")
 
             # Create a temporary file in same directory, write and rename it to the original file
             temp_file = file_path.with_suffix(".tmp")
@@ -145,14 +133,3 @@ class PydanticSettings(BaseModel):
         logger.debug("Resetting settings")
         new = self.__class__()
         self.__dict__.update(new.__dict__)
-
-    @classmethod
-    def _model_validate(cls: Type[SettingsType], data: Dict[str, Any]) -> SettingsType:
-        if PYDANTIC_V2:
-            return cast(SettingsType, cls.model_validate(data))  # type: ignore[attr-defined]
-        return cls.parse_obj(data)
-
-    def _model_dump(self) -> Dict[str, Any]:
-        if PYDANTIC_V2:
-            return cast(Dict[str, Any], self.model_dump(mode="json"))  # type: ignore[attr-defined]
-        return self.dict()
