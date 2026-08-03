@@ -68,15 +68,18 @@
         <span v-if="stats.codec" class="ml-3">{{ stats.codec }}</span>
         <v-btn
           v-if="!error"
-          v-tooltip="'Save this stream as an MP4 file'"
-          icon
+          v-tooltip="clip ? 'Save the chosen part of this stream as a video file'
+            : 'Save this whole stream as a video file'"
           x-small
+          text
+          color="primary"
           class="ml-2"
           @click="saveMp4"
         >
-          <v-icon small>
+          <v-icon x-small left>
             mdi-download
           </v-icon>
+          MP4
         </v-btn>
       </template>
     </div>
@@ -86,7 +89,9 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import { exportTrackAsMp4, Mp4ExportProgress, saveBlob } from '@/libs/mcap/export'
+import {
+  exportTrackAsMp4, Mp4ExportProgress, Mp4ExportRange, saveBlob,
+} from '@/libs/mcap/export'
 import {
   McapVideoPlayer, McapVideoRecording, McapVideoStats,
 } from '@/libs/mcap/player'
@@ -136,6 +141,11 @@ export default Vue.extend({
     statistics: {
       type: Boolean,
       default: false,
+    },
+    /** Part of the recording to save, or null to save the whole stream. */
+    clip: {
+      type: Object as PropType<Mp4ExportRange | null>,
+      default: null,
     },
   },
   data() {
@@ -225,12 +235,29 @@ export default Vue.extend({
     this.export_controller?.abort()
   },
   methods: {
+    /** Recording, stream and, when only a part is saved, the seconds it covers. */
+    fileName(clip: Mp4ExportRange | null): string {
+      const base = `${this.name}-${this.track.name}`
+      if (!clip) {
+        return `${base}.mp4`
+      }
+      const end = Number.isFinite(clip.endSeconds) ? `${Math.round(clip.endSeconds)}s` : 'end'
+      return `${base}-${Math.round(clip.startSeconds)}s-${end}.mp4`
+    },
     async saveMp4(): Promise<void> {
       const controller = new AbortController()
+      // Held for the whole export, so moving the marks meanwhile cannot rename what is being saved.
+      const clip = this.clip as Mp4ExportRange | null
+      const end = Math.min(clip?.endSeconds ?? Infinity, this.recording.durationSeconds)
       this.export_controller = controller
-      this.export_progress = { seconds: 0, durationSeconds: this.recording.durationSeconds, bytes: 0 }
+      this.export_progress = {
+        seconds: 0,
+        durationSeconds: Math.max(end - (clip?.startSeconds ?? 0), 0),
+        bytes: 0,
+      }
       try {
         const file = await exportTrackAsMp4(this.recording, this.track, {
+          range: clip ?? undefined,
           signal: controller.signal,
           onProgress: (progress) => {
             const now = Date.now()
@@ -240,7 +267,7 @@ export default Vue.extend({
             }
           },
         })
-        saveBlob(file, `${this.name}-${this.track.name}.mp4`)
+        saveBlob(file, this.fileName(clip))
       } catch (error) {
         if (!(error instanceof Error) || error.name !== 'AbortError') {
           this.$emit('export-error', error)

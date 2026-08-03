@@ -179,17 +179,33 @@
       @click:outside="closePlayer"
     >
       <v-card class="player-card">
-        <v-btn
-          icon
-          small
-          class="dialog-close"
-          color="primary"
-          @click.stop="closePlayer"
-        >
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-        <v-card-title class="headline">
-          {{ activeRecord?.name }}
+        <v-card-title class="headline d-flex align-center">
+          <span class="text-truncate">{{ activeRecord?.name }}</span>
+          <v-spacer />
+          <v-btn
+            v-tooltip="'Download the recording as it was made, to open in other tools'"
+            small
+            text
+            color="primary"
+            :href="activeRecord?.download_url"
+            :download="activeRecord?.name"
+            @click.stop
+          >
+            <v-icon small left>
+              mdi-download
+            </v-icon>
+            {{ activeRecord?.kind.toUpperCase() }}
+          </v-btn>
+          <v-btn
+            v-tooltip="'Close'"
+            icon
+            small
+            class="ml-2"
+            color="primary"
+            @click.stop="closePlayer"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </v-card-title>
         <v-card-text>
           <mcap-video-player
@@ -215,19 +231,6 @@
             </video>
           </div>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            icon
-            color="primary"
-            :href="activeRecord?.download_url"
-            :download="activeRecord?.name"
-            :title="`Download ${activeRecord?.name ?? ''}`"
-            @click.stop
-          >
-            <v-icon>mdi-download</v-icon>
-          </v-btn>
-        </v-card-actions>
       </v-card>
     </v-dialog>
   </v-container>
@@ -407,13 +410,6 @@ export default Vue.extend({
   inset: 0;
   background: #eceff1;
   pointer-events: none;
-}
-
-.dialog-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1;
 }
 
 .player-wrapper {

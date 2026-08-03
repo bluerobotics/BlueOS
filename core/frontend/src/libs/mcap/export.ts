@@ -1,9 +1,14 @@
 /**
- * Writes a video stream of an MCAP recording out as an MP4 file, in the browser.
+ * Writes a video stream of an MCAP recording, or a part of one, out as an MP4 file in the browser.
  *
  * The frames stored in the recording are already H264 or H265, so saving is a matter of wrapping them
  * in a container: nothing is decoded or encoded, and the picture is exactly what was recorded. The
  * file is not fragmented, so players and editors that only understand ordinary MP4 read it too.
+ *
+ * Saving a range is what keeps the transfer down. Frames live inside compressed MCAP chunks that also
+ * carry every other topic recorded at the same time, so a chunk can only be read whole: saving a
+ * whole stream means downloading practically the whole recording, while saving a minute of it only
+ * downloads the chunks that minute falls in.
  */
 import { CodecConfig, ParameterSetCache, toMp4Sample } from './codec'
 import VideoFrameStream, { scanParameterSets, UNDECODABLE_FRAMES_BEFORE_SKIP } from './frame-stream'
@@ -29,7 +34,16 @@ export interface Mp4ExportProgress {
   bytes: number
 }
 
+/** Part of a recording to save, in seconds from its start, as the player counts them. */
+export interface Mp4ExportRange {
+  startSeconds: number
+  /** Infinity to save through to the end of the recording. */
+  endSeconds: number
+}
+
 export interface Mp4ExportOptions {
+  /** Defaults to the whole stream. */
+  range?: Mp4ExportRange
   onProgress?: (progress: Mp4ExportProgress) => void
   signal?: AbortSignal
 }
@@ -38,6 +52,12 @@ function abortError(): Error {
   const error = new Error('The export was cancelled.')
   error.name = 'AbortError'
   return error
+}
+
+/** How long a sample lasts, as the gap to the frame that follows it, within what MP4 can express. */
+function sampleDuration(logTime: bigint, nextLogTime: bigint): number {
+  const delta = Math.round(Number(nextLogTime - logTime) / 1000)
+  return Math.min(Math.max(delta, MINIMUM_SAMPLE_DURATION_US), MAXIMUM_SAMPLE_DURATION_US)
 }
 
 interface HeldSample {
@@ -114,15 +134,24 @@ class Mp4FileBuilder {
   }
 }
 
-/** Reads a whole video stream and returns it as an MP4 file ready to be saved. */
+/** Reads a video stream, or the requested range of it, and returns it as an MP4 file ready to save. */
 export async function exportTrackAsMp4(
   recording: McapVideoRecording,
   track: VideoTrack,
   options: Mp4ExportOptions = {},
 ): Promise<Blob> {
-  const { onProgress, signal } = options
+  const { onProgress, signal, range } = options
   const stream = new VideoFrameStream(recording.reader, track)
-  stream.seekToStart()
+  const startSeconds = Math.max(0, range?.startSeconds ?? 0)
+  const endSeconds = Math.min(range?.endSeconds ?? Infinity, stream.durationSeconds)
+  // Video can only be decoded from a keyframe on, so a range starts at the one covering its start.
+  // That is also why the file may open a moment earlier than asked for.
+  if (startSeconds > 0) {
+    await stream.seekToKeyframe(startSeconds, signal)
+  } else {
+    stream.seekToStart()
+  }
+  const endLogTime = range && Number.isFinite(range.endSeconds) ? stream.toLogTime(range.endSeconds) : null
 
   const parameterSets = new ParameterSetCache()
   let builder: Mp4FileBuilder | null = null
@@ -137,6 +166,14 @@ export async function exportTrackAsMp4(
     // eslint-disable-next-line no-await-in-loop
     const frame = await stream.next(signal)
     if (!frame) {
+      break
+    }
+    // The first frame past the end is not saved, but it does say how long the one before it lasts.
+    if (endLogTime !== null && frame.logTime > endLogTime) {
+      if (builder && held) {
+        builder.add(held, sampleDuration(held.logTime, frame.logTime))
+        held = null
+      }
       break
     }
 
@@ -164,12 +201,11 @@ export async function exportTrackAsMp4(
     }
 
     if (held) {
-      const delta = Math.round(Number(frame.logTime - held.logTime) / 1000)
-      duration = Math.min(Math.max(delta, MINIMUM_SAMPLE_DURATION_US), MAXIMUM_SAMPLE_DURATION_US)
+      duration = sampleDuration(held.logTime, frame.logTime)
       builder.add(held, duration)
       onProgress?.({
-        seconds: stream.toSeconds(held.logTime),
-        durationSeconds: stream.durationSeconds,
+        seconds: Math.max(0, stream.toSeconds(held.logTime) - startSeconds),
+        durationSeconds: Math.max(endSeconds - startSeconds, 0),
         bytes: builder.bytes,
       })
     }
@@ -177,7 +213,9 @@ export async function exportTrackAsMp4(
   }
 
   if (!builder) {
-    throw new Error('This video stream holds no keyframe, so there is nothing that can be saved.')
+    throw new Error(range
+      ? 'The selected part of this video stream holds no keyframe, so there is nothing that can be saved.'
+      : 'This video stream holds no keyframe, so there is nothing that can be saved.')
   }
   if (held) {
     // The last frame keeps the duration of the one before it, since nothing follows to measure it.
