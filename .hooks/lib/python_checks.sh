@@ -16,98 +16,33 @@ setup_python_environment() {
     export PATH="$VIRTUAL_ENV/bin:$PATH"
 }
 
-load_secondary_scope_paths() {
-    if [ -n "${BLUEOS_SECONDARY_SCOPE:-}" ]; then
-        read -r -a SECONDARY_SCOPE_PATHS <<<"${BLUEOS_SECONDARY_SCOPE}"
-        return
-    fi
-
-    local pyproject="$SECONDARY_PROJECT_DIR/pyproject.toml"
-    if [ ! -f "$pyproject" ]; then
-        echo "Missing secondary pyproject: $pyproject" >&2
-        exit 1
-    fi
-
-    local scope_script="$ROOT_DIR/.hooks/lib/get_secondary_scope.py"
-    if [ ! -x "$scope_script" ]; then
-        echo "Missing scope helper: $scope_script"
-        exit 1
-    fi
-
-    local scope_output
-    if ! scope_output=$(
-        "$scope_script" --core-dir "$CORE_DIR" --pyproject "$pyproject"
-    ); then
-        echo "Failed to load secondary scope; see errors above." >&2
-        exit 1
-    fi
-    mapfile -t SECONDARY_SCOPE_PATHS <<<"$scope_output"
-    if [ "${#SECONDARY_SCOPE_PATHS[@]}" -eq 1 ] && [ -z "${SECONDARY_SCOPE_PATHS[0]}" ]; then
-        SECONDARY_SCOPE_PATHS=()
-    fi
-}
-
-path_matches_any() {
-    local file="$1"
-    shift || true
-    local scope_path
-    for scope_path in "$@"; do
-        [[ -z "$scope_path" ]] && continue
-        [[ $file == "$scope_path" || $file == "$scope_path/"* ]] && return 0
-    done
-    return 1
-}
-
 collect_python_files() {
-    case "$1" in
-        primary|secondary) local scope="$1";;
-        *) echo "${FUNCNAME[0]}: scope must be 'primary' or 'secondary'" >&2; return 1;;
-    esac
-
     git -C "$CORE_DIR" ls-files '*.py' |
     while read -r file; do
         [[ -z "$file" ]] && continue
-        if path_matches_any "$file" "${SECONDARY_SCOPE_PATHS[@]}"; then
-            [[ "$scope" == secondary ]] && echo "$file"
-        else
-            [[ "$scope" == primary ]] && echo "$file"
-        fi
+        echo "$file"
     done
 }
 
 collect_mypy_targets() {
-    case "$1" in
-        primary|secondary) local scope="$1";;
-        *) echo "${FUNCNAME[0]}: scope must be 'primary' or 'secondary'" >&2; return 1;;
-    esac
-
     git -C "$CORE_DIR" ls-files '*/pyproject.toml' |
     while read -r project; do
         [[ $project == libs/* || $project == services/* ]] || continue
-
-        if path_matches_any "$project" "${SECONDARY_SCOPE_PATHS[@]}"; then
-            [[ $scope == secondary ]] && echo "$(dirname "$project")"
-        else
-            [[ $scope == primary ]] && echo "$(dirname "$project")"
-        fi
+        echo "$(dirname "$project")"
     done
 }
 
 run_python_checks() {
     local env_label="$1"
-    case "$2" in
-        primary|secondary) local scope="$2";;
-        *) echo "${FUNCNAME[0]}: scope must be 'primary' or 'secondary'" >&2; return 1;;
-    esac
-    local pytest_ignores_ref="$3"
-    local pytest_targets_ref="$4"
+    local pytest_ignores_ref="$2"
+    local pytest_targets_ref="$3"
     local -n pytest_ignores="$pytest_ignores_ref"
     local -n pytest_targets="$pytest_targets_ref"
 
     echo "Running Python tooling for ${env_label}"
 
     local python_files=()
-    mapfile -t python_files < <(collect_python_files "$scope")
+    mapfile -t python_files < <(collect_python_files)
 
     if [ "${#python_files[@]}" -eq 0 ]; then
         echo "No Python files found for ${env_label}, skipping."
@@ -134,7 +69,7 @@ run_python_checks() {
     pylint "${python_files[@]}"
 
     local mypy_targets=()
-    mapfile -t mypy_targets < <(collect_mypy_targets "$scope")
+    mapfile -t mypy_targets < <(collect_mypy_targets)
     if [ "${#mypy_targets[@]}" -gt 0 ]; then
         echo "Running mypy (${env_label}).."
         local mypy_bin="${VIRTUAL_ENV:-}/bin/mypy"
@@ -168,14 +103,10 @@ run_python_checks() {
 run_environment_phase() {
     local env_label="$1"
     local project_dir="$2"
-    case "$3" in
-        primary|secondary) local scope="$3";;
-        *) echo "${FUNCNAME[0]}: scope must be 'primary' or 'secondary'" >&2; return 1;;
-    esac
-    local pytest_ignores_ref="$4"
-    local pytest_targets_ref="$5"
-    local run_bootstrap="${6:-false}"
-    local coverage_threshold="${7:-}"
+    local pytest_ignores_ref="$3"
+    local pytest_targets_ref="$4"
+    local run_bootstrap="${5:-false}"
+    local coverage_threshold="${6:-}"
 
     (
         setup_python_environment "$env_label" "$project_dir"
@@ -187,6 +118,6 @@ run_environment_phase() {
         else
             unset COVERAGE_FAIL_UNDER_OVERRIDE
         fi
-        run_python_checks "$env_label" "$scope" "$pytest_ignores_ref" "$pytest_targets_ref"
+        run_python_checks "$env_label" "$pytest_ignores_ref" "$pytest_targets_ref"
     )
 }
