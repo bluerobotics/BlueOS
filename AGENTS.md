@@ -63,13 +63,13 @@ When explaining:
 Before adding ANY dependency, check all `pyproject.toml` files. Use exact versions if already specified:
 
 ```toml
-aiohttp>=3.7.4,<=3.13.2
+aiohttp==3.13.2
 eclipse-zenoh==1.9.0
-fastapi-versioning==0.9.1
-fastapi==0.105.0
-loguru==0.5.3
-pydantic==1.10.12
-uvicorn==0.18.0
+fastapi-versioning==0.10.0
+fastapi==0.125.0
+loguru==0.7.3
+pydantic==2.12.5
+uvicorn==0.38.0
 ```
 
 > Always sort dependencies alphabetically
