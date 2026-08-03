@@ -96,7 +96,7 @@ def get_docker_accounts() -> PrettyJSONResponse:
 
     accounts = root_accounts + user_accounts
 
-    return PrettyJSONResponse(content=[account.dict() for account in accounts])
+    return PrettyJSONResponse(content=[account.model_dump() for account in accounts])
 
 
 def make_docker_login(info: DockerLoginInfo) -> None:
