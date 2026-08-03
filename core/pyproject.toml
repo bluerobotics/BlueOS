@@ -6,6 +6,23 @@ requires-python = ">=3.11"
 dependencies = [
   "bridges",
   "commonwealth",
+  "filebrowser",
+  "ardupilot_manager",
+  "bag_of_holding",
+  "beacon",
+  "bridget",
+  "cable_guy",
+  "commander",
+  "customization",
+  "disk_usage",
+  "versionchooser",
+  "kraken",
+  "helper",
+  "nmea_injector",
+  "recorder_extractor",
+  "pardal",
+  "ping",
+  "wifi",
 ]
 
 [dependency-groups]
@@ -38,26 +55,28 @@ default-groups = ["dev", "lint"]
 [tool.uv.sources]
 bridges = { workspace = true }
 commonwealth = { workspace = true }
+filebrowser = { workspace = true }
+ardupilot_manager = { workspace = true }
+bag_of_holding = { workspace = true }
+beacon = { workspace = true }
+bridget = { workspace = true }
+cable_guy = { workspace = true }
+commander = { workspace = true }
+customization = { workspace = true }
+disk_usage = { workspace = true }
+versionchooser = { workspace = true }
+kraken = { workspace = true }
+helper = { workspace = true }
+nmea_injector = { workspace = true }
+recorder_extractor = { workspace = true }
+pardal = { workspace = true }
+ping = { workspace = true }
+wifi = { workspace = true }
 
 [tool.uv.workspace]
-members = ["services/*", "libs/*"]
-exclude = [
-  "services/ardupilot_manager",
-  "services/bag_of_holding",
-  "services/beacon",
-  "services/bridget",
-  "services/cable_guy",
-  "services/commander",
-  "services/customization",
-  "services/disk_usage",
-  "services/versionchooser",
-  "services/kraken",
-  "services/helper",
-  "services/nmea_injector",
-  "services/recorder_extractor",
-  "services/ping",
-  "services/pardal",
-  "services/wifi",
+members = [
+  "libs/*",
+  "services/*",
 ]
 
 # ------------------ Tooling Configurations ------------------
