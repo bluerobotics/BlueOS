@@ -19,7 +19,7 @@ MAV_COMPONENT_ID_ONBOARD_COMPUTER4=194
 # Enable Rust backtrace for all programs
 RUST_BACKTRACE=1
 
-RUN_AS_REGULAR_USER_BEGIN="sudo -u blueos bash -c \"source /etc/blueosrc && "
+RUN_AS_REGULAR_USER_BEGIN="sudo -u blueos --preserve-env=MAV_SYSTEM_ID,MAV_COMPONENT_ID_ONBOARD_COMPUTER4 bash -c \"source /etc/blueosrc && "
 RUN_AS_REGULAR_USER_END="\""
 # Set BlueOS log folder
 BLUEOS_LOG_FOLDER_PATH="/var/logs/blueos"
