@@ -393,6 +393,8 @@ class ParameterMetadataManager:
     def _decode_uri(value: Any) -> str:
         if isinstance(value, str):
             return value.rstrip("\x00")
+        if isinstance(value, list) and all(isinstance(item, str) and len(item) == 1 for item in value):
+            return "".join(value).split("\x00", maxsplit=1)[0]
         if not isinstance(value, list) or not all(isinstance(item, int) and 0 <= item <= 255 for item in value):
             raise ParameterMetadataError("component metadata URI is invalid")
         try:

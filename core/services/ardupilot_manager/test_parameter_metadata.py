@@ -19,6 +19,11 @@ def metadata_crc(content: bytes) -> int:
     return zlib.crc32(content, 0xFFFFFFFF) ^ 0xFFFFFFFF
 
 
+def test_decode_uri_accepts_mavlink2rest_character_array() -> None:
+    uri = list("mftp://@META/general.json") + ["\x00"] * 74
+    assert ParameterMetadataManager._decode_uri(uri) == "mftp://@META/general.json"
+
+
 class FakeMavlinkMessenger:
     def __init__(self) -> None:
         self.advertisement: Optional[Dict[str, Any]] = None
