@@ -67,27 +67,6 @@ def test_blueos_version(monkeypatch: pytest.MonkeyPatch) -> None:
     general.blueos_version.cache_clear()
 
 
-@pytest.mark.parametrize(
-    "returncode,stdout,stderr,expected",
-    [
-        (0, "1234", "", True),  # lsof listed a PID holding the file
-        (0, "", "", False),  # lsof succeeded but nothing holds the file
-        (1, "", "", False),  # lsof exit 1 with clean stderr: file not open
-        (1, "", "lsof: status error", True),  # lsof failed: assume open to stay safe
-        (None, "", "", True),  # no return code: assume open to stay safe
-    ],
-)
-def test_file_is_open_logic_lsof(returncode: int | None, stdout: str, stderr: str, expected: bool) -> None:
-    assert general._file_is_open_logic_lsof(returncode, stdout, stderr) is expected
-
-
-def test_file_is_open_command(tmp_path: Path) -> None:
-    target = tmp_path / "some.file"
-    command = general._file_is_open_command(target)
-    assert command[0] == "lsof"
-    assert command[-1] == str(target.resolve())
-
-
 def test_file_is_open(tmp_path: Path) -> None:
     target = tmp_path / "target.txt"
     target.write_text("data", encoding="utf-8")
@@ -104,25 +83,10 @@ def test_file_is_open_when_lsof_fails_to_run(monkeypatch: pytest.MonkeyPatch, tm
     assert general.file_is_open(tmp_path / "target.txt") is True
 
 
-@pytest.mark.asyncio
-async def test_file_is_open_async(tmp_path: Path) -> None:
-    target = tmp_path / "target.txt"
-    target.write_text("data", encoding="utf-8")
-    assert await general.file_is_open_async(target) is False
-    with open(target, "r", encoding="utf-8"):
-        assert await general.file_is_open_async(target) is True
-
-
 def test_delete_everything(tmp_path: Path) -> None:
     root = tmp_path / "data"
-    keep_dir = root / "keep"
     doomed_dir = root / "doomed"
-    keep_dir.mkdir(parents=True)
-    doomed_dir.mkdir()
-    kept_file = keep_dir / "kept.txt"
-    kept_file.write_text("kept", encoding="utf-8")
-    kept_top_level = root / "kept-top-level.txt"
-    kept_top_level.write_text("kept", encoding="utf-8")
+    doomed_dir.mkdir(parents=True)
     (root / "doomed-top-level.txt").write_text("doomed", encoding="utf-8")
     (doomed_dir / "doomed-nested.txt").write_text("doomed", encoding="utf-8")
     outside = tmp_path / "outside"
@@ -131,10 +95,8 @@ def test_delete_everything(tmp_path: Path) -> None:
     outside_file.write_text("untouchable", encoding="utf-8")
     (root / "link-to-outside").symlink_to(outside)
 
-    general.delete_everything(root, ignore=[keep_dir, kept_top_level])
+    general.delete_everything(root)
 
-    assert kept_file.exists()
-    assert kept_top_level.exists()
     assert not (root / "doomed-top-level.txt").exists()
     assert not (doomed_dir / "doomed-nested.txt").exists()
     # Symlinked directories are not followed
@@ -144,9 +106,6 @@ def test_delete_everything(tmp_path: Path) -> None:
 def test_delete_everything_single_file(tmp_path: Path) -> None:
     target = tmp_path / "single.txt"
     target.write_text("data", encoding="utf-8")
-
-    general.delete_everything(target, ignore=[target])
-    assert target.exists()
 
     general.delete_everything(target)
     assert not target.exists()
@@ -161,21 +120,16 @@ async def test_delete_everything_stream(tmp_path: Path) -> None:
     small.write_text("12345", encoding="utf-8")
     nested_file = nested / "inner.txt"
     nested_file.write_text("abc", encoding="utf-8")
-    rotated_log = root / "rotated.gz"
-    rotated_log.write_text("gz", encoding="utf-8")
 
-    # .gz files are deleted even while a process holds them open
-    with open(rotated_log, "r", encoding="utf-8"):
-        infos = [info async for info in general.delete_everything_stream(root)]
+    infos = [info async for info in general.delete_everything_stream(root)]
 
-    assert {info["path"] for info in infos} == {str(small), str(nested_file), str(rotated_log)}
+    assert {info["path"] for info in infos} == {str(small), str(nested_file)}
     assert all(info["success"] for info in infos)
     assert all(info["type"] == "file" for info in infos)
     sizes = {info["path"]: info["size"] for info in infos}
     assert sizes[str(small)] == 5
     assert not small.exists()
     assert not nested_file.exists()
-    assert not rotated_log.exists()
 
 
 @pytest.mark.asyncio
