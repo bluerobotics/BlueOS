@@ -11,8 +11,13 @@ from typing import Any, AsyncGenerator, Dict
 
 import appdirs
 from commonwealth.utils.apis import GenericErrorHandlingRoute
-from commonwealth.utils.commands import run_command
-from commonwealth.utils.general import delete_everything, delete_everything_stream
+from commonwealth.utils.commands import load_file, locate_file, run_command, save_file
+from commonwealth.utils.general import (
+    CpuType,
+    delete_everything,
+    delete_everything_stream,
+    get_cpu_type,
+)
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from commonwealth.utils.streaming import streamer
@@ -22,6 +27,12 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, version
 from filebrowser.filebrowser import filebrowser
 from loguru import logger
+from pi5_i2c import (
+    Pi5I2CConfigurationError,
+    Pi5I2CMode,
+    get_pi5_i2c_mode,
+    set_pi5_i2c_mode,
+)
 from uvicorn import Config, Server
 
 SERVICE_NAME = "commander"
@@ -129,6 +140,63 @@ async def raspi_config_camera_legacy_set(enable: bool = True) -> Any:
         )
 
     return output
+
+
+def pi5_boot_config_file() -> str:
+    if get_cpu_type() != CpuType.PI5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The I2C/MIPI mode is only available on Raspberry Pi 5.",
+        )
+    config_file = locate_file(["/boot/firmware/config.txt", "/boot/config.txt"])
+    if not config_file:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Raspberry Pi boot configuration was not found.",
+        )
+    return config_file
+
+
+@app.get("/raspi_config/pi5_i2c_mode", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def raspi_config_pi5_i2c_mode() -> Any:
+    try:
+        mode = get_pi5_i2c_mode(load_file(pi5_boot_config_file()))
+    except Pi5I2CConfigurationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+        ) from error
+    return {"mode": mode}
+
+
+@app.post("/raspi_config/pi5_i2c_mode", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def raspi_config_pi5_i2c_mode_set(mode: Pi5I2CMode) -> Any:
+    config_file = pi5_boot_config_file()
+    config_content = load_file(config_file)
+    try:
+        updated_content = set_pi5_i2c_mode(config_content, mode)
+    except Pi5I2CConfigurationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+        ) from error
+
+    reboot_required = updated_content != config_content
+    if reboot_required:
+        save_file(config_file, updated_content, "before_pi5_i2c_mode")
+        try:
+            saved_mode = get_pi5_i2c_mode(load_file(config_file))
+        except Pi5I2CConfigurationError as error:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)
+            ) from error
+        if saved_mode != mode:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Raspberry Pi I2C/MIPI mode could not be saved.",
+            )
+
+    return {"mode": mode, "reboot_required": reboot_required}
 
 
 @app.get("/raspi/vcgencmd", status_code=status.HTTP_200_OK)
