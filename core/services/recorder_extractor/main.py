@@ -8,18 +8,16 @@ import struct
 import tempfile
 import time
 from functools import wraps
-from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Set
 from urllib.parse import quote
 
-from aiocache import cached
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.general import file_is_open_async
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import APIRouter, FastAPI, HTTPException, status
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, versioned_api_route
 from loguru import logger
 from pydantic import BaseModel
@@ -29,9 +27,8 @@ SERVICE_NAME = "recorder-extractor"
 RECORDER_DIR = Path("/usr/blueos/userdata/recorder")
 # Where nginx serves the same directory from, which recordings are read through
 RECORDER_URL = "/userdata/recorder"
-SERVICE_URL = "/recorder-extractor/v1.0/recorder"
 PORT = 9150
-SUPPORTED_SUFFIXES = (".mcap", ".mp4")
+RECORDING_SUFFIX = ".mcap"
 
 MCAP_MAGIC = b"\x89MCAP0\r\n"
 # opcode + u64 length + summary_start + summary_offset_start + summary_crc
@@ -40,9 +37,6 @@ MCAP_FOOTER_SIZE = 29
 # A recording touched this recently may still be growing, and recovering one that is being written
 # truncates it at whatever reached the disk
 RECENTLY_WRITTEN_SECONDS = 10
-
-# Prevent thumbnails from being generated while a recording is being repaired
-thumbnail_lock = asyncio.Lock()
 
 # Track MCAP files currently being repaired
 processing_mcap_files: set[str] = set()
@@ -69,9 +63,6 @@ class RecordingFile(BaseModel):
     modified: float
     download_url: str
     stream_url: str
-    # MCAP recordings are decoded by the frontend, which also renders their preview
-    thumbnail_url: Optional[str]
-    kind: str
 
 
 class ProcessingFile(BaseModel):
@@ -106,36 +97,16 @@ def resolve_recording(filename: str) -> Path:
 
     if candidate.is_dir():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid recording path.")
-    if candidate.suffix.lower() not in SUPPORTED_SUFFIXES:
+    if candidate.suffix.lower() != RECORDING_SUFFIX:
         logger.warning(f"Rejected unsupported path: {candidate}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Only {' and '.join(SUPPORTED_SUFFIXES)} recordings are supported.",
+            detail=f"Only {RECORDING_SUFFIX} recordings are supported.",
         )
     if not candidate.exists() or not candidate.is_file():
         logger.warning(f"Recording not found: {candidate}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recording not found.")
     return candidate
-
-
-def parse_duration_ns(discover_output: str) -> int:
-    duration_ns = 0
-    for line in discover_output.splitlines():
-        # Example: Duration: 0:00:12.345678000
-        if "Duration:" not in line:
-            continue
-
-        try:
-            parts = line.split("Duration:", maxsplit=1)[1].strip().split(".")
-            hms = parts[0]
-            nanos = parts[1] if len(parts) > 1 else "0"
-            hours, minutes, seconds = [int(x) for x in hms.split(":")]
-            duration_ns = ((hours * 3600) + (minutes * 60) + seconds) * 1_000_000_000 + int(nanos)
-            break
-        except Exception as exception:
-            logger.error(f"Failed to parse duration: {exception}")
-            break
-    return duration_ns
 
 
 def mcap_is_indexed(mcap_path: Path) -> bool:
@@ -238,75 +209,6 @@ async def write_recovered_mcap(mcap_binary: str, mcap_path: Path, tmp_path: Path
     logger.info(f"Successfully recovered {mcap_path} (recovered size: {mcap_path.stat().st_size} bytes)")
 
 
-@cached()
-async def build_thumbnail_bytes(path: Path) -> bytes:
-    """
-    Extract a single JPEG frame from the recording using a raw gst-launch pipeline (ASYNC).
-
-    Seek to the middle of the file, scale to 320x180, and encode as JPEG. If any step fails,
-    propagate an HTTP 500 so callers can fall back.
-    """
-    # 1) Discover duration (nanoseconds) using gst-discoverer
-    discover_cmd = ["gst-discoverer-1.0", f"file://{path}"]
-    discover_proc = await asyncio.create_subprocess_exec(
-        *discover_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        text=False,
-    )
-    stdout_bytes, stderr_bytes = await discover_proc.communicate()
-    stdout = stdout_bytes.decode("utf-8", "ignore")
-    stderr = stderr_bytes.decode("utf-8", "ignore")
-    if discover_proc.returncode != 0:
-        logger.error(f"gst-discoverer-1.0 failed for {path}: {stderr.strip()}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to inspect recording.",
-        )
-
-    duration_ns = parse_duration_ns(stdout)
-    target_ns = duration_ns // 2 if duration_ns > 0 else 0
-    target_sec = target_ns / 1_000_000_000
-
-    # 2) Grab a frame at the target time using gst-play-1.0 + raw pipeline sink
-    pipeline = (
-        "videoconvert ! videoscale ! "
-        "video/x-raw,width=320,height=180 ! "
-        "jpegenc snapshot=true quality=85 ! "
-        "fdsink fd=1 sync=false"
-    )
-
-    play_cmd = [
-        "gst-play-1.0",
-        f"--start-position={target_sec:.3f}",
-        f"--videosink={pipeline}",
-        "--audiosink=fakesink",
-        "--no-interactive",
-        "-q",
-        f"file://{path}",
-    ]
-    logger.info(
-        f"Thumbnail target: duration_ns={duration_ns} target_ns={target_ns} target_sec={target_sec:.3f} file={path}"
-    )
-    logger.info(f"Thumbnail command: {' '.join(play_cmd)}")
-    play_proc = await asyncio.create_subprocess_exec(
-        *play_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        text=False,
-    )
-    stdout_bytes, stderr_bytes = await play_proc.communicate()
-    stderr = stderr_bytes.decode("utf-8", "ignore")
-    if play_proc.returncode != 0 or not stdout:
-        logger.error(f"gst-play-1.0 failed for {path} (code={play_proc.returncode}): {stderr}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate thumbnail.",
-        )
-
-    return stdout_bytes
-
-
 async def repair_recording(mcap_path: Path, relative_path: str) -> None:
     """Give a recording its index back, reporting through the status endpoint while it runs."""
     try:
@@ -363,12 +265,11 @@ recorder_router = APIRouter(
 async def list_recordings() -> List[RecordingFile]:
     files: List[RecordingFile] = []
     base_path = ensure_recorder_dir()
-    recordings = [path for suffix in SUPPORTED_SUFFIXES for path in base_path.rglob(f"*{suffix}")]
+    recordings = base_path.rglob(f"*{RECORDING_SUFFIX}")
     for path in sorted(recordings, key=lambda item: item.stat().st_mtime, reverse=True):
         stat = path.stat()
         relative_path = path.relative_to(base_path)
         safe_path = str(relative_path)
-        kind = path.suffix.lower().lstrip(".")
         # Recordings are read straight from nginx, which serves them with byte ranges and sendfile,
         # so playing and saving them costs the vehicle no more than the kernel copying bytes.
         recording_url = f"{RECORDER_URL}/{quote(safe_path)}"
@@ -380,8 +281,6 @@ async def list_recordings() -> List[RecordingFile]:
                 modified=stat.st_mtime,
                 download_url=recording_url,
                 stream_url=recording_url,
-                thumbnail_url=f"{SERVICE_URL}/files/{quote(safe_path, safe='')}/thumbnail" if kind == "mp4" else None,
-                kind=kind,
             )
         )
     return files
@@ -414,12 +313,6 @@ async def repair_recording_request(filename: str) -> ProcessingStatus:
     still growing would be cut back to whatever had reached the disk.
     """
     path = resolve_recording(filename)
-    if path.suffix.lower() != ".mcap":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only MCAP recordings carry an index.",
-        )
-
     relative_path = str(path.relative_to(ensure_recorder_dir()))
     if relative_path in processing_mcap_files:
         return current_status()
@@ -446,23 +339,6 @@ async def repair_recording_request(filename: str) -> ProcessingStatus:
     return current_status()
 
 
-@recorder_router.get(
-    "/files/{filename:path}/thumbnail",
-    summary="Grab a thumbnail from a recording.",
-)
-@to_http_exception
-async def get_recording_thumbnail(filename: str) -> StreamingResponse:
-    path = resolve_recording(filename)
-    if path.suffix.lower() != ".mp4":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Thumbnails are only available for extracted MP4 recordings.",
-        )
-    async with thumbnail_lock:
-        thumbnail_bytes = await build_thumbnail_bytes(path)
-    return StreamingResponse(BytesIO(thumbnail_bytes), media_type="image/jpeg")
-
-
 @recorder_router.delete(
     "/files/{filename:path}",
     summary="Delete a recording.",
@@ -483,7 +359,7 @@ async def delete_recording(filename: str) -> None:
 
 fast_api_app = FastAPI(
     title="Recorder Extractor API",
-    description="List recordings, keep them seekable, and preview them. Their bytes are served by nginx.",
+    description="List MCAP recordings and keep them seekable. Their bytes are served by nginx.",
     default_response_class=PrettyJSONResponse,
 )
 fast_api_app.router.route_class = GenericErrorHandlingRoute
