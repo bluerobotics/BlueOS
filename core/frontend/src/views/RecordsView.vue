@@ -28,8 +28,8 @@
         lg="3"
       >
         <v-card class="record-card d-flex flex-column processing-card">
-          <div class="thumbnail-wrapper">
-            <div class="processing-thumbnail grey lighten-3 d-flex flex-column align-center justify-center">
+          <div class="preview-wrapper">
+            <div class="processing-preview grey lighten-3 d-flex flex-column align-center justify-center">
               <v-progress-circular
                 indeterminate
                 color="primary"
@@ -62,9 +62,9 @@
         lg="3"
       >
         <v-card class="record-card d-flex flex-column">
-          <div v-if="file.kind === 'mcap'" class="thumbnail-wrapper">
+          <div class="preview-wrapper">
             <div
-              class="mcap-thumbnail grey darken-3 d-flex flex-column align-center justify-center thumbnail-clickable"
+              class="record-preview grey darken-3 d-flex flex-column align-center justify-center preview-clickable"
               role="button"
               tabindex="0"
               @click="openPlayer(file)"
@@ -102,65 +102,20 @@
               </div>
             </div>
           </div>
-          <div v-else class="thumbnail-wrapper">
-            <v-img
-              :src="thumbnailSrc(file)"
-              height="180"
-              class="grey lighten-3 thumbnail-clickable"
-              aspect-ratio="16/9"
-              contain
-              @error="onThumbnailError(file.path)"
-              @load="onThumbnailLoad(file.path)"
-              @click="openPlayer(file)"
-            >
-              <div v-if="brokenThumbnails[file.path]" class="fallback-icon d-flex align-center justify-center">
-                <v-icon large color="grey darken-1">
-                  mdi-multimedia
-                </v-icon>
-              </div>
-
-              <div v-if="!isThumbnailLoading(file.path)" class="thumbnail-actions">
-                <v-btn
-                  icon
-                  large
-                  color="primary"
-                  class="play-btn"
-                  @click.stop="openPlayer(file)"
-                >
-                  <v-icon large>
-                    mdi-play-circle
-                  </v-icon>
-                </v-btn>
-              </div>
-            </v-img>
-            <div
-              v-if="isThumbnailLoading(file.path)"
-              class="thumbnail-loading grey lighten-3 d-flex flex-column align-center justify-center"
-            >
-              <v-progress-circular
-                indeterminate
-                color="primary"
-                size="48"
-              />
-              <span class="mt-2 caption grey--text text--darken-1">
-                Processing video/thumbnail...
-              </span>
-            </div>
-          </div>
           <v-card-title class="py-2">
             <div class="text-truncate" :title="file.name">
               {{ file.name }}
             </div>
           </v-card-title>
           <v-card-subtitle class="py-0">
-            <v-chip x-small class="mr-2" :color="file.kind === 'mcap' ? 'primary' : 'grey'">
-              {{ file.kind.toUpperCase() }}
+            <v-chip x-small class="mr-2" color="primary">
+              MCAP
             </v-chip>
             <span class="mr-2">{{ formatSize(file.size_bytes) }}</span>
             <span class="caption">{{ formatDate(file.modified) }}</span>
           </v-card-subtitle>
           <v-spacer />
-          <v-card-actions v-if="file.kind === 'mcap' || !isThumbnailLoading(file.path)" class="pt-0">
+          <v-card-actions class="pt-0">
             <v-btn
               icon
               small
@@ -208,7 +163,7 @@
             <v-icon small left>
               mdi-download
             </v-icon>
-            {{ activeRecord?.kind.toUpperCase() }}
+            MCAP
           </v-btn>
           <v-btn
             v-tooltip="'Close'"
@@ -223,27 +178,10 @@
         </v-card-title>
         <v-card-text>
           <mcap-video-player
-            v-if="activeRecord && activeRecord.kind === 'mcap'"
+            v-if="activeRecord"
             :key="activeRecord.path"
             :url="activeRecord.stream_url"
           />
-          <div v-else-if="activeRecord" class="player-wrapper">
-            <video
-              ref="player"
-              controls
-              autoplay
-              class="player"
-              :src="activeRecord.stream_url"
-            >
-              <track
-                kind="captions"
-                srclang="en"
-                label="Captions not available"
-                :src="emptyCaptions"
-                default
-              />
-            </video>
-          </div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -270,12 +208,9 @@ export default Vue.extend({
     return {
       playerOpen: false,
       activeRecord: null as RecordingFile | null,
-      brokenThumbnails: {} as Record<string, boolean>,
-      loadingThumbnails: {} as Record<string, boolean>,
       summaries: {} as Record<string, McapVideoSummary>,
       summaryErrors: {} as Record<string, string>,
       repairable: {} as Record<string, boolean>,
-      emptyCaptions: 'data:text/vtt,WEBVTT',
       statusPoller: null as OneMoreTime | null,
     }
   },
@@ -334,7 +269,7 @@ export default Vue.extend({
      */
     async loadSummaries(): Promise<void> {
       const pending = this.recordings.filter(
-        (file) => file.kind === 'mcap' && !this.summaries[file.path] && !this.summaryErrors[file.path],
+        (file) => !this.summaries[file.path] && !this.summaryErrors[file.path],
       )
       for (const file of pending) {
         try {
@@ -385,11 +320,6 @@ export default Vue.extend({
       this.playerOpen = true
     },
     closePlayer(): void {
-      const player = this.$refs.player as HTMLVideoElement | undefined
-      if (player) {
-        player.pause()
-        player.currentTime = 0
-      }
       this.playerOpen = false
     },
     formatSize(bytes: number): string {
@@ -398,19 +328,6 @@ export default Vue.extend({
     formatDate(timestamp: number): string {
       const date = new Date(timestamp * 1000)
       return date.toLocaleString()
-    },
-    thumbnailSrc(file: RecordingFile): string {
-      return this.brokenThumbnails[file.path] ? '' : file.thumbnail_url
-    },
-    onThumbnailError(path: string): void {
-      this.$set(this.brokenThumbnails, path, true)
-      this.$set(this.loadingThumbnails, path, false)
-    },
-    onThumbnailLoad(path: string): void {
-      this.$set(this.loadingThumbnails, path, false)
-    },
-    isThumbnailLoading(path: string): boolean {
-      return this.loadingThumbnails[path] !== false && !this.brokenThumbnails[path]
     },
   },
 })
@@ -425,17 +342,8 @@ export default Vue.extend({
   height: 100%;
 }
 
-.thumbnail-wrapper {
+.preview-wrapper {
   position: relative;
-}
-
-.thumbnail-actions {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
 }
 
 .play-btn {
@@ -443,34 +351,12 @@ export default Vue.extend({
   pointer-events: all;
 }
 
-.thumbnail-clickable {
+.preview-clickable {
   cursor: pointer;
 }
 
 .player-card {
   position: relative;
-}
-
-.fallback-icon {
-  position: absolute;
-  inset: 0;
-  background: #eceff1;
-  pointer-events: none;
-}
-
-.player-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%;
-  background: #111827;
-}
-
-.player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
 }
 
 .mr-2 {
@@ -481,14 +367,8 @@ export default Vue.extend({
   opacity: 0.85;
 }
 
-.processing-thumbnail,
-.mcap-thumbnail {
+.processing-preview,
+.record-preview {
   height: 180px;
-}
-
-.thumbnail-loading {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
 }
 </style>
