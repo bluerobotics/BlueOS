@@ -36,7 +36,7 @@
                 size="48"
               />
               <span class="mt-2 caption grey--text text--darken-1">
-                Extracting video...
+                Repairing recording index...
               </span>
             </div>
           </div>
@@ -47,7 +47,7 @@
           </v-card-title>
           <v-card-subtitle class="py-0">
             <v-chip x-small color="primary">
-              Processing
+              Repairing
             </v-chip>
           </v-card-subtitle>
           <v-spacer />
@@ -62,7 +62,33 @@
         lg="3"
       >
         <v-card class="record-card d-flex flex-column">
-          <div class="thumbnail-wrapper">
+          <div v-if="file.kind === 'mcap'" class="thumbnail-wrapper">
+            <div
+              class="mcap-thumbnail grey darken-3 d-flex flex-column align-center justify-center thumbnail-clickable"
+              role="button"
+              tabindex="0"
+              @click="openPlayer(file)"
+              @keydown.enter="openPlayer(file)"
+            >
+              <v-btn icon large color="primary" class="play-btn">
+                <v-icon large>
+                  mdi-play-circle
+                </v-icon>
+              </v-btn>
+              <div class="mt-2 caption grey--text text--lighten-1 text-center">
+                <div v-if="summaryOf(file)">
+                  {{ formatDuration(summaryOf(file).durationSeconds) }}
+                  &middot;
+                  {{ streamsLabel(summaryOf(file)) }}
+                </div>
+                <div v-else-if="summaryError(file)">
+                  {{ summaryError(file) }}
+                </div>
+                <v-progress-circular v-else indeterminate size="14" width="2" color="grey" />
+              </div>
+            </div>
+          </div>
+          <div v-else class="thumbnail-wrapper">
             <v-img
               :src="thumbnailSrc(file)"
               height="180"
@@ -113,11 +139,14 @@
             </div>
           </v-card-title>
           <v-card-subtitle class="py-0">
+            <v-chip x-small class="mr-2" :color="file.kind === 'mcap' ? 'primary' : 'grey'">
+              {{ file.kind.toUpperCase() }}
+            </v-chip>
             <span class="mr-2">{{ formatSize(file.size_bytes) }}</span>
             <span class="caption">{{ formatDate(file.modified) }}</span>
           </v-card-subtitle>
           <v-spacer />
-          <v-card-actions v-if="!isThumbnailLoading(file.path)" class="pt-0">
+          <v-card-actions v-if="file.kind === 'mcap' || !isThumbnailLoading(file.path)" class="pt-0">
             <v-btn
               icon
               small
@@ -150,22 +179,42 @@
       @click:outside="closePlayer"
     >
       <v-card class="player-card">
-        <v-btn
-          icon
-          small
-          class="dialog-close"
-          color="primary"
-          @click.stop="closePlayer"
-        >
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-        <v-card-title class="headline">
-          {{ activeRecord?.name }}
+        <v-card-title class="headline d-flex align-center">
+          <span class="text-truncate">{{ activeRecord?.name }}</span>
+          <v-spacer />
+          <v-btn
+            v-tooltip="'Download the recording as it was made, to open in other tools'"
+            small
+            text
+            color="primary"
+            :href="activeRecord?.download_url"
+            :download="activeRecord?.name"
+            @click.stop
+          >
+            <v-icon small left>
+              mdi-download
+            </v-icon>
+            {{ activeRecord?.kind.toUpperCase() }}
+          </v-btn>
+          <v-btn
+            v-tooltip="'Close'"
+            icon
+            small
+            class="ml-2"
+            color="primary"
+            @click.stop="closePlayer"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </v-card-title>
         <v-card-text>
-          <div class="player-wrapper">
+          <mcap-video-player
+            v-if="activeRecord && activeRecord.kind === 'mcap'"
+            :key="activeRecord.path"
+            :url="activeRecord.stream_url"
+          />
+          <div v-else-if="activeRecord" class="player-wrapper">
             <video
-              v-if="activeRecord"
               ref="player"
               controls
               autoplay
@@ -182,19 +231,6 @@
             </video>
           </div>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            icon
-            color="primary"
-            :href="activeRecord?.download_url"
-            :download="activeRecord?.name"
-            :title="`Download ${activeRecord?.name ?? ''}`"
-            @click.stop
-          >
-            <v-icon>mdi-download</v-icon>
-          </v-btn>
-        </v-card-actions>
       </v-card>
     </v-dialog>
   </v-container>
@@ -203,6 +239,8 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import McapVideoPlayer from '@/components/records/McapVideoPlayer.vue'
+import { McapVideoSummary, readMcapVideoSummary } from '@/libs/mcap/player'
 import { OneMoreTime } from '@/one-more-time'
 import records_store from '@/store/records'
 import { ProcessingFile, RecordingFile } from '@/types/records'
@@ -210,12 +248,17 @@ import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'RecordsView',
+  components: {
+    McapVideoPlayer,
+  },
   data() {
     return {
       playerOpen: false,
       activeRecord: null as RecordingFile | null,
       brokenThumbnails: {} as Record<string, boolean>,
       loadingThumbnails: {} as Record<string, boolean>,
+      summaries: {} as Record<string, McapVideoSummary>,
+      summaryErrors: {} as Record<string, string>,
       emptyCaptions: 'data:text/vtt,WEBVTT',
       statusPoller: null as OneMoreTime | null,
     }
@@ -252,6 +295,41 @@ export default Vue.extend({
         records_store.fetchRecordings(),
         records_store.fetchProcessingStatus(),
       ])
+      await this.loadSummaries()
+    },
+    /**
+     * Reads what each recording contains directly from its index. Recordings are read one at a time
+     * to leave the link to the vehicle free for playback.
+     */
+    async loadSummaries(): Promise<void> {
+      const pending = this.recordings.filter(
+        (file) => file.kind === 'mcap' && !this.summaries[file.path] && !this.summaryErrors[file.path],
+      )
+      for (const file of pending) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          this.$set(this.summaries, file.path, await readMcapVideoSummary(file.stream_url))
+        } catch (error) {
+          this.$set(this.summaryErrors, file.path, error instanceof Error ? error.message : String(error))
+        }
+      }
+    },
+    summaryOf(file: RecordingFile): McapVideoSummary | null {
+      return this.summaries[file.path] ?? null
+    },
+    summaryError(file: RecordingFile): string | null {
+      return this.summaryErrors[file.path] ?? null
+    },
+    streamsLabel(summary: McapVideoSummary): string {
+      if (summary.tracks.length === 0) {
+        return 'no video'
+      }
+      return summary.tracks.map((track) => track.name).join(', ')
+    },
+    formatDuration(seconds: number): string {
+      const total = Math.round(seconds)
+      const minutes = Math.floor(total / 60)
+      return `${minutes}m ${String(total % 60).padStart(2, '0')}s`
     },
     async deleteRecording(file: RecordingFile): Promise<void> {
       await records_store.deleteRecording(file)
@@ -334,13 +412,6 @@ export default Vue.extend({
   pointer-events: none;
 }
 
-.dialog-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1;
-}
-
 .player-wrapper {
   position: relative;
   width: 100%;
@@ -364,7 +435,8 @@ export default Vue.extend({
   opacity: 0.85;
 }
 
-.processing-thumbnail {
+.processing-thumbnail,
+.mcap-thumbnail {
   height: 180px;
 }
 

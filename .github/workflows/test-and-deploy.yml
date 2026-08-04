@@ -60,7 +60,7 @@ jobs:
           bun-version: 1.3.14
 
       - name: Bun install
-        run: bun install --cwd ./core/frontend
+        run: bun install --frozen-lockfile --cwd ./core/frontend
 
       - name: Bun lint
         run: bun --cwd ./core/frontend lint

@@ -4,11 +4,12 @@ import asyncio
 import contextlib
 import logging
 import shutil
+import struct
 import tempfile
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional
 from urllib.parse import quote
 
 from aiocache import cached
@@ -17,7 +18,7 @@ from commonwealth.utils.general import file_is_open_async
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import APIRouter, FastAPI, HTTPException, status
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi_versioning import VersionedFastAPI, versioned_api_route
 from loguru import logger
 from pydantic import BaseModel
@@ -25,13 +26,24 @@ from uvicorn import Config, Server
 
 SERVICE_NAME = "recorder-extractor"
 RECORDER_DIR = Path("/usr/blueos/userdata/recorder")
+# Where nginx serves the same directory from, which recordings are read through
+RECORDER_URL = "/userdata/recorder"
+SERVICE_URL = "/recorder-extractor/v1.0/recorder"
 PORT = 9150
+SUPPORTED_SUFFIXES = (".mcap", ".mp4")
 
-# Prevent thumbnails from being generated while MCAP extraction is running
+MCAP_MAGIC = b"\x89MCAP0\r\n"
+# opcode + u64 length + summary_start + summary_offset_start + summary_crc
+MCAP_FOOTER_SIZE = 29
+
+# Prevent thumbnails from being generated while a recording is being repaired
 thumbnail_lock = asyncio.Lock()
 
-# Track MCAP files currently being processed
+# Track MCAP files currently being repaired
 processing_mcap_files: set[str] = set()
+
+# MCAP files whose index was already validated in this session
+checked_mcap_files: set[Path] = set()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 init_logger(SERVICE_NAME)
@@ -45,7 +57,9 @@ class RecordingFile(BaseModel):
     modified: float
     download_url: str
     stream_url: str
-    thumbnail_url: str
+    # MCAP recordings are decoded by the frontend, which also renders their preview
+    thumbnail_url: Optional[str]
+    kind: str
 
 
 class ProcessingFile(BaseModel):
@@ -73,9 +87,12 @@ def resolve_recording(filename: str) -> Path:
 
     if candidate.is_dir():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid recording path.")
-    if candidate.suffix.lower() != ".mp4":
-        logger.warning(f"Rejected non-mp4 path: {candidate}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only .mp4 recordings are supported.")
+    if candidate.suffix.lower() not in SUPPORTED_SUFFIXES:
+        logger.warning(f"Rejected unsupported path: {candidate}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Only {' and '.join(SUPPORTED_SUFFIXES)} recordings are supported.",
+        )
     if not candidate.exists() or not candidate.is_file():
         logger.warning(f"Recording not found: {candidate}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recording not found.")
@@ -102,41 +119,42 @@ def parse_duration_ns(discover_output: str) -> int:
     return duration_ns
 
 
+def mcap_is_indexed(mcap_path: Path) -> bool:
+    """
+    Check whether the recording ends with a footer pointing at a summary section.
+
+    The frontend seeks through recordings using the MCAP index, so a file without one cannot be
+    streamed. Reading the footer costs a few bytes, unlike scanning the whole file.
+    """
+    try:
+        size = mcap_path.stat().st_size
+        if size < (len(MCAP_MAGIC) * 2) + MCAP_FOOTER_SIZE:
+            return False
+        with mcap_path.open("rb") as recording:
+            recording.seek(size - len(MCAP_MAGIC) - MCAP_FOOTER_SIZE)
+            footer = recording.read(MCAP_FOOTER_SIZE + len(MCAP_MAGIC))
+    except OSError as exception:
+        logger.warning(f"Failed to read MCAP footer of {mcap_path}: {exception}")
+        return False
+
+    if len(footer) != MCAP_FOOTER_SIZE + len(MCAP_MAGIC) or not footer.endswith(MCAP_MAGIC):
+        return False
+    summary_start: int = struct.unpack_from("<Q", footer, 9)[0]
+    return summary_start > 0
+
+
 # pylint: disable=too-many-locals
-async def check_and_recover_mcap(mcap_path: Path) -> None:
-    """
-    Check if mcap binary is available, run mcap doctor on the file,
-    and if it fails, run mcap recover to fix the file.
-    """
-    # Check if mcap binary exists
+async def recover_mcap(mcap_path: Path) -> None:
+    """Rewrite a recording with `mcap recover`, which restores its index and drops truncated data."""
     mcap_binary = shutil.which("mcap")
     if not mcap_binary:
-        logger.warning("mcap binary not found, skipping doctor/recover check")
+        logger.warning("mcap binary not found, skipping recover")
         return
 
-    # Ensure path exists and is a file
     if not mcap_path.exists() or not mcap_path.is_file():
         logger.debug(f"MCAP file not found or not a file: {mcap_path}")
         return
 
-    logger.info(f"Running mcap doctor on {mcap_path}")
-    # Run mcap doctor
-    doctor_cmd = [mcap_binary, "doctor", str(mcap_path)]
-    doctor_proc = await asyncio.create_subprocess_exec(
-        *doctor_cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        text=False,
-    )
-    stdout_bytes, stderr_bytes = await doctor_proc.communicate()
-    stdout = stdout_bytes.decode("utf-8", "ignore")
-    stderr = stderr_bytes.decode("utf-8", "ignore")
-
-    if doctor_proc.returncode == 0:
-        logger.info(f"mcap doctor passed for {mcap_path}: {stdout.strip()}")
-        return
-
-    logger.warning(f"mcap doctor failed for {mcap_path} (code={doctor_proc.returncode}): {stderr.strip()}")
     logger.info(f"Attempting to recover {mcap_path}")
 
     # Create a temporary file path in the same directory as the mcap file
@@ -258,57 +276,37 @@ async def build_thumbnail_bytes(path: Path) -> bytes:
     return stdout_bytes
 
 
-async def extract_mcap_recordings() -> None:
-    """Periodically extract MP4 files from MCAP recordings."""
+async def repair_unindexed_recordings() -> None:
+    """
+    Periodically make sure every recording carries an MCAP index.
+
+    Video is extracted by the frontend straight from the recording, so the only thing the vehicle has
+    to guarantee is that recordings are seekable. Files left without an index, for example when the
+    vehicle lost power while recording, are rewritten by `mcap recover`.
+    """
     while True:
         await asyncio.sleep(10)
         try:
             base = ensure_recorder_dir()
             for mcap_path in base.rglob("*.mcap"):
-                # If the folder already exists, it's already extracted or deleted by user
-                output_dir = mcap_path.with_suffix("")
-                if output_dir.exists():
+                if mcap_path in checked_mcap_files:
                     continue
-
-                logger.info(f"Checking if file is in use: {mcap_path}")
+                if mcap_is_indexed(mcap_path):
+                    checked_mcap_files.add(mcap_path)
+                    continue
                 if await file_is_open_async(mcap_path):
-                    logger.info(f"Skipping MCAP extract, file in use: {mcap_path}")
+                    logger.info(f"Recording is still being written, postponing repair: {mcap_path}")
                     continue
 
-                # Check and recover MCAP file if mcap binary is available
-                await check_and_recover_mcap(mcap_path)
-
-                command = [
-                    "mcap-foxglove-video-extract",
-                    str(mcap_path),
-                    "all",
-                    "--output",
-                    str(output_dir),
-                ]
-                logger.info(f"Extracting MCAP video to {output_dir} with command: {' '.join(command)}")
                 mcap_relative = str(mcap_path.relative_to(base))
                 processing_mcap_files.add(mcap_relative)
                 try:
-                    async with thumbnail_lock:
-                        process = await asyncio.create_subprocess_exec(
-                            *command,
-                            stdout=asyncio.subprocess.PIPE,
-                            stderr=asyncio.subprocess.PIPE,
-                            text=False,
-                        )
-                        stdout_bytes, stderr_bytes = await process.communicate()
-                        stdout = stdout_bytes.decode("utf-8", "ignore")
-                        stderr = stderr_bytes.decode("utf-8", "ignore")
+                    await recover_mcap(mcap_path)
                 finally:
                     processing_mcap_files.discard(mcap_relative)
-                if process.returncode != 0:
-                    logger.error(
-                        f"MCAP extract failed for {mcap_path} (code={process.returncode}): {stderr}",
-                    )
-                else:
-                    logger.info(f"MCAP extract completed for {mcap_path}: {stdout.strip()}")
+                checked_mcap_files.add(mcap_path)
         except Exception as exception:
-            logger.exception(f"MCAP extraction loop failed: {exception}")
+            logger.exception(f"MCAP index check loop failed: {exception}")
 
 
 def to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
@@ -340,28 +338,31 @@ recorder_router = APIRouter(
 @recorder_router.get(
     "/files",
     response_model=List[RecordingFile],
-    summary="List available MP4 recordings under /usr/blueos/userdata/recorder.",
+    summary="List available recordings under /usr/blueos/userdata/recorder.",
 )
 @to_http_exception
 async def list_recordings() -> List[RecordingFile]:
-    base_url = "/recorder-extractor/v1.0/recorder/files"
     files: List[RecordingFile] = []
     base_path = ensure_recorder_dir()
-    mp4_files = sorted(base_path.rglob("*.mp4"), key=lambda item: item.stat().st_mtime, reverse=True)
-    for path in mp4_files:
+    recordings = [path for suffix in SUPPORTED_SUFFIXES for path in base_path.rglob(f"*{suffix}")]
+    for path in sorted(recordings, key=lambda item: item.stat().st_mtime, reverse=True):
         stat = path.stat()
         relative_path = path.relative_to(base_path)
         safe_path = str(relative_path)
-        encoded_path = quote(safe_path, safe="")
+        kind = path.suffix.lower().lstrip(".")
+        # Recordings are read straight from nginx, which serves them with byte ranges and sendfile,
+        # so playing and saving them costs the vehicle no more than the kernel copying bytes.
+        recording_url = f"{RECORDER_URL}/{quote(safe_path)}"
         files.append(
             RecordingFile(
                 name=path.name,
                 path=safe_path,
                 size_bytes=stat.st_size,
                 modified=stat.st_mtime,
-                download_url=f"{base_url}/{encoded_path}",
-                stream_url=f"{base_url}/{encoded_path}",
-                thumbnail_url=f"{base_url}/{encoded_path}/thumbnail",
+                download_url=recording_url,
+                stream_url=recording_url,
+                thumbnail_url=f"{SERVICE_URL}/files/{quote(safe_path, safe='')}/thumbnail" if kind == "mp4" else None,
+                kind=kind,
             )
         )
     return files
@@ -370,11 +371,11 @@ async def list_recordings() -> List[RecordingFile]:
 @recorder_router.get(
     "/status",
     response_model=ProcessingStatus,
-    summary="Get MCAP extraction processing status.",
+    summary="Get MCAP repair status.",
 )
 @to_http_exception
 async def get_processing_status() -> ProcessingStatus:
-    """Return MCAP files currently being processed."""
+    """Return MCAP files currently being repaired."""
     # Snapshot the set with list to avoid RuntimeError from concurrent mutation
     processing = [ProcessingFile(name=Path(path).name, path=path) for path in list(processing_mcap_files)]
     return ProcessingStatus(processing=processing)
@@ -387,6 +388,11 @@ async def get_processing_status() -> ProcessingStatus:
 @to_http_exception
 async def get_recording_thumbnail(filename: str) -> StreamingResponse:
     path = resolve_recording(filename)
+    if path.suffix.lower() != ".mp4":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Thumbnails are only available for extracted MP4 recordings.",
+        )
     async with thumbnail_lock:
         thumbnail_bytes = await build_thumbnail_bytes(path)
     return StreamingResponse(BytesIO(thumbnail_bytes), media_type="image/jpeg")
@@ -410,19 +416,9 @@ async def delete_recording(filename: str) -> None:
         ) from exception
 
 
-@recorder_router.get(
-    "/files/{filename:path}",
-    summary="Download or stream a recording.",
-)
-@to_http_exception
-async def get_recording(filename: str) -> FileResponse:
-    path = resolve_recording(filename)
-    return FileResponse(path, media_type="video/mp4", filename=path.name)
-
-
 fast_api_app = FastAPI(
     title="Recorder Extractor API",
-    description="Serve recorded MP4 files for playback and download.",
+    description="List recordings, keep them seekable, and preview them. Their bytes are served by nginx.",
     default_response_class=PrettyJSONResponse,
 )
 fast_api_app.router.route_class = GenericErrorHandlingRoute
@@ -449,7 +445,7 @@ async def root() -> HTMLResponse:
 
 
 async def main() -> None:
-    extractor_task = asyncio.create_task(extract_mcap_recordings())
+    extractor_task = asyncio.create_task(repair_unindexed_recordings())
     try:
         await init_sentry_async(SERVICE_NAME)
 

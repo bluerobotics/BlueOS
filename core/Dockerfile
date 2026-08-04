@@ -21,7 +21,7 @@ COPY frontend /home/pi/frontend
 RUN <<-EOF
 set -e
 
-    bun install --cwd /home/pi/frontend
+    bun install --frozen-lockfile --cwd /home/pi/frontend
     NODE_OPTIONS=--max-old-space-size=8192 bun run --cwd /home/pi/frontend build
 
 EOF
@@ -119,7 +119,6 @@ COPY --from=download-binaries \
     /usr/bin/mavlink-camera-manager \
     /usr/bin/mavlink-server \
     /usr/bin/mcap \
-    /usr/bin/mcap-foxglove-video-extract \
     /usr/bin/zenoh \
     /usr/bin/ttyd \
     /usr/bin/
