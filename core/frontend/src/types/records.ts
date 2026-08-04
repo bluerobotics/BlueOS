@@ -16,6 +16,11 @@ export interface ProcessingFile {
   path: string
 }
 
+export interface FailedRepair extends ProcessingFile {
+  error: string
+}
+
 export interface ProcessingStatus {
   processing: ProcessingFile[]
+  failed: FailedRepair[]
 }

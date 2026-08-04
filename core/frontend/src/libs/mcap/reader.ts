@@ -42,6 +42,12 @@ enum Opcode {
 /** Records describing what a recording contains, as opposed to where its data lives. */
 const METADATA_OPCODES = [Opcode.SCHEMA, Opcode.CHANNEL, Opcode.STATISTICS]
 
+/**
+ * A recording that holds no index, which is what nothing closing the file leaves behind. Reading it
+ * takes rewriting it first, so this is worth telling apart from a recording that is simply broken.
+ */
+export class McapNeedsRepairError extends Error {}
+
 interface SummaryGroup {
   start: number
   length: number
@@ -185,7 +191,7 @@ export class McapIndexedReader {
     const tailSize = Math.min(TAIL_READ_SIZE, size)
     const tail = await source.read(size - tailSize, tailSize, signal)
     if (!hasMagic(tail, tail.length - MAGIC_SIZE)) {
-      throw new Error('Not an MCAP file, or the recording was truncated before being closed.')
+      throw new McapNeedsRepairError('This recording was cut short before it could be closed.')
     }
 
     const footer = new RecordReader(tail, tail.length - MAGIC_SIZE - FOOTER_RECORD_SIZE)
@@ -194,7 +200,7 @@ export class McapIndexedReader {
     const summaryStart = Number(footer.uint64())
     const summaryOffsetStart = Number(footer.uint64())
     if (summaryStart === 0) {
-      throw new Error('Recording has no index, so it cannot be streamed. It needs to be repaired first.')
+      throw new McapNeedsRepairError('This recording holds no index, so nothing can be read out of it.')
     }
 
     const summaryEnd = size - MAGIC_SIZE - FOOTER_RECORD_SIZE
