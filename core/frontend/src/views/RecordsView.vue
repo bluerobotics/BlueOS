@@ -54,7 +54,7 @@
         </v-card>
       </v-col>
       <v-col
-        v-for="file in recordings"
+        v-for="file in visibleRecordings"
         :key="file.path"
         cols="12"
         sm="6"
@@ -81,9 +81,23 @@
                   &middot;
                   {{ streamsLabel(summaryOf(file)) }}
                 </div>
-                <div v-else-if="summaryError(file)">
-                  {{ summaryError(file) }}
-                </div>
+                <template v-else-if="summaryError(file)">
+                  <div>{{ repairFailure(file) ?? summaryError(file) }}</div>
+                  <v-btn
+                    v-if="needsRepair(file)"
+                    v-tooltip="'Rewrite this recording on the vehicle so that it can be read'"
+                    x-small
+                    text
+                    color="primary"
+                    class="mt-1"
+                    @click.stop="repair(file)"
+                  >
+                    <v-icon x-small left>
+                      mdi-wrench
+                    </v-icon>
+                    Repair
+                  </v-btn>
+                </template>
                 <v-progress-circular v-else indeterminate size="14" width="2" color="grey" />
               </div>
             </div>
@@ -241,9 +255,10 @@ import Vue from 'vue'
 
 import McapVideoPlayer from '@/components/records/McapVideoPlayer.vue'
 import { McapVideoSummary, readMcapVideoSummary } from '@/libs/mcap/player'
+import { McapNeedsRepairError } from '@/libs/mcap/reader'
 import { OneMoreTime } from '@/one-more-time'
 import records_store from '@/store/records'
-import { ProcessingFile, RecordingFile } from '@/types/records'
+import { FailedRepair, ProcessingFile, RecordingFile } from '@/types/records'
 import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
@@ -259,6 +274,7 @@ export default Vue.extend({
       loadingThumbnails: {} as Record<string, boolean>,
       summaries: {} as Record<string, McapVideoSummary>,
       summaryErrors: {} as Record<string, string>,
+      repairable: {} as Record<string, boolean>,
       emptyCaptions: 'data:text/vtt,WEBVTT',
       statusPoller: null as OneMoreTime | null,
     }
@@ -267,8 +283,16 @@ export default Vue.extend({
     recordings(): RecordingFile[] {
       return records_store.recordings
     },
+    /** A recording being repaired is shown by its own card, so it is left out of this list. */
+    visibleRecordings(): RecordingFile[] {
+      const beingRepaired = this.processingFiles.map((file) => file.path)
+      return this.recordings.filter((file) => !beingRepaired.includes(file.path))
+    },
     processingFiles(): ProcessingFile[] {
       return records_store.processing_files
+    },
+    failedRepairs(): FailedRepair[] {
+      return records_store.failed_repairs
     },
     loading(): boolean {
       return records_store.loading
@@ -282,10 +306,17 @@ export default Vue.extend({
     this.statusPoller = new OneMoreTime(
       { delay: 5000, disposeWith: this },
       async () => {
+        const repairing = this.processingFiles.map((file) => file.path)
         await records_store.fetchProcessingStatus()
-        if (this.processingFiles.length > 0) {
-          await records_store.fetchRecordings()
+        const stillRepairing = this.processingFiles.map((file) => file.path)
+        const finished = repairing.filter((path) => !stillRepairing.includes(path))
+        if (finished.length === 0) {
+          return
         }
+        // A repaired recording is a different file, so whatever was read out of it no longer holds
+        finished.forEach((path) => this.forgetSummary(path))
+        await records_store.fetchRecordings()
+        await this.loadSummaries()
       },
     )
   },
@@ -311,14 +342,29 @@ export default Vue.extend({
           this.$set(this.summaries, file.path, await readMcapVideoSummary(file.stream_url))
         } catch (error) {
           this.$set(this.summaryErrors, file.path, error instanceof Error ? error.message : String(error))
+          this.$set(this.repairable, file.path, error instanceof McapNeedsRepairError)
         }
       }
+    },
+    forgetSummary(path: string): void {
+      this.$delete(this.summaries, path)
+      this.$delete(this.summaryErrors, path)
+      this.$delete(this.repairable, path)
     },
     summaryOf(file: RecordingFile): McapVideoSummary | null {
       return this.summaries[file.path] ?? null
     },
     summaryError(file: RecordingFile): string | null {
       return this.summaryErrors[file.path] ?? null
+    },
+    needsRepair(file: RecordingFile): boolean {
+      return this.repairable[file.path] ?? false
+    },
+    repairFailure(file: RecordingFile): string | null {
+      return this.failedRepairs.find((failure) => failure.path === file.path)?.error ?? null
+    },
+    async repair(file: RecordingFile): Promise<void> {
+      await records_store.repairRecording(file)
     },
     streamsLabel(summary: McapVideoSummary): string {
       if (summary.tracks.length === 0) {

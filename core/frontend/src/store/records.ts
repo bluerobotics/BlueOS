@@ -3,7 +3,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { ProcessingFile, RecordingFile } from '@/types/records'
+import { FailedRepair, ProcessingFile, RecordingFile } from '@/types/records'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
 @Module({ dynamic: true, store, name: 'records' })
@@ -13,6 +13,8 @@ class RecordsStore extends VuexModule {
   recordings: RecordingFile[] = []
 
   processing_files: ProcessingFile[] = []
+
+  failed_repairs: FailedRepair[] = []
 
   loading = false
 
@@ -31,6 +33,11 @@ class RecordsStore extends VuexModule {
   @Mutation
   setProcessingFiles(files: ProcessingFile[]): void {
     this.processing_files = files
+  }
+
+  @Mutation
+  setFailedRepairs(failures: FailedRepair[]): void {
+    this.failed_repairs = failures
   }
 
   @Mutation
@@ -86,12 +93,38 @@ class RecordsStore extends VuexModule {
     })
       .then((response) => {
         this.setProcessingFiles(response.data.processing)
+        this.setFailedRepairs(response.data.failed ?? [])
       })
       .catch((error) => {
         if (isBackendOffline(error)) {
           return
         }
         this.setProcessingFiles([])
+      })
+  }
+
+  /**
+   * Asks the vehicle to rewrite a recording so that it carries an index again. The rewrite runs on
+   * the vehicle and is followed through the processing status, since it takes as long as copying the
+   * recording.
+   */
+  @Action
+  async repairRecording(file: RecordingFile): Promise<void> {
+    await back_axios({
+      method: 'post',
+      url: `${this.API_URL}/files/${file.path}/repair`,
+      timeout: 10000,
+    })
+      .then((response) => {
+        this.setProcessingFiles(response.data.processing)
+        this.setFailedRepairs(response.data.failed ?? [])
+      })
+      .catch((error) => {
+        if (isBackendOffline(error)) {
+          return
+        }
+        const detail = error.response?.data?.detail
+        this.setError(`Could not repair ${file.name}: ${detail ?? error.message}`)
       })
   }
 }
