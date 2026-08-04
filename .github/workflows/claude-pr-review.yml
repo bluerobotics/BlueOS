@@ -206,8 +206,8 @@ jobs:
             - Then determine whether a previous bot comment exists by scanning the PR's comments for the marker:
               `gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | startswith("<!-- claude-pr-review-bot:v1 -->")) | .id' | head -n 1`
             - If an id is returned, UPDATE that comment:
-              `gh api --method PATCH "repos/$REPO/issues/comments/<id>" -f body=@review.md`
-              (if `-f body=@review.md` is not supported by the installed `gh` version, fall back to `jq -Rs . < review.md` to build a JSON payload and pipe via `--input -` to `gh api`.)
+              `gh api --method PATCH "repos/$REPO/issues/comments/<id>" -F body=@review.md`
+              (use `-F`, not `-f`: only `--field`/`-F` reads the value from the file via `@`; `--raw-field`/`-f` would post the literal string `@review.md`.)
             - Otherwise CREATE a new comment:
               `gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file review.md`
             - Post exactly one comment. Do not open issues, do not modify files in the repo, do not push, do not approve/request-changes on the PR.
