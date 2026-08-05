@@ -44,9 +44,18 @@ import { get_board_model } from '@/components/vehiclesetup/viewers/modelHelper'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
+import dracoDecoderPath from '@/utils/draco'
 
-// Import DRACO decoder files using Vite's glob import
-const dracoFiles = import.meta.glob('/node_modules/three/examples/jsm/libs/draco/*', { eager: true, as: 'url' })
+function makeGLTFLoader(): GLTFLoader {
+  const dracoLoader = new DRACOLoader()
+  const decoderPath = dracoDecoderPath()
+  if (decoderPath !== undefined) {
+    dracoLoader.setDecoderPath(decoderPath)
+  }
+  const loader = new GLTFLoader()
+  loader.setDRACOLoader(dracoLoader)
+  return loader
+}
 
 class Rotation {
   name: string
@@ -331,15 +340,7 @@ export default {
           this.vehicle_obj = undefined
         }
 
-        const dracoLoader = new DRACOLoader()
-        // Get the base path from the imported DRACO files
-        const dracoWasmFile = Object.keys(dracoFiles).find((key) => key.includes('draco_decoder.wasm'))
-        if (dracoWasmFile) {
-          const basePath = dracoFiles[dracoWasmFile].replace(/[^/]*$/, '')
-          dracoLoader.setDecoderPath(basePath)
-        }
-        const loader = new GLTFLoader()
-        loader.setDRACOLoader(dracoLoader)
+        const loader = makeGLTFLoader()
         loader.load(
           this.vehicle_model,
           (gltf: GLTF) => {
@@ -374,15 +375,7 @@ export default {
     async add_board_model() {
       if (this.scene) {
         try {
-          const dracoLoader = new DRACOLoader()
-          // Get the base path from the imported DRACO files
-          const dracoWasmFile = Object.keys(dracoFiles).find((key) => key.includes('draco_decoder.wasm'))
-          if (dracoWasmFile) {
-            const basePath = dracoFiles[dracoWasmFile].replace(/[^/]*$/, '')
-            dracoLoader.setDecoderPath(basePath)
-          }
-          const loader = new GLTFLoader()
-          loader.setDRACOLoader(dracoLoader)
+          const loader = makeGLTFLoader()
 
           const board_model = await get_board_model(this.componentModel)
 
