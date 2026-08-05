@@ -1,5 +1,22 @@
 <template>
   <v-container fluid class="records-view">
+    <v-overlay
+      v-if="!isSafe"
+      absolute
+      :opacity="0.9"
+      z-index="10"
+    >
+      <div class="d-flex flex-column align-center text-center pa-4">
+        <v-icon large color="warning" class="mb-3">
+          mdi-alert-outline
+        </v-icon>
+        <p class="mb-0">
+          Recording browsing is paused while the vehicle is armed,
+          so the link stays free for vehicle control.
+        </p>
+      </div>
+    </v-overlay>
+
     <v-alert
       v-if="error"
       type="error"
@@ -205,6 +222,7 @@ import { McapNeedsRepairError } from '@/libs/mcap/reader'
 import { extractMcapThumbnail } from '@/libs/mcap/thumbnail'
 import { deleteCachedThumbnail, getCachedThumbnail, setCachedThumbnail } from '@/libs/mcap/thumbnail-cache'
 import { OneMoreTime } from '@/one-more-time'
+import autopilot_data from '@/store/autopilot'
 import records_store from '@/store/records'
 import { FailedRepair, ProcessingFile, RecordingFile } from '@/types/records'
 import { prettifySize } from '@/utils/helper_functions'
@@ -225,10 +243,16 @@ export default Vue.extend({
       thumbnails: {} as Record<string, string>,
       thumbnailFailed: {} as Record<string, boolean>,
       thumbnailController: null as AbortController | null,
+      /** Cancels summary range-reads the moment the vehicle arms. */
+      summaryController: null as AbortController | null,
       statusPoller: null as OneMoreTime | null,
     }
   },
   computed: {
+    /** Armed vehicles need the link for control; this page must not compete with them. */
+    isSafe(): boolean {
+      return autopilot_data.is_safe
+    },
     recordings(): RecordingFile[] {
       return records_store.recordings
     },
@@ -250,13 +274,30 @@ export default Vue.extend({
       return records_store.error
     },
   },
+  watch: {
+    isSafe(safe: boolean) {
+      if (safe) {
+        this.refresh()
+        return
+      }
+      this.pauseNetworkActivity()
+    },
+  },
   mounted() {
-    this.refresh()
+    if (this.isSafe) {
+      this.refresh()
+    }
     this.statusPoller = new OneMoreTime(
       { delay: 5000, disposeWith: this },
       async () => {
+        if (!this.isSafe) {
+          return
+        }
         const repairing = this.processingFiles.map((file) => file.path)
         await records_store.fetchProcessingStatus()
+        if (!this.isSafe) {
+          return
+        }
         const stillRepairing = this.processingFiles.map((file) => file.path)
         const finished = repairing.filter((path) => !stillRepairing.includes(path))
         if (finished.length === 0) {
@@ -270,15 +311,32 @@ export default Vue.extend({
     )
   },
   beforeDestroy() {
-    this.thumbnailController?.abort()
+    this.pauseNetworkActivity()
     Object.values(this.thumbnails).forEach((url) => URL.revokeObjectURL(url))
   },
   methods: {
+    /** Stops every in-flight download and closes playback so arming never leaves traffic running. */
+    pauseNetworkActivity(): void {
+      this.thumbnailController?.abort()
+      this.thumbnailController = null
+      this.summaryController?.abort()
+      this.summaryController = null
+      if (this.playerOpen) {
+        this.playerOpen = false
+        this.activeRecord = null
+      }
+    },
     async refresh(): Promise<void> {
+      if (!this.isSafe) {
+        return
+      }
       await Promise.all([
         records_store.fetchRecordings(),
         records_store.fetchProcessingStatus(),
       ])
+      if (!this.isSafe) {
+        return
+      }
       await this.loadSummaries()
     },
     /**
@@ -286,25 +344,50 @@ export default Vue.extend({
      * to leave the link to the vehicle free for playback.
      */
     async loadSummaries(): Promise<void> {
+      if (!this.isSafe) {
+        return
+      }
+      this.summaryController?.abort()
+      const controller = new AbortController()
+      this.summaryController = controller
       const pending = this.recordings.filter(
         (file) => !this.summaries[file.path] && !this.summaryErrors[file.path],
       )
-      for (const file of pending) {
-        try {
-          // eslint-disable-next-line no-await-in-loop
-          this.$set(this.summaries, file.path, await readMcapVideoSummary(file.stream_url))
-        } catch (error) {
-          this.$set(this.summaryErrors, file.path, error instanceof Error ? error.message : String(error))
-          this.$set(this.repairable, file.path, error instanceof McapNeedsRepairError)
+      try {
+        for (const file of pending) {
+          if (!this.isSafe || controller.signal.aborted) {
+            return
+          }
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            this.$set(
+              this.summaries,
+              file.path,
+              await readMcapVideoSummary(file.stream_url, controller.signal),
+            )
+          } catch (error) {
+            if (controller.signal.aborted || !this.isSafe) {
+              return
+            }
+            this.$set(this.summaryErrors, file.path, error instanceof Error ? error.message : String(error))
+            this.$set(this.repairable, file.path, error instanceof McapNeedsRepairError)
+          }
+        }
+      } finally {
+        if (this.summaryController === controller) {
+          this.summaryController = null
         }
       }
       await this.loadThumbnails()
     },
     /**
      * Builds JPEG previews one recording at a time. Stops while the player is open so seeking and
-     * playback keep the link to themselves.
+     * playback keep the link to themselves, and never runs while the vehicle is armed.
      */
     async loadThumbnails(): Promise<void> {
+      if (!this.isSafe) {
+        return
+      }
       const pending = this.recordings.filter((file) => {
         if (this.thumbnails[file.path] || this.thumbnailFailed[file.path] || this.summaryErrors[file.path]) {
           return false
@@ -313,7 +396,7 @@ export default Vue.extend({
         return Boolean(summary?.tracks.some((track) => track.frameCount > 0))
       })
       for (const file of pending) {
-        if (this.playerOpen) {
+        if (!this.isSafe || this.playerOpen) {
           return
         }
         // eslint-disable-next-line no-await-in-loop
@@ -331,14 +414,17 @@ export default Vue.extend({
         this.rememberThumbnail(file.path, cached)
         return
       }
+      if (!this.isSafe) {
+        return
+      }
 
       this.thumbnailController?.abort()
       const controller = new AbortController()
       this.thumbnailController = controller
       try {
         const blob = await extractMcapThumbnail(file.stream_url, { signal: controller.signal })
-        if (!blob || controller.signal.aborted) {
-          if (!blob) {
+        if (!blob || controller.signal.aborted || !this.isSafe) {
+          if (!blob && this.isSafe) {
             this.$set(this.thumbnailFailed, file.path, true)
           }
           return
@@ -346,7 +432,7 @@ export default Vue.extend({
         await setCachedThumbnail(cacheKey, blob)
         this.rememberThumbnail(file.path, blob)
       } catch (error) {
-        if (controller.signal.aborted) {
+        if (controller.signal.aborted || !this.isSafe) {
           return
         }
         this.$set(this.thumbnailFailed, file.path, true)
@@ -402,6 +488,9 @@ export default Vue.extend({
       return this.failedRepairs.find((failure) => failure.path === file.path)?.error ?? null
     },
     async repair(file: RecordingFile): Promise<void> {
+      if (!this.isSafe) {
+        return
+      }
       await records_store.repairRecording(file)
     },
     streamsLabel(summary: McapVideoSummary): string {
@@ -416,6 +505,9 @@ export default Vue.extend({
       return `${minutes}m ${String(total % 60).padStart(2, '0')}s`
     },
     async deleteRecording(file: RecordingFile): Promise<void> {
+      if (!this.isSafe) {
+        return
+      }
       await deleteCachedThumbnail({
         path: file.path,
         sizeBytes: file.size_bytes,
@@ -425,12 +517,16 @@ export default Vue.extend({
       await records_store.deleteRecording(file)
     },
     openPlayer(file: RecordingFile): void {
+      if (!this.isSafe) {
+        return
+      }
       this.thumbnailController?.abort()
       this.activeRecord = file
       this.playerOpen = true
     },
     closePlayer(): void {
       this.playerOpen = false
+      this.activeRecord = null
       this.loadThumbnails()
     },
     formatSize(bytes: number): string {
@@ -446,6 +542,7 @@ export default Vue.extend({
 
 <style scoped>
 .records-view {
+  position: relative;
   min-height: 100%;
 }
 
