@@ -19,6 +19,9 @@ import { listVideoTracks, VideoTrack } from './video-track'
 
 const RESUME_TOLERANCE_SECONDS = 0.25
 
+/** How short of the recorded span the buffered media may end and still count as the whole of it. */
+const COMPLETE_TOLERANCE_SECONDS = 2
+
 export interface McapVideoStats {
   bytesDownloaded: number
   bufferedAheadSeconds: number
@@ -142,10 +145,14 @@ export class McapVideoPlayer {
 
   private sequence = 1
 
-  private internalSeek = false
+  /** Time the player moved the playhead to itself, which needs no restart of its own. */
+  private internalSeekTarget: number | null = null
 
-  /** Number of seeks currently pointing the stream at a new time. */
-  private restarts = 0
+  /** Time a queued restart has to land on, or null when nothing is waiting to be seeked to. */
+  private queuedRestartSeconds: number | null = null
+
+  /** Whether a seek is currently pointing the stream at a new time. */
+  private restarting = false
 
   private reachedEnd = false
 
@@ -235,21 +242,52 @@ export class McapVideoPlayer {
     this.options.onStats?.(this.stats)
   }
 
-  private bufferedAhead(): number {
+  /** Media covering the playhead itself, which is the only media it can play from where it is. */
+  private bufferedFromPlayhead(): number {
     const { buffered, currentTime } = this.video
     for (let index = 0; index < buffered.length; index += 1) {
       if (currentTime >= buffered.start(index) - RESUME_TOLERANCE_SECONDS && currentTime <= buffered.end(index)) {
         return buffered.end(index) - currentTime
       }
     }
+    return 0
+  }
+
+  private bufferedAhead(): number {
+    const covering = this.bufferedFromPlayhead()
+    if (covering > 0) {
+      return covering
+    }
     // A playhead sitting in a gap still has media waiting after it. Ignoring that would leave the
     // filling loop convinced it has nothing buffered, and it would read on to the end of the file.
+    const { buffered, currentTime } = this.video
     for (let index = 0; index < buffered.length; index += 1) {
       if (buffered.start(index) > currentTime) {
         return buffered.end(index) - buffered.start(index)
       }
     }
     return 0
+  }
+
+  private bufferedEnd(): number {
+    const { buffered } = this.video
+    return buffered.length > 0 ? buffered.end(buffered.length - 1) : 0
+  }
+
+  /**
+   * Tells the decoder there is nothing left to play, but only once the media held covers the
+   * recording to its end. Ending the stream shortens it to whatever is buffered, and media further
+   * back has been evicted by then, so doing it early would put the end of the recording out of reach
+   * of the playback controls.
+   */
+  private signalEndOfStream(): void {
+    if (this.mediaSource.readyState !== 'open') {
+      return
+    }
+    if (this.bufferedEnd() < this.stream.durationSeconds - COMPLETE_TOLERANCE_SECONDS) {
+      return
+    }
+    this.mediaSource.endOfStream()
   }
 
   private onTimeUpdate = (): void => {
@@ -270,11 +308,16 @@ export class McapVideoPlayer {
   }
 
   private onSeeking = (): void => {
-    if (this.internalSeek) {
-      this.internalSeek = false
+    // Compared against the playhead rather than trusted on its own: a seek of the viewer's that
+    // landed elsewhere has to restart reading, however it interleaved with the player's own.
+    const internalTarget = this.internalSeekTarget
+    this.internalSeekTarget = null
+    if (internalTarget !== null && Math.abs(this.video.currentTime - internalTarget) < RESUME_TOLERANCE_SECONDS) {
       return
     }
-    if (this.bufferedAhead() > 0) {
+    // Media held for some other part of the recording is no help to a viewer who asked to watch from
+    // here, and leaving it in place would only let the playhead be pulled back onto it.
+    if (this.bufferedFromPlayhead() > 0) {
       this.scheduleFill()
       return
     }
@@ -290,17 +333,31 @@ export class McapVideoPlayer {
     this.options.onError?.(error instanceof Error ? error : new Error(String(error)))
   }
 
-  /** Restarts reading at a keyframe covering the requested time, dropping everything buffered. */
+  /**
+   * Restarts reading at a keyframe covering the requested time, dropping everything buffered.
+   *
+   * Restarts run one at a time: a second seek starting while one is under way would abort the reads
+   * the first had just begun, leaving nothing buffered and no filling scheduled to recover from it.
+   * Seeks arriving meanwhile replace the queued time instead, so only the last one is honoured.
+   */
   private async restartAt(seconds: number): Promise<void> {
-    this.restarts += 1
+    this.queuedRestartSeconds = seconds
+    if (this.restarting) {
+      return
+    }
+
+    this.restarting = true
     try {
-      await this.reopenAt(seconds)
+      while (this.queuedRestartSeconds !== null && !this.destroyed) {
+        const target = this.queuedRestartSeconds
+        this.queuedRestartSeconds = null
+        // eslint-disable-next-line no-await-in-loop
+        await this.reopenAt(target)
+      }
     } finally {
-      this.restarts -= 1
+      this.restarting = false
     }
-    if (this.restarts === 0) {
-      this.scheduleFill()
-    }
+    this.scheduleFill()
   }
 
   private async reopenAt(seconds: number): Promise<void> {
@@ -319,14 +376,24 @@ export class McapVideoPlayer {
 
     if (this.sourceBuffer) {
       await this.run(() => this.removeRange(0, Infinity))
+      this.restoreDuration()
     }
     await this.stream.seekToKeyframe(seconds, this.controller.signal)
+  }
+
+  /** Puts the recorded span back on the media, which ending the stream may have cut short. */
+  private restoreDuration(): void {
+    const { durationSeconds } = this.stream
+    if (this.mediaSource.readyState !== 'open' || this.mediaSource.duration >= durationSeconds) {
+      return
+    }
+    this.mediaSource.duration = durationSeconds
   }
 
   private scheduleFill(): void {
     // Filling while the stream is being pointed at a new time would read on from the old position,
     // which is both the wrong content and a needless download.
-    if (this.destroyed || this.restarts > 0 || this.fillTask || this.reachedEnd) {
+    if (this.destroyed || this.restarting || this.fillTask || this.reachedEnd) {
       return
     }
     if (this.sourceBuffer && this.bufferedAhead() >= this.bufferAheadSeconds) {
@@ -355,9 +422,7 @@ export class McapVideoPlayer {
         if (this.needsKeyframe) {
           throw new Error('This video stream holds no keyframe, so there is nothing that can be decoded.')
         }
-        if (this.mediaSource.readyState === 'open') {
-          this.mediaSource.endOfStream()
-        }
+        this.signalEndOfStream()
         return
       }
 
@@ -475,6 +540,11 @@ export class McapVideoPlayer {
    * forward, waiting for the missing media would stall playback for good.
    */
   private alignPlayhead(): void {
+    // A restart on its way drops everything buffered and reads the media the playhead is waiting for,
+    // so moving it now would only take it off the time that was asked for.
+    if (this.restarting || this.queuedRestartSeconds !== null) {
+      return
+    }
     const { buffered, currentTime } = this.video
     for (let index = 0; index < buffered.length; index += 1) {
       if (currentTime >= buffered.start(index) - RESUME_TOLERANCE_SECONDS && currentTime <= buffered.end(index)) {
@@ -484,8 +554,8 @@ export class McapVideoPlayer {
     for (let index = 0; index < buffered.length; index += 1) {
       const start = buffered.start(index)
       if (start > currentTime) {
-        this.internalSeek = true
-        this.video.currentTime = start + 0.001
+        this.internalSeekTarget = start + 0.001
+        this.video.currentTime = this.internalSeekTarget
         return
       }
     }

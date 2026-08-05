@@ -450,8 +450,10 @@ export default Vue.extend({
     /** Shows the frame at the bound just dragged, once dragging stops: seeking on every step thrashes reads. */
     onRangeSettled(range: number[]): void {
       const [leader] = this.videos
-      if (leader) {
-        leader.currentTime = range[this.moved_bound]
+      const target = range[this.moved_bound]
+      // A bound dropped where the playhead already sits would restart every read for the same frame.
+      if (leader && Math.abs(leader.currentTime - target) > CLIP_STEP_SECONDS) {
+        leader.currentTime = target
       }
     },
     /**
