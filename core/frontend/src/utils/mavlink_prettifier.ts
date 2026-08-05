@@ -2,8 +2,6 @@ import { Message } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2re
 import { Message as M2R } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import { Dictionary } from '@/types/common'
 
-import { mavlinkString } from './mavlink2rest_compat'
-
 const formatters = {
   AHRS2(message: M2R.Ahrs2) {
     return `Roll: ${message.roll.toFixed(2)} rad, Pitch: `
@@ -17,8 +15,19 @@ const formatters = {
     return `${message.voltages[0] / 1000} V ${message.current_consumed} mAh consumed`
   },
   CAMERA_INFORMATION(message: M2R.CameraInformation) {
-    const vendor_name = mavlinkString(message.vendor_name)
-    const definition_url = mavlinkString(message.cam_definition_uri)
+    function byteArrayToString(array: number[]): string {
+      return array
+        .filter((value: number) => value !== 0)
+        .map((value: number) => String.fromCharCode(value))
+        .join('')
+    }
+    function removeNullFromCharArray(array: string[]): string {
+      return array
+        .filter((value) => value !== '\x00')
+        .join('')
+    }
+    const vendor_name = byteArrayToString(message.vendor_name)
+    const definition_url = removeNullFromCharArray(message.cam_definition_uri)
     return `vendor: ${vendor_name}, definition_url: ${definition_url}`
   },
   COMMAND_ACK(message: M2R.CommandAck) {
@@ -42,16 +51,16 @@ const formatters = {
     return `${message.mavtype.type}`
   },
   NAMED_VALUE_FLOAT(message: M2R.NamedValueFloat) {
-    return `${mavlinkString(message.name)} = ${message.value.toFixed(2)}`
+    return `${message.name.join('')} = ${message.value.toFixed(2)}`
   },
   PARAM_VALUE(message: M2R.ParamValue) {
-    return `${mavlinkString(message.param_id)}: ${message.param_value}`
+    return `${message.param_id.join('')}: ${message.param_value}`
   },
   SCALED_PRESSURE(message: M2R.ScaledPressure) {
     return `${message.press_abs?.toFixed(2)}hPa at ${message.temperature / 100}c`
   },
   STATUSTEXT(message: M2R.Statustext): string {
-    return `${message.severity.type.replace('MAV_SEVERITY_', '')}: ${mavlinkString(message.text)}`
+    return `${message.severity.type.replace('MAV_SEVERITY_', '')}: ${message.text.join('')}`
   },
   SYS_STATUS(message: M2R.SysStatus) {
     return `Batt: (${message.current_battery / 100} A, ${message.voltage_battery / 1000} V)`

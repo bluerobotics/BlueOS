@@ -5,7 +5,6 @@
 <script lang="ts">
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'
-import { mavlinkString } from '@/utils/mavlink2rest_compat'
 
 export default {
   name: 'StatusTextWatcher',
@@ -28,7 +27,7 @@ export default {
   },
   mounted() {
     this.listener = mavlink2rest.startListening('STATUSTEXT').setCallback((receivedMessage) => {
-      const text = mavlinkString(receivedMessage.message.text)
+      const text = receivedMessage.message.text.join('')
       if (this.messages?.last() === text) {
         return
       }

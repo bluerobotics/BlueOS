@@ -12,7 +12,6 @@ from commonwealth.mavlink_comm.typedefs import (
 from loguru import logger
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
-MAV_MODE_FLAG_SAFETY_ARMED_NAME = "MAV_MODE_FLAG_SAFETY_ARMED"
 
 
 class VehicleManager:
@@ -55,7 +54,7 @@ class VehicleManager:
             "custom_mode": 0,
             "mavtype": {"type": "MAV_TYPE_ONBOARD_CONTROLLER"},
             "autopilot": {"type": "MAV_AUTOPILOT_INVALID"},
-            "base_mode": "",
+            "base_mode": {"bits": 0},
             "system_status": {"type": "MAV_STATE_STANDBY"},
             "mavlink_version": 3,
         }
@@ -115,12 +114,12 @@ class VehicleManager:
 
     async def is_vehicle_armed(self) -> bool:
         get_response = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
-        base_mode = get_response["message"]["base_mode"]
-        if isinstance(base_mode, str):
-            return MAV_MODE_FLAG_SAFETY_ARMED_NAME in {flag.strip() for flag in base_mode.split("|")}
-        if isinstance(base_mode, dict) and isinstance(base_mode.get("bits"), int):
-            return bool(base_mode["bits"] & MAV_MODE_FLAG_SAFETY_ARMED)
-        raise ValueError("Got unexpected HEARTBEAT message from Autopilot.")
+        base_mode_bits = get_response["message"]["base_mode"]["bits"]
+        if not isinstance(base_mode_bits, int):
+            raise ValueError("Got unexpected HEARTBEAT message from Autopilot.")
+
+        # Check if bit representing an armed vehicle is on base_mode bit array
+        return bool(base_mode_bits & MAV_MODE_FLAG_SAFETY_ARMED)
 
     async def disarm_vehicle(self) -> None:
         if not await self.is_vehicle_armed():

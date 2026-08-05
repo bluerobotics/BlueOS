@@ -8,7 +8,6 @@ import autopilot_data from "@/store/autopilot";
 import mavlink_store_get from "./mavlink";
 import mavlink from "@/store/mavlink";
 import { Message } from "@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message";
-import { mavlinkFlagEnabled } from '@/utils/mavlink2rest_compat'
 
 
 export function isArmed(): boolean {
@@ -19,11 +18,7 @@ export function isArmed(): boolean {
     vehicle_id,
     1,
   ) as Message.Heartbeat
-  return mavlinkFlagEnabled(
-    heartbeat?.base_mode,
-    'MAV_MODE_FLAG_SAFETY_ARMED',
-    MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED,
-  )
+  return Boolean(heartbeat?.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED)
 }
 
 function sendArmDisarm(arm: boolean, force: boolean): void {

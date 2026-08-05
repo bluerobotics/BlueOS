@@ -2,7 +2,6 @@ import mavlink2rest from '@/libs/MAVLink2Rest'
 // eslint-disable-next-line import/no-cycle
 import ardupilot_data, { AutopilotStore } from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { mavlinkString } from '@/utils/mavlink2rest_compat'
 
 import ParametersTable from './parameter-table'
 
@@ -106,7 +105,7 @@ export default class ParameterFetcher {
         this.reset_timestamp = 0
       }
 
-      const param_name = mavlinkString(receivedMessage.message.param_id)
+      const param_name = receivedMessage.message.param_id.join('').replace(/\0/g, '')
       const { param_index, param_value, param_type } = receivedMessage.message
       // We need this due to mismatches between js 64-bit floats and REAL32 in MAVLink
       const trimmed_value = Math.round(param_value * 10000) / 10000

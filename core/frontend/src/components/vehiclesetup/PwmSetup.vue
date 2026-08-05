@@ -174,7 +174,6 @@ import { SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
 import { Dictionary } from '@/types/common'
 import { armDisarm, doMotorTest } from '@/utils/ardupilot_mavlink'
 import mavlink_store_get from '@/utils/mavlink'
-import { mavlinkFlagEnabled } from '@/utils/mavlink2rest_compat'
 import { servoNumberToGpio } from '@/utils/servoGpio'
 
 import ParameterSwitch from '../common/ParameterSwitch.vue'
@@ -336,11 +335,7 @@ export default Vue.extend({
         this.vehicle_id,
         1,
       ) as Message.Heartbeat
-      return mavlinkFlagEnabled(
-        heartbeat?.base_mode,
-        'MAV_MODE_FLAG_SAFETY_ARMED',
-        MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED,
-      )
+      return Boolean(heartbeat?.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED)
     },
     is_manual(): boolean {
       const heartbeat = mavlink_store_get(
@@ -351,16 +346,8 @@ export default Vue.extend({
       ) as Message.Heartbeat
 
       // Legacy manual mode
-      if (!mavlinkFlagEnabled(
-        heartbeat?.base_mode,
-        'MAV_MODE_FLAG_CUSTOM_MODE_ENABLED',
-        MavModeFlag.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-      )) {
-        return mavlinkFlagEnabled(
-          heartbeat?.base_mode,
-          'MAV_MODE_FLAG_MANUAL_INPUT_ENABLED',
-          MavModeFlag.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED,
-        )
+      if (!(heartbeat?.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)) {
+        return Boolean(heartbeat?.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)
       }
 
       if (this.is_rover) {

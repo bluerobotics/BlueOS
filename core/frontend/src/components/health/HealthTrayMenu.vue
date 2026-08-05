@@ -125,7 +125,6 @@ import * as DEFAULT_COLORS from '@/style/colors/default'
 import { RaspberryEventType } from '@/types/system-information/platform'
 import { Disk } from '@/types/system-information/system'
 import mavlink_store_get from '@/utils/mavlink'
-import { mavlinkFlagEnabled } from '@/utils/mavlink2rest_compat'
 
 const FETCH_TYPES = [
   FetchType.SystemTemperatureType,
@@ -199,11 +198,7 @@ export default Vue.extend({
       }
       autopilot_data.setSystemId(message?.header.system_id)
       autopilot_data.setAutopilotType(message?.message.autopilot.type)
-      autopilot_data.setVehicleArmed(mavlinkFlagEnabled(
-        message?.message.base_mode,
-        'MAV_MODE_FLAG_SAFETY_ARMED',
-        MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED,
-      ))
+      autopilot_data.setVehicleArmed(Boolean(message?.message.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED))
       autopilot_data.setLastHeartbeatDate(new Date())
     }).setFrequency(0))
   },
