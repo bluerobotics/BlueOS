@@ -161,10 +161,14 @@ export default defineConfig(({ command, mode }) => {
             // List of file patterns to excluded from hashing
             const noHashPatterns = [
               /ArduPilot-Parameter-Repository.*\.json$/,
-              /three\/examples\/jsm\/libs\/draco\//
             ];
 
             if (assetInfo.name) {
+              // DRACOLoader is configured with a directory and looks up the decoder files by
+              // name inside it, so they must be unhashed and kept together.
+              if (/three\/examples\/jsm\/libs\/draco\//.test(assetInfo.name)) {
+                return `assets/draco/[name][extname]`;
+              }
               if (noHashPatterns.some(pattern => pattern.test(assetInfo.name))) {
                 return `assets/[name][extname]`;
               }
