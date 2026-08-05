@@ -28,7 +28,7 @@
         <span class="mt-2 caption text-center white--text">{{ error }}</span>
       </div>
       <table v-if="statistics && !error" class="stats-overlay grey--text text--lighten-3">
-        <tr v-for="row in stat_rows" :key="row.label">
+        <tr v-for="row in detail_stat_rows" :key="row.label">
           <td class="stats-label">
             {{ row.label }}
           </td>
@@ -39,49 +39,14 @@
       </table>
     </div>
 
-    <v-progress-linear
-      v-if="export_progress"
-      :value="export_percentage"
-      height="3"
-      color="primary"
-    />
-
-    <div class="d-flex align-center caption grey--text text--darken-1 mt-1">
+    <div class="stream-meta d-flex align-center caption mt-2">
+      <v-icon x-small :color="error ? 'error' : 'success'" class="mr-1">
+        mdi-circle
+      </v-icon>
       <span class="font-weight-medium text-truncate">{{ track.name }}</span>
-      <v-spacer />
-      <template v-if="export_progress">
-        <span>saving {{ export_percentage }}% · {{ export_size }}</span>
-        <v-btn
-          v-tooltip="'Stop saving'"
-          icon
-          x-small
-          class="ml-1"
-          @click="cancelExport"
-        >
-          <v-icon small>
-            mdi-close
-          </v-icon>
-        </v-btn>
-      </template>
-      <template v-else>
-        <span v-if="resolution" class="ml-3">{{ resolution }}</span>
-        <span v-if="stats.codec" class="ml-3">{{ stats.codec }}</span>
-        <v-btn
-          v-if="!error"
-          v-tooltip="clip ? 'Save the chosen part of this stream as a video file'
-            : 'Save this whole stream as a video file'"
-          x-small
-          text
-          color="primary"
-          class="ml-2"
-          @click="saveMp4"
-        >
-          <v-icon x-small left>
-            mdi-download
-          </v-icon>
-          MP4
-        </v-btn>
-      </template>
+      <span v-if="resolution" class="ml-2 grey--text text--darken-1">{{ resolution }}</span>
+      <span v-if="codec_label" class="ml-2 grey--text text--darken-1">{{ codec_label }}</span>
+      <span v-if="frame_rate" class="ml-2 grey--text text--darken-1">{{ frame_rate }}</span>
     </div>
   </div>
 </template>
@@ -90,16 +55,9 @@
 import Vue, { PropType } from 'vue'
 
 import {
-  exportTrackAsMp4, Mp4ExportProgress, Mp4ExportRange, saveBlob,
-} from '@/libs/mcap/export'
-import {
   McapVideoPlayer, McapVideoRecording, McapVideoStats,
 } from '@/libs/mcap/player'
 import { VideoTrack } from '@/libs/mcap/video-track'
-import { prettifySize } from '@/utils/helper_functions'
-
-/** Time between progress updates, so that saving does not repaint the page on every frame. */
-const PROGRESS_INTERVAL_MS = 200
 
 interface StatRow {
   label: string
@@ -119,6 +77,17 @@ function prettifyBitrate(bitsPerSecond: number): string {
   return `${Math.round(bitsPerSecond / 1e3)} kbps`
 }
 
+/** Short codec family for the metadata row, e.g. avc1.640033 → H.264. */
+function codecFamily(codec: string): string {
+  if (codec.startsWith('avc1') || codec.startsWith('avc3')) {
+    return 'H.264'
+  }
+  if (codec.startsWith('hvc1') || codec.startsWith('hev1')) {
+    return 'H.265'
+  }
+  return codec
+}
+
 export default Vue.extend({
   name: 'McapVideoStream',
   props: {
@@ -130,10 +99,6 @@ export default Vue.extend({
       type: Object as PropType<VideoTrack>,
       required: true,
     },
-    name: {
-      type: String,
-      required: true,
-    },
     controls: {
       type: Boolean,
       default: false,
@@ -141,11 +106,6 @@ export default Vue.extend({
     statistics: {
       type: Boolean,
       default: false,
-    },
-    /** Part of the recording to save, or null to save the whole stream. */
-    clip: {
-      type: Object as PropType<Mp4ExportRange | null>,
-      default: null,
     },
   },
   data() {
@@ -156,9 +116,6 @@ export default Vue.extend({
       loading: true,
       loading_message: 'Loading video...',
       empty_captions: 'data:text/vtt,WEBVTT',
-      export_progress: null as Mp4ExportProgress | null,
-      export_controller: null as AbortController | null,
-      last_progress_at: 0,
     }
   },
   computed: {
@@ -166,14 +123,14 @@ export default Vue.extend({
       const { width, height } = this.stats
       return width && height ? `${width}x${height}` : ''
     },
-    export_percentage(): number {
-      const { seconds, durationSeconds } = this.export_progress ?? { seconds: 0, durationSeconds: 0 }
-      return durationSeconds > 0 ? Math.min(100, Math.round(seconds / durationSeconds * 100)) : 0
+    codec_label(): string {
+      return this.stats.codec ? codecFamily(this.stats.codec) : ''
     },
-    export_size(): string {
-      return prettifySize((this.export_progress?.bytes ?? 0) / 1024)
+    frame_rate(): string {
+      const { frameRate } = this.stats
+      return frameRate && frameRate > 0 ? `${frameRate.toFixed(1)} fps` : ''
     },
-    stat_rows(): StatRow[] {
+    detail_stat_rows(): StatRow[] {
       const {
         framesRead = 0, keyframes = 0, framesLost = 0, framesSkipped = 0, framesCorrupt = 0,
         framesDecoded = 0, framesDropped = 0, decodeErrors = 0, frameRate = 0, bitrate = 0,
@@ -232,54 +189,6 @@ export default Vue.extend({
   },
   beforeDestroy() {
     this.player?.destroy()
-    this.export_controller?.abort()
-  },
-  methods: {
-    /** Recording, stream and, when only a part is saved, the seconds it covers. */
-    fileName(clip: Mp4ExportRange | null): string {
-      const base = `${this.name}-${this.track.name}`
-      if (!clip) {
-        return `${base}.mp4`
-      }
-      const end = Number.isFinite(clip.endSeconds) ? `${Math.round(clip.endSeconds)}s` : 'end'
-      return `${base}-${Math.round(clip.startSeconds)}s-${end}.mp4`
-    },
-    async saveMp4(): Promise<void> {
-      const controller = new AbortController()
-      // Held for the whole export, so moving the marks meanwhile cannot rename what is being saved.
-      const clip = this.clip as Mp4ExportRange | null
-      const end = Math.min(clip?.endSeconds ?? Infinity, this.recording.durationSeconds)
-      this.export_controller = controller
-      this.export_progress = {
-        seconds: 0,
-        durationSeconds: Math.max(end - (clip?.startSeconds ?? 0), 0),
-        bytes: 0,
-      }
-      try {
-        const file = await exportTrackAsMp4(this.recording, this.track, {
-          range: clip ?? undefined,
-          signal: controller.signal,
-          onProgress: (progress) => {
-            const now = Date.now()
-            if (now - this.last_progress_at >= PROGRESS_INTERVAL_MS) {
-              this.last_progress_at = now
-              this.export_progress = progress
-            }
-          },
-        })
-        saveBlob(file, this.fileName(clip))
-      } catch (error) {
-        if (!(error instanceof Error) || error.name !== 'AbortError') {
-          this.$emit('export-error', error)
-        }
-      } finally {
-        this.export_controller = null
-        this.export_progress = null
-      }
-    },
-    cancelExport(): void {
-      this.export_controller?.abort()
-    },
   },
 })
 </script>
@@ -312,6 +221,10 @@ export default Vue.extend({
 
 .stream-error {
   background: rgba(17, 24, 39, 0.85);
+}
+
+.stream-meta {
+  min-height: 20px;
 }
 
 .stats-overlay {

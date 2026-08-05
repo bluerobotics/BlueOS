@@ -173,8 +173,16 @@
       @click:outside="closePlayer"
     >
       <v-card class="player-card">
-        <v-card-title class="headline d-flex align-center">
-          <span class="text-truncate">{{ activeRecord?.name }}</span>
+        <v-card-title class="headline d-flex align-center flex-wrap">
+          <div class="text-truncate mr-2">
+            {{ activeRecord?.name }}
+          </div>
+          <span
+            v-if="activeRecordMeta"
+            class="caption grey--text text--darken-1 font-weight-regular mr-2"
+          >
+            {{ activeRecordMeta }}
+          </span>
           <v-spacer />
           <v-btn
             v-tooltip="'Download the recording as it was made, to open in other tools'"
@@ -188,7 +196,7 @@
             <v-icon small left>
               mdi-download
             </v-icon>
-            MCAP
+            Download MCAP
           </v-btn>
           <v-btn
             v-tooltip="'Close'"
@@ -272,6 +280,23 @@ export default Vue.extend({
     },
     error(): string | null {
       return records_store.error
+    },
+    activeRecordMeta(): string | null {
+      const file = this.activeRecord
+      if (!file) {
+        return null
+      }
+      const summary = this.summaries[file.path]
+      const parts: string[] = []
+      if (summary) {
+        const total = Math.round(summary.durationSeconds)
+        const minutes = Math.floor(total / 60)
+        parts.push(`${minutes}:${String(total % 60).padStart(2, '0')}`)
+        const count = summary.tracks.length
+        parts.push(`${count} stream${count === 1 ? '' : 's'}`)
+      }
+      parts.push(this.formatSize(file.size_bytes))
+      return parts.join(' · ')
     },
   },
   watch: {
