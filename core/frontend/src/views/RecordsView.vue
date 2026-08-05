@@ -70,35 +70,43 @@
               @click="openPlayer(file)"
               @keydown.enter="openPlayer(file)"
             >
-              <v-btn icon large color="primary" class="play-btn">
-                <v-icon large>
-                  mdi-play-circle
-                </v-icon>
-              </v-btn>
-              <div class="mt-2 caption grey--text text--lighten-1 text-center">
-                <div v-if="summaryOf(file)">
-                  {{ formatDuration(summaryOf(file).durationSeconds) }}
-                  &middot;
-                  {{ streamsLabel(summaryOf(file)) }}
+              <img
+                v-if="thumbnailUrl(file)"
+                :src="thumbnailUrl(file)"
+                class="preview-image"
+                alt=""
+              >
+              <div class="preview-overlay d-flex flex-column align-center justify-center">
+                <v-btn icon large color="primary" class="play-btn">
+                  <v-icon large>
+                    mdi-play-circle
+                  </v-icon>
+                </v-btn>
+                <div class="mt-2 caption text-center preview-caption">
+                  <div v-if="summaryOf(file)">
+                    {{ formatDuration(summaryOf(file).durationSeconds) }}
+                    &middot;
+                    {{ streamsLabel(summaryOf(file)) }}
+                  </div>
+                  <template v-else-if="summaryError(file)">
+                    <div>{{ repairFailure(file) ?? summaryError(file) }}</div>
+                    <v-btn
+                      v-if="needsRepair(file)"
+                      v-tooltip="'Rewrite this recording on the vehicle so that it can be read'"
+                      x-small
+                      text
+                      color="primary"
+                      class="mt-1"
+                      @click.stop="repair(file)"
+                    >
+                      <v-icon x-small left>
+                        mdi-wrench
+                      </v-icon>
+                      Repair
+                    </v-btn>
+                  </template>
+                  <v-progress-circular v-else indeterminate size="14" width="2" color="grey" />
                 </div>
-                <template v-else-if="summaryError(file)">
-                  <div>{{ repairFailure(file) ?? summaryError(file) }}</div>
-                  <v-btn
-                    v-if="needsRepair(file)"
-                    v-tooltip="'Rewrite this recording on the vehicle so that it can be read'"
-                    x-small
-                    text
-                    color="primary"
-                    class="mt-1"
-                    @click.stop="repair(file)"
-                  >
-                    <v-icon x-small left>
-                      mdi-wrench
-                    </v-icon>
-                    Repair
-                  </v-btn>
-                </template>
-                <v-progress-circular v-else indeterminate size="14" width="2" color="grey" />
               </div>
             </div>
           </div>
@@ -194,6 +202,8 @@ import Vue from 'vue'
 import McapVideoPlayer from '@/components/records/McapVideoPlayer.vue'
 import { McapVideoSummary, readMcapVideoSummary } from '@/libs/mcap/player'
 import { McapNeedsRepairError } from '@/libs/mcap/reader'
+import { extractMcapThumbnail } from '@/libs/mcap/thumbnail'
+import { deleteCachedThumbnail, getCachedThumbnail, setCachedThumbnail } from '@/libs/mcap/thumbnail-cache'
 import { OneMoreTime } from '@/one-more-time'
 import records_store from '@/store/records'
 import { FailedRepair, ProcessingFile, RecordingFile } from '@/types/records'
@@ -211,6 +221,10 @@ export default Vue.extend({
       summaries: {} as Record<string, McapVideoSummary>,
       summaryErrors: {} as Record<string, string>,
       repairable: {} as Record<string, boolean>,
+      /** Object URLs for JPEG previews already in memory this session. */
+      thumbnails: {} as Record<string, string>,
+      thumbnailFailed: {} as Record<string, boolean>,
+      thumbnailController: null as AbortController | null,
       statusPoller: null as OneMoreTime | null,
     }
   },
@@ -255,6 +269,10 @@ export default Vue.extend({
       },
     )
   },
+  beforeDestroy() {
+    this.thumbnailController?.abort()
+    Object.values(this.thumbnails).forEach((url) => URL.revokeObjectURL(url))
+  },
   methods: {
     async refresh(): Promise<void> {
       await Promise.all([
@@ -280,11 +298,96 @@ export default Vue.extend({
           this.$set(this.repairable, file.path, error instanceof McapNeedsRepairError)
         }
       }
+      await this.loadThumbnails()
+    },
+    /**
+     * Builds JPEG previews one recording at a time. Stops while the player is open so seeking and
+     * playback keep the link to themselves.
+     */
+    async loadThumbnails(): Promise<void> {
+      const pending = this.recordings.filter((file) => {
+        if (this.thumbnails[file.path] || this.thumbnailFailed[file.path] || this.summaryErrors[file.path]) {
+          return false
+        }
+        const summary = this.summaries[file.path]
+        return Boolean(summary?.tracks.some((track) => track.frameCount > 0))
+      })
+      for (const file of pending) {
+        if (this.playerOpen) {
+          return
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await this.loadThumbnail(file)
+      }
+    },
+    async loadThumbnail(file: RecordingFile): Promise<void> {
+      const cacheKey = {
+        path: file.path,
+        sizeBytes: file.size_bytes,
+        modified: file.modified,
+      }
+      const cached = await getCachedThumbnail(cacheKey)
+      if (cached) {
+        this.rememberThumbnail(file.path, cached)
+        return
+      }
+
+      this.thumbnailController?.abort()
+      const controller = new AbortController()
+      this.thumbnailController = controller
+      try {
+        const blob = await extractMcapThumbnail(file.stream_url, { signal: controller.signal })
+        if (!blob || controller.signal.aborted) {
+          if (!blob) {
+            this.$set(this.thumbnailFailed, file.path, true)
+          }
+          return
+        }
+        await setCachedThumbnail(cacheKey, blob)
+        this.rememberThumbnail(file.path, blob)
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return
+        }
+        this.$set(this.thumbnailFailed, file.path, true)
+        console.warn(`Failed to build a preview for ${file.name}:`, error)
+      } finally {
+        if (this.thumbnailController === controller) {
+          this.thumbnailController = null
+        }
+      }
+    },
+    rememberThumbnail(path: string, blob: Blob): void {
+      const previous = this.thumbnails[path]
+      if (previous) {
+        URL.revokeObjectURL(previous)
+      }
+      this.$set(this.thumbnails, path, URL.createObjectURL(blob))
+    },
+    forgetThumbnail(path: string): void {
+      const url = this.thumbnails[path]
+      if (url) {
+        URL.revokeObjectURL(url)
+      }
+      this.$delete(this.thumbnails, path)
+      this.$delete(this.thumbnailFailed, path)
     },
     forgetSummary(path: string): void {
+      const file = this.recordings.find((recording) => recording.path === path)
+      if (file) {
+        deleteCachedThumbnail({
+          path: file.path,
+          sizeBytes: file.size_bytes,
+          modified: file.modified,
+        }).catch(() => undefined)
+      }
+      this.forgetThumbnail(path)
       this.$delete(this.summaries, path)
       this.$delete(this.summaryErrors, path)
       this.$delete(this.repairable, path)
+    },
+    thumbnailUrl(file: RecordingFile): string | null {
+      return this.thumbnails[file.path] ?? null
     },
     summaryOf(file: RecordingFile): McapVideoSummary | null {
       return this.summaries[file.path] ?? null
@@ -313,14 +416,22 @@ export default Vue.extend({
       return `${minutes}m ${String(total % 60).padStart(2, '0')}s`
     },
     async deleteRecording(file: RecordingFile): Promise<void> {
+      await deleteCachedThumbnail({
+        path: file.path,
+        sizeBytes: file.size_bytes,
+        modified: file.modified,
+      })
+      this.forgetThumbnail(file.path)
       await records_store.deleteRecording(file)
     },
     openPlayer(file: RecordingFile): void {
+      this.thumbnailController?.abort()
       this.activeRecord = file
       this.playerOpen = true
     },
     closePlayer(): void {
       this.playerOpen = false
+      this.loadThumbnails()
     },
     formatSize(bytes: number): string {
       return prettifySize(bytes / 1024)
@@ -344,6 +455,33 @@ export default Vue.extend({
 
 .preview-wrapper {
   position: relative;
+}
+
+.record-preview {
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-overlay {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.15));
+}
+
+.preview-caption {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .play-btn {
