@@ -12,6 +12,7 @@
     "build": "NODE_ENV=production vite build",
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
     "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src && stylelint 'src/**/*.{vue,css,scss}'",
+    "type-check": "vue-tsc --noEmit",
     "lint:css": "stylelint 'src/**/*.{vue,css,scss}'",
     "lint:css:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix"
   },
@@ -96,7 +97,7 @@
     "stylelint-config-recommended-vue": "^1.6.1",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-config-standard-scss": "^17.0.0",
-    "typescript": "~4.9.5",
+    "typescript": "5.4.5",
     "unplugin-vue-components": "^0.25.2",
     "vite": "3",
     "vite-plugin-compression": "^0.5.1",
@@ -104,6 +105,7 @@
     "vite-plugin-wasm": "^3.4.1",
     "vue-cli-plugin-vuetify": "~2.4.1",
     "vue-template-babel-compiler": "^2.0.0",
+    "vue-tsc": "2.0.29",
     "vuetify-loader": "^1.7.0",
     "workbox-build": "7.0.0"
   }
