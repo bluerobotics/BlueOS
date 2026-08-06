@@ -4,4 +4,3 @@ dist/
 yarn.lock
 dev-dist/
 components.d.ts
-bun.lockb
