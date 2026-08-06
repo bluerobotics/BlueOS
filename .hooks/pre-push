@@ -99,9 +99,14 @@ echo "Running shellcheck..."
 #SC2086: Allow word splitting
 git ls-files '*.sh' | xargs -L 1 shellcheck --exclude=SC2005,SC2015,SC2046,SC2048,SC2086
 
+# Roots of every python project, which isort and mypy check one by one. A project
+# declares itself with either a setup.py or a pyproject.toml.
+python_packages=$(git ls-files '*/setup.py' 'core/libs/*/pyproject.toml' 'core/services/*/pyproject.toml' \
+    | xargs -n 1 dirname | sort -u)
+
 echo "Running isort.."
 # Run isort for each python project
-dirname $(git ls-files "$repository_path/*/setup.py") | xargs -I {} isort --src-path="{}" ${isort_extra_args} "{}"
+echo "$python_packages" | xargs -I {} isort --src-path="{}" ${isort_extra_args} "{}"
 
 # This will only get the python files track by git, not including submodules
 python_files=$(git ls-files '*.py')
@@ -120,7 +125,7 @@ echo "Running pylint.."
 pylint $python_files
 
 echo "Running mypy.."
-git ls-files '*setup.py' | parallel 'mypy $(dirname {}) --cache-dir "$(dirname {})/__mypycache__"'
+echo "$python_packages" | parallel 'mypy {} --cache-dir "{}/__mypycache__"'
 
 echo "Running pytest.."
 pytest -n 10 --durations=0 --cov="$repository_path" --cov-report html
