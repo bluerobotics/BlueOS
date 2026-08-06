@@ -12,7 +12,6 @@ node_modules
 env/
 Pipfile
 Pipfile.lock
-poetry.lock
 registry/
 
 # Docker compose binds
