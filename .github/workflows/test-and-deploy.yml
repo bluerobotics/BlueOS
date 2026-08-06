@@ -31,7 +31,7 @@ jobs:
       run: |
         sudo apt-get install --no-install-recommends --assume-yes shellcheck parallel
         python -m pip install --upgrade pip
-        pip install poetry
+        pip install poetry==2.4.1
 
     - name: Run tests
       run: |
