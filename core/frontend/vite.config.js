@@ -118,6 +118,51 @@ export default defineConfig(({ command, mode }) => {
         deleteOriginFile: true,
         filter: /\.(js|css|json|svg|txt|xml|wasm|glb)$/i,
       }),
+      // Parse every shipped script, so a corrupt chunk fails the build instead of only breaking
+      // the route that imports it at runtime, like 1.4.4-beta.14 shipped a source map as a chunk.
+      // Runs after compression to check the exact bytes nginx serves.
+      {
+        name: 'validate-emitted-javascript',
+        apply: 'build',
+        enforce: 'post',
+        // closeBundle is a parallel hook, sequential makes it wait for the compression above
+        closeBundle: {
+          sequential: true,
+          handler() {
+            const fs = require('fs')
+            const { gunzipSync } = require('zlib')
+            const { transformSync } = require('esbuild')
+            const distPath = path.resolve(__dirname, 'dist')
+
+            const collectScripts = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+              const fullPath = path.join(dir, entry.name)
+              if (entry.isDirectory()) return collectScripts(fullPath)
+              return /\.js(\.gz)?$/.test(entry.name) ? [fullPath] : []
+            })
+
+            const scripts = collectScripts(distPath)
+            if (scripts.length === 0) {
+              throw new Error('No javascript emitted to dist/, the build produced nothing to validate')
+            }
+
+            const failures = scripts.flatMap((script) => {
+              try {
+                const bytes = fs.readFileSync(script)
+                transformSync((script.endsWith('.gz') ? gunzipSync(bytes) : bytes).toString('utf8'), { loader: 'js' })
+                return []
+              } catch (error) {
+                return [`${path.relative(distPath, script)}: ${error.errors?.[0]?.text ?? error.message}`]
+              }
+            })
+
+            if (failures.length > 0) {
+              throw new Error(`Corrupt javascript in dist/:\n  ${failures.join('\n  ')}`)
+            }
+
+            console.log(`validated ${scripts.length} emitted javascript files`)
+          }
+        }
+      },
       // Fix Draco imports in dev server
       {
         name: 'draco-dev-fix',
