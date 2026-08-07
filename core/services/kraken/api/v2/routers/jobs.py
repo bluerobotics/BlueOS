@@ -3,9 +3,10 @@ from functools import wraps
 from typing import Any, Callable, List, Tuple
 
 from fastapi import APIRouter, Body, HTTPException, status
+from fastapi.responses import StreamingResponse
 from fastapi_versioning import versioned_api_route
 from jobs import JobsManager
-from jobs.exceptions import JobNotFound
+from jobs.exceptions import JobIsRunning, JobNotFound
 from jobs.models import Job, JobMethod
 
 jobs_router_v2 = APIRouter(
@@ -21,6 +22,8 @@ def jobs_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
     async def wrapper(*args: Tuple[Any], **kwargs: dict[str, Any]) -> Any:
         try:
             return await endpoint(*args, **kwargs)
+        except JobIsRunning as error:
+            raise HTTPException(status_code=status.HTTP_423_LOCKED, detail=str(error)) from error
         except JobNotFound as error:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
         except Exception as error:
@@ -43,6 +46,12 @@ async def create(
 @jobs_to_http_exception
 async def fetch() -> List[Job]:
     return JobsManager.get()
+
+
+@jobs_router_v2.get("/{identifier}/stream", status_code=status.HTTP_200_OK)
+@jobs_to_http_exception
+async def stream(identifier: str) -> StreamingResponse:
+    return StreamingResponse(JobsManager.stream(identifier), media_type="text/plain")
 
 
 @jobs_router_v2.get("/{identifier}", status_code=status.HTTP_200_OK)

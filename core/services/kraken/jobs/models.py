@@ -13,9 +13,17 @@ class JobMethod(str, Enum):
     DELETE = "DELETE"
 
 
+class JobStatus(str, Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+
+
 class Job(BaseModel):
     id: str
     route: str
     method: JobMethod
     body: Any
     retries: int = 5
+    status: JobStatus = JobStatus.PENDING
