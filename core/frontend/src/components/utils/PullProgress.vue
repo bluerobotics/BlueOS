@@ -12,6 +12,12 @@
       </v-card-title>
 
       <v-card-text>
+        <p
+          v-if="step !== ''"
+          class="text-subtitle-2 mb-1 mt-3"
+        >
+          {{ step }}
+        </p>
         <v-progress-linear
           :buffer-value="download"
           :value="extraction"
@@ -79,6 +85,10 @@ export default Vue.extend({
     statustext: {
       type: String,
       required: true,
+    },
+    step: {
+      type: String,
+      default: '',
     },
   },
   data() {
