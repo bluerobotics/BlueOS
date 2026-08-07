@@ -81,7 +81,7 @@ gh pr diff <number> --repo bluerobotics/BlueOS
 gh issue list --repo bluerobotics/BlueOS
 ```
 
-### 3. Use yarn over npm
+### 3. Use bun for the frontend
 
 ### 4. Use `jq` to parse json
 
@@ -100,12 +100,12 @@ Always run before finishing a task:
 ```bash
 ./.hooks/pre-push --fix        # Auto-fix formatting
 ./.hooks/pre-push              # Run all checks
-yarn --cwd core/frontend lint --fix  # Lint and fix frontend code
+bun --cwd core/frontend lint  # Lint frontend code
 ```
 
 This enforces: Black formatting, isort imports, pylint, ruff, mypy strict mode, pytest with coverage.
 
-> **Important:** Always use `yarn` for frontend commands, never `npx`, `npm` or others.
+> **Important:** Always use `bun` for frontend commands, never `yarn`, `npx`, `npm` or others.
 
 ## Common Pitfalls
 
