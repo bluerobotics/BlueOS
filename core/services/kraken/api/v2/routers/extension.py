@@ -83,7 +83,7 @@ async def install(body: ExtensionSource) -> StreamingResponse:
     can install incompatible extensions. Make sure to check the extension source before installing it.
     """
     extension = Extension(body)
-    return StreamingResponse(streamer(extension.install(atomic=True)))
+    return StreamingResponse(streamer(extension.install()))
 
 
 @extension_router_v2.post("/{identifier}/install", status_code=status.HTTP_201_CREATED)
@@ -149,13 +149,13 @@ async def update_to_latest(identifier: str, purge: bool = True, stable: bool = T
 
 @extension_router_v2.put("/{identifier}/{tag}", status_code=status.HTTP_200_OK)
 @extension_to_http_exception
-async def update_to_tag(identifier: str, tag: str, purge: bool = True) -> Response:
+async def update_to_tag(identifier: str, tag: str, purge: bool = True, should_enable: bool = True) -> Response:
     """
     Update a given extension by its identifier and tag to latest version on the higher priority manifest and by default
     purge all other tags, if purge is set to false it will keep all other versions disabled only.
     """
     extension = cast(Extension, await Extension.from_manifest(identifier, tag))
-    return StreamingResponse(streamer(extension.update(purge)))
+    return StreamingResponse(streamer(extension.update(purge, should_enable)))
 
 
 @extension_router_v2.delete("/{identifier}", status_code=status.HTTP_202_ACCEPTED)
@@ -254,4 +254,4 @@ async def finalize_extension(
     new_extension = await Extension.finalize_temporary_extension(temp_extension, body.identifier, body)
 
     # Install the extension
-    return StreamingResponse(streamer(new_extension.install(atomic=True)))
+    return StreamingResponse(streamer(new_extension.install()))
