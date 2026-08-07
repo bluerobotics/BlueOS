@@ -1,0 +1,15 @@
+{
+  "configurations": [
+    {
+      // Use this to debug python code in the remote container
+      // Requires the "Remote development" extensions to be installed
+      // as well as the Python debugger extension in the container
+      "name": "Python Debugger in Remote Container: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "python": "/usr/blueos/venv/bin/python3"
+    }
+  ]
+}
