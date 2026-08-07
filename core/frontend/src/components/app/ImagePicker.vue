@@ -143,6 +143,11 @@ export default Vue.extend({
       default: null,
       required: false,
     },
+    maxDimension: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
   },
   data() {
     return {
@@ -200,18 +205,18 @@ export default Vue.extend({
         this.error = `Error deleting file: ${error}`
       }
     },
-    onFileInputChange(event: Event) {
+    async onFileInputChange(event: Event) {
       const target = event.target as HTMLInputElement
       const file = target.files?.[0]
       if (!file) return
       const fileName = encodeURIComponent(file.name)
-      this.uploadFile(file, `${this.directory}/${fileName}`)
+      await this.uploadImage(file, `${this.directory}/${fileName}`)
     },
     onFilePickerClick() {
       const input = this.$refs.fileInput as HTMLInputElement
       input.click()
     },
-    async uploadFile(file: File, destination_path: string) {
+    async uploadFile(file: Blob, destination_path: string) {
       const config = {
         headers: {
           'Content-Type': file.type,
@@ -224,11 +229,60 @@ export default Vue.extend({
         })
       this.loadImages()
     },
+    async resizeImage(file: File): Promise<Blob> {
+      const resizableTypes = ['image/jpeg', 'image/png', 'image/webp']
+      if (this.maxDimension <= 0 || !resizableTypes.includes(file.type)) {
+        return file
+      }
+
+      const objectUrl = URL.createObjectURL(file)
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const element = new Image()
+        element.onload = () => resolve(element)
+        element.onerror = () => reject(new Error(`Unable to decode ${file.name}`))
+        element.src = objectUrl
+      }).finally(() => URL.revokeObjectURL(objectUrl))
+
+      const longestSide = Math.max(image.naturalWidth, image.naturalHeight)
+      if (longestSide <= this.maxDimension) {
+        return file
+      }
+
+      const scale = this.maxDimension / longestSide
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+      const context = canvas.getContext('2d')
+      if (!context) {
+        throw new Error('Unable to create an image resize context')
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+      return new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob)
+          } else {
+            reject(new Error(`Unable to resize ${file.name}`))
+          }
+        }, file.type)
+      })
+    },
+    async uploadImage(file: File, destinationPath: string) {
+      try {
+        this.upload_error = null
+        const resizedImage = await this.resizeImage(file)
+        await this.uploadFile(resizedImage, destinationPath)
+      } catch (error) {
+        this.upload_error = `Error preparing image: ${error}`
+        console.error(this.upload_error)
+      }
+    },
     async onDrop(event: DragEvent) {
       const file = event.dataTransfer?.files?.[0]
       if (!file) return
       const fileName = encodeURIComponent(file.name)
-      await this.uploadFile(file, `${this.directory}/${fileName}`)
+      await this.uploadImage(file, `${this.directory}/${fileName}`)
     },
   },
 })
