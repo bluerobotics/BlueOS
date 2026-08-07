@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.6
 
 # Build frontend
-FROM --platform=$BUILDPLATFORM oven/bun:1.0.3-slim AS frontend-builder
+FROM --platform=$BUILDPLATFORM oven/bun:1.3.14-slim AS frontend-builder
 
 ARG VITE_APP_GIT_DESCRIBE
 ENV VITE_APP_GIT_DESCRIBE=${VITE_APP_GIT_DESCRIBE:-none/none-0-g00000000}
@@ -21,7 +21,7 @@ COPY frontend /home/pi/frontend
 RUN <<-EOF
 set -e
 
-    bun install --cwd /home/pi/frontend
+    bun install --frozen-lockfile --cwd /home/pi/frontend
     NODE_OPTIONS=--max-old-space-size=8192 bun run --cwd /home/pi/frontend build
 
 EOF
