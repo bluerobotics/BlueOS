@@ -1,5 +1,6 @@
 import asyncio
-from typing import AsyncGenerator, Dict, List
+import time
+from typing import Any, AsyncGenerator, Dict, List
 
 import psutil
 from aiodocker import Docker
@@ -13,6 +14,62 @@ from loguru import logger
 
 
 class ContainerManager:
+    @staticmethod
+    def _human_duration(duration_seconds: float) -> str:
+        seconds = int(duration_seconds)
+        if seconds < 1:
+            human_duration = "Less than a second"
+        elif seconds == 1:
+            human_duration = "1 second"
+        elif seconds < 60:
+            human_duration = f"{seconds} seconds"
+        else:
+            minutes = int(duration_seconds / 60)
+            hours = int(duration_seconds / 60 / 60 + 0.5)
+            if minutes == 1:
+                human_duration = "About a minute"
+            elif minutes < 60:
+                human_duration = f"{minutes} minutes"
+            elif hours == 1:
+                human_duration = "About an hour"
+            elif hours < 48:
+                human_duration = f"{hours} hours"
+            elif hours < 24 * 7 * 2:
+                human_duration = f"{hours // 24} days"
+            elif hours < 24 * 30 * 2:
+                human_duration = f"{hours // 24 // 7} weeks"
+            elif hours < 24 * 365 * 2:
+                human_duration = f"{hours // 24 // 30} months"
+            else:
+                human_duration = f"{int(duration_seconds / 60 / 60) // 24 // 365} years"
+
+        return human_duration
+
+    @classmethod
+    def _status_with_monotonic_uptime(cls, status_text: str, pid: int) -> str:
+        if not status_text.startswith("Up ") or pid <= 0:
+            return status_text
+
+        try:
+            process_start_since_boot = psutil.Process(pid).create_time() - psutil.boot_time()
+            uptime_seconds = max(0.0, time.monotonic() - process_start_since_boot)
+        except psutil.Error:
+            return status_text
+
+        suffix_start = status_text.find(" (")
+        suffix = status_text[suffix_start:] if suffix_start >= 0 else ""
+        return f"Up {cls._human_duration(uptime_seconds)}{suffix}"
+
+    @classmethod
+    def _container_model(cls, container: DockerContainer, details: Dict[str, Any]) -> ContainerModel:
+        pid = details.get("State", {}).get("Pid", 0)
+        return ContainerModel(
+            name=container["Names"][0],
+            image=container["Image"],
+            image_id=container["ImageID"],
+            status=cls._status_with_monotonic_uptime(container["Status"], pid),
+        )
+
     @staticmethod
     async def get_raw_container_by_name(client: Docker, container_name: str) -> DockerContainer:
         containers = await client.containers.list(filters={"name": {container_name: True}})  # type: ignore
@@ -84,32 +141,21 @@ class ContainerManager:
 
         return result
 
-    @staticmethod
-    async def get_running_containers() -> List[ContainerModel]:
+    @classmethod
+    async def get_running_containers(cls) -> List[ContainerModel]:
         async with DockerCtx() as client:
             containers = await client.containers.list(filters={"status": ["running"]})  # type: ignore
+            details = await asyncio.gather(*(container.show() for container in containers))
 
-            return [
-                ContainerModel(
-                    name=container["Names"][0],
-                    image=container["Image"],
-                    image_id=container["ImageID"],
-                    status=container["Status"],
-                )
-                for container in containers
-            ]
+            return [cls._container_model(container, detail) for container, detail in zip(containers, details)]
 
     @classmethod
     async def get_running_container_by_name(cls, container_name: str) -> ContainerModel:
         async with DockerCtx() as client:
             container = await cls.get_raw_container_by_name(client, container_name)
+            details = await container.show()
 
-            return ContainerModel(
-                name=container["Names"][0],
-                image=container["Image"],
-                image_id=container["ImageID"],
-                status=container["Status"],
-            )
+            return cls._container_model(container, details)
 
     @classmethod
     async def get_container_log_by_name(cls, container_name: str) -> AsyncGenerator[str, None]:
