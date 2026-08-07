@@ -1,6 +1,4 @@
 node_modules/
 dist/
-.yarn/
-yarn.lock
 dev-dist/
 components.d.ts
