@@ -43,6 +43,7 @@ import Vue from 'vue'
 import { OneMoreTime } from '@/one-more-time'
 import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
+import { fetchWithVehicleFallback } from '@/utils/helper_functions'
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'
 
@@ -130,7 +131,7 @@ export default Vue.extend({
       return value !== ''
     },
     async fetchScripts() {
-      const response = await fetch(REPOSITORY_SCRIPTS_URL)
+      const response = await fetchWithVehicleFallback(REPOSITORY_SCRIPTS_URL)
       const scripts = await response.json()
 
       return scripts
