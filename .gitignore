@@ -11,9 +11,6 @@ core/logs
 *.pytest_cache
 *__mypycache__
 env/
-Pipfile
-Pipfile.lock
-poetry.lock
 registry/
 
 # Docker compose binds
