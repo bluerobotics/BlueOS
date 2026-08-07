@@ -37,9 +37,9 @@ def blueos_version() -> str:
 def get_cpu_type() -> CpuType:
     with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
         for line in f:
-            if "Raspberry Pi 4" in line:
+            if "Raspberry Pi 4" in line or "Raspberry Pi Compute Module 4" in line:
                 return CpuType.PI4
-            if "Raspberry Pi 5" in line:
+            if "Raspberry Pi 5" in line or "Raspberry Pi Compute Module 5" in line:
                 return CpuType.PI5
             if "Raspberry Pi 3" in line:
                 return CpuType.PI3
