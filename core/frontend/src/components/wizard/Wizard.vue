@@ -424,7 +424,7 @@ export default Vue.extend({
     current_page(): unknown {
       return this.configuration_pages[this.configuration_page_index].page
     },
-    current_page_bind(): unknown {
+    current_page_bind(): Record<string, unknown> {
       return this.configuration_pages[this.configuration_page_index].binds
     },
   },
@@ -765,7 +765,8 @@ export default Vue.extend({
       return response.text()
     },
     validateParams(): boolean {
-      return this.$refs.param_loader?.validateParams()
+      const param_loader = this.$refs.param_loader as { validateParams(): boolean } | undefined
+      return param_loader?.validateParams() ?? false
     },
     async isBoardDetected(): Promise<boolean> {
       try {

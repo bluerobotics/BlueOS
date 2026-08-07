@@ -69,10 +69,11 @@
                     style="height: 30px !important;"
                   >
                     <v-checkbox
-                      v-model="filter_by_selected_companies"
+                      :input-value="filter_by_selected_companies"
                       :label="company"
                       :value="company"
                       class="pa-0 pl-3 ma-0"
+                      @change="filter_by_selected_companies = $event"
                     />
                   </v-card-text>
                 </div>
@@ -85,10 +86,11 @@
                   <template #default="{ item }">
                     <v-card-text class="pt-2">
                       <v-checkbox
-                        v-model="filter_by_selected_companies"
+                        :input-value="filter_by_selected_companies"
                         :label="item"
                         :value="item"
                         class="pa-0 pl-3 ma-0"
+                        @change="filter_by_selected_companies = $event"
                       />
                     </v-card-text>
                   </template>
@@ -113,10 +115,11 @@
                     style="height: 30px !important;"
                   >
                     <v-checkbox
-                      v-model="filter_by_selected_types"
+                      :input-value="filter_by_selected_types"
                       :label="category"
                       :value="category"
                       class="pa-0 pl-3 ma-0"
+                      @change="filter_by_selected_types = $event"
                     />
                   </v-card-text>
                 </div>
@@ -129,10 +132,11 @@
                   <template #default="{ item }">
                     <v-card-text class="pt-2">
                       <v-checkbox
-                        v-model="filter_by_selected_types"
+                        :input-value="filter_by_selected_types"
                         :label="item"
                         :value="item"
                         class="pa-0 pl-3 ma-0"
+                        @change="filter_by_selected_types = $event"
                       />
                     </v-card-text>
                   </template>

@@ -103,7 +103,7 @@ export default Vue.extend({
       for (const baro of ardupilot_sensors.baros) {
         const radix = baro.param.replace('_DEVID', '')
         const calibrated_param = autopilot_data.parameter(`${radix}_GND_PRESS`)
-        const pretty_value = (printParam(calibrated_param) / 100).toFixed(2)
+        const pretty_value = ((calibrated_param?.value ?? 0) / 100).toFixed(2)
         results[baro.param] = `${pretty_value} hPa`
       }
       return results

@@ -65,30 +65,30 @@ class Calibrator {
       },
       message: {
         type: MAVLinkType.COMMAND_LONG,
-        param1: {
+        param1: ({
           [PreflightCalibration.GYROSCOPE]: 1,
           [PreflightCalibration.GYROSCOPE_TEMPERATURE]: 3,
-        }[type] || 0,
+        } as Record<number, number>)[type] || 0,
         param2: type === PreflightCalibration.MAGNETOMETER ? 1 : 0,
         param3: type === PreflightCalibration.PRESSURE ? 1 : 0,
-        param4: {
+        param4: ({
           [PreflightCalibration.RC]: 1,
           [PreflightCalibration.RC_TRIM]: 2,
-        }[type] || 0,
-        param5: {
+        } as Record<number, number>)[type] || 0,
+        param5: ({
           [PreflightCalibration.ACCELEROMETER]: 1,
           [PreflightCalibration.BOARD_LEVEL]: 2,
           [PreflightCalibration.ACCELEROMETER_TEMPERATURE]: 3,
           [PreflightCalibration.SIMPLE_ACCELEROMETER]: 4,
-        }[type] || 0,
-        param6: {
+        } as Record<number, number>)[type] || 0,
+        param6: ({
           [PreflightCalibration.COMPASS_MOTOR_INTERFERENCE]: 1,
           [PreflightCalibration.AIRPSEED]: 2,
-        }[type] || 0,
-        param7: {
+        } as Record<number, number>)[type] || 0,
+        param7: ({
           [PreflightCalibration.ESC]: 1,
           [PreflightCalibration.BAROMETER_TEMPERATURE]: 3,
-        }[type] || 0,
+        } as Record<number, number>)[type] || 0,
         command: {
           type: MavCmd.MAV_CMD_PREFLIGHT_CALIBRATION,
         },

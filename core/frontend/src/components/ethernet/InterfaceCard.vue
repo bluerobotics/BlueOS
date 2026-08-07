@@ -336,7 +336,7 @@ export default Vue.extend({
       this.loading_leases = true
       try {
         const response = await ethernet.getDHCPServerDetails(this.adapter.name)
-        this.dhcp_server_details = response.data[this.adapter.name] as DHCPServerDetails
+        this.dhcp_server_details = response[this.adapter.name]
         this.dhcp_server_details.leases = this.dhcp_server_details?.leases.map((lease: DHCPServerLease) => ({
           ...lease,
           expires_at: lease.expires_at ? new Date(lease.expires_at) : undefined,

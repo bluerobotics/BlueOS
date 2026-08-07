@@ -121,9 +121,10 @@ import InlineParameterEditor from './InlineParameterEditor.vue'
 
 type ParamType = 'min' | 'trim' | 'max'
 type ParamValueKey = 'minValue' | 'trimValue' | 'maxValue'
+type ParamKey = 'resolvedMinParam' | 'resolvedTrimParam' | 'resolvedMaxParam'
 
 type ValueMap = Record<ParamType, ParamValueKey>
-type ParamMap = Record<ParamType, string>
+type ParamMap = Record<ParamType, ParamKey>
 
 const MIN_PWM = 800
 const MAX_PWM = 2200

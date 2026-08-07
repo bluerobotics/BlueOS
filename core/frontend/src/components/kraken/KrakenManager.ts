@@ -396,7 +396,7 @@ export async function finalizeExtension(
  */
 export async function getHistoricalLogsForExtension(identifier: string, timeout: number): Promise<any | null> {
   const queryKey = `kraken/extension/logs/request?extension_name=${identifier}`
-  return await zenoh.query(queryKey, QueryTarget.BestMatching, timeout)
+  return await zenoh.query(queryKey, QueryTarget.BEST_MATCHING, timeout)
 }
 
 /**

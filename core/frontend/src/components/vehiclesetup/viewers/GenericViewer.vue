@@ -116,7 +116,16 @@ import { checkModelOverrides, frame_name, vehicle_folder } from './modelHelper'
 
 const MODEL_VIEWER_SUPPORTED = canUseModelViewer()
 
-const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
+// Model annotation JSON files include a descriptive `text` field on top of the
+// model-viewer HotspotConfiguration.
+interface Annotation extends HotspotConfiguration {
+  text?: string
+}
+
+const models: Record<string, { annotations?: Dictionary<Annotation> }> = import.meta.glob(
+  '/public/assets/vehicles/models/**',
+  { eager: true },
+)
 
 export default Vue.extend({
   name: 'GenericViewer',
@@ -165,8 +174,8 @@ export default Vue.extend({
   data() {
     return {
       model_override_path: '' as string | undefined,
-      annotations: {} as Dictionary<HotspotConfiguration>,
-      override_annotations: {} as Dictionary<HotspotConfiguration>,
+      annotations: {} as Dictionary<Annotation>,
+      override_annotations: {} as Dictionary<Annotation>,
       default_alphas: {} as Dictionary<number>,
       show_model_not_found: false,
       model_viewer_supported: MODEL_VIEWER_SUPPORTED,
@@ -183,7 +192,7 @@ export default Vue.extend({
     override_models(): ModelEntry[] {
       return customization_store.models
     },
-    filtered_annotations(): (HotspotConfiguration & Indexed & Keyed)[] {
+    filtered_annotations(): (Annotation & Indexed & Keyed)[] {
       if (this.noannotations) {
         return []
       }
@@ -196,7 +205,7 @@ export default Vue.extend({
       if ('Motor1' in this.override_annotations) {
         all = this.override_annotations
       }
-      const keyed_indexed_annotations: (HotspotConfiguration & Indexed & Keyed)[] = []
+      const keyed_indexed_annotations: (Annotation & Indexed & Keyed)[] = []
       let index = 0
       for (const [key, hotspot] of Object.entries(all)) {
         keyed_indexed_annotations.push({
@@ -353,7 +362,7 @@ export default Vue.extend({
       saveAs(file)
     },
     async reloadAnnotations() {
-      const path = `/public/assets/vehicles/models/${vehicle_folder()}/${frame_name()}.json`
+      const path = `/public/assets/vehicles/models/${vehicle_folder()}/${autopilot_data.frame_name}.json`
       const json = await models[path]
       if (json) {
         this.annotations = json.annotations ?? {}

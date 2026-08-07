@@ -211,7 +211,7 @@ export default Vue.extend({
           const speed_Mb = 8 * (progress_event.loaded / seconds / 2 ** 20)
           const alpha_factor = 0.7
           this.upload_speed = (this.upload_speed ?? 0) * (1 - alpha_factor) + alpha_factor * speed_Mb
-          const percentage = 100 * (progress_event.loaded / progress_event.total)
+          const percentage = progress_event.total ? 100 * (progress_event.loaded / progress_event.total) : 0
           this.series.upload.push({ x: percentage, y: this.upload_speed })
           // Force vue update
           // eslint-disable-next-line
@@ -253,7 +253,7 @@ export default Vue.extend({
           const speed_Mb = 8 * (progress_event.loaded / seconds / 2 ** 20)
           const alpha_factor = 0.7
           this.download_speed = (this.download_speed ?? 0) * (1 - alpha_factor) + alpha_factor * speed_Mb
-          const percentage = 100 * (progress_event.loaded / progress_event.total)
+          const percentage = progress_event.total ? 100 * (progress_event.loaded / progress_event.total) : 0
           this.series.download.push({ x: percentage, y: this.download_speed })
           // Force vue update
           // eslint-disable-next-line

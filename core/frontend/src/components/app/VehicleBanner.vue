@@ -131,7 +131,7 @@ export default Vue.extend({
       }
     },
     async load_company_logo() {
-      this.logo_image = (await bag.getData('vehicle.logo_image_path'))?.url as (string | undefined)
+      this.logo_image = (await bag.getData('vehicle.logo_image_path'))?.url as string | undefined ?? null
       if (this.logo_image && !this.logo_image.startsWith('/')) {
         this.logo_image = `/${this.vehicle_image}`
       }

@@ -6,7 +6,6 @@
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "bundler",
-    "moduleDetection": "force",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -15,12 +14,23 @@
     "baseUrl": ".",
     "experimentalDecorators": true,
     "types": [
-      "webpack-env",
       "vite/client"
     ],
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "vue/types/vue": [
+        "node_modules/vue/types/vue.d.ts"
+      ],
+      "vue/types/options": [
+        "node_modules/vue/types/options.d.ts"
+      ],
+      "vuex": [
+        "node_modules/vuex/types/index.d.ts"
+      ],
+      "three/examples/jsm/*": [
+        "node_modules/@types/three/examples/jsm/*"
       ]
     },
     "lib": [

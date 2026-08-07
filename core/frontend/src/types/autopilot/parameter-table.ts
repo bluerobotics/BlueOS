@@ -157,7 +157,7 @@ export default class ParametersTable {
             console.log(`ignoring ${name} : ${parameter}`)
             continue
           }
-          this.metadata[name] = parameter
+          this.metadata[name] = parameter as Metadata
         }
       }
     }

@@ -324,7 +324,8 @@ export default Vue.extend({
 
         this.fetchManifestsSources()
       } catch (error) {
-        if (error.response?.status === 502) {
+        const axios_error = error as { response?: { status?: number } }
+        if (axios_error.response?.status === 502) {
           this.is_operation_url_invalid = true
           return
         }
@@ -356,7 +357,8 @@ export default Vue.extend({
 
         this.fetchManifestsSources()
       } catch (error) {
-        if (error.response?.status === 502) {
+        const axios_error = error as { response?: { status?: number } }
+        if (axios_error.response?.status === 502) {
           this.is_operation_url_invalid = true
           return
         }

@@ -49,9 +49,9 @@
           v-for="(paramSet, name) in filtered_param_sets"
           :key="name"
           color="primary"
-          @click="loadParams(name, paramSet)"
+          @click="loadParams(String(name), paramSet)"
         >
-          {{ name.split('/').pop() }}
+          {{ String(name).split('/').pop() }}
         </v-btn>
         <p v-if="(Object.keys(filtered_param_sets).length === 0)">
           No parameters available for this setup
@@ -122,7 +122,7 @@ export default Vue.extend({
     version(): SemVer | undefined {
       return autopilot.firmware_info?.version
     },
-    filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
+    filtered_param_sets(): Dictionary<Dictionary<number>> {
       const fw_patch = `${this.vehicle}/${this.version}/${this.board}`
       const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}`
       const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}`

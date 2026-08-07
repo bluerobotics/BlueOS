@@ -1,7 +1,8 @@
 import {
-    getModule,
-  Module, VuexModule,
+  getModule, VuexModule,
 } from 'vuex-module-decorators'
+
+import { DynamicModule as Module } from '@/utils/vuex'
 
 import store from '@/store'
 import autopilot_data from "./autopilot"

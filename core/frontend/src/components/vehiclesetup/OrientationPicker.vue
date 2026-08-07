@@ -133,7 +133,7 @@ export default {
       ] as Rotation[],
       unsupportedRotation: new Rotation('UNSUPPORTED', 0, 0, 0, -1),
       object: undefined as THREE.Object3D | undefined,
-      camera: undefined as THREE.Camera | undefined,
+      camera: undefined as THREE.PerspectiveCamera | undefined,
       scene: undefined as THREE.Scene | undefined,
       renderer: undefined as THREE.WebGLRenderer | undefined,
       vehicle_obj: undefined as THREE.Object3D | undefined,
@@ -365,7 +365,7 @@ export default {
           (progressEvent: ProgressEvent) => {
             console.debug('Loading progress:', progressEvent)
           },
-          (error: ErrorEvent) => {
+          (error: unknown) => {
             console.error('An error occurred while loading the GLB model:', error)
           },
         )
@@ -415,7 +415,7 @@ export default {
             (progressEvent: ProgressEvent) => {
               console.debug('Loading progress:', progressEvent.loaded, progressEvent.total)
             },
-            (error: ErrorEvent) => {
+            (error: unknown) => {
               console.error('An error occurred while loading the GLB model:', error)
             },
           )

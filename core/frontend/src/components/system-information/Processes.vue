@@ -29,10 +29,11 @@
         <v-checkbox
           v-for="header in headers"
           :key="header.text"
-          v-model="filterHeader"
+          :input-value="filterHeader"
           :value="header.value"
           class="shrink mr-5"
           :label="header.text"
+          @change="filterHeader = $event"
         />
       </v-row>
     </template>

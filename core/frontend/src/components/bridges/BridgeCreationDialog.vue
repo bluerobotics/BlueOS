@@ -22,8 +22,8 @@
             no-data-text="No serial ports available"
             :loading="updating_serial_ports"
             item-text="name"
-            :item-value="(item) => item.by_path ? item.by_path : item.name"
-            :item-disabled="(item) => item.current_user !== null"
+            :item-value="serial_port_value"
+            :item-disabled="is_serial_port_in_use"
             dense
           >
             <template #item="{ item }">
@@ -271,6 +271,12 @@ export default Vue.extend({
       const creation_time = time_now - ms_time
       const creation_date = new Date(creation_time)
       return `${formatDistanceToNow(creation_time)} ago (${creation_date.toLocaleTimeString()})`
+    },
+    serial_port_value(item: SerialPortInfo): string {
+      return item.by_path ? item.by_path : item.name
+    },
+    is_serial_port_in_use(item: SerialPortInfo): boolean {
+      return item.current_user !== null
     },
     validate_required_field(input: string | number): (true | string) {
       const string_input = String(input)

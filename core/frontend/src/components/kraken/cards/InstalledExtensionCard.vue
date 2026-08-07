@@ -104,9 +104,8 @@
                       v-if="loading || extension.enabled && !container"
                       size="20px"
                     />
-                    <strong v-else-if="getMemoryUsage()?.toFixed">
-                      {{ prettifySize(getMemoryUsage() * getMemoryLimit() * 100) }} /
-                      {{ prettifySize(getMemoryLimit() * total_memory * 0.01) }}
+                    <strong v-else-if="memory_usage_text">
+                      {{ memory_usage_text }}
                     </strong>
                     <strong v-else>
                       N/A
@@ -129,9 +128,8 @@
                       v-if="loading || extension.enabled && !container"
                       size="20px"
                     />
-                    <strong v-else-if="getDiskUsage()?.toFixed">
-                      {{ prettifySize(getDiskUsage() * main_disk_size * 0.01) }} /
-                      {{ prettifySize(main_disk_size) }}
+                    <strong v-else-if="disk_usage_text">
+                      {{ disk_usage_text }}
                     </strong>
                     <strong v-else>
                       N/A
@@ -260,7 +258,7 @@ export default Vue.extend({
       default: false,
     },
     metrics: {
-      type: Object as PropType<{cpu: number, memory: string}>,
+      type: Object as PropType<{ cpu: number, memory: number | string, disk: number | string }>,
       required: true,
     },
     container: {
@@ -295,6 +293,21 @@ export default Vue.extend({
     main_disk_size(): number {
       const value = this.main_disk?.total_space_B ?? 0
       return value / 1024 // Move to kB
+    },
+    memory_usage_text(): string | null {
+      const usage = this.getMemoryUsage()
+      const limit = this.getMemoryLimit()
+      if (typeof usage !== 'number' || limit === undefined || this.total_memory === undefined) {
+        return null
+      }
+      return `${this.prettifySize(usage * limit * 100)} / ${this.prettifySize(limit * this.total_memory * 0.01)}`
+    },
+    disk_usage_text(): string | null {
+      const usage = this.getDiskUsage()
+      if (typeof usage !== 'number') {
+        return null
+      }
+      return `${this.prettifySize(usage * this.main_disk_size * 0.01)} / ${this.prettifySize(this.main_disk_size)}`
     },
     buttonBgColor() {
       return settings.is_dark_theme ? '#20455e' : '#BDE0F0'
@@ -343,10 +356,10 @@ export default Vue.extend({
     getCpuUsage(): number {
       return this.metrics?.cpu
     },
-    getMemoryUsage(): string {
+    getMemoryUsage(): number | string {
       return this.metrics?.memory
     },
-    getDiskUsage(): string {
+    getDiskUsage(): number | string {
       return this.metrics?.disk
     },
     getMemoryLimit(): number | undefined {

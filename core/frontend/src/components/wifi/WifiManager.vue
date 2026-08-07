@@ -47,7 +47,7 @@
         v-if="current_network"
         connected
         :network="current_network"
-        :ip-address="wifi_status.ip_address"
+        :ip-address="wifi_status?.ip_address"
         @click="openDisconnectionDialog"
       />
 
@@ -55,7 +55,7 @@
         max-height="600"
         class="overflow-y-auto"
       >
-        <div v-if="filtered_networks !== null">
+        <div v-if="filtered_networks !== undefined">
           <v-text-field
             v-if="show_search"
             v-model="ssid_filter"

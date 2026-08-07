@@ -1,7 +1,9 @@
 import Vue from 'vue'
 import {
-  Action, getModule, Module, Mutation, VuexModule,
+  Action, getModule, Mutation, VuexModule,
 } from 'vuex-module-decorators'
+
+import { DynamicModule as Module } from '@/utils/vuex'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'

@@ -13,11 +13,11 @@
         <v-checkbox
           v-for="(name, index) in topWidgetsName"
           :key="index"
-          v-model="selected_widgets"
+          :input-value="selected_widgets"
           :label="name"
           :value="name"
           class="pa-0 pl-3 ma-0"
-          @change="settings.user_top_widgets = selected_widgets"
+          @change="selected_widgets = $event; settings.user_top_widgets = $event"
         />
       </v-list>
     </v-card>

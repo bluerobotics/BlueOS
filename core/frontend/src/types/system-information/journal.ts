@@ -8,3 +8,7 @@ export interface JournalEntry {
     hostname?: string,
     message: string,
 }
+
+export interface JournalResponse {
+    entries: JournalEntry[],
+}
