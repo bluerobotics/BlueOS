@@ -30,8 +30,6 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get install --no-install-recommends --assume-yes shellcheck parallel
-        python -m pip install --upgrade pip
-        pip install poetry
 
     - name: Install the latest version of uv
       uses: astral-sh/setup-uv@v8.0.0

@@ -9,7 +9,7 @@ setup_python_environment() {
     local env_label="$1"
     local project_dir="$2"
     echo "Setting up ${env_label} environment"
-    uv sync --all-groups --project "$project_dir"
+    uv sync --locked --all-groups --project "$project_dir"
     # shellcheck disable=SC1091
     source "$project_dir/.venv/bin/activate"
     export VIRTUAL_ENV="$project_dir/.venv"
