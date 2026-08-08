@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from parameter_metadata import (
     MAX_METADATA_FILE_SIZE,
-    MavlinkFtpReader,
+    MavlinkServerFtpReader,
     MetadataFileReader,
     ParameterMetadataError,
     ParameterMetadataManager,
@@ -33,63 +33,6 @@ class FakeMavlinkMessenger:
         if message_name != "COMPONENT_METADATA" or self.advertisement is None:
             raise RuntimeError("message unavailable")
         return self.advertisement
-
-
-class FakeFtpMessenger:
-    def __init__(self, content: bytes) -> None:
-        self.content = content
-        self.counter = 0
-        self.response: Optional[Dict[str, Any]] = None
-        self.sessions: list[int] = []
-        self.components: list[int] = []
-
-    async def get_mavlink_message(self, message_name: str, vehicle: int, component: int) -> Dict[str, Any]:
-        del vehicle, component
-        if message_name != "FILE_TRANSFER_PROTOCOL" or self.response is None:
-            raise RuntimeError("message unavailable")
-        return self.response
-
-    async def send_mavlink_message(self, message: Dict[str, Any]) -> None:
-        self.components.append(message["target_component"])
-        request = message["payload"]
-        request_sequence = int.from_bytes(bytes(request[0:2]), byteorder="little")
-        request_session = request[2]
-        opcode = request[3]
-        self.sessions.append(request_session)
-
-        if opcode == 4:
-            response_session = 7
-            data = len(self.content).to_bytes(4, byteorder="little")
-        elif opcode == 5:
-            assert request_session == 7
-            offset = int.from_bytes(bytes(request[8:12]), byteorder="little")
-            data = self.content[offset : offset + request[4]]
-            response_session = request_session
-        else:
-            assert opcode == 1
-            assert request_session == 7
-            data = b""
-            response_session = request_session
-
-        payload = [0] * 251
-        payload[0:2] = ((request_sequence + 1) & 0xFFFF).to_bytes(2, byteorder="little")
-        payload[2] = response_session
-        payload[3] = 128
-        payload[4] = len(data)
-        payload[5] = opcode
-        payload[12 : 12 + len(data)] = data
-        self.counter += 1
-        self.response = {
-            "status": {"time": {"counter": self.counter}},
-            "message": {"payload": payload},
-        }
-
-
-class FakeFtpVehicleManager:
-    def __init__(self, content: bytes) -> None:
-        self.target_system = 1
-        self.target_component = 1
-        self.mavlink2rest = FakeFtpMessenger(content)
 
 
 class FakeVehicleManager:
@@ -275,15 +218,15 @@ def test_metadata_validation_and_mavftp_uri_boundaries() -> None:
     valid = b'{"version":3,"parameters":[]}'
     assert metadata_crc(b"123456789") == 0x2DFD2D88
     ParameterMetadataManager._validate_crc(valid, metadata_crc(valid))
-    assert MavlinkFtpReader._path_from_uri("mftp://@META/parameters.json") == (
+    assert MavlinkServerFtpReader._path_from_uri("mftp://@META/parameters.json") == (
         "@META/parameters.json",
         None,
     )
-    assert MavlinkFtpReader._path_from_uri("mftp:///absolute/parameters.json") == (
+    assert MavlinkServerFtpReader._path_from_uri("mftp:///absolute/parameters.json") == (
         "/absolute/parameters.json",
         None,
     )
-    assert MavlinkFtpReader._path_from_uri("mftp://comp=42:@META/parameters.json") == (
+    assert MavlinkServerFtpReader._path_from_uri("mftp://comp=42:@META/parameters.json") == (
         "@META/parameters.json",
         42,
     )
@@ -293,7 +236,7 @@ def test_metadata_validation_and_mavftp_uri_boundaries() -> None:
         "mftp://@META/../parameters.json",
     ):
         try:
-            MavlinkFtpReader._path_from_uri(uri)
+            MavlinkServerFtpReader._path_from_uri(uri)
         except ParameterMetadataError:
             continue
         raise AssertionError(f"invalid URI was accepted: {uri}")
@@ -304,19 +247,6 @@ def test_metadata_validation_and_mavftp_uri_boundaries() -> None:
         pass
     else:
         raise AssertionError("invalid CRC was accepted")
-
-
-def test_mavftp_download_uses_server_assigned_session() -> None:
-    async def run() -> None:
-        content = bytes(index % 251 for index in range(500))
-        vehicle = FakeFtpVehicleManager(content)
-        reader = MavlinkFtpReader(cast(Any, vehicle))
-        assert await reader.download("mftp://comp=7:@META/parameters.json") == content
-        assert vehicle.mavlink2rest.sessions[0] == 0
-        assert all(session == 7 for session in vehicle.mavlink2rest.sessions[1:])
-        assert all(component == 7 for component in vehicle.mavlink2rest.components)
-
-    asyncio.run(run())
 
 
 def test_failed_hotswap_retries_same_advertisement_and_keeps_stale_snapshot() -> None:
@@ -418,8 +348,8 @@ class FakeHttpContent:
 
 
 class FakeHttpResponse:
-    def __init__(self, content: bytes) -> None:
-        self.url = SimpleNamespace(scheme="https")
+    def __init__(self, content: bytes, scheme: str = "https") -> None:
+        self.url = SimpleNamespace(scheme=scheme)
         self.headers = {"Content-Length": str(len(content))}
         self.content = FakeHttpContent(content)
 
@@ -434,8 +364,9 @@ class FakeHttpResponse:
 
 
 class FakeHttpSession:
-    def __init__(self, content: bytes) -> None:
-        self._response = FakeHttpResponse(content)
+    def __init__(self, content: bytes, scheme: str = "https") -> None:
+        self._response = FakeHttpResponse(content, scheme)
+        self.request: Optional[tuple[str, Optional[Dict[str, str]], bool]] = None
 
     async def __aenter__(self) -> "FakeHttpSession":
         return self
@@ -443,10 +374,32 @@ class FakeHttpSession:
     async def __aexit__(self, *args: Any) -> None:
         del args
 
-    def get(self, uri: str, allow_redirects: bool) -> FakeHttpResponse:
-        assert uri.startswith("https://")
-        assert allow_redirects
+    def get(
+        self,
+        uri: str,
+        allow_redirects: bool,
+        params: Optional[Dict[str, str]] = None,
+    ) -> FakeHttpResponse:
+        self.request = (uri, params, allow_redirects)
         return self._response
+
+
+def test_mavftp_download_uses_mavlink_server_api() -> None:
+    async def run() -> None:
+        content = bytes(index % 251 for index in range(500))
+        vehicle = FakeVehicleManager()
+        session = FakeHttpSession(content, scheme="http")
+        with patch("parameter_metadata.aiohttp.ClientSession", return_value=session):
+            reader = MavlinkServerFtpReader(cast(Any, vehicle))
+            assert await reader.download("mftp://comp=7:@META/parameters.json") == content
+
+        assert session.request == (
+            "http://127.0.0.1:8080/v1/mavftp/1/7/download",
+            {"path": "@META/parameters.json"},
+            False,
+        )
+
+    asyncio.run(run())
 
 
 def test_https_download_is_bounded_without_new_dependencies() -> None:

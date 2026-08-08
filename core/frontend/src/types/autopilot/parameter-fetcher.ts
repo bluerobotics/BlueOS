@@ -1,9 +1,10 @@
 import mavlink2rest from '@/libs/MAVLink2Rest'
 // eslint-disable-next-line import/no-cycle
-import ardupilot_data, { AutopilotStore } from '@/store/autopilot'
-import autopilot from '@/store/autopilot_manager'
+import ardupilot_data from '@/store/autopilot'
+import { AutopilotStore } from '@/store/autopilot'
 
 import ParametersTable from './parameter-table'
+import autopilot from '@/store/autopilot_manager'
 
 export default class ParameterFetcher {
   parameter_table = new ParametersTable()

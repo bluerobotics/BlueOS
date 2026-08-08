@@ -1,12 +1,10 @@
-import axios from 'axios'
 // eslint-disable-next-line import/no-unresolved
 import ardupilotParamPaths from 'virtual:ardupilot-param-index'
 
-import { fetchFirmwareVehicleType, fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
+import { fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
 import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { FirmwareVehicleType } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 
 import Parameter from './parameter'
@@ -21,6 +19,9 @@ import {
   updateComponentMetadataState,
 } from './parameter-metadata'
 import { fetchPX4Metadata, PX4ParametersMetadata } from './px4/metadata-fetcher'
+import { fetchFirmwareVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
+import { FirmwareVehicleType } from '@/types/autopilot'
+import axios from 'axios'
 
 const COMPONENT_PARAMETER_METADATA_URL = '/ardupilot-manager/v1.0/parameter_metadata'
 
@@ -106,16 +107,15 @@ export default class ParametersTable {
   async fetchArduPilotMetadata(): Promise<ArduPilotMetadataFile> {
     try {
       const json_metadata_override = '/userdata/metadata_override.json'
-      const metadata = await axios.get(json_metadata_override)
-        .then((response) => response.data as ArduPilotMetadataFile)
+      const metadata = await axios.get(json_metadata_override).then(response => response.data as ArduPilotMetadataFile)
       console.info(`Using metadata override from ${json_metadata_override}`)
       return metadata
     } catch (error) {
-      console.debug('Metadata override not present')
+      console.debug(`Metadata override not present`)
     }
     await fetchFirmwareVehicleType() // required to populate autopilot.vehicle_type
     const jsons = ardupilotParamPaths
-    let folder = 'Copter'
+    let folder = "Copter"
     switch (autopilot.firmware_vehicle_type) {
       case FirmwareVehicleType.ArduSub:
         folder = 'Sub'
@@ -125,9 +125,6 @@ export default class ParametersTable {
         break
       case FirmwareVehicleType.ArduPlane:
         folder = 'Plane'
-        break
-      default:
-        break
     }
     const major = autopilot.firmware_info?.version.major
     const minor = autopilot.firmware_info?.version.minor ?? 0
@@ -139,7 +136,7 @@ export default class ParametersTable {
         + `Falling back to ${metadataPath}`,
       )
     }
-    return axios.get(metadataPath).then((response) => response.data as ArduPilotMetadataFile)
+    return axios.get(metadataPath).then(response => response.data as ArduPilotMetadataFile)
   }
 
   async fetchMetadata(generation = this.metadata_generation): Promise<void> {

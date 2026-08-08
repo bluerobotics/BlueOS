@@ -12,13 +12,8 @@ from loguru import logger
 
 COMPONENT_METADATA_MESSAGE_ID = 397
 PARAMETER_METADATA_TYPE = 1
-MAVFTP_ACK = 128
-MAVFTP_NACK = 129
-MAVFTP_OPEN_FILE_READ_ONLY = 4
-MAVFTP_READ_FILE = 5
-MAVFTP_TERMINATE_SESSION = 1
-MAVFTP_PAYLOAD_SIZE = 251
-MAVFTP_DATA_SIZE = 239
+MAVLINK_SERVER_MAVFTP_URL = "http://127.0.0.1:8080/v1/mavftp"
+MAVFTP_MAX_PATH_SIZE = 239
 MAX_METADATA_FILE_SIZE = 2 * 1024 * 1024
 
 
@@ -52,134 +47,27 @@ class RequestState:
     next_at: float = 0.0
 
 
-@dataclass(frozen=True)
-class MavlinkFtpReply:
-    session: int
-    data: bytes
-
-
-class MavlinkFtpReader:
+class MavlinkServerFtpReader:
     def __init__(self, vehicle_manager: VehicleManager) -> None:
         self._vehicle_manager = vehicle_manager
-        self._lock = asyncio.Lock()
-        self._sequence = 0
-        self._target_component = vehicle_manager.target_component
 
     async def download(self, uri: str) -> bytes:
         path, target_component = self._path_from_uri(uri)
-        async with self._lock:
-            self._target_component = target_component or self._vehicle_manager.target_component
-            try:
-                return await asyncio.wait_for(self._download(path), timeout=45.0)
-            finally:
-                self._target_component = self._vehicle_manager.target_component
-
-    async def _download(self, path: str) -> bytes:
-        session = 0
-        opened = False
-        try:
-            open_reply = await self._request(session, MAVFTP_OPEN_FILE_READ_ONLY, 0, path.encode("utf-8"))
-            opened = True
-            session = open_reply.session
-            if len(open_reply.data) < 4:
-                raise ParameterMetadataError("MAVFTP open response did not include a file size")
-            file_size = int.from_bytes(open_reply.data[:4], byteorder="little")
-            if file_size > MAX_METADATA_FILE_SIZE:
-                raise ParameterMetadataError(f"metadata file is too large: {file_size} bytes")
-
-            content = bytearray()
-            while len(content) < file_size:
-                read_size = min(MAVFTP_DATA_SIZE, file_size - len(content))
-                read_reply = await self._request(session, MAVFTP_READ_FILE, len(content), read_size)
-                if read_reply.session != session:
-                    raise ParameterMetadataError("MAVFTP session changed during download")
-                if not read_reply.data or len(read_reply.data) > read_size:
-                    raise ParameterMetadataError("MAVFTP returned an invalid read size")
-                content.extend(read_reply.data)
-            if len(content) != file_size:
-                raise ParameterMetadataError("MAVFTP returned an unexpected file size")
-            return bytes(content)
-        finally:
-            if opened:
-                try:
-                    await self._request(session, MAVFTP_TERMINATE_SESSION, 0)
-                except Exception as error:  # A failed close must not replace the download result.
-                    logger.warning(f"Failed to close MAVFTP metadata session: {error}")
-
-    async def _request(
-        self,
-        session: int,
-        opcode: int,
-        offset: int,
-        data_or_size: bytes | int = b"",
-    ) -> MavlinkFtpReply:
-        data = data_or_size if isinstance(data_or_size, bytes) else b""
-        size = len(data) if isinstance(data_or_size, bytes) else data_or_size
-        if len(data) > MAVFTP_DATA_SIZE:
-            raise ParameterMetadataError("MAVFTP request data is too large")
-        payload = [0] * MAVFTP_PAYLOAD_SIZE
-        payload[0:2] = self._sequence.to_bytes(2, byteorder="little")
-        payload[2] = session
-        payload[3] = opcode
-        payload[4] = size
-        payload[8:12] = offset.to_bytes(4, byteorder="little")
-        payload[12 : 12 + len(data)] = data
-
-        baseline_counter = await self._reply_counter()
-        message = {
-            "type": "FILE_TRANSFER_PROTOCOL",
-            "target_network": 0,
-            "target_system": self._vehicle_manager.target_system,
-            "target_component": self._target_component,
-            "payload": payload,
-        }
-        for attempt in range(3):
-            await self._vehicle_manager.mavlink2rest.send_mavlink_message(message)
-            try:
-                return await self._wait_for_reply(baseline_counter, opcode)
-            except asyncio.TimeoutError:
-                if attempt == 2:
-                    raise ParameterMetadataError("MAVFTP request timed out") from None
-        raise ParameterMetadataError("MAVFTP request failed")
-
-    async def _reply_counter(self) -> int:
-        try:
-            response = await self._vehicle_manager.mavlink2rest.get_mavlink_message(
-                "FILE_TRANSFER_PROTOCOL",
-                self._vehicle_manager.target_system,
-                self._target_component,
-            )
-            return int(response["status"]["time"]["counter"])
-        except Exception:
-            return -1
-
-    async def _wait_for_reply(self, baseline_counter: int, request_opcode: int) -> MavlinkFtpReply:
-        deadline = time.monotonic() + 0.75
-        expected_sequence = (self._sequence + 1) & 0xFFFF
-        while time.monotonic() < deadline:
-            try:
-                response = await self._vehicle_manager.mavlink2rest.get_mavlink_message(
-                    "FILE_TRANSFER_PROTOCOL",
-                    self._vehicle_manager.target_system,
-                    self._target_component,
-                )
-                counter = int(response["status"]["time"]["counter"])
-                payload = response["message"]["payload"]
-                reply_sequence = int.from_bytes(bytes(payload[0:2]), byteorder="little")
-                if counter != baseline_counter and reply_sequence == expected_sequence and payload[5] == request_opcode:
-                    self._sequence = reply_sequence
-                    if payload[3] == MAVFTP_NACK:
-                        error = payload[12] if payload[4] else "unknown"
-                        raise ParameterMetadataError(f"MAVFTP request was rejected: {error}")
-                    if payload[3] != MAVFTP_ACK:
-                        raise ParameterMetadataError(f"unexpected MAVFTP opcode: {payload[3]}")
-                    return MavlinkFtpReply(session=payload[2], data=bytes(payload[12 : 12 + payload[4]]))
-            except ParameterMetadataError:
-                raise
-            except Exception:
-                pass
-            await asyncio.sleep(0.02)
-        raise asyncio.TimeoutError
+        target_component = target_component or self._vehicle_manager.target_component
+        url = f"{MAVLINK_SERVER_MAVFTP_URL}/{self._vehicle_manager.target_system}/{target_component}/download"
+        timeout = aiohttp.ClientTimeout(total=45.0, connect=3.0, sock_read=40.0)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(url, params={"path": path}, allow_redirects=False) as response:
+                response.raise_for_status()
+                content_length = response.headers.get("Content-Length")
+                if content_length is not None and int(content_length) > MAX_METADATA_FILE_SIZE:
+                    raise ParameterMetadataError("MAVFTP metadata file is too large")
+                content = bytearray()
+                async for chunk in response.content.iter_chunked(64 * 1024):
+                    content.extend(chunk)
+                    if len(content) > MAX_METADATA_FILE_SIZE:
+                        raise ParameterMetadataError("MAVFTP metadata file is too large")
+                return bytes(content)
 
     @staticmethod
     def _path_from_uri(uri: str) -> tuple[str, Optional[int]]:
@@ -200,7 +88,7 @@ class MavlinkFtpReader:
         if (
             not path
             or any(part in ("", ".", "..") for part in relative_parts)
-            or len(path.encode("utf-8")) > MAVFTP_DATA_SIZE
+            or len(path.encode("utf-8")) > MAVFTP_MAX_PATH_SIZE
         ):
             raise ParameterMetadataError(f"invalid MAVFTP metadata path: {path}")
         return path, target_component
@@ -208,7 +96,7 @@ class MavlinkFtpReader:
 
 class MetadataFileReader:
     def __init__(self, vehicle_manager: VehicleManager) -> None:
-        self._mavftp = MavlinkFtpReader(vehicle_manager)
+        self._mavftp = MavlinkServerFtpReader(vehicle_manager)
 
     async def download(self, uri: str) -> bytes:
         if uri.startswith("mftp://"):

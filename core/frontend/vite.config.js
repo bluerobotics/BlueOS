@@ -55,7 +55,6 @@ export default defineConfig(({ command, mode }) => {
       }),
       sentryVitePlugin({
         authToken: process.env.SENTRY_AUTH_TOKEN,
-        disable: !process.env.SENTRY_AUTH_TOKEN,
         org: "blue-robotics-c7",
         project: "blueos",
       }),
