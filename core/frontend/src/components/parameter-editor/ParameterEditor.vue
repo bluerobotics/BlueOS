@@ -159,7 +159,7 @@ import Fuse from 'fuse.js'
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
-import autopilot_data from '@/store/autopilot'
+import autopilot_data, { refreshParameterMetadata } from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
@@ -228,6 +228,9 @@ export default Vue.extend({
         this.parameter_file = undefined
       }
     },
+  },
+  async mounted() {
+    await refreshParameterMetadata()
   },
   methods: {
     setDefaultParamValue(param: Parameter) {

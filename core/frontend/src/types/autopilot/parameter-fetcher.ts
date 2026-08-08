@@ -56,6 +56,10 @@ export default class ParameterFetcher {
     }
   }
 
+  async refreshParameterMetadata(): Promise<void> {
+    if (await this.parameter_table.refreshComponentMetadata()) this.updateStore()
+  }
+
   requestParamsWatchdog(): void {
     if (this.total_params_count !== null
       && this.loaded_params_count > 0

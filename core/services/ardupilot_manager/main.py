@@ -45,13 +45,19 @@ async def main() -> None:
         except Exception as start_error:
             logger.exception(start_error)
     else:
+        await autopilot.setup()
         logger.info("Autopilot was stopped by the user, skipping auto-start on boot.")
 
     asyncio.create_task(autopilot.auto_restart_ardupilot())
     asyncio.create_task(autopilot.start_mavlink_manager_watchdog())
+    parameter_metadata_task = asyncio.create_task(autopilot.update_parameter_metadata())
 
-    await server.serve()
-    await autopilot.kill_ardupilot()
+    try:
+        await server.serve()
+    finally:
+        parameter_metadata_task.cancel()
+        await asyncio.gather(parameter_metadata_task, return_exceptions=True)
+        await autopilot.kill_ardupilot()
 
 
 if __name__ == "__main__":
