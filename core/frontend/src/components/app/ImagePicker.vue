@@ -97,6 +97,7 @@
 
 <script lang="ts">
 import axios from 'axios'
+import imageCompression, { Options as ImageCompressionOptions } from 'browser-image-compression'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -144,6 +145,11 @@ export default Vue.extend({
       required: false,
     },
     maxDimension: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    maxSizeMb: {
       type: Number,
       default: 0,
       required: false,
@@ -229,44 +235,22 @@ export default Vue.extend({
         })
       this.loadImages()
     },
-    async resizeImage(file: File): Promise<Blob> {
-      const resizableTypes = ['image/jpeg', 'image/png', 'image/webp']
-      if (this.maxDimension <= 0 || !resizableTypes.includes(file.type)) {
+    async resizeImage(file: File): Promise<File> {
+      if (this.maxDimension <= 0 && this.maxSizeMb <= 0) {
         return file
       }
 
-      const objectUrl = URL.createObjectURL(file)
-      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const element = new Image()
-        element.onload = () => resolve(element)
-        element.onerror = () => reject(new Error(`Unable to decode ${file.name}`))
-        element.src = objectUrl
-      }).finally(() => URL.revokeObjectURL(objectUrl))
-
-      const longestSide = Math.max(image.naturalWidth, image.naturalHeight)
-      if (longestSide <= this.maxDimension) {
-        return file
+      const options: ImageCompressionOptions = {
+        useWebWorker: true,
+        fileType: file.type,
       }
-
-      const scale = this.maxDimension / longestSide
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
-      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
-      const context = canvas.getContext('2d')
-      if (!context) {
-        throw new Error('Unable to create an image resize context')
+      if (this.maxDimension > 0) {
+        options.maxWidthOrHeight = this.maxDimension
       }
-      context.drawImage(image, 0, 0, canvas.width, canvas.height)
-
-      return new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(blob)
-          } else {
-            reject(new Error(`Unable to resize ${file.name}`))
-          }
-        }, file.type)
-      })
+      if (this.maxSizeMb > 0) {
+        options.maxSizeMB = this.maxSizeMb
+      }
+      return imageCompression(file, options)
     },
     async uploadImage(file: File, destinationPath: string) {
       try {
