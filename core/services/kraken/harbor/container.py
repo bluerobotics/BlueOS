@@ -15,50 +15,15 @@ from loguru import logger
 
 class ContainerManager:
     @staticmethod
-    def _human_duration(duration_seconds: float) -> str:
-        seconds = int(duration_seconds)
-        if seconds < 1:
-            human_duration = "Less than a second"
-        elif seconds == 1:
-            human_duration = "1 second"
-        elif seconds < 60:
-            human_duration = f"{seconds} seconds"
-        else:
-            minutes = int(duration_seconds / 60)
-            hours = int(duration_seconds / 60 / 60 + 0.5)
-            if minutes == 1:
-                human_duration = "About a minute"
-            elif minutes < 60:
-                human_duration = f"{minutes} minutes"
-            elif hours == 1:
-                human_duration = "About an hour"
-            elif hours < 48:
-                human_duration = f"{hours} hours"
-            elif hours < 24 * 7 * 2:
-                human_duration = f"{hours // 24} days"
-            elif hours < 24 * 30 * 2:
-                human_duration = f"{hours // 24 // 7} weeks"
-            elif hours < 24 * 365 * 2:
-                human_duration = f"{hours // 24 // 30} months"
-            else:
-                human_duration = f"{int(duration_seconds / 60 / 60) // 24 // 365} years"
-
-        return human_duration
-
-    @classmethod
-    def _status_with_monotonic_uptime(cls, status_text: str, pid: int) -> str:
-        if not status_text.startswith("Up ") or pid <= 0:
-            return status_text
+    def _monotonic_uptime(pid: int) -> float | None:
+        if pid <= 0:
+            return None
 
         try:
             process_start_since_boot = psutil.Process(pid).create_time() - psutil.boot_time()
-            uptime_seconds = max(0.0, time.monotonic() - process_start_since_boot)
+            return float(max(0.0, time.monotonic() - process_start_since_boot))
         except psutil.Error:
-            return status_text
-
-        suffix_start = status_text.find(" (")
-        suffix = status_text[suffix_start:] if suffix_start >= 0 else ""
-        return f"Up {cls._human_duration(uptime_seconds)}{suffix}"
+            return None
 
     @classmethod
     def _container_model(cls, container: DockerContainer, details: Dict[str, Any]) -> ContainerModel:
@@ -67,7 +32,8 @@ class ContainerManager:
             name=container["Names"][0],
             image=container["Image"],
             image_id=container["ImageID"],
-            status=cls._status_with_monotonic_uptime(container["Status"], pid),
+            status=container["Status"],
+            uptime_seconds=cls._monotonic_uptime(pid),
         )
 
     @staticmethod
@@ -88,7 +54,9 @@ class ContainerManager:
 
     @staticmethod
     # pylint: disable=too-many-locals
-    async def _get_stats_from_containers(containers: List[DockerContainer]) -> Dict[str, ContainerUsageModel]:
+    async def _get_stats_from_containers(
+        containers: List[DockerContainer],
+    ) -> Dict[str, ContainerUsageModel]:
         result: Dict[str, ContainerUsageModel] = {}
 
         # Create separate lists of coroutine objects for stats and show

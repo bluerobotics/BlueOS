@@ -5,24 +5,9 @@ import pytest
 from harbor.container import ContainerManager
 
 
-@pytest.mark.parametrize(
-    ("duration_seconds", "expected"),
-    [
-        (0.5, "Less than a second"),
-        (1, "1 second"),
-        (59, "59 seconds"),
-        (60, "About a minute"),
-        (59 * 60, "59 minutes"),
-        (60 * 60, "About an hour"),
-        (4 * 60 * 60, "4 hours"),
-        (3 * 24 * 60 * 60, "3 days"),
-    ],
-)
-def test_human_duration(duration_seconds: float, expected: str) -> None:
-    assert ContainerManager._human_duration(duration_seconds) == expected
-
-
-def test_status_uses_process_uptime_and_preserves_health(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_uptime_uses_process_start_relative_to_boot(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class FakeProcess:
         @staticmethod
         def create_time() -> float:
@@ -32,17 +17,34 @@ def test_status_uses_process_uptime_and_preserves_health(monkeypatch: pytest.Mon
     monkeypatch.setattr(psutil, "boot_time", lambda: 1_000.0)
     monkeypatch.setattr(time, "monotonic", lambda: 10_800.0)
 
-    status = ContainerManager._status_with_monotonic_uptime("Up 17 hours (healthy)", 42)
+    uptime = ContainerManager._monotonic_uptime(42)
 
-    assert status == "Up 2 hours (healthy)"
+    assert uptime == 7_200.0
 
 
-def test_status_falls_back_when_process_is_gone(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_uptime_is_unavailable_when_process_is_gone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def missing_process(pid: int) -> None:
         raise psutil.NoSuchProcess(pid)
 
     monkeypatch.setattr(psutil, "Process", missing_process)
 
-    status = ContainerManager._status_with_monotonic_uptime("Up 17 hours", 42)
+    assert ContainerManager._monotonic_uptime(42) is None
 
-    assert status == "Up 17 hours"
+
+def test_container_model_keeps_status_and_exposes_uptime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(ContainerManager, "_monotonic_uptime", lambda _pid: 7_200.0)
+    container = {
+        "Names": ["/example"],
+        "Image": "example/image:latest",
+        "ImageID": "sha256:123",
+        "Status": "Up 17 hours (healthy)",
+    }
+
+    model = ContainerManager._container_model(container, {"State": {"Pid": 42}})  # type: ignore[arg-type]
+
+    assert model.status == "Up 17 hours (healthy)"
+    assert model.uptime_seconds == 7_200.0

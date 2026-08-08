@@ -6,6 +6,7 @@ class ContainerModel(BaseModel):
     image: str
     image_id: str
     status: str
+    uptime_seconds: float | None = None
 
 
 class ContainerUsageModel(BaseModel):
