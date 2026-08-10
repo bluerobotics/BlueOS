@@ -400,33 +400,62 @@ def update_navigator_overlays() -> bool:
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
-    navigator_configs_with_match_patterns = [
-        ("enable_uart=1", "^enable_uart=.*"),
-        ("dtoverlay=uart1", "^dtoverlay=uart1.*"),
-        ("dtoverlay=uart3", "^dtoverlay=uart3.*"),
-        ("dtoverlay=uart4", "^dtoverlay=uart4.*"),
-        ("dtoverlay=uart5", "^dtoverlay=uart5.*"),
-        ("dtparam=i2c_vc=on", "^dtparam=i2c_vc=.*"),
-        ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
-        ("dtparam=i2c_arm_baudrate=1000000", "^dtparam=i2c_arm_baudrate.*"),
-        ("dtoverlay=i2c4,pins_6_7,baudrate=1000000", "^dtoverlay=i2c4.*"),
-        ("dtoverlay=i2c6,pins_22_23,baudrate=400000", "^dtoverlay=i2c6.*"),
-        ("dtparam=spi=on", "^dtparam=spi=.*"),
-        ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
-        ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
-        ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
-        ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
-    ]
+    # Keep in sync with install/boards/bcm_27xx.sh (Pi4) and bcm_2712.sh (Pi5).
+    # The dwc2 part is owned by update_dwc2().
+    if get_cpu_type() == CpuType.PI4:
+        section_name = "pi4"
+        navigator_configs_with_match_patterns = [
+            ("enable_uart=1", "^enable_uart=.*"),
+            ("dtoverlay=uart1", "^dtoverlay=uart1.*"),
+            ("dtoverlay=uart3", "^dtoverlay=uart3.*"),
+            ("dtoverlay=uart4", "^dtoverlay=uart4.*"),
+            ("dtoverlay=uart5", "^dtoverlay=uart5.*"),
+            ("dtparam=i2c_vc=on", "^dtparam=i2c_vc=.*"),
+            ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
+            ("dtparam=i2c_arm_baudrate=1000000", "^dtparam=i2c_arm_baudrate.*"),
+            ("dtoverlay=i2c4,pins_6_7,baudrate=1000000", "^dtoverlay=i2c4.*"),
+            ("dtoverlay=i2c6,pins_22_23,baudrate=400000", "^dtoverlay=i2c6.*"),
+            ("dtparam=spi=on", "^dtparam=spi=.*"),
+            ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
+            ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
+            ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
+            ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
+        ]
+    elif get_cpu_type() == CpuType.PI5:
+        section_name = "pi5"
+        navigator_configs_with_match_patterns = [
+            ("enable_uart=1", "^enable_uart=.*"),
+            ("dtoverlay=uart0-pi5", "^dtoverlay=uart0.*"),
+            ("dtoverlay=uart3-pi5", "^dtoverlay=uart3.*"),
+            ("dtoverlay=uart4-pi5", "^dtoverlay=uart4.*"),
+            ("dtoverlay=uart2-pi5", "^dtoverlay=uart2.*"),
+            ("dtparam=i2c_arm=on", "^dtparam=i2c_arm=.*"),
+            ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
+            ("dtoverlay=i2c3-pi5,baudrate=400000", "^dtoverlay=i2c3-pi5,.*"),
+            ("dtoverlay=i2c3-pi5.baudrate=400000", "^dtoverlay=i2c3-pi5\\.baudrate.*"),
+            (
+                "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0",
+                "^dtoverlay=i2c-gpio.*",
+            ),
+            ("dtparam=spi=on", "^dtparam=spi=.*"),
+            ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
+            ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
+            ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
+            ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
+        ]
+    else:
+        logger.error("Unsupported CPU type for navigator overlays update")
+        return False
+
     navigator_configs_with_match_patterns.reverse()
 
-    pi4_section_name = "pi4"
     for (config, config_match_pattern) in navigator_configs_with_match_patterns:
-        # Add each navigator configuration to pi4 section
-        boot_config_add_configuration_at_section(config_content, config, pi4_section_name)
+        # Add each navigator configuration to the board-specific section
+        boot_config_add_configuration_at_section(config_content, config, section_name)
 
         # Remove any unprotected and conflicting configuration of peripherals
         config_content = boot_config_filter_conflicting_configuration_at_section(
-            config_content, config_match_pattern, config, pi4_section_name
+            config_content, config_match_pattern, config, section_name
         )
 
     # Don't need to apply or restart if the content is the same
@@ -765,12 +794,10 @@ def main() -> int:
             ]
         )
 
-    if host_cpu == CpuType.PI4:
-        patches_to_apply.extend([("navigator", update_navigator_overlays)])
-
     if host_cpu in [CpuType.PI4, CpuType.PI5]:
         patches_to_apply.extend(
             [
+                ("navigator", update_navigator_overlays),
                 ("dwc2", update_dwc2),
                 ("i2c4", update_i2c4_symlink),
             ]
