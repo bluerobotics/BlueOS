@@ -1,4 +1,5 @@
 import logging
+import sys
 from datetime import datetime, timezone
 from logging import LogRecord
 from pathlib import Path
@@ -6,6 +7,9 @@ from types import FrameType
 from typing import Any, Optional, TextIO, Union
 
 from loguru import logger
+
+# ISO 8601 UTC (e.g. 2026-08-11T19:15:00.123Z)
+ISO8601_LOG_FORMAT = "{time:YYYY-MM-DDTHH:mm:ss.SSS!UTC}Z | {level:<8} | {name}:{function}:{line} - {message}"
 
 
 class LogRotator:
@@ -61,7 +65,9 @@ def get_new_log_path(service_name: str) -> Path:
 
 def init_logger(service_name: str) -> None:
     try:
-        logger.add(get_new_log_path(service_name), rotation="10 MB")
+        logger.remove()
+        logger.add(sys.stderr, format=ISO8601_LOG_FORMAT)
+        logger.add(get_new_log_path(service_name), rotation="10 MB", format=ISO8601_LOG_FORMAT)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
 

@@ -65,7 +65,7 @@ start_service() {
 while true; do
   echo "Starting service: $service_command with memory limit: $memory_limit_bytes bytes "
   if ! start_service; then
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
     echo "$timestamp: Service ($service_command) exceeded memory limit or stopped. Restarting..." | tee -a "$LOG_FILE"
   else
     echo "Service ($service_command) completed successfully."
