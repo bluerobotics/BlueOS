@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 import traceback
 from logging import LogRecord
 from types import FrameType
@@ -11,6 +12,9 @@ from loguru import logger
 
 if TYPE_CHECKING:
     from loguru import Message
+
+# ISO 8601 UTC (e.g. 2026-08-11T19:15:00.123Z)
+ISO8601_LOG_FORMAT = "{time:YYYY-MM-DDTHH:mm:ss.SSS!UTC}Z | {level:<8} | {name}:{function}:{line} - {message}"
 
 LOG_PUBLISHER_OPTIONS: dict[str, Any] = {
     "encoding": zenoh.Encoding.APPLICATION_JSON.with_schema("foxglove.Log"),
@@ -51,6 +55,8 @@ def validate_service_name(service_name: str) -> None:
 def init_logger(service_name: str) -> None:
     try:
         validate_service_name(service_name)
+        logger.remove()
+        logger.add(sys.stderr, format=ISO8601_LOG_FORMAT)
         logger.add(create_log_sink(service_name), serialize=True)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
