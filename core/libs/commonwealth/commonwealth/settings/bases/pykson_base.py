@@ -14,6 +14,7 @@ from commonwealth.settings.exceptions import (
     MigrationFail,
     SettingsFromTheFuture,
 )
+from commonwealth.settings.temp_files import save_lock
 
 
 class PyksonSettings(pykson.JsonObject):
@@ -93,18 +94,20 @@ class PyksonSettings(pykson.JsonObject):
 
         # Prepare data prior to operation
         logger.debug(f"Saving settings on: {file_path}")
-        json_data = json.dumps(json.loads(Pykson().to_json(self)), indent=4)
 
-        # Create a temporary file in same directory, write and rename it to the original file
-        temp_file = file_path.with_suffix(".tmp")
-        with open(temp_file, "w", encoding="utf-8") as settings_file:
-            settings_file.write(json_data)
-            # Ensure data is written to disk
-            settings_file.flush()
-            os.fsync(settings_file.fileno())
-        # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
-        # https://docs.python.org/3/library/os.html#os.replace
-        temp_file.replace(file_path)
+        with save_lock:
+            json_data = json.dumps(json.loads(Pykson().to_json(self)), indent=4)
+
+            # Create a temporary file in same directory, write and rename it to the original file
+            temp_file = file_path.with_suffix(".tmp")
+            with open(temp_file, "w", encoding="utf-8") as settings_file:
+                settings_file.write(json_data)
+                # Ensure data is written to disk
+                settings_file.flush()
+                os.fsync(settings_file.fileno())
+            # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
+            # https://docs.python.org/3/library/os.html#os.replace
+            temp_file.replace(file_path)
 
     def reset(self) -> None:
         """Reset internal data to default values"""

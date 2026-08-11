@@ -286,3 +286,45 @@ def test_concurrent_saves_preserve_all_updates() -> None:
     assert reloaded.settings.version_1_variable == 111
     assert reloaded.settings.version_2_variable == 222
     assert os.listdir(config_path.joinpath("managertest")) == ["settings-2.json"]
+
+
+def test_concurrent_load_and_save_do_not_crash() -> None:
+    # Regression test for https://github.com/bluerobotics/BlueOS/issues/4106: load() clearing *.tmp
+    # while save() is writing must not raise FileNotFoundError on replace.
+    temporary_folder = tempfile.mkdtemp()
+    config_path = pathlib.Path(temporary_folder)
+
+    settings_manager = PydanticManager("ManagerTest", SettingsV2, config_path)
+    settings_manager.settings.version_1_variable = 1
+    settings_manager.save()
+
+    errors: list[Exception] = []
+    stop = threading.Event()
+
+    def save_loop() -> None:
+        try:
+            for i in range(200):
+                settings_manager.settings.version_1_variable = i
+                settings_manager.save()
+        except Exception as error:  # noqa: BLE001 - collect to assert on the main thread
+            errors.append(error)
+
+    def load_loop() -> None:
+        try:
+            while not stop.is_set():
+                settings_manager.load()
+        except Exception as error:  # noqa: BLE001 - collect to assert on the main thread
+            errors.append(error)
+
+    save_thread = threading.Thread(target=save_loop)
+    load_thread = threading.Thread(target=load_loop)
+    save_thread.start()
+    load_thread.start()
+    save_thread.join(timeout=30)
+    stop.set()
+    load_thread.join(timeout=30)
+
+    assert not save_thread.is_alive(), "save thread did not finish"
+    assert not load_thread.is_alive(), "load thread did not finish"
+    assert not errors, f"Concurrent load and save raised: {errors}"
+    assert os.listdir(config_path.joinpath("managertest")) == ["settings-2.json"]
