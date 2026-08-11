@@ -44,6 +44,7 @@ class AutoPilotManager(metaclass=Singleton):
         self.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
         self.should_be_running = False
+        self._restart_lock = asyncio.Lock()
         self.mavlink_manager = MavlinkManager()
 
         # Kept out of setup() because that runs on every start attempt, which would reset the counter
@@ -609,12 +610,66 @@ class AutoPilotManager(metaclass=Singleton):
         finally:
             self.should_be_running = True
 
+    async def _detect_serial_board(self, board: FlightController) -> Optional[FlightController]:
+        return next(
+            (
+                detected
+                for detected in await self.available_boards()
+                if detected.type == PlatformType.Serial and detected.platform == board.platform and detected.path
+            ),
+            None,
+        )
+
     async def restart_ardupilot(self) -> None:
-        if self.current_board is None or self.current_board.type in [PlatformType.SITL, PlatformType.Linux]:
-            await self.kill_ardupilot()
-            await self.start_ardupilot()
-            return
-        await self.vehicle_manager.reboot_vehicle()
+        # Both the /restart endpoint and the heartbeat watchdog can call this, so serialize them.
+        async with self._restart_lock:
+            board = self.current_board
+            # Serial boards are the only ones rebooted through MAVLink; everything else (SITL,
+            # Linux, Manual, unknown) is a process/router we can just bounce.
+            if board is None or board.type != PlatformType.Serial:
+                await self.kill_ardupilot()
+                await self.start_ardupilot()
+                return
+
+            await self.vehicle_manager.reboot_vehicle()
+
+            # The router watchdog would otherwise reopen the stale path the moment the board drops.
+            # Stand it down until start_serial re-arms it on the freshly detected path below.
+            self.mavlink_manager.should_be_running = False
+
+            try:
+                # A serial board re-enumerates on USB after rebooting, so its device path changes and
+                # the router keeps a stale handle. Wait for the board to drop first: this confirms the
+                # reboot landed and stops us from reopening the pre-reboot path. Boards reached through a
+                # separate USB-serial adapter never drop, so this wait is best-effort.
+                disconnect_deadline = time.monotonic() + 10.0
+                while time.monotonic() < disconnect_deadline:
+                    if await self._detect_serial_board(board) is None:
+                        break
+                    await asyncio.sleep(0.5)
+                else:
+                    logger.warning(f"{board.name} did not disconnect after reboot. Restarting its link anyway.")
+
+                reconnected_board = None
+                reconnect_deadline = time.monotonic() + 30.0
+                while reconnected_board is None and time.monotonic() < reconnect_deadline:
+                    await asyncio.sleep(0.5)
+                    reconnected_board = await self._detect_serial_board(board)
+                if reconnected_board is None:
+                    raise RuntimeError(f"Timed out waiting for {board.name} to reconnect after reboot.")
+
+                # Release the stale serial handle before reopening on the new path. We avoid the full
+                # kill/start cycle so runtime-only endpoints and the current router survive the reboot.
+                await self.mavlink_manager.stop()
+                await self.start_serial(reconnected_board)
+                self.should_be_running = True
+            except Exception:
+                try:
+                    await self.mavlink_manager.stop()
+                except Exception as error:
+                    logger.warning(f"Failed to stop Mavlink manager after serial restart failure: {error}")
+                self.should_be_running = False
+                raise
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
