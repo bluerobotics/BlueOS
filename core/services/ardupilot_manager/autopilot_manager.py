@@ -47,6 +47,10 @@ class AutoPilotManager(metaclass=Singleton):
         self._restart_lock = asyncio.Lock()
         self.mavlink_manager = MavlinkManager()
 
+        # Kept out of setup() because that runs on every start attempt, which would reset the counter
+        self._start_fail_count = 0
+        self._max_start_failures = 10
+
         # Load settings and do the initial configuration
         if self.settings.load():
             logger.info(f"Loaded settings from {self.settings.settings_file}.")
@@ -201,7 +205,18 @@ class AutoPilotManager(metaclass=Singleton):
                 try:
                     await self.start_ardupilot()
                 except Exception as error:
-                    logger.warning(f"Could not start Ardupilot: {error}")
+                    self._start_fail_count += 1
+                    logger.warning(
+                        f"Could not start Ardupilot ({self._start_fail_count}/{self._max_start_failures}): {error}"
+                    )
+                    if self._start_fail_count >= self._max_start_failures:
+                        self.should_be_running = False
+                        logger.error(
+                            "Consecutive start failures threshold reached, not retrying automatically. "
+                            "Start the autopilot or change the board to try again."
+                        )
+            elif self.is_running():
+                self._start_fail_count = 0
             await asyncio.sleep(5.0)
 
     async def start_mavlink_manager_watchdog(self) -> None:
