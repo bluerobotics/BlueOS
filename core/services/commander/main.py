@@ -167,7 +167,10 @@ async def do_eeprom_update(i_know_what_i_am_doing: bool = False) -> Any:
 async def reset_settings(i_know_what_i_am_doing: bool = False) -> Any:
     check_what_i_am_doing(i_know_what_i_am_doing)
     # Be sure to not delete bootstrap to avoid going back to factory image
+    # .ssh holds the keypair used to run host commands; wiping it forces the
+    # sshpass fallback, which fails whenever the default password was changed
     ignore = [
+        Path("/root/.config/.ssh"),
         Path("/root/.config/ardupilot-manager"),
         Path("/root/.config/bag-of-holding"),
         Path("/root/.config/bootstrap"),
