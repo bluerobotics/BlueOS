@@ -163,7 +163,9 @@ export async function restart(): Promise<void> {
   return back_axios({
     method: 'post',
     url: `${autopilot.API_URL}/restart`,
-    timeout: 10000,
+    // Serial boards reboot over MAVLink and re-enumerate on USB; the backend waits for the board to
+    // drop and come back before reopening the link, which can take tens of seconds.
+    timeout: 60000,
   })
     .then((response) => response.data)
     .catch((error) => {
