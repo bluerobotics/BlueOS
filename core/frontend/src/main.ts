@@ -50,6 +50,7 @@ if (version && isOfficialTag) {
     integrations: [
       Sentry.browserTracingIntegration({ router }),
       Sentry.replayIntegration(),
+      Sentry.feedbackIntegration({ autoInject: false }),
     ],
     tracesSampleRate: 1.0,
     tracePropagationTargets: [],

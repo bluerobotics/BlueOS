@@ -41,8 +41,9 @@
             </v-btn>
 
             <v-btn
-              v-tooltip="'Directly send us a feedback'"
+              v-tooltip="feedback_available ? 'Directly send us a feedback' : 'Only available on official releases'"
               class="ma-2"
+              :disabled="!feedback_available"
               @click="openSimpleReport"
             >
               <v-icon
@@ -85,6 +86,11 @@ export default Vue.extend({
       show_dialog: false,
     }
   },
+  computed: {
+    feedback_available(): boolean {
+      return Sentry.getFeedback() !== undefined
+    },
+  },
   methods: {
     showDialog(state: boolean): void {
       this.show_dialog = state
@@ -96,6 +102,11 @@ export default Vue.extend({
       window.open(this.discussUrl(), '_blank')
     },
     async openSimpleReport(): Promise<void> {
+      const feedback = Sentry.getFeedback()
+      if (!feedback) {
+        return
+      }
+
       // @ts-expect-error - Theme is not defined in the type
       const { isDark, currentTheme } = this.$vuetify.theme
 
@@ -110,7 +121,7 @@ export default Vue.extend({
         interactiveFilter: `brightness(${isDark ? '150' : '95'}%)`,
       }
 
-      const feedback = Sentry.feedbackIntegration({
+      const form = await feedback.createForm({
         colorScheme: 'system',
         showBranding: false,
         formTitle: 'Send us a simple report',
@@ -119,8 +130,6 @@ export default Vue.extend({
         themeLight: theme,
         themeDark: theme,
       })
-
-      const form = await feedback.createForm()
       form.appendToDom()
 
       this.show_dialog = false
