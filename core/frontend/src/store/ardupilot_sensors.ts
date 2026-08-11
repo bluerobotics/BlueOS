@@ -1,15 +1,27 @@
+import { vec3 } from 'gl-matrix'
+import { every } from 'lodash'
 import {
-    getModule,
+  getModule,
   Module, VuexModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import autopilot_data from "./autopilot"
-import { Dictionary } from "@/types/common"
+import Parameter from '@/types/autopilot/parameter'
+import { Dictionary } from '@/types/common'
 import decode, { deviceId } from '@/utils/deviceid_decoder'
 
-import { vec3 } from 'gl-matrix'
-import { every } from 'lodash'
+import autopilot_data from './autopilot'
+
+// avoid parameterRegex full-table scans on every sensors getter eval.
+const ACCEL_ID_PARAMS = ['INS_ACC_ID', 'INS_ACC2_ID', 'INS_ACC3_ID']
+const COMPASS_ID_PARAMS = ['COMPASS_DEV_ID', 'COMPASS_DEV_ID2', 'COMPASS_DEV_ID3']
+const BARO_ID_PARAMS = ['BARO_DEVID', 'BARO2_DEVID', 'BARO3_DEVID']
+
+function params_by_names(names: string[]): Parameter[] {
+  return names
+    .map((name) => autopilot_data.parameter(name))
+    .filter((param): param is Parameter => param !== undefined && param.value !== 0)
+}
 
 @Module({
     dynamic: true,
@@ -20,20 +32,17 @@ import { every } from 'lodash'
 class ArdupilotSensorsStore extends VuexModule {
 
     get accelerometers(): deviceId[]  {
-        return autopilot_data.parameterRegex('^INS_ACC.*_ID')
-        .filter((param) => param.value !== 0)
+        return params_by_names(ACCEL_ID_PARAMS)
         .map((parameter) => decode(parameter.name, parameter.value))
       }
     
       get compasses(): deviceId[] {
-        return autopilot_data.parameterRegex('^COMPASS_DEV_ID.*')
-          .filter((param) => param.value !== 0)
+        return params_by_names(COMPASS_ID_PARAMS)
           .map((parameter) => decode(parameter.name, parameter.value))
       }
     
       get baros(): deviceId[] {
-        return autopilot_data.parameterRegex('^BARO.*_DEVID')
-          .filter((param) => param.value !== 0)
+        return params_by_names(BARO_ID_PARAMS)
           .map((parameter) => decode(parameter.name, parameter.value))
       }
     

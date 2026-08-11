@@ -34,6 +34,7 @@
       mdi-lightning-bolt
     </v-icon>
     <v-menu
+      v-model="menu_open"
       :close-on-content-click="false"
       nudge-left="150"
       nudge-bottom="25"
@@ -49,7 +50,7 @@
         >
           <v-icon
             v-if="heartbeat_age() < time_limit_heartbeat"
-            v-tooltip="heartbeat_message()"
+            v-tooltip="heartbeat_message"
             class="px-1"
             :color="heartbeat_color()"
           >
@@ -85,7 +86,7 @@
                 <td>Current:</td>
                 <td> {{ battery_current }} A</td>
               </tr>
-              <tr v-for="(calibrated, sensor_name,) in ardupilot_sensors.sensors" :key="sensor_name">
+              <tr v-for="(calibrated, sensor_name) in sensor_status" :key="sensor_name">
                 <td class="sensor-type">
                   {{ sensor_name }}:
                 </td>
@@ -117,11 +118,12 @@ import { convertHexToRgbd } from '@/cosmos'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'
 import { MavModeFlag, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import ardupilot_sensors, { ArdupilotSensorsStore } from '@/store/ardupilot_sensors'
+import ardupilot_sensors from '@/store/ardupilot_sensors'
 import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
 import system_information, { FetchType } from '@/store/system-information'
 import * as DEFAULT_COLORS from '@/style/colors/default'
+import { Dictionary } from '@/types/common'
 import { RaspberryEventType } from '@/types/system-information/platform'
 import { Disk } from '@/types/system-information/system'
 import mavlink_store_get from '@/utils/mavlink'
@@ -137,6 +139,9 @@ export default Vue.extend({
   data() {
     return {
       time_limit_heartbeat: 3000,
+      menu_open: false,
+      heartbeat_now: Date.now(),
+      heartbeat_timer: undefined as ReturnType<typeof setInterval> | undefined,
       heartbeat_listener: undefined as Listener | undefined,
     }
   },
@@ -185,30 +190,65 @@ export default Vue.extend({
     disk_usage_high(): boolean {
       return this.disk_usage_percent > 85
     },
-    ardupilot_sensors(): ArdupilotSensorsStore {
-      return ardupilot_sensors
+    all_sensors_calibrated(): boolean {
+      return ardupilot_sensors.all_sensors_calibrated
+    },
+    // Avoid evaluating the full sensors tree while the menu is closed.
+    sensor_status(): Dictionary<boolean> {
+      return this.menu_open ? ardupilot_sensors.sensors : {}
+    },
+    heartbeat_message(): string {
+      if (this.all_sensors_calibrated) {
+        return 'MAVLink heartbeats arriving as expected'
+      }
+      return 'One or more sensors are not calibrated'
     },
   },
   mounted() {
     system_information.subscribeSystemInformation(FETCH_TYPES)
+    this.heartbeat_timer = setInterval(() => {
+      this.heartbeat_now = Date.now()
+    }, 1000)
     // markRaw: Listener → Endpoint.latestData must not be deep-observed per HEARTBEAT.
     this.heartbeat_listener = markRaw(mavlink2rest.startListening('HEARTBEAT').setCallback((message) => {
       if (!this.is_vehicle(message?.message.mavtype.type) || message?.header.component_id !== 1) {
         return
       }
-      autopilot_data.setSystemId(message?.header.system_id)
-      autopilot_data.setAutopilotType(message?.message.autopilot.type)
-      autopilot_data.setVehicleArmed(Boolean(message?.message.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED))
+      const system_id = message?.header.system_id
+      const autopilot_type = message?.message.autopilot.type
+      const armed = Boolean(message?.message.base_mode.bits & MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED)
+      if (autopilot_data.system_id !== system_id) {
+        autopilot_data.setSystemId(system_id)
+      }
+      if (autopilot_data.autopilot_type !== autopilot_type) {
+        autopilot_data.setAutopilotType(autopilot_type)
+      }
+      if (autopilot_data.verhicle_armed !== armed) {
+        autopilot_data.setVehicleArmed(armed)
+      }
+      this.heartbeat_now = Date.now()
       autopilot_data.setLastHeartbeatDate(new Date())
     }).setFrequency(0))
   },
   beforeDestroy() {
     system_information.unsubscribeSystemInformation(FETCH_TYPES)
+    if (this.heartbeat_timer !== undefined) {
+      clearInterval(this.heartbeat_timer)
+    }
     this.heartbeat_listener?.discard()
   },
   methods: {
+    // Method (not computed): age must follow wall clock, not a cached Date.now() snapshot.
     heartbeat_age(): number {
-      return new Date().valueOf() - autopilot_data.last_heartbeat_date.getTime()
+      return this.heartbeat_now - autopilot_data.last_heartbeat_date.getTime()
+    },
+    heartbeat_color(): string {
+      const selected_color = this.all_sensors_calibrated
+        ? DEFAULT_COLORS.SHEET_LIGHT_BG : DEFAULT_COLORS.WARNING
+      const [r, g, b] = convertHexToRgbd(selected_color)
+      const opacity = Math.max(0.4, 1.4 - this.heartbeat_age() / 1000)
+
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`
     },
     is_vehicle(type: string) {
       return [
@@ -231,20 +271,6 @@ export default Vue.extend({
         'MAV_TYPE_VTOL_FIXEDROTOR',
         'MAV_TYPE_VTOL_TAILSITTER',
       ].includes(type)
-    },
-    heartbeat_color() : string {
-      const selected_color = ardupilot_sensors.all_sensors_calibrated
-        ? DEFAULT_COLORS.SHEET_LIGHT_BG : DEFAULT_COLORS.WARNING
-      const [r, g, b] = convertHexToRgbd(selected_color)
-      const opacity = Math.max(0.4, 1.4 - this.heartbeat_age() / 1000)
-
-      return `rgba(${r}, ${g}, ${b}, ${opacity})`
-    },
-    heartbeat_message() : string {
-      if (ardupilot_sensors.all_sensors_calibrated) {
-        return 'MAVLink heartbeats arriving as expected'
-      }
-      return 'One or more sensors are not calibrated'
     },
   },
 })
