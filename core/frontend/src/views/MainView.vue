@@ -15,13 +15,13 @@
       >
         <h3>Welcome to BlueOS!</h3>
         Before you start, we highly recommend <a
-          href="https://docs.bluerobotics.com/ardusub-zola/software/onboard/BlueOS-1.0/getting-started/#connect-wifi"
+          href="https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet"
           target="_blank"
         >
           connecting to the internet
         </a>
         and performing a <a
-          href="https://docs.bluerobotics.com/ardusub-zola/software/onboard/BlueOS-1.0/getting-started/#select-version"
+          href="https://blueos.cloud/docs/stable/usage/getting-started/#select-version"
           target="_blank"
         >
           system update to the latest available BlueOS version
