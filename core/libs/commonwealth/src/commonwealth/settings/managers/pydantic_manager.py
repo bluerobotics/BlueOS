@@ -3,7 +3,7 @@ import re
 from typing import Any, Optional, Type
 
 import appdirs
-from commonwealth.settings.bases.pydantic_base import PydanticSettings
+from commonwealth.settings.bases.pydantic_base import PydanticSettings, _save_lock
 from loguru import logger
 
 
@@ -115,7 +115,7 @@ class PydanticManager:
         valid_files = [
             possible_file
             for possible_file in self.config_folder.iterdir()
-            if possible_file.name.startswith(PydanticManager.SETTINGS_NAME_PREFIX)
+            if possible_file.name.startswith(PydanticManager.SETTINGS_NAME_PREFIX) and possible_file.suffix == ".json"
         ]
         valid_files.sort(key=get_settings_version_from_filename, reverse=True)
 
@@ -135,8 +135,11 @@ class PydanticManager:
 
     def _clear_temp_files(self) -> None:
         """Clear temporary files"""
-        for temp_file in self.config_folder.glob("*.tmp"):
-            try:
-                temp_file.unlink()
-            except Exception as exception:
-                logger.debug(f"Failed to clear temporary file {temp_file}: {exception}")
+        # Must use the same non-reentrant lock as PydanticSettings.save() so we never unlink a .tmp
+        # file while save() is still writing and about to os.replace() it.
+        with _save_lock:
+            for temp_file in self.config_folder.glob("*.tmp"):
+                try:
+                    temp_file.unlink()
+                except Exception as exception:
+                    logger.debug(f"Failed to clear temporary file {temp_file}: {exception}")
