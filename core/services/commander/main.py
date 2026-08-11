@@ -222,6 +222,14 @@ async def remove_mavlink_log_services(i_know_what_i_am_doing: bool = False) -> A
     delete_everything(Path(MAVLINK_LOG_FOLDER_PATH))
 
 
+@app.post("/services/remove_mavlink_log_stream", status_code=status.HTTP_200_OK)
+@version(1, 0)
+async def remove_mavlink_log_services_stream(i_know_what_i_am_doing: bool = False) -> StreamingResponse:
+    """Stream the deletion of MAVLink log files, providing real-time updates about each file being deleted."""
+    check_what_i_am_doing(i_know_what_i_am_doing)
+    return deletion_stream_response(Path(MAVLINK_LOG_FOLDER_PATH))
+
+
 @app.get("/services/check_log_folder_size", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def check_log_folder_size() -> Any:
