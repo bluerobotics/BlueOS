@@ -314,6 +314,7 @@
                     class="mr-2"
                     outlined
                     small
+                    :disabled="deletion_in_progress"
                     @click="download_mavlink_log_files"
                   >
                     <v-icon left small>
@@ -325,7 +326,7 @@
                     v-tooltip="'Free up space by removing MAVLink logs'"
                     outlined
                     small
-                    :disabled="disable_remove_mavlink"
+                    :disabled="disable_remove_mavlink || deletion_in_progress"
                     color="error"
                     @click="show_log_clear_confirm = true; pending_log_clear_type = 'mavlink'"
                   >
@@ -741,29 +742,56 @@ export default Vue.extend({
     },
 
     async remove_mavlink_log_files(): Promise<void> {
-      this.prepare_operation('Removing MAVLink log files...')
+      this.deletion_log_abort_controller = new AbortController()
+      this.deletion_in_progress = true
+      this.current_deletion_path = '...'
+      this.current_deletion_size = 0
+      this.current_deletion_total_size = 0
+      this.current_deletion_status = 'Starting deletion...'
 
-      await back_axios({
-        url: `${commander.API_URL}/services/remove_mavlink_log`,
-        method: 'post',
-        params: {
-          i_know_what_i_am_doing: true,
-        },
-        timeout: 20000,
-      })
-        .then(() => {
-          this.get_mavlink_log_folder_size()
+      try {
+        await back_axios({
+          url: `${commander.API_URL}/services/remove_mavlink_log_stream`,
+          method: 'post',
+          params: {
+            i_know_what_i_am_doing: true,
+          },
+          responseType: 'text',
+          onDownloadProgress: (progressEvent) => {
+            let result = parseStreamingResponse(progressEvent.event.currentTarget.response)
+            result = result.filter((fragment) => fragment.fragment !== -1)
+            const last_fragment = result.last()
+            const total_deleted = result
+              .reduce((acc, fragment) => acc + (JSON.parse(fragment?.data ?? '{}')?.size ?? 0), 0)
+
+            if (last_fragment?.data) {
+              try {
+                const info = JSON.parse(last_fragment.data)
+                this.current_deletion_path = info.path.length > 40 ? `...${info.path.slice(-35)}` : info.path
+                this.current_deletion_size = info.size
+                this.current_deletion_total_size = total_deleted
+                this.current_deletion_status = info.success ? 'Deleting..' : 'Failed to delete file..'
+              } catch (e) {
+                console.error('Error parsing deletion info:', e)
+              }
+            }
+          },
+          signal: this.deletion_log_abort_controller?.signal,
         })
-        .catch((error) => {
-          this.operation_error = String(error)
-          this.show_error = true
-          notifier.pushBackError('REMOVE_MAVLINK_LOG_FAIL', error)
-        })
-        .finally(() => {
-          this.operation_in_progress = false
-          this.show_log_clear_confirm = false
-          this.pending_log_clear_type = null
-        })
+      } catch (error) {
+        this.operation_error = String(error)
+        this.show_error = true
+        notifier.pushBackError('REMOVE_MAVLINK_LOG_FAIL', error)
+      } finally {
+        this.deletion_in_progress = false
+        this.current_deletion_path = ''
+        this.current_deletion_size = 0
+        this.current_deletion_status = ''
+        this.show_log_clear_confirm = false
+        this.pending_log_clear_type = null
+      }
+
+      this.get_mavlink_log_folder_size()
     },
 
     async enable_wizard(): Promise<void> {
