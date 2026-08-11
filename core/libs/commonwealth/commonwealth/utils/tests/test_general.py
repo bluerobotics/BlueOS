@@ -2,6 +2,7 @@ import os
 import subprocess
 import uuid
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pyfakefs.fake_filesystem import FakeFilesystem
@@ -51,6 +52,36 @@ def test_file_is_open_when_lsof_fails_to_run(monkeypatch: pytest.MonkeyPatch, tm
     assert general.file_is_open(tmp_path / "target.txt") is True
 
 
+def test_open_files_under_reports_open_file(tmp_path: Path) -> None:
+    held = tmp_path / "in-use.txt"
+    held.write_text("in use", encoding="utf-8")
+    closed = tmp_path / "closed.txt"
+    closed.write_text("closed", encoding="utf-8")
+
+    with open(held, "r", encoding="utf-8"):
+        open_files = general.open_files_under(tmp_path)
+
+    assert open_files is not None
+    assert held.resolve() in open_files
+    assert closed.resolve() not in open_files
+
+
+def test_open_files_under_when_lsof_fails_to_run(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def raise_oserror(*_args: object, **_kwargs: object) -> None:
+        raise OSError("lsof missing")
+
+    monkeypatch.setattr(subprocess, "run", raise_oserror)
+    assert general.open_files_under(tmp_path) is None
+
+
+def test_open_files_under_when_lsof_reports_an_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def failing_run(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="lsof: status error")
+
+    monkeypatch.setattr(subprocess, "run", failing_run)
+    assert general.open_files_under(tmp_path) is None
+
+
 def test_delete_everything(tmp_path: Path) -> None:
     root = tmp_path / "data"
     keep_dir = root / "keep"
@@ -90,6 +121,76 @@ def test_delete_everything_single_file(tmp_path: Path) -> None:
     assert not target.exists()
 
 
+def test_delete_everything_keeps_open_files_with_one_check(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "data"
+    nested = root / "nested"
+    nested.mkdir(parents=True)
+    for index in range(10):
+        (root / f"file-{index}.txt").write_text("data", encoding="utf-8")
+        (nested / f"file-{index}.txt").write_text("data", encoding="utf-8")
+    held = root / "in-use.txt"
+    held.write_text("in use", encoding="utf-8")
+
+    spawns = 0
+    original = subprocess.run
+
+    def counting_run(*args: Any, **kwargs: Any) -> Any:
+        nonlocal spawns
+        spawns += 1
+        return original(*args, **kwargs)  # pylint: disable=subprocess-run-check
+
+    monkeypatch.setattr(subprocess, "run", counting_run)
+
+    with open(held, "r", encoding="utf-8"):
+        general.delete_everything(root)
+
+    assert held.exists()
+    assert not (root / "file-0.txt").exists()
+    assert not (nested / "file-0.txt").exists()
+    # A single lsof pass covers the whole tree, spawning one process per file is what makes deletion time out
+    assert spawns == 1
+
+
+def test_delete_everything_on_open_file_keeps_it_quietly(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    target = tmp_path / "service.log"
+    target.write_text("data", encoding="utf-8")
+
+    spawns = 0
+    original = subprocess.run
+
+    def counting_run(*args: Any, **kwargs: Any) -> Any:
+        nonlocal spawns
+        spawns += 1
+        return original(*args, **kwargs)  # pylint: disable=subprocess-run-check
+
+    monkeypatch.setattr(subprocess, "run", counting_run)
+
+    with open(target, "r", encoding="utf-8"):
+        general.delete_everything(target)
+
+    assert target.exists()
+    # lsof cannot search a single file, and log_zipper deletes file by file: only the open check may run
+    assert spawns == 1
+
+
+def test_delete_everything_through_symlinked_folder(tmp_path: Path) -> None:
+    # /shortcuts/ardupilot_logs/logs is a symlink to the folder ArduPilot writes to
+    real = tmp_path / "ardupilot-manager" / "logs"
+    real.mkdir(parents=True)
+    held = real / "00000042.BIN"
+    held.write_text("being written", encoding="utf-8")
+    doomed = real / "00000041.BIN"
+    doomed.write_text("old", encoding="utf-8")
+    shortcut = tmp_path / "ardupilot_logs"
+    shortcut.symlink_to(real)
+
+    with open(held, "r", encoding="utf-8"):
+        general.delete_everything(shortcut)
+
+    assert held.exists()
+    assert not doomed.exists()
+
+
 @pytest.mark.asyncio
 async def test_delete_everything_stream(tmp_path: Path) -> None:
     root = tmp_path / "logs"
@@ -123,6 +224,72 @@ async def test_delete_everything_stream_single_file(tmp_path: Path) -> None:
 
     assert infos == [{"path": str(target), "size": 4, "type": "file", "success": True}]
     assert not target.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_everything_stream_keeps_open_files(tmp_path: Path) -> None:
+    root = tmp_path / "logs"
+    root.mkdir()
+    held = root / "in-use.txt"
+    held.write_text("in use", encoding="utf-8")
+    doomed = root / "doomed.txt"
+    doomed.write_text("doomed", encoding="utf-8")
+
+    with open(held, "r", encoding="utf-8"):
+        infos = [info async for info in general.delete_everything_stream(root)]
+
+    assert {info["path"] for info in infos} == {str(doomed)}
+    assert held.exists()
+    assert not doomed.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_everything_stream_checks_open_files_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "logs"
+    nested = root / "nested"
+    nested.mkdir(parents=True)
+    for index in range(10):
+        (root / f"file-{index}.txt").write_text("data", encoding="utf-8")
+        (nested / f"file-{index}.txt").write_text("data", encoding="utf-8")
+
+    spawns = 0
+    original = subprocess.run
+
+    def counting_run(*args: Any, **kwargs: Any) -> Any:
+        nonlocal spawns
+        spawns += 1
+        return original(*args, **kwargs)  # pylint: disable=subprocess-run-check
+
+    monkeypatch.setattr(subprocess, "run", counting_run)
+    infos = [info async for info in general.delete_everything_stream(root)]
+
+    assert len(infos) == 20
+    # A single lsof pass covers the whole tree, spawning one process per file is what makes deletion time out
+    assert spawns == 1
+
+
+@pytest.mark.asyncio
+async def test_delete_everything_stream_falls_back_when_lsof_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "logs"
+    root.mkdir()
+    held = root / "in-use.txt"
+    held.write_text("in use", encoding="utf-8")
+    doomed = root / "doomed.txt"
+    doomed.write_text("doomed", encoding="utf-8")
+
+    def failed_snapshot(_path: Path) -> None:
+        return None
+
+    monkeypatch.setattr(general, "open_files_under", failed_snapshot)
+
+    with open(held, "r", encoding="utf-8"):
+        infos = [info async for info in general.delete_everything_stream(root)]
+
+    assert {info["path"] for info in infos} == {str(doomed)}
+    assert held.exists()
+    assert not doomed.exists()
 
 
 def test_local_unique_identifier_reads_existing(fs: FakeFilesystem) -> None:
