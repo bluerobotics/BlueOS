@@ -88,7 +88,7 @@ def main() -> None:
             if not local_files:
                 continue
             folder_name = os.path.basename(folder)
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            timestamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
             zipped_file = f"{folder}/{folder_name}-{timestamp}.{zip_extension}"
             zip_files(local_files, zipped_file)
             logger.info(f"Created zip archive {zipped_file} with {len(local_files)} files.")
