@@ -46,6 +46,10 @@ class AutoPilotManager(metaclass=Singleton):
         self.should_be_running = False
         self.mavlink_manager = MavlinkManager()
 
+        # Kept out of setup() because that runs on every start attempt, which would reset the counter
+        self._start_fail_count = 0
+        self._max_start_failures = 10
+
         # Load settings and do the initial configuration
         if self.settings.load():
             logger.info(f"Loaded settings from {self.settings.settings_file}.")
@@ -211,7 +215,18 @@ class AutoPilotManager(metaclass=Singleton):
                 try:
                     await self.start_ardupilot()
                 except Exception as error:
-                    logger.warning(f"Could not start Ardupilot: {error}")
+                    self._start_fail_count += 1
+                    logger.warning(
+                        f"Could not start Ardupilot ({self._start_fail_count}/{self._max_start_failures}): {error}"
+                    )
+                    if self._start_fail_count >= self._max_start_failures:
+                        self.should_be_running = False
+                        logger.error(
+                            "Consecutive start failures threshold reached, not retrying automatically. "
+                            "Start the autopilot or change the board to try again."
+                        )
+            elif self.is_running():
+                self._start_fail_count = 0
 
             # Monitor MAVLink heartbeat while autopilot is supposed to be running
             if self.should_be_running and self.is_running():
