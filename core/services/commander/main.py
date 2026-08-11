@@ -56,6 +56,27 @@ def check_what_i_am_doing(i_know_what_i_am_doing: bool = False) -> None:
         )
 
 
+def deletion_stream_response(path: Path) -> StreamingResponse:
+    async def generate() -> AsyncGenerator[str, None]:
+        try:
+            async for info in delete_everything_stream(path):
+                yield json.dumps(info)
+        except Exception as error:
+            logger.error(f"Error during deletion stream of {path}: {error}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+
+    return StreamingResponse(
+        streamer(generate(), heartbeats=1.0),
+        media_type="application/x-ndjson",
+        headers={
+            "Content-Type": "application/x-ndjson",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable buffering for nginx
+        },
+    )
+
+
 @app.post("/command/host", status_code=status.HTTP_200_OK)
 @version(1, 0)
 async def command_host(command: str, i_know_what_i_am_doing: bool = False) -> Any:
@@ -189,25 +210,7 @@ async def remove_log_services(i_know_what_i_am_doing: bool = False) -> Any:
 async def remove_log_services_stream(i_know_what_i_am_doing: bool = False) -> StreamingResponse:
     """Stream the deletion of log files, providing real-time updates about each file being deleted."""
     check_what_i_am_doing(i_know_what_i_am_doing)
-
-    async def generate() -> AsyncGenerator[str, None]:
-        try:
-            async for info in delete_everything_stream(Path(LOG_FOLDER_PATH)):
-                yield json.dumps(info)
-        except Exception as error:
-            logger.error(f"Error during log deletion stream: {error}")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
-
-    return StreamingResponse(
-        streamer(generate(), heartbeats=1.0),
-        media_type="application/x-ndjson",
-        headers={
-            "Content-Type": "application/x-ndjson",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # Disable buffering for nginx
-        },
-    )
+    return deletion_stream_response(Path(LOG_FOLDER_PATH))
 
 
 @app.post("/services/remove_mavlink_log", status_code=status.HTTP_200_OK)
