@@ -2,6 +2,7 @@ import {
   getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
+import { vehicle_folder } from '@/components/vehiclesetup/viewers/modelHelper'
 import { MavAutopilot, MavType } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import { Message as M2R } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-message'
 import store from '@/store'
@@ -21,10 +22,7 @@ import {
 
 import autopilot_manager from './autopilot_manager'
 
-import { vehicle_folder } from '@/components/vehiclesetup/viewers/modelHelper'
-
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
-
 
 const parameterFetcher = new ParameterFetcher()
 
@@ -36,6 +34,8 @@ const parameterFetcher = new ParameterFetcher()
 
 class AutopilotStore extends VuexModule {
   parameters: Parameter[] = []
+
+  parameters_by_name: Record<string, Parameter> = {}
 
   parameters_loaded = 0
 
@@ -58,7 +58,7 @@ class AutopilotStore extends VuexModule {
   last_heartbeat_date: Date = new Date()
 
   get parameter() {
-    return (name: string): Parameter | undefined => this.parameters.find((parameter) => parameter.name === name)
+    return (name: string): Parameter | undefined => this.parameters_by_name[name]
   }
 
   get parameterRegex() {
@@ -75,7 +75,7 @@ class AutopilotStore extends VuexModule {
   }
 
   get frame_type(): number | undefined {
-    const mav_type = 'MAV_TYPE_' + autopilot_manager.vehicle_type?.toUpperCase().replace(' ', '_')
+    const mav_type = `MAV_TYPE_${autopilot_manager.vehicle_type?.toUpperCase().replace(' ', '_')}`
     switch (mav_type) {
       case MavType.MAV_TYPE_SUBMARINE:
         return this.parameter('FRAME_CONFIG')?.value
@@ -94,12 +94,11 @@ class AutopilotStore extends VuexModule {
       case 'Surface Boat':
         // we already know it is a boat, so check only TYPE and ignore CLASS (rover/boat/balancebot)
         return Object.entries(ROVER_FRAME_CLASS).find((key, value) => value === this.frame_type)?.[1] as string
-     default:
+      default:
         break
     }
     return undefined
   }
-
 
   get vehicle_model() {
     const frame = this.frame_type
@@ -121,6 +120,7 @@ class AutopilotStore extends VuexModule {
   @Mutation
   reset(): void {
     this.parameters = []
+    this.parameters_by_name = {}
     parameterFetcher.reset()
     this.finished_loading = false
     this.metadata_loaded = false
@@ -131,6 +131,11 @@ class AutopilotStore extends VuexModule {
   @Mutation
   setParameters(parameters: Parameter[]): void {
     this.parameters = parameters
+    const by_name: Record<string, Parameter> = {}
+    for (const parameter of parameters) {
+      by_name[parameter.name] = parameter
+    }
+    this.parameters_by_name = by_name
   }
 
   @Mutation
