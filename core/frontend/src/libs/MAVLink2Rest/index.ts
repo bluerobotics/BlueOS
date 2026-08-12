@@ -203,6 +203,11 @@ class Mavlink2RestManager {
       console.warn(`Requested invalid message rate for ${message}: ${rate}`)
       return
     }
+    // ~0 Hz means listen only (e.g. HEARTBEAT). Do not POST SET_MESSAGE_INTERVAL:
+    // 1000000 / 0 is Infinity, JSON-serialized as null, and mavlink2rest returns 404.
+    if (rate < 0.01) {
+      return
+    }
     if (!Object.keys(messageId).includes(message)) {
       console.warn(
         `Requesting for an unmapped message (${message})! Please add it to mavlink2rest/MessageID.ts`,
