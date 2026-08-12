@@ -8,8 +8,12 @@ from typing import Any, Optional, TextIO, Union
 
 from loguru import logger
 
-# ISO 8601 UTC (e.g. 2026-08-11T19:15:00.123Z)
-ISO8601_LOG_FORMAT = "{time:YYYY-MM-DDTHH:mm:ss.SSS!UTC}Z | {level:<8} | {name}:{function}:{line} - {message}"
+# ISO 8601 UTC (e.g. 2026-08-11T19:15:00.123Z), with loguru's default colors.
+# Tags are stripped automatically when the sink is not a terminal.
+ISO8601_LOG_FORMAT = (
+    "<green>{time:YYYY-MM-DDTHH:mm:ss.SSS!UTC}Z</green> | <level>{level:<8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+)
 
 
 class LogRotator:
