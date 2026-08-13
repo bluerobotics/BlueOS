@@ -356,6 +356,22 @@ const SENSOR_PRESETS: SensorPreset[] = [
     ampOffset: 0.330,
   },
   {
+    text: 'BlueBoat120 Power Module v2',
+    voltPin: 5,
+    currPin: 4,
+    voltMult: 11.000,
+    ampPerVolt: 37.8788,
+    ampOffset: 0.330,
+  },
+  {
+    text: 'BlueBoat120 Power Module v1',
+    voltPin: 5,
+    currPin: 4,
+    voltMult: 11.3,
+    ampPerVolt: 100.0,
+    ampOffset: 1.638,
+  },
+  {
     text: 'Navigator w/ Blue Robotics Power Sense Module',
     voltPin: 5,
     currPin: 4,
