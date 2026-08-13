@@ -92,7 +92,7 @@
               @click="toggleContinuous"
             >
               <v-icon small>
-                {{ continuous_mode ? 'mdi-pause' : 'mdi-play' }}
+                {{ continuous_mode ? 'mdi-pause' : 'mdi-image-multiple' }}
               </v-icon>
             </v-btn>
           </template>
