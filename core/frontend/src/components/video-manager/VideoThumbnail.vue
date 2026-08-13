@@ -40,7 +40,7 @@
         class="thumbnail-overlay text-caption"
       >
         <template v-if="continuous_mode">
-          LIVE
+          1 Hz
           <template v-if="last_fetch_ms !== null">
             {{ last_fetch_ms }}ms
           </template>
@@ -74,7 +74,7 @@
               @click="fetchSingleThumbnail"
             >
               <v-icon small>
-                mdi-camera
+                mdi-image
               </v-icon>
             </v-btn>
           </template>
@@ -87,12 +87,13 @@
               text
               dark
               class="control-btn"
+              :class="{ 'control-btn--active': continuous_mode }"
               v-bind="attrs"
               v-on="on"
               @click="toggleContinuous"
             >
               <v-icon small>
-                {{ continuous_mode ? 'mdi-pause' : 'mdi-play' }}
+                mdi-image-sync
               </v-icon>
             </v-btn>
           </template>
@@ -269,6 +270,10 @@ export default Vue.extend({
   border-radius: 0 !important;
   margin: 0 !important;
   letter-spacing: normal !important;
+}
+
+.control-btn--active {
+  background-color: rgba(255, 255, 255, 0.18) !important;
 }
 
 .control-separator {
