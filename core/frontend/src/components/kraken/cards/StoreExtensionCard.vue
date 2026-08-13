@@ -475,7 +475,7 @@ export default Vue.extend({
 }
 
 .v-img {
-  border-radius: 8px;
+  border-radius: 20px;
 }
 
 .v-avatar img {
