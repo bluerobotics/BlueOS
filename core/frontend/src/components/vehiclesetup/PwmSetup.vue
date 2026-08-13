@@ -5,7 +5,7 @@
         cols="12"
         sm="8"
       >
-        <v-card>
+        <v-card color="grey lighten-3">
           <vehicle-viewer :highlight="highlight" :transparent="true" :autorotate="false" />
         </v-card>
         <v-card class="mt-3">
