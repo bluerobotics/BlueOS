@@ -15,8 +15,17 @@ from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import StackedHTTPException
 from commonwealth.utils.decorators import single_threaded
 from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
-from fastapi import APIRouter, Body, File, HTTPException, UploadFile, status
-from fastapi.responses import PlainTextResponse
+from fastapi import (
+    APIRouter,
+    Body,
+    File,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi_versioning import versioned_api_route
 from loguru import logger
 from typedefs import (
@@ -128,6 +137,22 @@ async def get_vehicle_type() -> Any:
         return PlainTextResponse(f"Timed out fetching message: {error}", status_code=500)
     except MavlinkMessageReceiveFail as error:
         return PlainTextResponse(f"Failed to get vehicle type: {error}", status_code=500)
+
+
+@index_router_v1.get("/parameter_metadata", summary="Get vehicle-provided MAVLink parameter metadata.")
+async def get_parameter_metadata(request: Request) -> Response:
+    manager = autopilot.parameter_metadata_manager
+    if manager is not None:
+        try:
+            await manager.refresh_from_vehicle()
+        except Exception as error:
+            logger.warning(f"Failed to refresh vehicle parameter metadata: {error}")
+    snapshot = manager.snapshot if manager is not None else None
+    if snapshot is None:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    if request.headers.get("if-none-match") == snapshot.etag:
+        return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers={"ETag": snapshot.etag})
+    return JSONResponse(content=snapshot.document, headers={"ETag": snapshot.etag})
 
 
 @index_router_v1.post("/sitl_frame", summary="Set SITL Frame type.")

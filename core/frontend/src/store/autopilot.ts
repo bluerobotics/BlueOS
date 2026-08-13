@@ -181,4 +181,9 @@ export { AutopilotStore }
 
 const autopilot_data: AutopilotStore = getModule(AutopilotStore)
 parameterFetcher.setStore(autopilot_data)
+
+export async function refreshParameterMetadata(): Promise<void> {
+  await parameterFetcher.refreshParameterMetadata()
+}
+
 export default autopilot_data

@@ -20,7 +20,10 @@
           </span>
         </v-tooltip>
       </v-card-title>
-      <v-card-text v-if="different_param_set_length !== 0" height="80%">
+      <v-card-text
+        v-if="different_param_set_length !== 0 && !(write_finished && initial_size > 0)"
+        height="80%"
+      >
         <v-row class="virtual-table-row">
           <v-col class="virtual-table-cell checkbox-cell">
             <v-checkbox
@@ -127,7 +130,10 @@
         <v-alert
           type="success"
         >
-          Parameters written successfully
+          Parameter loading complete
+          <div v-if="skipped_params_length">
+            {{ skipped_params_length }} rejected parameter values were skipped.
+          </div>
         </v-alert>
       </v-card-text>
       <v-card-text v-else>
@@ -186,6 +192,7 @@ export default Vue.extend({
     should_open: false,
     error: false as boolean | string,
     writing: false,
+    skipped_params: {} as Dictionary<boolean>,
   }),
   computed: {
     progress(): number {
@@ -209,6 +216,9 @@ export default Vue.extend({
     write_finished(): boolean {
       return this.user_selected_params_length === 0
     },
+    skipped_params_length(): number {
+      return Object.keys(this.skipped_params).length
+    },
   },
   watch: {
     param_checkboxes: {
@@ -226,11 +236,17 @@ export default Vue.extend({
       },
     },
   },
+  beforeDestroy() {
+    clearInterval(this.retry_interval)
+  },
   methods: {
     done() {
+      clearInterval(this.retry_interval)
+      this.retry_interval = 0
       this.$emit('done')
       this.error = false
       this.retries = 0
+      this.skipped_params = {}
       setTimeout(() => {
         // delay this as the dialog is still open when the done event is emitted
         // which causes the text to change during the close animation
@@ -246,7 +262,12 @@ export default Vue.extend({
       }
     },
     writeParams() {
+      clearInterval(this.retry_interval)
+      this.retry_interval = 0
       this.writing = true
+      this.error = false
+      this.retries = 0
+      this.skipped_params = {}
       this.initial_size = this.user_selected_params_length
       this.writeSelectedParams()
       this.retry_interval = setInterval(() => {
@@ -254,13 +275,17 @@ export default Vue.extend({
           this.retries += 1
           if (this.retries > 5) {
             clearInterval(this.retry_interval)
+            this.retry_interval = 0
+            for (const name of Object.keys(this.user_selected_params)) {
+              Vue.set(this.skipped_params, name, true)
+            }
             this.retries = 0
-            this.error = 'Failed to write some parameters. Please restart the vehicle and try again.'
             return
           }
           this.writeSelectedParams()
         } else {
           clearInterval(this.retry_interval)
+          this.retry_interval = 0
         }
       }, 1000)
     },
@@ -273,7 +298,8 @@ export default Vue.extend({
       }
     },
     writeParam(name: string, value: number) {
-      mavlink2rest.setParam(name, value, autopilot_data.system_id)
+      const parameter_type = autopilot_data.parameter(name)?.paramType.type
+      mavlink2rest.setParam(name, value, autopilot_data.system_id, parameter_type)
     },
     filterParamsByReadOnly(params: Dictionary<number>): Dictionary<number> {
       return Object.fromEntries(
@@ -288,7 +314,7 @@ export default Vue.extend({
         Object.entries(params).filter(([name, value]) => {
           const param = autopilot_data.parameter(name)
           if (!param) {
-            return true
+            return false
           }
           return Math.abs(param.value - value) > 0.0001
         }),
@@ -296,7 +322,7 @@ export default Vue.extend({
     },
     filterParamsBySelection(params: Dictionary<number>): Dictionary<number> {
       return Object.fromEntries(
-        Object.entries(params).filter(([name]) => this.param_checkboxes[name]),
+        Object.entries(params).filter(([name]) => this.param_checkboxes[name] && !this.skipped_params[name]),
       )
     },
     updateSelectAllStatus() {
