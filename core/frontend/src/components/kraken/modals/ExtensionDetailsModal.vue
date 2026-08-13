@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-subtitle class="px-4 pt-4 pb-2 d-flex justify-space-between align-start">
-      <v-avatar size="100" rounded="0">
+      <v-avatar size="100" class="extension-icon">
         <v-img contain :src="extension.extension_logo" />
       </v-avatar>
       <div class="extension-creators">
@@ -389,5 +389,9 @@ div.readme img {
   font-size: 15px;
   padding-top: 4px;
   text-transform: uppercase;
+}
+.extension-icon {
+  border-radius: 13px !important;
+  overflow: hidden;
 }
 </style>
