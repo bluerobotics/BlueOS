@@ -251,7 +251,7 @@ def test_invalid_json_fallback_to_defaults_v2_from_invalid_v2_and_v1() -> None:
 
 
 def test_concurrent_saves_preserve_all_updates() -> None:
-    # Regression test for https://github.com/bluerobotics/BlueOS/issues/3998: two requests mutating and saving
+    # Regression test for https://github.com/bluerobotics/BlueOS/issues/3998 two requests mutating and saving
     # the same settings object at once must not crash on the temporary file and must both end up persisted.
     temporary_folder = tempfile.mkdtemp()
     config_path = pathlib.Path(temporary_folder)
