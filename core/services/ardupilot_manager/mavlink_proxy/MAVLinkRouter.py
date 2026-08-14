@@ -47,10 +47,10 @@ class MAVLinkRouter(AbstractRouter):
             EndpointType.TCPServer: 2,
             EndpointType.TCPClient: 3,
         }
-        sorted_endpoints = sorted(
-            self.endpoints(), key=lambda endpoint: types_order[endpoint.connection_type]  # type: ignore
+        filtered_endpoints = sorted(
+            Endpoint.filter_enabled(self.endpoints()),
+            key=lambda endpoint: types_order[endpoint.connection_type],  # type: ignore
         )
-        filtered_endpoints = Endpoint.filter_enabled(sorted_endpoints)
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in filtered_endpoints])
 
         if master_endpoint.connection_type not in [

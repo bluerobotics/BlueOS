@@ -183,7 +183,8 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         self._logdir = directory
 
     def add_endpoint(self, endpoint: Endpoint) -> None:
-        self._validate_endpoint(endpoint)
+        if endpoint.is_supported():
+            self._validate_endpoint(endpoint)
 
         for current_endpoint in self._endpoints:
             if endpoint == current_endpoint:
