@@ -86,7 +86,7 @@ BlueOS provides generic support for a wide variety of terrestrial, aerial, and m
 
 ### Raspberry Pi and hardware preparation
 
-For installations that need hardware configuration and preparation of the operating system, it´s highly recommended to use [the installation script](https://github.com/bluerobotics/BlueOS/blob/master/install) and customize it as necessary to perform the necessary changes for your system.
+For installations that need hardware configuration and preparation of the operating system, it's highly recommended to use [the installation script](https://github.com/bluerobotics/BlueOS/blob/master/install) and customize it as necessary to perform the necessary changes for your system.
 
 ### Running BlueOS
 
