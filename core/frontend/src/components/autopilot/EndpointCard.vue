@@ -56,16 +56,17 @@
       </v-icon>
       <v-switch
         v-model="updated_endpoint.enabled"
-        v-tooltip="updated_endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'"
+        v-tooltip="enable_tooltip"
         color="primary"
         class="my-1 ml-2"
         hide-details
         dense
+        :disabled="!is_known_type"
         @change="toggleEndpointEnabled"
       />
     </div>
     <v-btn
-      v-if="!endpoint.protected"
+      v-if="!endpoint.protected && is_known_type"
       color="primary"
       class="endpoint-edit-btn"
       dark
@@ -79,7 +80,7 @@
       </v-icon>
     </v-btn>
     <v-btn
-      v-if="!endpoint.protected"
+      v-if="!endpoint.protected || !is_known_type"
       color="error"
       class="endpoint-remove-btn"
       dark
@@ -107,7 +108,7 @@ import Vue, { PropType } from 'vue'
 
 import Notifier from '@/libs/notifier'
 import autopilot from '@/store/autopilot_manager'
-import { AutopilotEndpoint, userFriendlyEndpointType } from '@/types/autopilot'
+import { AutopilotEndpoint, isKnownEndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 import { sleep } from '@/utils/helper_functions'
@@ -146,6 +147,15 @@ export default Vue.extend({
         return { icon: 'mdi-lock', tooltip: 'Protected' }
       }
       return { icon: 'mdi-lock-off', tooltip: 'Not protected' }
+    },
+    is_known_type(): boolean {
+      return isKnownEndpointType(this.endpoint.connection_type)
+    },
+    enable_tooltip(): string {
+      if (!this.is_known_type) {
+        return 'This endpoint type is not supported'
+      }
+      return this.updated_endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'
     },
   },
   methods: {
