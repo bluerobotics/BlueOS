@@ -144,7 +144,7 @@ services:
       - /var/run/wpa_supplicant:/var/run/wpa_supplicant
       - /run/log/journal:/run/log/journal:ro
       - /var/log/journal:/var/log/journal:ro
-      - /home/patrick/.ssh:/home/pi/.ssh
+      - $HOME/.ssh:/home/pi/.ssh
 ```
 
 The system should be accessible now via `0.0.0.0:80` or via the network using the IP address of the device.
