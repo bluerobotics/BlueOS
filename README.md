@@ -41,7 +41,7 @@ The development of BlueOS is driven by the following core principles:
 * **Designed to focus on what matters**, improving user access to information and controls with a human-friendly UI and UX
 * **Make complex tasks simpler** and improve ease of use by reusing design patterns from other applications (based on the [material UI guidelines](https://material.io/design/guidelines-overview))
 * **Advanced error handling and detection**, making any problems clear to the user and developers, along with how to fix them
-* **Simplify development**, providing full access to our [services API](https://blueos.cloud/docs/blueos/1.1/development/core/#services) and [modular development model](https://blueos.cloud/docs/blueos/1.1/development/overview/)
+* **Simplify development**, providing full access to our [services API](https://blueos.cloud/docs/latest/development/core/#services) and [modular development model](https://blueos.cloud/docs/latest/development/overview/)
 * **Portable and flexible**, you should be able to run on a Raspberry Pi 3/4/5 or any SBC with Linux operating system, contributions are welcomed
 * **Highly functional with low CPU usage**, the entire system is built to run efficiently
 * **Developed on solid foundations**, critical parts or intensive workforce services are designed using the most advanced languages and features available for stability
