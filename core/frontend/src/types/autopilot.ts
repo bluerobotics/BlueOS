@@ -47,7 +47,7 @@ export function vehicleTypeFromString(vehicle_type: string): Vehicle {
   }
 }
 
-export function userFriendlyEndpointType(type: EndpointType): string {
+export function userFriendlyEndpointType(type: string): string {
   switch (type) {
     case EndpointType.udpin: return 'UDP Server'
     case EndpointType.udpout: return 'UDP Client'
@@ -55,13 +55,18 @@ export function userFriendlyEndpointType(type: EndpointType): string {
     case EndpointType.tcpout: return 'TCP Client'
     case EndpointType.serial: return 'Serial'
     case EndpointType.zenoh: return 'Zenoh'
-    default: return 'Undefined type'
+    default: return type
   }
 }
+
+export function isKnownEndpointType(type: string): boolean {
+  return (Object.values(EndpointType) as string[]).includes(type)
+}
+
 export interface AutopilotEndpoint {
     name: string
     owner: string
-    connection_type: EndpointType
+    connection_type: string
     place: string
     argument: number
     persistent: boolean
