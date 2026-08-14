@@ -66,7 +66,9 @@ class Manager:
                 ) from error
 
     def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
-        protected_endpoints = set(filter(lambda endpoint: endpoint.protected, endpoints_to_remove))
+        protected_endpoints = {
+            endpoint for endpoint in endpoints_to_remove if endpoint.protected and endpoint.is_supported()
+        }
         if protected_endpoints:
             raise ValueError(f"Endpoints {[e.name for e in protected_endpoints]} are protected. Aborting operation.")
 
