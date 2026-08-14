@@ -26,7 +26,7 @@ BlueOS is a modular, robust, and efficient platform for managing a vehicle or ro
 ## Quick Links ⚡
 
 - [Official documentation](https://blueos.cloud/docs/)
-- [Installation](https://blueos.cloud/docs/stable/usage/installation/)
+- [Installation](https://blueos.cloud/docs/latest/usage/installation/)
 - [Development documentation](https://blueos.cloud/docs/latest/development/overview/)
 - [Contributions](https://blueos.cloud/docs/latest/development/core/#contributions)
 - [Code of Conduct](./CoC.md)
