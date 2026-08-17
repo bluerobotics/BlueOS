@@ -159,7 +159,7 @@ export default Vue.extend({
     available_ips(): string[] {
       return [...new Set(beacon.available_domains.map((domain) => domain.ip))]
     },
-    connection_type(): EndpointType {
+    connection_type(): string {
       return this.edited_endpoint.connection_type
     },
   },
