@@ -32,6 +32,8 @@ class SettingsStore extends VuexModule {
 
   language = 'en'
 
+  skip_untested_firmware_warning = false
+
   @Mutation
   setDarkTheme(value: boolean): void {
     this.is_dark_theme = value
@@ -74,6 +76,12 @@ class SettingsStore extends VuexModule {
   @Mutation
   setLanguage(value: string): void {
     this.language = value
+    SettingsStore.save()
+  }
+
+  @Mutation
+  setSkipUntestedFirmwareWarning(value: boolean): void {
+    this.skip_untested_firmware_warning = value
     SettingsStore.save()
   }
 
