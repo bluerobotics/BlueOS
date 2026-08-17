@@ -44,6 +44,16 @@ class Settings {
   }
 
   // eslint-disable-next-line
+  get skip_untested_firmware_warning(): boolean {
+    return settingsStore.skip_untested_firmware_warning
+  }
+
+  // eslint-disable-next-line
+  set skip_untested_firmware_warning(value: boolean) {
+    settingsStore.setSkipUntestedFirmwareWarning(value)
+  }
+
+  // eslint-disable-next-line
   get last_version_update_notification_time(): Date {
     const time = settingsStore.last_version_update_notification_time
     return time ? new Date(time) : new Date(0)
