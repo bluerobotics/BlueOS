@@ -30,6 +30,8 @@ class SettingsStore extends VuexModule {
 
   user_top_widgets = [] as string[]
 
+  skip_untested_firmware_warning = false
+
   @Mutation
   setDarkTheme(value: boolean): void {
     this.is_dark_theme = value
@@ -66,6 +68,12 @@ class SettingsStore extends VuexModule {
   @Mutation
   setTopWidgets(widgets: string[]): void {
     this.user_top_widgets = widgets
+    SettingsStore.save()
+  }
+
+  @Mutation
+  setSkipUntestedFirmwareWarning(value: boolean): void {
+    this.skip_untested_firmware_warning = value
     SettingsStore.save()
   }
 
