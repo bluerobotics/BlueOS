@@ -24,6 +24,7 @@
         </v-card-title>
         <v-card-text :class="['warning-text', textClass]">
           {{ message }}
+          <slot />
         </v-card-text>
         <v-card-actions>
           <v-btn :color="cancelColor" @click="close">
