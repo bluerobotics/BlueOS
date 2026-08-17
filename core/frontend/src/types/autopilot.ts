@@ -104,6 +104,16 @@ export function vehicleTypeFromString(vehicle_type: string): Vehicle {
   }
 }
 
+export function firmwareVehicleTypeFromVehicle(vehicle: Vehicle): FirmwareVehicleType | null {
+  switch (vehicle) {
+    case Vehicle.Sub: return FirmwareVehicleType.ArduSub
+    case Vehicle.Rover: return FirmwareVehicleType.ArduRover
+    case Vehicle.Plane: return FirmwareVehicleType.ArduPlane
+    case Vehicle.Copter: return FirmwareVehicleType.ArduCopter
+    default: return null
+  }
+}
+
 export function userFriendlyEndpointType(type: string): string {
   switch (type) {
     case EndpointType.udpin: return 'UDP Server'

@@ -86,6 +86,7 @@ import {
   MavCmd, MavResult,
 } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import Notifier from '@/libs/notifier'
+import { fetchParamSets, paramSetsForFirmware } from '@/libs/parameter_repository'
 import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
@@ -93,7 +94,6 @@ import { Dictionary } from '@/types/common'
 import { frontend_service } from '@/types/frontend_services'
 
 const notifier = new Notifier(frontend_service)
-const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
 export default Vue.extend({
   name: 'ParamSets',
@@ -113,39 +113,14 @@ export default Vue.extend({
     show_warning: false,
   }),
   computed: {
-    board(): string | undefined {
-      return autopilot.current_board?.name
-    },
     vehicle(): string | null {
       return autopilot.firmware_vehicle_type
     },
-    version(): SemVer | undefined {
-      return autopilot.firmware_info?.version
+    version(): SemVer | null {
+      return autopilot.firmware_info?.version ?? null
     },
-    filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
-      const fw_patch = `${this.vehicle}/${this.version}/${this.board}`
-      const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}`
-      const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}`
-
-      // returns a new dict where the keys start with the fullname
-      // e.g. "ArduSub/BlueROV2/4.0.3" -> "ArduSub/BlueROV2/4.0.3/BlueROV2"
-
-      let fw_params = {}
-      // try to find a paramset that matches the firmware version, starting from patch and walking up to major
-      for (const string of [fw_patch, fw_minor, fw_major]) {
-        fw_params = Object.fromEntries(
-          Object.entries(this.all_param_sets).filter(
-            // We add a trailing slash to avoid matching Navigator and Navigator64, or any board with suffix
-            ([name]) => name.toLocaleLowerCase().includes(`${string.toLowerCase()}/`),
-          ),
-        )
-        if (Object.keys(fw_params).length > 0) {
-          break
-        }
-      }
-      return {
-        ...fw_params,
-      }
+    filtered_param_sets(): Dictionary<Dictionary<number>> {
+      return paramSetsForFirmware(this.all_param_sets, this.vehicle, this.version, autopilot.current_board)
     },
     warningMessage(): string {
       return 'You will lose ALL your parameters, vehicle setup, and calibrations. Are you sure you want to reset?'
@@ -157,9 +132,11 @@ export default Vue.extend({
   },
   methods: {
     async loadParamSets() {
-      const response = await fetch(REPOSITORY_URL)
-      const paramSets = await response.json()
-      this.all_param_sets = paramSets
+      try {
+        this.all_param_sets = await fetchParamSets()
+      } catch (error) {
+        notifier.pushError('PARAM_SETS_FETCH_FAIL', error)
+      }
     },
     async loadParams(name: string, paramset: Dictionary<number>) {
       this.selected_paramset_name = name
