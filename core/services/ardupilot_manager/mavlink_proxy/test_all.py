@@ -153,8 +153,38 @@ def test_endpoint_validators() -> None:
         _bad_endpoint(connection_type=EndpointType.Serial, place="dev/autopilot", argument=115200)
     with pytest.raises(ValidationError):
         _bad_endpoint(connection_type=EndpointType.Serial, place=serial_port_name, argument=100000)
-    with pytest.raises(ValidationError):
-        _bad_endpoint(connection_type="potato", place=serial_port_name, argument=100)
+
+
+def test_unsupported_endpoints_are_stored_but_not_routed() -> None:
+    known = {
+        "name": "GCS Client Link",
+        "owner": "ardupilot-manager",
+        "connection_type": "udpout",
+        "place": "192.168.2.1",
+        "argument": 14550,
+    }
+    unknown = {
+        "name": "Future endpoint",
+        "owner": "ardupilot-manager",
+        "connection_type": "notatype",
+        "place": "0.0.0.0",
+        "argument": 7117,
+        "persistent": True,
+        "protected": True,
+        "enabled": True,
+    }
+
+    parsed_known = Endpoint.from_raw(known)
+    parsed_unknown = Endpoint.from_raw(unknown)
+    assert parsed_known is not None
+    assert parsed_unknown is not None
+    assert parsed_known.is_supported() is True
+    assert parsed_unknown.is_supported() is False
+    assert parsed_unknown.enabled is True
+    assert parsed_unknown.as_api_dict()["enabled"] is False
+    assert parsed_unknown.as_dict()["enabled"] is True
+    assert list(Endpoint.filter_enabled([parsed_known, parsed_unknown])) == [parsed_known]
+    assert Endpoint.from_raw("not a mapping") is None
 
 
 @pytest.mark.skip(

@@ -63,13 +63,28 @@ class Endpoint:
                 raise ValueError(f"Invalid serial baudrate: {argument}. Valid option are {VALID_SERIAL_BAUDRATES}.")
             return values
 
-        raise ValueError(
-            f"Invalid connection_type: {connection_type}. Valid types are: {[e.value for e in EndpointType]}."
-        )
+        return values
+
+    def is_supported(self) -> bool:
+        return self.connection_type in {endpoint_type.value for endpoint_type in EndpointType}
 
     @staticmethod
     def filter_enabled(endpoints: Iterable["Endpoint"]) -> Iterable["Endpoint"]:
-        return [endpoint for endpoint in endpoints if endpoint.enabled is True]
+        return [endpoint for endpoint in endpoints if endpoint.enabled is True and endpoint.is_supported()]
+
+    @staticmethod
+    def from_raw(raw_endpoint: Any) -> Optional["Endpoint"]:
+        """Build an endpoint from a saved record, returning None if the record is not an endpoint."""
+        try:
+            return Endpoint(**raw_endpoint)
+        except Exception:
+            return None
+
+    def as_api_dict(self) -> Dict[str, Any]:
+        data = self.as_dict()
+        if not self.is_supported():
+            data["enabled"] = False
+        return data
 
     def __str__(self) -> str:
         return ":".join([self.connection_type, self.place, str(self.argument)])
