@@ -758,7 +758,14 @@ class AutoPilotManager(metaclass=Singleton):
                 raise
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
-        return {Endpoint(**endpoint) for endpoint in self.configuration.get("endpoints") or []}
+        endpoints: Set[Endpoint] = set()
+        for raw in self.configuration.get("endpoints") or []:
+            endpoint = Endpoint.from_raw(raw)
+            if endpoint is None:
+                logger.warning(f"Ignoring invalid endpoint record {raw}")
+                continue
+            endpoints.add(endpoint)
+        return endpoints
 
     def _save_endpoints_to_configuration(self, endpoints: Set[Endpoint]) -> None:
         self.configuration["endpoints"] = list(map(Endpoint.as_dict, endpoints))
