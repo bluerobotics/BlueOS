@@ -20,7 +20,7 @@ import {
   CPU, Disk, Info, Memory, Network, Process, System, Temperature,
 } from '@/types/system-information/system'
 import back_axios, { isBackendOffline } from '@/utils/api'
-import { networkProbeRateBps } from '@/utils/networking'
+import { linux2restProbeRateBps } from '@/utils/linux2rest'
 
 export enum FetchType {
     ModelType = 'model',
@@ -218,8 +218,8 @@ class SystemInformationStore extends VuexModule {
       // frontend re-diff of total_*. Those deltas are already saturating and match the
       // Sampler window (LINUX2REST_SYSTEM_SAMPLE_INTERVAL_S).
       for (const network of networks) {
-        network.download_speed = networkProbeRateBps(network.received_B)
-        network.upload_speed = networkProbeRateBps(network.transmitted_B)
+        network.download_speed = linux2restProbeRateBps(network.received_B)
+        network.upload_speed = linux2restProbeRateBps(network.transmitted_B)
       }
       this.system.network = networks
       const names = nextNetworkInterfaceNames(this.network_interface_names, networks)
