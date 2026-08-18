@@ -71,6 +71,40 @@ export function convertGitDescribeToUrl(git_describe: string): string {
   return `${project_url}/tree/${hash}`
 }
 
+// Prefix for nginx's caching reverse proxy (see core/tools/nginx/nginx.conf).
+// A request to `/cache/<host>/<path>` is proxied by the vehicle to `https://<host>/<path>`.
+const VEHICLE_PROXY_PREFIX = '/cache/'
+
+async function fetchWithTimeout(url: string, timeout_ms: number): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout_ms)
+  try {
+    return await fetch(url, { signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Fetch a remote URL, trying the topside browser's own connection first and falling
+ * back to routing the request through the vehicle's caching proxy when that fails.
+ * This allows resources hosted outside BlueOS to be reached even when only the vehicle
+ * (and not the computer running the frontend) has internet access.
+ */
+export async function fetchWithVehicleFallback(url: string, timeout_ms = 5000): Promise<Response> {
+  try {
+    const response = await fetchWithTimeout(url, timeout_ms)
+    if (response.ok) {
+      return response
+    }
+  } catch {
+    // Direct fetch failed, fall through to the vehicle proxy below.
+  }
+
+  const proxied_url = VEHICLE_PROXY_PREFIX + url.replace(/^https?:\/\//, '')
+  return fetchWithTimeout(proxied_url, timeout_ms)
+}
+
 export function prettifySize(size_kb: number): string {
   if (Number.isNaN(size_kb)) {
     return 'N/A'

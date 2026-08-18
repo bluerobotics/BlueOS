@@ -95,6 +95,7 @@ import autopilot from '@/store/autopilot_manager'
 import { Firmware, Vehicle } from '@/types/autopilot'
 import { printParamWithUnit } from '@/types/autopilot/parameter'
 import { VForm } from '@/types/vuetify'
+import { fetchWithVehicleFallback } from '@/utils/helper_functions'
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'
 
@@ -226,7 +227,7 @@ export default Vue.extend({
       return value !== ''
     },
     async fetchParamSets() {
-      const response = await fetch(REPOSITORY_URL)
+      const response = await fetchWithVehicleFallback(REPOSITORY_URL)
       const parameters = await response.json()
 
       return parameters
