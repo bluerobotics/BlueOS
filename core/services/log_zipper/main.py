@@ -18,10 +18,11 @@ SERVICE_NAME = "log-zipper"
 
 
 def zip_files(files: List[str], output_path: str) -> None:
-    for file in files:
-        logger.debug(f"Zipping {file}...")
-        with open(file, "rb") as f_in, gzip.open(output_path, "wb") as f_out:
-            f_out.writelines(f_in)
+    with gzip.open(output_path, "wb") as f_out:
+        for file in files:
+            logger.debug(f"Zipping {file}...")
+            with open(file, "rb") as f_in:
+                f_out.writelines(f_in)
 
     for file in files:
         try:
