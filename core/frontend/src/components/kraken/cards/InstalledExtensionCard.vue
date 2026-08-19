@@ -21,7 +21,7 @@
         >
           <v-avatar
             size="60"
-            rounded="0"
+            class="extension-icon"
           >
             <v-img
               :src="extensionData.extension_logo"
@@ -464,5 +464,10 @@ export default Vue.extend({
   margin: 0;
   line-height: 1;
   transform: translateY(0.25em);
+}
+
+.extension-icon {
+  border-radius: 8px !important;
+  overflow: hidden;
 }
 </style>
