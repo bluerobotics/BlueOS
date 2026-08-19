@@ -15,23 +15,30 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[Callable[[Any], An
     """
     cache: Dict[Any, Any] = {}
     last_sample_time: Dict[Any, float] = {}
+    # Retained for the process lifetime. Safe here because args are a small set (enums/ports).
+    arg_locks: Dict[Any, Lock] = {}
+    arg_locks_guard = Lock()
 
     def inner_function(function: Callable[[Any], Any]) -> Any:
         @wraps(function)
         def wrapper(*args: Any) -> Any:
             nonlocal last_sample_time
-            current_time = time.time()
-            cache_is_valid = args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
+            with arg_locks_guard:
+                arg_lock = arg_locks.setdefault(args, Lock())
 
-            # The cache is still valid and we can return the value if exists
-            if cache_is_valid and args in cache:
-                return cache[args]
+            with arg_lock:
+                current_time = time.time()
+                cache_is_valid = args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
 
-            # The cache is invalid or argument does not exist in cache, update it!
-            last_sample_time[args] = current_time
-            function_return = function(*args)
-            cache[args] = function_return
-            return function_return
+                # The cache is still valid and we can return the value if exists
+                if cache_is_valid and args in cache:
+                    return cache[args]
+
+                # The cache is invalid or argument does not exist in cache, update it!
+                last_sample_time[args] = current_time
+                function_return = function(*args)
+                cache[args] = function_return
+                return function_return
 
         return wrapper
 
