@@ -302,7 +302,8 @@ class AutoPilotManager(metaclass=Singleton):
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
         if "serials" not in self.configuration:
-            assert isinstance(self._current_board, LinuxFlightController)
+            if not isinstance(self._current_board, LinuxFlightController):
+                return []
             return self._current_board.get_serials()
         serials = []
         for entry in self.configuration["serials"]:
