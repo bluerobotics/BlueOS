@@ -43,6 +43,12 @@ from nginx_parser import parse_nginx_file
 SERVICE_NAME = "helper"
 SPEED_TEST: Optional[Speedtest] = None
 
+# Stay below the frontend's 10s Axios timeout. Cache covers overlapping UI polls (20s).
+# Website cache must outlive INTERNET_CHECK_CACHE_S so a late probe is still valid next poll.
+INTERNET_CHECK_DEADLINE_S = 4
+INTERNET_CHECK_CACHE_S = 25
+WEBSITE_CHECK_CACHE_S = 30
+
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 try:
     init_logger(SERVICE_NAME)
@@ -232,6 +238,9 @@ class Helper:
 
     MAX_ATTEMPTS_LEFT = 3
     attempts_left: Dict[int, int] = {}
+    website_executor = futures.ThreadPoolExecutor(max_workers=10)
+    # Reused so a hung DNS lookup cannot queue a second worker for the same site.
+    website_in_flight: Dict[Website, "futures.Future[WebsiteStatus]"] = {}
 
     @staticmethod
     # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
@@ -286,7 +295,8 @@ class Helper:
 
             # Decode the data
             request_response.status = response.status
-            if response.status == http.client.OK:
+            # HEAD has no body; gzip-decoding an empty 200 would raise and mark the site offline.
+            if method != "HEAD" and response.status == http.client.OK:
                 encoding = response.headers.get_content_charset() or "utf-8"
                 if response.getheader("Content-Encoding") == "gzip":
                     buffer = BytesIO(response.read())
@@ -465,13 +475,13 @@ class Helper:
         return [service for service in Helper.KNOWN_SERVICES if service.valid]
 
     @staticmethod
-    @temporary_cache(timeout_seconds=1)
+    @temporary_cache(timeout_seconds=WEBSITE_CHECK_CACHE_S)
     def check_website(site: Website) -> WebsiteStatus:
         hostname = str(site.value["hostname"])
         port = int(str(site.value["port"]))
         path = str(site.value["path"])
 
-        response = Helper.simple_http_request(hostname, port=port, path=path, timeout=5, method="GET")
+        response = Helper.simple_http_request(hostname, port=port, path=path, timeout=5, method="HEAD")
         website_status = WebsiteStatus(site=site, online=False)
 
         log_msg = f"Running check_website for '{hostname}:{port}'"
@@ -502,13 +512,26 @@ class Helper:
             Helper.reload_nginx()
 
     @staticmethod
-    @temporary_cache(timeout_seconds=5)
+    @temporary_cache(timeout_seconds=INTERNET_CHECK_CACHE_S)
     def check_internet_access() -> Dict[str, WebsiteStatus]:
-        # 10 concurrent executors is fine here because its a very short/light task
-        with futures.ThreadPoolExecutor(max_workers=10) as executor:
-            tasks = [executor.submit(Helper.check_website, site) for site in Website]
-            status_list = [task.result() for task in futures.as_completed(tasks)]
+        # Hard deadline below the frontend's 10s Axios timeout. DNS is not covered by the per-socket timeout.
+        # Pending futures keep running on website_executor after wait() returns; do not drop max_workers to
+        # len(Website), and do not submit a second task for a site that is still in flight.
+        future_to_site: Dict["futures.Future[WebsiteStatus]", Website] = {}
+        for site in Website:
+            existing = Helper.website_in_flight.get(site)
+            if existing is not None and not existing.done():
+                future_to_site[existing] = site
+                continue
+            future = Helper.website_executor.submit(Helper.check_website, site)
+            Helper.website_in_flight[site] = future
+            future_to_site[future] = site
 
+        done, pending = futures.wait(future_to_site.keys(), timeout=INTERNET_CHECK_DEADLINE_S)
+        status_list = [future.result() for future in done]
+        status_list.extend(
+            WebsiteStatus(site=future_to_site[future], online=False, error="timeout") for future in pending
+        )
         return {status.site.name: status for status in status_list}
 
     @staticmethod
@@ -674,7 +697,6 @@ async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
 async def periodic() -> None:
     while True:
         await asyncio.sleep(60)
-        Helper.check_internet_access()
 
         # Clear the known ports cache and re-scan it
         if Helper.PERIODICALLY_RESCAN_ALL_SERVICES:
@@ -715,5 +737,6 @@ if __name__ == "__main__":
     config = Config(app=app, loop=loop, host="0.0.0.0", port=Helper.PORT, log_config=None)
     server = Server(config)
 
-    loop.create_task(periodic())
+    periodic_task = loop.create_task(periodic())
     loop.run_until_complete(server.serve())
+    periodic_task.cancel()
