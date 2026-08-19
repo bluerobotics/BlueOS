@@ -41,12 +41,14 @@ class PingStore extends VuexModule {
 
   reachable_hosts: string[] = []
 
+  internet_check_failures = 0
+
   checkInternetAccessTask = new OneMoreTime(
     { delay: 20000 },
   )
 
   updateWebServicesTask = new OneMoreTime(
-    { delay: 5000 },
+    { delay: 10000 }, // scan_ports can take several seconds; a 5s delay stacked overlapping polls
   )
 
   @Mutation
@@ -64,6 +66,16 @@ class PingStore extends VuexModule {
     this.services = services
   }
 
+  @Mutation
+  resetInternetCheckFailures(): void {
+    this.internet_check_failures = 0
+  }
+
+  @Mutation
+  incrementInternetCheckFailures(): void {
+    this.internet_check_failures += 1
+  }
+
   @Action
   async checkInternetAccess(): Promise<void> {
     back_axios({
@@ -72,27 +84,34 @@ class PingStore extends VuexModule {
       timeout: 10000,
     })
       .then((response) => {
-        const sites = Object.values(response.data as SiteStatus)
-        const online_sites = sites.filter((item) => item.online)
-        this.setReachableHosts(online_sites.map((item) => item.site.hostname))
+        this.resetInternetCheckFailures()
+        try {
+          const sites = Object.values(response.data as SiteStatus)
+          const online_sites = sites.filter((item) => item.online)
+          this.setReachableHosts(online_sites.map((item) => item.site.hostname))
 
-        // If no sites are reachable, we're offline
-        if (online_sites.length === 0) {
-          this.setHasInternet(InternetConnectionState.OFFLINE)
-          return
+          // A site that did not answer inside Helper's budget carries no verdict.
+          const decided_sites = sites.filter((item) => item.error !== 'timeout')
+          if (decided_sites.length === 0) {
+            return
+          }
+          if (online_sites.length === decided_sites.length) {
+            this.setHasInternet(InternetConnectionState.ONLINE)
+            return
+          }
+          this.setHasInternet(
+            online_sites.length > 0 ? InternetConnectionState.LIMITED : InternetConnectionState.OFFLINE,
+          )
+        } catch {
+          // Helper answered; keep the last verdict if the body is unusable.
         }
-
-        // If all sites are reachable, we're fully online
-        if (online_sites.length === sites.length) {
-          this.setHasInternet(InternetConnectionState.ONLINE)
-          return
-        }
-
-        // If some sites are reachable but not all, we have limited connectivity
-        this.setHasInternet(InternetConnectionState.LIMITED)
       })
       .catch((error) => {
-        // If we can't even reach the backend, we're in an unknown state
+        // One timed-out poll is not a connectivity verdict.
+        this.incrementInternetCheckFailures()
+        if (this.internet_check_failures < 3) {
+          return
+        }
         this.setHasInternet(InternetConnectionState.UNKNOWN)
         this.setReachableHosts([])
         notifier.pushBackError('INTERNET_CHECK_FAIL', error)
