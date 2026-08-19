@@ -46,15 +46,18 @@
           @click="$emit('selected')"
           @keydown.left="() => {}"
         >
-          <v-img
-            v-once
-            ref="extension_logo"
-            contain
-            :src="extension.extension_logo"
-            height="150px"
+          <v-avatar
+            size="150"
             class="mt-3 mb-5 my-2 logo-img"
-            @load="setDominantColor"
-          />
+          >
+            <v-img
+              v-once
+              ref="extension_logo"
+              contain
+              :src="extension.extension_logo"
+              @load="setDominantColor"
+            />
+          </v-avatar>
 
           <v-card-subtitle class="px-3 py-2 ext-subtitles">
             <div
@@ -368,6 +371,9 @@ export default Vue.extend({
 .logo-img {
   flex-grow: 0;
   z-index: 0 !important;
+  align-self: center;
+  border-radius: 20px !important;
+  overflow: hidden;
 }
 
 .bottom-gradient {
@@ -486,10 +492,6 @@ export default Vue.extend({
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.v-img {
-  border-radius: 20px;
 }
 
 .v-avatar img {
