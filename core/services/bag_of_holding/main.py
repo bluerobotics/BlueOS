@@ -67,6 +67,7 @@ async def parse_nullable_body(payload: Any | None = Body(None)) -> Any:
 
 
 @app.post("/overwrite")
+@version(1, 0)
 async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
     logger.debug(f"Overwrite: {json.dumps(payload)}")
     write_db(payload)
