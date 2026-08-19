@@ -56,6 +56,7 @@ async def fetch_log_by_container_name(container_name: str, timeout: Optional[int
     Fetch logs of a given container.
     If timeout is provided, the stream will be closed after no log line is received for the given timeout.
     """
+    await ContainerManager.get_running_container_by_name(container_name)
     stream = ContainerManager.get_container_log_by_name(container_name)
 
     if timeout is not None:
