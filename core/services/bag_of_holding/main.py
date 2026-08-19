@@ -15,7 +15,6 @@ from fastapi import Path as FastPath
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from pydantic import BaseModel
 from uvicorn import Config, Server
 
 SERVICE_NAME = "bag-of-holding"
@@ -33,11 +32,6 @@ app = FastAPI(
 )
 app.router.route_class = GenericErrorHandlingRoute
 logger.info(f"Starting Bag of Holding: {FILE_PATH}")
-
-
-class KeyValue(BaseModel):
-    key: str
-    value: Any
 
 
 def read_db() -> Any:
