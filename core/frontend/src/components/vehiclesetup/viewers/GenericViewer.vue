@@ -361,7 +361,7 @@ export default Vue.extend({
     },
     redraw() {
       if (this.transparent) {
-        this.setAlphas(0.05)
+        this.setAlphas(0.3)
         for (const part of this.highlight) {
           this.makeOpaque(part)
         }
