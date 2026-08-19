@@ -5,8 +5,8 @@
         cols="12"
         sm="8"
       >
-        <v-card color="grey lighten-3">
-          <vehicle-viewer :highlight="highlight" :transparent="true" :autorotate="false" />
+        <v-card>
+          <vehicle-viewer :highlight="highlight" :autorotate="false" />
         </v-card>
         <v-card class="mt-3">
           <v-overlay :value="!has_focus">
