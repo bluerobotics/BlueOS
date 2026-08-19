@@ -2,8 +2,10 @@
 import asyncio
 import json
 import logging
+import os
 from pathlib import Path
-from typing import Any, Dict
+from types import SimpleNamespace
+from typing import Any
 
 import appdirs
 import dpath
@@ -19,15 +21,19 @@ from uvicorn import Config, Server
 
 SERVICE_NAME = "bag-of-holding"
 FILE_PATH = Path(appdirs.user_config_dir(SERVICE_NAME, "db.json"))
+FLUSH_INTERVAL = 1.0
 
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 
-def read_db() -> Any:
+def read_db() -> dict[str, Any]:
     try:
-        with open(FILE_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with open(FILE_PATH, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+            if isinstance(data, dict):
+                return data
+            logger.error("Database file is not an object")
     except FileNotFoundError:
         logger.error("Database not found")
     except json.decoder.JSONDecodeError as exception:
@@ -37,13 +43,40 @@ def read_db() -> Any:
     return {}
 
 
-def write_db(data: Dict[str, Any]) -> None:
-    # Just to be sure that we'll be able to load it later
-    json_string = json.dumps(data)
-    json.loads(json_string)
+def write_db() -> None:
+    FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    temp_file = FILE_PATH.with_suffix(".tmp")
+    with open(temp_file, "w", encoding="utf-8") as handle:
+        json.dump(bag_of_holding_db, handle)
+        handle.flush()
+        os.fsync(handle.fileno())
+    temp_file.replace(FILE_PATH)
 
-    with open(FILE_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f)
+
+bag_of_holding_db = read_db()
+_pending = SimpleNamespace(handle=None)
+
+
+def mark_dirty() -> None:
+    if _pending.handle is not None:
+        return
+    _pending.handle = asyncio.get_running_loop().call_later(FLUSH_INTERVAL, _flush)
+
+
+def _flush() -> None:
+    try:
+        write_db()
+        _pending.handle = None
+    except Exception:
+        logger.exception("Failed to persist database")
+        _pending.handle = asyncio.get_running_loop().call_later(FLUSH_INTERVAL, _flush)
+
+
+def flush_now() -> None:
+    if _pending.handle is not None:
+        _pending.handle.cancel()
+        _pending.handle = None
+    write_db()
 
 
 app = FastAPI(
@@ -65,7 +98,9 @@ async def parse_nullable_body(payload: Any | None = Body(None)) -> Any:
 @version(1, 0)
 async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
     logger.debug(f"Overwrite: {json.dumps(payload)}")
-    write_db(payload)
+    bag_of_holding_db.clear()
+    bag_of_holding_db.update(payload)
+    flush_now()
     return JSONResponse(content={"status": "success"})
 
 
@@ -76,9 +111,8 @@ async def write_data(
     payload: Any = Depends(parse_nullable_body),
 ) -> JSONResponse:
     logger.debug(f"Write path: {path}, {json.dumps(payload)}")
-    current_data = read_db()
-    dpath.new(current_data, path, payload)
-    write_db(current_data)
+    dpath.new(bag_of_holding_db, path, payload)
+    mark_dirty()
     return JSONResponse(content={"status": "success"})
 
 
@@ -86,13 +120,12 @@ async def write_data(
 @version(1, 0)
 async def read_data(path: str) -> JSONResponse:
     logger.debug(f"Get path: {path}")
-    current_data = read_db()
 
     if path == "*":
-        return JSONResponse(current_data)
+        return JSONResponse(bag_of_holding_db)
 
     try:
-        result = dpath.get(current_data, path)
+        result = dpath.get(bag_of_holding_db, path)
         return JSONResponse(result)
     except KeyError as error:
         raise HTTPException(status_code=400, detail="Invalid path") from error
@@ -120,7 +153,10 @@ async def main() -> None:
     config = Config(app=app, host="0.0.0.0", port=9101, log_config=None)
     server = Server(config)
 
-    await server.serve()
+    try:
+        await server.serve()
+    finally:
+        flush_now()
 
 
 if __name__ == "__main__":
