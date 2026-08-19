@@ -23,16 +23,6 @@ FILE_PATH = Path(appdirs.user_config_dir(SERVICE_NAME, "db.json"))
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-app = FastAPI(
-    title="Bag of Holding API",
-    description=(
-        "Bag of Holding implements a FastAPI service with versioning that provides a simple key-value"
-        "storage API, enabling the user to store and retrieve data as JSON objects through HTTP requests."
-    ),
-)
-app.router.route_class = GenericErrorHandlingRoute
-logger.info(f"Starting Bag of Holding: {FILE_PATH}")
-
 
 def read_db() -> Any:
     try:
@@ -54,6 +44,17 @@ def write_db(data: Dict[str, Any]) -> None:
 
     with open(FILE_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f)
+
+
+app = FastAPI(
+    title="Bag of Holding API",
+    description=(
+        "Bag of Holding implements a FastAPI service with versioning that provides a simple key-value"
+        "storage API, enabling the user to store and retrieve data as JSON objects through HTTP requests."
+    ),
+)
+app.router.route_class = GenericErrorHandlingRoute
+logger.info(f"Starting Bag of Holding: {FILE_PATH}")
 
 
 async def parse_nullable_body(payload: Any | None = Body(None)) -> Any:
