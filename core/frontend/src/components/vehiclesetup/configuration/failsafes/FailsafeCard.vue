@@ -41,7 +41,7 @@
                 v-if="params[param.name] != null"
                 :key="failsafeDefinition.name"
                 :auto-set="true"
-                :disabled="is_disabled && !control_param_names.includes(param.name)"
+                :disabled="is_disabled && !dependency_unmet && !control_param_names.includes(param.name)"
                 :param="params[param.name] ?? undefined"
               />
               <template v-else>
