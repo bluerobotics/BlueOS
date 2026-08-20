@@ -511,7 +511,6 @@ export default Vue.extend({
   white-space: nowrap;
   user-select: none;
   text-align: center;
-  pointer-events: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
