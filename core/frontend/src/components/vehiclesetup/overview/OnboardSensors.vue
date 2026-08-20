@@ -34,8 +34,8 @@
               :key="accelerometer.param"
             >
               <td><b>{{ accelerometer.deviceName ?? 'UNKNOWN' }}</b></td>
-              <td v-tooltip="'Inertial Navigation Sensor'">
-                INS
+              <td v-tooltip="'Inertial Measurement Unit'">
+                IMU
               </td>
               <td>{{ print_bus(accelerometer.busType) }} {{ accelerometer.bus }}</td>
               <td>{{ `0x${accelerometer.address}` }}</td>
