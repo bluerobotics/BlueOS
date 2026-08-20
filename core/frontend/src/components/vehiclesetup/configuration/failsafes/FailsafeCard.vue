@@ -28,7 +28,7 @@
               <inline-parameter-editor
                 :key="failsafeDefinition.name"
                 :auto-set="true"
-                :disabled="is_disabled && param.name !== actionParamName"
+                :disabled="is_disabled && !control_param_names.includes(param.name)"
                 :param="params[param.name]"
               />
             </v-col>
@@ -81,14 +81,28 @@ export default Vue.extend({
       return this.failsafeDefinition.params.filter((param) => param.name in this.params)
     },
     is_disabled(): boolean {
+      if (this.is_battery_failsafe) {
+        const lowOff = this.params.BATT_LOW_VOLT?.value === 0
+          && (autopilot_data.parameter('BATT_LOW_MAH')?.value ?? 0) === 0
+        const crtOff = this.params.BATT_CRT_VOLT?.value === 0
+          && (autopilot_data.parameter('BATT_CRT_MAH')?.value ?? 0) === 0
+        return lowOff && crtOff
+      }
       const controlParam = this.findControlParam()
       if (!controlParam || !(controlParam.name in this.params)) {
         return false
       }
       return this.params[controlParam.name].value === 0
     },
-    actionParamName(): string | undefined {
-      return this.findControlParam()?.name
+    is_battery_failsafe(): boolean {
+      return this.failsafeDefinition.params.some((param) => param.name === 'BATT_LOW_VOLT')
+    },
+    control_param_names(): string[] {
+      if (this.is_battery_failsafe) {
+        return ['BATT_LOW_VOLT', 'BATT_CRT_VOLT', 'BATT_LOW_MAH', 'BATT_CRT_MAH']
+      }
+      const name = this.findControlParam()?.name
+      return name ? [name] : []
     },
   },
   mounted() {
