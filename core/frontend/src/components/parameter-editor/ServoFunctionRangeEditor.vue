@@ -22,9 +22,6 @@
           ref="sliderContainer"
           class="servo-slider"
           @mousedown="onSliderMouseDown"
-          @mousemove="onSliderMouseMove"
-          @mouseup="onSliderMouseUp"
-          @mouseleave="onSliderMouseUp"
           @touchstart="onTouchStart"
           @touchmove="onTouchMove"
           @touchend="onTouchEnd"
@@ -42,7 +39,7 @@
             class="slider-thumb"
             :class="{ active: activeThumb === index }"
             :style="{ left: `${getThumbPosition(index)}%` }"
-            @mousedown.stop="startDragging(index)"
+            @mousedown.stop.prevent="startDragging(index)"
           >
             <div class="thumb-label">
               {{ thumbType }}: {{ getThumbValue(index) }}
@@ -224,6 +221,10 @@ export default Vue.extend({
       this.updateParamValue('max', newValue)
     },
   },
+  beforeDestroy() {
+    window.removeEventListener('mousemove', this.onSliderMouseMove)
+    window.removeEventListener('mouseup', this.onSliderMouseUp)
+  },
   methods: {
     getParamByType(type: string): Parameter | undefined {
       if (!this.param?.name) return undefined
@@ -278,6 +279,8 @@ export default Vue.extend({
     startDragging(index: number): void {
       this.activeThumb = index
       this.isDragging = true
+      window.addEventListener('mousemove', this.onSliderMouseMove)
+      window.addEventListener('mouseup', this.onSliderMouseUp)
     },
     onSliderMouseDown(event: MouseEvent): void {
       const container = this.$refs.sliderContainer as HTMLElement
@@ -340,6 +343,8 @@ export default Vue.extend({
 
       this.isDragging = false
       this.activeThumb = -1
+      window.removeEventListener('mousemove', this.onSliderMouseMove)
+      window.removeEventListener('mouseup', this.onSliderMouseUp)
     },
     updateThumbValue(event: MouseEvent | Touch): void {
       if (!this.isDragging) return
