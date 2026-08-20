@@ -41,7 +41,7 @@
                 v-if="params[param.name] != null"
                 :key="failsafeDefinition.name"
                 :auto-set="true"
-                :disabled="is_disabled && param.name !== actionParamName"
+                :disabled="is_disabled && !control_param_names.includes(param.name)"
                 :param="params[param.name] ?? undefined"
               />
               <template v-else>
@@ -101,11 +101,21 @@ export default Vue.extend({
       )
     },
     is_disabled(): boolean {
+      if (this.is_battery_failsafe) {
+        const lowOff = this.params.BATT_LOW_VOLT?.value === 0
+          && (autopilot_data.parameter('BATT_LOW_MAH')?.value ?? 0) === 0
+        const crtOff = this.params.BATT_CRT_VOLT?.value === 0
+          && (autopilot_data.parameter('BATT_CRT_MAH')?.value ?? 0) === 0
+        return lowOff && crtOff
+      }
       const controlParam = this.findControlParam()
       if (!controlParam || this.params[controlParam.name] == null) {
         return false
       }
       return this.params[controlParam.name]?.value === 0
+    },
+    is_battery_failsafe(): boolean {
+      return this.failsafeDefinition.params.some((param) => param.name === 'BATT_LOW_VOLT')
     },
     dependency_unmet(): boolean {
       const dep = this.failsafeDefinition.dependsOn
@@ -134,8 +144,12 @@ export default Vue.extend({
     dependency_message(): string {
       return this.failsafeDefinition.dependsOn?.message ?? ''
     },
-    actionParamName(): string | undefined {
-      return this.findControlParam()?.name
+    control_param_names(): string[] {
+      if (this.is_battery_failsafe) {
+        return ['BATT_LOW_VOLT', 'BATT_CRT_VOLT', 'BATT_LOW_MAH', 'BATT_CRT_MAH']
+      }
+      const name = this.findControlParam()?.name
+      return name ? [name] : []
     },
   },
   mounted() {
