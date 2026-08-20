@@ -24,11 +24,11 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       vue(),
       VitePWA({
+        // Operators use plain HTTP (not a secure context), so Workbox never
+        // installs. registerType still injects registerSW.js so localhost /
+        // tunnel leftovers get this unregistering worker.
         registerType: 'autoUpdate',
-        devOptions: {
-          enabled: true,
-        },
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        selfDestroying: true,
       }),
       Components({
         // generate `components.d.ts` global declarations
