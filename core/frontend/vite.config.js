@@ -139,7 +139,14 @@ export default defineConfig(({ command, mode }) => {
         ext: '.gz',
         threshold: 1024,
         deleteOriginFile: true,
-        filter: /\.(js|css|json|svg|txt|xml|wasm|glb)$/i,
+        filter: (file) => {
+          if (!/\.(js|css|json|svg|txt|xml|wasm|glb)$/i.test(file)) {
+            return false
+          }
+          // Keep sw.js as a real file. gzip_static prefers a leftover sw.js.gz from
+          // an incremental build, and try_files (if reintroduced) cannot see .gz.
+          return path.basename(file) !== 'sw.js'
+        },
       }),
       // Parse every shipped script, so a corrupt chunk fails the build instead of only breaking
       // the route that imports it at runtime, like 1.4.4-beta.14 shipped a source map as a chunk.
@@ -156,6 +163,11 @@ export default defineConfig(({ command, mode }) => {
             const { gunzipSync } = require('zlib')
             const { transformSync } = require('esbuild')
             const distPath = path.resolve(__dirname, 'dist')
+            // gzip_static prefers a leftover sw.js.gz over the uncompressed worker
+            const staleSwGz = path.join(distPath, 'sw.js.gz')
+            if (fs.existsSync(staleSwGz)) {
+              fs.unlinkSync(staleSwGz)
+            }
 
             const collectScripts = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
               const fullPath = path.join(dir, entry.name)
