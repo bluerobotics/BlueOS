@@ -38,6 +38,7 @@
         :transparent="false"
         :cameracontrols="false"
         :orientation="current_state_3D"
+        :style="{ height: '320px' }"
       />
       <v-card-actions class="justify-center">
         <v-btn v-if="show_start_button" :loading="start_button_loading" class="primary" @click="startCalibration">
