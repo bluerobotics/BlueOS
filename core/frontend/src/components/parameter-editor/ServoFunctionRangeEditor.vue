@@ -283,6 +283,10 @@ export default Vue.extend({
       const container = this.$refs.sliderContainer as HTMLElement
       if (!container) return
 
+      const rect = container.getBoundingClientRect()
+      const trackY = rect.top + rect.height / 2
+      if (Math.abs(event.clientY - trackY) > 16) return
+
       const { value } = this.calculateValueFromEvent(event, container)
       const closestThumb = this.findClosestThumb(value)
 
@@ -442,7 +446,7 @@ export default Vue.extend({
 .servo-slider {
   position: relative;
   height: 80px;
-  cursor: pointer;
+  cursor: default;
   padding: 0 10px;
   margin: 20px 0;
 }
@@ -455,6 +459,7 @@ export default Vue.extend({
   height: 4px;
   background-color: rgba(128, 128, 128, 0.2);
   border-radius: 2px;
+  cursor: pointer;
 }
 
 .slider-fill {
@@ -465,6 +470,7 @@ export default Vue.extend({
   background-color: var(--v-primary-base);
   border-radius: 2px;
   opacity: 0.8;
+  cursor: pointer;
 }
 
 .slider-thumb {
