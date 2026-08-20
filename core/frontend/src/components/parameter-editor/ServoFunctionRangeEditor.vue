@@ -37,7 +37,7 @@
           />
           <div
             v-for="(thumbType, index) in ['min', 'trim', 'max']"
-            v-show="thumbType !== 'trim' || trimParam"
+            v-show="thumbType !== 'trim' || resolvedTrimParam"
             :key="thumbType"
             class="slider-thumb"
             :class="{ active: activeThumb === index }"
