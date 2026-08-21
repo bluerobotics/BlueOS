@@ -28,6 +28,7 @@ dependencies = [
 [dependency-groups]
 dev = [
   "coverage==7.5.1",
+  "httpx==0.28.1",
   "nmeasim==1.1.1.0",
   "pytest==7.4.2",
   "pytest-cov==4.1.0",
