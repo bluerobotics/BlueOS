@@ -40,6 +40,15 @@ export default Vue.extend({
         timeout: 10000,
       })
         .then((response) => {
+          if (response.data.state === 'unavailable') {
+            wifi.setNetworkStatus(response.data)
+            wifi.setCurrentNetwork(null)
+            wifi.setAvailableNetworks([])
+            this.fetch_network_status_task.setDelay(30000)
+            return
+          }
+
+          this.fetch_network_status_task.setDelay(5000)
           wifi.setNetworkStatus(response.data)
 
           if (response.data.wpa_state !== 'COMPLETED') {
