@@ -5,6 +5,7 @@ import requests
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate
 from commonwealth.settings.manager import PydanticManager
+from fastapi import HTTPException, status
 from pydantic import BaseModel, Field
 from serial.tools.list_ports_linux import SysFS
 from settings import BridgeSettingsSpecV2, SettingsV2
@@ -57,9 +58,8 @@ class Bridget:
             response = requests.get("http://localhost:6030/serial", timeout=1)
             data = response.json()
             return [port["name"] for port in data["ports"] if port["name"] is not None]
-        except requests.RequestException as e:
-            print(f"Error fetching data: {e}")
-            return []
+        except requests.RequestException as error:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
 
     def get_bridges(self) -> List[BridgeFrontendSpec]:
         return [spec for spec, bridge in self._bridges.items()]
