@@ -99,8 +99,8 @@ def boot_config_get_or_append_section(config_content: List[str], section_name: s
         (i for (i, line) in enumerate(config_content) if re.match(section_match_pattern, line, regex_flags)), None
     )
     if section_start_line_number is None:
-        config_content.append(f"\n[{section_name}]")
-        section_start_line_number = len(config_content)
+        config_content.extend(["", f"[{section_name}]"])
+        section_start_line_number = len(config_content) - 1
 
     any_section_match_pattern = r"^\[.*\].*$"
     section_end_line_number = next(
