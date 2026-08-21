@@ -27,6 +27,7 @@ export interface WifiStatus {
     p2p_device_address: string
     address: string
     uuid: string
+    state?: string
 }
 
 export interface WPANetwork {
