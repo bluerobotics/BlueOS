@@ -652,13 +652,13 @@ async def internet_upload_speed() -> Any:
 
 @fast_api_app.get(
     "/internet_test_previous_result",
-    response_model=SpeedTestResult,
+    response_model=Optional[SpeedTestResult],
     summary="Return previous result of internet speed test.",
 )
 @version(1, 0)
 async def internet_test_previous_result() -> Any:
-    if not SPEED_TEST:
-        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+    if not SPEED_TEST or not SPEED_TEST.results.server:
+        return None
     return SPEED_TEST.results.dict()
 
 
