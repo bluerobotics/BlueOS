@@ -3,12 +3,12 @@ from typing import Any, Callable, Coroutine, Dict, Optional
 
 from commonwealth.utils.logs import stack_trace_message
 from fastapi import HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from loguru import logger
-from starlette.responses import Response as StarletteResponse
 
 
-class PrettyJSONResponse(StarletteResponse):
+class PrettyJSONResponse(JSONResponse):
     media_type = "application/json"
 
     def render(self, content: Any) -> bytes:
