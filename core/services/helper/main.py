@@ -42,6 +42,7 @@ from nginx_parser import parse_nginx_file
 
 SERVICE_NAME = "helper"
 SPEED_TEST: Optional[Speedtest] = None
+SPEED_TEST_LOCK = asyncio.Lock()
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 try:
@@ -612,9 +613,11 @@ async def internet_best_server(interface_addr: Optional[str] = None) -> Any:
     # Since we are finding a new server, clear previous results
     # pylint: disable=global-statement
     global SPEED_TEST
-    SPEED_TEST = Speedtest(secure=True, source_address=interface_addr)
-    SPEED_TEST.get_best_server()
-    return SPEED_TEST.results.dict()
+    async with SPEED_TEST_LOCK:
+        speed_test = await asyncio.to_thread(Speedtest, secure=True, source_address=interface_addr)
+        await asyncio.to_thread(speed_test.get_best_server)
+        SPEED_TEST = speed_test
+        return speed_test.results.dict()
 
 
 @fast_api_app.get(
@@ -624,10 +627,12 @@ async def internet_best_server(interface_addr: Optional[str] = None) -> Any:
 )
 @version(1, 0)
 async def internet_download_speed() -> Any:
-    if not SPEED_TEST:
-        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
-    SPEED_TEST.download()
-    return SPEED_TEST.results.dict()
+    async with SPEED_TEST_LOCK:
+        speed_test = SPEED_TEST
+        if not speed_test:
+            raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+        await asyncio.to_thread(speed_test.download)
+        return speed_test.results.dict()
 
 
 @fast_api_app.get(
@@ -637,10 +642,12 @@ async def internet_download_speed() -> Any:
 )
 @version(1, 0)
 async def internet_upload_speed() -> Any:
-    if not SPEED_TEST:
-        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
-    SPEED_TEST.upload(pre_allocate=False)
-    return SPEED_TEST.results.dict()
+    async with SPEED_TEST_LOCK:
+        speed_test = SPEED_TEST
+        if not speed_test:
+            raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+        await asyncio.to_thread(speed_test.upload, pre_allocate=False)
+        return speed_test.results.dict()
 
 
 @fast_api_app.get(
