@@ -389,8 +389,6 @@ class Extension:
     @classmethod
     async def from_running(cls, identifier: str) -> "Extension":
         installed: List[Extension] = cast(List[Extension], await cls.from_settings(identifier))
-        if not installed:
-            raise ExtensionNotFound(f"Extension {identifier} not found")
 
         enabled = [ext for ext in installed if ext.source.enabled]
         if not enabled:
