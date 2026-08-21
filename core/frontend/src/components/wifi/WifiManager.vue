@@ -80,8 +80,13 @@
             flat
             class="text-body-1 text-center"
           >
-            No wifi networks available :( <br>
-            Rescanning...
+            <template v-if="wifi_status?.state === 'unavailable'">
+              No wifi adapter
+            </template>
+            <template v-else>
+              No wifi networks available :( <br>
+              Rescanning...
+            </template>
           </v-card-text>
         </div>
         <div v-else>
