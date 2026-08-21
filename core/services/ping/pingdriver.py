@@ -27,7 +27,7 @@ class PingDriver:
         failure_threshold = 0.1  # allow up to 10% failure rate
         attempts = 10  # try up to 10 times per baudrate
         max_failures = attempts * failure_threshold
-        last_valid_baud = Baudrate.b115200
+        last_valid_baud: Optional[Baudrate] = None
 
         if self.ping.port is None:
             raise InvalidDeviceDescriptor("PingDeviceDescriptor has no usable port")
@@ -53,6 +53,8 @@ class PingDriver:
             if failures <= max_failures:
                 last_valid_baud = baud
             logger.debug(f"Baudrate {baud} is {'valid' if baud==last_valid_baud else 'invalid'}")
+        if last_valid_baud is None:
+            raise RuntimeError("No valid baudrate detected")
         logger.info(f"Highest baudrate detected: {last_valid_baud}")
         return last_valid_baud
 
