@@ -39,6 +39,7 @@
     "axios": "^1.12.2",
     "babel-loader": "^8.2.5",
     "broadway-player": "^0.1.1",
+    "browser-image-compression": "^2.0.2",
     "colorthief": "2.4.0",
     "cytoscape": "^3.32.0",
     "cytoscape-fcose": "^2.2.0",
