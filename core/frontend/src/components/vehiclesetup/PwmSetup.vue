@@ -78,7 +78,7 @@
                       thumb-label
                       color="primary"
                       track-color="primary"
-                      :disabled="!is_armed || !is_manual"
+                      :disabled="!can_run_motor_test"
                       @mouseup="restart_motor_zeroer()"
                       @mousedown="pause_motor_zeroer()"
                     />
@@ -225,6 +225,7 @@ export default Vue.extend({
       motor_zeroer_interval: undefined as undefined | number,
       motor_writer_interval: undefined as undefined | number,
       desired_armed_state: false,
+      armed_by_this_page: false,
       has_focus: true,
       motors_zeroed: false,
       // These two change from firmware to firmware...
@@ -361,10 +362,15 @@ export default Vue.extend({
 
       return false
     },
+    can_run_motor_test(): boolean {
+      return this.is_armed && this.armed_by_this_page && this.is_manual
+    },
     arm_disarm_switch_label(): string {
       let label = `${this.is_armed ? 'Armed' : 'Disarmed'}`
       if (!this.is_manual) {
         label += ' - Vehicle needs to be in Manual Mode'
+      } else if (this.is_armed && !this.armed_by_this_page) {
+        label += ' externally - re-arm here to enable motor test'
       }
       return label
     },
@@ -410,9 +416,12 @@ export default Vue.extend({
     },
   },
   watch: {
-    is_armed() {
+    is_armed(armed: boolean) {
       // To reflect changed made from other sources like from GCSs
-      this.desired_armed_state = this.is_armed
+      this.desired_armed_state = armed
+      if (!armed) {
+        this.armed_by_this_page = false
+      }
     },
     is_rover() {
       this.updateReversionValues()
@@ -527,7 +536,7 @@ export default Vue.extend({
       if (!this.has_focus) {
         return
       }
-      if (this.is_armed && this.desired_armed_state && this.is_manual) {
+      if (this.can_run_motor_test && this.desired_armed_state) {
         for (const [motor, value] of Object.entries(this.motor_target_with_reversion)) {
           doMotorTest(parseInt(motor, 10), value)
         }
@@ -542,12 +551,22 @@ export default Vue.extend({
       clearInterval(this.motor_zeroer_interval)
     },
     arm() {
-      armDisarm(true, true).catch(() => {
-        this.desired_armed_state = this.is_armed
-        console.warn('Arming failed!')
-      })
+      this.armed_by_this_page = false
+      if (this.is_armed) {
+        this.desired_armed_state = true
+        return
+      }
+      armDisarm(true, true)
+        .then(() => {
+          this.armed_by_this_page = true
+        })
+        .catch(() => {
+          this.desired_armed_state = this.is_armed
+          console.warn('Arming failed!')
+        })
     },
     disarm() {
+      this.armed_by_this_page = false
       armDisarm(false, true).catch(() => {
         this.desired_armed_state = this.is_armed
         console.warn('Disarming failed!')
