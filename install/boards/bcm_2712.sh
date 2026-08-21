@@ -8,8 +8,17 @@ VERSION="${VERSION:-master}"
 GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/BlueOS}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
 ROOT="$REMOTE/$VERSION"
-CMDLINE_FILE=/boot/firmware/cmdline.txt
-CONFIG_FILE=/boot/firmware/config.txt
+# Bookworm moved the boot partition to /boot/firmware and left a plain text stub at /boot that
+# configures nothing. A Pi5 is newer than Bullseye, so it never uses the old /boot layout.
+if [ -f /boot/firmware/config.txt ]; then
+    BOOT_PATH=/boot/firmware
+else
+    echo "No boot partition at /boot/firmware, is it mounted?" >&2
+    echo "Refusing to configure a file the board would never read." >&2
+    exit 1
+fi
+CMDLINE_FILE="$BOOT_PATH/cmdline.txt"
+CONFIG_FILE="$BOOT_PATH/config.txt"
 alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --connect-timeout 60"
 
 # Download, compile, and install spi0 mosi-only device tree overlay for
@@ -18,7 +27,7 @@ echo "- compile spi0 device tree overlay."
 DTS_PATH="$ROOT/install/overlays"
 DTS_NAME="spi0-led"
 curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME.dts
-dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/$DTS_NAME.dtbo /tmp/$DTS_NAME
+dtc -@ -Hepapr -I dts -O dtb -o "$BOOT_PATH/overlays/$DTS_NAME.dtbo" /tmp/$DTS_NAME
 
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
