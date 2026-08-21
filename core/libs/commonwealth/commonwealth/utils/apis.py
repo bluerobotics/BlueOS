@@ -6,16 +6,15 @@ import fastapi.applications as fastapi_applications
 import fastapi.openapi.docs as fastapi_docs
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
-from starlette.responses import Response as StarletteResponse
 
 from commonwealth.utils.logs import stack_trace_message
 
 
-class PrettyJSONResponse(StarletteResponse):
+class PrettyJSONResponse(JSONResponse):
     media_type = "application/json"
 
     def render(self, content: Any) -> bytes:
