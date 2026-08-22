@@ -214,12 +214,19 @@ command -v raspi-config && (
 )
 
 echo "Downloading bootstrap"
-BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
-BLUEOS_CORE="$DOCKER_USER/blueos-core:$VERSION" # We don't have a stable tag yet
+# HACK, DROP THIS COMMIT: VERSION points at a pull request commit, which has no images published
+# for it, so the images come from the branch this one is based on
+BLUEOS_TAG="${BLUEOS_TAG:-$VERSION}"
+BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$BLUEOS_TAG" # Use current version
+BLUEOS_CORE="$DOCKER_USER/blueos-core:$BLUEOS_TAG" # We don't have a stable tag yet
 BLUEOS_FACTORY="bluerobotics/blueos-core:factory" # used for "factory reset"
 
 docker pull $BLUEOS_BOOTSTRAP
 docker pull $BLUEOS_CORE
+
+# HACK, DROP THIS COMMIT: the bootstrap looks the core image up by VERSION, which is what the
+# startup.json of the image being built names
+docker image tag $BLUEOS_CORE $DOCKER_USER/blueos-core:$VERSION
 
 # Set up default extensions
 curl -fsSL $ROOT/install/kraken/set_default_extensions.sh | bash
