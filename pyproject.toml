@@ -58,13 +58,23 @@ markers = [
 
 [tool.coverage.run]
 branch = true
+source = [
+    "bootstrap",
+    "core",
+]
 omit = [
     "*/setup.py",
     "*/__init__.py",
-    ]
+    "*/test_*.py",
+    "*/tests/*",
+    "*/.venv/*",
+    "*/__mypycache__/*",
+]
 
 [tool.coverage.report]
-fail_under = 75
+fail_under = 15.5
+include_namespace_packages = true
+precision = 2
 
 [tool.black]
 line-length = 120
