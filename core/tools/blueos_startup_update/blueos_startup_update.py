@@ -238,7 +238,7 @@ def boot_cmdline_add_modules(cmdline_content: List[str], config_key: str, desire
             cmdline_content.remove(cmdline_content[config_index])
 
     # Replace the first configs line with the combined, append if none
-    if first_config_line:
+    if first_config_line is not None:
         cmdline_content[first_config_line] = f"{config_key}=" + ",".join(desired_config)
     else:
         config_line = f"{config_key}=" + ",".join(desired_config)
