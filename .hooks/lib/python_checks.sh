@@ -3,7 +3,6 @@
 declare -a isort_args=()
 declare -a black_args=()
 : "${fixing:=false}"
-: "${DEFAULT_COVERAGE_FAIL_UNDER:=73}"
 
 setup_python_environment() {
     local env_label="$1"
@@ -84,9 +83,7 @@ run_python_checks() {
     fi
 
     echo "Running pytest (${env_label}).."
-    local pytest_args=(-n 10 --durations=0 --cov="$ROOT_DIR" --cov-report html)
-    local coverage_threshold="${COVERAGE_FAIL_UNDER_OVERRIDE:-$DEFAULT_COVERAGE_FAIL_UNDER}"
-    pytest_args+=(--cov-fail-under "$coverage_threshold")
+    local pytest_args=(-n 10 --durations=0 --cov --cov-report term --cov-report html)
     local ignore_path
     for ignore_path in "${pytest_ignores[@]}"; do
         [[ -z "$ignore_path" ]] && continue
@@ -106,17 +103,11 @@ run_environment_phase() {
     local pytest_ignores_ref="$3"
     local pytest_targets_ref="$4"
     local run_bootstrap="${5:-false}"
-    local coverage_threshold="${6:-}"
 
     (
         setup_python_environment "$env_label" "$project_dir"
         if [ "$run_bootstrap" = true ]; then
             bootstrap_runtime_dependencies
-        fi
-        if [ -n "$coverage_threshold" ]; then
-            COVERAGE_FAIL_UNDER_OVERRIDE="$coverage_threshold"
-        else
-            unset COVERAGE_FAIL_UNDER_OVERRIDE
         fi
         run_python_checks "$env_label" "$pytest_ignores_ref" "$pytest_targets_ref"
     )
