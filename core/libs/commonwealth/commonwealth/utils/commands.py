@@ -10,6 +10,10 @@ class KeyNotFound(Exception):
     """Raised when the SSH key is not found."""
 
 
+class HostFileError(Exception):
+    """Raised when a host file cannot be read or written."""
+
+
 def run_command_with_password(command: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
     # attempt to run the command with sshpass
     # used as a fallback if the ssh key is not found
@@ -131,8 +135,10 @@ def upload_file_with_ssh_key(source: str, destination: str, check: bool = True) 
 
 
 def load_file(file_name: str) -> str:
-    command = f'cat "{file_name}"'
-    return run_command(command, False).stdout
+    result = run_command(f'cat "{file_name}"', False)
+    if result.returncode != 0:
+        raise HostFileError(f"Failed to read {file_name}: {result.stderr}")
+    return result.stdout
 
 
 def upload_file(file_content: str, destination: str, check: bool = True) -> "subprocess.CompletedProcess['str']":
@@ -147,22 +153,30 @@ def upload_file(file_content: str, destination: str, check: bool = True) -> "sub
         logger.warning("SSH key not found, falling back to password authentication")
         ret = upload_file_with_password(temp_file_in_container, temp_file_in_host, check)
     logger.debug(ret)
-    if ret.returncode == 0:
-        run_command(f"sudo mv {temp_file_in_host} {destination}")
-    else:
+    if ret.returncode != 0:
         logger.error(f"Failed to upload file: {ret.stderr}")
+        return ret
+    moved = run_command(f"sudo mv {temp_file_in_host} {destination}", False)
+    if moved.returncode != 0:
+        logger.error(f"Failed to install uploaded file at {destination}: {moved.stderr}")
+        return moved
     return ret
 
 
 def locate_file(candidates: List[str]) -> Optional[str]:
     # first match will return
     command = f"find {' '.join(candidates)} -type f -print -quit"
-    return run_command(command, False, log_output=False).stdout.strip()
+    found = run_command(command, False, log_output=False).stdout.strip()
+    return found or None
 
 
 def save_file(file_name: str, file_content: str, backup_identifier: str, ensure_newline: bool = True) -> None:
     if ensure_newline and not file_content.endswith("\n"):
         file_content += "\n"
     command = f'sudo cp "{file_name}" "{file_name}.{backup_identifier}.bak"'
-    run_command(command, False)
-    upload_file(file_content, file_name, False)
+    backup = run_command(command, False)
+    if backup.returncode != 0:
+        logger.warning(f"Failed to backup {file_name}: {backup.stderr}")
+    result = upload_file(file_content, file_name, False)
+    if result.returncode != 0:
+        raise HostFileError(f"Failed to save {file_name}: {result.stderr}")
