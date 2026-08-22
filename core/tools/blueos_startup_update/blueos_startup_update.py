@@ -348,7 +348,16 @@ def update_dwc2() -> bool:
 
     # Add dwc2 overlay in pi4 section if it doesn't exist
     dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=otg"
-    section_name = "pi4" if get_cpu_type() == CpuType.PI4 else "pi5"
+    cpu_type = get_cpu_type()
+    if cpu_type == CpuType.PI4:
+        section_name = "pi4"
+    elif cpu_type == CpuType.PI5:
+        section_name = "pi5"
+    else:
+        # A board filter the firmware does not know is applied instead of ignored, so a [pi5]
+        # section would reach the pins of every board older than the Pi5
+        logger.error("Unsupported CPU type for dwc2 update")
+        return False
     boot_config_add_configuration_at_section(config_content, dwc2_overlay_config, section_name)
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
