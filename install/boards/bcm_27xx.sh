@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 echo "Configuring BCM27XX board (Raspberry Pi 4).."
 
 VERSION="${VERSION:-master}"
