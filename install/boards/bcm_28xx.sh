@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 echo "Configuring BCM28XX board (Raspberry Pi zero, 1, 2, 3).."
 
 # Bookworm moved the boot partition to /boot/firmware and left plain text stubs behind at /boot,
