@@ -49,7 +49,7 @@ if ! grep -q "\[pi4\]" $CONFIG_FILE; then
 fi
 # find the line number of the [pi4] tag
 
-line_number=$(grep -n "\[pi4\]" $CONFIG_FILE | awk -F ":" '{print $1}')
+line_number=$(grep -n "\[pi4\]" $CONFIG_FILE | head -n 1 | awk -F ":" '{print $1}')
 echo "Line number of [pi4] tag: $line_number"
 
 

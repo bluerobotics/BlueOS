@@ -51,7 +51,7 @@ if ! grep -q "\[pi5\]" $CONFIG_FILE; then
 fi
 # find the line number of the [pi5] tag
 
-line_number=$(grep -n "\[pi5\]" $CONFIG_FILE | awk -F ":" '{print $1}')
+line_number=$(grep -n "\[pi5\]" $CONFIG_FILE | head -n 1 | awk -F ":" '{print $1}')
 echo "Line number of [pi5] tag: $line_number"
 
 
