@@ -74,7 +74,6 @@ for arg in "$@"; do
 done
 
 echo "Running pre push hook!"
-repository_path=$(git rev-parse --show-toplevel)
 tag_name=$(git tag --points-at=HEAD | head -n 1)
 
 [ -n "$tag_name" ] && {
@@ -128,6 +127,6 @@ echo "Running mypy.."
 echo "$python_packages" | parallel 'mypy {} --cache-dir "{}/__mypycache__"'
 
 echo "Running pytest.."
-pytest -n 10 --durations=0 --cov="$repository_path" --cov-report html
+pytest -n 10 --durations=0 --cov --cov-report term --cov-report html
 
 exit 0
