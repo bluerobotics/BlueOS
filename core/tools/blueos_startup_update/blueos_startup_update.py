@@ -117,6 +117,38 @@ def boot_config_get_or_append_section(config_content: List[str], section_name: s
     return (section_start_line_number, section_end_line_number)
 
 
+def boot_config_merge_duplicated_sections(config_content: List[str], section_name: str) -> None:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    section_match_pattern = r"^\[" + re.escape(section_name) + r"\].*$"
+    any_section_match_pattern = r"^\[.*\].*$"
+
+    # A board filter is applied until the next one, so config.txt is a run of sections, each starting
+    # at its header, with the configuration that applies to every board ahead of the first header
+    sections: List[List[str]] = [[]]
+    for line in config_content:
+        if re.match(any_section_match_pattern, line, regex_flags):
+            sections.append([])
+        sections[-1].append(line)
+
+    duplicated = [
+        index
+        for (index, section) in enumerate(sections[1:], start=1)
+        if re.match(section_match_pattern, section[0], regex_flags)
+    ]
+    if len(duplicated) < 2:
+        return
+
+    # Only the first section is ever read, and a blank line ends it, so the strays are emptied into
+    # it right below its header
+    (survivor, *strays) = duplicated
+    sections[survivor][1:1] = [line for index in strays for line in sections[index][1:] if line != ""]
+    for index in strays:
+        sections[index] = []
+
+    config_content[:] = [line for section in sections for line in section]
+
+
 def boot_config_add_configuration_at_section(config_content: List[str], config: str, section_name: str) -> None:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
@@ -445,6 +477,10 @@ def update_navigator_overlays() -> bool:
     else:
         logger.error("Unsupported CPU type for navigator overlays update")
         return False
+
+    # Devices patched by a release that appended a board section on every boot accumulated strays,
+    # and only the first of them would ever be configured
+    boot_config_merge_duplicated_sections(config_content, section_name)
 
     navigator_configs_with_match_patterns.reverse()
 
