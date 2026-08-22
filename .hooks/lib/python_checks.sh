@@ -83,7 +83,14 @@ run_python_checks() {
     fi
 
     echo "Running pytest (${env_label}).."
-    local pytest_args=(-n 10 --durations=0 --cov --cov-report term --cov-report html)
+    local pytest_args=(
+        -n 10
+        --durations=0
+        --cov="$CORE_DIR"
+        --cov="$ROOT_DIR/bootstrap"
+        --cov-report term
+        --cov-report html
+    )
     local ignore_path
     for ignore_path in "${pytest_ignores[@]}"; do
         [[ -z "$ignore_path" ]] && continue
