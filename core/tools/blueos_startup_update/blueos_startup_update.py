@@ -292,6 +292,9 @@ def revert_update_dwc2() -> bool:
     Removes dwc2 configuration from cmdline.txt
     This was being wrongly applied on Pi3 due to a bad host_cpu check.
     """
+    if cmdline_file is None:
+        logging.warning("cmdline.txt not found. skipping dwc2 revert")
+        return False
 
     # Remove dwc2 module configuration from cmdline
     unpatched_cmdline_content = load_file(cmdline_file).replace("\n", "").split(" ")
@@ -314,6 +317,9 @@ def clean_config_pi3() -> bool:
     Removes any tagged configurations from config.txt on Pi3
     This was being wrongly applied due to a bad host_cpu check.
     """
+    if config_file is None:
+        logging.warning("config.txt not found. skipping pi3 config cleanup")
+        return False
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
