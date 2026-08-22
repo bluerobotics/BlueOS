@@ -156,7 +156,9 @@ def boot_config_add_configuration_at_section(config_content: List[str], config: 
 
     section_content = config_content[section_start:section_end]
     config_already_exists = any(
-        section_content for section_content in section_content if re.match(config, section_content, regex_flags)
+        section_content
+        for section_content in section_content
+        if re.match(re.escape(config), section_content, regex_flags)
     )
     if not config_already_exists:
         config_content.insert(section_start + 1, config)
@@ -200,7 +202,7 @@ def boot_config_filter_conflicting_configuration_at_section(
                 # ...except...
                 and not (
                     # ...if it's the correct one....
-                    re.match(f"^{config}.*$", line, regex_flags)
+                    re.match(f"^{re.escape(config)}.*$", line, regex_flags)
                     # ...and lives inside the correct section.
                     and (section_start < i < section_end)
                 )
