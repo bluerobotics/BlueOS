@@ -160,15 +160,17 @@ jobs:
           echo "Core size is: $IMAGE_SIZE_MB MB"
           ((IMAGE_SIZE_MB < LIMIT_SIZE_MB))
 
+      # HACK, DROP THIS COMMIT: nothing may reach the bluerobotics registry while the images are
+      # built off a pull request, so publishing is turned off outright rather than by event name.
       - name: Login to DockerHub
-        if: success() && github.event_name != 'pull_request'
+        if: false
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker Buildx (push)
-        if: success() && github.event_name != 'pull_request'
+        if: false
         run: |
           docker buildx build \
             --output "type=image,push=true" \
@@ -176,7 +178,7 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }}
 
       - name: Inspect image
-        if: always() && github.event_name != 'pull_request'
+        if: false
         run: |
           docker buildx imagetools \
             inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
@@ -248,7 +250,9 @@ jobs:
 
   deploy-raspberry-image:
     needs: deploy-docker-images
-    if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
+    # HACK, DROP THIS COMMIT: build the images for this pull request so the boot configuration can
+    # be checked on a Pi3, a Pi4 and a Pi5 before merging. Restore the event name test after that.
+    if: github.repository_owner == 'bluerobotics'
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
     strategy:
       fail-fast: false
@@ -294,13 +298,27 @@ jobs:
             -v $PWD:/files \
             -e PATH=/pimod:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
             -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
-            -e VERSION=$GITHUB_REF_NAME \
+            -e VERSION=${{ github.event.pull_request.head.sha || github.ref_name }} \
             -e BASE_IMAGE=${{ matrix.image }} \
             --workdir=/files \
             --platform ${{ matrix.platform }} nature40/pimod:${PIMOD_VERSION} pimod.sh deploy/pimod/blueos.Pifile
 
       - name: Add /boot additions
         run: |
+          # configure_board.sh dispatches on the host device tree, so the board configuration the image
+          # must end up with is decided by the runner's own hardware, not by the image it builds.
+          case "${{ matrix.runner }}" in
+            pi5-builder)
+              EXPECTED=("[pi5]" "dtoverlay=i2c3-pi5,baudrate=400000" "dtoverlay=spi1-3cs")
+              ;;
+            blueos-ci|pi4-builder2)
+              EXPECTED=("[pi4]" "dtoverlay=i2c4,pins_6_7,baudrate=1000000" "dtoverlay=spi1-3cs")
+              ;;
+            *)
+              echo "Unknown runner ${{ matrix.runner }}, add the board configuration its image must contain."
+              exit 1
+              ;;
+          esac
           sudo apt-get update && sudo apt-get install -y parted kpartx
           # Create mount point if it doesn't exist
           sudo mkdir -p /mnt/piboot
@@ -310,12 +328,36 @@ jobs:
           sudo mount "/dev/mapper/${LOOP_DEVICE}p1" /mnt/piboot
           # Create ssh and userconf files
           sudo cp install/boards/config.toml /mnt/piboot/custom.toml
+          # A board install script writing to the /boot stub instead of the boot partition still exits 0,
+          # so the image itself is the only place where a missing Navigator configuration can be caught.
+          MISSING=()
+          for LINE in "${EXPECTED[@]}"; do
+            sudo grep -qxF "$LINE" /mnt/piboot/config.txt || MISSING+=("config.txt: $LINE")
+          done
+          # cmdline.txt is reached through its own path and can be left behind on its own. Whatever
+          # board this is, the memory cgroup docker needs is enabled and the serial console that
+          # would hold the autopilot port is dropped.
+          sudo grep -q "cgroup_enable=memory" /mnt/piboot/cmdline.txt || MISSING+=("cmdline.txt: cgroup_enable=memory")
+          if sudo grep -q "console=serial" /mnt/piboot/cmdline.txt; then
+            MISSING+=("cmdline.txt: console=serial is still there")
+          fi
           sudo umount /mnt/piboot
           sudo kpartx -d deploy/pimod/blueos.img
+          if [ ${#MISSING[@]} -ne 0 ]; then
+            echo "Missing from the boot partition of the ${{ matrix.os }} ${{ matrix.platform }} image built on ${{ matrix.runner }}:"
+            printf '  %s\n' "${MISSING[@]}"
+            echo "The board install script did not configure the image's boot partition."
+            exit 1
+          fi
           echo "Boot partition updated successfully."
 
       - name: Sanitize platform name
         run: echo "SANITIZED_PLATFORM=$(echo ${{ matrix.platform }} | tr '/' '-')" >> $GITHUB_ENV
+
+      # HACK, DROP THIS COMMIT: a pull request ref is refs/pull/N/merge, and an artifact name
+      # cannot hold the slashes of its GITHUB_REF_NAME
+      - name: Sanitize ref name
+        run: echo "SANITIZED_REF=$(echo $GITHUB_REF_NAME | tr '/' '-')" >> $GITHUB_ENV
 
       - name: Set asset name
         run: |
@@ -335,7 +377,7 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 120
         with:
-          name: BlueOS-raspberry-${{ env.GITHUB_REF_NAME }}${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}
+          name: BlueOS-raspberry-${{ env.SANITIZED_REF }}${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}
           path: BlueOS-raspberry-${{ env.SANITIZED_PLATFORM }}-${{ matrix.os }}${{ env.ASSET_NAME_SUFFIX }}.z*
           if-no-files-found: error
           retention-days: 7

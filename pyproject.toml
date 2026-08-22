@@ -61,6 +61,9 @@ branch = true
 omit = [
     "*/setup.py",
     "*/__init__.py",
+    # Host patch script. Most of it shells out to the host to reboot it, move boot files around and
+    # talk to docker, so only the boot configuration helpers are reachable from a test.
+    "*/blueos_startup_update.py",
     ]
 
 [tool.coverage.report]

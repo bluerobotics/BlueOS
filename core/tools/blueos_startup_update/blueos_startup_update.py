@@ -99,8 +99,8 @@ def boot_config_get_or_append_section(config_content: List[str], section_name: s
         (i for (i, line) in enumerate(config_content) if re.match(section_match_pattern, line, regex_flags)), None
     )
     if section_start_line_number is None:
-        config_content.append(f"\n[{section_name}]")
-        section_start_line_number = len(config_content)
+        config_content.extend(["", f"[{section_name}]"])
+        section_start_line_number = len(config_content) - 1
 
     any_section_match_pattern = r"^\[.*\].*$"
     section_end_line_number = next(
@@ -117,6 +117,38 @@ def boot_config_get_or_append_section(config_content: List[str], section_name: s
     return (section_start_line_number, section_end_line_number)
 
 
+def boot_config_merge_duplicated_sections(config_content: List[str], section_name: str) -> None:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+
+    section_match_pattern = r"^\[" + re.escape(section_name) + r"\].*$"
+    any_section_match_pattern = r"^\[.*\].*$"
+
+    # A board filter is applied until the next one, so config.txt is a run of sections, each starting
+    # at its header, with the configuration that applies to every board ahead of the first header
+    sections: List[List[str]] = [[]]
+    for line in config_content:
+        if re.match(any_section_match_pattern, line, regex_flags):
+            sections.append([])
+        sections[-1].append(line)
+
+    duplicated = [
+        index
+        for (index, section) in enumerate(sections[1:], start=1)
+        if re.match(section_match_pattern, section[0], regex_flags)
+    ]
+    if len(duplicated) < 2:
+        return
+
+    # Only the first section is ever read, and a blank line ends it, so the strays are emptied into
+    # it right below its header
+    (survivor, *strays) = duplicated
+    sections[survivor][1:1] = [line for index in strays for line in sections[index][1:] if line != ""]
+    for index in strays:
+        sections[index] = []
+
+    config_content[:] = [line for section in sections for line in section]
+
+
 def boot_config_add_configuration_at_section(config_content: List[str], config: str, section_name: str) -> None:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
@@ -124,13 +156,18 @@ def boot_config_add_configuration_at_section(config_content: List[str], config: 
 
     section_content = config_content[section_start:section_end]
     config_already_exists = any(
-        section_content for section_content in section_content if re.match(config, section_content, regex_flags)
+        section_content
+        for section_content in section_content
+        if re.match(re.escape(config), section_content, regex_flags)
     )
     if not config_already_exists:
         config_content.insert(section_start + 1, config)
 
 
 def boot_config_remove_section(config_content: List[str], section_name: str) -> None:
+    if section_name not in boot_config_get_available_section(config_content):
+        return
+
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
     del config_content[section_start:section_end]
 
@@ -168,7 +205,7 @@ def boot_config_filter_conflicting_configuration_at_section(
                 # ...except...
                 and not (
                     # ...if it's the correct one....
-                    re.match(f"^{config}.*$", line, regex_flags)
+                    re.match(f"^{re.escape(config)}.*$", line, regex_flags)
                     # ...and lives inside the correct section.
                     and (section_start < i < section_end)
                 )
@@ -206,7 +243,7 @@ def boot_cmdline_add_modules(cmdline_content: List[str], config_key: str, desire
             cmdline_content.remove(cmdline_content[config_index])
 
     # Replace the first configs line with the combined, append if none
-    if first_config_line:
+    if first_config_line is not None:
         cmdline_content[first_config_line] = f"{config_key}=" + ",".join(desired_config)
     else:
         config_line = f"{config_key}=" + ",".join(desired_config)
@@ -348,7 +385,16 @@ def update_dwc2() -> bool:
 
     # Add dwc2 overlay in pi4 section if it doesn't exist
     dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=otg"
-    section_name = "pi4" if get_cpu_type() == CpuType.PI4 else "pi5"
+    cpu_type = get_cpu_type()
+    if cpu_type == CpuType.PI4:
+        section_name = "pi4"
+    elif cpu_type == CpuType.PI5:
+        section_name = "pi5"
+    else:
+        # A board filter the firmware does not know is applied instead of ignored, so a [pi5]
+        # section would reach the pins of every board older than the Pi5
+        logger.error("Unsupported CPU type for dwc2 update")
+        return False
     boot_config_add_configuration_at_section(config_content, dwc2_overlay_config, section_name)
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
@@ -436,6 +482,10 @@ def update_navigator_overlays() -> bool:
     else:
         logger.error("Unsupported CPU type for navigator overlays update")
         return False
+
+    # Devices patched by a release that appended a board section on every boot accumulated strays,
+    # and only the first of them would ever be configured
+    boot_config_merge_duplicated_sections(config_content, section_name)
 
     navigator_configs_with_match_patterns.reverse()
 
