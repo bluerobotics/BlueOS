@@ -39,10 +39,12 @@ jobs:
         .hooks/pre-push
 
     - name: Upload coverage
+      if: always()
       uses: actions/upload-artifact@v7
       with:
         name: coverage
         path: ./core/htmlcov
+        if-no-files-found: ignore
 
 
   frontend-tests:
