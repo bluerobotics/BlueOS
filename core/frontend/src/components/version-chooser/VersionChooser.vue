@@ -223,11 +223,20 @@
       </v-card>
     </v-col>
     <pull-progress
+      :progress="major_tom_pull_output"
+      :show="show_major_tom_progress"
+      :download="major_tom_download_percentage"
+      :extraction="major_tom_extraction_percentage"
+      :statustext="major_tom_status_text"
+      :step="major_tom_step"
+    />
+    <pull-progress
       :progress="pull_output"
       :show="show_pull_output"
       :download="download_percentage"
       :extraction="extraction_percentage"
       :statustext="status_text"
+      :step="pull_step"
     />
     <v-overlay
       :z-index="10"
@@ -256,6 +265,10 @@ import {
   LocalVersionsQuery, Version, VersionsQuery, VersionType,
 } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
+import {
+  installOrUpdateMajorTom,
+  resolveMajorTomAction,
+} from '@/utils/major_tom'
 import PullTracker from '@/utils/pull_tracker'
 // Version Chooser Utils
 import * as VCU from '@/utils/version_chooser'
@@ -281,6 +294,13 @@ export default Vue.extend({
       bootstrap_version: undefined as (undefined | string),
       pull_output: '',
       show_pull_output: false,
+      pull_step: '',
+      show_major_tom_progress: false,
+      major_tom_pull_output: '',
+      major_tom_download_percentage: 0,
+      major_tom_extraction_percentage: 0,
+      major_tom_status_text: '',
+      major_tom_step: '',
       page: 1,
       local_versions: {
         result: {
@@ -340,6 +360,69 @@ export default Vue.extend({
     this.loadCurrentVersion()
   },
   methods: {
+    async runMajorTomInstallOrUpdate(): Promise<void> {
+      this.major_tom_status_text = 'Updating Major Tom...'
+      return new Promise<void>((resolve, reject) => {
+        const tracker = new PullTracker(
+          () => { resolve() },
+          (error) => { reject(new Error(error)) },
+        )
+
+        installOrUpdateMajorTom((progressEvent) => {
+          if (!progressEvent.event?.currentTarget?.response) {
+            return
+          }
+          tracker.digestNewData(progressEvent.event)
+          this.major_tom_pull_output = tracker.pull_output
+          this.major_tom_download_percentage = tracker.download_percentage
+          this.major_tom_extraction_percentage = tracker.extraction_percentage
+          this.major_tom_status_text = tracker.overall_status || 'Updating Major Tom...'
+        })
+          .then(() => { resolve() })
+          .catch(reject)
+      })
+    },
+    async updateMajorTomIfNeeded(): Promise<void> {
+      let step = ''
+      try {
+        const action = await resolveMajorTomAction(this.has_internet)
+        if (action === 'skip') {
+          return
+        }
+        step = action === 'install' ? 'Installing Major Tom' : 'Updating Major Tom'
+      } catch (error) {
+        console.warn('Failed to check for Major Tom updates:', error)
+        return
+      }
+
+      this.major_tom_step = step
+      this.major_tom_pull_output = ''
+      this.major_tom_download_percentage = 0
+      this.major_tom_extraction_percentage = 0
+      this.show_major_tom_progress = true
+      try {
+        await this.runMajorTomInstallOrUpdate()
+      } catch (error) {
+        notifier.pushError(
+          'MAJOR_TOM_UPDATE_FAIL',
+          `Failed to update Major Tom: ${error}`,
+          true,
+        )
+      } finally {
+        this.show_major_tom_progress = false
+      }
+    },
+    async applyVersion(fullname: string): Promise<void> {
+      const [repository, tag] = fullname.split(':')
+      await back_axios({
+        method: 'post',
+        url: '/version-chooser/v1.0/version/current',
+        data: {
+          repository,
+          tag,
+        },
+      }).finally(() => { this.waitForBackendToRestart(true) })
+    },
     backendIsOnline() {
       return new Promise((resolve) => {
         back_axios({
@@ -533,13 +616,15 @@ export default Vue.extend({
     },
     async pullAndSetVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
+      await this.updateMajorTomIfNeeded()
       // This streams the output of docker pull
+      this.pull_step = 'Updating BlueOS'
       this.pull_output = 'Fetching remote image...'
       this.show_pull_output = true
       await this.pullVersion(fullname)
         .then(() => {
           this.show_pull_output = false
-          this.setVersion(fullname)
+          this.applyVersion(fullname)
         })
         .catch((error) => {
           this.show_pull_output = false
@@ -596,6 +681,7 @@ export default Vue.extend({
     async updateBootstrap(image: string) {
       const [_, tag] = image.split(':')
       this.updating_bootstrap = true
+      this.pull_step = 'Updating Bootstrap'
       await this.pullVersion(image)
         .then(() => {
           this.show_pull_output = false
@@ -638,15 +724,8 @@ export default Vue.extend({
     },
     async setVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
-      const [repository, tag] = fullname.split(':')
-      await back_axios({
-        method: 'post',
-        url: '/version-chooser/v1.0/version/current',
-        data: {
-          repository,
-          tag,
-        },
-      }).finally(() => { this.waitForBackendToRestart(true) })
+      await this.updateMajorTomIfNeeded()
+      await this.applyVersion(fullname)
     },
     async deleteVersion(args: string | string[]) {
       const fullname: string = Array.isArray(args) ? args[0] : args
