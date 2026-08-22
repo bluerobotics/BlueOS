@@ -57,6 +57,8 @@ BOOT_FILE_INSTALL_SCRIPTS = [
 ]
 assert set(NAVIGATOR_INSTALL_SCRIPTS.values()) <= set(BOOT_FILE_INSTALL_SCRIPTS), "an install script went missing"
 
+WORKFLOW_PATH = REPOSITORY_PATH / ".github" / "workflows" / "test-and-deploy.yml"
+
 # Stock config.txt of the Bullseye image BlueOS builds from, taken from
 # RPi-Distro/pi-gen stage1/00-boot-files/files/config.txt on the bullseye branch.
 # The board section already exists here, sits in the middle of the file, and is followed by a
@@ -689,6 +691,36 @@ def test_install_scripts_reach_boot_files_only_through_boot_path(script_name: st
     outside_probe = code.replace(probe, "") if probe else code
     hardcoded = sorted(set(re.findall(r"/boot[\w./$-]*", outside_probe)))
     assert not hardcoded, f"{script_name} reaches boot files without BOOT_PATH: {hardcoded}"
+
+
+def test_image_build_checks_what_the_install_scripts_write() -> None:
+    # An install script that configures a stub still exits 0, so the built image is the only place
+    # the mistake shows. That check only runs on the upstream repository, where nobody reads it
+    # until a release ships, so it stopping matching the install scripts has to fail here instead.
+    workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+    sections = {install_script_section(script): script for script in NAVIGATOR_INSTALL_SCRIPTS.values()}
+
+    checked = []
+    for words in re.findall(r"EXPECTED=\((.*?)\)", workflow, re.DOTALL):
+        expected = bash_words(words)
+        headers = [line for line in expected if line.startswith("[")]
+        assert len(headers) == 1, f"{expected} does not look for exactly one board section"
+        section_name = headers[0].strip("[]")
+        assert section_name in sections, f"no install script writes a [{section_name}] section"
+        _, insertions = install_script_configuration(sections[section_name])
+        for line in expected:
+            assert line in headers or line in insertions, f"{sections[section_name]} does not write {line!r}"
+        checked.append(section_name)
+
+    assert sorted(checked) == sorted(sections), f"{sorted(sections)} are built as images, {sorted(checked)} are checked"
+
+    # cmdline.txt is reached through a path of its own, so it is checked separately, and every board
+    # script writes the same two things to it whether or not a Navigator can be used with the board
+    for configuration in ("cgroup_enable=memory", "console=serial"):
+        assert f'"{configuration}" /mnt/piboot/cmdline.txt' in workflow, f"the image is not checked for {configuration}"
+        for script_name in BOOT_FILE_INSTALL_SCRIPTS:
+            content = (REPOSITORY_PATH / script_name).read_text(encoding="utf-8")
+            assert configuration in content, f"{script_name} no longer writes {configuration!r}"
 
 
 @pytest.mark.parametrize("boot_file", ["config.txt", "cmdline.txt"])
