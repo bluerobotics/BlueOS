@@ -165,6 +165,9 @@ def boot_config_add_configuration_at_section(config_content: List[str], config: 
 
 
 def boot_config_remove_section(config_content: List[str], section_name: str) -> None:
+    if section_name not in boot_config_get_available_section(config_content):
+        return
+
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
     del config_content[section_start:section_end]
 
