@@ -817,7 +817,13 @@ def main() -> int:
 
     enabled_patches = [(name, patch) for name, patch in patches_to_apply if name not in disabled_patches]
 
-    patches_requiring_restart = [name for name, patch in enabled_patches if patch()]
+    patches_requiring_restart = []
+    for name, patch in enabled_patches:
+        try:
+            if patch():
+                patches_requiring_restart.append(name)
+        except Exception as patch_error:
+            logger.error(f"Patch {name} failed: {patch_error}")
     if patches_requiring_restart:
         logger.warning("The system will restart in 10 seconds because the following applied patches required restart:")
         for patch in patches_requiring_restart:
