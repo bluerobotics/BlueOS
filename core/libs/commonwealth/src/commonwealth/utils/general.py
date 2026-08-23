@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, AsyncGenerator
 
 import psutil
-from commonwealth.utils.commands import load_file
+from commonwealth.utils.commands import HostFileError, load_file
 from commonwealth.utils.decorators import temporary_cache
 from loguru import logger
 
@@ -47,7 +47,10 @@ def get_cpu_type() -> CpuType:
 
 @cache
 def get_host_os() -> HostOs:
-    os_release = load_file("/etc/os-release")
+    try:
+        os_release = load_file("/etc/os-release")
+    except HostFileError:
+        return HostOs.Other
     if "bookworm" in os_release.lower():
         return HostOs.Bookworm
     if "bullseye" in os_release.lower():
