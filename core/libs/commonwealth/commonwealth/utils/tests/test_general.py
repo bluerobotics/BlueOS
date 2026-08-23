@@ -8,6 +8,7 @@ import pytest
 from pyfakefs.fake_filesystem import FakeFilesystem
 
 from .. import general
+from ..commands import HostFileError
 from ..general import HostOs
 
 
@@ -23,6 +24,17 @@ def test_get_host_os(os_release: str, expected_host_os: HostOs, monkeypatch: pyt
     general.get_host_os.cache_clear()
     monkeypatch.setattr(general, "load_file", lambda _: os_release)
     assert general.get_host_os() == expected_host_os
+    general.get_host_os.cache_clear()
+
+
+def test_get_host_os_returns_other_when_load_file_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    general.get_host_os.cache_clear()
+
+    def raise_host_file_error(_file_name: str) -> str:
+        raise HostFileError("Failed to read /etc/os-release")
+
+    monkeypatch.setattr(general, "load_file", raise_host_file_error)
+    assert general.get_host_os() == HostOs.Other
     general.get_host_os.cache_clear()
 
 
