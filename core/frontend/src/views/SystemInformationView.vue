@@ -3,7 +3,7 @@
     height="100%"
   >
     <v-tabs
-      v-model="page_selected"
+      v-model="current_page"
       centered
       icons-and-text
       show-arrows
@@ -12,29 +12,21 @@
       <v-tab
         v-for="page in pages"
         :key="page.value"
+        :tab-value="page.value"
       >
         {{ page.title }}
         <v-icon>{{ page.icon }}</v-icon>
       </v-tab>
     </v-tabs>
-    <v-tabs-items v-model="page_selected">
-      <v-tab-item
-        v-for="(page, index) in pages"
-        :key="page.value"
-      >
-        <!-- Only mount the active tab so heavy consumers (kernel/journal WS) tear down when leaving -->
-        <template v-if="page_selected === index">
-          <processes v-if="page.value === 'process'" />
-          <system-condition v-else-if="page.value === 'system_condition'" />
-          <network v-else-if="page.value === 'network'" />
-          <usb v-else-if="page.value === 'usb'" />
-          <kernel v-else-if="page.value === 'kernel'" />
-          <journal v-else-if="page.value === 'journal'" />
-          <firmware v-else-if="page.value === 'firmware'" />
-          <about-this-system v-else-if="page.value === 'about'" />
-        </template>
-      </v-tab-item>
-    </v-tabs-items>
+    <!-- Only mount the active tab so heavy consumers (kernel/journal WS) tear down when leaving -->
+    <processes v-if="current_page === 'process'" />
+    <system-condition v-else-if="current_page === 'system_condition'" />
+    <network v-else-if="current_page === 'network'" />
+    <usb v-else-if="current_page === 'usb'" />
+    <kernel v-else-if="current_page === 'kernel'" />
+    <journal v-else-if="current_page === 'journal'" />
+    <firmware v-else-if="current_page === 'firmware'" />
+    <about-this-system v-else-if="current_page === 'about'" />
   </v-card>
 </template>
 
@@ -89,13 +81,22 @@ export default Vue.extend({
         },
         { title: 'About', icon: 'mdi-information', value: 'about' },
       ] as Item[],
-      page_selected: 0 as number,
+      page_value: 'system_condition',
     }
   },
   computed: {
     pages(): Item[] {
       return this.items
         .filter((item: Item) => item?.is_pirate !== true || this.settings.is_pirate_mode)
+    },
+    current_page: {
+      get(): string {
+        return this.pages.find((page) => page.value === this.page_value)?.value
+          ?? this.pages[0].value
+      },
+      set(value: string) {
+        this.page_value = value
+      },
     },
   },
 })
