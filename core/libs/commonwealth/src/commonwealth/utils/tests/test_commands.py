@@ -40,6 +40,15 @@ def test_locate_file_returns_none_when_find_prints_nothing(monkeypatch: pytest.M
     assert commands.locate_file(["/missing/a", "/missing/b"]) is None
 
 
+def test_locate_file_returns_match_when_find_exits_nonzero(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        commands,
+        "run_command",
+        lambda *_args, **_kwargs: _result(1, stdout="/boot/config.txt\n", stderr="No such file"),
+    )
+    assert commands.locate_file(["/boot/firmware/config.txt", "/boot/config.txt"]) == "/boot/config.txt"
+
+
 def test_save_file_raises_when_upload_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(commands, "run_command", lambda *_args, **_kwargs: _result(0))
     monkeypatch.setattr(commands, "upload_file", lambda *_args, **_kwargs: _result(1, stderr="Permission denied"))
