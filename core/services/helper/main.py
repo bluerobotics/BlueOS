@@ -13,7 +13,7 @@ from enum import Enum
 from functools import cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -578,18 +578,80 @@ def software_id() -> Any:
         raise HTTPException(status_code=400, detail="Error: {exception}") from exception
 
 
+async def _tcp_reachable(host: str, ports: Tuple[int, ...], interface: Optional[str], timeout: float = 2.0) -> bool:
+    """TCP connect bound to an iface. Used when ICMP is filtered (amazon.com, etc).
+
+    `interface` is an iface name (`SO_BINDTODEVICE`) or an IPv4 source (`bind()`).
+    DNS uses the default route; only the TCP connect is bound.
+    """
+    event_loop = asyncio.get_running_loop()
+    try:
+        socket.inet_aton(host)
+        ips = [host]
+    except OSError:
+        try:
+            infos = await asyncio.wait_for(
+                event_loop.getaddrinfo(host, None, family=socket.AF_INET, type=socket.SOCK_STREAM),
+                timeout,
+            )
+        except (OSError, asyncio.TimeoutError):
+            return False
+        ips = list(dict.fromkeys(info[4][0] for info in infos))
+        if not ips:
+            return False
+
+    async def connect(ip: str, port: int) -> bool:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setblocking(False)
+        try:
+            if interface:
+                try:
+                    socket.inet_aton(interface)
+                except OSError:
+                    try:
+                        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, interface.encode() + b"\0")
+                    except PermissionError as exc:
+                        logger.warning(f"SO_BINDTODEVICE {interface}: {exc}")
+                        return False
+                else:
+                    sock.bind((interface, 0))
+            await asyncio.wait_for(event_loop.sock_connect(sock, (ip, port)), timeout)
+            return True
+        except (OSError, asyncio.TimeoutError):
+            return False
+        finally:
+            sock.close()
+
+    for ip in ips:
+        if any(await asyncio.gather(*(connect(ip, port) for port in ports))):
+            return True
+    return False
+
+
 @fast_api_app.get(
     "/ping",
-    summary="Ping a server using a specific interface.",
+    summary="Check that a host is reachable via a specific interface (ICMP, then TCP 80/443).",
 )
 @version(1, 0)
 async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
     iface = ["-I", interface_addr] if interface_addr else []
     process = await asyncio.create_subprocess_exec(
-        "ping", "-c", "1", *iface, host, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        "ping",
+        "-c",
+        "1",
+        "-W",
+        "2",
+        "-n",
+        *iface,
+        host,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
     await process.communicate()
-    return process.returncode == 0
+    if process.returncode == 0:
+        return True
+    # ICMP-deaf HTTP hosts (amazon.com, telemetry.blueos.cloud) still have internet.
+    return await _tcp_reachable(host, (80, 443), interface_addr)
 
 
 async def periodic() -> None:
