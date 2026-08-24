@@ -706,7 +706,7 @@ class EthernetManager:
                 oif=interface_index,
                 dst=str(route.destination),
                 gateway=str(gateway) if gateway else None,
-                metrics={"metric": route.priority} if route.priority else None,
+                priority=route.priority if action == "add" else None,
             )
 
             act = "Removed" if action == "del" else "Added" if action == "add" else action
