@@ -493,6 +493,7 @@ class WifiManager(AbstractWifiManager):
 
         if self.hotspot.is_running():
             logger.warning("Hotspot already running. No need to enable it again.")
+            return True
         await self.hotspot.start()
         return True
 
