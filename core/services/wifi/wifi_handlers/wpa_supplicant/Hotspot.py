@@ -164,20 +164,26 @@ class HotspotManager:
     def command_list(self) -> List[str]:
         return shlex.split(f"{self.binary()} {self.config_path()}")
 
+    def _hostapd_process_alive(self) -> bool:
+        return self._subprocess is not None and self._subprocess.poll() is None
+
     async def start(self) -> None:
         logger.info("Starting hotspot.")
         if not self.supports_hotspot:
             raise RuntimeError("Hotspot not supported on this device.")
         try:
             self._create_temp_config_file()
+            # Recreating uap0 leaves hostapd bound to the old netdev unless we stop it first.
+            if self._hostapd_process_alive():
+                assert self._subprocess is not None
+                self._subprocess.kill()
             self._create_virtual_interface()
             # pylint: disable=consider-using-with
-            if not self.is_running():
-                self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
-                await asyncio.sleep(3)
-                if not self.is_running():
-                    exit_code = self._subprocess.returncode
-                    raise RuntimeError(f"Failed to initialize Hostapd ({exit_code}).")
+            self._subprocess = subprocess.Popen(self.command_list(), shell=False, encoding="utf-8", errors="ignore")
+            await asyncio.sleep(3)
+            if not self._hostapd_process_alive():
+                exit_code = self._subprocess.returncode
+                raise RuntimeError(f"Failed to initialize Hostapd ({exit_code}).")
             if not self._dhcp_server:
                 self._dhcp_server = DHCPServerManager(self._ap_interface_name, self._ipv4_gateway)
                 return
@@ -187,7 +193,7 @@ class HotspotManager:
 
     def stop(self) -> None:
         logger.info("Stopping hotspot.")
-        if self.is_running():
+        if self._hostapd_process_alive():
             assert self._subprocess is not None
             self._subprocess.kill()
             if not self._dhcp_server:
@@ -202,9 +208,10 @@ class HotspotManager:
         await self.start()
 
     def is_running(self) -> bool:
-        if not self.supports_hotspot:
+        if not self.supports_hotspot or not self._hostapd_process_alive():
             return False
-        return self._subprocess is not None and self._subprocess.poll() is None
+        stats = psutil.net_if_stats().get(self._ap_interface_name)
+        return bool(stats and stats.isup)
 
     @staticmethod
     def config_path() -> pathlib.Path:
