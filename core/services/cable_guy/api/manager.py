@@ -3,7 +3,7 @@ import errno
 import re
 import subprocess
 import time
-from ipaddress import ip_network
+from ipaddress import IPv4Address, ip_network
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -390,7 +390,37 @@ class EthernetManager:
                 address for address in saved_interface.addresses if address.mode != AddressMode.Client
             ]
 
+        self._remove_orphaned_subnet_route(interface_name, ip_address, saved_interface)
+
         self._update_interface_settings(interface_name, saved_interface)
+
+    def _remove_orphaned_subnet_route(
+        self, interface_name: str, ip_address: str, saved_interface: NetworkInterface
+    ) -> None:
+        # A subnet route previously adopted will outlives its IP and can hijack traffic
+        if not self.weak_is_ip_address(ip_address) or ip_address == "0.0.0.0":
+            return
+
+        # /24 mirrors the prefix used when adding/removing static IPs
+        subnet = ip_network(f"{ip_address}/24", strict=False)
+        try:
+            remaining = self.get_interface_by_name(interface_name).addresses
+        except Exception as error:
+            logger.error(f"Could not check remaining addresses on {interface_name}: {error}")
+            return
+        if any(self.weak_is_ip_address(address.ip) and IPv4Address(address.ip) in subnet for address in remaining):
+            return
+
+        try:
+            self.ipr.route("del", dst=str(subnet), oif=self._get_interface_index(interface_name))
+            logger.info(f"Removed orphaned route {subnet} from interface {interface_name}.")
+        except NetlinkError as error:
+            # the kernel already removes its own connected routes on address deletion, so a missing route is fine
+            if error.code not in (errno.ESRCH, errno.ENOENT):
+                logger.error(f"Failed to remove orphaned route {subnet} on {interface_name}: {error}")
+                return
+
+        saved_interface.routes = [route for route in saved_interface.routes if route.destination != str(subnet)]
 
     def get_interface_by_name(self, name: str, include_dhcp_markers: bool = False) -> NetworkInterface:
         """Get interface by name.
