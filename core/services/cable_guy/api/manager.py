@@ -15,6 +15,7 @@ from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.exceptions import NetlinkError
+from pyroute2.netlink.rtnl import rtprotos
 from pyroute2.netlink.rtnl.ifaddrmsg import ifaddrmsg
 
 from api import dns, settings
@@ -732,6 +733,11 @@ class EthernetManager:
 
         routes: Set[Route] = set()
         for raw_route in raw_routes:
+            # Kernel-maintained connected routes are created/removed automatically alongside their
+            # interface addresses. Adopting them would turn them into persistent routes
+            # that outlive their IP, so we ignore them entirely.
+            if raw_route["proto"] == rtprotos["RTPROT_KERNEL"]:
+                continue
             try:
                 route = self._parse_route(raw_route)
 
