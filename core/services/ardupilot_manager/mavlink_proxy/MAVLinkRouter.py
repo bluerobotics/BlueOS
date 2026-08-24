@@ -2,6 +2,8 @@ import re
 import subprocess
 from typing import Optional
 
+from loguru import logger
+
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 
@@ -9,6 +11,15 @@ from mavlink_proxy.Endpoint import Endpoint, EndpointType
 class MAVLinkRouter(AbstractRouter):
     def __init__(self) -> None:
         super().__init__()
+
+    def add_endpoint(self, endpoint: Endpoint) -> None:
+        if endpoint.connection_type == EndpointType.TCPServer and any(
+            existing.connection_type == EndpointType.TCPServer and existing.name != endpoint.name
+            for existing in self.endpoints()
+        ):
+            logger.error(f"MAVLinkRouter only supports one TCP server. Skipping '{endpoint}'.")
+            return
+        super().add_endpoint(endpoint)
 
     def _get_version(self) -> Optional[str]:
         binary = self.binary()
