@@ -3,6 +3,7 @@ from typing import Any, Callable, Coroutine, Dict, Optional
 
 from commonwealth.utils.logs import stack_trace_message
 from fastapi import HTTPException, Request, Response, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from loguru import logger
@@ -32,6 +33,8 @@ class GenericErrorHandlingRoute(APIRoute):
                 if error.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
                     logger.exception(error)
                 raise error
+            except RequestValidationError:
+                raise
             except Exception as error:
                 logger.error("Unhandled service exception.")
                 logger.exception(error)
