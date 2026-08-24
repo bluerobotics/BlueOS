@@ -2,6 +2,7 @@ import json
 from typing import Any, Callable, Coroutine, Dict, Optional
 
 from fastapi import HTTPException, Request, Response, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute
 from loguru import logger
 from starlette.responses import Response as StarletteResponse
@@ -33,6 +34,8 @@ class GenericErrorHandlingRoute(APIRoute):
                 if error.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
                     logger.exception(error)
                 raise error
+            except RequestValidationError:
+                raise
             except Exception as error:
                 logger.error("Unhandled service exception.")
                 logger.exception(error)
