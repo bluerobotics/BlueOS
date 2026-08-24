@@ -85,6 +85,25 @@ class Route(BaseModel):
         return ip_network(self.destination).is_multicast
 
 
+def managed_routes_only(routes: List[Route]) -> List[Route]:
+    return [route for route in routes if route.managed]
+
+
+def persist_managed_route(saved: List[Route], action: str, route: Route) -> List[Route]:
+    """Keep only cable-guy-owned routes; never snapshot kernel/DHCP/connected routes."""
+    owned = [saved_route for saved_route in saved if saved_route.managed and saved_route != route]
+    if action == "add":
+        owned.append(
+            Route(
+                destination=route.destination,
+                gateway=route.gateway,
+                priority=route.priority,
+                managed=True,
+            )
+        )
+    return owned
+
+
 class NetworkInterfaceV1(BaseModel):
     name: str
     addresses: List[InterfaceAddress]
