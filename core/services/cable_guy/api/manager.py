@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import asyncio
 import errno
 import ipaddress
@@ -31,6 +32,8 @@ from typedefs import (
     NetworkInterfaceMetric,
     NetworkInterfaceMetricApi,
     Route,
+    managed_routes_only,
+    persist_managed_route,
 )
 
 __all__ = [
@@ -71,6 +74,15 @@ class EthernetManager:
     async def initialize(self) -> None:
         self.network_handler = await NetworkHandlerDetector().getHandler()
         logger.info("Loading previous settings.")
+        dropped_unmanaged = False
+        for item in self._settings.content:
+            managed = managed_routes_only(item.routes)
+            if len(managed) != len(item.routes):
+                item.routes = managed
+                dropped_unmanaged = True
+        if dropped_unmanaged:
+            logger.warning("Dropped unmanaged saved routes so they are not reapplied on ethernet.")
+            self.save()
         for item in self._settings.content:
             logger.info(f"Loading following configuration: {item}.")
             try:
@@ -140,7 +152,7 @@ class EthernetManager:
     def _set_routes_configuration(self, interface: NetworkInterface) -> None:
         try:
             current_routes = self.get_routes(interface.name, ignore_unmanaged=True)
-            desired_routes = interface.routes
+            desired_routes = managed_routes_only(interface.routes)
 
             # Remove old routes
             for current_route in current_routes:
@@ -699,21 +711,23 @@ class EthernetManager:
 
             act = "Removed" if action == "del" else "Added" if action == "add" else action
             logger.info(f"{act} route to {route.destination} via {gateway} on {interface_name}")
-        except NetlinkError as e:
-            if e.code == errno.EEXIST and action == "add":
-                logger.debug(f"Route {route.destination} via {gateway} on {interface_name} already exists, ignoring")
-                return
-
-        except Exception as e:
+        except NetlinkError as error:
+            already_present = error.code == errno.EEXIST and action == "add"
+            already_absent = error.code in (errno.ENOENT, errno.ESRCH) and action == "del"
+            if not already_present and not already_absent:
+                act = "Remove" if action == "del" else "Add" if action == "add" else action
+                logger.error(f"Failed to {act} route {route.destination} via {gateway} on {interface_name}: {error}")
+                raise
+            logger.debug(
+                f"Route {route.destination} via {gateway} on {interface_name} already "
+                f"{'exists' if already_present else 'absent'}, persisting anyway"
+            )
+        except Exception as error:
             act = "Remove" if action == "del" else "Add" if action == "add" else action
-            logger.error(f"Failed to {act} route {route.destination} via {gateway} on {interface_name}: {e}")
+            logger.error(f"Failed to {act} route {route.destination} via {gateway} on {interface_name}: {error}")
             raise
 
-        # Update settings
-        current_interface.routes = list(self.get_routes(interface_name, ignore_unmanaged=False))
-        for current_route in current_interface.routes:
-            if current_route.destination == route.destination and current_route.gateway == route.gateway:
-                current_route.managed = route.managed
+        current_interface.routes = persist_managed_route(current_interface.routes, action, route)
         self._update_interface_settings(interface_name, current_interface)
 
     def get_routes(self, interface_name: str, ignore_unmanaged: bool = True) -> Set[Route]:
