@@ -1,9 +1,10 @@
 import asyncio
 import errno
+import ipaddress
 import re
 import subprocess
 import time
-from ipaddress import IPv4Address, ip_network
+from ipaddress import ip_network
 from socket import AddressFamily
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -387,19 +388,28 @@ class EthernetManager:
     def _remove_orphaned_subnet_route(
         self, interface_name: str, ip_address: str, saved_interface: NetworkInterface
     ) -> None:
-        # A subnet route previously adopted will outlives its IP and can hijack traffic
-        if not self.weak_is_ip_address(ip_address) or ip_address == "0.0.0.0":
+        # A subnet route previously adopted will outlive its IP and can hijack traffic
+        try:
+            addr = ipaddress.ip_address(ip_address)
+        except ValueError:
+            return
+        if addr.is_unspecified:
             return
 
-        # /24 mirrors the prefix used when adding/removing static IPs
-        subnet = ip_network(f"{ip_address}/24", strict=False)
+        prefixlen = 24 if addr.version == 4 else 64
+        subnet = ipaddress.ip_network((addr, prefixlen), strict=False)
         try:
             remaining = self.get_interface_by_name(interface_name).addresses
         except Exception as error:
             logger.error(f"Could not check remaining addresses on {interface_name}: {error}")
             return
-        if any(self.weak_is_ip_address(address.ip) and IPv4Address(address.ip) in subnet for address in remaining):
-            return
+        for address in remaining:
+            try:
+                other = ipaddress.ip_address(str(address.ip))
+            except ValueError:
+                continue
+            if other.version == addr.version and other in subnet:
+                return
 
         try:
             self.ipr.route("del", dst=str(subnet), oif=self._get_interface_index(interface_name))
