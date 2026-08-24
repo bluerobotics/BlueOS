@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import asyncio
 import errno
 import re
