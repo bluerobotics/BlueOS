@@ -1,7 +1,7 @@
 import platform
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
-from commonwealth.utils.commands import load_file
+from commonwealth.utils.commands import HostFileError, load_file
 from commonwealth.utils.general import CpuType, get_cpu_type
 from elftools.elf.elffile import ELFFile
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
@@ -77,7 +77,10 @@ class NavigatorPi4(Navigator):
 
     def get_serials(self) -> List[Serial]:
         release = "Bullseye"
-        os_release = load_file("/etc/os-release")
+        try:
+            os_release = load_file("/etc/os-release")
+        except HostFileError:
+            os_release = ""
         if "bookworm" in os_release.lower():
             release = "Bookworm"
 
