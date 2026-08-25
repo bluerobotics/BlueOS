@@ -6,6 +6,7 @@ from fastapi_versioning import versioned_api_route
 from manifest import ManifestManager
 from manifest.exceptions import (
     ExtensionEntryNotFound,
+    ManifestBackendOffline,
     ManifestDataFetchFailed,
     ManifestDataParseFailed,
     ManifestInvalidURL,
@@ -34,7 +35,12 @@ def manifest_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., An
     async def wrapper(*args: Tuple[Any], **kwargs: dict[str, Any]) -> Any:
         try:
             return await endpoint(*args, **kwargs)
-        except (ManifestDataFetchFailed, ManifestDataParseFailed, ManifestInvalidURL) as error:
+        except (
+            ManifestBackendOffline,
+            ManifestDataFetchFailed,
+            ManifestDataParseFailed,
+            ManifestInvalidURL,
+        ) as error:
             raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
         except (ManifestNotFound, ExtensionEntryNotFound) as error:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
