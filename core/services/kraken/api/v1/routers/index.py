@@ -1,5 +1,6 @@
 from typing import Any, List, Optional, cast
 
+from api.v2.routers.manifest import manifest_to_http_exception
 from commonwealth.utils.streaming import streamer, timeout_streamer
 from extension.extension import Extension
 from extension.models import ExtensionSource
@@ -20,6 +21,7 @@ manifest_manager = ManifestManager.instance()
 
 
 @index_router_v1.get("/extensions_manifest", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
 async def fetch_manifest() -> list[RepositoryEntry]:
     return await manifest_manager.fetch_consolidated()
 
