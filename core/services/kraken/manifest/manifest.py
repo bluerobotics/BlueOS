@@ -275,7 +275,7 @@ class ManifestManager:
 
         versions: List[semver.VersionInfo] = sorted([valid_semver(tag) for tag in ext.versions], reverse=True)
         if stable:
-            versions = [v for v in versions if not v.prerelease and not v.patch]
+            versions = [v for v in versions if not v.prerelease]
 
         return versions
 
