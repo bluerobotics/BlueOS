@@ -13,7 +13,8 @@ for _name in ("exceptions", "settings", "typedefs"):
 
 sys.modules["pyroute2"] = MagicMock()
 sys.modules["settings"] = MagicMock()
-for _pkg in (
+# Restore after import so other collected tests still see real commonwealth (pytest-xdist).
+_STUBBED = (
     "commonwealth",
     "commonwealth.utils",
     "commonwealth.utils.DHCPServerManager",
@@ -22,13 +23,21 @@ for _pkg in (
     "commonwealth.settings.manager",
     "commonwealth.settings.settings",
     "fastapi",
-):
-    sys.modules[_pkg] = MagicMock()
+)
+_previous = {name: sys.modules.get(name) for name in _STUBBED}
+for name in _STUBBED:
+    sys.modules[name] = MagicMock()
 
 import pytest
 
 from wifi_handlers.wpa_supplicant.Hotspot import HotspotManager
 from wifi_handlers.wpa_supplicant.WifiManager import WifiManager
+
+for name, previous in _previous.items():
+    if previous is None:
+        del sys.modules[name]
+    else:
+        sys.modules[name] = previous
 
 
 def _bare_hotspot() -> HotspotManager:
