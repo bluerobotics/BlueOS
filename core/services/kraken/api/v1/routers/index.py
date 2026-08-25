@@ -5,6 +5,7 @@ from fastapi import APIRouter, status
 from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi_versioning import versioned_api_route
 
+from api.v2.routers.container import container_to_http_exception
 from extension.extension import Extension
 from extension.models import ExtensionSource
 from harbor import ContainerManager
@@ -37,11 +38,13 @@ async def list_containers() -> Any:
 
 
 @index_router_v1.get("/log", status_code=status.HTTP_200_OK, response_class=PlainTextResponse)
+@container_to_http_exception
 async def log_containers(container_name: str, timeout: Optional[int] = None) -> StreamingResponse:
     """
     Fetch logs of a given container.
     If timeout is provided, the stream will be closed after no log line is received for the given timeout.
     """
+    await ContainerManager.get_running_container_by_name(container_name)
     stream = ContainerManager.get_container_log_by_name(container_name)
 
     if timeout is not None:
