@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, HTTPException, status
 from fastapi_versioning import versioned_api_route
 
 from jobs import JobsManager
-from jobs.exceptions import JobNotFound
+from jobs.exceptions import JobNotFound, JobOperationNotAllowed
 from jobs.models import Job, JobMethod
 
 jobs_router_v2 = APIRouter(
@@ -24,6 +24,8 @@ def jobs_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
             return await endpoint(*args, **kwargs)
         except JobNotFound as error:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+        except JobOperationNotAllowed as error:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
         except Exception as error:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
 
