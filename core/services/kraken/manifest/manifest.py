@@ -257,11 +257,9 @@ class ManifestManager:
 
         return next((ext for ext in manifest if ext.identifier == extension_id), None)
 
-    async def fetch_extension_versions(
-        self, extension_id: str, stable: bool, manifest_id: Optional[str] = None
-    ) -> List[semver.VersionInfo]:
-        ext = await self.fetch_extension(extension_id, manifest_id)
-        if not ext or not ext.versions:
+    @staticmethod
+    def versions_from_entry(ext: RepositoryEntry, stable: bool) -> List[semver.VersionInfo]:
+        if not ext.versions:
             return []
 
         def valid_semver(string: str) -> Optional[semver.VersionInfo]:
@@ -286,7 +284,7 @@ class ManifestManager:
         if not ext or not ext.versions:
             return None
 
-        versions = await self.fetch_extension_versions(extension_id, stable, manifest_id)
+        versions = self.versions_from_entry(ext, stable)
 
         return (ext.versions.get(str(versions[0])) or ext.versions.get(f"v{versions[0]}")) if versions else None
 

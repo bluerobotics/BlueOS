@@ -85,11 +85,10 @@ async def fetch_ext_tags_from_manifest(
     """
     Get all tags for a given extension identifier using one manifest as source.
     """
-    if not await manifest_manager.fetch_extension(extension_identifier, manifest_identifier):
+    ext = await manifest_manager.fetch_extension(extension_identifier, manifest_identifier)
+    if not ext:
         raise ExtensionNotFound(f"Extension {extension_identifier} not found")
-    versions = await manifest_manager.fetch_extension_versions(extension_identifier, stable, manifest_identifier)
-
-    return [str(version) for version in versions]
+    return [str(version) for version in manifest_manager.versions_from_entry(ext, stable)]
 
 
 @manifest_router_v2.get("/tags/{extension_identifier}", status_code=status.HTTP_200_OK)
@@ -98,11 +97,10 @@ async def fetch_ext_tags_from_consolidated(extension_identifier: str, stable: bo
     """
     Get all tags for a given extension identifier using consolidated manifest as source.
     """
-    if not await manifest_manager.fetch_extension(extension_identifier):
+    ext = await manifest_manager.fetch_extension(extension_identifier)
+    if not ext:
         raise ExtensionNotFound(f"Extension {extension_identifier} not found")
-    versions = await manifest_manager.fetch_extension_versions(extension_identifier, stable)
-
-    return [str(version) for version in versions]
+    return [str(version) for version in manifest_manager.versions_from_entry(ext, stable)]
 
 
 @manifest_router_v2.post("/", status_code=status.HTTP_201_CREATED)
