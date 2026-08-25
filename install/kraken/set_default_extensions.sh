@@ -69,7 +69,7 @@ cat > "${SETTINGS_BASE_DIR}/settings-2.json" <<EOF
       "permissions": "{\"ExposedPorts\":{\"8000/tcp\":{}},\"HostConfig\":{\"PortBindings\":{\"8000/tcp\":[{\"HostPort\":\"\"}]}}}",
       "tag": "$cockpit_tag_name",
       "user_permissions": ""
-    },
+    }
   ],
   "manifests": []
 }
