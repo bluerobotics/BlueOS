@@ -2,7 +2,7 @@ import asyncio
 from typing import List, Optional
 
 import aiohttp
-from jobs.exceptions import JobNotFound
+from jobs.exceptions import JobNotFound, JobOperationNotAllowed
 from jobs.models import Job
 from loguru import logger
 
@@ -36,9 +36,11 @@ class JobsManager:
         while self.is_running:
             await asyncio.sleep(1)
             if self._jobs:
-                self._executing_job = self._jobs.pop(0)
-                await self.execute_job(self._executing_job)
-                self._executing_job = None
+                JobsManager._executing_job = self._jobs.pop(0)
+                try:
+                    await self.execute_job(JobsManager._executing_job)
+                finally:
+                    JobsManager._executing_job = None
 
     async def stop(self) -> None:
         self.is_running = False
@@ -64,4 +66,6 @@ class JobsManager:
     @classmethod
     def delete(cls, identifier: str) -> None:
         job = cls.get_by_identifier(identifier)
+        if job is cls._executing_job:
+            raise JobOperationNotAllowed(f"Job {identifier} is currently executing")
         cls._jobs.remove(job)
