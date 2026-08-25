@@ -3,6 +3,7 @@ from typing import Any, List, cast
 
 from api.v2.routers.extension import extension_to_http_exception
 from commonwealth.utils.streaming import streamer
+from extension.exceptions import ExtensionNotFound
 from extension.extension import Extension
 from extension.models import ExtensionSource
 from fastapi import APIRouter, status
@@ -42,6 +43,8 @@ async def update_extension(extension_identifier: str, new_version: str) -> Strea
 @extension_to_http_exception
 async def enable_extension(extension_identifier: str) -> Any:
     extension = cast(List[Extension], await Extension.from_settings(extension_identifier))
+    if not extension:
+        raise ExtensionNotFound(f"Extension {extension_identifier} not found")
     await extension[0].enable()
 
 
