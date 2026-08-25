@@ -162,6 +162,8 @@ async def uninstall(identifier: str) -> None:
     Uninstall all versions of an extension by its identifier.
     """
     extensions = cast(List[Extension], await Extension.from_settings(identifier))
+    if not extensions:
+        raise ExtensionNotFound(f"Extension {identifier} not found")
     await asyncio.gather(*[ext.uninstall() for ext in extensions])
 
 
