@@ -15,6 +15,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import Response, StreamingResponse
 from fastapi_versioning import versioned_api_route
 from loguru import logger
+from manifest.exceptions import ManifestBackendOffline
 
 extension_router_v2 = APIRouter(
     prefix="/extension",
@@ -37,6 +38,8 @@ def extension_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., A
             raise HTTPException(status_code=status.HTTP_507_INSUFFICIENT_STORAGE, detail=str(error)) from error
         except ExtensionPullFailed as error:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+        except ManifestBackendOffline as error:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
         except HTTPException as error:
             raise error
         except Exception as error:
