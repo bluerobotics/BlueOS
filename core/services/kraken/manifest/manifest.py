@@ -297,7 +297,7 @@ class ManifestManager:
                 tagged.append((version, tag))
         tagged.sort(key=lambda item: item[0], reverse=True)
         if stable:
-            tagged = [(version, tag) for version, tag in tagged if not version.prerelease and not version.patch]
+            tagged = [(version, tag) for version, tag in tagged if not version.prerelease]
         return [tag for _, tag in tagged]
 
     async def fetch_latest_extension_version(
