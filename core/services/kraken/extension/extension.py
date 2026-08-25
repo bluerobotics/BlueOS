@@ -167,7 +167,7 @@ class Extension:
             if running_ext:
                 await running_ext.disable()
             return running_ext
-        except ExtensionNotRunning:
+        except (ExtensionNotRunning, ExtensionNotFound):
             return None
 
     def _create_extension_settings(self) -> ExtensionSettings:
@@ -389,6 +389,8 @@ class Extension:
     @classmethod
     async def from_running(cls, identifier: str) -> "Extension":
         installed: List[Extension] = cast(List[Extension], await cls.from_settings(identifier))
+        if not installed:
+            raise ExtensionNotFound(f"Extension {identifier} not found")
 
         enabled = [ext for ext in installed if ext.source.enabled]
         if not enabled:
