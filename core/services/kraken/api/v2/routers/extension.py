@@ -11,6 +11,7 @@ from extension.exceptions import (
     ExtensionInsufficientStorage,
     ExtensionNotFound,
     ExtensionNotRunning,
+    IncompatibleExtension,
 )
 from extension.extension import Extension
 from extension.models import ExtensionSource
@@ -31,6 +32,8 @@ def extension_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., A
         except ExtensionNotFound as error:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
         except ExtensionNotRunning as error:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+        except IncompatibleExtension as error:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
         except ExtensionInsufficientStorage as error:
             raise HTTPException(status_code=status.HTTP_507_INSUFFICIENT_STORAGE, detail=str(error)) from error
