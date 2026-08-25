@@ -7,6 +7,7 @@ import aiohttp
 import semver
 from aiocache import cached
 from commonwealth.settings.manager import Manager
+from loguru import logger
 
 from config import DEFAULT_MANIFESTS, SERVICE_NAME
 from manifest.exceptions import (
@@ -126,7 +127,21 @@ class ManifestManager:
         if enabled:
             settings = [source for source in settings if source.enabled]
 
-        return await asyncio.gather(*[self._fetch_manifest(source, fetch_data) for source in settings])
+        results = await asyncio.gather(
+            *[self._fetch_manifest(source, fetch_data) for source in settings],
+            return_exceptions=True,
+        )
+
+        manifests: List[Manifest] = []
+        for source, result in zip(settings, results):
+            if isinstance(result, BaseException):
+                if not isinstance(result, Exception):
+                    raise result
+                logger.warning(f"Skipping unreachable manifest source {source.identifier} ({source.url}): {result}")
+                manifests.append(await self._fetch_manifest(source, fetch_data=False))
+            else:
+                manifests.append(cast(Manifest, result))
+        return manifests
 
     async def fetch_by_identifier(self, identifier: str, fetch_data: bool) -> Manifest:
         settings = self._get_settings_by_identifier(identifier)
