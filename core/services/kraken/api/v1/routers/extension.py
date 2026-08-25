@@ -3,6 +3,7 @@ from typing import Any, List, cast
 
 from api.v2.routers.extension import extension_to_http_exception
 from commonwealth.utils.streaming import streamer
+from extension.exceptions import ExtensionNotFound
 from extension.extension import Extension
 from extension.models import ExtensionSource
 from fastapi import APIRouter, status
@@ -28,6 +29,8 @@ async def install_extension(body: ExtensionSource) -> StreamingResponse:
 @extension_to_http_exception
 async def uninstall_extension(extension_identifier: str) -> Any:
     extensions = cast(List[Extension], await Extension.from_settings(extension_identifier))
+    if not extensions:
+        raise ExtensionNotFound(f"Extension {extension_identifier} not found")
     await asyncio.gather(*[ext.uninstall() for ext in extensions])
 
 
