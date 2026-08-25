@@ -68,6 +68,8 @@ async def fetch_by_identifier(identifier: str) -> list[ExtensionSource]:
     List details of all versions of a given extension.
     """
     extensions = cast(List[Extension], await Extension.from_settings(identifier))
+    if not extensions:
+        raise ExtensionNotFound(f"Extension {identifier} not found")
     return [ext.source for ext in extensions]
 
 
