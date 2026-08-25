@@ -6,6 +6,7 @@ from fastapi.responses import PlainTextResponse, RedirectResponse, StreamingResp
 from fastapi_versioning import versioned_api_route
 
 from api.v2.routers.container import container_to_http_exception
+from api.v2.routers.manifest import manifest_to_http_exception
 from extension.extension import Extension
 from extension.models import ExtensionSource
 from harbor import ContainerManager
@@ -22,6 +23,7 @@ manifest_manager = ManifestManager.instance()
 
 
 @index_router_v1.get("/extensions_manifest", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
 async def fetch_manifest() -> list[RepositoryEntry]:
     return await manifest_manager.fetch_consolidated()
 
