@@ -45,6 +45,8 @@ async def update_extension(extension_identifier: str, new_version: str) -> Strea
 @extension_to_http_exception
 async def enable_extension(extension_identifier: str) -> Any:
     extension = cast(List[Extension], await Extension.from_settings(extension_identifier))
+    if not extension:
+        raise ExtensionNotFound(f"Extension {extension_identifier} not found")
     await extension[0].enable()
 
 
