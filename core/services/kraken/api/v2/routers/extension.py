@@ -15,6 +15,7 @@ from extension.exceptions import (
 )
 from extension.extension import Extension
 from extension.models import ExtensionSource
+from manifest.exceptions import ManifestBackendOffline
 
 extension_router_v2 = APIRouter(
     prefix="/extension",
@@ -37,6 +38,8 @@ def extension_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., A
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
         except ExtensionInsufficientStorage as error:
             raise HTTPException(status_code=status.HTTP_507_INSUFFICIENT_STORAGE, detail=str(error)) from error
+        except ManifestBackendOffline as error:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
         except HTTPException as error:
             raise error
         except Exception as error:
