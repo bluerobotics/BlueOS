@@ -94,7 +94,7 @@ async def fetch_ext_tags_from_manifest(
     ext = await manifest_manager.fetch_extension(extension_identifier, manifest_identifier)
     if not ext:
         raise ExtensionNotFound(f"Extension {extension_identifier} not found")
-    return [str(version) for version in manifest_manager.versions_from_entry(ext, stable)]
+    return manifest_manager.versions_from_entry(ext, stable)
 
 
 @manifest_router_v2.get("/tags/{extension_identifier}", status_code=status.HTTP_200_OK)
@@ -106,7 +106,7 @@ async def fetch_ext_tags_from_consolidated(extension_identifier: str, stable: bo
     ext = await manifest_manager.fetch_extension(extension_identifier)
     if not ext:
         raise ExtensionNotFound(f"Extension {extension_identifier} not found")
-    return [str(version) for version in manifest_manager.versions_from_entry(ext, stable)]
+    return manifest_manager.versions_from_entry(ext, stable)
 
 
 @manifest_router_v2.post("/", status_code=status.HTTP_201_CREATED)

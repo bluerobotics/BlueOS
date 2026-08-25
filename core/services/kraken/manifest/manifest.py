@@ -278,7 +278,7 @@ class ManifestManager:
         return next((ext for ext in manifest if ext.identifier == extension_id), None)
 
     @staticmethod
-    def versions_from_entry(ext: RepositoryEntry, stable: bool) -> List[semver.VersionInfo]:
+    def versions_from_entry(ext: RepositoryEntry, stable: bool) -> List[str]:
         if not ext.versions:
             return []
 
@@ -291,13 +291,15 @@ class ManifestManager:
             except ValueError:
                 return None
 
-        versions: List[semver.VersionInfo] = sorted(
-            [version for version in (valid_semver(tag) for tag in ext.versions) if version is not None], reverse=True
-        )
+        tagged = []
+        for tag in ext.versions:
+            version = valid_semver(tag)
+            if version is not None:
+                tagged.append((version, tag))
+        tagged.sort(key=lambda item: item[0], reverse=True)
         if stable:
-            versions = [v for v in versions if not v.prerelease]
-
-        return versions
+            tagged = [(version, tag) for version, tag in tagged if not version.prerelease]
+        return [tag for _, tag in tagged]
 
     async def fetch_latest_extension_version(
         self, extension_id: str, stable: bool, manifest_id: Optional[str] = None
@@ -308,11 +310,15 @@ class ManifestManager:
 
         versions = self.versions_from_entry(ext, stable)
 
-        return (ext.versions.get(str(versions[0])) or ext.versions.get(f"v{versions[0]}")) if versions else None
+        return ext.versions.get(versions[0]) if versions else None
 
     async def fetch_extension_version(self, extension_id: str, tag: str) -> Optional[ExtensionVersion]:
         ext = await self.fetch_extension(extension_id)
         if not ext:
             return None
 
-        return ext.versions.get(tag)
+        return (
+            ext.versions.get(tag)
+            or ext.versions.get(f"v{tag}")
+            or (ext.versions.get(tag[1:]) if tag.startswith("v") else None)
+        )
