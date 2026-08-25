@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 from fastapi_versioning import versioned_api_route
 
+from extension.exceptions import ExtensionNotFound
 from manifest import ManifestManager
 from manifest.exceptions import (
     ManifestBackendOffline,
@@ -43,7 +44,7 @@ def manifest_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., An
             ManifestInvalidURL,
         ) as error:
             raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
-        except ManifestNotFound as error:
+        except (ManifestNotFound, ExtensionNotFound) as error:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
         except ManifestOperationNotAllowed as error:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
@@ -90,6 +91,8 @@ async def fetch_ext_tags_from_manifest(
     """
     Get all tags for a given extension identifier using one manifest as source.
     """
+    if not await manifest_manager.fetch_extension(extension_identifier, manifest_identifier):
+        raise ExtensionNotFound(f"Extension {extension_identifier} not found")
     versions = await manifest_manager.fetch_extension_versions(extension_identifier, stable, manifest_identifier)
 
     return [str(version) for version in versions]
@@ -101,6 +104,8 @@ async def fetch_ext_tags_from_consolidated(extension_identifier: str, stable: bo
     """
     Get all tags for a given extension identifier using consolidated manifest as source.
     """
+    if not await manifest_manager.fetch_extension(extension_identifier):
+        raise ExtensionNotFound(f"Extension {extension_identifier} not found")
     versions = await manifest_manager.fetch_extension_versions(extension_identifier, stable)
 
     return [str(version) for version in versions]
