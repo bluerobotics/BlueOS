@@ -10,7 +10,7 @@
           <v-card-subtitle class="text-md-center" max-width="30">
             Drag manifest sources to set priority. <br /><b>Top ones have higher priority.</b>
           </v-card-subtitle>
-          <draggable v-model="manifests">
+          <draggable v-model="manifests" :move="preventFactoryReorder">
             <v-card
               v-for="(element, index) in manifests"
               :key="index"
@@ -90,10 +90,10 @@
     <v-dialog v-model="operation_open" width="600px">
       <v-card elevation="0">
         <v-card-title class="mb-7">
-          {{ is_editing ? 'Update Source' : 'Add a new source' }}
+          {{ is_factory ? 'Factory source' : is_editing ? 'Update Source' : 'Add a new source' }}
         </v-card-title>
-        <v-card-subtitle class="text-md-center" max-width="30">
-          <b>Factory sources can only be enabled/disabled.</b>
+        <v-card-subtitle v-if="is_factory" class="text-md-center" max-width="30">
+          <b>Factory sources cannot be modified.</b>
         </v-card-subtitle>
         <v-text-field
           v-model="source_url"
@@ -116,6 +116,7 @@
         />
         <v-checkbox
           v-model="source_enabled"
+          :disabled="is_factory"
           class="mx-6 mt-0"
           label="Source Enabled"
         />
@@ -153,6 +154,7 @@
           </v-btn>
           <v-spacer />
           <v-btn
+            v-if="!is_factory"
             color="success"
             @click="applySubModalAction"
           >
@@ -226,6 +228,13 @@ export default Vue.extend({
       // Based over: https://stackoverflow.com/a/39466341
       return `${index}${['st', 'nd', 'rd'][((index + 90) % 100 - 10) % 10 - 1] || 'th'}`
     },
+    preventFactoryReorder(evt: {
+      draggedContext: { element: Manifest },
+      relatedContext: { element?: Manifest },
+    }): boolean {
+      // vuedraggable :move — false refuses the drag. Refuse the factory row or a drop onto it.
+      return !(evt.draggedContext.element.factory || evt.relatedContext.element?.factory)
+    },
     blockNameAutoComplete() {
       this.allow_deduct_name = false
     },
@@ -287,15 +296,16 @@ export default Vue.extend({
       // approach
       if (this.is_editing) {
         if (this.is_factory) {
-          await this.setSourceEnable(this.editing_source!.identifier, this.source_enabled)
-        } else {
-          await this.updateSource(
-            this.editing_source!.identifier,
-            this.source_name,
-            this.source_url,
-            this.source_enabled,
-          )
+          // Fields are disabled; skip the API that would 409.
+          this.operation_open = false
+          return
         }
+        await this.updateSource(
+          this.editing_source!.identifier,
+          this.source_name,
+          this.source_url,
+          this.source_enabled,
+        )
       } else {
         await this.addSource(this.source_name, this.source_url, this.source_enabled)
       }
@@ -377,19 +387,6 @@ export default Vue.extend({
         this.settings_open = false
       } catch (error) {
         this.operation_error = `Unable to update order: ${error}`
-      } finally {
-        this.operation_loading = false
-      }
-    },
-    async setSourceEnable(identifier: string, enable: boolean) {
-      this.prepareRequest()
-
-      try {
-        await (enable ? kraken.enabledManifestSource(identifier) : kraken.disabledManifestSource(identifier))
-
-        this.fetchManifestsSources()
-      } catch (error) {
-        this.operation_error = `Unable to ${enable ? 'enable' : 'disable'} source: ${error}`
       } finally {
         this.operation_loading = false
       }
