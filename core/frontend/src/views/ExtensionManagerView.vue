@@ -120,7 +120,7 @@
         <div class="installed-extensions-container">
           <InstalledExtensionCard
             v-for="extension in installed_extensions"
-            :key="extension.docker"
+            :key="extension.identifier"
             :extension="extension"
             :loading="extension.loading"
             :metrics="metricsFor(extension)"
