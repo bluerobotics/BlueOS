@@ -35,6 +35,7 @@
           <v-text-field
             v-model="new_extension.identifier"
             label="Extension Identifier"
+            placeholder="yourorganization.yourextension"
             :disabled="is_editing"
             :rules="[validate_identifier]"
           />
