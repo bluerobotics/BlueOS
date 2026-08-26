@@ -10,8 +10,8 @@
       text
       dense
     >
-    The autopilot will not use injected position until {{ gps_type_param?.name }} is MAV (14).
-    It is currently {{ gps_type_param?.value }}. Reboot the autopilot after changing the parameter.
+      The autopilot will not use injected position until {{ gps_type_param?.name }} is MAV (14).
+      It is currently {{ gps_type_param?.value }}. Reboot the autopilot after changing the parameter.
     </v-alert>
     <v-card
       class="mx-auto my-6"
