@@ -54,16 +54,37 @@ class ManifestManager:
 
     @classmethod
     def _set_default_manifests(cls) -> None:
+        default_ids = [source["identifier"] for source in DEFAULT_MANIFESTS]
+        had_settings = bool(cls._settings.manifests)
+
+        def factory_snap() -> Tuple[dict[str, Tuple[Any, ...]], dict[str, int], dict[str, int]]:
+            fields: dict[str, Tuple[Any, ...]] = {}
+            index: dict[str, int] = {}
+            counts: dict[str, int] = {}
+            for i, manifest in enumerate(cls._settings.manifests):
+                ident = manifest.identifier
+                if ident not in default_ids:
+                    continue
+                counts[ident] = counts.get(ident, 0) + 1
+                if ident not in fields:
+                    fields[ident] = (manifest.enabled, manifest.factory, manifest.name, manifest.url)
+                    index[ident] = i
+            return fields, index, counts
+
+        before = factory_snap()
+
         for source in DEFAULT_MANIFESTS:
             identifier = source["identifier"]
             name = source["name"]
             url = source["url"]
 
-            # If already exists only update the name and url otherwise add it
+            # Keep factory sources present, named, enabled, and marked factory
             try:
                 manifest = cls._get_settings_by_identifier(identifier)
                 manifest.url = url
                 manifest.name = name
+                manifest.enabled = True
+                manifest.factory = True
             except ManifestNotFound:
                 cls._settings.manifests.append(
                     ManifestSettings(
@@ -75,6 +96,26 @@ class ManifestManager:
                         url=url,
                     )
                 )
+
+        # Pin factory sources first and drop duplicate factory rows left by older builds
+        by_id: dict[str, ManifestSettings] = {}
+        others: List[ManifestSettings] = []
+        for manifest in cls._settings.manifests:
+            if manifest.identifier in default_ids:
+                by_id.setdefault(manifest.identifier, manifest)
+            else:
+                others.append(manifest)
+        cls._settings.manifests = [by_id[identifier] for identifier in default_ids if identifier in by_id] + others
+        for i, manifest in enumerate(cls._settings.manifests):
+            manifest.priority = i
+        after = factory_snap()
+        if had_settings and before != after:
+            logger.info(
+                "Healed factory catalog sources "
+                f"(fields {before[0]} -> {after[0]}; "
+                f"index {before[1]} -> {after[1]}; "
+                f"rows {before[2]} -> {after[2]})"
+            )
         cls._manager.save()
 
     @classmethod
@@ -167,6 +208,17 @@ class ManifestManager:
         if identifier in default_identifiers:
             raise ManifestOperationNotAllowed(f"Operation is not allowed in default manifest [{identifier}]")
 
+    def _raise_if_default_manifests_demoted(self, new_order: List[str]) -> None:
+        # 409 if a factory source would lose its current index or be omitted.
+        # Unknown ids are not this check: callers look up first (404). Dummy
+        # order/0 is 409 because factory would drop from 0 to 1.
+        current = [manifest.identifier for manifest in self._get_settings()]
+        for identifier in (source["identifier"] for source in DEFAULT_MANIFESTS):
+            if identifier not in current:
+                continue
+            if identifier not in new_order or new_order.index(identifier) > current.index(identifier):
+                self._raise_in_default_source(identifier)
+
     @staticmethod
     def not_on_default_manifest(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
@@ -220,6 +272,7 @@ class ManifestManager:
         self._manager.save()
 
     def _set_enabled(self, identifier: str, enabled: bool) -> None:
+        self._raise_in_default_source(identifier)
         manifest = self._get_settings_by_identifier(identifier)
         manifest.enabled = enabled
         self._manager.save()
@@ -230,11 +283,16 @@ class ManifestManager:
     async def disable_source(self, identifier: str) -> None:
         self._set_enabled(identifier, False)
 
+    @not_on_default_manifest
     async def order_source(self, identifier: str, order: int) -> None:
         manifest = self._get_settings_by_identifier(identifier)
+        manifests = self._get_settings()
+        proposed = [item.identifier for item in manifests if item.identifier != identifier]
+        proposed.insert(min(order, len(proposed)), identifier)
+        self._raise_if_default_manifests_demoted(proposed)
+
         manifest.priority = order
 
-        manifests = self._get_settings()
         if manifest in manifests:
             manifests.remove(manifest)
 
@@ -250,14 +308,21 @@ class ManifestManager:
         manifests = self._get_settings()
         manifest_record = {manifest.identifier: manifest for manifest in manifests}
 
+        for identifier in identifiers:
+            if identifier not in manifest_record:
+                raise ManifestNotFound(f"Manifest with identifier {identifier} not found")
+
+        if len(identifiers) != len(set(identifiers)):
+            raise ManifestOperationNotAllowed("Duplicate manifest identifiers are not allowed")
+
+        omitted = [manifest.identifier for manifest in manifests if manifest.identifier not in identifiers]
+        self._raise_if_default_manifests_demoted(identifiers + omitted)
+
         ordered_manifests = []
         for order, identifier in enumerate(identifiers):
-            if identifier in manifest_record:
-                manifest = manifest_record[identifier]
-                manifest.priority = order
-                ordered_manifests.append(manifest)
-            else:
-                raise ManifestNotFound(f"Manifest with identifier {identifier} not found")
+            manifest = manifest_record[identifier]
+            manifest.priority = order
+            ordered_manifests.append(manifest)
 
         for manifest in manifests:
             if manifest.identifier not in identifiers:
