@@ -27,6 +27,8 @@
 import Vue from 'vue'
 
 import settings from '@/libs/settings'
+import helper from '@/store/helper'
+import { InternetConnectionState } from '@/types/helper'
 import { Version, VersionsQuery } from '@/types/version-chooser'
 import * as VCU from '@/utils/version_chooser'
 
@@ -47,6 +49,19 @@ export default Vue.extend({
       should_open: false,
     }
   },
+  computed: {
+    can_fetch_remote(): boolean {
+      return helper.has_internet === InternetConnectionState.ONLINE
+        || helper.has_internet === InternetConnectionState.LIMITED
+    },
+  },
+  watch: {
+    can_fetch_remote(can_fetch: boolean) {
+      if (can_fetch) {
+        this.run()
+      }
+    },
+  },
   mounted() {
     this.run()
   },
@@ -62,6 +77,10 @@ export default Vue.extend({
           this.current_version = image
           this.selected_image = image.repository
         })
+
+      if (!this.can_fetch_remote) {
+        return
+      }
 
       await VCU.loadAvailableVersions(this.selected_image)
         .then((versions_query) => {

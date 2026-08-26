@@ -44,12 +44,13 @@
           @pull-and-apply="pullAndSetVersion"
         />
         <v-alert
-          v-if="available_versions.error"
+          v-if="remote_alert_message"
+
           color="red lighten-2"
           dark
         >
           <div class="d-flex align-center justify-space-between">
-            <span>{{ available_versions.error }}</span>
+            <span>{{ remote_alert_message }}</span>
             <v-btn
               color="warning"
               dark
@@ -118,12 +119,13 @@
           />
         </v-form>
         <v-alert
-          v-if="available_versions.error"
+          v-if="remote_alert_message"
+
           color="red lighten-2"
           dark
         >
           <div class="d-flex align-center justify-space-between">
-            <span>{{ available_versions.error }}</span>
+            <span>{{ remote_alert_message }}</span>
             <v-btn
               color="warning"
               dark
@@ -365,16 +367,32 @@ export default Vue.extend({
     inputFileRequiredMessage(): string {
       return 'File is required'
     },
-    has_internet(): boolean {
-      return helper.has_internet !== InternetConnectionState.OFFLINE
+    internet_state(): InternetConnectionState {
+      return helper.has_internet
+    },
+    is_offline(): boolean {
+      return this.internet_state === InternetConnectionState.OFFLINE
+    },
+    can_fetch_remote(): boolean {
+      return this.internet_state === InternetConnectionState.ONLINE
+        || this.internet_state === InternetConnectionState.LIMITED
+    },
+    remote_alert_message(): string | null {
+      if (this.is_offline) {
+        return "No internet connection available, can't fetch remote images"
+      }
+      return this.available_versions.error
     },
   },
   watch: {
-    has_internet(value: boolean) {
-      if (value) {
-        this.loadAvailableVersions()
-      } else {
+    is_offline(offline: boolean) {
+      if (offline) {
         this.resetToNoInternetAvailable()
+      }
+    },
+    can_fetch_remote(can_fetch: boolean) {
+      if (can_fetch) {
+        this.loadAvailableVersions()
       }
     },
   },
@@ -562,8 +580,11 @@ export default Vue.extend({
         })
     },
     async loadAvailableVersions() {
-      if (!this.has_internet) {
+      if (this.is_offline) {
         this.resetToNoInternetAvailable()
+        return
+      }
+      if (!this.can_fetch_remote) {
         return
       }
 
@@ -807,7 +828,7 @@ export default Vue.extend({
       this.available_versions = {
         ...this.available_versions,
         remote: [],
-        error: "No internet connection available, can't fetch remote images",
+        error: null,
       }
       this.latest_stable = undefined
       this.latest_beta = undefined
