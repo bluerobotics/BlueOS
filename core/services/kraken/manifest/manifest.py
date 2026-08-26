@@ -164,6 +164,11 @@ class ManifestManager:
     async def add_source(self, source: ManifestSource, validate_url: bool) -> Manifest:
         manifests = self._get_settings()
 
+        if any(manifest.name == source.name and manifest.url == source.url for manifest in manifests):
+            raise ManifestOperationNotAllowed(
+                f"Manifest source with name [{source.name}] and url [{source.url}] already exists"
+            )
+
         new_manifest_settings = ManifestSettings(
             identifier=str(uuid.uuid4()),
             priority=len(manifests),
