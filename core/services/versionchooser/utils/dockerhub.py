@@ -22,6 +22,9 @@ DNS_FAILURE_MESSAGE = (
     "Check DNS nameservers under Network, or use Manual Upload."
 )
 
+# Unreachable DockerHub used to hang on aiohttp's 5-minute default timeout.
+DOCKERHUB_TIMEOUT = aiohttp.ClientTimeout(total=60, connect=10)
+
 
 def get_current_arch() -> str:
     """Maps platform.machine() outputs to docker architectures"""
@@ -119,7 +122,8 @@ def _session() -> aiohttp.ClientSession:
         connector=aiohttp.TCPConnector(
             resolver=_FamilyRaceResolver(),
             happy_eyeballs_delay=0.25,
-        )
+        ),
+        timeout=DOCKERHUB_TIMEOUT,
     )
 
 

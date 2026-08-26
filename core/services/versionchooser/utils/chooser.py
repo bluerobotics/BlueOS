@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
 
 import aiodocker
+import aiohttp
 import appdirs
 import docker
 from fastapi import Response
@@ -382,6 +383,14 @@ class VersionChooser:
             assert isinstance(output["local"], list)
             output["error"], online_tags = await TagFetcher().fetch_remote_tags(
                 repository, [image["tag"] for image in output["local"]]
+            )
+        except (TimeoutError, aiohttp.ClientConnectionError, OSError) as error:
+            logger.warning(f"Skipping remote tags, DockerHub unreachable: {error or type(error).__name__}")
+            online_tags = []
+            output["error"] = (
+                DNS_FAILURE_MESSAGE
+                if is_name_resolution_error(error)
+                else "Unable to reach DockerHub, can't fetch remote images"
             )
         except Exception as error:
             logger.critical(f"error fetching online tags: {error}")
