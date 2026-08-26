@@ -89,13 +89,26 @@ Extract number, title, author. No API call needed for authorship.
 
 **Attribution**
 
-Drop `by @user in <url>` by default. Bare `#NNNN` at the end of the bullet
-already links the PR. Keep `by @user` only for contributors outside the org,
-on that same line, before the PR numbers:
+Drop `by @user in <url>` everywhere in the changelog bullets. Bare `#NNNN`
+already links the PR. Outside-org PRs still go in Frontend / Backend / CI
+like everyone else. Do not take them out of the groups.
+
+Check org membership for every author:
 
 ```bash
 gh api orgs/OWNER/members/LOGIN --silent && echo member || echo outside
 ```
+
+Collect outside authors in first-seen order. After `**Full Changelog**`, add
+one thanks line. Each name is `@user` plus that author's PR numbers as
+markdown links. Those same `#NNNN` also stay in the changelog bullets.
+Omit the thanks line when there are no outside contributors:
+
+```markdown
+Thanks [@Safe-bet](https://github.com/Safe-bet) for [#4186](https://github.com/bluerobotics/BlueOS/pull/4186) [#4184](https://github.com/bluerobotics/BlueOS/pull/4184) [#4185](https://github.com/bluerobotics/BlueOS/pull/4185) and [@Michael-F-Bryan](https://github.com/Michael-F-Bryan) for [#4209](https://github.com/bluerobotics/BlueOS/pull/4209).
+```
+
+Use the real repo in those URLs. Several people: `Thanks @a for [#N](url) and @b for [#M](url).` One person: drop the `and`.
 
 ### 3. Resolve ambiguous PRs
 
@@ -173,23 +186,29 @@ Several PRs for one issue or one binary share that line:
 - README #4158
 
 **Full Changelog**: https://github.com/OWNER/REPO/compare/PREV...CURR
+
+Thanks [@Safe-bet](https://github.com/Safe-bet) for [#4186](https://github.com/OWNER/REPO/pull/4186).
 ```
 
 Formatting rules, all load-bearing:
 
 - PR numbers are **bare** `#4027`, never in backticks. GitHub only autolinks
-  bare refs. Put them at the end of the bullet, after the title (and after
-  `by @user` when that applies).
+  bare refs. Put them at the end of the bullet, after the title.
+  Never `by @user` on a changelog bullet.
 - If a bullet has more than one PR, list every number on that same line.
 - Backticks are for code identifiers, paths, and env vars only.
 - No nested sub-bullets for PRs.
 - Drop the `## What's Changed` heading; keep the trailing `**Full Changelog**`
   line verbatim.
+- After Full Changelog, the thanks line (outside contributors only). Their PR
+  numbers are markdown links `[#N](https://github.com/OWNER/REPO/pull/N)`, not
+  bare refs. The same PRs stay in the changelog as bare `#NNNN`. Omit the
+  thanks line when nobody is outside the org.
 - The last section is still one bullet per leftover item, with `#NNNN` at the
   end. Collapse CI PRs that are the same workflow fix onto one line.
 - Omit a section entirely when no PR lands in it. Do not emit an empty heading.
-- Every PR from the input appears at least once in the output. Count them before
-  saving.
+- Every PR from the input appears in a changelog bullet. Outside PRs also
+  appear on the thanks line. Count before saving.
 
 ### 6. Save back as draft
 
