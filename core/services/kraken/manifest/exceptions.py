@@ -20,3 +20,7 @@ class ManifestOperationNotAllowed(Exception):
 
 class ManifestBackendOffline(Exception):
     pass
+
+
+class ExtensionEntryNotFound(Exception):
+    pass
