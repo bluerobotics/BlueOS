@@ -1,10 +1,9 @@
 from functools import wraps
 from typing import Any, Callable, Tuple
 
+from extension.exceptions import ExtensionNotFound
 from fastapi import APIRouter, HTTPException, status
 from fastapi_versioning import versioned_api_route
-
-from extension.exceptions import ExtensionNotFound
 from manifest import ManifestManager
 from manifest.exceptions import (
     ManifestDataFetchFailed,
