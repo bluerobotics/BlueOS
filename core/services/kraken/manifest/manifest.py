@@ -7,8 +7,8 @@ import aiohttp
 import semver
 from aiocache import cached
 from commonwealth.settings.manager import PydanticManager
-from loguru import logger
 from config import DEFAULT_MANIFESTS, SERVICE_NAME
+from loguru import logger
 from manifest.exceptions import (
     ManifestBackendOffline,
     ManifestDataFetchFailed,
