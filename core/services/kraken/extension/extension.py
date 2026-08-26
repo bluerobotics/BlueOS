@@ -5,6 +5,7 @@ import os
 import time
 from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, Tuple, cast
 
+from aiodocker.exceptions import DockerError
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
@@ -145,7 +146,18 @@ class Extension:
         finally:
             cls.unlock(container_name)
 
-    async def install(self, clear_remaining_tags: bool = True, atomic: bool = False) -> AsyncGenerator[bytes, None]:
+    async def _image_is_available_locally(self) -> bool:
+        try:
+            image_ref = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
+            async with DockerCtx() as client:
+                await client.images.inspect(image_ref)
+                return True
+        except DockerError:
+            return False
+
+    async def install(  # pylint: disable=too-many-branches
+        self, clear_remaining_tags: bool = True, atomic: bool = False
+    ) -> AsyncGenerator[bytes, None]:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
 
         # First we should make sure no other tag is running
@@ -191,12 +203,14 @@ class Extension:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
             if atomic:
                 should_raise = False
-                if not running_ext or self.unique_entry != running_ext.unique_entry:
-                    should_raise = True
-                    await self.uninstall()
-
-                if running_ext:
-                    await running_ext.enable()
+                if await self._image_is_available_locally():
+                    logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
+                else:
+                    if not running_ext or self.unique_entry != running_ext.unique_entry:
+                        should_raise = True
+                        await self.uninstall()
+                    if running_ext:
+                        await running_ext.enable()
 
                 if should_raise:
                     raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
