@@ -851,7 +851,7 @@ export default Vue.extend({
     },
     openCreationDialog() : void {
       this.edited_extension = {
-        identifier: 'yourorganization.yourextension',
+        identifier: '',
         name: '',
         docker: '',
         enabled: true,
