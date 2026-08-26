@@ -4,6 +4,15 @@
     elevation="0"
     class="mx-auto my-6 injectors-list"
   >
+    <v-alert
+      v-if="show_gps_type_warning"
+      type="warning"
+      text
+      dense
+    >
+    The autopilot will not use injected position until {{ gps_type_param?.name }} is MAV (14).
+    It is currently {{ gps_type_param?.value }}. Reboot the autopilot after changing the parameter.
+    </v-alert>
     <v-card
       class="mx-auto my-6"
       width="500"
@@ -99,7 +108,9 @@
 import Vue from 'vue'
 
 import { OneMoreTime } from '@/one-more-time'
+import autopilot_data from '@/store/autopilot'
 import nmea_injector from '@/store/nmea-injector'
+import Parameter from '@/types/autopilot/parameter'
 import { NMEASocket } from '@/types/nmea-injector'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
@@ -129,6 +140,12 @@ export default Vue.extend({
     },
     are_nmea_sockets_available(): boolean {
       return !this.available_nmea_sockets.isEmpty()
+    },
+    gps_type_param(): Parameter | undefined {
+      return autopilot_data.parameter('GPS1_TYPE') ?? autopilot_data.parameter('GPS_TYPE')
+    },
+    show_gps_type_warning(): boolean {
+      return this.gps_type_param !== undefined && this.gps_type_param.value !== 14
     },
   },
   mounted() {
