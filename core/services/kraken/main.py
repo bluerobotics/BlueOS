@@ -12,7 +12,7 @@ from uvicorn import Config, Server
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
-from api import application
+from api.app import application
 from jobs import JobsManager
 from kraken import Kraken
 from zenoh_handlers import (  # noqa: F401 # pylint: disable=unused-import
