@@ -1,4 +1,1 @@
-# pylint: disable=W0406
-from .app import application
-
-__all__ = ["application"]
+# Importing this package must not load api.app (zenoh binds on import).
