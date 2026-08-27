@@ -1,13 +1,20 @@
 import json
+import socket
 from pathlib import Path
 from runpy import run_path
-from typing import Tuple
+from typing import Any, Tuple
 from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
 from utils.chooser import VersionChooser
-from utils.dockerhub import TagFetcher, TagMetadata
+from utils.dockerhub import (
+    DNS_FAILURE_MESSAGE,
+    TagFetcher,
+    TagMetadata,
+    get_json_with_retry,
+    remote_tags_error_message,
+)
 
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
@@ -283,3 +290,91 @@ class TestTagFetcher:
         except Exception as e:
             # If this fails due to network issues, skip the test
             pytest.skip(f"Could not fetch tags from DockerHub, likely network issue: {e}")
+
+
+def test_remote_tags_error_message_gaierror() -> None:
+    assert remote_tags_error_message(socket.gaierror(-3, "Temporary failure in name resolution")) == DNS_FAILURE_MESSAGE
+
+
+def test_remote_tags_error_message_os_error() -> None:
+    error = Exception("Cannot connect to host")
+    error.os_error = socket.gaierror(-3, "Temporary failure in name resolution")  # type: ignore[attr-defined]
+    assert remote_tags_error_message(error) == DNS_FAILURE_MESSAGE
+
+
+def test_remote_tags_error_message_other() -> None:
+    message = remote_tags_error_message(RuntimeError("boom"))
+    assert message == "error fetching online tags: boom"
+
+
+class _FakeResponse:
+    def __init__(self, payload: dict[str, Any], status: int = 200) -> None:
+        self.status = status
+        self._payload = payload
+
+    async def json(self, **_kwargs: Any) -> dict[str, Any]:
+        return self._payload
+
+    async def text(self) -> str:
+        return ""
+
+    async def __aenter__(self) -> "_FakeResponse":
+        return self
+
+    async def __aexit__(self, *_args: object) -> bool:
+        return False
+
+
+class _FakeSession:
+    def __init__(self, side_effects: list[object]) -> None:
+        self.calls = 0
+        self._side_effects = side_effects
+
+    def get(self, _url: str, **_kwargs: Any) -> _FakeResponse:
+        self.calls += 1
+        result = self._side_effects[self.calls - 1]
+        if isinstance(result, BaseException):
+            raise result
+        assert isinstance(result, _FakeResponse)
+        return result
+
+
+async def test_get_json_with_retry_succeeds_after_dns_failure() -> None:
+    session = _FakeSession(
+        [
+            socket.gaierror(-3, "Temporary failure in name resolution"),
+            _FakeResponse({"token": "t"}),
+        ]
+    )
+    with mock.patch("utils.dockerhub.asyncio.sleep", new=mock.AsyncMock()):
+        status, _, data = await get_json_with_retry(session, "https://auth.docker.io/token")  # type: ignore[arg-type]
+    assert session.calls == 2
+    assert status == 200
+    assert data == {"token": "t"}
+
+
+async def test_get_json_with_retry_gives_up_after_persistent_dns_failure() -> None:
+    session = _FakeSession(
+        [
+            socket.gaierror(-3, "Temporary failure in name resolution"),
+            socket.gaierror(-3, "Temporary failure in name resolution"),
+            socket.gaierror(-3, "Temporary failure in name resolution"),
+        ]
+    )
+    with mock.patch("utils.dockerhub.asyncio.sleep", new=mock.AsyncMock()):
+        with pytest.raises(socket.gaierror):
+            await get_json_with_retry(session, "https://auth.docker.io/token")  # type: ignore[arg-type]
+    assert session.calls == 3
+
+
+async def test_set_remote_versions_dns_error() -> None:
+    chooser = VersionChooser(mock.AsyncMock())
+    output: dict[str, Any] = {"local": [], "remote": [], "error": None}
+    with mock.patch.object(
+        TagFetcher,
+        "fetch_remote_tags",
+        side_effect=socket.gaierror(-3, "Temporary failure in name resolution"),
+    ):
+        await chooser.set_remote_versions(output, "bluerobotics/blueos-core")
+    assert output["error"] == DNS_FAILURE_MESSAGE
+    assert not output["remote"]
