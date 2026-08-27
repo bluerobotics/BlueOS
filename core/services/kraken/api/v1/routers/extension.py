@@ -5,7 +5,7 @@ from api.v2.routers.extension import extension_to_http_exception
 from commonwealth.utils.streaming import streamer
 from extension.exceptions import ExtensionNotFound
 from extension.extension import Extension
-from extension.models import ExtensionSource
+from extension.models import ExtensionInstallSource
 from fastapi import APIRouter, status
 from fastapi.responses import StreamingResponse
 from fastapi_versioning import versioned_api_route
@@ -20,7 +20,7 @@ extension_router_v1 = APIRouter(
 
 @extension_router_v1.post("/install", status_code=status.HTTP_201_CREATED)
 @extension_to_http_exception
-async def install_extension(body: ExtensionSource) -> StreamingResponse:
+async def install_extension(body: ExtensionInstallSource) -> StreamingResponse:
     extension = Extension(body)
     return StreamingResponse(streamer(extension.install(atomic=True)))
 
