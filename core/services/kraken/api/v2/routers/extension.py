@@ -14,7 +14,7 @@ from extension.exceptions import (
     IncompatibleExtension,
 )
 from extension.extension import Extension
-from extension.models import ExtensionSource
+from extension.models import ExtensionInstallSource, ExtensionSource
 from manifest.exceptions import ManifestBackendOffline
 
 extension_router_v2 = APIRouter(
@@ -82,7 +82,7 @@ async def fetch_by_identifier_and_tag(identifier: str, tag: str) -> ExtensionSou
 
 @extension_router_v2.post("/", status_code=status.HTTP_201_CREATED)
 @extension_to_http_exception
-async def install(body: ExtensionSource) -> StreamingResponse:
+async def install(body: ExtensionInstallSource) -> StreamingResponse:
     """
     Install an extension by a custom source instead of the valid manifests, be careful with this endpoint because it
     can install incompatible extensions. Make sure to check the extension source before installing it.
