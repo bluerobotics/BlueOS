@@ -16,6 +16,12 @@ from warnings import warn
 import aiohttp
 from loguru import logger
 
+RETRY_ATTEMPTS = 3
+DNS_FAILURE_MESSAGE = (
+    "Cannot resolve Docker Hub. The vehicle can still reach the internet by IP. "
+    "Check DNS nameservers under Network, or use Manual Upload."
+)
+
 
 def get_current_arch() -> str:
     """Maps platform.machine() outputs to docker architectures"""
@@ -33,6 +39,18 @@ def get_current_arch() -> str:
             return "arm64"
         case _:
             raise RuntimeError(f"Unknown architecture! {machine}")
+
+
+def is_name_resolution_error(error: BaseException) -> bool:
+    if isinstance(error, socket.gaierror):
+        return True
+    return isinstance(getattr(error, "os_error", None), socket.gaierror)
+
+
+def remote_tags_error_message(error: BaseException) -> str:
+    if is_name_resolution_error(error):
+        return DNS_FAILURE_MESSAGE
+    return f"error fetching online tags: {error}"
 
 
 # getaddrinfo is not cancellable. Cap threads so leftover AAAA cannot fill the default pool.
@@ -101,6 +119,26 @@ def _session() -> aiohttp.ClientSession:
     )
 
 
+async def get_json_with_retry(session: aiohttp.ClientSession, url: str, **kwargs: Any) -> Tuple[int, str, Any]:
+    last_error: Optional[BaseException] = None
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            async with session.get(url, **kwargs) as resp:
+                if resp.status != 200:
+                    return resp.status, await resp.text(), None
+                return resp.status, "", await resp.json(content_type=None)
+        except Exception as error:
+            if not (isinstance(error, aiohttp.ClientConnectorError) or is_name_resolution_error(error)):
+                raise
+            last_error = error
+            if attempt == RETRY_ATTEMPTS:
+                raise
+            logger.warning(f"Docker Hub GET {url} failed: {error} (attempt {attempt}/{RETRY_ATTEMPTS})")
+            await asyncio.sleep(0.5)
+    assert last_error is not None
+    raise last_error
+
+
 @dataclass
 class TagMetadata:
     """Class for keeping track of an item in inventory."""
@@ -139,11 +177,11 @@ class TagFetcher:
         }
 
         async with _session() as session:
-            async with session.get(auth_url + "/token", params=payload) as resp:
-                if resp.status != 200:
-                    warn(f"Error status {resp.status}")
-                    raise RuntimeError("Could not get auth token")
-                return str((await resp.json(content_type=None))["token"])
+            status, _text, data = await get_json_with_retry(session, auth_url + "/token", params=payload)
+            if status != 200 or data is None:
+                warn(f"Error status {status}")
+                raise RuntimeError("Could not get auth token")
+            return str(data["token"])
 
     async def fetch_sha(self, metadata: TagMetadata) -> str:
         """Fetches the digest sha from a tag. This returns the image id displayed by 'docker image ls'"""
@@ -153,14 +191,11 @@ class TagFetcher:
         }
         async with _session() as session:
             url = f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}"
-            async with session.get(url, headers=header) as resp:
-                if resp.status != 200:
-                    warn(f"Error status {resp.status}")
-                    raise RuntimeError(
-                        f"Failed getting sha from DockerHub at {url} : {resp.status} : {await resp.text()}"
-                    )
-                data = await resp.json(content_type=None)
-                return str(data["config"]["digest"])
+            status, text, data = await get_json_with_retry(session, url, headers=header)
+            if status != 200 or data is None:
+                warn(f"Error status {status}")
+                raise RuntimeError(f"Failed getting sha from DockerHub at {url} : {status} : {text}")
+            return str(data["config"]["digest"])
 
     async def fetch_remote_tags(self, repository: str, local_images: List[str]) -> Tuple[str, List[TagMetadata]]:
         """Fetches the tags available for an image in DockerHub"""
@@ -168,49 +203,49 @@ class TagFetcher:
         errors = []
         self.last_token = await self._get_token(auth_url="https://auth.docker.io", image_name=repository)
         async with _session() as session:
-            async with session.get(
-                f"{self.docker_url}/v2/repositories/{repository}/tags/?page_size=200&page=1&ordering=last_updated"
-            ) as resp:
-                if resp.status != 200:
-                    warn(f"Error status {resp.status}")
-                    raise RuntimeError("Failed getting tags from DockerHub!")
-                data = await resp.json(content_type=None)
-                tags = data["results"]
+            status, text, data = await get_json_with_retry(
+                session,
+                f"{self.docker_url}/v2/repositories/{repository}/tags/?page_size=200&page=1&ordering=last_updated",
+            )
+            if status != 200 or data is None:
+                warn(f"Error status {status}")
+                raise RuntimeError(f"Failed getting tags from DockerHub! {status} {text}")
+            tags = data["results"]
 
-                my_architecture = get_current_arch()
-                valid_images = []
-                for tag in tags:
-                    images = tag["images"]
-                    if len(images) == 0:
-                        # this is a hack to deal with https://github.com/docker/hub-feedback/issues/2484
-                        # we lost the ability to properly identify the images as we dont have the digest,
-                        # and also the ability to filter for compatible architectures.
-                        # so we just add the tag and hope for the best.
+            my_architecture = get_current_arch()
+            valid_images = []
+            for tag in tags:
+                images = tag["images"]
+                if len(images) == 0:
+                    # this is a hack to deal with https://github.com/docker/hub-feedback/issues/2484
+                    # we lost the ability to properly identify the images as we dont have the digest,
+                    # and also the ability to filter for compatible architectures.
+                    # so we just add the tag and hope for the best.
+                    tag = TagMetadata(
+                        repository=repository,
+                        image=repository.split("/")[-1],
+                        tag=tag["name"],
+                        last_modified=tag["last_updated"],
+                        sha=None,
+                        digest="------",
+                    )
+                    valid_images.append(tag)
+                    continue
+                for image in tag["images"]:
+                    if image["architecture"] == my_architecture:
                         tag = TagMetadata(
                             repository=repository,
                             image=repository.split("/")[-1],
                             tag=tag["name"],
-                            last_modified=tag["last_updated"],
+                            last_modified=image["last_pushed"],
                             sha=None,
-                            digest="------",
+                            digest=image["digest"],
                         )
+                        if tag.tag in local_images:
+                            try:
+                                tag.sha = await self.fetch_sha(tag)
+                            except Exception as new_error:
+                                if str(new_error) not in errors:
+                                    errors.append(str(f"Error fetching sha for {tag}: {new_error}"))
                         valid_images.append(tag)
-                        continue
-                    for image in tag["images"]:
-                        if image["architecture"] == my_architecture:
-                            tag = TagMetadata(
-                                repository=repository,
-                                image=repository.split("/")[-1],
-                                tag=tag["name"],
-                                last_modified=image["last_pushed"],
-                                sha=None,
-                                digest=image["digest"],
-                            )
-                            if tag.tag in local_images:
-                                try:
-                                    tag.sha = await self.fetch_sha(tag)
-                                except Exception as new_error:
-                                    if str(new_error) not in errors:
-                                        errors.append(str(f"Error fetching sha for {tag}: {new_error}"))
-                            valid_images.append(tag)
-                return "\n".join(errors), valid_images
+            return "\n".join(errors), valid_images
