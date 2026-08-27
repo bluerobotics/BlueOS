@@ -16,6 +16,7 @@ from jobs import JobsManager
 from jobs.models import Job, JobMethod
 from manifest import ManifestManager
 from manifest.exceptions import ManifestBackendOffline
+from recovery import recovered_extension_from_inspect
 from settings import ExtensionSettings, SettingsV2
 
 
@@ -87,6 +88,46 @@ class Kraken:
                     logger.warning(
                         f"Dead extension {extension.identifier}:{extension.tag} could not be started: {traceback.format_exc()}"
                     )
+
+    async def recover_lost_extensions(self) -> None:
+        extensions: List[ExtensionSettings] = Extension._fetch_settings()
+        if extensions:
+            return
+
+        try:
+            inspects = await ContainerManager.inspect_extension_containers()
+        except Exception as error:
+            logger.error(f"Unable to inspect extension containers for settings recovery: {error}")
+            return
+        if not inspects:
+            return
+
+        catalog_by_docker: dict[str, tuple[str, str]] = {}
+        try:
+            entries = await asyncio.wait_for(self.manifest.fetch_consolidated(), timeout=5)
+            for entry in entries:
+                catalog_by_docker[entry.docker] = (entry.identifier, entry.name)
+        except Exception as error:
+            logger.warning(f"Catalog unavailable while recovering extensions: {error}")
+
+        recovered = []
+        for inspect in inspects:
+            data = recovered_extension_from_inspect(inspect, catalog_by_docker)
+            if data:
+                recovered.append(ExtensionSettings(**data))
+
+        if not recovered:
+            logger.error("Kraken settings have no extensions but extension containers exist and could not be recovered")
+            return
+
+        logger.error(
+            "Kraken settings were empty while extension containers still exist; recovering "
+            + ", ".join(f"{ext.identifier}:{ext.tag}" for ext in recovered)
+        )
+        Extension._manager.load()
+        Extension._settings = Extension._manager.settings
+        Extension._settings.extensions = recovered
+        Extension._manager.save()
 
     async def fetch_default_extension_data(self, url: str) -> Any:
         async with aiohttp.ClientSession() as session:
