@@ -44,7 +44,11 @@ def get_current_arch() -> str:
 def is_name_resolution_error(error: BaseException) -> bool:
     if isinstance(error, socket.gaierror):
         return True
-    return isinstance(getattr(error, "os_error", None), socket.gaierror)
+    if isinstance(getattr(error, "os_error", None), socket.gaierror):
+        return True
+    # e.g. lookup auth.docker.io on 192.168.31.1:53: i/o timeout
+    message = str(error).lower()
+    return "lookup " in message and ":53" in message
 
 
 def remote_tags_error_message(error: BaseException) -> str:
@@ -201,6 +205,7 @@ class TagFetcher:
         """Fetches the tags available for an image in DockerHub"""
         logger.info("fetching", repository)
         errors = []
+        dns_failed = False
         self.last_token = await self._get_token(auth_url="https://auth.docker.io", image_name=repository)
         async with _session() as session:
             status, text, data = await get_json_with_retry(
@@ -241,11 +246,14 @@ class TagFetcher:
                             sha=None,
                             digest=image["digest"],
                         )
-                        if tag.tag in local_images:
+                        if tag.tag in local_images and not dns_failed:
                             try:
                                 tag.sha = await self.fetch_sha(tag)
                             except Exception as new_error:
-                                if str(new_error) not in errors:
-                                    errors.append(str(f"Error fetching sha for {tag}: {new_error}"))
+                                if is_name_resolution_error(new_error):
+                                    errors.append(DNS_FAILURE_MESSAGE)
+                                    dns_failed = True
+                                elif str(new_error) not in errors:
+                                    errors.append(f"Error fetching sha for {tag}: {new_error}")
                         valid_images.append(tag)
             return "\n".join(errors), valid_images
