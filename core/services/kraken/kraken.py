@@ -143,6 +143,10 @@ class Kraken:
             return
 
         extensions: List[ExtensionSettings] = Extension._fetch_settings()
+        if not extensions:
+            if any(container.name[1:].startswith("extension-") for container in containers):
+                logger.error("Skipping dangling extension cleanup because settings have no extensions")
+            return
 
         for container in containers:
             container_name = container.name[1:]
