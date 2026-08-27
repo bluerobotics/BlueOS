@@ -88,8 +88,8 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
 export async function fetchCatalogExtension(identifier: string): Promise<ExtensionData> {
   const response = await back_axios({
     method: 'get',
-    url: `${KRAKEN_API_V2_URL}/manifest/consolidated/${identifier}`,
-    timeout: 15000,
+    url: `${KRAKEN_API_V2_URL}/manifest/consolidated/${encodeURIComponent(identifier)}`,
+    timeout: 60000,
   })
 
   return withCompatibility(response.data as ExtensionData)
