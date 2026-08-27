@@ -220,8 +220,7 @@ class TagFetcher:
             my_architecture = get_current_arch()
             valid_images = []
             for tag in tags:
-                images = tag["images"]
-                if len(images) == 0:
+                if not tag["images"]:
                     # this is a hack to deal with https://github.com/docker/hub-feedback/issues/2484
                     # we lost the ability to properly identify the images as we dont have the digest,
                     # and also the ability to filter for compatible architectures.
