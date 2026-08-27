@@ -11,7 +11,7 @@ import docker
 from fastapi import Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
-from utils.dockerhub import TagFetcher
+from utils.dockerhub import TagFetcher, remote_tags_error_message
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
 
@@ -378,7 +378,7 @@ class VersionChooser:
         except Exception as error:
             logger.critical(f"error fetching online tags: {error}")
             online_tags = []
-            output["error"] = f"error fetching online tags: {error}"
+            output["error"] = remote_tags_error_message(error)
         assert isinstance(output["remote"], list)
         output["remote"].extend([asdict(tag) for tag in online_tags])
 
