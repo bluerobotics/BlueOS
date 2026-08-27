@@ -45,11 +45,22 @@
         />
         <v-alert
           v-if="available_versions.error"
-
           color="red lighten-2"
           dark
         >
-          {{ available_versions.error }}
+          <div class="d-flex align-center justify-space-between">
+            <span>{{ available_versions.error }}</span>
+            <v-btn
+              color="warning"
+              dark
+              small
+              :loading="loading_images"
+              :disabled="loading_images"
+              @click="loadAvailableVersions"
+            >
+              Retry
+            </v-btn>
+          </div>
         </v-alert>
       </v-card>
 
@@ -108,12 +119,23 @@
         </v-form>
         <v-alert
           v-if="available_versions.error"
-
           color="red lighten-2"
           dark
         >
-          {{ available_versions.error }}
-          <br><br>
+          <div class="d-flex align-center justify-space-between">
+            <span>{{ available_versions.error }}</span>
+            <v-btn
+              color="warning"
+              dark
+              small
+              :loading="loading_images"
+              :disabled="loading_images"
+              @click="loadAvailableVersions"
+            >
+              Retry
+            </v-btn>
+          </div>
+          <br>
           You can download BlueOS versions (`BlueOS-core-docker-image` files) directly from the Assets in
           <a
             href="https://github.com/bluerobotics/BlueOS/releases"
