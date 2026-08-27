@@ -11,7 +11,12 @@ import docker
 from fastapi import Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
-from utils.dockerhub import TagFetcher, remote_tags_error_message
+from utils.dockerhub import (
+    DNS_FAILURE_MESSAGE,
+    TagFetcher,
+    is_name_resolution_error,
+    remote_tags_error_message,
+)
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
 
@@ -139,7 +144,10 @@ class VersionChooser:
                     yield json.dumps(line).encode("utf-8")
             except Exception as e:
                 logger.error(f"pull of {repository}:{tag}  failed: {e}")
-                yield json.dumps({"error": f"error while pulling image: {e}"}).encode("utf-8")
+                error = f"error while pulling image: {e}"
+                if is_name_resolution_error(e):
+                    error = DNS_FAILURE_MESSAGE
+                yield json.dumps({"error": error}).encode("utf-8")
 
         return StreamingResponse(
             generate(),
