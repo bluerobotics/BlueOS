@@ -82,6 +82,20 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
 }
 
 /**
+ * Fetch one catalog entry including per-version readme/docs, uses API v2
+ * @param {string} identifier The extension identifier
+ */
+export async function fetchCatalogExtension(identifier: string): Promise<ExtensionData> {
+  const response = await back_axios({
+    method: 'get',
+    url: `${KRAKEN_API_V2_URL}/manifest/consolidated/${identifier}`,
+    timeout: 15000,
+  })
+
+  return withCompatibility(response.data as ExtensionData)
+}
+
+/**
  * Creates a new manifest source in kraken, uses API v2
  * @param {boolean} validateUrl If true, will throw in case an invalid manifest source is provided in given URL
  * @returns {Promise<Manifest>} The created manifest source with data already fetched in case validate is true,
@@ -191,6 +205,7 @@ export default {
   fetchManifestSources,
   fetchManifestSource,
   fetchConsolidatedManifests,
+  fetchCatalogExtension,
   fetchInstalledExtensions,
   addManifestSource,
   updateManifestSource,
