@@ -145,23 +145,33 @@ class Kraken:
 
     async def setup_default_extensions(self) -> None:
         extensions: List[ExtensionSettings] = Extension._fetch_settings()
-        for ext in [
-            ext
-            for ext in DEFAULT_EXTENSIONS
-            if not any(ext["identifier"] == extension.identifier for extension in extensions)
-        ]:
+        for ext in DEFAULT_EXTENSIONS:
+            if any(ext["identifier"] == extension.identifier for extension in extensions):
+                continue
             job_id = f'__default_install_{ext["identifier"]}'
-            if not self.is_install_default_ext_job_created(job_id):
-                data = await self.fetch_default_extension_data(ext["url"])
-                job = Job(
-                    id=job_id,
-                    route="v2.0/extension",
-                    method=JobMethod.POST,
-                    body=data,
-                    retries=1,
-                )
-                JobsManager.add(job)
-                logger.info(f"Created job to install default extension {ext['identifier']}")
+            if self.is_install_default_ext_job_created(job_id):
+                continue
+            data = await self.fetch_default_extension_data(ext["url"])
+            recovered = next((extension for extension in extensions if extension.docker == data.get("docker")), None)
+            if recovered:
+                if recovered.identifier != ext["identifier"]:
+                    logger.info(
+                        f"Rebinding recovered extension {recovered.identifier} to default identifier {ext['identifier']}"
+                    )
+                    recovered.identifier = ext["identifier"]
+                    if data.get("name"):
+                        recovered.name = data["name"]
+                    Extension._manager.save()
+                continue
+            job = Job(
+                id=job_id,
+                route="v2.0/extension",
+                method=JobMethod.POST,
+                body=data,
+                retries=1,
+            )
+            JobsManager.add(job)
+            logger.info(f"Created job to install default extension {ext['identifier']}")
 
     async def kill_invalid_extensions(self) -> None:
         extensions: List[ExtensionSettings] = Extension._fetch_settings()
