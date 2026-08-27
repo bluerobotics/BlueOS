@@ -57,6 +57,15 @@ export async function fetchManifestSource(identifier: string, data = true): Prom
   return response.data as Manifest
 }
 
+function withCompatibility(extension: ExtensionData): ExtensionData {
+  return {
+    ...extension,
+    is_compatible: Object.values(extension.versions).some(
+      (version) => version.images.some((image) => image.compatible),
+    ),
+  }
+}
+
 /**
  * Fetch all manifests from kraken in a single merged representation, repeated entries will be excluded, only the one
  * present in the manifest wth higher priority will be kept, uses API v2
@@ -69,12 +78,7 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
     timeout: 25000,
   })
 
-  return (response.data as ExtensionData[]).map((extension: ExtensionData) => ({
-    ...extension,
-    is_compatible: Object.values(extension.versions).some(
-      (version) => version.images.some((image) => image.compatible),
-    ),
-  }))
+  return (response.data as ExtensionData[]).map(withCompatibility)
 }
 
 /**
