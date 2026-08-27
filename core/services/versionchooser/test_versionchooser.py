@@ -12,6 +12,7 @@ from utils.dockerhub import (
     TagFetcher,
     TagMetadata,
     get_json_with_retry,
+    is_name_resolution_error,
     remote_tags_error_message,
 )
 
@@ -370,3 +371,89 @@ async def test_set_remote_versions_dns_error() -> None:
         await chooser.set_remote_versions(output, "bluerobotics/blueos-core")
     assert output["error"] == DNS_FAILURE_MESSAGE
     assert not output["remote"]
+
+
+def test_is_name_resolution_error_docker_lookup() -> None:
+    error = RuntimeError(
+        'DockerError(500, \'Head "https://registry-1.docker.io/v2/bluerobotics/blueos-core/manifests/master": '
+        'Get "https://auth.docker.io/token": dial tcp: lookup auth.docker.io on 192.168.31.1:53: '
+        "read udp 192.168.31.177:54417->192.168.31.1:53: i/o timeout')"
+    )
+    assert is_name_resolution_error(error)
+
+
+async def test_pull_version_dns_error() -> None:
+    class _FailingPull:
+        def __aiter__(self) -> "_FailingPull":
+            return self
+
+        async def __anext__(self) -> Any:
+            raise RuntimeError("lookup auth.docker.io on 192.168.31.1:53: i/o timeout")
+
+    client = mock.AsyncMock()
+    client.images.pull = lambda *_args, **_kwargs: _FailingPull()
+    chooser = VersionChooser(client)
+    chunks: list[bytes] = []
+    response = mock.AsyncMock()
+    response.headers = {}
+
+    async def write(data: bytes) -> None:
+        chunks.append(data)
+
+    response.write = write
+    with mock.patch("utils.chooser.web.StreamResponse", return_value=response):
+        await chooser.pull_version(mock.Mock(), "bluerobotics/blueos-core", "master")
+    assert chunks
+    payload = json.loads(chunks[0])
+    assert payload["error"] == DNS_FAILURE_MESSAGE
+
+
+async def test_fetch_remote_tags_sha_dns_error() -> None:
+    fetcher = TagFetcher()
+    tags_payload = {
+        "results": [
+            {
+                "name": "master",
+                "last_updated": "2020-01-01",
+                "images": [
+                    {
+                        "architecture": "amd64",
+                        "last_pushed": "2020-01-01",
+                        "digest": "sha256:abc",
+                    }
+                ],
+            },
+            {
+                "name": "latest",
+                "last_updated": "2020-01-02",
+                "images": [
+                    {
+                        "architecture": "amd64",
+                        "last_pushed": "2020-01-02",
+                        "digest": "sha256:def",
+                    }
+                ],
+            },
+        ]
+    }
+
+    async def fake_get_json(_session: Any, _url: str, **_kwargs: Any) -> tuple[int, str, dict[str, Any]]:
+        return 200, "", tags_payload
+
+    with (
+        mock.patch.object(TagFetcher, "_get_token", new_callable=AsyncMock, return_value="tok"),
+        mock.patch("utils.dockerhub.get_json_with_retry", side_effect=fake_get_json),
+        mock.patch("utils.dockerhub.get_current_arch", return_value="amd64"),
+        mock.patch.object(
+            TagFetcher,
+            "fetch_sha",
+            new_callable=AsyncMock,
+            side_effect=socket.gaierror(-3, "Temporary failure in name resolution"),
+        ) as fetch_sha,
+    ):
+        errors, tags = await fetcher.fetch_remote_tags("bluerobotics/blueos-core", ["master", "latest"])
+
+    assert errors == DNS_FAILURE_MESSAGE
+    assert fetch_sha.await_count == 1
+    assert {tag.tag for tag in tags} == {"master", "latest"}
+    assert all(tag.sha is None for tag in tags)
