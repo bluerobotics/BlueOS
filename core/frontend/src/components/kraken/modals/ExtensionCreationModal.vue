@@ -200,6 +200,9 @@ export default Vue.extend({
     validate_identifier(input: string): (true | string) {
       // Identifiers should be two words separated by a period
       // They can contain lower and uppercase characters, but cannot begin with a number
+      if (/\s/.test(input)) {
+        return 'This field must not contain whitespace.'
+      }
       const name_validator = '[A-Za-z][A-Za-z0-9]+'
       const regex = RegExp(`^${name_validator}\\.${name_validator}`)
       if (regex.test(input)) {
@@ -212,6 +215,7 @@ export default Vue.extend({
       const path_part_regex = /^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*$/
 
       if (!input) return 'Name must not be empty'
+      if (/\s/.test(input)) return 'Name must not contain whitespace'
 
       const parts = input.split('/')
 
@@ -232,16 +236,21 @@ export default Vue.extend({
       return true
     },
     validate_name(input: string): (true | string) {
-      if (input.trim().length === 0) {
+      // Trim only for checks so a space while typing the next word is not an error.
+      const name = input.trim()
+      if (name.length === 0) {
         return 'This field must not be empty.'
       }
-      if (input.length > 128) {
+      if (name.length > 128) {
         return 'This entry must fit within 128 characters.'
       }
       return true
     },
     validate_tag(input: string) {
-      if (input.includes(' ')) {
+      if (!input) {
+        return 'Tag name must not be empty.'
+      }
+      if (/\s/.test(input)) {
         return 'Tag name must not include spaces.'
       }
       if (input.startsWith('-') || input.startsWith('.')) {
@@ -260,6 +269,7 @@ export default Vue.extend({
       if (this.new_permissions) {
         this.new_extension.user_permissions = JSON.stringify(this.new_permissions)
       }
+      this.new_extension.name = this.new_extension.name.trim()
       if (this.form.validate() === true) {
         this.$emit('extensionChange', this.new_extension)
       }
