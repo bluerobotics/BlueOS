@@ -4,9 +4,13 @@ Responsible for interacting with dockerhub
 adapted from https://github.com/al4/docker-registry-list
 """
 
+import asyncio
 import platform
+import socket
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from functools import partial
+from typing import Any, List, Optional, Tuple
 from warnings import warn
 
 import aiohttp
@@ -29,6 +33,72 @@ def get_current_arch() -> str:
             return "arm64"
         case _:
             raise RuntimeError(f"Unknown architecture! {machine}")
+
+
+# getaddrinfo is not cancellable. Cap threads so leftover AAAA cannot fill the default pool.
+_HUB_DNS = ThreadPoolExecutor(max_workers=2, thread_name_prefix="hub-dns")
+_DNS_FAMILY_TIMEOUT_S = 2.0
+
+
+class _FamilyRaceResolver(aiohttp.abc.AbstractResolver):
+    """Resolve AF_INET and AF_INET6 in parallel. Keep every family that answers."""
+
+    async def _resolve_family(self, host: str, port: int, family: int) -> List[Any]:
+        loop = asyncio.get_running_loop()
+        infos = await loop.run_in_executor(
+            _HUB_DNS,
+            partial(socket.getaddrinfo, host, port, family, socket.SOCK_STREAM, socket.IPPROTO_TCP),
+        )
+        hosts: List[Any] = []
+        for address_family, _type, proto, _name, address in infos:
+            hosts.append(
+                {
+                    "hostname": host,
+                    "host": address[0],
+                    "port": address[1],
+                    "family": address_family,
+                    "proto": proto,
+                    "flags": socket.AI_NUMERICHOST | socket.AI_NUMERICSERV,
+                }
+            )
+        return hosts
+
+    async def resolve(self, host: str, port: int = 0, family: int = socket.AF_UNSPEC) -> List[Any]:
+        if family != socket.AF_UNSPEC:
+            return await self._resolve_family(host, port, family)
+
+        last_error: Optional[BaseException] = None
+
+        async def lookup(fam: int) -> List[Any]:
+            nonlocal last_error
+            try:
+                return await asyncio.wait_for(
+                    self._resolve_family(host, port, fam),
+                    timeout=_DNS_FAMILY_TIMEOUT_S,
+                )
+            except OSError as error:
+                last_error = error
+                return []
+
+        v4, v6 = await asyncio.gather(lookup(socket.AF_INET), lookup(socket.AF_INET6))
+        hosts = [*v4, *v6]
+        if hosts:
+            return hosts
+        if last_error is not None:
+            raise last_error
+        raise socket.gaierror(socket.EAI_NONAME, f"Name or service not known: {host}")
+
+    async def close(self) -> None:
+        pass
+
+
+def _session() -> aiohttp.ClientSession:
+    return aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(
+            resolver=_FamilyRaceResolver(),
+            happy_eyeballs_delay=0.25,
+        )
+    )
 
 
 @dataclass
@@ -68,7 +138,7 @@ class TagFetcher:
             "scope": f"repository:{image_name}:pull",
         }
 
-        async with aiohttp.ClientSession() as session:
+        async with _session() as session:
             async with session.get(auth_url + "/token", params=payload) as resp:
                 if resp.status != 200:
                     warn(f"Error status {resp.status}")
@@ -81,7 +151,7 @@ class TagFetcher:
             "Authorization": f"Bearer {self.last_token}",
             "Accept": "application/vnd.docker.distribution.manifest.v2+json,application/vnd.oci.image.manifest.v1+json",
         }
-        async with aiohttp.ClientSession() as session:
+        async with _session() as session:
             url = f"{self.index_url}/v2/{metadata.repository}/manifests/{metadata.digest}"
             async with session.get(url, headers=header) as resp:
                 if resp.status != 200:
@@ -97,7 +167,7 @@ class TagFetcher:
         logger.info("fetching", repository)
         errors = []
         self.last_token = await self._get_token(auth_url="https://auth.docker.io", image_name=repository)
-        async with aiohttp.ClientSession() as session:
+        async with _session() as session:
             async with session.get(
                 f"{self.docker_url}/v2/repositories/{repository}/tags/?page_size=200&page=1&ordering=last_updated"
             ) as resp:
