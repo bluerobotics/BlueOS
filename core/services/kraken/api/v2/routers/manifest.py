@@ -85,6 +85,18 @@ async def fetch_consolidated() -> list[RepositoryEntry]:
     return [entry.without_readme() for entry in await manifest_manager.fetch_consolidated()]
 
 
+@manifest_router_v2.get("/consolidated/{extension_identifier}", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
+async def fetch_consolidated_extension(extension_identifier: str) -> RepositoryEntry:
+    """
+    Get one catalog entry from the consolidated manifests, including readme and docs.
+    """
+    ext = await manifest_manager.fetch_extension(extension_identifier)
+    if not ext:
+        raise ExtensionEntryNotFound(f"Extension {extension_identifier} not found")
+    return ext
+
+
 @manifest_router_v2.get("/tags/{manifest_identifier}/{extension_identifier}/", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch_ext_tags_from_manifest(
