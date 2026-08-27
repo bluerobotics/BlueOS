@@ -45,11 +45,22 @@
         />
         <v-alert
           v-if="available_versions.error"
-
           color="red lighten-2"
           dark
         >
-          {{ available_versions.error }}
+          <div class="d-flex align-center justify-space-between">
+            <span>{{ available_versions.error }}</span>
+            <v-btn
+              color="warning"
+              dark
+              small
+              :loading="loading_images"
+              :disabled="loading_images"
+              @click="loadAvailableVersions"
+            >
+              Retry
+            </v-btn>
+          </div>
         </v-alert>
       </v-card>
 
@@ -107,11 +118,22 @@
         </v-form>
         <v-alert
           v-if="available_versions.error"
-
           color="red lighten-2"
           dark
         >
-          {{ available_versions.error }}
+          <div class="d-flex align-center justify-space-between">
+            <span>{{ available_versions.error }}</span>
+            <v-btn
+              color="warning"
+              dark
+              small
+              :loading="loading_images"
+              :disabled="loading_images"
+              @click="loadAvailableVersions"
+            >
+              Retry
+            </v-btn>
+          </div>
         </v-alert>
         <spinning-logo
           v-if="loading_images"
