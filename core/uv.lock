@@ -62,6 +62,15 @@ wheels = [
 ]
 
 [[package]]
+name = "aiohappyeyeballs"
+version = "2.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ce/f4/eec0465c2f67b2664688d0240b3212d5196fd89e741df67ddb81f8d35658/aiohappyeyeballs-2.7.1.tar.gz", hash = "sha256:065665c041c42a5938ed220bdcd7230f22527fbec085e1853d2402c8a3615d9d", size = 24757, upload-time = "2026-07-01T17:11:55.501Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/43/1947f06babed6b3f1d7f38b0c767f52df66bfb2bc10b468c4a7de9eceff2/aiohappyeyeballs-2.7.1-py3-none-any.whl", hash = "sha256:9243213661e29250eb41368e5daa826fc017156c3b8a11440826b2e3ed376472", size = 15038, upload-time = "2026-07-01T17:11:54.055Z" },
+]
+
+[[package]]
 name = "aiohttp"
 version = "3.7.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1419,6 +1428,7 @@ version = "0.1.0"
 source = { virtual = "services/versionchooser" }
 dependencies = [
     { name = "aiodocker" },
+    { name = "aiohappyeyeballs" },
     { name = "aiohttp" },
     { name = "aiohttp-jinja2" },
     { name = "appdirs" },
@@ -1440,6 +1450,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiodocker", specifier = "==0.21.0" },
+    { name = "aiohappyeyeballs", specifier = "==2.7.1" },
     { name = "aiohttp", specifier = "==3.7.4" },
     { name = "aiohttp-jinja2", specifier = "==1.4.2" },
     { name = "appdirs", specifier = "==1.4.4" },
