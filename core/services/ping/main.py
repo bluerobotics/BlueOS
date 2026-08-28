@@ -39,8 +39,7 @@ ping_manager = PingManager()
 @version(1, 0)
 def get_sensors() -> Any:
     devices = ping_manager.devices()
-    logger.info(f"Sensors available: {devices}")
-    return [PingDeviceDescriptorModel.from_descriptor(device) for device in ping_manager.devices()]
+    return [PingDeviceDescriptorModel.from_descriptor(device) for device in devices]
 
 
 @app.post("/sensors", status_code=status.HTTP_200_OK, summary="Set sensor settings.")
