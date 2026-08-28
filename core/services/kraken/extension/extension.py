@@ -247,7 +247,7 @@ class Extension:
             await self._clear_remaining_tags()
 
     async def update(self, clear_remaining_tags: bool) -> AsyncGenerator[bytes, None]:
-        async for data in self.install(clear_remaining_tags):
+        async for data in self.install(clear_remaining_tags, atomic=True):
             yield data
 
     async def uninstall(self) -> None:
