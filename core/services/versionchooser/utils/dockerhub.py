@@ -13,6 +13,7 @@ from functools import partial
 from typing import Any, List, Optional, Tuple
 from warnings import warn
 
+import aiohappyeyeballs
 import aiohttp
 from loguru import logger
 
@@ -114,12 +115,52 @@ class _FamilyRaceResolver(aiohttp.abc.AbstractResolver):
         pass
 
 
+class _HappyEyeballsConnector(aiohttp.TCPConnector):
+    async def _create_direct_connection(  # type: ignore[override]
+        self,
+        req: Any,
+        traces: Any,
+        timeout: Any,
+        *,
+        client_error: Any = aiohttp.ClientConnectorError,
+    ) -> Any:
+        sslcontext = self._get_ssl_context(req)
+        host = req.url.raw_host
+        port = req.port
+        hosts = await self._resolve_host(host, port, traces=traces)
+        addr_infos = []
+        for hinfo in hosts:
+            if hinfo["family"] == socket.AF_INET6:
+                addr: Any = (hinfo["host"], hinfo["port"], 0, 0)
+            else:
+                addr = (hinfo["host"], hinfo["port"])
+            addr_infos.append((hinfo["family"], socket.SOCK_STREAM, socket.IPPROTO_TCP, "", addr))
+        try:
+            sock = await aiohappyeyeballs.start_connection(
+                addr_infos,
+                happy_eyeballs_delay=0.25,
+                interleave=1,
+            )
+        except OSError as error:
+            raise client_error(req.connection_key, error) from error
+        try:
+            return await self._wrap_create_connection(
+                self._factory,
+                sock=sock,
+                timeout=timeout,
+                ssl=sslcontext,
+                server_hostname=host if sslcontext else None,
+                req=req,
+                client_error=client_error,
+            )
+        except Exception:
+            sock.close()
+            raise
+
+
 def _session() -> aiohttp.ClientSession:
     return aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(
-            resolver=_FamilyRaceResolver(),
-            happy_eyeballs_delay=0.25,
-        )
+        connector=_HappyEyeballsConnector(resolver=_FamilyRaceResolver()),
     )
 
 

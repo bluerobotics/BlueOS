@@ -17,6 +17,18 @@ aiohttp = ">=3.6"
 typing-extensions = ">=3.6.5"
 
 [[package]]
+name = "aiohappyeyeballs"
+version = "2.7.1"
+description = "Happy Eyeballs for asyncio"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "aiohappyeyeballs-2.7.1-py3-none-any.whl", hash = "sha256:9243213661e29250eb41368e5daa826fc017156c3b8a11440826b2e3ed376472"},
+    {file = "aiohappyeyeballs-2.7.1.tar.gz", hash = "sha256:065665c041c42a5938ed220bdcd7230f22527fbec085e1853d2402c8a3615d9d"},
+]
+
+[[package]]
 name = "aiohttp"
 version = "3.9.5"
 description = "Async http client/server framework (asyncio)"
@@ -1859,4 +1871,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "cbbb74e5d678ae3367e2fbace2847611be3ebb8a419cf122d10f91365672536b"
+content-hash = "c0dda466a6c1fc98ef134504392829139d213a5072644f7ce62f338032af6e7f"
