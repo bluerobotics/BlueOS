@@ -276,7 +276,7 @@ class Extension:
         to_clear = [version for version in to_clear if version.source.tag != self.tag]
         await asyncio.gather(*(version.uninstall() for version in to_clear))
 
-    async def install(self, clear_remaining_tags: bool = True, atomic: bool = False) -> AsyncGenerator[bytes, None]:
+    async def install(self, clear_remaining_tags: bool = True) -> AsyncGenerator[bytes, None]:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
 
         # First we should make sure no other tag is running
@@ -291,21 +291,20 @@ class Extension:
                 yield line
         except Exception as error:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
-            if atomic:
-                should_raise = False
-                if await self._image_is_available_locally():
-                    logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
-                else:
-                    if not running_ext or self.unique_entry != running_ext.unique_entry:
-                        should_raise = True
-                        await self.uninstall()
-                    if running_ext:
-                        await running_ext.enable()
+            should_raise = False
+            if await self._image_is_available_locally():
+                logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
+            else:
+                if not running_ext or self.unique_entry != running_ext.unique_entry:
+                    should_raise = True
+                    await self.uninstall()
+                if running_ext:
+                    await running_ext.enable()
 
-                if should_raise:
-                    raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
-                # Reached only if the extensions are the same, the change is in permissions, not installation failure.
-                return
+            if should_raise:
+                raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
+            # Reached only if the extensions are the same, the change is in permissions, not installation failure.
+            return
         finally:
             self.unlock(self.unique_entry)
             self.reset_start_attempt(self.unique_entry)
