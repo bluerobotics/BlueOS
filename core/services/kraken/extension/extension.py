@@ -392,20 +392,11 @@ class Extension:
         try:
             async with DockerCtx() as client:
                 # Checks if image exists locally, if not tries to pull it
-                try:
-                    await client.images.inspect(img_name)
-                except Exception:
-                    try:
-                        logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
-                        self.lock(self.unique_entry)
-
-                        tag = img_name + (f"@{self.digest}" if self.digest else "")
-                        await client.images.pull(tag, repo=self.source.docker, tag=self.tag)
-                        # Make sure to add correct tag if a digest was used since docker messes up the tag
-                        if self.digest:
-                            await client.images.tag(tag, img_name)
-                    except Exception as error:
-                        raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
+                if not await self._ensure_tagged_local_image(client):
+                    logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
+                    self.lock(self.unique_entry)
+                    async for _ in self._pull_docker_image(self._prepare_docker_auth()):
+                        pass
 
                 container = await client.containers.create_or_replace(name=ext.container_name(), config=config)  # type: ignore
                 await container.start()
