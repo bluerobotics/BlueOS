@@ -494,6 +494,7 @@ export default Vue.extend({
     },
     async updateAvailableFirmwares(): Promise<void> {
       this.chosen_firmware_url = null
+      this.available_firmwares = []
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
       await back_axios({
         method: 'get',
