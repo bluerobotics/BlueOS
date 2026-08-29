@@ -107,11 +107,10 @@
       </div>
       <div id="update-options">
         <v-select
-          v-if="settings.is_pirate_mode || only_bootloader_boards_available"
+          v-if="only_bootloader_boards_available"
           v-model="chosen_board"
           :items="available_boards"
           label="Board"
-          hint="If no board is chosen the system will try to flash the currently running board."
           class="ma-1 pa-0"
           @change="chosen_vehicle = null"
         />
@@ -364,8 +363,14 @@ export default Vue.extend({
       return this.no_sitl_boards.length > 0
         && this.no_sitl_boards.every((board) => board.flags.includes(FlightControllerFlags.is_bootloader))
     },
+    target_board(): FlightController | null {
+      if (this.only_bootloader_boards_available) {
+        return this.chosen_board
+      }
+      return autopilot.current_board
+    },
     available_boards(): {value: FlightController, text: string}[] {
-      return (this.only_bootloader_boards_available ? this.no_sitl_boards : autopilot.available_boards).map(
+      return this.no_sitl_boards.map(
         (board) => ({
           value: board,
           text: board.name === autopilot.current_board?.name ? `${board.name} (current)` : board.name,
@@ -390,7 +395,7 @@ export default Vue.extend({
     // Blue Robotics only curates parameters for firmwares it has tested, so a version resolving to no parameter
     // set has not been vetted. An empty repository means it could not be fetched, which proves nothing.
     is_untested_firmware(): boolean {
-      const board = this.chosen_board ?? autopilot.current_board
+      const board = this.target_board
       if (this.upload_type !== UploadType.Cloud || this.chosen_vehicle === null || board === null) {
         return false
       }
@@ -499,7 +504,7 @@ export default Vue.extend({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 30000,
-        params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.name },
+        params: { vehicle: this.chosen_vehicle, board_name: this.target_board?.name },
       })
         .then((response) => {
           this.available_firmwares = response.data
@@ -525,13 +530,13 @@ export default Vue.extend({
         // Populate request with data for cloud install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_url`,
-          params: { url: this.chosen_firmware_url, board_name: this.chosen_board?.name },
+          params: { url: this.chosen_firmware_url, board_name: this.target_board?.name },
         })
       } else if (this.upload_type === UploadType.Restore) {
         // Populate request with data for restore install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/restore_default_firmware`,
-          params: { board_name: this.chosen_board?.name },
+          params: { board_name: this.target_board?.name },
         })
       } else {
         // Populate request with data for file install
@@ -545,7 +550,7 @@ export default Vue.extend({
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_file`,
           headers: { 'Content-Type': 'multipart/form-data' },
-          params: { board_name: this.chosen_board?.name },
+          params: { board_name: this.target_board?.name },
           data: form_data,
         })
       }
