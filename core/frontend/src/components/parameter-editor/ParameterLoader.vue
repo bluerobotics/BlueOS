@@ -123,7 +123,7 @@
         No parameters to change. This means all the
         parameters in this group are already set to the desired values
       </v-card-text>
-      <v-card-text v-if="error">
+      <v-card-text v-if="error && !write_finished">
         <v-alert
           type="error"
         >
@@ -139,6 +139,14 @@
           @click="writeParams"
         >
           Write Parameters
+        </v-btn>
+        <v-btn
+          v-if="write_finished || error"
+          class="ma-6 elevation-2"
+          x-large
+          @click="done"
+        >
+          Close
         </v-btn>
         <RebootButton v-if="error" />
       </v-card-actions>
@@ -214,9 +222,16 @@ export default Vue.extend({
         this.updateParamCheckboxes(newval)
       },
     },
+    write_finished(finished: boolean) {
+      if (finished && this.writing) {
+        clearInterval(this.retry_interval)
+        this.error = false
+      }
+    },
   },
   methods: {
     done() {
+      clearInterval(this.retry_interval)
       this.$emit('done')
       this.error = false
       this.retries = 0
