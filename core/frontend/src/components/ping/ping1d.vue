@@ -79,7 +79,7 @@ export default Vue.extend({
   data() {
     return {
       expand: false,
-      user_desired_mavlink_driver_state: true,
+      user_desired_mavlink_driver_state: false,
     }
   },
   computed: {
