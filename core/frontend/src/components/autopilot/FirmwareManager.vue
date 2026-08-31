@@ -122,10 +122,21 @@
             v-model="chosen_vehicle"
             :items="vehicle_types"
             label="Vehicle type"
+            :hint="vehicle_changed ? vehicle_change_warning : ''"
+            :persistent-hint="vehicle_changed"
             required
             class="ma-1 pa-0"
             @change="updateAvailableFirmwares"
-          />
+          >
+            <template
+              v-if="vehicle_changed"
+              #append-outer
+            >
+              <v-icon color="warning">
+                mdi-alert
+              </v-icon>
+            </template>
+          </v-select>
           <div class="d-flex">
             <v-select
               v-model="chosen_firmware_url"
@@ -361,6 +372,14 @@ export default Vue.extend({
         (vehicle) => firmwareVehicleTypeFromVehicle(vehicle) === firmware,
       )
       return match ?? null
+    },
+    vehicle_changed(): boolean {
+      return this.chosen_vehicle !== null
+        && this.current_vehicle !== null
+        && this.chosen_vehicle !== this.current_vehicle
+    },
+    vehicle_change_warning(): string {
+      return `Installing this firmware will change the vehicle from ${this.current_vehicle} to ${this.chosen_vehicle}.`
     },
     no_sitl_boards(): FlightController[] {
       return autopilot.available_boards.filter((board) => board.name.toLowerCase() !== 'sitl')
