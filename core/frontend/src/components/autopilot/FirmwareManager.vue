@@ -352,6 +352,16 @@ export default Vue.extend({
         (vehicle) => ({ value: vehicle[0], text: vehicle[1] }),
       )
     },
+    current_vehicle(): Vehicle | null {
+      const firmware = autopilot.firmware_vehicle_type
+      if (firmware === null) {
+        return null
+      }
+      const match = Object.values(Vehicle).find(
+        (vehicle) => firmwareVehicleTypeFromVehicle(vehicle) === firmware,
+      )
+      return match ?? null
+    },
     no_sitl_boards(): FlightController[] {
       return autopilot.available_boards.filter((board) => board.name.toLowerCase() !== 'sitl')
     },
@@ -444,7 +454,7 @@ export default Vue.extend({
     'autopilot.firmware_vehicle_type': {
       handler(new_value: FirmwareVehicleType | null): void {
         if (this.chosen_vehicle === null && new_value !== null) {
-          this.setVehicleFromFirmware(new_value)
+          this.setVehicleFromFirmware()
         }
       },
       immediate: true,
@@ -478,17 +488,9 @@ export default Vue.extend({
       const [first_board] = this.no_sitl_boards
       this.chosen_board = first_board
     },
-    setVehicleFromFirmware(firmware_vehicle_type: FirmwareVehicleType): void {
-      const mapping: Record<FirmwareVehicleType, Vehicle | null> = {
-        [FirmwareVehicleType.ArduSub]: Vehicle.Sub,
-        [FirmwareVehicleType.ArduRover]: Vehicle.Rover,
-        [FirmwareVehicleType.ArduPlane]: Vehicle.Plane,
-        [FirmwareVehicleType.ArduCopter]: Vehicle.Copter,
-        [FirmwareVehicleType.Other]: null,
-      }
-      const vehicle = mapping[firmware_vehicle_type]
-      if (vehicle !== null) {
-        this.chosen_vehicle = vehicle
+    setVehicleFromFirmware(): void {
+      if (this.current_vehicle !== null) {
+        this.chosen_vehicle = this.current_vehicle
         this.updateAvailableFirmwares()
       }
     },
