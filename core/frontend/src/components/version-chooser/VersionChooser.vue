@@ -117,6 +117,13 @@
             @click:append="resetToDefaultRepository()"
           />
         </v-form>
+        <v-text-field
+          v-if="showRemoteSearch"
+          v-model="search"
+          label="Search images"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+        />
         <v-alert
           v-if="remote_alert_message"
 
@@ -233,6 +240,7 @@
 </template>
 
 <script lang="ts">
+import Fuse from 'fuse.js'
 import { gt as sem_ver_greater, SemVer } from 'semver'
 import Vue from 'vue'
 
@@ -273,6 +281,7 @@ export default Vue.extend({
       pull_output: '',
       show_pull_output: false,
       page: 1,
+      search: '',
       local_versions: {
         result: {
           local: [],
@@ -304,11 +313,30 @@ export default Vue.extend({
     }
   },
   computed: {
+    // Keyed off the loaded images instead of the repository field, so the bar
+    // doesn't flicker while the field is still being typed into
+    showRemoteSearch(): boolean {
+      const [first] = this.available_versions.remote
+      return first !== undefined && !first.repository.startsWith('bluerobotics/')
+    },
+    fuse(): Fuse<Version> {
+      return new Fuse(this.available_versions.remote, {
+        keys: ['tag'],
+        shouldSort: true,
+        threshold: 0.3,
+      })
+    },
+    filteredRemoteVersions(): Version[] {
+      if (!this.showRemoteSearch || !this.search) {
+        return this.available_versions.remote
+      }
+      return this.fuse.search(this.search).map(({ item }) => item)
+    },
     paginatedComponents(): Version[] {
-      return this.available_versions.remote.slice((this.page - 1) * 10, this.page * 10)
+      return this.filteredRemoteVersions.slice((this.page - 1) * 10, this.page * 10)
     },
     totalPages(): number {
-      return Math.ceil(this.available_versions.remote.length / 10)
+      return Math.ceil(this.filteredRemoteVersions.length / 10)
     },
     inputFileRequiredMessage(): string {
       return 'File is required'
@@ -331,6 +359,9 @@ export default Vue.extend({
     },
   },
   watch: {
+    search() {
+      this.page = 1
+    },
     is_offline(offline: boolean) {
       if (offline) {
         this.resetToNoInternetAvailable()
@@ -715,6 +746,7 @@ export default Vue.extend({
     },
     resetToDefaultRepository() {
       this.selected_image = this.default_repository
+      this.search = ''
       this.loadAvailableVersions()
     },
   },
