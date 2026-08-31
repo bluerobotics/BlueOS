@@ -59,7 +59,8 @@
       </v-card-actions>
     </v-card>
     <ParameterLoader
-      v-if="selected_paramset"
+      v-if="Object.keys(selected_paramset).length"
+      :key="selected_paramset_name"
       :parameters="selected_paramset"
       @done="selected_paramset = {}"
     />
@@ -163,7 +164,7 @@ export default Vue.extend({
     },
     async loadParams(name: string, paramset: Dictionary<number>) {
       this.selected_paramset_name = name
-      this.selected_paramset = paramset
+      this.selected_paramset = { ...paramset }
     },
     async restartAutopilot(): Promise<void> {
       this.rebooting = true
