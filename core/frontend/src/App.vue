@@ -432,6 +432,7 @@ import menus, { menuItem } from './menus'
 import autopilot_data from './store/autopilot'
 import system_information from './store/system-information'
 import { TopBarWidget } from './types/common'
+import Battery from './widgets/Battery.vue'
 import Cpu from './widgets/Cpu.vue'
 import Disk from './widgets/Disk.vue'
 import Networking from './widgets/Networking.vue'
@@ -483,6 +484,11 @@ export default Vue.extend({
   computed: {
     widgets(): TopBarWidget[] {
       const widgets = [
+        {
+          component: Battery,
+          name: 'Battery',
+          props: {},
+        },
         {
           component: Cpu,
           name: 'CPU',
