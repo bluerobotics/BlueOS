@@ -68,6 +68,7 @@
     <div class="endpoint-buttons">
       <v-btn
         v-if="!endpoint.protected && is_known_type"
+        v-tooltip="'Edit endpoint'"
         color="primary"
         dark
         fab
@@ -79,6 +80,7 @@
         </v-icon>
       </v-btn>
       <v-btn
+        v-tooltip="'Copy command line string'"
         color="primary"
         dark
         fab
@@ -91,6 +93,7 @@
       </v-btn>
       <v-btn
         v-if="!endpoint.protected || !is_known_type"
+        v-tooltip="'Delete endpoint'"
         color="error"
         dark
         fab
