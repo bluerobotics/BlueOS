@@ -6,15 +6,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 _WIFI_DIR = str(Path(__file__).resolve().parent)
 sys.path.insert(0, _WIFI_DIR)
-for _name in ("exceptions", "settings", "typedefs"):
+for _name in ("exceptions", "typedefs"):
     _mod = sys.modules.get(_name)
     if _mod is not None and not str(getattr(_mod, "__file__", "")).startswith(_WIFI_DIR):
         del sys.modules[_name]
 
-sys.modules["pyroute2"] = MagicMock()
-sys.modules["settings"] = MagicMock()
 # Restore after import so other collected tests still see real commonwealth (pytest-xdist).
 _STUBBED = (
+    "pyroute2",
+    "settings",
     "commonwealth",
     "commonwealth.utils",
     "commonwealth.utils.DHCPServerManager",
@@ -29,7 +29,6 @@ for name in _STUBBED:
     sys.modules[name] = MagicMock()
 
 import pytest
-
 from wifi_handlers.wpa_supplicant.Hotspot import HotspotManager
 from wifi_handlers.wpa_supplicant.WifiManager import WifiManager
 
