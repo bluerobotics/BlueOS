@@ -99,6 +99,7 @@
     <v-fab-transition>
       <v-btn
         :key="'create_button'"
+        v-tooltip="'Create endpoint'"
         color="primary"
         fab
         large
