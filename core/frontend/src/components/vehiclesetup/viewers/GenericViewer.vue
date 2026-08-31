@@ -93,6 +93,7 @@
 
 <script lang="ts">
 import type { ModelViewerElement } from '@google/model-viewer/lib/model-viewer'
+import type { RGB, RGBA } from '@google/model-viewer/lib/three-components/gltf-instance/gltf-2.0'
 import type { HotspotConfiguration } from '@google/model-viewer/lib/three-components/Hotspot'
 import axios from 'axios'
 import { saveAs } from 'file-saver'
@@ -168,6 +169,8 @@ export default Vue.extend({
       annotations: {} as Dictionary<HotspotConfiguration>,
       override_annotations: {} as Dictionary<HotspotConfiguration>,
       default_alphas: {} as Dictionary<number>,
+      default_base_colors: {} as Dictionary<RGBA>,
+      default_emissives: {} as Dictionary<RGB>,
       show_model_not_found: false,
       model_viewer_supported: MODEL_VIEWER_SUPPORTED,
       model_viewer_ready: false,
@@ -313,6 +316,9 @@ export default Vue.extend({
       this.forceRefreshAnnotations()
     },
     onModelViewerLoad() {
+      this.default_alphas = {}
+      this.default_base_colors = {}
+      this.default_emissives = {}
       this.redraw()
       this.hideIrrelevantParts()
     },
@@ -360,13 +366,16 @@ export default Vue.extend({
       }
     },
     redraw() {
+      this.restoreMaterials()
       if (this.transparent) {
         this.setAlphas(0.05)
-        for (const part of this.highlight) {
-          this.makeOpaque(part)
+        if (this.highlight) {
+          for (const part of this.highlight) {
+            this.makeOpaque(part)
+          }
         }
-      } else {
-        this.setAlphas(1)
+      } else if (this.highlight && !this.highlight.isEmpty()) {
+        this.highlightMaterials(this.highlight)
       }
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
@@ -384,6 +393,63 @@ export default Vue.extend({
         return {}
       }
     },
+    cacheMaterial(
+      material: { name: string, pbrMetallicRoughness: { baseColorFactor: RGBA }, emissiveFactor?: RGB },
+    ): void {
+      if (material.name in this.default_base_colors) {
+        return
+      }
+      const color = material.pbrMetallicRoughness.baseColorFactor
+      const [red, green, blue, alpha] = color
+      this.default_base_colors[material.name] = [red, green, blue, alpha]
+      this.default_alphas[material.name] = alpha
+      const emissive = material.emissiveFactor ?? [0, 0, 0]
+      this.default_emissives[material.name] = [emissive[0], emissive[1], emissive[2]]
+    },
+    restoreMaterials(): void {
+      if (!this.$refs.modelviewer) {
+        return
+      }
+      // eslint-disable-next-line no-extra-parens
+      const materials = (this.$refs.modelviewer as ModelViewerElement).model?.materials ?? []
+      for (const material of materials) {
+        this.cacheMaterial(material)
+        const color = this.default_base_colors[material.name]
+        material.pbrMetallicRoughness.setBaseColorFactor(color)
+        material.setAlphaMode(color[3] < 1.0 ? 'BLEND' : 'OPAQUE')
+        material.setEmissiveFactor(this.default_emissives[material.name])
+      }
+    },
+    highlightMaterials(parts: string[]): void {
+      if (!this.$refs.modelviewer) {
+        return
+      }
+      const needles = parts.map((part) => part.toLowerCase())
+      // eslint-disable-next-line no-extra-parens
+      const materials = (this.$refs.modelviewer as ModelViewerElement).model?.materials ?? []
+      for (const material of materials) {
+        this.cacheMaterial(material)
+        const original = this.default_base_colors[material.name]
+        const selected = needles.some((needle) => material.name.toLowerCase().includes(needle))
+        if (selected) {
+          material.pbrMetallicRoughness.setBaseColorFactor([
+            Math.min(1, original[0] * 0.55 + 0.45),
+            Math.min(1, original[1] * 0.55 + 0.28),
+            Math.min(1, original[2] * 0.55 + 0.05),
+            original[3],
+          ])
+          material.setEmissiveFactor([0.55, 0.32, 0.04])
+        } else {
+          material.pbrMetallicRoughness.setBaseColorFactor([
+            original[0] * 0.4,
+            original[1] * 0.4,
+            original[2] * 0.4,
+            original[3],
+          ])
+          material.setEmissiveFactor([0, 0, 0])
+        }
+      }
+    },
     setAlphas(new_color: number, text = ''): void {
       const lower_text = text.toLowerCase()
       if (!this.$refs.modelviewer) {
@@ -393,13 +459,10 @@ export default Vue.extend({
       const materials = (this.$refs.modelviewer as ModelViewerElement).model?.materials ?? []
       const affected_materials = materials.filter((material) => material.name.toLowerCase().includes(lower_text))
       for (const material of affected_materials) {
-        // store default alphas and do not allow going above it.
-        if (!(material.name in this.default_alphas)) {
-          // eslint-disable-next-line prefer-destructuring
-          this.default_alphas[material.name] = material.pbrMetallicRoughness.baseColorFactor[3]
-        }
-        const color = material.pbrMetallicRoughness.baseColorFactor
-        color[3] = Math.min(new_color, this.default_alphas[material.name])
+        this.cacheMaterial(material)
+        const original = this.default_base_colors[material.name]
+        const alpha = Math.min(new_color, this.default_alphas[material.name])
+        const color: RGBA = [original[0], original[1], original[2], alpha]
         material.setAlphaMode(color[3] < 1.0 ? 'BLEND' : 'OPAQUE')
         material.pbrMetallicRoughness.setBaseColorFactor(color)
       }
