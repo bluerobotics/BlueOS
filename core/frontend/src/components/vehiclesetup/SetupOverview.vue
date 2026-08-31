@@ -8,7 +8,6 @@
       >
         <v-card class="pa-5 flex-grow-1 d-flex flex-column">
           <vehicle-viewer
-            :highlight="highlight"
             noannotations
             :autorotate="true"
             class="flex-grow-1"
@@ -73,7 +72,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      highlight: null as string | null,
       bottomComponents: [
         'ping-info',
         'video-overview',
