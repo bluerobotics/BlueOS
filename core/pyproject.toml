@@ -103,7 +103,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 10.8
+fail_under = 15.5
 include_namespace_packages = true
 precision = 2
 
