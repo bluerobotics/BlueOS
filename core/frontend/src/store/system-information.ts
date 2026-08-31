@@ -104,6 +104,13 @@ class SystemInformationStore extends VuexModule {
   // Stable interface name list for App tray widgets — updated only when the set of names changes.
   network_interface_names: string[] = []
 
+  get cpu_temperature(): number | undefined {
+    return this.system?.temperature?.find((sensor) => {
+      const name = sensor.name.toLowerCase()
+      return name.includes('cpu') || name.includes('soc') || name.includes('ccd')
+    })?.temperature
+  }
+
   fetchPlatformTask = new OneMoreTime(
     { delay: 5000, autostart: false },
   )
