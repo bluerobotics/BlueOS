@@ -10,7 +10,7 @@
       :orientation="orientation"
       shadow-intensity="0.3"
       interaction-prompt="none"
-      :camera-orbit="cameraOrbit"
+      :camera-orbit="orbit"
       camera-target="auto 0m auto"
       @load="onModelViewerLoad"
     >
@@ -98,6 +98,7 @@ import type { HotspotConfiguration } from '@google/model-viewer/lib/three-compon
 import axios from 'axios'
 import { saveAs } from 'file-saver'
 import Image from 'image-js'
+import { Box3, Object3D, Vector3 } from 'three'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -116,6 +117,70 @@ import { checkModelOverrides, frame_name, vehicle_folder } from './modelHelper'
 const MODEL_VIEWER_SUPPORTED = canUseModelViewer()
 
 const models: Record<string, string> = import.meta.glob('/public/assets/vehicles/models/**', { eager: true })
+
+type SceneObject = {
+  isMesh?: boolean
+  name?: string
+  material?: { name?: string } | { name?: string }[]
+}
+
+type SceneGraph = {
+  isScene?: boolean
+  traverse: (callback: (object: SceneObject) => void) => void
+}
+
+function objectNameMatches(object: SceneObject, needle: string): boolean {
+  if (object.name?.toLowerCase().includes(needle)) {
+    return true
+  }
+  const materials = Array.isArray(object.material) ? object.material : [object.material]
+  return materials.some((material) => material?.name?.toLowerCase().includes(needle))
+}
+
+function viewerScene(viewer: ModelViewerElement): SceneGraph | undefined {
+  const record = viewer as unknown as Record<symbol, SceneGraph | undefined>
+  for (const key of Object.getOwnPropertySymbols(viewer)) {
+    const value = record[key]
+    if (value?.isScene) {
+      return value
+    }
+  }
+  return undefined
+}
+
+function highlightedPartPosition(
+  viewer: ModelViewerElement,
+  part: string,
+): { x: number, y: number, z: number } | undefined {
+  const scene = viewerScene(viewer)
+  if (!scene) {
+    return undefined
+  }
+  const needle = part.toLowerCase()
+  const box = new Box3()
+  const mesh_box = new Box3()
+  let found = false
+  scene.traverse((object) => {
+    if (!object.isMesh || !objectNameMatches(object, needle)) {
+      return
+    }
+    mesh_box.setFromObject(object as Object3D)
+    if (mesh_box.isEmpty()) {
+      return
+    }
+    if (!found) {
+      box.copy(mesh_box)
+      found = true
+      return
+    }
+    box.union(mesh_box)
+  })
+  if (!found || box.isEmpty()) {
+    return undefined
+  }
+  const center = box.getCenter(new Vector3())
+  return { x: center.x, y: center.y, z: center.z }
+}
 
 export default Vue.extend({
   name: 'GenericViewer',
@@ -172,6 +237,7 @@ export default Vue.extend({
       show_model_not_found: false,
       model_viewer_supported: MODEL_VIEWER_SUPPORTED,
       model_viewer_ready: false,
+      orbit: this.cameraOrbit as string,
     }
   },
   computed: {
@@ -249,16 +315,21 @@ export default Vue.extend({
     },
   },
   watch: {
-    highlight(highlight: string | null): void {
+    highlight(): void {
       // Deals with changing the highlighted part of the model when the "highlight" prop changes
-      if (!highlight) {
+      if (!this.highlight) {
         this.redraw()
         this.forceRefreshAnnotations()
+        this.orbitToHighlight()
         return
       }
       this.redraw()
       this.hideIrrelevantParts()
       this.forceRefreshAnnotations()
+      this.orbitToHighlight()
+    },
+    cameraOrbit(): void {
+      this.orbit = this.cameraOrbit
     },
     async computed_model_path() {
       this.reloadAnnotations()
@@ -308,6 +379,36 @@ export default Vue.extend({
       this.default_emissives = {}
       this.redraw()
       this.hideIrrelevantParts()
+      this.orbitToHighlight()
+    },
+    orbitToHighlight(): void {
+      if (!this.$refs.modelviewer) {
+        return
+      }
+      const viewer = this.$refs.modelviewer as ModelViewerElement
+      if (!this.highlight || this.highlight.length !== 1) {
+        this.orbit = this.cameraOrbit
+        return
+      }
+      const position = highlightedPartPosition(viewer, this.highlight[0])
+      if (!position) {
+        this.orbit = this.cameraOrbit
+        return
+      }
+      const length = Math.hypot(position.x, position.y, position.z)
+      if (length === 0) {
+        this.orbit = this.cameraOrbit
+        return
+      }
+      const direction_x = position.x / length
+      const direction_y = position.y / length
+      const direction_z = position.z / length
+      const to_degrees = 180 / Math.PI
+      const azimuth_degrees = Math.atan2(direction_x, direction_z) * to_degrees
+      const elevation_degrees = Math.asin(direction_y) * to_degrees
+      const polar_degrees = Math.min(175, Math.max(5, 90 - elevation_degrees))
+      const { radius } = viewer.getCameraOrbit()
+      this.orbit = `${azimuth_degrees}deg ${polar_degrees}deg ${radius}m`
     },
     async download() {
       const viewer = this.$refs.modelviewer as ModelViewerElement
