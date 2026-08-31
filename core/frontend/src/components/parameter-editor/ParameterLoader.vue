@@ -218,6 +218,7 @@ export default Vue.extend({
       },
     },
     parameters: {
+      immediate: true,
       handler(newval) {
         if (Object.keys(this.writeable_param_set).length !== 0) {
           this.should_open = true
