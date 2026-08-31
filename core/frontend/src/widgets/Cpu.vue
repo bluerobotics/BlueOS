@@ -65,13 +65,8 @@ export default Vue.extend({
       return cpus.map((cpu) => cpu.frequency)
     },
     cpu_temperature(): string {
-      const temperature_sensors = system_information.system?.temperature
-      const main_sensor = temperature_sensors?.find(
-        (sensor) => sensor.name.toLowerCase().includes('cpu')
-          || sensor.name.toLowerCase().includes('soc')
-          || sensor.name.toLowerCase().includes('ccd'),
-      )
-      return main_sensor ? main_sensor.temperature.toFixed(1) : 'Loading..'
+      const temperature = system_information.cpu_temperature
+      return temperature === undefined ? 'Loading..' : temperature.toFixed(1)
     },
     clockDisplay(): { single: string | null; max?: string | null; min?: string | null } {
       if (this.cpu_clock.length === 0) {
