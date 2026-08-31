@@ -73,15 +73,27 @@ async def streamer(gen: AsyncGenerator[str | bytes, None], heartbeats: float = -
         finally:
             if heartbeat_task:
                 heartbeat_task.cancel()
+            try:
+                await gen.aclose()
+            except Exception:
+                pass
             await queue.put(None)
 
-    asyncio.create_task(generator_wrapper(gen, queue))
+    wrapper_task = asyncio.create_task(generator_wrapper(gen, queue))
 
-    while True:
-        item = await queue.get()
-        if item is None:
-            break
-        yield item
+    try:
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+            yield item
+    finally:
+        if not wrapper_task.done():
+            wrapper_task.cancel()
+            try:
+                await wrapper_task
+            except asyncio.CancelledError:
+                pass
 
 
 async def _fetch_stream(
@@ -93,6 +105,10 @@ async def _fetch_stream(
     except Exception as e:
         await queue.put((None, e))
     finally:
+        try:
+            await gen.aclose()
+        except Exception:
+            pass
         await queue.put((None, None))
 
 
