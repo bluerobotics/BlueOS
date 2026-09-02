@@ -12,6 +12,7 @@ import {
   CreatedStream, Device, StreamStatus,
 } from '@/types/video'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 export interface Thumbnail {
   source: string | undefined

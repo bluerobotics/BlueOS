@@ -6,6 +6,7 @@ import store from '@/store'
 import { DiskSpeedResult, DiskSpeedTestPoint, DiskUsageQuery, DiskUsageResponse } from '@/types/disk'
 import back_axios, { isBackendOffline } from '@/utils/api'
 import { parseStreamingResponse } from '@/utils/streaming'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 @Module({ dynamic: true, store, name: 'disk' })
 class DiskStore extends VuexModule {

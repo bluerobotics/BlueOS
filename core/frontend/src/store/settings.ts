@@ -6,6 +6,7 @@ import {
 import store from '@/store'
 import beacon from '@/store/beacon'
 import { castString } from '@/utils/helper_functions'
+import { DynamicModule as Module } from '@/utils/vuex'
 import bag from '@/store/bag'
 
 @Module({

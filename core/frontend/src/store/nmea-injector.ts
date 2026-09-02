@@ -7,6 +7,7 @@ import store from '@/store'
 import { nmea_injector_service } from '@/types/frontend_services'
 import { NMEASocket } from '@/types/nmea-injector'
 import back_axios from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 const notifier = new Notifier(nmea_injector_service)
 

@@ -8,6 +8,7 @@ import store from '@/store'
 import { BrandingAsset, ModelEntry, ThemeStatus } from '@/types/customization'
 import { customization_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 const API_URL = '/customization/v1.0'
 const notifier = new Notifier(customization_service)

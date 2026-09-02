@@ -6,6 +6,7 @@ import store from '@/store'
 import {
   CumulatedNotification, Notification, NotificationLevel,
 } from '@/types/notifications'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 @Module({
   dynamic: true,

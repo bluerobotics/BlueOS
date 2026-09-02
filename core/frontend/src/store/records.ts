@@ -5,6 +5,7 @@ import {
 import store from '@/store'
 import { ProcessingFile, RecordingFile } from '@/types/records'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 @Module({ dynamic: true, store, name: 'records' })
 class RecordsStore extends VuexModule {

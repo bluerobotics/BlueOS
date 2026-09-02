@@ -7,6 +7,7 @@ import store from '@/store'
 import { ReturnStruct, ShutdownType } from '@/types/commander'
 import { commander_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 const notifier = new Notifier(commander_service)
 

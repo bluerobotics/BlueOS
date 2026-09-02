@@ -20,6 +20,7 @@ import {
 } from '@/types/system-information/system'
 import back_axios, { isBackendOffline } from '@/utils/api'
 import { linux2restProbeRateBps } from '@/utils/linux2rest'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 export enum FetchType {
     ModelType = 'model',

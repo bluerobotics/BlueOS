@@ -9,6 +9,7 @@ import {
   FlightController, SerialEndpoint, SITLFrame,
 } from '@/types/autopilot'
 import { SERVO_FUNCTION as SUB_SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 // ArduSub <= 4.5.5 used RCIN9/RCIN10 for lights control; newer versions handle lights natively
 const LEGACY_SUB_LIGHTS_MAX_VERSION = '4.5.5'

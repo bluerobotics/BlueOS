@@ -8,6 +8,7 @@ import store from '@/store'
 import Parameter from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
 import decode, { deviceId } from '@/utils/deviceid_decoder'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 import autopilot_data from './autopilot'
 
