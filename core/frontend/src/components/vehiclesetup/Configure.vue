@@ -53,6 +53,7 @@ import LeakInfo from './overview/LeakInfo.vue'
 import LightsInfo from './overview/LightsInfo.vue'
 import ParamSets from './overview/ParamSets.vue'
 import PowerInfo from './overview/PowerInfo.vue'
+import SystemId from './overview/SystemId.vue'
 
 export interface Item {
   title: string,
@@ -81,6 +82,7 @@ export default Vue.extend({
     FailsafesConfiguration,
     Camera,
     NotSafeOverlay,
+    SystemId,
   },
   data() {
     return {
@@ -100,6 +102,7 @@ export default Vue.extend({
         { title: t`Failsafes`, value: 'failsafes', component: FailsafesConfiguration },
         { title: t`Power`, value: 'power', component: PowerConfiguration },
         { title: t`Camera Gimbal`, value: 'camera', component: Camera },
+        { title: t`Vehicle ID`, value: 'systemid', component: SystemId },
       ] as Item[],
     }
   },
