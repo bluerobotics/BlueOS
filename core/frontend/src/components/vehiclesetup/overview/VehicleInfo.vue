@@ -19,6 +19,10 @@
             <td>{{ model }}</td>
           </tr>
           <tr>
+            <td><b>System ID</b></td>
+            <td>{{ systemId }}</td>
+          </tr>
+          <tr>
             <td><b>Frame</b></td>
             <td>{{ frameType }}</td>
           </tr>
@@ -55,6 +59,9 @@ export default Vue.extend({
     },
     boardType() {
       return autopilot.current_board?.name ?? null
+    },
+    systemId() {
+      return autopilot_data.system_id ?? null
     },
     firmware() {
       const { firmware_info } = autopilot
