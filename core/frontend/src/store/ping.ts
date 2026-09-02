@@ -9,6 +9,7 @@ import store from '@/store'
 import { ping_service } from '@/types/frontend_services'
 import { PingDevice } from '@/types/ping'
 import back_axios from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 const notifier = new Notifier(ping_service)
 

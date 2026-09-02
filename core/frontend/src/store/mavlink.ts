@@ -8,6 +8,7 @@ import Listener from '@/libs/MAVLink2Rest/Listener'
 import store from '@/store'
 import { Dictionary } from '@/types/common'
 import { MavlinkMessage } from '@/types/mavlink'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 import autopilot_data from './autopilot'
 

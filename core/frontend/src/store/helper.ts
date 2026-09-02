@@ -9,6 +9,7 @@ import store from '@/store'
 import { helper_service } from '@/types/frontend_services'
 import { InternetConnectionState, Service } from '@/types/helper'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 const notifier = new Notifier(helper_service)
 

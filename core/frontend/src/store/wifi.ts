@@ -6,6 +6,7 @@ import store from '@/store'
 import {
   Network, NetworkCredentials, SavedNetwork, WifiStatus, HotspotStatus
 } from '@/types/wifi'
+import { DynamicModule as Module } from '@/utils/vuex'
 import { sorted_networks } from '@/utils/wifi'
 
 @Module({

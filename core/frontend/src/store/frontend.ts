@@ -5,6 +5,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 @Module({
   dynamic: true,

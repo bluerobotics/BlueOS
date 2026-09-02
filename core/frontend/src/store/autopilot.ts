@@ -19,6 +19,7 @@ import {
 import {
   FRAME_CONFIG as SUB_FRAME_CONFIG,
 } from '@/types/autopilot/parameter-sub-enums'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 import autopilot_manager from './autopilot_manager'
 

@@ -9,6 +9,7 @@ import store from "@/store"
 import { pardal_service } from "@/types/frontend_services"
 import { SpeedTestResult } from "@/types/pardal"
 import back_axios from "@/utils/api"
+import { DynamicModule as Module } from "@/utils/vuex"
 
 const notifier = new Notifier(pardal_service)
 

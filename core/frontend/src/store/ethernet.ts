@@ -7,6 +7,7 @@ import store from '@/store'
 import { DHCPServerDetails, EthernetInterface } from '@/types/ethernet'
 import { ethernet_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 import Notifier from '@/libs/notifier'
 
 const notifier = new Notifier(ethernet_service)

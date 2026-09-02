@@ -9,6 +9,7 @@ import store from '@/store'
 import { Domain } from '@/types/beacon'
 import { beacon_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { DynamicModule as Module } from '@/utils/vuex'
 
 const notifier = new Notifier(beacon_service)
 
