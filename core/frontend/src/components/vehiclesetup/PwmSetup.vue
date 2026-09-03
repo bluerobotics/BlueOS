@@ -16,6 +16,7 @@
           </v-overlay>
           <v-simple-table
             dense
+            class="motor-test-table"
           >
             <template #default>
               <thead>
@@ -25,7 +26,7 @@
                   </th>
                   <th />
                   <th>
-                    <div class="flex-row justify-space-between d-flex">
+                    <div class="d-flex flex-wrap align-center justify-space-between">
                       <v-switch
                         v-model="desired_armed_state"
                         :loading="desired_armed_state !== (is_armed) ? 'warning' : null"
@@ -35,7 +36,7 @@
                         :color="`${is_armed ? 'error' : 'success'}`"
                         @change="arm_disarm_switch_change"
                       />
-                      <div style="width:50%" class="d-flex justify-center mt-3">
+                      <div class="d-flex justify-center mt-3">
                         <MotorDetection />
                       </div>
                     </div>
@@ -596,5 +597,25 @@ export default Vue.extend({
 /* Disable transition on v-slider thumb */
 .v-slider__thumb-container {
   transition:none !important;
+}
+
+/* Stack the motor cells on phones: a slider inside a horizontally scrolling
+   table cannot be dragged, since the drag scrolls the table instead */
+@media (max-width: 600px) {
+  .motor-test-table table,
+  .motor-test-table thead,
+  .motor-test-table tbody,
+  .motor-test-table tr,
+  .motor-test-table th,
+  .motor-test-table td {
+    display: block;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  /* Keep a single divider per motor instead of one under every stacked cell */
+  .motor-test-table tbody td:not(:last-child) {
+    border-bottom: none !important;
+  }
 }
 </style>
