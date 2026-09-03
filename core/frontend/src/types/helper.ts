@@ -24,6 +24,11 @@ export interface Service {
     metadata?: ServiceMetadata
 }
 
+export enum WebsiteError {
+  DNS = 'dns',
+  TIMEOUT = 'timeout',
+}
+
 export enum InternetConnectionState {
   OFFLINE = 0,
   UNKNOWN = 1,
