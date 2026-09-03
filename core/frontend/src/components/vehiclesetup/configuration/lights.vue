@@ -144,7 +144,12 @@ export default {
 <style scoped>
 .main-container {
   display: flex;
-  column-gap: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
   padding: 10px;
+}
+
+.main-container > * {
+  flex: 1 1 300px;
 }
 </style>
