@@ -11,6 +11,7 @@
         <v-tab
           v-for="page in pages"
           :key="page.value"
+          :value="page.value"
         >
           {{ page.title }}
           <v-icon>{{ page.icon }}</v-icon>
@@ -20,6 +21,7 @@
         <v-tab-item
           v-for="page in pages"
           :key="page.value"
+          :value="page.value"
         >
           <network-interface-priority-menu v-if="page.value === 'network_interface_priority'" @close="close" />
           <dns-configuration-menu v-else-if="page.value === 'dns_configuration'" @close="close" />
@@ -47,9 +49,15 @@ export default Vue.extend({
     NetworkInterfacePriorityMenu,
     DnsConfigurationMenu,
   },
+  props: {
+    initialPage: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
     return {
-      page_selected: null as string | null,
+      page_selected: this.initialPage as string | null,
       pages: [
         { title: 'Network Interface Priority', icon: 'mdi-sort', value: 'network_interface_priority' },
         { title: 'Dns Configuration', icon: 'mdi-dns', value: 'dns_configuration' },
