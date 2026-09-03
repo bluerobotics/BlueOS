@@ -2,8 +2,7 @@
   <div class="endpoints-manager d-flex flex-column align-center">
     <div
       v-if="are_endpoints_available && !updating_endpoints && !updating_router"
-      class="d-flex flex-column align-center justify-center ma-0 pa-0"
-      style="width: 80%;"
+      class="endpoints-list d-flex flex-column align-center justify-center ma-0 pa-0"
     >
       <v-divider
         width="80%"
@@ -211,5 +210,20 @@ export default Vue.extend({
 .endpoints-manager {
   width: 80%;
   margin-bottom: 100px;
+}
+
+.endpoints-list {
+  width: 80%;
+}
+
+@media (max-width: 600px) {
+  .endpoints-manager {
+    width: 100%;
+    padding: 0 12px;
+  }
+
+  .endpoints-list {
+    width: 100%;
+  }
 }
 </style>
