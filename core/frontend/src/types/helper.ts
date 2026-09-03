@@ -24,6 +24,13 @@ export interface Service {
     metadata?: ServiceMetadata
 }
 
+// Mirrors the WebsiteError enum from
+// core/services/helper/main.py
+export enum WebsiteError {
+  DNS = 'dns',
+  TIMEOUT = 'timeout',
+}
+
 export enum InternetConnectionState {
   OFFLINE = 0,
   UNKNOWN = 1,
