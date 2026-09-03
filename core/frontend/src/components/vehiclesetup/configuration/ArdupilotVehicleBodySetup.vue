@@ -103,7 +103,7 @@ export default Vue.extend({
 }
 
 .main-card {
-  min-width: 800px;
+  min-width: min(800px, 100%);
 }
 
 td {
