@@ -6,7 +6,7 @@
       'disabled-failsafe': is_disabled && !dependency_unmet,
       'unavailable-failsafe': dependency_unmet,
     }"
-    class="mb-4 mt-4 pa-4 d-flex flex-row  flex-grow-0 justify-left failsafe-card"
+    class="mb-4 mt-4 pa-4 d-flex flex-column flex-sm-row flex-grow-0 justify-left failsafe-card"
   >
     <div class="ma-4">
       <!-- this is theoretically not safe, but we have a command that gives users root access, so... -->
@@ -189,6 +189,7 @@ i.svg-icon svg {
   margin-left: auto;
   margin-right: auto;
   width: 700px;
+  max-width: 100%;
 }
 
 .action-col {
