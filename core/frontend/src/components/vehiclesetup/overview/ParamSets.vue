@@ -13,7 +13,7 @@
           Use this if you don't know which parameters you changed and need a clean start.
         </p>
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap">
         <v-btn :disabled="wipe_successful" :loading="erasing" color="primary" @click="show_warning = true">
           Reset All Parameters
         </v-btn>
@@ -44,7 +44,7 @@
           These are the recommended parameter sets for your vehicle and firmware version. Curated by Blue Robotics
         </p>
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap">
         <v-btn
           v-for="(paramSet, name) in filtered_param_sets"
           :key="name"
@@ -192,7 +192,7 @@ button {
 .card-container {
   flex: 1 1 calc(50% - 10px);
   max-width: calc(50% - 0px);
-  min-width: 600px;
+  min-width: min(600px, 100%);
 }
 
 .virtual-table-row {
