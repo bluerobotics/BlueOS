@@ -117,7 +117,11 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import ArduCopterBanner from '@/assets/img/banners/ArduCopter.svg'
 import ArduPilotBanner from '@/assets/img/banners/ArduPilot.svg'
+import ArduPlaneBanner from '@/assets/img/banners/ArduPlane.svg'
+import ArduRoverBanner from '@/assets/img/banners/ArduRover.svg'
+import ArduSubBanner from '@/assets/img/banners/ArduSub.svg'
 import OpenPilotBanner from '@/assets/img/banners/OpenPilot.svg'
 import PX4Banner from '@/assets/img/banners/PX4.svg'
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
@@ -135,7 +139,7 @@ import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import bag from '@/store/bag'
-import { FirmwareInfo, FlightController } from '@/types/autopilot'
+import { FirmwareInfo, FirmwareVehicleType, FlightController } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -184,7 +188,18 @@ export default Vue.extend({
     banner(): string {
       switch (autopilot_data.autopilot_type) {
         case MavAutopilot.MAV_AUTOPILOT_ARDUPILOTMEGA:
-          return ArduPilotBanner
+          switch (this.firmware_vehicle_type) {
+            case FirmwareVehicleType.ArduCopter:
+              return ArduCopterBanner
+            case FirmwareVehicleType.ArduPlane:
+              return ArduPlaneBanner
+            case FirmwareVehicleType.ArduRover:
+              return ArduRoverBanner
+            case FirmwareVehicleType.ArduSub:
+              return ArduSubBanner
+            default:
+              return ArduPilotBanner
+          }
         case MavAutopilot.MAV_AUTOPILOT_OPENPILOT:
           return OpenPilotBanner
         case MavAutopilot.MAV_AUTOPILOT_PX4:
