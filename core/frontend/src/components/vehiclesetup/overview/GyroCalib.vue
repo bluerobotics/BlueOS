@@ -1,6 +1,6 @@
 <template>
   <div class="main-container">
-    <v-card outline class="pa-2" width="600px">
+    <v-card outline class="pa-2" width="600px" max-width="100%">
       <v-card-title class="align-center justify-center">
         Calibrate Gyroscopes
       </v-card-title>
