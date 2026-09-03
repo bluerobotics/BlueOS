@@ -87,12 +87,16 @@ export default {
 table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
+/* Parameter names have no spaces, so they need an explicit break opportunity
+   to stop the table from outgrowing narrow screens */
 th, td {
   border: 1px solid #ddd;
   padding: 8px;
   cursor: pointer;
+  overflow-wrap: anywhere;
 }
 
 </style>
