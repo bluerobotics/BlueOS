@@ -47,7 +47,7 @@
           </tr>
         </tbody>
       </v-simple-table>
-      <v-card-actions class="justify-center">
+      <v-card-actions class="justify-center flex-wrap">
         <FullAccelerometerCalibration />
         <QuickAccelerometerCalibration />
         <LevelHorizonCalibration />
