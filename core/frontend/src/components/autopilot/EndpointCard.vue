@@ -1,13 +1,8 @@
 <template>
   <v-card
-    width="80%"
-    height="130px"
-    class="d-flex justify-space-between align-center justify-center"
+    class="endpoint-card d-flex justify-space-between align-center justify-center"
   >
-    <div
-      class="align-center justify-center ml-5"
-      style="width: 20%;"
-    >
+    <div class="endpoint-name align-center justify-center">
       <p class="text-h6 text-center ma-0">
         {{ endpoint.name }}
       </p>
@@ -17,7 +12,7 @@
     </div>
     <div
       min-width="106px"
-      class="d-flex flex-column justify-center elevation-0 pa-1"
+      class="endpoint-details d-flex flex-column justify-center elevation-0 pa-1"
     >
       <v-simple-table
         dense
@@ -40,7 +35,7 @@
     </div>
     <div
       width="62px"
-      class="d-flex flex-column justify-center elevation-0 pa-1 mr-5"
+      class="endpoint-flags d-flex justify-center elevation-0 pa-1"
     >
       <v-icon
         v-tooltip="persistency.tooltip"
@@ -213,6 +208,21 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+.endpoint-card {
+  width: 80%;
+  height: 130px;
+}
+
+.endpoint-name {
+  width: 20%;
+  margin-left: 20px;
+}
+
+.endpoint-flags {
+  flex-direction: column;
+  margin-right: 20px;
+}
+
 .endpoint-buttons {
   gap: 8px;
   position: absolute;
@@ -221,5 +231,45 @@ export default Vue.extend({
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 600px) {
+  .endpoint-card {
+    width: 100%;
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding: 12px 0;
+  }
+
+  .endpoint-details,
+  .endpoint-flags {
+    flex: 1 1 50%;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .endpoint-name,
+  .endpoint-buttons {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .endpoint-name {
+    width: auto;
+    margin-left: 0;
+  }
+
+  .endpoint-flags {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 0;
+  }
+
+  .endpoint-buttons {
+    position: static;
+    flex-direction: row;
+    transform: none;
+  }
 }
 </style>
