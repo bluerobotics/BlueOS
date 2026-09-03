@@ -1,7 +1,7 @@
 <template>
   <div class="pa-3">
     <v-card>
-      <div class="main-container d-flex flex-col">
+      <div class="main-container d-flex flex-column flex-md-row">
         <v-card outline class="mr-2 mb-2 flex-shrink-1">
           <div class="compass-container">
             <compass-display :compasses="reordered_compasses" :colors="compass_colors" />
