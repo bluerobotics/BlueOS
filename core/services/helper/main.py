@@ -88,10 +88,16 @@ class Website(Enum):
     }
 
 
+class WebsiteError(str, Enum):
+    DNS = "dns"
+    TIMEOUT = "timeout"
+
+
 class WebsiteStatus(BaseModel):
     site: Website
     online: bool
     error: Optional[str] = None
+    error_kind: Optional[WebsiteError] = None
 
 
 class ServiceMetadata(BaseModel):
@@ -140,6 +146,7 @@ class SimpleHttpResponse(BaseModel):
     as_json: Optional[Union[List[Any], Dict[Any, Any]]]
     error: Optional[str]
     timeout: bool
+    dns_error: bool = False
 
 
 class Helper:
@@ -283,6 +290,7 @@ class Helper:
             error_msg = str(e) if str(e).isascii() else type(e).__name__
             logger.warning(error_msg)
             request_response.error = error_msg
+            request_response.dns_error = isinstance(e, socket.gaierror)
 
         except Exception as e:
             # Binary data from non-HTTP services can end up in exception messages
@@ -456,6 +464,8 @@ class Helper:
             website_status.online = True
         else:
             website_status.error = response.error
+            if response.dns_error:
+                website_status.error_kind = WebsiteError.DNS
             logger.warning(f"{log_msg}: Offline: {website_status.error}.")
 
         return website_status
@@ -496,7 +506,8 @@ class Helper:
         done, pending = futures.wait(future_to_site.keys(), timeout=INTERNET_CHECK_DEADLINE_S)
         status_list = [future.result() for future in done]
         status_list.extend(
-            WebsiteStatus(site=future_to_site[future], online=False, error="timeout") for future in pending
+            WebsiteStatus(site=future_to_site[future], online=False, error_kind=WebsiteError.TIMEOUT)
+            for future in pending
         )
         return {status.site.name: status for status in status_list}
 
