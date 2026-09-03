@@ -6,7 +6,7 @@
           <div class="compass-container">
             <compass-display :compasses="reordered_compasses" :colors="compass_colors" />
           </div>
-          <v-card class="pa-2 ma-2" width="300px">
+          <v-card class="pa-2 ma-2" width="300px" max-width="100%">
             <v-card-title>
               Declination
             </v-card-title>
@@ -141,7 +141,7 @@
                 <h3>{{ compass.deviceName }} (ID: {{ compass.paramValue }})</h3>
               </v-card-title>
               <v-row>
-                <v-col cols="6">
+                <v-col cols="12" md="6">
                   <v-card class="pa-5 mt-3">
                     <v-alert text dense :type="compass_calibration_type[compass.param].alert">
                       {{ compass_calibration_type[compass.param].description }}
@@ -194,7 +194,7 @@
                     <p>Bus: 0x{{ compass.address }} @ {{ compass.busType }}{{ compass.bus }} </p>
                   </v-card>
                 </v-col>
-                <v-col cols="6">
+                <v-col cols="12" md="6">
                   <compass-params :index="compass.deviceIdNumber" />
                 </v-col>
               </v-row>
@@ -491,6 +491,14 @@ export default Vue.extend({
   width: 100%;
   padding: 15px;
   margin-top: -15px;
+}
+
+/* The vertical tab rail is sized by its content, which leaves almost nothing
+   for the settings panel on phones, so stack the panel below the rail */
+@media (max-width: 600px) {
+  .compass-reorder-container .v-tabs--vertical {
+    flex-direction: column;
+  }
 }
 
 .chip-container {
