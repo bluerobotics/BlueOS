@@ -253,6 +253,8 @@ export default defineConfig(({ command, mode }) => {
         },
         '^/ardupilot-manager': {
           target: SERVER_ADDRESS,
+          changeOrigin: true,
+          autoRewrite: true,
         },
         '^/bag': {
           target: SERVER_ADDRESS,
