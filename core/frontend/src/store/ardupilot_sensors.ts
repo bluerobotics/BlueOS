@@ -45,6 +45,12 @@ class ArdupilotSensorsStore extends VuexModule {
         return params_by_names(BARO_ID_PARAMS)
           .map((parameter) => decode(parameter.name, parameter.value))
       }
+
+      get temperatures(): deviceId[] {
+        return autopilot_data.parameterRegex('^TEMP\\d+_DEV_ID')
+          .filter((param) => param.value !== 0)
+          .map((parameter) => decode(parameter.name, parameter.value))
+      }
     
       get accelerometers_calibrated() {
         const results = {} as Dictionary<boolean>
