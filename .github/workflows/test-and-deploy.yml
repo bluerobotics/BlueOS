@@ -303,6 +303,20 @@ jobs:
 
       - name: Add /boot additions
         run: |
+          # configure_board.sh dispatches on the host device tree, so the board configuration the image
+          # must end up with is decided by the runner's own hardware, not by the image it builds.
+          case "${{ matrix.runner }}" in
+            pi5-builder)
+              EXPECTED=("[pi5]" "dtoverlay=i2c3-pi5,baudrate=400000" "dtoverlay=spi1-3cs")
+              ;;
+            blueos-ci|pi4-builder2)
+              EXPECTED=("[pi4]" "dtoverlay=i2c4,pins_6_7,baudrate=1000000" "dtoverlay=spi1-3cs")
+              ;;
+            *)
+              echo "Unknown runner ${{ matrix.runner }}, add the board configuration its image must contain."
+              exit 1
+              ;;
+          esac
           sudo apt-get update && sudo apt-get install -y parted kpartx
           # Create mount point if it doesn't exist
           sudo mkdir -p /mnt/piboot
@@ -312,8 +326,27 @@ jobs:
           sudo mount "/dev/mapper/${LOOP_DEVICE}p1" /mnt/piboot
           # Create ssh and userconf files
           sudo cp install/boards/config.toml /mnt/piboot/custom.toml
+          # A board install script writing to the /boot stub instead of the boot partition still exits 0,
+          # so the image itself is the only place where a missing Navigator configuration can be caught.
+          MISSING=()
+          for LINE in "${EXPECTED[@]}"; do
+            sudo grep -qxF "$LINE" /mnt/piboot/config.txt || MISSING+=("config.txt: $LINE")
+          done
+          # cmdline.txt is reached through its own path and can be left behind on its own. Whatever
+          # board this is, the memory cgroup docker needs is enabled and the serial console that
+          # would hold the autopilot port is dropped.
+          sudo grep -q "cgroup_enable=memory" /mnt/piboot/cmdline.txt || MISSING+=("cmdline.txt: cgroup_enable=memory")
+          if sudo grep -q "console=serial" /mnt/piboot/cmdline.txt; then
+            MISSING+=("cmdline.txt: console=serial is still there")
+          fi
           sudo umount /mnt/piboot
           sudo kpartx -d deploy/pimod/blueos.img
+          if [ ${#MISSING[@]} -ne 0 ]; then
+            echo "Missing from the boot partition of the ${{ matrix.os }} ${{ matrix.platform }} image built on ${{ matrix.runner }}:"
+            printf '  %s\n' "${MISSING[@]}"
+            echo "The board install script did not configure the image's boot partition."
+            exit 1
+          fi
           echo "Boot partition updated successfully."
 
       - name: Sanitize platform name
