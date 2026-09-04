@@ -17,3 +17,7 @@ class FetchUpdatedMessageFail(RuntimeError):
 
 class VehicleDisarmFail(RuntimeError):
     """Could not disarm vehicle."""
+
+
+class VehicleSystemIdUpdateFail(RuntimeError):
+    """Failed to update the vehicle's system id."""
