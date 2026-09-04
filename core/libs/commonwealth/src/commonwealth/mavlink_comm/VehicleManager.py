@@ -65,7 +65,7 @@ class VehicleManager:
             "confirmation": self.confirmation,
         }
 
-    def command_heartbeat_message(self) -> Dict[str, Any]:
+    def heartbeat_message(self) -> Dict[str, Any]:
         return {
             "type": "HEARTBEAT",
             "custom_mode": 0,
@@ -77,7 +77,7 @@ class VehicleManager:
         }
 
     async def burst_heartbeat(self) -> None:
-        heartbeat_message = self.command_heartbeat_message()
+        heartbeat_message = self.heartbeat_message()
         for _ in range(5):
             await self.mavlink2rest.send_mavlink_message(heartbeat_message)
             await asyncio.sleep(0.1)
