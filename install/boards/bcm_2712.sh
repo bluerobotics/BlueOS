@@ -20,8 +20,19 @@ DTS_NAME="spi0-led"
 curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME.dts
 dtc -@ -Hepapr -I dts -O dtb -o /boot/overlays/$DTS_NAME.dtbo /tmp/$DTS_NAME
 
+# Preserve the Pi 5 I2C/MIPI mode selected in Commander across BlueOS updates.
+NAVIGATOR_I2C_BUS=6
+if grep -E '^[[:space:]]*dtoverlay=i2c-gpio,' "$CONFIG_FILE" \
+    | grep -E '(^|,)[[:space:]]*i2c_gpio_sda[[:space:]]*=[[:space:]]*22([,[:space:]#]|$)' \
+    | grep -E '(^|,)[[:space:]]*i2c_gpio_scl[[:space:]]*=[[:space:]]*23([,[:space:]#]|$)' \
+    | grep -Eq '(^|,)[[:space:]]*bus[[:space:]]*=[[:space:]]*8([,[:space:]#]|$)'; then
+    NAVIGATOR_I2C_BUS=8
+fi
+
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
+# ArduPilot expects Navigator external sensors on bus 6. Commander can move this software bus to 8
+# when the Pi 5 MIPI camera needs the hardware i2c6 controller.
 for STRING in \
     "enable_uart=" \
     "dtoverlay=uart" \
@@ -55,7 +66,7 @@ for STRING in \
     "dtoverlay=i2c1" \
     "dtoverlay=i2c3-pi5,baudrate=400000" \
     "dtoverlay=i2c3-pi5.baudrate=400000" \
-    "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0" \
+    "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=$NAVIGATOR_I2C_BUS,i2c_gpio_delay_us=0" \
     "dtparam=spi=on" \
     "dtoverlay=spi0-led" \
     "dtoverlay=spi1-3cs" \
