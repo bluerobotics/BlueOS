@@ -1,5 +1,5 @@
 # Override with --build-arg BASE_IMAGE=blueos-base:dev for local builds
-ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.6
+ARG BASE_IMAGE=joaoantoniocardoso/blueos-base:move_to_vendored_libcamera
 
 # Build frontend
 FROM --platform=$BUILDPLATFORM oven/bun:1.3.14-slim AS frontend-builder
