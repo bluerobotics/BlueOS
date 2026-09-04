@@ -213,6 +213,12 @@ async def remove_log_services(i_know_what_i_am_doing: bool = False) -> Any:
 async def remove_log_services_stream(i_know_what_i_am_doing: bool = False) -> StreamingResponse:
     """Stream the deletion of log files, providing real-time updates about each file being deleted."""
     check_what_i_am_doing(i_know_what_i_am_doing)
+    logger.info("Delete all gzs since they are good to go")
+    await asyncio.to_thread(
+        subprocess.run,
+        ["find", LOG_FOLDER_PATH, "-type", "f", "-name", "*.gz", "-delete"],
+        check=False,
+    )
     return deletion_stream_response(Path(LOG_FOLDER_PATH))
 
 
