@@ -1,7 +1,11 @@
 import asyncio
+import time
 from typing import Any, Dict, List
 
-from commonwealth.mavlink_comm.exceptions import VehicleDisarmFail
+from commonwealth.mavlink_comm.exceptions import (
+    VehicleDisarmFail,
+    VehicleSystemIdUpdateFail,
+)
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.mavlink_comm.typedefs import (
     FirmwareInfo,
@@ -31,6 +35,19 @@ class VehicleManager:
 
     def set_confirmation(self, confirmation: int) -> None:
         self.confirmation = confirmation
+
+    def param_set_message(self, parameter: str, value: float) -> Dict[Any, Any]:
+        # param_id is a char[16] array, so zero-pad to 16 bytes
+        param_id = list(parameter) + ["\0"] * (16 - len(parameter))
+
+        return {
+            "type": "PARAM_SET",
+            "param_value": value,
+            "target_system": self.target_system,
+            "target_component": self.target_component,
+            "param_id": param_id,
+            "param_type": {"type": "MAV_PARAM_TYPE_UINT8"},
+        }
 
     def command_long_message(self, command_type: str, params: List[float]) -> Dict[str, Any]:
         return {
@@ -137,3 +154,34 @@ class VehicleManager:
         This might eventually be enhanced to check for other conditions.
         """
         return not await self.is_vehicle_armed()
+
+    async def set_system_id(self, value: int) -> None:
+        # send a `PARAM_SET` message to change `MAV_SYSID`
+        message = self.param_set_message("MAV_SYSID", value)
+        await self.mavlink2rest.send_mavlink_message(message)
+
+        # note: the spec mandates [1] that every PARAM_SET should be
+        # acknowledged by the receiving party by broadcasting a PARAM_VALUE
+        # with the updated parameter, so ideally the cleanest way to check that
+        # the PARAM_SET succeeded would be to read a subsequent PARAM_VALUE
+        # message; however, in this scenario we are sending a message from one
+        # component to another (MAV_TYPE_ONBOARD_CONTROLLER ->
+        # MAV_TYPE_SUBMARINE) in the same vehicle (e.g. equal system ids but
+        # different component ids), and mavlink-server filters out loopbacks
+        # for broadcast messages, so we never actually receive the PARAM_VALUE.
+        #
+        # [1] https://mavlink.io/en/messages/common.html#PARAM_SET
+
+        # hack around this limitation by waiting for self.mavlink2rest to
+        # timeout and trigger system ID detection, then set the new target
+        # system value
+        start_time = time.time()
+        timeout = 30.0
+        while time.time() - start_time < timeout:
+            if await self.is_heart_beating():
+                continue
+        self.set_target_system(await self.mavlink2rest.get_most_recent_vehicle_id())
+
+        # bail out if we end up failing to update the system ID anyway
+        if self.target_system != value:
+            raise VehicleSystemIdUpdateFail("Failed to update the vehicle's system id")
