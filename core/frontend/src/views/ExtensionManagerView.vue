@@ -323,62 +323,62 @@
           <spinning-logo size="20%" subtitle="Fetching installed extensions" />
         </template>
       </template>
-      <v-fab-transition>
-        <v-speed-dial
-          :key="'create_button'"
-          v-model="fab_menu"
-          fixed
-          bottom
-          right
-          direction="top"
-          transition="slide-y-reverse-transition"
-        >
-          <template #activator>
-            <v-btn
-              v-model="fab_menu"
-              color="primary"
-              fab
-              large
-              dark
-            >
-              <v-icon v-if="fab_menu">
-                mdi-close
-              </v-icon>
-              <v-icon v-else>
-                mdi-plus
-              </v-icon>
-            </v-btn>
-          </template>
-          <v-btn
-            v-tooltip="'Install from file'"
-            fab
-            dark
-            small
-            color="primary"
-            @click="openInstallFromFileDialog"
-          >
-            <v-icon>mdi-file-upload-outline</v-icon>
-          </v-btn>
-          <v-btn
-            v-tooltip="'Create from scratch'"
-            fab
-            dark
-            small
-            color="green"
-            @click="openCreationDialog"
-          >
-            <v-icon>mdi-code-braces</v-icon>
-          </v-btn>
-        </v-speed-dial>
-      </v-fab-transition>
-      <ExtensionCreationModal
-        v-if="edited_extension"
-        :extension="edited_extension"
-        :temp-tag="upload_temp_tag"
-        @extensionChange="createOrUpdateExtension"
-        @closed="clearEditedExtension"
-      />
     </v-card>
+    <v-fab-transition>
+      <v-speed-dial
+        :key="'create_button'"
+        v-model="fab_menu"
+        fixed
+        bottom
+        right
+        direction="top"
+        transition="slide-y-reverse-transition"
+      >
+        <template #activator>
+          <v-btn
+            v-model="fab_menu"
+            color="primary"
+            fab
+            large
+            dark
+          >
+            <v-icon v-if="fab_menu">
+              mdi-close
+            </v-icon>
+            <v-icon v-else>
+              mdi-plus
+            </v-icon>
+          </v-btn>
+        </template>
+        <v-btn
+          v-tooltip="'Install from file'"
+          fab
+          dark
+          small
+          color="primary"
+          @click="openInstallFromFileDialog"
+        >
+          <v-icon>mdi-file-upload-outline</v-icon>
+        </v-btn>
+        <v-btn
+          v-tooltip="'Create from scratch'"
+          fab
+          dark
+          small
+          color="green"
+          @click="openCreationDialog"
+        >
+          <v-icon>mdi-code-braces</v-icon>
+        </v-btn>
+      </v-speed-dial>
+    </v-fab-transition>
+    <ExtensionCreationModal
+      v-if="edited_extension"
+      :extension="edited_extension"
+      :temp-tag="upload_temp_tag"
+      @extensionChange="createOrUpdateExtension"
+      @closed="clearEditedExtension"
+    />
   </v-container>
 </template>
 
