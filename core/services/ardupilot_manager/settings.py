@@ -14,6 +14,7 @@ class Settings:
     app_name = SERVICE_NAME
     settings_path = Path(appdirs.user_config_dir(app_name))
     settings_file = Path.joinpath(settings_path, "settings.json")
+    startup_settings_file = Path(appdirs.user_config_dir("bootstrap"), "startup.json")
     firmware_folder = Path.joinpath(settings_path, "firmware")
     user_firmware_folder = Path("/usr/blueos/userdata/firmware")
     log_path = Path.joinpath(settings_path, "logs")
