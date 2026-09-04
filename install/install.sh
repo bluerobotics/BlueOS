@@ -199,16 +199,17 @@ fi
 
 sudo usermod -aG docker $USER
 
-# Stop and remove all docker if NO_CLEAN is not defined
+# Stop and remove BlueOS docker if NO_CLEAN is not defined
 test $NO_CLEAN || (
-    # Check if there is any docker installed
-    [[ $(docker ps -a -q) ]] && (
+    blueos_containers=$(docker ps -a -q --filter name=blueos)
+    blueos_images=$(docker images -q --filter reference='*/blueos-core*' --filter reference='blueos-core*' --filter reference='*/blueos-bootstrap*' --filter reference='blueos-bootstrap*')
+    [[ -n $blueos_containers || -n $blueos_images ]] && (
         echo "Stopping running dockers."
-        docker stop $(docker ps -a -q)
+        [[ -n $blueos_containers ]] && docker stop $blueos_containers
 
         echo "Removing dockers."
-        docker rm $(docker ps -a -q)
-        docker image prune -af
+        [[ -n $blueos_containers ]] && docker rm $blueos_containers
+        [[ -n $blueos_images ]] && docker rmi -f $blueos_images
     ) || true
 )
 
