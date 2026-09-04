@@ -9,6 +9,7 @@ import store from '@/store'
 import { helper_service } from '@/types/frontend_services'
 import { InternetConnectionState, Service } from '@/types/helper'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { isIpAddress } from '@/utils/pattern_validators'
 import { DynamicModule as Module } from '@/utils/vuex'
 
 const notifier = new Notifier(helper_service)
@@ -38,6 +39,8 @@ class PingStore extends VuexModule {
 
   has_internet: InternetConnectionState = InternetConnectionState.UNKNOWN
 
+  dns_failure = false
+
   services: Service[] = []
 
   reachable_hosts: string[] = []
@@ -55,6 +58,11 @@ class PingStore extends VuexModule {
   @Mutation
   setHasInternet(has_internet: InternetConnectionState): void {
     this.has_internet = has_internet
+  }
+
+  @Mutation
+  setDnsFailure(dns_failure: boolean): void {
+    this.dns_failure = dns_failure
   }
 
   @Mutation
@@ -96,6 +104,21 @@ class PingStore extends VuexModule {
           if (decided_sites.length === 0) {
             return
           }
+
+          // Sites probed by IP need no resolution, so only named ones can tell DNS apart from no internet.
+          const ip_sites = decided_sites.filter((item) => isIpAddress(item.site.hostname))
+          const named_sites = decided_sites.filter((item) => !isIpAddress(item.site.hostname))
+          const link_up = ip_sites.some((item) => item.online)
+          const name_resolved = named_sites.some((item) => item.error !== 'dns')
+          const link_down = ip_sites.length > 0 && !link_up
+          if (name_resolved || link_down) {
+            this.setDnsFailure(false)
+          } else if (link_up && named_sites.length > 0) {
+            this.setDnsFailure(true)
+          }
+          // Neither answered: keep the last verdict, a hung lookup outlives Helper's budget and would
+          // otherwise flip the warning off every time the site cache expires.
+
           if (online_sites.length === decided_sites.length) {
             this.setHasInternet(InternetConnectionState.ONLINE)
             return
@@ -114,6 +137,7 @@ class PingStore extends VuexModule {
           return
         }
         this.setHasInternet(InternetConnectionState.UNKNOWN)
+        this.setDnsFailure(false)
         this.setReachableHosts([])
         notifier.pushBackError('INTERNET_CHECK_FAIL', error)
       })
