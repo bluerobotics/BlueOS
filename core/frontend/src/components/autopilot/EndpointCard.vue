@@ -80,7 +80,7 @@
         </v-icon>
       </v-btn>
       <v-btn
-        v-tooltip="'Copy command line string'"
+        v-tooltip="`Copy command line string (${command_line_string})`"
         color="primary"
         dark
         fab
@@ -170,10 +170,13 @@ export default Vue.extend({
       }
       return this.updated_endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'
     },
+    command_line_string(): string {
+      return `${this.endpoint.connection_type}:${window.location.host}:${this.endpoint.argument}`
+    },
   },
   methods: {
     async copyEndpoint(): Promise<void> {
-      await copyToClipboard(`${this.endpoint.connection_type}:${window.location.host}:${this.endpoint.argument}`)
+      await copyToClipboard(this.command_line_string)
     },
     async removeEndpoint(): Promise<void> {
       autopilot.setUpdatingEndpoints(true)
