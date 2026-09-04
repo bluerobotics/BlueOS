@@ -242,7 +242,7 @@ import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
 import { JSONValue } from '@/types/common'
-import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
+import { ExtensionData, InstalledExtensionData, RunningContainer } from '@/types/kraken'
 import { Disk } from '@/types/system-information/system'
 import { prettifySize } from '@/utils/helper_functions'
 
@@ -264,9 +264,9 @@ export default Vue.extend({
       required: true,
     },
     container: {
-      type: Object as PropType<{status: string}>,
+      type: Object as PropType<RunningContainer>,
       required: false,
-      default: undefined as {status: string} | undefined,
+      default: undefined as RunningContainer | undefined,
     },
     extensionData: {
       type: Object as PropType<ExtensionData>,
@@ -381,7 +381,29 @@ export default Vue.extend({
       return 100
     },
     getStatus(): string {
-      return this.container?.status ?? 'N/A'
+      if (!this.container) return 'N/A'
+      if (this.container.uptime_seconds == null) return this.container.status
+
+      const suffix_start = this.container.status.indexOf(' (')
+      const suffix = suffix_start >= 0 ? this.container.status.slice(suffix_start) : ''
+      return `Up ${this.humanDuration(this.container.uptime_seconds)}${suffix}`
+    },
+    humanDuration(duration_seconds: number): string {
+      const seconds = Math.floor(duration_seconds)
+      if (seconds < 1) return 'Less than a second'
+      if (seconds === 1) return '1 second'
+      if (seconds < 60) return `${seconds} seconds`
+
+      const minutes = Math.floor(duration_seconds / 60)
+      const hours = Math.floor(duration_seconds / 60 / 60 + 0.5)
+      if (minutes === 1) return 'About a minute'
+      if (minutes < 60) return `${minutes} minutes`
+      if (hours === 1) return 'About an hour'
+      if (hours < 48) return `${hours} hours`
+      if (hours < 24 * 7 * 2) return `${Math.floor(hours / 24)} days`
+      if (hours < 24 * 30 * 2) return `${Math.floor(hours / 24 / 7)} weeks`
+      if (hours < 24 * 365 * 2) return `${Math.floor(hours / 24 / 30)} months`
+      return `${Math.floor(hours / 24 / 365)} years`
     },
   },
 })
