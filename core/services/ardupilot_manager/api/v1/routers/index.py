@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import shutil
 from functools import wraps
@@ -15,7 +16,7 @@ from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import StackedHTTPException
 from commonwealth.utils.decorators import single_threaded
 from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
-from fastapi import APIRouter, Body, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import PlainTextResponse
 from fastapi_versioning import versioned_api_route
 from loguru import logger
@@ -294,3 +295,34 @@ async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
 @index_to_http_exception
 async def available_boards() -> Any:
     return await autopilot.available_boards(True)
+
+
+@index_router_v1.post("/system_id", summary="Set the vehicle's system id.")
+@index_to_http_exception
+async def set_system_id(value: int = Query(ge=1, le=255)) -> Any:
+    if not autopilot.current_board:
+        message = "No board running, system ID is unavailable"
+        logger.warning(message)
+        return PlainTextResponse(message, status_code=503)
+
+    try:
+        await autopilot.vehicle_manager.set_system_id(value)
+
+        if autopilot.vehicle_manager.target_system != value:
+            return PlainTextResponse("Failed to set system ID", status_code=500)
+
+        with open(autopilot.settings.startup_settings_file, "r+", encoding="utf-8") as startup_settings:
+            settings = json.load(startup_settings)
+            environment = settings["core"].get("environment", [])
+
+            # make sure to remove MAV_SYSTEM_ID if it is already defined in
+            # bootstrap/startup.json
+            environment = [v for v in environment if not v.startswith("MAV_SYSTEM_ID=")]
+            environment.append(f"MAV_SYSTEM_ID={value}")
+            settings["core"]["environment"] = environment
+
+            startup_settings.seek(0)
+            startup_settings.write(json.dumps(settings, indent=2))
+            startup_settings.truncate()
+    except Exception as error:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
