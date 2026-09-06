@@ -97,6 +97,7 @@
 
 <script lang="ts">
 import axios from 'axios'
+import imageCompression, { Options as ImageCompressionOptions } from 'browser-image-compression'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -141,6 +142,16 @@ export default Vue.extend({
     image: {
       type: String,
       default: null,
+      required: false,
+    },
+    maxDimension: {
+      type: Number,
+      default: 0,
+      required: false,
+    },
+    maxSizeMb: {
+      type: Number,
+      default: 0,
       required: false,
     },
   },
@@ -200,18 +211,18 @@ export default Vue.extend({
         this.error = `Error deleting file: ${error}`
       }
     },
-    onFileInputChange(event: Event) {
+    async onFileInputChange(event: Event) {
       const target = event.target as HTMLInputElement
       const file = target.files?.[0]
       if (!file) return
       const fileName = encodeURIComponent(file.name)
-      this.uploadFile(file, `${this.directory}/${fileName}`)
+      await this.uploadImage(file, `${this.directory}/${fileName}`)
     },
     onFilePickerClick() {
       const input = this.$refs.fileInput as HTMLInputElement
       input.click()
     },
-    async uploadFile(file: File, destination_path: string) {
+    async uploadFile(file: Blob, destination_path: string) {
       const config = {
         headers: {
           'Content-Type': file.type,
@@ -224,11 +235,38 @@ export default Vue.extend({
         })
       this.loadImages()
     },
+    async resizeImage(file: File): Promise<File> {
+      if (this.maxDimension <= 0 && this.maxSizeMb <= 0) {
+        return file
+      }
+
+      const options: ImageCompressionOptions = {
+        useWebWorker: true,
+        fileType: file.type,
+      }
+      if (this.maxDimension > 0) {
+        options.maxWidthOrHeight = this.maxDimension
+      }
+      if (this.maxSizeMb > 0) {
+        options.maxSizeMB = this.maxSizeMb
+      }
+      return imageCompression(file, options)
+    },
+    async uploadImage(file: File, destinationPath: string) {
+      try {
+        this.upload_error = null
+        const resizedImage = await this.resizeImage(file)
+        await this.uploadFile(resizedImage, destinationPath)
+      } catch (error) {
+        this.upload_error = `Error preparing image: ${error}`
+        console.error(this.upload_error)
+      }
+    },
     async onDrop(event: DragEvent) {
       const file = event.dataTransfer?.files?.[0]
       if (!file) return
       const fileName = encodeURIComponent(file.name)
-      await this.uploadFile(file, `${this.directory}/${fileName}`)
+      await this.uploadImage(file, `${this.directory}/${fileName}`)
     },
   },
 })
