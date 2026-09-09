@@ -23,7 +23,7 @@
         <span>Click to activate wizard</span>
       </v-tooltip>
 
-      <img height="80" :src="banner" />
+      <img height="80" :src="banner" style="max-width: 100%; object-fit: contain;" />
 
       <v-card-text>
         <span v-if="board_undefined">No board running</span>
