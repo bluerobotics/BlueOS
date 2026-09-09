@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-toolbar height="0" extension-height="70" elevation="0">
+    <v-toolbar height="0" :extension-height="$vuetify.breakpoint.xs ? 130 : 70" elevation="0">
       <template #extension>
         <div class="toolbar-extension">
           <v-text-field
@@ -455,6 +455,7 @@ export default Vue.extend({
 <style scoped>
 .query-text-field {
   max-width: 620px;
+  min-width: 200px;
 }
 
 .store-tab {
@@ -470,6 +471,7 @@ export default Vue.extend({
 
 .toolbar-extension {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: start;
   width: 100%;
