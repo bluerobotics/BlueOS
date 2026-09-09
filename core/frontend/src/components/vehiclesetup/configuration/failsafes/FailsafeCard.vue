@@ -30,13 +30,13 @@
       <div>
         <div v-for="param in failsafeDefinition.params" :key="param.name">
           <v-row class="justify-right">
-            <v-col :key="param.name" class="action-col" cols="7">
+            <v-col :key="param.name" class="action-col text-start text-sm-end" cols="12" sm="7">
               <v-icon v-if="param.icon">
                 {{ param.icon }}
               </v-icon>
               {{ param.replacementTitle ?? param.name }}
             </v-col>
-            <v-col :key="`${param.name}-editor`" cols="5" class="pt-1 pb-1">
+            <v-col :key="`${param.name}-editor`" cols="12" sm="5" class="pt-1 pb-1">
               <inline-parameter-editor
                 v-if="params[param.name] != null"
                 :key="failsafeDefinition.name"
@@ -193,7 +193,6 @@ i.svg-icon svg {
 }
 
 .action-col {
-  text-align: end;
   margin: auto;
 }
 
