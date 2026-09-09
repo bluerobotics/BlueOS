@@ -156,6 +156,9 @@ class VehicleManager:
         return not await self.is_vehicle_armed()
 
     async def set_system_id(self, value: int) -> None:
+        # update the target system id
+        self.set_target_system(await self.mavlink2rest.get_most_recent_vehicle_id())
+
         # send a `PARAM_SET` message to change `MAV_SYSID`
         message = self.param_set_message("MAV_SYSID", value)
         await self.mavlink2rest.send_mavlink_message(message)
@@ -172,16 +175,18 @@ class VehicleManager:
         #
         # [1] https://mavlink.io/en/messages/common.html#PARAM_SET
 
-        # hack around this limitation by waiting for self.mavlink2rest to
-        # timeout and trigger system ID detection, then set the new target
-        # system value
+        # hack around this limitation by listening to the vehicle heartbeat
+        # messages and waiting for the source system id to change to the value
+        # we just configured. ardupilot sends heartbeats at 1Hz so 10s is a
+        # reasonable timeout
         start_time = time.time()
-        timeout = 30.0
+        timeout = 10.0
         while time.time() - start_time < timeout:
-            if await self.is_heart_beating():
-                continue
-        self.set_target_system(await self.mavlink2rest.get_most_recent_vehicle_id())
+            if await self.mavlink2rest.get_most_recent_vehicle_id() == value:
+                self.set_target_system(value)
+                break
+            await asyncio.sleep(timeout / 10.0)
 
-        # bail out if we end up failing to update the system ID anyway
+        # bail out if we failed to update the system id after all
         if self.target_system != value:
             raise VehicleSystemIdUpdateFail("Failed to update the vehicle's system id")
