@@ -187,12 +187,11 @@ export default Vue.extend({
   methods: {
     populatePermissions() {
       const user_permissions = JSON.parse(this.extension?.user_permissions || '{}')
-      const original_permissions = JSON.parse(this.extension?.permissions || '{}')
-      if (user_permissions) {
+      if (Object.keys(user_permissions).length > 0) {
         this.new_permissions = user_permissions
-      } else {
-        this.new_permissions = original_permissions
+        return
       }
+      this.new_permissions = JSON.parse(this.extension?.permissions || '{}')
     },
     closeDialog() {
       this.new_extension = {
