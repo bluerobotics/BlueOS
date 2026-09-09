@@ -13,6 +13,7 @@ from commonwealth.mavlink_comm.typedefs import (
     MavlinkMessageId,
     MavlinkVehicleType,
 )
+from commonwealth.utils.environment import EnvironmentManager
 from loguru import logger
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
@@ -190,3 +191,7 @@ class VehicleManager:
         # bail out if we failed to update the system id after all
         if self.target_system != value:
             raise VehicleSystemIdUpdateFail("Failed to update the vehicle's system id")
+
+        # persist the new system id in the MAV_SYSTEM_ID environment variable
+        # used by mavlink2rest
+        EnvironmentManager.set_variable("MAV_SYSTEM_ID", value)

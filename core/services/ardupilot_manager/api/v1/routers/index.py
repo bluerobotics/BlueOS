@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import shutil
 from functools import wraps
@@ -306,17 +305,3 @@ async def set_system_id(value: int = Query(ge=1, le=255)) -> Any:
         return PlainTextResponse(message, status_code=503)
 
     await autopilot.vehicle_manager.set_system_id(value)
-
-    with open(autopilot.settings.startup_settings_file, "r+", encoding="utf-8") as startup_settings:
-        settings = json.load(startup_settings)
-        environment = settings["core"].get("environment", [])
-
-        # make sure to remove MAV_SYSTEM_ID if it is already defined in
-        # bootstrap/startup.json
-        environment = [v for v in environment if not v.startswith("MAV_SYSTEM_ID=")]
-        environment.append(f"MAV_SYSTEM_ID={value}")
-        settings["core"]["environment"] = environment
-
-        startup_settings.seek(0)
-        startup_settings.write(json.dumps(settings, indent=2))
-        startup_settings.truncate()
