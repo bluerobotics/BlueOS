@@ -305,24 +305,18 @@ async def set_system_id(value: int = Query(ge=1, le=255)) -> Any:
         logger.warning(message)
         return PlainTextResponse(message, status_code=503)
 
-    try:
-        await autopilot.vehicle_manager.set_system_id(value)
+    await autopilot.vehicle_manager.set_system_id(value)
 
-        if autopilot.vehicle_manager.target_system != value:
-            return PlainTextResponse("Failed to set system ID", status_code=500)
+    with open(autopilot.settings.startup_settings_file, "r+", encoding="utf-8") as startup_settings:
+        settings = json.load(startup_settings)
+        environment = settings["core"].get("environment", [])
 
-        with open(autopilot.settings.startup_settings_file, "r+", encoding="utf-8") as startup_settings:
-            settings = json.load(startup_settings)
-            environment = settings["core"].get("environment", [])
+        # make sure to remove MAV_SYSTEM_ID if it is already defined in
+        # bootstrap/startup.json
+        environment = [v for v in environment if not v.startswith("MAV_SYSTEM_ID=")]
+        environment.append(f"MAV_SYSTEM_ID={value}")
+        settings["core"]["environment"] = environment
 
-            # make sure to remove MAV_SYSTEM_ID if it is already defined in
-            # bootstrap/startup.json
-            environment = [v for v in environment if not v.startswith("MAV_SYSTEM_ID=")]
-            environment.append(f"MAV_SYSTEM_ID={value}")
-            settings["core"]["environment"] = environment
-
-            startup_settings.seek(0)
-            startup_settings.write(json.dumps(settings, indent=2))
-            startup_settings.truncate()
-    except Exception as error:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)) from error
+        startup_settings.seek(0)
+        startup_settings.write(json.dumps(settings, indent=2))
+        startup_settings.truncate()
