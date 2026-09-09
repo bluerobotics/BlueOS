@@ -28,8 +28,7 @@
     <v-card-actions class="justify-end">
       <v-btn
         v-tooltip="'Restart the BlueOS core container'"
-        :loading="restarting_core"
-        :disabled="restarting_core || saving"
+        :disabled="restarting || saving"
         @click="restartCore"
       >
         <v-icon left color="orange">
@@ -40,12 +39,18 @@
       <v-btn
         color="primary"
         :loading="saving"
-        :disabled="!can_save || saving"
+        :disabled="!can_save || saving || restarting"
         @click="save"
       >
         Save
       </v-btn>
     </v-card-actions>
+    <v-container v-if="restarting">
+      <p class="text-md-center">
+        Core container is restarting, please wait.
+      </p>
+      <spinning-logo size="20%" />
+    </v-container>
   </v-card>
 </template>
 
@@ -59,19 +64,22 @@ import Parameter from '@/types/autopilot/parameter'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
+import SpinningLogo from '../../common/SpinningLogo.vue'
+
 const notifier = new Notifier(autopilot_service)
 
 export default Vue.extend({
   name: 'SystemId',
   components: {
     InlineParameterEditor,
+    SpinningLogo,
   },
   data() {
     return {
       pending_value: undefined as number | undefined,
       is_form_valid: true,
-      restarting_core: false,
       saving: false,
+      restarting: false,
       save_error: undefined as string | undefined,
     }
   },
@@ -107,14 +115,24 @@ export default Vue.extend({
       })
     },
     async restartCore(): Promise<void> {
-      this.restarting_core = true
+      this.restarting = true
       await back_axios({
         method: 'post',
         url: '/version-chooser/v1.0/version/restart',
-      }).finally(() => {
-        // Give the backend a bit to go down, then reload so the user reconnects to the fresh core
-        setTimeout(() => window.location.reload(), 15000)
+      }).finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
+    },
+    async waitForBackendToBeOnline(): Promise<void> {
+      back_axios({
+        method: 'get',
+        url: '/helper/latest/web_services',
       })
+        .then(() => {
+          setTimeout(() => { window.location.reload() }, 1000)
+        })
+        .catch((error) => {
+          console.debug(`Backend is not available yet: ${error}`)
+          setTimeout(this.waitForBackendToBeOnline, 2000)
+        })
     },
   },
 })
