@@ -13,6 +13,59 @@ from typing_extensions import override
 
 SERVICE_NAME = "ardupilot-manager"
 
+# pylint: disable=too-many-branches
+def migrate_from_old_settings(target_settings: "SettingsV1") -> None:
+    path = Path(appdirs.user_config_dir(SERVICE_NAME)) / "settings.json"
+    if not path.exists():
+        logger.error("Old settings file for ardupilot_manager not found")
+
+    try:
+        with path.open(encoding="utf-8") as file:
+            data = json.load(file)
+        content = data.get("content")
+        if not isinstance(content, dict):
+            raise ValueError("old settings file is missing a content object")
+
+        serials: list[Serial] = []
+        for entry in content.get("serials") or []:
+            try:
+                serials.append(Serial.model_validate(entry))
+            except Exception as error:
+                logger.error(f"Entry is invalid! {entry}")
+                logger.error(error)
+        target_settings.serials = serials
+
+        if "start_on_boot" in content:
+            target_settings.start_on_boot = bool(content["start_on_boot"])
+        if "preferred_router" in content:
+            target_settings.preferred_router = content["preferred_router"]
+        try:
+            if "sitl_frame" in content:
+                target_settings.sitl_frame = SITLFrame(content["sitl_frame"])
+        except Exception as error:
+            logger.warning(f"Ignoring invalid SITL frame in old settings: {error}")
+        try:
+            if content.get("preferred_board") is not None:
+                target_settings.preferred_board = FlightController.model_validate(content["preferred_board"])
+        except Exception as error:
+            logger.warning(f"Ignoring invalid preferred board in old settings: {error}")
+
+        endpoints: set[Endpoint] = set()
+        for raw in content.get("endpoints") or []:
+            endpoint = Endpoint.from_raw(raw)
+            if endpoint is None:
+                logger.warning(f"Ignoring invalid endpoint record {raw}")
+                continue
+            endpoints.add(endpoint)
+        target_settings.endpoints = endpoints
+
+        if content.get("manual_board_master_endpoint") is not None:
+            endpoint = Endpoint.from_raw(content["manual_board_master_endpoint"])
+            if endpoint is not None:
+                target_settings.manual_board_master_endpoint = endpoint
+    except Exception as error:
+        logger.warning(f"Failed to migrate ardupilot_manager settings from {path}: {error}")
+
 
 class SettingsV1(PydanticSettings):
     VERSION: int = 0
