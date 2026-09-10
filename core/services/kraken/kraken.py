@@ -21,7 +21,7 @@ from settings import ExtensionSettings, SettingsV2
 
 class Kraken:
     def __init__(self) -> None:
-        self._manager: PydanticManager = PydanticManager(SERVICE_NAME, SettingsV2)
+        self._manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2)
         self._settings = self._manager.settings
         self.is_running = True
         self.manifest = ManifestManager.instance()

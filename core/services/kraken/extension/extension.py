@@ -51,7 +51,7 @@ class Extension:
     start_attempts: Dict[str, Tuple[int, int]] = {}
     temp_extension_activity: Dict[str, Tuple[int, int]] = {}
 
-    _manager: PydanticManager = PydanticManager(SERVICE_NAME, SettingsV2)
+    _manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2)
     _settings = _manager.settings
 
     def __init__(self, source: ExtensionSource, digest: Optional[str] = None) -> None:
@@ -98,7 +98,7 @@ class Extension:
     def _list_settings(cls, identifier: Optional[str] = None, tag: Optional[str] = None) -> List[ExtensionSettings]:
         return [
             ext
-            for ext in cast(List[ExtensionSettings], cls._settings.extensions)
+            for ext in cls._settings.extensions
             if (identifier is None or ext.identifier == identifier) and (tag is None or ext.tag == tag)
         ]
 
