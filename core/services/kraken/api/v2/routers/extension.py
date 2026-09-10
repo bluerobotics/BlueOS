@@ -17,6 +17,7 @@ from fastapi.responses import Response, StreamingResponse
 from fastapi_versioning import versioned_api_route
 from loguru import logger
 from manifest.exceptions import ManifestBackendOffline
+from manifest.models import DockerPlatforms
 
 extension_router_v2 = APIRouter(
     prefix="/extension",
@@ -219,6 +220,7 @@ async def upload_tar_file(file: UploadFile = File(...)) -> dict[str, Any]:
             "temp_tag": temp_extension.tag,
             "metadata": metadata,
             "image_name": image_name,
+            "is_incompatible": metadata.get("platform") != DockerPlatforms.from_machine(),
         }
     except Exception as error:
         logger.error(f"Failed to process tar file: {error}")

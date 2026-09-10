@@ -32,7 +32,7 @@ from harbor import ContainerManager, DockerCtx
 from harbor.exceptions import ContainerNotFound
 from loguru import logger
 from manifest import ManifestManager
-from manifest.models import ExtensionVersion
+from manifest.models import DockerPlatforms, ExtensionVersion
 from settings import ExtensionSettings, SettingsV2
 from utils import has_enough_disk_space
 
@@ -483,6 +483,7 @@ class Extension:
 
                 metadata = Extension._metadata_from_labels(labels)
                 metadata.update(Extension._docker_metadata(image_info))
+                metadata["platform"] = Extension._get_docker_platform_from_image_info(image_info)
                 Extension._ensure_extension_name(metadata)
 
                 return metadata
@@ -555,6 +556,19 @@ class Extension:
         image_id = image_info.get("Id", "")
         docker = image_id[:12] if image_id else "unknown"
         return {"docker": docker, "tag": "latest"}
+
+    @staticmethod
+    def _get_docker_platform_from_image_info(config: Dict[str, Any]) -> DockerPlatforms | None:
+        print("DEBUG config: ", config)
+        match config.get("Architecture", None):
+            case "arm/v6" | "arm/v7":
+                return DockerPlatforms.ARM_V7
+            case "amd64":
+                return DockerPlatforms.AMD64
+            case "arm64":
+                return DockerPlatforms.ARM64
+            case _:
+                return None
 
     @staticmethod
     def _ensure_extension_name(metadata: Dict[str, Any]) -> None:
