@@ -1,33 +1,31 @@
 <template>
   <div>
-    <v-container fluid>
-      <v-tabs
-        :value="currentSubtab"
-        centered
-        show-arrows
+    <v-tabs
+      :value="currentSubtab"
+      centered
+      show-arrows
+    >
+      <v-tabs-slider />
+      <v-tab
+        v-for="page in filtered_pages"
+        :key="`title-${page.title}`"
+        :to="{ name: 'Vehicle Setup', params: { tab: 'configure', subtab: page.value } }"
       >
-        <v-tabs-slider />
-        <v-tab
-          v-for="page in filtered_pages"
-          :key="`title-${page.title}`"
-          :to="{ name: 'Vehicle Setup', params: { tab: 'configure', subtab: page.value } }"
-        >
-          {{ page.title }}
-        </v-tab>
-      </v-tabs>
-      <not-safe-overlay />
-      <v-tabs-items :value="currentSubtab">
-        <v-tab-item
-          v-for="page in filtered_pages"
-          :key="`item-${page.title}`"
-          :value="page.value"
-        >
-          <div class="main-container">
-            <component :is="page.component" />
-          </div>
-        </v-tab-item>
-      </v-tabs-items>
-    </v-container>
+        {{ page.title }}
+      </v-tab>
+    </v-tabs>
+    <not-safe-overlay />
+    <v-tabs-items :value="currentSubtab">
+      <v-tab-item
+        v-for="page in filtered_pages"
+        :key="`item-${page.title}`"
+        :value="page.value"
+      >
+        <div class="main-container">
+          <component :is="page.component" />
+        </div>
+      </v-tab-item>
+    </v-tabs-items>
   </div>
 </template>
 
