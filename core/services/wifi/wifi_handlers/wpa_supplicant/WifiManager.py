@@ -28,6 +28,7 @@ from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
 class WifiManager(AbstractWifiManager):
     wpa = WPASupplicant()
     wpa_path: Optional[str] = None
+    _hotspot: Optional[HotspotManager] = None
 
     async def can_work(self) -> bool:
         return bool(get_host_os() == HostOs.Bullseye)
@@ -104,7 +105,6 @@ class WifiManager(AbstractWifiManager):
         await self.get_wifi_available()
 
         try:
-            self._hotspot: Optional[HotspotManager] = None
             ssid, password = (
                 self._settings_manager.settings.hotspot_ssid,
                 self._settings_manager.settings.hotspot_password,
