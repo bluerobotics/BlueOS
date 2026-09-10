@@ -278,18 +278,43 @@ async def test_delete_everything_stream(tmp_path: Path) -> None:
     rotated_log = root / "rotated.gz"
     rotated_log.write_text("gz", encoding="utf-8")
 
-    # .gz files are deleted even while a process holds them open
+    # .gz files are deleted in a single batch, even while a process holds them open
     with open(rotated_log, "r", encoding="utf-8"):
         infos = [info async for info in general.delete_everything_stream(root)]
 
-    assert {info["path"] for info in infos} == {str(small), str(nested_file), str(rotated_log)}
+    batch = f"{root}/*.gz (1 files)"
+    assert {info["path"] for info in infos} == {batch, str(small), str(nested_file)}
     assert all(info["success"] for info in infos)
     assert all(info["type"] == "file" for info in infos)
     sizes = {info["path"]: info["size"] for info in infos}
     assert sizes[str(small)] == 5
+    assert sizes[batch] == 2
     assert not small.exists()
     assert not nested_file.exists()
     assert not rotated_log.exists()
+
+
+@pytest.mark.asyncio
+async def test_bulk_delete_stream_sums_the_batch(tmp_path: Path) -> None:
+    root = tmp_path / "logs"
+    (root / "nested").mkdir(parents=True)
+    (root / "keep.log").write_text("keep", encoding="utf-8")
+    (root / "a.gz").write_text("aa", encoding="utf-8")
+    (root / "nested" / "b.gz").write_text("bbb", encoding="utf-8")
+
+    infos = [info async for info in general.bulk_delete_stream(root, "*.gz")]
+
+    assert infos == [{"path": f"{root}/*.gz (2 files)", "size": 5, "type": "file", "success": True}]
+    assert (root / "keep.log").exists()
+    assert not list(root.rglob("*.gz"))
+
+
+@pytest.mark.asyncio
+async def test_bulk_delete_stream_without_matches(tmp_path: Path) -> None:
+    root = tmp_path / "logs"
+    root.mkdir()
+
+    assert [info async for info in general.bulk_delete_stream(root, "*.gz")] == []
 
 
 @pytest.mark.asyncio
