@@ -180,8 +180,8 @@ async def delete_everything_stream(
     Yields:
         Dictionary containing information about each file being deleted:
         {
-            'path': str,  # Path of the file being deleted
-            'size': int,  # Size of the file in bytes
+            'path': str,  # Path of the file being deleted, or of the pattern of a bulk deleted batch
+            'size': int,  # Size in bytes, summed over the batch when several files go at once
             'type': str,  # 'file' or 'directory'
             'success': bool  # Whether deletion was successful
         }
@@ -212,13 +212,17 @@ async def delete_everything_stream(
         return
 
     if open_files is None and path.is_dir():
+        # Rotated logs are never held open and are most of the tree, taking them out first also shrinks
+        # what lsof has to walk below
+        async for info in bulk_delete_stream(path, "*.gz"):
+            yield info
         open_files = await asyncio.to_thread(open_files_under, path)
 
     items = await asyncio.to_thread(lambda: list(path.glob("*")))
 
     for item in items:
         try:
-            if item.is_file() and (item.suffix == ".gz" or not await _file_is_open_in_async(item, open_files)):
+            if item.is_file() and not await _file_is_open_in_async(item, open_files):
                 size = item.stat().st_size
                 await asyncio.to_thread(item.unlink)
                 # fmt: off
