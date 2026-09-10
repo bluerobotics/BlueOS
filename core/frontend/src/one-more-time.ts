@@ -1,3 +1,20 @@
+import frontend, { PageState } from '@/store/frontend'
+
+// Delays are multiplied by these factors when the page is not actively focused,
+// reducing unnecessary network traffic and CPU usage for background tabs.
+const PAGE_STATE_MULTIPLIERS: Record<PageState, number> = { focused: 1, blurred: 5, hidden: 10 }
+
+// When the page regains focus, we need to explicitly notify all instances so they can
+// cancel their throttled (long) timeouts and fire immediately with fresh data.
+// This can't rely on Vuex reactivity alone because setTimeout callbacks aren't reactive —
+// a sleeping timeout won't wake up just because a store value changed.
+const pageResumeListeners = new Set<() => void>()
+if (typeof document !== 'undefined') {
+  const notify = () => pageResumeListeners.forEach((fn) => fn())
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) notify() })
+  window.addEventListener('focus', notify)
+}
+
 /**
  * Represents a function that can be OneMoreTime valid action
  */
@@ -39,6 +56,8 @@ export interface OneMoreTimeOptions {
    * OneMoreTime instance.
    */
   disposeWith?: unknown
+
+  disablePageThrottle?: boolean
 }
 
 /**
@@ -55,6 +74,12 @@ export class OneMoreTime {
 
   private timeoutId?: ReturnType<typeof setTimeout>
 
+  private onPageResume = () => {
+    if (this.isDisposed || this.isPaused || this.isRunning || !this.timeoutId) return
+    this.killTask()
+    this.start()
+  }
+
   /**
    * Constructs an instance of OneMoreTime, optionally starting the action immediately.
    * @param {OneMoreTimeOptions} options Configuration options for the instance.
@@ -65,8 +90,15 @@ export class OneMoreTime {
     private action?: OneMoreTimeAction,
   ) {
     this.watchDisposeWith()
+    if (!this.options.disablePageThrottle) pageResumeListeners.add(this.onPageResume)
     // One more time
     this.softStart()
+  }
+
+  private getEffectiveDelay(baseDelay?: number): number | undefined {
+    if (baseDelay === undefined) return undefined
+    if (this.options.disablePageThrottle) return baseDelay
+    return baseDelay * PAGE_STATE_MULTIPLIERS[frontend.page_state]
   }
 
   private killTask(): void {
@@ -85,6 +117,7 @@ export class OneMoreTime {
         // eslint-disable-next-line
         if (!ref.deref() || ref.deref()._isDestroyed) {
           this.isDisposed = true
+          pageResumeListeners.delete(this.onPageResume)
           this.killTask()
           clearInterval(id)
         }
@@ -95,6 +128,7 @@ export class OneMoreTime {
   // Celebrate and dance so free
   [Symbol.dispose](): void {
     this.isDisposed = true
+    pageResumeListeners.delete(this.onPageResume)
     this.killTask()
   }
 
@@ -150,13 +184,13 @@ export class OneMoreTime {
       this.options.onError?.(error)
       // Oh yeah, alright, don't stop the dancing
       // eslint-disable-next-line no-promise-executor-return
-      await new Promise((resolve) => setTimeout(resolve, this.options.errorDelay))
+      await new Promise((resolve) => setTimeout(resolve, this.getEffectiveDelay(this.options.errorDelay)))
     } finally {
       this.isRunning = false
     }
 
     if (!this.isPaused && !this.isDisposed) {
-      this.timeoutId = setTimeout(() => this.start(), this.options.delay)
+      this.timeoutId = setTimeout(() => this.start(), this.getEffectiveDelay(this.options.delay))
     }
   }
 
