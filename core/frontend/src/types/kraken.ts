@@ -72,6 +72,7 @@ export interface InstalledExtensionData {
     enabled: boolean
     permissions: string
     user_permissions: string
+    platform?: string
     status?: string
     loading?: boolean
 }
@@ -112,10 +113,12 @@ export interface ExtensionUploadMetadata {
     docker?: string
     tag?: string
     permissions?: JSONValue
+    platform?: string
 }
 
 export interface ExtensionUploadResponse {
     temp_tag: string
     metadata: ExtensionUploadMetadata
     image_name: string
+    is_incompatible?: boolean
 }

@@ -158,6 +158,18 @@
               </div>
             </v-col>
           </v-row>
+          <v-row
+            v-if="upload_metadata && upload_is_incompatible"
+          >
+            <v-alert
+              type="warning"
+              dense
+              class="mt-4"
+            >
+              The extension's platform ({{ upload_metadata?.platform }}) doesn't match the one from your device.
+              Installing it might result in the extension failing to load.
+            </v-alert>
+          </v-row>
           <v-expand-transition>
             <div
               v-if="upload_metadata"
@@ -197,6 +209,14 @@
                   </div>
                   <div class="body-2">
                     {{ upload_metadata.tag || 'latest' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="caption text--secondary">
+                    Platform
+                  </div>
+                  <div class="body-2">
+                    {{ upload_metadata.platform || 'Pending' }}
                   </div>
                 </div>
               </div>
@@ -502,6 +522,7 @@ export default Vue.extend({
       fab_menu: false,
       upload_temp_tag: null as null | string,
       upload_metadata: null as null | ExtensionUploadMetadata,
+      upload_is_incompatible: null as null | boolean,
       upload_keep_alive_task: null as null | OneMoreTime,
       selected_tar_file: null as null | File,
       file_uploading: false,
@@ -788,6 +809,7 @@ export default Vue.extend({
         )
         this.upload_temp_tag = response.temp_tag
         this.upload_metadata = response.metadata
+        this.upload_is_incompatible = response.is_incompatible
         this.startUploadKeepAlive()
         this.setInstallFromFilePhase('ready')
       } catch (error) {
@@ -1116,6 +1138,7 @@ export default Vue.extend({
         name: metadata.name || '',
         docker: metadata.docker || '',
         tag: metadata.tag || 'latest',
+        platform: metadata.platform || 'unknown',
         enabled: true,
         permissions: serializedPermissions,
         user_permissions: serializedPermissions,
