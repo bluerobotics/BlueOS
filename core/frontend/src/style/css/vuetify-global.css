@@ -2,3 +2,11 @@
 .v-card__text, .v-card__title {
     word-break: normal;
 }
+
+/* The default 16px cell gutters cost a phone a third of the table width */
+@media (max-width: 600px) {
+    .v-application .v-data-table .v-data-table__wrapper td,
+    .v-application .v-data-table .v-data-table__wrapper th {
+        padding: 0 8px;
+    }
+}
