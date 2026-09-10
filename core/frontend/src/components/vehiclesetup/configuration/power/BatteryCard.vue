@@ -12,10 +12,10 @@
     </v-card-title>
     <v-card-text>
       <v-row dense align="center">
-        <v-col cols="5" class="label-col">
+        <v-col cols="12" sm="5" class="label-col text-sm-right">
           <parameter-label label="Battery Monitor" :param="monitorParam" />
         </v-col>
-        <v-col cols="7">
+        <v-col cols="12" sm="7">
           <inline-parameter-editor
             :param="monitorParam"
             :auto-set="true"
@@ -27,10 +27,10 @@
         <v-divider class="my-2" />
 
         <v-row dense align="center">
-          <v-col cols="5" class="label-col">
+          <v-col cols="12" sm="5" class="label-col text-sm-right">
             Power Sensor
           </v-col>
-          <v-col cols="7">
+          <v-col cols="12" sm="7">
             <v-select
               v-model="selected_sensor"
               :items="sensor_options"
@@ -58,10 +58,10 @@
             <v-divider class="my-2" />
 
             <v-row v-if="voltPinParam" dense align="center">
-              <v-col cols="5" class="label-col">
+              <v-col cols="12" sm="5" class="label-col text-sm-right">
                 <parameter-label label="Voltage Pin" :param="voltPinParam" />
               </v-col>
-              <v-col cols="7">
+              <v-col cols="12" sm="7">
                 <inline-parameter-editor
                   :param="voltPinParam"
                   :auto-set="true"
@@ -70,10 +70,10 @@
             </v-row>
 
             <v-row v-if="currPinParam" dense align="center">
-              <v-col cols="5" class="label-col">
+              <v-col cols="12" sm="5" class="label-col text-sm-right">
                 <parameter-label label="Current Pin" :param="currPinParam" />
               </v-col>
-              <v-col cols="7">
+              <v-col cols="12" sm="7">
                 <inline-parameter-editor
                   :param="currPinParam"
                   :auto-set="true"
@@ -82,10 +82,10 @@
             </v-row>
 
             <v-row v-if="voltMultParam" dense align="center">
-              <v-col cols="5" class="label-col">
+              <v-col cols="12" sm="5" class="label-col text-sm-right">
                 <parameter-label label="Voltage Multiplier" :param="voltMultParam" />
               </v-col>
-              <v-col cols="7" class="d-flex align-center">
+              <v-col cols="12" sm="7" class="d-flex align-center">
                 <div class="flex-grow-1">
                   <inline-parameter-editor
                     :param="voltMultParam"
@@ -115,10 +115,10 @@
             </v-alert>
 
             <v-row v-if="ampPerVoltParam" dense align="center">
-              <v-col cols="5" class="label-col">
+              <v-col cols="12" sm="5" class="label-col text-sm-right">
                 <parameter-label label="Amps per Volt" :param="ampPerVoltParam" />
               </v-col>
-              <v-col cols="7" class="d-flex align-center">
+              <v-col cols="12" sm="7" class="d-flex align-center">
                 <div class="flex-grow-1">
                   <inline-parameter-editor
                     :param="ampPerVoltParam"
@@ -138,10 +138,10 @@
             </v-row>
 
             <v-row v-if="ampOffsetParam" dense align="center">
-              <v-col cols="5" class="label-col">
+              <v-col cols="12" sm="5" class="label-col text-sm-right">
                 <parameter-label label="Amps Offset" :param="ampOffsetParam" />
               </v-col>
-              <v-col cols="7">
+              <v-col cols="12" sm="7">
                 <inline-parameter-editor
                   :param="ampOffsetParam"
                   :auto-set="true"
@@ -161,10 +161,10 @@
           </div>
 
           <v-row v-if="capacityParam" dense align="center">
-            <v-col cols="5" class="label-col">
+            <v-col cols="12" sm="5" class="label-col text-sm-right">
               <parameter-label label="Battery Capacity" :param="capacityParam" />
             </v-col>
-            <v-col cols="7">
+            <v-col cols="12" sm="7">
               <inline-parameter-editor
                 :param="capacityParam"
                 :auto-set="true"
@@ -173,10 +173,10 @@
           </v-row>
 
           <v-row v-if="armVoltParam" dense align="center">
-            <v-col cols="5" class="label-col">
+            <v-col cols="12" sm="5" class="label-col text-sm-right">
               <parameter-label label="Min Arming Voltage" :param="armVoltParam" />
             </v-col>
-            <v-col cols="7">
+            <v-col cols="12" sm="7">
               <inline-parameter-editor
                 :param="armVoltParam"
                 :auto-set="true"
@@ -462,7 +462,6 @@ export default Vue.extend({
 
 <style scoped>
 .label-col {
-  text-align: right;
   font-weight: 500;
 }
 </style>
