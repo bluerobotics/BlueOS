@@ -95,6 +95,8 @@ class WifiManager(AbstractWifiManager):
             path {[tuple/str]} -- Can be a tuple to connect (ip/port) or unix socket file
         """
         self.wpa.run(path)
+        # run only returns when the socket is connected, before that there is no adapter to talk to
+        self.wpa_path = str(path)
         self._scan_task: Optional[asyncio.Task[bytes]] = None
         self._updated_scan_results: Optional[List[ScannedWifiNetwork]] = None
         self._ignored_reconnection_networks: List[str] = []
@@ -571,7 +573,6 @@ class WifiManager(AbstractWifiManager):
                 socket_name = available_sockets[-1]
                 logger.info(f"Going to use {socket_name} file")
             WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
-            self.wpa_path = WLAN_SOCKET
             await self.connect(WLAN_SOCKET)
         except Exception as socket_connection_error:
             logger.warning(f"Could not connect with wifi socket. {socket_connection_error}")
