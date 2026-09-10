@@ -483,4 +483,22 @@ export default {
   min-width: 220px;
   max-width: 320px;
 }
+
+/* The overlay is as wide as the viewer on a phone, so it hides the model it configures */
+@media (max-width: 600px) {
+  .threejs-relative-container {
+    height: auto;
+  }
+
+  .threejs-container {
+    height: 300px;
+  }
+
+  .orientation-selector-overlay {
+    position: static;
+    min-width: 0;
+    max-width: none;
+    margin-bottom: 8px;
+  }
+}
 </style>
