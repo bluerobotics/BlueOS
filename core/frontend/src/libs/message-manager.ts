@@ -49,6 +49,16 @@ class MessageManager {
   }
 
   /**
+   * Remove a previously added callback
+   */
+  removeCallback(callback:(level: MessageLevel, msg: string) => void): void {
+    const index = this.callbacks.indexOf(callback)
+    if (index !== -1) {
+      this.callbacks.splice(index, 1)
+    }
+  }
+
+  /**
    * Emit a new message to be used in all callbacks
    */
   emitMessage(level: MessageLevel, message: string): void {

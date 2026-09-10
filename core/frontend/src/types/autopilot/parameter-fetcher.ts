@@ -1,4 +1,6 @@
 import mavlink2rest from '@/libs/MAVLink2Rest'
+import message_manager, { MessageLevel } from '@/libs/message-manager'
+import settings from '@/libs/settings'
 // eslint-disable-next-line import/no-cycle
 import ardupilot_data from '@/store/autopilot'
 import { AutopilotStore } from '@/store/autopilot'
@@ -33,6 +35,10 @@ export default class ParameterFetcher {
     this.store = store
   }
 
+  allParametersLoaded(): boolean {
+    return this.total_params_count !== null && this.loaded_params_count >= this.total_params_count
+  }
+
   reset(): void {
     this.loaded_params_count = 0
     this.total_params_count = null
@@ -57,9 +63,7 @@ export default class ParameterFetcher {
   }
 
   requestParamsWatchdog(): void {
-    if (this.total_params_count !== null
-      && this.loaded_params_count > 0
-      && this.loaded_params_count >= this.total_params_count) {
+    if (this.loaded_params_count > 0 && this.allParametersLoaded()) {
       return
     }
     if (autopilot.restarting) {
@@ -107,7 +111,13 @@ export default class ParameterFetcher {
       // We need this due to mismatches between js 64-bit floats and REAL32 in MAVLink
       const trimmed_value = Math.round(param_value * 10000) / 10000
       if (param_index === 65535) {
-        this.parameter_table.updateParam(param_name, trimmed_value)
+        const change = this.parameter_table.updateParam(param_name, trimmed_value)
+        if (change && this.allParametersLoaded() && settings.is_dev_mode) {
+          message_manager.emitMessage(
+            MessageLevel.Info,
+            `Parameter ${param_name} changed: ${change.oldValue} → ${trimmed_value}`,
+          )
+        }
       } else {
         this.parameter_table.addParam(
           {
