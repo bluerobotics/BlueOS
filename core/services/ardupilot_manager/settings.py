@@ -1,13 +1,72 @@
 import json
-from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any
 
 import appdirs
+from commonwealth.settings.settings import PydanticSettings
+from config import SERVICE_NAME
 from loguru import logger
-from typedefs import SITLFrame
+from mavlink_proxy.Endpoint import Endpoint
+from pydantic import field_validator
+from typedefs import FlightController, Serial, SITLFrame
+from typing_extensions import override
 
 SERVICE_NAME = "ardupilot-manager"
+
+
+class SettingsV1(PydanticSettings):
+    VERSION: int = 0
+
+    firmware_folder: Path = Path(appdirs.user_config_dir(SERVICE_NAME)) / "firmware"
+    defaults_folder: Path = Path.home() / "blueos-files/ardupilot-manager/default"
+    user_firmware_folder: Path = Path("/usr/blueos/userdata/firmware")
+    log_path: Path = Path(appdirs.user_config_dir(SERVICE_NAME)) / "logs"
+
+    serials: list[Serial] = []
+    sitl_frame: SITLFrame = SITLFrame.UNDEFINED
+    start_on_boot: bool = True
+    preferred_router: str | None = None
+    preferred_board: FlightController | None = None
+    endpoints: set[Endpoint] = set()
+    manual_board_master_endpoint: Endpoint | None = None
+
+    @field_validator("serials", mode="before")
+    @classmethod
+    def keep_valid_serials(cls, value: Any) -> list[Serial]:
+        if not value:
+            return []
+        valid: list[Serial] = []
+        if isinstance(value, list):
+            for entry in value:
+                try:
+                    valid.append(entry if isinstance(entry, Serial) else Serial.model_validate(entry))
+                except Exception as error:
+                    logger.warning(f"Ignoring invalid serial settings entry {entry}: {error}")
+        return valid
+
+    @override
+    def migrate(self, data: dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
+            return
+
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
+            super().migrate(data)
+
+        data["VERSION"] = SettingsV1.STATIC_VERSION
+
+    @override
+    def on_settings_created(self, _: Path) -> None:
+        migrate_from_old_settings(self)
+
+    def create_app_folders(self) -> None:
+        """Create the necessary folders for the app to function properly."""
+        for folder in (self.firmware_folder, self.log_path, self.user_firmware_folder):
+            try:
+                Path.mkdir(folder, parents=True, exist_ok=True)
+            except FileExistsError:
+                logger.warning(f"Found file {folder} where a folder should be. Removing file and creating folder.")
+                Path.unlink(folder)
+                Path.mkdir(folder)
 
 
 class Settings:
