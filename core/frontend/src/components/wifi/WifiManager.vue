@@ -11,6 +11,15 @@
       <v-toolbar-title>Wifi</v-toolbar-title>
       <v-spacer />
       <v-btn
+        v-tooltip="'Refresh'"
+        icon
+        color="gray"
+        hide-details="auto"
+        @click="$emit('refresh-request')"
+      >
+        <v-icon>mdi-refresh</v-icon>
+      </v-btn>
+      <v-btn
         v-tooltip="'Toggle hotspot'"
         icon
         :color="hotspot_status ? 'success' : 'gray'"
