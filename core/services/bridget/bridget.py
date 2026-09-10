@@ -44,7 +44,7 @@ class Bridget:
 
     def __init__(self) -> None:
         self._bridges: Dict[BridgeFrontendSpec, Bridge] = {}
-        self._settings_manager = PydanticManager("bridget", SettingsV2)
+        self._settings_manager: PydanticManager[SettingsV2] = PydanticManager("bridget", SettingsV2)
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specsv2:
             try:
