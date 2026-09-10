@@ -125,6 +125,49 @@ class DeletionInfo:
         return asdict(self)
 
 
+async def bulk_delete_stream(root: Path, pattern: str) -> AsyncGenerator[dict[str, Any], None]:
+    """Delete every file matching pattern under root with a single find, yielding one info for the batch.
+
+    Each file deleted from python costs a thread hop, a json fragment and a http chunk, and that dominates
+    the time when a folder holds thousands of rotated logs. find does the whole tree in one process, so the
+    batch is reported as a single event with the total freed size.
+    """
+    # fmt: off
+    cmd = [
+        "find", str(root),
+        "-type", "f",
+        "-name", pattern,
+        "-printf", "%s\n",  # sizes have to be printed before -delete, the file is gone after it
+        "-delete",
+    ]
+    # fmt: on
+
+    process = await asyncio.create_subprocess_exec(*cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
+    except asyncio.TimeoutError:
+        process.kill()
+        logger.error(f"Timed out bulk deleting {pattern} in {root}, the file by file walk takes what is left")
+        return
+
+    if process.returncode != 0:
+        logger.warning(f"Failed to bulk delete {pattern} in {root}: {stderr.decode().strip()}")
+
+    sizes = [int(size) for size in stdout.split()]
+    if not sizes:
+        logger.warning(f"No sizes found for {pattern} in {root}")
+        return
+
+    # fmt: off
+    yield DeletionInfo(
+        path=f"{root}/{pattern} ({len(sizes)} files)",
+        size=sum(sizes),
+        type="file",
+        success=True
+    ).to_dict()
+    # fmt: on
+
+
 async def delete_everything_stream(
     path: Path, open_files: set[Path] | None = None
 ) -> AsyncGenerator[dict[str, Any], None]:
