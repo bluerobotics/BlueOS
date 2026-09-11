@@ -28,7 +28,7 @@
           icon
           color="error"
           :disabled="disable_batch_operations || downloading"
-          @click="removeLogs"
+          @click="show_delete_confirm = true"
         >
           <v-icon>mdi-trash-can</v-icon>
         </v-btn>
@@ -73,6 +73,13 @@
         subtitle="Fetching available logs..."
       />
     </v-container>
+    <warning-dialog
+      v-model="show_delete_confirm"
+      title="Delete logs"
+      message="Deleting logs is an operation that cannot be undone."
+      confirm-label="Delete logs"
+      @confirm="removeLogs"
+    />
   </v-container>
 </template>
 
@@ -85,11 +92,13 @@ import { FilebrowserFile } from '@/types/filebrowser'
 import { prettifySize } from '@/utils/helper_functions'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import WarningDialog from '../common/WarningDialog.vue'
 
 export default Vue.extend({
   name: 'LogManager',
   components: {
     SpinningLogo,
+    WarningDialog,
   },
   data() {
     return {
@@ -99,6 +108,7 @@ export default Vue.extend({
       logs_fetched: false,
       selected_logs: [] as FilebrowserFile[],
       deleting: false,
+      show_delete_confirm: false,
       downloading: false,
       headers: [
         {
