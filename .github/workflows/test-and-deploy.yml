@@ -37,6 +37,9 @@ jobs:
       uses: astral-sh/setup-uv@v8.0.0
 
     - name: Run tests
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       run: |
         .hooks/pre-push
 
