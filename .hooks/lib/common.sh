@@ -55,6 +55,28 @@ verify_tag_if_needed() {
     fi
 }
 
+check_no_fixup_commits() {
+    local range=""
+    if [ -n "${BASE_SHA:-}" ] && [ -n "${HEAD_SHA:-}" ]; then
+        range="${BASE_SHA}..${HEAD_SHA}"
+    elif git rev-parse --verify --quiet origin/master >/dev/null; then
+        range="origin/master..HEAD"
+    else
+        echo "Skipping fixup commit check (no base ref)."
+        return 0
+    fi
+
+    echo "Checking for fixup commits in ${range}..."
+    local log matches
+    log="$(git log --format='%s (%h)' "$range")"
+    matches="$(printf '%s\n' "$log" | grep -i '^(fixup|rebase|squash)' || true)"
+    if [ -n "$matches" ]; then
+        echo "Found fixup/rebase/squash commits:"
+        echo "$matches"
+        exit 1
+    fi
+}
+
 run_shellcheck_suite() {
     echo "Running shellcheck..."
     #SC2005: Allow us to break line while running command
