@@ -7,7 +7,7 @@ import subprocess
 import time
 from ipaddress import IPv4Address
 from socket import AddressFamily
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import psutil
 from api import dns, settings
@@ -60,11 +60,11 @@ class EthernetManager:
 
     result: List[NetworkInterface] = []
 
-    _manager: PydanticManager = PydanticManager(SERVICE_NAME, settings.SettingsV2)
+    _manager: PydanticManager[settings.SettingsV2] = PydanticManager(SERVICE_NAME, settings.SettingsV2)
 
     @property
     def _settings(self) -> settings.SettingsV2:
-        return cast(settings.SettingsV2, self._manager.settings)
+        return self._manager.settings
 
     def __init__(self) -> None:
         self._dhcp_servers: List[DHCPServerManager] = []

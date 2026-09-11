@@ -2,8 +2,7 @@ from enum import Enum
 from typing import Annotated, Any, Dict, Iterable, Optional, Type
 
 import validators
-from pydantic import StringConstraints, model_validator
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, StringConstraints, model_validator
 from pydantic_core import ArgsKwargs
 
 
@@ -19,9 +18,7 @@ class EndpointType(str, Enum):
     ZenohRaw = "zenohraw"
 
 
-@dataclass
-# pylint: disable=too-many-instance-attributes
-class Endpoint:
+class Endpoint(BaseModel):
     name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=50)]
     owner: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=50)]
 
@@ -76,12 +73,12 @@ class Endpoint:
     def from_raw(raw_endpoint: Any) -> Optional["Endpoint"]:
         """Build an endpoint from a saved record, returning None if the record is not an endpoint."""
         try:
-            return Endpoint(**raw_endpoint)
+            return Endpoint.model_validate(raw_endpoint)
         except Exception:
             return None
 
     def as_api_dict(self) -> Dict[str, Any]:
-        data = self.as_dict()
+        data = self.model_dump(mode="json")
         if not self.is_supported():
             data["enabled"] = False
         return data
