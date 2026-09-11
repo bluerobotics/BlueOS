@@ -420,7 +420,7 @@ class NetworkManagerWifi(AbstractWifiManager):
 
     async def status(self) -> WifiStatus:
         if not self._device_path:
-            return WifiStatus(state="disconnected")
+            return WifiStatus(state="unavailable")
 
         device = NetworkDeviceWireless(self._device_path, self._bus)
         state = await device.state

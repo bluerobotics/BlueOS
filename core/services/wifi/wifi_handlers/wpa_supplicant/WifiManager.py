@@ -28,6 +28,7 @@ from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
 class WifiManager(AbstractWifiManager):
     wpa = WPASupplicant()
     wpa_path: Optional[str] = None
+    _hotspot: Optional[HotspotManager] = None
 
     async def can_work(self) -> bool:
         return bool(get_host_os() == HostOs.Bullseye)
@@ -94,6 +95,8 @@ class WifiManager(AbstractWifiManager):
             path {[tuple/str]} -- Can be a tuple to connect (ip/port) or unix socket file
         """
         self.wpa.run(path)
+        # run only returns when the socket is connected, before that there is no adapter to talk to
+        self.wpa_path = str(path)
         self._scan_task: Optional[asyncio.Task[bytes]] = None
         self._updated_scan_results: Optional[List[ScannedWifiNetwork]] = None
         self._ignored_reconnection_networks: List[str] = []
@@ -104,7 +107,6 @@ class WifiManager(AbstractWifiManager):
         await self.get_wifi_available()
 
         try:
-            self._hotspot: Optional[HotspotManager] = None
             ssid, password = (
                 self._settings_manager.settings.hotspot_ssid,
                 self._settings_manager.settings.hotspot_password,
@@ -192,6 +194,8 @@ class WifiManager(AbstractWifiManager):
 
     async def get_wifi_available(self) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
+        if self.wpa_path is None:
+            return []
 
         async def perform_new_scan() -> None:
             try:
@@ -231,6 +235,8 @@ class WifiManager(AbstractWifiManager):
 
     async def get_saved_wifi_network(self) -> List[SavedWifiNetwork]:
         """Get a list of saved wifi networks"""
+        if self.wpa_path is None:
+            return []
         try:
             data = await self.wpa.send_command_list_networks()
             networks_list = WifiManager.__dict_from_table(data)
@@ -331,6 +337,8 @@ class WifiManager(AbstractWifiManager):
 
     async def status(self) -> WifiStatus:
         """Check wpa_supplicant status"""
+        if self.wpa_path is None:
+            return WifiStatus(state="unavailable")
         try:
             data = await self.wpa.send_command_status()
             return WifiStatus(**WifiManager.__dict_from_list(data))
@@ -473,6 +481,9 @@ class WifiManager(AbstractWifiManager):
         self._settings_manager.settings.hotspot_password = credentials.password
         self._settings_manager.save()
 
+        if self.wpa_path is None:
+            return
+
         self.hotspot.set_credentials(credentials)
 
         if self.hotspot.is_running():
@@ -481,6 +492,9 @@ class WifiManager(AbstractWifiManager):
             await self.enable_hotspot(save_settings=False)
 
     def hotspot_credentials(self) -> WifiCredentials:
+        if self.wpa_path is None:
+            settings = self._settings_manager.settings
+            return WifiCredentials(ssid=settings.hotspot_ssid or "", password=settings.hotspot_password or "")
         credentials: WifiCredentials = self.hotspot.credentials
         return credentials
 
@@ -559,7 +573,6 @@ class WifiManager(AbstractWifiManager):
                 socket_name = available_sockets[-1]
                 logger.info(f"Going to use {socket_name} file")
             WLAN_SOCKET = os.path.join(wpa_socket_folder, socket_name)
-            self.wpa_path = WLAN_SOCKET
             await self.connect(WLAN_SOCKET)
         except Exception as socket_connection_error:
             logger.warning(f"Could not connect with wifi socket. {socket_connection_error}")
@@ -567,14 +580,19 @@ class WifiManager(AbstractWifiManager):
             try:
                 await self.connect(("127.0.0.1", 6664))
             except Exception as udp_connection_error:
-                logger.error(f"Could not connect with internet socket: {udp_connection_error}. Exiting.")
-                raise udp_connection_error
+                logger.error(f"Could not connect with internet socket: {udp_connection_error}.")
+                self.wpa_path = None
+                return
         loop = asyncio.get_event_loop()
         loop.create_task(self.auto_reconnect(60))
         loop.create_task(self.start_hotspot_watchdog())
 
     async def supports_hotspot(self) -> bool:
+        if self.wpa_path is None:
+            return False
         return self.hotspot.supports_hotspot
 
     async def hotspot_is_running(self) -> bool:
+        if self.wpa_path is None:
+            return False
         return self.hotspot.is_running()
