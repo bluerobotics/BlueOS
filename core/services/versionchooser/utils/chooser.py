@@ -20,6 +20,7 @@ from utils.dockerhub import (
 )
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
+DISK_RESERVE_PATH = pathlib.Path("/usr/blueos/userdata/.disk_reserve")
 
 
 class VersionChooser:
@@ -352,11 +353,18 @@ class VersionChooser:
         logger.info(f"Deleting image {image}:{tag}...")
         try:
             await self.client.images.delete(full_name, force=True, noprune=False)
-            logger.info("Image deleted successfully")
-            return Response(status_code=200)
-        except Exception as e:
-            logger.warning(f"Error deleting image: {e}")
-            return JSONResponse(status_code=500, content={"error": f"Unable do delete image: {e}"})
+        except Exception as error:
+            logger.warning(f"Error deleting image: {error}")
+            if not DISK_RESERVE_PATH.exists():
+                return JSONResponse(status_code=500, content={"error": f"Unable do delete image: {error}"})
+            DISK_RESERVE_PATH.unlink()
+            try:
+                await self.client.images.delete(full_name, force=True, noprune=False)
+            except Exception as exception:
+                logger.warning(f"Error deleting image: {exception}")
+                return JSONResponse(status_code=500, content={"error": f"Unable do delete image: {exception}"})
+        logger.info("Image deleted successfully")
+        return Response(status_code=200)
 
     async def set_local_versions(self, output: Dict[str, Optional[Union[str, List[Dict[str, Any]]]]]) -> None:
         for image in await self.client.images.list():
