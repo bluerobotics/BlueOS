@@ -54,8 +54,10 @@
       <v-sheet
         max-height="600"
         class="overflow-y-auto"
+        @mouseenter="freezeList"
+        @mouseleave="hovering_list = false"
       >
-        <div v-if="filtered_networks !== null">
+        <div v-if="displayed_networks !== null">
           <v-text-field
             v-if="show_search"
             v-model="ssid_filter"
@@ -66,9 +68,9 @@
             clearable
             class="ml-7 mr-7"
           />
-          <div v-if="!filtered_networks.isEmpty()">
+          <div v-if="displayed_networks && !displayed_networks.isEmpty()">
             <wifi-network-card
-              v-for="(network, key) in filtered_networks"
+              v-for="(network, key) in displayed_networks"
               :key="key"
               class="available-network"
               :network="network"
@@ -182,6 +184,8 @@ export default Vue.extend({
       show_qr_code_dialog: false,
       wifi_qr_code_img: '',
       ssid_filter: undefined as string | undefined,
+      hovering_list: false,
+      frozen_networks: undefined as Network[] | undefined,
     }
   },
   computed: {
@@ -210,6 +214,19 @@ export default Vue.extend({
         (network) => network.ssid.toLowerCase().includes(filter.toLowerCase()),
       )
     },
+    displayed_networks(): Network[] | undefined {
+      if (!this.hovering_list) {
+        return this.filtered_networks
+      }
+      // eslint-disable-next-line eqeqeq
+      if (this.ssid_filter == undefined || this.ssid_filter.trim() === '') {
+        return this.frozen_networks
+      }
+      const filter = this.ssid_filter
+      return this.frozen_networks?.filter(
+        (network) => network.ssid.toLowerCase().includes(filter.toLowerCase()),
+      )
+    },
     hotspot_status(): boolean | null {
       return wifi.hotspot_status?.enabled ?? null
     },
@@ -231,6 +248,10 @@ export default Vue.extend({
   methods: {
     forgetNetwork(network: Network): void {
       wifi.forgettNetwork(network)
+    },
+    freezeList(): void {
+      this.frozen_networks = this.connectable_networks
+      this.hovering_list = true
     },
     openConnectionDialog(network: Network): void {
       this.selected_network = network
