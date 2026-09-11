@@ -26,7 +26,7 @@
             readings to the expected local magnetic field.
           </p>
           <p>
-            A valid global region/position is <strong>recomended</strong> for Onboard Calibration to
+            A valid global region/position is <strong>recommended</strong> for Onboard Calibration to
             estimate the local world magnetic field.
           </p>
         </span>
@@ -76,12 +76,15 @@
 
         <StatusTextWatcher :filter="/.*/" :style="`display : ${status_type === 'error' ? 'block' : 'none'};`" />
       </v-card-text>
+      <v-alert v-if="!coordinates" type="warning" dense text class="text-caption mx-4 mb-0">
+        Calibration without a valid global region/position is not recommended.
+      </v-alert>
       <v-card-actions>
         <v-spacer />
         <v-btn
           v-if="state !== states.CALIBRATING && state !== states.FAILED"
           color="primary"
-          :disabled="!compass_mask || !coordinates"
+          :disabled="!compass_mask"
           @click="calibrate()"
         >
           Calibrate
