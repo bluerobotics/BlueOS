@@ -48,6 +48,7 @@ if [ "$fixing" = true ]; then
     echo "Fix mode enabled. Running isort/black only."
 fi
 
+check_no_fixup_commits
 check_required_tools
 run_nginx_validation
 
