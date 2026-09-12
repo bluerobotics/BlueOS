@@ -38,7 +38,7 @@ export interface OneMoreTimeOptions {
    * Reference to some object instance that can be used as a source to dispose the
    * OneMoreTime instance.
    */
-  disposeWith?: unknown
+  disposeWith?: { _isDestroyed?: boolean }
 }
 
 /**
@@ -77,6 +77,13 @@ export class OneMoreTime {
   }
 
   private watchDisposeWith(): void {
+    // A component instance always carries `_isDestroyed`, anything else (like the module scope captured by an
+    // arrow-function `data`) can never be watched and would keep the task running forever
+    // eslint-disable-next-line no-underscore-dangle
+    if ('disposeWith' in this.options && this.options.disposeWith?._isDestroyed === undefined) {
+      console.warn('OneMoreTime: disposeWith is not a component instance, task will never be disposed')
+    }
+
     if (this.options.disposeWith) {
       const ref = new WeakRef(this.options.disposeWith)
 
