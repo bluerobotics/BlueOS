@@ -130,12 +130,14 @@ export default Vue.extend({
     SelfHealthTest,
     GenericViewer,
   },
-  data: () => ({
-    windowHeight: window.innerHeight,
-    windowWidth: window.innerWidth,
-    fetch_streams_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
-    lastOrientation: { roll: 0, pitch: 0, yaw: 0 } as Orientation,
-  }),
+  data() {
+    return {
+      windowHeight: window.innerHeight,
+      windowWidth: window.innerWidth,
+      fetch_streams_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      lastOrientation: { roll: 0, pitch: 0, yaw: 0 } as Orientation,
+    }
+  },
   computed: {
     apps(): AppItem[] {
       return [
