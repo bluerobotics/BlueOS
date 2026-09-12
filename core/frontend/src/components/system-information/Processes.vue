@@ -3,6 +3,7 @@
     dense
     :headers="filteredHeader"
     :items="process"
+    :mobile-breakpoint="0"
     class="pa-6"
     item-key="pid"
     :items-per-page="-1"

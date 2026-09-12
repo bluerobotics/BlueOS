@@ -1,4 +1,5 @@
 /* Prevent words in titles to break in half */
-.v-card__text, .v-card__title {
+.v-application .v-card__text, .v-application .v-card__title {
     word-break: normal;
+    overflow-wrap: break-word;
 }

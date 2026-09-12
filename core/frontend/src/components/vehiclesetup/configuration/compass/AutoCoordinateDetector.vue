@@ -29,7 +29,7 @@
       <v-card-text>
         No valid GPS position!
       </v-card-text>
-      <v-card-actions>
+      <v-card-actions class="flex-wrap" style="gap: 8px;">
         <v-btn v-if="!manual_coordinates" small color="primary" @click="setOrigin(geoip_lat ?? 0, geoip_lon ?? 0)">
           Use GeoIP coordinates
         </v-btn>
