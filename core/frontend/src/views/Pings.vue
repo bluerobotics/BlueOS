@@ -44,10 +44,12 @@ import Ping360Card from '../components/ping/ping360.vue'
 export default Vue.extend({
   name: 'Pings',
   components: { PingCard, Ping360Card },
-  data: () => ({
-    PingType,
-    fetch_serial_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
-  }),
+  data() {
+    return {
+      PingType,
+      fetch_serial_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+    }
+  },
   computed: {
     ping_devices(): PingDevice[] {
       return ping.available_ping_devices

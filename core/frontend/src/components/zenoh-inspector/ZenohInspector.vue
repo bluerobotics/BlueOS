@@ -127,7 +127,7 @@ import {
 import { parse as parseMessageDefinition } from '@foxglove/rosmsg'
 import { MessageReader } from '@foxglove/rosmsg2-serialization'
 import axios from 'axios'
-import Vue from 'vue'
+import Vue, { markRaw } from 'vue'
 
 import zenoh from '@/libs/zenoh'
 
@@ -159,6 +159,13 @@ export default Vue.extend({
       subscriber: null as Subscriber | null,
       liveliness_subscriber: null as Subscriber | null,
       video_reader: null as MessageReader | null,
+      // markRaw: written once per arriving sample, must not be observed or we just move the cost here.
+      // Keyed by topic, so it stays bounded by topic count even when requestAnimationFrame is throttled.
+      // Null-prototype because zenoh key expressions can collide with Object.prototype keys.
+      staging: markRaw({
+        messages: Object.create(null) as { [key: string]: ZenohMessage },
+        frame_request: null as number | null,
+      }),
     }
   },
   computed: {
@@ -234,6 +241,31 @@ export default Vue.extend({
       return JSON.stringify(formattedMessage, null, 2)
     },
 
+    // `topics` is the union of both keyed maps, so membership is a constant time lookup instead of a scan.
+    // Own properties only, otherwise a key expression named after an Object.prototype member reads as known.
+    isKnownTopic(topic: string): boolean {
+      return Object.prototype.hasOwnProperty.call(this.messages, topic)
+        || Object.prototype.hasOwnProperty.call(this.topic_liveliness, topic)
+    },
+
+    flushStagedMessages() {
+      this.staging.frame_request = null
+      const batch = this.staging.messages
+      this.staging.messages = Object.create(null)
+
+      const new_topics: string[] = []
+      for (const topic of Object.keys(batch)) {
+        if (!this.isKnownTopic(topic)) {
+          new_topics.push(topic)
+        }
+        this.$set(this.messages, topic, batch[topic])
+      }
+
+      if (new_topics.length > 0) {
+        this.topics = [...this.topics, ...new_topics].sort()
+      }
+    },
+
     async setupZenoh() {
       try {
         this.session = await zenoh.getSession()
@@ -253,10 +285,15 @@ export default Vue.extend({
               timestamp: new Date(),
             }
 
-            // Update messages and topics
-            this.$set(this.messages, topic, message)
-            if (!this.topics.includes(topic)) {
-              this.topics = [...this.topics, topic].sort()
+            // The selected topic bypasses batching because RawVideoPlayer's decoders consume every sample
+            if (topic === this.selected_topic) {
+              delete this.staging.messages[topic]
+              this.$set(this.messages, topic, message)
+            } else {
+              this.staging.messages[topic] = message
+              if (this.staging.frame_request === null) {
+                this.staging.frame_request = requestAnimationFrame(this.flushStagedMessages)
+              }
             }
 
             return Promise.resolve()
@@ -285,15 +322,15 @@ export default Vue.extend({
 
             const isAlive = sample.kind() === SampleKind.PUT
 
+            // Add to topics if not already present, before $set fills the map isKnownTopic reads
+            if (!this.isKnownTopic(topic)) {
+              this.topics = [...this.topics, topic].sort()
+            }
+
             // Update liveliness state and type
             this.$set(this.topic_liveliness, topic, isAlive)
             this.$set(this.topic_types, topic, type)
             this.$set(this.topic_message_types, topic, messageTyp)
-
-            // Add to topics if not already present
-            if (!this.topics.includes(topic)) {
-              this.topics = [...this.topics, topic].sort()
-            }
 
             return Promise.resolve()
           },
@@ -304,6 +341,10 @@ export default Vue.extend({
       }
     },
     async disconnectZenoh() {
+      if (this.staging.frame_request !== null) {
+        cancelAnimationFrame(this.staging.frame_request)
+        this.staging.frame_request = null
+      }
       this.subscriber?.undeclare()
       this.liveliness_subscriber?.undeclare()
       this.session = null
