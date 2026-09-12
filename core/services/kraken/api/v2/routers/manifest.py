@@ -79,8 +79,22 @@ async def fetch_consolidated() -> list[RepositoryEntry]:
     """
     List a consolidation of all repository entries from all manifest sources merged by its sorted priority, if a
     repository entry is duplicated, the one with the highest priority will be kept.
+
+    Per-version readme/docs are omitted so the store list stays small.
     """
-    return await manifest_manager.fetch_consolidated()
+    return [entry.without_readme() for entry in await manifest_manager.fetch_consolidated()]
+
+
+@manifest_router_v2.get("/consolidated/{extension_identifier}", status_code=status.HTTP_200_OK)
+@manifest_to_http_exception
+async def fetch_consolidated_extension(extension_identifier: str) -> RepositoryEntry:
+    """
+    Get one catalog entry from the consolidated manifests, including readme and docs.
+    """
+    ext = await manifest_manager.fetch_extension(extension_identifier)
+    if not ext:
+        raise ExtensionEntryNotFound(f"Extension {extension_identifier} not found")
+    return ext
 
 
 @manifest_router_v2.get("/tags/{manifest_identifier}/{extension_identifier}/", status_code=status.HTTP_200_OK)

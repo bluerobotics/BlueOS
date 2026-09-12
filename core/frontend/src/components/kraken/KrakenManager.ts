@@ -57,6 +57,15 @@ export async function fetchManifestSource(identifier: string, data = true): Prom
   return response.data as Manifest
 }
 
+function withCompatibility(extension: ExtensionData): ExtensionData {
+  return {
+    ...extension,
+    is_compatible: Object.values(extension.versions).some(
+      (version) => version.images.some((image) => image.compatible),
+    ),
+  }
+}
+
 /**
  * Fetch all manifests from kraken in a single merged representation, repeated entries will be excluded, only the one
  * present in the manifest wth higher priority will be kept, uses API v2
@@ -66,15 +75,24 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
   const response = await back_axios({
     method: 'get',
     url: `${KRAKEN_API_V2_URL}/manifest/consolidated`,
-    timeout: 25000,
+    timeout: 60000,
   })
 
-  return (response.data as ExtensionData[]).map((extension: ExtensionData) => ({
-    ...extension,
-    is_compatible: Object.values(extension.versions).some(
-      (version) => version.images.some((image) => image.compatible),
-    ),
-  }))
+  return (response.data as ExtensionData[]).map(withCompatibility)
+}
+
+/**
+ * Fetch one catalog entry including per-version readme/docs, uses API v2
+ * @param {string} identifier The extension identifier
+ */
+export async function fetchCatalogExtension(identifier: string): Promise<ExtensionData> {
+  const response = await back_axios({
+    method: 'get',
+    url: `${KRAKEN_API_V2_URL}/manifest/consolidated/${encodeURIComponent(identifier)}`,
+    timeout: 60000,
+  })
+
+  return withCompatibility(response.data as ExtensionData)
 }
 
 /**
@@ -187,6 +205,7 @@ export default {
   fetchManifestSources,
   fetchManifestSource,
   fetchConsolidatedManifests,
+  fetchCatalogExtension,
   fetchInstalledExtensions,
   addManifestSource,
   updateManifestSource,
