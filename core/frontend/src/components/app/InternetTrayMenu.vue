@@ -31,6 +31,7 @@
     >
       <network-interface-menu
         v-if="show_menu"
+        :initial-page="dns_failure ? 'dns_configuration' : ''"
         @close="show_menu = false"
       />
     </v-dialog>
@@ -56,7 +57,13 @@ export default Vue.extend({
     show_menu: false,
   }),
   computed: {
+    dns_failure(): boolean {
+      return helper.dns_failure
+    },
     tooltip() {
+      if (this.dns_failure) {
+        return 'Internet is reachable by IP, but DNS name resolution is failing. Check DNS nameservers.'
+      }
       switch (helper.has_internet) {
         case InternetConnectionState.ONLINE:
           return 'Vehicle has internet access.'
@@ -71,6 +78,9 @@ export default Vue.extend({
       }
     },
     icon(): string {
+      if (this.dns_failure) {
+        return 'mdi-dns'
+      }
       switch (helper.has_internet) {
         case InternetConnectionState.ONLINE:
           return 'mdi-web'

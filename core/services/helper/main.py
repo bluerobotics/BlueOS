@@ -140,6 +140,7 @@ class SimpleHttpResponse(BaseModel):
     as_json: Optional[Union[List[Any], Dict[Any, Any]]]
     error: Optional[str]
     timeout: bool
+    dns_error: bool = False
 
 
 class Helper:
@@ -283,6 +284,7 @@ class Helper:
             error_msg = str(e) if str(e).isascii() else type(e).__name__
             logger.warning(error_msg)
             request_response.error = error_msg
+            request_response.dns_error = isinstance(e, socket.gaierror)
 
         except Exception as e:
             # Binary data from non-HTTP services can end up in exception messages
@@ -455,7 +457,8 @@ class Helper:
             logger.debug(f"{log_msg}: Online.")
             website_status.online = True
         else:
-            website_status.error = response.error
+            # Sentinel, like the "timeout" one set by check_internet_access. Full message is logged above.
+            website_status.error = "dns" if response.dns_error else response.error
             logger.warning(f"{log_msg}: Offline: {website_status.error}.")
 
         return website_status

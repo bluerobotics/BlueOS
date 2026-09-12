@@ -47,13 +47,25 @@ export default Vue.extend({
     NetworkInterfacePriorityMenu,
     DnsConfigurationMenu,
   },
+  props: {
+    initialPage: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
     return {
-      page_selected: null as string | null,
+      page_selected: null as number | null,
       pages: [
         { title: 'Network Interface Priority', icon: 'mdi-sort', value: 'network_interface_priority' },
         { title: 'Dns Configuration', icon: 'mdi-dns', value: 'dns_configuration' },
       ] as Item[],
+    }
+  },
+  mounted() {
+    const index = this.pages.findIndex((page) => page.value === this.initialPage)
+    if (index !== -1) {
+      this.page_selected = index
     }
   },
   methods: {
