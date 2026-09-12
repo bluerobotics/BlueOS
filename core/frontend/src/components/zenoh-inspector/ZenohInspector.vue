@@ -234,6 +234,13 @@ export default Vue.extend({
       return JSON.stringify(formattedMessage, null, 2)
     },
 
+    // `topics` is the union of both keyed maps, so membership is a constant time lookup instead of a scan.
+    // Own properties only, otherwise a key expression named after an Object.prototype member reads as known.
+    isKnownTopic(topic: string): boolean {
+      return Object.prototype.hasOwnProperty.call(this.messages, topic)
+        || Object.prototype.hasOwnProperty.call(this.topic_liveliness, topic)
+    },
+
     async setupZenoh() {
       try {
         this.session = await zenoh.getSession()
@@ -253,11 +260,11 @@ export default Vue.extend({
               timestamp: new Date(),
             }
 
-            // Update messages and topics
-            this.$set(this.messages, topic, message)
-            if (!this.topics.includes(topic)) {
+            // Update topics before messages, isKnownTopic reads the map that $set is about to fill
+            if (!this.isKnownTopic(topic)) {
               this.topics = [...this.topics, topic].sort()
             }
+            this.$set(this.messages, topic, message)
 
             return Promise.resolve()
           },
@@ -285,15 +292,15 @@ export default Vue.extend({
 
             const isAlive = sample.kind() === SampleKind.PUT
 
+            // Add to topics if not already present, before $set fills the map isKnownTopic reads
+            if (!this.isKnownTopic(topic)) {
+              this.topics = [...this.topics, topic].sort()
+            }
+
             // Update liveliness state and type
             this.$set(this.topic_liveliness, topic, isAlive)
             this.$set(this.topic_types, topic, type)
             this.$set(this.topic_message_types, topic, messageTyp)
-
-            // Add to topics if not already present
-            if (!this.topics.includes(topic)) {
-              this.topics = [...this.topics, topic].sort()
-            }
 
             return Promise.resolve()
           },
