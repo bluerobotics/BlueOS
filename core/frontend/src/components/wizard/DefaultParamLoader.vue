@@ -113,16 +113,18 @@ export default Vue.extend({
       required: true,
     },
   },
-  data: () => ({
-    all_param_sets: {} as Dictionary<Dictionary<number>>,
-    selected_param_set: {},
-    selected_param_set_name: '' as string,
-    version: undefined as (undefined | SemVer),
-    fetch_retries: 0,
-    is_loading_parameters: false,
-    has_parameters_load_error: false,
-    fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
-  }),
+  data() {
+    return {
+      all_param_sets: {} as Dictionary<Dictionary<number>>,
+      selected_param_set: {},
+      selected_param_set_name: '' as string,
+      version: undefined as (undefined | SemVer),
+      fetch_retries: 0,
+      is_loading_parameters: false,
+      has_parameters_load_error: false,
+      fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+    }
+  },
   computed: {
     filtered_param_sets(): Dictionary<Dictionary<number>> {
       return {
