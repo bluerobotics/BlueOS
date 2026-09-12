@@ -3,9 +3,9 @@
 # Immediately exit on errors
 set -e
 
-VERSION="0.9.0"
+VERSION="wip4d"
 PROJECT_NAME="mavlink-server"
-REPOSITORY_ORG="bluerobotics"
+REPOSITORY_ORG="joaoantoniocardoso"
 REPOSITORY_NAME="$PROJECT_NAME"
 REPOSITORY_URL="https://github.com/$REPOSITORY_ORG/$REPOSITORY_NAME"
 
