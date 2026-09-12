@@ -14,10 +14,12 @@ const notifier = new Notifier(frontend_service)
 
 export default Vue.extend({
   name: 'BackendStatusChecker',
-  data: () => ({
-    backend_offline: false,
-    check_backend_status_task: new OneMoreTime({ delay: 3000, disposeWith: this }),
-  }),
+  data() {
+    return {
+      backend_offline: false,
+      check_backend_status_task: new OneMoreTime({ delay: 3000, disposeWith: this }),
+    }
+  },
   computed: {
     status_text(): string {
       return this.backend_offline ? 'Disconnected' : ''
