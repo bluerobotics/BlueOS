@@ -60,15 +60,17 @@ export default Vue.extend({
       required: true,
     },
   },
-  data: () => ({
-    all_scripts: [] as string[],
-    selected_scripts: [] as string[],
-    version: undefined as (undefined | SemVer),
-    fetch_retries: 0,
-    is_loading_scripts: false,
-    has_script_load_error: false,
-    fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
-  }),
+  data() {
+    return {
+      all_scripts: [] as string[],
+      selected_scripts: [] as string[],
+      version: undefined as (undefined | SemVer),
+      fetch_retries: 0,
+      is_loading_scripts: false,
+      has_script_load_error: false,
+      fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+    }
+  },
   computed: {
     filtered_scripts(): string[] | undefined {
       // for scripts, we only check major version for now
