@@ -46,10 +46,12 @@ import PingIgnoredPorts from '../components/ping/PingIgnoredPorts.vue'
 export default Vue.extend({
   name: 'Pings',
   components: { PingCard, Ping360Card, PingIgnoredPorts },
-  data: () => ({
-    PingType,
-    fetch_serial_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
-  }),
+  data() {
+    return {
+      PingType,
+      fetch_serial_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
+    }
+  },
   computed: {
     ping_devices(): PingDevice[] {
       return ping.available_ping_devices
