@@ -47,7 +47,6 @@ export function vehicleTypeFromString(vehicle_type: string): Vehicle {
   }
 }
 
-
 export function firmwareVehicleTypeFromVehicle(vehicle: Vehicle): FirmwareVehicleType | null {
   switch (vehicle) {
     case Vehicle.Sub: return FirmwareVehicleType.ArduSub
