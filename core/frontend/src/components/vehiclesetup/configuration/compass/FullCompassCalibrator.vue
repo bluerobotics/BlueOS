@@ -32,7 +32,8 @@
         </span>
         <span v-else-if="state === states.CALIBRATING">
           Spin your vehicle around all of its axes until the progress bar completes.
-          The arrow is the magnetic field, which stays where it is while the vehicle turns under it.
+          The arrow is the field as the vehicle currently measures it, so it drifts a little while the
+          compass is still uncalibrated.
           Bring the grey sections onto the arrow, each one lights up once it has been sampled.
         </span>
 
