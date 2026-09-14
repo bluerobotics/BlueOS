@@ -34,7 +34,8 @@
           Spin your vehicle around all of its axes until the progress bar completes.
           The arrow is the field as the vehicle currently measures it, so it drifts a little while the
           compass is still uncalibrated.
-          Bring the grey sections onto the arrow, each one lights up once it has been sampled.
+          Bring the grey sections onto the arrow. Each one lights up once it has been sampled, and only
+          reaches full colour once every compass being calibrated has it.
         </span>
 
         <auto-coordinate-detector
@@ -66,8 +67,8 @@
           </tbody>
         </v-simple-table>
         <compass-calibration-progress-grid
-          v-if="state === states.CALIBRATING && completion_mask.length > 0"
-          :completion-mask="completion_mask"
+          v-if="state === states.CALIBRATING && completion_masks.length > 0"
+          :completion-masks="completion_masks"
           :direction-x="field_direction.x"
           :direction-y="field_direction.y"
           :direction-z="field_direction.z"
@@ -78,7 +79,7 @@
 
         <v-progress-linear
           v-if="percent && !all_compasses_calibrated"
-          v-model="percent"
+          :value="percent"
           color="blue-grey"
           height="25"
           class="mt-5 mb-5"
@@ -161,9 +162,7 @@ export default {
       compass_mask: 0,
       status_type: '' as string | undefined,
       status_text: '' as string | undefined,
-      percent: 0,
-      completion_mask: [] as number[],
-      progress_compass_id: undefined as number | undefined,
+      progress: {} as Dictionary<{ percent: number, mask: number[] }>,
       field_subscribed: false,
       state: states.IDLE,
       progress_listener: undefined as Listener | undefined,
@@ -180,6 +179,15 @@ export default {
     },
     all_compasses_calibrated(): boolean {
       return this.compasses_calibrated === this.compasses.length
+    },
+    // Every calibrating compass reports its own progress, and they are not in step: the bar follows
+    // the one with the most left to do, and the grid shades each direction by how many have it
+    completion_masks(): number[][] {
+      return Object.values(this.progress).map((entry) => entry.mask)
+    },
+    percent(): number {
+      const percents = Object.values(this.progress).map((entry) => entry.percent)
+      return percents.length > 0 ? Math.max(Math.min(...percents), 0.01) : 0
     },
     // MAG_CAL_PROGRESS carries a direction field, but ArduPilot always sends it as zero, so the
     // sampled direction comes from the field reading itself. Every compass is reported in body
@@ -252,9 +260,7 @@ export default {
       this.progress_listener?.discard()
       this.report_listener?.discard()
       this.unsubscribeField()
-      this.percent = 0
-      this.completion_mask = []
-      this.progress_compass_id = undefined
+      this.progress = {}
       this.status_type = undefined
       this.status_text = undefined
     },
@@ -276,7 +282,7 @@ export default {
       if (ack.result.type !== MavResult.MAV_RESULT_ACCEPTED) {
         throw new Error(`Unexpected response trying to cancel calibration: ${ack.result.type}`)
       }
-      this.percent = 0
+      this.progress = {}
       this.status_text = 'Calibration cancelled'
       this.status_type = 'warning'
       this.progress_listener?.discard()
@@ -300,16 +306,13 @@ export default {
         }
         this.progress_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_PROGRESS).setCallback(
           (message) => {
-            this.percent = Math.max(message.message.completion_pct, 0.01)
-            // Each calibrating compass sends its own progress, follow a single one so the grid doesn't
-            // flip between masks that are slightly out of step with each other
-            if (this.progress_compass_id === undefined) {
-              this.progress_compass_id = message.message.compass_id
+            this.progress = {
+              ...this.progress,
+              [message.message.compass_id]: {
+                percent: message.message.completion_pct,
+                mask: message.message.completion_mask,
+              },
             }
-            if (message.message.compass_id !== this.progress_compass_id) {
-              return
-            }
-            this.completion_mask = message.message.completion_mask
           },
         ).setFrequency(0)
         this.report_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_REPORT).setCallback(
@@ -317,6 +320,8 @@ export default {
             const name = this.compasses[message.message.compass_id].deviceName ?? 'unknown'
             // we need to use Vue.set when adding a key to a dict to ensure reactivity...
             Vue.set(this.fitness, name, message.message.fitness)
+            // a finished compass stops reporting progress, so its last mask would hold the grid back
+            Vue.delete(this.progress, message.message.compass_id)
           },
         ).setFrequency(0)
       } catch (error) {

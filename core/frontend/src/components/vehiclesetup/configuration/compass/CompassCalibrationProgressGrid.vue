@@ -24,15 +24,16 @@ import {
 const MODEL_SPAN_IN_RADII = 1.15
 
 const COLOR_PENDING = 0x9ea4ac
-const COLOR_COMPLETE = 0x29b6ff
+const COLOR_COMPLETE = new THREE.Color(0x29b6ff)
 const COLOR_CURRENT = 0xffeb3b
 const COLOR_LAST = 0xf57c00
 
 export default Vue.extend({
   name: 'CompassCalibrationProgressGrid',
   props: {
-    completionMask: {
-      type: Array as PropType<number[]>,
+    // one completion mask per calibrating compass, they do not agree section for section
+    completionMasks: {
+      type: Array as PropType<number[][]>,
       required: true,
     },
     directionX: {
@@ -112,7 +113,7 @@ export default Vue.extend({
         this.updateSectionStyles()
       },
     },
-    completionMask: {
+    completionMasks: {
       deep: true,
       handler() {
         this.updateSectionStyles()
@@ -284,10 +285,13 @@ export default Vue.extend({
     updateSectionStyles() {
       for (const [section, mesh] of this.sectionMeshes.entries()) {
         const material = mesh.material as THREE.MeshStandardMaterial
-        const completed = sectionCompleted(this.completionMask, section)
+        // a direction is only done once every compass has sampled it, so sections the compasses
+        // disagree about are drawn part of the way between pending and complete
+        const sampled = this.completionMasks.filter((mask) => sectionCompleted(mask, section)).length
+        const coverage = this.completionMasks.length > 0 ? sampled / this.completionMasks.length : 0
 
-        material.color.setHex(completed ? COLOR_COMPLETE : COLOR_PENDING)
-        material.opacity = completed ? 0.6 : 0.14
+        material.color.setHex(COLOR_PENDING).lerp(COLOR_COMPLETE, coverage)
+        material.opacity = 0.14 + 0.46 * coverage
         material.emissive.setHex(0x000000)
         material.emissiveIntensity = 0
         mesh.scale.setScalar(1)
