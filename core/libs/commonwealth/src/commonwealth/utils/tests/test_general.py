@@ -70,6 +70,114 @@ def test_get_host_os_returns_other_when_load_file_fails(monkeypatch: pytest.Monk
     general.get_host_os.cache_clear()
 
 
+@pytest.mark.parametrize(
+    "os_release,expected",
+    [
+        ('PRETTY_NAME="NixOS 24.05 (Uakari)"\nNAME=NixOS\nVERSION_ID="24.05"\n', "NixOS 24.05 (Uakari)"),
+        ('PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\nNAME="Debian GNU/Linux"\n', "Debian GNU/Linux 12 (bookworm)"),
+        ('NAME="Ubuntu"\nVERSION_ID="22.04"\n', "Ubuntu 22.04"),
+        ('NAME="Ubuntu"\nVERSION="22.04.3 LTS (Jammy Jellyfish)"\n', "Ubuntu 22.04.3 LTS (Jammy Jellyfish)"),
+        ("NAME=Alpine\n", "Alpine"),
+    ],
+)
+def test_get_host_os_pretty_name(os_release: str, expected: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    general.get_host_os_pretty_name.cache_clear()
+    monkeypatch.setattr(general, "_read_local_os_release", lambda _path: None)
+    monkeypatch.setattr(general, "load_file", lambda _: os_release)
+    assert general.get_host_os_pretty_name() == expected
+    general.get_host_os_pretty_name.cache_clear()
+
+
+def test_get_host_os_pretty_name_returns_empty_when_load_file_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    general.get_host_os_pretty_name.cache_clear()
+
+    def raise_host_file_error(_file_name: str) -> str:
+        raise HostFileError("Failed to read /etc/os-release")
+
+    monkeypatch.setattr(general, "_read_local_os_release", lambda _path: None)
+    monkeypatch.setattr(general, "load_file", raise_host_file_error)
+    assert general.get_host_os_pretty_name() == ""
+    general.get_host_os_pretty_name.cache_clear()
+
+
+def test_get_host_os_pretty_name_prefers_os_release_host_bind(monkeypatch: pytest.MonkeyPatch) -> None:
+    general.get_host_os_pretty_name.cache_clear()
+    host = 'PRETTY_NAME="NixOS 24.05 (Uakari)"\nNAME=NixOS\n'
+
+    def fake_read(path: Path) -> str | None:
+        if path == Path("/etc/os-release.host"):
+            return host
+        return None
+
+    monkeypatch.setattr(general, "_read_local_os_release", fake_read)
+
+    def fail_load(_file_name: str) -> str:
+        raise HostFileError("should not SSH")
+
+    monkeypatch.setattr(general, "load_file", fail_load)
+    assert general.get_host_os_pretty_name() == "NixOS 24.05 (Uakari)"
+    general.get_host_os_pretty_name.cache_clear()
+
+
+def test_get_host_os_pretty_name_prefers_proc_1_root_when_distinct(monkeypatch: pytest.MonkeyPatch) -> None:
+    general.get_host_os_pretty_name.cache_clear()
+    container = 'PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\nNAME="Debian GNU/Linux"\n'
+    host = 'PRETTY_NAME="NixOS 24.05 (Uakari)"\nNAME=NixOS\n'
+
+    def fake_read(path: Path) -> str | None:
+        if path == Path("/etc/os-release"):
+            return container
+        if path == Path("/proc/1/root/etc/os-release"):
+            return host
+        return None
+
+    monkeypatch.setattr(general, "_read_local_os_release", fake_read)
+
+    def fail_load(_file_name: str) -> str:
+        raise HostFileError("should not SSH")
+
+    monkeypatch.setattr(general, "load_file", fail_load)
+    assert general.get_host_os_pretty_name() == "NixOS 24.05 (Uakari)"
+    general.get_host_os_pretty_name.cache_clear()
+
+
+def test_get_host_os_pretty_name_skips_proc_1_root_when_same_as_container(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    general.get_host_os_pretty_name.cache_clear()
+    shared = 'PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\nNAME="Debian GNU/Linux"\n'
+    via_ssh = 'PRETTY_NAME="Raspberry Pi OS"\nNAME="Debian GNU/Linux"\n'
+
+    def fake_read(path: Path) -> str | None:
+        if path in (Path("/etc/os-release"), Path("/proc/1/root/etc/os-release")):
+            return shared
+        return None
+
+    monkeypatch.setattr(general, "_read_local_os_release", fake_read)
+    monkeypatch.setattr(general, "load_file", lambda _: via_ssh)
+    assert general.get_host_os_pretty_name() == "Raspberry Pi OS"
+    general.get_host_os_pretty_name.cache_clear()
+
+
+def test_get_host_os_pretty_name_does_not_cache_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    general.get_host_os_pretty_name.cache_clear()
+    calls = {"n": 0}
+
+    def raise_then_succeed(_file_name: str) -> str:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise HostFileError("not ready")
+        return 'PRETTY_NAME="NixOS 24.05 (Uakari)"\n'
+
+    monkeypatch.setattr(general, "_read_local_os_release", lambda _path: None)
+    monkeypatch.setattr(general, "load_file", raise_then_succeed)
+    assert general.get_host_os_pretty_name() == ""
+    assert general.get_host_os_pretty_name() == "NixOS 24.05 (Uakari)"
+    assert general.get_host_os_pretty_name() == "NixOS 24.05 (Uakari)"
+    assert calls["n"] == 2
+    general.get_host_os_pretty_name.cache_clear()
+
+
 def test_blueos_version(monkeypatch: pytest.MonkeyPatch) -> None:
     general.blueos_version.cache_clear()
     monkeypatch.setenv("GIT_DESCRIBE_TAGS", "1.5.0-10-gabcdef12")
