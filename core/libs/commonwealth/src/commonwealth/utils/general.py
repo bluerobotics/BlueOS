@@ -58,6 +58,86 @@ def get_host_os() -> HostOs:
     return HostOs.Other
 
 
+def _parse_os_release_pretty_name(os_release: str) -> str:
+    values: dict[str, str] = {}
+    for line in os_release.splitlines():
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key] = value.strip().strip('"')
+
+    if values.get("PRETTY_NAME"):
+        return values["PRETTY_NAME"]
+
+    name = values.get("NAME", "")
+    version = values.get("VERSION_ID") or values.get("VERSION", "")
+    if name and version:
+        return f"{name} {version}"
+    return name
+
+
+def _read_local_os_release(path: Path) -> str | None:
+    """Read an os-release file from the local filesystem when present and parseable."""
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if not content.strip():
+        return None
+    if _parse_os_release_pretty_name(content):
+        return content
+    return None
+
+
+def _load_host_os_release() -> str:
+    """Load host /etc/os-release without SSH when a host path is available.
+
+    Prefer optional bind mounts and /proc/1/root (when the container shares the host
+    PID namespace) over SSH-backed load_file, which needs a usable SSH_USER (default pi).
+    """
+    container_os_release = _read_local_os_release(Path("/etc/os-release")) or ""
+
+    # Optional bind, same idea as /etc/resolv.conf.host — only used when present.
+    host_bind = _read_local_os_release(Path("/etc/os-release.host"))
+    if host_bind is not None:
+        return host_bind
+
+    # With pid: host, /proc/1/root is the host root filesystem.
+    proc_host = _read_local_os_release(Path("/proc/1/root/etc/os-release"))
+    if proc_host is not None and proc_host != container_os_release:
+        return proc_host
+
+    return load_file("/etc/os-release")
+
+
+# Only cache successful non-empty results so transient HostFileError stays retryable.
+_host_os_pretty_name_cache: str | None = None
+
+
+def get_host_os_pretty_name() -> str:
+    global _host_os_pretty_name_cache
+    if _host_os_pretty_name_cache is not None:
+        return _host_os_pretty_name_cache
+
+    try:
+        os_release = _load_host_os_release()
+    except HostFileError:
+        return ""
+
+    pretty_name = _parse_os_release_pretty_name(os_release)
+    if pretty_name:
+        _host_os_pretty_name_cache = pretty_name
+    return pretty_name
+
+
+def _clear_host_os_pretty_name_cache() -> None:
+    global _host_os_pretty_name_cache
+    _host_os_pretty_name_cache = None
+
+
+get_host_os_pretty_name.cache_clear = _clear_host_os_pretty_name_cache  # type: ignore[attr-defined]
+
+
 def delete_everything(path: Path, ignore: list[Path] | None = None, open_files: set[Path] | None = None) -> None:
     if ignore is None:
         ignore = []
