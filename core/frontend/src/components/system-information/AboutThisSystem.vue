@@ -26,6 +26,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import helper from '@/store/helper'
 import system_information, { FetchType } from '@/store/system-information'
 
 export default Vue.extend({
@@ -37,6 +38,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    host_os_pretty_name(): string {
+      return helper.host_os_pretty_name
+    },
     info(): Record<string, unknown>[] | undefined {
       const info = system_information.system?.info
       const unix_time_seconds = system_information.system?.unix_time_seconds
@@ -44,9 +48,11 @@ export default Vue.extend({
         return undefined
       }
 
+      const os_type = this.host_os_pretty_name || `${info.system_name} ${info.os_version}`
+
       return [
         {
-          title: 'OS Type', value: `${info.system_name} ${info.os_version}`,
+          title: 'OS Type', value: os_type,
         },
         {
           title: 'Kernel', value: `${info.kernel_version}`,
@@ -67,7 +73,9 @@ export default Vue.extend({
     },
     avatar(): string | undefined {
       const info = system_information.system?.info
+      const os_name = (this.host_os_pretty_name || info?.system_name || '').toLowerCase()
       const map = [
+        { os: 'nix', icon: 'mdi-nix' },
         { os: 'debian', icon: 'mdi-debian' },
         { os: 'arch', icon: 'mdi-arch' },
         { os: 'ubuntu', icon: 'mdi-ubuntu' },
@@ -76,8 +84,8 @@ export default Vue.extend({
         { os: '', icon: 'mdi-linux' },
       ]
 
-      return info
-        ? map.find((item) => info.system_name.toLowerCase().includes(item.os))?.icon
+      return info || this.host_os_pretty_name
+        ? map.find((item) => os_name.includes(item.os))?.icon
         : 'mdi-help-circle'
     },
   },
@@ -86,6 +94,7 @@ export default Vue.extend({
       system_information.fetchSystemInformation(FetchType.SystemUnixTimeSecondsType)
     }, 1000)
     this.timer_model = setInterval(() => system_information.fetchSystemInformation(FetchType.ModelType), 1000)
+    helper.fetchHostOs()
   },
   beforeDestroy() {
     clearInterval(this.timer_unix)

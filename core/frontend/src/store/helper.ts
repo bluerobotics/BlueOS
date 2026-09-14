@@ -42,6 +42,8 @@ class PingStore extends VuexModule {
 
   reachable_hosts: string[] = []
 
+  host_os_pretty_name = ''
+
   internet_check_failures = 0
 
   checkInternetAccessTask = new OneMoreTime(
@@ -60,6 +62,11 @@ class PingStore extends VuexModule {
   @Mutation
   setReachableHosts(hosts: string[]): void {
     this.reachable_hosts = hosts
+  }
+
+  @Mutation
+  setHostOsPrettyName(pretty_name: string): void {
+    this.host_os_pretty_name = pretty_name
   }
 
   @Mutation
@@ -158,6 +165,21 @@ class PingStore extends VuexModule {
     })
       .then((response) => response.data as boolean)
       .catch(() => undefined)
+  }
+
+  @Action
+  async fetchHostOs(): Promise<void> {
+    return back_axios({
+      method: 'get',
+      url: `${this.API_URL}/host_os`,
+      timeout: 5000,
+    })
+      .then((response) => {
+        this.setHostOsPrettyName(response.data?.pretty_name ?? '')
+      })
+      .catch(() => {
+        // Fall back to linux2rest system_name / os_version in the About tab
+      })
   }
 }
 
