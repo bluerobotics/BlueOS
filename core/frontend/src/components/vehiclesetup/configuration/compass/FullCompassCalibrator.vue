@@ -32,6 +32,7 @@
         </span>
         <span v-else-if="state === states.CALIBRATING">
           Spin your vehicle around all of its axes until the progress bar completes.
+          The arrow follows the vehicle, and each section lights up once enough samples are collected for it.
         </span>
 
         <auto-coordinate-detector
@@ -62,6 +63,14 @@
             </tr>
           </tbody>
         </v-simple-table>
+        <compass-calibration-progress-grid
+          v-if="state === states.CALIBRATING && completion_mask.length > 0"
+          :completion-mask="completion_mask"
+          :direction-x="direction.x"
+          :direction-y="direction.y"
+          :direction-z="direction.z"
+        />
+
         <v-progress-linear
           v-if="percent && !all_compasses_calibrated"
           v-model="percent"
@@ -142,6 +151,9 @@ export default {
       status_type: '' as string | undefined,
       status_text: '' as string | undefined,
       percent: 0,
+      completion_mask: [] as number[],
+      direction: { x: 0, y: 0, z: 0 },
+      progress_compass_id: undefined as number | undefined,
       state: states.IDLE,
       progress_listener: undefined as Listener | undefined,
       report_listener: undefined as Listener | undefined,
@@ -195,6 +207,8 @@ export default {
       this.progress_listener?.discard()
       this.report_listener?.discard()
       this.percent = 0
+      this.completion_mask = []
+      this.progress_compass_id = undefined
       this.status_type = undefined
       this.status_text = undefined
     },
@@ -240,6 +254,20 @@ export default {
         this.progress_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_PROGRESS).setCallback(
           (message) => {
             this.percent = Math.max(message.message.completion_pct, 0.01)
+            // Each calibrating compass sends its own progress, follow a single one so the grid doesn't
+            // flip between masks that are slightly out of step with each other
+            if (this.progress_compass_id === undefined) {
+              this.progress_compass_id = message.message.compass_id
+            }
+            if (message.message.compass_id !== this.progress_compass_id) {
+              return
+            }
+            this.completion_mask = message.message.completion_mask
+            this.direction = {
+              x: message.message.direction_x,
+              y: message.message.direction_y,
+              z: message.message.direction_z,
+            }
           },
         ).setFrequency(0)
         this.report_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_REPORT).setCallback(
