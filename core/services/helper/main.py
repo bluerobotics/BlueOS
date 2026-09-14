@@ -27,6 +27,7 @@ from commonwealth.utils.general import (
     CpuType,
     blueos_version,
     get_cpu_type,
+    get_host_os_pretty_name,
     local_hardware_identifier,
     local_unique_identifier,
 )
@@ -603,6 +604,16 @@ def software_id() -> Any:
         return str(uuid_obj)
     except Exception as exception:
         raise HTTPException(status_code=400, detail="Error: {exception}") from exception
+
+
+@fast_api_app.get(
+    "/host_os",
+    response_model=Dict[str, str],
+    summary="Pretty name of the host operating system from /etc/os-release.",
+)
+@version(1, 0)
+def host_os() -> Any:
+    return {"pretty_name": get_host_os_pretty_name()}
 
 
 async def _tcp_reachable(host: str, ports: Tuple[int, ...], interface: Optional[str], timeout: float = 2.0) -> bool:
