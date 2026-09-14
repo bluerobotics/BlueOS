@@ -133,3 +133,20 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+/* Vuetify gives every subtitle flex: 1 1 100%, so a label and its value split the row in half and
+   both get ellipsised. Size them to their text and let the value wrap to its own line instead. */
+.v-list-item {
+  flex-wrap: wrap;
+  column-gap: 8px;
+}
+
+.v-list-item__subtitle {
+  flex: 0 1 auto;
+}
+
+.v-list-item__subtitle.text-right {
+  margin-left: auto;
+}
+</style>
