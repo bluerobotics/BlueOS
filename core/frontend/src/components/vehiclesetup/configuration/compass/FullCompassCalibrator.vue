@@ -32,7 +32,8 @@
         </span>
         <span v-else-if="state === states.CALIBRATING">
           Spin your vehicle around all of its axes until the progress bar completes.
-          The arrow follows the vehicle, and each section lights up once enough samples are collected for it.
+          The arrow points along the magnetic field as the vehicle currently sees it, and each
+          section lights up once it has been sampled.
         </span>
 
         <auto-coordinate-detector
@@ -66,9 +67,9 @@
         <compass-calibration-progress-grid
           v-if="state === states.CALIBRATING && completion_mask.length > 0"
           :completion-mask="completion_mask"
-          :direction-x="direction.x"
-          :direction-y="direction.y"
-          :direction-z="direction.z"
+          :direction-x="field_direction.x"
+          :direction-y="field_direction.y"
+          :direction-z="field_direction.z"
         />
 
         <v-progress-linear
@@ -119,10 +120,14 @@ import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'
 import { MavCmd, MAVLinkType, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
+import mavlink from '@/store/mavlink'
 import { Dictionary } from '@/types/common'
 import { deviceId } from '@/utils/deviceid_decoder'
+import mavlink_store_get from '@/utils/mavlink'
 
 import CalibrationQualityIndicator from './CalibrationQualityIndicator.vue'
+
+const FIELD_REFRESH_RATE = 10
 
 enum states {
   IDLE,
@@ -152,8 +157,8 @@ export default {
       status_text: '' as string | undefined,
       percent: 0,
       completion_mask: [] as number[],
-      direction: { x: 0, y: 0, z: 0 },
       progress_compass_id: undefined as number | undefined,
+      field_subscribed: false,
       state: states.IDLE,
       progress_listener: undefined as Listener | undefined,
       report_listener: undefined as Listener | undefined,
@@ -169,6 +174,14 @@ export default {
     },
     all_compasses_calibrated(): boolean {
       return this.compasses_calibrated === this.compasses.length
+    },
+    // MAG_CAL_PROGRESS carries a direction field, but ArduPilot always sends it as zero, so the
+    // sampled direction comes from the field reading itself. Every compass is reported in body
+    // frame, which is the frame the autopilot bins the samples in, so the primary one stands for
+    // all of them.
+    field_direction(): { x: number, y: number, z: number } {
+      const raw_imu = mavlink_store_get(mavlink, 'RAW_IMU.messageData.message') as Dictionary<number> | null
+      return { x: raw_imu?.xmag ?? 0, y: raw_imu?.ymag ?? 0, z: raw_imu?.zmag ?? 0 }
     },
   },
   watch: {
@@ -190,6 +203,7 @@ export default {
   },
   beforeDestroy() {
     this.progress_listener?.discard()
+    this.unsubscribeField()
   },
   methods: {
     reset() {
@@ -203,9 +217,24 @@ export default {
       this.cleanup()
       this.fitness = {}
     },
+    subscribeField() {
+      if (this.field_subscribed) {
+        return
+      }
+      mavlink.subscribeMessageRefreshRate({ messageName: 'RAW_IMU', refreshRate: FIELD_REFRESH_RATE })
+      this.field_subscribed = true
+    },
+    unsubscribeField() {
+      if (!this.field_subscribed) {
+        return
+      }
+      mavlink.unsubscribeMessageRefreshRate({ messageName: 'RAW_IMU', refreshRate: FIELD_REFRESH_RATE })
+      this.field_subscribed = false
+    },
     cleanup() {
       this.progress_listener?.discard()
       this.report_listener?.discard()
+      this.unsubscribeField()
       this.percent = 0
       this.completion_mask = []
       this.progress_compass_id = undefined
@@ -240,6 +269,7 @@ export default {
       this.fitness = {}
       this.status_text = undefined
       this.state = states.CALIBRATING
+      this.subscribeField()
       mavlink2rest.sendCommandLong(
         MavCmd.MAV_CMD_DO_START_MAG_CAL,
         this.compass_mask,
@@ -263,11 +293,6 @@ export default {
               return
             }
             this.completion_mask = message.message.completion_mask
-            this.direction = {
-              x: message.message.direction_x,
-              y: message.message.direction_y,
-              z: message.message.direction_z,
-            }
           },
         ).setFrequency(0)
         this.report_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_REPORT).setCallback(

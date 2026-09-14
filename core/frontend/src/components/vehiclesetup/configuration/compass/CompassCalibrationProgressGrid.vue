@@ -8,57 +8,19 @@
 <script lang="ts">
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import Vue, { PropType } from 'vue'
 
-type Point3D = [number, number, number]
-type Triangle3D = [Point3D, Point3D, Point3D]
+import autopilot_data from '@/store/autopilot'
+import { makeGLTFLoader } from '@/utils/draco'
 
-const AP_GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2
-const AP_GRID_RADIUS = Math.sqrt(1 + AP_GOLDEN_RATIO ** 2)
-const AP_MIDPOINT_SCALE = AP_GRID_RADIUS / (2 * AP_GOLDEN_RATIO)
+import {
+  AP_GEODESIC_SECTIONS, AP_GRID_RADIUS, sectionByDirection, sectionCompleted, toModelFrame,
+} from './geodesic_grid'
 
-const AP_ICO_TRIANGLES_FIRST_HALF: Triangle3D[] = [
-  [[-AP_GOLDEN_RATIO, 1, 0], [-1, 0, -AP_GOLDEN_RATIO], [-AP_GOLDEN_RATIO, -1, 0]],
-  [[-1, 0, -AP_GOLDEN_RATIO], [-AP_GOLDEN_RATIO, -1, 0], [0, -AP_GOLDEN_RATIO, -1]],
-  [[-AP_GOLDEN_RATIO, -1, 0], [0, -AP_GOLDEN_RATIO, -1], [0, -AP_GOLDEN_RATIO, 1]],
-  [[-1, 0, -AP_GOLDEN_RATIO], [0, -AP_GOLDEN_RATIO, -1], [1, 0, -AP_GOLDEN_RATIO]],
-  [[0, -AP_GOLDEN_RATIO, -1], [0, -AP_GOLDEN_RATIO, 1], [AP_GOLDEN_RATIO, -1, 0]],
-  [[0, -AP_GOLDEN_RATIO, -1], [1, 0, -AP_GOLDEN_RATIO], [AP_GOLDEN_RATIO, -1, 0]],
-  [[AP_GOLDEN_RATIO, -1, 0], [1, 0, -AP_GOLDEN_RATIO], [AP_GOLDEN_RATIO, 1, 0]],
-  [[1, 0, -AP_GOLDEN_RATIO], [AP_GOLDEN_RATIO, 1, 0], [0, AP_GOLDEN_RATIO, -1]],
-  [[1, 0, -AP_GOLDEN_RATIO], [0, AP_GOLDEN_RATIO, -1], [-1, 0, -AP_GOLDEN_RATIO]],
-  [[0, AP_GOLDEN_RATIO, -1], [-AP_GOLDEN_RATIO, 1, 0], [-1, 0, -AP_GOLDEN_RATIO]],
-]
-
-const AP_ICO_TRIANGLES_SECOND_HALF: Triangle3D[] = AP_ICO_TRIANGLES_FIRST_HALF
-  .map(([a, b, c]) => [[-a[0], -a[1], -a[2]], [-b[0], -b[1], -b[2]], [-c[0], -c[1], -c[2]]])
-
-const AP_ICO_TRIANGLES = AP_ICO_TRIANGLES_FIRST_HALF.concat(AP_ICO_TRIANGLES_SECOND_HALF)
-
-function midpointProjection(a: Point3D, b: Point3D): Point3D {
-  return [
-    AP_MIDPOINT_SCALE * (a[0] + b[0]),
-    AP_MIDPOINT_SCALE * (a[1] + b[1]),
-    AP_MIDPOINT_SCALE * (a[2] + b[2]),
-  ]
-}
-
-function buildGeodesicSections(): Triangle3D[] {
-  const sections: Triangle3D[] = []
-  for (const [a, b, c] of AP_ICO_TRIANGLES) {
-    const ma = midpointProjection(a, b)
-    const mb = midpointProjection(b, c)
-    const mc = midpointProjection(c, a)
-    sections.push([ma, mb, mc], [a, ma, mc], [ma, b, mb], [mc, mb, c])
-  }
-  return sections
-}
-
-function determinant([a0, a1, a2]: Point3D, [b0, b1, b2]: Point3D, [c0, c1, c2]: Point3D): number {
-  return a0 * (b1 * c2 - b2 * c1) - b0 * (a1 * c2 - a2 * c1) + c0 * (a1 * b2 - a2 * b1)
-}
-
-const AP_GEODESIC_SECTIONS = buildGeodesicSections()
+// Fraction of the grid radius spanned by the longest axis of the vehicle, it only has to read as a
+// reference for which way the sections sit relative to the vehicle
+const MODEL_SPAN_IN_RADII = 1.15
 
 const COLOR_PENDING = 0x9ea4ac
 const COLOR_COMPLETE = 0x29b6ff
@@ -94,6 +56,7 @@ export default Vue.extend({
       renderer: undefined as THREE.WebGLRenderer | undefined,
       orbitControls: undefined as OrbitControls | undefined,
       sectionMeshes: [] as THREE.Mesh[],
+      vehicleObject: undefined as THREE.Object3D | undefined,
       directionArrow: undefined as THREE.ArrowHelper | undefined,
       directionMarker: undefined as THREE.Mesh | undefined,
       animationFrameId: undefined as number | undefined,
@@ -108,11 +71,19 @@ export default Vue.extend({
     three_mount(): HTMLDivElement {
       return this.$refs.threeMount as HTMLDivElement
     },
+    vehicle_model(): string {
+      return autopilot_data.vehicle_model
+    },
     direction_key(): string {
       return `${this.directionX}:${this.directionY}:${this.directionZ}`
     },
   },
   watch: {
+    vehicle_model: {
+      handler() {
+        this.addVehicleModel()
+      },
+    },
     direction_key: {
       immediate: true,
       handler() {
@@ -153,7 +124,8 @@ export default Vue.extend({
       this.scene = new THREE.Scene()
 
       this.camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100)
-      this.camera.position.set(0, 0, 6)
+      // looking at the vehicle from above its starboard bow, so forward and up read correctly
+      this.camera.position.set(3.8, 2.5, 3.8)
 
       this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
       this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -178,6 +150,35 @@ export default Vue.extend({
       this.scene.add(directionalLight)
 
       this.createGeodesicMeshes()
+      this.addVehicleModel()
+    },
+    addVehicleModel() {
+      if (!this.scene || !this.vehicle_model) {
+        return
+      }
+      makeGLTFLoader().load(
+        this.vehicle_model,
+        (gltf: GLTF) => {
+          if (!this.scene) {
+            return
+          }
+          if (this.vehicleObject) {
+            this.scene.remove(this.vehicleObject)
+          }
+
+          const bounds = new THREE.Box3().setFromObject(gltf.scene)
+          const longest = Math.max(...bounds.getSize(new THREE.Vector3()).toArray())
+          const scale = longest > 0 ? MODEL_SPAN_IN_RADII * AP_GRID_RADIUS / longest : 1
+          gltf.scene.scale.setScalar(scale)
+          // the models are not centred on their own origin, and the grid is centred on the vehicle
+          gltf.scene.position.copy(bounds.getCenter(new THREE.Vector3()).multiplyScalar(-scale))
+
+          this.vehicleObject = gltf.scene
+          this.scene.add(gltf.scene)
+        },
+        undefined,
+        (error: ErrorEvent) => console.error('Failed to load the vehicle model for the calibration grid:', error),
+      )
     },
     createGeodesicMeshes() {
       if (!this.scene) {
@@ -186,8 +187,9 @@ export default Vue.extend({
 
       this.sectionMeshes = []
       for (const [section, [a, b, c]] of AP_GEODESIC_SECTIONS.entries()) {
+        const [pa, pb, pc] = [toModelFrame(a), toModelFrame(b), toModelFrame(c)]
         const geometry = new THREE.BufferGeometry()
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute([...a, ...b, ...c], 3))
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute([...pa, ...pb, ...pc], 3))
         geometry.computeVertexNormals()
 
         const material = new THREE.MeshStandardMaterial({
@@ -198,6 +200,8 @@ export default Vue.extend({
           roughness: 0.82,
           metalness: 0.04,
           emissive: 0x000000,
+          // the shell surrounds the vehicle, without this its far half hides the model inside
+          depthWrite: false,
         })
 
         const mesh = new THREE.Mesh(geometry, material)
@@ -206,33 +210,8 @@ export default Vue.extend({
         this.sectionMeshes.push(mesh)
       }
     },
-    sectionCompleted(section: number): boolean {
-      const byte = this.completionMask[Math.floor(section / 8)] ?? 0
-      return (byte & 1 << section % 8) !== 0
-    },
-    sectionCompletedInMask(mask: number[], section: number): boolean {
-      const byte = mask[Math.floor(section / 8)] ?? 0
-      return (byte & 1 << section % 8) !== 0
-    },
-    findSectionByDirection(direction_x: number, direction_y: number, direction_z: number): number {
-      const eps = 1e-6
-      for (let section = 0; section < AP_GEODESIC_SECTIONS.length; section += 1) {
-        const [a, b, c] = AP_GEODESIC_SECTIONS[section]
-        const det = determinant(a, b, c)
-        if (Math.abs(det) < eps) {
-          continue
-        }
-        const x = determinant([direction_x, direction_y, direction_z], b, c) / det
-        const y = determinant(a, [direction_x, direction_y, direction_z], c) / det
-        const z = determinant(a, b, [direction_x, direction_y, direction_z]) / det
-        if (x >= -eps && y >= -eps && z >= -eps) {
-          return section
-        }
-      }
-      return -1
-    },
     updateCurrentAndLastSections() {
-      const nextSection = this.findSectionByDirection(this.directionX, this.directionY, this.directionZ)
+      const nextSection = sectionByDirection([this.directionX, this.directionY, this.directionZ])
       if (nextSection >= 0 && this.current_section >= 0 && nextSection !== this.current_section) {
         this.last_section = this.current_section
       } else if (this.last_section < 0) {
@@ -244,7 +223,7 @@ export default Vue.extend({
       if (!this.scene) {
         return
       }
-      const direction = new THREE.Vector3(this.directionX, this.directionY, this.directionZ)
+      const direction = new THREE.Vector3(...toModelFrame([this.directionX, this.directionY, this.directionZ]))
       if (direction.lengthSq() <= 1e-8) {
         return
       }
@@ -276,8 +255,8 @@ export default Vue.extend({
       }
       const newCompletedSections: number[] = []
       for (let section = 0; section < AP_GEODESIC_SECTIONS.length; section += 1) {
-        const wasCompleted = this.sectionCompletedInMask(this.previous_completion_mask, section)
-        const isCompleted = this.sectionCompletedInMask(this.completionMask, section)
+        const wasCompleted = sectionCompleted(this.previous_completion_mask, section)
+        const isCompleted = sectionCompleted(this.completionMask, section)
         if (!wasCompleted && isCompleted) {
           newCompletedSections.push(section)
         }
@@ -293,7 +272,7 @@ export default Vue.extend({
       if (!this.camera || !this.orbitControls) {
         return
       }
-      const [a, b, c] = AP_GEODESIC_SECTIONS[section]
+      const [a, b, c] = AP_GEODESIC_SECTIONS[section].map(toModelFrame)
       const sectionCenter = new THREE.Vector3(
         (a[0] + b[0] + c[0]) / 3,
         (a[1] + b[1] + c[1]) / 3,
@@ -322,10 +301,10 @@ export default Vue.extend({
     updateSectionStyles() {
       for (const [section, mesh] of this.sectionMeshes.entries()) {
         const material = mesh.material as THREE.MeshStandardMaterial
-        const completed = this.sectionCompleted(section)
+        const completed = sectionCompleted(this.completionMask, section)
 
         material.color.setHex(completed ? COLOR_COMPLETE : COLOR_PENDING)
-        material.opacity = completed ? 0.95 : 0.22
+        material.opacity = completed ? 0.6 : 0.14
         material.emissive.setHex(0x000000)
         material.emissiveIntensity = 0
         mesh.scale.setScalar(1)
@@ -339,7 +318,7 @@ export default Vue.extend({
         if (section === this.current_section) {
           material.emissive.setHex(COLOR_CURRENT)
           material.emissiveIntensity = 0.45
-          material.opacity = 1
+          material.opacity = 0.85
           mesh.scale.setScalar(1.04)
         }
 
