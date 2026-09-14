@@ -5,8 +5,11 @@
  * triangles, so the expectations below are taken from ArduPilot's own test of AP_GeodesicGrid,
  * libraries/AP_Math/tests/test_geodesic_grid.cpp, plus the frame conventions this display relies on.
  */
+import * as THREE from 'three'
+
 import {
-  AP_GEODESIC_SECTIONS, AP_GRID_RADIUS, Point3D, sectionByDirection, sectionCompleted, toModelFrame,
+  AP_GEODESIC_SECTIONS, AP_GRID_RADIUS, modelRotationFromAttitude, Point3D, sectionByDirection,
+  sectionCompleted, toModelFrame,
 } from './geodesic_grid'
 
 const GOLDEN = (1 + Math.sqrt(5)) / 2
@@ -94,6 +97,50 @@ check('orthonormal axes', [dot(mx, my), dot(my, mz), dot(mz, mx)].every((d) => d
 check('vehicle forward stays forward', `${toModelFrame([1, 0, 0])}` === `${[1, 0, 0]}`)
 check('vehicle right maps to model right', `${toModelFrame([0, 1, 0])}` === `${[0, 0, 1]}`)
 check('vehicle down maps to model down', `${toModelFrame([0, 0, 1])}` === `${[0, -1, 0]}`)
+
+/*
+ * The attitude rotation turns the vehicle and its grid under a field that stays put, so getting the
+ * euler convention wrong would draw the vehicle in an orientation it is not in. Body forward, right
+ * and down are checked against where the model frame puts north, east and up.
+ */
+const DEG = Math.PI / 180
+const BODY_FORWARD: Point3D = [1, 0, 0]
+const BODY_RIGHT: Point3D = [0, 1, 0]
+const BODY_DOWN: Point3D = [0, 0, 1]
+
+function rotated(body: Point3D, roll: number, pitch: number, yaw: number): Point3D {
+  const vector = new THREE.Vector3(...toModelFrame(body))
+    .applyQuaternion(modelRotationFromAttitude(roll * DEG, pitch * DEG, yaw * DEG))
+  return [vector.x, vector.y, vector.z].map((value) => Math.round(value * 1e6) / 1e6) as Point3D
+}
+
+const points = (axis: Point3D, expected: Point3D) => `${axis}` === `${expected}`
+
+// Level and heading north, so the model frame's own axes: north along x, east along z, up along y
+check('level: forward is north', points(rotated(BODY_FORWARD, 0, 0, 0), [1, 0, 0]))
+check('level: right is east', points(rotated(BODY_RIGHT, 0, 0, 0), [0, 0, 1]))
+check('level: down is down', points(rotated(BODY_DOWN, 0, 0, 0), [0, -1, 0]))
+
+// Yaw is a turn about the vertical, and a quarter turn to starboard leaves the nose facing east
+check('yaw 90: forward is east', points(rotated(BODY_FORWARD, 0, 0, 90), [0, 0, 1]))
+check('yaw 90: stays level', points(rotated(BODY_DOWN, 0, 0, 90), [0, -1, 0]))
+
+// Rolling to starboard puts the right hand side down and the top to starboard
+check('roll 90: right is down', points(rotated(BODY_RIGHT, 90, 0, 0), [0, -1, 0]))
+check('roll 90: down is west', points(rotated(BODY_DOWN, 90, 0, 0), [0, 0, -1]))
+check('roll 90: forward unchanged', points(rotated(BODY_FORWARD, 90, 0, 0), [1, 0, 0]))
+
+// Pitching up lifts the nose and tips the belly forward
+check('pitch 90: forward is up', points(rotated(BODY_FORWARD, 0, 90, 0), [0, 1, 0]))
+check('pitch 90: down is north', points(rotated(BODY_DOWN, 0, 90, 0), [1, 0, 0]))
+check('pitch 90: right unchanged', points(rotated(BODY_RIGHT, 0, 90, 0), [0, 0, 1]))
+
+// A body fixed field turns with the vehicle, which is what keeps the arrow over its own section
+const FIELD: Point3D = [0.4, -0.2, 0.9]
+const heldStill = rotated(FIELD, 20, -10, 35)
+check('a body fixed vector moves with the vehicle', `${heldStill}` !== `${toModelFrame(FIELD)}`)
+const worldLength = Math.hypot(...heldStill)
+check('rotation preserves length', Math.abs(worldLength - Math.hypot(...FIELD)) < 1e-6)
 
 if (failures > 0) {
   throw new Error(`${failures} check(s) failed`)

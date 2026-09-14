@@ -15,7 +15,8 @@ import autopilot_data from '@/store/autopilot'
 import { makeGLTFLoader } from '@/utils/draco'
 
 import {
-  AP_GEODESIC_SECTIONS, AP_GRID_RADIUS, sectionByDirection, sectionCompleted, toModelFrame,
+  AP_GEODESIC_SECTIONS, AP_GRID_RADIUS, modelRotationFromAttitude, sectionByDirection, sectionCompleted,
+  toModelFrame,
 } from './geodesic_grid'
 
 // Fraction of the grid radius spanned by the longest axis of the vehicle, it only has to read as a
@@ -46,6 +47,18 @@ export default Vue.extend({
       type: Number,
       required: true,
     },
+    roll: {
+      type: Number,
+      required: true,
+    },
+    pitch: {
+      type: Number,
+      required: true,
+    },
+    yaw: {
+      type: Number,
+      required: true,
+    },
   },
   data() {
     return {
@@ -55,16 +68,13 @@ export default Vue.extend({
       camera: undefined as THREE.PerspectiveCamera | undefined,
       renderer: undefined as THREE.WebGLRenderer | undefined,
       orbitControls: undefined as OrbitControls | undefined,
+      // the vehicle and its body fixed grid turn together, the field does not
+      bodyGroup: undefined as THREE.Group | undefined,
       sectionMeshes: [] as THREE.Mesh[],
       vehicleObject: undefined as THREE.Object3D | undefined,
       directionArrow: undefined as THREE.ArrowHelper | undefined,
       directionMarker: undefined as THREE.Mesh | undefined,
       animationFrameId: undefined as number | undefined,
-      previous_completion_mask: [] as number[],
-      cameraTweenStart: undefined as THREE.Vector3 | undefined,
-      cameraTweenEnd: undefined as THREE.Vector3 | undefined,
-      cameraTweenStartMs: 0,
-      cameraTweenDurationMs: 700,
     }
   },
   computed: {
@@ -77,11 +87,21 @@ export default Vue.extend({
     direction_key(): string {
       return `${this.directionX}:${this.directionY}:${this.directionZ}`
     },
+    attitude_rotation(): THREE.Quaternion {
+      return modelRotationFromAttitude(this.roll, this.pitch, this.yaw)
+    },
   },
   watch: {
     vehicle_model: {
       handler() {
         this.addVehicleModel()
+      },
+    },
+    attitude_rotation: {
+      immediate: true,
+      handler() {
+        this.updateAttitude()
+        this.updateDirectionIndicator()
       },
     },
     direction_key: {
@@ -95,9 +115,7 @@ export default Vue.extend({
     completionMask: {
       deep: true,
       handler() {
-        this.rotateToNewlyCheckedSection()
         this.updateSectionStyles()
-        this.previous_completion_mask = [...this.completionMask]
       },
     },
   },
@@ -105,10 +123,10 @@ export default Vue.extend({
     this.initializeScene()
     window.addEventListener('resize', this.handleResize)
     this.handleResize()
+    this.updateAttitude()
     this.updateCurrentAndLastSections()
     this.updateDirectionIndicator()
     this.updateSectionStyles()
-    this.previous_completion_mask = [...this.completionMask]
     this.animate()
   },
   beforeDestroy() {
@@ -149,21 +167,27 @@ export default Vue.extend({
       directionalLight.position.set(1.5, 1.2, 2.5)
       this.scene.add(directionalLight)
 
+      this.bodyGroup = new THREE.Group()
+      this.scene.add(this.bodyGroup)
+
       this.createGeodesicMeshes()
       this.addVehicleModel()
     },
+    updateAttitude() {
+      this.bodyGroup?.quaternion.copy(this.attitude_rotation)
+    },
     addVehicleModel() {
-      if (!this.scene || !this.vehicle_model) {
+      if (!this.bodyGroup || !this.vehicle_model) {
         return
       }
       makeGLTFLoader().load(
         this.vehicle_model,
         (gltf: GLTF) => {
-          if (!this.scene) {
+          if (!this.bodyGroup) {
             return
           }
           if (this.vehicleObject) {
-            this.scene.remove(this.vehicleObject)
+            this.bodyGroup.remove(this.vehicleObject)
           }
 
           const bounds = new THREE.Box3().setFromObject(gltf.scene)
@@ -174,14 +198,14 @@ export default Vue.extend({
           gltf.scene.position.copy(bounds.getCenter(new THREE.Vector3()).multiplyScalar(-scale))
 
           this.vehicleObject = gltf.scene
-          this.scene.add(gltf.scene)
+          this.bodyGroup.add(gltf.scene)
         },
         undefined,
         (error: ErrorEvent) => console.error('Failed to load the vehicle model for the calibration grid:', error),
       )
     },
     createGeodesicMeshes() {
-      if (!this.scene) {
+      if (!this.bodyGroup) {
         return
       }
 
@@ -206,7 +230,7 @@ export default Vue.extend({
 
         const mesh = new THREE.Mesh(geometry, material)
         mesh.userData.section = section
-        this.scene.add(mesh)
+        this.bodyGroup.add(mesh)
         this.sectionMeshes.push(mesh)
       }
     },
@@ -223,7 +247,10 @@ export default Vue.extend({
       if (!this.scene) {
         return
       }
+      // the grid turns with the vehicle, so the field has to be drawn where the vehicle's own
+      // attitude puts it, which leaves it pointing the same way in the world as the vehicle turns
       const direction = new THREE.Vector3(...toModelFrame([this.directionX, this.directionY, this.directionZ]))
+        .applyQuaternion(this.attitude_rotation)
       if (direction.lengthSq() <= 1e-8) {
         return
       }
@@ -248,55 +275,6 @@ export default Vue.extend({
         this.scene.add(this.directionMarker)
       }
       this.directionMarker.position.copy(markerPosition)
-    },
-    rotateToNewlyCheckedSection() {
-      if (this.previous_completion_mask.length === 0) {
-        return
-      }
-      const newCompletedSections: number[] = []
-      for (let section = 0; section < AP_GEODESIC_SECTIONS.length; section += 1) {
-        const wasCompleted = sectionCompleted(this.previous_completion_mask, section)
-        const isCompleted = sectionCompleted(this.completionMask, section)
-        if (!wasCompleted && isCompleted) {
-          newCompletedSections.push(section)
-        }
-      }
-
-      if (newCompletedSections.length === 0) {
-        return
-      }
-      const latestSection = newCompletedSections[newCompletedSections.length - 1]
-      this.rotateCameraToSection(latestSection)
-    },
-    rotateCameraToSection(section: number) {
-      if (!this.camera || !this.orbitControls) {
-        return
-      }
-      const [a, b, c] = AP_GEODESIC_SECTIONS[section].map(toModelFrame)
-      const sectionCenter = new THREE.Vector3(
-        (a[0] + b[0] + c[0]) / 3,
-        (a[1] + b[1] + c[1]) / 3,
-        (a[2] + b[2] + c[2]) / 3,
-      ).normalize()
-
-      const distanceFromTarget = this.camera.position.distanceTo(this.orbitControls.target)
-      this.cameraTweenStart = this.camera.position.clone()
-      this.cameraTweenEnd = sectionCenter.multiplyScalar(Math.max(distanceFromTarget, 4.2))
-      this.cameraTweenStartMs = performance.now()
-    },
-    updateCameraTween() {
-      if (!this.camera || !this.orbitControls || !this.cameraTweenStart || !this.cameraTweenEnd) {
-        return
-      }
-      const elapsed = performance.now() - this.cameraTweenStartMs
-      const t = Math.min(Math.max(elapsed / this.cameraTweenDurationMs, 0), 1)
-      const eased = 1 - (1 - t) ** 3
-      this.camera.position.lerpVectors(this.cameraTweenStart, this.cameraTweenEnd, eased)
-      this.orbitControls.target.set(0, 0, 0)
-      if (t >= 1) {
-        this.cameraTweenStart = undefined
-        this.cameraTweenEnd = undefined
-      }
     },
     updateSectionStyles() {
       for (const [section, mesh] of this.sectionMeshes.entries()) {
@@ -341,7 +319,6 @@ export default Vue.extend({
     },
     animate() {
       this.animationFrameId = window.requestAnimationFrame(this.animate)
-      this.updateCameraTween()
       this.orbitControls?.update()
       if (this.renderer && this.scene && this.camera) {
         this.renderer.render(this.scene, this.camera)

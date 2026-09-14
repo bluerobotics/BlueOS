@@ -8,6 +8,8 @@
  * Run `bun geodesic_grid.check.ts` to check them against ArduPilot's own test vectors.
  */
 
+import * as THREE from 'three'
+
 export type Point3D = [number, number, number]
 export type Triangle3D = [Point3D, Point3D, Point3D]
 
@@ -107,4 +109,21 @@ export function sectionCompleted(completion_mask: number[], section: number): bo
  */
 export function toModelFrame([x, y, z]: Point3D): Point3D {
   return [x, -z, y]
+}
+
+/** toModelFrame as a rotation, which is what it is: a quarter turn about the forward axis. */
+const MODEL_FROM_BODY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2)
+
+/**
+ * The vehicle's attitude, as a rotation to apply to everything drawn in the model frame. The grid is
+ * body fixed, so rotating it along with the vehicle leaves the field pointing the same way in the
+ * world while the vehicle turns underneath it.
+ *
+ * ATTITUDE is the aerospace 3-2-1 sequence taking body frame to NED, which three.js spells 'ZYX'.
+ * Conjugating it by MODEL_FROM_BODY re-expresses it in the y-up frame the grid is drawn in, so north
+ * ends up along x, east along z and up along y.
+ */
+export function modelRotationFromAttitude(roll: number, pitch: number, yaw: number): THREE.Quaternion {
+  const bodyToNed = new THREE.Quaternion().setFromEuler(new THREE.Euler(roll, pitch, yaw, 'ZYX'))
+  return MODEL_FROM_BODY.clone().multiply(bodyToNed).multiply(MODEL_FROM_BODY.clone().invert())
 }

@@ -32,8 +32,8 @@
         </span>
         <span v-else-if="state === states.CALIBRATING">
           Spin your vehicle around all of its axes until the progress bar completes.
-          The arrow points along the magnetic field as the vehicle currently sees it, and each
-          section lights up once it has been sampled.
+          The arrow is the magnetic field, which stays where it is while the vehicle turns under it.
+          Bring the grey sections onto the arrow, each one lights up once it has been sampled.
         </span>
 
         <auto-coordinate-detector
@@ -70,6 +70,9 @@
           :direction-x="field_direction.x"
           :direction-y="field_direction.y"
           :direction-z="field_direction.z"
+          :roll="attitude.roll"
+          :pitch="attitude.pitch"
+          :yaw="attitude.yaw"
         />
 
         <v-progress-linear
@@ -127,7 +130,9 @@ import mavlink_store_get from '@/utils/mavlink'
 
 import CalibrationQualityIndicator from './CalibrationQualityIndicator.vue'
 
-const FIELD_REFRESH_RATE = 10
+// The field the samples are binned by, and the attitude the grid is drawn at
+const GRID_MESSAGES = ['ATTITUDE', 'RAW_IMU']
+const GRID_REFRESH_RATE = 10
 
 enum states {
   IDLE,
@@ -183,6 +188,13 @@ export default {
       const raw_imu = mavlink_store_get(mavlink, 'RAW_IMU.messageData.message') as Dictionary<number> | null
       return { x: raw_imu?.xmag ?? 0, y: raw_imu?.ymag ?? 0, z: raw_imu?.zmag ?? 0 }
     },
+    // Roll and pitch come from the accelerometers, but heading comes from the compass being
+    // calibrated, so the vehicle can be drawn pointing the wrong way. The grid turns with it either
+    // way, so which section is lit stays right regardless.
+    attitude(): { roll: number, pitch: number, yaw: number } {
+      const attitude = mavlink_store_get(mavlink, 'ATTITUDE.messageData.message') as Dictionary<number> | null
+      return { roll: attitude?.roll ?? 0, pitch: attitude?.pitch ?? 0, yaw: attitude?.yaw ?? 0 }
+    },
   },
   watch: {
     all_compasses_calibrated(newValue) {
@@ -221,14 +233,18 @@ export default {
       if (this.field_subscribed) {
         return
       }
-      mavlink.subscribeMessageRefreshRate({ messageName: 'RAW_IMU', refreshRate: FIELD_REFRESH_RATE })
+      for (const messageName of GRID_MESSAGES) {
+        mavlink.subscribeMessageRefreshRate({ messageName, refreshRate: GRID_REFRESH_RATE })
+      }
       this.field_subscribed = true
     },
     unsubscribeField() {
       if (!this.field_subscribed) {
         return
       }
-      mavlink.unsubscribeMessageRefreshRate({ messageName: 'RAW_IMU', refreshRate: FIELD_REFRESH_RATE })
+      for (const messageName of GRID_MESSAGES) {
+        mavlink.unsubscribeMessageRefreshRate({ messageName, refreshRate: GRID_REFRESH_RATE })
+      }
       this.field_subscribed = false
     },
     cleanup() {
