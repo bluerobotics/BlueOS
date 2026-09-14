@@ -161,10 +161,12 @@
               <v-text-field v-model="mdns_name" label="MDNS Name" />
             </div>
             <ScriptLoader
+              v-if="should_open"
               v-model="scripts"
               :vehicle="vehicle_type"
             />
             <DefaultParamLoader
+              v-if="should_open"
               ref="param_loader"
               v-model="params"
               :vehicle="vehicle_type"
