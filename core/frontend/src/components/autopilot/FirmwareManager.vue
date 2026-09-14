@@ -189,7 +189,13 @@ import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { Firmware, FlightController, Vehicle } from '@/types/autopilot'
+import {
+  Firmware,
+  FirmwareVehicleType,
+  firmwareVehicleTypeFromVehicle,
+  FlightController,
+  Vehicle,
+} from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
@@ -221,6 +227,7 @@ export default Vue.extend({
   data() {
     const { current_board } = autopilot
     return {
+      autopilot,
       settings,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
       install_status: InstallStatus.NotStarted,
@@ -258,6 +265,16 @@ export default Vue.extend({
         (vehicle) => ({ value: vehicle[0], text: vehicle[1] }),
       )
     },
+    current_vehicle(): Vehicle | null {
+      const firmware = autopilot.firmware_vehicle_type
+      if (firmware === null) {
+        return null
+      }
+      const match = Object.values(Vehicle).find(
+        (vehicle) => firmwareVehicleTypeFromVehicle(vehicle) === firmware,
+      )
+      return match ?? null
+    },
     available_boards(): {value: FlightController, text: string}[] {
       return autopilot.available_boards.map(
         (board) => ({
@@ -294,7 +311,23 @@ export default Vue.extend({
       return true
     },
   },
+  watch: {
+    'autopilot.firmware_vehicle_type': {
+      handler(new_value: FirmwareVehicleType | null): void {
+        if (this.chosen_vehicle === null && new_value !== null) {
+          this.setVehicleFromFirmware()
+        }
+      },
+      immediate: true,
+    },
+  },
   methods: {
+    setVehicleFromFirmware(): void {
+      if (this.current_vehicle !== null) {
+        this.chosen_vehicle = this.current_vehicle
+        this.updateAvailableFirmwares()
+      }
+    },
     async updateAvailableFirmwares(): Promise<void> {
       this.chosen_firmware_url = null
       this.available_firmwares = []
