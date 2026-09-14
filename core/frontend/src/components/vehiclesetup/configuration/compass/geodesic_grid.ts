@@ -103,9 +103,10 @@ export function sectionCompleted(completion_mask: number[], section: number): bo
 }
 
 /**
- * ArduPilot works in body frame (x forward, y right, z down), while three.js and the vehicle models
- * are y-up (x forward, y up, z right). Only what gets drawn is rotated into the model frame, so that
- * section lookups stay in body frame and their indices keep matching the completion mask.
+ * ArduPilot works in body frame (x forward, y right, z down), while three.js is y-up, so the grid
+ * is drawn with forward on x, right on z and up on y. Only what gets drawn is rotated into the
+ * model frame, so that section lookups stay in body frame and their indices keep matching the
+ * completion mask. The vehicle models are y-up but face +z, they are turned onto forward when loaded.
  */
 export function toModelFrame([x, y, z]: Point3D): Point3D {
   return [x, -z, y]

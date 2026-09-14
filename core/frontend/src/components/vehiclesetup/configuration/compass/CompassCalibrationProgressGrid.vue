@@ -194,8 +194,13 @@ export default Vue.extend({
           const longest = Math.max(...bounds.getSize(new THREE.Vector3()).toArray())
           const scale = longest > 0 ? MODEL_SPAN_IN_RADII * AP_GRID_RADIUS / longest : 1
           gltf.scene.scale.setScalar(scale)
+          // the models face +z, so the nose only lands on the body frame's forward axis after a
+          // quarter turn about up, the same one OrientationPicker gives them
+          gltf.scene.rotation.y = Math.PI / 2
           // the models are not centred on their own origin, and the grid is centred on the vehicle
-          gltf.scene.position.copy(bounds.getCenter(new THREE.Vector3()).multiplyScalar(-scale))
+          gltf.scene.position.copy(
+            bounds.getCenter(new THREE.Vector3()).multiplyScalar(-scale).applyEuler(gltf.scene.rotation),
+          )
 
           this.vehicleObject = gltf.scene
           this.bodyGroup.add(gltf.scene)
