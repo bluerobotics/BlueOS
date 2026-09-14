@@ -68,7 +68,7 @@
       </div>
       <div id="update-options">
         <v-select
-          v-if="settings.is_pirate_mode"
+          v-if="only_bootloader_boards_available"
           v-model="chosen_board"
           :items="available_boards"
           label="Board"
@@ -196,7 +196,6 @@ import { AxiosRequestConfig } from 'axios'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
-import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import {
@@ -204,6 +203,7 @@ import {
   FirmwareVehicleType,
   firmwareVehicleTypeFromVehicle,
   FlightController,
+  FlightControllerFlags,
   Vehicle,
 } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
@@ -235,15 +235,13 @@ enum UploadType {
 export default Vue.extend({
   name: 'FirmwareManager',
   data() {
-    const { current_board } = autopilot
     return {
       autopilot,
-      settings,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
       install_status: InstallStatus.NotStarted,
       UploadType,
       upload_type: UploadType.Cloud,
-      chosen_board: current_board as (FlightController | null),
+      chosen_board: null as (FlightController | null),
       chosen_vehicle: null as (Vehicle | null),
       chosen_firmware_url: null as (URL | null),
       available_firmwares: [] as Firmware[],
@@ -293,11 +291,26 @@ export default Vue.extend({
     vehicle_change_warning(): string {
       return `Installing this firmware will change the vehicle from ${this.current_vehicle} to ${this.chosen_vehicle}.`
     },
+    no_sitl_boards(): FlightController[] {
+      return autopilot.available_boards.filter((board) => board.name.toLowerCase() !== 'sitl')
+    },
+    only_bootloader_boards_available(): boolean {
+      /** If user explicitly selected SITL, we don't want to show as bootloader only boards */
+      if (autopilot.current_board?.name.toLowerCase() === 'sitl') {
+        return false
+      }
+
+      return this.no_sitl_boards.length > 0
+        && this.no_sitl_boards.every((board) => board.flags.includes(FlightControllerFlags.is_bootloader))
+    },
     target_board(): FlightController | null {
+      if (this.only_bootloader_boards_available) {
+        return this.chosen_board
+      }
       return autopilot.current_board
     },
     available_boards(): {value: FlightController, text: string}[] {
-      return autopilot.available_boards.map(
+      return this.no_sitl_boards.map(
         (board) => ({
           value: board,
           text: board.name === autopilot.current_board?.name ? `${board.name} (current)` : board.name,
@@ -341,8 +354,22 @@ export default Vue.extend({
       },
       immediate: true,
     },
+    only_bootloader_boards_available(new_value: boolean): void {
+      if (new_value) {
+        this.setFirstNoSitlBoard()
+      }
+    },
+  },
+  mounted(): void {
+    if (this.only_bootloader_boards_available) {
+      this.setFirstNoSitlBoard()
+    }
   },
   methods: {
+    setFirstNoSitlBoard(): void {
+      const [first_board] = this.no_sitl_boards
+      this.chosen_board = first_board
+    },
     setVehicleFromFirmware(): void {
       if (this.current_vehicle !== null) {
         this.chosen_vehicle = this.current_vehicle
