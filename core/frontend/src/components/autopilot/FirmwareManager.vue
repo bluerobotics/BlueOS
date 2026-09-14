@@ -72,7 +72,6 @@
           v-model="chosen_board"
           :items="available_boards"
           label="Board"
-          hint="If no board is chosen the system will try to flash the currently running board."
           class="ma-1 pa-0"
           @change="chosen_vehicle = null"
         />
@@ -294,6 +293,9 @@ export default Vue.extend({
     vehicle_change_warning(): string {
       return `Installing this firmware will change the vehicle from ${this.current_vehicle} to ${this.chosen_vehicle}.`
     },
+    target_board(): FlightController | null {
+      return autopilot.current_board
+    },
     available_boards(): {value: FlightController, text: string}[] {
       return autopilot.available_boards.map(
         (board) => ({
@@ -355,7 +357,7 @@ export default Vue.extend({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 30000,
-        params: { vehicle: this.chosen_vehicle, board_name: this.chosen_board?.name },
+        params: { vehicle: this.chosen_vehicle, board_name: this.target_board?.name },
       })
         .then((response) => {
           this.available_firmwares = response.data
@@ -382,13 +384,13 @@ export default Vue.extend({
         // Populate request with data for cloud install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_url`,
-          params: { url: this.chosen_firmware_url, board_name: this.chosen_board?.name },
+          params: { url: this.chosen_firmware_url, board_name: this.target_board?.name },
         })
       } else if (this.upload_type === UploadType.Restore) {
         // Populate request with data for restore install
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/restore_default_firmware`,
-          params: { board_name: this.chosen_board?.name },
+          params: { board_name: this.target_board?.name },
         })
       } else {
         // Populate request with data for file install
@@ -402,7 +404,7 @@ export default Vue.extend({
         Object.assign(axios_request_config, {
           url: `${autopilot.API_URL}/install_firmware_from_file`,
           headers: { 'Content-Type': 'multipart/form-data' },
-          params: { board_name: this.chosen_board?.name },
+          params: { board_name: this.target_board?.name },
           data: form_data,
         })
       }
