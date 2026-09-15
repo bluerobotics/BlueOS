@@ -1,6 +1,7 @@
 <template>
   <v-sheet
     class="network-card"
+    :class="{ 'network-card-blocked': network.is_p2p_group }"
     :color="connected ? 'primary' : ''"
   >
     <v-row
@@ -89,6 +90,9 @@ export default Vue.extend({
   },
   methods: {
     emitClick(): void {
+      if (this.network.is_p2p_group) {
+        return
+      }
       this.$emit('click', this.network)
     },
   },
@@ -96,7 +100,7 @@ export default Vue.extend({
 </script>
 
 <style>
-  .network-card:hover {
+  .network-card:not(.network-card-blocked):hover {
     cursor: pointer;
     background-color: #2174aa;
   }
