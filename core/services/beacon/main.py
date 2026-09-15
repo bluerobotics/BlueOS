@@ -16,7 +16,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from settings import ServiceTypes, SettingsV4
+from settings import Interface, ServiceTypes, SettingsV4
 from typedefs import InterfaceType, IpInfo, MdnsEntry
 from uvicorn import Config, Server
 from zeroconf import IPVersion
@@ -139,7 +139,7 @@ class Beacon:
         return self.manager.settings.vehicle_name or "BlueROV2"
 
     def create_async_service_infos(
-        self, interface: str, service_name: str, domain_name: str, ip: str
+        self, interface: Interface, service_name: str, domain_name: str, ip: str
     ) -> AsyncServiceInfo:
         """
         Create A list of AsyncServiceInfo() for the given interface and service

@@ -34,7 +34,7 @@ class ManifestManager:
     """
 
     _instance: Optional["ManifestManager"] = None
-    _manager: PydanticManager = PydanticManager(SERVICE_NAME, SettingsV2)
+    _manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2)
     _settings = _manager.settings
 
     def __init__(self) -> None:
@@ -49,7 +49,7 @@ class ManifestManager:
         manifest = next(filter(lambda x: x.identifier == identifier, cls._settings.manifests), None)
         if not manifest:
             raise ManifestNotFound(f"Manifest with identifier {identifier} not found")
-        return cast(ManifestSettings, manifest)
+        return manifest
 
     @classmethod
     def _set_default_manifests(cls) -> None:

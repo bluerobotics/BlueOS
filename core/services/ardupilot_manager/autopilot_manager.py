@@ -3,13 +3,14 @@ import os
 import pathlib
 import subprocess
 import time
-from copy import deepcopy
 from typing import Any, List, Optional, Set
 from uuid import uuid4
 
 import psutil
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
+from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.Singleton import Singleton
+from config import SERVICE_NAME
 from elftools.elf.elffile import ELFFile
 from exceptions import (
     AutoPilotProcessKillFail,
@@ -23,7 +24,7 @@ from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
-from settings import Settings
+from settings import SettingsV1
 from typedefs import (
     Firmware,
     FlightController,
@@ -40,8 +41,8 @@ from typedefs import (
 class AutoPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
-        self.settings = Settings()
-        self.settings.create_app_folders()
+        self._settings_manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1)
+        self._settings_manager.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
         self.should_be_running = False
         self._restart_lock = asyncio.Lock()
@@ -51,17 +52,10 @@ class AutoPilotManager(metaclass=Singleton):
         self._start_fail_count = 0
         self._max_start_failures = 10
 
-        # Load settings and do the initial configuration
-        if self.settings.load():
-            logger.info(f"Loaded settings from {self.settings.settings_file}.")
-            logger.debug(self.settings.content)
-        else:
-            self.settings.create_settings_file()
-
         self.autopilot_default_endpoints = [
             Endpoint(
                 name="GCS Server Link",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPServer,
                 place="0.0.0.0",
                 argument=14550,
@@ -70,7 +64,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="GCS Client Link",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPClient,
                 place="192.168.2.1",
                 argument=14550,
@@ -79,7 +73,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="MAVLink2RestServer",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPServer,
                 place="127.0.0.1",
                 argument=14001,
@@ -88,7 +82,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="MAVLink2Rest",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPClient,
                 place="127.0.0.1",
                 argument=14000,
@@ -98,7 +92,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="Zenoh Deamon",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.Zenoh,
                 place="0.0.0.0",
                 argument=7117,
@@ -107,7 +101,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="ZenohRaw",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.ZenohRaw,
                 place="0.0.0.0",
                 argument=7117,
@@ -116,7 +110,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="Internal Link",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.TCPServer,
                 place="127.0.0.1",
                 argument=5777,
@@ -126,7 +120,7 @@ class AutoPilotManager(metaclass=Singleton):
             ),
             Endpoint(
                 name="Ping360 Heading",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.UDPServer,
                 place="0.0.0.0",
                 argument=14660,
@@ -136,9 +130,6 @@ class AutoPilotManager(metaclass=Singleton):
         ]
 
     async def setup(self) -> None:
-        # This is the logical continuation of __init__(), extracted due to its async nature
-        self.configuration = deepcopy(self.settings.content)
-
         # Undesired state, only to avoid losing the reference to a running MavlinkManager
         if self.mavlink_manager is not None:
             await self.mavlink_manager.stop()
@@ -156,12 +147,14 @@ class AutoPilotManager(metaclass=Singleton):
         if not preferred_router:
             await self.set_preferred_router(self.mavlink_manager.tool.name())
             logger.info(f"Setting {self.mavlink_manager.tool.name()} as preferred router.")
-        self.mavlink_manager.set_logdir(self.settings.log_path)
+        self.mavlink_manager.set_logdir(self._settings_manager.settings.log_path)
 
         self._load_endpoints()
         self.ardupilot_subprocess: Optional[Any] = None
         self.firmware_manager = FirmwareManager(
-            self.settings.firmware_folder, self.settings.defaults_folder, self.settings.user_firmware_folder
+            self._settings_manager.settings.firmware_folder,
+            self._settings_manager.settings.defaults_folder,
+            self._settings_manager.settings.user_firmware_folder,
         )
         self.vehicle_manager = VehicleManager()
         self._heartbeat_fail_count = 0  # Consecutive heartbeat failures
@@ -178,8 +171,8 @@ class AutoPilotManager(metaclass=Singleton):
             return file.stat().st_size == 0 and file.stat().st_mtime < week_old
 
         try:
-            firmware_log_files = list((self.settings.firmware_folder / "logs").iterdir())
-            router_log_files = list(self.settings.log_path.iterdir())
+            firmware_log_files = list((self._settings_manager.settings.firmware_folder / "logs").iterdir())
+            router_log_files = list(self._settings_manager.settings.log_path.iterdir())
 
             # Get all files with zero bytes and more than 7 days older
             files = [file for file in firmware_log_files + router_log_files if need_to_remove_file(file)]
@@ -260,6 +253,10 @@ class AutoPilotManager(metaclass=Singleton):
         await self.mavlink_manager.auto_restart_router()
 
     @property
+    def settings(self) -> SettingsV1:
+        return self._settings_manager.settings
+
+    @property
     def current_board(self) -> Optional[FlightController]:
         return self._current_board
 
@@ -287,8 +284,8 @@ class AutoPilotManager(metaclass=Singleton):
         return False
 
     def update_serials(self, serials: List[Serial]) -> None:
-        self.configuration["serials"] = [vars(serial) for serial in serials]
-        self.settings.save(self.configuration)
+        self._settings_manager.settings.serials = serials
+        self._settings_manager.save()
 
     def get_serials(self) -> List[Serial]:
         # The mapping of serial ports works as in the following table:
@@ -300,19 +297,12 @@ class AutoPilotManager(metaclass=Singleton):
         # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
-
-        if "serials" not in self.configuration:
-            if not isinstance(self._current_board, LinuxFlightController):
-                return []
+        serials = self._settings_manager.settings.serials
+        if serials:
+            return serials
+        if isinstance(self._current_board, LinuxFlightController):
             return self._current_board.get_serials()
-        serials = []
-        for entry in self.configuration["serials"]:
-            try:
-                serials.append(Serial(port=entry["port"], endpoint=entry["endpoint"]))
-            except Exception as e:
-                logger.error(f"Entry is invalid! {entry['port']}:{entry['endpoint']}")
-                logger.error(e)
-        return serials
+        return []
 
     def get_serial_cmdline(self) -> str:
         return " ".join([f"-{entry.port} {entry.endpoint}" for entry in self.get_serials()])
@@ -348,7 +338,7 @@ class AutoPilotManager(metaclass=Singleton):
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
             name="Master",
-            owner=self.settings.app_name,
+            owner=SERVICE_NAME,
             connection_type=EndpointType.UDPServer,
             place="127.0.0.1",
             argument=8852,
@@ -373,8 +363,8 @@ class AutoPilotManager(metaclass=Singleton):
         command_line = (
             f"{firmware_path}"
             f" -A udp:{master_endpoint.place}:{master_endpoint.argument}"
-            f" --log-directory {self.settings.firmware_folder}/logs/"
-            f" --storage-directory {self.settings.firmware_folder}/storage/"
+            f" --log-directory {self._settings_manager.settings.firmware_folder}/logs/"
+            f" --storage-directory {self._settings_manager.settings.firmware_folder}/storage/"
             f" {self.get_serial_cmdline()}"
             f" {self.get_default_params_cmdline(board.platform)}"
         )
@@ -389,7 +379,7 @@ class AutoPilotManager(metaclass=Singleton):
             shell=True,
             encoding="utf-8",
             errors="ignore",
-            cwd=self.settings.firmware_folder,
+            cwd=self._settings_manager.settings.firmware_folder,
         )
 
         await self.start_mavlink_manager(master_endpoint)
@@ -405,7 +395,7 @@ class AutoPilotManager(metaclass=Singleton):
         await self.start_mavlink_manager(
             Endpoint(
                 name="Master",
-                owner=self.settings.app_name,
+                owner=SERVICE_NAME,
                 connection_type=EndpointType.Serial,
                 place=board.path,
                 argument=baudrate,
@@ -418,43 +408,34 @@ class AutoPilotManager(metaclass=Singleton):
 
     def set_sitl_frame(self, frame: SITLFrame) -> None:
         self.current_sitl_frame = frame
-        self.configuration["sitl_frame"] = frame
-        self.settings.save(self.configuration)
+        self._settings_manager.settings.sitl_frame = frame
+        self._settings_manager.save()
 
     def load_sitl_frame(self) -> SITLFrame:
-        if self.configuration.get("sitl_frame", SITLFrame.UNDEFINED) != SITLFrame.UNDEFINED:
-            return SITLFrame(self.configuration["sitl_frame"])
+        if self._settings_manager.settings.sitl_frame != SITLFrame.UNDEFINED:
+            return SITLFrame(self._settings_manager.settings.sitl_frame)
         frame = SITLFrame.VECTORED
         logger.warning(f"SITL frame is undefined. Setting {frame} as current frame.")
         self.set_sitl_frame(frame)
         return frame
 
     async def set_preferred_router(self, router: str) -> None:
-        self.settings.preferred_router = router
-        self.configuration["preferred_router"] = router
-        self.settings.save(self.configuration)
+        self._settings_manager.settings.preferred_router = router
+        self._settings_manager.save()
         await self.mavlink_manager.set_preferred_router(router, self.autopilot_default_endpoints)
 
     def load_preferred_router(self) -> Optional[str]:
         try:
-            return self.configuration["preferred_router"]  # type: ignore
+            return self._settings_manager.settings.preferred_router
         except KeyError:
             return None
 
     def set_start_on_boot(self, enabled: bool) -> None:
-        # self.configuration is only created in setup(), fall back to building
-        # off self.settings.content when called pre-setup.
-        # e.g. /start right after a boot where auto-start was disabled
-        if not hasattr(self, "configuration"):
-            content = dict(self.settings.content)
-            content["start_on_boot"] = enabled
-            self.settings.save(content)
-            return
-        self.configuration["start_on_boot"] = enabled
-        self.settings.save(self.configuration)
+        self._settings_manager.settings.start_on_boot = enabled
+        self._settings_manager.save()
 
     def should_start_on_boot(self) -> bool:
-        return bool(self.settings.content.get("start_on_boot", True))
+        return self._settings_manager.settings.start_on_boot
 
     def get_available_routers(self) -> List[str]:
         return [router.name() for router in self.mavlink_manager.available_interfaces()]
@@ -481,7 +462,7 @@ class AutoPilotManager(metaclass=Singleton):
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
             name="Master",
-            owner=self.settings.app_name,
+            owner=SERVICE_NAME,
             connection_type=EndpointType.TCPClient,
             place="127.0.0.1",
             argument=5760,
@@ -491,7 +472,7 @@ class AutoPilotManager(metaclass=Singleton):
         # defaults instead of --home, which would lock the location and prevent users
         # from overriding it with the SIM_OPOS_* parameters.
         sitl_defaults = "SIM_OPOS_LAT -27.563\nSIM_OPOS_LNG -48.459\nSIM_OPOS_ALT 0.0\nSIM_OPOS_HDG 270.0\n"
-        sitl_defaults_path = pathlib.Path(self.settings.firmware_folder, "sitl_defaults.parm")
+        sitl_defaults_path = pathlib.Path(self._settings_manager.settings.firmware_folder, "sitl_defaults.parm")
         try:
             current_defaults = sitl_defaults_path.read_text(encoding="utf-8") if sitl_defaults_path.is_file() else None
             if current_defaults != sitl_defaults:
@@ -521,7 +502,7 @@ class AutoPilotManager(metaclass=Singleton):
             shell=False,
             encoding="utf-8",
             errors="ignore",
-            cwd=self.settings.firmware_folder,
+            cwd=self._settings_manager.settings.firmware_folder,
         )
 
         await self.start_mavlink_manager(master_endpoint)
@@ -556,14 +537,14 @@ class AutoPilotManager(metaclass=Singleton):
 
     def set_preferred_board(self, board: FlightController) -> None:
         logger.info(f"Setting {board.name} as preferred flight-controller.")
-        self.configuration["preferred_board"] = board.model_dump(exclude={"path"})
-        self.settings.save(self.configuration)
+        self._settings_manager.settings.preferred_board = board
+        self._settings_manager.save()
 
     def get_preferred_board(self) -> FlightController:
-        preferred_board = self.configuration.get("preferred_board")
+        preferred_board = self._settings_manager.settings.preferred_board
         if not preferred_board:
             raise NoPreferredBoardSet("Preferred board not set yet.")
-        return FlightController(**preferred_board)
+        return preferred_board
 
     def get_board_to_be_used(self, boards: List[FlightController]) -> FlightController:
         """Check if preferred board exists and is connected. If so, use it, otherwise, choose by priority."""
@@ -760,7 +741,7 @@ class AutoPilotManager(metaclass=Singleton):
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         endpoints: Set[Endpoint] = set()
-        for raw in self.configuration.get("endpoints") or []:
+        for raw in self._settings_manager.settings.endpoints:
             endpoint = Endpoint.from_raw(raw)
             if endpoint is None:
                 logger.warning(f"Ignoring invalid endpoint record {raw}")
@@ -769,7 +750,8 @@ class AutoPilotManager(metaclass=Singleton):
         return endpoints
 
     def _save_endpoints_to_configuration(self, endpoints: Set[Endpoint]) -> None:
-        self.configuration["endpoints"] = list(map(Endpoint.as_dict, endpoints))
+        self._settings_manager.settings.endpoints = endpoints
+        self._settings_manager.save()
 
     def _load_endpoints(self) -> None:
         """Load endpoints from the configuration file to the mavlink manager."""
@@ -783,7 +765,6 @@ class AutoPilotManager(metaclass=Singleton):
         try:
             persistent_endpoints = set(filter(lambda endpoint: endpoint.persistent, self.get_endpoints()))
             self._save_endpoints_to_configuration(persistent_endpoints)
-            self.settings.save(self.configuration)
         except Exception as error:
             logger.error(f"Could not save endpoints. {error}")
 
@@ -833,8 +814,8 @@ class AutoPilotManager(metaclass=Singleton):
         await self.firmware_manager.restore_default_firmware(board)
 
     async def set_manual_board_master_endpoint(self, endpoint: Endpoint) -> bool:
-        self.configuration["manual_board_master_endpoint"] = endpoint.as_dict()
-        self.settings.save(self.configuration)
+        self._settings_manager.settings.manual_board_master_endpoint = endpoint
+        self._settings_manager.save()
         self.mavlink_manager.master_endpoint = endpoint
         await self.mavlink_manager.restart()
         return True
@@ -842,14 +823,14 @@ class AutoPilotManager(metaclass=Singleton):
     def get_manual_board_master_endpoint(self) -> Endpoint:
         default_master_endpoint = Endpoint(
             name="Manual Board Master Endpoint",
-            owner=self.settings.app_name,
+            owner=SERVICE_NAME,
             connection_type=EndpointType.UDPServer,
             place="0.0.0.0",
             argument=14551,
             persistent=True,
             enabled=True,
         )
-        endpoint = self.configuration.get("manual_board_master_endpoint", None)
+        endpoint = self._settings_manager.settings.manual_board_master_endpoint
         if endpoint is None:
             return default_master_endpoint
-        return Endpoint(**endpoint)
+        return endpoint

@@ -2,7 +2,6 @@ import asyncio
 import os
 import shutil
 from functools import wraps
-from pathlib import Path
 from typing import Any, Callable, List, Optional, Tuple
 
 from autopilot_manager import AutoPilotManager
@@ -199,7 +198,7 @@ async def install_firmware_from_file(
     parameters: Optional[Parameters] = None,
 ) -> Any:
     try:
-        custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
+        custom_firmware = autopilot.settings.firmware_folder / "custom_firmware"
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
         logger.debug("Going to kill ardupilot")

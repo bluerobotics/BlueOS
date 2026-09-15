@@ -1,19 +1,21 @@
 import pathlib
 import re
-from typing import Any, Optional, Type
+from typing import Any, Generic, Optional, TypeVar
 
 import appdirs
 from commonwealth.settings.bases.pydantic_base import PydanticSettings, _save_lock
 from loguru import logger
 
+T = TypeVar("T", bound=PydanticSettings)
 
-class PydanticManager:
+
+class PydanticManager(Generic[T]):
     SETTINGS_NAME_PREFIX = "settings-"
 
     def __init__(
         self,
         project_name: str,
-        settings_type: Type[PydanticSettings],
+        settings_type: type[T],
         config_folder: Optional[pathlib.Path] = None,
         load: bool = True,
     ) -> None:
@@ -28,7 +30,7 @@ class PydanticManager:
         )
         self.config_folder.mkdir(parents=True, exist_ok=True)
         self.settings_type = settings_type
-        self._settings: Optional[PydanticSettings] = None
+        self._settings: Optional[T] = None
         logger.debug(
             f"Starting {project_name} settings with {settings_type.__name__}, configuration path: {config_folder}"
         )
@@ -36,7 +38,7 @@ class PydanticManager:
             self.load()
 
     @property
-    def settings(self) -> Any:
+    def settings(self) -> T:
         """Getter point for settings
 
         Returns:
@@ -44,11 +46,13 @@ class PydanticManager:
         """
         if not self._settings:
             self.load()
+        if not self._settings:
+            raise RuntimeError("PydanticManager.load() failed")
 
         return self._settings
 
     @settings.setter
-    def settings(self, value: Any) -> None:
+    def settings(self, value: T) -> None:
         """Setter point for settings. Save settings for every change
 
         Args:
@@ -73,7 +77,7 @@ class PydanticManager:
         return self.config_folder.joinpath(f"{PydanticManager.SETTINGS_NAME_PREFIX}{version}.json")
 
     @staticmethod
-    def load_from_file(settings_type: Type[PydanticSettings], file_path: pathlib.Path) -> Any:
+    def load_from_file(settings_type: type[T], file_path: pathlib.Path) -> Any:
         """Load settings from a generic location and settings type
 
         Args:
