@@ -5,6 +5,11 @@ export interface Version {
   sha: (string | null),
 }
 
+export interface ReleaseNotes {
+  html: string,
+  url: string,
+}
+
 export interface VersionsQuery {
   local: Version[],
   remote: Version[],
