@@ -130,6 +130,13 @@ export default Vue.extend({
             saved: saved_networks_ssids?.includes(network.ssid) || false,
             bssid: network.bssid,
             frequency: network.frequency,
+            device_name: network.device_name,
+            device_category: network.device_category,
+            device_subcategory: network.device_subcategory,
+            manufacturer: network.manufacturer,
+            model_name: network.model_name,
+            wps_available: network.wps_available,
+            is_p2p_group: network.is_p2p_group,
           }))
           wifi.setAvailableNetworks(available_networks)
         })
