@@ -37,7 +37,7 @@ export default Vue.extend({
   },
   methods: {
     togglePirateMode(): void {
-      this.$emit('pirateModeChanged', settings.is_pirate_mode)
+      this.$emit('pirateModeChanged', !settings.is_pirate_mode)
 
       // Wait for menu to close before changing pirate mode,
       // otherwise the menu will change before closing it
