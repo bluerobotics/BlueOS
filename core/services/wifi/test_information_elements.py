@@ -53,7 +53,6 @@ def test_joins_the_split_vendor_elements() -> None:
 
     assert identity.device_name == '43" AOC Roku TV'
     assert identity.manufacturer == "Roku"
-    assert identity.model_name == "Roku Streaming Player"
     assert identity.device_subcategory == "Television"
 
 
@@ -62,12 +61,8 @@ def test_parses_a_roku_like_access_point() -> None:
 
     assert identity.device_name == '43" AOC Roku TV'
     assert identity.manufacturer == "Roku"
-    assert identity.model_name == "Roku Streaming Player"
-    assert identity.model_number == "C000X"
     assert identity.device_category == "Display"
     assert identity.device_subcategory == "Television"
-    assert identity.wps_available is True
-    assert identity.wps_configured is True
     assert identity.is_p2p_group is False
 
 
@@ -96,7 +91,6 @@ def test_falls_back_to_the_p2p_device_info() -> None:
     assert identity.device_name == "Roku Express"
     assert identity.device_category == "Display"
     assert identity.device_subcategory == "Television"
-    assert identity.wps_available is False
 
 
 def test_keeps_the_wps_name_over_the_p2p_one() -> None:
@@ -120,7 +114,6 @@ def test_ignores_device_types_from_other_ouis() -> None:
 
     assert identity.device_category is None
     assert identity.device_subcategory is None
-    assert identity.wps_available is True
 
 
 def test_reports_an_unnamed_subcategory() -> None:
@@ -129,13 +122,6 @@ def test_reports_an_unnamed_subcategory() -> None:
 
     assert identity.device_category == "Display"
     assert identity.device_subcategory is None
-
-
-def test_reports_an_unconfigured_access_point() -> None:
-    identity = parse_information_elements(_wps_element(_wps_attribute(0x1044, b"\x01")))
-
-    assert identity.wps_available is True
-    assert identity.wps_configured is False
 
 
 def test_sanitizes_the_decoded_strings() -> None:

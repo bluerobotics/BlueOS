@@ -35,13 +35,11 @@ class ScannedWifiNetwork(BaseModel):
     flags: str
     frequency: int
     signallevel: int
-    # Advertised on the beacon information elements, the only identity a cloaked network has
+    # Advertised on the vendor information elements, the only identity a cloaked network has
     device_name: Optional[str] = None
     device_category: Optional[str] = None
     device_subcategory: Optional[str] = None
     manufacturer: Optional[str] = None
-    model_name: Optional[str] = None
-    wps_available: Optional[bool] = None
     is_p2p_group: Optional[bool] = None
 
 

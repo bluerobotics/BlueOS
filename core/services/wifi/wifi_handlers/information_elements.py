@@ -1,8 +1,8 @@
 """Decoding of 802.11 vendor information elements.
 
 Access points that cloak their SSID keep advertising WPS and P2P vendor elements, and those
-carry the device name, manufacturer and model. Decoding them is the only way to tell apart the
-several cloaked networks a user sees while scanning.
+carry the device name, manufacturer and device type. Decoding them is the only way to tell
+apart the several cloaked networks a user sees while scanning.
 
 The elements come from whatever frame the supplicant kept for the BSS, usually a probe
 response, so an access point may advertise more there than it does on its beacon.
@@ -21,12 +21,7 @@ P2P_OUI_TYPE = 0x09
 
 WPS_DEVICE_NAME = 0x1011
 WPS_MANUFACTURER = 0x1021
-WPS_MODEL_NAME = 0x1023
-WPS_MODEL_NUMBER = 0x1024
-WPS_SETUP_STATE = 0x1044
 WPS_PRIMARY_DEVICE_TYPE = 0x1054
-
-WPS_SETUP_STATE_CONFIGURED = 0x02
 
 P2P_CAPABILITY = 0x02
 P2P_DEVICE_INFO = 0x0D
@@ -126,12 +121,8 @@ DEVICE_TYPES: Dict[int, Tuple[str, Dict[int, str]]] = {
 class AccessPointIdentity(BaseModel):
     device_name: Optional[str] = None
     manufacturer: Optional[str] = None
-    model_name: Optional[str] = None
-    model_number: Optional[str] = None
     device_category: Optional[str] = None
     device_subcategory: Optional[str] = None
-    wps_available: bool = False
-    wps_configured: Optional[bool] = None
     is_p2p_group: bool = False
 
 
@@ -185,18 +176,11 @@ def _device_type(raw: bytes) -> Tuple[Optional[str], Optional[str]]:
 
 
 def _apply_wps(identity: AccessPointIdentity, payload: bytes) -> None:
-    identity.wps_available = True
     for attribute, data in _wps_attributes(payload):
         if attribute == WPS_DEVICE_NAME:
             identity.device_name = _text(data)
         elif attribute == WPS_MANUFACTURER:
             identity.manufacturer = _text(data)
-        elif attribute == WPS_MODEL_NAME:
-            identity.model_name = _text(data)
-        elif attribute == WPS_MODEL_NUMBER:
-            identity.model_number = _text(data)
-        elif attribute == WPS_SETUP_STATE and data:
-            identity.wps_configured = data[0] == WPS_SETUP_STATE_CONFIGURED
         elif attribute == WPS_PRIMARY_DEVICE_TYPE:
             _set_device_type(identity, data)
 
