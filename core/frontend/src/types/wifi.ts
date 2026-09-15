@@ -5,6 +5,13 @@ export interface Network {
     saved: boolean
     bssid: string
     frequency: number
+    device_name?: string
+    device_category?: string
+    device_subcategory?: string
+    manufacturer?: string
+    model_name?: string
+    wps_available?: boolean
+    is_p2p_group?: boolean
 }
 
 export interface HotspotStatus {
@@ -36,6 +43,13 @@ export interface WPANetwork {
     flags: string
     frequency: number
     signallevel: number
+    device_name?: string
+    device_category?: string
+    device_subcategory?: string
+    manufacturer?: string
+    model_name?: string
+    wps_available?: boolean
+    is_p2p_group?: boolean
 }
 
 export interface SavedNetwork {
