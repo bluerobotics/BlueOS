@@ -113,6 +113,16 @@ class ExtensionMetadata(BaseModel):
 class RepositoryEntry(ExtensionMetadata):
     versions: Dict[str, ExtensionVersion] = Field(default_factory=dict)
 
+    def without_readme(self) -> "RepositoryEntry":
+        """Shallow copy with per-version readme/docs cleared for catalog list payloads."""
+        return self.copy(
+            update={
+                "versions": {
+                    tag: version.copy(update={"readme": None, "docs": None}) for tag, version in self.versions.items()
+                }
+            }
+        )
+
 
 # Local Manifest models
 
