@@ -3,6 +3,13 @@ export interface Version {
   tag: string,
   last_modified: string,
   sha: (string | null),
+  // Only local versions carry this, remote tags have no layer chain to compare against
+  parent_sha?: (string | null),
+}
+
+export interface NestedVersion {
+  version: Version,
+  depth: number,
 }
 
 export interface VersionsQuery {
