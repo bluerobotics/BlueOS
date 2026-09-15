@@ -22,6 +22,7 @@ from harbor import ContainerManager, DockerCtx
 from harbor.exceptions import ContainerNotFound
 from manifest import ManifestManager
 from manifest.models import ExtensionVersion
+from recovery import stamp_extension_labels
 from settings import ExtensionSettings, SettingsV2
 from utils import has_enough_disk_space
 
@@ -263,6 +264,7 @@ class Extension:
 
         self._set_container_config_host_config(config)
         self._set_container_config_default_env_variables(config)
+        stamp_extension_labels(config, ext.identifier, ext.name, ext.permissions, ext.user_permissions or "")
 
         try:
             async with DockerCtx() as client:
