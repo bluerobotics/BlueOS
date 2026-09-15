@@ -45,6 +45,13 @@ async def pull_version(
     return await version_chooser.pull_version(request.repository, request.tag)
 
 
+@version_router_v1.post("/commit", summary="Commit the running BlueOS container as a new local version")
+async def commit_version(
+    request: DockerImageIdentifier, version_chooser: VersionChooser = Depends(get_docker_client)
+) -> Any:
+    return await version_chooser.commit_version(request.repository, request.tag)
+
+
 @version_router_v1.delete("/delete", summary="Delete the selected version of BlueOS")
 async def delete_version(
     request: DockerImageIdentifier, version_chooser: VersionChooser = Depends(get_docker_client)
