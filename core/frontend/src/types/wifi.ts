@@ -9,8 +9,6 @@ export interface Network {
     device_category?: string
     device_subcategory?: string
     manufacturer?: string
-    model_name?: string
-    wps_available?: boolean
     is_p2p_group?: boolean
 }
 
@@ -47,8 +45,6 @@ export interface WPANetwork {
     device_category?: string
     device_subcategory?: string
     manufacturer?: string
-    model_name?: string
-    wps_available?: boolean
     is_p2p_group?: boolean
 }
 
