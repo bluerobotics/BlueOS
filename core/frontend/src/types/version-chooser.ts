@@ -12,6 +12,11 @@ export interface NestedVersion {
   depth: number,
 }
 
+export interface ReleaseNotes {
+  html: string,
+  url: string,
+}
+
 export interface VersionsQuery {
   local: Version[],
   remote: Version[],
