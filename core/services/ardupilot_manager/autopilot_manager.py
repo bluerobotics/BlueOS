@@ -264,6 +264,13 @@ class AutoPilotManager(metaclass=Singleton):
         return self._current_board
 
     @property
+    def current_board_sanitized(self) -> Optional[FlightController]:
+        board = self._current_board
+        if board and board.path and not pathlib.Path(board.path).exists():
+            return None
+        return board
+
+    @property
     def current_sitl_frame(self) -> SITLFrame:
         return self._current_sitl_frame
 
