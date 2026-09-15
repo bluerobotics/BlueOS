@@ -1,8 +1,6 @@
 import asyncio
 from pathlib import Path
 
-from bridges.bridges import Bridge
-from bridges.serialhelper import Baudrate
 from commonwealth.settings.manager import PydanticManager
 from loguru import logger
 from ping1d_mavlink import Ping1DMavlinkDriver
@@ -35,20 +33,20 @@ class Ping1DDriver(PingDriver):
 
     async def start(self) -> None:
         await super().start()
-        # self.port shouldn't be None, as we force port to Int in the constructor
+        # super().start() either sets the bridge config or raises
         # the following assert makes mypy happy
-        assert self.port is not None, "Ping1d port is None."
+        assert self.bridge_config is not None
+        config = self.bridge_config
         while True:
             try:
                 logger.info("trying to start mavlink driver")
-                await self.mavlink_driver.drive(self.port)
+                await self.mavlink_driver.drive(config.udp_port)
             except Exception as error:
                 logger.warning(error)
                 assert self.bridge is not None
-                self.bridge.stop()
+                await asyncio.to_thread(self.bridge.stop)
                 await asyncio.sleep(5)
-                baudrate = Baudrate.b115200 if self.baud is None else self.baud
-                self.bridge = Bridge(self.ping.port, baudrate, "0.0.0.0", 0, self.port, automatic_disconnect=False)
+                self.bridge = await asyncio.to_thread(self.open_bridge, config)
 
     def save_settings(self) -> None:
         self.manager.load()  # re-load as other sensors could have changed it
