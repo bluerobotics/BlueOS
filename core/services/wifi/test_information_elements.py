@@ -32,7 +32,7 @@ def _p2p_element(payload: bytes) -> bytes:
 
 TELEVISION_DEVICE_TYPE = (7).to_bytes(2, "big") + b"\x00\x50\xf2\x04" + (1).to_bytes(2, "big")
 
-ROKU_WPS = _wps_element(
+ROKU_WPS_ATTRIBUTES = (
     _wps_attribute(0x1044, b"\x02")
     + _wps_attribute(0x1011, '43" AOC Roku TV'.encode("utf-8"))
     + _wps_attribute(0x1021, b"Roku")
@@ -42,8 +42,22 @@ ROKU_WPS = _wps_element(
     + _wps_attribute(0x1054, TELEVISION_DEVICE_TYPE)
 )
 
+ROKU_WPS = _wps_element(ROKU_WPS_ATTRIBUTES)
 
-def test_parses_a_roku_like_beacon() -> None:
+
+def test_joins_the_split_vendor_elements() -> None:
+    half = len(ROKU_WPS_ATTRIBUTES) // 2
+    identity = parse_information_elements(
+        _wps_element(ROKU_WPS_ATTRIBUTES[:half]) + _wps_element(ROKU_WPS_ATTRIBUTES[half:])
+    )
+
+    assert identity.device_name == '43" AOC Roku TV'
+    assert identity.manufacturer == "Roku"
+    assert identity.model_name == "Roku Streaming Player"
+    assert identity.device_subcategory == "Television"
+
+
+def test_parses_a_roku_like_access_point() -> None:
     identity = parse_information_elements(_element(0x00, b"") + ROKU_WPS)
 
     assert identity.device_name == '43" AOC Roku TV'

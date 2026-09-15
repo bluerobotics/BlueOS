@@ -1,8 +1,11 @@
-"""Decoding of 802.11 beacon information elements.
+"""Decoding of 802.11 vendor information elements.
 
 Access points that cloak their SSID keep advertising WPS and P2P vendor elements, and those
 carry the device name, manufacturer and model. Decoding them is the only way to tell apart the
 several cloaked networks a user sees while scanning.
+
+The elements come from whatever frame the supplicant kept for the BSS, usually a probe
+response, so an access point may advertise more there than it does on its beacon.
 """
 
 from typing import Dict, Iterator, Optional, Tuple
@@ -226,16 +229,20 @@ def _set_device_type(identity: AccessPointIdentity, raw: bytes) -> None:
 
 
 def parse_information_elements(blob: bytes) -> AccessPointIdentity:
+    # An element carries at most 255 bytes, so wpa_supplicant splits the bigger vendor payloads
+    # over several elements sharing the same OUI and type, to be read back as a single one
+    payloads: Dict[Tuple[bytes, int], bytes] = {}
+    for element_id, payload in _elements(bytes(blob)):
+        if element_id != VENDOR_SPECIFIC_ELEMENT_ID or len(payload) < 4:
+            continue
+        key = (payload[0:3], payload[3])
+        payloads[key] = payloads.get(key, b"") + payload[4:]
+
     identity = AccessPointIdentity()
-    try:
-        for element_id, payload in _elements(bytes(blob)):
-            if element_id != VENDOR_SPECIFIC_ELEMENT_ID or len(payload) < 4:
-                continue
-            oui, oui_type, attributes = payload[0:3], payload[3], payload[4:]
-            if oui == WPS_OUI and oui_type == WPS_OUI_TYPE:
-                _apply_wps(identity, attributes)
-            elif oui == P2P_OUI and oui_type == P2P_OUI_TYPE:
-                _apply_p2p(identity, attributes)
-    except Exception:
-        pass
+    wps_payload = payloads.get((WPS_OUI, WPS_OUI_TYPE))
+    if wps_payload is not None:
+        _apply_wps(identity, wps_payload)
+    p2p_payload = payloads.get((P2P_OUI, P2P_OUI_TYPE))
+    if p2p_payload is not None:
+        _apply_p2p(identity, p2p_payload)
     return identity
