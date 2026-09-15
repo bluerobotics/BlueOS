@@ -28,10 +28,10 @@ class PortWatcher:
         self.ethernet_ping_found_callback: Callable[
             [Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]
         ] = found_callback
-        self.port_lost_callback: Optional[Callable[[SysFS], None]] = None
+        self.port_lost_callback: Optional[Callable[[SysFS | str], Coroutine[Any, Any, None]]] = None
         self.probe_attempts_counter: Dict[SysFS, int] = {}
 
-    def set_port_post_callback(self, callback: Callable[[SysFS], None]) -> None:
+    def set_port_post_callback(self, callback: Callable[[SysFS | str], Coroutine[Any, Any, None]]) -> None:
         self.port_lost_callback = callback
 
     def port_should_be_probed(self, port: SysFS) -> bool:
@@ -68,7 +68,7 @@ class PortWatcher:
         new_ips = ips - self.known_ips
         for ip in lost_ips:
             if self.port_lost_callback is not None:
-                self.port_lost_callback(ip)
+                await self.port_lost_callback(ip)
             self.known_ips.remove(ip)
         for ip in new_ips:
             self.known_ips.add(ip)
@@ -93,7 +93,7 @@ class PortWatcher:
                     logger.info(f"Port lost: {port.hwid}")
                     self.known_ports.remove(port)
                     if self.port_lost_callback is not None:
-                        self.port_lost_callback(port)
+                        await self.port_lost_callback(port)
                 await self.add_ping360()
             except Exception as error:
                 logger.exception(f"Error while watching ports/devices: {error}")
