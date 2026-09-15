@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        {{ real_ssid }}
+        {{ dialog_title }}
 
         <v-spacer />
 
@@ -115,6 +115,7 @@ import { getErrorMessage } from '@/types/common'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, NetworkCredentials } from '@/types/wifi'
 import back_axios from '@/utils/api'
+import { network_display_name } from '@/utils/wifi'
 
 import PasswordInput from '../common/PasswordInput.vue'
 
@@ -162,6 +163,13 @@ export default Vue.extend({
     },
     real_ssid(): string {
       return this.is_hidden ? this.inputed_ssid : this.network.ssid
+    },
+    dialog_title(): string {
+      // The SSID is up to the user to fill, so only the advertised name identifies the network
+      if (this.is_hidden && this.network.device_name) {
+        return network_display_name(this.network)
+      }
+      return this.real_ssid
     },
     is_hidden(): boolean {
       return this.network.ssid === null || this.network.ssid === ''

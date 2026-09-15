@@ -53,7 +53,7 @@
 import Vue, { PropType } from 'vue'
 
 import { Network } from '@/types/wifi'
-import { wifi_strenght_icon } from '@/utils/wifi'
+import { network_display_name, wifi_strenght_icon } from '@/utils/wifi'
 
 export default Vue.extend({
   name: 'WifiNetworkCard',
@@ -78,10 +78,7 @@ export default Vue.extend({
       return this.network.saved ? 'mdi-content-save' : ''
     },
     network_name(): string {
-      if (this.network.ssid === null || this.network.ssid === '') {
-        return this.network.device_name ? `[HIDDEN] ${this.network.device_name}` : '[HIDDEN SSID]'
-      }
-      return this.network.ssid
+      return network_display_name(this.network)
     },
     network_protection_icon(): string {
       return this.network.locked ? 'mdi-lock' : 'mdi-lock-open-outline'
