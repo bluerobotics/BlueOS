@@ -1,3 +1,5 @@
+import asyncio
+from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from bridges.bridges import Bridge
@@ -7,7 +9,15 @@ from brping.definitions import COMMON_DEVICE_INFORMATION
 from loguru import logger
 from ping_exceptions import InvalidDeviceDescriptor, NoUDPPortAssignedToPingDriver
 from pingutils import PingDeviceDescriptor
+from serial.tools.list_ports_linux import SysFS
 from typedefs import DriverStatus
+
+
+@dataclass
+class BridgeConfig:
+    serial_port: SysFS
+    baud: Baudrate
+    udp_port: int
 
 
 class PingDriver:
@@ -15,11 +25,12 @@ class PingDriver:
         self.ping = ping
         self.port = port
         self.bridge: Optional[Bridge] = None
+        self.bridge_config: Optional[BridgeConfig] = None
         self.ping.driver = self
-        self.baud: Optional[Baudrate] = None
         self.driver_status = DriverStatus(udp_port=port, mavlink_driver_enabled=False)
 
-    def detect_highest_baud(self) -> Baudrate:
+    @staticmethod
+    def detect_highest_baud(port: SysFS) -> Baudrate:
         """Tries to communicate in increasingly high baudrates up to 4M
         returns the highest one with at least 90% success rate.
         """
@@ -28,9 +39,6 @@ class PingDriver:
         max_failures = attempts * failure_threshold
         last_valid_baud: Optional[Baudrate] = None
 
-        if self.ping.port is None:
-            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no usable port")
-
         for baud in Baudrate:
             # Ping1D hangs with a baudrate bigger than 3M, going to ignore it for now
             if baud > 3000000:
@@ -38,7 +46,7 @@ class PingDriver:
             logger.debug(f"Trying baud {baud}...")
             failures = 0
             ping = PingDevice()
-            ping.connect_serial(self.ping.port.device, baud)
+            ping.connect_serial(port.device, baud)
             for _ in range(attempts):
                 device_info = None
                 try:
@@ -57,6 +65,12 @@ class PingDriver:
         logger.info(f"Highest baudrate detected: {last_valid_baud}")
         return last_valid_baud
 
+    @staticmethod
+    def open_bridge(config: BridgeConfig) -> Bridge:
+        PingDevice().connect_serial(config.serial_port.device, config.baud)
+        set_low_latency(config.serial_port)
+        return Bridge(config.serial_port, config.baud, "0.0.0.0", 0, config.udp_port, automatic_disconnect=False)
+
     async def start(self) -> None:
         """Starts the driver"""
         if self.ping.port is None:
@@ -65,11 +79,11 @@ class PingDriver:
         if self.port is None:
             raise NoUDPPortAssignedToPingDriver("PingDriver attempted to stash with no UDP port.")
 
-        self.baud = self.detect_highest_baud()
-        # Do a ping connection to set the baudrate
-        PingDevice().connect_serial(self.ping.port.device, self.baud)
-        set_low_latency(self.ping.port)
-        self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", 0, self.port, automatic_disconnect=False)
+        serial_port = self.ping.port
+        udp_port = self.port
+        baud = await asyncio.to_thread(self.detect_highest_baud, serial_port)
+        self.bridge_config = BridgeConfig(serial_port, baud, udp_port)
+        self.bridge = await asyncio.to_thread(self.open_bridge, self.bridge_config)
 
     def stop(self) -> None:
         """Stops the driver"""
