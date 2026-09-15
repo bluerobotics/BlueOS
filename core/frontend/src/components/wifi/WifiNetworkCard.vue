@@ -14,7 +14,10 @@
         :cols="7"
         class="d-flex flex-column justify-center"
       >
-        <span>{{ network_name }}</span>
+        <span
+          v-tooltip="network.is_p2p_group && 'Wi-Fi Direct group created by a nearby device, not a regular network.'"
+          :class="{ 'text--disabled': network.is_p2p_group }"
+        >{{ network_name }}</span>
         <span
           v-if="ipAddress !== ''"
           class="text-subtitle-2"
@@ -76,7 +79,7 @@ export default Vue.extend({
     },
     network_name(): string {
       if (this.network.ssid === null || this.network.ssid === '') {
-        return '[HIDDEN SSID]'
+        return this.network.device_name ? `[HIDDEN] ${this.network.device_name}` : '[HIDDEN SSID]'
       }
       return this.network.ssid
     },
