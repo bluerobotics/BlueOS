@@ -20,6 +20,12 @@
           :class="{ 'text--disabled': network.is_p2p_group }"
         >{{ network_name }}</span>
         <span
+          v-if="device_description !== ''"
+          class="text-caption"
+        >
+          {{ device_description }}
+        </span>
+        <span
           v-if="ipAddress !== ''"
           class="text-subtitle-2"
         >
@@ -80,6 +86,10 @@ export default Vue.extend({
     },
     network_name(): string {
       return network_display_name(this.network)
+    },
+    device_description(): string {
+      const { manufacturer, device_category, device_subcategory } = this.network
+      return [manufacturer, device_subcategory ?? device_category].filter((part) => part).join(' • ')
     },
     network_protection_icon(): string {
       return this.network.locked ? 'mdi-lock' : 'mdi-lock-open-outline'
