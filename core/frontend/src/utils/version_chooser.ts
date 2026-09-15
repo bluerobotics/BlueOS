@@ -1,10 +1,11 @@
+import { groupBy, partition } from 'lodash'
 import { gt as sem_ver_greater, SemVer } from 'semver'
 
 import Notifier from '@/libs/notifier'
 import { version_chooser_service } from '@/types/frontend_services'
 import {
   DockerLoginInfo,
-  LocalVersionsQuery, Version, VersionsQuery, VersionType,
+  LocalVersionsQuery, NestedVersion, Version, VersionsQuery, VersionType,
 } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
 
@@ -81,6 +82,31 @@ function sortImages(versions_query: VersionsQuery): VersionsQuery {
     remote: versions_query.remote.sort(compareVersions),
     error: versions_query.error,
   }
+}
+
+/** Orders versions so each one is followed by the images committed from it, tagged with their nesting depth */
+function nestVersions(versions: Version[]): NestedVersion[] {
+  const known_shas = new Set(versions.map(({ sha }) => sha))
+  const [children, roots] = partition(
+    versions,
+    ({ parent_sha, sha }) => parent_sha && parent_sha !== sha && known_shas.has(parent_sha),
+  )
+  const children_by_parent = groupBy(children, 'parent_sha')
+
+  const nested: NestedVersion[] = []
+  // Several tags can point at the same image
+  const expanded = new Set<string>()
+  const visit = (version: Version, depth: number): void => {
+    nested.push({ version, depth })
+    if (version.sha === null || expanded.has(version.sha)) {
+      return
+    }
+    expanded.add(version.sha)
+    children_by_parent[version.sha]?.forEach((child) => visit(child, depth + 1))
+  }
+  roots.forEach((root) => visit(root, 0))
+
+  return nested
 }
 
 function getLatestBeta(versions_query: VersionsQuery): Version | undefined {
@@ -174,6 +200,15 @@ async function loadBootstrapCurrentVersion(): Promise<string | undefined> {
     })
 }
 
+async function commitVersion(repository: string, tag: string): Promise<void> {
+  await back_axios({
+    method: 'post',
+    url: `${API_URL}/version/commit`,
+    data: { repository, tag },
+    timeout: 2 * 1000,
+  })
+}
+
 async function dockerLogin(info: DockerLoginInfo): Promise<void> {
   await back_axios({
     method: 'post',
@@ -209,6 +244,7 @@ async function getFactoryVersion(): Promise<string> {
 }
 
 export {
+  commitVersion,
   DEFAULT_REMOTE_IMAGE,
   dockerAccounts,
   dockerLogin,
@@ -223,6 +259,7 @@ export {
   loadBootstrapCurrentVersion,
   loadCurrentVersion,
   loadLocalVersions,
+  nestVersions,
   sortImages,
   sortVersions,
   getFactoryVersion,
