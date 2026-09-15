@@ -18,18 +18,19 @@
         >
           ({{ system_id }})
         </span>
+      </p>
+      <div class="action-buttons-container">
         <v-btn
-          class="mx-2 edit-icon"
+          class="mx-1"
           fab
           dark
           x-small
           @click="openDialog"
         >
-          <v-icon>
-            mdi-pencil
-          </v-icon>
+          <v-icon>mdi-pencil</v-icon>
         </v-btn>
-      </p>
+        <VehiclePicker />
+      </div>
       <v-spacer />
       <image-picker
         size="35px"
@@ -75,11 +76,13 @@ import beacon from '@/store/beacon'
 import customization_store from '@/store/customization'
 
 import ImagePicker from './ImagePicker.vue'
+import VehiclePicker from './VehiclePicker.vue'
 
 export default Vue.extend({
   name: 'VehicleBanner',
   components: {
     ImagePicker,
+    VehiclePicker,
   },
   data() {
     return {
@@ -170,7 +173,7 @@ export default Vue.extend({
 })
 </script>
 <style scoped>
-  #vehicle-name:hover .edit-icon{
+  #vehicle-banner:hover .action-buttons-container{
     display: inline-flex;
   }
 
@@ -185,10 +188,13 @@ export default Vue.extend({
     margin-bottom: 0 !important;
     position: relative;
   }
-  .edit-icon {
+
+  .action-buttons-container {
     display: none;
-    right: 0;
-    bottom: 0;
-    position: absolute;
+    position: fixed;
+    right: 70px;
+    z-index: 10;
+    align-items: center;
+    gap: 4px;
   }
 </style>
