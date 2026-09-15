@@ -40,6 +40,7 @@
           :new-stable-available="newStableAvailable()"
           :new-beta-available="runningBeta() ? newBetaAvailable() : ''"
           :update-available="updateIsAvailable(current_version)"
+          :latest-stable="latest_stable"
           @apply="setVersion"
           @pull-and-apply="pullAndSetVersion"
         />
@@ -79,6 +80,7 @@
           :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
           :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(image)"
+          :latest-stable="latest_stable"
           :deleting="isBeingDeleted(image)"
           :enable-delete="local_versions.result.local.length > 2"
           @delete="deleteVersion"
