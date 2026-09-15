@@ -22,3 +22,10 @@ export function wifi_strenght_icon(signal_db: number): string {
 export function sorted_networks(networks: Network[]): Network[] {
   return networks.sort((a: Network, b: Network) => b.signal - a.signal)
 }
+
+export function network_display_name(network: Network): string {
+  if (!network.ssid) {
+    return network.device_name ? `[HIDDEN] ${network.device_name}` : '[HIDDEN SSID]'
+  }
+  return network.ssid
+}
