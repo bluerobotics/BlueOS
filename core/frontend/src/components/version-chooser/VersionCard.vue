@@ -104,6 +104,15 @@
         v-text="`Upgrade to ${newBetaAvailable}`"
       />
       <v-btn
+        v-if="showCommit"
+        v-tooltip="'Saves the container filesystem as a new image'"
+        color="primary"
+        class="mx-2 my-1"
+        :disabled="working"
+        @click="$emit('commit', `${image.repository}:${image.tag}`)"
+        v-text="'Commit'"
+      />
+      <v-btn
         v-if="!current && !remote && imageCanBeDeleted()"
         color="error"
         class="mx-2 my-1"
@@ -230,6 +239,9 @@ export default Vue.extend({
       return this.settings.is_pirate_mode && this.current
         && !this.updateAvailable && this.isFromBR && this.allImagesLoaded
         && this.bootstrapVersion !== `${this.image.repository.split('/')[0]}/blueos-bootstrap:${this.image.tag}`
+    },
+    showCommit(): boolean {
+      return this.settings.is_dev_mode && this.current && !this.remote
     },
     displayTag(): string {
       if (this.image.tag === 'factory') {
