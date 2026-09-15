@@ -3,11 +3,11 @@
     class="v-card v-sheet theme--light mt-5"
   >
     <v-combobox
-      v-for="port in Object.keys(port_map)"
+      v-for="port in range(1, 9)"
       :key="port"
       v-model="ports[port]"
       :items="available_ports"
-      :label="`${port_map[port]}`"
+      :label="`Serial ${port}`"
       :rules="[isValidEndpoint]"
       :loading="current_serial_ports.isEmpty()"
       outlined
@@ -86,6 +86,7 @@
 </template>
 
 <script lang="ts">
+import { range } from 'lodash'
 import Vue from 'vue'
 
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
@@ -107,19 +108,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      // Portmap is used to deal with ardupilots weird mapping situation
-      // Note that the mapping is not linear
-      port_map: {
-        // A (Serial 0) is reserved
-        C: 'Serial 1',
-        D: 'Serial 2',
-        B: 'Serial 3',
-        E: 'Serial 4',
-        F: 'Serial 5',
-        G: 'Serial 6',
-        H: 'Serial 7',
-        I: 'Serial 8',
-      },
       ports: {} as Dictionary<string | undefined>,
       fetch_autopilot_serial_config_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_serial_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
@@ -176,6 +164,7 @@ export default Vue.extend({
         }
       }
     },
+    range,
     async saveAndRestart(): Promise<void> {
       await back_axios({
         method: 'put',
