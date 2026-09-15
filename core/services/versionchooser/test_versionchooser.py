@@ -160,6 +160,7 @@ image_list = [
         "Created": 1634315959,
         "Architecture": "amd64",
         "Id": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
+        "ParentId": "",
         "RepoTags": [
             "bluerobotics/blueos-core:test1",
         ],
@@ -168,6 +169,7 @@ image_list = [
         "Created": 1634315959,
         "Architecture": "amd64",
         "Id": "856fdf5e66c9b36remoteID856fdf5e66c9b36",
+        "ParentId": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
         "RepoTags": [
             "bluerobotics/blueos-core:test2",
         ],
@@ -253,6 +255,50 @@ async def test_set_version_json_exception(json_mock: mock.MagicMock) -> None:
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert result.status_code == 500
         assert len(json_mock.mock_calls) > 0
+
+
+@pytest.mark.asyncio
+async def test_set_local_versions_reports_parent() -> None:
+    """A committed image points at the image it was committed from, a pulled one has no parent"""
+    client_mock = mock.AsyncMock()
+    client_mock.images.list.return_value = image_list
+    output: dict[str, Any] = {"local": [], "error": None}
+
+    await VersionChooser(client_mock).set_local_versions(output)
+
+    assert [image["tag"] for image in output["local"]] == ["test1", "test2"]
+    assert output["local"][0]["parent_sha"] is None
+    assert output["local"][1]["parent_sha"] == image_list[0]["Id"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "repository, tag",
+    [
+        ("joaozinho/potato", "batatinha"),  # not a blueos-core repository, would never show up in the version list
+        ("/blueos-core", "batatinha"),  # the namespace cannot be empty
+        ("localhost:5000/blueos-core", "batatinha"),  # a port would break the "repository:tag" split
+        ("joaozinho/blueos-core", ""),  # the tag cannot be empty
+    ],
+)
+async def test_commit_version_rejects_invalid_names(repository: str, tag: str) -> None:
+    client_mock = mock.AsyncMock()
+    result = await VersionChooser(client_mock).commit_version(repository, tag)
+    assert result.status_code == 422
+    client_mock.containers.get.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_commit_version_does_not_pause_core() -> None:
+    client_mock = mock.AsyncMock()
+    core = client_mock.containers.get.return_value
+    core.commit.return_value = {"Id": "sha256:cafe"}
+
+    result = await VersionChooser(client_mock).commit_version("joaozinho/blueos-core", "batatinha")
+
+    assert result.status_code == 200
+    client_mock.containers.get.assert_awaited_once_with("blueos-core")
+    core.commit.assert_awaited_once_with(repository="joaozinho/blueos-core", tag="batatinha", pause=False)
 
 
 class TestTagFetcher:
