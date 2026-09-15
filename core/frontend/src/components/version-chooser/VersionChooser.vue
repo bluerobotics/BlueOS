@@ -12,6 +12,60 @@
           @cancel="show_docker_login_dialog = false"
         />
       </v-dialog>
+      <v-dialog
+        v-model="show_commit_dialog"
+        max-width="500"
+        persistent
+      >
+        <v-card>
+          <v-card-title>Commit running version</v-card-title>
+          <v-card-subtitle class="pt-2">
+            Saves the running container's filesystem as a new image, layered on top of
+            <code>{{ commit_parent }}</code>.
+          </v-card-subtitle>
+          <v-card-text>
+            <v-alert
+              dense
+              text
+              type="info"
+            >
+              Settings, extensions and user data are kept outside the container, so they are not committed.
+            </v-alert>
+            <v-form
+              ref="form"
+              @submit.prevent="commit()"
+            >
+              <v-text-field
+                v-model="commit_target.repository"
+                label="Repository"
+                hint="Has to end in /blueos-core to be listed as a version"
+                persistent-hint
+                :rules="[isValidCommitRepository]"
+              />
+              <v-text-field
+                v-model="commit_target.tag"
+                label="Tag"
+                :rules="[isValidCommitTag]"
+              />
+            </v-form>
+          </v-card-text>
+          <v-card-actions class="justify-center pb-4">
+            <v-btn
+              color="primary"
+              :disabled="committing"
+              @click="show_commit_dialog = false"
+              v-text="'Cancel'"
+            />
+            <v-spacer />
+            <v-btn
+              color="success"
+              :loading="committing"
+              @click="commit()"
+              v-text="'Commit'"
+            />
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
       <v-card
         v-if="!settings.is_pirate_mode"
         max-width="900"
@@ -72,20 +126,22 @@
       >
         <h2>Local Versions</h2>
         <version-card
-          v-for="(image, index) in local_versions.result.local"
-          :key="`${image.sha}-${index}-local`"
-          :image="image"
+          v-for="({ version, depth }, index) in nested_local_versions"
+          :key="`${version.sha}-${index}-local`"
+          :style="{ marginLeft: `${depth * 24}px` }"
+          :image="version"
           :updating="updating_bootstrap"
-          :current="image.tag === current_version?.tag && image.repository === current_version?.repository"
+          :current="version.tag === current_version?.tag && version.repository === current_version?.repository"
           :bootstrap-version="bootstrap_version"
-          :update-available="updateIsAvailable(image)"
+          :update-available="updateIsAvailable(version)"
           :all-images-loaded="all_images_loaded"
-          :deleting="isBeingDeleted(image)"
+          :deleting="isBeingDeleted(version)"
           :enable-delete="local_versions.result.local.length > 2"
           @delete="deleteVersion"
           @apply="setVersion"
           @pull-and-apply="pullAndSetVersion"
           @update-bootstrap="updateBootstrap"
+          @commit="openCommitDialog"
         />
         <spinning-logo
           v-if="local_versions.loading"
@@ -294,8 +350,9 @@ import { version_chooser_service } from '@/types/frontend_services'
 import { InternetConnectionState } from '@/types/helper'
 import {
   isServerResponse,
-  LocalVersionsQuery, Version, VersionsQuery, VersionType,
+  LocalVersionsQuery, NestedVersion, Version, VersionsQuery, VersionType,
 } from '@/types/version-chooser'
+import { VForm } from '@/types/vuetify'
 import back_axios from '@/utils/api'
 import {
   installOrUpdateMajorTom,
@@ -363,10 +420,20 @@ export default Vue.extend({
       deleting: '', // image currently being deleted, if any
       file_input_error: '',
       show_docker_login_dialog: false,
+      show_commit_dialog: false,
+      committing: false,
+      commit_parent: '',
+      commit_target: { repository: '', tag: '' },
       all_images_loaded: false,
     }
   },
   computed: {
+    form(): VForm {
+      return this.$refs.form as VForm
+    },
+    nested_local_versions(): NestedVersion[] {
+      return VCU.nestVersions(this.local_versions.result.local)
+    },
     // Keyed off the loaded images instead of the repository field, so the bar
     // doesn't flicker while the field is still being typed into
     showRemoteSearch(): boolean {
@@ -866,6 +933,44 @@ export default Vue.extend({
     },
     isBeingDeleted(image: Version) {
       return this.deleting === `${image.repository}:${image.tag}`
+    },
+    openCommitDialog(fullname: string) {
+      const [repository] = fullname.split(':')
+      this.commit_parent = fullname
+      this.commit_target = { repository, tag: '' }
+      this.show_commit_dialog = true
+    },
+    isValidCommitRepository(value: string): true | string {
+      // We need to be sure that the repository looks like username/blueos-core
+      return /^[^:]+\/blueos-core$/.test(value) || 'Should look like username/blueos-core'
+    },
+    isValidCommitTag(value: string): true | string {
+      return Boolean(value) || 'Cannot be empty'
+    },
+    async commit() {
+      if (!this.form.validate()) {
+        return
+      }
+      const { repository, tag } = this.commit_target
+      this.committing = true
+      await VCU.commitVersion(repository, tag)
+        .then(() => {
+          this.show_commit_dialog = false
+          notifier.pushSuccess(
+            'VERSION_CHOOSER_COMMIT_SUCCESS',
+            `Committed running BlueOS as ${repository}:${tag}`,
+            true,
+          )
+          return this.loadLocalVersions()
+        })
+        .catch((error) => {
+          notifier.pushError(
+            'VERSION_CHOOSER_COMMIT_FAIL',
+            error.response?.data?.error ?? error.message,
+            true,
+          )
+        })
+        .finally(() => { this.committing = false })
     },
     resetToDefaultRepository() {
       this.selected_image = this.default_repository
