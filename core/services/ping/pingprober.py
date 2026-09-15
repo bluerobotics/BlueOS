@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Callable, Coroutine, Optional
 
 from brping import PingDevice
@@ -14,7 +15,7 @@ class PingProber:
         """Attempts to communicate via Ping Protocol at port "port".
         Calls on_ping_found callback when a ping device is found."""
         logger.info(f"Probing {port}")
-        detected_device = self.detect_device(port)
+        detected_device = await asyncio.to_thread(self.detect_device, port)
         if detected_device:
             await self.ping_found_callback(detected_device)
         return detected_device

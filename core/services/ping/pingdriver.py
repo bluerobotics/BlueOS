@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Dict, Optional
 
 from bridges.bridges import Bridge
@@ -57,6 +58,18 @@ class PingDriver:
         logger.info(f"Highest baudrate detected: {last_valid_baud}")
         return last_valid_baud
 
+    def _open_bridge(self) -> Bridge:
+        if self.ping.port is None:
+            raise InvalidDeviceDescriptor("PingDeviceDescriptor has no usable port.")
+        if self.port is None:
+            raise NoUDPPortAssignedToPingDriver("PingDriver attempted to stash with no UDP port.")
+        if self.baud is None:
+            raise RuntimeError("No baudrate set")
+        # Do a ping connection to set the baudrate
+        PingDevice().connect_serial(self.ping.port.device, self.baud)
+        set_low_latency(self.ping.port)
+        return Bridge(self.ping.port, self.baud, "0.0.0.0", 0, self.port, automatic_disconnect=False)
+
     async def start(self) -> None:
         """Starts the driver"""
         if self.ping.port is None:
@@ -65,11 +78,8 @@ class PingDriver:
         if self.port is None:
             raise NoUDPPortAssignedToPingDriver("PingDriver attempted to stash with no UDP port.")
 
-        self.baud = self.detect_highest_baud()
-        # Do a ping connection to set the baudrate
-        PingDevice().connect_serial(self.ping.port.device, self.baud)
-        set_low_latency(self.ping.port)
-        self.bridge = Bridge(self.ping.port, self.baud, "0.0.0.0", 0, self.port, automatic_disconnect=False)
+        self.baud = await asyncio.to_thread(self.detect_highest_baud)
+        self.bridge = await asyncio.to_thread(self._open_bridge)
 
     def stop(self) -> None:
         """Stops the driver"""

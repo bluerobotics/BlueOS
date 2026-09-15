@@ -17,11 +17,11 @@ class PingManager:
         self.ping1d_base_port: int = 9090
         self.ping360_base_port: int = 9092
 
-    def stop_driver_at_port(self, port: SysFS | str) -> None:
+    async def stop_driver_at_port(self, port: SysFS | str) -> None:
         """Stops the driver instance running for port "port" """
         ping_at_port = [ping for ping in self.drivers if port in [ping.port, ping.ethernet_discovery_info]]
         if ping_at_port:
-            self.drivers[ping_at_port[0]].stop()
+            await asyncio.to_thread(self.drivers[ping_at_port[0]].stop)
             del self.drivers[ping_at_port[0]]
 
     async def register_ethernet_ping360(self, ping: PingDeviceDescriptor) -> None:
