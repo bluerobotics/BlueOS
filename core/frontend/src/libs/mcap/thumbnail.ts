@@ -5,28 +5,22 @@
  * Source Extensions. That keeps the work on the browser's hardware decoder and works over plain
  * HTTP, where WebCodecs is not available.
  */
-import {
-  ParameterSetCache, toMp4Sample, VideoFormat,
-} from './codec'
+import { isKeyframe, ParameterSetCache, VideoFormat } from './codec'
 import VideoFrameStream, { scanParameterSets, UNDECODABLE_FRAMES_BEFORE_SKIP } from './frame-stream'
-import { buildFragment, buildInitSegment, MINIMUM_SAMPLE_DURATION_US } from './mp4'
+import { muxFragmentedMp4, probeDecoderInfo } from './mux'
 import { openMcapVideoRecording } from './player'
 import { McapIndexedReader } from './reader'
 import { VideoTrack } from './video-track'
 
 const DEFAULT_TARGET_WIDTH = 320
 const DEFAULT_QUALITY = 0.85
-/** Where in the recording to look for a representative frame, matching the old on-vehicle grab. */
 const PREVIEW_POSITION = 0.5
 const FRAME_WAIT_MS = 10_000
-/** Frames to inspect before giving up on finding a keyframe near the preview position. */
 const MAX_PREVIEW_FRAMES = 240
 
 export interface McapThumbnailOptions {
   signal?: AbortSignal
-  /** Longest edge of the JPEG, keeping the original aspect ratio. */
   targetWidth?: number
-  /** JPEG quality from 0 to 1. */
   quality?: number
 }
 
@@ -148,12 +142,11 @@ async function readPreviewKeyframe(
     if (!frame) {
       break
     }
-    parameterSets.observeFrame(frame.data, frame.format)
-    const sample = toMp4Sample(frame.data, frame.format, parameterSets)
-    if (sample.data.length === 0) {
+    const annexB = parameterSets.withParameterSets(frame.data, frame.format)
+    if (annexB.length === 0) {
       continue
     }
-    if (!sample.isKeyframe) {
+    if (!isKeyframe(annexB, frame.format)) {
       skipped += 1
       if (skipped >= UNDECODABLE_FRAMES_BEFORE_SKIP) {
         skipped = 0
@@ -166,7 +159,7 @@ async function readPreviewKeyframe(
       // eslint-disable-next-line no-await-in-loop
       await scanParameterSets(reader, track, parameterSets, signal)
     }
-    return { format: frame.format, data: frame.data }
+    return { format: frame.format, data: parameterSets.withParameterSets(annexB, frame.format) }
   }
   throw new Error('This video stream holds no keyframe, so there is nothing to preview.')
 }
@@ -188,7 +181,9 @@ export async function extractMcapThumbnail(
   const track = [...recording.tracks]
     .filter((candidate) => candidate.frameCount > 0)
     .sort((left, right) => {
-      const fakeScore = (name: string): number => (/fake/i.test(name) ? 1 : 0)
+      function fakeScore(name: string): number {
+        return /fake/i.test(name) ? 1 : 0
+      }
       return fakeScore(left.name) - fakeScore(right.name) || right.frameCount - left.frameCount
     })[0]
   if (!track) {
@@ -205,21 +200,16 @@ export async function extractMcapThumbnail(
     parameterSets,
     signal,
   )
-  if (!parameterSets.complete) {
-    await scanParameterSets(recording.reader, track, parameterSets, signal)
-  }
-  const config = parameterSets.buildConfig(keyframe.format)
-  if (!config) {
-    throw new Error(`This ${keyframe.format.toUpperCase()} stream was recorded without the parameter`
-      + ' sets needed to decode it, so no preview can be made.')
-  }
-
-  const mime = `video/mp4; codecs="${config.codec}"`
+  const info = await probeDecoderInfo(keyframe.format, keyframe.data)
+  const mime = `video/mp4; codecs="${info.codec}"`
   if (!MediaSource.isTypeSupported(mime)) {
     return null
   }
 
-  const sample = toMp4Sample(keyframe.data, keyframe.format, parameterSets)
+  const media = await muxFragmentedMp4([{
+    data: keyframe.data, timestamp: 0, duration: 1 / 30, isKeyframe: true,
+  }], info)
+
   const mediaSource = new MediaSource()
   const objectUrl = URL.createObjectURL(mediaSource)
   const video = document.createElement('video')
@@ -232,12 +222,7 @@ export async function extractMcapThumbnail(
     await waitForSourceOpen(mediaSource, signal)
     const sourceBuffer = mediaSource.addSourceBuffer(mime)
     sourceBuffer.mode = 'segments'
-    await appendBuffer(sourceBuffer, buildInitSegment(config), signal)
-    await appendBuffer(
-      sourceBuffer,
-      buildFragment([{ ...sample, duration: Math.max(MINIMUM_SAMPLE_DURATION_US, 33_333) }], 0, 1),
-      signal,
-    )
+    await appendBuffer(sourceBuffer, media, signal)
     if (mediaSource.readyState === 'open') {
       mediaSource.endOfStream()
     }
@@ -245,10 +230,10 @@ export async function extractMcapThumbnail(
 
     await waitForVideoFrame(video, signal)
 
-    const scale = Math.min(1, targetWidth / Math.max(1, config.width))
+    const scale = Math.min(1, targetWidth / Math.max(1, info.width))
     const canvas = document.createElement('canvas')
-    canvas.width = Math.max(1, Math.round(config.width * scale))
-    canvas.height = Math.max(1, Math.round(config.height * scale))
+    canvas.width = Math.max(1, Math.round(info.width * scale))
+    canvas.height = Math.max(1, Math.round(info.height * scale))
     const context = canvas.getContext('2d')
     if (!context) {
       throw new Error('Failed to create a canvas for the thumbnail.')

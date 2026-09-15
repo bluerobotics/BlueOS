@@ -1,8 +1,9 @@
 /** Reads every video stream of a recording at once, to measure what simultaneous playback costs. */
 import { closeSync, openSync, readSync, statSync } from 'fs'
 
-import { ParameterSetCache, toMp4Sample } from '../src/libs/mcap/codec'
+import { isKeyframe, ParameterSetCache } from '../src/libs/mcap/codec'
 import VideoFrameStream from '../src/libs/mcap/frame-stream'
+import { probeDecoderInfo } from '../src/libs/mcap/mux'
 import { McapIndexedReader } from '../src/libs/mcap/reader'
 import { ByteSource } from '../src/libs/mcap/source'
 import { listVideoTracks } from '../src/libs/mcap/video-track'
@@ -72,22 +73,19 @@ async function playAll(path: string, wantedSeconds: number, seekSeconds: number 
       if (!frame) {
         break
       }
-      const sample = toMp4Sample(frame.data, frame.format, parameterSets[index])
+      const annexB = parameterSets[index].withParameterSets(frame.data, frame.format)
+      const keyframe = isKeyframe(annexB, frame.format)
       const state = progress[index]
       if (state.codec === '') {
-        if (!sample.isKeyframe) {
+        if (!keyframe) {
           continue
         }
-        const config = parameterSets[index].buildConfig(frame.format)
-        if (!config) {
-          state.codec = 'undecodable'
-          break
-        }
-        state.codec = `${config.codec} ${config.width}x${config.height}`
+        const info = await probeDecoderInfo(frame.format, annexB)
+        state.codec = `${info.codec} ${info.width}x${info.height}`
         firstTime[index] = frame.logTime
       }
       state.frames += 1
-      state.keyframes += sample.isKeyframe ? 1 : 0
+      state.keyframes += keyframe ? 1 : 0
       const start = firstTime[index]
       state.seconds = start === null ? 0 : Number(frame.logTime - start) / 1e9
       if (state.seconds >= wantedSeconds) {

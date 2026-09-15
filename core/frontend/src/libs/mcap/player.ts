@@ -6,13 +6,11 @@
  * instead of WebCodecs because WebCodecs is only available in secure contexts, and BlueOS is
  * normally served over plain HTTP.
  */
-import {
-  CodecConfig, ParameterSetCache, toMp4Sample, VideoFormat,
-} from './codec'
+import { isKeyframe, ParameterSetCache, VideoFormat } from './codec'
 import VideoFrameStream, { scanParameterSets, UNDECODABLE_FRAMES_BEFORE_SKIP } from './frame-stream'
 import {
-  buildFragment, buildInitSegment, MAXIMUM_SAMPLE_DURATION_US, MINIMUM_SAMPLE_DURATION_US, Mp4Sample,
-} from './mp4'
+  AnnexBFrame, clampSampleDuration, Mp4MediaStream, probeDecoderInfo, VideoDecoderInfo,
+} from './mux'
 import { McapIndexedReader } from './reader'
 import { HttpByteSource } from './source'
 import { listVideoTracks, VideoTrack } from './video-track'
@@ -117,7 +115,9 @@ export class McapVideoPlayer {
 
   private sourceBuffer: SourceBuffer | null = null
 
-  private config: CodecConfig | null = null
+  private decoderInfo: VideoDecoderInfo | null = null
+
+  private media: Mp4MediaStream | null = null
 
   private parameterSets = new ParameterSetCache()
 
@@ -141,9 +141,7 @@ export class McapVideoPlayer {
 
   private decodeErrors = 0
 
-  private lastSampleDuration = MINIMUM_SAMPLE_DURATION_US
-
-  private sequence = 1
+  private lastSampleDuration = 0.033
 
   /** Time the player moved the playhead to itself, which needs no restart of its own. */
   private internalSeekTarget: number | null = null
@@ -199,6 +197,8 @@ export class McapVideoPlayer {
   destroy(): void {
     this.destroyed = true
     this.controller.abort()
+    this.media?.cancel().catch(() => undefined)
+    this.media = null
     this.video.removeEventListener('seeking', this.onSeeking)
     this.video.removeEventListener('timeupdate', this.onTimeUpdate)
     this.video.removeEventListener('waiting', this.onWaiting)
@@ -217,9 +217,9 @@ export class McapVideoPlayer {
     return {
       bytesDownloaded: this.stream.bytesRead,
       bufferedAheadSeconds: this.bufferedAhead(),
-      codec: this.config?.codec ?? '',
-      width: this.config?.width ?? 0,
-      height: this.config?.height ?? 0,
+      codec: this.decoderInfo?.codec ?? '',
+      width: this.decoderInfo?.width ?? 0,
+      height: this.decoderInfo?.height ?? 0,
       format: this.pending[0]?.format ?? null,
       loading: this.loading,
       framesRead,
@@ -363,6 +363,8 @@ export class McapVideoPlayer {
   private async reopenAt(seconds: number): Promise<void> {
     this.controller.abort()
     await this.fillTask?.catch(() => undefined)
+    await this.media?.cancel().catch(() => undefined)
+    this.media = null
     if (this.destroyed) {
       return
     }
@@ -426,18 +428,17 @@ export class McapVideoPlayer {
         return
       }
 
-      const sample = toMp4Sample(frame.data, frame.format, this.parameterSets)
-      // Nothing the muxer can do with a frame that holds no NAL unit, and the decoder would only
-      // choke on the empty sample.
-      if (sample.data.length === 0) {
+      const annexB = this.parameterSets.withParameterSets(frame.data, frame.format)
+      const keyframe = isKeyframe(annexB, frame.format)
+      if (annexB.length === 0) {
         this.framesCorrupt += 1
         continue
       }
-      if (sample.isKeyframe) {
+      if (keyframe) {
         this.keyframes += 1
       }
       if (this.needsKeyframe) {
-        if (!sample.isKeyframe) {
+        if (!keyframe) {
           this.framesSkipped += 1
           this.skippedFrames += 1
           if (this.skippedFrames >= UNDECODABLE_FRAMES_BEFORE_SKIP) {
@@ -449,11 +450,13 @@ export class McapVideoPlayer {
         }
         this.skippedFrames = 0
         // eslint-disable-next-line no-await-in-loop
-        await this.configure(frame.format)
+        await this.configure(annexB, frame.format)
         this.needsKeyframe = false
       }
 
-      this.pending.push({ ...sample, logTime: frame.logTime, format: frame.format })
+      this.pending.push({
+        logTime: frame.logTime, format: frame.format, data: annexB, isKeyframe: keyframe,
+      })
       if (this.pendingSeconds() >= this.fragmentSeconds) {
         // eslint-disable-next-line no-await-in-loop
         await this.flushFragment()
@@ -471,62 +474,64 @@ export class McapVideoPlayer {
   }
 
   /** Creates or updates the source buffer from the parameter sets seen so far. */
-  private async configure(format: VideoFormat): Promise<void> {
+  private async configure(keyframe: Uint8Array, format: VideoFormat): Promise<void> {
     if (!this.parameterSets.complete && !this.scannedForParameterSets) {
       this.scannedForParameterSets = true
       await scanParameterSets(this.recording.reader, this.track, this.parameterSets, this.controller.signal)
     }
-    const config = this.parameterSets.buildConfig(format)
-    if (!config) {
-      throw new Error(`This ${format.toUpperCase()} stream was recorded without the parameter sets`
-        + ' needed to decode it, so no player can show it.')
-    }
+    const annexB = this.parameterSets.withParameterSets(keyframe, format)
+    const info = this.decoderInfo ?? await probeDecoderInfo(format, annexB)
+    this.decoderInfo = info
 
-    const mime = `video/mp4; codecs="${config.codec}"`
+    const mime = `video/mp4; codecs="${info.codec}"`
     if (!this.sourceBuffer) {
       if (!MediaSource.isTypeSupported(mime)) {
-        throw new Error(`This browser cannot play ${format.toUpperCase()} video (${config.codec}).`)
+        throw new Error(`This browser cannot play ${format.toUpperCase()} video (${info.codec}).`)
       }
       this.sourceBuffer = this.mediaSource.addSourceBuffer(mime)
       this.sourceBuffer.mode = 'segments'
       this.mediaSource.duration = this.stream.durationSeconds
-    } else if (config.codec !== this.config?.codec) {
-      const buffer = this.sourceBuffer
-      await this.run(async () => buffer.changeType(mime))
-    } else if (config.width === this.config?.width && config.height === this.config?.height) {
-      return
     }
 
-    this.config = config
-    await this.appendData(buildInitSegment(config))
+    if (!this.media) {
+      this.media = await Mp4MediaStream.open(
+        info,
+        (data) => this.appendData(data),
+        this.fragmentSeconds,
+      )
+    }
     this.emitStats()
   }
 
   private async flushFragment(flushAll = false): Promise<void> {
     const { signal } = this.controller
-    // The last frame is held back because its duration is only known once the next one arrives.
     const frames = flushAll ? this.pending : this.pending.slice(0, -1)
-    if (frames.length === 0) {
+    if (frames.length === 0 || !this.media) {
       return
     }
     this.pending = flushAll ? [] : this.pending.slice(-1)
 
-    const samples: Mp4Sample[] = frames.map((frame, index) => {
+    for (let index = 0; index < frames.length; index += 1) {
+      const frame = frames[index]
       const next = frames[index + 1] ?? this.pending[0]
       if (next) {
-        const delta = Math.round(Number(next.logTime - frame.logTime) / 1000)
-        this.lastSampleDuration = Math.min(Math.max(delta, MINIMUM_SAMPLE_DURATION_US), MAXIMUM_SAMPLE_DURATION_US)
+        this.lastSampleDuration = clampSampleDuration(Number(next.logTime - frame.logTime) / 1e9)
       }
-      return { data: frame.data, duration: this.lastSampleDuration, isKeyframe: frame.isKeyframe }
-    })
+      const packet: AnnexBFrame = {
+        data: frame.data,
+        timestamp: this.stream.toSeconds(frame.logTime),
+        duration: this.lastSampleDuration,
+        isKeyframe: frame.isKeyframe,
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await this.media.add(packet)
+    }
 
-    const startSeconds = this.stream.toSeconds(frames[0].logTime)
-    const baseMediaDecodeTime = Math.round(startSeconds * 1e6)
-    await this.appendData(buildFragment(samples, baseMediaDecodeTime, this.sequence))
-    this.sequence += 1
+    if (flushAll) {
+      await this.media.finalize()
+      this.media = null
+    }
 
-    // A seek that happened while this fragment was being appended has already moved the playhead
-    // where it belongs, and reading has restarted elsewhere.
     if (!signal.aborted) {
       this.alignPlayhead()
     }

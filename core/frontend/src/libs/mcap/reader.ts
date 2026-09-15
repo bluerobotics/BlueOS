@@ -1,19 +1,32 @@
 /**
- * Minimal MCAP reader designed for random access over HTTP range requests.
+ * Indexed MCAP reader over HTTP range requests, using @mcap/core to parse records.
  *
- * Only the records needed to locate and decode video messages are parsed. The file index (footer +
- * summary section) lives at the end of the file, so opening a multi-gigabyte recording costs a few
- * tens of kilobytes and every seek afterwards downloads just the chunks that overlap the requested
- * time range.
+ * @mcap/core McapIndexedReader.Initialize reads the whole summary in one shot
+ * (`readable.read(dataEndOffset, footerOffset - dataEndOffset)`), with a comment that avoiding
+ * that blob is a future optimization. This open() is that optimization: SummaryOffset locates
+ * Schema/Channel/Statistics (tens of kilobytes), and ChunkIndex records load in windows as
+ * playback needs them. After this is proven against vehicle recordings, the same split belongs
+ * upstream in foxglove/mcap.
  */
+/* eslint-disable max-classes-per-file */
+import type {
+  Channel as McapChannelRecord,
+  ChunkIndex as McapChunkIndexRecord,
+  DecompressHandlers,
+  Schema as McapSchemaRecord,
+  TypedMcapRecord,
+} from '@mcap/core'
+import {
+  McapRecordBuilder,
+  McapStreamReader,
+  Opcode,
+} from '@mcap/core'
 import { decompress as zstdDecompress } from 'fzstd'
 
-import { forEachRecord, RecordReader } from './record-reader'
 import { ByteSource } from './source'
 
-const MAGIC = [0x89, 0x4d, 0x43, 0x41, 0x50, 0x30, 0x0d, 0x0a]
-const MAGIC_SIZE = MAGIC.length
-const FOOTER_RECORD_SIZE = 29 // opcode + u64 length + summary_start + summary_offset_start + crc
+const MAGIC_SIZE = 8
+const FOOTER_RECORD_SIZE = 29
 const TAIL_READ_SIZE = 4096
 /**
  * Bytes of chunk index to fetch at a time. The index costs a bit over half a kilobyte per chunk, so
@@ -28,33 +41,24 @@ const CHUNK_INDEX_WINDOW_SIZE = 256 * 1024
  */
 const CHUNK_CACHE_LIMIT_BYTES = 32 * 1024 * 1024
 
-enum Opcode {
-  SCHEMA = 0x03,
-  CHANNEL = 0x04,
-  MESSAGE = 0x05,
-  CHUNK = 0x06,
-  MESSAGE_INDEX = 0x07,
-  CHUNK_INDEX = 0x08,
-  STATISTICS = 0x0b,
-  SUMMARY_OFFSET = 0x0e,
-}
-
-/** Records describing what a recording contains, as opposed to where its data lives. */
 const METADATA_OPCODES = [Opcode.SCHEMA, Opcode.CHANNEL, Opcode.STATISTICS]
 
-/**
- * A recording that holds no index, which is what nothing closing the file leaves behind. Reading it
- * takes rewriting it first, so this is worth telling apart from a recording that is simply broken.
- */
+/** opcode + u64 length + channel_id + sequence + log_time + publish_time */
+const MESSAGE_HEADER_SIZE = 31
+
+const DECOMPRESS_HANDLERS: DecompressHandlers = {
+  zstd: (buffer: Uint8Array, size: bigint): Uint8Array => zstdDecompress(
+    buffer,
+    Number(size) > 0 ? new Uint8Array(Number(size)) : undefined,
+  ),
+}
+
 export class McapNeedsRepairError extends Error {}
 
 interface SummaryGroup {
   start: number
   length: number
 }
-
-/** opcode + u64 length + channel_id + sequence + log_time + publish_time */
-const MESSAGE_HEADER_SIZE = 31
 
 export interface McapSchema {
   id: number
@@ -79,25 +83,21 @@ export interface McapChunkIndex {
   compressedSize: number
   uncompressedSize: number
   channelIds: number[]
-  /** Total size of the message index records that follow the chunk. */
   messageIndexLength: number
 }
 
-/** Log time and size of a single message, derived from the message index alone. */
 export interface McapMessageEntry {
   logTime: bigint
   size: number
 }
 
 export interface McapOpenOptions {
-  /** Skip the chunk index, which is only needed to seek and read messages. */
   metadataOnly?: boolean
   signal?: AbortSignal
 }
 
 export interface McapMessage {
   channelId: number
-  /** Per-channel counter written by the recorder, used to notice messages that never made it. */
   sequence: number
   logTime: bigint
   data: Uint8Array
@@ -113,20 +113,12 @@ export interface McapSummary {
   messageCountByChannel: Map<number, bigint>
 }
 
-function hasMagic(bytes: Uint8Array, offset: number): boolean {
-  return MAGIC.every((byte, index) => bytes[offset + index] === byte)
-}
-
 function abortError(): Error {
   const error = new Error('The read was aborted.')
   error.name = 'AbortError'
   return error
 }
 
-/**
- * Waits for work that is shared between callers. Aborting only gives up waiting, since cancelling the
- * download would take it away from the other streams reading the same chunk.
- */
 function whileWaiting<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
   if (!signal) {
     return work
@@ -143,24 +135,47 @@ function whileWaiting<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
   })
 }
 
-function decompressChunk(compression: string, compressed: Uint8Array, uncompressedSize: number): Uint8Array {
-  switch (compression) {
-    case '':
-      return compressed
-    case 'zstd':
-      return zstdDecompress(compressed, uncompressedSize > 0 ? new Uint8Array(uncompressedSize) : undefined)
-    default:
-      throw new Error(`Unsupported MCAP chunk compression: '${compression}'.`)
+function parseRecords(data: Uint8Array): { records: TypedMcapRecord[], consumed: number } {
+  const stream = new McapStreamReader({ noMagicPrefix: true, validateCrcs: false })
+  stream.append(data)
+  const records: TypedMcapRecord[] = []
+  for (let record = stream.nextRecord(); record; record = stream.nextRecord()) {
+    records.push(record)
+  }
+  return { records, consumed: data.byteLength - stream.bytesRemaining() }
+}
+
+function toChunkIndex(record: McapChunkIndexRecord): McapChunkIndex {
+  return {
+    startTime: record.messageStartTime,
+    endTime: record.messageEndTime,
+    offset: Number(record.chunkStartOffset),
+    length: Number(record.chunkLength),
+    compression: record.compression,
+    compressedSize: Number(record.compressedSize),
+    uncompressedSize: Number(record.uncompressedSize),
+    channelIds: [...record.messageIndexOffsets.keys()],
+    messageIndexLength: Number(record.messageIndexLength),
+  }
+}
+
+function toSchema(record: McapSchemaRecord): McapSchema {
+  return {
+    id: record.id, name: record.name, encoding: record.encoding, data: record.data,
+  }
+}
+
+function toChannel(record: McapChannelRecord): McapChannel {
+  return {
+    id: record.id, schemaId: record.schemaId, topic: record.topic, messageEncoding: record.messageEncoding,
   }
 }
 
 export class McapIndexedReader {
-  /** Next unread byte of the chunk index group, or null when the whole index is already loaded. */
   private chunkIndexCursor: number | null
 
   private pendingLoad: Promise<boolean> = Promise.resolve(false)
 
-  /** Decompressed chunks, in least recently used order. */
   private chunkCache = new Map<number, Uint8Array>()
 
   private chunkCacheBytes = 0
@@ -190,37 +205,40 @@ export class McapIndexedReader {
 
     const tailSize = Math.min(TAIL_READ_SIZE, size)
     const tail = await source.read(size - tailSize, tailSize, signal)
-    if (!hasMagic(tail, tail.length - MAGIC_SIZE)) {
+    const footerBytes = tail.subarray(tail.length - MAGIC_SIZE - FOOTER_RECORD_SIZE)
+    let footer: Extract<TypedMcapRecord, { type: 'Footer' }> | undefined
+    try {
+      footer = parseRecords(footerBytes).records.find(
+        (record): record is Extract<TypedMcapRecord, { type: 'Footer' }> => record.type === 'Footer',
+      )
+    } catch {
+      footer = undefined
+    }
+    if (!footer) {
       throw new McapNeedsRepairError('This recording was cut short before it could be closed.')
     }
-
-    const footer = new RecordReader(tail, tail.length - MAGIC_SIZE - FOOTER_RECORD_SIZE)
-    footer.uint8()
-    footer.size()
-    const summaryStart = Number(footer.uint64())
-    const summaryOffsetStart = Number(footer.uint64())
-    if (summaryStart === 0) {
+    if (footer.summaryStart === 0n) {
       throw new McapNeedsRepairError('This recording holds no index, so nothing can be read out of it.')
     }
 
+    const summaryStart = Number(footer.summaryStart)
+    const summaryOffsetStart = Number(footer.summaryOffsetStart)
     const summaryEnd = size - MAGIC_SIZE - FOOTER_RECORD_SIZE
     const groups = await McapIndexedReader
       .readSummaryOffsets(source, summaryOffsetStart, summaryEnd, tail, size, signal)
     const statistics = groups?.get(Opcode.STATISTICS)
     const chunkIndex = groups?.get(Opcode.CHUNK_INDEX)
 
-    // Statistics carry the time span of the recording. Without them, or without summary offsets to
-    // locate the groups, the only way to learn what the recording holds is to read the summary whole.
     if (!groups || !statistics || !chunkIndex) {
       const data = await source.read(summaryStart, summaryEnd - summaryStart, signal)
-      return new McapIndexedReader(source, McapIndexedReader.parseSummary(data, size), null)
+      return new McapIndexedReader(source, McapIndexedReader.summaryFrom(parseRecords(data).records, size), null)
     }
 
     const wanted = [...groups.entries()]
       .filter(([opcode]) => METADATA_OPCODES.includes(opcode))
       .map(([, group]) => group)
     const metadata = await McapIndexedReader.readGroups(source, wanted, signal)
-    const summary = McapIndexedReader.parseSummary(metadata, size)
+    const summary = McapIndexedReader.summaryFrom(parseRecords(metadata).records, size)
     return new McapIndexedReader(source, summary, metadataOnly ? null : chunkIndex)
   }
 
@@ -246,17 +264,12 @@ export class McapIndexedReader {
       : await source.read(summaryOffsetStart, summaryEnd - summaryOffsetStart, signal)
 
     const groups = new Map<number, SummaryGroup>()
-    forEachRecord(offsetsData, (opcode, reader) => {
-      if (opcode !== Opcode.SUMMARY_OFFSET) {
-        return
+    for (const record of parseRecords(offsetsData).records) {
+      if (record.type !== 'SummaryOffset' || record.groupLength === 0n) {
+        continue
       }
-      const groupOpcode = reader.uint8()
-      const start = Number(reader.uint64())
-      const length = Number(reader.uint64())
-      if (length > 0) {
-        groups.set(groupOpcode, { start, length })
-      }
-    })
+      groups.set(record.groupOpcode, { start: Number(record.groupStart), length: Number(record.groupLength) })
+    }
     return groups.size > 0 ? groups : null
   }
 
@@ -277,32 +290,7 @@ export class McapIndexedReader {
     return merged
   }
 
-  private static parseChunkIndex(reader: RecordReader): McapChunkIndex {
-    const startTime = reader.uint64()
-    const endTime = reader.uint64()
-    const offset = Number(reader.uint64())
-    const length = Number(reader.uint64())
-    const channelIds: number[] = []
-    const mapEnd = reader.offset + reader.uint32()
-    while (reader.offset < mapEnd) {
-      channelIds.push(reader.uint16())
-      reader.skip(8)
-    }
-    const messageIndexLength = Number(reader.uint64())
-    return {
-      startTime,
-      endTime,
-      offset,
-      length,
-      compression: reader.string(),
-      compressedSize: Number(reader.uint64()),
-      uncompressedSize: Number(reader.uint64()),
-      channelIds,
-      messageIndexLength,
-    }
-  }
-
-  private static parseSummary(data: Uint8Array, size: number): McapSummary {
+  private static summaryFrom(records: TypedMcapRecord[], size: number): McapSummary {
     const schemas = new Map<number, McapSchema>()
     const channels = new Map<number, McapChannel>()
     const chunkIndexes: McapChunkIndex[] = []
@@ -310,41 +298,28 @@ export class McapIndexedReader {
     let startTime = 0n
     let endTime = 0n
 
-    forEachRecord(data, (opcode, reader) => {
-      switch (opcode) {
-        case Opcode.SCHEMA: {
-          const id = reader.uint16()
-          const name = reader.string()
-          const encoding = reader.string()
-          schemas.set(id, {
-            id, name, encoding, data: reader.bytes(reader.uint32()),
-          })
+    for (const record of records) {
+      switch (record.type) {
+        case 'Schema':
+          schemas.set(record.id, toSchema(record))
           break
-        }
-        case Opcode.CHANNEL: {
-          const id = reader.uint16()
-          channels.set(id, {
-            id, schemaId: reader.uint16(), topic: reader.string(), messageEncoding: reader.string(),
-          })
+        case 'Channel':
+          channels.set(record.id, toChannel(record))
           break
-        }
-        case Opcode.CHUNK_INDEX:
-          chunkIndexes.push(McapIndexedReader.parseChunkIndex(reader))
+        case 'ChunkIndex':
+          chunkIndexes.push(toChunkIndex(record))
           break
-        case Opcode.STATISTICS: {
-          reader.skip(8 + 2 + 4 + 4 + 4 + 4)
-          startTime = reader.uint64()
-          endTime = reader.uint64()
-          const mapEnd = reader.offset + reader.uint32()
-          while (reader.offset < mapEnd) {
-            messageCountByChannel.set(reader.uint16(), reader.uint64())
+        case 'Statistics':
+          startTime = record.messageStartTime
+          endTime = record.messageEndTime
+          for (const [channelId, count] of record.channelMessageCounts) {
+            messageCountByChannel.set(channelId, count)
           }
           break
-        }
         default:
           break
       }
-    })
+    }
 
     chunkIndexes.sort((left, right) => Number(left.startTime - right.startTime))
     if (startTime === 0n && chunkIndexes.length > 0) {
@@ -361,10 +336,6 @@ export class McapIndexedReader {
     return this.chunkIndexGroup === null || this.chunkIndexCursor === null
   }
 
-  /**
-   * Reads the next window of chunk index records. Calls are serialised so that a seek and a running
-   * read cannot fetch the same window twice. Returns false once the whole index has been read.
-   */
   loadMoreChunkIndexes(signal?: AbortSignal): Promise<boolean> {
     this.pendingLoad = this.pendingLoad
       .catch(() => false)
@@ -372,7 +343,6 @@ export class McapIndexedReader {
     return this.pendingLoad
   }
 
-  /** Reads chunk index records until the recording is covered up to the given time. */
   async loadChunkIndexesUntil(time: bigint, signal?: AbortSignal): Promise<void> {
     while (!this.chunkIndexComplete) {
       const last = this.summary.chunkIndexes[this.summary.chunkIndexes.length - 1]
@@ -395,19 +365,16 @@ export class McapIndexedReader {
 
     const end = group.start + group.length
     const data = await this.source.read(cursor, Math.min(CHUNK_INDEX_WINDOW_SIZE, end - cursor), signal)
-    const chunks: McapChunkIndex[] = []
-    const consumed = forEachRecord(data, (opcode, reader) => {
-      if (opcode === Opcode.CHUNK_INDEX) {
-        chunks.push(McapIndexedReader.parseChunkIndex(reader))
-      }
-    })
+    const { records, consumed } = parseRecords(data)
     if (consumed === 0) {
       throw new Error('Chunk index record does not fit in a read window.')
     }
 
-    // Chunk indexes are written in the order the chunks appear in the file, so appending keeps the
-    // list sorted by time and, more importantly, keeps the position of every chunk stable.
-    this.summary.chunkIndexes.push(...chunks)
+    for (const record of records) {
+      if (record.type === 'ChunkIndex') {
+        this.summary.chunkIndexes.push(toChunkIndex(record))
+      }
+    }
     this.chunkIndexCursor = cursor + consumed < end ? cursor + consumed : null
     return true
   }
@@ -418,7 +385,6 @@ export class McapIndexedReader {
       .sort((left, right) => left.topic.localeCompare(right.topic))
   }
 
-  /** Indexes of the chunks holding messages for a channel, in time order. */
   chunkIndexesForChannel(channelId: number): number[] {
     return this.summary.chunkIndexes
       .map((chunk, index) => ({ chunk, index }))
@@ -426,7 +392,6 @@ export class McapIndexedReader {
       .map(({ index }) => index)
   }
 
-  /** First chunk that may contain a message at or after the given time. */
   findChunkIndexAtTime(channelId: number, time: bigint): number {
     const candidates = this.chunkIndexesForChannel(channelId)
     let result = candidates.length > 0 ? candidates[0] : 0
@@ -439,11 +404,6 @@ export class McapIndexedReader {
     return result
   }
 
-  /**
-   * Reads the message index that follows a chunk to obtain the log time and size of every message
-   * of a channel, without downloading the chunk itself. A chunk of video costs hundreds of kilobytes
-   * while its message index costs a few, which is what makes cheap keyframe lookup possible.
-   */
   async readChunkMessageEntries(
     chunkIndex: number,
     channelId: number,
@@ -457,23 +417,19 @@ export class McapIndexedReader {
     const data = await this.source.read(index.offset + index.length, index.messageIndexLength, signal)
     const allOffsets: number[] = []
     const channelOffsets: { logTime: bigint, offset: number }[] = []
-    forEachRecord(data, (opcode, reader) => {
-      if (opcode !== Opcode.MESSAGE_INDEX) {
-        return
+    for (const record of parseRecords(data).records) {
+      if (record.type !== 'MessageIndex') {
+        continue
       }
-      const recordChannelId = reader.uint16()
-      const arrayEnd = reader.offset + reader.uint32()
-      while (reader.offset < arrayEnd) {
-        const logTime = reader.uint64()
-        const offset = Number(reader.uint64())
-        allOffsets.push(offset)
-        if (recordChannelId === channelId) {
-          channelOffsets.push({ logTime, offset })
+      for (const [logTime, offset] of record.records) {
+        const offsetNumber = Number(offset)
+        allOffsets.push(offsetNumber)
+        if (record.channelId === channelId) {
+          channelOffsets.push({ logTime, offset: offsetNumber })
         }
       }
-    })
+    }
 
-    // A message ends where the next message of any channel begins.
     allOffsets.sort((left, right) => left - right)
     return channelOffsets.map(({ logTime, offset }) => {
       let low = 0
@@ -493,29 +449,33 @@ export class McapIndexedReader {
 
   async readChunkMessages(chunkIndex: number, channelId: number, signal?: AbortSignal): Promise<McapMessage[]> {
     const data = await this.readChunkData(chunkIndex, signal)
+    const builder = new McapRecordBuilder()
+    for (const channel of this.summary.channels.values()) {
+      builder.writeChannel({
+        id: channel.id,
+        schemaId: channel.schemaId,
+        topic: channel.topic,
+        messageEncoding: channel.messageEncoding,
+        metadata: new Map(),
+      })
+    }
+    const stream = new McapStreamReader({ noMagicPrefix: true, validateCrcs: false })
+    stream.append(builder.buffer)
+    stream.append(data)
 
     const messages: McapMessage[] = []
-    forEachRecord(data, (opcode, message, end) => {
-      if (opcode !== Opcode.MESSAGE || message.uint16() !== channelId) {
-        return
+    for (let record = stream.nextRecord(); record; record = stream.nextRecord()) {
+      if (record.type !== 'Message' || record.channelId !== channelId) {
+        continue
       }
-      const sequence = message.uint32()
-      const logTime = message.uint64()
-      message.skip(8) // publish_time
       messages.push({
-        channelId, sequence, logTime, data: message.bytes(end - message.offset),
+        channelId: record.channelId, sequence: record.sequence, logTime: record.logTime, data: record.data,
       })
-    })
-
+    }
     messages.sort((left, right) => Number(left.logTime - right.logTime))
     return messages
   }
 
-  /**
-   * Decompressed contents of a chunk. Downloads in flight are shared, so several streams asking for
-   * the same chunk at the same time cost one request, and recently used chunks are kept in memory for
-   * the streams that are still catching up.
-   */
   private async readChunkData(chunkIndex: number, signal?: AbortSignal): Promise<Uint8Array> {
     const cached = this.chunkCache.get(chunkIndex)
     if (cached) {
@@ -544,16 +504,22 @@ export class McapIndexedReader {
     }
 
     const record = await this.source.read(index.offset, index.length)
-    const reader = new RecordReader(record)
-    if (reader.uint8() !== Opcode.CHUNK) {
+    const stream = new McapStreamReader({
+      includeChunks: true, noMagicPrefix: true, validateCrcs: false,
+    })
+    stream.append(record)
+    const chunk = stream.nextRecord()
+    if (!chunk || chunk.type !== 'Chunk') {
       throw new Error(`Expected a chunk record at offset ${index.offset}.`)
     }
-    reader.size()
-    reader.skip(8 + 8) // message_start_time, message_end_time
-    const uncompressedSize = reader.size()
-    reader.skip(4) // uncompressed_crc
-    const compression = reader.string()
-    return decompressChunk(compression, reader.bytes(reader.size()), uncompressedSize)
+    if (chunk.compression === '') {
+      return chunk.records
+    }
+    const decompress = DECOMPRESS_HANDLERS[chunk.compression]
+    if (!decompress) {
+      throw new Error(`Unsupported MCAP chunk compression: '${chunk.compression}'.`)
+    }
+    return decompress(chunk.records, chunk.uncompressedSize)
   }
 
   private cacheChunk(chunkIndex: number, data: Uint8Array): void {

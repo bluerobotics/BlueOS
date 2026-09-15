@@ -2,9 +2,9 @@ import {
   closeSync, openSync, readSync, statSync, writeFileSync,
 } from 'fs'
 
-import { CodecConfig, ParameterSetCache, toMp4Sample } from '../src/libs/mcap/codec'
+import { isKeyframe, ParameterSetCache } from '../src/libs/mcap/codec'
 import VideoFrameStream from '../src/libs/mcap/frame-stream'
-import { buildFragment, buildInitSegment, Mp4Sample } from '../src/libs/mcap/mp4'
+import { AnnexBFrame, clampSampleDuration, muxFragmentedMp4, probeDecoderInfo } from '../src/libs/mcap/mux'
 import { McapIndexedReader } from '../src/libs/mcap/reader'
 import { ByteSource } from '../src/libs/mcap/source'
 import { listVideoTracks } from '../src/libs/mcap/video-track'
@@ -80,12 +80,11 @@ async function main(): Promise<void> {
   }
   console.log(`  keyframe lookup cost: ${((source.bytesRead - beforeSeek) / 1024).toFixed(1)} kB`)
 
-  const parts: Uint8Array[] = []
-  let config: CodecConfig | null = null
+  const parts: AnnexBFrame[] = []
+  let decoder: Awaited<ReturnType<typeof probeDecoderInfo>> | null = null
   let frames: { logTime: bigint, data: Uint8Array, isKeyframe: boolean }[] = []
   let firstTime: bigint | null = null
   let lastTime: bigint | null = null
-  let sequence = 1
   let keyframes = 0
   let droppedBeforeKeyframe = 0
   let sampleCount = 0
@@ -98,19 +97,20 @@ async function main(): Promise<void> {
     }
     frames = all ? [] : frames.slice(-1)
     const rest = frames
-    const samples: Mp4Sample[] = batch.map((frame, index) => {
+    for (let index = 0; index < batch.length; index += 1) {
+      const frame = batch[index]
       const next = batch[index + 1] ?? rest[0]
-      const duration = next ? Math.round(Number(next.logTime - frame.logTime) / 1000) : 33_333
-      return {
+      const duration = next
+        ? clampSampleDuration(Number(next.logTime - frame.logTime) / 1e9)
+        : 1 / 30
+      parts.push({
         data: frame.data,
-        duration: Math.min(Math.max(duration, 1000), 10_000_000),
+        timestamp: Number(frame.logTime - summary.startTime) / 1e9,
+        duration,
         isKeyframe: frame.isKeyframe,
-      }
-    })
-    sampleCount += samples.length
-    const base = Math.round(Number(batch[0].logTime - summary.startTime) / 1000)
-    parts.push(buildFragment(samples, base, sequence))
-    sequence += 1
+      })
+      sampleCount += 1
+    }
   }
 
   const startBytes = source.bytesRead
@@ -120,9 +120,10 @@ async function main(): Promise<void> {
     if (!frame) {
       break
     }
-    const sample = toMp4Sample(frame.data, frame.format, parameterSets)
-    if (!config) {
-      if (!sample.isKeyframe) {
+    const annexB = parameterSets.withParameterSets(frame.data, frame.format)
+    const keyframe = isKeyframe(annexB, frame.format)
+    if (!decoder) {
+      if (!keyframe) {
         droppedBeforeKeyframe += 1
         if (droppedBeforeKeyframe % 30 === 0) {
           // eslint-disable-next-line no-await-in-loop
@@ -130,20 +131,16 @@ async function main(): Promise<void> {
         }
         continue
       }
-      config = parameterSets.buildConfig(frame.format)
-      if (!config) {
-        throw new Error('keyframe without parameter sets')
-      }
-      console.log(`  codec: ${config.codec} ${config.width}x${config.height}`
-        + ` (${config.description.length} byte description), format: ${frame.format}`)
-      parts.push(buildInitSegment(config))
+      // eslint-disable-next-line no-await-in-loop
+      decoder = await probeDecoderInfo(frame.format, annexB)
+      console.log(`  codec: ${decoder.codec} ${decoder.width}x${decoder.height}, format: ${frame.format}`)
       firstTime = frame.logTime
     }
-    if (sample.isKeyframe) {
+    if (keyframe) {
       keyframes += 1
     }
     lastTime = frame.logTime
-    frames.push({ logTime: frame.logTime, data: sample.data, isKeyframe: sample.isKeyframe })
+    frames.push({ logTime: frame.logTime, data: annexB, isKeyframe: keyframe })
     if (frames.length > 1 && Number(frames[frames.length - 1].logTime - frames[0].logTime) / 1e9 >= 0.5) {
       flush(false)
     }
@@ -152,6 +149,10 @@ async function main(): Promise<void> {
     }
   }
   flush(true)
+  if (!decoder) {
+    throw new Error('keyframe without parameter sets')
+  }
+  const file = await muxFragmentedMp4(parts, decoder)
 
   const mediaSeconds = firstTime !== null && lastTime !== null ? Number(lastTime - firstTime) / 1e9 : 0
   const payload = source.bytesRead - startBytes
@@ -162,16 +163,8 @@ async function main(): Promise<void> {
   console.log(`  downloaded ${(payload / 1e6).toFixed(2)} MB for playback`
     + ` (${((payload * 8) / 1e6 / Math.max(mediaSeconds, 0.001)).toFixed(1)} Mbps)`)
   console.log(`  total read: ${(source.bytesRead / 1e6).toFixed(2)} MB of ${(summary.size / 1e6).toFixed(1)} MB`)
-
-  const total = parts.reduce((size, part) => size + part.length, 0)
-  const file = new Uint8Array(total)
-  let offset = 0
-  for (const part of parts) {
-    file.set(part, offset)
-    offset += part.length
-  }
   writeFileSync(output, file)
-  console.log(`  wrote ${output} (${(total / 1e6).toFixed(2)} MB)`)
+  console.log(`  wrote ${output} (${(file.byteLength / 1e6).toFixed(2)} MB)`)
   source.close()
 }
 
