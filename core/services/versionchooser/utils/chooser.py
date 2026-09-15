@@ -373,6 +373,8 @@ class VersionChooser:
                         "tag": tag,
                         "last_modified": datetime.fromtimestamp(image["Created"]).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                         "sha": image["Id"],
+                        # Parent is the base docker image from the committed image
+                        "parent_sha": image["ParentId"] or None,
                     }
                 )
 
