@@ -146,29 +146,18 @@ class Extension:
         finally:
             cls.unlock(container_name)
 
-    async def _image_is_available_locally(self) -> bool:
-        try:
-            image_ref = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
-            async with DockerCtx() as client:
-                await client.images.inspect(image_ref)
-                return True
-        except DockerError:
-            return False
-
-    async def install(  # pylint: disable=too-many-branches
-        self, clear_remaining_tags: bool = True, atomic: bool = False
-    ) -> AsyncGenerator[bytes, None]:
-        logger.info(f"Installing extension {self.identifier}:{self.tag}")
-
-        # First we should make sure no other tag is running
-        running_ext = None
+    async def _disable_running_extension(self) -> Optional["Extension"]:
+        """Disable any currently running extension with the same identifier."""
         try:
             running_ext = await self.from_running(self.identifier)
             if running_ext:
                 await running_ext.disable()
+            return running_ext
         except (ExtensionNotRunning, ExtensionNotFound):
-            pass
+            return None
 
+    def _create_extension_settings(self) -> ExtensionSettings:
+        """Create and save extension settings."""
         new_extension = ExtensionSettings(
             identifier=self.identifier,
             name=self.source.name,
@@ -179,57 +168,193 @@ class Extension:
             user_permissions=self.source.user_permissions,
         )
         # Save in settings first, if the image fails to install it will try to fetch after in main kraken check loop
+        # Atomic failure rolls this entry back and re-enables the previously running sibling.
         self._save_settings(new_extension)
+        return new_extension
 
+    def _prepare_docker_auth(self) -> Optional[str]:
+        """Prepare Docker authentication string from source auth credentials."""
+        if self.source.auth is None:
+            return None
+        docker_auth = f"{self.source.auth.username}:{self.source.auth.password}"
+        return base64.b64encode(docker_auth.encode("utf-8")).decode("utf-8")
+
+    @staticmethod
+    async def _inspect_or_none(client: Any, ref: str) -> Optional[Any]:
+        try:
+            return await client.images.inspect(ref)
+        except DockerError as error:
+            if error.status == 404:
+                return None
+            raise
+
+    async def _ensure_tagged_local_image(self, client: Any, sibling_image_id: Optional[str] = None) -> bool:
+        # start() and a successful pull run docker:tag. Catalog platform digests are not
+        # stored in RepoDigests after `docker pull repo:tag` (that records the index
+        # digest), so a digest match against the catalog cannot be required.
+        # sibling_image_id is only for the failed-pull fallback: a retag of the running
+        # sibling onto the new name is not the requested version. Do not pass it after a
+        # clean pull -- two tags can share an image Id (aliases) and still be the pull.
+        tag_ref = f"{self.source.docker}:{self.tag}"
+        tagged = await self._inspect_or_none(client, tag_ref)
+        image_id = tagged.get("Id") if isinstance(tagged, dict) else None
+        if isinstance(image_id, str) and image_id and (sibling_image_id is None or image_id != sibling_image_id):
+            return True
+        if not self.digest:
+            return False
+        digest = self.digest if self.digest.startswith("sha256:") else f"sha256:{self.digest}"
+        digest_ref = f"{self.source.docker}@{digest}"
+        info = await self._inspect_or_none(client, digest_ref)
+        image_id = info.get("Id") if isinstance(info, dict) else None
+        if not isinstance(image_id, str) or not image_id or image_id == sibling_image_id:
+            return False
+        try:
+            await client.images.tag(digest_ref, self.source.docker, tag=self.tag)
+        except Exception as error:
+            logger.warning(f"Failed to tag {digest_ref} as {tag_ref}: {error}")
+        tagged = await self._inspect_or_none(client, tag_ref)
+        image_id = tagged.get("Id") if isinstance(tagged, dict) else None
+        return (
+            isinstance(image_id, str) and bool(image_id) and (sibling_image_id is None or image_id != sibling_image_id)
+        )
+
+    async def _rollback_failed_install(
+        self,
+        running_ext: Optional["Extension"],
+        prior_settings: Optional[ExtensionSettings],
+        atomic: bool,
+    ) -> None:
+        try:
+            if prior_settings is not None:
+                self._save_settings(prior_settings)
+            elif atomic:
+                self._save_settings()
+            else:
+                await self.set_enabled(False)
+        except Exception as rollback_error:
+            logger.warning(f"Failed to roll back {self.identifier}:{self.tag} after pull failure: {rollback_error}")
+        if not running_ext:
+            return
+        try:
+            self.reset_start_attempt(running_ext.unique_entry)
+            await running_ext.enable()
+        except Exception as enable_error:
+            logger.warning(
+                f"Failed to re-enable {running_ext.identifier}:{running_ext.tag} after pull failure: {enable_error}"
+            )
+
+    async def _pull_docker_image(self, docker_auth: Optional[str]) -> AsyncGenerator[bytes, None]:
+        """Pull Docker image and yield progress updates."""
+        tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
+        async with DockerCtx() as client:
+            pull_ok = False
+            async for line in client.images.pull(
+                tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
+            ):
+                yield json.dumps(line).encode("utf-8")
+                # Docker reports pull errors in-band; a finished stream without a success
+                # status is not a completed pull.
+                error = None
+                status = None
+                if isinstance(line, dict):
+                    error = line.get("error") or (line.get("errorDetail") or {}).get("message")
+                    status = line.get("status")
+                if error:
+                    raise RuntimeError(str(error))
+                if isinstance(status, str) and ("Downloaded newer image" in status or "Image is up to date" in status):
+                    pull_ok = True
+            if not pull_ok:
+                raise RuntimeError("pull finished without a success status")
+            # Make sure to add correct tag if a digest was used since docker messes up the tag
+            if not await self._ensure_tagged_local_image(client):
+                raise RuntimeError(f"Image {self.source.docker}:{self.tag} missing after pull")
+
+    async def _clear_remaining_tags(self) -> None:
+        """Uninstall all other tags for this extension."""
+        logger.info(f"Clearing remaining tags for extension {self.identifier}")
+        to_clear: List[Extension] = cast(List[Extension], await self.from_settings(self.identifier))
+        to_clear = [version for version in to_clear if version.source.tag != self.tag]
+        await asyncio.gather(*(version.uninstall() for version in to_clear))
+
+    async def install(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+        self, clear_remaining_tags: bool = True, atomic: bool = True
+    ) -> AsyncGenerator[bytes, None]:
+        logger.info(f"Installing extension {self.identifier}:{self.tag}")
+
+        # First we should make sure no other tag is running
+        sibling_image_id: Optional[str] = None
+        sibling_id_unknown = False
+        prior_settings: Optional[ExtensionSettings] = None
+        try:
+            existing = self.settings
+            prior_settings = ExtensionSettings(
+                identifier=existing.identifier,
+                name=existing.name,
+                docker=existing.docker,
+                tag=existing.tag,
+                permissions=existing.permissions,
+                enabled=existing.enabled,
+                user_permissions=existing.user_permissions,
+            )
+        except ExtensionNotFound:
+            pass
+
+        running_ext = await self._disable_running_extension()
+        if running_ext and running_ext.unique_entry != self.unique_entry:
+            try:
+                async with DockerCtx() as client:
+                    info = await self._inspect_or_none(client, f"{running_ext.source.docker}:{running_ext.tag}")
+                image_id = info.get("Id") if isinstance(info, dict) else None
+                sibling_image_id = image_id if isinstance(image_id, str) and image_id else None
+                if not sibling_image_id:
+                    sibling_id_unknown = True
+            except Exception:
+                sibling_id_unknown = True
+
+        self._create_extension_settings()
+
+        used_local_image = False
         try:
             self.lock(self.unique_entry)
 
-            docker_auth: Optional[str] = None
-            if self.source.auth is not None:
-                docker_auth = f"{self.source.auth.username}:{self.source.auth.password}"
-                docker_auth = base64.b64encode(docker_auth.encode("utf-8")).decode("utf-8")
-
-            tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
-            async with DockerCtx() as client:
-                async for line in client.images.pull(
-                    tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
-                ):
-                    # TODO - Plug Error detection from docker image here
-                    yield json.dumps(line).encode("utf-8")
-                # Make sure to add correct tag if a digest was used since docker messes up the tag
-                if self.digest:
-                    await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
+            docker_auth = self._prepare_docker_auth()
+            async for line in self._pull_docker_image(docker_auth):
+                yield line
         except Exception as error:
-            # In case of some external installs kraken shouldn't try to install it again so we remove from settings
-            if atomic:
-                should_raise = False
-                if await self._image_is_available_locally():
-                    logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
-                else:
-                    if not running_ext or self.unique_entry != running_ext.unique_entry:
-                        should_raise = True
-                        await self.uninstall()
-                    if running_ext:
-                        await running_ext.enable()
-
-                if should_raise:
-                    raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
-                # Reached only if the extensions are the same, the change is in permissions, not installation failure.
-                return
+            # In case of some external installs kraken shouldn't try to install it again so we
+            # remove from settings. Keep a leftover docker:tag if it is not the running sibling's
+            # image; otherwise roll back so we do not uninstall/delete the running image.
+            local_ok = False
+            if sibling_id_unknown:
+                logger.warning(f"Could not inspect running image for {self.identifier}; refusing local-image fallback")
+            else:
+                try:
+                    async with DockerCtx() as client:
+                        local_ok = await self._ensure_tagged_local_image(client, sibling_image_id)
+                except Exception as inspect_error:
+                    logger.warning(
+                        f"Could not verify image after pull of {self.identifier}:{self.tag}: {inspect_error}"
+                    )
+                    local_ok = False
+            if local_ok:
+                logger.warning(
+                    f"Pull failed but image {self.identifier}:{self.tag} is already available locally: {error}"
+                )
+                used_local_image = True
+            else:
+                await self._rollback_failed_install(running_ext, prior_settings, atomic)
+                raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}: {error}") from error
         finally:
             self.unlock(self.unique_entry)
             self.reset_start_attempt(self.unique_entry)
 
         logger.info(f"Extension {self.identifier}:{self.tag} installed")
         # Uninstall all other tags in case user wants to clear them
-        if clear_remaining_tags:
-            logger.info(f"Clearing remaining tags for extension {self.identifier}")
-            to_clear: List[Extension] = cast(List[Extension], await self.from_settings(self.identifier))
-            to_clear = [version for version in to_clear if version.source.tag != self.tag]
-            await asyncio.gather(*(version.uninstall() for version in to_clear))
+        if clear_remaining_tags and not used_local_image:
+            await self._clear_remaining_tags()
 
     async def update(self, clear_remaining_tags: bool) -> AsyncGenerator[bytes, None]:
-        async for data in self.install(clear_remaining_tags):
+        async for data in self.install(clear_remaining_tags, atomic=True):
             yield data
 
     async def uninstall(self) -> None:
@@ -267,20 +392,11 @@ class Extension:
         try:
             async with DockerCtx() as client:
                 # Checks if image exists locally, if not tries to pull it
-                try:
-                    await client.images.inspect(img_name)
-                except Exception:
-                    try:
-                        logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
-                        self.lock(self.unique_entry)
-
-                        tag = img_name + (f"@{self.digest}" if self.digest else "")
-                        await client.images.pull(tag, repo=self.source.docker, tag=self.tag)
-                        # Make sure to add correct tag if a digest was used since docker messes up the tag
-                        if self.digest:
-                            await client.images.tag(tag, img_name)
-                    except Exception as error:
-                        raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
+                if not await self._ensure_tagged_local_image(client):
+                    logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
+                    self.lock(self.unique_entry)
+                    async for _ in self._pull_docker_image(self._prepare_docker_auth()):
+                        pass
 
                 container = await client.containers.create_or_replace(name=ext.container_name(), config=config)  # type: ignore
                 await container.start()
