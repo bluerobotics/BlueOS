@@ -4,7 +4,7 @@ import select
 import signal
 import subprocess
 from concurrent.futures import CancelledError
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import sdbus
 from commonwealth.utils.general import device_id
@@ -22,6 +22,13 @@ from sdbus_async.networkmanager import (
 from sdbus_async.networkmanager.enums import AccessPointCapabilities, WpaSecurityFlags
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
 from wifi_handlers.AbstractWifiHandler import AbstractWifiManager
+from wifi_handlers.information_elements import (
+    AccessPointIdentity,
+    parse_information_elements,
+)
+
+WPA_SUPPLICANT_SERVICE = "fi.w1.wpa_supplicant1"
+WPA_SUPPLICANT_PATH = "/fi/w1/wpa_supplicant1"
 
 
 class CreateAPException(Exception):
@@ -131,6 +138,38 @@ class NetworkManagerWifi(AbstractWifiManager):
                 logger.info("Requested WiFi scan")
             await asyncio.sleep(10)
 
+    async def _wpa_supplicant_property(self, path: str, interface: str, name: str) -> Any:
+        message = self._bus.new_property_get_message(WPA_SUPPLICANT_SERVICE, path, interface, name)
+        return (await self._bus.call_async(message)).get_contents()[1]
+
+    async def _access_point_identities(self) -> Dict[str, AccessPointIdentity]:
+        """Identity advertised on the raw beacon elements, indexed by BSSID.
+
+        NetworkManager trims the beacon down to what it needs, leaving a cloaked network with
+        nothing but its BSSID, while wpa_supplicant keeps the raw elements of every known BSS.
+        """
+        identities: Dict[str, AccessPointIdentity] = {}
+        bss_interface = f"{WPA_SUPPLICANT_SERVICE}.BSS"
+        try:
+            interfaces = await self._wpa_supplicant_property(WPA_SUPPLICANT_PATH, WPA_SUPPLICANT_SERVICE, "Interfaces")
+            for interface_path in interfaces:
+                bss_paths = await self._wpa_supplicant_property(
+                    interface_path, f"{WPA_SUPPLICANT_SERVICE}.Interface", "BSSs"
+                )
+                for bss_path in bss_paths:
+                    try:
+                        bssid = await self._wpa_supplicant_property(bss_path, bss_interface, "BSSID")
+                        information_elements = await self._wpa_supplicant_property(bss_path, bss_interface, "IEs")
+                    except Exception as error:
+                        logger.debug(f"Unable to read BSS {bss_path}: {error}")
+                        continue
+                    address = ":".join(f"{octet:02X}" for octet in bssid)
+                    identities[address] = parse_information_elements(bytes(information_elements))
+        except Exception as error:
+            logger.debug(f"Unable to fetch beacon information elements from wpa_supplicant: {error}")
+        return identities
+
+    # pylint: disable=too-many-locals
     async def get_wifi_available(self) -> List[ScannedWifiNetwork]:
         if not self._device_path or not self._nm:
             return []
@@ -138,6 +177,7 @@ class NetworkManagerWifi(AbstractWifiManager):
         try:
             device = NetworkDeviceWireless(self._device_path, bus=self._bus)
             networks: List[ScannedWifiNetwork] = []
+            identities = await self._access_point_identities()
 
             ap_paths = await device.get_all_access_points()
             for ap_path in ap_paths:
@@ -174,14 +214,23 @@ class NetworkManagerWifi(AbstractWifiManager):
 
                 flag_str = f"[{'-'.join(set(security_flags))}]" if security_flags else ""
 
+                bssid = await ap.hw_address.get_async()
+                identity = identities.get(bssid.upper(), AccessPointIdentity())
+
                 networks.append(
                     ScannedWifiNetwork(
                         ssid=ssid,
-                        signal_strength=(await ap.strength.get_async()),
                         frequency=freq,
-                        bssid=(await ap.hw_address.get_async()),
+                        bssid=bssid,
                         flags=flag_str,
                         signallevel=(await ap.strength.get_async()),
+                        device_name=identity.device_name,
+                        device_category=identity.device_category,
+                        device_subcategory=identity.device_subcategory,
+                        manufacturer=identity.manufacturer,
+                        model_name=identity.model_name,
+                        wps_available=identity.wps_available,
+                        is_p2p_group=identity.is_p2p_group,
                     )
                 )
 
