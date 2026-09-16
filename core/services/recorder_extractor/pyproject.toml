@@ -1,10 +1,9 @@
 [project]
 name = "recorder_extractor"
 version = "0.1.0"
-description = "Serve and manage recorded MP4 files with thumbnails and streaming."
+description = "List MCAP recordings, keep them seekable, and delete them."
 requires-python = ">=3.11"
 dependencies = [
-    "aiocache==0.12.3",
     "commonwealth==0.1.0",
     "fastapi==0.125.0",
     "fastapi-versioning==0.10.0",

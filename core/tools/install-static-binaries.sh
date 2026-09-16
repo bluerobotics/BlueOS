@@ -15,7 +15,6 @@ TOOLS=(
     mavlink_camera_manager
     mavlink_server
     mcap
-    mcap-extractor
     recorder
     ttyd
     zenoh

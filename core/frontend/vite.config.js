@@ -204,6 +204,10 @@ export default defineConfig(({ command, mode }) => {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
       alias: {
         '@': path.resolve(__dirname, './src'),
+        'mediabunny/codec-data': path.resolve(
+          __dirname,
+          'node_modules/mediabunny/dist/modules/src/codec-data.js',
+        ),
       },
     },
     build: {
