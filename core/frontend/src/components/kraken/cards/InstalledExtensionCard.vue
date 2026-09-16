@@ -175,7 +175,7 @@
     />
     <v-card-actions class="card-actions">
       <v-btn
-        v-if="extension.identifier !== 'blueos.major_tom'"
+        v-if="!is_extension_major_tom"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('uninstall', extension)"
       >
@@ -197,7 +197,7 @@
       <v-btn
         v-if="extension.enabled && container"
         :style="{ backgroundColor: buttonBgColor }"
-        @click="$emit('disable', extension)"
+        @click="handleDisableClick"
       >
         Disable
       </v-btn>
@@ -217,6 +217,15 @@
         Restart
       </v-btn>
     </v-card-actions>
+    <WarningDialog
+      v-model="show_major_tom_disable_warning"
+      :message="
+        'All cloud related services and some telemetry features may not be available '
+          + 'if Major Tom extension is disabled.'
+      "
+      confirm-label="Disable"
+      @confirm="confirmDisable"
+    />
   </v-card>
 </template>
 
@@ -227,6 +236,7 @@ import stable from 'semver-stable'
 import Vue, { PropType } from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import WarningDialog from '@/components/common/WarningDialog.vue'
 import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
@@ -235,7 +245,7 @@ import { prettifySize } from '@/utils/helper_functions'
 
 export default Vue.extend({
   name: 'InstalledExtensionCard',
-  components: { SpinningLogo },
+  components: { SpinningLogo, WarningDialog },
   props: {
     extension: {
       type: Object as PropType<InstalledExtensionData>,
@@ -264,6 +274,7 @@ export default Vue.extend({
   data() {
     return {
       settings,
+      show_major_tom_disable_warning: false,
     }
   },
   computed: {
@@ -313,6 +324,9 @@ export default Vue.extend({
 
       return this.extension.tag === latest ? false : latest
     },
+    is_extension_major_tom(): boolean {
+      return this.extension.identifier === 'blueos.major_tom'
+    },
   },
   methods: {
     prettifySize(size_kb: number) {
@@ -360,6 +374,16 @@ export default Vue.extend({
     },
     getStatus(): string {
       return this.container?.status ?? 'N/A'
+    },
+    handleDisableClick() {
+      if (this.is_extension_major_tom) {
+        this.show_major_tom_disable_warning = true
+        return
+      }
+      this.$emit('disable', this.extension)
+    },
+    confirmDisable() {
+      this.$emit('disable', this.extension)
     },
   },
 })
