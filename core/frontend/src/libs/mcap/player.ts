@@ -6,6 +6,7 @@
  * instead of WebCodecs because WebCodecs is only available in secure contexts, and BlueOS is
  * normally served over plain HTTP.
  */
+import { listMcapChannels, McapRecordingChannel } from './channels'
 import { isKeyframe, ParameterSetCache, VideoFormat } from './codec'
 import VideoFrameStream, { scanParameterSets, UNDECODABLE_FRAMES_BEFORE_SKIP } from './frame-stream'
 import {
@@ -68,6 +69,7 @@ interface PendingFrame {
 export interface McapVideoRecording {
   reader: McapIndexedReader
   tracks: VideoTrack[]
+  channels: McapRecordingChannel[]
   durationSeconds: number
   startTime: bigint
 }
@@ -78,6 +80,7 @@ export async function openMcapVideoRecording(url: string, signal?: AbortSignal):
   return {
     reader,
     tracks: listVideoTracks(reader),
+    channels: listMcapChannels(reader),
     durationSeconds: Number(endTime - startTime) / 1e9,
     startTime,
   }
@@ -85,7 +88,10 @@ export async function openMcapVideoRecording(url: string, signal?: AbortSignal):
 
 export interface McapVideoSummary {
   durationSeconds: number
+  started: number
+  ended: number
   tracks: VideoTrack[]
+  channels: McapRecordingChannel[]
   /** Bytes transferred to read this summary, useful to explain the cost of browsing recordings. */
   bytesRead: number
 }
@@ -97,7 +103,10 @@ export async function readMcapVideoSummary(url: string, signal?: AbortSignal): P
   const { startTime, endTime } = reader.summary
   return {
     durationSeconds: Number(endTime - startTime) / 1e9,
+    started: Number(startTime) / 1e9,
+    ended: Number(endTime) / 1e9,
     tracks: listVideoTracks(reader),
+    channels: listMcapChannels(reader),
     bytesRead: source.bytesRead,
   }
 }

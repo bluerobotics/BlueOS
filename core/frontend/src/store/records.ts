@@ -3,13 +3,15 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import { FailedRepair, ProcessingFile, RecordingFile } from '@/types/records'
+import {
+  FailedRepair, ProcessingFile, RecordingFile, SplitRecordingResponse,
+} from '@/types/records'
 import back_axios, { isBackendOffline } from '@/utils/api'
 import { DynamicModule as Module } from '@/utils/vuex'
 
 @Module({ dynamic: true, store, name: 'records' })
 class RecordsStore extends VuexModule {
-  API_URL = '/recorder-extractor/v1.0/recorder'
+  API_URL = '/recorder-extractor/v1.0'
 
   recordings: RecordingFile[] = []
 
@@ -59,7 +61,6 @@ class RecordsStore extends VuexModule {
         this.setRecordings(response.data)
       })
       .catch((error) => {
-        this.setRecordings([])
         if (isBackendOffline(error)) {
           return
         }
@@ -127,6 +128,27 @@ class RecordsStore extends VuexModule {
         const detail = error.response?.data?.detail
         this.setError(`Could not repair ${file.name}: ${detail ?? error.message}`)
       })
+  }
+
+  @Action
+  async splitRecording(file: RecordingFile): Promise<SplitRecordingResponse | null> {
+    try {
+      const response = await back_axios({
+        method: 'post',
+        url: `${this.API_URL}/files/${file.path}/split`,
+        timeout: 120000,
+      })
+      this.setProcessingFiles(response.data.status.processing)
+      this.setFailedRepairs(response.data.status.failed ?? [])
+      return response.data
+    } catch (error) {
+      if (isBackendOffline(error)) {
+        return null
+      }
+      const detail = error.response?.data?.detail
+      this.setError(`Could not split ${file.name}: ${detail ?? error.message}`)
+      return null
+    }
   }
 }
 

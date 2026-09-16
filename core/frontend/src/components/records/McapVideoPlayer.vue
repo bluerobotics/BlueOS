@@ -27,7 +27,16 @@
       />
     </div>
 
-    <div v-if="tracks.length > 0" class="player-footer mt-3">
+    <v-alert
+      v-if="recording && tracks.length === 0"
+      type="info"
+      dense
+      class="mb-2"
+    >
+      This recording has no video streams. CSV export is still available below.
+    </v-alert>
+
+    <div v-if="recording && recording.channels.length > 0" class="player-footer mt-3">
       <div class="d-flex align-center caption grey--text text--darken-1 mb-2">
         <span
           v-if="bytes_downloaded > 0"
@@ -175,6 +184,13 @@
             {{ export_button_label }}
           </v-btn>
         </div>
+
+        <mcap-csv-export
+          :recording="recording"
+          :clip="clip"
+          :name="name"
+          @error="onCsvError"
+        />
       </div>
 
       <div
@@ -213,6 +229,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import McapCsvExport from '@/components/records/McapCsvExport.vue'
 import McapVideoStream from '@/components/records/McapVideoStream.vue'
 import {
   exportTrackAsMp4, Mp4ExportProgress, Mp4ExportRange, saveBlob,
@@ -248,6 +265,7 @@ function formatPosition(seconds: number): string {
 export default Vue.extend({
   name: 'McapVideoPlayer',
   components: {
+    McapCsvExport,
     McapVideoStream,
   },
   props: {
@@ -350,19 +368,13 @@ export default Vue.extend({
     },
   },
   async mounted() {
-    if (!isMediaSourceSupported()) {
-      this.error = 'This browser cannot play recordings, as it does not support Media Source Extensions.'
-      this.opening = false
-      return
-    }
-
     try {
       this.recording = await openMcapVideoRecording(this.url)
       // Biggest stream first: it gets the playback controls the others follow.
       this.tracks = [...this.recording.tracks].sort((left, right) => right.frameCount - left.frameCount)
       this.clip_range = [0, this.recording.durationSeconds]
-      if (this.tracks.length === 0) {
-        this.error = 'This recording does not contain any video stream.'
+      if (this.tracks.length > 0 && !isMediaSourceSupported()) {
+        this.error = 'This browser cannot play recordings, as it does not support Media Source Extensions.'
       }
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error)
@@ -536,6 +548,9 @@ export default Vue.extend({
     },
     cancelExport(): void {
       this.export_controller?.abort()
+    },
+    onCsvError(message: string): void {
+      this.error = message
     },
   },
 })

@@ -5,6 +5,7 @@ import { exportTrackAsMp4 } from '../src/libs/mcap/export'
 import { openMcapVideoRecording } from '../src/libs/mcap/player'
 import { McapIndexedReader } from '../src/libs/mcap/reader'
 import { ByteSource } from '../src/libs/mcap/source'
+import { listMcapChannels } from '../src/libs/mcap/csv'
 import { listVideoTracks } from '../src/libs/mcap/video-track'
 
 class FileSource implements ByteSource {
@@ -51,6 +52,7 @@ async function run(path: string, output: string): Promise<void> {
   const recording = {
     reader,
     tracks,
+    channels: listMcapChannels(reader),
     durationSeconds: Number(reader.summary.endTime - reader.summary.startTime) / 1e9,
     startTime: reader.summary.startTime,
   } as Awaited<ReturnType<typeof openMcapVideoRecording>>
