@@ -4,15 +4,17 @@
 set -e
 
 PROJECT_NAME="zenoh"
-VERSION="1.9.0"
-BINARIES=(
-  "zenoh"
+VERSION="1.9.0-shared-memory"
+REPOSITORY_ORG="joaoantoniocardoso"
+REPOSITORY_NAME="zenoh"
+REPOSITORY_URL="https://github.com/${REPOSITORY_ORG}/${REPOSITORY_NAME}"
+PLUGIN_BINARIES=(
   "zenoh-plugin-webserver"
   "zenoh-backend-filesystem"
   "zenoh-plugin-remote-api/zenoh-ts"
 )
 
-echo "Installing project $PROJECT_NAME and friends with version $VERSION"
+echo "Installing project $PROJECT_NAME version $VERSION"
 
 # Step 1: Prepare the download URL
 
@@ -51,7 +53,12 @@ echo "Downloading binaries..."
 
 DOWNLOAD_FOLDER="/tmp/zenoh_and_friends"
 mkdir -p "$DOWNLOAD_FOLDER"
-for BINARY in "${BINARIES[@]}"; do
+
+URL="${REPOSITORY_URL}/releases/download/${VERSION}/${PROJECT_NAME}-${VERSION}-${TOOLCHAIN}-standalone.zip"
+echo " - Download: ${URL}"
+wget -q "$URL" -O "${DOWNLOAD_FOLDER}/${PROJECT_NAME}.zip"
+
+for BINARY in "${PLUGIN_BINARIES[@]}"; do
   if [[ "$BINARY" == *"/"* ]]; then
     BINARY_URL_PATH="${BINARY%/*}"
     BINARY_URL_NAME="${BINARY##*/}"
@@ -60,7 +67,7 @@ for BINARY in "${BINARIES[@]}"; do
     BINARY_URL_NAME="$BINARY"
   fi
 
-  URL="https://download.eclipse.org/zenoh/${BINARY_URL_PATH}/${VERSION}/${BINARY_URL_NAME}-${VERSION}-${TOOLCHAIN}-standalone.zip"
+  URL="${REPOSITORY_URL}/releases/download/${VERSION}/${BINARY_URL_NAME}-${VERSION}-${TOOLCHAIN}-standalone.zip"
   echo " - Download: ${URL}"
   wget -q "$URL" -O "${DOWNLOAD_FOLDER}/${BINARY_URL_PATH}.zip"
 done
