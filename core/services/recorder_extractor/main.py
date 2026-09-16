@@ -3,17 +3,19 @@
 import asyncio
 import logging
 import os
+import re
 import shutil
 import struct
 import tempfile
 import time
+from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Set
+from typing import Any, Callable, Dict, List, Literal, Set
 from urllib.parse import quote
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
-from commonwealth.utils.general import file_is_open_async
+from commonwealth.utils.general import file_is_open_async, open_files_under
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import APIRouter, FastAPI, HTTPException, status
@@ -25,27 +27,27 @@ from uvicorn import Config, Server
 
 SERVICE_NAME = "recorder-extractor"
 RECORDER_DIR = Path("/usr/blueos/userdata/recorder")
-# Where nginx serves the same directory from, which recordings are read through
 RECORDER_URL = "/userdata/recorder"
 PORT = 9150
 RECORDING_SUFFIX = ".mcap"
 
 MCAP_MAGIC = b"\x89MCAP0\r\n"
-# opcode + u64 length + summary_start + summary_offset_start + summary_crc
 MCAP_FOOTER_SIZE = 29
 
-# A recording touched this recently may still be growing, and recovering one that is being written
-# truncates it at whatever reached the disk
 RECENTLY_WRITTEN_SECONDS = 10
 
-# Track MCAP files currently being repaired
+SPLIT_TIMESTAMP_PATTERN = re.compile(r"_split_(\d{8})_(\d{6})\.mcap$", re.IGNORECASE)
+RECORDER_TIMESTAMP_PATTERN = re.compile(r"^recorder_(\d{8})_(\d{6})")
+
+RecordingState = Literal["recording", "ready", "needs_repair", "repairing"]
+
 processing_mcap_files: set[str] = set()
-
-# Why the last repair of a recording failed, so whoever asked for it can be told
+splitting_source_paths: set[str] = set()
 repair_failures: Dict[str, str] = {}
-
-# Repairs in flight, kept referenced so the event loop cannot collect them halfway through
-repair_tasks: Set["asyncio.Task[None]"] = set()
+processing_tasks: Set["asyncio.Task[None]"] = set()
+# Resolved path -> (inode, size, mtime_ns, footer). Finished files do not grow, so the footer
+# is reused until the file is replaced or deleted.
+recording_footer_cache: Dict[str, tuple[int, int, int, tuple[int, int] | None]] = {}
 
 logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 init_logger(SERVICE_NAME)
@@ -60,7 +62,8 @@ class RecordingFile(BaseModel):
     name: str
     path: str
     size_bytes: int
-    modified: float
+    created: float
+    state: RecordingState
     download_url: str
     stream_url: str
 
@@ -79,6 +82,11 @@ class FailedRepair(BaseModel):
 class ProcessingStatus(BaseModel):
     processing: List[ProcessingFile]
     failed: List[FailedRepair] = []
+
+
+class SplitRecordingResponse(BaseModel):
+    recording: RecordingFile
+    status: ProcessingStatus
 
 
 def ensure_recorder_dir() -> Path:
@@ -109,32 +117,102 @@ def resolve_recording(filename: str) -> Path:
     return candidate
 
 
-def mcap_is_indexed(mcap_path: Path) -> bool:
-    """
-    Check whether the recording ends with a footer pointing at a summary section.
+def parse_utc_timestamp(date_part: str, time_part: str) -> float:
+    parsed = datetime.strptime(f"{date_part}_{time_part}", "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
 
-    The frontend seeks through recordings using the MCAP index, so a file without one cannot be
-    streamed. Reading the footer costs a few bytes, unlike scanning the whole file.
-    """
+
+def created_from_filename(name: str, stat: os.stat_result) -> float:
+    split_match = SPLIT_TIMESTAMP_PATTERN.search(name)
+    if split_match:
+        return parse_utc_timestamp(split_match.group(1), split_match.group(2))
+    recorder_match = RECORDER_TIMESTAMP_PATTERN.match(name)
+    if recorder_match:
+        return parse_utc_timestamp(recorder_match.group(1), recorder_match.group(2))
+    return stat.st_ctime or stat.st_mtime
+
+
+def read_mcap_footer(mcap_path: Path, size: int | None = None) -> tuple[int, int] | None:
     try:
-        size = mcap_path.stat().st_size
+        if size is None:
+            size = mcap_path.stat().st_size
         if size < (len(MCAP_MAGIC) * 2) + MCAP_FOOTER_SIZE:
-            return False
+            return None
         with mcap_path.open("rb") as recording:
             recording.seek(size - len(MCAP_MAGIC) - MCAP_FOOTER_SIZE)
             footer = recording.read(MCAP_FOOTER_SIZE + len(MCAP_MAGIC))
     except OSError as exception:
         logger.warning(f"Failed to read MCAP footer of {mcap_path}: {exception}")
-        return False
+        return None
 
     if len(footer) != MCAP_FOOTER_SIZE + len(MCAP_MAGIC) or not footer.endswith(MCAP_MAGIC):
-        return False
-    summary_start: int = struct.unpack_from("<Q", footer, 9)[0]
-    return summary_start > 0
+        return None
+    summary_start = struct.unpack_from("<Q", footer, 9)[0]
+    summary_offset_start = struct.unpack_from("<Q", footer, 17)[0]
+    return summary_start, summary_offset_start
+
+
+def mcap_is_indexed(mcap_path: Path) -> bool:
+    footer = read_mcap_footer(mcap_path)
+    return footer is not None and footer[0] > 0
+
+
+def footer_for_listing(path: Path, stat: os.stat_result, *, is_open: bool) -> tuple[int, int] | None:
+    if is_open:
+        return None
+    cache_key = str(path.resolve())
+    identity = (stat.st_ino, stat.st_size, stat.st_mtime_ns)
+    cached = recording_footer_cache.get(cache_key)
+    if cached is not None and cached[:3] == identity:
+        return cached[3]
+    footer = read_mcap_footer(path, size=stat.st_size)
+    recording_footer_cache[cache_key] = (*identity, footer)
+    return footer
+
+
+def prune_recording_footer_cache(keep: set[str]) -> None:
+    for cache_key in [key for key in recording_footer_cache if key not in keep]:
+        recording_footer_cache.pop(cache_key, None)
+
+
+def recording_state(relative_path: str, is_open: bool, footer: tuple[int, int] | None) -> RecordingState:
+    if relative_path in processing_mcap_files:
+        return "repairing"
+    if is_open:
+        return "recording"
+    if footer is not None and footer[0] > 0:
+        return "ready"
+    return "needs_repair"
+
+
+async def recording_is_open(path: Path, open_files: set[Path] | None) -> bool:
+    if open_files is None:
+        return await file_is_open_async(path)
+    return path.resolve() in open_files
+
+
+async def build_recording_file(path: Path, base_path: Path, *, is_open: bool | None = None) -> RecordingFile:
+    stat = path.stat()
+    relative_path = str(path.relative_to(base_path))
+    if is_open is None:
+        is_open = await file_is_open_async(path)
+
+    created = created_from_filename(path.name, stat)
+    footer = footer_for_listing(path, stat, is_open=is_open)
+    state = recording_state(relative_path, is_open, footer)
+    recording_url = f"{RECORDER_URL}/{quote(relative_path)}"
+    return RecordingFile(
+        name=path.name,
+        path=relative_path,
+        size_bytes=stat.st_size,
+        created=created,
+        state=state,
+        download_url=recording_url,
+        stream_url=recording_url,
+    )
 
 
 async def recover_mcap(mcap_path: Path) -> None:
-    """Rewrite a recording with `mcap recover`, which restores its index and drops truncated data."""
     mcap_binary = shutil.which("mcap")
     if not mcap_binary:
         raise RepairFailed("The mcap tool is not available on this vehicle.")
@@ -144,8 +222,6 @@ async def recover_mcap(mcap_path: Path) -> None:
 
     logger.info(f"Attempting to recover {mcap_path}")
 
-    # Write the recovered recording in the same directory as the mcap file
-    # This ensures atomic replacement on the same filesystem
     with tempfile.NamedTemporaryFile(delete=False, dir=mcap_path.parent, suffix=".recover") as tmpfile:
         tmp_path = Path(tmpfile.name)
     try:
@@ -159,7 +235,6 @@ async def recover_mcap(mcap_path: Path) -> None:
         logger.exception(f"Unexpected error during mcap recover: {exception}")
         raise RepairFailed(str(exception)) from exception
     finally:
-        # A recover that got as far as replacing the recording leaves nothing behind to clean up
         if tmp_path.exists():
             try:
                 tmp_path.unlink()
@@ -168,7 +243,6 @@ async def recover_mcap(mcap_path: Path) -> None:
 
 
 async def write_recovered_mcap(mcap_binary: str, mcap_path: Path, tmp_path: Path) -> None:
-    """Run `mcap recover` into a temporary file and put the result in the place of the recording."""
     recover_cmd = [mcap_binary, "recover", str(mcap_path), "-o", str(tmp_path)]
     recover_proc = await asyncio.create_subprocess_exec(
         *recover_cmd,
@@ -179,12 +253,10 @@ async def write_recovered_mcap(mcap_binary: str, mcap_path: Path, tmp_path: Path
     _, recover_stderr_bytes = await recover_proc.communicate()
     recover_stderr = recover_stderr_bytes.decode("utf-8", "ignore")
 
-    # Check if recovery succeeded
     if recover_proc.returncode != 0:
         logger.error(
             f"mcap recover command failed for {mcap_path} (code={recover_proc.returncode}): {recover_stderr.strip()}",
         )
-        # Only the last line of the tool's output says what went wrong, the rest is a tally
         reason = recover_stderr.strip().splitlines()[-1:]
         raise RepairFailed(reason[0] if reason else f"mcap recover exited with {recover_proc.returncode}.")
 
@@ -194,8 +266,6 @@ async def write_recovered_mcap(mcap_binary: str, mcap_path: Path, tmp_path: Path
     if tmp_path.stat().st_size == 0:
         raise RepairFailed("mcap recover found nothing worth keeping in this recording.")
 
-    # The repaired recording takes the place of the original, so it has to be left as reachable as the
-    # original was: nginx serves recordings straight from disk, and a temporary file is private
     original = mcap_path.stat()
     os.chmod(tmp_path, original.st_mode & 0o777)
     try:
@@ -203,14 +273,11 @@ async def write_recovered_mcap(mcap_binary: str, mcap_path: Path, tmp_path: Path
     except PermissionError:
         logger.warning(f"Cannot keep the owner of {mcap_path}, the repaired file stays with ours")
 
-    # Atomically replace the original file with the recovered one
-    # Using replace ensures atomic operation
     tmp_path.replace(mcap_path)
     logger.info(f"Successfully recovered {mcap_path} (recovered size: {mcap_path.stat().st_size} bytes)")
 
 
-async def repair_recording(mcap_path: Path, relative_path: str) -> None:
-    """Give a recording its index back, reporting through the status endpoint while it runs."""
+async def process_recording(mcap_path: Path, relative_path: str) -> None:
     try:
         await recover_mcap(mcap_path)
     except RepairFailed as failure:
@@ -221,13 +288,67 @@ async def repair_recording(mcap_path: Path, relative_path: str) -> None:
 
 
 def current_status() -> ProcessingStatus:
-    # Snapshot both with list to avoid RuntimeError from concurrent mutation
     return ProcessingStatus(
         processing=[ProcessingFile(name=Path(path).name, path=path) for path in list(processing_mcap_files)],
         failed=[
             FailedRepair(name=Path(path).name, path=path, error=error) for path, error in list(repair_failures.items())
         ],
     )
+
+
+def split_destination_path(source_path: Path) -> Path:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return source_path.with_name(f"{source_path.stem}_split_{timestamp}{RECORDING_SUFFIX}")
+
+
+def copy_recording_prefix(source_path: Path, destination_path: Path) -> None:
+    source_size = source_path.stat().st_size
+    with source_path.open("rb") as source, destination_path.open("wb") as destination:
+        remaining = source_size
+        offset = 0
+        while remaining > 0:
+            sent = os.sendfile(destination.fileno(), source.fileno(), offset, remaining)
+            if sent == 0:
+                break
+            offset += sent
+            remaining -= sent
+
+
+def ensure_disk_space_for_split(directory: Path, source_size: int) -> None:
+    free_bytes = shutil.disk_usage(directory).free
+    if free_bytes < source_size:
+        raise HTTPException(
+            status_code=status.HTTP_507_INSUFFICIENT_STORAGE,
+            detail="Not enough disk space to snapshot this recording.",
+        )
+
+
+async def snapshot_copy_recording(source_path: Path, destination_path: Path) -> None:
+    ensure_disk_space_for_split(destination_path.parent, source_path.stat().st_size)
+    try:
+        await asyncio.to_thread(copy_recording_prefix, source_path, destination_path)
+    except Exception:
+        if destination_path.exists():
+            try:
+                destination_path.unlink()
+            except OSError as exception:
+                logger.error(f"Failed to remove partial split recording {destination_path}: {exception}")
+        raise
+
+
+async def recover_split_recording(split_path: Path, split_relative_path: str) -> None:
+    try:
+        await recover_mcap(split_path)
+    except RepairFailed as failure:
+        logger.error(f"Split recover of {split_relative_path} failed: {failure}")
+        repair_failures[split_relative_path] = str(failure)
+        if split_path.exists():
+            try:
+                split_path.unlink()
+            except OSError as exception:
+                logger.error(f"Failed to remove failed split recording {split_path}: {exception}")
+    finally:
+        processing_mcap_files.discard(split_relative_path)
 
 
 def to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
@@ -249,7 +370,6 @@ def to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
 
 
 recorder_router = APIRouter(
-    prefix="/recorder",
     tags=["recorder_v1"],
     route_class=versioned_api_route(1, 0),
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found"}},
@@ -263,37 +383,29 @@ recorder_router = APIRouter(
 )
 @to_http_exception
 async def list_recordings() -> List[RecordingFile]:
-    files: List[RecordingFile] = []
     base_path = ensure_recorder_dir()
-    recordings = base_path.rglob(f"*{RECORDING_SUFFIX}")
-    for path in sorted(recordings, key=lambda item: item.stat().st_mtime, reverse=True):
-        stat = path.stat()
-        relative_path = path.relative_to(base_path)
-        safe_path = str(relative_path)
-        # Recordings are read straight from nginx, which serves them with byte ranges and sendfile,
-        # so playing and saving them costs the vehicle no more than the kernel copying bytes.
-        recording_url = f"{RECORDER_URL}/{quote(safe_path)}"
-        files.append(
-            RecordingFile(
-                name=path.name,
-                path=safe_path,
-                size_bytes=stat.st_size,
-                modified=stat.st_mtime,
-                download_url=recording_url,
-                stream_url=recording_url,
-            )
-        )
-    return files
+    recording_paths = list(base_path.rglob(f"*{RECORDING_SUFFIX}"))
+    open_files = await asyncio.to_thread(open_files_under, base_path)
+    files: List[RecordingFile] = []
+    listed_paths: set[str] = set()
+    for path in recording_paths:
+        try:
+            is_open = await recording_is_open(path, open_files)
+            files.append(await build_recording_file(path, base_path, is_open=is_open))
+            listed_paths.add(str(path.resolve()))
+        except FileNotFoundError:
+            continue
+    prune_recording_footer_cache(listed_paths)
+    return sorted(files, key=lambda recording: recording.created, reverse=True)
 
 
 @recorder_router.get(
     "/status",
     response_model=ProcessingStatus,
-    summary="Get MCAP repair status.",
+    summary="Get MCAP repair and split status.",
 )
 @to_http_exception
 async def get_processing_status() -> ProcessingStatus:
-    """Return MCAP files currently being repaired, and the repairs that failed."""
     return current_status()
 
 
@@ -305,17 +417,13 @@ async def get_processing_status() -> ProcessingStatus:
 )
 @to_http_exception
 async def repair_recording_request(filename: str) -> ProcessingStatus:
-    """
-    Rewrite a recording so that it carries an index, which is what random access needs.
-
-    Recordings lose their index when nothing closes them, as when the vehicle loses power mid flight.
-    Repairing rewrites the file, so it is asked for rather than done on a timer: a recording that is
-    still growing would be cut back to whatever had reached the disk.
-    """
     path = resolve_recording(filename)
     relative_path = str(path.relative_to(ensure_recorder_dir()))
     if relative_path in processing_mcap_files:
-        return current_status()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This recording is already being repaired.",
+        )
 
     if mcap_is_indexed(path):
         raise HTTPException(
@@ -330,13 +438,51 @@ async def repair_recording_request(filename: str) -> ProcessingStatus:
             detail="This recording is still being written. Try again once it is finished.",
         )
 
-    # Marked as processing before answering, so the reply already shows the repair this asked for
     processing_mcap_files.add(relative_path)
     repair_failures.pop(relative_path, None)
-    task = asyncio.create_task(repair_recording(path, relative_path))
-    repair_tasks.add(task)
-    task.add_done_callback(repair_tasks.discard)
+    task = asyncio.create_task(process_recording(path, relative_path))
+    processing_tasks.add(task)
+    task.add_done_callback(processing_tasks.discard)
     return current_status()
+
+
+@recorder_router.post(
+    "/files/{filename:path}/split",
+    response_model=SplitRecordingResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Snapshot a live recording into a seekable split file.",
+)
+@to_http_exception
+async def split_recording_request(filename: str) -> SplitRecordingResponse:
+    source_path = resolve_recording(filename)
+    relative_path = str(source_path.relative_to(ensure_recorder_dir()))
+    if relative_path in processing_mcap_files or relative_path in splitting_source_paths:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This recording is already being processed.",
+        )
+
+    split_path = split_destination_path(source_path)
+    if split_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A split recording with this name already exists.",
+        )
+
+    split_relative_path = str(split_path.relative_to(ensure_recorder_dir()))
+    splitting_source_paths.add(relative_path)
+    try:
+        await snapshot_copy_recording(source_path, split_path)
+    finally:
+        splitting_source_paths.discard(relative_path)
+    processing_mcap_files.add(split_relative_path)
+    repair_failures.pop(split_relative_path, None)
+    task = asyncio.create_task(recover_split_recording(split_path, split_relative_path))
+    processing_tasks.add(task)
+    task.add_done_callback(processing_tasks.discard)
+
+    recording = await build_recording_file(split_path, ensure_recorder_dir(), is_open=False)
+    return SplitRecordingResponse(recording=recording, status=current_status())
 
 
 @recorder_router.delete(
@@ -347,6 +493,17 @@ async def repair_recording_request(filename: str) -> ProcessingStatus:
 @to_http_exception
 async def delete_recording(filename: str) -> None:
     path = resolve_recording(filename)
+    relative_path = str(path.relative_to(ensure_recorder_dir()))
+    if relative_path in processing_mcap_files:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This recording is being processed.",
+        )
+    if await file_is_open_async(path):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This recording is still being written.",
+        )
     try:
         path.unlink()
     except Exception as exception:
@@ -359,7 +516,7 @@ async def delete_recording(filename: str) -> None:
 
 fast_api_app = FastAPI(
     title="Recorder Extractor API",
-    description="List MCAP recordings and keep them seekable. Their bytes are served by nginx.",
+    description="Catalog MCAP recordings and keep them seekable. Their bytes are served by nginx.",
     default_response_class=PrettyJSONResponse,
 )
 fast_api_app.router.route_class = GenericErrorHandlingRoute
