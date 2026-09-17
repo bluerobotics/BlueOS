@@ -122,7 +122,6 @@ COPY --from=download-binaries \
     /usr/bin/mavlink-camera-manager \
     /usr/bin/mavlink-server \
     /usr/bin/mcap \
-    /usr/bin/mcap-foxglove-video-extract \
     /usr/bin/zenoh \
     /usr/bin/ttyd \
     /usr/bin/
