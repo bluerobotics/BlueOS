@@ -18,6 +18,7 @@ set -e
 EOF
 
 COPY frontend /home/pi/frontend
+ENV BUN_FEATURE_FLAG_DISABLE_STREAMING_INSTALL=1
 RUN <<-EOF
 set -e
 
