@@ -9,6 +9,16 @@
       <v-card-title class="justify-center pt-6">
         A new version is available!
       </v-card-title>
+      <v-card-text
+        v-if="show_release_notes"
+        class="release-notes-preview"
+      >
+        <release-notes
+          :key="latest_version?.tag"
+          :repository="latest_version?.repository"
+          :tag="latest_version?.tag"
+        />
+      </v-card-text>
       <v-card-actions class="justify-center">
         <v-btn
           class="ma-6 elevation-2"
@@ -26,6 +36,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
+import ReleaseNotes from '@/components/version-chooser/ReleaseNotes.vue'
 import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import { InternetConnectionState } from '@/types/helper'
@@ -34,6 +45,9 @@ import * as VCU from '@/utils/version_chooser'
 
 export default Vue.extend({
   name: 'NewVersionNotificator',
+  components: {
+    ReleaseNotes,
+  },
   data() {
     return {
       available_versions: {
@@ -53,6 +67,11 @@ export default Vue.extend({
     can_fetch_remote(): boolean {
       return helper.has_internet === InternetConnectionState.ONLINE
         || helper.has_internet === InternetConnectionState.LIMITED
+    },
+    // Non-version tags like 'master' have no release to point at, so the dialog would only be
+    // able to say the notes are unavailable
+    show_release_notes(): boolean {
+      return this.latest_version !== undefined && VCU.isSemVer(this.latest_version.tag)
     },
   },
   watch: {
@@ -114,3 +133,10 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.release-notes-preview {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+</style>
