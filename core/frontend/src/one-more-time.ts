@@ -182,6 +182,22 @@ export class OneMoreTime {
     this.isPaused = false
     this.start()
   }
+
+  /**
+   * Starts or resumes when `active`, stops when not. Safe to call repeatedly: a running or
+   * scheduled task is left alone, so this can sit in a watcher without doubling up work.
+   */
+  setActive(active: boolean): void {
+    if (active) {
+      if (this.isPaused) {
+        this.resume()
+      } else if (!this.isRunning && !this.timeoutId) {
+        this.start()
+      }
+      return
+    }
+    this.stop()
+  }
 }
 
 /** Example
