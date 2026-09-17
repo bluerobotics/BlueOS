@@ -46,6 +46,8 @@ class PydanticManager(Generic[T]):
         """
         if not self._settings:
             self.load()
+            if not self._settings:
+                raise RuntimeError("PydanticManager.load() failed")
 
         return self._settings
 
