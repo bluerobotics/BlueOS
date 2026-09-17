@@ -75,11 +75,11 @@ export function convertGitDescribeToUrl(git_describe: string): string {
 // A request to `/cache/<host>/<path>` is proxied by the vehicle to `https://<host>/<path>`.
 const VEHICLE_PROXY_PREFIX = '/cache/'
 
-async function fetchWithTimeout(url: string, timeout_ms: number): Promise<Response> {
+async function fetchWithTimeout(url: string, timeout_ms: number, headers?: HeadersInit): Promise<Response> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout_ms)
   try {
-    return await fetch(url, { signal: controller.signal })
+    return await fetch(url, { headers, signal: controller.signal })
   } finally {
     clearTimeout(timer)
   }
@@ -91,9 +91,13 @@ async function fetchWithTimeout(url: string, timeout_ms: number): Promise<Respon
  * This allows resources hosted outside BlueOS to be reached even when only the vehicle
  * (and not the computer running the frontend) has internet access.
  */
-export async function fetchWithVehicleFallback(url: string, timeout_ms = 5000): Promise<Response> {
+export async function fetchWithVehicleFallback(
+  url: string,
+  headers?: HeadersInit,
+  timeout_ms = 5000,
+): Promise<Response> {
   try {
-    const response = await fetchWithTimeout(url, timeout_ms)
+    const response = await fetchWithTimeout(url, timeout_ms, headers)
     if (response.ok) {
       return response
     }
@@ -102,7 +106,7 @@ export async function fetchWithVehicleFallback(url: string, timeout_ms = 5000): 
   }
 
   const proxied_url = VEHICLE_PROXY_PREFIX + url.replace(/^https?:\/\//, '')
-  return fetchWithTimeout(proxied_url, timeout_ms)
+  return fetchWithTimeout(proxied_url, timeout_ms, headers)
 }
 
 export function prettifySize(size_kb: number): string {
