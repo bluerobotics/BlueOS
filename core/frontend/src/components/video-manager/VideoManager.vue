@@ -68,6 +68,26 @@
             label="Raspberry legacy camera support"
             @change="toggleLegacyMode"
           />
+          <v-switch
+            v-if="is_raspberry_pi_5"
+            v-model="pi5_mipi_camera_mode"
+            :disabled="updating_pi5_i2c_mode"
+            :loading="updating_pi5_i2c_mode"
+            label="Raspberry Pi 5 MIPI camera support"
+            hint="Requires a reboot and disables external Navigator I²C sensors in ArduPilot."
+            persistent-hint
+            @change="togglePi5MipiCameraMode"
+          />
+          <v-alert
+            v-if="is_raspberry_pi_5 && pi5_mipi_camera_mode"
+            class="mt-3"
+            dense
+            text
+            type="warning"
+          >
+            The Navigator external I²C port is moved to bus 8 in this mode. Current Navigator ArduPilot firmware
+            probes external sensors on bus 6, so those sensors will not be detected.
+          </v-alert>
           <v-btn
             @click="resetSettings"
           >
@@ -88,7 +108,8 @@ import Vue from 'vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
-import commander from '@/store/commander'
+import commander, { Pi5I2CMode } from '@/store/commander'
+import system_information from '@/store/system-information'
 import video from '@/store/video'
 import { commander_service } from '@/types/frontend_services'
 import {
@@ -114,9 +135,14 @@ export default Vue.extend({
     return {
       show_settings_dialog: false,
       legacy_mode: false,
+      pi5_mipi_camera_mode: false,
+      updating_pi5_i2c_mode: false,
     }
   },
   computed: {
+    is_raspberry_pi_5(): boolean {
+      return system_information.platform?.raspberry?.model?.includes('Raspberry Pi 5') ?? false
+    },
     are_video_devices_available(): boolean {
       return !this.video_devices.isEmpty()
     },
@@ -163,6 +189,9 @@ export default Vue.extend({
   },
   async mounted() {
     await this.updateCameraLegacy()
+    if (this.is_raspberry_pi_5) {
+      await this.updatePi5I2CMode()
+    }
   },
   methods: {
     async updateCameraLegacy(): Promise<void> {
@@ -178,11 +207,29 @@ export default Vue.extend({
     async toggleLegacyMode(): Promise<void> {
       await this.setCameraLegacy(this.legacy_mode)
     },
+    async updatePi5I2CMode(): Promise<void> {
+      this.pi5_mipi_camera_mode = await commander.getPi5I2CMode() === Pi5I2CMode.MipiCamera
+    },
+    async togglePi5MipiCameraMode(): Promise<void> {
+      this.updating_pi5_i2c_mode = true
+      const mode = this.pi5_mipi_camera_mode ? Pi5I2CMode.MipiCamera : Pi5I2CMode.ExternalSensor
+      const updated = await commander.setPi5I2CMode(mode)
+      if (updated) {
+        const message = 'Reboot is required for the Raspberry Pi I²C/MIPI change to take effect.'
+        notifier.pushInfo('DO_PI5_I2C_MODE_REBOOT_REQUIRED', message, true)
+      } else {
+        await this.updatePi5I2CMode()
+      }
+      this.updating_pi5_i2c_mode = false
+    },
     is_redirect_source(device: Device): boolean {
       return device.source === 'Redirect'
     },
-    openSettingsDialog(): void {
+    async openSettingsDialog(): Promise<void> {
       this.show_settings_dialog = true
+      if (this.is_raspberry_pi_5) {
+        await this.updatePi5I2CMode()
+      }
     },
     resetSettings(): void {
       video.resetSettings()

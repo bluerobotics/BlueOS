@@ -11,6 +11,11 @@ import { DynamicModule as Module } from '@/utils/vuex'
 
 const notifier = new Notifier(commander_service)
 
+export enum Pi5I2CMode {
+  ExternalSensor = 'external_sensor',
+  MipiCamera = 'mipi_camera',
+}
+
 @Module({
   dynamic: true,
   store,
@@ -147,6 +152,45 @@ class CommanderStore extends VuexModule {
         const message = 'Could not set Raspberry legacy camera configuration:'
           + ` ${error.message ?? error.response?.data}.`
         notifier.pushError('COMMANDER_SET_CAMERA_LEGACY_FAIL', message, true)
+        return false
+      })
+  }
+
+  @Action
+  async getPi5I2CMode(): Promise<Pi5I2CMode | undefined> {
+    return back_axios({
+      method: 'get',
+      url: `${this.API_URL}/raspi_config/pi5_i2c_mode`,
+      timeout: 5000,
+    })
+      .then((response) => response.data?.mode)
+      .catch((error) => {
+        if (isBackendOffline(error)) {
+          return undefined
+        }
+        const message = 'Could not get Raspberry Pi 5 I²C/MIPI mode:'
+          + ` ${error.response?.data?.detail ?? error.message}.`
+        notifier.pushError('COMMANDER_GET_PI5_I2C_MODE_FAIL', message, true)
+        return undefined
+      })
+  }
+
+  @Action
+  async setPi5I2CMode(mode: Pi5I2CMode): Promise<boolean> {
+    return back_axios({
+      method: 'post',
+      url: `${this.API_URL}/raspi_config/pi5_i2c_mode`,
+      timeout: 5000,
+      params: { mode },
+    })
+      .then(() => true)
+      .catch((error) => {
+        if (isBackendOffline(error)) {
+          return false
+        }
+        const message = 'Could not set Raspberry Pi 5 I²C/MIPI mode:'
+          + ` ${error.response?.data?.detail ?? error.message}.`
+        notifier.pushError('COMMANDER_SET_PI5_I2C_MODE_FAIL', message, true)
         return false
       })
   }
