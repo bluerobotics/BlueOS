@@ -228,6 +228,35 @@ def boot_config_filter_conflicting_configuration_at_section(
     ]
 
 
+def boot_config_line_is_protected(line: str) -> bool:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+    return bool(re.match(f"^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$", line, regex_flags))
+
+
+def boot_config_normalize_section_order(
+    config_content: List[str], section_name: str, managed_entries: List[Tuple[str, str]]
+) -> None:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+    (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
+    section_body = config_content[section_start + 1 : section_end]
+    match_patterns = [pattern for _, pattern in managed_entries]
+
+    def is_managed(line: str) -> bool:
+        if boot_config_line_is_protected(line):
+            return False
+        return any(re.match(pattern, line, regex_flags) for pattern in match_patterns)
+
+    user_lines = [line for line in section_body if line and not is_managed(line)]
+
+    board_lines = []
+    for board_line, pattern in managed_entries:
+        if any(boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags) for line in section_body):
+            continue
+        board_lines.append(board_line)
+    # First the board lines, in the order of the list. Then the lines the user added.
+    config_content[section_start + 1 : section_end] = board_lines + user_lines
+
+
 def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
     # Keep in sync with install/boards/bcm_27xx.sh (Pi4) and bcm_2712.sh (Pi5).
     if cpu_type == CpuType.PI4:
@@ -461,12 +490,13 @@ def update_dwc2() -> bool:
         entry for entry in managed_entries if entry[0].startswith("dtoverlay=dwc2")
     )
 
-    boot_config_add_configuration_at_section(config_content, dwc2_overlay_config, section_name)
+    boot_config_merge_duplicated_sections(config_content, section_name)
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
     config_content = boot_config_filter_conflicting_configuration_at_section(
         config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, section_name
     )
+    boot_config_normalize_section_order(config_content, section_name, managed_entries)
 
     # Save if needed, with backup
     backup_identifier = "before_update_dwc2"
@@ -515,16 +545,13 @@ def update_navigator_overlays() -> bool:
     # and only the first of them would ever be configured
     boot_config_merge_duplicated_sections(config_content, section_name)
 
-    navigator_configs_with_match_patterns.reverse()
-
     for (config, config_match_pattern) in navigator_configs_with_match_patterns:
-        # Add each navigator configuration to the board-specific section
-        boot_config_add_configuration_at_section(config_content, config, section_name)
-
         # Remove any unprotected and conflicting configuration of peripherals
         config_content = boot_config_filter_conflicting_configuration_at_section(
             config_content, config_match_pattern, config, section_name
         )
+
+    boot_config_normalize_section_order(config_content, section_name, managed_entries)
 
     # Don't need to apply or restart if the content is the same
     if unpatched_config_content == config_content:
