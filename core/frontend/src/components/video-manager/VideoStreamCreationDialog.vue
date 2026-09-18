@@ -47,13 +47,12 @@
           <div
             v-for="(endpoint, index) in stream_endpoints"
             :key="index"
-            class="d-flex justify-space-between align-center"
+            class="endpoint-row d-flex justify-space-between align-center"
           >
             <v-select
               :items="availableStreamTypes(endpoint)"
               :value="selectedStreamType(endpoint)"
-              class="mr-10"
-              style="width:20%;"
+              class="endpoint-protocol mr-10"
               @change="set_default_address_for_stream(index, $event)"
             >
               <template #item="{ item }">
@@ -550,3 +549,21 @@ export default Vue.extend({
   },
 })
 </script>
+<style scoped>
+.endpoint-protocol {
+  width: 20%;
+}
+
+/* A fifth of a 600px dialog is readable, a fifth of a phone is not, and it
+   starves the endpoint field beside it too */
+@media (max-width: 600px) {
+  .endpoint-row {
+    flex-wrap: wrap;
+  }
+
+  .endpoint-protocol {
+    width: 100%;
+    margin-right: 0 !important;
+  }
+}
+</style>
