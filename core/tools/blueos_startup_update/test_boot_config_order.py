@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+import blueos_startup_update
 import pytest
 from commonwealth.utils.general import CpuType
 from test_blueos_startup_update import (
@@ -32,6 +33,9 @@ def apply_install_script_section(script_name: str, config_txt: str) -> str:
 def assert_dtparam_lines_precede_overlays(section_lines: List[str]) -> None:
     seen_overlay = False
     for line in section_lines:
+        if line == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE:
+            seen_overlay = False
+            continue
         if line.startswith("dtoverlay="):
             seen_overlay = True
             continue
@@ -106,6 +110,46 @@ def test_board_section_keeps_dtparam_before_overlays(distribution: Distribution,
     apply_boot_config_patches(cpu_type, distribution, files)
 
     assert_dtparam_lines_precede_overlays(section_configuration(files[distribution.config_file], section_name))
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_ends_the_overlay_scope(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+    assert any(line.startswith("dtoverlay=") for line in distribution.stock_config.splitlines())
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    first_dtparam = next(index for index, line in enumerate(section_lines) if line.startswith("dtparam="))
+    assert section_lines.index(blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE) < first_dtparam
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_keeps_the_hat_overlay_loadable(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+    files[distribution.config_file] = "# a config.txt with no dtparam and no dtoverlay\n"
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    assert blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE not in section_lines
+    assert_dtparam_lines_precede_overlays(section_lines)
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_keeps_the_scope_end_of_the_user(distribution: Distribution, cpu_type: CpuType) -> None:
+    user_dtparam = "dtparam=act_led_trigger=heartbeat"
+    files = stock_files(distribution)
+    files[distribution.config_file] += f"\n{blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE}\n{user_dtparam}\n"
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    patched_lines = files[distribution.config_file].splitlines()
+    assert (
+        patched_lines[patched_lines.index(user_dtparam) - 1] == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
+    ), "the patch removed the empty dtoverlay= that the user wrote"
 
 
 def test_startup_patches_repair_a_reversed_board_section() -> None:
