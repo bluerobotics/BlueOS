@@ -1,8 +1,8 @@
 <template>
   <v-card
     elevation="0"
-    class="mx-auto my-12 px-1 py-6 text-center"
-    min-width="370"
+    color="transparent"
+    class="mx-auto my-12 px-4 py-6 text-center"
     max-width="720"
   >
     <v-card>
