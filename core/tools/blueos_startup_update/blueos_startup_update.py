@@ -243,33 +243,34 @@ def boot_config_normalize_section_order(
 
 def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
     # Keep in sync with install/boards/bcm_27xx.sh (Pi4) and bcm_2712.sh (Pi5).
+    # All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
     if cpu_type == CpuType.PI4:
         return [
-            ("enable_uart=1", "^enable_uart=.*"),
+            ("dtparam=i2c_vc=on", "^dtparam=i2c_vc=.*"),
+            ("dtparam=i2c_arm_baudrate=1000000", "^dtparam=i2c_arm_baudrate.*"),
+            ("dtparam=spi=on", "^dtparam=spi=.*"),
             ("dtoverlay=uart1", "^dtoverlay=uart1.*"),
             ("dtoverlay=uart3", "^dtoverlay=uart3.*"),
             ("dtoverlay=uart4", "^dtoverlay=uart4.*"),
             ("dtoverlay=uart5", "^dtoverlay=uart5.*"),
-            ("dtparam=i2c_vc=on", "^dtparam=i2c_vc=.*"),
             ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
-            ("dtparam=i2c_arm_baudrate=1000000", "^dtparam=i2c_arm_baudrate.*"),
             ("dtoverlay=i2c4,pins_6_7,baudrate=1000000", "^dtoverlay=i2c4.*"),
             ("dtoverlay=i2c6,pins_22_23,baudrate=400000", "^dtoverlay=i2c6.*"),
-            ("dtparam=spi=on", "^dtparam=spi=.*"),
             ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
             ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
+            ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
+            ("enable_uart=1", "^enable_uart=.*"),
             ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
             ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
-            ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
         ]
     if cpu_type == CpuType.PI5:
         return [
-            ("enable_uart=1", "^enable_uart=.*"),
+            ("dtparam=i2c_arm=on", "^dtparam=i2c_arm=.*"),
+            ("dtparam=spi=on", "^dtparam=spi=.*"),
             ("dtoverlay=uart0-pi5", "^dtoverlay=uart0.*"),
             ("dtoverlay=uart3-pi5", "^dtoverlay=uart3.*"),
             ("dtoverlay=uart4-pi5", "^dtoverlay=uart4.*"),
             ("dtoverlay=uart2-pi5", "^dtoverlay=uart2.*"),
-            ("dtparam=i2c_arm=on", "^dtparam=i2c_arm=.*"),
             ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
             ("dtoverlay=i2c3-pi5,baudrate=400000", "^dtoverlay=i2c3-pi5,.*"),
             ("dtoverlay=i2c3-pi5.baudrate=400000", "^dtoverlay=i2c3-pi5\\.baudrate.*"),
@@ -277,12 +278,12 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
                 "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0",
                 "^dtoverlay=i2c-gpio.*",
             ),
-            ("dtparam=spi=on", "^dtparam=spi=.*"),
             ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
             ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
+            ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
+            ("enable_uart=1", "^enable_uart=.*"),
             ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
             ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
-            ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
         ]
     raise ValueError(f"No Navigator configuration for {cpu_type}")
 
