@@ -59,6 +59,9 @@ CONFIG_USER_PROTECTION_WORD = "custom"
 
 BOARD_SECTION_BY_CPU = {CpuType.PI4: "pi4", CpuType.PI5: "pi5"}
 
+# An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
+BOOT_CONFIG_END_OVERLAY_SCOPE = "dtoverlay="
+
 config_file = None
 cmdline_file = None
 
@@ -233,8 +236,16 @@ def boot_config_normalize_section_order(
 
     user_lines = [line for line in section_body if line and not is_managed(line)]
 
+    # Write the empty dtoverlay= only when a dtparam or a dtoverlay comes before the board section.
+    # When config.txt starts with dtoverlay=, the firmware skips the HAT overlay.
+    earlier_directive_present = any(
+        re.match(r"^dt(param|overlay)=", line, regex_flags) for line in config_content[:section_start]
+    )
+
     board_lines = []
     for board_line, pattern in managed_entries:
+        if board_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not earlier_directive_present:
+            continue
         if any(boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags) for line in section_body):
             continue
         board_lines.append(board_line)
@@ -247,6 +258,7 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
     # All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
     if cpu_type == CpuType.PI4:
         return [
+            (BOOT_CONFIG_END_OVERLAY_SCOPE, "^dtoverlay=$"),
             ("dtparam=i2c_vc=on", "^dtparam=i2c_vc=.*"),
             ("dtparam=i2c_arm_baudrate=1000000", "^dtparam=i2c_arm_baudrate.*"),
             ("dtparam=spi=on", "^dtparam=spi=.*"),
@@ -266,6 +278,7 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
         ]
     if cpu_type == CpuType.PI5:
         return [
+            (BOOT_CONFIG_END_OVERLAY_SCOPE, "^dtoverlay=$"),
             ("dtparam=i2c_arm=on", "^dtparam=i2c_arm=.*"),
             ("dtparam=spi=on", "^dtparam=spi=.*"),
             ("dtoverlay=uart0-pi5", "^dtoverlay=uart0.*"),
@@ -524,8 +537,13 @@ def update_navigator_overlays() -> bool:
 
     section_name = BOARD_SECTION_BY_CPU[host_cpu]
     managed_entries = navigator_managed_entries(host_cpu)
-    # The dwc2 part is owned by update_dwc2().
-    navigator_configs_with_match_patterns = [(line, pattern) for line, pattern in managed_entries if "dwc2" not in line]
+    # update_dwc2() owns the dwc2 line. We also skip the empty dtoverlay=, because the user may
+    # have written one, and that line protects the dtparam lines below it.
+    navigator_configs_with_match_patterns = [
+        (line, pattern)
+        for line, pattern in managed_entries
+        if "dwc2" not in line and line != BOOT_CONFIG_END_OVERLAY_SCOPE
+    ]
 
     # Devices patched by a release that appended a board section on every boot accumulated strays,
     # and only the first of them would ever be configured
