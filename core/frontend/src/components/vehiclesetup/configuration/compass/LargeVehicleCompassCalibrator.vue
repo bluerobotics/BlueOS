@@ -121,7 +121,7 @@ export default {
 <style scoped>
 /* This label is the longest of the calibration buttons and a button never
    shrinks below its text, so let it wrap instead of outgrowing the card */
-.start-btn {
+.start-btn.v-btn:not(.v-btn--round) {
   max-width: 100%;
   height: auto;
   min-height: 36px;
