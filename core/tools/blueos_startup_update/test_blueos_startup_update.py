@@ -413,8 +413,10 @@ def test_startup_patches_replace_conflicting_configuration(distribution: Distrib
     distribution_configuration = section_configuration(distribution.stock_config, section_name)
     conflicting = "enable_uart=0\ndtparam=spi=off\ndtoverlay=spi1-1cs\ndtoverlay=dwc2,dr_mode=host\n"
     # The same configuration outside the board section applies to boards it was never meant for,
-    # so it has to be removed even though the value itself is the one we want
-    misplaced = insertions[:2]
+    # so it has to be removed even though the value itself is the one we want. The empty dtoverlay=
+    # is the exception. It drives no pin, and a copy the user wrote protects the dtparam lines
+    # below it.
+    misplaced = [line for line in insertions if line != blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE][:2]
     protected = "dtoverlay=i2c1 # custom\n"
     files = stock_files(distribution)
     files[distribution.config_file] += conflicting + "\n".join(misplaced) + "\n" + protected
@@ -625,17 +627,21 @@ def test_pi3_cleanup_keeps_distribution_sections(distribution: Distribution) -> 
 
 
 def test_bcm28xx_enables_the_peripherals_a_pi3_needs() -> None:
-    # Pi zero/1/2/3 have no startup patch to cross-check this script against, so these four lines
+    # Pi zero/1/2/3 have no startup patch to cross-check this script against, so these lines
     # are the only description of what the onboard peripherals need
     deletions, insertions = install_script_configuration("install/boards/bcm_28xx.sh")
 
     assert sorted(insertions) == [
+        blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE,
         "dtoverlay=spi1-3cs",
         "dtoverlay=uart1",
         "dtparam=i2c_arm=on",
         "dtparam=spi=on",
     ], f"bcm_28xx.sh no longer enables I2C, SPI and UART on a Pi3: {sorted(insertions)}"
+    assert "^dtoverlay=$" in deletions, "the empty dtoverlay= is written but never cleaned out first"
     for insertion in insertions:
+        if insertion == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE:
+            continue
         assert any(
             deletion in insertion for deletion in deletions
         ), f"{insertion!r} is written but never cleaned out first, so reinstalling would stack duplicates"

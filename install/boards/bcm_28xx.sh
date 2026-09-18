@@ -20,10 +20,11 @@ CONFIG_FILE="$BOOT_PATH/config.txt"
 
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
-for STRING in "dtparam=i2c_arm=" "dtparam=spi=" "dtoverlay=spi1" "dtoverlay=uart1"; do
+for STRING in "dtparam=i2c_arm=" "dtparam=spi=" "dtoverlay=spi1" "dtoverlay=uart1" "^dtoverlay=$"; do
     sudo sed -i "/$STRING/d" $CONFIG_FILE
 done
-for STRING in "dtparam=i2c_arm=on" "dtparam=spi=on" "dtoverlay=spi1-3cs" "dtoverlay=uart1"; do
+# An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
+for STRING in "dtoverlay=" "dtparam=i2c_arm=on" "dtparam=spi=on" "dtoverlay=spi1-3cs" "dtoverlay=uart1"; do
     echo "$STRING" | sudo tee -a $CONFIG_FILE
 done
 

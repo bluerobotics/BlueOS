@@ -54,6 +54,12 @@ DELTA_JSON = {
 # However, it is important to note that conflicting configurations can happen, potentially impacting the kernel's loading process or causing harm to BlueOS.
 CONFIG_USER_PROTECTION_WORD = "custom"
 
+# A board filter the firmware does not know is applied instead of ignored, so a [pi5]
+# section would reach the pins of every board older than the Pi5
+BOARD_SECTION_BY_CPU = {CpuType.PI4: "pi4", CpuType.PI5: "pi5"}
+
+BOOT_CONFIG_END_OVERLAY_SCOPE = "dtoverlay="
+
 config_file = None
 cmdline_file = None
 
@@ -158,21 +164,6 @@ def boot_config_merge_duplicated_sections(config_content: List[str], section_nam
     config_content[:] = [line for section in sections for line in section]
 
 
-def boot_config_add_configuration_at_section(config_content: List[str], config: str, section_name: str) -> None:
-    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
-
-    (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
-
-    section_content = config_content[section_start:section_end]
-    config_already_exists = any(
-        section_content
-        for section_content in section_content
-        if re.match(re.escape(config), section_content, regex_flags)
-    )
-    if not config_already_exists:
-        config_content.insert(section_start + 1, config)
-
-
 def boot_config_remove_section(config_content: List[str], section_name: str) -> None:
     if section_name not in boot_config_get_available_section(config_content):
         return
@@ -221,6 +212,93 @@ def boot_config_filter_conflicting_configuration_at_section(
             )
         )
     ]
+
+
+def boot_config_line_is_protected(line: str) -> bool:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+    return bool(re.match(f"^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$", line, regex_flags))
+
+
+def boot_config_normalize_section_order(
+    config_content: List[str], section_name: str, managed_entries: List[Tuple[str, str]]
+) -> None:
+    regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
+    (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
+    section_body = config_content[section_start + 1 : section_end]
+    match_patterns = [pattern for _, pattern in managed_entries]
+
+    def is_managed(line: str) -> bool:
+        if boot_config_line_is_protected(line):
+            return False
+        return any(re.match(pattern, line, regex_flags) for pattern in match_patterns)
+
+    user_lines = [line for line in section_body if line and not is_managed(line)]
+
+    # Write the empty dtoverlay= only when a dtparam or a dtoverlay comes before the board section.
+    # When config.txt starts with dtoverlay=, the firmware skips the HAT overlay.
+    earlier_directive_present = any(
+        re.match(r"^dt(param|overlay)=", line, regex_flags) for line in config_content[:section_start]
+    )
+
+    board_lines = []
+    for board_line, pattern in managed_entries:
+        if board_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not earlier_directive_present:
+            continue
+        if any(boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags) for line in section_body):
+            continue
+        board_lines.append(board_line)
+    # First the board lines, in the order of the list. Then the lines the user added.
+    config_content[section_start + 1 : section_end] = board_lines + user_lines
+
+
+def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
+    # Keep in sync with install/boards/bcm_27xx.sh (Pi4) and bcm_2712.sh (Pi5).
+    # All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
+    # An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
+    if cpu_type == CpuType.PI4:
+        return [
+            (BOOT_CONFIG_END_OVERLAY_SCOPE, "^dtoverlay=$"),
+            ("dtparam=i2c_vc=on", "^dtparam=i2c_vc=.*"),
+            ("dtparam=i2c_arm_baudrate=1000000", "^dtparam=i2c_arm_baudrate.*"),
+            ("dtparam=spi=on", "^dtparam=spi=.*"),
+            ("dtoverlay=uart1", "^dtoverlay=uart1.*"),
+            ("dtoverlay=uart3", "^dtoverlay=uart3.*"),
+            ("dtoverlay=uart4", "^dtoverlay=uart4.*"),
+            ("dtoverlay=uart5", "^dtoverlay=uart5.*"),
+            ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
+            ("dtoverlay=i2c4,pins_6_7,baudrate=1000000", "^dtoverlay=i2c4.*"),
+            ("dtoverlay=i2c6,pins_22_23,baudrate=400000", "^dtoverlay=i2c6.*"),
+            ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
+            ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
+            ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
+            ("enable_uart=1", "^enable_uart=.*"),
+            ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
+            ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
+        ]
+    if cpu_type == CpuType.PI5:
+        return [
+            (BOOT_CONFIG_END_OVERLAY_SCOPE, "^dtoverlay=$"),
+            ("dtparam=i2c_arm=on", "^dtparam=i2c_arm=.*"),
+            ("dtparam=spi=on", "^dtparam=spi=.*"),
+            ("dtoverlay=uart0-pi5", "^dtoverlay=uart0.*"),
+            ("dtoverlay=uart3-pi5", "^dtoverlay=uart3.*"),
+            ("dtoverlay=uart4-pi5", "^dtoverlay=uart4.*"),
+            ("dtoverlay=uart2-pi5", "^dtoverlay=uart2.*"),
+            ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
+            ("dtoverlay=i2c3-pi5,baudrate=400000", "^dtoverlay=i2c3-pi5,.*"),
+            ("dtoverlay=i2c3-pi5.baudrate=400000", "^dtoverlay=i2c3-pi5\\.baudrate.*"),
+            (
+                "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0",
+                "^dtoverlay=i2c-gpio.*",
+            ),
+            ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
+            ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
+            ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
+            ("enable_uart=1", "^enable_uart=.*"),
+            ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
+            ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
+        ]
+    raise ValueError(f"No Navigator configuration for {cpu_type}")
 
 
 def hardlink_exists(file_name: str) -> bool:
@@ -398,25 +476,25 @@ def update_dwc2() -> bool:
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
-    # Add dwc2 overlay in pi4 section if it doesn't exist
-    dwc2_overlay_config = "dtoverlay=dwc2,dr_mode=otg"
-    cpu_type = get_cpu_type()
-    if cpu_type == CpuType.PI4:
-        section_name = "pi4"
-    elif cpu_type == CpuType.PI5:
-        section_name = "pi5"
-    else:
-        # A board filter the firmware does not know is applied instead of ignored, so a [pi5]
-        # section would reach the pins of every board older than the Pi5
+    host_cpu = get_cpu_type()
+    if host_cpu not in BOARD_SECTION_BY_CPU:
         logger.error("Unsupported CPU type for dwc2 update")
         return False
-    boot_config_add_configuration_at_section(config_content, dwc2_overlay_config, section_name)
+
+    section_name = BOARD_SECTION_BY_CPU[host_cpu]
+    managed_entries = navigator_managed_entries(host_cpu)
+    # Add dwc2 overlay in pi4 or pi5 section if it doesn't exist
+    (dwc2_overlay_config, dwc2_overlay_match_pattern) = next(
+        entry for entry in managed_entries if entry[0].startswith("dtoverlay=dwc2")
+    )
+
+    boot_config_merge_duplicated_sections(config_content, section_name)
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
-    dwc2_overlay_match_pattern = "^[#]*dtoverlay=dwc2.*$"
     config_content = boot_config_filter_conflicting_configuration_at_section(
         config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, section_name
     )
+    boot_config_normalize_section_order(config_content, section_name, managed_entries)
 
     # Save if needed, with backup
     backup_identifier = "before_update_dwc2"
@@ -451,67 +529,32 @@ def update_navigator_overlays() -> bool:
     config_content = load_file(config_file).splitlines()
     unpatched_config_content = config_content.copy()
 
-    # Keep in sync with install/boards/bcm_27xx.sh (Pi4) and bcm_2712.sh (Pi5).
-    # The dwc2 part is owned by update_dwc2().
-    if get_cpu_type() == CpuType.PI4:
-        section_name = "pi4"
-        navigator_configs_with_match_patterns = [
-            ("enable_uart=1", "^enable_uart=.*"),
-            ("dtoverlay=uart1", "^dtoverlay=uart1.*"),
-            ("dtoverlay=uart3", "^dtoverlay=uart3.*"),
-            ("dtoverlay=uart4", "^dtoverlay=uart4.*"),
-            ("dtoverlay=uart5", "^dtoverlay=uart5.*"),
-            ("dtparam=i2c_vc=on", "^dtparam=i2c_vc=.*"),
-            ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
-            ("dtparam=i2c_arm_baudrate=1000000", "^dtparam=i2c_arm_baudrate.*"),
-            ("dtoverlay=i2c4,pins_6_7,baudrate=1000000", "^dtoverlay=i2c4.*"),
-            ("dtoverlay=i2c6,pins_22_23,baudrate=400000", "^dtoverlay=i2c6.*"),
-            ("dtparam=spi=on", "^dtparam=spi=.*"),
-            ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
-            ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
-            ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
-            ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
-        ]
-    elif get_cpu_type() == CpuType.PI5:
-        section_name = "pi5"
-        navigator_configs_with_match_patterns = [
-            ("enable_uart=1", "^enable_uart=.*"),
-            ("dtoverlay=uart0-pi5", "^dtoverlay=uart0.*"),
-            ("dtoverlay=uart3-pi5", "^dtoverlay=uart3.*"),
-            ("dtoverlay=uart4-pi5", "^dtoverlay=uart4.*"),
-            ("dtoverlay=uart2-pi5", "^dtoverlay=uart2.*"),
-            ("dtparam=i2c_arm=on", "^dtparam=i2c_arm=.*"),
-            ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
-            ("dtoverlay=i2c3-pi5,baudrate=400000", "^dtoverlay=i2c3-pi5,.*"),
-            ("dtoverlay=i2c3-pi5.baudrate=400000", "^dtoverlay=i2c3-pi5\\.baudrate.*"),
-            (
-                "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0",
-                "^dtoverlay=i2c-gpio.*",
-            ),
-            ("dtparam=spi=on", "^dtparam=spi=.*"),
-            ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
-            ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
-            ("gpio=11,24,25=op,pu,dh", "^gpio=.*((11|24|25),?)+.*"),
-            ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
-        ]
-    else:
+    host_cpu = get_cpu_type()
+    if host_cpu not in BOARD_SECTION_BY_CPU:
         logger.error("Unsupported CPU type for navigator overlays update")
         return False
+
+    section_name = BOARD_SECTION_BY_CPU[host_cpu]
+    managed_entries = navigator_managed_entries(host_cpu)
+    # update_dwc2() owns the dwc2 line. We also skip the empty dtoverlay=, because the user may
+    # have written one, and that line protects the dtparam lines below it.
+    navigator_configs_with_match_patterns = [
+        (line, pattern)
+        for line, pattern in managed_entries
+        if "dwc2" not in line and line != BOOT_CONFIG_END_OVERLAY_SCOPE
+    ]
 
     # Devices patched by a release that appended a board section on every boot accumulated strays,
     # and only the first of them would ever be configured
     boot_config_merge_duplicated_sections(config_content, section_name)
 
-    navigator_configs_with_match_patterns.reverse()
-
     for (config, config_match_pattern) in navigator_configs_with_match_patterns:
-        # Add each navigator configuration to the board-specific section
-        boot_config_add_configuration_at_section(config_content, config, section_name)
-
         # Remove any unprotected and conflicting configuration of peripherals
         config_content = boot_config_filter_conflicting_configuration_at_section(
             config_content, config_match_pattern, config, section_name
         )
+
+    boot_config_normalize_section_order(config_content, section_name, managed_entries)
 
     # Don't need to apply or restart if the content is the same
     if unpatched_config_content == config_content:
