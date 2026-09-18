@@ -56,23 +56,24 @@ line_number=$(grep -n "\[pi4\]" $CONFIG_FILE | head -n 1 | awk -F ":" '{print $1
 echo "Line number of [pi4] tag: $line_number"
 
 
+# All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
 for STRING in \
-    "enable_uart=1" \
+    "dtparam=i2c_vc=on" \
+    "dtparam=i2c_arm_baudrate=1000000" \
+    "dtparam=spi=on" \
     "dtoverlay=uart1" \
     "dtoverlay=uart3" \
     "dtoverlay=uart4" \
     "dtoverlay=uart5" \
-    "dtparam=i2c_vc=on" \
     "dtoverlay=i2c1" \
-    "dtparam=i2c_arm_baudrate=1000000" \
     "dtoverlay=i2c4,pins_6_7,baudrate=1000000" \
     "dtoverlay=i2c6,pins_22_23,baudrate=400000" \
-    "dtparam=spi=on" \
     "dtoverlay=spi0-led" \
     "dtoverlay=spi1-3cs" \
+    "dtoverlay=dwc2,dr_mode=otg" \
+    "enable_uart=1" \
     "gpio=11,24,25=op,pu,dh" \
     "gpio=37=op,pd,dl" \
-    "dtoverlay=dwc2,dr_mode=otg" \
     ; do \
     sed -i "$line_number r /dev/stdin" $CONFIG_FILE <<< "$STRING"
     # sed writes the string after this line number. Increase it, or the next string goes above the last one.
