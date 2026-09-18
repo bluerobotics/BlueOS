@@ -29,6 +29,16 @@ def apply_install_script_section(script_name: str, config_txt: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def assert_dtparam_lines_precede_overlays(section_lines: List[str]) -> None:
+    seen_overlay = False
+    for line in section_lines:
+        if line.startswith("dtoverlay="):
+            seen_overlay = True
+            continue
+        if line.startswith("dtparam=") and seen_overlay:
+            raise AssertionError(f"dtparam line {line!r} appears after a dtoverlay line in {section_lines}")
+
+
 SHIPPED_REVERSED_PI5_SECTION = """[pi5]
 dtoverlay=dwc2,dr_mode=peripheral
 gpio=37=op,pd,dl
@@ -88,6 +98,16 @@ def test_install_script_and_startup_patches_agree(distribution: Distribution, cp
     )
 
 
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_keeps_dtparam_before_overlays(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    assert_dtparam_lines_precede_overlays(section_configuration(files[distribution.config_file], section_name))
+
+
 def test_startup_patches_repair_a_reversed_board_section() -> None:
     _, insertions = install_script_configuration(NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5])
     files = stock_files(BOOKWORM)
@@ -98,6 +118,7 @@ def test_startup_patches_repair_a_reversed_board_section() -> None:
     restarting = [name for name, wants_restart in applied.items() if wants_restart]
     assert restarting, "repairing a reversed section has to ask for a restart"
     assert section_configuration(files[BOOKWORM.config_file], "pi5")[: len(insertions)] == insertions
+    assert_dtparam_lines_precede_overlays(section_configuration(files[BOOKWORM.config_file], "pi5"))
 
 
 def test_startup_patches_converge_after_repairing_a_reversed_board_section() -> None:
