@@ -1,7 +1,7 @@
 <template>
   <v-card class="pa-2 my-4">
     <div class="d-flex flex-column flex-sm-row justify-space-between ma-7">
-      <div class="d-flex flex-column align-start align-sm-start">
+      <div class="d-flex flex-column align-center align-sm-start">
         <div class="d-flex align-center align-sm-start">
           <v-tooltip top>
             <template #activator="{ on, attrs }">
