@@ -537,5 +537,13 @@ export default Vue.extend({
   .compass-tab.v-tab--active {
     transform: none;
   }
+
+  /* The tab shape leaves its right side open for the settings panel to join
+     onto, which now sits below it, so close the box instead */
+  .compass-tab,
+  .compass-tab.v-tab--active {
+    border-right: 1px solid var(--v-primary-base);
+    border-radius: 5px;
+  }
 }
 </style>
