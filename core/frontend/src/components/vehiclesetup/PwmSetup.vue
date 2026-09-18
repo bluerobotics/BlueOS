@@ -26,7 +26,7 @@
                   </th>
                   <th />
                   <th>
-                    <div class="d-flex flex-wrap align-center justify-space-between">
+                    <div class="d-flex flex-wrap align-center justify-center justify-sm-space-between">
                       <v-switch
                         v-model="desired_armed_state"
                         :loading="desired_armed_state !== (is_armed) ? 'warning' : null"
@@ -616,6 +616,18 @@ export default Vue.extend({
   /* Keep a single divider per motor instead of one under every stacked cell */
   .motor-test-table tbody td:not(:last-child) {
     border-bottom: none !important;
+  }
+
+  /* The reverse switch belongs to the motor named beside it, so keep the two
+     on one line and give the slider the row below to itself */
+  .motor-test-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .motor-test-table tbody td:last-child {
+    flex: 1 0 100%;
   }
 }
 </style>
