@@ -13,7 +13,7 @@
           Use this if you don't know which parameters you changed and need a clean start.
         </p>
       </v-card-text>
-      <v-card-actions class="flex-wrap">
+      <v-card-actions class="flex-wrap justify-center justify-sm-start">
         <v-btn :disabled="wipe_successful" :loading="erasing" color="primary" @click="show_warning = true">
           Reset All Parameters
         </v-btn>
@@ -44,7 +44,7 @@
           These are the recommended parameter sets for your vehicle and firmware version. Curated by Blue Robotics
         </p>
       </v-card-text>
-      <v-card-actions class="flex-wrap">
+      <v-card-actions class="flex-wrap justify-center justify-sm-start">
         <v-btn
           v-for="(paramSet, name) in filtered_param_sets"
           :key="name"
