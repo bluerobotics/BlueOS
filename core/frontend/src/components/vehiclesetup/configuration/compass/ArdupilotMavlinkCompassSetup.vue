@@ -493,14 +493,6 @@ export default Vue.extend({
   margin-top: -15px;
 }
 
-/* The vertical tab rail is sized by its content, which leaves almost nothing
-   for the settings panel on phones, so stack the panel below the rail */
-@media (max-width: 600px) {
-  .compass-reorder-container .v-tabs--vertical {
-    flex-direction: column;
-  }
-}
-
 .chip-container {
   display: flex;
   flex-direction: column; /* Change the flex-direction to column */
@@ -526,5 +518,24 @@ export default Vue.extend({
 
 .compass-settings {
   border-color: var(--v-primary-base);
+}
+
+/* The vertical tab rail is sized by its content, which leaves almost nothing
+   for the settings panel on phones, so stack the panel below the rail */
+@media (max-width: 600px) {
+  .compass-reorder-container .v-tabs--vertical {
+    flex-direction: column;
+  }
+
+  /* Once the cards stack, the negative margin tucks the list under the
+     calibration card above it, and the nudge that joins the active tab to the
+     settings panel pushes it out of the rail the panel no longer sits beside */
+  .compass-reorder-container {
+    margin-top: 0;
+  }
+
+  .compass-tab.v-tab--active {
+    transform: none;
+  }
 }
 </style>
