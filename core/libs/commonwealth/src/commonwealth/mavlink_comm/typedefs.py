@@ -23,6 +23,14 @@ class FirmwareVersionType(str, Enum):
         return FirmwareVersionType.DEV
 
 
+class MavlinkFirmwareType(str, Enum):
+    ArduPlane = "ArduPlane"
+    ArduCopter = "ArduCopter"
+    ArduRover = "ArduRover"
+    ArduSub = "ArduSub"
+    Unknown = "Unknown"
+
+
 class MavlinkVehicleType(str, Enum):
     MAV_TYPE_GENERIC = "Generic"
     MAV_TYPE_FIXED_WING = "Fixed Wing"
@@ -68,7 +76,7 @@ class MavlinkVehicleType(str, Enum):
     MAV_TYPE_GPS = "Gps"
     MAV_TYPE_WINCH = "Winch"
 
-    def mavlink_firmware_type(self) -> str:
+    def mavlink_firmware_type(self) -> MavlinkFirmwareType:
         plane_options = [
             self.MAV_TYPE_FIXED_WING,
             self.MAV_TYPE_VTOL_DUOROTOR,
@@ -99,21 +107,21 @@ class MavlinkVehicleType(str, Enum):
         ]
 
         if self in plane_options:
-            return "ArduPlane"
+            return MavlinkFirmwareType.ArduPlane
 
         if self in copter_options:
-            return "ArduCopter"
+            return MavlinkFirmwareType.ArduCopter
 
         if self in rover_options:
-            return "ArduRover"
+            return MavlinkFirmwareType.ArduRover
 
         if self in sub_options:
-            return "ArduSub"
+            return MavlinkFirmwareType.ArduSub
 
-        return "Unknown"
+        return MavlinkFirmwareType.Unknown
 
     def is_actually_a_vehicle(self) -> bool:
-        return self.mavlink_firmware_type() in ["ArduPlane", "ArduCopter", "ArduRover", "ArduSub"]
+        return self.mavlink_firmware_type() != MavlinkFirmwareType.Unknown
 
 
 class FirmwareInfo(BaseModel):
