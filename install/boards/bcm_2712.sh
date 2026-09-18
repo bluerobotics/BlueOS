@@ -73,6 +73,8 @@ for STRING in \
     "dtoverlay=dwc2,dr_mode=otg" \
     ; do \
     sed -i "$line_number r /dev/stdin" $CONFIG_FILE <<< "$STRING"
+    # sed writes the string after this line number. Increase it, or the next string goes above the last one.
+    line_number=$((line_number + 1))
 done
 
 # Check for valid modules file to load kernel modules
