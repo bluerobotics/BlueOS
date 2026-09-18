@@ -1,5 +1,6 @@
 import asyncio
-from typing import AsyncGenerator, Dict, List
+import time
+from typing import Any, AsyncGenerator, Dict, List
 
 import psutil
 from aiodocker import Docker
@@ -13,6 +14,28 @@ from loguru import logger
 
 
 class ContainerManager:
+    @staticmethod
+    def _monotonic_uptime(pid: int) -> float | None:
+        if pid <= 0:
+            return None
+
+        try:
+            process_start_since_boot = psutil.Process(pid).create_time() - psutil.boot_time()
+            return float(max(0.0, time.monotonic() - process_start_since_boot))
+        except psutil.Error:
+            return None
+
+    @classmethod
+    def _container_model(cls, container: DockerContainer, details: Dict[str, Any]) -> ContainerModel:
+        pid = details.get("State", {}).get("Pid", 0)
+        return ContainerModel(
+            name=container["Names"][0],
+            image=container["Image"],
+            image_id=container["ImageID"],
+            status=container["Status"],
+            uptime_seconds=cls._monotonic_uptime(pid),
+        )
+
     @staticmethod
     async def get_raw_container_by_name(client: Docker, container_name: str) -> DockerContainer:
         containers = await client.containers.list(filters={"name": {container_name: True}})  # type: ignore
@@ -31,7 +54,9 @@ class ContainerManager:
 
     @staticmethod
     # pylint: disable=too-many-locals
-    async def _get_stats_from_containers(containers: List[DockerContainer]) -> Dict[str, ContainerUsageModel]:
+    async def _get_stats_from_containers(
+        containers: List[DockerContainer],
+    ) -> Dict[str, ContainerUsageModel]:
         result: Dict[str, ContainerUsageModel] = {}
 
         # Create separate lists of coroutine objects for stats and show
@@ -84,32 +109,21 @@ class ContainerManager:
 
         return result
 
-    @staticmethod
-    async def get_running_containers() -> List[ContainerModel]:
+    @classmethod
+    async def get_running_containers(cls) -> List[ContainerModel]:
         async with DockerCtx() as client:
             containers = await client.containers.list(filters={"status": ["running"]})  # type: ignore
+            details = await asyncio.gather(*(container.show() for container in containers))
 
-            return [
-                ContainerModel(
-                    name=container["Names"][0],
-                    image=container["Image"],
-                    image_id=container["ImageID"],
-                    status=container["Status"],
-                )
-                for container in containers
-            ]
+            return [cls._container_model(container, detail) for container, detail in zip(containers, details)]
 
     @classmethod
     async def get_running_container_by_name(cls, container_name: str) -> ContainerModel:
         async with DockerCtx() as client:
             container = await cls.get_raw_container_by_name(client, container_name)
+            details = await container.show()
 
-            return ContainerModel(
-                name=container["Names"][0],
-                image=container["Image"],
-                image_id=container["ImageID"],
-                status=container["Status"],
-            )
+            return cls._container_model(container, details)
 
     @classmethod
     async def get_container_log_by_name(cls, container_name: str) -> AsyncGenerator[str, None]:
