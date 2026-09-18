@@ -21,6 +21,9 @@
     "paths": {
       "@/*": [
         "src/*"
+      ],
+      "mediabunny/codec-data": [
+        "node_modules/mediabunny/dist/modules/src/codec-data.d.ts"
       ]
     },
     "lib": [

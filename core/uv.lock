@@ -1855,7 +1855,6 @@ name = "recorder-extractor"
 version = "0.1.0"
 source = { virtual = "services/recorder_extractor" }
 dependencies = [
-    { name = "aiocache" },
     { name = "commonwealth" },
     { name = "fastapi" },
     { name = "fastapi-versioning" },
@@ -1866,7 +1865,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiocache", specifier = "==0.12.3" },
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "fastapi", specifier = "==0.125.0" },
     { name = "fastapi-versioning", specifier = "==0.10.0" },
