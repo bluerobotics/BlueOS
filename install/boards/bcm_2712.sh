@@ -40,6 +40,7 @@ for STRING in \
     "dtoverlay=spi" \
     "gpio=" \
     "dwc2" \
+    "^dtoverlay=$" \
     ; do \
     sudo sed -i "/$STRING/d" $CONFIG_FILE
 done
@@ -55,7 +56,9 @@ echo "Line number of [pi5] tag: $line_number"
 
 
 # All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
+# An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
 for STRING in \
+    "dtoverlay=" \
     "dtparam=i2c_arm=on" \
     "dtparam=spi=on" \
     "dtoverlay=uart0-pi5" \
