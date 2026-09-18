@@ -6,6 +6,7 @@
     <template #activator="{ on, attrs }">
       <v-btn
         color="primary"
+        class="start-btn"
         v-bind="attrs"
         v-on="on"
       >
@@ -117,3 +118,18 @@ export default {
   },
 }
 </script>
+<style scoped>
+/* This label is the longest of the calibration buttons and a button never
+   shrinks below its text, so let it wrap instead of outgrowing the card */
+.start-btn {
+  max-width: 100%;
+  height: auto;
+  min-height: 36px;
+  padding: 6px 16px;
+}
+
+.start-btn ::v-deep .v-btn__content {
+  white-space: normal;
+  flex: 1 1 auto;
+}
+</style>
