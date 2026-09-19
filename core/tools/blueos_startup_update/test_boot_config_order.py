@@ -138,6 +138,29 @@ def test_board_section_keeps_the_hat_overlay_loadable(distribution: Distribution
     assert_dtparam_lines_precede_overlays(section_lines)
 
 
+@pytest.mark.parametrize(
+    "line, overlay_is_open",
+    [
+        ("dtoverlay=uart1", True),
+        ("dtoverlay=", False),
+        # the firmware trims the line before it reads the directive
+        ("   dtoverlay=   ", False),
+        ("\tdtoverlay=uart1", True),
+        # the firmware keeps a comment that follows a directive, so the name is "uart1 # a
+        # comment". No overlay carries that name, so the line opens nothing. We still answer
+        # open, because one empty dtoverlay= too many costs nothing and one too few does.
+        ("dtoverlay=uart1 # a comment", True),
+        ("dtoverlay= # a comment", True),
+        # the firmware reads nothing in these three lines, so the overlay above stays open
+        ("dtoverlay = uart1", True),
+        ("DTOVERLAY=", True),
+        ("#dtoverlay=", True),
+    ],
+)
+def test_overlay_is_open_reads_a_line_like_the_firmware(line: str, overlay_is_open: bool) -> None:
+    assert blueos_startup_update.boot_config_overlay_is_open(["dtoverlay=uart0", line]) == overlay_is_open
+
+
 @pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
 def test_board_section_keeps_the_scope_end_of_the_user(distribution: Distribution, cpu_type: CpuType) -> None:
     user_dtparam = "dtparam=act_led_trigger=heartbeat"
