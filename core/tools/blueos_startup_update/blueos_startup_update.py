@@ -237,7 +237,8 @@ def boot_config_normalize_section_order(
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
     section_body = config_content[section_start + 1 : section_end]
-    match_patterns = [pattern for _, pattern in managed_entries]
+    # The user also writes an empty dtoverlay=, so the patch does not own every copy of it.
+    match_patterns = [pattern for board_line, pattern in managed_entries if board_line != BOOT_CONFIG_END_OVERLAY_SCOPE]
 
     def is_managed(line: str) -> bool:
         if boot_config_line_is_protected(line):
@@ -265,7 +266,13 @@ def boot_config_normalize_section_order(
         board_lines.append(BOOT_CONFIG_END_OVERLAY_SCOPE)
 
     # First the board lines, in the order of the list. Then the lines the user added.
-    config_content[section_start + 1 : section_end] = board_lines + user_lines
+    # Keep an empty dtoverlay= that closes an overlay. Drop one that closes nothing.
+    for user_line in user_lines:
+        if user_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not boot_config_overlay_is_open(board_lines):
+            continue
+        board_lines.append(user_line)
+
+    config_content[section_start + 1 : section_end] = board_lines
 
 
 def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
