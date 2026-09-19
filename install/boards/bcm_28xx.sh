@@ -24,7 +24,8 @@ for STRING in "dtparam=i2c_arm=" "dtparam=spi=" "dtoverlay=spi1" "dtoverlay=uart
     sudo sed -i "/$STRING/d" $CONFIG_FILE
 done
 # An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
-for STRING in "dtoverlay=" "dtparam=i2c_arm=on" "dtparam=spi=on" "dtoverlay=spi1-3cs" "dtoverlay=uart1"; do
+# The last one closes dtoverlay=uart1.
+for STRING in "dtoverlay=" "dtparam=i2c_arm=on" "dtparam=spi=on" "dtoverlay=spi1-3cs" "dtoverlay=uart1" "dtoverlay="; do
     echo "$STRING" | sudo tee -a $CONFIG_FILE
 done
 
