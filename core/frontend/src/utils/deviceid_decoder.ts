@@ -1,6 +1,7 @@
 // based on https://github.com/ArduPilot/ardupilot/blob/master/Tools/scripts/decode_devid.py
 
 export enum BUS_TYPE {
+  UNKNOWN = 0,
   I2C = 1,
   SPI = 2,
   UAVCAN = 3,
@@ -121,6 +122,19 @@ enum AIRSPEED_TYPE {
   AIRSPEED_ASP5033 = 0x0A,
 }
 
+enum TEMP_TYPE {
+  UNKNOWN = 0x00,
+  TSYS01 = 0x01,
+  MCP9600 = 0x02,
+  MAX31865 = 0x03,
+  TSYS03 = 0x04,
+  ANALOG = 0x05,
+  DRONECAN = 0x06,
+  MLX90614 = 0x07,
+  SHT3x = 0x08,
+  TMP119 = 0x09,
+}
+
 function toHex(value: number): string {
   return Number(value).toString(16).padStart(2, '0')
 }
@@ -171,6 +185,9 @@ export default function decode(device: string, devid: number): deviceId {
   }
   if (device.startsWith('ARSP')) {
     decodedDevname = AIRSPEED_TYPE[devtype] || 'UNKNOWN'
+  }
+  if (device.startsWith('TEMP')) {
+    decodedDevname = TEMP_TYPE[devtype] || 'UNKNOWN'
   }
   return {
     param: device,
