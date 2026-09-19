@@ -252,13 +252,18 @@ def boot_config_normalize_section_order(
         re.match(r"^dt(param|overlay)=", line, regex_flags) for line in config_content[:section_start]
     )
 
-    board_lines = []
+    board_lines: List[str] = []
     for board_line, pattern in managed_entries:
         if board_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not earlier_directive_present:
             continue
         if any(boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags) for line in section_body):
             continue
         board_lines.append(board_line)
+
+    # Close the last dtoverlay of the board. A dtparam below an open overlay goes to that overlay.
+    if boot_config_overlay_is_open(board_lines):
+        board_lines.append(BOOT_CONFIG_END_OVERLAY_SCOPE)
+
     # First the board lines, in the order of the list. Then the lines the user added.
     config_content[section_start + 1 : section_end] = board_lines + user_lines
 
