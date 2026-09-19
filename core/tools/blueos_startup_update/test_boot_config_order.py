@@ -179,16 +179,26 @@ def test_overlay_is_open_reads_a_line_like_the_firmware(line: str, overlay_is_op
 
 @pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
 def test_board_section_keeps_the_scope_end_of_the_user(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    user_overlay = "dtoverlay=my-hat"
     user_dtparam = "dtparam=act_led_trigger=heartbeat"
+    scope_end = blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
     files = stock_files(distribution)
-    files[distribution.config_file] += f"\n{blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE}\n{user_dtparam}\n"
+    files[distribution.config_file] += f"\n[{section_name}]\n{user_overlay}\n{scope_end}\n{user_dtparam}\n"
 
     apply_boot_config_patches(cpu_type, distribution, files)
 
-    patched_lines = files[distribution.config_file].splitlines()
-    assert (
-        patched_lines[patched_lines.index(user_dtparam) - 1] == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
-    ), "the patch removed the empty dtoverlay= that the user wrote"
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    above_dtparam = section_lines[: section_lines.index(user_dtparam)]
+    assert user_overlay in above_dtparam
+    assert not blueos_startup_update.boot_config_overlay_is_open(
+        above_dtparam
+    ), "the patch removed the empty dtoverlay= of the user, so the dtparam goes to the overlay of the user"
+
+    patched = dict(files)
+    applied = apply_boot_config_patches(cpu_type, distribution, files)
+    assert not any(applied.values()), "the second run asked for a restart, so it changed something"
+    assert files == patched, "the second run rewrote a boot file"
 
 
 def test_startup_patches_repair_a_reversed_board_section() -> None:
