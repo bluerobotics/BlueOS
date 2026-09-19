@@ -142,6 +142,23 @@ def test_board_section_keeps_the_hat_overlay_loadable(distribution: Distribution
 
 
 @pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_closes_a_hat_overlay_scope(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+    # the firmware loads the HAT overlay before it reads config.txt, and that overlay stays
+    # in scope while no line of config.txt opens another one. The firmware trims the line and
+    # accepts a space around the equal sign, so this line counts as a directive.
+    files[distribution.config_file] = "  dtparam = audio=on\n"
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    assert (
+        section_lines[0] == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
+    ), "a HAT overlay is in scope here, so the board dtparam lines would be read against the HAT"
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
 def test_board_section_closes_its_own_overlay_scope(distribution: Distribution, cpu_type: CpuType) -> None:
     section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
     files = stock_files(distribution)

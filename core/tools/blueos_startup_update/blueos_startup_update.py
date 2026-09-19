@@ -250,7 +250,7 @@ def boot_config_normalize_section_order(
     # Write the empty dtoverlay= only when a dtparam or a dtoverlay comes before the board section.
     # When config.txt starts with dtoverlay=, the firmware skips the HAT overlay.
     earlier_directive_present = any(
-        re.match(r"^dt(param|overlay)=", line, regex_flags) for line in config_content[:section_start]
+        re.match(r"^\s*dt(param|overlay)\s*=", line, regex_flags) for line in config_content[:section_start]
     )
 
     board_lines: List[str] = []
