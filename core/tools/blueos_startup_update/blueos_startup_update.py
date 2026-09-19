@@ -249,8 +249,10 @@ def boot_config_normalize_section_order(
 
     # Write the empty dtoverlay= only when a dtparam or a dtoverlay comes before the board section.
     # When config.txt starts with dtoverlay=, the firmware skips the HAT overlay.
+    # This match drops regex_flags on purpose: the firmware reads dtparam= and dtoverlay= in lower
+    # case only, so DTPARAM= is not a directive and must not count as one.
     earlier_directive_present = any(
-        re.match(r"^dt(param|overlay)=", line, regex_flags) for line in config_content[:section_start]
+        re.match(r"^dt(param|overlay)=", line.strip()) for line in config_content[:section_start]
     )
 
     board_lines: List[str] = []
