@@ -59,7 +59,6 @@ CONFIG_USER_PROTECTION_WORD = "custom"
 
 BOARD_SECTION_BY_CPU = {CpuType.PI4: "pi4", CpuType.PI5: "pi5"}
 
-# An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
 BOOT_CONFIG_END_OVERLAY_SCOPE = "dtoverlay="
 
 config_file = None
@@ -256,6 +255,7 @@ def boot_config_normalize_section_order(
 def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
     # Keep in sync with install/boards/bcm_27xx.sh (Pi4) and bcm_2712.sh (Pi5).
     # All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
+    # An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
     if cpu_type == CpuType.PI4:
         return [
             (BOOT_CONFIG_END_OVERLAY_SCOPE, "^dtoverlay=$"),
