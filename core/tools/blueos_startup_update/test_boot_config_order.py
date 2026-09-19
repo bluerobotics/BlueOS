@@ -133,9 +133,25 @@ def test_board_section_keeps_the_hat_overlay_loadable(distribution: Distribution
 
     apply_boot_config_patches(cpu_type, distribution, files)
 
+    patched_lines = files[distribution.config_file].splitlines()
+    first_directive = next(line for line in patched_lines if line.startswith(("dtparam=", "dtoverlay=")))
+    assert (
+        first_directive != blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
+    ), "config.txt opens with the empty dtoverlay=, so the firmware skips the HAT overlay"
+    assert_dtparam_lines_precede_overlays(section_configuration(files[distribution.config_file], section_name))
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_closes_its_own_overlay_scope(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
     section_lines = section_configuration(files[distribution.config_file], section_name)
-    assert blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE not in section_lines
-    assert_dtparam_lines_precede_overlays(section_lines)
+    assert not blueos_startup_update.boot_config_overlay_is_open(
+        section_lines
+    ), "a line written below the board section would go to the last overlay of the board"
 
 
 @pytest.mark.parametrize(
@@ -239,6 +255,10 @@ def test_board_section_rewrite_drops_a_protected_line(distribution: Distribution
     section_lines = section_configuration(files[distribution.config_file], section_name)
     assert section_lines.count(protected_spi) == 1
     assert section_lines.count("dtparam=spi=on") == 0
+    above_protected = section_lines[: section_lines.index(protected_spi)]
+    assert not blueos_startup_update.boot_config_overlay_is_open(
+        above_protected
+    ), "the protected dtparam goes to the overlay above it instead of to the board"
 
 
 @pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
