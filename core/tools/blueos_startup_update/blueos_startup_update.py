@@ -59,7 +59,6 @@ CONFIG_USER_PROTECTION_WORD = "custom"
 
 BOARD_SECTION_BY_CPU = {CpuType.PI4: "pi4", CpuType.PI5: "pi5"}
 
-# An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
 BOOT_CONFIG_END_OVERLAY_SCOPE = "dtoverlay="
 
 config_file = None
@@ -221,13 +220,25 @@ def boot_config_line_is_protected(line: str) -> bool:
     return bool(re.match(f"^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$", line, regex_flags))
 
 
+def boot_config_overlay_is_open(lines: List[str]) -> bool:
+    overlay_is_open = False
+    for line in lines:
+        # the firmware trims the line and drops the comment before it reads the directive
+        directive = re.sub(r"\s*#.*$", "", line.strip())
+        overlay = re.match(r"^dtoverlay\s*=\s*(.*)", directive, re.IGNORECASE)
+        if overlay:
+            overlay_is_open = bool(overlay.group(1).strip())
+    return overlay_is_open
+
+
 def boot_config_normalize_section_order(
     config_content: List[str], section_name: str, managed_entries: List[Tuple[str, str]]
 ) -> None:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
     section_body = config_content[section_start + 1 : section_end]
-    match_patterns = [pattern for _, pattern in managed_entries]
+    # The user also writes an empty dtoverlay=, so the patch does not own every copy of it.
+    match_patterns = [pattern for board_line, pattern in managed_entries if board_line != BOOT_CONFIG_END_OVERLAY_SCOPE]
 
     def is_managed(line: str) -> bool:
         if boot_config_line_is_protected(line):
@@ -239,23 +250,35 @@ def boot_config_normalize_section_order(
     # Write the empty dtoverlay= only when a dtparam or a dtoverlay comes before the board section.
     # When config.txt starts with dtoverlay=, the firmware skips the HAT overlay.
     earlier_directive_present = any(
-        re.match(r"^dt(param|overlay)=", line, regex_flags) for line in config_content[:section_start]
+        re.match(r"^\s*dt(param|overlay)\s*=", line, regex_flags) for line in config_content[:section_start]
     )
 
-    board_lines = []
+    board_lines: List[str] = []
     for board_line, pattern in managed_entries:
         if board_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not earlier_directive_present:
             continue
         if any(boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags) for line in section_body):
             continue
         board_lines.append(board_line)
+
+    # Close the last dtoverlay of the board. A dtparam below an open overlay goes to that overlay.
+    if boot_config_overlay_is_open(board_lines):
+        board_lines.append(BOOT_CONFIG_END_OVERLAY_SCOPE)
+
     # First the board lines, in the order of the list. Then the lines the user added.
-    config_content[section_start + 1 : section_end] = board_lines + user_lines
+    # Keep an empty dtoverlay= that closes an overlay. Drop one that closes nothing.
+    for user_line in user_lines:
+        if user_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not boot_config_overlay_is_open(board_lines):
+            continue
+        board_lines.append(user_line)
+
+    config_content[section_start + 1 : section_end] = board_lines
 
 
 def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
     # Keep in sync with install/boards/bcm_27xx.sh (Pi4) and bcm_2712.sh (Pi5).
     # All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
+    # An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
     if cpu_type == CpuType.PI4:
         return [
             (BOOT_CONFIG_END_OVERLAY_SCOPE, "^dtoverlay=$"),

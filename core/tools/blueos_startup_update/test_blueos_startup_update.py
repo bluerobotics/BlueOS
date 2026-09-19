@@ -632,12 +632,17 @@ def test_bcm28xx_enables_the_peripherals_a_pi3_needs() -> None:
     deletions, insertions = install_script_configuration("install/boards/bcm_28xx.sh")
 
     assert sorted(insertions) == [
+        # one empty dtoverlay= opens the block and one closes it
+        blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE,
         blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE,
         "dtoverlay=spi1-3cs",
         "dtoverlay=uart1",
         "dtparam=i2c_arm=on",
         "dtparam=spi=on",
     ], f"bcm_28xx.sh no longer enables I2C, SPI and UART on a Pi3: {sorted(insertions)}"
+    assert (
+        insertions[-1] == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
+    ), "the block ends with an overlay, so a dtparam written below it goes to that overlay"
     assert "^dtoverlay=$" in deletions, "the empty dtoverlay= is written but never cleaned out first"
     for insertion in insertions:
         if insertion == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE:
