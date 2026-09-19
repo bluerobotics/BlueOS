@@ -220,6 +220,17 @@ def boot_config_line_is_protected(line: str) -> bool:
     return bool(re.match(f"^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$", line, regex_flags))
 
 
+def boot_config_overlay_is_open(lines: List[str]) -> bool:
+    overlay_is_open = False
+    for line in lines:
+        # the firmware trims the line and drops the comment before it reads the directive
+        directive = re.sub(r"\s*#.*$", "", line.strip())
+        overlay = re.match(r"^dtoverlay\s*=\s*(.*)", directive, re.IGNORECASE)
+        if overlay:
+            overlay_is_open = bool(overlay.group(1).strip())
+    return overlay_is_open
+
+
 def boot_config_normalize_section_order(
     config_content: List[str], section_name: str, managed_entries: List[Tuple[str, str]]
 ) -> None:
