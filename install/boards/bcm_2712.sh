@@ -67,7 +67,6 @@ for STRING in \
     "dtoverlay=uart2-pi5" \
     "dtoverlay=i2c1" \
     "dtoverlay=i2c3-pi5,baudrate=400000" \
-    "dtoverlay=i2c3-pi5.baudrate=400000" \
     "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0" \
     "dtoverlay=spi0-led" \
     "dtoverlay=spi1-3cs" \
