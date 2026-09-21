@@ -563,25 +563,17 @@ def test_removing_a_section_that_is_not_there_changes_nothing() -> None:
     assert config_content == untouched, "removing an absent section rewrote config.txt and asked for a restart"
 
 
-def test_pi5_keeps_both_spellings_of_the_navigator_i2c_overlay() -> None:
-    _, insertions = install_script_configuration(NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5])
-    spellings = [line for line in insertions if line.startswith("dtoverlay=i2c3-pi5")]
-    assert len(spellings) == 2, f"bcm_2712.sh no longer writes both i2c3 spellings: {spellings}"
+def test_pi5_replaces_the_malformed_navigator_i2c_overlay() -> None:
+    malformed = "dtoverlay=i2c3-pi5.baudrate=400000"
+    written = "dtoverlay=i2c3-pi5,baudrate=400000"
+    files = stock_files(BOOKWORM)
+    files[BOOKWORM.config_file] += f"\n[pi5]\n{malformed}\n"
 
-    # The two spellings reach different firmware revisions, and used as a pattern the dotted one
-    # matches the comma one, so a device already carrying either must still be given the other
-    for existing in spellings:
-        files = stock_files(BOOKWORM)
-        files[BOOKWORM.config_file] += f"\n[pi5]\n{existing}\n"
+    apply_boot_config_patches(CpuType.PI5, BOOKWORM, files)
 
-        apply_boot_config_patches(CpuType.PI5, BOOKWORM, files)
-
-        section = section_configuration(files[BOOKWORM.config_file], "pi5")
-        for spelling in spellings:
-            assert section.count(spelling) == 1, (
-                f"a Pi5 already carrying {existing!r} ended up with {section.count(spelling)} copies of "
-                f"{spelling!r}, the Navigator I2C bus would not come up"
-            )
+    section = section_configuration(files[BOOKWORM.config_file], "pi5")
+    assert malformed not in section, "the firmware reads the dot as part of the overlay name and skips the line"
+    assert section.count(written) == 1, f"the Navigator I2C bus would not come up: {section}"
 
 
 @pytest.mark.parametrize("distribution", DISTRIBUTIONS)

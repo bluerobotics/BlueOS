@@ -286,8 +286,8 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
             ("dtoverlay=uart4-pi5", "^dtoverlay=uart4.*"),
             ("dtoverlay=uart2-pi5", "^dtoverlay=uart2.*"),
             ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
-            ("dtoverlay=i2c3-pi5,baudrate=400000", "^dtoverlay=i2c3-pi5,.*"),
-            ("dtoverlay=i2c3-pi5.baudrate=400000", "^dtoverlay=i2c3-pi5\\.baudrate.*"),
+            # the pattern also matches the malformed line that older images wrote, so it is removed
+            ("dtoverlay=i2c3-pi5,baudrate=400000", "^dtoverlay=i2c3-pi5.*"),
             (
                 "dtoverlay=i2c-gpio,i2c_gpio_sda=22,i2c_gpio_scl=23,bus=6,i2c_gpio_delay_us=0",
                 "^dtoverlay=i2c-gpio.*",
