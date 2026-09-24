@@ -276,7 +276,6 @@ class Bootstrapper:
         """Runs the bootstrapper"""
         logger.info(f"Starting bootstrap {self.bootstrap_version()}")
         while True:
-            time.sleep(5)
             for image in self.read_config_file():
                 # Start image if it's not running
                 if not self.is_running(image):
@@ -310,3 +309,4 @@ class Bootstrapper:
             # This is required for the tests, we need to "finish" somehow
             if "pytest" in sys.modules:
                 return
+            time.sleep(5)
