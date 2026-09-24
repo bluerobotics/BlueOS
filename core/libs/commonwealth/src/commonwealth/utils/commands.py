@@ -5,6 +5,18 @@ from typing import List, Optional
 
 from loguru import logger
 
+# Each new connection to the host costs ~0.5s of handshake on a Pi, so reuse one master connection
+SSH_OPTIONS = [
+    "-o",
+    "StrictHostKeyChecking=no",
+    "-o",
+    "ControlMaster=auto",
+    "-o",
+    "ControlPath=/tmp/blueos-ssh-%C",
+    "-o",
+    "ControlPersist=60",
+]
+
 
 class KeyNotFound(Exception):
     """Raised when the SSH key is not found."""
@@ -26,8 +38,7 @@ def run_command_with_password(command: str, check: bool = True) -> "subprocess.C
             "-p",
             password,
             "ssh",
-            "-o",
-            "StrictHostKeyChecking=no",
+            *SSH_OPTIONS,
             f"{user}@localhost",
             command,
         ],
@@ -51,8 +62,7 @@ def run_command_with_ssh_key(command: str, check: bool = True) -> "subprocess.Co
             "ssh",
             "-i",
             id_file,
-            "-o",
-            "StrictHostKeyChecking=no",
+            *SSH_OPTIONS,
             f"{user}@localhost",
             command,
         ],
@@ -98,8 +108,7 @@ def upload_file_with_password(
             "-p",
             password,
             "scp",
-            "-o",
-            "StrictHostKeyChecking=no",
+            *SSH_OPTIONS,
             source,
             f"{user}@localhost:{destination}",
         ],
@@ -122,8 +131,7 @@ def upload_file_with_ssh_key(source: str, destination: str, check: bool = True) 
             "scp",
             "-i",
             id_file,
-            "-o",
-            "StrictHostKeyChecking=no",
+            *SSH_OPTIONS,
             source,
             f"{user}@localhost:{destination}",
         ],
