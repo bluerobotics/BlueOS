@@ -65,8 +65,10 @@ class Bridget:
         return [spec for spec, bridge in self._bridges.items()]
 
     def add_bridge(self, bridge_spec: BridgeFrontendSpec) -> None:
-        if bridge_spec in self._bridges:
-            raise RuntimeError("Bridge already exist.")
+        if any(spec.serial_path == bridge_spec.serial_path for spec in self._bridges):
+            raise RuntimeError(
+                f"A bridge is already attached to {bridge_spec.serial_path}. Remove it before adding a new one."
+            )
         new_bridge = Bridge(
             SysFS(bridge_spec.serial_path),
             bridge_spec.baud,
@@ -77,8 +79,9 @@ class Bridget:
         )
         self._bridges[bridge_spec] = new_bridge
         settings_spec = BridgeSettingsSpecV2.from_spec(bridge_spec)
-        if settings_spec not in self._settings_manager.settings.specsv2:
-            self._settings_manager.settings.specsv2.append(settings_spec)
+        settings = self._settings_manager.settings
+        if settings_spec.model_dump() not in [spec.model_dump() for spec in settings.specsv2]:
+            settings.specsv2 = [spec for spec in settings.specsv2 if spec != settings_spec] + [settings_spec]
             self._settings_manager.save()
 
     def remove_bridge(self, bridge_spec: BridgeFrontendSpec) -> None:
