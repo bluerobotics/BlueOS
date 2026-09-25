@@ -251,6 +251,13 @@ configure_host() {
         sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
     fi
 
+    if [ -f /etc/dphys-swapfile ]; then
+        # dphys-swapfile caps the swap at half the free space, so on the first boot it has to wait for the root
+        # filesystem to grow, or the second boot deletes the capped file and spends ~30s writing it again
+        mkdir -p /etc/systemd/system/dphys-swapfile.service.d
+        printf "[Unit]\nAfter=resize2fs_once.service\n" > /etc/systemd/system/dphys-swapfile.service.d/after-resize.conf
+    fi
+
     [ "$(lsb_release -sc)" == "bookworm" ] || return 0
 
     WPA_SERVICE=/lib/systemd/system/wpa_supplicant.service
