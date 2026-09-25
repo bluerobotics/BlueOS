@@ -83,10 +83,10 @@ class Bridget:
 
     def remove_bridge(self, bridge_spec: BridgeFrontendSpec) -> None:
         bridge = self._bridges.pop(bridge_spec, None)
-        self._settings_manager.settings.specsv2.remove(BridgeSettingsSpecV2.from_spec(bridge_spec))
-        self._settings_manager.save()
         if bridge is None:
             raise RuntimeError("Bridge doesn't exist.")
+        self._settings_manager.settings.specsv2.remove(BridgeSettingsSpecV2.from_spec(bridge_spec))
+        self._settings_manager.save()
         bridge.stop()
 
     def stop(self) -> None:
