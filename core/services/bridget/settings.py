@@ -10,15 +10,6 @@ class BridgeSettingsSpecV1(pykson.JsonObject):
     ip = pykson.StringField()
     udp_port = pykson.IntegerField()
 
-    @staticmethod
-    def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV1":  # type: ignore
-        return BridgeSettingsSpecV1(
-            serial_path=spec.serial_path,
-            baudrate=spec.baud,
-            ip=spec.ip,
-            udp_port=spec.udp_port,
-        )
-
     def __eq__(self, other: object) -> Any:
         if isinstance(other, BridgeSettingsSpecV1):
             return self.serial_path == other.serial_path
