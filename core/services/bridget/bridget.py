@@ -90,9 +90,11 @@ class Bridget:
         bridge.stop()
 
     def stop(self) -> None:
-        logging.debug("Stopping Bridget and removing all bridges.")
-        for bridge_spec in self._bridges:
-            self.remove_bridge(bridge_spec)
+        # Shutdown must not touch persistency
+        logging.debug("Stopping Bridget and all bridges.")
+        for bridge in self._bridges.values():
+            bridge.stop()
+        self._bridges.clear()
 
     def __del__(self) -> None:
         self.stop()
