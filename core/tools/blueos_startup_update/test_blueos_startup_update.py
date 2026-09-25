@@ -887,6 +887,10 @@ def test_install_script_leaves_nothing_for_the_first_boot(
 
     assert not restarts and not writes, f"the first boot still runs {restarts} and writes {writes}"
     assert not (tmp_path / "etc/systemd/system/dhcpcd.service.d/wait.conf").exists()
+    swap_order = (tmp_path / "etc/systemd/system/dphys-swapfile.service.d/after-resize.conf").read_text(
+        encoding="utf-8"
+    )
+    assert "After=resize2fs_once.service" in swap_order, "the first boot sizes the swap before the filesystem grows"
     sysctl = (tmp_path / "etc/sysctl.conf").read_text(encoding="utf-8")
     for interface in ("all", "default", "lo"):
         assert sysctl.count(f"net.ipv6.conf.{interface}.disable_ipv6") == 1, f"{interface} is not set exactly once"
