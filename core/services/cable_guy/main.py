@@ -182,8 +182,12 @@ async def main() -> None:
     config = Config(app=app, host="0.0.0.0", port=9090, log_config=None)
     server = Server(config)
 
-    await manager.initialize()
-    asyncio.create_task(manager.watchdog())
+    async def configure_interfaces() -> None:
+        await manager.initialize()
+        await manager.watchdog()
+
+    # Applying the saved configuration waits on DHCP, which should not hold back the API
+    asyncio.create_task(configure_interfaces())
 
     await server.serve()
 
