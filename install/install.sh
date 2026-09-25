@@ -230,6 +230,44 @@ else
     echo "Not modifying /etc/dhcpcd.conf - file does not exist"
 fi
 
+# Leaves the host as blueos_startup_update.py wants it, otherwise the first boot patches it and reboots
+configure_host() {
+    echo "Disabling IPv6."
+    touch /etc/sysctl.conf
+    for INTERFACE in all default lo; do
+        sed -i "/^\s*#\?\s*net\.ipv6\.conf\.$INTERFACE\.disable_ipv6\s*=/d" /etc/sysctl.conf
+        echo "net.ipv6.conf.$INTERFACE.disable_ipv6=1" >> /etc/sysctl.conf
+    done
+
+    SWAP_SIZE=$(sed -n 's/^CONF_SWAPSIZE=//p' /etc/dphys-swapfile 2>/dev/null)
+    if [ "${SWAP_SIZE:-1024}" -lt 1024 ]; then
+        echo "Increasing swap size to 1024MB."
+        sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
+    fi
+
+    # Tethered vehicles have no DHCP server on eth0, so waiting for a lease stalls docker for ~30s on every boot
+    rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+
+    [ "$(lsb_release -sc)" == "bookworm" ] || return 0
+
+    WPA_SERVICE=/lib/systemd/system/wpa_supplicant.service
+    if [ -f $WPA_SERVICE ]; then
+        echo "Making wpa_supplicant use its configuration file."
+        sed -i '/^ExecStart=/{/-i /!s/$/ -i wlan0/;/-c /!s|$| -c /etc/wpa_supplicant/wpa_supplicant.conf|}' $WPA_SERVICE
+    fi
+
+    echo "Leaving DNS, eth0 and usb0 to BlueOS in NetworkManager."
+    NM_CONF=/etc/NetworkManager/NetworkManager.conf
+    mkdir -p /etc/NetworkManager
+    [ -f $NM_CONF ] || printf "[main]\nplugins=ifupdown,keyfile\n\n[ifupdown]\nmanaged=false\n\n[device]\nwifi.scan-rand-mac-address=no\n" > $NM_CONF
+    grep -q '^\[main\]' $NM_CONF || printf "\n[main]\n" >> $NM_CONF
+    sed -n '/^\[main\]/,/^\[/p' $NM_CONF | grep -q '^dns\s*=' || sed -i '/^\[main\]/a dns=none' $NM_CONF
+    grep -q '^\[keyfile\]' $NM_CONF || printf "\n[keyfile]\n" >> $NM_CONF
+    sed -n '/^\[keyfile\]/,/^\[/p' $NM_CONF | grep -q '^unmanaged-devices\s*=' \
+        || sed -i '/^\[keyfile\]/a unmanaged-devices=interface:eth0;interface:usb0' $NM_CONF
+}
+configure_host
+
 # Do necessary changes if running in a Raspiberry
 command -v raspi-config && (
     echo "Running in a Raspiberry."

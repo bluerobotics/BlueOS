@@ -825,3 +825,68 @@ def test_startup_patcher_resolves_both_boot_files_through_the_stub_guard() -> No
                 f"main() resolved {name} to {resolved!r} on a host whose boot partition is not mounted, so the "
                 "board section goes into a file the firmware never reads and the Navigator never appears"
             )
+
+
+# Host files as the image build finds them, from the Bullseye vehicle image and the Debian Bookworm packages
+STOCK_HOST_FILES = {
+    "/etc/sysctl.conf": "#net.ipv6.conf.all.forwarding=1\n#net.ipv6.conf.all.accept_redirects = 0\n",
+    "/etc/dphys-swapfile": "# set size to absolute value\nCONF_SWAPSIZE=100\n",
+    "/etc/systemd/system/dhcpcd.service.d/wait.conf": "[Service]\nExecStart=\nExecStart=/usr/sbin/dhcpcd -q -w\n",
+    "/lib/systemd/system/wpa_supplicant.service": (
+        '[Service]\nExecStart=/sbin/wpa_supplicant -u -s -O "DIR=/run/wpa_supplicant GROUP=netdev"\n'
+    ),
+    "/etc/NetworkManager/NetworkManager.conf": "[main]\nplugins=ifupdown,keyfile\n\n[ifupdown]\nmanaged=false\n",
+}
+
+
+@pytest.mark.parametrize("distribution", ["bullseye", "bookworm"])
+@pytest.mark.parametrize("absent", [None, "/etc/NetworkManager/NetworkManager.conf"])
+def test_install_script_leaves_nothing_for_the_first_boot(
+    distribution: str, absent: Optional[str], tmp_path: Path
+) -> None:
+    # Every host patch the first boot applies costs it a reboot, so the image has to ship already patched
+    content = (REPOSITORY_PATH / "install" / "install.sh").read_text(encoding="utf-8")
+    function = re.search(r"^configure_host\(\) \{\n.*?^\}$", content, re.MULTILINE | re.DOTALL)
+    assert function, "install.sh no longer configures the host through configure_host"
+
+    for path, stock in STOCK_HOST_FILES.items():
+        if path != absent:
+            (tmp_path / path[1:]).parent.mkdir(parents=True, exist_ok=True)
+            (tmp_path / path[1:]).write_text(stock, encoding="utf-8")
+
+    # Running it twice covers reinstalling over an installed host
+    script = re.sub(r"(?<![\w.-])/(etc|lib)/", rf"{tmp_path}/\1/", function.group(0))
+    subprocess.run(
+        ["bash", "-c", f"set -e\nlsb_release() {{ echo {distribution}; }}\n{script}\nconfigure_host\nconfigure_host"],
+        check=True,
+    )
+
+    writes: List[str] = []
+
+    def run_command(command: str, **_kwargs: bool) -> "subprocess.CompletedProcess[str]":
+        match = re.fullmatch(r"test -f (\S+) && cat \1", command)
+        if not match:
+            writes.append(command)
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        host_file = tmp_path / match[1][1:]
+        stdout = host_file.read_text(encoding="utf-8") if host_file.exists() else ""
+        return subprocess.CompletedProcess(command, 0 if host_file.exists() else 1, stdout=stdout, stderr="")
+
+    patches = [blueos_startup_update.ensure_ipv6_disabled, blueos_startup_update.update_swap_size]
+    if distribution == "bookworm":
+        patches += [blueos_startup_update.fix_wpa_service, blueos_startup_update.configure_network_manager]
+
+    with patch.object(
+        blueos_startup_update, "load_file", lambda path: (tmp_path / path[1:]).read_text(encoding="utf-8")
+    ), patch.object(blueos_startup_update, "save_file", lambda path, *_: writes.append(path)), patch.object(
+        blueos_startup_update, "run_command", run_command
+    ), patch.object(
+        blueos_startup_update, "check_available_space", lambda _required_mb: True
+    ):
+        restarts = [patch_function.__name__ for patch_function in patches if patch_function()]
+
+    assert not restarts and not writes, f"the first boot still runs {restarts} and writes {writes}"
+    assert not (tmp_path / "etc/systemd/system/dhcpcd.service.d/wait.conf").exists()
+    sysctl = (tmp_path / "etc/sysctl.conf").read_text(encoding="utf-8")
+    for interface in ("all", "default", "lo"):
+        assert sysctl.count(f"net.ipv6.conf.{interface}.disable_ipv6") == 1, f"{interface} is not set exactly once"
