@@ -23,12 +23,12 @@ class ContainerManager:
         return cast(DockerContainer, containers[0])
 
     @staticmethod
-    async def kill_all_by_name(client: Docker, container_name: str) -> None:
-        logger.info(f"Killing container {container_name}")
+    async def stop_all_by_name(client: Docker, container_name: str) -> None:
+        logger.info(f"Stopping container {container_name}")
         containers = await client.containers.list(filters={"name": {container_name: True}})  # type: ignore
-        for container in containers:
-            await container.kill()
-            await container.wait()
+        # Graceful termination with 10 seconds timeout before the containers are killed
+        await asyncio.gather(*(container.stop(t=10) for container in containers))
+        await asyncio.gather(*(container.wait() for container in containers))
 
     @staticmethod
     # pylint: disable=too-many-locals

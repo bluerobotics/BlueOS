@@ -136,7 +136,7 @@ class Extension:
 
                 image = container["Image"]
 
-                await ContainerManager.kill_all_by_name(client, container_name)
+                await ContainerManager.stop_all_by_name(client, container_name)
                 await container.delete()  # type: ignore
                 logger.info(f"Extension {container_name} removed")
 
