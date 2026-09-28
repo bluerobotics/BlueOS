@@ -186,10 +186,12 @@ async def main() -> None:
         await manager.initialize()
         await manager.watchdog()
 
-    # Applying the saved configuration waits on DHCP, which should not hold back the API
-    asyncio.create_task(configure_interfaces())
+    # Applying the saved configuration waits on DHCP, which should not hold back the API.
+    # The loop only keeps weak references to tasks, and this one waits on D-Bus futures nothing else holds.
+    configure_task = asyncio.create_task(configure_interfaces())
 
     await server.serve()
+    configure_task.cancel()
 
 
 if __name__ == "__main__":
