@@ -302,6 +302,13 @@ sudo ln --force /etc/resolv.conf /etc/resolv.conf.host
 echo "disabling NetworkManager-wait-online.service"
 systemctl disable NetworkManager-wait-online.service || true
 
+# Raspberry Pi OS runs dhcpcd with -w via this drop-in, so network-online.target
+# waits for a lease. docker.service waits on that target, and tethered vehicles
+# have no DHCP server on eth0. Keep in sync with remove_dhcpcd_wait().
+# Only Bullseye ships this drop-in. Drop this once we no longer support Bullseye.
+echo "Removing dhcpcd wait for network at boot."
+rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
+
 echo "Installation finished successfully."
 echo "You can access after the reboot:"
 echo "- The computer webpage: http://blueos-avahi.local"
