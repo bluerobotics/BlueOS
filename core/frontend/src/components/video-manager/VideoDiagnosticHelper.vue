@@ -19,6 +19,17 @@
           That should be fine if you are using this wi-fi connection for something other than piloting.
         </span>
       </v-alert>
+      <v-alert
+        v-if="has_mjpg_or_raw_streams"
+        border="top"
+        colored-border
+        type="warning"
+        elevation="2"
+        dismissible
+      >
+        Some streams use MJPEG or uncompressed video. Cockpit can't play these formats, and they require more
+        network bandwidth. We recommend switching to H.264 or H.265.
+      </v-alert>
     </v-row>
   </v-container>
 </template>
@@ -29,6 +40,7 @@ import Vue from 'vue'
 import beacon from '@/store/beacon'
 import video from '@/store/video'
 import { Domain, InterfaceType } from '@/types/beacon'
+import { VideoEncodeTypeEnum } from '@/types/video'
 
 export default Vue.extend({
   name: 'VideoDiagnosticHelper',
@@ -67,6 +79,12 @@ export default Vue.extend({
     },
     is_connected_to_wifi(): boolean {
       return this.wireless_interface_domains.some((domain) => domain.ip === beacon.nginx_ip_address)
+    },
+    has_mjpg_or_raw_streams(): boolean {
+      return video.available_streams.some((stream) => {
+        const { encode } = stream.video_and_stream.stream_information.configuration
+        return typeof encode === 'string' && ![VideoEncodeTypeEnum.H264, VideoEncodeTypeEnum.H265].includes(encode)
+      })
     },
 
   },
