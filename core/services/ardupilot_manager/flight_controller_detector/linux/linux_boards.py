@@ -1,6 +1,9 @@
 import os
+import pathlib
+import subprocess
 from typing import ClassVar, List, Type
 
+from loguru import logger
 from smbus2 import SMBus
 from typedefs import FlightController, PlatformType, Serial
 
@@ -8,6 +11,7 @@ from typedefs import FlightController, PlatformType, Serial
 class LinuxFlightController(FlightController):
     """Linux-based Flight-controller board."""
 
+    NET_PATH: ClassVar[pathlib.Path] = pathlib.Path("/sys/class/net")
     STANDARD_SCRIPT_DIRECTORY_PATH: ClassVar[str] = "/root/.config/ardupilot-manager/firmware/scripts"
     LUA_SCRIPT_DIRECTORY_PATH: ClassVar[str] = "/shortcuts/lua_scripts"
 
@@ -29,7 +33,49 @@ class LinuxFlightController(FlightController):
         except OSError:
             return False
 
+    def can_interfaces(self) -> List[str]:
+        return sorted(path.name for path in self.NET_PATH.iterdir() if path.name.startswith("can"))
+
+    def configure_can(self, interface: str) -> None:
+        # ponytail: 1 Mbit is forced on every start, overriding host or extension setups, because ArduPilot's Linux
+        # HAL ignores CAN_Pn_BITRATE. Read that parameter here if a bus ever needs another rate.
+        subprocess.run(["ip", "link", "set", interface, "down"], check=True, timeout=5)
+        subprocess.run(
+            [
+                "ip",
+                "link",
+                "set",
+                interface,
+                "up",
+                "type",
+                "can",
+                "bitrate",
+                "1000000",
+                "restart-ms",
+                "100",
+                "loopback",
+                "off",
+            ],
+            check=True,
+            timeout=5,
+        )
+
+    def setup_can(self) -> None:
+        try:
+            interfaces = self.can_interfaces()
+        except OSError as error:
+            logger.warning(f"Failed to list CAN interfaces: {error}")
+            return
+        # ponytail: ArduPilot maps CAN_Pn to can(n-1), so the port order follows kernel naming at boot.
+        # Rename by USB serial if a fixed mapping is ever needed.
+        for interface in interfaces:
+            try:
+                self.configure_can(interface)
+            except (OSError, subprocess.SubprocessError) as error:
+                logger.warning(f"Failed to configure {interface}: {error}")
+
     def setup(self) -> None:
+        self.setup_can()
         os.makedirs(self.STANDARD_SCRIPT_DIRECTORY_PATH, exist_ok=True)
         try:
             os.symlink(self.STANDARD_SCRIPT_DIRECTORY_PATH, self.LUA_SCRIPT_DIRECTORY_PATH)
