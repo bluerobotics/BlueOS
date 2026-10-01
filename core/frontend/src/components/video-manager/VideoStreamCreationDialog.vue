@@ -145,6 +145,14 @@
             tests we recommend you to use small resolutions and low framerates.
           </p>
         </v-form>
+        <v-alert
+          v-if="is_mjpg_or_raw_encode"
+          type="warning"
+          dense
+        >
+          This stream uses MJPEG or uncompressed video. Cockpit can't play these formats, and they require more
+          network bandwidth. We recommend switching to H.264 or H.265.
+        </v-alert>
       </v-card-text>
       <v-card-actions
         class="pt-1"
@@ -254,6 +262,10 @@ export default Vue.extend({
     },
     is_redirect_source(): boolean {
       return this.device.name === 'Redirect source'
+    },
+    is_mjpg_or_raw_encode(): boolean {
+      return typeof this.selected_encode === 'string'
+        && ![VideoEncodeTypeEnum.H264, VideoEncodeTypeEnum.H265].includes(this.selected_encode)
     },
     created_stream(): (CreatedStream | null) {
       if (this.format_required && (this.selected_encode === null
