@@ -520,9 +520,17 @@ export default Vue.extend({
       const file = new File([this.log_output ?? ''], `${this.log_container_name}.log`, { type: 'text/plain' })
       saveAs(file)
     },
-    showModal(extension: ExtensionData) {
+    async showModal(extension: ExtensionData) {
       this.show_dialog = true
       this.selected_extension = extension
+      try {
+        const full = await kraken.fetchCatalogExtension(extension.identifier)
+        if (this.selected_extension?.identifier === full.identifier) {
+          this.selected_extension = full
+        }
+      } catch {
+        // Compact catalog entry is enough to install; readme stays empty.
+      }
     },
     async install(
       identifier: string,
