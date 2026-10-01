@@ -409,6 +409,14 @@ def update_i2c4_symlink() -> bool:
     return False  # This patch doesn't require restart to take effect
 
 
+def remove_dhcpcd_wait() -> bool:
+    # Raspberry Pi OS makes dhcpcd block network-online.target until a lease arrives, and docker waits on it.
+    # Tethered vehicles have no DHCP server on eth0, so every boot stalled ~30s for the lease timeout.
+    logger.info("Removing dhcpcd wait for network at boot..")
+    run_command("sudo rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf", False)
+    return False  # Takes effect on next boot, no need to restart for it
+
+
 def revert_update_dwc2() -> bool:
     """
     Removes dwc2 configuration from cmdline.txt
@@ -901,6 +909,7 @@ def main() -> int:
         ("noIPV6", ensure_ipv6_disabled),
         ("swap", update_swap_size),
         ("cgroups", update_cgroups),
+        ("dhcpcd_wait", remove_dhcpcd_wait),
     ]
 
     if host_cpu == CpuType.PI3:

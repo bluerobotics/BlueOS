@@ -208,6 +208,8 @@ class Bootstrapper:
                 privileged=privileged,
                 network=network,
                 detach=True,
+                # Without an init to forward it, SIGTERM is ignored by PID 1 and docker waits 10s to kill it
+                init=True,
                 environment=environment,
                 log_config={
                     "Type": "json-file",
@@ -276,7 +278,6 @@ class Bootstrapper:
         """Runs the bootstrapper"""
         logger.info(f"Starting bootstrap {self.bootstrap_version()}")
         while True:
-            time.sleep(5)
             for image in self.read_config_file():
                 # Start image if it's not running
                 if not self.is_running(image):
@@ -310,3 +311,4 @@ class Bootstrapper:
             # This is required for the tests, we need to "finish" somehow
             if "pytest" in sys.modules:
                 return
+            time.sleep(5)

@@ -131,6 +131,12 @@ COPY --from=download-binaries \
 COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
 
+# Core is recreated from the image on every boot, so bytecode compiled at runtime is lost and every service
+# spent seconds recompiling its imports. Compiled here, after the last COPY, so the paths and mtimes match.
+RUN /usr/blueos/venv/bin/python -m compileall -q -j 0 \
+    "$(/usr/blueos/venv/bin/python -c 'import sysconfig; print(sysconfig.get_path("stdlib"))')" \
+    /usr/blueos/venv /home/pi/libs /home/pi/services
+
 RUN <<-EOF
 set -e
 
