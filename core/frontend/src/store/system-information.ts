@@ -68,13 +68,7 @@ function nextNetworkInterfaceNames(previous: string[], networks: Network[] | und
 }
 
 function resumeOrStart(task: OneMoreTime): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const state = task as any
-  if (state.isPaused) {
-    task.resume()
-  } else if (!state.isRunning && !state.timeoutId) {
-    task.start()
-  }
+  task.setActive(true)
 }
 
 @Module({

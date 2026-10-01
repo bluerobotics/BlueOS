@@ -23,6 +23,17 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     plugins: [
+      // mediabunny does not export `./codec-data`; map the import onto the shipped module.
+      {
+        name: 'mediabunny-codec-data',
+        enforce: 'pre',
+        resolveId(id) {
+          if (id === 'mediabunny/codec-data') {
+            return path.resolve(__dirname, 'node_modules/mediabunny/dist/modules/src/codec-data.js')
+          }
+          return null
+        },
+      },
       vue(),
       wasm(),
       VitePWA({
@@ -204,6 +215,7 @@ export default defineConfig(({ command, mode }) => {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
       alias: {
         '@': path.resolve(__dirname, './src'),
+        'mediabunny/codec-data': path.resolve(__dirname, 'node_modules/mediabunny/dist/modules/src/codec-data.js'),
       },
     },
     build: {
@@ -240,7 +252,7 @@ export default defineConfig(({ command, mode }) => {
       __APP_ENV__: env.APP_ENV,
     },
     optimizeDeps: {
-      exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util']
+      exclude: ['mediabunny']
     },
     server: {
       port: 8080,
