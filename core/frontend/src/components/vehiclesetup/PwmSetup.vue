@@ -261,11 +261,15 @@ export default Vue.extend({
       return autopilot.firmware_vehicle_type === FirmwareVehicleType.ArduSub
     },
     available_sub_motors(): MotorTestTarget[] {
-      return this.servo_function_parameters.filter(
-        (parameter) => parameter.value >= SERVO_FUNCTION.MOTOR1 && parameter.value <= SERVO_FUNCTION.MOTOR8,
-      ).map((parameter) => {
+      return this.servo_function_parameters.map((parameter) => {
+        const function_name = SERVO_FUNCTION[parameter.value]
+        const motor_function_match = /^MOTOR(\d+)$/.exec(function_name)
+        if (!motor_function_match) {
+          return undefined
+        }
+
         const servo_number = parseInt(/\d+/g.exec(parameter.name)?.[0] ?? '0', 10)
-        const motor_number = parseInt(/\d+/g.exec(printParam(parameter))?.[0] ?? '0', 10)
+        const motor_number = parseInt(motor_function_match[1], 10)
         const name = this.effective_param_value_map.Submarine?.[parameter.name] ?? `Motor ${motor_number}`
         const direction_parameter = autopilot_data.parameterRegex(`MOT_${motor_number}_DIRECTION`)?.[0]
         const target = motor_number - 1
@@ -274,10 +278,11 @@ export default Vue.extend({
           servo: servo_number,
           motor: motor_number,
           target,
-          direction: direction_parameter.value,
+          direction: direction_parameter?.value ?? 1.0,
           reverse_parameter: direction_parameter,
         }
-      }).sort((a, b) => a.motor - b.motor)
+      }).filter((motor): motor is MotorTestTarget => motor !== undefined)
+        .sort((a, b) => a.motor - b.motor)
     },
     available_motors(): MotorTestTarget[] {
       if (this.is_rover) {
