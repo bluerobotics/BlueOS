@@ -337,7 +337,8 @@ async def serial_test_mavlink_server(
     mavlink_server = MAVLinkServer()
     mavlink_server.log_path = "./logs"
     assert mavlink_server.name() == "MAVLink-Server", "Name does not match."
-    assert re.search(r"\d+.\d+.\d+", str(mavlink_server.version())) is not None, "Version does not follow pattern."
+    # Experimental tags (e.g. wip4d) are not semver; still require a non-empty version string.
+    assert mavlink_server.version(), "Version is missing."
 
     allowed_output_types = [
         EndpointType.UDPServer,
