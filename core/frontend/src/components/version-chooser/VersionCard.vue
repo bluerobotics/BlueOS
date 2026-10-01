@@ -1,142 +1,182 @@
 <template>
   <v-sheet
-    class="d-flex flex-column align-center my-4 pa-4 flex-sm-row py-sm-0"
+    class="my-4 pa-4 py-sm-0"
     :elevation="$vuetify.breakpoint.xs ? 1 : 0"
   >
-    <div class="d-flex">
-      <v-list-item-avatar>
-        <v-icon :class="current ? 'green' : 'grey'">
-          {{ remote ? 'mdi-earth' : '' }}
-          {{ displayIcon }}
-        </v-icon>
-      </v-list-item-avatar>
+    <div class="d-flex flex-column align-center flex-sm-row">
+      <div class="d-flex">
+        <v-list-item-avatar>
+          <v-icon :class="current ? 'green' : 'grey'">
+            {{ remote ? 'mdi-earth' : '' }}
+            {{ displayIcon }}
+          </v-icon>
+        </v-list-item-avatar>
 
-      <div>
-        <p
-          class="text-body-1 ma-0"
-          v-text="displayTag"
-        />
-        <p
-          v-if="settings.is_pirate_mode"
-          class="text-caption text--secondary ma-0"
-          v-text="`${image.sha ? shortSha(image.sha) : 'N/A'} - ${asTimeAgo(image.last_modified)}`"
-        />
-        <p
-          v-else
-          class="text-caption text--secondary ma-0"
-          v-text="`${asTimeAgo(image.last_modified)}`"
-        />
-        <p
-          class="text-caption text--secondary ma-0"
-          v-text="image.repository"
-        />
-      </div>
-    </div>
-    <v-spacer />
-    <div class="d-flex flex-wrap justify-center align-center my-2">
-      <v-alert
-        v-if="upToDate && !settings.is_pirate_mode"
-        class="mx-2 my-1"
-        dense
-        text
-        type="success"
-      >
-        Up to date
-      </v-alert>
-      <v-alert
-        v-if="settings.is_pirate_mode && current"
-        class="mx-2 my-1"
-        dense
-        text
-        type="success"
-      >
-        Running
-      </v-alert>
-      <div v-if="working">
-        <spinning-logo
-          size="30px"
-        />
-      </div>
-      <v-btn
-        v-if="newStableAvailable"
-        color="primary"
-        class="mx-2 my-1"
-        @click="$emit('pull-and-apply', `${image.repository}:${newStableAvailable}`)"
-        v-text="`Upgrade to ${newStableAvailable}`"
-      />
-      <v-btn
-        v-if="current && updateAvailable"
-        color="primary"
-        class="mx-2 my-1 scroll-container"
-        width="195"
-        :disabled="working"
-        @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
-      >
-        <div class="scroll-text">
-          Update to latest {{ image.tag }}
+        <div>
+          <p
+            class="text-body-1 ma-0"
+            v-text="displayTag"
+          />
+          <p
+            v-if="settings.is_pirate_mode"
+            class="text-caption text--secondary ma-0"
+            v-text="`${image.sha ? shortSha(image.sha) : 'N/A'} - ${asTimeAgo(image.last_modified)}`"
+          />
+          <p
+            v-else
+            class="text-caption text--secondary ma-0"
+            v-text="`${asTimeAgo(image.last_modified)}`"
+          />
+          <p
+            class="text-caption text--secondary ma-0"
+            v-text="image.repository"
+          />
         </div>
-      </v-btn>
-      <v-btn
-        v-if="showBootstrapUpdate"
-        color="warning"
-        class="mx-2 my-1"
-        :disabled="working"
-        dark
-        @click="bootstrapDialog = true"
-      >
-        Update Bootstrap
-      </v-btn>
-      <WarningDialog
-        v-if="showBootstrapUpdate"
-        v-model="bootstrapDialog"
-        message="Updating bootstrap is only recommended between stable versions."
-        confirm-label="Yes, update bootstrap"
-        cancel-label="Abort"
-        confirm-color="primary"
-        @confirm="updateBootstrap"
-      />
-      <v-btn
-        v-if="newBetaAvailable"
-        color="primary"
-        class="mx-2 my-1"
-        :disabled="working"
-        @click="$emit('pull-and-apply', `${image.repository}:${newBetaAvailable}`)"
-        v-text="`Upgrade to ${newBetaAvailable}`"
-      />
-      <v-btn
-        v-if="showCommit"
-        v-tooltip="'Saves the container filesystem as a new image'"
-        color="primary"
-        class="mx-2 my-1"
-        :disabled="working"
-        @click="$emit('commit', `${image.repository}:${image.tag}`)"
-        v-text="'Commit'"
-      />
-      <v-btn
-        v-if="!current && !remote && imageCanBeDeleted()"
-        color="error"
-        class="mx-2 my-1"
-        :disabled="working"
-        @click="$emit('delete', `${image.repository}:${image.tag}`)"
-        v-text="'Delete'"
-      />
-      <v-btn
-        v-if="!current && !remote"
-        color="primary"
-        class="mx-2 my-1"
-        :disabled="working"
-        @click="$emit('apply', `${image.repository}:${image.tag}`)"
-        v-text="'Apply'"
-      />
-      <v-btn
-        v-if="showPullButton"
-        color="primary"
-        class="mx-2 my-1"
-        :disabled="working"
-        @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
-        v-text="'Download and Apply'"
-      />
+      </div>
+      <v-spacer />
+      <div class="d-flex flex-wrap justify-center align-center my-2">
+        <v-btn
+          v-if="showDocsLink"
+          v-tooltip="'Documentation for this version'"
+          icon
+          :href="docsUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <v-icon>mdi-book-open-variant</v-icon>
+        </v-btn>
+        <v-btn
+          v-if="showReleaseNotes && !notesExpanded"
+          key="show-notes"
+          class="mx-2 my-1"
+          text
+          @click="notesExpanded = true"
+        >
+          <v-icon left>
+            mdi-list-box-outline
+          </v-icon>
+          What's new?
+        </v-btn>
+        <v-alert
+          v-if="upToDate && !settings.is_pirate_mode"
+          class="mx-2 my-1"
+          dense
+          text
+          type="success"
+        >
+          Up to date
+        </v-alert>
+        <v-alert
+          v-if="settings.is_pirate_mode && current"
+          class="mx-2 my-1"
+          dense
+          text
+          type="success"
+        >
+          Running
+        </v-alert>
+        <div v-if="working">
+          <spinning-logo
+            size="30px"
+          />
+        </div>
+        <v-btn
+          v-if="newStableAvailable"
+          color="primary"
+          class="mx-2 my-1"
+          @click="$emit('pull-and-apply', `${image.repository}:${newStableAvailable}`)"
+          v-text="`Upgrade to ${newStableAvailable}`"
+        />
+        <v-btn
+          v-if="current && updateAvailable"
+          color="primary"
+          class="mx-2 my-1 scroll-container"
+          width="195"
+          :disabled="working"
+          @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
+        >
+          <div class="scroll-text">
+            Update to latest {{ image.tag }}
+          </div>
+        </v-btn>
+        <v-btn
+          v-if="showBootstrapUpdate"
+          color="warning"
+          class="mx-2 my-1"
+          :disabled="working"
+          dark
+          @click="bootstrapDialog = true"
+        >
+          Update Bootstrap
+        </v-btn>
+        <WarningDialog
+          v-if="showBootstrapUpdate"
+          v-model="bootstrapDialog"
+          message="Updating bootstrap is only recommended between stable versions."
+          confirm-label="Yes, update bootstrap"
+          cancel-label="Abort"
+          confirm-color="primary"
+          @confirm="updateBootstrap"
+        />
+        <v-btn
+          v-if="newBetaAvailable"
+          color="primary"
+          class="mx-2 my-1"
+          :disabled="working"
+          @click="$emit('pull-and-apply', `${image.repository}:${newBetaAvailable}`)"
+          v-text="`Upgrade to ${newBetaAvailable}`"
+        />
+        <v-btn
+          v-if="showCommit"
+          v-tooltip="'Saves the container filesystem as a new image'"
+          color="primary"
+          class="mx-2 my-1"
+          :disabled="working"
+          @click="$emit('commit', `${image.repository}:${image.tag}`)"
+          v-text="'Commit'"
+        />
+        <v-btn
+          v-if="!current && !remote && imageCanBeDeleted()"
+          color="error"
+          class="mx-2 my-1"
+          :disabled="working"
+          @click="$emit('delete', `${image.repository}:${image.tag}`)"
+          v-text="'Delete'"
+        />
+        <v-btn
+          v-if="!current && !remote"
+          color="primary"
+          class="mx-2 my-1"
+          :disabled="working"
+          @click="$emit('apply', `${image.repository}:${image.tag}`)"
+          v-text="'Apply'"
+        />
+        <v-btn
+          v-if="showPullButton"
+          color="primary"
+          class="mx-2 my-1"
+          :disabled="working"
+          @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
+          v-text="'Download and Apply'"
+        />
+        <v-btn
+          v-if="showReleaseNotes && notesExpanded"
+          key="hide-notes"
+          v-tooltip="'Hide release notes'"
+          icon
+          @click="notesExpanded = false"
+        >
+          <v-icon>mdi-chevron-up</v-icon>
+        </v-btn>
+      </div>
     </div>
+    <release-notes
+      v-if="showReleaseNotes && notesExpanded"
+      :key="image.tag"
+      class="pb-4"
+      :repository="image.repository"
+      :tag="image.tag"
+    />
   </v-sheet>
 </template>
 
@@ -149,13 +189,17 @@ import settings from '@/libs/settings'
 import helper from '@/store/helper'
 import { Dictionary } from '@/types/common'
 import { InternetConnectionState } from '@/types/helper'
-import { DEFAULT_REMOTE_IMAGE, getFactoryVersion } from '@/utils/version_chooser'
+import {
+  DEFAULT_REMOTE_IMAGE, getDocsUrl, getFactoryVersion, isSemVer,
+} from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import ReleaseNotes from './ReleaseNotes.vue'
 
 export default Vue.extend({
   name: 'VersionCard',
   components: {
+    ReleaseNotes,
     SpinningLogo,
     WarningDialog,
   },
@@ -165,6 +209,10 @@ export default Vue.extend({
       default: false,
     },
     bootstrapVersion: {
+      type: String as PropType<string | undefined>,
+      default: undefined,
+    },
+    latestStable: {
       type: String as PropType<string | undefined>,
       default: undefined,
     },
@@ -220,6 +268,7 @@ export default Vue.extend({
   data() {
     return {
       bootstrapDialog: false,
+      notesExpanded: false,
       settings,
       factoryVersion: '',
     }
@@ -229,11 +278,14 @@ export default Vue.extend({
       return this.loading || this.deleting || this.updating
     },
     isFromBR(): boolean {
-      return this.image.repository === 'bluerobotics/blueos-core'
+      return this.image.repository === DEFAULT_REMOTE_IMAGE
+    },
+    hasInternet(): boolean {
+      return helper.has_internet !== InternetConnectionState.OFFLINE
+        && helper.has_internet !== InternetConnectionState.UNKNOWN
     },
     showBootstrapUpdate(): boolean {
-      if (!this.bootstrapVersion || helper.has_internet === InternetConnectionState.OFFLINE
-        || helper.has_internet === InternetConnectionState.UNKNOWN) {
+      if (!this.bootstrapVersion || !this.hasInternet) {
         return false
       }
       return this.settings.is_pirate_mode && this.current
@@ -242,6 +294,19 @@ export default Vue.extend({
     },
     showCommit(): boolean {
       return this.settings.is_dev_mode && this.current && !this.remote
+    },
+    showReleaseNotes(): boolean {
+      return this.isFromBR && this.hasInternet && isSemVer(this.image.tag)
+    },
+    docsTag(): string {
+      return this.image.tag === 'factory' ? this.factoryVersion : this.image.tag
+    },
+    // Branch builds and custom tags are not documented anywhere, unlike releases and master
+    showDocsLink(): boolean {
+      return isSemVer(this.docsTag) || this.docsTag === 'master'
+    },
+    docsUrl(): string {
+      return getDocsUrl(this.docsTag, this.latestStable)
     },
     displayTag(): string {
       if (this.image.tag === 'factory') {

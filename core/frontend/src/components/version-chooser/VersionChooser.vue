@@ -94,6 +94,7 @@
           :new-stable-available="newStableAvailable()"
           :new-beta-available="runningBeta() ? newBetaAvailable() : ''"
           :update-available="updateIsAvailable(current_version)"
+          :latest-stable="latest_stable"
           @apply="setVersion"
           @pull-and-apply="pullAndSetVersion"
         />
@@ -135,6 +136,7 @@
           :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(version)"
           :all-images-loaded="all_images_loaded"
+          :latest-stable="latest_stable"
           :deleting="isBeingDeleted(version)"
           :enable-delete="local_versions.result.local.length > 2"
           @delete="deleteVersion"
