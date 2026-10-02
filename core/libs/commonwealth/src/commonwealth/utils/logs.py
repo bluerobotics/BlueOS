@@ -60,7 +60,7 @@ def init_logger(service_name: str) -> None:
     try:
         validate_service_name(service_name)
         logger.remove()
-        logger.add(sys.stderr, format=ISO8601_LOG_FORMAT)
+        logger.add(sys.stderr, format=ISO8601_LOG_FORMAT, enqueue=True)
         logger.add(create_log_sink(service_name), serialize=True)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
