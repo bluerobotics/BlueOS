@@ -94,6 +94,9 @@ class PortWatcher:
                     self.known_ports.remove(port)
                     if self.port_lost_callback is not None:
                         await self.port_lost_callback(port)
+                for port in list(self.probe_attempts_counter):
+                    if port not in found_ports:
+                        del self.probe_attempts_counter[port]
                 await self.add_ping360()
             except Exception as error:
                 logger.exception(f"Error while watching ports/devices: {error}")
