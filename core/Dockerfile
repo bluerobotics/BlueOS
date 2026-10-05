@@ -32,21 +32,28 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
-# Project files
+# Project files. Services are virtual projects (package = false) and run from
+# /home/pi/services in the final image, so only their metadata is required to
+# resolve dependencies. Copying the source would rebuild this environment on
+# every service edit, and the vehicle would re-download the whole virtualenv.
 COPY ./uv.lock /home/pi/uv.lock
 COPY ./pyproject.toml /home/pi/pyproject.toml
 COPY ./.python-version /home/pi/.python-version
 
-COPY ./libs /home/pi/libs
-COPY ./services /home/pi/services
-
-COPY ./tools /home/pi/tools
+COPY --parents libs/*/pyproject.toml /home/pi/
+COPY --parents services/*/pyproject.toml /home/pi/
 
 # Virtual environment creation and packages installation
 WORKDIR /home/pi
-RUN uv venv && uv sync --frozen --no-default-groups
+RUN uv venv && uv sync --frozen --no-default-groups --no-install-workspace \
+    && for lib in libs/*/; do \
+        name=$(basename "$lib"); \
+        printf '%s\n' "/home/pi/libs/$name/src" > "/home/pi/.venv/lib/python3.11/site-packages/$name.pth"; \
+    done
 
-# Post install scripts
+# Post install scripts. Kept after the sync so a tool-script edit does not
+# redo the dependency install above.
+COPY ./tools /home/pi/tools
 RUN BLUEOS_PYTHON_ENVS="/home/pi/.venv" /home/pi/tools/install-python-libs.sh
 
 # Reset default workdir
