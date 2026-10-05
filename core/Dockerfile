@@ -60,7 +60,11 @@ RUN BLUEOS_PYTHON_ENVS="/home/pi/.venv" /home/pi/tools/install-python-libs.sh
 WORKDIR /home/pi
 ENV VIRTUAL_ENV=/home/pi/.venv
 
-# BlueOS base image
+# BlueOS base image.
+# Least-changed layers first: tools, then services, then the frontend.
+# A pulled update re-downloads a layer when its contents change, and it
+# re-downloads every later layer. GIT_DESCRIBE_TAGS changes
+# on every release, so it stays in the last layer.
 FROM base
 
 # Define arguments for target platform
@@ -68,41 +72,12 @@ FROM base
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-# Ensure that the git describe exists and also is in valid format as well
-# The format can be invalid if someone is build BlueOS without a tag as reference
-ARG GIT_DESCRIBE_TAGS
-ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-0-g00000000}
-RUN <<-EOF
-set -e
-
-    if ! echo "$GIT_DESCRIBE_TAGS" | grep -Eq -- '-[0-9]+-g[a-f0-9]{8,}$'; then
-        echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)"
-        exit 1
-    fi
-
-EOF
-
-# Set these arguments as environment variables
 ENV TARGETARCH=${TARGETARCH}
 ENV TARGETVARIANT=${TARGETVARIANT}
 
-# Install necessary tools
+# Tools change least often.
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-system-tools.sh
-
-# Copy libs and services code
-COPY libs /home/pi/libs
-COPY services /home/pi/services
-
-# Set tmux configuration file
-COPY configuration/tmux.conf /etc/tmux.conf
-COPY configuration/motd /etc/motd
-
-# Copy configuration files
-COPY start-blueos-core /usr/bin/start-blueos-core
-COPY run-service.sh /usr/bin/run-service
-
-COPY ./.vscode /home/pi/.vscode
 
 # Copy binaries and necessary folders from download-binaries to this stage
 COPY --from=download-binaries \
@@ -121,8 +96,6 @@ COPY --from=download-binaries \
     /usr/bin/ttyd \
     /usr/bin/
 
-# Copy frontend built on frontend-builder to this stage
-COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
 
 RUN <<-EOF
@@ -134,9 +107,9 @@ set -e
     ## If the folder tree contains any files during the build step, it means we put it here by mistake.
     [ -z "$(find '/root/.config' -mindepth 1 -type f)" ]
 
-    # Update blueosrc with the necessary environment variables
+    # Update blueosrc with the necessary environment variables.
+    # GIT_DESCRIBE_TAGS is appended in the last layer; it changes every release.
     RCFILE_PATH="/etc/blueosrc"
-    echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
     echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
     echo "export BLUEOS_VENV=/usr/blueos/venv" >> $RCFILE_PATH
     echo "export PATH=/usr/blueos/venv/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
@@ -160,6 +133,45 @@ set -e
     # on top of the existing file inside the docker.
     # This allows docker to actually create a folder, which we handle in networksetup.py
     rm -f /etc/dhcpcd.conf
+
+EOF
+
+# Services change more often than tools, less often than the frontend.
+COPY libs /home/pi/libs
+COPY services /home/pi/services
+
+# The venv's .pth files point at libs/<name>/src. Fail the build if a lib uses another layout.
+RUN for lib in /home/pi/libs/*/; do \
+        [ -d "${lib}src" ] || { echo "${lib} has no src directory"; exit 1; }; \
+    done
+
+COPY configuration/tmux.conf /etc/tmux.conf
+COPY configuration/motd /etc/motd
+COPY start-blueos-core /usr/bin/start-blueos-core
+COPY run-service.sh /usr/bin/run-service
+COPY ./.vscode /home/pi/.vscode
+
+# Frontend changes most often. The git description is not in this bundle; the
+# next layer writes it beside these files.
+COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
+
+# Version stamp. Last, because this value changes on every release and a step
+# that consumes it invalidates every layer above it.
+ARG GIT_DESCRIBE_TAGS
+ARG GIT_COMMIT_DATE
+# The fallback has a non-zero distance so a local build without the argument never counts as a tag build.
+ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-999-g00000000}
+RUN <<-EOF
+set -e
+
+    # The format can be invalid if someone builds BlueOS without a tag as reference.
+    if ! echo "$GIT_DESCRIBE_TAGS" | grep -Eq -- '-[0-9]+-g[a-f0-9]{8,}$'; then
+        echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)"
+        exit 1
+    fi
+
+    echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> /etc/blueosrc
+    printf '%s\n%s\n' "$GIT_DESCRIBE_TAGS" "$GIT_COMMIT_DATE" > /home/pi/frontend/blueos-version
 
 EOF
 
