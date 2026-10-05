@@ -45,7 +45,9 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
 
                 async with async_lock:
                     current_time = time.time()
-                    cache_is_valid = args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
+                    cache_is_valid = (
+                        args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
+                    )
 
                     # The cache is still valid and we can return the value if exists
                     if cache_is_valid and args in cache:
