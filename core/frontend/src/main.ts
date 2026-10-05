@@ -17,6 +17,8 @@ import DefaultTooltip from './components/common/DefaultTooltip.vue'
 import VStep from './components/vue-tour/src/components/VStep.vue'
 import VTour from './components/vue-tour/src/components/VTour.vue'
 import consoleLogger from '@/libs/console-logger'
+import { loadBlueosVersion } from '@/utils/blueos-version'
+import { convertGitDescribeToTag } from '@/utils/helper_functions'
 import vuetify from './plugins/vuetify'
 import router from './router'
 import store from './store'
@@ -36,37 +38,39 @@ Vue.component('VTour', VTour)
 Vue.component('VStep', VStep)
 Vue.prototype.$tours = {}
 
-const project = 'BlueOS'
-// Avoid logging local development
-const version = import.meta.env.VITE_APP_GIT_DESCRIBE
-const isOfficialTag = version?.includes('tags/')
-const release = `${project}@${version}`.replace('tags/', '').replace(/\//g, ':')
-console.info(`Running: ${release}`)
-if (version && isOfficialTag) {
-  Sentry.init({
-    Vue,
-    release,
-    dsn: 'https://d87285a04a74f71aac13445f60506708@o4507696465707008.ingest.us.sentry.io/4507765318615040',
-    integrations: [
-      Sentry.browserTracingIntegration({ router }),
-      Sentry.replayIntegration(),
-      Sentry.feedbackIntegration({ autoInject: false }),
-    ],
-    tracesSampleRate: 1.0,
-    tracePropagationTargets: [],
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-    transport: Sentry.makeBrowserOfflineTransport(Sentry.makeFetchTransport),
+async function start(): Promise<void> {
+  const version = await loadBlueosVersion()
+  const release = `BlueOS@${version}`
+  console.info(`Running: ${release}`)
+  // Distance 0 is a build of the tag itself. Later commits stay out of Sentry.
+  if (convertGitDescribeToTag(version)) {
+    Sentry.init({
+      Vue,
+      release,
+      dsn: 'https://d87285a04a74f71aac13445f60506708@o4507696465707008.ingest.us.sentry.io/4507765318615040',
+      integrations: [
+        Sentry.browserTracingIntegration({ router }),
+        Sentry.replayIntegration(),
+        Sentry.feedbackIntegration({ autoInject: false }),
+      ],
+      tracesSampleRate: 1.0,
+      tracePropagationTargets: [],
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+      transport: Sentry.makeBrowserOfflineTransport(Sentry.makeFetchTransport),
+    })
+  }
+
+  consoleLogger.initialize().catch((error) => {
+    console.error('Failed to initialize console logger:', error)
   })
+
+  new Vue({
+    router,
+    store,
+    vuetify,
+    render: (h) => h(App),
+  }).$mount('#app')
 }
 
-consoleLogger.initialize().catch((error) => {
-  console.error('Failed to initialize console logger:', error)
-})
-
-new Vue({
-  router,
-  store,
-  vuetify,
-  render: (h) => h(App),
-}).$mount('#app')
+start().catch((error) => console.error('Failed to start BlueOS:', error))
