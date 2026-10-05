@@ -90,23 +90,24 @@ hold_container_restarts() {
     local containers="${rootfs}/var/lib/docker/containers"
     RESTART_BACKUP="${WORK_DIR}/restart-backup"
     mkdir -p "$RESTART_BACKUP"
-    [ -d "$containers" ] || return 0
+    # /var/lib/docker is root-only, so tests and globs must go through sudo
+    sudo test -d "$containers" || return 0
     local dir base
-    for dir in "$containers"/*; do
-        [ -d "$dir" ] || continue
+    while IFS= read -r dir; do
+        [ -n "$dir" ] || continue
         base="$(basename "$dir")"
-        if [ -f "$dir/hostconfig.json" ]; then
+        if sudo test -f "$dir/hostconfig.json"; then
             sudo cat "$dir/hostconfig.json" | tee "$RESTART_BACKUP/${base}.hostconfig.json" >/dev/null
             jq '.RestartPolicy.Name = "no"' "$RESTART_BACKUP/${base}.hostconfig.json" \
                 | sudo tee "$dir/hostconfig.json" >/dev/null
         fi
-        if [ -f "$dir/config.v2.json" ]; then
+        if sudo test -f "$dir/config.v2.json"; then
             sudo cat "$dir/config.v2.json" | tee "$RESTART_BACKUP/${base}.config.v2.json" >/dev/null
             jq 'if .HostConfig.RestartPolicy then .HostConfig.RestartPolicy.Name = "no" else . end' \
                 "$RESTART_BACKUP/${base}.config.v2.json" \
                 | sudo tee "$dir/config.v2.json" >/dev/null
         fi
-    done
+    done < <(sudo find "$containers" -mindepth 1 -maxdepth 1 -type d)
 }
 
 restore_container_restarts() {
@@ -599,7 +600,8 @@ apply_extensions() {
         start_image_dockerd "$rootfs"
         settings_path="${rootfs}/root/.config/blueos/kraken/settings-2.json"
         current="${WORK_DIR}/kraken-settings.json"
-        if [ -f "$settings_path" ]; then
+        # /root is root-only, a plain -f would read an existing file as missing
+        if sudo test -f "$settings_path"; then
             sudo cat "$settings_path" | tee "$current" >/dev/null
         else
             echo '{"VERSION":2,"extensions":[],"manifests":[]}' >"$current"
