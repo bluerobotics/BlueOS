@@ -124,6 +124,10 @@ jobs:
 
           echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          # Fixed epoch. rewrite-timestamp applies this to every layer, so a build time
+          # would give unchanged layers a new digest on every release. The image config
+          # "created" becomes 1970 too, so the real date goes in a label (see versionchooser).
+          echo "SOURCE_DATE_EPOCH=0" >> $GITHUB_ENV
           COMMIT_DATE_ARG=""
           if [[ "${{ matrix.docker }}" == "core" ]]; then
             COMMIT_DATE_ARG="--build-arg GIT_COMMIT_DATE=$(git log -1 --format=%cI)"
@@ -131,6 +135,7 @@ jobs:
           echo "buildx_args=\
             --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
             ${COMMIT_DATE_ARG} \
+            --label org.opencontainers.image.created=$(git log -1 --format=%cI) \
             --cache-from 'type=local,src=/tmp/.buildx-cache' \
             --cache-to 'type=local,dest=/tmp/.buildx-cache' \
             ${TAGS} \
@@ -163,7 +168,7 @@ jobs:
             docker pull --platform ${platform} ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}:master || true
           done
           docker buildx build \
-            --output "type=image,push=false" \
+            --output "type=image,push=false,rewrite-timestamp=true" \
             --platform ${{ matrix.platforms }} \
             ${{ steps.prepare.outputs.buildx_args }}
 
@@ -189,7 +194,7 @@ jobs:
         if: success() && github.event_name != 'pull_request'
         run: |
           docker buildx build \
-            --output "type=image,push=true" \
+            --output "type=image,push=true,rewrite-timestamp=true" \
             --platform ${{ matrix.platforms }} \
             ${{ steps.prepare.outputs.buildx_args }}
 
@@ -208,7 +213,7 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }} \
             --platform "linux/arm64/v8"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar,rewrite-timestamp=true" \
 
       - name: Upload artifact arm64-v8
         uses: actions/upload-artifact@v7
@@ -226,7 +231,7 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }} \
             --platform "linux/arm/v7"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm-v7.tar,rewrite-timestamp=true" \
 
       - name: Upload artifact arm-v7
         uses: actions/upload-artifact@v7
@@ -244,7 +249,7 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }} \
             --platform "linux/amd64"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
+            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-amd64.tar,rewrite-timestamp=true" \
 
       - name: Upload artifact amd64
         uses: actions/upload-artifact@v7
