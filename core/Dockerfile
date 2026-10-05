@@ -79,22 +79,21 @@ ENV TARGETVARIANT=${TARGETVARIANT}
 COPY tools /home/pi/tools
 RUN /home/pi/tools/install-system-tools.sh
 
-# Copy binaries and necessary folders from download-binaries to this stage
-COPY --from=download-binaries \
-    /usr/bin/blueos_startup_update.py \
-    /usr/bin/blueos-recorder \
-    /usr/bin/bridges \
-    /usr/bin/disktest \
-    /usr/bin/linux2rest \
-    /usr/bin/machineid-cli \
-    /usr/bin/mavlink2rest \
-    /usr/bin/mavlink-camera-manager \
-    /usr/bin/mavlink-server \
-    /usr/bin/mcap \
-    /usr/bin/mcap-foxglove-video-extract \
-    /usr/bin/zenoh \
-    /usr/bin/ttyd \
-    /usr/bin/
+# One layer per binary: a release usually changes only a few of them. They change
+# less often than the Python services, so they stay below those.
+COPY --from=download-binaries /usr/bin/blueos_startup_update.py /usr/bin/
+COPY --from=download-binaries /usr/bin/blueos-recorder /usr/bin/
+COPY --from=download-binaries /usr/bin/bridges /usr/bin/
+COPY --from=download-binaries /usr/bin/disktest /usr/bin/
+COPY --from=download-binaries /usr/bin/linux2rest /usr/bin/
+COPY --from=download-binaries /usr/bin/machineid-cli /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink2rest /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink-camera-manager /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink-server /usr/bin/
+COPY --from=download-binaries /usr/bin/mcap /usr/bin/
+COPY --from=download-binaries /usr/bin/mcap-foxglove-video-extract /usr/bin/
+COPY --from=download-binaries /usr/bin/zenoh /usr/bin/
+COPY --from=download-binaries /usr/bin/ttyd /usr/bin/
 
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
 
