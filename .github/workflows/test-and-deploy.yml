@@ -121,9 +121,13 @@ jobs:
 
           echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          COMMIT_DATE_ARG=""
+          if [[ "${{ matrix.docker }}" == "core" ]]; then
+            COMMIT_DATE_ARG="--build-arg GIT_COMMIT_DATE=$(git log -1 --format=%cI)"
+          fi
           echo "buildx_args=\
             --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
-            --build-arg VITE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
+            ${COMMIT_DATE_ARG} \
             --cache-from 'type=local,src=/tmp/.buildx-cache' \
             --cache-to 'type=local,dest=/tmp/.buildx-cache' \
             ${TAGS} \
