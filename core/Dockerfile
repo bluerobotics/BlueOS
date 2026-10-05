@@ -4,19 +4,6 @@ ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.6
 # Build frontend
 FROM --platform=$BUILDPLATFORM oven/bun:1.3.14-slim AS frontend-builder
 
-ARG VITE_APP_GIT_DESCRIBE
-ENV VITE_APP_GIT_DESCRIBE=${VITE_APP_GIT_DESCRIBE:-none/none-0-g00000000}
-RUN <<-EOF
-set -e
-
-    if [ -z "$VITE_APP_GIT_DESCRIBE" ]; then
-        echo "VITE_APP_GIT_DESCRIBE argument not provided."
-        echo "Use: --build-arg VITE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)"
-        exit 1
-    fi
-
-EOF
-
 COPY frontend /home/pi/frontend
 ENV BUN_FEATURE_FLAG_DISABLE_STREAMING_INSTALL=1
 RUN <<-EOF
