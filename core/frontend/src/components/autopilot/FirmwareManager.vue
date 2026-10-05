@@ -799,7 +799,7 @@ export default Vue.extend({
 }
 
 .info-log {
-  color: #ffffff;
+  color: #fff;
 }
 
 .error-log {
