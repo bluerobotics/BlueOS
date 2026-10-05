@@ -3,7 +3,12 @@ import Vue from 'vue'
 const VERSION_PATH = '/blueos-version'
 const DESCRIBE_PATTERN = /-\d+-g[0-9a-f]{8,}$/
 
-const state = Vue.observable({ git_describe: '', build_date: '' })
+interface BlueosVersion {
+  git_describe: string
+  build_date: string
+}
+
+const state = Vue.observable<BlueosVersion>({ git_describe: '', build_date: '' })
 
 export function blueosGitDescribe(): string {
   return state.git_describe
@@ -15,7 +20,7 @@ export function blueosBuildDate(): string {
 
 // First line is GIT_DESCRIBE_TAGS. Second line, when present, is the committer
 // time of that commit (`git log -1 --format=%cI`).
-export function parseBlueosVersion(body: string): { git_describe: string, build_date: string } {
+export function parseBlueosVersion(body: string): BlueosVersion {
   const [describe_line, date_line] = body.trim().split(/\r?\n/)
   const parsed_date = date_line ? Date.parse(date_line) : Number.NaN
   return {
