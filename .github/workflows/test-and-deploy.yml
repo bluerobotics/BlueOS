@@ -6,6 +6,9 @@ env:
 on:
     workflow_dispatch:
     pull_request:
+      # The build-images label starts the Raspberry images build. Any other label skips the tests, and with them
+      # everything that needs them (see their if)
+      types: [opened, synchronize, reopened, labeled]
     push:
     schedule:
     # Run every 6 days to keep our caches alive
@@ -13,6 +16,7 @@ on:
 
 jobs:
   python-tests:
+    if: github.event.action != 'labeled' || github.event.label.name == 'build-images'
     runs-on: ubuntu-latest
 
     env:
@@ -53,6 +57,7 @@ jobs:
 
 
   frontend-tests:
+    if: github.event.action != 'labeled' || github.event.label.name == 'build-images'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -259,7 +264,9 @@ jobs:
 
   deploy-raspberry-image:
     needs: deploy-docker-images
-    if: github.event_name != 'pull_request' && github.repository_owner == 'bluerobotics'
+    if: >-
+      github.repository_owner == 'bluerobotics' &&
+      (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-images'))
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
     strategy:
       fail-fast: false
@@ -293,15 +300,28 @@ jobs:
       - name: Pimod Build
         run: |
           PIMOD_VERSION=v0.7.0
-          VERSION=$GITHUB_REPOSITORY
-          VERSION=${VERSION:-master}
+          BLUEOS_VERSION=$GITHUB_REF_NAME
+          REMOTE=https://raw.githubusercontent.com/$GITHUB_REPOSITORY
+          if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
+            # A pull request has no published images nor a raw ref, so use master's images with this checkout's scripts
+            BLUEOS_VERSION=master
+            mkdir -p /tmp/remote
+            ln -sfn $PWD /tmp/remote/$BLUEOS_VERSION
+            # The pimod container reaches the host through the docker0 address, so serve only there
+            python3 -m http.server 8000 --bind 172.17.0.1 --directory /tmp/remote > /tmp/http.log 2>&1 &
+            trap "kill $! || true" EXIT
+            REMOTE=http://172.17.0.1:8000
+            # The chroot fetches the scripts as soon as it starts, so the server has to be up before that
+            curl -fsS --retry 5 --retry-connrefused -o /dev/null $REMOTE/$BLUEOS_VERSION/install/install.sh
+          fi
           wget https://raw.githubusercontent.com/Nature40/pimod/${PIMOD_VERSION}/pimod.sh && chmod +x pimod.sh
           # The nested dockerd only pulls images, and iptables-nft can't initialize under qemu-user
           docker run --rm --privileged \
             -v $PWD:/files \
             -e PATH=/pimod:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
             -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
-            -e VERSION=$GITHUB_REF_NAME \
+            -e VERSION=$BLUEOS_VERSION \
+            -e REMOTE=$REMOTE \
             -e BASE_IMAGE=${{ matrix.image }} \
             -e BOARD=${{ matrix.board }} \
             -e DOCKER_EXTRA_OPTS="--iptables=false --ip6tables=false --bridge=none" \
