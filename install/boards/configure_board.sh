@@ -23,7 +23,20 @@ echo "Detecting board type"
 #     Unfortunately it means that cat /proc/cpuinfo is inaccurate for the Raspberry Pi 2, Raspberry Pi 3 and Raspberry Pi 4,
 #     which use the bcm2836/bcm2837, bcm2837 and bcm2711 respectively.
 #     You can use cat /proc/device-tree/model to get an accurate description of the SoC on your Raspberry Pi model.
-if [ -f "/proc/device-tree/model" ]; then
+if [ -n "$BOARD" ]; then
+    # Image builds run on hosts that are not the target board, so detection can't be used
+    # The accepted values are the scripts in this directory, and must match the board of the image build matrix
+    case "$BOARD" in
+        bcm_28xx|bcm_27xx|bcm_2712)
+            echo "Using $BOARD from BOARD"
+            curl -fsSL $CONFIGURE_BOARD_PATH/$BOARD.sh | bash
+            ;;
+        *)
+            echo "Invalid BOARD: $BOARD (expected bcm_28xx, bcm_27xx or bcm_2712)"
+            exit 1
+            ;;
+    esac
+elif [ -f "/proc/device-tree/model" ]; then
     CPU_MODEL=$(tr -d '\0' < /proc/device-tree/model)
     if [[ $CPU_MODEL =~ Raspberry\ Pi\ [0-3] ]]; then
         echo "Detected BCM28XX via device tree"
