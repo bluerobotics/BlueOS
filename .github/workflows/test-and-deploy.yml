@@ -142,10 +142,6 @@ jobs:
 
       - name: Docker Buildx (build)
         run: |
-          # Pull latest version of image to help with build speed
-          for platform in $(echo ${{ matrix.platforms }} | tr ',' '\n'); do
-            docker pull --platform ${platform} ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}:master || true
-          done
           docker buildx build \
             --output "type=image,push=false" \
             --platform ${{ matrix.platforms }} \
