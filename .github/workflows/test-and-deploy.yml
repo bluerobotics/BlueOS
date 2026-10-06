@@ -112,10 +112,17 @@ jobs:
 
           echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          # Every build reads the registry cache. Only 1.4-dev writes it: one shared tag, so
+          # concurrent pushes from other refs would overwrite each other. Tags are left out on
+          # purpose: they are cut from 1.4-dev, whose push already wrote the cache.
+          if [[ "${GITHUB_REF}" == 'refs/heads/1.4-dev' && "${{ github.event_name }}" != 'pull_request' ]]; then
+            echo "buildx_registry_cache_to=--cache-to 'type=registry,ref=${DOCKER_IMAGE}:buildcache,mode=max'" >> $GITHUB_OUTPUT
+          fi
           echo "buildx_args=\
             --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
             --build-arg VITE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
             --cache-from 'type=local,src=/tmp/.buildx-cache' \
+            --cache-from 'type=registry,ref=${DOCKER_IMAGE}:buildcache' \
             --cache-to 'type=local,dest=/tmp/.buildx-cache' \
             ${TAGS} \
             --file ${{ matrix.docker }}/Dockerfile ./${{ matrix.docker }}" >> $GITHUB_OUTPUT
@@ -171,7 +178,8 @@ jobs:
           docker buildx build \
             --output "type=image,push=true" \
             --platform ${{ matrix.platforms }} \
-            ${{ steps.prepare.outputs.buildx_args }}
+            ${{ steps.prepare.outputs.buildx_args }} \
+            ${{ steps.prepare.outputs.buildx_registry_cache_to }}
 
       - name: Inspect image
         if: always() && github.event_name != 'pull_request'
