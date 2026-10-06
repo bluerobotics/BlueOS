@@ -190,7 +190,13 @@ then
     echo 'dockremap:165536:65536' >> /etc/subgid
 
     dind dockerd $DOCKER_EXTRA_OPTS &
+      # A daemon that can't start would otherwise hang the install forever
+      SECONDS=0
       while(! docker info > /dev/null 2>&1); do
+        if [ $SECONDS -ge 120 ]; then
+          echo "==> The Docker daemon did not come online in 120 seconds."
+          exit 1
+        fi
         echo "==> Waiting for the Docker daemon to come online..."
         sleep 1
       done
