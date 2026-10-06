@@ -163,13 +163,32 @@ jobs:
       - name: Check core size
         if: ${{ matrix.docker == 'core' }}
         run: |
-          # Check if the image size is lower than our limit
-          docker image list
-          IMAGE_ID=$(docker images -q ${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }} | head -n 1)
+          # Check if the compressed image size is lower than our limit: that is what a vehicle downloads.
+          # A multi-platform build cannot be loaded into docker, so load only amd64.
+          IMAGE=${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
           LIMIT_SIZE_MB=700
-          IMAGE_SIZE_MB=$(( $(docker inspect $IMAGE_ID --format {{.Size}})/(2**20) ))
-          echo "Core size is: $IMAGE_SIZE_MB MB"
-          ((IMAGE_SIZE_MB < LIMIT_SIZE_MB))
+          docker buildx build \
+            --output "type=docker" \
+            --platform linux/amd64 \
+            ${{ steps.prepare.outputs.buildx_args }}
+          # gzip -1 is faster than the level a registry uses, so this slightly overestimates the download.
+          UNCOMPRESSED_SIZE_BYTES=$(docker image inspect "${IMAGE}" --format '{{.Size}}')
+          COMPRESSED_SIZE_BYTES=$(docker save "${IMAGE}" | gzip -1 | wc -c)
+          for SIZE_BYTES in "${UNCOMPRESSED_SIZE_BYTES}" "${COMPRESSED_SIZE_BYTES}"; do
+            if ! [[ "${SIZE_BYTES}" =~ ^[0-9]+$ ]] || (( SIZE_BYTES == 0 )); then
+              echo "::error::Could not measure the size of ${IMAGE}, got '${SIZE_BYTES}'"
+              exit 1
+            fi
+          done
+          UNCOMPRESSED_SIZE_MB=$(( UNCOMPRESSED_SIZE_BYTES / 2**20 ))
+          COMPRESSED_SIZE_MB=$(( COMPRESSED_SIZE_BYTES / 2**20 ))
+          MESSAGE="Core amd64 size: ${COMPRESSED_SIZE_MB} MB compressed (limit ${LIMIT_SIZE_MB} MB), ${UNCOMPRESSED_SIZE_MB} MB uncompressed"
+          echo "${MESSAGE}"
+          echo "${MESSAGE}" >> $GITHUB_STEP_SUMMARY
+          if (( COMPRESSED_SIZE_MB > LIMIT_SIZE_MB )); then
+            echo "::error::${IMAGE} is ${COMPRESSED_SIZE_MB} MB compressed, over the ${LIMIT_SIZE_MB} MB limit"
+            exit 1
+          fi
 
       - name: Login to DockerHub
         if: success() && github.event_name != 'pull_request'
