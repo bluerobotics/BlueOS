@@ -219,6 +219,7 @@ async def test_get_available_versions() -> None:
     assert "remote" in data
     assert data["local"][0]["tag"] == "test1"
     assert data["local"][1]["tag"] == "test2"
+    assert data["local"][0]["last_modified"].startswith("2021-10-1")  # unlabeled image falls back to Created
     assert len(client_mock.mock_calls) > 0
 
 
