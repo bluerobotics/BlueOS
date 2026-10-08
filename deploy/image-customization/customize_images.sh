@@ -17,6 +17,7 @@ DRY_RUN=0
 LOOP_DEVICE=""
 WORK_DIR=""
 EXTENSIONS=()
+EXTENSION_ENABLED=()
 DOCKERD_PID=""
 DOCKER_SOCK=""
 MANIFEST_JSON=""
@@ -25,17 +26,18 @@ RESTART_BACKUP=""
 MOUNTPOINT=""
 
 usage() {
-    echo "Usage: $0 <image_path> <vehicle_type> [firmware_version] [options]"
+    echo "Usage: $0 <image_path> <vehicle_type> <firmware_version> [options]"
     echo ""
     echo "Arguments:"
     echo "  image_path         Path to the BlueOS .img file"
     echo "  vehicle_type       Overlay to apply (directory overlay_<vehicle_type>/)"
-    echo "  firmware_version   Optional. ArduPilot version to fetch (e.g. 4.5.3, stable-4.5.3, beta)"
+    echo "  firmware_version   ArduPilot version to fetch (e.g. 4.5.3, stable-4.5.3, beta)"
     echo ""
     echo "Options:"
     echo "  --board navigator|navigator64   Autodetected from the image userland if omitted"
     echo "  --param-set NAME                Parameter set from the repository (without .params)"
-    echo "  --extension ID[:TAG]            BlueOS extension to install and enable (repeatable)."
+    echo "  --extension ID[:TAG]            Install the image and enable it (repeatable)."
+    echo "  --extension-disabled ID[:TAG]   Install the image but leave it disabled (repeatable)."
     echo "                                  Tag defaults to the newest stable manifest version."
     echo "  --dry-run                       Print firmware URL, param set, and extensions; do not write an image"
     echo ""
@@ -43,8 +45,8 @@ usage() {
     echo "  $0 BlueOS-raspberry-linux-arm-v7-bullseye-pi4.img bluerov2 4.5.3"
     echo "  $0 BlueOS-pi5.img blueboat120 4.6.2 --board navigator64"
     echo "  $0 BlueOS-pi4.img bluerov2 4.5.3 --param-set 'Heavy BlueROV2' --dry-run"
-    echo "  $0 BlueOS-pi4.img bluerov2 --extension bluerobotics.cockpit"
-    echo "  $0 BlueOS-pi5.img blueboat120 4.6.2 --extension some.extension:v1.2.3 --extension another.ext"
+    echo "  $0 BlueOS-pi4.img bluerov2 4.5.3 --extension bluerobotics.cockpit"
+    echo "  $0 BlueOS-pi5.img blueboat120 4.6.2 --extension some.extension:v1.2.3 --extension-disabled another.ext"
     exit 1
 }
 
@@ -425,13 +427,14 @@ merge_extension_settings() {
     local docker="$3"
     local tag="$4"
     local permissions="$5"
-    local settings_file="${6:-}"
+    local enabled="${6:-true}"
+    local settings_file="${7:-}"
     # shellcheck disable=SC2016 # jq variables, not shell
     local filter='
         def blank: {VERSION: 2, extensions: [], manifests: []};
         def entry: {
             docker: $docker,
-            enabled: true,
+            enabled: $enabled,
             identifier: $identifier,
             name: $name,
             permissions: $permissions,
@@ -454,6 +457,7 @@ merge_extension_settings() {
             --arg docker "$docker" \
             --arg tag "$tag" \
             --arg permissions "$permissions" \
+            --argjson enabled "$enabled" \
             "$filter" \
             "$settings_file"
     else
@@ -463,6 +467,7 @@ merge_extension_settings() {
             --arg docker "$docker" \
             --arg tag "$tag" \
             --arg permissions "$permissions" \
+            --argjson enabled "$enabled" \
             "$filter"
     fi
 }
@@ -608,10 +613,14 @@ apply_extensions() {
         fi
     fi
 
-    local spec old_ref
-    for spec in "${EXTENSIONS[@]}"; do
+    local i spec enabled old_ref state
+    for i in "${!EXTENSIONS[@]}"; do
+        spec="${EXTENSIONS[$i]}"
+        enabled="${EXTENSION_ENABLED[$i]}"
         resolve_extension "$spec"
-        echo "Extension: ${EXT_IDENTIFIER} ${EXT_DOCKER}:${EXT_TAG} (${EXT_PLATFORM})"
+        state="enabled"
+        [ "$enabled" = "true" ] || state="disabled"
+        echo "Extension: ${EXT_IDENTIFIER} ${EXT_DOCKER}:${EXT_TAG} (${EXT_PLATFORM}, ${state})"
         if [ "$DRY_RUN" -eq 1 ]; then
             continue
         fi
@@ -625,7 +634,7 @@ apply_extensions() {
             fi
         fi
         merge_extension_settings \
-            "$EXT_IDENTIFIER" "$EXT_NAME" "$EXT_DOCKER" "$EXT_TAG" "$EXT_PERMISSIONS" "$current" \
+            "$EXT_IDENTIFIER" "$EXT_NAME" "$EXT_DOCKER" "$EXT_TAG" "$EXT_PERMISSIONS" "$enabled" "$current" \
             >"${WORK_DIR}/kraken-settings.next"
         mv "${WORK_DIR}/kraken-settings.next" "$current"
     done
@@ -720,12 +729,17 @@ main() {
                 PARAM_SET="$2"
                 shift 2
                 ;;
-            --extension)
+            --extension | --extension-disabled)
                 if [ $# -lt 2 ]; then
-                    echo "Error: --extension requires identifier[:tag]"
+                    echo "Error: $1 requires identifier[:tag]"
                     usage
                 fi
                 EXTENSIONS+=("$2")
+                if [ "$1" = "--extension" ]; then
+                    EXTENSION_ENABLED+=(true)
+                else
+                    EXTENSION_ENABLED+=(false)
+                fi
                 shift 2
                 ;;
             --dry-run)
@@ -752,8 +766,8 @@ main() {
         esac
     done
 
-    if [ -z "$IMAGE_PATH" ] || [ -z "$VEHICLE_TYPE" ]; then
-        echo "Error: Missing required arguments"
+    if [ -z "$IMAGE_PATH" ] || [ -z "$VEHICLE_TYPE" ] || [ -z "$FIRMWARE_VERSION" ]; then
+        echo "Error: image, vehicle type, and ArduPilot version are required"
         usage
     fi
 
@@ -782,22 +796,12 @@ main() {
         IMAGE_PATH="$(cd "$(dirname "$IMAGE_PATH")" && pwd)/$(basename "$IMAGE_PATH")"
     fi
 
-    if [ -n "$FIRMWARE_VERSION" ]; then
-        configure_vehicle
-    fi
-    if [ -n "$FIRMWARE_VERSION" ] || [ "${#EXTENSIONS[@]}" -gt 0 ]; then
-        ensure_board
-    fi
+    configure_vehicle
+    ensure_board
 
     if [ "$DRY_RUN" -eq 1 ]; then
-        if [ -z "$FIRMWARE_VERSION" ] && [ "${#EXTENSIONS[@]}" -eq 0 ]; then
-            echo "Error: --dry-run requires a firmware version or --extension"
-            exit 1
-        fi
         ensure_work_dir
-        if [ -n "$FIRMWARE_VERSION" ]; then
-            apply_firmware_and_params ""
-        fi
+        apply_firmware_and_params ""
         if [ "${#EXTENSIONS[@]}" -gt 0 ]; then
             apply_extensions ""
         fi
@@ -841,16 +845,12 @@ main() {
 
     echo "Overlay applied successfully!"
 
-    if [ -n "$FIRMWARE_VERSION" ] || [ "${#EXTENSIONS[@]}" -gt 0 ]; then
-        apply_rootfs_board "$MOUNTPOINT"
-        ensure_work_dir
-    fi
+    apply_rootfs_board "$MOUNTPOINT"
+    ensure_work_dir
     if [ "${#EXTENSIONS[@]}" -gt 0 ]; then
         apply_extensions "$MOUNTPOINT"
     fi
-    if [ -n "$FIRMWARE_VERSION" ]; then
-        apply_firmware_and_params "$MOUNTPOINT"
-    fi
+    apply_firmware_and_params "$MOUNTPOINT"
 
     echo "Unmounting and cleaning up..."
     stop_image_dockerd
