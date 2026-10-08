@@ -20,6 +20,8 @@ from utils.dockerhub import (
     remote_tags_error_message,
 )
 
+# Builds pin the image config "created" to the epoch for reproducible layers, so the real date is a label.
+CREATED_LABEL = "org.opencontainers.image.created"
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
 
 
@@ -69,7 +71,7 @@ class VersionChooser:
         output = {
             "repository": image_name,
             "tag": tag,
-            "last_modified": image["Created"],
+            "last_modified": ((image.get("Config") or {}).get("Labels") or {}).get(CREATED_LABEL) or image["Created"],
             "sha": image["Id"],
             "architecture": image["Architecture"],
         }
@@ -409,7 +411,8 @@ class VersionChooser:
                     {
                         "repository": image_repository,
                         "tag": tag,
-                        "last_modified": datetime.fromtimestamp(image["Created"]).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                        "last_modified": (image.get("Labels") or {}).get(CREATED_LABEL)
+                        or datetime.fromtimestamp(image["Created"]).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                         "sha": image["Id"],
                         # Parent is the base docker image from the committed image
                         "parent_sha": image["ParentId"] or None,

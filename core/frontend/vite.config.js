@@ -9,7 +9,6 @@ import wasm from "vite-plugin-wasm"
 const { name } = require('./package.json')
 
 process.env.PROJECT_NAME = name
-process.env.VITE_BUILD_DATE = new Date().toLocaleString()
 const DEFAULT_ADDRESS = 'http://blueos-avahi.local/'
 const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? DEFAULT_ADDRESS
 
