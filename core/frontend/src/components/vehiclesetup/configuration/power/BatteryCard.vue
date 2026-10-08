@@ -169,13 +169,24 @@
               <v-col cols="12" sm="5" class="label-col text-sm-right">
                 <parameter-label label="Amps Offset" :param="ampOffsetParam" />
               </v-col>
-              <v-col cols="12" sm="7">
-                <inline-parameter-editor
-                  v-if="ampOffsetParam"
-                  :param="ampOffsetParam"
-                  :auto-set="true"
-                />
-                <span v-else class="caption text--disabled">Not available</span>
+              <v-col cols="12" sm="7" class="d-flex align-center">
+                <div class="flex-grow-1">
+                  <inline-parameter-editor
+                    v-if="ampOffsetParam"
+                    :param="ampOffsetParam"
+                    :auto-set="true"
+                  />
+                  <span v-else class="caption text--disabled">Not available</span>
+                </div>
+                <v-btn
+                  v-if="ampOffsetParam && current != null"
+                  x-small
+                  color="primary"
+                  class="ml-2"
+                  @click="show_offset_cal = true"
+                >
+                  Calibrate
+                </v-btn>
               </v-col>
             </v-row>
 
@@ -301,6 +312,52 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+
+        <v-dialog v-model="show_offset_cal" max-width="400">
+          <v-card class="pa-4">
+            <v-card-title class="subtitle-1 font-weight-bold">
+              Calibrate Amps Offset
+            </v-card-title>
+            <v-card-text>
+              <p class="body-2">
+                Measure current with an external meter and enter it below.
+                The offset is changed so the vehicle reports that current.
+              </p>
+              <v-text-field
+                v-model.number="measured_offset_current"
+                label="Measured Current (A)"
+                type="number"
+                step="0.01"
+                dense
+                hide-details
+                class="mb-3"
+              />
+              <div v-if="current != null" class="body-2 mb-1">
+                <b>Vehicle Current:</b> {{ current.toFixed(3) }} A
+              </div>
+              <div v-if="ampOffsetParam" class="body-2 mb-1">
+                <b>Current Offset:</b> {{ ampOffsetParam.value }}
+              </div>
+              <div v-if="calibrated_amp_offset != null" class="body-2">
+                <b>New Offset:</b> {{ calibrated_amp_offset.toFixed(4) }}
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn text small @click="show_offset_cal = false">
+                Cancel
+              </v-btn>
+              <v-btn
+                small
+                color="primary"
+                :disabled="!can_calibrate_offset"
+                @click="calibrateAmpOffset"
+              >
+                Calibrate &amp; Set
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </template>
     </v-card-text>
   </v-card>
@@ -410,8 +467,10 @@ export default Vue.extend({
       show_advanced: false,
       show_voltage_calc: false,
       show_current_calc: false,
+      show_offset_cal: false,
       measured_voltage: null as number | null,
       measured_current: null as number | null,
+      measured_offset_current: null as number | null,
     }
   },
   computed: {
@@ -440,6 +499,19 @@ export default Vue.extend({
     can_calculate_current(): boolean {
       return this.measured_current != null && this.measured_current > 0
         && this.current != null && this.current !== 0
+    },
+    calibrated_amp_offset(): number | null {
+      if (!this.can_calibrate_offset || !this.ampOffsetParam || !this.ampPerVoltParam
+        || this.current == null || this.measured_offset_current == null) {
+        return null
+      }
+      return this.ampOffsetParam.value + (this.current - this.measured_offset_current) / this.ampPerVoltParam.value
+    },
+    can_calibrate_offset(): boolean {
+      return this.measured_offset_current != null && Number.isFinite(this.measured_offset_current)
+        && this.current != null && Number.isFinite(this.current)
+        && this.ampOffsetParam != null
+        && this.ampPerVoltParam != null && this.ampPerVoltParam.value !== 0
     },
     sensor_fingerprint(): string {
       return [
@@ -506,6 +578,12 @@ export default Vue.extend({
       mavlink2rest.setParam(this.ampPerVoltParam.name, newApv, autopilot_data.system_id)
       this.show_current_calc = false
       this.measured_current = null
+    },
+    calibrateAmpOffset() {
+      if (this.calibrated_amp_offset == null || !this.ampOffsetParam) return
+      mavlink2rest.setParam(this.ampOffsetParam.name, this.calibrated_amp_offset, autopilot_data.system_id)
+      this.show_offset_cal = false
+      this.measured_offset_current = null
     },
   },
 })
