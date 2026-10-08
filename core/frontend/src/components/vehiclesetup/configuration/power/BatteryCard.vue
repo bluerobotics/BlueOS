@@ -287,6 +287,7 @@ interface SensorPreset {
   voltMult: number
   ampPerVolt: number
   ampOffset: number
+  ampOffsetRange?: [number, number]
 }
 
 const SENSOR_PRESETS: SensorPreset[] = [
@@ -329,6 +330,8 @@ const SENSOR_PRESETS: SensorPreset[] = [
     voltMult: 11.000,
     ampPerVolt: 37.8788,
     ampOffset: 0.330,
+    // Detection window only. Selecting this preset still writes ampOffset.
+    ampOffsetRange: [0.305, 0.33],
   },
   {
     text: 'Navigator w/ Blue Robotics PowerSwitch (R1)',
@@ -418,12 +421,14 @@ export default Vue.extend({
       if (!this.voltPinParam || !this.currPinParam || !this.voltMultParam || !this.ampPerVoltParam) {
         return
       }
+      const ampOffset = this.ampOffsetParam?.value ?? 0
       for (const preset of SENSOR_PRESETS) {
+        const [offsetMin, offsetMax] = preset.ampOffsetRange ?? [preset.ampOffset, preset.ampOffset]
         if (preset.voltPin === this.voltPinParam.value
           && preset.currPin === this.currPinParam.value
           && preset.voltMult === this.voltMultParam.value
           && preset.ampPerVolt === this.ampPerVoltParam.value
-          && preset.ampOffset === (this.ampOffsetParam?.value ?? 0)) {
+          && ampOffset >= offsetMin && ampOffset <= offsetMax) {
           this.selected_sensor = preset.text
           return
         }
