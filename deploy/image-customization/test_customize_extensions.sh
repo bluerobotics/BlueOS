@@ -58,7 +58,7 @@ cat >"$tmp/settings.json" <<'EOF'
 }
 EOF
 
-merged="$(merge_extension_settings "bluerobotics.sonar" "Sonar" "bluerobotics/sonar" "v1.2.3" '{"ExposedPorts":{}}' "$tmp/settings.json")"
+merged="$(merge_extension_settings "bluerobotics.sonar" "Sonar" "bluerobotics/sonar" "v1.2.3" '{"ExposedPorts":{}}' true "$tmp/settings.json")"
 echo "$merged" | jq -e '
     (.extensions | length) == 2
     and .extensions[0].identifier == "bluerobotics.cockpit"
@@ -72,7 +72,7 @@ echo "$merged" | jq -e '
 ' >/dev/null || fail "append dropped or rewrote existing settings"
 
 printf '%s' "$merged" >"$tmp/settings.json"
-merged="$(merge_extension_settings "bluerobotics.cockpit" "Cockpit" "bluerobotics/cockpit" "v9.9.9" "{}" "$tmp/settings.json")"
+merged="$(merge_extension_settings "bluerobotics.cockpit" "Cockpit" "bluerobotics/cockpit" "v9.9.9" "{}" true "$tmp/settings.json")"
 cockpit_count="$(echo "$merged" | jq '[.extensions[] | select(.identifier == "bluerobotics.cockpit")] | length')"
 [ "$cockpit_count" = "1" ] || fail "replace duplicated cockpit (${cockpit_count})"
 cockpit_tag="$(echo "$merged" | jq -r '.extensions[] | select(.identifier == "bluerobotics.cockpit") | .tag')"
@@ -83,5 +83,12 @@ echo "$merged" | jq -e '.extensions[] | select(.identifier == "bluerobotics.sona
 created="$(merge_extension_settings "a.b" "Name" "img/name" "v1.0.0" "{}")"
 echo "$created" | jq -e '.VERSION == 2 and .manifests == [] and (.extensions | length) == 1 and .extensions[0].enabled == true' \
     >/dev/null || fail "missing settings file should create a v2 document"
+
+disabled="$(merge_extension_settings "bluerobotics.sonar" "Sonar" "bluerobotics/sonar" "v1.2.3" "{}" false "$tmp/settings.json")"
+echo "$disabled" | jq -e '
+    (.extensions | length) == 2
+    and (.extensions[] | select(.identifier == "bluerobotics.cockpit") | .enabled) == true
+    and (.extensions[] | select(.identifier == "bluerobotics.sonar") | .enabled) == false
+' >/dev/null || fail "disabled extension should stay disabled without turning others off"
 
 echo "ok"
