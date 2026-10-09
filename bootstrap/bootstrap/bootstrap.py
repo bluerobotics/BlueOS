@@ -159,7 +159,11 @@ class Bootstrapper:
         """Checks if the image is already available locally"""
         try:
             images = self.client.images.list(image_name)
-            return any(f"{image_name}:{tag}" in image.tags for image in images)
+            # podman reports tags with the registry prefix, docker omits it for docker.io
+            return any(
+                f"{image_name}:{tag}" in [image_tag.removeprefix("docker.io/") for image_tag in image.tags]
+                for image in images
+            )
         except Exception as exception:
             logger.warning(f"Failed to list image ({image_name}): {exception}")
         return False
