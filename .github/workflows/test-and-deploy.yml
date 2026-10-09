@@ -303,6 +303,12 @@ jobs:
             board: "bcm_2712"
             artifact: "arm64-v8"
             image: "raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
+          - runner: ubuntu-24.04-arm
+            platform: "linux/arm64/v8"
+            os: "trixie"
+            board: "bcm_multi"
+            artifact: "arm64-v8"
+            image: "raspios_lite_arm64/images/raspios_lite_arm64-2026-10-06/2026-10-06-raspios-trixie-arm64-lite.img.xz"
 
     runs-on: ${{ matrix.runner }}
 
@@ -363,6 +369,9 @@ jobs:
               ;;
             bcm_27xx)
               EXPECTED=("[pi4]" "dtoverlay=i2c4,pins_6_7,baudrate=1000000" "dtoverlay=spi1-3cs")
+              ;;
+            bcm_multi)
+              EXPECTED=("[pi3]" "[pi4]" "[pi5]" "dtoverlay=i2c4,pins_6_7,baudrate=1000000" "dtoverlay=i2c3-pi5,baudrate=400000" "dtoverlay=spi1-3cs")
               ;;
             *)
               echo "Unknown board ${{ matrix.board }}, add the board configuration its image must contain."
