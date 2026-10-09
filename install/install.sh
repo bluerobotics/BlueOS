@@ -12,6 +12,7 @@ alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --c
 # Additional options
 DO_BOARD_CONFIG=1 # default to do the board config
 RUNNING_IN_CI=0 # default to not running CI mode/docker-in-docker
+CONTAINER_ENGINE="${CONTAINER_ENGINE:-docker}" # set to podman to run BlueOS on podman
 
 usage_help()
 {
@@ -172,27 +173,41 @@ iptables -v 2>&1 | grep -q "Failed to initialize nft" && (
     exit 1
 )
 
-# Check for docker and install it if not found
-echo "Checking for docker."
-## Docker uses VERSION environment variable to set the docker version,
-## We unset this variable for this command to avoid conflicts with blueos version
-docker --version || curl -fsSL https://get.docker.com | env -u VERSION sh || (
-    echo "Failed to start docker, something may be wrong."
-    if [ $RUNNING_IN_CI -ne 1 ]
-    then
-        exit 1
-    fi
-    echo "Running in CI is enabled, trying dind."
-)
+if [ "$CONTAINER_ENGINE" = "podman" ]; then
+    echo "Installing podman."
+    apt-get update
+    # podman-docker provides the docker command and /var/run/docker.sock, which the rest of BlueOS expects
+    apt-get install -y podman podman-docker crun netavark aardvark-dns passt
+    touch /etc/containers/nodocker
+    groupadd docker || true
+    mkdir -p /etc/containers/registries.conf.d /etc/systemd/system/podman.socket.d
+    curl -fsSL $ROOT/install/configs/podman/registries.conf -o /etc/containers/registries.conf.d/blueos.conf
+    curl -fsSL $ROOT/install/configs/podman/podman-tmpfiles.conf -o /etc/tmpfiles.d/podman.conf
+    curl -fsSL $ROOT/install/configs/podman/podman-socket.conf -o /etc/systemd/system/podman.socket.d/blueos.conf
+    systemctl enable podman.socket
+    [ $RUNNING_IN_CI -eq 1 ] || systemctl start podman.socket
+else
+    # Check for docker and install it if not found
+    echo "Checking for docker."
+    ## Docker uses VERSION environment variable to set the docker version,
+    ## We unset this variable for this command to avoid conflicts with blueos version
+    docker --version || curl -fsSL https://get.docker.com | env -u VERSION sh || (
+        echo "Failed to start docker, something may be wrong."
+        if [ $RUNNING_IN_CI -ne 1 ]
+        then
+            exit 1
+        fi
+        echo "Running in CI is enabled, trying dind."
+    )
 
-systemctl enable docker
+    systemctl enable docker
 
-# Docker 29+ defaults to the containerd image store (containerd-snapshotter=true).
-# That store breaks BlueOS installation, the booted docker.service talks to the
-# system containerd (a different data-root), so images baked into the image during
-# the build are invisible at runtime;
-mkdir -p /etc/docker
-cat <<'EOF' > /etc/docker/daemon.json
+    # Docker 29+ defaults to the containerd image store (containerd-snapshotter=true).
+    # That store breaks BlueOS installation, the booted docker.service talks to the
+    # system containerd (a different data-root), so images baked into the image during
+    # the build are invisible at runtime;
+    mkdir -p /etc/docker
+    cat <<'EOF' > /etc/docker/daemon.json
 {
     "features": {
         "containerd-snapshotter": false
@@ -200,34 +215,35 @@ cat <<'EOF' > /etc/docker/daemon.json
 }
 EOF
 
-if [ $RUNNING_IN_CI -eq 1 ]
-then
+    if [ $RUNNING_IN_CI -eq 1 ]
+    then
 
-    # Download Docker-in-Docker scripts
-    # This is used to allow running dockers from within other dockers, as this scripts usually runs in a docker in CI.
-    DIND_COMMIT="52379fa76dee07ca038624d639d9e14f4fb719ff"
-    curl -fL -o /usr/local/bin/dind "https://raw.githubusercontent.com/moby/moby/${DIND_COMMIT}/hack/dind" && chmod +x /usr/local/bin/dind
+        # Download Docker-in-Docker scripts
+        # This is used to allow running dockers from within other dockers, as this scripts usually runs in a docker in CI.
+        DIND_COMMIT="52379fa76dee07ca038624d639d9e14f4fb719ff"
+        curl -fL -o /usr/local/bin/dind "https://raw.githubusercontent.com/moby/moby/${DIND_COMMIT}/hack/dind" && chmod +x /usr/local/bin/dind
 
-    addgroup --system dockremap && \
-    adduser --system --ingroup dockremap dockremap && \
-    echo 'dockremap:165536:65536' >> /etc/subuid && \
-    echo 'dockremap:165536:65536' >> /etc/subgid
+        addgroup --system dockremap && \
+        adduser --system --ingroup dockremap dockremap && \
+        echo 'dockremap:165536:65536' >> /etc/subuid && \
+        echo 'dockremap:165536:65536' >> /etc/subgid
 
-    dind dockerd $DOCKER_EXTRA_OPTS &
-      # A daemon that can't start would otherwise hang the install forever
-      SECONDS=0
-      while(! docker info > /dev/null 2>&1); do
-        if [ $SECONDS -ge 120 ]; then
-          echo "==> The Docker daemon did not come online in 120 seconds."
-          exit 1
-        fi
-        echo "==> Waiting for the Docker daemon to come online..."
-        sleep 1
-      done
-    alias docker=dind
+        dind dockerd $DOCKER_EXTRA_OPTS &
+          # A daemon that can't start would otherwise hang the install forever
+          SECONDS=0
+          while(! docker info > /dev/null 2>&1); do
+            if [ $SECONDS -ge 120 ]; then
+              echo "==> The Docker daemon did not come online in 120 seconds."
+              exit 1
+            fi
+            echo "==> Waiting for the Docker daemon to come online..."
+            sleep 1
+          done
+        alias docker=dind
+    fi
+
+    sudo usermod -aG docker $USER
 fi
-
-sudo usermod -aG docker $USER
 
 # Stop and remove all docker if NO_CLEAN is not defined
 test $NO_CLEAN || (
@@ -261,9 +277,12 @@ else
 fi
 
 echo "Downloading bootstrap"
-BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
-BLUEOS_CORE="$DOCKER_USER/blueos-core:$VERSION" # We don't have a stable tag yet
-BLUEOS_FACTORY="bluerobotics/blueos-core:factory" # used for "factory reset"
+# podman stores unqualified names as localhost/..., which bootstrap does not match
+IMAGE_REGISTRY=""
+[ "$CONTAINER_ENGINE" = "podman" ] && IMAGE_REGISTRY="docker.io/"
+BLUEOS_BOOTSTRAP="$IMAGE_REGISTRY$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
+BLUEOS_CORE="$IMAGE_REGISTRY$DOCKER_USER/blueos-core:$VERSION" # We don't have a stable tag yet
+BLUEOS_FACTORY="${IMAGE_REGISTRY}bluerobotics/blueos-core:factory" # used for "factory reset"
 
 if [ -n "$LOCAL_IMAGES_DIR" ]
 then
@@ -299,6 +318,15 @@ curl -fsSL $ROOT/install/kraken/set_default_extensions.sh | bash
 # Use current release version for factory fallback
 docker image tag $BLUEOS_CORE $BLUEOS_FACTORY
 
+# podman does not create missing bind sources
+mkdir -p $HOME/.config/blueos/bootstrap /var/logs/blueos
+if [ "$CONTAINER_ENGINE" = "podman" ] && [ ! -e /var/run/docker.sock ]; then
+    # The socket only exists while podman.socket runs, which is not the case when building an image
+    mkdir -p /run/podman
+    touch /run/podman/podman.sock
+    ln -sf /run/podman/podman.sock /run/docker.sock
+fi
+
 # Create blueos-bootstrap container
 docker create \
     -t \
@@ -316,9 +344,16 @@ groupadd docker || true
 usermod -aG docker pi || true
 
 # Create service to start blueos-bootstrap container on boot
-curl -fsSL "$ROOT/install/configs/blueos.service" -o /etc/systemd/system/blueos.service
-systemctl start blueos
-systemctl enable blueos
+if [ "$CONTAINER_ENGINE" = "podman" ]; then
+    mkdir -p /etc/systemd/system/podman-restart.service.d
+    curl -fsSL $ROOT/install/configs/podman/podman-restart.conf -o /etc/systemd/system/podman-restart.service.d/blueos.conf
+    systemctl enable podman-restart
+    [ $RUNNING_IN_CI -eq 1 ] || { systemctl daemon-reload && systemctl start podman-restart; }
+else
+    curl -fsSL "$ROOT/install/configs/blueos.service" -o /etc/systemd/system/blueos.service
+    systemctl start blueos
+    systemctl enable blueos
+fi
 
 # Configure network settings
 ## This should be after everything, otherwise network problems can happen
