@@ -12,7 +12,7 @@ class AbstractWifiManager:
     wpa = WPASupplicant()
 
     def __init__(self) -> None:
-        self._settings_manager = PydanticManager("wifi-manager", SettingsV1)
+        self._settings_manager: PydanticManager[SettingsV1] = PydanticManager("wifi-manager", SettingsV1)
         self._settings_manager.load()
 
     @abc.abstractmethod
