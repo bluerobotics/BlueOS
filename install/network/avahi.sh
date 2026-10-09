@@ -10,17 +10,17 @@ alias curl="curl --retry 6 --max-time 15 --retry-all-errors --retry-delay 20 --c
 # Exit if something goes wrong
 set -e
 
-systemctl is-active --quiet avahi-daemon || (
+systemctl is-active --quiet avahi-daemon || {
     echo "Avahi daemon is not installed or running."
     exit 1
-)
+}
 
 echo "Configuring blueos avahi service"
 AVAHI_SERVICE_PATH="/etc/avahi/services"
-[ ! -d "${AVAHI_SERVICE_PATH}" ] && (
+[ ! -d "${AVAHI_SERVICE_PATH}" ] && {
     echo "Avahi service directory does not exist: ${AVAHI_SERVICE_PATH}"
     exit 1
-)
+}
 curl -fsSL $CONFIGURE_NETWORK_PATH/blueos.service > "${AVAHI_SERVICE_PATH}/blueos.service"
 
 AVAHI_DAEMON_CONFIG_PATH="/etc/avahi/avahi-daemon.conf"
