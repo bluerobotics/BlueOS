@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# Records the seconds since kernel start at which BlueOS boot milestones are reached, to benchmark boot times.
+# Run "boot-probe install" (from BlueOS core or the host), reboot, then "boot-probe report".
+# From inside BlueOS core, install and uninstall run on the host over ssh. The log is append-only, trim it by hand.
+
+LOG=/var/logs/blueos/boot-probe.log
+BIN=/usr/local/bin/boot-probe
+UNIT=/etc/systemd/system/boot-probe.service
+MILESTONES=(docker core eth0_ip cable_guy version_chooser heartbeat)
+TIMEOUT_S=400
+
+usage() {
+    echo "Usage: $0 install|uninstall|report|run"
+    echo
+    echo "  install    Run the probe on every boot, results go to $LOG"
+    echo "  uninstall  Stop running the probe on boot"
+    echo "  report     Show the milestones of each recorded boot"
+    echo "  run        Probe the current boot (used by the systemd service)"
+    exit 1
+}
+
+reached() {
+    case $1 in
+        docker) systemctl is-active -q docker ;;
+        core) [ "$(docker inspect -f '{{.State.Running}}' blueos-core 2>/dev/null)" == "true" ] ;;
+        eth0_ip) ip -4 -o addr show eth0 2>/dev/null | grep -q inet ;;
+        cable_guy) curl -sf -m1 -o /dev/null http://127.0.0.1/cable-guy/v1.0/ethernet ;;
+        version_chooser) curl -sf -m1 -o /dev/null http://127.0.0.1/version-chooser/v1.0/version/current ;;
+        heartbeat)
+            curl -sf -m1 -o /dev/null http://127.0.0.1/mavlink2rest/mavlink/vehicles/1/components/1/messages/HEARTBEAT
+            ;;
+        *) return 1 ;;
+    esac
+}
+
+run() {
+    local boot_id uptime model details
+    local -a pending still
+    boot_id=$(cat /proc/sys/kernel/random/boot_id)
+    pending=("${MILESTONES[@]}")
+    mkdir -p "$(dirname "$LOG")"
+    model=$(tr -d '\0' 2>/dev/null < /proc/device-tree/model)
+    echo "$boot_id platform ${model:-unknown} ($(uname -m))" >> "$LOG"
+    while [ ${#pending[@]} -gt 0 ]; do
+        uptime=$(cut -d' ' -f1 /proc/uptime)
+        if [ "${uptime%.*}" -ge $TIMEOUT_S ]; then
+            echo "$boot_id timeout $uptime ${pending[*]}" >> "$LOG"
+            return
+        fi
+        still=()
+        for name in "${pending[@]}"; do
+            if ! reached "$name"; then
+                still+=("$name")
+                continue
+            fi
+            echo "$boot_id $name $(cut -d' ' -f1 /proc/uptime)" >> "$LOG"
+            if [ "$name" == "core" ] && details=$(docker inspect \
+                -f '{{.Config.Image}}{{println}}{{range .Config.Env}}{{println .}}{{end}}' blueos-core 2>/dev/null); then
+                echo "$boot_id image $(head -n1 <<< "$details")" >> "$LOG"
+                echo "$boot_id version $(sed -n 's/^GIT_DESCRIBE_TAGS=//p' <<< "$details")" >> "$LOG"
+            fi
+        done
+        pending=("${still[@]}")
+        sleep 0.25
+    done
+}
+
+install() {
+    cp "$0" "$BIN"
+    chmod +x "$BIN"
+    # DefaultDependencies=no so this starts before the network and docker units it is timing.
+    # Type stays simple: a oneshot keeps its start job queued until it exits, so systemd would consider boot
+    # unfinished for up to TIMEOUT_S, skewing systemd-analyze and is-system-running.
+    printf "%s\n" \
+        "[Unit]" \
+        "Description=BlueOS boot time probe" \
+        "DefaultDependencies=no" \
+        "After=local-fs.target" \
+        "" \
+        "[Service]" \
+        "ExecStart=$BIN run" \
+        "" \
+        "[Install]" \
+        "WantedBy=sysinit.target" > "$UNIT"
+    systemctl daemon-reload
+    systemctl enable boot-probe.service
+    echo "Installed, reboot and run \"boot-probe report\" to see the results."
+}
+
+uninstall() {
+    systemctl disable --now boot-probe.service 2>/dev/null
+    rm -f "$UNIT" "$BIN"
+    systemctl daemon-reload
+    echo "Uninstalled, results are kept in $LOG."
+}
+
+report() {
+    [ -f "$LOG" ] || { echo "No boots recorded in $LOG yet."; return; }
+    echo "Seconds since kernel start, oldest boot first, - means not reached within ${TIMEOUT_S}s"
+    awk -v milestones="${MILESTONES[*]}" '
+        BEGIN {
+            count = split(milestones, names, " ")
+            texts = split("version image platform", text_names, " ")
+            for (t = 1; t <= texts; t++) { is_text[text_names[t]] = 1; width[text_names[t]] = length(text_names[t]) }
+        }
+        !($1 in seen) { seen[$1] = 1; order[++boots] = $1 }
+        $2 in is_text {
+            value = substr($0, length($1 $2) + 3)
+            text[$1, $2] = value
+            if (length(value) > width[$2]) width[$2] = length(value)
+            next
+        }
+        { at[$1, $2] = $3 }
+        END {
+            printf "%-8s", "boot"
+            for (i = 1; i <= count; i++) printf "  %s", names[i]
+            for (t = 1; t <= texts; t++) printf "  %-*s", t < texts ? width[text_names[t]] : 0, text_names[t]
+            print ""
+            for (b = 1; b <= boots; b++) {
+                printf "%-8s", substr(order[b], 1, 8)
+                for (i = 1; i <= count; i++) {
+                    value = ((order[b], names[i]) in at) ? sprintf("%.1f", at[order[b], names[i]]) : "-"
+                    printf "  %*s", length(names[i]), value
+                }
+                for (t = 1; t <= texts; t++) {
+                    value = ((order[b], text_names[t]) in text) ? text[order[b], text_names[t]] : "-"
+                    printf "  %-*s", t < texts ? width[text_names[t]] : 0, value
+                }
+                print ""
+            }
+        }
+    ' "$LOG"
+}
+
+case $1 in
+    install | uninstall)
+        # From inside BlueOS core, install on the host through the same ssh access red-pill uses
+        if [ -f /.dockerenv ]; then
+            ssh -i /root/.config/.ssh/id_rsa -o StrictHostKeyChecking=no "${SSH_USER:-pi}@localhost" \
+                "cat > /tmp/boot-probe && sudo bash /tmp/boot-probe $1; rm /tmp/boot-probe" < "$0"
+        elif [ "$(id -u)" -ne 0 ]; then
+            sudo "$0" "$1"
+        else
+            $1
+        fi
+        ;;
+    report) report ;;
+    run) run ;;
+    *) usage ;;
+esac
