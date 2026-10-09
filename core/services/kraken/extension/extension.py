@@ -206,9 +206,7 @@ class Extension:
         """Pull Docker image and yield progress updates."""
         tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
         async with DockerCtx() as client:
-            async for line in client.images.pull(
-                tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
-            ):
+            async for line in client.images.pull(tag, auth=docker_auth, stream=True):
                 # TODO - Plug Error detection from docker image here
                 yield json.dumps(line).encode("utf-8")
             # Make sure to add correct tag if a digest was used since docker messes up the tag
@@ -311,7 +309,7 @@ class Extension:
                         self.lock(self.unique_entry)
 
                         tag = img_name + (f"@{self.digest}" if self.digest else "")
-                        await client.images.pull(tag, repo=self.source.docker, tag=self.tag)
+                        await client.images.pull(tag)
                         # Make sure to add correct tag if a digest was used since docker messes up the tag
                         if self.digest:
                             await client.images.tag(tag, img_name)
