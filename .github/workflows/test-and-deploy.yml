@@ -183,7 +183,7 @@ jobs:
             inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
 
       - name: Create image artifact
-        if: success() && matrix.docker == 'core'
+        if: success()
         run: |
           DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
@@ -191,17 +191,17 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }} \
             --platform "linux/arm64/v8"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
+            --output "type=docker,dest=BlueOs-${{ matrix.docker }}-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
 
       - name: Upload artifact arm64-v8
         uses: actions/upload-artifact@v4
-        if: success() && matrix.docker == 'core'
+        if: success()
         with:
-          name: BlueOS-core-docker-image-arm64-v8
+          name: BlueOS-${{ matrix.docker }}-docker-image-arm64-v8
           path: '*arm64-v8.tar'
 
       - name: Create image artifact
-        if: success() && matrix.docker == 'core'
+        if: success()
         run: |
           DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
           GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
@@ -209,13 +209,13 @@ jobs:
             ${{ steps.prepare.outputs.buildx_args }} \
             --platform "linux/arm/v7"  \
             --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
+            --output "type=docker,dest=BlueOs-${{ matrix.docker }}-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
 
       - name: Upload artifact arm-v7
         uses: actions/upload-artifact@v4
-        if: success() && matrix.docker == 'core'
+        if: success()
         with:
-          name: BlueOS-core-docker-image-arm-v7
+          name: BlueOS-${{ matrix.docker }}-docker-image-arm-v7
           path: '*arm-v7.tar'
 
       - name: Create image artifact
@@ -261,16 +261,19 @@ jobs:
             platform: "linux/arm/v7"
             os: "bookworm"
             board: "bcm_27xx"
+            artifact: "arm-v7"
             image: "raspios_lite_armhf/images/raspios_lite_armhf-2024-07-04/2024-07-04-raspios-bookworm-armhf-lite.img.xz"
           - runner: ubuntu-latest
             platform: "linux/arm/v7"
             os: "bullseye"
             board: "bcm_27xx"
+            artifact: "arm-v7"
             image: "raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip"
           - runner: ubuntu-24.04-arm
             platform: "linux/arm64/v8"
             os: "bookworm"
             board: "bcm_2712"
+            artifact: "arm64-v8"
             image: "raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
 
     runs-on: ${{ matrix.runner }}
@@ -281,6 +284,14 @@ jobs:
         with:
           submodules: recursive
 
+      # The image embeds the images built by this run rather than whatever is published for the branch name
+      - name: Download docker images
+        uses: actions/download-artifact@v4
+        with:
+          pattern: BlueOS-*-docker-image-${{ matrix.artifact }}
+          path: deploy/pimod/images
+          merge-multiple: true
+
       # We use our own pimod as upstream doesn't provide armv7 images
       - name: Pimod Build
         run: |
@@ -288,7 +299,7 @@ jobs:
           BLUEOS_VERSION=$GITHUB_REF_NAME
           REMOTE=https://raw.githubusercontent.com/$GITHUB_REPOSITORY
           if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
-            # A pull request has no published images nor a raw ref, so use master's images with this checkout's scripts
+            # A pull request has no raw ref, so label the images built by this run as master and use this checkout's scripts
             BLUEOS_VERSION=master
             mkdir -p /tmp/remote
             ln -sfn $PWD /tmp/remote/$BLUEOS_VERSION
@@ -300,13 +311,14 @@ jobs:
             curl -fsS --retry 5 --retry-connrefused -o /dev/null $REMOTE/$BLUEOS_VERSION/install/install.sh
           fi
           wget https://raw.githubusercontent.com/Nature40/pimod/${PIMOD_VERSION}/pimod.sh && chmod +x pimod.sh
-          # The nested dockerd only pulls images, and iptables-nft can't initialize under qemu-user
+          # The nested dockerd loads the built images and pulls the extensions, and iptables-nft can't initialize under qemu-user
           docker run --rm --privileged \
             -v $PWD:/files \
             -e PATH=/pimod:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
             -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
             -e VERSION=$BLUEOS_VERSION \
             -e REMOTE=$REMOTE \
+            -e LOCAL_IMAGES_DIR=/root/blueos-images \
             -e BASE_IMAGE=${{ matrix.image }} \
             -e BOARD=${{ matrix.board }} \
             -e DOCKER_EXTRA_OPTS="--iptables=false --ip6tables=false --bridge=none" \
