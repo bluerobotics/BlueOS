@@ -133,23 +133,105 @@ def test_board_section_keeps_the_hat_overlay_loadable(distribution: Distribution
 
     apply_boot_config_patches(cpu_type, distribution, files)
 
+    patched_lines = files[distribution.config_file].splitlines()
+    first_directive = next(line for line in patched_lines if line.startswith(("dtparam=", "dtoverlay=")))
+    assert (
+        first_directive != blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
+    ), "config.txt opens with the empty dtoverlay=, so the firmware skips the HAT overlay"
+    assert_dtparam_lines_precede_overlays(section_configuration(files[distribution.config_file], section_name))
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_closes_a_hat_overlay_scope(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+    # the firmware loads the HAT overlay before it reads config.txt, and that overlay stays
+    # in scope while no line of config.txt opens another one. The firmware trims the line,
+    # so this line counts as a directive.
+    files[distribution.config_file] = "  dtparam=audio=on\n"
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
     section_lines = section_configuration(files[distribution.config_file], section_name)
-    assert blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE not in section_lines
-    assert_dtparam_lines_precede_overlays(section_lines)
+    assert (
+        section_lines[0] == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
+    ), "a HAT overlay is in scope here, so the board dtparam lines would be read against the HAT"
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_skips_a_line_the_firmware_does_not_read(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+    # a space around the equal sign hides the line from the firmware, so the board section
+    # holds the first directive of the file
+    files[distribution.config_file] = "dtparam = audio=on\n"
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    assert (
+        section_lines[0] != blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
+    ), "config.txt opens with the empty dtoverlay=, so the firmware skips the HAT overlay"
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_closes_its_own_overlay_scope(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    assert not blueos_startup_update.boot_config_overlay_is_open(
+        section_lines
+    ), "a line written below the board section would go to the last overlay of the board"
+
+
+@pytest.mark.parametrize(
+    "line, overlay_is_open",
+    [
+        ("dtoverlay=uart1", True),
+        ("dtoverlay=", False),
+        # the firmware trims the line before it reads the directive
+        ("   dtoverlay=   ", False),
+        ("\tdtoverlay=uart1", True),
+        # the firmware keeps a comment that follows a directive, so the name is "uart1 # a
+        # comment". No overlay carries that name, so the line opens nothing. We still answer
+        # open, because one empty dtoverlay= too many costs nothing and one too few does.
+        ("dtoverlay=uart1 # a comment", True),
+        ("dtoverlay= # a comment", True),
+        # the firmware reads nothing in these three lines, so the overlay above stays open
+        ("dtoverlay = uart1", True),
+        ("DTOVERLAY=", True),
+        ("#dtoverlay=", True),
+    ],
+)
+def test_overlay_is_open_reads_a_line_like_the_firmware(line: str, overlay_is_open: bool) -> None:
+    assert blueos_startup_update.boot_config_overlay_is_open(["dtoverlay=uart0", line]) == overlay_is_open
 
 
 @pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
 def test_board_section_keeps_the_scope_end_of_the_user(distribution: Distribution, cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    user_overlay = "dtoverlay=my-hat"
     user_dtparam = "dtparam=act_led_trigger=heartbeat"
+    scope_end = blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
     files = stock_files(distribution)
-    files[distribution.config_file] += f"\n{blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE}\n{user_dtparam}\n"
+    files[distribution.config_file] += f"\n[{section_name}]\n{user_overlay}\n{scope_end}\n{user_dtparam}\n"
 
     apply_boot_config_patches(cpu_type, distribution, files)
 
-    patched_lines = files[distribution.config_file].splitlines()
-    assert (
-        patched_lines[patched_lines.index(user_dtparam) - 1] == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE
-    ), "the patch removed the empty dtoverlay= that the user wrote"
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    above_dtparam = section_lines[: section_lines.index(user_dtparam)]
+    assert user_overlay in above_dtparam
+    assert not blueos_startup_update.boot_config_overlay_is_open(
+        above_dtparam
+    ), "the patch removed the empty dtoverlay= of the user, so the dtparam goes to the overlay of the user"
+
+    patched = dict(files)
+    applied = apply_boot_config_patches(cpu_type, distribution, files)
+    assert not any(applied.values()), "the second run asked for a restart, so it changed something"
+    assert files == patched, "the second run rewrote a boot file"
 
 
 def test_startup_patches_repair_a_reversed_board_section() -> None:
@@ -216,6 +298,10 @@ def test_board_section_rewrite_drops_a_protected_line(distribution: Distribution
     section_lines = section_configuration(files[distribution.config_file], section_name)
     assert section_lines.count(protected_spi) == 1
     assert section_lines.count("dtparam=spi=on") == 0
+    above_protected = section_lines[: section_lines.index(protected_spi)]
+    assert not blueos_startup_update.boot_config_overlay_is_open(
+        above_protected
+    ), "the protected dtparam goes to the overlay above it instead of to the board"
 
 
 @pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)

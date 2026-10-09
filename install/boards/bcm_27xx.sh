@@ -60,6 +60,7 @@ echo "Line number of [pi4] tag: $line_number"
 
 # All dtparam lines come first. A dtparam below a dtoverlay changes that overlay, not the board.
 # An empty dtoverlay= closes the overlay above it. The dtparam lines below it then go to the board.
+# The last one closes dtoverlay=dwc2.
 for STRING in \
     "dtoverlay=" \
     "dtparam=i2c_vc=on" \
@@ -78,6 +79,7 @@ for STRING in \
     "enable_uart=1" \
     "gpio=11,24,25=op,pu,dh" \
     "gpio=37=op,pd,dl" \
+    "dtoverlay=" \
     ; do \
     sed -i "$line_number r /dev/stdin" $CONFIG_FILE <<< "$STRING"
     # sed writes the string after this line number. Increase it, or the next string goes above the last one.
