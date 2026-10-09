@@ -1,4 +1,5 @@
 import asyncio
+import json
 import pathlib
 import platform
 
@@ -40,3 +41,24 @@ def test_firmware_validation() -> None:
             await installer.install_firmware(temporary_file, board, pathlib.Path(f"{temporary_file}_dest"))
 
     asyncio.run(firmware_validation_wrapper())
+
+
+def test_apj_validation_for_generic_serial(tmp_path: pathlib.Path) -> None:
+    firmware_path = tmp_path / "custom.apj"
+    firmware_path.write_text(json.dumps({"board_id": 1013}), encoding="utf-8")
+    FirmwareInstaller.validate_firmware(firmware_path, Platform.GenericSerial)
+
+
+def test_apj_validation_requires_board_id(tmp_path: pathlib.Path) -> None:
+    firmware_path = tmp_path / "custom.apj"
+    firmware_path.write_text(json.dumps({"image": ""}), encoding="utf-8")
+    for board_platform in (Platform.Pixhawk1, Platform.GenericSerial):
+        with pytest.raises(InvalidFirmwareFile, match="Could not find board_id"):
+            FirmwareInstaller.validate_firmware(firmware_path, board_platform)
+
+
+def test_apj_validation_reports_board_id_mismatch(tmp_path: pathlib.Path) -> None:
+    firmware_path = tmp_path / "custom.apj"
+    firmware_path.write_text(json.dumps({"board_id": 1013}), encoding="utf-8")
+    with pytest.raises(InvalidFirmwareFile, match="Expected board_id 9, found 1013"):
+        FirmwareInstaller.validate_firmware(firmware_path, Platform.Pixhawk1)
