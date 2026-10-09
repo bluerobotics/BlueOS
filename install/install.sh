@@ -82,6 +82,21 @@ curl -fsSL --silent $ROOT/install/install.sh 1> /dev/null || (
     exit 1
 )
 
+# Must run before the board configuration: do_legacy inserts dtoverlay=vc4-fkms-v3d right below [pi4],
+# and the board lines must stay above it or the first boot navigator patch reorders them and reboots.
+command -v raspi-config && (
+    echo "Running in a Raspberry."
+    if [ $(lsb_release -sc) == "bullseye" ];
+    then
+        raspi-config nonint get_legacy 1> /dev/null && (
+            echo "Enabling legacy camera support."
+            raspi-config nonint do_legacy 0
+        )
+    else
+        echo "Not on bullseye - no need to enable legacy camera support"
+    fi
+)
+
 # Detect CPU and do necessary hardware configuration for each supported hardware
 if [ $DO_BOARD_CONFIG -eq 1 ]
 then
@@ -204,20 +219,6 @@ then
 else
     echo "Not modifying /etc/dhcpcd.conf - file does not exist"
 fi
-
-# Do necessary changes if running in a Raspiberry
-command -v raspi-config && (
-    echo "Running in a Raspiberry."
-    if [ $(lsb_release -sc) == "bullseye" ];
-    then
-        raspi-config nonint get_legacy 1> /dev/null && (
-            echo "Enabling legacy camera support."
-            raspi-config nonint do_legacy 0
-        )
-    else
-        echo "Not on bullseye - no need to enable legacy camera support"
-    fi
-)
 
 echo "Downloading bootstrap"
 BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
