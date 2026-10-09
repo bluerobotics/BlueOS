@@ -373,7 +373,9 @@ def apply_boot_config_patches(
     blueos_startup_update.cmdline_file = distribution.cmdline_file
     with patch.object(blueos_startup_update, "load_file", fake_load_file), patch.object(
         blueos_startup_update, "save_file", fake_save_file
-    ), patch.object(blueos_startup_update, "get_cpu_type", lambda: cpu_type):
+    ), patch.object(blueos_startup_update, "get_cpu_type", lambda: cpu_type), patch.object(
+        blueos_startup_update, "keep_other_board_sections", distribution is TRIXIE
+    ):
         # Every patch has to run, the startup script does not stop at the first one that applies
         return {patch_function.__name__: patch_function() for patch_function in patches}
 
@@ -683,6 +685,22 @@ def test_pi3_cleanup_keeps_distribution_sections(distribution: Distribution) -> 
     )
 
     assert not any(applied.values()), "the cleanup did not converge, a reboot loop would follow"
+
+
+def test_trixie_boards_leave_each_others_sections_alone() -> None:
+    """The same SD card moves between a Pi3, a Pi4 and a Pi5, each boot must keep the other boards' sections."""
+    files = stock_files(TRIXIE)
+    files[TRIXIE.config_file] += "\n[pi3]\ndtoverlay=uart1\n[all]\n\n[pi4]\ndtoverlay=uart3\n[all]\n"
+    files[TRIXIE.config_file] = files[TRIXIE.config_file].replace("[pi5]\n", "[pi5]\ndtoverlay=uart3-pi5\n", 1)
+
+    for cpu_type in (CpuType.PI4, CpuType.PI5, CpuType.PI4):
+        apply_boot_config_patches(cpu_type, TRIXIE, files)
+        assert section_configuration(files[TRIXIE.config_file], "pi3") == ["dtoverlay=uart1"]
+        assert "dtoverlay=uart3" in section_configuration(files[TRIXIE.config_file], "pi4")
+        assert "dtoverlay=uart3-pi5" in section_configuration(files[TRIXIE.config_file], "pi5")
+
+    applied = apply_boot_config_patches(CpuType.PI4, TRIXIE, files)
+    assert not any(applied.values()), "swapping boards would reboot forever"
 
 
 def test_bcm28xx_enables_the_peripherals_a_pi3_needs() -> None:
