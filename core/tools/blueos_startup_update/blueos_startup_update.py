@@ -49,6 +49,7 @@ DELTA_JSON = {
             "/root/.majortom": {"bind": "/root/.majortom", "mode": "rw"},
             "/run/udev": {"bind": "/run/udev", "mode": "ro"},
             "/sys/": {"bind": "/sys/", "mode": "rw"},
+            "/sys/fs/cgroup": {"bind": "/sys/fs/cgroup", "mode": "rw"},
             "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
             "/usr/blueos/extensions": {"bind": "/usr/blueos/extensions", "mode": "rw"},
             "/usr/blueos/userdata": {"bind": "/usr/blueos/userdata", "mode": "rw"},
