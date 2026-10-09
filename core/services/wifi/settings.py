@@ -8,6 +8,7 @@ class SettingsV1(PydanticSettings):
     hotspot_ssid: Optional[str] = None
     hotspot_password: Optional[str] = None
     smart_hotspot_enabled: Optional[bool] = None
+    regulatory_country: Optional[str] = None
 
     def migrate(self, data: Dict[str, Any]) -> None:
         if data["VERSION"] == SettingsV1.STATIC_VERSION:

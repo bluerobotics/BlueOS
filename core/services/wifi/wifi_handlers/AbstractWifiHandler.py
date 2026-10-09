@@ -2,6 +2,7 @@ import abc
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
+import radio
 from commonwealth.settings.manager import PydanticManager
 from settings import SettingsV1
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
@@ -98,6 +99,24 @@ class AbstractWifiManager:
     @abc.abstractmethod
     def is_smart_hotspot_enabled(self) -> bool:
         return self._settings_manager.settings.smart_hotspot_enabled is True
+
+    async def set_country(self, code: str) -> None:
+        await radio.set_country(code)
+        previous_country = self._settings_manager.settings.regulatory_country
+        if previous_country == code:
+            return
+        self._settings_manager.settings.regulatory_country = code
+        try:
+            self._settings_manager.save()
+        except Exception:
+            # Or a later unrelated save would persist a country the request failed to apply
+            self._settings_manager.settings.regulatory_country = previous_country
+            raise
+
+    async def apply_saved_country(self) -> None:
+        # Never forcing a default: the country can already have been set by the user outside of BlueOS
+        if self._settings_manager.settings.regulatory_country is not None:
+            await self.set_country(self._settings_manager.settings.regulatory_country)
 
     @abc.abstractmethod
     async def start(self) -> None:

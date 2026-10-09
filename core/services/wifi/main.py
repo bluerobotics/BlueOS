@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, List, Optional
 
+import radio
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
@@ -20,7 +21,9 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from tabulate import tabulate  # type: ignore
 from typedefs import (
+    Country,
     HotspotStatus,
+    RfkillStatus,
     SavedWifiNetwork,
     ScannedWifiNetwork,
     WifiCredentials,
@@ -163,6 +166,47 @@ def get_hotspot_credentials() -> Any:
     return wifi_manager.hotspot_credentials()
 
 
+@app.get("/rfkill", response_model=RfkillStatus, summary="Get the rfkill state of the wifi radio.")
+@version(1, 0)
+async def get_rfkill() -> Any:
+    return await radio.rfkill_status()
+
+
+@app.post("/rfkill/unblock", summary="Unblock the wifi radio.")
+@version(1, 0)
+async def unblock_rfkill() -> Any:
+    await radio.rfkill_unblock()
+    rfkill = await radio.rfkill_status()
+    if rfkill.hard_blocked:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Wifi radio is blocked by hardware.")
+    return rfkill
+
+
+@app.get("/countries", response_model=List[Country], summary="Get the regulatory countries supported by the system.")
+@version(1, 0)
+async def get_countries() -> Any:
+    return await radio.supported_countries()
+
+
+@app.get("/country", response_model=str, summary="Get the regulatory country.")
+@version(1, 0)
+async def get_country() -> Any:
+    return await radio.current_country()
+
+
+@app.post("/country", response_model=str, summary="Set the regulatory country.")
+@version(1, 0)
+async def set_country(code: str) -> str:
+    assert wifi_manager is not None
+    countries = await radio.supported_countries()
+    if not countries:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Could not read the countries.")
+    if code not in {country.code for country in countries}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Country '{code}' is not supported.")
+    await wifi_manager.set_country(code)
+    return code
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
@@ -193,6 +237,11 @@ async def main() -> None:
             logger.info(f"Using {implementation} as wifi manager.")
             await implementation.start()
             wifi_manager = implementation
+            try:
+                await wifi_manager.apply_saved_country()
+            except Exception:
+                # The service has to come up even if the host can't apply it, or the UI can't change it
+                logger.exception("Could not apply the saved regulatory country.")
             break
 
     await server.serve()
