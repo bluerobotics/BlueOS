@@ -825,3 +825,10 @@ def test_startup_patcher_resolves_both_boot_files_through_the_stub_guard() -> No
                 f"main() resolved {name} to {resolved!r} on a host whose boot partition is not mounted, so the "
                 "board section goes into a file the firmware never reads and the Navigator never appears"
             )
+
+
+def test_image_provisioning_writes_the_network_manager_template() -> None:
+    provision_script = (REPOSITORY_PATH / "deploy/pimod/provision_trixie.sh").read_text(encoding="utf-8")
+    heredoc = re.search(r"<< 'CONF'\n(.*?)\nCONF\n", provision_script, re.DOTALL)
+    assert heredoc, "provision_trixie.sh no longer writes NetworkManager.conf"
+    assert heredoc.group(1) + "\n" == blueos_startup_update.NETWORK_MANAGER_CONF_TEMPLATE

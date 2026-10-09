@@ -703,6 +703,22 @@ def fix_wpa_service() -> bool:
     return True
 
 
+# deploy/pimod/provision_trixie.sh writes the same content into the image, a test keeps them equal
+NETWORK_MANAGER_CONF_TEMPLATE = """[main]
+plugins=ifupdown,keyfile
+dns=none
+
+[ifupdown]
+managed=false
+
+[device]
+wifi.scan-rand-mac-address=no
+
+[keyfile]
+unmanaged-devices=interface:eth0;interface:usb0
+"""
+
+
 def configure_network_manager() -> bool:
     """
     Ensures NetworkManager.conf has [main] section with dns=none set if dns is not already configured
@@ -716,20 +732,7 @@ def configure_network_manager() -> bool:
     result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
     if result.returncode != 0:
         # File doesn't exist, create with template
-        content = """[main]
-plugins=ifupdown,keyfile
-dns=none
-
-[ifupdown]
-managed=false
-
-[device]
-wifi.scan-rand-mac-address=no
-
-[keyfile]
-unmanaged-devices=interface:eth0;interface:usb0
-"""
-        run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
+        run_command(f"echo '{NETWORK_MANAGER_CONF_TEMPLATE}' | sudo tee {file_path}", check=False)
         return True
 
     config.read_string(result.stdout)
@@ -933,6 +936,9 @@ def main() -> int:
         )
     if host_os == HostOs.Bookworm:
         patches_to_apply.extend([("wpa", fix_wpa_service), ("networkmanager", configure_network_manager)])
+    # Trixie keeps wpa_supplicant as the NetworkManager-driven D-Bus service, so only the NetworkManager patch applies
+    if host_os == HostOs.Trixie:
+        patches_to_apply.append(("networkmanager", configure_network_manager))
 
     logger.info("The following patches will be applied if needed:")
     for name, patch in patches_to_apply:
