@@ -11,7 +11,6 @@
         <v-tab
           v-for="page in pages"
           :key="page.value"
-          :value="page.value"
         >
           {{ page.title }}
           <v-icon>{{ page.icon }}</v-icon>
@@ -21,7 +20,6 @@
         <v-tab-item
           v-for="page in pages"
           :key="page.value"
-          :value="page.value"
         >
           <network-interface-priority-menu v-if="page.value === 'network_interface_priority'" @close="close" />
           <dns-configuration-menu v-else-if="page.value === 'dns_configuration'" @close="close" />
@@ -57,12 +55,14 @@ export default Vue.extend({
     },
   },
   data() {
+    const pages: Item[] = [
+      { title: t`Network Interface Priority`, icon: 'mdi-sort', value: 'network_interface_priority' },
+      { title: t`Dns Configuration`, icon: 'mdi-dns', value: 'dns_configuration' },
+    ]
+    // v-tabs selects by index, so the page value can't be used as the model
     return {
-      page_selected: this.initialPage as string | null,
-      pages: [
-        { title: t`Network Interface Priority`, icon: 'mdi-sort', value: 'network_interface_priority' },
-        { title: t`Dns Configuration`, icon: 'mdi-dns', value: 'dns_configuration' },
-      ] as Item[],
+      page_selected: Math.max(pages.findIndex((page) => page.value === this.initialPage), 0),
+      pages,
     }
   },
   methods: {
