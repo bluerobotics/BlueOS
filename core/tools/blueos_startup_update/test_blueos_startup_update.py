@@ -46,6 +46,10 @@ NAVIGATOR_INSTALL_SCRIPTS = {
     CpuType.PI5: "install/boards/bcm_2712.sh",
 }
 
+# Configures every board at once for an image that can't know which board it will boot on, so it
+# writes one section per board instead of a single one
+MULTI_BOARD_INSTALL_SCRIPT = "install/boards/bcm_multi.sh"
+
 ALL_INSTALL_SCRIPTS = sorted(
     str(script.relative_to(REPOSITORY_PATH)) for script in (REPOSITORY_PATH / "install" / "boards").glob("*.sh")
 )
@@ -758,7 +762,7 @@ def test_install_scripts_probe_selects_the_real_boot_partition(
     assert probe, f"{script_name} no longer probes for the boot partition, /boot may be an inert Bookworm stub"
 
     # A Pi5 is newer than Bullseye, so boot files at /boot are never its boot partition
-    if expected == "boot" and script_name == NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5]:
+    if expected == "boot" and script_name in (NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5], MULTI_BOARD_INSTALL_SCRIPT):
         expected = None
 
     for directory, boot_files in layout.items():
@@ -814,6 +818,14 @@ def test_image_build_checks_what_the_install_scripts_write() -> None:
     for words in re.findall(r"EXPECTED=\((.*?)\)", workflow, re.DOTALL):
         expected = bash_words(words)
         headers = [line for line in expected if line.startswith("[")]
+        if len(headers) > 1:
+            multi_board_script = (REPOSITORY_PATH / MULTI_BOARD_INSTALL_SCRIPT).read_text(encoding="utf-8")
+            for line in expected:
+                if line in headers:
+                    assert f"write_board_section {line.strip('[]')} " in multi_board_script, f"no [{line}] section"
+                else:
+                    assert f'"{line}"' in multi_board_script, f"{MULTI_BOARD_INSTALL_SCRIPT} does not write {line!r}"
+            continue
         assert len(headers) == 1, f"{expected} does not look for exactly one board section"
         section_name = headers[0].strip("[]")
         assert section_name in sections, f"no install script writes a [{section_name}] section"
