@@ -12,8 +12,16 @@ LOG_FILE="/var/logs/blueos/run-service.log"
 
 # Assuming cgroups v2
 CHILD_CGROUP="/sys/fs/cgroup/$DOCKER_CGROUP/$service_name"
-# Create a new cgroup for the service
-mkdir -p "$CHILD_CGROUP"
+# Without the container cgroup, $CHILD_CGROUP would be on the host's cgroup root, so run without limits
+if [ -z "$DOCKER_CGROUP" ]; then
+    memory_limit_bytes=0
+    cpu_limit_percent=0
+    io_read_mbps=0
+    io_write_mbps=0
+else
+    # Create a new cgroup for the service
+    mkdir -p "$CHILD_CGROUP"
+fi
 
 # Set memory limit for the cgroup (0 = no limit)
 if [ "$memory_limit_bytes" -gt 0 ]; then
