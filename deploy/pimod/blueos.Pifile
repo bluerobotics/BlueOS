@@ -1,6 +1,7 @@
 FROM https://downloads.raspberrypi.org/${BASE_IMAGE}
 
-PUMP 3000M
+# docker load peaks at about 2x the size of the image archives
+PUMP 4500M
 
 # expand_fs
 INSTALL deploy/expand_fs.sh /usr/bin/expand_fs.sh
@@ -17,8 +18,16 @@ RUN bash -c '
   sed -i 's/factory/$VERSION/g' /root/.config/blueos/bootstrap/startup.json
 '
 
+# dind mounts a tmpfs over /tmp, so the archives can't live there
+INSTALL deploy/pimod/images /root/blueos-images
+
 RUN bash -c '
   curl -O ${REMOTE:-https://raw.githubusercontent.com/$GITHUB_REPOSITORY}/$VERSION/install/install.sh
   chmod +x install.sh
   USER=pi ./install.sh --ci-run
 '
+
+RUN rm -rf /root/blueos-images
+
+# The deleted archives and docker's import spool would otherwise stay as data in the zipped image
+RUN bash -c 'dd if=/dev/zero of=/zero bs=1M || true; rm -f /zero'
