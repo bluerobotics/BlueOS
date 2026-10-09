@@ -42,6 +42,31 @@
       </v-btn>
     </v-app-bar>
 
+    <v-alert
+      v-if="rfkill_blocked"
+      type="warning"
+      dense
+      text
+      class="ma-2"
+    >
+      {{ rfkill_hard_blocked
+        ? 'The wifi radio is blocked by hardware and cannot be unblocked from BlueOS.'
+        : 'The wifi radio is blocked, so no network can be scanned or hosted.' }}
+      <template
+        v-if="!rfkill_hard_blocked"
+        #append
+      >
+        <v-btn
+          color="warning"
+          small
+          :loading="rfkill_unblocking"
+          @click="unblockRfkill"
+        >
+          Unblock
+        </v-btn>
+      </template>
+    </v-alert>
+
     <v-sheet v-if="!wifi_is_loading">
       <wifi-network-card
         v-if="current_network"
@@ -187,6 +212,7 @@ export default Vue.extend({
       show_qr_code_dialog: false,
       wifi_qr_code_img: '',
       ssid_filter: undefined as string | undefined,
+      rfkill_unblocking: false,
     }
   },
   computed: {
@@ -220,6 +246,12 @@ export default Vue.extend({
     },
     hotspot_supported(): boolean | null {
       return wifi.hotspot_status?.supported ?? null
+    },
+    rfkill_blocked(): boolean {
+      return wifi.rfkill_status?.soft_blocked === true || wifi.rfkill_status?.hard_blocked === true
+    },
+    rfkill_hard_blocked(): boolean {
+      return wifi.rfkill_status?.hard_blocked === true
     },
     show_search(): boolean {
       if (!this.connectable_networks) {
@@ -263,6 +295,24 @@ export default Vue.extend({
       const data = await qrCodePromise
       console.log(data)
       this.wifi_qr_code_img = data
+    },
+    async unblockRfkill(): Promise<void> {
+      this.rfkill_unblocking = true
+      await back_axios({
+        method: 'post',
+        url: `${wifi.API_URL}/rfkill/unblock`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setRfkillStatus(response.data)
+          notifier.pushSuccess('WIFI_RFKILL_UNBLOCK_SUCCESS', 'Successfully unblocked the wifi radio.')
+        })
+        .catch((error) => {
+          notifier.pushBackError('WIFI_RFKILL_UNBLOCK_FAIL', error, true)
+        })
+        .finally(() => {
+          this.rfkill_unblocking = false
+        })
     },
     async toggleHotspot(): Promise<void> {
       this.hotspot_status_loading = true
