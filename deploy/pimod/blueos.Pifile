@@ -9,8 +9,10 @@ RUN chmod +x /usr/bin/expand_fs.sh
 
 RUN touch /boot/ssh
 
-# rfkill can't run in chroot, run here instead
+# rfkill can't run in chroot, run here instead. Bookworm blocks all radios by default (rfkill default_state=0)
 RUN sed -i "\%^exit 0%irfkill unblock all" /etc/rc.local
+# Bullseye ships wlan saved as blocked, and systemd-rfkill restores that after rc.local runs
+RUN bash -c 'shopt -s nullglob; for f in /var/lib/systemd/rfkill/*:wlan; do echo 0 > "$f"; done'
 
 RUN bash -c '
   mkdir -p /root/.config/blueos/bootstrap/
