@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import signal
 import sys
 
 import docker
@@ -24,6 +25,9 @@ if __name__ == "__main__":
             " bluerobotics/blueos-bootstrap:master"
         )
         sys.exit(1)
+
+    # As PID 1 the default SIGTERM action is ignored, so docker waited 10s to kill us on every shutdown
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
 
     bootstrapper = Bootstrapper(docker.client.from_env())
     bootstrapper.run()
