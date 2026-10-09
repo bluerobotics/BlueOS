@@ -1,3 +1,4 @@
+import asyncio
 import gzip
 import json
 import pathlib
@@ -57,6 +58,24 @@ class FirmwareDownloader:
         return pathlib.Path.joinpath(folder, filename)
 
     @staticmethod
+    async def _fetch(url: str, attempts: int = 5) -> bytes:
+        for attempt in range(1, attempts + 1):
+            try:
+                connector = aiohttp.TCPConnector(ssl=FirmwareDownloader._create_ssl_context())
+                async with aiohttp.ClientSession(connector=connector) as session:
+                    async with session.get(url) as response:
+                        response.raise_for_status()
+                        return await response.read()
+            except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+                # Client errors (4xx) are permanent, only retry connection issues and server errors
+                client_error = isinstance(error, aiohttp.ClientResponseError) and error.status < 500
+                if attempt == attempts or client_error:
+                    raise
+                logger.warning(f"Download of {url} failed (attempt {attempt}/{attempts}): {error!r}, retrying...")
+                await asyncio.sleep(2**attempt)
+        raise AssertionError("unreachable")
+
+    @staticmethod
     async def _download(url: str) -> pathlib.Path:
         """Download a specific file for a temporary location.
 
@@ -72,12 +91,8 @@ class FirmwareDownloader:
         filename = pathlib.Path(f"{FirmwareDownloader._generate_random_filename()}-{name}")
         try:
             logger.debug(f"Downloading: {url}")
-            connector = aiohttp.TCPConnector(ssl=FirmwareDownloader._create_ssl_context())
-            async with aiohttp.ClientSession(connector=connector) as session:
-                async with session.get(url) as response:
-                    response.raise_for_status()
-                    with open(filename, "wb") as f:
-                        f.write(await response.read())
+            with open(filename, "wb") as f:
+                f.write(await FirmwareDownloader._fetch(url))
         except Exception as error:
             raise FirmwareDownloadFail("Could not download firmware file.") from error
         return filename
@@ -98,13 +113,8 @@ class FirmwareDownloader:
         Returns:
             bool: True if file was downloaded and validated, False if not.
         """
-        connector = aiohttp.TCPConnector(ssl=FirmwareDownloader._create_ssl_context())
-        async with aiohttp.ClientSession(connector=connector) as session:
-            async with session.get(FirmwareDownloader._manifest_remote) as response:
-                response.raise_for_status()
-                manifest_gzip = await response.read()
-                manifest = gzip.decompress(manifest_gzip)
-                self._manifest = json.loads(manifest)
+        manifest_gzip = await FirmwareDownloader._fetch(FirmwareDownloader._manifest_remote)
+        self._manifest = json.loads(gzip.decompress(manifest_gzip))
 
         if "format-version" not in self._manifest:
             raise InvalidManifest("Invalid Manifest file. Does not contain 'format-version' key.")
