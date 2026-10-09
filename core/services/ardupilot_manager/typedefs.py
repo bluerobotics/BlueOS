@@ -181,6 +181,7 @@ class Serial(BaseModel):
     --serial3 /dev/ttyAMA1
     --serial4 /dev/ttyAMA2
     --serial5 /dev/ttyAMA3
+    (the ttyAMA numbers shown are Bullseye's, Bookworm and Trixie use 3, 4 and 5)
     """
 
     port: str

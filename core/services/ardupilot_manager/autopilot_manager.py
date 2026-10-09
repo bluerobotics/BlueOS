@@ -293,11 +293,11 @@ class AutoPilotManager(metaclass=Singleton):
     def get_serials(self) -> List[Serial]:
         # The mapping of serial ports works as in the following table:
         #
-        # |    ArduSub   |       Navigator         |
-        # | -C = Serial1 | Serial1 => /dev/ttyS0   |
-        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 |
-        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 |
-        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
+        # |    ArduSub   |   Navigator (Bullseye)  | Navigator (Bookworm, Trixie) |
+        # | -C = Serial1 | Serial1 => /dev/ttyS0   | Serial1 => /dev/ttyS0        |
+        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 | Serial3 => /dev/ttyAMA3      |
+        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 | Serial4 => /dev/ttyAMA4      |
+        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 | Serial5 => /dev/ttyAMA5      |
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
@@ -362,11 +362,11 @@ class AutoPilotManager(metaclass=Singleton):
         #
         # The mapping of serial ports works as in the following table:
         #
-        # |    ArduSub   |       Navigator         |
-        # | -C = Serial1 | Serial1 => /dev/ttyS0   |
-        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 |
-        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 |
-        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
+        # |    ArduSub   |   Navigator (Bullseye)  | Navigator (Bookworm, Trixie) |
+        # | -C = Serial1 | Serial1 => /dev/ttyS0   | Serial1 => /dev/ttyS0        |
+        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 | Serial3 => /dev/ttyAMA3      |
+        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 | Serial4 => /dev/ttyAMA4      |
+        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 | Serial5 => /dev/ttyAMA5      |
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
