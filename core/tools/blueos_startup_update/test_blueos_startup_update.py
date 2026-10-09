@@ -175,6 +175,64 @@ dtoverlay=dwc2,dr_mode=host
 [all]
 """
 
+# Stock config.txt of a Trixie 64-bit image, read back from the Raspberry Pi OS image before BlueOS touched it.
+# It already holds a [pi5] section, and enables the 64-bit kernel for every board.
+TRIXIE_STOCK_CONFIG_TXT = """# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+#dtparam=i2c_arm=on
+#dtparam=i2s=on
+#dtparam=spi=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+
+# Additional overlays and parameters are documented
+# /boot/firmware/overlays/README
+
+# Automatically load overlays for detected cameras
+camera_auto_detect=1
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=1
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows
+arm_boost=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[pi5]
+dtoverlay=nospi10
+
+[all]
+"""
+
 STOCK_CMDLINE_TXT = (
     "console=serial0,115200 console=tty1 root=PARTUUID=41964984-02 rootfstype=ext4 fsck.repair=yes rootwait\n"
 )
@@ -199,15 +257,24 @@ BOOKWORM = Distribution(
     cpu_types=(CpuType.PI3, CpuType.PI4, CpuType.PI5),
 )
 
+TRIXIE = Distribution(
+    name="trixie",
+    config_file="/boot/firmware/config.txt",
+    cmdline_file="/boot/firmware/cmdline.txt",
+    stock_config=TRIXIE_STOCK_CONFIG_TXT,
+    stock_cmdline=STOCK_CMDLINE_TXT,
+    cpu_types=(CpuType.PI3, CpuType.PI4, CpuType.PI5),
+)
+
 # Every distribution and Navigator capable board combination that can reach a user
 NAVIGATOR_BOARDS = [
     pytest.param(distribution, cpu_type, id=f"{distribution.name}-{cpu_type.name}")
-    for distribution in (BULLSEYE, BOOKWORM)
+    for distribution in (BULLSEYE, BOOKWORM, TRIXIE)
     for cpu_type in distribution.cpu_types
     if cpu_type in NAVIGATOR_INSTALL_SCRIPTS
 ]
 
-DISTRIBUTIONS = [pytest.param(distribution, id=distribution.name) for distribution in (BULLSEYE, BOOKWORM)]
+DISTRIBUTIONS = [pytest.param(distribution, id=distribution.name) for distribution in (BULLSEYE, BOOKWORM, TRIXIE)]
 
 # What Bookworm leaves at /boot once it has moved the boot partition to /boot/firmware. Writing to
 # it configures nothing, and the write still succeeds, which is how the original bug shipped.
