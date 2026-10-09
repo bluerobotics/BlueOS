@@ -255,8 +255,33 @@ BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
 BLUEOS_CORE="$DOCKER_USER/blueos-core:$VERSION" # We don't have a stable tag yet
 BLUEOS_FACTORY="bluerobotics/blueos-core:factory" # used for "factory reset"
 
-docker pull $BLUEOS_BOOTSTRAP
-docker pull $BLUEOS_CORE
+if [ -n "$LOCAL_IMAGES_DIR" ]
+then
+    # Images built by the CI run are used as they are, instead of what is published under $VERSION
+    if ! compgen -G "$LOCAL_IMAGES_DIR/*.tar" > /dev/null
+    then
+        echo "LOCAL_IMAGES_DIR is set but has no image archives: $LOCAL_IMAGES_DIR" >&2
+        exit 1
+    fi
+    for image_archive in "$LOCAL_IMAGES_DIR"/*.tar
+    do
+        load_output=$(docker load -i "$image_archive")
+        echo "$load_output"
+        for loaded in $(echo "$load_output" | sed -n 's/^Loaded image: //p')
+        do
+            case "$loaded" in
+                */blueos-core:*) docker image tag "$loaded" $BLUEOS_CORE ;;
+                */blueos-bootstrap:*) docker image tag "$loaded" $BLUEOS_BOOTSTRAP ;;
+            esac
+            # The other tags of the build would show up as versions in the version chooser. The archive of a
+            # master build already carries the $VERSION tag, which has to stay.
+            [[ "$loaded" == "$BLUEOS_CORE" || "$loaded" == "$BLUEOS_BOOTSTRAP" ]] || docker image rm "$loaded"
+        done
+    done
+else
+    docker pull $BLUEOS_BOOTSTRAP
+    docker pull $BLUEOS_CORE
+fi
 
 # Set up default extensions
 curl -fsSL $ROOT/install/kraken/set_default_extensions.sh | bash
