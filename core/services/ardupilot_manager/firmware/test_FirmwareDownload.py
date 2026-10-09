@@ -2,6 +2,7 @@ import asyncio
 import os
 import platform
 
+import aiohttp
 import pytest
 from firmware.FirmwareDownload import FirmwareDownloader
 from typedefs import Platform, Vehicle
@@ -70,3 +71,71 @@ def test_firmware_download() -> None:
                 await firmware_download.download(Vehicle.Sub, Platform.Navigator)
 
     asyncio.run(firmware_download_wrapper())
+
+
+def test_fetch_retries_transient_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = {"count": 0}
+
+    class FakeResponse:
+        status = 200
+
+        def raise_for_status(self) -> None:
+            pass
+
+        async def read(self) -> bytes:
+            return b"data"
+
+        async def __aenter__(self) -> "FakeResponse":
+            calls["count"] += 1
+            if calls["count"] < 3:
+                raise aiohttp.ClientConnectionError()
+            return self
+
+        async def __aexit__(self, *_: object) -> None:
+            pass
+
+    async def no_sleep(_: float) -> None:
+        pass
+
+    monkeypatch.setattr(aiohttp.ClientSession, "get", lambda *_, **__: FakeResponse())
+    monkeypatch.setattr(asyncio, "sleep", no_sleep)
+    assert asyncio.run(FirmwareDownloader._fetch("https://example.invalid/file")) == b"data"
+    assert calls["count"] == 3
+
+
+def test_fetch_does_not_retry_client_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = {"count": 0}
+
+    class NotFoundResponse:
+        async def __aenter__(self) -> "NotFoundResponse":
+            calls["count"] += 1
+            raise aiohttp.ClientResponseError(None, (), status=404)  # type: ignore[arg-type]
+
+        async def __aexit__(self, *_: object) -> None:
+            pass
+
+    monkeypatch.setattr(aiohttp.ClientSession, "get", lambda *_, **__: NotFoundResponse())
+    with pytest.raises(aiohttp.ClientResponseError):
+        asyncio.run(FirmwareDownloader._fetch("https://example.invalid/file"))
+    assert calls["count"] == 1
+
+
+def test_fetch_gives_up_after_all_attempts_on_server_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = {"count": 0, "sleeps": 0}
+
+    class ServerErrorResponse:
+        async def __aenter__(self) -> "ServerErrorResponse":
+            calls["count"] += 1
+            raise aiohttp.ClientResponseError(None, (), status=503)  # type: ignore[arg-type]
+
+        async def __aexit__(self, *_: object) -> None:
+            pass
+
+    async def counting_sleep(_: float) -> None:
+        calls["sleeps"] += 1
+
+    monkeypatch.setattr(aiohttp.ClientSession, "get", lambda *_, **__: ServerErrorResponse())
+    monkeypatch.setattr(asyncio, "sleep", counting_sleep)
+    with pytest.raises(aiohttp.ClientResponseError):
+        asyncio.run(FirmwareDownloader._fetch("https://example.invalid/file", attempts=3))
+    assert calls == {"count": 3, "sleeps": 2}
