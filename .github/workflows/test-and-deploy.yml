@@ -308,6 +308,7 @@ jobs:
             os: "trixie"
             board: "bcm_multi"
             artifact: "arm64-v8"
+            container_engine: "podman"
             image: "raspios_lite_arm64/images/raspios_lite_arm64-2026-10-06/2026-10-06-raspios-trixie-arm64-lite.img.xz"
 
     runs-on: ${{ matrix.runner }}
@@ -355,6 +356,7 @@ jobs:
             -e LOCAL_IMAGES_DIR=/root/blueos-images \
             -e BASE_IMAGE=${{ matrix.image }} \
             -e BOARD=${{ matrix.board }} \
+            -e CONTAINER_ENGINE=${{ matrix.container_engine }} \
             -e DOCKER_EXTRA_OPTS="--iptables=false --ip6tables=false --bridge=none" \
             --workdir=/files \
             nature40/pimod:${PIMOD_VERSION} pimod.sh deploy/pimod/blueos.Pifile
