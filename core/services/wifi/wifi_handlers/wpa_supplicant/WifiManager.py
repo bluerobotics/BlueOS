@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import stat
 import subprocess
 import time
@@ -8,8 +9,9 @@ from http.client import HTTPException
 from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
+import radio
 from commonwealth.utils.general import HostOs, get_host_os
-from exceptions import FetchError, ParseError
+from exceptions import FetchError, ParseError, WPAOperationFail
 from fastapi import status
 from loguru import logger
 from typedefs import (
@@ -586,6 +588,40 @@ class WifiManager(AbstractWifiManager):
         loop = asyncio.get_event_loop()
         loop.create_task(self.auto_reconnect(60))
         loop.create_task(self.start_hotspot_watchdog())
+
+    async def set_country(self, code: str) -> None:
+        # Before saving anything, so a failure here leaves the country and the setting untouched
+        radio.check_country(code)
+        if self.wpa_path is None:
+            await super().set_country(code)
+        else:
+            # wpa_supplicant answers "FAIL\n", which send_command does not recognize as a failure
+            async def send(command: str) -> str:
+                reply = (await self.wpa.send_command(command, 1)).decode().strip()
+                if reply == "FAIL":
+                    raise WPAOperationFail(f"WPA operation {command} failed.")
+                return reply
+
+            try:
+                reply = await send("GET country")
+                # Older wpa_supplicant versions answer "UNKNOWN COMMAND" instead of "FAIL"
+                previous_country: Optional[str] = reply if re.fullmatch(r"[A-Z0-9]{2}", reply) else None
+            except Exception:
+                previous_country = None
+            try:
+                await send(f"SET country {code}")
+                await send("SAVE_CONFIG")
+                await super().set_country(code)
+            except Exception:
+                # SET already made wpa_supplicant ask the kernel for the new country
+                logger.exception("Could not set the country, restoring the previous one.")
+                if previous_country:
+                    try:
+                        await send(f"SET country {previous_country}")
+                        await send("SAVE_CONFIG")
+                    except Exception:
+                        logger.exception("Could not restore the previous country.")
+                raise
 
     async def supports_hotspot(self) -> bool:
         if self.wpa_path is None:

@@ -42,5 +42,22 @@ async def test_reports_available_after_connecting(monkeypatch: pytest.MonkeyPatc
     assert manager.wpa_path is not None
 
 
+async def test_failing_to_save_the_country_restores_the_previous_one(monkeypatch: pytest.MonkeyPatch) -> None:
+    manager = WifiManager.__new__(WifiManager)
+    manager.wpa_path = "wlan0"
+    sent: list[str] = []
+
+    async def send_command(command: str, _timeout: float) -> bytes:
+        sent.append(command)
+        return {"GET country": b"BR", "SAVE_CONFIG": b"FAIL\n"}.get(command, b"OK\n")
+
+    monkeypatch.setattr(manager.wpa, "send_command", send_command)
+
+    with pytest.raises(ConnectionError):
+        await manager.set_country("US")
+
+    assert sent == ["GET country", "SET country US", "SAVE_CONFIG", "SET country BR", "SAVE_CONFIG"]
+
+
 async def _no_networks(_self: Any) -> list[Any]:
     return []
