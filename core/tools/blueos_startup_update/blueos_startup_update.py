@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=too-many-lines
 import configparser
 import copy
 import json
@@ -8,10 +9,16 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import appdirs
-from commonwealth.utils.commands import load_file, locate_file, run_command, save_file
+from commonwealth.utils.commands import (
+    HostFileError,
+    load_file,
+    locate_file,
+    run_command,
+    save_file,
+)
 from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
@@ -64,6 +71,8 @@ BOOT_CONFIG_END_OVERLAY_SCOPE = "dtoverlay="
 
 config_file = None
 cmdline_file = None
+# One config.txt serves every board on Trixie, so a board must not touch the other boards' sections
+keep_other_board_sections = False
 
 disabled_patches = [entry.strip() for entry in os.getenv("BLUEOS_DISABLE_PATCHES", "").split(",")]
 
@@ -195,12 +204,20 @@ def boot_config_filter_conflicting_configuration_at_section(
 
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
 
+    def in_other_board_section(index: int) -> bool:
+        headers = [
+            re.match(r"^\[(?P<name>\w+)\]", line) for line in config_content[: index + 1] if line.startswith("[")
+        ]
+        return bool(headers) and headers[-1]["name"].lower() in {"pi3", "pi4", "pi5"} - {section_name.lower()}
+
     return [
         line
         for (i, line) in enumerate(config_content)
         if (
             # If it's not protected
             re.match(f"^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$", line, regex_flags)
+            # Or it belongs to another board that shares this config.txt
+            or (keep_other_board_sections and in_other_board_section(i))
             # Then remove the conflicting configuration...
             or not (
                 re.match(config_pattern_match, line, regex_flags)
@@ -642,8 +659,14 @@ def ensure_ipv6_disabled() -> bool:
         ),
     ]
 
-    sysctl_config_path = "/etc/sysctl.conf"
-    sysctl_config_file = load_file(sysctl_config_path)
+    # Trixie's systemd-sysctl no longer reads /etc/sysctl.conf, only /etc/sysctl.d
+    sysctl_config_path = "/etc/sysctl.d/99-blueos.conf" if get_host_os() == HostOs.Trixie else "/etc/sysctl.conf"
+    try:
+        sysctl_config_file = load_file(sysctl_config_path)
+    except HostFileError:
+        if sysctl_config_path == "/etc/sysctl.conf":
+            raise
+        sysctl_config_file = ""
 
     # Make sure every required entry is in the file and uncommented
     needs_update = False
@@ -703,6 +726,22 @@ def fix_wpa_service() -> bool:
     return True
 
 
+# deploy/pimod/provision_trixie.sh writes the same content into the image, a test keeps them equal
+NETWORK_MANAGER_CONF_TEMPLATE = """[main]
+plugins=ifupdown,keyfile
+dns=none
+
+[ifupdown]
+managed=false
+
+[device]
+wifi.scan-rand-mac-address=no
+
+[keyfile]
+unmanaged-devices=interface:eth0;interface:usb0
+"""
+
+
 def configure_network_manager() -> bool:
     """
     Ensures NetworkManager.conf has [main] section with dns=none set if dns is not already configured
@@ -716,20 +755,7 @@ def configure_network_manager() -> bool:
     result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
     if result.returncode != 0:
         # File doesn't exist, create with template
-        content = """[main]
-plugins=ifupdown,keyfile
-dns=none
-
-[ifupdown]
-managed=false
-
-[device]
-wifi.scan-rand-mac-address=no
-
-[keyfile]
-unmanaged-devices=interface:eth0;interface:usb0
-"""
-        run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
+        run_command(f"echo '{NETWORK_MANAGER_CONF_TEMPLATE}' | sudo tee {file_path}", check=False)
         return True
 
     config.read_string(result.stdout)
@@ -874,6 +900,43 @@ def locate_boot_file(candidates: List[str]) -> Optional[str]:
     return located
 
 
+def select_patches(host_cpu: CpuType, host_os: HostOs) -> List[Tuple[str, Callable[[], bool]]]:
+    # TODO: parse tag as semver and check before applying patches
+    patches_to_apply = [
+        ("startup", update_startup),
+        ("userdata", ensure_user_data_structure_is_in_place),
+        ("nginx", ensure_nginx_permissions),
+        ("dns", create_dns_conf_host_link),
+        ("ssh", fix_ssh_ownership),
+        ("noIPV6", ensure_ipv6_disabled),
+        ("swap", update_swap_size),
+        ("cgroups", update_cgroups),
+        ("dhcpcd_wait", remove_dhcpcd_wait),
+    ]
+
+    if host_cpu == CpuType.PI3:
+        patches_to_apply.append(("revert_update_dwc2", revert_update_dwc2))
+        # Trixie images ship one config.txt with a section per board, and current firmware ignores the other boards'
+        # sections, so the Pi3 keeps them to let the same SD card boot on a Pi4 or Pi5
+        if host_os != HostOs.Trixie:
+            patches_to_apply.append(("clean_config_pi3", clean_config_pi3))
+
+    if host_cpu in [CpuType.PI4, CpuType.PI5]:
+        patches_to_apply.extend(
+            [
+                ("navigator", update_navigator_overlays),
+                ("dwc2", update_dwc2),
+                ("i2c4", update_i2c4_symlink),
+            ]
+        )
+    if host_os == HostOs.Bookworm:
+        patches_to_apply.append(("wpa", fix_wpa_service))
+    # Trixie keeps wpa_supplicant as the NetworkManager-driven D-Bus service, so it has no wpa patch
+    if host_os in [HostOs.Bookworm, HostOs.Trixie]:
+        patches_to_apply.append(("networkmanager", configure_network_manager))
+    return patches_to_apply
+
+
 def main() -> int:
     start = time.time()
     # check if boot_loop_detector exists
@@ -902,37 +965,10 @@ def main() -> int:
     host_cpu = get_cpu_type()
     logger.info(f"Host CPU: {host_cpu}")
 
-    # TODO: parse tag as semver and check before applying patches
-    patches_to_apply = [
-        ("startup", update_startup),
-        ("userdata", ensure_user_data_structure_is_in_place),
-        ("nginx", ensure_nginx_permissions),
-        ("dns", create_dns_conf_host_link),
-        ("ssh", fix_ssh_ownership),
-        ("noIPV6", ensure_ipv6_disabled),
-        ("swap", update_swap_size),
-        ("cgroups", update_cgroups),
-        ("dhcpcd_wait", remove_dhcpcd_wait),
-    ]
+    global keep_other_board_sections
+    keep_other_board_sections = host_os == HostOs.Trixie
 
-    if host_cpu == CpuType.PI3:
-        patches_to_apply.extend(
-            [
-                ("revert_update_dwc2", revert_update_dwc2),
-                ("clean_config_pi3", clean_config_pi3),
-            ]
-        )
-
-    if host_cpu in [CpuType.PI4, CpuType.PI5]:
-        patches_to_apply.extend(
-            [
-                ("navigator", update_navigator_overlays),
-                ("dwc2", update_dwc2),
-                ("i2c4", update_i2c4_symlink),
-            ]
-        )
-    if host_os == HostOs.Bookworm:
-        patches_to_apply.extend([("wpa", fix_wpa_service), ("networkmanager", configure_network_manager)])
+    patches_to_apply = select_patches(host_cpu, host_os)
 
     logger.info("The following patches will be applied if needed:")
     for name, patch in patches_to_apply:

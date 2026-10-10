@@ -9,10 +9,19 @@ RUN chmod +x /usr/bin/expand_fs.sh
 
 RUN touch /boot/ssh
 
+# Trixie ships no rc.local, expand_fs and rfkill below hook into it
+RUN bash -c '[ -f /etc/rc.local ] || { echo "#!/bin/sh -e" > /etc/rc.local; echo "exit 0" >> /etc/rc.local; chmod +x /etc/rc.local; }'
+
 # rfkill can't run in chroot, run here instead. Bookworm blocks all radios by default (rfkill default_state=0)
 RUN sed -i "\%^exit 0%irfkill unblock all" /etc/rc.local
 # Bullseye ships wlan saved as blocked, and systemd-rfkill restores that after rc.local runs
 RUN bash -c 'shopt -s nullglob; for f in /var/lib/systemd/rfkill/*:wlan; do echo 0 > "$f"; done'
+
+# NetworkManager can start with the radio blocked (no wifi country yet) and remember it as disabled
+RUN sed -i "\%^exit 0%inmcli radio wifi on || true" /etc/rc.local
+
+INSTALL deploy/pimod/provision_trixie.sh /tmp/provision_trixie.sh
+RUN bash /tmp/provision_trixie.sh
 
 RUN bash -c '
   mkdir -p /root/.config/blueos/bootstrap/

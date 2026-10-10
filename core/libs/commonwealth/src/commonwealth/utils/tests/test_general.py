@@ -47,6 +47,7 @@ def test_get_cpu_type(model: str, expected_cpu_type: CpuType) -> None:
 @pytest.mark.parametrize(
     "os_release,expected_host_os",
     [
+        ('PRETTY_NAME="Debian GNU/Linux 13 (trixie)"', HostOs.Trixie),
         ('PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"', HostOs.Bookworm),
         ('PRETTY_NAME="Raspbian GNU/Linux 11 (bullseye)"', HostOs.Bullseye),
         ('PRETTY_NAME="Ubuntu 22.04.3 LTS"', HostOs.Other),

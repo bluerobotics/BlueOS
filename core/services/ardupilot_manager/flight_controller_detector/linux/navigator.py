@@ -1,8 +1,7 @@
 import platform
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
-from commonwealth.utils.commands import HostFileError, load_file
-from commonwealth.utils.general import CpuType, get_cpu_type
+from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from elftools.elf.elffile import ELFFile
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from typedefs import Platform, Serial
@@ -76,23 +75,20 @@ class NavigatorPi4(Navigator):
     }
 
     def get_serials(self) -> List[Serial]:
-        release = "Bullseye"
-        try:
-            os_release = load_file("/etc/os-release")
-        except HostFileError:
-            os_release = ""
-        if "bookworm" in os_release.lower():
-            release = "Bookworm"
-
-        match release:
-            case "Bullseye":
+        host_os = get_host_os()
+        if host_os == HostOs.Other:
+            # An unreadable os-release is cached as Other, and must not keep the autopilot down until a restart
+            get_host_os.cache_clear()
+            host_os = get_host_os()
+        match host_os:
+            case HostOs.Bullseye:
                 return [
                     Serial(port="C", endpoint="/dev/ttyS0"),
                     Serial(port="B", endpoint="/dev/ttyAMA1"),
                     Serial(port="E", endpoint="/dev/ttyAMA2"),
                     Serial(port="F", endpoint="/dev/ttyAMA3"),
                 ]
-            case "Bookworm":
+            case HostOs.Bookworm | HostOs.Trixie:
                 return [
                     Serial(port="C", endpoint="/dev/ttyS0"),
                     Serial(port="B", endpoint="/dev/ttyAMA3"),
