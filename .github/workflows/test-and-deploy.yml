@@ -335,6 +335,8 @@ jobs:
             # A pull request has no raw ref, so serve this checkout's scripts under the branch name, without its
             # slashes as they are not valid in a docker tag
             BLUEOS_VERSION=${GITHUB_HEAD_REF##*/}
+            # Same for the registry user: the images of a fork are not under the upstream's
+            DOCKER_USER=$(echo ${{ github.event.pull_request.head.repo.owner.login }} | tr '[:upper:]' '[:lower:]')
             mkdir -p /tmp/remote
             ln -sfn $PWD /tmp/remote/$BLUEOS_VERSION
             # The pimod container reaches the host through the docker0 address, so serve only there
@@ -352,6 +354,7 @@ jobs:
             -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
             -e VERSION=$BLUEOS_VERSION \
             -e REMOTE=$REMOTE \
+            -e DOCKER_USER=$DOCKER_USER \
             -e LOCAL_IMAGES_DIR=/root/blueos-images \
             -e BASE_IMAGE=${{ matrix.image }} \
             -e BOARD=${{ matrix.board }} \
