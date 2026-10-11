@@ -327,8 +327,9 @@ jobs:
           BLUEOS_VERSION=$GITHUB_REF_NAME
           REMOTE=https://raw.githubusercontent.com/$GITHUB_REPOSITORY
           if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
-            # A pull request has no raw ref, so label the images built by this run as master and use this checkout's scripts
-            BLUEOS_VERSION=master
+            # A pull request has no raw ref, so serve this checkout's scripts under the branch name, with
+            # slashes replaced by dashes as they are not valid in a docker tag
+            BLUEOS_VERSION=${GITHUB_HEAD_REF//\//-}
             mkdir -p /tmp/remote
             ln -sfn $PWD /tmp/remote/$BLUEOS_VERSION
             # The pimod container reaches the host through the docker0 address, so serve only there
