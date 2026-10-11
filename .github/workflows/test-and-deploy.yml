@@ -277,9 +277,7 @@ jobs:
 
   deploy-raspberry-image:
     needs: deploy-docker-images
-    if: >-
-      github.repository_owner == 'bluerobotics' &&
-      (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-images'))
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-images')
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
     strategy:
       fail-fast: false
