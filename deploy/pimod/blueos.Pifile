@@ -27,6 +27,7 @@ RUN bash -c '
   mkdir -p /root/.config/blueos/bootstrap/
   curl -o /root/.config/blueos/bootstrap/startup.json ${REMOTE:-https://raw.githubusercontent.com/$GITHUB_REPOSITORY}/$VERSION/bootstrap/startup.json.default
   sed -i 's/factory/$VERSION/g' /root/.config/blueos/bootstrap/startup.json
+  sed -i "s#bluerobotics/blueos-core#${DOCKER_USER:-bluerobotics}/blueos-core#" /root/.config/blueos/bootstrap/startup.json
 '
 
 # dind mounts a tmpfs over /tmp, so the archives can't live there
