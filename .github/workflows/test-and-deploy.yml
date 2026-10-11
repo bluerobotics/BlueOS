@@ -103,6 +103,7 @@ jobs:
           # Deploy image with the name of the branch, if the build is a git tag, replace tag with the tag name.
           # If git tag matches semver, append latest tag to the push.
           DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
+          CACHE_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-buildcache:${{ matrix.docker }}-master
           VERSION=${GITHUB_REF##*/}
 
           if [[ $GITHUB_REF == refs/tags/* ]]; then
@@ -120,13 +121,13 @@ jobs:
           # concurrent pushes from other refs would overwrite each other. Tags are left out on
           # purpose: they are cut from master, whose push already wrote the cache.
           if [[ "${GITHUB_REF}" == 'refs/heads/master' && "${{ github.event_name }}" != 'pull_request' ]]; then
-            echo "buildx_registry_cache_to=--cache-to 'type=registry,ref=${DOCKER_IMAGE}:buildcache,mode=max'" >> $GITHUB_OUTPUT
+            echo "buildx_registry_cache_to=--cache-to 'type=registry,ref=${CACHE_IMAGE},mode=max'" >> $GITHUB_OUTPUT
           fi
           echo "buildx_args=\
             --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
             --build-arg VITE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
             --cache-from 'type=local,src=/tmp/.buildx-cache' \
-            --cache-from 'type=registry,ref=${DOCKER_IMAGE}:buildcache' \
+            --cache-from 'type=registry,ref=${CACHE_IMAGE}' \
             --cache-to 'type=local,dest=/tmp/.buildx-cache' \
             ${TAGS} \
             --file ${{ matrix.docker }}/Dockerfile ./${{ matrix.docker }}" >> $GITHUB_OUTPUT
