@@ -199,7 +199,7 @@ class VersionChooser:
         """
         try:
             bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
-            return str(bootstrap["Config"]["Image"])
+            return str(bootstrap["Config"]["Image"]).removeprefix("docker.io/")
         except Exception as e:
             logger.critical(f"unable to read bootstrap version: {e}")
             return "Unknown"
