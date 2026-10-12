@@ -34,7 +34,7 @@ class VersionChooser:
         if "pytest" in sys.modules:  # don't run this in testing environment
             return
         # TODO: migrate this to aiodocker once https://github.com/aio-libs/aiodocker/issues/696 is fixed
-        client = docker.from_env()
+        client = docker.from_env(version="1.41")
         client.images.prune({"dangling": True})
 
     @staticmethod
