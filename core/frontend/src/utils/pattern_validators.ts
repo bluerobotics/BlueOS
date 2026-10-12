@@ -55,6 +55,18 @@ export function isRtspVariantAddress(address: string): boolean {
   }
 }
 
+export function isHostname(hostname: string): boolean {
+  if (hostname.length > 253) {
+    return false
+  }
+
+  const labels = hostname.split('.')
+  const label = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/
+  const suffix = /^[A-Za-z]{2,63}$/
+  const name = labels.slice(0, -1)
+  const tld = labels[labels.length - 1]
+  return name.every((part) => label.test(part)) && suffix.test(tld)
+}
 
 export function isFilepath(filepath: string): boolean {
   const filepath_pattern = /^(.+)\/([^/]+)$/
