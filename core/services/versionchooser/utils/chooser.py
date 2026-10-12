@@ -407,7 +407,7 @@ class VersionChooser:
             if not any("/blueos-core:" in tag for tag in image["RepoTags"]):
                 continue
             for image_tag in image["RepoTags"]:
-                image_repository, tag = image_tag.split(":")
+                image_repository, tag = image_tag.removeprefix("docker.io/").split(":")
                 assert isinstance(output["local"], list)
                 output["local"].append(
                     {
