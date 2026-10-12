@@ -17,7 +17,7 @@
         hide-details="auto"
         :loading="hotspot_status_loading"
         :disabled="hotspot_supported === false"
-        @click="toggleHotspot"
+        @click="handleToggleHotspot"
       >
         <v-icon>{{ hotspot_status ? 'mdi-access-point' : 'mdi-access-point-off' }}</v-icon>
       </v-btn>
@@ -140,6 +140,17 @@
         </v-card-text>
       </v-card>
     </v-dialog>
+
+    <WarningDialog
+      v-model="show_hotspot_disconnect_warning"
+      :message="
+        'This hotspot is currently being used to access BlueOS. '
+          + 'Turning it off could prevent you from accessing your vehicle. '
+          + 'Are you sure you want to turn it off?'
+      "
+      confirm-label="Turn off hotspot"
+      @confirm="toggleHotspot"
+    />
   </v-card>
 </template>
 
@@ -149,12 +160,15 @@ import Vue from 'vue'
 import { generateWifiQRCode } from 'wifi-qr-code-generator'
 
 import Notifier from '@/libs/notifier'
+import beacon from '@/store/beacon'
 import wifi from '@/store/wifi'
+import { InterfaceType } from '@/types/beacon'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, WifiStatus } from '@/types/wifi'
 import back_axios from '@/utils/api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import WarningDialog from '../common/WarningDialog.vue'
 import ConnectionDialog from './ConnectionDialog.vue'
 import DisconnectionDialog from './DisconnectionDialog.vue'
 import WifiNetworkCard from './WifiNetworkCard.vue'
@@ -167,6 +181,7 @@ export default Vue.extend({
   components: {
     WifiNetworkCard,
     SpinningLogo,
+    WarningDialog,
     ConnectionDialog,
     DisconnectionDialog,
     WifiSettingsDialog,
@@ -182,6 +197,7 @@ export default Vue.extend({
       selected_network: null as Network | null,
       show_connection_dialog: false,
       show_disconnection_dialog: false,
+      show_hotspot_disconnect_warning: false,
       hotspot_status_loading: false,
       show_settings_menu: false,
       show_qr_code_dialog: false,
@@ -221,6 +237,12 @@ export default Vue.extend({
     hotspot_supported(): boolean | null {
       return wifi.hotspot_status?.supported ?? null
     },
+    connected_through_hotspot(): boolean {
+      return beacon.available_domains.some(
+        (domain) => domain.interface_type === InterfaceType.HOTSPOT
+          && domain.ip === beacon.nginx_ip_address,
+      )
+    },
     show_search(): boolean {
       if (!this.connectable_networks) {
         return false
@@ -232,6 +254,9 @@ export default Vue.extend({
     hotspot_status(): void {
       this.hotspot_status_loading = false
     },
+  },
+  mounted() {
+    beacon.registerBeaconListener(this)
   },
   methods: {
     forgetNetwork(network: Network): void {
@@ -263,6 +288,13 @@ export default Vue.extend({
       const data = await qrCodePromise
       console.log(data)
       this.wifi_qr_code_img = data
+    },
+    handleToggleHotspot(): void {
+      if (this.hotspot_status && this.connected_through_hotspot) {
+        this.show_hotspot_disconnect_warning = true
+        return
+      }
+      this.toggleHotspot()
     },
     async toggleHotspot(): Promise<void> {
       this.hotspot_status_loading = true
