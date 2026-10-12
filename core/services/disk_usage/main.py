@@ -87,21 +87,20 @@ def to_http_exception(endpoint: Any) -> Any:
     return wrapper
 
 
-def resolve_requested_path(requested_path: str | None) -> Path:
-    path = Path(requested_path or "/")
-    if not path.is_absolute():
-        path = (FILESYSTEM_ROOT / path).resolve()
-    try:
+def resolve_requested_path(requested_path: str | None, follow_symlinks: bool = True) -> Path:
+    path = FILESYSTEM_ROOT / (requested_path or "/")
+    if follow_symlinks:
         resolved = path.resolve()
-    except FileNotFoundError as exception:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path not found.") from exception
+    else:
+        path = Path(os.path.normpath(path))
+        resolved = path.parent.resolve() / path.name
     try:
         resolved.relative_to(FILESYSTEM_ROOT)
     except ValueError as exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid path outside filesystem root."
         ) from exception
-    if not resolved.exists():
+    if not os.path.lexists(resolved):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path not found.")
     return resolved
 
@@ -272,12 +271,12 @@ async def get_disk_usage(
 )
 @to_http_exception
 async def delete_path(target_path: str) -> None:
-    resolved_path = resolve_requested_path(target_path)
+    resolved_path = resolve_requested_path(target_path, follow_symlinks=False)
 
     if is_protected_target(resolved_path):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Refusing to delete protected path.")
 
-    if resolved_path.is_dir():
+    if resolved_path.is_dir() and not resolved_path.is_symlink():
         shutil.rmtree(resolved_path)
     else:
         resolved_path.unlink()
