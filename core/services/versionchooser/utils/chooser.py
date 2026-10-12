@@ -249,6 +249,10 @@ class VersionChooser:
             await bootstrap.kill()
             result = await bootstrap.wait()  # type: ignore
             logger.info(f"Response after waiting for {self.bootstrap_name} to be stopped: {result}")
+            # podman, unlike docker, starts the stopped containers of the unless-stopped policy again on boot
+            await bootstrap.docker._query_json(  # pylint: disable=protected-access
+                f"containers/{bootstrap.id}/update", method="POST", data={"RestartPolicy": {"Name": "no"}}
+            )
 
         HOME = "/root"
         bootstrap_config = {
