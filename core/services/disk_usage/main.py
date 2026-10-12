@@ -123,13 +123,7 @@ def is_protected_target(path: Path) -> bool:
         Path("/usr/libexec"),
         Path("/usr/sbin"),
     }
-    for root_path in protected_roots:
-        try:
-            path.relative_to(root_path)
-            return True
-        except ValueError:
-            continue
-    return False
+    return any(path.is_relative_to(root_path) or root_path.is_relative_to(path) for root_path in protected_roots)
 
 
 def build_tree(entries: Dict[Path, int], root_path: Path, min_size_bytes: int) -> DiskNode:
