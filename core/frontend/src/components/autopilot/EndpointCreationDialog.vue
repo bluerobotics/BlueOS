@@ -42,7 +42,7 @@
 
           <v-text-field
             v-model="edited_endpoint.place"
-            :rules="[validate_required_field, is_ip_address_path, is_useable_ip_address]"
+            :rules="[validate_required_field, is_ip_address_path_hostname, is_useable_ip_address]"
             label="IP/Device"
           />
 
@@ -101,7 +101,7 @@ import beacon from '@/store/beacon'
 import { AutopilotEndpoint, EndpointType, userFriendlyEndpointType } from '@/types/autopilot'
 import { VForm } from '@/types/vuetify'
 import {
-  isBaudrate, isFilepath, isIpAddress, isNotEmpty, isSocketPort,
+  isBaudrate, isFilepath, isHostname, isIpAddress, isNotEmpty, isSocketPort,
 } from '@/utils/pattern_validators'
 
 const defaultEndpointValue: AutopilotEndpoint = {
@@ -188,8 +188,8 @@ export default Vue.extend({
     validate_required_field(input: string): (true | string) {
       return isNotEmpty(input) ? true : 'Required field.'
     },
-    is_ip_address_path(input: string): (true | string) {
-      return isIpAddress(input) || isFilepath(input) ? true : 'Invalid IP/Device-path.'
+    is_ip_address_path_hostname(input: string): (true | string) {
+      return isIpAddress(input) || isFilepath(input) || isHostname(input) ? true : 'Invalid IP/Device-path or Hostname.'
     },
     is_useable_ip_address(input: string): (true | string) {
       if ([EndpointType.udpin, EndpointType.tcpin].includes(this.edited_endpoint.connection_type)) {
