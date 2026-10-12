@@ -185,13 +185,7 @@ def parse_du_output(output: bytes) -> Dict[Path, int]:
         except ValueError:
             logger.debug(f"Skipping malformed size for line: {line}")
             continue
-        entry_path = Path(raw_path)
-        try:
-            resolved = entry_path.resolve()
-        except (FileNotFoundError, OSError, RuntimeError):
-            # Skip entries that cannot be resolved (broken/looping symlinks, missing files, loops)
-            continue
-        entries[resolved] = size
+        entries[Path(raw_path)] = size
     return entries
 
 
