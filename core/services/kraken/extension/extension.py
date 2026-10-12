@@ -545,7 +545,7 @@ class Extension:
         """Extract docker + tag metadata, falling back to ID snippet."""
         repo_tags = image_info.get("RepoTags", [])
         if repo_tags:
-            repo_tag = repo_tags[0]
+            repo_tag = repo_tags[0].removeprefix("docker.io/")
             if ":" in repo_tag:
                 repo, tag = repo_tag.rsplit(":", 1)
                 return {"docker": repo, "tag": tag}
@@ -744,7 +744,7 @@ class Extension:
                     if not tag.startswith(TEMP_EXTENSION_TAG_PREFIX):
                         continue
 
-                    if reference in active_temp_refs:
+                    if reference.removeprefix("docker.io/") in active_temp_refs:
                         continue
 
                     try:
