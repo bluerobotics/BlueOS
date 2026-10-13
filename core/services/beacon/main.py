@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import psutil
 from commonwealth.settings.manager import PydanticManager
-from commonwealth.utils.apis import PrettyJSONResponse
+from commonwealth.utils.apis import PrettyJSONResponse, use_local_docs_assets
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, Request
@@ -319,6 +319,7 @@ def get_ip(request: Request) -> Any:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")
