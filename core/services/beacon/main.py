@@ -109,16 +109,19 @@ class Beacon:
         return services
 
     def set_hostname(self, hostname: str) -> None:
+        previous = self.get_hostname()
         self.manager.settings.default.domain_names = [hostname]
         for interface in self.manager.settings.interfaces:
             match InterfaceType.guess_from_name(interface.name):
                 case InterfaceType.WIRED | InterfaceType.USB:
-                    interface.domain_names = [
-                        old_name.replace(self.DEFAULT_HOSTNAME, hostname) for old_name in interface.domain_names
+                    renamed = [
+                        hostname + domain[len(previous) :]
+                        if domain == previous or domain.startswith(f"{previous}-")
+                        else domain
+                        for domain in interface.domain_names
                     ]
                     # Let's keep our default just in case
-                    if self.DEFAULT_HOSTNAME not in interface.domain_names:
-                        interface.domain_names.append(self.DEFAULT_HOSTNAME)
+                    interface.domain_names = list(dict.fromkeys([*renamed, self.DEFAULT_HOSTNAME]))
                 case InterfaceType.WIFI:
                     interface.domain_names = [f"{hostname}-wifi"]
                 case InterfaceType.HOTSPOT:
