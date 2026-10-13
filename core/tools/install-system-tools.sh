@@ -12,6 +12,7 @@ TOOLS=(
     logviewer
     mavlink_camera_manager
     scripts
+    swagger_ui
     wifi
 )
 
