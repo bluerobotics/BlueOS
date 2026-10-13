@@ -12,7 +12,11 @@ from typing import Any, Callable, List
 from urllib.parse import quote
 
 from aiocache import cached
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from commonwealth.utils.general import file_is_open_async
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
@@ -433,6 +437,7 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
+use_local_docs_assets(app)
 
 
 @app.get("/")

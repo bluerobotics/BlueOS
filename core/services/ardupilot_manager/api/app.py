@@ -3,7 +3,11 @@ from os import path
 # Routers
 from api.v1.routers import endpoints_router_v1, index_router_v1
 from api.v2.routers import index_router_v2
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,6 +29,7 @@ application.include_router(endpoints_router_v1)
 application.include_router(index_router_v2)
 
 application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(application)
 
 
 @application.get("/", status_code=200)
