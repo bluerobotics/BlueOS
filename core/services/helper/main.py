@@ -19,7 +19,11 @@ from uuid import UUID
 
 import psutil
 from bs4 import BeautifulSoup
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
     CpuType,
@@ -675,6 +679,7 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
+use_local_docs_assets(app)
 
 
 @app.get("/")

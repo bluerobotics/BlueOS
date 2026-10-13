@@ -1,6 +1,6 @@
 from os import path
 
-from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.apis import GenericErrorHandlingRoute, use_local_docs_assets
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -34,6 +34,7 @@ application.include_router(jobs_router_v2)
 application.include_router(manifest_router_v2)
 
 application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(application)
 
 
 @application.get("/", status_code=200)
