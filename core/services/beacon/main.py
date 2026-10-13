@@ -258,6 +258,13 @@ class Beacon:
                     self.runners[runner_name] = runner
                     await runner.register_services()
 
+            for runner_name in self.runners.keys() - all_runners.keys():
+                logger.info(f"runner {runner_name} is gone, removing runner...")
+                try:
+                    await self.runners.pop(runner_name).unregister_services()
+                except Exception as e:
+                    logger.warning(e)
+
             await asyncio.sleep(10)
 
     async def stop(self) -> None:
