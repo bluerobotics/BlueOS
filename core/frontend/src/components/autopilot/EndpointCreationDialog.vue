@@ -43,7 +43,7 @@
           <v-text-field
             v-model="edited_endpoint.place"
             :rules="[validate_required_field, is_ip_address_path_hostname, is_useable_ip_address]"
-            label="IP/Device"
+            label="Address"
           />
 
           <v-text-field
@@ -189,7 +189,7 @@ export default Vue.extend({
       return isNotEmpty(input) ? true : 'Required field.'
     },
     is_ip_address_path_hostname(input: string): (true | string) {
-      return isIpAddress(input) || isFilepath(input) || isHostname(input) ? true : 'Invalid IP/Device-path or Hostname.'
+      return isIpAddress(input) || isFilepath(input) || isHostname(input) ? true : 'Invalid IP/Hostname or Device.'
     },
     is_useable_ip_address(input: string): (true | string) {
       if ([EndpointType.udpin, EndpointType.tcpin].includes(this.edited_endpoint.connection_type)) {
