@@ -9,6 +9,7 @@ TOOLS=(
     filebrowser
     logviewer
     scripts
+    swagger_ui
     wifi
 )
 
