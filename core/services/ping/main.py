@@ -4,7 +4,11 @@ import asyncio
 import logging
 from typing import Any, List
 
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import FastAPI, status
@@ -51,6 +55,7 @@ def set_sensor(sensor_settings: dict[str, Any]) -> Any:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")
