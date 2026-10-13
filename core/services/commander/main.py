@@ -10,7 +10,7 @@ from typing import Any, AsyncGenerator, Dict
 
 import appdirs
 import uvicorn
-from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.apis import GenericErrorHandlingRoute, use_local_docs_assets
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.general import delete_everything, delete_everything_stream
 from commonwealth.utils.logs import InterceptHandler, init_logger
@@ -281,6 +281,7 @@ async def environment_variables() -> Dict[str, Any]:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")

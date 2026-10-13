@@ -10,7 +10,7 @@ from typing import Any
 import appdirs
 import dpath
 import uvicorn
-from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.apis import GenericErrorHandlingRoute, use_local_docs_assets
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, Depends, FastAPI, HTTPException
 from fastapi import Path as FastPath
@@ -135,6 +135,7 @@ async def read_data(path: str) -> JSONResponse:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")
