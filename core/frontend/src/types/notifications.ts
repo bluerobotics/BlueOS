@@ -98,3 +98,10 @@ export function cumulateSimilar(notifications: Notification[]): CumulatedNotific
   })
   return cumulated_notifications
 }
+
+/** Notifications sharing the same service and level */
+export interface NotificationGroup {
+  service: Service
+  level: NotificationLevel
+  notifications: Notification[]
+}

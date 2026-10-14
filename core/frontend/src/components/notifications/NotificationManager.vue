@@ -28,6 +28,7 @@
           </v-btn>
         </template>
         <notifications-config-menu
+          :group-by-service.sync="group_by_service"
           :show-old.sync="show_old_messages"
         />
       </v-menu>
@@ -45,7 +46,19 @@
         max-height="50vh"
       >
         <v-list-item-group
-          v-if="notifications_to_show.length != 0"
+          v-if="group_by_service && groups_to_show.length != 0"
+        >
+          <notification-group-card
+            v-for="group in groups_to_show"
+            :key="`${group.service.name}-${group.level}`"
+            :group="group"
+            :timestamp="timestamp"
+            @dismiss="dismissNotification"
+          />
+        </v-list-item-group>
+
+        <v-list-item-group
+          v-else-if="!group_by_service && notifications_to_show.length != 0"
         >
           <notification-card
             v-for="{ notification, count } in notifications_to_show"
@@ -75,19 +88,24 @@ import { differenceInSeconds } from 'date-fns'
 import Vue from 'vue'
 
 import notifications from '@/store/notifications'
-import { CumulatedNotification, cumulateSimilar, Notification } from '@/types/notifications'
+import {
+  CumulatedNotification, cumulateSimilar, Notification, NotificationGroup,
+} from '@/types/notifications'
 
 import NotificationsConfigMenu from './ConfigMenu.vue'
 import NotificationCard from './NotificationCard.vue'
+import NotificationGroupCard from './NotificationGroupCard.vue'
 
 export default Vue.extend({
   name: 'NotificationManager',
   components: {
     NotificationsConfigMenu,
     NotificationCard,
+    NotificationGroupCard,
   },
   data() {
     return {
+      group_by_service: true,
       show_config_menu: false,
       show_old_messages: false,
       timestamp: new Date(),
@@ -105,6 +123,20 @@ export default Vue.extend({
     },
     notifications_to_show(): CumulatedNotification[] {
       return cumulateSimilar(this.visible_notifications)
+    },
+    groups_to_show(): NotificationGroup[] {
+      const groups = new Map<string, NotificationGroup>()
+      this.visible_notifications.forEach((notification) => {
+        const { service, level } = notification
+        const group_key = `${service.name}-${level}`
+        const group = groups.get(group_key)
+        if (group) {
+          group.notifications.push(notification)
+          return
+        }
+        groups.set(group_key, { level, service, notifications: [notification] })
+      })
+      return [...groups.values()].sort((a, b) => a.service.name.localeCompare(b.service.name))
     },
   },
   watch: {
