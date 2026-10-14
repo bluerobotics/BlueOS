@@ -51,13 +51,13 @@ def fixture_bridge_cls(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Magic
 )
 def test_spec_str_and_hash(spec: BridgeFrontendSpec, expected: str) -> None:
     assert str(spec) == expected
-    assert hash(spec) == hash(spec.model_copy())
+    assert hash(spec) == hash(spec.copy())
 
 
 @pytest.mark.parametrize("field, value", [("udp_listen_port", 65536), ("udp_target_port", -1), ("baud", 1234)])
 def test_spec_rejects_invalid(field: str, value: int) -> None:
     with pytest.raises(ValidationError):
-        BridgeFrontendSpec(**{**SERVER.model_dump(), field: value})
+        BridgeFrontendSpec(**{**SERVER.dict(), field: value})
 
 
 @pytest.mark.usefixtures("bridge_cls")
@@ -85,7 +85,7 @@ def test_one_bridge_per_serial_port(bridge_cls: MagicMock) -> None:
     manager = Bridget()
     manager.add_bridge(SERVER)
     with pytest.raises(RuntimeError):
-        manager.add_bridge(SERVER.model_copy(update={"udp_listen_port": 16000}))
+        manager.add_bridge(SERVER.copy(update={"udp_listen_port": 16000}))
     assert manager.get_bridges() == [SERVER]
     assert bridge_cls.call_count == 1
 
@@ -97,7 +97,7 @@ def test_failed_restore_is_kept_until_replaced(bridge_cls: MagicMock) -> None:
     assert offline.get_bridges() == []
     bridge_cls.side_effect = None
     assert Bridget().get_bridges() == [SERVER]
-    replacement = SERVER.model_copy(update={"udp_listen_port": 16000})
+    replacement = SERVER.copy(update={"udp_listen_port": 16000})
     offline.add_bridge(replacement)
     assert Bridget().get_bridges() == [replacement]
 
