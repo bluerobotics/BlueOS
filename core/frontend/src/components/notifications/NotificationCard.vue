@@ -15,7 +15,9 @@
         </v-list-item-icon>
 
         <v-list-item-content>
-          <v-list-item-title>{{ notification.service.name }}</v-list-item-title>
+          <v-list-item-title v-if="showService">
+            {{ notification.service.name }}
+          </v-list-item-title>
           <v-list-item-subtitle>{{ notification.type }}</v-list-item-subtitle>
           <v-slide-y-reverse-transition
             leave-absolute
@@ -38,7 +40,9 @@
               {{ notification.message }}
             </v-list-item-subtitle>
           </v-slide-y-transition>
-          <v-list-item-subtitle>{{ time_since }} ({{ count }} times)</v-list-item-subtitle>
+          <v-list-item-subtitle>
+            {{ time_since }} ({{ count }} times)
+          </v-list-item-subtitle>
         </v-list-item-content>
 
         <v-list-item-action>
@@ -74,6 +78,10 @@ export default Vue.extend({
     notification: {
       type: Object as PropType<Notification>,
       required: true,
+    },
+    showService: {
+      type: Boolean,
+      default: true,
     },
     timestamp: {
       type: Date,
