@@ -3,9 +3,7 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
-import {
-  CumulatedNotification, Notification, NotificationLevel,
-} from '@/types/notifications'
+import { Notification, NotificationLevel } from '@/types/notifications'
 
 @Module({
   dynamic: true,
@@ -16,8 +14,6 @@ import {
 @Module
 class NotificationsStore extends VuexModule {
   notifications: Notification[] = []
-
-  cumulated_notifications: CumulatedNotification[] = []
 
   dismissed_notifications: Notification[] = []
 
@@ -46,17 +42,6 @@ class NotificationsStore extends VuexModule {
         this part of the code. Regardless of that, here's the notification message: ${notification.message}`)
         break
     }
-
-    // If current notification is similar to the last one, cumulate it on the counter
-    const [last_item] = this.cumulated_notifications.slice(-1)
-    if (last_item
-      && notification.similarTo(last_item.notification)
-      && !this.dismissed_notifications.includes(last_item.notification)) {
-      last_item.notification = notification
-      last_item.count += 1
-      return
-    }
-    this.cumulated_notifications.push({ notification, count: 1 })
   }
 
   @Mutation
@@ -67,12 +52,6 @@ class NotificationsStore extends VuexModule {
   get active_notifications(): Notification[] {
     return this.notifications.filter(
       (notification) => !this.dismissed_notifications.includes(notification),
-    )
-  }
-
-  get active_cumulated_notifications(): CumulatedNotification[] {
-    return this.cumulated_notifications.filter(
-      (cumulated) => !this.dismissed_notifications.includes(cumulated.notification),
     )
   }
 }

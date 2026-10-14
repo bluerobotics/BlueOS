@@ -62,7 +62,7 @@
 import { formatDistance } from 'date-fns'
 import Vue, { PropType } from 'vue'
 
-import { Notification, NotificationLevel } from '@/types/notifications'
+import { Notification, notificationLevelColor, notificationLevelIcon } from '@/types/notifications'
 
 export default Vue.extend({
   name: 'NotificationCard',
@@ -92,24 +92,10 @@ export default Vue.extend({
       return `${formatDistance(date_now, date_notification)} ago`
     },
     level_icon(): string {
-      switch (this.notification.level) {
-        case NotificationLevel.Success: return 'mdi-check-bold'
-        case NotificationLevel.Error: return 'mdi-close-circle'
-        case NotificationLevel.Info: return 'mdi-information'
-        case NotificationLevel.Warning: return 'mdi-alert'
-        case NotificationLevel.Critical: return 'mdi-skull'
-        default: return 'mdi-help-circle'
-      }
+      return notificationLevelIcon(this.notification.level)
     },
     level_color(): string {
-      switch (this.notification.level) {
-        case NotificationLevel.Success: return 'success'
-        case NotificationLevel.Error: return 'error'
-        case NotificationLevel.Info: return 'info'
-        case NotificationLevel.Warning: return 'warning'
-        case NotificationLevel.Critical: return 'critical'
-        default: return 'info'
-      }
+      return notificationLevelColor(this.notification.level)
     },
   },
   methods: {

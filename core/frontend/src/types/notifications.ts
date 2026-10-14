@@ -11,6 +11,28 @@ export enum NotificationLevel {
   Critical = 'critical',
 }
 
+export function notificationLevelIcon(level: NotificationLevel): string {
+  switch (level) {
+    case NotificationLevel.Success: return 'mdi-check-bold'
+    case NotificationLevel.Error: return 'mdi-close-circle'
+    case NotificationLevel.Info: return 'mdi-information'
+    case NotificationLevel.Warning: return 'mdi-alert'
+    case NotificationLevel.Critical: return 'mdi-skull'
+    default: return 'mdi-help-circle'
+  }
+}
+
+export function notificationLevelColor(level: NotificationLevel): string {
+  switch (level) {
+    case NotificationLevel.Success: return 'success'
+    case NotificationLevel.Error: return 'error'
+    case NotificationLevel.Info: return 'info'
+    case NotificationLevel.Warning: return 'warning'
+    case NotificationLevel.Critical: return 'critical'
+    default: return 'info'
+  }
+}
+
 /** Base Notification interface to be used for system-user communication */
 export interface NotificationInterface {
   /**
@@ -61,4 +83,18 @@ export class LiveNotification extends Notification {
 export interface CumulatedNotification {
   notification: Notification
   count: number
+}
+
+/** Cumulate consecutive similar notifications, keeping the first of each run as representative */
+export function cumulateSimilar(notifications: Notification[]): CumulatedNotification[] {
+  const cumulated_notifications: CumulatedNotification[] = []
+  notifications.forEach((notification) => {
+    const [last_item] = cumulated_notifications.slice(-1)
+    if (last_item?.notification.similarTo(notification)) {
+      last_item.count += 1
+      return
+    }
+    cumulated_notifications.push({ notification, count: 1 })
+  })
+  return cumulated_notifications
 }
