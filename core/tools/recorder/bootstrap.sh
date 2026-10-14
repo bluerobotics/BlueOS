@@ -3,9 +3,9 @@
 # Immediately exit on errors
 set -e
 
-VERSION="0.0.5"
+VERSION="camera_recording_gate"
 PROJECT_NAME="blueos-recorder"
-REPOSITORY_ORG="bluerobotics"
+REPOSITORY_ORG="joaoantoniocardoso"
 REPOSITORY_NAME="$PROJECT_NAME"
 REPOSITORY_URL="https://github.com/$REPOSITORY_ORG/$REPOSITORY_NAME"
 
