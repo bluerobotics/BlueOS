@@ -53,7 +53,7 @@
             :notification="notification"
             :count="count"
             :timestamp="timestamp"
-            @dismiss="dismissNotification"
+            @dismiss="dismissSimilarNotifications"
           />
         </v-list-item-group>
 
@@ -75,7 +75,7 @@ import { differenceInSeconds } from 'date-fns'
 import Vue from 'vue'
 
 import notifications from '@/store/notifications'
-import { CumulatedNotification, Notification } from '@/types/notifications'
+import { CumulatedNotification, cumulateSimilar, Notification } from '@/types/notifications'
 
 import NotificationsConfigMenu from './ConfigMenu.vue'
 import NotificationCard from './NotificationCard.vue'
@@ -97,24 +97,18 @@ export default Vue.extend({
     }
   },
   computed: {
-    notifications(): CumulatedNotification[] {
-      return notifications.active_cumulated_notifications
-    },
-    recent_notifications(): CumulatedNotification[] {
-      return this.notifications.filter((cumulated) => {
-        const date_now = new Date()
-        const date_notification = new Date(cumulated.notification.time_created)
-        return differenceInSeconds(date_now, date_notification) < this.seconds_recent
-      }).slice(-this.max_number_notifications)
+    // Newest first
+    visible_notifications(): Notification[] {
+      const active = notifications.active_notifications
+      const visible = this.show_old_messages ? active : active.filter(this.isRecent)
+      return visible.slice(-this.max_number_notifications).reverse()
     },
     notifications_to_show(): CumulatedNotification[] {
-      const notifications_to_show = this.show_old_messages ? this.notifications : this.recent_notifications
-      // Returning the notifications reversed to show the last ones first
-      return notifications_to_show.reverse()
+      return cumulateSimilar(this.visible_notifications)
     },
   },
   watch: {
-    notifications(): void {
+    notifications_to_show(): void {
       this.$emit('notificationsChange', this.notifications_to_show)
     },
   },
@@ -133,6 +127,14 @@ export default Vue.extend({
     },
     dismissNotification(notification: Notification): void {
       notifications.dismissNotification(notification)
+    },
+    dismissSimilarNotifications(notification: Notification): void {
+      this.visible_notifications
+        .filter((visible) => visible.similarTo(notification))
+        .forEach(this.dismissNotification)
+    },
+    isRecent(notification: Notification): boolean {
+      return differenceInSeconds(new Date(), new Date(notification.time_created)) < this.seconds_recent
     },
     updateTimestamp(): void {
       this.timestamp = new Date()
