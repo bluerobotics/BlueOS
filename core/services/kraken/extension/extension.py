@@ -20,6 +20,7 @@ from typing import (
 from aiodocker.exceptions import DockerError
 from commonwealth.settings.manager import PydanticManager
 from config import DEFAULT_INJECTED_ENV_VARIABLES, SERVICE_NAME
+from docker_registry import RegistryClient
 from extension.exceptions import (
     ExtensionInsufficientStorage,
     ExtensionNotFound,
@@ -135,7 +136,10 @@ class Extension:
             config["HostConfig"] = {}
         if "LogConfig" not in config["HostConfig"]:
             config["HostConfig"]["LogConfig"] = {}
-        config["HostConfig"]["LogConfig"] = {"Type": "json-file", "Config": {"max-size": "20m", "max-file": "3"}}
+        config["HostConfig"]["LogConfig"] = {
+            "Type": "json-file",
+            "Config": {"max-size": "20m", "max-file": "3"},
+        }
 
     @classmethod
     async def remove(cls, container_name: str, delete_image: bool = True) -> None:
@@ -169,6 +173,31 @@ class Extension:
             return running_ext
         except (ExtensionNotRunning, ExtensionNotFound):
             return None
+
+    async def _load_image_permissions(self) -> None:
+        if self.source.permissions not in ("", "{}"):
+            self._clear_duplicate_user_permissions()
+            return
+
+        try:
+            permissions = await Extension.fetch_extension_permissions(self.source.docker, self.tag)
+        except Exception as error:
+            logger.warning(f"Failed to read permissions from {self.source.docker}:{self.tag}: {error}")
+            return
+
+        self.source.permissions = json.dumps(permissions)
+        self._clear_duplicate_user_permissions()
+
+    def _clear_duplicate_user_permissions(self) -> None:
+        """Drop user overrides that are the same JSON as the image or manifest defaults."""
+        raw_value = self.source.user_permissions
+        if not raw_value:
+            return
+        try:
+            if json.loads(raw_value) == json.loads(self.source.permissions or "{}"):
+                self.source.user_permissions = ""
+        except json.JSONDecodeError:
+            return
 
     def _create_extension_settings(self) -> ExtensionSettings:
         """Create and save extension settings."""
@@ -207,7 +236,11 @@ class Extension:
         tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
         async with DockerCtx() as client:
             async for line in client.images.pull(
-                tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
+                tag,
+                repo=self.source.docker,
+                tag=self.tag,
+                auth=docker_auth,
+                stream=True,
             ):
                 # TODO - Plug Error detection from docker image here
                 yield json.dumps(line).encode("utf-8")
@@ -227,6 +260,9 @@ class Extension:
 
         # First we should make sure no other tag is running
         running_ext = await self._disable_running_extension()
+
+        # The image label is only a fallback when the manifest has no permissions
+        await self._load_image_permissions()
 
         self._create_extension_settings()
         try:
@@ -478,8 +514,7 @@ class Extension:
         async with DockerCtx() as client:
             try:
                 image_info: Dict[str, Any] = await client.images.inspect(image_name)
-                config = cast(Dict[str, Any], image_info.get("Config", {}) or {})
-                labels = cast(Dict[str, Any], config.get("Labels", {}) or {})
+                labels = Extension._labels_from_config(image_info.get("Config"))
 
                 metadata = Extension._metadata_from_labels(labels)
                 metadata.update(Extension._docker_metadata(image_info))
@@ -489,6 +524,40 @@ class Extension:
                 return metadata
             except Exception as error:
                 raise ExtensionPullFailed(f"Failed to inspect image {image_name}") from error
+
+    @staticmethod
+    async def fetch_extension_permissions(image: str, tag: str) -> dict[str, Any]:
+        """Get permissions from the labels in a Docker image, preferring a local copy over the registry."""
+        try:
+            async with DockerCtx() as client:
+                image_info: Dict[str, Any] = await client.images.inspect(f"{image}:{tag}")
+            return Extension._permissions_from_labels(Extension._labels_from_config(image_info.get("Config")))
+        except DockerError:
+            pass
+
+        platform = DockerPlatforms.from_machine()
+        if platform is None:
+            raise IncompatibleExtension("Unable to detect the docker platform of this device")
+
+        async with RegistryClient() as registry:
+            resolved = await registry.linux_manifests(image, tag)
+            selected = next(
+                (manifest for name, manifest in resolved if name in (None, str(platform))),
+                None,
+            )
+            if selected is None:
+                raise IncompatibleExtension(f"No linux/{platform} image found for {image}:{tag}")
+            config = await registry.image_config(image, tag, selected)
+
+        return Extension._permissions_from_labels(Extension._labels_from_config(config.get("config")))
+
+    @staticmethod
+    def _labels_from_config(config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        return cast(Dict[str, Any], (config or {}).get("Labels") or {})
+
+    @staticmethod
+    def _permissions_from_labels(labels: Dict[str, Any]) -> Dict[str, Any]:
+        return cast(Dict[str, Any], json.loads(labels.get("permissions", "{}")))
 
     @staticmethod
     def _metadata_from_labels(labels: Dict[str, Any]) -> Dict[str, Any]:
