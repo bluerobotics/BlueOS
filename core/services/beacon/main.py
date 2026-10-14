@@ -51,17 +51,25 @@ class AsyncRunner:
 
     async def register_services(self) -> None:
         self.aiozc = AsyncZeroconf(ip_version=self.ip_version, interfaces=[self.interface])  # type: ignore
-        tasks = [self.aiozc.async_register_service(info, cooperating_responders=True, ttl=25) for info in self.services]
-        background_tasks = await asyncio.gather(*tasks)
-        await asyncio.gather(*background_tasks)
+        try:
+            tasks = [
+                self.aiozc.async_register_service(info, cooperating_responders=True, ttl=25) for info in self.services
+            ]
+            background_tasks = await asyncio.gather(*tasks)
+            await asyncio.gather(*background_tasks)
+        except Exception:
+            await self.aiozc.async_close()
+            raise
         logger.info("Finished registration, press Ctrl-C to exit...")
 
     async def unregister_services(self) -> None:
         assert self.aiozc is not None
-        tasks = [self.aiozc.async_unregister_service(info) for info in self.services]
-        background_tasks = await asyncio.gather(*tasks)
-        await asyncio.gather(*background_tasks)
-        await self.aiozc.async_close()
+        try:
+            tasks = [self.aiozc.async_unregister_service(info) for info in self.services]
+            background_tasks = await asyncio.gather(*tasks)
+            await asyncio.gather(*background_tasks)
+        finally:
+            await self.aiozc.async_close()
 
     def __eq__(self, other: Any) -> bool:
         return {str(service) for service in self.services} == {
@@ -257,9 +265,12 @@ class Beacon:
                 elif self.runners[runner_name] != runner:
                     # unregister old one and register new one
                     logger.info(f"runner {runner_name} has changed, updating runner...")
-                    await self.runners[runner_name].unregister_services()
-                    self.runners[runner_name] = runner
-                    await runner.register_services()
+                    try:
+                        await self.runners.pop(runner_name).unregister_services()
+                        await runner.register_services()
+                        self.runners[runner_name] = runner
+                    except Exception as e:
+                        logger.warning(f"Error updating runner {runner_name}: {e}")
 
             for runner_name in self.runners.keys() - all_runners.keys():
                 logger.info(f"runner {runner_name} is gone, removing runner...")
