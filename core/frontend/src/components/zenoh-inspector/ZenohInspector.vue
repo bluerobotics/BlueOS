@@ -98,7 +98,8 @@
             <v-card-text class="flex-grow-1 overflow-auto">
               <template v-if="isVideoTopic">
                 <raw-video-player
-                  :video-data="videoData"
+                  :key="selected_topic || ''"
+                  ref="video_player"
                 />
               </template>
               <template v-else>
@@ -129,6 +130,8 @@ import { MessageReader } from '@foxglove/rosmsg2-serialization'
 import axios from 'axios'
 import Vue, { markRaw } from 'vue'
 
+import { VideoFormat } from '@/libs/mcap/codec'
+import { parseCompressedVideo } from '@/libs/mcap/video-track'
 import zenoh from '@/libs/zenoh'
 
 import RawVideoPlayer from './RawVideoPlayer.vue'
@@ -183,14 +186,7 @@ export default Vue.extend({
       return this.messages[this.selected_topic] || null
     },
     isVideoTopic(): boolean {
-      return this.selected_topic?.toLowerCase().includes('video') || false
-    },
-    videoData(): Uint8Array | null {
-      if (!this.current_message?.payload || !this.video_reader) {
-        return null
-      }
-      const msg: { data: Uint8Array } = this.video_reader.readMessage(this.current_message.payload.toBytes())
-      return msg.data
+      return this.selected_topic !== null && this.isLiveVideoTopic(this.selected_topic)
     },
   },
   async mounted() {
@@ -203,7 +199,7 @@ export default Vue.extend({
   methods: {
     async setupVideoReader() {
       const CompressedVideo = await axios.get('/msgs/CompressedVideo.msg').then((response) => response.data as string)
-      const definition = parseMessageDefinition(CompressedVideo)
+      const definition = parseMessageDefinition(CompressedVideo, { ros2: true })
       this.video_reader = new MessageReader(definition)
     },
     formatMessage(message: ZenohMessage | null): string {
@@ -248,6 +244,29 @@ export default Vue.extend({
         || Object.prototype.hasOwnProperty.call(this.topic_liveliness, topic)
     },
 
+    isLiveVideoTopic(topic: string): boolean {
+      const messageType = this.topic_message_types[topic] ?? ''
+      return messageType.includes('CompressedVideo') || topic.startsWith('video/')
+    },
+
+    forwardLiveFrame(payload: ZBytes): void {
+      if (!this.video_reader) {
+        return
+      }
+      const player = this.$refs.video_player as {
+        pushFrame?: (data: Uint8Array, format: VideoFormat, timestamp?: number) => void
+      } | undefined
+      if (!player?.pushFrame) {
+        return
+      }
+      try {
+        const frame = parseCompressedVideo(this.video_reader, payload.toBytes())
+        player.pushFrame(frame.data, frame.format, frame.timestampSeconds)
+      } catch {
+        // Stay on the last good frame; a bad payload should not tear down the player.
+      }
+    },
+
     flushStagedMessages() {
       this.staging.frame_request = null
       const batch = this.staging.messages
@@ -285,7 +304,12 @@ export default Vue.extend({
               timestamp: new Date(),
             }
 
-            // The selected topic bypasses batching because RawVideoPlayer's decoders consume every sample
+            // Live video is pushed through $refs so Vue's tick does not collapse 30 fps into one frame.
+            if (topic === this.selected_topic && this.isLiveVideoTopic(topic)) {
+              delete this.staging.messages[topic]
+              this.forwardLiveFrame(payload)
+              return Promise.resolve()
+            }
             if (topic === this.selected_topic) {
               delete this.staging.messages[topic]
               this.$set(this.messages, topic, message)
