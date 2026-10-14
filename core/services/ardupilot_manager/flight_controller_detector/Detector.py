@@ -1,11 +1,16 @@
 import asyncio
 from typing import List, Optional
 
+import serial
+from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import is_running_as_root
-from flight_controller_detector.board_identification import identifiers
+from flight_controller_detector.bootloader.px4_bootloader import PX4BootLoader
 from flight_controller_detector.linux.detector import LinuxFlightControllerDetector
+from flight_controller_detector.mavlink_board_id import get_board_id
+from loguru import logger
+from serial import SerialException
 from serial.tools.list_ports_linux import SysFS, comports
-from typedefs import FlightController, FlightControllerFlags, Platform
+from typedefs import FlightController, FlightControllerFlags, Platform, PlatformType
 
 
 class Detector:
@@ -33,47 +38,72 @@ class Detector:
         return port.product is not None and "BL" in port.product
 
     @staticmethod
-    def detect_serial_platform(port: SysFS) -> Optional[Platform]:
-        for identifier in identifiers:
-            port_attr = getattr(port, identifier.attribute)
-            if port_attr is not None and identifier.id_value in port_attr:
-                return identifier.platform
-
-        return None
+    def _ask_bootloader_for_board_id_sync(port: SysFS) -> Optional[int]:
+        """
+        Synchronous implementation of bootloader board_id retrieval.
+        Internal function - use ask_bootloader_for_board_id() instead.
+        """
+        try:
+            logger.info(f"asking bootloader for board id on {port.device}")
+            with serial.Serial(port.device, 115200, timeout=0.2, write_timeout=0, exclusive=True) as ser:
+                bootloader = PX4BootLoader(ser)
+                board_info = bootloader.get_board_info()
+                return board_info.board_id
+        except SerialException as e:
+            logger.error(f"Error asking bootloader for board id on {port.device}: {e}")
+            return None
 
     @staticmethod
-    def detect_serial_flight_controllers() -> List[FlightController]:
-        """Check if a Pixhawk1 or a Pixhawk4 is connected.
+    @temporary_cache(
+        timeout_seconds=300
+    )  # what are the chances of someone switching between two boards in bootloader mode?
+    async def ask_bootloader_for_board_id(port: SysFS) -> Optional[int]:
+        return await asyncio.to_thread(Detector._ask_bootloader_for_board_id_sync, port)
+
+    @staticmethod
+    @temporary_cache(timeout_seconds=30)
+    async def detect_serial_flight_controllers() -> List[FlightController]:
+        """Check if a standalone flight controller is connected via usb/serial.
 
         Returns:
             List[FlightController]: List with connected serial flight controller.
         """
         sorted_serial_ports = sorted(comports(), key=lambda port: port.name)  # type: ignore
-        unique_serial_devices: List[SysFS] = []
+        boards = []
         for port in sorted_serial_ports:
-            # usb_device_path property will be the same for two serial connections using the same USB port
-            if port.usb_device_path not in [device.usb_device_path for device in unique_serial_devices]:
-                unique_serial_devices.append(port)
-        boards = [
-            FlightController(
-                name=port.product or port.name,
+            board_id = None
+            if Detector.is_serial_bootloader(port):
+                board_id = await Detector.ask_bootloader_for_board_id(port)
+                # https://github.com/mavlink/qgroundcontrol/blob/f68674f47b0ca03f23a50753280516b6fa129545/src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc#L43
+                if board_id == 255:
+                    board_id = 9  # px4_fmu-v3_default edge case
+            if board_id is None:
+                board_id = await get_board_id(port.device)
+            if board_id is None:
+                continue
+
+            board_name = port.product or port.name
+            board = FlightController(
+                name=board_name,
                 manufacturer=port.manufacturer,
-                platform=Detector.detect_serial_platform(port)
-                or Platform(),  # this is just to make CI happy. check line 82
+                platform=Platform(name=board_name, platform_type=PlatformType.Serial),
                 path=port.device,
+                ardupilot_board_id=board_id,
+                flags=[FlightControllerFlags.is_bootloader] if Detector.is_serial_bootloader(port) else [],
             )
-            for port in unique_serial_devices
-            if Detector.detect_serial_platform(port) is not None
-        ]
-        for port in unique_serial_devices:
-            for board in boards:
-                if board.path == port.device and Detector.is_serial_bootloader(port):
-                    board.flags.append(FlightControllerFlags.is_bootloader)
+            boards.append(board)
+
+        # if we have multiple boards with the same name, lets keep the one with the shortest platform name
+        if len(boards) > 1:
+            names = [board.platform.name for board in boards]
+            logger.info(f"multiple board type candidates: ({names})")
+
+        logger.info(f"detected serial boards: {boards}")
         return boards
 
     @staticmethod
     def detect_sitl() -> FlightController:
-        return FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL)
+        return FlightController(name="SITL", manufacturer="ArduPilot Team", platform=Platform.SITL())
 
     @classmethod
     async def detect(cls, include_sitl: bool = True, include_manual: bool = True) -> List[FlightController]:
@@ -86,19 +116,28 @@ class Detector:
             List[FlightController]: List of available flight controllers
         """
         available: List[FlightController] = []
+
+        available.extend(await cls().detect_serial_flight_controllers())
+
+        if include_sitl:
+            available.append(Detector.detect_sitl())
+
+        if include_manual:
+            available.append(
+                FlightController(
+                    name="Manual",
+                    manufacturer="Manual",
+                    platform=Platform(name="Manual", platform_type=PlatformType.Serial),
+                    path="",
+                    ardupilot_board_id=None,
+                )
+            )
+
         if not is_running_as_root():
             return available
 
         linux_board = await cls.detect_linux_board()
         if linux_board:
             available.append(linux_board)
-
-        available.extend(cls().detect_serial_flight_controllers())
-
-        if include_sitl:
-            available.append(Detector.detect_sitl())
-
-        if include_manual:
-            available.append(FlightController(name="Manual", manufacturer="Manual", platform=Platform.Manual))
 
         return available

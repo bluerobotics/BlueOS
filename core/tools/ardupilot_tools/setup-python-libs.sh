@@ -15,9 +15,9 @@ fi
 mkdir -p "$PYTHON_BIN_DIR"
 
 ### Ardupilot's uploader is used to upload firmwares to serial boards
-COMMIT_HASH=f6544ca25ab232407ec102b7a5adf0adca0f2062
+COMMIT_HASH=8b779a8f3b61e66b4bfc39ff413e27b4be51df2e
 LOCAL_PATH_UPLOADER="$PYTHON_BIN_DIR/ardupilot_fw_uploader.py"
-REMOTE_URL_UPLOADER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/uploader.py"
+REMOTE_URL_UPLOADER="https://raw.githubusercontent.com/williangalvani/ardupilot/${COMMIT_HASH}/Tools/scripts/uploader.py"
 
 # Sudo command is not available on docker and the script is also used in different environments
 # The SUDO alias allow the usage of sudo when such command exists and also ignore if it doesn't

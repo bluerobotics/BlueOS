@@ -203,7 +203,7 @@ export default Vue.extend({
       const record: Record<string, string> = {
         'Board name': this.current_board?.name ?? 'Unknown',
         Manufacturer: this.current_board?.manufacturer ?? 'Unknown',
-        'Mavlink platform': this.current_board?.platform ?? 'Unknown',
+        'Mavlink platform': this.current_board?.platform.name ?? 'Unknown',
         'Firmware version': version,
         'Vehicle type': `${this.vehicle_type ?? 'Unknown'} (${this.firmware_vehicle_type ?? 'Unknown'})`,
       }

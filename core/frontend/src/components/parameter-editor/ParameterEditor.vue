@@ -285,7 +285,7 @@ export default Vue.extend({
       let content = ''
 
       const vehicle = autopilot.vehicle_type ?? 'vehicle'
-      const platform = autopilot.current_board?.platform ?? 'platform'
+      const platform = autopilot.current_board?.platform.name ?? 'platform'
       const version = autopilot.firmware_info?.version ?? 'version'
       const type = autopilot.firmware_info?.type ?? 'None'
       const date = format(new Date(), 'yyyyMMdd-HHmmss')
