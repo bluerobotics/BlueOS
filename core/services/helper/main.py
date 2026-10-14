@@ -614,7 +614,7 @@ def hardware_id() -> Any:
 @fast_api_app.get(
     "/software_id",
     response_model=str,
-    summary="An UUID that can bse used as unique identifier, generated once on BlueOS first boot.",
+    summary="An UUID that can be used as unique identifier, generated once on BlueOS first boot.",
 )
 @version(1, 0)
 @cache
