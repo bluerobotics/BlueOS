@@ -71,7 +71,7 @@ def get_new_log_path(service_name: str) -> Path:
 def init_logger(service_name: str) -> None:
     try:
         logger.remove()
-        logger.add(sys.stderr, format=ISO8601_LOG_FORMAT)
+        logger.add(sys.stderr, format=ISO8601_LOG_FORMAT, enqueue=True)
         logger.add(get_new_log_path(service_name), rotation="10 MB", format=ISO8601_LOG_FORMAT)
     except Exception as e:
         print(f"Error: unable to set logging path: {e}")
