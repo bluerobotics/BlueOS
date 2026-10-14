@@ -608,7 +608,7 @@ def hardware_id() -> Any:
         uuid_obj = UUID(content, version=4)
         return str(uuid_obj)
     except Exception as exception:
-        raise HTTPException(status_code=400, detail="Error: {exception}") from exception
+        raise HTTPException(status_code=400, detail=f"Error: {exception}") from exception
 
 
 @fast_api_app.get(
@@ -625,7 +625,7 @@ def software_id() -> Any:
         uuid_obj = UUID(content, version=4)
         return str(uuid_obj)
     except Exception as exception:
-        raise HTTPException(status_code=400, detail="Error: {exception}") from exception
+        raise HTTPException(status_code=400, detail=f"Error: {exception}") from exception
 
 
 @fast_api_app.get(
