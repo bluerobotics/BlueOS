@@ -81,7 +81,7 @@ class Bridget:
         self._bridges[bridge_spec] = new_bridge
         settings_spec = BridgeSettingsSpecV2.from_spec(bridge_spec)
         settings = self._settings_manager.settings
-        if settings_spec.model_dump() not in [spec.model_dump() for spec in settings.specsv2]:
+        if settings_spec.dict() not in [spec.dict() for spec in settings.specsv2]:
             settings.specsv2 = [spec for spec in settings.specsv2 if spec != settings_spec] + [settings_spec]
             self._settings_manager.save()
 
