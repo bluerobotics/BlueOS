@@ -9,20 +9,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  review:
-    name: Claude PR Review
+  permission:
+    name: Check actor permission
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # Outside collaborators without write access cannot be reviewed: the
-    # claude-code-action performs its own actor-permission check and hard-fails
-    # on a `read`-only actor. Only OWNER/MEMBER/COLLABORATOR authors normally
-    # have write access, so gate on author_association to cleanly SKIP
-    # the review (neutral) for outside contributors instead of failing the run.
+    # The claude-code-action hard-fails when github.actor has no write access,
+    # and author_association can't tell: an org MEMBER may only have read
+    # access. The real permission needs an API call that a job-level if can't
+    # make, so it gets its own job and the review job is skipped for read-only
+    # actors. A maintainer that reopens their pull request becomes the actor
+    # and gets it reviewed.
     if: >-
       ${{ !github.event.pull_request.draft
-          && github.event.pull_request.user.type != 'Bot'
-          && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                      github.event.pull_request.author_association) }}
+          && github.event.pull_request.user.type != 'Bot' }}
+    permissions:
+      contents: read
+    outputs:
+      allowed: ${{ steps.permission.outputs.allowed }}
+    steps:
+      - name: Check actor permission
+        id: permission
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          PERMISSION=$(gh api "repos/${{ github.repository }}/collaborators/${ACTOR}/permission" --jq .permission)
+          if [[ "$PERMISSION" =~ ^(admin|write)$ ]]; then
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Skipping review, ${ACTOR} has ${PERMISSION} permission"
+          fi
+
+  review:
+    name: Claude PR Review
+    needs: permission
+    if: needs.permission.outputs.allowed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
