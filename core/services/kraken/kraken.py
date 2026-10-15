@@ -32,9 +32,7 @@ class Kraken:
         attempts, last_attempt = Extension.start_attempts.get(unique_entry, (0, 0))
         maximum_delay = 600
         minimum_delay = 10
-        required_delay = (
-            max(minimum_delay * (attempts != 0) + 2**attempts, maximum_delay) if attempts < 8 else maximum_delay
-        )
+        required_delay = min(minimum_delay * (attempts != 0) + 2**attempts, maximum_delay)
 
         now = int(time.monotonic())
 
