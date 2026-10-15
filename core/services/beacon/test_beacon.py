@@ -1,21 +1,81 @@
 import asyncio
+import enum
 import json
 import os
 import socket
 import sys
 import tempfile
+import types
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List
+from typing import Any, Callable, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import psutil
 import pytest
-from starlette.requests import Request
-from zeroconf import IPVersion
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-_saved = {name: sys.modules.pop(name, None) for name in ("main", "settings", "typedefs")}
+BEACON_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(BEACON_DIR))
+# commonwealth is not installed in the 1.4 test env, but its settings manager only needs pykson and appdirs,
+# so the real one is loaded by path to keep the settings persistence and migration tests meaningful
+sys.path.append(str(BEACON_DIR.parent.parent / "libs" / "commonwealth"))
+
+
+class IPVersion(enum.Enum):
+    V4Only = 1
+    V6Only = 2
+    All = 3
+
+
+class AsyncServiceInfo:
+    def __init__(self, type_: str, name: str, **kwargs: Any) -> None:
+        self.type = type_
+        self.name = name
+        self.kwargs = kwargs
+
+    def __repr__(self) -> str:
+        return f"AsyncServiceInfo({self.type!r}, {self.name!r}, {sorted(self.kwargs.items())!r})"
+
+
+class FakeApp:
+    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+        pass
+
+    def _route(self, *_args: Any, **_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return lambda function: function
+
+    get = post = mount = _route
+
+
+class Request:
+    def __init__(self, scope: Dict[str, Any]) -> None:
+        self.scope = scope
+        self.headers = {key.decode().lower(): value.decode() for key, value in scope.get("headers", [])}
+
+
+def module(name: str, **attributes: Any) -> types.ModuleType:
+    stub = types.ModuleType(name)
+    stub.__dict__.update(attributes)
+    return stub
+
+
+# The 1.4 test env has no fastapi, starlette, uvicorn or zeroconf, so main.py imports are replaced by stand-ins
+_STUBS = {
+    "commonwealth.utils.apis": module("commonwealth.utils.apis", PrettyJSONResponse=MagicMock()),
+    "commonwealth.utils.logs": module("commonwealth.utils.logs", init_logger=MagicMock()),
+    "fastapi": module("fastapi", FastAPI=FakeApp, Request=Request),
+    "fastapi.responses": module("fastapi.responses", HTMLResponse=MagicMock()),
+    "fastapi_versioning": module(
+        "fastapi_versioning",
+        VersionedFastAPI=lambda app, **_kwargs: app,
+        version=lambda *_args, **_kwargs: lambda function: function,
+    ),
+    "uvicorn": module("uvicorn", Config=MagicMock(), Server=MagicMock()),
+    "zeroconf": module("zeroconf", IPVersion=IPVersion),
+    "zeroconf.asyncio": module("zeroconf.asyncio", AsyncServiceInfo=AsyncServiceInfo, AsyncZeroconf=MagicMock()),
+}
+_saved = {name: sys.modules.pop(name, None) for name in ("main", "settings", "typedefs", *_STUBS)}
+sys.modules.update(_STUBS)
 
 # main.py creates a Beacon at import time, which would write to the real settings folder
 with patch.dict(os.environ, {"XDG_CONFIG_HOME": tempfile.mkdtemp(prefix="beacon-test-")}):
@@ -23,9 +83,10 @@ with patch.dict(os.environ, {"XDG_CONFIG_HOME": tempfile.mkdtemp(prefix="beacon-
     from settings import Interface, InvalidIpAddress
     from typedefs import InterfaceType, IpInfo
 
-for module_name, module in _saved.items():
-    if module is not None:
-        sys.modules[module_name] = module
+# Restore after import so other collected tests still see the real modules (pytest-xdist)
+for module_name, saved_module in _saved.items():
+    if saved_module is not None:
+        sys.modules[module_name] = saved_module
     else:
         sys.modules.pop(module_name, None)
 
