@@ -2,6 +2,8 @@ import { Service } from './common'
 import { NotificationLevel } from './notifications'
 
 export enum AlertRuleId {
+  AutopilotFirmwareMissing = 'autopilot.firmware_missing',
+  AutopilotNoBoard = 'autopilot.no_board',
   AutopilotNotConfigured = 'autopilot.not_configured',
   AutopilotSensorsUncalibrated = 'autopilot.sensors_uncalibrated',
   BackendOffline = 'backend.offline',
