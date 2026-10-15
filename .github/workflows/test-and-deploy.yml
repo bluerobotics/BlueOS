@@ -6,8 +6,8 @@ env:
 on:
     workflow_dispatch:
     pull_request:
-      # The build-images label starts the Raspberry images build. Any other label skips the tests, and with them
-      # everything that needs them (see their if)
+      # The build-images label starts the Raspberry images build. Any other label still runs the tests, a pull
+      # request only shows the latest run of the workflow and a skipped one would hide their results
       types: [opened, synchronize, reopened, labeled]
     push:
     schedule:
@@ -16,7 +16,6 @@ on:
 
 jobs:
   python-tests:
-    if: github.event.action != 'labeled' || github.event.label.name == 'build-images'
     runs-on: ubuntu-latest
 
     env:
@@ -57,7 +56,6 @@ jobs:
 
 
   frontend-tests:
-    if: github.event.action != 'labeled' || github.event.label.name == 'build-images'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -280,6 +278,7 @@ jobs:
     needs: deploy-docker-images
     if: >-
       github.repository_owner == 'bluerobotics' &&
+      (github.event.action != 'labeled' || github.event.label.name == 'build-images') &&
       (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-images'))
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
     strategy:
