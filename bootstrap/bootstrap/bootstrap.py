@@ -159,7 +159,11 @@ class Bootstrapper:
         """Checks if the image is already available locally"""
         try:
             images = self.client.images.list(image_name)
-            return any(f"{image_name}:{tag}" in image.tags for image in images)
+            # podman reports tags with the registry prefix, docker omits it for docker.io
+            return any(
+                f"{image_name}:{tag}" in [image_tag.removeprefix("docker.io/") for image_tag in image.tags]
+                for image in images
+            )
         except Exception as exception:
             logger.warning(f"Failed to list image ({image_name}): {exception}")
         return False
@@ -201,22 +205,24 @@ class Bootstrapper:
         # Remove image if name already exist
         self.remove(component_name)
         try:
-            self.client.containers.run(
-                docker_name,
-                name=f"blueos-{component_name}",
-                volumes=binds,
+            # containers.run() also sends the bind destinations as anonymous volumes, which podman rejects as
+            # duplicate mounts for the privileged /dev/ and /sys/ binds, so only the binds are sent
+            host_config = self.client.api.create_host_config(
+                binds=binds,
                 privileged=privileged,
-                network=network,
-                detach=True,
-                environment=environment,
-                log_config={
-                    "Type": "json-file",
-                    "Config": {
-                        "max-size": "30m",
-                        "max-file": "3",
-                    },
-                },
+                network_mode=network,
+                log_config=docker.types.LogConfig(
+                    type=docker.types.LogConfig.types.JSON, config={"max-size": "30m", "max-file": "3"}
+                ),
             )
+            container = self.client.api.create_container(
+                docker_name,
+                detach=True,
+                name=f"blueos-{component_name}",
+                environment=environment,
+                host_config=host_config,
+            )
+            self.client.api.start(container["Id"])
         except docker.errors.APIError as error:
             warn(f"Error trying to start image: {error}, reverting to default...")
             self.overwrite_config_file_with_defaults()

@@ -117,11 +117,33 @@ class FakeImages:
         return [FakeImage(image=image_name, tags=["master"])]
 
 
+class FakeApi:
+    """Mocks the low level "APIClient" class from docker-py, as exposed by DockerClient.api"""
+
+    def __init__(self, client: "FakeClient") -> None:
+        self.client = client
+        self.created: Dict[str, Any] = {}
+
+    @staticmethod
+    def create_host_config(**kwargs: Any) -> Dict[str, Any]:
+        return kwargs
+
+    def create_container(self, image: str, name: str = "", **kwargs: Any) -> Dict[str, str]:
+        self.created = {"image": image, "name": name, **kwargs}
+        self.client.containers.run(image, name=name, **kwargs)
+        return {"Id": name}
+
+    @staticmethod
+    def start(_container_id: str) -> None:
+        return
+
+
 class FakeClient:
     """Mocks a docker-py client for testing purposes"""
 
     def __init__(self) -> None:
         self.containers = FakeContainers([], self)
+        self.api = FakeApi(self)
         self.images = FakeImages()
 
     def set_active_dockers(self, containers: List[FakeContainer]) -> None:
@@ -173,6 +195,17 @@ class BootstrapperTests(TestCase):  # type: ignore
         fake_client = FakeClient()
         bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
         bootstrapper.start("core")
+
+    @pytest.mark.timeout(10)
+    def test_start_core_sends_binds_only_in_host_config(self) -> None:
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
+        fake_client = FakeClient()
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
+        bootstrapper.start("core")
+        created = fake_client.api.created
+        assert "volumes" not in created
+        assert created["name"] == "blueos-core"
+        assert created["host_config"]["log_config"]["Config"]["max-size"] == "30m"
 
     @pytest.mark.timeout(10)
     def test_start_core_and_ttyd(self) -> None:

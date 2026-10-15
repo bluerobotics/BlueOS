@@ -19,7 +19,7 @@ class BootstrapRequest(BaseModel):
 
 
 async def get_docker_client() -> AsyncGenerator[VersionChooser, None]:
-    async with aiodocker.Docker() as docker_client:
+    async with aiodocker.Docker(api_version="v1.41") as docker_client:
         yield VersionChooser(docker_client)
 
 

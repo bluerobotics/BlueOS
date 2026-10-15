@@ -86,13 +86,14 @@ class ContainerManager:
 
     @staticmethod
     async def get_running_containers() -> List[ContainerModel]:
+        # podman reports fully qualified image names, while the extension manifests use the short ones
         async with DockerCtx() as client:
             containers = await client.containers.list(filters={"status": ["running"]})  # type: ignore
 
             return [
                 ContainerModel(
                     name=container["Names"][0],
-                    image=container["Image"],
+                    image=container["Image"].removeprefix("docker.io/"),
                     image_id=container["ImageID"],
                     status=container["Status"],
                 )
@@ -106,7 +107,7 @@ class ContainerManager:
 
             return ContainerModel(
                 name=container["Names"][0],
-                image=container["Image"],
+                image=container["Image"].removeprefix("docker.io/"),
                 image_id=container["ImageID"],
                 status=container["Status"],
             )

@@ -11,10 +11,10 @@ class DockerCtx:
 
     def __init__(self, timeout: Optional[int] = None) -> None:
         if timeout is None:
-            self._client: Docker = Docker()
+            self._client: Docker = Docker(api_version="v1.41")
         else:
             # aiodocker will not create a session if is different from None
-            self._client: Docker = Docker(session=True)  # type: ignore
+            self._client: Docker = Docker(session=True, api_version="v1.41")  # type: ignore
             # We insert a new session with desired timeout
             self._client.session = self._client.session = aiohttp.ClientSession(
                 connector=self._client.connector,

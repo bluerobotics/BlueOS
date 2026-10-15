@@ -34,7 +34,7 @@ class VersionChooser:
         if "pytest" in sys.modules:  # don't run this in testing environment
             return
         # TODO: migrate this to aiodocker once https://github.com/aio-libs/aiodocker/issues/696 is fixed
-        client = docker.from_env()
+        client = docker.from_env(version="1.41")
         client.images.prune({"dangling": True})
 
     @staticmethod
@@ -142,7 +142,7 @@ class VersionChooser:
 
         async def generate() -> AsyncGenerator[bytes, None]:
             try:
-                async for line in self.client.images.pull(f"{repository}:{tag}", repo=repository, tag=tag, stream=True):
+                async for line in self.client.images.pull(f"{repository}:{tag}", stream=True):
                     yield json.dumps(line).encode("utf-8")
             except Exception as e:
                 logger.error(f"pull of {repository}:{tag}  failed: {e}")
@@ -199,7 +199,7 @@ class VersionChooser:
         """
         try:
             bootstrap = await self.client.containers.get(self.bootstrap_name)  # type: ignore
-            return str(bootstrap["Config"]["Image"])
+            return str(bootstrap["Config"]["Image"]).removeprefix("docker.io/")
         except Exception as e:
             logger.critical(f"unable to read bootstrap version: {e}")
             return "Unknown"
@@ -249,6 +249,10 @@ class VersionChooser:
             await bootstrap.kill()
             result = await bootstrap.wait()  # type: ignore
             logger.info(f"Response after waiting for {self.bootstrap_name} to be stopped: {result}")
+            # podman, unlike docker, starts the stopped containers of the unless-stopped policy again on boot
+            await bootstrap.docker._query_json(  # pylint: disable=protected-access
+                f"containers/{bootstrap.id}/update", method="POST", data={"RestartPolicy": {"Name": "no"}}
+            )
 
         HOME = "/root"
         bootstrap_config = {
@@ -403,7 +407,7 @@ class VersionChooser:
             if not any("/blueos-core:" in tag for tag in image["RepoTags"]):
                 continue
             for image_tag in image["RepoTags"]:
-                image_repository, tag = image_tag.split(":")
+                image_repository, tag = image_tag.removeprefix("docker.io/").split(":")
                 assert isinstance(output["local"], list)
                 output["local"].append(
                     {

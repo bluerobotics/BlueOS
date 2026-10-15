@@ -216,11 +216,13 @@ prepare_cgroups() {
     return
   fi
   # Prepare cgroups for run-service.sh to use
-  # Get the Docker container's hash by its name
-  FULL_COMMAND="docker ps --no-trunc --filter name=blueos-core --format '{{.ID}}'"
-  CONTAINER_HASH=$(ssh_command "$FULL_COMMAND")
-  # Use the Docker container's hash to generate the path
-  FULL_PATH="system.slice/docker-$CONTAINER_HASH.scope"
+  # The host's view of the container cgroup depends on the runtime (docker: system.slice/docker-<id>.scope,
+  # podman: libpod_parent/libpod-<id>), so read it from the container's init process instead of building it
+  if ! CONTAINER_PID=$(ssh_command "docker inspect --format '{{.State.Pid}}' blueos-core"); then
+    echo "Could not inspect the container, skipping cgroups preparation"
+    return
+  fi
+  FULL_PATH=$(ssh_command "cat /proc/$CONTAINER_PID/cgroup")
 
   # Remove the starting '0::' from FULL_PATH
   FULL_PATH=${FULL_PATH#0::}

@@ -46,6 +46,10 @@ NAVIGATOR_INSTALL_SCRIPTS = {
     CpuType.PI5: "install/boards/bcm_2712.sh",
 }
 
+# Configures every board at once for an image that can't know which board it will boot on, so it
+# writes one section per board instead of a single one
+MULTI_BOARD_INSTALL_SCRIPT = "install/boards/bcm_multi.sh"
+
 ALL_INSTALL_SCRIPTS = sorted(
     str(script.relative_to(REPOSITORY_PATH)) for script in (REPOSITORY_PATH / "install" / "boards").glob("*.sh")
 )
@@ -175,6 +179,64 @@ dtoverlay=dwc2,dr_mode=host
 [all]
 """
 
+# Stock config.txt of a Trixie 64-bit image, read back from the Raspberry Pi OS image before BlueOS touched it.
+# It already holds a [pi5] section, and enables the 64-bit kernel for every board.
+TRIXIE_STOCK_CONFIG_TXT = """# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+#dtparam=i2c_arm=on
+#dtparam=i2s=on
+#dtparam=spi=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+
+# Additional overlays and parameters are documented
+# /boot/firmware/overlays/README
+
+# Automatically load overlays for detected cameras
+camera_auto_detect=1
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=1
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows
+arm_boost=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[pi5]
+dtoverlay=nospi10
+
+[all]
+"""
+
 STOCK_CMDLINE_TXT = (
     "console=serial0,115200 console=tty1 root=PARTUUID=41964984-02 rootfstype=ext4 fsck.repair=yes rootwait\n"
 )
@@ -199,15 +261,24 @@ BOOKWORM = Distribution(
     cpu_types=(CpuType.PI3, CpuType.PI4, CpuType.PI5),
 )
 
+TRIXIE = Distribution(
+    name="trixie",
+    config_file="/boot/firmware/config.txt",
+    cmdline_file="/boot/firmware/cmdline.txt",
+    stock_config=TRIXIE_STOCK_CONFIG_TXT,
+    stock_cmdline=STOCK_CMDLINE_TXT,
+    cpu_types=(CpuType.PI3, CpuType.PI4, CpuType.PI5),
+)
+
 # Every distribution and Navigator capable board combination that can reach a user
 NAVIGATOR_BOARDS = [
     pytest.param(distribution, cpu_type, id=f"{distribution.name}-{cpu_type.name}")
-    for distribution in (BULLSEYE, BOOKWORM)
+    for distribution in (BULLSEYE, BOOKWORM, TRIXIE)
     for cpu_type in distribution.cpu_types
     if cpu_type in NAVIGATOR_INSTALL_SCRIPTS
 ]
 
-DISTRIBUTIONS = [pytest.param(distribution, id=distribution.name) for distribution in (BULLSEYE, BOOKWORM)]
+DISTRIBUTIONS = [pytest.param(distribution, id=distribution.name) for distribution in (BULLSEYE, BOOKWORM, TRIXIE)]
 
 # What Bookworm leaves at /boot once it has moved the boot partition to /boot/firmware. Writing to
 # it configures nothing, and the write still succeeds, which is how the original bug shipped.
@@ -306,7 +377,9 @@ def apply_boot_config_patches(
     blueos_startup_update.cmdline_file = distribution.cmdline_file
     with patch.object(blueos_startup_update, "load_file", fake_load_file), patch.object(
         blueos_startup_update, "save_file", fake_save_file
-    ), patch.object(blueos_startup_update, "get_cpu_type", lambda: cpu_type):
+    ), patch.object(blueos_startup_update, "get_cpu_type", lambda: cpu_type), patch.object(
+        blueos_startup_update, "keep_other_board_sections", distribution is TRIXIE
+    ):
         # Every patch has to run, the startup script does not stop at the first one that applies
         return {patch_function.__name__: patch_function() for patch_function in patches}
 
@@ -618,6 +691,22 @@ def test_pi3_cleanup_keeps_distribution_sections(distribution: Distribution) -> 
     assert not any(applied.values()), "the cleanup did not converge, a reboot loop would follow"
 
 
+def test_trixie_boards_leave_each_others_sections_alone() -> None:
+    """The same SD card moves between a Pi3, a Pi4 and a Pi5, each boot must keep the other boards' sections."""
+    files = stock_files(TRIXIE)
+    files[TRIXIE.config_file] += "\n[pi3]\ndtoverlay=uart1\n[all]\n\n[pi4]\ndtoverlay=uart3\n[all]\n"
+    files[TRIXIE.config_file] = files[TRIXIE.config_file].replace("[pi5]\n", "[pi5]\ndtoverlay=uart3-pi5\n", 1)
+
+    for cpu_type in (CpuType.PI4, CpuType.PI5, CpuType.PI4):
+        apply_boot_config_patches(cpu_type, TRIXIE, files)
+        assert section_configuration(files[TRIXIE.config_file], "pi3") == ["dtoverlay=uart1"]
+        assert "dtoverlay=uart3" in section_configuration(files[TRIXIE.config_file], "pi4")
+        assert "dtoverlay=uart3-pi5" in section_configuration(files[TRIXIE.config_file], "pi5")
+
+    applied = apply_boot_config_patches(CpuType.PI4, TRIXIE, files)
+    assert not any(applied.values()), "swapping boards would reboot forever"
+
+
 def test_bcm28xx_enables_the_peripherals_a_pi3_needs() -> None:
     # Pi zero/1/2/3 have no startup patch to cross-check this script against, so these lines
     # are the only description of what the onboard peripherals need
@@ -673,7 +762,7 @@ def test_install_scripts_probe_selects_the_real_boot_partition(
     assert probe, f"{script_name} no longer probes for the boot partition, /boot may be an inert Bookworm stub"
 
     # A Pi5 is newer than Bullseye, so boot files at /boot are never its boot partition
-    if expected == "boot" and script_name == NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5]:
+    if expected == "boot" and script_name in (NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5], MULTI_BOARD_INSTALL_SCRIPT):
         expected = None
 
     for directory, boot_files in layout.items():
@@ -729,6 +818,14 @@ def test_image_build_checks_what_the_install_scripts_write() -> None:
     for words in re.findall(r"EXPECTED=\((.*?)\)", workflow, re.DOTALL):
         expected = bash_words(words)
         headers = [line for line in expected if line.startswith("[")]
+        if len(headers) > 1:
+            multi_board_script = (REPOSITORY_PATH / MULTI_BOARD_INSTALL_SCRIPT).read_text(encoding="utf-8")
+            for line in expected:
+                if line in headers:
+                    assert f"write_board_section {line.strip('[]')} " in multi_board_script, f"no [{line}] section"
+                else:
+                    assert f'"{line}"' in multi_board_script, f"{MULTI_BOARD_INSTALL_SCRIPT} does not write {line!r}"
+            continue
         assert len(headers) == 1, f"{expected} does not look for exactly one board section"
         section_name = headers[0].strip("[]")
         assert section_name in sections, f"no install script writes a [{section_name}] section"
@@ -825,3 +922,10 @@ def test_startup_patcher_resolves_both_boot_files_through_the_stub_guard() -> No
                 f"main() resolved {name} to {resolved!r} on a host whose boot partition is not mounted, so the "
                 "board section goes into a file the firmware never reads and the Navigator never appears"
             )
+
+
+def test_image_provisioning_writes_the_network_manager_template() -> None:
+    provision_script = (REPOSITORY_PATH / "deploy/pimod/provision_trixie.sh").read_text(encoding="utf-8")
+    heredoc = re.search(r"<< 'CONF'\n(.*?)\nCONF\n", provision_script, re.DOTALL)
+    assert heredoc, "provision_trixie.sh no longer writes NetworkManager.conf"
+    assert heredoc.group(1) + "\n" == blueos_startup_update.NETWORK_MANAGER_CONF_TEMPLATE
