@@ -87,7 +87,10 @@
 import { differenceInSeconds } from 'date-fns'
 import Vue from 'vue'
 
+import alert_engine from '@/alerts/engine.js'
+import alerts from '@/store/alerts.js'
 import notifications from '@/store/notifications'
+import settings from '@/store/settings.js'
 import {
   CumulatedNotification, cumulateSimilar, Notification, NotificationGroup,
 } from '@/types/notifications'
@@ -117,6 +120,11 @@ export default Vue.extend({
   computed: {
     // Newest first
     visible_notifications(): Notification[] {
+      if (settings.is_dev_mode_enabled) {
+        return this.alert_notifications.map(
+          (notification) => notification.notification,
+        ).sort((a, b) => b.time_created - a.time_created)
+      }
       const active = notifications.active_notifications
       const visible = this.show_old_messages ? active : active.filter(this.isRecent)
       return visible.slice(-this.max_number_notifications).reverse()
@@ -137,6 +145,21 @@ export default Vue.extend({
         groups.set(group_key, { level, service, notifications: [notification] })
       })
       return [...groups.values()].sort((a, b) => a.service.name.localeCompare(b.service.name))
+    },
+    alert_notifications(): CumulatedNotification[] {
+      return alerts.alerts_list.flatMap((alert) => {
+        const rule = alert_engine.getRule(alert.rule_id)
+        if (!rule) return []
+        const notification = new Notification(
+          rule.level,
+          rule.service,
+          rule.title,
+          rule.description ?? '',
+          alert.since.getTime(),
+          rule.id,
+        )
+        return [{ notification, count: 1 }]
+      })
     },
   },
   watch: {
@@ -159,6 +182,9 @@ export default Vue.extend({
     },
     dismissNotification(notification: Notification): void {
       notifications.dismissNotification(notification)
+      if (notification.id) {
+        alert_engine.dismiss(notification.id)
+      }
     },
     dismissSimilarNotifications(notification: Notification): void {
       this.visible_notifications

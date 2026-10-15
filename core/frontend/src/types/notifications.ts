@@ -41,12 +41,14 @@ export interface NotificationInterface {
    * @param type - Free string used for notification categorization
    * @param message - What is being communicated
    * @param time_created - UNIX timestamp indicating the time of creation
+   * @param id - Optional external id
   * */
   level: NotificationLevel
   service: Service
   type: string
   message: string
   time_created: number
+  id?: string
 }
 
 /** Base class for frontend notification system. */
@@ -57,6 +59,7 @@ export class Notification implements NotificationInterface {
     public readonly type: string,
     public readonly message: string,
     public readonly time_created: number,
+    public readonly id?: string,
   ) {}
 
   /** Compare if all properties (except time_created) between this and other match */
@@ -74,8 +77,9 @@ export class LiveNotification extends Notification {
     public service: Service,
     public type: string,
     public message: string,
+    public id?: string,
   ) {
-    super(level, service, type, message, new Date().getTime())
+    super(level, service, type, message, new Date().getTime(), id)
   }
 }
 
