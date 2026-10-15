@@ -256,6 +256,26 @@ BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
 BLUEOS_CORE="$DOCKER_USER/blueos-core:$VERSION" # We don't have a stable tag yet
 BLUEOS_FACTORY="bluerobotics/blueos-core:factory" # used for "factory reset"
 
+# docker load restores layer contents but not registry blob digests. The buildx archive
+# already lists those digests. A later pull skips a layer only when diffid-by-digest maps
+# that blob to the local diff ID, and only for an unbroken prefix.
+register_image_layer_digests() {
+    local image_reference="$1"
+    local image_archive="$2"
+    local script
+    script="$(cd "$(dirname "$0")" && pwd)/register_layer_digests.py"
+    if [ ! -f "$script" ]; then
+        script=/run/register_layer_digests.py
+        curl -fsSL "$ROOT/install/register_layer_digests.py" -o "$script"
+    fi
+    local docker_root driver distribution_directory diff_ids
+    docker_root="$(docker info -f '{{.DockerRootDir}}')"
+    driver="$(docker info -f '{{.Driver}}')"
+    distribution_directory="${docker_root}/image/${driver}/distribution"
+    diff_ids="$(docker image inspect "$image_reference" --format '{{json .RootFS.Layers}}')"
+    python3 "$script" --archive "$image_archive" --distribution "$distribution_directory" --diff-ids "$diff_ids"
+}
+
 if [ -n "$LOCAL_IMAGES_DIR" ]
 then
     # Images built by the CI run are used as they are, instead of what is published under $VERSION
@@ -268,16 +288,30 @@ then
     do
         load_output=$(docker load -i "$image_archive")
         echo "$load_output"
+        core_loaded=0
+        bootstrap_loaded=0
         for loaded in $(echo "$load_output" | sed -n 's/^Loaded image: //p')
         do
             case "$loaded" in
-                */blueos-core:*) docker image tag "$loaded" $BLUEOS_CORE ;;
-                */blueos-bootstrap:*) docker image tag "$loaded" $BLUEOS_BOOTSTRAP ;;
+                */blueos-core:*)
+                    docker image tag "$loaded" $BLUEOS_CORE
+                    core_loaded=1
+                    ;;
+                */blueos-bootstrap:*)
+                    docker image tag "$loaded" $BLUEOS_BOOTSTRAP
+                    bootstrap_loaded=1
+                    ;;
             esac
             # The other tags of the build would show up as versions in the version chooser. The archive of a
             # master build already carries the $VERSION tag, which has to stay.
             [[ "$loaded" == "$BLUEOS_CORE" || "$loaded" == "$BLUEOS_BOOTSTRAP" ]] || docker image rm "$loaded"
         done
+        if [ "$core_loaded" -eq 1 ]; then
+            register_image_layer_digests "$BLUEOS_CORE" "$image_archive"
+        fi
+        if [ "$bootstrap_loaded" -eq 1 ]; then
+            register_image_layer_digests "$BLUEOS_BOOTSTRAP" "$image_archive"
+        fi
     done
 else
     docker pull $BLUEOS_BOOTSTRAP
