@@ -5,6 +5,8 @@ import {
 import store from '@/store'
 import { Notification, NotificationLevel } from '@/types/notifications'
 
+const MAX_NOTIFICATIONS = 5000
+
 @Module({
   dynamic: true,
   store,
@@ -19,7 +21,9 @@ class NotificationsStore extends VuexModule {
 
   @Mutation
   pushNotification(notification: Notification): void {
-    this.notifications.push(notification)
+    /* Notifications are immutable, then don't need to be reactive */
+    this.notifications.push(Object.freeze(notification))
+    this.notifications.splice(0, this.notifications.length - MAX_NOTIFICATIONS)
 
     switch (notification.level) {
       case NotificationLevel.Success:
