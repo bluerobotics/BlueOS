@@ -67,6 +67,7 @@
         :show-service="false"
         :timestamp="timestamp"
         @dismiss="dismissSimilar"
+        @showInLog="$emit('showInLog', $event)"
       />
     </div>
   </div>
