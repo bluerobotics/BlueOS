@@ -46,6 +46,18 @@
         </v-list-item-content>
 
         <v-list-item-action>
+          <v-btn
+            v-tooltip="'Show in event log'"
+            icon
+            @click.stop="$emit('showInLog', notification)"
+          >
+            <v-icon
+              color="grey lighten-1"
+              size="medium"
+            >
+              mdi-text-box-search-outline
+            </v-icon>
+          </v-btn>
           <v-btn icon>
             <v-icon
               color="grey lighten-1"
