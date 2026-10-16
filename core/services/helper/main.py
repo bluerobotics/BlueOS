@@ -8,11 +8,11 @@ import logging
 import re
 import socket
 import subprocess
+import zlib
 from concurrent import futures
 from datetime import datetime
 from enum import Enum
 from functools import cache
-from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
@@ -248,6 +248,18 @@ class Helper:
     mavlink2rest = MavlinkMessenger()
 
     @staticmethod
+    def decompress_body(data: bytes, content_encoding: Optional[str]) -> bytes:
+        if content_encoding == "gzip":
+            return gzip.decompress(data)
+        if content_encoding == "deflate":
+            try:
+                return zlib.decompress(data)
+            except zlib.error:
+                # Some servers send raw deflate instead of the zlib-wrapped data HTTP specifies
+                return zlib.decompress(data, -zlib.MAX_WBITS)
+        return data
+
+    @staticmethod
     # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
     def simple_http_request(
         host: str,
@@ -303,13 +315,7 @@ class Helper:
             # HEAD has no body; gzip-decoding an empty 200 would raise and mark the site offline.
             if method != "HEAD" and response.status == http.client.OK:
                 encoding = response.headers.get_content_charset() or "utf-8"
-                if response.getheader("Content-Encoding") == "gzip":
-                    buffer = BytesIO(response.read())
-                    with gzip.GzipFile(fileobj=buffer) as file:
-                        decompressed_data = file.read()
-                else:
-                    decompressed_data = response.read()
-
+                decompressed_data = Helper.decompress_body(response.read(), response.getheader("Content-Encoding"))
                 request_response.decoded_data = decompressed_data.decode(encoding, errors="replace")
 
                 # Interpret it as json
