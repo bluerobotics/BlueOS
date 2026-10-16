@@ -60,13 +60,12 @@
       class="ml-4"
     >
       <notification-card
-        v-for="{ notification, count } in cumulated_notifications"
+        v-for="notification in group.notifications"
         :key="JSON.stringify(notification)"
         :notification="notification"
-        :count="count"
         :show-service="false"
         :timestamp="timestamp"
-        @dismiss="dismissSimilar"
+        @dismiss="dismiss"
         @showInLog="$emit('showInLog', $event)"
       />
     </div>
@@ -78,7 +77,7 @@ import { formatDistance } from 'date-fns'
 import Vue, { PropType } from 'vue'
 
 import {
-  CumulatedNotification, cumulateSimilar, Notification, NotificationGroup, notificationLevelColor,
+  Notification, NotificationGroup, notificationLevelColor,
   notificationLevelIcon,
 } from '@/types/notifications'
 
@@ -105,9 +104,6 @@ export default Vue.extend({
     }
   },
   computed: {
-    cumulated_notifications(): CumulatedNotification[] {
-      return cumulateSimilar(this.group.notifications)
-    },
     latest(): Notification {
       return this.group.notifications[0]
     },
@@ -121,11 +117,7 @@ export default Vue.extend({
       return `${formatDistance(new Date(this.latest.time_created), new Date(this.timestamp))} ago`
     },
     types_summary(): string[] {
-      const count_by_type = new Map<string, number>()
-      this.group.notifications.forEach(({ type }) => {
-        count_by_type.set(type, (count_by_type.get(type) ?? 0) + 1)
-      })
-      return [...count_by_type].map(([type, count]) => `${type} (${count})`)
+      return [...new Set(this.group.notifications.map(({ type }) => type))]
     },
   },
   methods: {
@@ -134,11 +126,6 @@ export default Vue.extend({
     },
     dismissAll(): void {
       this.group.notifications.forEach(this.dismiss)
-    },
-    dismissSimilar(notification: Notification): void {
-      this.group.notifications
-        .filter((item) => item.similarTo(notification))
-        .forEach(this.dismiss)
     },
   },
 })

@@ -41,7 +41,7 @@
             </v-list-item-subtitle>
           </v-slide-y-transition>
           <v-list-item-subtitle>
-            {{ time_since }} ({{ count }} times)
+            {{ time_since }}
           </v-list-item-subtitle>
         </v-list-item-content>
 
@@ -83,10 +83,6 @@ import { Notification, notificationLevelColor, notificationLevelIcon } from '@/t
 export default Vue.extend({
   name: 'NotificationCard',
   props: {
-    count: {
-      type: Number,
-      required: true,
-    },
     notification: {
       type: Object as PropType<Notification>,
       required: true,
