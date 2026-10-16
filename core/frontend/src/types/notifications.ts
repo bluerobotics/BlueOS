@@ -62,12 +62,6 @@ export class Notification implements NotificationInterface {
     public readonly id?: string,
   ) {}
 
-  /** Compare if all properties (except time_created) between this and other match */
-  similarTo(other: Notification): boolean {
-    const { time_created: t_this, ...similar_this } = this // eslint-disable-line @typescript-eslint/no-unused-vars
-    const { time_created: t_other, ...similar_other } = other // eslint-disable-line @typescript-eslint/no-unused-vars
-    return JSON.stringify(similar_this) === JSON.stringify(similar_other)
-  }
 }
 
 /** Similar to a standard Notification but auto-populates current UNIX timestamp on time_created */
@@ -83,25 +77,6 @@ export class LiveNotification extends Notification {
   }
 }
 
-/** Interface to represent the cumulation of notifications, counted */
-export interface CumulatedNotification {
-  notification: Notification
-  count: number
-}
-
-/** Cumulate consecutive similar notifications, keeping the first of each run as representative */
-export function cumulateSimilar(notifications: Notification[]): CumulatedNotification[] {
-  const cumulated_notifications: CumulatedNotification[] = []
-  notifications.forEach((notification) => {
-    const [last_item] = cumulated_notifications.slice(-1)
-    if (last_item?.notification.similarTo(notification)) {
-      last_item.count += 1
-      return
-    }
-    cumulated_notifications.push({ notification, count: 1 })
-  })
-  return cumulated_notifications
-}
 
 /** Notifications sharing the same service and level */
 export interface NotificationGroup {
