@@ -3,6 +3,7 @@ import './cosmos'
 import '@/style/css/vuetify-global.css'
 import '@/style/css/animations.css'
 import './components/vue-tour/dist/vue-tour.css'
+import '@/alerts'
 
 import Vue from 'vue'
 import VueApexCharts from 'vue-apexcharts'

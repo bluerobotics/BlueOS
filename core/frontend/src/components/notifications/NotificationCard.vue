@@ -41,11 +41,23 @@
             </v-list-item-subtitle>
           </v-slide-y-transition>
           <v-list-item-subtitle>
-            {{ time_since }} ({{ count }} times)
+            {{ time_since }}
           </v-list-item-subtitle>
         </v-list-item-content>
 
         <v-list-item-action>
+          <v-btn
+            v-tooltip="'Show in event log'"
+            icon
+            @click.stop="$emit('showInLog', notification)"
+          >
+            <v-icon
+              color="grey lighten-1"
+              size="medium"
+            >
+              mdi-text-box-search-outline
+            </v-icon>
+          </v-btn>
           <v-btn icon>
             <v-icon
               color="grey lighten-1"
@@ -71,10 +83,6 @@ import { Notification, notificationLevelColor, notificationLevelIcon } from '@/t
 export default Vue.extend({
   name: 'NotificationCard',
   props: {
-    count: {
-      type: Number,
-      required: true,
-    },
     notification: {
       type: Object as PropType<Notification>,
       required: true,

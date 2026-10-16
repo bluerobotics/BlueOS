@@ -7,6 +7,13 @@
       <v-toolbar-title>Notifications</v-toolbar-title>
       <v-spacer />
       <v-btn
+        v-tooltip="'Event log'"
+        icon
+        @click="$emit('showEventLog')"
+      >
+        <v-icon>mdi-text-box-search-outline</v-icon>
+      </v-btn>
+      <v-btn
         icon
         @click="dismissAllNotifications()"
       >
@@ -54,6 +61,7 @@
             :group="group"
             :timestamp="timestamp"
             @dismiss="dismissNotification"
+            @showInLog="showInLog"
           />
         </v-list-item-group>
 
@@ -61,12 +69,12 @@
           v-else-if="!group_by_service && notifications_to_show.length != 0"
         >
           <notification-card
-            v-for="{ notification, count } in notifications_to_show"
+            v-for="notification in notifications_to_show"
             :key="JSON.stringify(notification)"
             :notification="notification"
-            :count="count"
             :timestamp="timestamp"
-            @dismiss="dismissSimilarNotifications"
+            @dismiss="dismissNotification"
+            @showInLog="showInLog"
           />
         </v-list-item-group>
 
@@ -84,12 +92,13 @@
 </template>
 
 <script lang="ts">
-import { differenceInSeconds } from 'date-fns'
 import Vue from 'vue'
 
-import notifications from '@/store/notifications'
+import alert_engine from '@/alerts/engine'
+import alerts from '@/store/alerts'
+import { AlertLifecycle } from '@/types/alerts'
 import {
-  CumulatedNotification, cumulateSimilar, Notification, NotificationGroup,
+  Notification, NotificationGroup,
 } from '@/types/notifications'
 
 import NotificationsConfigMenu from './ConfigMenu.vue'
@@ -109,20 +118,16 @@ export default Vue.extend({
       show_config_menu: false,
       show_old_messages: false,
       timestamp: new Date(),
-      seconds_recent: 60,
       active_intervals: [] as number[],
-      max_number_notifications: 100,
     }
   },
   computed: {
     // Newest first
     visible_notifications(): Notification[] {
-      const active = notifications.active_notifications
-      const visible = this.show_old_messages ? active : active.filter(this.isRecent)
-      return visible.slice(-this.max_number_notifications).reverse()
+      return [...this.alert_notifications].sort((a, b) => b.time_created - a.time_created)
     },
-    notifications_to_show(): CumulatedNotification[] {
-      return cumulateSimilar(this.visible_notifications)
+    notifications_to_show(): Notification[] {
+      return this.visible_notifications
     },
     groups_to_show(): NotificationGroup[] {
       const groups = new Map<string, NotificationGroup>()
@@ -137,6 +142,21 @@ export default Vue.extend({
         groups.set(group_key, { level, service, notifications: [notification] })
       })
       return [...groups.values()].sort((a, b) => a.service.name.localeCompare(b.service.name))
+    },
+    alert_notifications(): Notification[] {
+      return alerts.alerts_list.flatMap((alert) => {
+        const rule = alert_engine.getRule(alert.rule_id)
+        if (!rule || alert.state !== AlertLifecycle.Fired) return []
+        const notification = new Notification(
+          rule.level,
+          rule.service,
+          rule.title,
+          rule.description ?? '',
+          alert.since.getTime(),
+          rule.id,
+        )
+        return [notification]
+      })
     },
   },
   watch: {
@@ -153,20 +173,17 @@ export default Vue.extend({
   },
   methods: {
     dismissAllNotifications(): void {
-      notifications.notifications.forEach((notification) => {
-        this.dismissNotification(notification)
+      alerts.fired_alerts.forEach((alert) => {
+        alert_engine.dismiss(alert.rule_id)
       })
     },
     dismissNotification(notification: Notification): void {
-      notifications.dismissNotification(notification)
+      if (notification.id) {
+        alert_engine.dismiss(notification.id)
+      }
     },
-    dismissSimilarNotifications(notification: Notification): void {
-      this.visible_notifications
-        .filter((visible) => visible.similarTo(notification))
-        .forEach(this.dismissNotification)
-    },
-    isRecent(notification: Notification): boolean {
-      return differenceInSeconds(new Date(), new Date(notification.time_created)) < this.seconds_recent
+    showInLog(notification: Notification): void {
+      this.$emit('showEventLog', notification.time_created)
     },
     updateTimestamp(): void {
       this.timestamp = new Date()
