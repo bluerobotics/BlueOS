@@ -1,6 +1,6 @@
 FROM https://downloads.raspberrypi.org/${BASE_IMAGE}
 
-# docker load peaks at about 2x the size of the image archives
+# docker pull unpacks core and bootstrap before the image is zipped
 PUMP 4500M
 
 # expand_fs
@@ -17,19 +17,17 @@ RUN bash -c 'shopt -s nullglob; for f in /var/lib/systemd/rfkill/*:wlan; do echo
 RUN bash -c '
   mkdir -p /root/.config/blueos/bootstrap/
   curl -o /root/.config/blueos/bootstrap/startup.json ${REMOTE:-https://raw.githubusercontent.com/$GITHUB_REPOSITORY}/$VERSION/bootstrap/startup.json.default
-  sed -i 's/factory/$VERSION/g' /root/.config/blueos/bootstrap/startup.json
+  tag="${IMAGE_VERSION:-$VERSION}"
+  user="${DOCKER_USER:-bluerobotics}"
+  sed -i "s#\"tag\": \"factory\"#\"tag\": \"${tag}\"#" /root/.config/blueos/bootstrap/startup.json
+  sed -i "s#bluerobotics/blueos-core#${user}/blueos-core#g" /root/.config/blueos/bootstrap/startup.json
 '
-
-# dind mounts a tmpfs over /tmp, so the archives can't live there
-INSTALL deploy/pimod/images /root/blueos-images
 
 RUN bash -c '
   curl -O ${REMOTE:-https://raw.githubusercontent.com/$GITHUB_REPOSITORY}/$VERSION/install/install.sh
   chmod +x install.sh
   USER=pi ./install.sh --ci-run
 '
-
-RUN rm -rf /root/blueos-images
 
 # The deleted archives and docker's import spool would otherwise stay as data in the zipped image
 RUN bash -c 'dd if=/dev/zero of=/zero bs=1M || true; rm -f /zero'
