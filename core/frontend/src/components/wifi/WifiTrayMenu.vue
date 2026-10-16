@@ -1,6 +1,6 @@
 <template>
   <div>
-    <wifi-updater v-if="!wifi_service_disabled" />
+    <wifi-updater v-if="!wifi_service_disabled" ref="wifiUpdater" />
     <v-menu
       :close-on-content-click="false"
       nudge-left="500"
@@ -29,7 +29,7 @@
           </v-icon>
         </v-card>
       </template>
-      <wifi-manager v-if="!wifi_service_disabled" />
+      <wifi-manager v-if="!wifi_service_disabled" @refresh-request="onRefreshRequest" />
       <v-card
         v-else
         elevation="1"
@@ -87,6 +87,12 @@ export default Vue.extend({
     commander.getEnvironmentVariables().then((environment_variables) => {
       this.disabled_services = ((environment_variables?.BLUEOS_DISABLE_SERVICES as string) ?? '').split(',') as string[]
     })
+  },
+  methods: {
+    onRefreshRequest(): void {
+      wifi.setAvailableNetworks(null)
+      this.$refs.wifiUpdater?.fetchAvailableNetworks()
+    },
   },
 })
 </script>
