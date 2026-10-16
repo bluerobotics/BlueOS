@@ -43,7 +43,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import { CumulatedNotification } from '@/types/notifications'
+import { Notification } from '@/types/notifications'
 
 import EventLogModal from './EventLogModal.vue'
 import NotificationManager from './NotificationManager.vue'
@@ -66,7 +66,7 @@ export default Vue.extend({
       this.event_log_focus_time = time ?? null
       this.show_event_log = true
     },
-    updateNumberOfNotifications(showable_notifications: CumulatedNotification[]): void {
+    updateNumberOfNotifications(showable_notifications: Notification[]): void {
       this.number_of_notifications = showable_notifications.length
     },
   },
