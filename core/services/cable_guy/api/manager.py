@@ -144,7 +144,8 @@ class EthernetManager:
             # Even if it happened to receive more than one dynamic IP, only one trigger is necessary
             if any(address.mode == AddressMode.Client for address in interface.addresses):
                 logger.info(f"Triggering dynamic IP acquisition for interface '{interface.name}'.")
-                self.trigger_dynamic_ip_acquisition(interface.name)
+                # dhclient waits up to 5s for a lease that tethered vehicles never get, keep serving the API meanwhile
+                await asyncio.to_thread(self.trigger_dynamic_ip_acquisition, interface.name)
 
             # Handle routes configuration
             self._set_routes_configuration(interface)

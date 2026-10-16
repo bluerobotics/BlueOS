@@ -296,6 +296,9 @@ class Extension:
 
         img_name = ext.fullname()
         config["Image"] = img_name
+        # Most extensions ignore SIGTERM as PID 1, so docker's 10s default only delayed every shutdown.
+        # Extensions that need longer to exit cleanly can set their own StopTimeout in their permissions.
+        config.setdefault("StopTimeout", 3)
 
         self._set_container_config_host_config(config)
         self._set_container_config_default_env_variables(config)

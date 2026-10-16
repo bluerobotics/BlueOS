@@ -151,7 +151,8 @@ SERVICES=(
     'customization',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/customization/main.py"
 )
 
-tmux -f /etc/tmux.conf start-server
+# Keep the server alive without sessions, otherwise the global environment set below is lost
+tmux -f /etc/tmux.conf start-server \; set -s exit-empty off
 
 function create_service {
     tmux new -d -s "$1" || true
@@ -190,14 +191,6 @@ function create_service {
         return
     fi
     echo "Service: $SERVICE_NAME: mem=${memory_limit_mb}MB cpu=${cpu_limit_percent}% io_r=${io_read_mbps}MB/s io_w=${io_write_mbps}MB/s"
-
-    # Set all necessary environment variables for the new tmux session
-    for NAME in $(compgen -v | grep -e MAV_ -e BLUEOS_); do
-        VALUE=${!NAME}
-        tmux setenv -t "$SESSION_NAME" -g "$NAME" "$VALUE"
-    done
-    # Pass DOCKER_CGROUP for cgroup path resolution in run-service
-    tmux setenv -t "$SESSION_NAME" -g "DOCKER_CGROUP" "$DOCKER_CGROUP"
 
     # Use run_service to start the service with resource limits
     tmux send-keys -t $SESSION_NAME "run-service '$SERVICE_NAME' '$command' $memory_limit_mb $cpu_limit_percent $io_read_mbps $io_write_mbps" C-m
@@ -317,6 +310,13 @@ tune_performance() {
 
 tune_performance
 
+# Sessions copy the tmux global environment when created, so it must be set before the first one
+for NAME in $(compgen -v | grep -e MAV_ -e BLUEOS_); do
+    tmux setenv -g "$NAME" "${!NAME}"
+done
+# Pass DOCKER_CGROUP for cgroup path resolution in run-service
+tmux setenv -g "DOCKER_CGROUP" "$DOCKER_CGROUP"
+
 echo "Starting infrastructure services.."
 for TUPLE in "${INFRA_SERVICES[@]}"; do
     IFS=',' read -r NAME MEMORY_MB CPU_PERCENT IO_READ_MBPS IO_WRITE_MBPS EXECUTABLE <<< "$TUPLE"
@@ -330,8 +330,6 @@ for TUPLE in "${PRIORITY_SERVICES[@]}"; do
     IFS=',' read -r NAME MEMORY_MB CPU_PERCENT IO_READ_MBPS IO_WRITE_MBPS EXECUTABLE <<< "$TUPLE"
     create_service "$NAME" "$EXECUTABLE" "$MEMORY_MB" "$CPU_PERCENT" "$IO_READ_MBPS" "$IO_WRITE_MBPS"
 done
-
-sleep 5
 
 echo "Starting other services.."
 for TUPLE in "${SERVICES[@]}"; do
