@@ -101,6 +101,17 @@ mkdir -p /usr/blueos/userdata/settings
 find /usr/blueos/userdata -type d -exec chmod a+rw {} \;
 find /usr/blueos/userdata -type f -exec chmod a+rw {} \;
 
+# Keep 1GB aside so docker can delete images on a full disk
+DISK_RESERVE=/usr/blueos/userdata/.disk_reserve
+if [ ! -f "$DISK_RESERVE" ]; then
+    TOTAL_SPACE_MB=$(($(stat -f / --format="%b*%S/1024**2")))
+    FREE_SPACE_MB=$(($(stat -f / --format="%a*%S/1024**2")))
+    if (( TOTAL_SPACE_MB > 7 * 1024 && FREE_SPACE_MB > 1024 )); then
+        echo "Allocating 1GB disk reserve"
+        fallocate -l 1G "$DISK_RESERVE" || rm -f "$DISK_RESERVE"
+    fi
+fi
+
 # These services have priority because they do the fundamental for the vehicle to work,
 # and by initializing them first we reduce the time users have to wait to control the vehicle.
 # From tests with QGC and Pi3, the reboot time was ~1min42s when not using this strategy,
