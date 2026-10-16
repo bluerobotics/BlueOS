@@ -7,6 +7,13 @@
       <v-toolbar-title>Notifications</v-toolbar-title>
       <v-spacer />
       <v-btn
+        v-tooltip="'Event log'"
+        icon
+        @click="$emit('showEventLog')"
+      >
+        <v-icon>mdi-text-box-search-outline</v-icon>
+      </v-btn>
+      <v-btn
         icon
         @click="dismissAllNotifications()"
       >
@@ -54,6 +61,7 @@
             :group="group"
             :timestamp="timestamp"
             @dismiss="dismissNotification"
+            @showInLog="showInLog"
           />
         </v-list-item-group>
 
@@ -67,6 +75,7 @@
             :count="count"
             :timestamp="timestamp"
             @dismiss="dismissSimilarNotifications"
+            @showInLog="showInLog"
           />
         </v-list-item-group>
 
@@ -185,6 +194,9 @@ export default Vue.extend({
       if (notification.id) {
         alert_engine.dismiss(notification.id)
       }
+    },
+    showInLog(notification: Notification): void {
+      this.$emit('showEventLog', notification.time_created)
     },
     dismissSimilarNotifications(notification: Notification): void {
       this.visible_notifications
