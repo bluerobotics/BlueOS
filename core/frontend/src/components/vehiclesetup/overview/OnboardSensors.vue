@@ -110,16 +110,16 @@
               <td>{{ baro_status[baro.param] }}</td>
             </tr>
             <tr
-              v-for="sensor in celsius"
+              v-for="sensor in ardupilot_sensors.temperatures"
               :key="sensor.param"
             >
               <td><b>{{ sensor.deviceName ?? 'UNKNOWN' }}</b></td>
-              <td v-tooltip="'Used to estimate altitude/depth'">
+              <td v-tooltip="'External temperature sensor'">
                 Temperature
               </td>
               <td>{{ print_bus(sensor.busType) }} {{ sensor.bus }}</td>
               <td>{{ `0x${sensor.address}` }}</td>
-              <td>{{ celsius_temperature }} ºC</td>
+              <td>Detected</td>
             </tr>
           </tbody>
         </template>
@@ -137,33 +137,12 @@ import autopilot from '@/store/autopilot_manager'
 import mavlink from '@/store/mavlink'
 import { printParam } from '@/types/autopilot/parameter'
 import { Dictionary } from '@/types/common'
-import { BUS_TYPE, deviceId } from '@/utils/deviceid_decoder'
+import { BUS_TYPE } from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
 
 export default Vue.extend({
   name: 'OnboardSensors',
   computed: {
-    // DEV_ID params do not exist yet for temperature sensors, so here we detect the incoming message instead
-    celsius_temperature(): number | undefined {
-      return mavlink_store_get(mavlink, 'SCALED_PRESSURE3.messageData.message.temperature') as number / 100.0
-    },
-    celsius(): deviceId[] {
-      if (!this.celsius_temperature) {
-        return []
-      }
-      return [
-        {
-          bus: 1,
-          paramValue: 0,
-          deviceIdNumber: 0,
-          devtype: 0,
-          busType: BUS_TYPE.I2C,
-          address: '77',
-          deviceName: 'Celsius',
-          param: '-',
-        },
-      ]
-    },
     compass_description(): Dictionary<string> {
       const results = {} as Dictionary<string>
       for (const compass of ardupilot_sensors.compasses) {
