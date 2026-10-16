@@ -11,7 +11,7 @@ from api.v2.routers import (
     jobs_router_v2,
     manifest_router_v2,
 )
-from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.apis import GenericErrorHandlingRoute, use_local_docs_assets
 from commonwealth.utils.zenoh_helper import ZenohRouter, ZenohSession
 from config import SERVICE_NAME
 from fastapi import FastAPI
@@ -51,6 +51,7 @@ zenoh_router.add_routes_to_zenoh(application)
 
 
 application = VersionedFastAPI(application, prefix_format="/v{major}.{minor}", enable_latest=True, lifespan=lifespan)
+use_local_docs_assets(application)
 
 
 @application.get("/", status_code=200)
