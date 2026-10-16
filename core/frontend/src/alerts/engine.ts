@@ -1,7 +1,9 @@
 import { effectScope, watch } from 'vue'
 
 import alerts from '@/store/alerts'
+import notifications from '@/store/notifications'
 import { AlertLifecycle, AlertRule, AlertRuleId } from '@/types/alerts'
+import { LiveNotification } from '@/types/notifications'
 
 class AlertEngine {
   private static instance: AlertEngine
@@ -120,11 +122,15 @@ class AlertEngine {
     const current = alerts.alerts[id]
     if (current) {
       alerts.setAlert({ ...current, state: AlertLifecycle.TimedOut })
+      this.logEvent(id, AlertLifecycle.TimedOut)
     }
   }
 
   private dropAlert(id: AlertRuleId): void {
     this.cancel(id)
+    if (alerts.alerts[id] !== undefined) {
+      this.logEvent(id, 'cleared')
+    }
     alerts.removeAlert(id)
   }
 
@@ -134,6 +140,16 @@ class AlertEngine {
       state,
       since: new Date(),
     })
+    this.logEvent(id, state)
+  }
+
+  private logEvent(id: AlertRuleId, event: AlertLifecycle | 'cleared'): void {
+    const rule = this.getRule(id)
+    if (!rule) {
+      return
+    }
+    const notification = new LiveNotification(rule.level, rule.service, 'alert', `${id} ${event}`)
+    notifications.pushNotification(notification)
   }
 
   /* Replaces whatever was scheduled before, so a timer can never outlive the state it was created for */
