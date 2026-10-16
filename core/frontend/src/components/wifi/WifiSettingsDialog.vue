@@ -14,6 +14,18 @@
           ref="form"
           lazy-validation
         >
+          <v-select
+            v-model="inputed_country"
+            v-tooltip="'Regulatory region of the whole radio, hotspot included. Defines allowed channels and power.'"
+            :items="country_options"
+            :loading="loading_countries"
+            :disabled="countries_unavailable"
+            :error-messages="countries_unavailable ? 'Could not load the countries.' : []"
+            label="Regulatory country"
+            hide-details="auto"
+          />
+          <v-divider class="my-4" />
+
           <v-text-field
             v-model="inputed_ssid"
             label="Hotspot SSID"
@@ -64,7 +76,7 @@ import Notifier from '@/libs/notifier'
 import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
-import { NetworkCredentials } from '@/types/wifi'
+import { Country, NetworkCredentials } from '@/types/wifi'
 import back_axios from '@/utils/api'
 
 const notifier = new Notifier(wifi_service)
@@ -86,15 +98,67 @@ export default Vue.extend({
       inputed_ssid: wifi.hotspot_credentials?.ssid || '',
       inputed_password: wifi.hotspot_credentials?.password || '',
       enable_smart_hotspot: wifi.smart_hotspot_status || false,
+      inputed_country: null as string | null,
+      country: null as string | null,
+      countries: [] as Country[],
+      loading_countries: false,
       saving_settings: false,
     }
   },
   computed: {
+    countries_unavailable(): boolean {
+      return !this.loading_countries && !this.countries.length
+    },
+    country_options(): { text: string, value: string }[] {
+      return this.countries.map(({ name, code, max_power_dbm }) => ({
+        text: `${name} (${code}) - up to ${max_power_dbm} dBm${code === '00' ? ' (default)' : ''}`,
+        value: code,
+      }))
+    },
     form(): VForm {
       return this.$refs.form as VForm
     },
   },
+  watch: {
+    show(opened: boolean): void {
+      if (opened) {
+        this.inputed_ssid = wifi.hotspot_credentials?.ssid || ''
+        this.inputed_password = wifi.hotspot_credentials?.password || ''
+        this.enable_smart_hotspot = wifi.smart_hotspot_status || false
+        this.fetchCountries()
+      }
+    },
+  },
   methods: {
+    async fetchCountries(): Promise<void> {
+      this.loading_countries = true
+      await Promise.all([
+        back_axios({
+          method: 'get',
+          url: `${wifi.API_URL}/country`,
+          timeout: 10000,
+        })
+          .then((response) => {
+            this.country = response.data
+            this.inputed_country = response.data
+          })
+          .catch((error) => {
+            notifier.pushBackError('WIFI_COUNTRY_FETCH_FAIL', error)
+          }),
+        back_axios({
+          method: 'get',
+          url: `${wifi.API_URL}/countries`,
+          timeout: 10000,
+        })
+          .then((response) => {
+            this.countries = response.data
+          })
+          .catch((error) => {
+            notifier.pushBackError('WIFI_COUNTRIES_FETCH_FAIL', error)
+          }),
+      ])
+      this.loading_countries = false
+    },
     async saveSettings(): Promise<boolean> {
       if (!this.form.validate()) {
         return false
@@ -126,6 +190,22 @@ export default Vue.extend({
           .catch((error) => {
             notifier.pushBackError('SMART_HOTSPOT_TOGGLE_FAIL', error, true)
           })
+        const country = this.inputed_country
+        if (country !== null && country !== this.country) {
+          await back_axios({
+            method: 'post',
+            url: `${wifi.API_URL}/country`,
+            params: { code: country },
+            timeout: 10000,
+          })
+            .then(() => {
+              this.country = country
+              notifier.pushSuccess('WIFI_COUNTRY_UPDATE_SUCCESS', 'Successfully updated the regulatory country.')
+            })
+            .catch((error) => {
+              notifier.pushBackError('WIFI_COUNTRY_UPDATE_FAIL', error, true)
+            })
+        }
         this.showDialog(false)
         return true
       } catch (error) {

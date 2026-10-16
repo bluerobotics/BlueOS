@@ -9,6 +9,17 @@ class HotspotStatus(BaseModel):
     enabled: bool
 
 
+class RfkillStatus(BaseModel):
+    soft_blocked: bool
+    hard_blocked: bool
+
+
+class Country(BaseModel):
+    code: str
+    name: str
+    max_power_dbm: int
+
+
 class WifiStatus(BaseModel):
     bssid: Optional[str] = None
     freq: Optional[str] = None
