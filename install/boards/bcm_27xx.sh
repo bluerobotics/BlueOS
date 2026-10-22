@@ -32,6 +32,11 @@ DTS_NAME="spi0-led"
 curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME.dts
 dtc -@ -Hepapr -I dts -O dtb -o "$BOOT_PATH/overlays/$DTS_NAME.dtbo" /tmp/$DTS_NAME
 
+echo "- compile navigator EEPROM device tree overlay."
+DTS_NAME="navigator-eeprom"
+curl -fsSL -o /tmp/$DTS_NAME $DTS_PATH/$DTS_NAME.dts
+dtc -@ -Hepapr -I dts -O dtb -o "$BOOT_PATH/overlays/$DTS_NAME.dtbo" /tmp/$DTS_NAME
+
 # Remove any configuration related to i2c and spi/spi1 and do the necessary changes for navigator
 echo "- Enable I2C, SPI and UART."
 for STRING in \
@@ -41,6 +46,7 @@ for STRING in \
     "dtoverlay=i2c" \
     "dtparam=spi=" \
     "dtoverlay=spi" \
+    "dtoverlay=navigator-eeprom" \
     "gpio=" \
     "dwc2" \
     "^dtoverlay=$" \
@@ -73,6 +79,7 @@ for STRING in \
     "dtoverlay=i2c1" \
     "dtoverlay=i2c4,pins_6_7,baudrate=1000000" \
     "dtoverlay=i2c6,pins_22_23,baudrate=400000" \
+    "dtoverlay=navigator-eeprom" \
     "dtoverlay=spi0-led" \
     "dtoverlay=spi1-3cs" \
     "dtoverlay=dwc2,dr_mode=otg" \

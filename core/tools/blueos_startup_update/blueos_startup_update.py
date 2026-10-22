@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# pylint: disable=too-many-lines
 import configparser
 import copy
 import json
@@ -60,6 +61,9 @@ CONFIG_USER_PROTECTION_WORD = "custom"
 BOARD_SECTION_BY_CPU = {CpuType.PI4: "pi4", CpuType.PI5: "pi5"}
 
 BOOT_CONFIG_END_OVERLAY_SCOPE = "dtoverlay="
+
+# Overlays that are only compiled by the install scripts, so a update could not have them
+INSTALL_ONLY_OVERLAYS = ["navigator-eeprom", "spi0-led"]
 
 config_file = None
 cmdline_file = None
@@ -294,6 +298,7 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
             ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
             ("dtoverlay=i2c4,pins_6_7,baudrate=1000000", "^dtoverlay=i2c4.*"),
             ("dtoverlay=i2c6,pins_22_23,baudrate=400000", "^dtoverlay=i2c6.*"),
+            ("dtoverlay=navigator-eeprom", "^dtoverlay=navigator-eeprom.*"),
             ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
             ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
             ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
@@ -325,6 +330,16 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
             ("gpio=37=op,pd,dl", "^gpio=.*37.*"),
         ]
     raise ValueError(f"No Navigator configuration for {cpu_type}")
+
+
+def overlay_is_compiled(overlay_name: str) -> bool:
+    overlay_file = Path(str(config_file)).parent / "overlays" / f"{overlay_name}.dtbo"
+    return run_command(f"[ -f '{overlay_file}' ]", False).returncode == 0
+
+
+def navigator_available_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
+    missing = [f"dtoverlay={name}" for name in INSTALL_ONLY_OVERLAYS if not overlay_is_compiled(name)]
+    return [entry for entry in navigator_managed_entries(cpu_type) if entry[0] not in missing]
 
 
 def hardlink_exists(file_name: str) -> bool:
@@ -519,7 +534,7 @@ def update_dwc2() -> bool:
         return False
 
     section_name = BOARD_SECTION_BY_CPU[host_cpu]
-    managed_entries = navigator_managed_entries(host_cpu)
+    managed_entries = navigator_available_entries(host_cpu)
     # Add dwc2 overlay in pi4 or pi5 section if it doesn't exist
     (dwc2_overlay_config, dwc2_overlay_match_pattern) = next(
         entry for entry in managed_entries if entry[0].startswith("dtoverlay=dwc2")
@@ -572,7 +587,7 @@ def update_navigator_overlays() -> bool:
         return False
 
     section_name = BOARD_SECTION_BY_CPU[host_cpu]
-    managed_entries = navigator_managed_entries(host_cpu)
+    managed_entries = navigator_available_entries(host_cpu)
     # update_dwc2() owns the dwc2 line. We also skip the empty dtoverlay=, because the user may
     # have written one, and that line protects the dtparam lines below it.
     navigator_configs_with_match_patterns = [
