@@ -285,6 +285,7 @@ def apply_boot_config_patches(
     distribution: Distribution,
     files: Dict[str, str],
     patches: Tuple[Callable[[], bool], ...] = (),
+    overlay_compiled: bool = True,
 ) -> Dict[str, bool]:
     """Run startup patches against in-memory boot files, returning which of them want a restart."""
 
@@ -306,7 +307,9 @@ def apply_boot_config_patches(
     blueos_startup_update.cmdline_file = distribution.cmdline_file
     with patch.object(blueos_startup_update, "load_file", fake_load_file), patch.object(
         blueos_startup_update, "save_file", fake_save_file
-    ), patch.object(blueos_startup_update, "get_cpu_type", lambda: cpu_type):
+    ), patch.object(blueos_startup_update, "get_cpu_type", lambda: cpu_type), patch.object(
+        blueos_startup_update, "overlay_is_compiled", lambda _: overlay_compiled
+    ):
         # Every patch has to run, the startup script does not stop at the first one that applies
         return {patch_function.__name__: patch_function() for patch_function in patches}
 
@@ -830,3 +833,15 @@ def test_startup_patcher_resolves_both_boot_files_through_the_stub_guard() -> No
                 f"main() resolved {name} to {resolved!r} on a host whose boot partition is not mounted, so the "
                 "board section goes into a file the firmware never reads and the Navigator never appears"
             )
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_overlay_that_is_not_compiled_is_not_configured(distribution: Distribution, cpu_type: CpuType) -> None:
+    with_overlays = stock_files(distribution)
+    apply_boot_config_patches(cpu_type, distribution, with_overlays)
+    without_overlays = stock_files(distribution)
+    apply_boot_config_patches(cpu_type, distribution, without_overlays, overlay_compiled=False)
+
+    skipped = [f"dtoverlay={name}" for name in blueos_startup_update.INSTALL_ONLY_OVERLAYS]
+    expected = [line for line in with_overlays[distribution.config_file].splitlines() if line not in skipped]
+    assert without_overlays[distribution.config_file].splitlines() == expected
