@@ -1,7 +1,7 @@
 from os import path
 
 # Routers
-from api.v1.routers import endpoints_router_v1, index_router_v1
+from api.v1.routers import eeprom_router_v1, endpoints_router_v1, index_router_v1
 from api.v2.routers import index_router_v2
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from fastapi import FastAPI
@@ -20,6 +20,7 @@ application.router.route_class = GenericErrorHandlingRoute
 # API v1
 application.include_router(index_router_v1)
 application.include_router(endpoints_router_v1)
+application.include_router(eeprom_router_v1)
 
 # API v2
 application.include_router(index_router_v2)
