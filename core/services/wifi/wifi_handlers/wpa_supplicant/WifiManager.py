@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import stat
 import subprocess
 import time
@@ -8,6 +9,7 @@ from http.client import HTTPException
 from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
+import radio
 from commonwealth.utils.general import HostOs, get_host_os
 from exceptions import FetchError, ParseError
 from fastapi import status
@@ -586,6 +588,33 @@ class WifiManager(AbstractWifiManager):
         loop = asyncio.get_event_loop()
         loop.create_task(self.auto_reconnect(60))
         loop.create_task(self.start_hotspot_watchdog())
+
+    async def set_country(self, code: str) -> None:
+        # Before saving anything, so a failure here leaves the country and the setting untouched
+        radio.check_country(code)
+        if self.wpa_path is None:
+            await super().set_country(code)
+        else:
+            try:
+                reply = (await self.wpa.send_command("GET country", 1)).decode().strip()
+                # Older wpa_supplicant versions answer "UNKNOWN COMMAND" instead of "FAIL"
+                previous_country: Optional[str] = reply if re.fullmatch(r"[A-Z0-9]{2}", reply) else None
+            except Exception:
+                previous_country = None
+            try:
+                await self.wpa.send_command_set("country", code)
+                await self.wpa.send_command_save_config()
+                await super().set_country(code)
+            except Exception:
+                # SET already made wpa_supplicant ask the kernel for the new country
+                logger.exception("Could not set the country, restoring the previous one.")
+                if previous_country:
+                    try:
+                        await self.wpa.send_command_set("country", previous_country)
+                        await self.wpa.send_command_save_config()
+                    except Exception:
+                        logger.exception("Could not restore the previous country.")
+                raise
 
     async def supports_hotspot(self) -> bool:
         if self.wpa_path is None:
