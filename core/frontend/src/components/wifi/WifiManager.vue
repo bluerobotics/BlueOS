@@ -166,6 +166,7 @@ import { InterfaceType } from '@/types/beacon'
 import { wifi_service } from '@/types/frontend_services'
 import { Network, WifiStatus } from '@/types/wifi'
 import back_axios from '@/utils/api'
+import { network_display_name } from '@/utils/wifi'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 import WarningDialog from '../common/WarningDialog.vue'
@@ -217,7 +218,8 @@ export default Vue.extend({
       return wifi.current_network
     },
     connectable_networks(): Network[] | undefined {
-      return uniqBy(wifi.connectable_networks, 'ssid')
+      // Every cloaked network reports the same empty ssid, tell them apart by hardware address
+      return uniqBy(wifi.connectable_networks, (network: Network) => network.ssid || network.bssid)
         // Move known networks to the top
         .sort((a: Network, b: Network) => Number(b.saved) - Number(a.saved))
     },
@@ -226,9 +228,9 @@ export default Vue.extend({
       if (this.ssid_filter == undefined || this.ssid_filter.trim() === '') {
         return this.connectable_networks ?? undefined
       }
-      const filter = this.ssid_filter
+      const filter = this.ssid_filter.toLowerCase()
       return this.connectable_networks?.filter(
-        (network) => network.ssid.toLowerCase().includes(filter.toLowerCase()),
+        (network) => network_display_name(network).toLowerCase().includes(filter),
       )
     },
     hotspot_status(): boolean | null {
