@@ -4,7 +4,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import appdirs
@@ -43,40 +42,42 @@ def read_db() -> dict[str, Any]:
     return {}
 
 
-def write_db() -> None:
+def write_db(data: str) -> None:
     FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
     temp_file = FILE_PATH.with_suffix(".tmp")
     with open(temp_file, "w", encoding="utf-8") as handle:
-        json.dump(bag_of_holding_db, handle)
+        handle.write(data)
         handle.flush()
         os.fsync(handle.fileno())
     temp_file.replace(FILE_PATH)
 
 
 bag_of_holding_db = read_db()
-_pending = SimpleNamespace(handle=None)
+db_lock = asyncio.Lock()
+db_dirty = asyncio.Event()
+disk_lock = asyncio.Lock()
 
 
-def mark_dirty() -> None:
-    if _pending.handle is not None:
-        return
-    _pending.handle = asyncio.get_running_loop().call_later(FLUSH_INTERVAL, _flush)
-
-
-def _flush() -> None:
+async def flush() -> None:
     try:
-        write_db()
-        _pending.handle = None
+        async with db_lock:
+            # Cleared with the snapshot: a mutation is either in this write or re-arms the next one
+            db_dirty.clear()
+            data = json.dumps(bag_of_holding_db)
+        # write_db reuses one temp file, so overlapping writers interleave into a corrupt database
+        async with disk_lock:
+            await asyncio.to_thread(write_db, data)
     except Exception:
         logger.exception("Failed to persist database")
-        _pending.handle = asyncio.get_running_loop().call_later(FLUSH_INTERVAL, _flush)
+        db_dirty.set()
 
 
-def flush_now() -> None:
-    if _pending.handle is not None:
-        _pending.handle.cancel()
-        _pending.handle = None
-    write_db()
+async def flush_periodically() -> None:
+    while True:
+        await db_dirty.wait()
+        await asyncio.sleep(FLUSH_INTERVAL)
+        if db_dirty.is_set():
+            await flush()
 
 
 app = FastAPI(
@@ -98,9 +99,10 @@ async def parse_nullable_body(payload: Any | None = Body(None)) -> Any:
 @version(1, 0)
 async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
     logger.debug(f"Overwrite: {json.dumps(payload)}")
-    bag_of_holding_db.clear()
-    bag_of_holding_db.update(payload)
-    flush_now()
+    async with db_lock:
+        bag_of_holding_db.clear()
+        bag_of_holding_db.update(payload)
+    await flush()
     return JSONResponse(content={"status": "success"})
 
 
@@ -111,8 +113,9 @@ async def write_data(
     payload: Any = Depends(parse_nullable_body),
 ) -> JSONResponse:
     logger.debug(f"Write path: {path}, {json.dumps(payload)}")
-    dpath.new(bag_of_holding_db, path, payload)
-    mark_dirty()
+    async with db_lock:
+        dpath.new(bag_of_holding_db, path, payload)
+    db_dirty.set()
     return JSONResponse(content={"status": "success"})
 
 
@@ -121,14 +124,15 @@ async def write_data(
 async def read_data(path: str) -> JSONResponse:
     logger.debug(f"Get path: {path}")
 
-    if path == "*":
-        return JSONResponse(bag_of_holding_db)
+    # JSONResponse serializes on construction, so building it here keeps the payload from changing mid-write
+    async with db_lock:
+        if path == "*":
+            return JSONResponse(bag_of_holding_db)
 
-    try:
-        result = dpath.get(bag_of_holding_db, path)
-        return JSONResponse(result)
-    except KeyError as error:
-        raise HTTPException(status_code=400, detail="Invalid path") from error
+        try:
+            return JSONResponse(dpath.get(bag_of_holding_db, path))
+        except KeyError as error:
+            raise HTTPException(status_code=400, detail="Invalid path") from error
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
@@ -153,10 +157,14 @@ async def main() -> None:
     config = Config(app=app, host="0.0.0.0", port=9101, log_config=None)
     server = Server(config)
 
+    flusher = asyncio.create_task(flush_periodically())
     try:
         await server.serve()
     finally:
-        flush_now()
+        # Cancelling mid-write would abandon a thread still writing, so stop the flusher between writes
+        async with disk_lock:
+            flusher.cancel()
+        await flush()
 
 
 if __name__ == "__main__":
