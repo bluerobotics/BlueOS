@@ -294,6 +294,7 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
             ("dtoverlay=i2c1", "^dtoverlay=i2c1.*"),
             ("dtoverlay=i2c4,pins_6_7,baudrate=1000000", "^dtoverlay=i2c4.*"),
             ("dtoverlay=i2c6,pins_22_23,baudrate=400000", "^dtoverlay=i2c6.*"),
+            ("dtoverlay=navigator-eeprom", "^dtoverlay=navigator-eeprom.*"),
             ("dtoverlay=spi0-led", "^dtoverlay=spi0.*"),
             ("dtoverlay=spi1-3cs", "^dtoverlay=spi1.*"),
             ("dtoverlay=dwc2,dr_mode=otg", "^[#]*dtoverlay=dwc2.*$"),
