@@ -33,6 +33,10 @@ export default class ParameterFetcher {
     this.store = store
   }
 
+  allParametersLoaded(): boolean {
+    return this.total_params_count !== null && this.loaded_params_count >= this.total_params_count
+  }
+
   reset(): void {
     this.loaded_params_count = 0
     this.total_params_count = null
@@ -57,9 +61,7 @@ export default class ParameterFetcher {
   }
 
   requestParamsWatchdog(): void {
-    if (this.total_params_count !== null
-      && this.loaded_params_count > 0
-      && this.loaded_params_count >= this.total_params_count) {
+    if (this.loaded_params_count > 0 && this.allParametersLoaded()) {
       return
     }
     if (autopilot.restarting) {
