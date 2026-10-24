@@ -14,8 +14,16 @@
       MAVLink
     </v-card-text>
 
-    <v-card-text v-else>
+    <v-card-text v-else-if="!supports_actuators">
       {{ toBoardFriendlyChannel(`SERVO${gripper + LEGACY_OUTPUT_OFFSET}_FUNCTION`) }}
+    </v-card-text>
+
+    <v-card-text v-else-if="gripper_outputs.length === 0" class="error--text">
+      Gripper is on Actuator {{ gripper }}, but no output is set to Actuator {{ gripper }}
+    </v-card-text>
+
+    <v-card-text v-else>
+      Actuator {{ gripper }}: {{ gripper_outputs.map((output) => toBoardFriendlyChannel(output)).join(', ') }}
     </v-card-text>
   </v-card>
 </template>
@@ -25,7 +33,7 @@ import Vue from 'vue'
 
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { BTN_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
+import { BTN_FUNCTION, SERVO_FUNCTION } from '@/types/autopilot/parameter-sub-enums'
 
 import toBoardFriendlyChannel from './common'
 
@@ -63,6 +71,18 @@ export default Vue.extend({
         }
       }
       return null
+    },
+    supports_actuators(): boolean {
+      return autopilot_data.firmware_supports_actuators
+    },
+    gripper_outputs(): string[] {
+      if (typeof this.gripper !== 'number') {
+        return []
+      }
+      const actuator_function = SERVO_FUNCTION.ACTUATOR1 + this.gripper - 1
+      return autopilot_data.parameterRegex('^SERVO(\\d+)_FUNCTION$')
+        .filter((param) => param.value === actuator_function)
+        .map((param) => param.name)
     },
     boardType() {
       return autopilot.current_board?.name
