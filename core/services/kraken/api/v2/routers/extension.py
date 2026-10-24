@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Any, Callable, List, Tuple, cast
 
 from commonwealth.utils.streaming import streamer
+from docker_registry.exceptions import ManifestNotFound
 from extension.exceptions import (
     ExtensionInsufficientStorage,
     ExtensionNotFound,
@@ -32,7 +33,7 @@ def extension_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., A
     async def wrapper(*args: Tuple[Any], **kwargs: dict[str, Any]) -> Any:
         try:
             return await endpoint(*args, **kwargs)
-        except ExtensionNotFound as error:
+        except (ExtensionNotFound, ManifestNotFound) as error:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
         except ExtensionNotRunning as error:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
@@ -82,6 +83,15 @@ async def fetch_by_identifier_and_tag(identifier: str, tag: str) -> ExtensionSou
     """
     extension = cast(Extension, await Extension.from_settings(identifier, tag))
     return extension.source
+
+
+@extension_router_v2.get("/permissions", status_code=status.HTTP_200_OK)
+@extension_to_http_exception
+async def get_extension_permissions(docker: str, tag: str) -> dict[str, Any]:
+    """
+    Read the permissions label from a Docker image tag.
+    """
+    return await Extension.fetch_extension_permissions(docker, tag)
 
 
 @extension_router_v2.post("/", status_code=status.HTTP_201_CREATED)

@@ -13,6 +13,8 @@ import { QueryTarget, Sample, Subscriber } from '@eclipse-zenoh/zenoh-ts'
 
 const KRAKEN_BASE_URL = '/kraken'
 const KRAKEN_API_V2_URL = `${KRAKEN_BASE_URL}/v2.0`
+// Anonymous registry auth, the manifest, and the config blob can exceed the default axios timeout.
+const PERMISSION_FETCH_TIMEOUT_MS = 15000
 
 /**
  * List details of all installed extensions.
@@ -386,6 +388,23 @@ export async function finalizeExtension(
     timeout: 120000,
     onDownloadProgress: progressHandler,
   })
+}
+
+/**
+ * Read the permissions label for a Docker image tag.
+ * @param {string} docker Which image to read permissions for.
+ * @param {string} tag Which tag to read permissions for.
+ * @returns {Promise<Record<string, unknown>>} JSON-parsed permissions.
+ */
+export async function fetchExtensionPermissions(docker: string, tag: string): Promise<Record<string, unknown>> {
+  const response = await back_axios({
+    method: 'get',
+    url: `${KRAKEN_API_V2_URL}/extension/permissions`,
+    params: { docker, tag },
+    timeout: PERMISSION_FETCH_TIMEOUT_MS,
+  })
+
+  return response.data as Record<string, unknown>
 }
 
 /**
