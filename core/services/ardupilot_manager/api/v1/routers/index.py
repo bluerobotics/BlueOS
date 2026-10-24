@@ -220,7 +220,7 @@ async def install_firmware_from_file(
 )
 @index_to_http_exception
 def get_board() -> Any:
-    return autopilot.current_board
+    return autopilot.current_board_sanitized
 
 
 @index_router_v1.post("/board", summary="Set board to be used.")
