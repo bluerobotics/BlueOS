@@ -75,6 +75,11 @@ class AutopilotStore extends VuexModule {
     )
   }
 
+  // Newer ArduSub drives actuator_n button functions through ACTUATORn outputs, older ones used fixed outputs
+  get firmware_supports_actuators(): boolean {
+    return this.parameter('ACTUATOR1_INC') !== undefined
+  }
+
   get frame_type(): number | undefined {
     const mav_type = `MAV_TYPE_${autopilot_manager.vehicle_type?.toUpperCase().replace(' ', '_')}`
     switch (mav_type) {
