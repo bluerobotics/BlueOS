@@ -208,6 +208,8 @@ class Bootstrapper:
                 privileged=privileged,
                 network=network,
                 detach=True,
+                # Without an init to forward it, SIGTERM is ignored by PID 1 and docker waits 10s to kill it
+                init=True,
                 environment=environment,
                 log_config={
                     "Type": "json-file",
