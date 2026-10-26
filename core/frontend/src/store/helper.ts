@@ -6,8 +6,11 @@ import {
 import Notifier from '@/libs/notifier'
 import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
+import { EthernetInterface } from '@/types/ethernet'
 import { helper_service } from '@/types/frontend_services'
-import { InternetConnectionState, Service, WebsiteError } from '@/types/helper'
+import {
+  InterfaceLatency, InternetConnectionState, PingResult, Service, WebsiteError,
+} from '@/types/helper'
 import back_axios, { isBackendOffline } from '@/utils/api'
 import { isIpAddress } from '@/utils/pattern_validators'
 import { DynamicModule as Module } from '@/utils/vuex'
@@ -29,6 +32,10 @@ type CheckSiteStatus = {
 
 type SiteStatus = Record<string, CheckSiteStatus>
 
+// Ratio of the preferred interface's latency to the faster interface's latency to be considered faster
+const FASTER_INTERFACE_LATENCY_RATIO = 0.75
+
+
 @Module({
   dynamic: true,
   store,
@@ -46,15 +53,36 @@ class PingStore extends VuexModule {
 
   reachable_hosts: string[] = []
 
+  // Sorted by priority
+  interfaces_latency: InterfaceLatency[] = []
+
   internet_check_failures = 0
 
   checkInternetAccessTask = new OneMoreTime(
     { delay: 20000 },
   )
 
+  checkInterfacesLatencyTask = new OneMoreTime(
+    { delay: 20000 },
+  )
+
   updateWebServicesTask = new OneMoreTime(
     { delay: 10000 }, // scan_ports can take several seconds; a 5s delay stacked overlapping polls
   )
+
+  get preferred_interface_has_no_internet(): boolean {
+    const [preferred, ...others] = this.interfaces_latency
+    return preferred?.ping?.reachable === false && others.some(({ ping }) => ping?.reachable)
+  }
+
+  get faster_interface_available(): boolean | undefined {
+    const [preferred, ...others] = this.interfaces_latency
+    if (!preferred?.ping?.reachable) {
+      return undefined
+    }
+    const preferred_ms = preferred.ping.latency_ms ?? Infinity
+    return others.some(({ ping }) => (ping?.latency_ms ?? Infinity) < preferred_ms * FASTER_INTERFACE_LATENCY_RATIO)
+  }
 
   @Mutation
   setHasInternet(has_internet: InternetConnectionState): void {
@@ -69,6 +97,11 @@ class PingStore extends VuexModule {
   @Mutation
   setReachableHosts(hosts: string[]): void {
     this.reachable_hosts = hosts
+  }
+
+  @Mutation
+  setInterfacesLatency(interfaces_latency: InterfaceLatency[]): void {
+    this.interfaces_latency = interfaces_latency
   }
 
   @Mutation
@@ -184,6 +217,41 @@ class PingStore extends VuexModule {
       .then((response) => response.data as boolean)
       .catch(() => undefined)
   }
+
+  @Action
+  async pingLatency(options: {host: string, iface?: string}): Promise<PingResult | undefined> {
+    return back_axios({
+      method: 'get',
+      url: `${this.API_URL}/ping_latency`,
+      params: { host: options.host, interface_addr: options.iface },
+      timeout: 15000,
+    })
+      .then((response) => response.data as PingResult)
+      .catch(() => undefined)
+  }
+
+  @Action
+  async checkInterfacesLatency(): Promise<void> {
+    const interfaces = await back_axios({
+      method: 'get',
+      url: '/cable-guy/v1.0/interfaces',
+      timeout: 10000,
+    })
+      .then((response) => response.data as EthernetInterface[])
+      .catch(() => undefined)
+    if (!interfaces) {
+      return
+    }
+    const by_priority = interfaces
+      .filter(({ priority }) => priority !== undefined && priority !== null)
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+
+    const host = this.reachable_hosts?.[0] ?? '1.1.1.1'
+    const results = await Promise.all(
+      by_priority.map(async ({ name }) => ({ name, ping: await this.pingLatency({ host, iface: name }) })),
+    )
+    this.setInterfacesLatency(results)
+  }
 }
 
 export { PingStore }
@@ -191,6 +259,7 @@ export { PingStore }
 const ping: PingStore = getModule(PingStore)
 
 ping.checkInternetAccessTask.setAction(ping.checkInternetAccess)
+ping.checkInterfacesLatencyTask.setAction(ping.checkInterfacesLatency)
 ping.updateWebServicesTask.setAction(ping.updateWebServices)
 
 export default ping
