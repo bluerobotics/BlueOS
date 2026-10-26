@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 from pydantic import BaseModel
 
@@ -119,6 +119,32 @@ class MavlinkVehicleType(str, Enum):
 class FirmwareInfo(BaseModel):
     version: str
     type: FirmwareVersionType
+
+
+class MavParamType(IntEnum):
+    MAV_PARAM_TYPE_UINT8 = 1
+    MAV_PARAM_TYPE_INT8 = 2
+    MAV_PARAM_TYPE_UINT16 = 3
+    MAV_PARAM_TYPE_INT16 = 4
+    MAV_PARAM_TYPE_UINT32 = 5
+    MAV_PARAM_TYPE_INT32 = 6
+    MAV_PARAM_TYPE_UINT64 = 7
+    MAV_PARAM_TYPE_INT64 = 8
+    MAV_PARAM_TYPE_REAL32 = 9
+    MAV_PARAM_TYPE_REAL64 = 10
+
+    @property
+    def struct_format(self) -> str:
+        return "BbHhIiQqfd"[self.value - 1]
+
+    def cast(self, value: int | float) -> int | float:
+        is_real = self in (MavParamType.MAV_PARAM_TYPE_REAL32, MavParamType.MAV_PARAM_TYPE_REAL64)
+        return float(value) if is_real else int(value)
+
+
+class MavlinkParameter(BaseModel):
+    type: MavParamType
+    value: int | float
 
 
 class MavlinkMessageId(Enum):
