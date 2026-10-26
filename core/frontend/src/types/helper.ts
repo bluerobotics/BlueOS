@@ -35,3 +35,13 @@ export enum InternetConnectionState {
   LIMITED = 2,
   ONLINE = 3,
 }
+
+export interface PingResult {
+  reachable: boolean
+  latency_ms: number | null
+}
+
+export interface InterfaceLatency {
+  name: string
+  ping?: PingResult
+}
