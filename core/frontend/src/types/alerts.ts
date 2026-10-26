@@ -8,7 +8,9 @@ export enum AlertRuleId {
   AutopilotSensorsUncalibrated = 'autopilot.sensors_uncalibrated',
   BackendOffline = 'backend.offline',
   NetworkDnsFailure = 'network.dns_failure',
+  NetworkFasterInterfaceAvailable = 'network.faster_interface_available',
   NetworkNoInternet = 'network.no_internet',
+  NetworkPreferredInterfaceNoInternet = 'network.preferred_interface_no_internet',
   NetworkWifiUnavailable = 'network.wifi_unavailable',
 }
 

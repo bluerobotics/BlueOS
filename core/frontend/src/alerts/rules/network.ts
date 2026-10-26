@@ -8,6 +8,8 @@ import { InternetConnectionState } from '@/types/helper'
 import { ruleSet } from '../define'
 import { NotificationLevel } from '@/types/notifications'
 
+const INTERFACES_PENDING_MS = 40000
+
 const defineRules = ruleSet({
   source: AlertSource.Frontend,
   pending_ms: 1000,
@@ -46,7 +48,27 @@ const rules: AlertRule[] = defineRules([
     condition: () => 
       helper.has_internet === InternetConnectionState.OFFLINE ||
       helper.has_internet === InternetConnectionState.UNKNOWN,
-  }
+  },
+  {
+    id: AlertRuleId.NetworkPreferredInterfaceNoInternet,
+    service: helper_service,
+    level: NotificationLevel.Error,
+    title: 'Preferred network interface has no internet',
+    description: 'Another interface is online. Check the connection or change the interfaces priority.',
+    pending_ms: INTERFACES_PENDING_MS,
+    condition: () => helper.has_internet === InternetConnectionState.OFFLINE
+      && helper.preferred_interface_has_no_internet,
+  },
+  {
+    id: AlertRuleId.NetworkFasterInterfaceAvailable,
+    service: helper_service,
+    level: NotificationLevel.Warning,
+    title: 'Preferred network interface is slow',
+    description: 'Another interface is faster. Check the connection or change the interfaces priority.',
+    pending_ms: INTERFACES_PENDING_MS,
+    inhibited_by: [AlertRuleId.NetworkPreferredInterfaceNoInternet],
+    condition: () => helper.faster_interface_available,
+  },
 ])
 
 
