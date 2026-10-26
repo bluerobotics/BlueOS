@@ -262,6 +262,16 @@
       :extraction="extraction_percentage"
       :statustext="status_text"
     />
+    <warning-dialog
+      v-model="show_restart_warning"
+      title="BlueOS is taking too long to restart"
+      message="The update may have failed or BlueOS is still starting up. Do you want to reload the page or skip?"
+      confirm-label="Reload page"
+      cancel-label="Skip"
+      confirm-color="primary"
+      persistent
+      @confirm="reloadPage"
+    />
     <v-overlay
       :z-index="10"
       :value="waiting"
@@ -295,6 +305,7 @@ import PullTracker from '@/utils/pull_tracker'
 import * as VCU from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import WarningDialog from '../common/WarningDialog.vue'
 import DockerLogin from './DockerLogin.vue'
 import VersionCard from './VersionCard.vue'
 
@@ -307,6 +318,7 @@ export default Vue.extend({
     SpinningLogo,
     VersionCard,
     PullProgress,
+    WarningDialog,
   },
   data() {
     const default_repository = 'bluerobotics/blueos-core'
@@ -340,6 +352,7 @@ export default Vue.extend({
       loading_images: false,
       updating_bootstrap: false,
       waiting: false,
+      show_restart_warning: false,
       default_repository,
       selected_image: default_repository,
       deleting: '', // image currently being deleted, if any
@@ -475,18 +488,23 @@ export default Vue.extend({
       })
     },
 
+    reloadPage() {
+      window.location.reload()
+    },
+
     async waitForBackendToRestart(reload: boolean) {
       this.waiting = true
       try {
         await this.waitForBackendToGoOffline()
         await this.waitForBackendToGoOnline()
+        if (reload) {
+          this.reloadPage()
+        }
       } catch (e) {
         console.log('Backend took too long to restart')
+        this.show_restart_warning = true
       } finally {
-        if (reload) {
-          this.waiting = false
-          window.location.reload()
-        }
+        this.waiting = false
       }
     },
 
