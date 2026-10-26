@@ -349,6 +349,18 @@ msgstr ""
 msgid "Angular speed (mrad/s)"
 msgstr ""
 
+#: src/alerts/rules/network.ts
+msgid ""
+"Another interface is faster. Check the connection or change the interfaces "
+"priority."
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid ""
+"Another interface is online. Check the connection or change the interfaces "
+"priority."
+msgstr ""
+
 #: src/views/SettingsView.vue
 msgid "Appearance"
 msgstr ""
@@ -3174,6 +3186,14 @@ msgstr ""
 
 #: src/components/app/PowerMenu.vue
 msgid "Power off"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Preferred network interface has no internet"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Preferred network interface is slow"
 msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
