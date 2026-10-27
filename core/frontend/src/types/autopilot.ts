@@ -114,6 +114,17 @@ export function firmwareVehicleTypeFromVehicle(vehicle: Vehicle): FirmwareVehicl
   }
 }
 
+const VEHICLE_DOCS_URLS: Partial<Record<FirmwareVehicleType, string>> = {
+  [FirmwareVehicleType.ArduSub]: 'https://ardupilot.org/sub/docs/introduction.html#swim-features',
+  [FirmwareVehicleType.ArduRover]: 'https://ardupilot.org/rover/docs/rover-features.html',
+  [FirmwareVehicleType.ArduCopter]: 'https://ardupilot.org/copter/docs/copter-flight-features.html',
+  [FirmwareVehicleType.ArduPlane]: 'https://ardupilot.org/plane/docs/flight-features.html',
+}
+
+export function vehicleDocsUrl(firmware_vehicle_type: FirmwareVehicleType | null): string | undefined {
+  return firmware_vehicle_type ? VEHICLE_DOCS_URLS[firmware_vehicle_type] : undefined
+}
+
 export function userFriendlyEndpointType(type: string): string {
   switch (type) {
     case EndpointType.udpin: return 'UDP Server'
