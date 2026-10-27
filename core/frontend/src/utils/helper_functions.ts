@@ -109,6 +109,17 @@ export async function fetchWithVehicleFallback(
   return fetchWithTimeout(proxied_url, timeout_ms, headers)
 }
 
+export async function anyHostReachable(hosts: string[]): Promise<boolean> {
+  try {
+    await Promise.any(hosts.map((host) => fetch(`https://${host}`, {
+      mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(5000),
+    })))
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function prettifySize(size_kb: number): string {
   if (Number.isNaN(size_kb)) {
     return 'N/A'

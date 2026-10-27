@@ -12,6 +12,7 @@ import {
   InterfaceLatency, InternetConnectionState, PingResult, Service, WebsiteError,
 } from '@/types/helper'
 import back_axios, { isBackendOffline } from '@/utils/api'
+import { anyHostReachable } from '@/utils/helper_functions'
 import { isIpAddress } from '@/utils/pattern_validators'
 import { DynamicModule as Module } from '@/utils/vuex'
 
@@ -35,6 +36,7 @@ type SiteStatus = Record<string, CheckSiteStatus>
 // Ratio of the preferred interface's latency to the faster interface's latency to be considered faster
 const FASTER_INTERFACE_LATENCY_RATIO = 0.75
 
+const TOPSIDE_INTERNET_CHECK_HOSTS = ['1.1.1.1', 'github.com']
 
 @Module({
   dynamic: true,
@@ -46,6 +48,10 @@ class PingStore extends VuexModule {
   API_URL = '/helper/latest'
 
   has_internet: InternetConnectionState = InternetConnectionState.UNKNOWN
+
+  topside_has_internet = true
+
+  topside_dns_failure = false
 
   dns_failure = false
 
@@ -63,6 +69,10 @@ class PingStore extends VuexModule {
   )
 
   checkInterfacesLatencyTask = new OneMoreTime(
+    { delay: 20000 },
+  )
+
+  checkTopsideInternetTask = new OneMoreTime(
     { delay: 20000 },
   )
 
@@ -87,6 +97,16 @@ class PingStore extends VuexModule {
   @Mutation
   setHasInternet(has_internet: InternetConnectionState): void {
     this.has_internet = has_internet
+  }
+
+  @Mutation
+  setTopsideHasInternet(topside_has_internet: boolean): void {
+    this.topside_has_internet = topside_has_internet
+  }
+
+  @Mutation
+  setTopsideDnsFailure(topside_dns_failure: boolean): void {
+    this.topside_dns_failure = topside_dns_failure
   }
 
   @Mutation
@@ -178,6 +198,18 @@ class PingStore extends VuexModule {
   }
 
   @Action
+  async checkTopsideInternet(): Promise<void> {
+    const hosts = [...new Set([...TOPSIDE_INTERNET_CHECK_HOSTS, ...this.reachable_hosts])]
+    // Sites probed by IP need no resolution, so only named ones can tell DNS apart from no internet.
+    const [link_up, name_resolved] = await Promise.all([
+      anyHostReachable(hosts.filter((host) => isIpAddress(host))),
+      anyHostReachable(hosts.filter((host) => !isIpAddress(host))),
+    ])
+    this.setTopsideHasInternet(link_up || name_resolved)
+    this.setTopsideDnsFailure(link_up && !name_resolved)
+  }
+
+  @Action
   async checkWebServices(): Promise<Service[]> {
     return back_axios({
       method: 'get',
@@ -260,6 +292,7 @@ const ping: PingStore = getModule(PingStore)
 
 ping.checkInternetAccessTask.setAction(ping.checkInternetAccess)
 ping.checkInterfacesLatencyTask.setAction(ping.checkInterfacesLatency)
+ping.checkTopsideInternetTask.setAction(ping.checkTopsideInternet)
 ping.updateWebServicesTask.setAction(ping.updateWebServices)
 
 export default ping
