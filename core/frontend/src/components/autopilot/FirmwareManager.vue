@@ -127,44 +127,61 @@
             class="ma-1 pa-0"
             @change="updateAvailableFirmwares"
           >
-            <template
-              v-if="vehicle_changed"
-              #append-outer
-            >
-              <v-icon color="warning">
+            <template #append-outer>
+              <v-icon
+                v-if="vehicle_changed"
+                color="warning"
+              >
                 mdi-alert
               </v-icon>
+              <v-tooltip
+                v-if="vehicle_docs_url"
+                bottom
+              >
+                <template #activator="{ on, attrs }">
+                  <v-icon
+                    style="margin-left: 2px"
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="openVehicleDocs"
+                  >
+                    mdi-file-document-outline
+                  </v-icon>
+                </template>
+                <p>Open {{ chosen_vehicle }} documentation</p>
+              </v-tooltip>
             </template>
           </v-select>
-          <div class="d-flex">
-            <v-select
-              v-model="chosen_firmware_url"
-              class="ma-1 pa-0"
-              :disabled="disable_firmware_selection"
-              :items="showable_firmwares"
-              :label="firmware_selector_label"
-              :loading="loading_firmware_options"
-              required
-              @change="setCloudFirmwareChosen"
-            />
-            <v-tooltip bottom>
-              <template #activator="{ on, attrs }">
-                <v-icon
-                  class="ml-4"
-                  v-bind="attrs"
-                  v-on="on"
-                >
-                  mdi-information
-                </v-icon>
-              </template>
-              <p>Stable - A production-ready release. Suitable for most users.</p>
-              <p>Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.</p>
-              <p>
-                Dev - Development branch, with all the newest features.
-                Intentionally unstable (changes quickly), and possibly untested/dangerous.
-              </p>
-            </v-tooltip>
-          </div>
+          <v-select
+            v-model="chosen_firmware_url"
+            class="ma-1 pa-0"
+            :disabled="disable_firmware_selection"
+            :items="showable_firmwares"
+            :label="firmware_selector_label"
+            :loading="loading_firmware_options"
+            required
+            @change="setCloudFirmwareChosen"
+          >
+            <template #append-outer>
+              <v-tooltip bottom>
+                <template #activator="{ on, attrs }">
+                  <v-icon
+                    style="pointer-events: auto"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    mdi-information
+                  </v-icon>
+                </template>
+                <p>Stable - A production-ready release. Suitable for most users.</p>
+                <p>Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.</p>
+                <p>
+                  Dev - Development branch, with all the newest features.
+                  Intentionally unstable (changes quickly), and possibly untested/dangerous.
+                </p>
+              </v-tooltip>
+            </template>
+          </v-select>
         </div>
 
         <v-file-input
@@ -280,6 +297,7 @@ import {
   FlightController,
   FlightControllerFlags,
   Vehicle,
+  vehicleDocsUrl,
 } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
@@ -376,6 +394,9 @@ export default Vue.extend({
       return this.chosen_vehicle !== null
         && this.current_vehicle !== null
         && this.chosen_vehicle !== this.current_vehicle
+    },
+    vehicle_docs_url(): string | undefined {
+      return this.chosen_vehicle ? vehicleDocsUrl(firmwareVehicleTypeFromVehicle(this.chosen_vehicle)) : undefined
     },
     vehicle_change_warning(): string {
       return `Installing this firmware will change the vehicle from ${this.current_vehicle} to ${this.chosen_vehicle}.`
@@ -491,6 +512,9 @@ export default Vue.extend({
     this.all_param_sets = await fetchParamSets().catch(() => ({}))
   },
   methods: {
+    openVehicleDocs(): void {
+      window.open(this.vehicle_docs_url, '_blank', 'noopener,noreferrer')
+    },
     requestInstall(): void {
       if (this.is_untested_firmware && !settings.skip_untested_firmware_warning) {
         this.show_untested_warning = true
