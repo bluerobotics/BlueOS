@@ -53,9 +53,32 @@
         >
           {{ name.split('/').pop() }}
         </v-btn>
-        <p v-if="(Object.keys(filtered_param_sets).length === 0)">
-          No parameters available for this setup
-        </p>
+        <v-progress-circular
+          v-if="is_loading"
+          class="mx-auto"
+          color="primary"
+          indeterminate
+        />
+        <template v-else-if="no_param_sets">
+          <div
+            v-if="show_offline_warning"
+            class="d-flex flex-column align-center mx-auto"
+          >
+            <v-icon
+              class="mb-2"
+              color="error"
+              size="48"
+            >
+              mdi-web-off
+            </v-icon>
+            <p class="mb-2">
+              No Internet connection, unable to load parameters.
+            </p>
+          </div>
+          <p v-else>
+            No parameters available for this setup
+          </p>
+        </template>
       </v-card-actions>
     </v-card>
     <ParameterLoader
@@ -91,8 +114,10 @@ import { fetchParamSets, paramSetsForFirmware } from '@/libs/parameter_repositor
 import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
+import helper from '@/store/helper'
 import { Dictionary } from '@/types/common'
 import { frontend_service } from '@/types/frontend_services'
+import { InternetConnectionState } from '@/types/helper'
 
 const notifier = new Notifier(frontend_service)
 
@@ -110,10 +135,17 @@ export default Vue.extend({
     rebooting: false,
     done: false,
     erasing: false,
+    is_loading: false,
     settings,
     show_warning: false,
   }),
   computed: {
+    topside_has_internet(): boolean {
+      return helper.topside_has_internet
+    },
+    has_internet(): boolean {
+      return this.topside_has_internet || helper.has_internet === InternetConnectionState.ONLINE
+    },
     vehicle(): string | null {
       return autopilot.firmware_vehicle_type
     },
@@ -123,8 +155,24 @@ export default Vue.extend({
     filtered_param_sets(): Dictionary<Dictionary<number>> {
       return paramSetsForFirmware(this.all_param_sets, this.vehicle, this.version, autopilot.current_board)
     },
+    has_param_sets(): boolean {
+      return Object.keys(this.all_param_sets).length > 0
+    },
+    show_offline_warning(): boolean {
+      return !this.has_internet && !this.has_param_sets
+    },
+    no_param_sets(): boolean {
+      return Object.keys(this.filtered_param_sets).length === 0
+    },
     warningMessage(): string {
       return 'You will lose ALL your parameters, vehicle setup, and calibrations. Are you sure you want to reset?'
+    },
+  },
+  watch: {
+    has_internet(has_internet: boolean) {
+      if (has_internet && !this.has_param_sets) {
+        this.loadParamSets()
+      }
     },
   },
   mounted() {
@@ -133,10 +181,13 @@ export default Vue.extend({
   },
   methods: {
     async loadParamSets() {
+      this.is_loading = true
       try {
         this.all_param_sets = await fetchParamSets()
       } catch (error) {
         notifier.pushError('PARAM_SETS_FETCH_FAIL', error)
+      } finally {
+        this.is_loading = false
       }
     },
     async loadParams(name: string, paramset: Dictionary<number>) {
@@ -190,9 +241,15 @@ button {
 }
 
 .card-container {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 calc(50% - 10px);
   max-width: calc(50% - 0px);
   min-width: min(600px, 100%);
+}
+
+.card-container .v-card__text {
+  flex-grow: 1;
 }
 
 .virtual-table-row {
