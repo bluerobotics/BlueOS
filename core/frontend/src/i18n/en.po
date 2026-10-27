@@ -2690,6 +2690,10 @@ msgstr ""
 msgid "No Extensions installed."
 msgstr ""
 
+#: src/components/vehiclesetup/overview/ParamSets.vue
+msgid "No Internet connection, unable to load parameters."
+msgstr ""
+
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid ""
 "No NMEA sockets available. You can add a connection by clicking the + "
