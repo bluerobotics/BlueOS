@@ -25,7 +25,7 @@ manifest_manager = ManifestManager.instance()
 @index_router_v1.get("/extensions_manifest", status_code=status.HTTP_200_OK)
 @manifest_to_http_exception
 async def fetch_manifest() -> list[RepositoryEntry]:
-    return await manifest_manager.fetch_consolidated()
+    return [entry.without_readme() for entry in await manifest_manager.fetch_consolidated()]
 
 
 @index_router_v1.get("/installed_extensions", status_code=status.HTTP_200_OK)
