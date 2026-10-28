@@ -100,12 +100,115 @@
         </v-alert>
       </v-col>
     </v-row>
+
+    <v-divider class="my-6" />
+
+    <div class="d-flex align-center mb-3">
+      <v-icon class="mr-2">
+        mdi-usb-flash-drive
+      </v-icon>
+      <span class="text-h6">Removable Storage</span>
+      <v-progress-circular
+        v-if="storage_store.loading"
+        class="ml-3"
+        indeterminate
+        size="20"
+        width="2"
+        color="primary"
+      />
+    </div>
+
+    <v-alert
+      v-if="storage_store.error"
+      type="error"
+      text
+    >
+      {{ storage_store.error }}
+    </v-alert>
+
+    <v-row v-if="storage_store.devices.length > 0">
+      <v-col
+        v-for="device in storage_store.devices"
+        :key="device.path"
+        cols="12"
+        md="6"
+      >
+        <v-card outlined>
+          <v-card-title>
+            <v-icon class="mr-2">
+              mdi-harddisk
+            </v-icon>
+            {{ device.label || device.name }}
+          </v-card-title>
+          <v-card-subtitle>
+            {{ device.path }} • {{ device.filesystem }} • {{ formatBytes(device.size_bytes) }}
+          </v-card-subtitle>
+          <v-card-text>
+            <v-chip
+              small
+              :color="device.mounted ? (device.writable ? 'success' : 'warning') : 'grey'"
+            >
+              {{ storageStatus(device) }}
+            </v-chip>
+            <div
+              v-if="device.mount_point"
+              class="text-caption text--secondary mt-2"
+            >
+              {{ device.mount_point }}
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn
+              v-if="!device.mounted"
+              v-tooltip="device.read_only ? 'This device is read-only' : 'Mount in BlueOS'"
+              color="primary"
+              text
+              :disabled="device.read_only || isOperating(device.path)"
+              :loading="isOperating(device.path)"
+              @click="storage_store.mountDevice(device)"
+            >
+              Mount
+            </v-btn>
+            <v-btn
+              v-else-if="device.managed"
+              v-tooltip="'Safely unmount before removing the device'"
+              color="warning"
+              text
+              :disabled="isOperating(device.path)"
+              :loading="isOperating(device.path)"
+              @click="storage_store.unmountDevice(device)"
+            >
+              Unmount
+            </v-btn>
+            <v-btn
+              v-if="device.managed"
+              v-tooltip="'Browse and write files on this device'"
+              color="primary"
+              text
+              :disabled="isOperating(device.path)"
+              :to="fileBrowserPath(device)"
+            >
+              Open in File Browser
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-alert
+      v-else-if="!storage_store.loading && !storage_store.error"
+      type="info"
+      text
+    >
+      No USB storage devices found
+    </v-alert>
   </v-container>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
+import removable_storage_store, { RemovableStorageStore } from '@/store/removable-storage'
+import { RemovableStorageDevice } from '@/types/removable-storage'
 import { UsbDevice } from '@/types/system-information/usb'
 import back_axios, { isBackendOffline } from '@/utils/api'
 
@@ -142,6 +245,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    storage_store(): RemovableStorageStore {
+      return removable_storage_store
+    },
     buses(): UsbBus[] {
       const busMap = new Map<number, UsbDevice[]>()
 
@@ -164,12 +270,35 @@ export default Vue.extend({
   },
   mounted() {
     this.fetchUsb()
-    this.timer = window.setInterval(() => this.fetchUsb(), 5000)
+    this.storage_store.fetchDevices()
+    this.timer = window.setInterval(() => {
+      this.fetchUsb()
+      this.storage_store.fetchDevices()
+    }, 5000)
   },
   beforeDestroy() {
     clearInterval(this.timer)
   },
   methods: {
+    formatBytes(bytes: number): string {
+      if (bytes === 0) return '0 B'
+      const unit = 1024
+      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+      const index = Math.min(Math.floor(Math.log(bytes) / Math.log(unit)), units.length - 1)
+      return `${(bytes / unit ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`
+    },
+    isOperating(path: string): boolean {
+      return this.storage_store.operatingPaths.includes(path)
+    },
+    fileBrowserPath(device: RemovableStorageDevice): string {
+      return `/tools/file-browser/files/usb/${device.name}`
+    },
+    storageStatus(device: RemovableStorageDevice): string {
+      if (device.managed) return device.writable ? 'Mounted read/write' : 'Mounted read-only'
+      if (device.mounted) return 'Mounted outside BlueOS'
+      if (device.read_only) return 'Read-only device'
+      return 'Not mounted'
+    },
     async fetchUsb(): Promise<void> {
       try {
         const response = await back_axios({

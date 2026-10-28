@@ -277,6 +277,9 @@ export default defineConfig(({ command, mode }) => {
         '^/disk-usage': {
           target: SERVER_ADDRESS,
         },
+        '^/removable-storage': {
+          target: SERVER_ADDRESS,
+        },
         '^/docker': {
           target: SERVER_ADDRESS,
         },
