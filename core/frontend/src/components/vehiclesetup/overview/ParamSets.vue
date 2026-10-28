@@ -58,6 +58,7 @@
         </p>
       </v-card-actions>
     </v-card>
+    <EepromBackup v-if="settings.is_pirate_mode" @load="loadParams('eeprom', $event)" />
     <ParameterLoader
       v-if="Object.keys(selected_paramset).length"
       :key="selected_paramset_name"
@@ -82,6 +83,7 @@ import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdate
 import { fetchCurrentBoard } from '@/components/autopilot/AutopilotManagerUpdater'
 import WarningDialog from '@/components/common/WarningDialog.vue'
 import ParameterLoader from '@/components/parameter-editor/ParameterLoader.vue'
+import EepromBackup from '@/components/vehiclesetup/overview/EepromBackup.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import {
   MavCmd, MavResult,
@@ -99,6 +101,7 @@ const notifier = new Notifier(frontend_service)
 export default Vue.extend({
   name: 'ParamSets',
   components: {
+    EepromBackup,
     ParameterLoader,
     WarningDialog,
   },
@@ -190,9 +193,7 @@ button {
 }
 
 .card-container {
-  flex: 1 1 calc(50% - 10px);
-  max-width: calc(50% - 0px);
-  min-width: min(600px, 100%);
+  flex: 1 1 min(600px, 100%);
 }
 
 .virtual-table-row {

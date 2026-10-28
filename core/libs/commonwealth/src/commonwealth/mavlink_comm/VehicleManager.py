@@ -1,7 +1,9 @@
 import asyncio
+import json
 import time
 from typing import Any, Dict, List
 
+import aiohttp
 from commonwealth.mavlink_comm.exceptions import (
     VehicleDisarmFail,
     VehicleSystemIdUpdateFail,
@@ -129,6 +131,33 @@ class VehicleManager:
         except Exception as error:
             logger.error(f"Failed to check heartbeat. {error}")
             return False
+
+    async def get_all_parameters(self, timeout: float = 10.0) -> dict[str, float]:
+        params: dict[str, float] = {}
+        received: set[int] = set()
+        url = f"http://{self.mavlink2rest.m2r_address}/ws/mavlink?filter=PARAM_VALUE"
+        async with aiohttp.ClientSession() as session:
+            async with session.ws_connect(url) as ws:
+                await self.mavlink2rest.send_mavlink_message(
+                    {
+                        "type": "PARAM_REQUEST_LIST",
+                        "target_system": self.target_system,
+                        "target_component": self.target_component,
+                    }
+                )
+                try:
+                    async with asyncio.timeout(timeout):
+                        async for msg in ws:
+                            message = json.loads(msg.data)["message"]
+                            name = "".join(message["param_id"]).rstrip("\0")
+                            params[name] = message["param_value"]
+                            received.add(message["param_index"])
+                            if len(received) == message["param_count"]:
+                                break
+                except TimeoutError:
+                    # Some parameters may not be available, return what was received
+                    pass
+        return params
 
     async def is_vehicle_armed(self) -> bool:
         get_response = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
