@@ -14,7 +14,6 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from commonwealth.utils.sentry_config import init_sentry_async
 from commonwealth.utils.streaming import streamer
 from fastapi import APIRouter, FastAPI, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
@@ -468,8 +467,6 @@ async def root() -> dict[str, str]:
 
 async def main() -> None:
     try:
-        await init_sentry_async(SERVICE_NAME)
-
         config = Config(app=app, host="0.0.0.0", port=PORT, log_config=None)
         server = Server(config)
 
