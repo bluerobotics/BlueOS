@@ -1,0 +1,136 @@
+name: Customize Vehicle Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "BlueOS release tag (e.g. 1.4.7) or commit SHA with images from a Test, Build and Deploy run"
+        required: true
+      image:
+        description: "Base image"
+        type: choice
+        default: raspberry-linux-arm-v7-bullseye-pi4
+        options:
+          - raspberry-linux-arm-v7-bullseye-pi4
+          - raspberry-linux-arm-v7-bookworm
+          - raspberry-linux-arm64-v8-bookworm-pi5
+      vehicle:
+        description: "Vehicle overlay"
+        type: choice
+        options:
+          - bluerov2
+          - blueboat120
+      ardupilot_version:
+        description: "ArduPilot version to install (e.g. 4.7.2)"
+        required: true
+      extensions:
+        description: "Extensions to install enabled, space separated ID[:TAG]"
+        required: false
+        default: ""
+      disabled_extensions:
+        description: "Extensions to install disabled, space separated ID[:TAG]"
+        required: false
+        default: ""
+
+env:
+  SOURCE_REPO: bluerobotics/BlueOS
+  SOURCE: ${{ inputs.source }}
+  IMAGE: ${{ inputs.image }}
+  VEHICLE: ${{ inputs.vehicle }}
+  ARDUPILOT_VERSION: ${{ inputs.ardupilot_version }}
+  EXTENSIONS: ${{ inputs.extensions }}
+  DISABLED_EXTENSIONS: ${{ inputs.disabled_extensions }}
+
+jobs:
+  customize-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate inputs
+        run: |
+          valid() { [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]]; }
+          valid "$SOURCE" || { echo "::error::Invalid source '$SOURCE'"; exit 1; }
+          valid "$ARDUPILOT_VERSION" || { echo "::error::Invalid ArduPilot version '$ARDUPILOT_VERSION'"; exit 1; }
+          for extension in $EXTENSIONS $DISABLED_EXTENSIONS; do
+            [[ "$extension" =~ ^[A-Za-z0-9._-]+(:[A-Za-z0-9._-]+)?$ ]] || {
+              echo "::error::Invalid extension '$extension'"
+              exit 1
+            }
+          done
+
+      # The base image, its unzipped copy and the customized copy don't fit in the runner's default free space
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Download base image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          WORK_DIR="$RUNNER_TEMP/base"
+          mkdir -p "$WORK_DIR"
+          ASSET="BlueOS-$IMAGE"
+          if gh release view "$SOURCE" --repo "$SOURCE_REPO" >/dev/null 2>&1; then
+            echo "Using release $SOURCE"
+            # Release images are split into 2GB volumes (.z01, ..., .zip) when they don't fit in one asset
+            gh release download "$SOURCE" --repo "$SOURCE_REPO" --pattern "$ASSET.z*" --dir "$WORK_DIR"
+            SOURCE_LABEL="$SOURCE"
+          else
+            SHA="$(gh api "repos/$SOURCE_REPO/commits/$SOURCE" --jq .sha)"
+            # Images are only built on pushes and labeled pull requests, and their artifacts expire after 7 days
+            RUN_ID="$(gh api "repos/$SOURCE_REPO/actions/artifacts?name=$ASSET&per_page=100" \
+              --jq "[.artifacts[] | select(.workflow_run.head_sha == \"$SHA\" and (.expired | not))][0].workflow_run.id")"
+            if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+              echo "::error::No unexpired $ASSET artifact for commit $SHA in $SOURCE_REPO"
+              exit 1
+            fi
+            echo "Using $ASSET from run $RUN_ID for commit $SHA"
+            gh run download "$RUN_ID" --repo "$SOURCE_REPO" --name "$ASSET" --dir "$WORK_DIR"
+            SOURCE_LABEL="${SHA:0:8}"
+          fi
+          sudo apt-get update && sudo apt-get install -y zip unzip
+          ZIP="$WORK_DIR/$ASSET.zip"
+          if compgen -G "$WORK_DIR/$ASSET.z0*" >/dev/null; then
+            zip -s 0 "$ZIP" --out "$WORK_DIR/joined.zip"
+            rm "$WORK_DIR/$ASSET".z*
+            ZIP="$WORK_DIR/joined.zip"
+          fi
+          unzip -j "$ZIP" -d "$WORK_DIR"
+          rm "$ZIP"
+          ls -lh "$WORK_DIR"
+          echo "BASE_IMAGE=$WORK_DIR/blueos.img" >> "$GITHUB_ENV"
+          echo "OUTPUT_NAME=BlueOS-$SOURCE_LABEL-$IMAGE-$VEHICLE-ardupilot-$ARDUPILOT_VERSION" >> "$GITHUB_ENV"
+
+      - name: Customize image
+        run: |
+          ARGS=()
+          for extension in $EXTENSIONS; do ARGS+=(--extension "$extension"); done
+          for extension in $DISABLED_EXTENSIONS; do ARGS+=(--extension-disabled "$extension"); done
+          ./deploy/image-customization/customize_images.sh "$BASE_IMAGE" "$VEHICLE" "$ARDUPILOT_VERSION" "${ARGS[@]}"
+          rm "$BASE_IMAGE"
+          mv "deploy/image-customization/blueos_${VEHICLE}_customized.img" "$OUTPUT_NAME.img"
+          sha256sum "$OUTPUT_NAME.img"
+
+      - name: Zip image
+        run: |
+          zip -9 "$OUTPUT_NAME.zip" "$OUTPUT_NAME.img"
+          rm "$OUTPUT_NAME.img"
+          ls -lh "$OUTPUT_NAME.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        timeout-minutes: 120
+        with:
+          name: ${{ env.OUTPUT_NAME }}
+          path: ${{ env.OUTPUT_NAME }}.zip
+          # Already compressed
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
