@@ -36,26 +36,14 @@
 <script lang="ts">
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { PropType } from 'vue'
 
 import { get_board_model } from '@/components/vehiclesetup/viewers/modelHelper'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
 import Parameter, { printParam } from '@/types/autopilot/parameter'
-import dracoDecoderPath from '@/utils/draco'
-
-function makeGLTFLoader(): GLTFLoader {
-  const dracoLoader = new DRACOLoader()
-  const decoderPath = dracoDecoderPath()
-  if (decoderPath !== undefined) {
-    dracoLoader.setDecoderPath(decoderPath)
-  }
-  const loader = new GLTFLoader()
-  loader.setDRACOLoader(dracoLoader)
-  return loader
-}
+import { makeGLTFLoader } from '@/utils/draco'
 
 class Rotation {
   name: string
