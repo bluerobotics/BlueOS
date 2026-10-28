@@ -27,12 +27,12 @@ if [ -n "$BOARD" ]; then
     # Image builds run on hosts that are not the target board, so detection can't be used
     # The accepted values are the scripts in this directory, and must match the board of the image build matrix
     case "$BOARD" in
-        bcm_28xx|bcm_27xx|bcm_2712)
+        bcm_28xx|bcm_27xx|bcm_2712|bcm_multi)
             echo "Using $BOARD from BOARD"
             curl -fsSL $CONFIGURE_BOARD_PATH/$BOARD.sh | bash
             ;;
         *)
-            echo "Invalid BOARD: $BOARD (expected bcm_28xx, bcm_27xx or bcm_2712)"
+            echo "Invalid BOARD: $BOARD (expected bcm_28xx, bcm_27xx, bcm_2712 or bcm_multi)"
             exit 1
             ;;
     esac
