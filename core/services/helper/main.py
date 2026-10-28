@@ -174,6 +174,7 @@ class Helper:
         9134,  # Kraken
         9150,  # Recorder Extractor
         9152,  # Customization
+        9153,  # Removable Storage
         27353,  # Bridget
     }
     SKIP_PORTS: Set[int] = {

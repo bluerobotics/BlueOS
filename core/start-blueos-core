@@ -149,6 +149,7 @@ SERVICES=(
     # [Disabled] 'recorder_extractor',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/recorder_extractor/main.py"
     'disk_usage',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/disk_usage/main.py"
     'customization',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/customization/main.py"
+    'removable_storage',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/removable_storage/main.py"
 )
 
 tmux -f /etc/tmux.conf start-server
