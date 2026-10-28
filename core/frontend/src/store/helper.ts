@@ -29,16 +29,19 @@ type CheckSiteStatus = {
 
 type SiteStatus = Record<string, CheckSiteStatus>
 
+const TOPSIDE_INTERNET_CHECK_HOSTS = ['1.1.1.1', 'github.com']
+
 @Module({
   dynamic: true,
   store,
   name: 'helper',
 })
-
 class PingStore extends VuexModule {
   API_URL = '/helper/latest'
 
   has_internet: InternetConnectionState = InternetConnectionState.UNKNOWN
+
+  topside_has_internet = true
 
   dns_failure = false
 
@@ -52,6 +55,10 @@ class PingStore extends VuexModule {
     { delay: 20000 },
   )
 
+  checkTopsideInternetTask = new OneMoreTime(
+    { delay: 20000 },
+  )
+
   updateWebServicesTask = new OneMoreTime(
     { delay: 10000 }, // scan_ports can take several seconds; a 5s delay stacked overlapping polls
   )
@@ -59,6 +66,11 @@ class PingStore extends VuexModule {
   @Mutation
   setHasInternet(has_internet: InternetConnectionState): void {
     this.has_internet = has_internet
+  }
+
+  @Mutation
+  setTopsideHasInternet(topside_has_internet: boolean): void {
+    this.topside_has_internet = topside_has_internet
   }
 
   @Mutation
@@ -145,6 +157,19 @@ class PingStore extends VuexModule {
   }
 
   @Action
+  async checkTopsideInternet(): Promise<void> {
+    const hosts = new Set([...TOPSIDE_INTERNET_CHECK_HOSTS, ...this.reachable_hosts])
+    try {
+      await Promise.any([...hosts].map((host) => fetch(`https://${host}`, {
+        mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(5000),
+      })))
+      this.setTopsideHasInternet(true)
+    } catch {
+      this.setTopsideHasInternet(false)
+    }
+  }
+
+  @Action
   async checkWebServices(): Promise<Service[]> {
     return back_axios({
       method: 'get',
@@ -191,6 +216,7 @@ export { PingStore }
 const ping: PingStore = getModule(PingStore)
 
 ping.checkInternetAccessTask.setAction(ping.checkInternetAccess)
+ping.checkTopsideInternetTask.setAction(ping.checkTopsideInternet)
 ping.updateWebServicesTask.setAction(ping.updateWebServices)
 
 export default ping
