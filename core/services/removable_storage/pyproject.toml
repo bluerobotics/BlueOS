@@ -1,0 +1,16 @@
+[project]
+name = "removable_storage"
+version = "0.1.0"
+description = "Manage removable USB storage devices."
+requires-python = ">=3.11"
+dependencies = [
+    "commonwealth==0.1.0",
+    "fastapi==0.125.0",
+    "fastapi-versioning==0.10.0",
+    "loguru==0.7.3",
+    "pydantic==2.12.5",
+    "uvicorn==0.38.0",
+]
+
+[tool.uv]
+package = false

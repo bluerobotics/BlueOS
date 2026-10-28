@@ -44,7 +44,7 @@ DELTA_JSON = {
             "/sys/": {"bind": "/sys/", "mode": "rw"},
             "/usr/blueos/bin": {"bind": "/usr/blueos/bin", "mode": "rw"},
             "/usr/blueos/extensions": {"bind": "/usr/blueos/extensions", "mode": "rw"},
-            "/usr/blueos/userdata": {"bind": "/usr/blueos/userdata", "mode": "rw"},
+            "/usr/blueos/userdata": {"bind": "/usr/blueos/userdata", "mode": "rw,rslave"},
             "/var/run/wpa_supplicant": {"bind": "/var/run/wpa_supplicant", "mode": "rw"},
             "/var/run/dbus": {"bind": "/var/run/dbus", "mode": "rw"},
             "/run/log/journal": {"bind": "/run/log/journal", "mode": "ro"},
@@ -642,6 +642,7 @@ def ensure_user_data_structure_is_in_place() -> bool:
     commands = [
         "sudo mkdir -p /usr/blueos/userdata/images/vehicle",
         "sudo mkdir -p /usr/blueos/userdata/images/logo",
+        "sudo mkdir -p /usr/blueos/userdata/removable",
         "sudo mkdir -p /usr/blueos/userdata/styles",
     ]
     for command in commands:

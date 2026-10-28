@@ -72,7 +72,7 @@
             },
             "/usr/blueos/userdata": {
                 "bind": "/usr/blueos/userdata",
-                "mode": "rw"
+                "mode": "rw,rslave"
             },
             "/usr/blueos/extensions": {
                 "bind": "/usr/blueos/extensions",

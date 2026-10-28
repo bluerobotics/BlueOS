@@ -153,6 +153,7 @@ set -e
     ln -s /root/.config /shortcuts/configs
     ln -s /var/logs/blueos/services /shortcuts/system_logs
     ln -s /usr/blueos/userdata /shortcuts/userdata
+    ln -s /usr/blueos/userdata/removable /shortcuts/usb
     ln -s /usr/blueos/extensions /shortcuts/extensions
     ln -s /root/.config/ardupilot-manager /shortcuts/ardupilot_logs
     ln -s / /shortcuts/system_root
