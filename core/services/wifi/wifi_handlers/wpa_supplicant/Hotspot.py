@@ -11,6 +11,7 @@ from ipaddress import IPv4Address
 from typing import Any, Callable, List, Optional
 
 import psutil
+import radio
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from commonwealth.utils.general import HostOs, device_id, get_host_os
 from loguru import logger
@@ -177,6 +178,8 @@ class HotspotManager:
             raise RuntimeError("Hotspot not supported on this device.")
         try:
             self._create_temp_config_file()
+            # A soft-blocked radio (e.g. no wifi country set yet) makes "ifconfig up" fail and the hotspot time out
+            await radio.rfkill_unblock(check=False)
             # Recreating uap0 leaves hostapd bound to the old netdev unless we stop it first.
             if self._hostapd_process_alive():
                 assert self._subprocess is not None
