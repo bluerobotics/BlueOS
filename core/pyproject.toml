@@ -21,6 +21,7 @@ dependencies = [
   "pardal",
   "ping",
   "recorder_extractor",
+  "removable_storage",
   "versionchooser",
   "wifi",
 ]
@@ -71,6 +72,7 @@ nmea_injector = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
 recorder_extractor = { workspace = true }
+removable_storage = { workspace = true }
 versionchooser = { workspace = true }
 wifi = { workspace = true }
 
