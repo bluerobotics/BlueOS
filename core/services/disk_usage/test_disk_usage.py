@@ -1,22 +1,78 @@
+import logging
 import os
 import shutil
 import sys
 import tempfile
+import types
+from http import HTTPStatus
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Callable, Optional, Tuple
+from unittest.mock import MagicMock
 
 import pytest
-from fastapi import HTTPException
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-_saved = sys.modules.pop("main", None)
+
+
+class HTTPException(Exception):
+    def __init__(self, status_code: int, detail: Any = None) -> None:
+        super().__init__(detail)
+        self.status_code = status_code
+        self.detail = detail
+
+
+class FakeRouter:
+    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+        pass
+
+    def _route(self, *_args: Any, **_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        return lambda function: function
+
+    get = delete = _route
+
+
+def module(name: str, **attributes: Any) -> types.ModuleType:
+    stub = types.ModuleType(name)
+    stub.__dict__.update(attributes)
+    return stub
+
+
+# The 1.4 test env has no commonwealth, fastapi, fastapi_versioning or uvicorn, so main.py imports are replaced
+_STUBS = {
+    "commonwealth.utils.apis": module(
+        "commonwealth.utils.apis", GenericErrorHandlingRoute=MagicMock(), PrettyJSONResponse=MagicMock()
+    ),
+    "commonwealth.utils.logs": module(
+        "commonwealth.utils.logs", InterceptHandler=logging.NullHandler, init_logger=MagicMock()
+    ),
+    "commonwealth.utils.streaming": module("commonwealth.utils.streaming", streamer=MagicMock()),
+    "fastapi": module(
+        "fastapi",
+        APIRouter=FakeRouter,
+        FastAPI=MagicMock(),
+        HTTPException=HTTPException,
+        Query=lambda default, **_kwargs: default,
+        status=types.SimpleNamespace(**{f"HTTP_{code.value}_{code.name}": code.value for code in HTTPStatus}),
+    ),
+    "fastapi.responses": module("fastapi.responses", StreamingResponse=MagicMock()),
+    "fastapi_versioning": module(
+        "fastapi_versioning",
+        VersionedFastAPI=lambda app, **_kwargs: FakeRouter(),
+        versioned_api_route=MagicMock(),
+    ),
+    "uvicorn": module("uvicorn", Config=MagicMock(), Server=MagicMock()),
+}
+_saved = {name: sys.modules.pop(name, None) for name in ("main", *_STUBS)}
+sys.modules.update(_STUBS)
 
 import main as disk_usage
 
-if _saved is not None:
-    sys.modules["main"] = _saved
-else:
-    sys.modules.pop("main", None)
+# Restore after import so other collected tests still see the real modules (pytest-xdist)
+for module_name, saved_module in _saved.items():
+    if saved_module is not None:
+        sys.modules[module_name] = saved_module
+    else:
+        sys.modules.pop(module_name, None)
 
 DISKTEST_OUTPUT = """Generated --seed abc123
 Done. Wrote 1.00 MiB (1.05 MB, 1048576 bytes) @ 19.7 MiB/s.
