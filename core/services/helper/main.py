@@ -8,6 +8,7 @@ import logging
 import re
 import socket
 import subprocess
+import time
 import zlib
 from concurrent import futures
 from enum import Enum
@@ -102,6 +103,11 @@ class WebsiteStatus(BaseModel):
     online: bool
     error: Optional[str] = None
     error_kind: Optional[WebsiteError] = None
+
+
+class PingResult(BaseModel):
+    reachable: bool
+    latency_ms: Optional[float] = None
 
 
 class ServiceMetadata(BaseModel):
@@ -677,12 +683,7 @@ async def _tcp_reachable(host: str, ports: Tuple[int, ...], interface: Optional[
     return False
 
 
-@fast_api_app.get(
-    "/ping",
-    summary="Check that a host is reachable via a specific interface (ICMP, then TCP 80/443).",
-)
-@version(1, 0)
-async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
+async def _ping(host: str, interface_addr: Optional[str]) -> PingResult:
     iface = ["-I", interface_addr] if interface_addr else []
     process = await asyncio.create_subprocess_exec(
         "ping",
@@ -696,11 +697,34 @@ async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    await process.communicate()
+    stdout, _ = await process.communicate()
     if process.returncode == 0:
-        return True
+        match = re.search(r"time[=<]([\d.]+) ms", stdout.decode(errors="replace"))
+        return PingResult(reachable=True, latency_ms=float(match.group(1)) if match else None)
     # ICMP-deaf HTTP hosts (amazon.com, telemetry.blueos.cloud) still have internet.
-    return await _tcp_reachable(host, (80, 443), interface_addr)
+    start = time.monotonic()
+    if await _tcp_reachable(host, (80, 443), interface_addr):
+        return PingResult(reachable=True, latency_ms=(time.monotonic() - start) * 1000)
+    return PingResult(reachable=False)
+
+
+@fast_api_app.get(
+    "/ping",
+    summary="Check that a host is reachable via a specific interface (ICMP, then TCP 80/443).",
+)
+@version(1, 0)
+async def ping(host: str, interface_addr: Optional[str] = None) -> bool:
+    return (await _ping(host, interface_addr)).reachable
+
+
+@fast_api_app.get(
+    "/ping_latency",
+    response_model=PingResult,
+    summary="Same as /ping, but also reports the round-trip latency in milliseconds.",
+)
+@version(1, 0)
+async def ping_latency(host: str, interface_addr: Optional[str] = None) -> PingResult:
+    return await _ping(host, interface_addr)
 
 
 async def periodic() -> None:
