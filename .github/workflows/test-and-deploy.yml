@@ -1,13 +1,10 @@
 name: Test, Build and Deploy Images
 
-env:
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-
 on:
     workflow_dispatch:
     pull_request:
-      # The build-images label starts the Raspberry images build. Any other label still runs the tests, a pull
-      # request only shows the latest run of the workflow and a skipped one would hide their results
+      # A new label re-runs the workflow. Pi images stay tied to build-images so an unrelated label does not
+      # replace the visible run with a skipped Pi build.
       types: [opened, synchronize, reopened, labeled]
     push:
     schedule:
@@ -79,61 +76,134 @@ jobs:
       - name: Bun build
         run: NODE_OPTIONS=--max-old-space-size=8192 bun run --cwd ./core/frontend build
 
-  deploy-docker-images:
+  image-ref:
     runs-on: ubuntu-latest
-    needs: [frontend-tests, python-tests]
+    outputs:
+      image_version: ${{ steps.ref.outputs.image_version }}
+      platforms: ${{ steps.ref.outputs.platforms }}
+      runners: ${{ steps.ref.outputs.runners }}
+      pushed: ${{ steps.ref.outputs.pushed }}
+      git_describe_tags: ${{ steps.ref.outputs.git_describe_tags }}
+      vite_git_describe: ${{ steps.ref.outputs.vite_git_describe }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Same commit the image build describes. A pull request's default checkout is the merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Resolve image tag
+        id: ref
+        env:
+          # The image namespace is the head repository owner. On a pull request, GITHUB_REPOSITORY is the base.
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            REF_NAME="$GITHUB_HEAD_REF"
+          else
+            REF_NAME="$GITHUB_REF_NAME"
+          fi
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            IMAGE_VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            # Docker tags cannot contain a slash. This is the same last segment a branch push publishes.
+            IMAGE_VERSION="${REF_NAME##*/}"
+          fi
+          # Fork pull requests have no registry secrets in this step.
+          source .github/registry-user.sh
+          image_tag_ok "$IMAGE_VERSION" || exit 1
+          # One list. The platform array and the runner map are built from it, so they cannot drift.
+          entries=(
+            "linux/amd64 ubuntu-latest"
+            "linux/arm64/v8 ubuntu-24.04-arm"
+            # arm/v7 is armhf. An arm64 runner would still emulate that ABI, so this stays on ubuntu-latest.
+            "linux/arm/v7 ubuntu-latest"
+          )
+          platforms=""
+          runners=""
+          for entry in "${entries[@]}"; do
+            platform="${entry%% *}"
+            runner="${entry##* }"
+            if [[ -n "$platforms" ]]; then
+              platforms+=","
+              runners+=","
+            fi
+            platforms+="\"${platform}\""
+            runners+="{\"platform\":\"${platform}\",\"runner\":\"${runner}\"}"
+          done
+          echo "platforms=[${platforms}]" >> "$GITHUB_OUTPUT"
+          echo "runners=[${runners}]" >> "$GITHUB_OUTPUT"
+          FORK_PULL_REQUEST=false
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && -n "$HEAD_REPOSITORY" && "$HEAD_REPOSITORY" != "$GITHUB_REPOSITORY" ]]; then
+            FORK_PULL_REQUEST=true
+          fi
+          # A fork pull request runs on the base repository and does not receive the fork's registry credentials.
+          # The branch push publishes. The pull request then pulls sha-<commit> of that publish.
+          DOCKER_USER=$(registry_user) || exit 1
+          if [[ "$FORK_PULL_REQUEST" == "false" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
+            PUSHED=true
+          else
+            PUSHED=false
+          fi
+          if [[ "$PUSHED" == "true" && "${DOCKER_USERNAME,,}" != "$DOCKER_USER" ]]; then
+            echo "::error::DOCKER_USERNAME must be the Docker Hub owner of ${DOCKER_USER}/blueos-*" >&2
+            exit 1
+          fi
+          echo "image_version=${IMAGE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "pushed=${PUSHED}" >> "$GITHUB_OUTPUT"
+          echo "git_describe_tags=$(git describe --tags --long --always)" >> "$GITHUB_OUTPUT"
+          echo "vite_git_describe=$(git describe --long --always --dirty --all)" >> "$GITHUB_OUTPUT"
+          if [[ "$PUSHED" == "true" ]]; then
+            echo "Publishing ${DOCKER_USER}/blueos-*:${IMAGE_VERSION} and sha-<commit>"
+          else
+            echo "Image tag ${DOCKER_USER}/blueos-*:${IMAGE_VERSION} (pushed=false)"
+          fi
+
+  build-docker-images:
+    runs-on: ${{ matrix.runner }}
+    needs: [frontend-tests, python-tests, image-ref]
     strategy:
       fail-fast: false
       matrix:
         docker: [bootstrap, core]
         project: [blueos]
-        platforms: ["linux/arm/v7,linux/arm64/v8,linux/amd64"]
+        platform: ${{ fromJSON(needs.image-ref.outputs.platforms) }}
+        include: ${{ fromJSON(needs.image-ref.outputs.runners) }}
+    env:
+      # The image namespace is the head repository owner. On a pull request, GITHUB_REPOSITORY is the base.
+      HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0 #Number of commits to fetch. 0 indicates all history for all branches and tags.
+          # A pull request checkout is the merge commit. Publish the branch tip, which is what the push run tags.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
           submodules: recursive
 
       - name: Prepare
         id: prepare
         run: |
-          # Deploy image with the name of the branch, if the build is a git tag, replace tag with the tag name.
-          # If git tag matches semver, append latest tag to the push.
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
-          CACHE_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-buildcache:${{ matrix.docker }}-master
-          VERSION=${GITHUB_REF##*/}
-
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
+          PLATFORM_SLUG=$(echo "${{ matrix.platform }}" | tr '/' '-')
+          PLATFORM_SUFFIX=${PLATFORM_SLUG#linux-}
+          echo "platform_slug=${PLATFORM_SLUG}" >> "$GITHUB_OUTPUT"
+          echo "platform_suffix=${PLATFORM_SUFFIX}" >> "$GITHUB_OUTPUT"
+          # One cache tag per platform. Only master writes it, so other refs cannot overwrite it.
+          if [[ "$GITHUB_REF" == "refs/heads/master" && "${{ needs.image-ref.outputs.pushed }}" == "true" ]]; then
+            echo "write_cache=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "write_cache=false" >> "$GITHUB_OUTPUT"
           fi
-
-          TAGS="--tag ${DOCKER_IMAGE}:${VERSION}"
-          if [[ $VERSION =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-            TAGS="$TAGS --tag ${DOCKER_IMAGE}:latest"
-          fi
-
-          echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          # Every build reads the registry cache. Only master writes it: one shared tag, so
-          # concurrent pushes from other refs would overwrite each other. Tags are left out on
-          # purpose: they are cut from master, whose push already wrote the cache.
-          if [[ "${GITHUB_REF}" == 'refs/heads/master' && "${{ github.event_name }}" != 'pull_request' ]]; then
-            echo "buildx_registry_cache_to=--cache-to 'type=registry,ref=${CACHE_IMAGE},mode=max'" >> $GITHUB_OUTPUT
-          fi
-          echo "buildx_args=\
-            --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
-            --build-arg VITE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
-            --cache-from 'type=local,src=/tmp/.buildx-cache' \
-            --cache-from 'type=registry,ref=${CACHE_IMAGE}' \
-            --cache-to 'type=local,dest=/tmp/.buildx-cache' \
-            ${TAGS} \
-            --file ${{ matrix.docker }}/Dockerfile ./${{ matrix.docker }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
+        if: matrix.platform == 'linux/arm/v7'
         uses: docker/setup-qemu-action@v4
         with:
-          platforms: all
+          platforms: arm
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -145,141 +215,220 @@ jobs:
         id: cache
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
+          key: ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ steps.prepare.outputs.platform_slug }}-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ hashFiles(format('{0}/Dockerfile', matrix.docker)) }}
-            ${{ runner.os }}-buildx-${{ matrix.docker }}
+            ${{ runner.os }}-buildx-${{ matrix.docker }}-${{ steps.prepare.outputs.platform_slug }}-
+
+      - name: Login to DockerHub
+        if: needs.image-ref.outputs.pushed == 'true'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Docker Buildx (build)
+        env:
+          GIT_DESCRIBE_TAGS: ${{ needs.image-ref.outputs.git_describe_tags }}
+          VITE_APP_GIT_DESCRIBE: ${{ needs.image-ref.outputs.vite_git_describe }}
         run: |
+          set -euo pipefail
+          # Fork pull requests have no registry secrets in this step.
+          source .github/registry-user.sh
+          REGISTRY_USER=$(registry_user) || exit 1
+          DOCKER_IMAGE="${REGISTRY_USER}/${{ matrix.project }}-${{ matrix.docker }}"
+          CACHE_IMAGE="${REGISTRY_USER}/${{ matrix.project }}-buildcache"
+          CACHE_IMAGE="${CACHE_IMAGE}:${{ matrix.docker }}-master-${{ steps.prepare.outputs.platform_slug }}"
+          OUTPUTS=()
+          if [[ "${{ needs.image-ref.outputs.pushed }}" == "true" ]]; then
+            OUTPUTS+=(--output "type=image,name=${DOCKER_IMAGE},push-by-digest=true,name-canonical=true,push=true")
+          fi
+          archive="BlueOs-${{ matrix.docker }}-docker-image-${{ steps.prepare.outputs.platform_suffix }}.tar"
+          OUTPUTS+=(--output "type=docker,dest=${archive}")
+          CACHE_TO=()
+          if [[ "${{ steps.prepare.outputs.write_cache }}" == "true" ]]; then
+            CACHE_TO+=(--cache-to "type=registry,ref=${CACHE_IMAGE},mode=max")
+          fi
+          # Provenance would wrap each platform in its own index, and the merge would nest those.
           docker buildx build \
-            --output "type=image,push=false" \
-            --platform ${{ matrix.platforms }} \
-            ${{ steps.prepare.outputs.buildx_args }}
+            --metadata-file /tmp/build-metadata.json \
+            --provenance=false \
+            --sbom=false \
+            --build-arg GIT_DESCRIBE_TAGS="$GIT_DESCRIBE_TAGS" \
+            --build-arg VITE_APP_GIT_DESCRIBE="$VITE_APP_GIT_DESCRIBE" \
+            --cache-from "type=local,src=/tmp/.buildx-cache" \
+            --cache-from "type=registry,ref=${CACHE_IMAGE}" \
+            --cache-to "type=local,dest=/tmp/.buildx-cache" \
+            "${CACHE_TO[@]}" \
+            "${OUTPUTS[@]}" \
+            --platform "${{ matrix.platform }}" \
+            --file "${{ matrix.docker }}/Dockerfile" \
+            "./${{ matrix.docker }}"
 
       - name: Check core size
-        if: ${{ matrix.docker == 'core' }}
+        if: matrix.docker == 'core' && matrix.platform == 'linux/amd64'
         run: |
-          # Check if the compressed image size is lower than our limit: that is what a vehicle downloads.
-          # A multi-platform build cannot be loaded into docker, so load only amd64.
-          IMAGE=${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
-          LIMIT_SIZE_MB=700
-          docker buildx build \
-            --output "type=docker" \
-            --platform linux/amd64 \
-            ${{ steps.prepare.outputs.buildx_args }}
+          set -euo pipefail
           # gzip -1 is faster than the level a registry uses, so this slightly overestimates the download.
-          UNCOMPRESSED_SIZE_BYTES=$(docker image inspect "${IMAGE}" --format '{{.Size}}')
-          COMPRESSED_SIZE_BYTES=$(docker save "${IMAGE}" | gzip -1 | wc -c)
-          for SIZE_BYTES in "${UNCOMPRESSED_SIZE_BYTES}" "${COMPRESSED_SIZE_BYTES}"; do
-            if ! [[ "${SIZE_BYTES}" =~ ^[0-9]+$ ]] || (( SIZE_BYTES == 0 )); then
-              echo "::error::Could not measure the size of ${IMAGE}, got '${SIZE_BYTES}'"
+          LIMIT_SIZE_MB=700
+          CORE_ARCHIVE=BlueOs-core-docker-image-amd64.tar
+          LOADED=$(docker load -i "$CORE_ARCHIVE")
+          echo "$LOADED"
+          IMAGE_ID=$(echo "$LOADED" | sed -n 's/^Loaded image ID: //p; s/^Loaded image: //p' | head -1)
+          if [[ -z "$IMAGE_ID" ]]; then
+            echo "::error::Could not load ${CORE_ARCHIVE}" >&2
+            exit 1
+          fi
+          UNCOMPRESSED_SIZE_BYTES=$(docker image inspect "$IMAGE_ID" --format '{{.Size}}')
+          COMPRESSED_SIZE_BYTES=$(gzip -1 -c "$CORE_ARCHIVE" | wc -c)
+          for SIZE_BYTES in "$UNCOMPRESSED_SIZE_BYTES" "$COMPRESSED_SIZE_BYTES"; do
+            if ! [[ "$SIZE_BYTES" =~ ^[0-9]+$ ]] || (( SIZE_BYTES == 0 )); then
+              echo "::error::Could not measure the core image, got '${SIZE_BYTES}'"
               exit 1
             fi
           done
           UNCOMPRESSED_SIZE_MB=$(( UNCOMPRESSED_SIZE_BYTES / 2**20 ))
           COMPRESSED_SIZE_MB=$(( COMPRESSED_SIZE_BYTES / 2**20 ))
           MESSAGE="Core amd64 size: ${COMPRESSED_SIZE_MB} MB compressed (limit ${LIMIT_SIZE_MB} MB), ${UNCOMPRESSED_SIZE_MB} MB uncompressed"
-          echo "${MESSAGE}"
-          echo "${MESSAGE}" >> $GITHUB_STEP_SUMMARY
+          echo "$MESSAGE"
+          echo "$MESSAGE" >> "$GITHUB_STEP_SUMMARY"
           if (( COMPRESSED_SIZE_MB > LIMIT_SIZE_MB )); then
-            echo "::error::${IMAGE} is ${COMPRESSED_SIZE_MB} MB compressed, over the ${LIMIT_SIZE_MB} MB limit"
+            echo "::error::core amd64 is ${COMPRESSED_SIZE_MB} MB compressed, over the ${LIMIT_SIZE_MB} MB limit"
             exit 1
           fi
 
+      - name: Upload docker image archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: BlueOs-${{ matrix.docker }}-docker-image-${{ steps.prepare.outputs.platform_suffix }}
+          path: BlueOs-${{ matrix.docker }}-docker-image-${{ steps.prepare.outputs.platform_suffix }}.tar
+          if-no-files-found: error
+
+      - name: Export digest
+        if: needs.image-ref.outputs.pushed == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/digests
+          DIGEST=$(jq -r '."containerimage.digest"' /tmp/build-metadata.json)
+          if [[ "$DIGEST" != sha256:* ]]; then
+            echo "::error::Build did not record a digest: ${DIGEST}" >&2
+            exit 1
+          fi
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - name: Upload digest
+        if: needs.image-ref.outputs.pushed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ matrix.docker }}-${{ steps.prepare.outputs.platform_slug }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+
+  deploy-docker-images:
+    runs-on: ubuntu-latest
+    needs: [build-docker-images, image-ref]
+    if: needs.build-docker-images.result == 'success' && needs.image-ref.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        docker: [bootstrap, core]
+        project: [blueos]
+    env:
+      # The image namespace is the head repository owner. On a pull request, GITHUB_REPOSITORY is the base.
+      HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+    steps:
+      - name: Checkout
+        if: needs.image-ref.outputs.pushed == 'true'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Download digests
+        if: needs.image-ref.outputs.pushed == 'true'
+        uses: actions/download-artifact@v7
+        with:
+          path: /tmp/digests
+          pattern: digests-${{ matrix.docker }}-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        if: needs.image-ref.outputs.pushed == 'true'
+        uses: docker/setup-buildx-action@v4
+        with:
+          version: latest
+
       - name: Login to DockerHub
-        if: success() && github.event_name != 'pull_request'
+        if: needs.image-ref.outputs.pushed == 'true'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker Buildx (push)
-        if: success() && github.event_name != 'pull_request'
+      - name: Create multi-platform image
+        if: needs.image-ref.outputs.pushed == 'true'
+        working-directory: /tmp/digests
         run: |
-          docker buildx build \
-            --output "type=image,push=true" \
-            --platform ${{ matrix.platforms }} \
-            ${{ steps.prepare.outputs.buildx_args }} \
-            ${{ steps.prepare.outputs.buildx_registry_cache_to }}
+          set -euo pipefail
+          # Fork pull requests have no registry secrets in this step.
+          source "$GITHUB_WORKSPACE/.github/registry-user.sh"
+          REGISTRY_USER=$(registry_user) || exit 1
+          DOCKER_IMAGE="${REGISTRY_USER}/${{ matrix.project }}-${{ matrix.docker }}"
+          VERSION=${{ needs.image-ref.outputs.image_version }}
+          # The branch tag moves. sha-<commit> is what a fork pull request pulls, so it cannot use an older branch tag.
+          COMMIT_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          TAGS=(--tag "${DOCKER_IMAGE}:${VERSION}" --tag "${DOCKER_IMAGE}:sha-${COMMIT_SHA}")
+          if [[ "$GITHUB_REF" == refs/tags/* && "$VERSION" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+            TAGS+=(--tag "${DOCKER_IMAGE}:latest")
+          fi
+          mapfile -t digests < <(find . -type f -printf '%f\n' | sort)
+          EXPECTED_PLATFORMS=$(jq -r 'length' <<< '${{ needs.image-ref.outputs.platforms }}')
+          if [[ ${#digests[@]} -ne "$EXPECTED_PLATFORMS" ]]; then
+            echo "::error::Expected ${EXPECTED_PLATFORMS} platform digests for ${DOCKER_IMAGE}, found ${#digests[@]}"
+            find . -type f
+            exit 1
+          fi
+          refs=()
+          for digest in "${digests[@]}"; do
+            refs+=("${DOCKER_IMAGE}@sha256:${digest}")
+          done
+          docker buildx imagetools create "${TAGS[@]}" "${refs[@]}"
+          echo "Published ${DOCKER_IMAGE}:${VERSION}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Inspect image
-        if: always() && github.event_name != 'pull_request'
+        if: needs.image-ref.outputs.pushed == 'true'
         run: |
-          docker buildx imagetools \
-            inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
+          # Fork pull requests have no registry secrets in this step.
+          source "$GITHUB_WORKSPACE/.github/registry-user.sh"
+          REGISTRY_USER=$(registry_user) || exit 1
+          docker buildx imagetools inspect \
+            "${REGISTRY_USER}/${{ matrix.project }}-${{ matrix.docker }}:${{ needs.image-ref.outputs.image_version }}"
 
-      - name: Create image artifact
-        if: success()
-        run: |
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
-          GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
-          docker buildx build \
-            ${{ steps.prepare.outputs.buildx_args }} \
-            --platform "linux/arm64/v8"  \
-            --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-${{ matrix.docker }}-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
-
-      - name: Upload artifact arm64-v8
-        uses: actions/upload-artifact@v7
-        if: success()
+      - name: Download core release archives
+        if: startsWith(github.ref, 'refs/tags/') && matrix.docker == 'core'
+        uses: actions/download-artifact@v7
         with:
-          name: BlueOS-${{ matrix.docker }}-docker-image-arm64-v8
-          path: '*arm64-v8.tar'
-
-      - name: Create image artifact
-        if: success()
-        run: |
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
-          GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
-          docker buildx build \
-            ${{ steps.prepare.outputs.buildx_args }} \
-            --platform "linux/arm/v7"  \
-            --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-${{ matrix.docker }}-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
-
-      - name: Upload artifact arm-v7
-        uses: actions/upload-artifact@v7
-        if: success()
-        with:
-          name: BlueOS-${{ matrix.docker }}-docker-image-arm-v7
-          path: '*arm-v7.tar'
-
-      - name: Create image artifact
-        if: success() && matrix.docker == 'core'
-        run: |
-          DOCKER_IMAGE=${DOCKER_USERNAME:-bluerobotics}/${{ matrix.project }}-${{ matrix.docker }}
-          GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
-          docker buildx build \
-            ${{ steps.prepare.outputs.buildx_args }} \
-            --platform "linux/amd64"  \
-            --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-            --output "type=docker,dest=BlueOs-core-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
-
-      - name: Upload artifact amd64
-        uses: actions/upload-artifact@v7
-        if: success() && matrix.docker == 'core'
-        with:
-          name: BlueOS-core-docker-image-amd64
-          path: '*amd64.tar'
+          pattern: BlueOs-core-docker-image-*
+          merge-multiple: true
 
       - name: Upload docker image for release
         uses: svenstaro/upload-release-action@v2
-        if: startsWith(github.ref, 'refs/tags/') && success() && matrix.docker == 'core'
+        if: startsWith(github.ref, 'refs/tags/') && matrix.docker == 'core'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: '*.tar'
+          file: BlueOs-core-docker-image-*.tar
           tag: ${{ github.ref }}
           overwrite: true
           prerelease: true
           file_glob: true
 
   deploy-raspberry-image:
-    needs: deploy-docker-images
+    needs: [deploy-docker-images, image-ref]
+    # A fork's own push bakes its Pi image. Only the schedule is limited to the bluerobotics owner.
     if: >-
-      github.repository_owner == 'bluerobotics' &&
+      needs.deploy-docker-images.result == 'success' &&
+      needs.image-ref.result == 'success' &&
+      (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-images')) &&
       (github.event.action != 'labeled' || github.event.label.name == 'build-images') &&
-      (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'build-images'))
+      (github.event_name != 'schedule' || github.repository_owner == 'bluerobotics')
     timeout-minutes: 180 # Detect if it gets into an infinite loop or some unexpected state
     strategy:
       fail-fast: false
@@ -289,45 +438,42 @@ jobs:
             platform: "linux/arm/v7"
             os: "bookworm"
             board: "bcm_27xx"
-            artifact: "arm-v7"
             image: "raspios_lite_armhf/images/raspios_lite_armhf-2024-07-04/2024-07-04-raspios-bookworm-armhf-lite.img.xz"
           - runner: ubuntu-latest
             platform: "linux/arm/v7"
             os: "bullseye"
             board: "bcm_27xx"
-            artifact: "arm-v7"
             image: "raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip"
           - runner: ubuntu-24.04-arm
             platform: "linux/arm64/v8"
             os: "bookworm"
             board: "bcm_2712"
-            artifact: "arm64-v8"
             image: "raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
 
     runs-on: ${{ matrix.runner }}
+    env:
+      # The image namespace is the head repository owner. On a pull request, GITHUB_REPOSITORY is the base.
+      HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: recursive
 
-      # The image embeds the images built by this run rather than whatever is published for the branch name
-      - name: Download docker images
-        uses: actions/download-artifact@v8
-        with:
-          pattern: BlueOS-*-docker-image-${{ matrix.artifact }}
-          path: deploy/pimod/images
-          merge-multiple: true
-
-      # We use our own pimod as upstream doesn't provide armv7 images
+      # We use our own pimod as upstream doesn't provide armv7 images.
+      # A run that published pulls the branch tag it just created. A fork pull request has no registry
+      # secret, so it pulls sha-<commit>, which the branch push publishes for this same commit.
       - name: Pimod Build
         run: |
           PIMOD_VERSION=v0.7.0
           BLUEOS_VERSION=$GITHUB_REF_NAME
           REMOTE=https://raw.githubusercontent.com/$GITHUB_REPOSITORY
           if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
-            # A pull request has no raw ref, so label the images built by this run as master and use this checkout's scripts
+            # A pull request has no raw ref, so serve this checkout's scripts. The image tag is separate.
             BLUEOS_VERSION=master
             mkdir -p /tmp/remote
             ln -sfn $PWD /tmp/remote/$BLUEOS_VERSION
@@ -339,14 +485,36 @@ jobs:
             curl -fsS --retry 5 --retry-connrefused -o /dev/null $REMOTE/$BLUEOS_VERSION/install/install.sh
           fi
           wget https://raw.githubusercontent.com/Nature40/pimod/${PIMOD_VERSION}/pimod.sh && chmod +x pimod.sh
-          # The nested dockerd loads the built images and pulls the extensions, and iptables-nft can't initialize under qemu-user
+          # Fork pull requests receive empty registry secrets. Do not log in above this source.
+          source .github/registry-user.sh
+          REGISTRY_USER=$(registry_user) || exit 1
+          if [[ "${{ needs.image-ref.outputs.pushed }}" == "true" ]]; then
+            IMAGE_VERSION="${{ needs.image-ref.outputs.image_version }}"
+            PULL_ATTEMPTS=3
+          else
+            if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
+              echo "::error::Nothing publishes ${REGISTRY_USER}/blueos-* without DOCKER_USERNAME and DOCKER_PASSWORD." >&2
+              exit 1
+            fi
+            IMAGE_VERSION="sha-${{ github.event.pull_request.head.sha || github.sha }}"
+            PULL_ATTEMPTS=30
+            echo "Waiting for ${REGISTRY_USER}/blueos-*:${IMAGE_VERSION}."
+            echo "The branch push publishes that tag and needs DOCKER_USERNAME and DOCKER_PASSWORD on the fork."
+          fi
+          image_tag_ok "$IMAGE_VERSION" || exit 1
+          # The nested dockerd pulls the images and the extensions, and iptables-nft can't initialize under qemu-user
           docker run --rm --privileged \
             -v $PWD:/files \
             -e PATH=/pimod:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
             -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY \
             -e VERSION=$BLUEOS_VERSION \
+            -e IMAGE_VERSION="$IMAGE_VERSION" \
+            -e DOCKER_USER="$REGISTRY_USER" \
+            -e DOCKER_USERNAME \
+            -e DOCKER_PASSWORD \
+            -e PULL_ATTEMPTS="$PULL_ATTEMPTS" \
+            -e DOCKER_PLATFORM=${{ matrix.platform }} \
             -e REMOTE=$REMOTE \
-            -e LOCAL_IMAGES_DIR=/root/blueos-images \
             -e BASE_IMAGE=${{ matrix.image }} \
             -e BOARD=${{ matrix.board }} \
             -e DOCKER_EXTRA_OPTS="--iptables=false --ip6tables=false --bridge=none" \
