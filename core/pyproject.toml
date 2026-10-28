@@ -4,24 +4,24 @@ version = "1.4.0"
 description = "Core workspace with backend services for BlueOS."
 requires-python = ">=3.11"
 dependencies = [
-  "bridges",
-  "commonwealth",
-  "filebrowser",
   "ardupilot_manager",
   "bag_of_holding",
   "beacon",
   "bridget",
+  "bridges",
   "cable_guy",
+  "commonwealth",
   "commander",
   "customization",
   "disk_usage",
-  "versionchooser",
-  "kraken",
+  "filebrowser",
   "helper",
+  "kraken",
   "nmea_injector",
-  "recorder_extractor",
   "pardal",
   "ping",
+  "recorder_extractor",
+  "versionchooser",
   "wifi",
 ]
 
@@ -54,24 +54,24 @@ lint = [
 default-groups = ["dev", "lint"]
 
 [tool.uv.sources]
-bridges = { workspace = true }
-commonwealth = { workspace = true }
-filebrowser = { workspace = true }
 ardupilot_manager = { workspace = true }
 bag_of_holding = { workspace = true }
 beacon = { workspace = true }
 bridget = { workspace = true }
+bridges = { workspace = true }
 cable_guy = { workspace = true }
+commonwealth = { workspace = true }
 commander = { workspace = true }
 customization = { workspace = true }
 disk_usage = { workspace = true }
-versionchooser = { workspace = true }
-kraken = { workspace = true }
+filebrowser = { workspace = true }
 helper = { workspace = true }
+kraken = { workspace = true }
 nmea_injector = { workspace = true }
-recorder_extractor = { workspace = true }
 pardal = { workspace = true }
 ping = { workspace = true }
+recorder_extractor = { workspace = true }
+versionchooser = { workspace = true }
 wifi = { workspace = true }
 
 [tool.uv.workspace]
