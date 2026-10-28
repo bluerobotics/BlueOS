@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import subprocess
@@ -25,6 +26,37 @@ exec(  # pylint: disable=exec-used
 )
 
 from commonwealth.utils.general import CpuType
+
+
+def test_userdata_mount_propagation_matches_bootstrap_default() -> None:
+    default_path = REPOSITORY_PATH / "bootstrap" / "startup.json.default"
+    default_config = json.loads(default_path.read_text(encoding="utf-8"))
+    default_bind = default_config["core"]["binds"]["/usr/blueos/userdata"]
+    delta_bind = blueos_startup_update.DELTA_JSON["core"]["binds"]["/usr/blueos/userdata"]
+    assert default_bind == delta_bind == {"bind": "/usr/blueos/userdata", "mode": "rw,rslave"}
+
+
+def test_update_startup_migrates_userdata_mount_propagation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    startup_path = tmp_path / "startup.json"
+    startup_path.write_text(
+        json.dumps(
+            {
+                "core": {
+                    "binds": {
+                        "/usr/blueos/userdata": {
+                            "bind": "/usr/blueos/userdata",
+                            "mode": "rw",
+                        }
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(blueos_startup_update.appdirs, "user_config_dir", lambda _name: str(tmp_path))
+    assert blueos_startup_update.update_startup()
+    config = json.loads(startup_path.read_text(encoding="utf-8"))
+    assert config["core"]["binds"]["/usr/blueos/userdata"]["mode"] == "rw,rslave"
 
 
 class Distribution(NamedTuple):
