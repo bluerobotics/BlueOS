@@ -8,6 +8,8 @@ import pytest
 
 @pytest.mark.parametrize("version", ["v1", "v2"])
 def test_api_root_redirects_to_relative_docs(version: str, tmp_path: Path) -> None:
+    # The root dev environment on 1.4 doesn't ship kraken's FastAPI dependencies
+    pytest.importorskip("fastapi")
     service_path = Path(__file__).parent
     environment = {key: value for key, value in os.environ.items() if not key.startswith("COV_CORE_")} | {
         # commonwealth is not installed on 1.4, so point the subprocess at its source
