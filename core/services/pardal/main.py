@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import asyncio
 import logging
 import os
 from typing import Generator, Optional
@@ -13,6 +14,7 @@ from speedtest import Speedtest
 
 SERVICE_NAME = "pardal"
 SPEED_TEST: Optional[Speedtest] = None
+SPEED_TEST_LOCK = asyncio.Lock()
 
 parser = argparse.ArgumentParser(description="Pardal, web service to help with speed and latency tests")
 parser.add_argument("-p", "--port", help="Port to run web server", action="store_true", default=9120)
@@ -84,9 +86,11 @@ async def internet_best_server(request: web.Request) -> web.Response:
     interface_addr = request.query.get("interface_addr") or None
 
     global SPEED_TEST
-    SPEED_TEST = Speedtest(secure=True, source_address=interface_addr)
-    SPEED_TEST.get_best_server()
-    return web.json_response(SPEED_TEST.results.dict())
+    async with SPEED_TEST_LOCK:
+        speed_test = await asyncio.to_thread(Speedtest, secure=True, source_address=interface_addr)
+        await asyncio.to_thread(speed_test.get_best_server)
+        SPEED_TEST = speed_test
+        return web.json_response(speed_test.results.dict())
 
 
 # pylint: disable=unused-argument
@@ -95,10 +99,12 @@ async def internet_download_speed(request: web.Request) -> web.Response:
     """
     Check internet download speed test from BlueOS.
     """
-    if not SPEED_TEST:
-        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
-    SPEED_TEST.download()
-    return web.json_response(SPEED_TEST.results.dict())
+    async with SPEED_TEST_LOCK:
+        speed_test = SPEED_TEST
+        if not speed_test:
+            raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+        await asyncio.to_thread(speed_test.download)
+        return web.json_response(speed_test.results.dict())
 
 
 # pylint: disable=unused-argument
@@ -107,10 +113,12 @@ async def internet_upload_speed(request: web.Request) -> web.Response:
     """
     Check internet upload speed test from BlueOS.
     """
-    if not SPEED_TEST:
-        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
-    SPEED_TEST.upload(pre_allocate=False)
-    return web.json_response(SPEED_TEST.results.dict())
+    async with SPEED_TEST_LOCK:
+        speed_test = SPEED_TEST
+        if not speed_test:
+            raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+        await asyncio.to_thread(speed_test.upload, pre_allocate=False)
+        return web.json_response(speed_test.results.dict())
 
 
 # pylint: disable=unused-argument
