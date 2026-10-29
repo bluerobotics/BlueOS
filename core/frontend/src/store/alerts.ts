@@ -1,11 +1,10 @@
 import Vue from 'vue'
 import {
-  getModule, Mutation, VuexModule,
+  getModule, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'
 import { Alert, AlertLifecycle, AlertRuleId } from '@/types/alerts'
-import { DynamicModule as Module } from '@/utils/vuex'
 
 @Module({
   dynamic: true,
