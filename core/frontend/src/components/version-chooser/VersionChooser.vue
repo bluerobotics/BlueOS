@@ -764,7 +764,7 @@ export default Vue.extend({
         .catch((error) => {
           notifier.pushError(
             'VERSION_CHOOSER_DELETE_FAIL',
-            error.response?.data?.error ?? error.message,
+            error.response?.data?.error ?? error.response?.data ?? error.message,
             true,
           )
         })
