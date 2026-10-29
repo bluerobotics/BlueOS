@@ -8,9 +8,9 @@ from typing import Any, List, Optional, Tuple
 
 import psutil
 from loguru import logger
+from pydantic import BaseModel
 
 from commonwealth.utils.DHCPDiscovery import discover_dhcp_servers
-from pydantic import BaseModel
 
 
 class DHCPServerLease(BaseModel):
