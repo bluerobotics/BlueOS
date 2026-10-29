@@ -276,7 +276,7 @@ async def test_set_local_versions_reports_parent() -> None:
 async def test_commit_version_rejects_invalid_names(repository: str, tag: str) -> None:
     client_mock = mock.AsyncMock()
     result = await VersionChooser(client_mock).commit_version(repository, tag)
-    assert result.status_code == 422
+    assert result.status == 422
     client_mock.containers.get.assert_not_called()
 
 
@@ -288,7 +288,7 @@ async def test_commit_version_does_not_pause_core() -> None:
 
     result = await VersionChooser(client_mock).commit_version("joaozinho/blueos-core", "batatinha")
 
-    assert result.status_code == 200
+    assert result.status == 200
     client_mock.containers.get.assert_awaited_once_with("blueos-core")
     core.commit.assert_awaited_once_with(repository="joaozinho/blueos-core", tag="batatinha", pause=False)
 
