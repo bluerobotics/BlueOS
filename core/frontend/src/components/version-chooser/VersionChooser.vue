@@ -424,7 +424,7 @@ export default Vue.extend({
     async updateMajorTomIfNeeded(): Promise<void> {
       let step = ''
       try {
-        const action = await resolveMajorTomAction(this.has_internet)
+        const action = await resolveMajorTomAction(this.can_fetch_remote)
         if (action === 'skip') {
           return
         }
