@@ -7,8 +7,9 @@ from unittest.mock import Mock
 
 import psutil
 import pytest
-from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from loguru import logger
+
+from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from typedefs import Platform
 
 BABEL = "/dev/serial/by-id/usb-CUAV_CUAV_CAN_Babel-if00"
