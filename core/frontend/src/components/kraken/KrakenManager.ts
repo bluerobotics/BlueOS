@@ -194,7 +194,7 @@ export async function installExtension(
   progressHandler: (event: any) => void,
 ): Promise<void> {
   await back_axios({
-    url: `${KRAKEN_API_V2_URL}/extension/install`,
+    url: `${KRAKEN_API_V2_URL}/extension/`,
     method: 'POST',
     data: {
       identifier: extension.identifier,
