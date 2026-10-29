@@ -446,7 +446,8 @@ class EthernetManager:
         Returns:
             NetworkInterface: Interface object
         """
-        for interface in self.get_ethernet_interfaces(include_dhcp_markers):
+        interfaces: List[NetworkInterface] = self.get_ethernet_interfaces(include_dhcp_markers)
+        for interface in interfaces:
             if interface.name == name:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
