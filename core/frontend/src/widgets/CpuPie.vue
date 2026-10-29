@@ -47,14 +47,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import { OneMoreTime } from '@/one-more-time'
 import system_information, { FetchType } from '@/store/system-information'
+
+const FETCH_TYPES = [FetchType.SystemCpuType, FetchType.SystemMemoryType, FetchType.SystemDiskType]
 
 export default Vue.extend({
   name: 'CpuPie',
   data() {
     return {
-      timer: new OneMoreTime({ delay: 2000, disposeWith: this }),
       containerWidth: 0,
     }
   },
@@ -85,16 +85,12 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.timer.setAction(() => {
-      system_information.fetchSystemInformation(FetchType.SystemCpuType)
-      system_information.fetchSystemInformation(FetchType.SystemMemoryType)
-      system_information.fetchSystemInformation(FetchType.SystemDiskType)
-    })
-
+    system_information.subscribeSystemInformation(FETCH_TYPES)
     this.updateContainerWidth()
     window.addEventListener('resize', this.updateContainerWidth)
   },
   beforeDestroy() {
+    system_information.unsubscribeSystemInformation(FETCH_TYPES)
     window.removeEventListener('resize', this.updateContainerWidth)
   },
   methods: {
