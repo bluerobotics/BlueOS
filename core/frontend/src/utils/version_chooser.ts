@@ -283,7 +283,6 @@ async function commitVersion(repository: string, tag: string): Promise<void> {
     method: 'post',
     url: `${API_URL}/version/commit`,
     data: { repository, tag },
-    timeout: 2 * 1000,
   })
 }
 
