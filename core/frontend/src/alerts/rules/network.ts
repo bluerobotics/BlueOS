@@ -17,14 +17,6 @@ const defineRules = ruleSet({
 
 const rules: AlertRule[] = defineRules([
   {
-    id: AlertRuleId.NetworkDnsFailure,
-    service: helper_service,
-    level: NotificationLevel.Warning,
-    title: 'DNS is not resolving names',
-    description: 'The network link is working but domain names cannot be resolved. Check the DNS settings.',
-    condition: () => helper.dns_failure,
-  },
-  {
     id: AlertRuleId.NetworkWifiUnavailable,
     service: wifi_service,
     level: NotificationLevel.Warning,
