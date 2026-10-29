@@ -11,8 +11,8 @@ from commonwealth.utils.apis import (
     use_local_docs_assets,
 )
 from commonwealth.utils.decorators import temporary_cache
-from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
