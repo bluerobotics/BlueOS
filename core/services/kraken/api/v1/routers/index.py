@@ -31,7 +31,8 @@ async def fetch_manifest() -> list[RepositoryEntry]:
 @index_router_v1.get("/installed_extensions", status_code=status.HTTP_200_OK)
 async def get_installed_extensions() -> list[ExtensionSource]:
     extensions = cast(List[Extension], await Extension.from_settings())
-    return [ext.source for ext in extensions]
+    # Uploaded extensions waiting to be configured have an empty identifier
+    return [ext.source for ext in extensions if ext.source.identifier != ""]
 
 
 @index_router_v1.get("/list_containers", status_code=status.HTTP_200_OK)
