@@ -1605,6 +1605,22 @@ files = [
 ]
 
 [[package]]
+name = "smbus2"
+version = "0.3.0"
+description = "smbus2 is a drop-in replacement for smbus-cffi/smbus-python in pure Python"
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "smbus2-0.3.0.tar.gz", hash = "sha256:210e66eebe4d0b1fe836b3ec2751841942e1c4918c0b429b20a0e20a222228b4"},
+]
+
+[package.extras]
+docs = ["sphinx (>=1.5.3)"]
+qa = ["flake8"]
+test = ["mock ; python_version < \"3.3\"", "nose"]
+
+[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -1871,4 +1887,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "c0dda466a6c1fc98ef134504392829139d213a5072644f7ce62f338032af6e7f"
+content-hash = "51270221b8470fae0171a05687a3e9495ddb46071b59162e071d8bc2f74fde89"
