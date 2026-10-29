@@ -96,10 +96,16 @@ class Website(Enum):
     }
 
 
+class WebsiteError(str, Enum):
+    DNS = "dns"
+    TIMEOUT = "timeout"
+
+
 class WebsiteStatus(BaseModel):
     site: Website
     online: bool
     error: Optional[str] = None
+    error_kind: Optional[WebsiteError] = None
 
 
 class ServiceMetadata(BaseModel):
@@ -186,7 +192,7 @@ class SimpleHttpResponse(BaseModel):
     decoded_data: Optional[str]
     as_json: Optional[Union[List[Any], Dict[Any, Any]]]
     error: Optional[str]
-    timeout: bool
+    error_kind: Optional[WebsiteError] = None
 
 
 class Helper:
@@ -258,7 +264,7 @@ class Helper:
         knowing that it will never raise"""
 
         conn: Optional[Union[http.client.HTTPConnection, http.client.HTTPSConnection]] = None
-        request_response = SimpleHttpResponse(status=None, decoded_data=None, as_json=None, timeout=False, error=None)
+        request_response = SimpleHttpResponse(status=None, decoded_data=None, as_json=None, error=None)
 
         # Based on requests library
         headers = {
@@ -314,12 +320,13 @@ class Helper:
 
         except socket.timeout as e:
             logger.warning(e)
-            request_response.timeout = True
+            request_response.error_kind = WebsiteError.TIMEOUT
             request_response.error = str(e)
 
         except (http.client.HTTPException, socket.error, json.JSONDecodeError) as e:
             logger.warning(e)
             request_response.error = str(e)
+            request_response.error_kind = WebsiteError.DNS if isinstance(e, socket.gaierror) else None
 
         except Exception as e:
             logger.exception(e)
@@ -341,7 +348,7 @@ class Helper:
             "127.0.0.1", port=port, path="/", timeout=1.0, method="GET", follow_redirects=10
         )
         log_msg = f"Detecting service at port {port}"
-        if response.timeout:
+        if response.error_kind is WebsiteError.TIMEOUT:
             service_attempts = Helper.attempts_left.get(port, Helper.MAX_ATTEMPTS_LEFT)
             Helper.attempts_left[port] = service_attempts - 1
 
@@ -491,6 +498,10 @@ class Helper:
             website_status.online = True
         else:
             website_status.error = response.error
+            # check_internet_access reserves TIMEOUT for probes still running at its deadline, which the frontend
+            # reads as "no verdict yet". This probe did finish, and a socket timeout means the name resolved.
+            if response.error_kind is WebsiteError.DNS:
+                website_status.error_kind = response.error_kind
             logger.warning(f"{log_msg}: Offline: {website_status.error}.")
 
         return website_status
@@ -531,7 +542,8 @@ class Helper:
         done, pending = futures.wait(future_to_site.keys(), timeout=INTERNET_CHECK_DEADLINE_S)
         status_list = [future.result() for future in done]
         status_list.extend(
-            WebsiteStatus(site=future_to_site[future], online=False, error="timeout") for future in pending
+            WebsiteStatus(site=future_to_site[future], online=False, error_kind=WebsiteError.TIMEOUT)
+            for future in pending
         )
         return {status.site.name: status for status in status_list}
 

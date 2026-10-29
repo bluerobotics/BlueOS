@@ -13,6 +13,7 @@ import psutil
 from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, discover_dhcp_servers
+from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
 from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pyroute2 import IW, NDB, IPRoute
@@ -355,7 +356,7 @@ class EthernetManager:
             )
 
         new_address = InterfaceAddress(ip=ip, mode=mode)
-        saved_interface.addresses = [address for address in saved_interface.addresses if address.ip != ip]
+        saved_interface.addresses = [address for address in saved_interface.addresses if str(address.ip) != str(ip)]
         saved_interface.addresses.append(new_address)
         # remove duplicates. this will prevent multiple client entries on the same interface
         saved_interface.addresses = list(set(saved_interface.addresses))
@@ -372,10 +373,9 @@ class EthernetManager:
         logger.info(f"Deleting IP {ip_address} from interface {interface_name}.")
         static_ip = self.is_static_ip(ip_address)
         try:
-            if (
-                self._is_dhcp_server_running_on_interface(interface_name)
-                and self._dhcp_server_on_interface(interface_name).ipv4_gateway == ip_address
-            ):
+            if self._is_dhcp_server_running_on_interface(interface_name) and str(
+                self._dhcp_server_on_interface(interface_name).ipv4_gateway
+            ) == str(ip_address):
                 self.remove_dhcp_server_from_interface(interface_name)
             self.network_handler.remove_static_ip(interface_name, ip_address)
         except Exception as error:
@@ -387,7 +387,9 @@ class EthernetManager:
             logger.error(f"Interface {interface_name} is not managed by Cable Guy. Not deleting IP {ip_address}.")
             return
 
-        saved_interface.addresses = [address for address in saved_interface.addresses if address.ip != ip_address]
+        saved_interface.addresses = [
+            address for address in saved_interface.addresses if str(address.ip) != str(ip_address)
+        ]
         if not static_ip:
             saved_interface.addresses = [
                 address for address in saved_interface.addresses if address.mode != AddressMode.Client
@@ -484,10 +486,9 @@ class EthernetManager:
                 is_static_ip = self.is_static_ip(ip)
 
                 # Populate our output item
-                if (
-                    self._is_dhcp_server_running_on_interface(interface)
-                    and self._dhcp_server_on_interface(interface).ipv4_gateway == ip
-                ):
+                if self._is_dhcp_server_running_on_interface(interface) and str(
+                    self._dhcp_server_on_interface(interface).ipv4_gateway
+                ) == str(ip):
                     mode = AddressMode.Server
                     if self._dhcp_server_on_interface(interface).is_backup_server:
                         mode = AddressMode.BackupServer
@@ -814,13 +815,13 @@ class EthernetManager:
 
     def _is_ip_on_interface(self, interface_name: str, ip_address: str) -> bool:
         interface = self.get_interface_by_name(interface_name)
-        return any(True for address in interface.addresses if address.ip == ip_address)
+        return any(True for address in interface.addresses if str(address.ip) == str(ip_address))
 
     def _is_ip_saved_on_interface(self, interface_name: str, ip_address: str) -> bool:
         interface = self.get_saved_interface_by_name(interface_name)
         if interface is None:
             return False
-        return any(True for address in interface.addresses if address.ip == ip_address)
+        return any(True for address in interface.addresses if str(address.ip) == str(ip_address))
 
     def _dhcp_server_on_interface(self, interface_name: str) -> DHCPServerManager:
         try:
@@ -879,7 +880,7 @@ class EthernetManager:
         if self._is_dhcp_server_running_on_interface(interface_name):
             dhcp_on_interface = self._dhcp_server_on_interface(interface_name)
             if (
-                dhcp_on_interface.ipv4_gateway == ipv4_gateway
+                str(dhcp_on_interface.ipv4_gateway) == str(ipv4_gateway)
                 and dhcp_on_interface.is_backup_server == backup
                 and self._is_ip_on_interface(interface_name, ipv4_gateway)
             ):
@@ -1001,3 +1002,19 @@ class EthernetManager:
             except Exception as error:
                 logger.error(f"Error in watchdog: {error}")
                 await asyncio.sleep(5)
+
+    def _get_dhcp_server_attribute(
+        self, interface_name: Optional[str] = None, attribute: str = "leases"
+    ) -> Dict[str, Any]:
+        if interface_name:
+            try:
+                return {interface_name: getattr(self._dhcp_server_on_interface(interface_name), attribute)}
+            except ValueError:
+                return {}
+        return {dhcp_server.interface: getattr(dhcp_server, attribute) for dhcp_server in self._dhcp_servers}
+
+    def get_dhcp_server_leases(self, interface_name: Optional[str] = None) -> Dict[str, List[DHCPServerLease]]:
+        return self._get_dhcp_server_attribute(interface_name, "leases")
+
+    def get_dhcp_server_details(self, interface_name: Optional[str] = None) -> Dict[str, DHCPServerDetails]:
+        return self._get_dhcp_server_attribute(interface_name, "details")
