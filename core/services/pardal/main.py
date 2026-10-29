@@ -127,8 +127,8 @@ async def internet_test_previous_result(request: web.Request) -> web.Response:
     """
     Return previous result of internet speed test.
     """
-    if not SPEED_TEST:
-        raise RuntimeError("SPEED_TEST not initialized, initialize server search.")
+    if not SPEED_TEST or not SPEED_TEST.results.server:
+        return web.json_response(None)
     return web.json_response(SPEED_TEST.results.dict())
 
 
