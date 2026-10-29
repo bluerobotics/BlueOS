@@ -229,7 +229,7 @@ prepare_cgroups() {
   echo "Creating a new child cgroup..."
   # Create a new child cgroup
   DOCKER_CGROUP_PATH="/sys/fs/cgroup/$DOCKER_CGROUP"
-  mkdir $DOCKER_CGROUP_PATH/child_cgroup
+  mkdir $DOCKER_CGROUP_PATH/child_cgroup || true
 
   echo "Moving all processes of this cgroup to the new child cgroup..."
   # Move all processes of this cgroup to the new child cgroup
@@ -245,7 +245,10 @@ prepare_cgroups() {
   fi
 
   echo "Enabling subtree_control for memory, cpu, and io on container cgroup..."
-  echo "+memory +cpu +io" > $DOCKER_CGROUP_PATH/cgroup.subtree_control && echo "subtree_control enabled on container cgroup"
+  # The write is atomic, a single missing controller would enable none of them
+  for CONTROLLER in memory cpu io; do
+    echo "+$CONTROLLER" > $DOCKER_CGROUP_PATH/cgroup.subtree_control || echo "Failed to enable $CONTROLLER, skipping"
+  done
 }
 
 prepare_cgroups
