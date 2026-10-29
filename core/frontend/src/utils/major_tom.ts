@@ -60,6 +60,7 @@ export async function installOrUpdateMajorTom(
       user_permissions: majorTomData?.user_permissions ?? '',
     },
     timeout: 600000,
-    onDownloadProgress: progressHandler,
+    // axios 0.21 has no .event, it passes the ProgressEvent directly
+    onDownloadProgress: (progressEvent) => progressHandler({ event: progressEvent.event ?? progressEvent }),
   })
 }
