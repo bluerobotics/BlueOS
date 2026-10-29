@@ -13,7 +13,8 @@ import psutil
 from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.DHCPDiscovery import DHCPDiscoveryError, discover_dhcp_servers
-from commonwealth.utils.DHCPServerManager import DHCPServerDetails, Dnsmasq as DHCPServerManager, DHCPServerLease
+from commonwealth.utils.DHCPServerManager import DHCPServerDetails, DHCPServerLease
+from commonwealth.utils.DHCPServerManager import Dnsmasq as DHCPServerManager
 from loguru import logger
 from pyroute2 import IW, NDB, IPRoute
 from pyroute2.netlink.exceptions import NetlinkError
