@@ -10,7 +10,10 @@ import pytest
 def test_api_root_redirects_to_relative_docs(version: str, tmp_path: Path) -> None:
     service_path = Path(__file__).parent
     environment = {key: value for key, value in os.environ.items() if not key.startswith("COV_CORE_")} | {
-        "PYTHONPATH": str(service_path / "api" / version / "routers"),
+        # commonwealth is not installed on 1.4, so point the subprocess at its source
+        "PYTHONPATH": os.pathsep.join(
+            [str(service_path / "api" / version / "routers"), str(service_path.parents[1] / "libs" / "commonwealth")]
+        ),
         "XDG_CONFIG_HOME": str(tmp_path),
     }
     script = 'import asyncio; from index import root; print(asyncio.run(root()).headers["location"])'
