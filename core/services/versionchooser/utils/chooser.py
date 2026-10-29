@@ -355,7 +355,7 @@ class VersionChooser:
 
         logger.info(f"Committing running core as {repository}:{tag}...")
         try:
-            core = await self.client.containers.get("blueos-core")
+            core = await self.client.containers.get("blueos-core")  # type: ignore
             # Pausing would freeze this very service, and bootstrap resets to factory if it stops answering
             result = await core.commit(repository=repository, tag=tag, pause=False)
         except Exception as error:
