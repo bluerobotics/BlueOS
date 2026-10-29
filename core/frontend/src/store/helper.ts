@@ -7,7 +7,9 @@ import Notifier from '@/libs/notifier'
 import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { helper_service } from '@/types/frontend_services'
-import { InternetConnectionState, Service, SpeedTestResult, WebsiteError } from '@/types/helper'
+import {
+  InternetConnectionState, Service, SpeedTestResult, WebsiteError,
+} from '@/types/helper'
 import back_axios, { isBackendOffline } from '@/utils/api'
 import { isIpAddress } from '@/utils/pattern_validators'
 
