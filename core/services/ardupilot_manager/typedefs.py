@@ -97,6 +97,7 @@ class PlatformType(LowerStringEnum):
     Linux = auto()
     SITL = auto()
     Unknown = auto()
+    Manual = auto()
 
 
 class Platform(str, Enum):
@@ -113,6 +114,7 @@ class Platform(str, Enum):
     Navigator64 = "navigator64"
     Argonot = "argonot"
     SITL = get_sitl_platform_name(machine())
+    Manual = "Manual"
 
     @property
     def type(self) -> PlatformType:
@@ -127,6 +129,7 @@ class Platform(str, Enum):
             Platform.Navigator64: PlatformType.Linux,
             Platform.Argonot: PlatformType.Linux,
             Platform.SITL: PlatformType.SITL,
+            Platform.Manual: PlatformType.Manual,
         }
         return platform_types.get(self, PlatformType.Unknown)
 
