@@ -6,6 +6,7 @@ import {
 import store from '@/store'
 import beacon from '@/store/beacon'
 import { castString } from '@/utils/helper_functions'
+import bag from '@/store/bag'
 
 @Module({
   dynamic: true,
@@ -75,69 +76,47 @@ class SettingsStore extends VuexModule {
   }
 
   /**
-   * Get name of the settings variable on the system
-   * @param string name
-   * @returns string
-   */
-  private static settingsName(name: string): string {
-    return `bluerobotics-blueos-${name}`
-  }
-
-  /**
    * Get variable value from settings system
    * @param string name
    * @returns T
    */
-  static loadVariable<T>(name: string): T {
-    const storedVariable = window.localStorage.getItem(SettingsStore.settingsName(name))
-    const castedVariable = storedVariable === null ? null : castString(storedVariable)
-    return castedVariable as T
+  static async loadVariable<T>(name: string): Promise<T | null> {
+    const data = await bag.getData(`settings/${name}`)
+    return data as T ?? null
   }
 
   /**
    * Load all variables from settings system
    */
-  static load(): void {
-    Object.keys(SettingsStore.state).forEach((name: string) => {
-      const value = SettingsStore.loadVariable(name)
+  static async load(): Promise<void> {
+    const data = await bag.getData('settings')
+    if (!data) {
+      console.warn('No settings data found')
+      return
+    }
+    Object.entries(data).forEach(([name, value]) => {
       Vue.set(SettingsStore.state, name, value)
     })
   }
 
   /**
-   * Save a variable on the settings system
-   * @param string name
-   * @param T value
+   * Save all variables on the settings system
    */
-  static saveVariable<T>(name: string, value: T): void {
-    // eslint-disable-next-line
-    window.localStorage.setItem(SettingsStore.settingsName(name), JSON.stringify(value))
-  }
-
-  /**
-   * Save all variables on the settings sytem
-   */
-  static save(): void {
-    Object.entries(SettingsStore.state).forEach(([name, value]) => {
-      SettingsStore.saveVariable(name, value)
-    })
+  static async save(): Promise<void> {
+    await bag.setData('settings', SettingsStore.state)
   }
 
   /**
    * Start the instance and do the proper connections
    */
-  static start(): void {
-    window.onstorage = () => {
-      SettingsStore.load()
-    }
-
-    const settings_version: number = SettingsStore.loadVariable('settings_version')
+  static async start(): Promise<void> {
+    const settings_version = await SettingsStore.loadVariable<number>('settings_version')
     if (settings_version === null) {
-      SettingsStore.save()
+      await SettingsStore.save()
       return
     }
 
-    SettingsStore.load()
+    await SettingsStore.load()
   }
 }
 
