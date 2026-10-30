@@ -88,7 +88,7 @@
       </v-list-item-icon>
       <v-list-item-subtitle>Bytes received:</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.received_B }} / {{ network.total_received_B }} total
+        {{ formatSize(network.received_B) }} / {{ formatSize(network.total_received_B) }} total
       </v-list-item-subtitle>
     </v-list-item>
 
@@ -100,7 +100,7 @@
       </v-list-item-icon>
       <v-list-item-subtitle>Bytes transmitted:</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.transmitted_B }} / {{ network.total_transmitted_B }} total
+        {{ formatSize(network.transmitted_B) }} / {{ formatSize(network.total_transmitted_B) }} total
       </v-list-item-subtitle>
     </v-list-item>
   </v-card>
@@ -110,6 +110,7 @@
 import { PropType } from 'vue'
 
 import { Network } from '@/types/system-information/system'
+import { prettifySize } from '@/utils/helper_functions'
 
 export default {
   name: 'NetworkCard',
@@ -125,5 +126,27 @@ export default {
       show_ipv6: false,
     }
   },
+  methods: {
+    formatSize(bytes: number): string {
+      return prettifySize(bytes / 1024)
+    },
+  },
 }
 </script>
+
+<style scoped>
+/* Vuetify gives every subtitle flex: 1 1 100%, so a label and its value split the row in half and
+   both get ellipsised. Size them to their text and let the value wrap to its own line instead. */
+.v-list-item {
+  flex-wrap: wrap;
+  column-gap: 8px;
+}
+
+.v-list-item__subtitle {
+  flex: 0 1 auto;
+}
+
+.v-list-item__subtitle.text-right {
+  margin-left: auto;
+}
+</style>
