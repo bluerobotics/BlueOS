@@ -13,7 +13,7 @@ from commonwealth.mavlink_comm.exceptions import (
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
 from commonwealth.utils.apis import StackedHTTPException
 from commonwealth.utils.decorators import single_threaded
-from fastapi import APIRouter, Body, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import PlainTextResponse
 from fastapi_versioning import versioned_api_route
 from loguru import logger
@@ -273,3 +273,14 @@ async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
 @index_to_http_exception
 async def available_boards() -> Any:
     return await autopilot.available_boards(True)
+
+
+@index_router_v1.post("/system_id", summary="Set the vehicle's system id.")
+@index_to_http_exception
+async def set_system_id(value: int = Query(ge=1, le=255)) -> Any:
+    if not autopilot.current_board:
+        message = "No board running, system ID is unavailable"
+        logger.warning(message)
+        return PlainTextResponse(message, status_code=503)
+
+    await autopilot.vehicle_manager.set_system_id(value)
