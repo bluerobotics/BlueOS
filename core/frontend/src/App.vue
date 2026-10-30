@@ -120,7 +120,7 @@
           nav
           dense
         >
-          <v-list-item-group color="primary">
+          <v-list-item-group :color="menu.new_page ? undefined : 'primary'">
             <v-list-group
               v-if="menu.submenus"
               :id="'button-to-' + menu.title.toLowerCase()"
@@ -204,6 +204,7 @@
 
             <v-list-item
               v-else
+              :class="{ 'external-link': menu.new_page }"
               :to="menu.new_page || menu.disabled ? null : menu.route"
               :target="menu.new_page ? '_blank' : '_self'"
               :href="menu.extension && !menu.disabled ? menu.route : undefined"
@@ -566,7 +567,6 @@ export default Vue.extend({
           route: '/tools/extensions-manager',
           advanced: false,
           text: 'Manage BlueOS extensions',
-          beta: true,
         },
         ...foundExtensions,
       ] as menuItem[]
@@ -856,6 +856,11 @@ export default Vue.extend({
 ::-webkit-scrollbar-thumb:hover {
   background: var(--v-primary-base);
 }
+
+.external-link.v-list-item--active::before {
+  opacity: 0 !important;
+}
+
 </style>
 
 <style scoped>
