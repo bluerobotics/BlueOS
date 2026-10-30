@@ -93,18 +93,13 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import Notifier from '@/libs/notifier'
 import beacon from '@/store/beacon'
 import ethernet from '@/store/ethernet'
 import { AddressMode, EthernetInterface } from '@/types/ethernet'
-import { ethernet_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
 
 import AddressCreationDialog from './AddressCreationDialog.vue'
 import AddressDeletionDialog from './AddressDeletionDialog.vue'
 import DHCPServerDialog from './DHCPServerDialog.vue'
-
-const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'InterfaceCard',
@@ -207,48 +202,16 @@ export default Vue.extend({
         return
       }
 
-      ethernet.setUpdatingInterfaces(true)
-
-      await back_axios({
-        method: 'delete',
-        url: `${ethernet.API_URL}/address`,
-        timeout: 10000,
-        params: { interface_name: this.adapter.name, ip_address: ip },
-      })
-        .catch((error) => {
-          notifier.pushBackError('ETHERNET_ADDRESS_DELETE_FAIL', error)
-        })
+      await ethernet.deleteAddress({ interface_name: this.adapter.name, ip_address: ip })
     },
     async triggerForDynamicIP(): Promise<void> {
-      ethernet.setUpdatingInterfaces(true)
-
-      await back_axios({
-        method: 'post',
-        url: `${ethernet.API_URL}/dynamic_ip`,
-        timeout: 10000,
-        params: { interface_name: this.adapter.name },
-      })
-        .catch((error) => {
-          const message = `Could not trigger for dynamic IP address on '${this.adapter.name}': ${error.message}.`
-          notifier.pushError('DYNAMIC_IP_TRIGGER_FAIL', message)
-        })
+      await ethernet.triggerDynamicIP(this.adapter.name)
     },
     openDHCPServerDialog(): void {
       this.show_dhcp_server_dialog = true
     },
     async removeDHCPServer(): Promise<void> {
-      ethernet.setUpdatingInterfaces(true)
-
-      await back_axios({
-        method: 'delete',
-        url: `${ethernet.API_URL}/dhcp`,
-        timeout: 10000,
-        params: { interface_name: this.adapter.name },
-      })
-        .catch((error) => {
-          const message = `Could not remove DHCP server from interface '${this.adapter.name}': ${error.message}.`
-          notifier.pushError('DHCP_SERVER_REMOVE_FAIL', message)
-        })
+      await ethernet.RemoveDHCPServer(this.adapter.name)
     },
   },
 })

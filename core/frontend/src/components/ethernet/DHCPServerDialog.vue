@@ -21,6 +21,15 @@
           v-model="is_backup_server"
           label="Backup Server"
         />
+        <v-alert
+          type="info"
+          dense
+          text
+          class="mt-0"
+        >
+          When Backup Server is enabled, the DHCP server will stay inactive and only
+          start serving IP addresses if no other DHCP server is detected on the network.
+        </v-alert>
         <v-btn
           :disabled="!allow_enabling"
           color="primary"
@@ -54,11 +63,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue'
 
-import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
 import { AddressMode, EthernetInterface } from '@/types/ethernet'
-import { ethernet_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
 
 enum ServerCreationStatus {
   NotStarted,
@@ -66,8 +72,6 @@ enum ServerCreationStatus {
   Succeeded,
   Failed
 }
-
-const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'DHCPServerDialog',
@@ -131,19 +135,13 @@ export default Vue.extend({
   },
   methods: {
     async addDHCPServer(): Promise<void> {
-      ethernet.setUpdatingInterfaces(true)
       this.creation_status = ServerCreationStatus.Enabling
       this.connection_result_message = ''
 
-      await back_axios({
-        method: 'post',
-        url: `${ethernet.API_URL}/dhcp`,
-        timeout: 10000,
-        params: {
-          interface_name: this.adapter.name,
-          ipv4_gateway: this.selected_ip,
-          is_backup_server: this.is_backup_server,
-        },
+      await ethernet.addDHCPServer({
+        interface_name: this.adapter.name,
+        ipv4_gateway: this.selected_ip,
+        is_backup_server: this.is_backup_server,
       })
         .then(() => {
           this.creation_status = ServerCreationStatus.Succeeded
@@ -152,10 +150,6 @@ export default Vue.extend({
         .catch((error) => {
           const message = error.response?.data?.detail ?? error.message
           this.connection_result_message = message
-          notifier.pushBackError('DHCP_SERVER_ADD_FAIL', error)
-        })
-        .finally(() => {
-          ethernet.setUpdatingInterfaces(false)
         })
     },
 
