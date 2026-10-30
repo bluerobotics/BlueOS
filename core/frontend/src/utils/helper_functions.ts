@@ -25,6 +25,23 @@ export function castString(value: string): any { // eslint-disable-line @typescr
   return value
 }
 
+/**
+ * Converts a git describe string to a tag string if present
+ * @param git_describe - The git describe string to convert
+ * @returns The tag string if present, otherwise undefined
+ */
+export function convertGitDescribeToTag(git_describe: string): string | undefined {
+  if (!git_describe || git_describe.endsWith('-dirty') || git_describe.isEmpty()) {
+    return undefined
+  }
+
+  const match = /tags\/(?<tag>|.*)-\d-.*/gm.exec(git_describe)
+  if (match && match.groups?.tag) {
+    return match.groups.tag
+  }
+  return undefined
+}
+
 /* Convert git describe text to a valid URL for the project. */
 /**
  * @param func - Function to be called.
@@ -42,9 +59,8 @@ export function convertGitDescribeToUrl(git_describe: string): string {
 
   // Show tag release page
   if (git_describe.startsWith('tags')) {
-    const match = /tags\/(?<tag>|.*)-\d-.*/gm.exec(git_describe)
-    if (match && match.groups?.tag) {
-      const { tag } = match.groups
+    const tag = convertGitDescribeToTag(git_describe)
+    if (tag) {
       return `${project_url}/releases/tag/${tag}`
     }
   }
