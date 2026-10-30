@@ -29,7 +29,7 @@
         <span v-if="board_undefined">No board running</span>
         <div v-else>
           <v-row
-            v-for="(value, name) in autopilot_info"
+            v-for="(info, name) in autopilot_info"
             :key="name"
             class="ma-0"
             no-gutters
@@ -38,7 +38,26 @@
               {{ name }}:
             </v-col>
             <v-col class="text-left ml-1">
-              {{ value }}
+              {{ info.value }}
+              <v-tooltip
+                v-if="info.docs_url"
+                bottom
+              >
+                <template #activator="{ on, attrs }">
+                  <a
+                    :href="info.docs_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon small>
+                      mdi-file-document-outline
+                    </v-icon>
+                  </a>
+                </template>
+                <span>Open documentation</span>
+              </v-tooltip>
             </v-col>
           </v-row>
           <br>
@@ -72,7 +91,7 @@
           color="secondary"
           :block="$vuetify.breakpoint.xs"
           class="ma-1"
-          :disabled="restarting"
+          :disabled="restarting || !is_safe"
           @click="openBoardChangeDialog"
         >
           Change board
@@ -139,7 +158,9 @@ import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import bag from '@/store/bag'
-import { FirmwareInfo, FirmwareVehicleType, FlightController } from '@/types/autopilot'
+import {
+  FirmwareInfo, FirmwareVehicleType, FlightController, vehicleDocsUrl,
+} from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -165,22 +186,25 @@ export default Vue.extend({
     }
   },
   computed: {
-    autopilot_info(): Record<string, string> {
+    autopilot_info(): Record<string, { value: string, docs_url?: string }> {
       let version = 'Unknown'
       if (this.firmware_info) {
         version = `${this.firmware_info.version} (${this.firmware_info.type})`
       }
 
-      const record: Record<string, string> = {
-        'Board name': this.current_board?.name ?? 'Unknown',
-        Manufacturer: this.current_board?.manufacturer ?? 'Unknown',
-        'Mavlink platform': this.current_board?.platform ?? 'Unknown',
-        'Firmware version': version,
-        'Vehicle type': `${this.vehicle_type ?? 'Unknown'} (${this.firmware_vehicle_type ?? 'Unknown'})`,
+      const record: Record<string, { value: string, docs_url?: string }> = {
+        'Board name': { value: this.current_board?.name ?? 'Unknown' },
+        Manufacturer: { value: this.current_board?.manufacturer ?? 'Unknown' },
+        'Mavlink platform': { value: this.current_board?.platform ?? 'Unknown' },
+        'Firmware version': { value: version },
+        'Vehicle type': {
+          value: `${this.vehicle_type ?? 'Unknown'} (${this.firmware_vehicle_type ?? 'Unknown'})`,
+          docs_url: vehicleDocsUrl(this.firmware_vehicle_type),
+        },
       }
 
       if (this.current_board?.path) {
-        record.Path = this.current_board.path
+        record.Path = { value: this.current_board.path }
       }
 
       return record
@@ -222,7 +246,7 @@ export default Vue.extend({
     firmware_info(): FirmwareInfo | null {
       return autopilot.firmware_info
     },
-    firmware_vehicle_type(): string | null {
+    firmware_vehicle_type(): FirmwareVehicleType | null {
       return autopilot.firmware_vehicle_type
     },
     vehicle_type(): string | null {
@@ -233,6 +257,9 @@ export default Vue.extend({
     },
     restarting(): boolean {
       return autopilot.restarting
+    },
+    is_safe(): boolean {
+      return autopilot_data.is_safe
     },
   },
   mounted() {

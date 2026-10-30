@@ -138,7 +138,7 @@ class FirmwareInstaller:
         ## For more information: https://www.gnu.org/software/libc/manual/html_node/Permission-Bits.html
         os.chmod(firmware_path, firmware_path.stat().st_mode | stat.S_IXOTH | stat.S_IXUSR | stat.S_IXGRP)
 
-    def install_firmware(
+    async def install_firmware(
         self,
         new_firmware_path: pathlib.Path,
         board: FlightController,
@@ -159,7 +159,7 @@ class FirmwareInstaller:
             if not board.path:
                 raise ValueError("Board path not available.")
             firmware_uploader.set_autopilot_port(pathlib.Path(board.path))
-            firmware_uploader.upload(new_firmware_path)
+            await firmware_uploader.upload(new_firmware_path)
             return
         if firmware_format == FirmwareFormat.ELF:
             # Using copy() instead of move() since the last can't handle cross-device properly (e.g. docker binds)
