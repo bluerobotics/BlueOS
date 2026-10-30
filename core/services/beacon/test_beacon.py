@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import socket
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -72,6 +73,13 @@ def fixture_settings_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Pat
     return tmp_path / "beacon"
 
 
+@pytest.fixture(name="host", autouse=True)
+def fixture_host(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    host = MagicMock(return_value=SimpleNamespace(returncode=0, stderr=""))
+    monkeypatch.setattr(beacon, "run_command", host)
+    return host
+
+
 def test_first_boot_loads_defaults(settings_dir: Path) -> None:
     manager = beacon.Beacon()
     assert set(manager.service_types) == {"_mavlink", "_http"}
@@ -133,6 +141,43 @@ def test_renaming_replaces_the_previous_hostname_on_wired_interfaces() -> None:
     assert eth0.domain_names == ["blueos2", "blueos2-ethernet", "companion", "blueos"]
     manager.set_hostname("blueos")
     assert eth0.domain_names == ["blueos", "blueos-ethernet", "companion"]
+
+
+@pytest.mark.usefixtures("settings_dir")
+def test_set_hostname_renames_the_host_and_avahi(tmp_path: Path, host: MagicMock) -> None:
+    hosts, avahi = tmp_path / "hosts", tmp_path / "avahi-daemon.conf"
+    hosts.write_text("127.0.0.1\tlocalhost\n127.0.1.1\tblueos blueos.lan\n", encoding="utf-8")
+    avahi.write_text("[server]\nhost-name=blueos-avahi\nuse-ipv4=yes\n", encoding="utf-8")
+    beacon.Beacon().set_hostname("blueos-fathomgt")
+
+    command = host.call_args.args[0]
+    assert "sudo hostnamectl set-hostname blueos-fathomgt" in command
+    assert "sudo systemctl restart --no-block avahi-daemon" in command
+    sed_commands = [
+        part.replace("sudo ", "").replace("/etc/hosts", str(hosts)).replace(beacon.AVAHI_DAEMON_CONFIG_PATH, str(avahi))
+        for part in command.split(" && ")
+        if "sed" in part
+    ]
+    subprocess.run(" && ".join(sed_commands), shell=True, check=True)
+    assert hosts.read_text(encoding="utf-8") == "127.0.0.1\tlocalhost\n127.0.1.1\tblueos-fathomgt blueos.lan\n"
+    assert avahi.read_text(encoding="utf-8") == "[server]\nhost-name=blueos-fathomgt-avahi\nuse-ipv4=yes\n"
+
+
+@pytest.mark.usefixtures("settings_dir")
+@pytest.mark.parametrize("hostname", ["", "-rov", "rov-", "my rov", "rov;reboot", "rov'", "rov\n", "a" * 55])
+def test_set_hostname_rejects_invalid_names(hostname: str, host: MagicMock) -> None:
+    manager = beacon.Beacon()
+    with pytest.raises(ValueError):
+        manager.set_hostname(hostname)
+    host.assert_not_called()
+    assert manager.get_hostname() == "blueos"
+
+
+@pytest.mark.usefixtures("settings_dir")
+def test_set_hostname_keeps_mdns_name_when_the_host_fails(host: MagicMock) -> None:
+    host.side_effect = FileNotFoundError("sshpass")
+    beacon.Beacon().set_hostname("myrov")
+    assert beacon.Beacon().get_hostname() == "myrov"
 
 
 @pytest.mark.usefixtures("settings_dir")
