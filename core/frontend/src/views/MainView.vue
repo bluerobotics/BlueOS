@@ -31,58 +31,55 @@
       <self-health-test />
     </v-row>
     <div class="grid-holder">
-      <div class="grid-holder-container">
+      <div class="app-grid">
         <div
           v-for="({
-            icon, title, text, route, advanced,
+            icon, title, text, route, component: Component, props, style,
           }, i) in apps"
           :key="i"
+          class="app-grid-item"
+          :style="{
+            'grid-column': `span ${Math.max(1, Math.ceil((apps[i].size?.w || 1) * 12))}`,
+            'grid-row': `span ${Math.max(1, Math.ceil((apps[i].size?.h || 1) * 4))}`,
+          }"
         >
           <v-card
-            class="mb-3 px-3 rounded-xl app-card"
+            class="px-3 rounded-xl app-card d-flex flex-column"
             :href="route"
           >
-            <v-theme-provider dark>
-              <v-row
-                class="py-3 px-3 d-flex justify-space-between flex-nowrap"
-              >
-                <v-card-title
-                  class="text-subtitle-2 font-weight-bold"
-                  v-text="title"
-                />
-                <div>
+            <div class="card-header">
+              <v-theme-provider dark>
+                <v-row
+                  class="py-3 px-3 d-flex justify-space-between flex-nowrap"
+                >
+                  <v-card-title
+                    class="text-subtitle-2 font-weight-bold"
+                    style="word-break: break-word;"
+                    v-text="title"
+                  />
                   <v-avatar
+                    class="mt-2"
                     color="primary"
-                    size="50"
+                    size="30"
                   >
                     <v-icon
-                      large
                       v-text="icon"
                     />
                   </v-avatar>
-                </div>
-              </v-row>
-            </v-theme-provider>
-            <v-theme-provider dark>
-              <div
-                v-if="advanced"
-                v-tooltip="'This is an advanced feature'"
-                class="pirate-marker"
-              >
-                <v-avatar
-                  color="error"
-                  size="35"
-                >
-                  <v-icon
-                    v-text="'mdi-skull-crossbones'"
-                  />
-                </v-avatar>
-              </div>
-            </v-theme-provider>
-            <v-card-text
-              class="subtitle-1 text-justify-start text-clamp pt-0 pb-0"
-              v-text="text"
-            />
+                </v-row>
+              </v-theme-provider>
+              <v-card-text
+                class="subtitle-1 text-justify-start text-clamp pt-0 pb-0"
+                v-text="text"
+              />
+            </div>
+            <div class="flex-grow-1 component-container">
+              <component
+                :is="Component"
+                v-bind="props || {}"
+                :style="style || {}"
+              />
+            </div>
           </v-card>
         </div>
       </div>
@@ -94,49 +91,215 @@
 import Vue from 'vue'
 
 import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
-import settings from '@/libs/settings'
+import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
+import VideoThumbnail from '@/components/video-manager/VideoThumbnail.vue'
+import { OneMoreTime } from '@/one-more-time'
 import helper from '@/store/helper'
+import mavlink from '@/store/mavlink'
+import video from '@/store/video'
 import { InternetConnectionState } from '@/types/helper'
+import { StreamStatus } from '@/types/video'
+import mavlink_store_get from '@/utils/mavlink'
+import CPUUsage from '@/widgets/CpuPie.vue'
+import Networking from '@/widgets/Networking.vue'
 
-import menus, { menuItem } from '../menus'
+interface Orientation {
+  roll: number
+  pitch: number
+  yaw: number
+}
+
+interface AppItem {
+  icon?: string
+  title?: string
+  text?: string
+  route?: string
+  component: typeof Vue
+  size?: {
+    w: number
+    h: number
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  props?: Record<string, any>
+  style?: Record<string, string>
+}
 
 export default Vue.extend({
   name: 'MainView',
   components: {
     SelfHealthTest,
+    GenericViewer,
   },
-  data: () => ({
-    menus,
-    settings,
-  }),
+  data() {
+    return {
+      windowHeight: window.innerHeight,
+      windowWidth: window.innerWidth,
+      fetch_streams_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      lastOrientation: { roll: 0, pitch: 0, yaw: 0 } as Orientation,
+    }
+  },
   computed: {
-    apps() {
-      const items: menuItem[] = []
-      for (const item of this.menus) {
-        if (item?.route && (!item.advanced || this.settings.is_pirate_mode)) {
-          items.push(item)
-          continue
+    apps(): AppItem[] {
+      return [
+        ...this.baseApps,
+        ...this.videoStreamWidgets,
+      ]
+    },
+    baseApps(): AppItem[] {
+      return [
+        {
+          icon: 'mdi-view-dashboard',
+          title: 'Digital Twin',
+          route: '#',
+          component: GenericViewer,
+          size: {
+            w: 0.4,
+            h: 1.2,
+          },
+          style: {
+            maxHeight: '300px',
+          },
+          props: {
+            autorotate: false,
+            cameracontrols: false,
+            orientation: this.orientation,
+          },
+        },
+        {
+          icon: 'mdi-cpu-64-bit',
+          title: 'System Information',
+          component: CPUUsage,
+          size: {
+            w: 0.4,
+            h: 0.8,
+          },
+          props: {
+            mode: 'graph',
+          },
+        },
+        {
+          icon: 'mdi-ethernet',
+          title: 'Ethernet Status',
+          component: Networking,
+          size: {
+            w: 0.1,
+            h: 0.4,
+          },
+          props: {
+            interface: 'eth0',
+          },
+        },
+        {
+          icon: 'mdi-wifi',
+          title: 'WiFi Status',
+          component: Networking,
+          size: {
+            w: 0.1,
+            h: 0.4,
+          },
+          props: {
+            interface: 'wlan0',
+          },
+        },
+      ]
+    },
+    videoStreamWidgets(): AppItem[] {
+      return this.video_streams.reduce<AppItem[]>((widgets, stream) => {
+        const source = this.streamSource(stream)
+        if (!source) {
+          return widgets
         }
 
-        for (const subitem of item?.submenus || []) {
-          if (!subitem.advanced || this.settings.is_pirate_mode) {
-            items.push(subitem)
-          }
-        }
-      }
-      return items
+        widgets.push({
+          icon: stream.running ? 'mdi-video-check' : 'mdi-video-off',
+          title: stream.video_and_stream.name,
+          route: '/vehicle/video-manager',
+          component: VideoThumbnail,
+          size: {
+            w: 0.4,
+            h: 1.2,
+          },
+          props: {
+            source,
+            register: stream.running,
+            width: '100%',
+          },
+          style: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        })
+
+        return widgets
+      }, [])
+    },
+    video_streams(): StreamStatus[] {
+      return video.available_streams
     },
     has_internet(): boolean {
       return helper.has_internet !== InternetConnectionState.OFFLINE
+    },
+    attitudeMessage(): Orientation | undefined {
+      return mavlink_store_get(mavlink, 'ATTITUDE.messageData.message') as Orientation | undefined
+    },
+    orientation(): string {
+      const { roll, pitch, yaw } = this.lastOrientation
+      return `${roll}rad ${-pitch}rad ${-yaw}rad`
+    },
+  },
+  watch: {
+    attitudeMessage(msg: Orientation | undefined): void {
+      if (!msg) return
+      const { roll, pitch, yaw } = msg
+      const last = this.lastOrientation
+      // Only update if any axis changed by more than 3 degrees
+      const threshold = 3 * (Math.PI / 180)
+      if (Math.abs(roll - last.roll) > threshold
+        || Math.abs(pitch - last.pitch) > threshold
+        || Math.abs(yaw - last.yaw) > threshold) {
+        this.lastOrientation = { roll, pitch, yaw }
+      }
+    },
+  },
+  mounted() {
+    window.addEventListener('resize', this.handleResize)
+    this.handleResize()
+    mavlink.subscribeMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
+    this.fetch_streams_task.setAction(video.fetchStreams)
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize)
+    mavlink.unsubscribeMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
+  },
+  methods: {
+    handleResize() {
+      this.windowHeight = window.innerHeight
+      this.windowWidth = window.innerWidth
+    },
+    streamSource(stream: StreamStatus): string | undefined {
+      const source = stream.video_and_stream.video_source
+      if ('Local' in source) {
+        return source.Local.device_path
+      }
+      if ('Redirect' in source) {
+        return source.Redirect.source.Redirect
+      }
+      if ('Onvif' in source) {
+        return source.Onvif.source.Onvif
+      }
+      if ('Gst' in source) {
+        return source.Gst.source.Fake
+      }
+      return undefined
     },
   },
 })
 </script>
 
 <style scoped>
-
 .rounded-card {
-  border-radius:50px;
+  border-radius: 50px;
 }
 
 div.pirate-marker {
@@ -162,32 +325,74 @@ div.pirate-marker.v-icon {
   padding: 10px;
 }
 
-.grid-holder-container {
+.app-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-  justify-content: center;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 60px;
+  gap: 8px;
+  width: 100%;
+}
+
+@media (max-width: 1280px) {
+  .app-grid {
+    grid-template-columns: repeat(10, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .app-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.app-grid-item {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .app-card {
-  width: auto;
-  min-width: 300px;
-  height: 200px;
+  width: 100%;
+  height: 100%;
   transition: transform 0.3s;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-card:hover {
   transform: translateY(-5px);
 }
 
+.card-header {
+  flex-shrink: 0;
+}
+
+.component-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.component-container > * {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
 @media (max-width: 677px) {
-  .grid-holder-container {
+  .app-grid {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
   }
-  .app-card {
+
+  .app-grid-item {
     width: 100%;
+    max-width: 280px;
   }
 }
 </style>
