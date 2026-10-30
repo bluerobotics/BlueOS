@@ -17,7 +17,7 @@
         <span v-if="param?.description">Description: {{ param.description }}<br></span>
         <span v-if="param?.range">Range: {{ param.range.low }} to {{ param.range.high }}<br></span>
         <span v-if="param?.units">Units: {{ param.units }}<br></span>
-        <span v-if="param?.options">Options: {{ formatOptions }}<br></span>
+        <span v-if="param?.options">Options: {{ formatOptions ?? formattedOptions }}<br></span>
         <span v-if="param?.rebootRequired">Requires reboot</span>
       </div>
     </v-tooltip>
@@ -41,8 +41,17 @@ export default Vue.extend({
       required: true,
     },
     formatOptions: {
-      type: String,
-      required: true,
+      type: String as PropType<string | null>,
+      default: null,
+      required: false,
+    },
+  },
+  computed: {
+    formattedOptions(): string {
+      if (this.param?.options) {
+        return Object.entries(this.param.options).map(([key, value]) => `${key}: ${value}`).join('\n')
+      }
+      return ''
     },
   },
 })
