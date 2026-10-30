@@ -1,6 +1,9 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="align-center">
+      <v-icon left>
+        mdi-hand-back-right
+      </v-icon>
       Gripper
     </v-card-title>
     <v-card-text v-if="gripper === null">

@@ -1,9 +1,18 @@
 <template>
   <v-card class="pa-2">
-    <v-card-title class="justify-center">
+    <v-card-title class="align-center">
+      <v-icon left>
+        mdi-radar
+      </v-icon>
       Ping Sensors
     </v-card-title>
-    <v-card-text class="d-flex justify-space-between">
+    <v-card-text v-if="pings.length === 0">
+      Not detected
+    </v-card-text>
+    <v-card-text
+      v-else
+      class="d-flex justify-space-between"
+    >
       <v-card
         v-for="ping in pings"
         :key="ping.port"

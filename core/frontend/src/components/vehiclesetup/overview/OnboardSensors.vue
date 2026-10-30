@@ -1,6 +1,9 @@
 <template>
   <v-card class="mt-6">
     <v-card-title class="align-center">
+      <v-icon left>
+        mdi-chip
+      </v-icon>
       Autopilot Sensors
     </v-card-title>
     <v-card-text>
