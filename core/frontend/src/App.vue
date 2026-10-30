@@ -82,6 +82,7 @@
     </v-card>
 
     <v-navigation-drawer
+      id="drawer"
       v-model="drawer"
       app
       fixed
@@ -123,7 +124,7 @@
           <v-list-item-group color="primary">
             <v-list-group
               v-if="menu.submenus"
-              :id="'button-to-' + menu.title.toLowerCase()"
+              :id="`button-to-${menu.title.toLowerCase().replace(' ', '-')}`"
               :prepend-icon="menu.icon"
               :to="menu.route"
               no-action
@@ -204,6 +205,7 @@
 
             <v-list-item
               v-else
+              :id="`button-to-${menu.title.toLowerCase().replace(' ', '-')}`"
               :to="menu.new_page || menu.disabled ? null : menu.route"
               :target="menu.new_page ? '_blank' : '_self'"
               :href="menu.extension && !menu.disabled ? menu.route : undefined"
@@ -372,7 +374,7 @@
     <ethernet-updater />
     <mavlink-updater />
     <new-version-notificator />
-    <Wizard />
+    <Wizard @start-tour="setStartTour" />
     <alerter />
     <VTour
       name="welcomeTour"
@@ -469,6 +471,7 @@ export default Vue.extend({
     selected_widgets: settings.user_top_widgets,
     bootstrap_version: undefined as string|undefined,
     build_clicks: 0,
+    start_tour: false,
   }),
   computed: {
     widgets(): TopBarWidget[] {
@@ -530,7 +533,7 @@ export default Vue.extend({
       return wifi.current_network != null
     },
     toolbar_height(): number {
-      return settings.is_pirate_mode && this.backend_offline ? 66 : 56
+      return 56
     },
     full_page_requested(): boolean {
       return this.$router.currentRoute.query.full_page === 'true'
@@ -612,7 +615,7 @@ export default Vue.extend({
           },
         },
         {
-          target: '#button-to-vehicle',
+          target: '#drawer',
           content: 'This is the main BlueOS menu. Here you can access all the running services and system utilities.',
           params: {
             enableScrolling: false,
@@ -626,19 +629,68 @@ export default Vue.extend({
           },
         },
         {
-          target: '#button-to-vehicle',
-          content: `Under the Vehicle menu, you can check the status of your autopilot, download logs from it,
-          set up video streams and even update its firmware!`,
+          target: '#button-to-vehicle-setup',
+          content: `Under the Vehicle Setup menu you can check the status of your autopilot sensors
+          and test PWM outputs.`,
           params: {
             enableScrolling: false,
+            placement: 'right',
           },
         },
         {
-          target: '#button-to-tools',
-          content: `Here you can find all kinds of tools to improve your BlueOS experience.
-          There are system-diagnosis tools, like network-speed tester and others, all under the Tools menu.`,
+          target: '#button-to-autopilot-firmware',
+          content: 'Here you can update the firmware of your autopilot, upload custom firmware files, and more.',
           params: {
             enableScrolling: false,
+            placement: 'right',
+          },
+        },
+        {
+          target: '#button-to-autopilot-parameters',
+          content: 'Here you can view and modify the parameters of your autopilot.',
+          params: {
+            enableScrolling: false,
+            placement: 'right',
+          },
+        },
+        {
+          target: '#button-to-log-browser',
+          content: 'Here you can browse the logs of your autopilot and download them.',
+          params: {
+            enableScrolling: false,
+            placement: 'right',
+          },
+        },
+        {
+          target: '#button-to-video-streams',
+          content: 'Here you can manage your video streams and configure them to your liking.',
+          params: {
+            enableScrolling: false,
+            placement: 'right',
+          },
+        },
+        {
+          target: '#button-to-system-information',
+          content: 'Here you can check the status of your system, processes and network.',
+          params: {
+            enableScrolling: false,
+            placement: 'right',
+          },
+        },
+        {
+          target: '#button-to-network-test',
+          content: 'You can test the speed of your network connection to your vehicle here.',
+          params: {
+            enableScrolling: false,
+            placement: 'right',
+          },
+        },
+        {
+          target: '#button-to-extensions',
+          content: 'And if you need to install new extensions, you can do it here.',
+          params: {
+            enableScrolling: false,
+            placement: 'right',
           },
         },
         {
@@ -722,6 +774,9 @@ export default Vue.extend({
     selected_widgets() {
       settings.user_top_widgets = this.selected_widgets
     },
+    start_tour() {
+      this.checkTour()
+    },
   },
 
   async mounted() {
@@ -804,9 +859,13 @@ export default Vue.extend({
     },
     checkTour(): void {
       // Check the current page and tour version to be sure that we are in the correct place before starting
-      if (this.$route.name === this.$router.options.routes!.first()!.name) {
+      if (this.$route.name === this.$router.options.routes!.first()!.name
+        && this.start_tour) {
         settings.run_tour_version(2)
-          .then(() => this.$tours.welcomeTour.start())
+          .then(() => {
+            this.start_tour = false
+            this.$tours.welcomeTour.start()
+          })
           .catch((message) => console.log(message))
       }
     },
@@ -833,6 +892,9 @@ export default Vue.extend({
     bluePillClick(): void {
       this.build_clicks = 0
       settings.is_dev_mode = false
+    },
+    setStartTour(value: boolean): void {
+      this.start_tour = value
     },
   },
 })
