@@ -23,13 +23,15 @@ export interface Disk {
      * @param name - Name that is used to identify the disk, E.g: /dev/root, /dev/sda1
      * @param total_space_B - Size of the disk in bytes
      * @param type - E.g: SSD, HD
+     * @param write_rate_Bps - Disk write rate in bytes per second
     * */
     available_space_B: number,
     filesystem_type: string,
     mount_point: string,
     name: string,
     total_space_B: number,
-    type: string
+    type: string,
+    write_rate_Bps?: number
 }
 
 /** Base structure that provides basic OS/computer information */

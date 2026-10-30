@@ -19,7 +19,7 @@ import {
   CPU, Disk, Info, Memory, Network, Process, System, Temperature,
 } from '@/types/system-information/system'
 import back_axios, { isBackendOffline } from '@/utils/api'
-import { networkProbeRateBps } from '@/utils/networking'
+import { linux2restProbeRateBps } from '@/utils/linux2rest'
 
 export enum FetchType {
     ModelType = 'model',
@@ -166,6 +166,30 @@ class SystemInformationStore extends VuexModule {
   @Mutation
   updateSystemDisk(disk: [Disk]): void {
     if (this.system) {
+      for (const currentDisk of disk) {
+        const previousDisk = this.system.disk?.find(
+          (d) => d.mount_point === currentDisk.mount_point,
+        )
+
+        // write_rate_Bps is frontend-only; linux2rest does not send it. Keep the last
+        // computed rate while the capacity snapshot is unchanged (zero delta).
+        if (currentDisk.write_rate_Bps === undefined) {
+          currentDisk.write_rate_Bps = previousDisk?.write_rate_Bps ?? 0
+        }
+
+        if (previousDisk) {
+          const currentUsed = currentDisk.total_space_B - currentDisk.available_space_B
+          const previousUsed = previousDisk.total_space_B - previousDisk.available_space_B
+          const disk_delta = currentUsed - previousUsed
+          if (disk_delta !== 0) {
+            // available_space_B only changes on linux2rest Sampler ticks (5s), not on
+            // the 2s frontend poll. Dividing by poll dt inflates the rate by 5/2 and a
+            // later zero delta freezes that value on screen.
+            // Used-space can drop (deletes); clamp to 0 because this widget is a write rate.
+            currentDisk.write_rate_Bps = linux2restProbeRateBps(disk_delta)
+          }
+        }
+      }
       this.system.disk = disk
     }
   }
@@ -191,8 +215,8 @@ class SystemInformationStore extends VuexModule {
       // frontend re-diff of total_*. Those deltas are already saturating and match the
       // Sampler window (LINUX2REST_SYSTEM_SAMPLE_INTERVAL_S).
       for (const network of networks) {
-        network.download_speed = networkProbeRateBps(network.received_B)
-        network.upload_speed = networkProbeRateBps(network.transmitted_B)
+        network.download_speed = linux2restProbeRateBps(network.received_B)
+        network.upload_speed = linux2restProbeRateBps(network.transmitted_B)
       }
       this.system.network = networks
       const names = nextNetworkInterfaceNames(this.network_interface_names, networks)
