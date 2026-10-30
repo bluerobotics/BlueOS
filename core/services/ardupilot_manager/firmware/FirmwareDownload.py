@@ -1,6 +1,6 @@
+import asyncio
 import gzip
 import json
-import os
 import pathlib
 import random
 import ssl
@@ -8,9 +8,9 @@ import string
 import tempfile
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
-from urllib.request import urlopen, urlretrieve
 
-from commonwealth.utils.decorators import temporary_cache
+import aiohttp
+from aiocache import cached
 from loguru import logger
 from packaging.version import Version
 
@@ -23,11 +23,6 @@ from exceptions import (
 )
 from typedefs import FirmwareFormat, Platform, PlatformType, Vehicle
 
-# TODO: This should be not necessary
-# Disable SSL verification
-if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverified_context", None):
-    ssl._create_default_https_context = ssl._create_unverified_context
-
 
 class FirmwareDownloader:
     _manifest_remote = "https://firmware.ardupilot.org/manifest.json.gz"
@@ -39,6 +34,14 @@ class FirmwareDownloader:
 
     def __init__(self) -> None:
         self._manifest: Dict[str, Any] = {}
+
+    @staticmethod
+    def _create_ssl_context() -> ssl.SSLContext:
+        """Create an SSL context with verification disabled for ArduPilot firmware server."""
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        return ssl_context
 
     @staticmethod
     def _generate_random_filename(length: int = 16) -> pathlib.Path:
@@ -56,7 +59,25 @@ class FirmwareDownloader:
         return pathlib.Path.joinpath(folder, filename)
 
     @staticmethod
-    def _download(url: str) -> pathlib.Path:
+    async def _fetch(url: str, attempts: int = 5) -> bytes:
+        for attempt in range(1, attempts + 1):
+            try:
+                connector = aiohttp.TCPConnector(ssl=FirmwareDownloader._create_ssl_context())
+                async with aiohttp.ClientSession(connector=connector) as session:
+                    async with session.get(url) as response:
+                        response.raise_for_status()
+                        return await response.read()
+            except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+                # Client errors (4xx) are permanent, only retry connection issues and server errors
+                client_error = isinstance(error, aiohttp.ClientResponseError) and error.status < 500
+                if attempt == attempts or client_error:
+                    raise
+                logger.warning(f"Download of {url} failed (attempt {attempt}/{attempts}): {error!r}, retrying...")
+                await asyncio.sleep(2**attempt)
+        raise AssertionError("unreachable")
+
+    @staticmethod
+    async def _download(url: str) -> pathlib.Path:
         """Download a specific file for a temporary location.
 
         Args:
@@ -71,29 +92,30 @@ class FirmwareDownloader:
         filename = pathlib.Path(f"{FirmwareDownloader._generate_random_filename()}-{name}")
         try:
             logger.debug(f"Downloading: {url}")
-            urlretrieve(url, filename)
+            with open(filename, "wb") as f:
+                f.write(await FirmwareDownloader._fetch(url))
         except Exception as error:
             raise FirmwareDownloadFail("Could not download firmware file.") from error
         return filename
 
-    def _manifest_is_valid(self) -> bool:
+    async def _manifest_is_valid(self) -> bool:
         """Check if internal content is valid and update it if not.
 
         Returns:
             bool: True if valid, False if was unable to validate.
         """
-        return "format-version" in self._manifest or self.download_manifest()
+        if "format-version" in self._manifest:
+            return True
+        return await self.download_manifest()
 
-    def download_manifest(self) -> bool:
+    async def download_manifest(self) -> bool:
         """Download ArduPilot manifest file
 
         Returns:
             bool: True if file was downloaded and validated, False if not.
         """
-        with urlopen(FirmwareDownloader._manifest_remote) as http_response:
-            manifest_gzip = http_response.read()
-            manifest = gzip.decompress(manifest_gzip)
-            self._manifest = json.loads(manifest)
+        manifest_gzip = await FirmwareDownloader._fetch(FirmwareDownloader._manifest_remote)
+        self._manifest = json.loads(gzip.decompress(manifest_gzip))
 
         if "format-version" not in self._manifest:
             raise InvalidManifest("Invalid Manifest file. Does not contain 'format-version' key.")
@@ -103,7 +125,7 @@ class FirmwareDownloader:
 
         return True
 
-    def _find_version_item(self, **args: str) -> List[Dict[str, Any]]:
+    async def _find_version_item(self, **args: str) -> List[Dict[str, Any]]:
         """Find version objects in the manifest that match the specific case of **args
 
         The arguments should follow the same name described in the dictionary inside the manifest
@@ -115,7 +137,7 @@ class FirmwareDownloader:
         Returns:
             List[Dict[str, Any]]: A list of firmware items that match the arguments.
         """
-        if not self._manifest and not self.download_manifest():
+        if not self._manifest and not await self.download_manifest():
             raise ManifestUnavailable("Manifest file is not available. Cannot use it to find firmware candidates.")
 
         found_version_item = []
@@ -131,8 +153,8 @@ class FirmwareDownloader:
 
         return found_version_item
 
-    @temporary_cache(timeout_seconds=3600)
-    def get_available_versions(self, vehicle: Vehicle, platform: Platform) -> List[str]:
+    @cached(ttl=3600, namespace="firmware_versions")
+    async def get_available_versions(self, vehicle: Vehicle, platform: Platform) -> List[str]:
         """Get available firmware versions for the specific plataform and vehicle
 
         Args:
@@ -144,10 +166,10 @@ class FirmwareDownloader:
         """
         available_versions: List[str] = []
 
-        if not self._manifest_is_valid():
+        if not await self._manifest_is_valid():
             raise InvalidManifest("Manifest file is invalid. Cannot use it to find available versions.")
 
-        items = self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
+        items = await self._find_version_item(vehicletype=vehicle.value, platform=platform.value)
 
         for item in items:
             if item["format"] == FirmwareDownloader._supported_firmware_formats[platform.type]:
@@ -155,8 +177,8 @@ class FirmwareDownloader:
 
         return available_versions
 
-    @temporary_cache(timeout_seconds=3600)
-    def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> str:
+    @cached(ttl=3600, namespace="firmware_url")
+    async def get_download_url(self, vehicle: Vehicle, platform: Platform, version: str = "") -> str:
         """Find a specific firmware URL from manifest that matches the arguments.
 
         Args:
@@ -168,7 +190,7 @@ class FirmwareDownloader:
         Returns:
             str: URL of valid firmware.
         """
-        versions = self.get_available_versions(vehicle, platform)
+        versions = await self.get_available_versions(vehicle, platform)
         logger.debug(f"Got following versions for {vehicle} running {platform}: {versions}")
 
         if not versions:
@@ -197,7 +219,7 @@ class FirmwareDownloader:
             else:
                 version = "BETA"
 
-        items = self._find_version_item(
+        items = await self._find_version_item(
             vehicletype=vehicle.value,
             platform=platform.value,
             mav_firmware_version_type=version,
@@ -216,7 +238,7 @@ class FirmwareDownloader:
         logger.debug(f"Downloading following firmware: {item}")
         return str(item["url"])
 
-    def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> pathlib.Path:
+    async def download(self, vehicle: Vehicle, platform: Platform, version: str = "") -> pathlib.Path:
         """Download a specific firmware that matches the arguments.
 
         Args:
@@ -228,5 +250,5 @@ class FirmwareDownloader:
         Returns:
             pathlib.Path: Temporary path for the firmware file.
         """
-        url = self.get_download_url(vehicle, platform, version)
-        return FirmwareDownloader._download(url)
+        url = await self.get_download_url(vehicle, platform, version)
+        return await FirmwareDownloader._download(url)
