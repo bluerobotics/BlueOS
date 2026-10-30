@@ -4,7 +4,7 @@ import { SemVer } from 'semver'
 import Notifier from '@/libs/notifier'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { Firmware, Vehicle } from '@/types/autopilot'
+import { Firmware, SITLFrame, Vehicle } from '@/types/autopilot'
 import { Dictionary } from '@/types/common'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
@@ -111,6 +111,20 @@ export async function fetchFirmwareVehicleType(): Promise<void> {
   } catch (error) {
     autopilot.setFirmwareVehicleType(null)
     notifier.pushBackError('AUTOPILOT_FIRMWARE_VEHICLE_TYPE_FETCH_FAIL', error)
+  }
+}
+
+export async function fetchSitlFrame(): Promise<void> {
+  try {
+    const response: AxiosResponse = await back_axios({
+      method: 'get',
+      url: `${autopilot.API_URL}/sitl_frame`,
+      timeout: 10000,
+    })
+    autopilot.setSitlFrame(response.data as SITLFrame)
+  } catch (error) {
+    autopilot.setSitlFrame(null)
+    notifier.pushBackError('AUTOPILOT_SITL_FRAME_FETCH_FAIL', error)
   }
 }
 
