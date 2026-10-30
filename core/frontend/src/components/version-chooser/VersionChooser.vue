@@ -81,6 +81,7 @@
           :bootstrap-version="bootstrap_version"
           :update-available="updateIsAvailable(image)"
           :latest-stable="latest_stable"
+          :all-images-loaded="all_images_loaded"
           :deleting="isBeingDeleted(image)"
           :enable-delete="local_versions.result.local.length > 2"
           @delete="deleteVersion"
@@ -145,6 +146,15 @@
               Retry
             </v-btn>
           </div>
+          <br>
+          You can download BlueOS versions (`BlueOS-core-docker-image` files) directly from the Assets in
+          <a
+            href="https://github.com/bluerobotics/BlueOS/releases"
+            target="_blank"
+            class="white--text"
+            rel="noopener noreferrer"
+          >
+            GitHub Releases</a> and upload them using the "Manual Upload" section below.
         </v-alert>
         <spinning-logo
           v-if="loading_images"
@@ -172,6 +182,78 @@
           />
         </v-card-actions>
       </v-card>
+      <v-card
+        v-if="settings.is_pirate_mode"
+        max-width="900"
+        class="mx-auto my-12 pa-4"
+      >
+        <h2>
+          Manual Upload
+          <v-tooltip top>
+            <template #activator="{ on }">
+              <v-icon
+                small
+                v-on="on"
+              >
+                mdi-information-outline
+              </v-icon>
+            </template>
+            <span>
+              When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)
+            </span>
+          </v-tooltip>
+        </h2>
+        Use this to upload a .tar docker image. These can be downloaded from the BlueOS
+        <a
+          href="https://github.com/bluerobotics/BlueOS/releases"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Releases</a> Assets, or
+        <a
+          href="https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          CI</a>
+        Artifacts (GitHub account required), or generated locally using <code>docker save</code>.
+        <v-file-input
+          v-if="!disable_upload_controls"
+          id="file"
+          show-size
+          accept=".tar"
+          :rules="[isFileInputNotEmpty]"
+          :error-messages="file_input_error"
+          label="File input"
+        />
+        <v-progress-linear
+          v-if="disable_upload_controls && upload_percentage !== 100"
+          class="mb-4 mt-4"
+          :value="upload_percentage"
+        />
+        <v-btn
+          v-if="!disable_upload_controls"
+          color="primary"
+          class="mr-2 mb-4 mt-1"
+          @click="validateInputFileForm() && upload()"
+          v-text="'Upload'"
+        />
+
+        <v-alert
+          v-if="upload_percentage == 100"
+          border="bottom"
+          colored-border
+          type="info"
+          elevation="2"
+        >
+          Decompressing file, this usually takes up to one minute, please stand by...
+          <spinning-logo
+            v-if="upload_percentage == 100"
+            size="15%"
+            subtitle="Decompressing file..."
+          />
+        </v-alert>
+      </v-card>
     </v-col>
     <pull-progress
       :progress="pull_output"
@@ -180,55 +262,16 @@
       :extraction="extraction_percentage"
       :statustext="status_text"
     />
-    <v-card
-      v-if="settings.is_pirate_mode"
-      max-width="900"
-      class="mx-auto pa-4"
-    >
-      <h2>Manual upload</h2>
-      Use this to upload a .tar docker image. These can be downloaded from
-      <a
-        href="https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml"
-        target="_blank"
-      >Github's CI</a>
-      or generated locally using "docker save"
-      <v-file-input
-        v-if="!disable_upload_controls"
-        id="file"
-        show-size
-        accept=".tar"
-        :rules="[isFileInputNotEmpty]"
-        :error-messages="file_input_error"
-        label="File input"
-      />
-      <v-progress-linear
-        v-if="disable_upload_controls && upload_percentage !== 100"
-        class="mb-4 mt-4"
-        :value="upload_percentage"
-      />
-      <v-btn
-        v-if="!disable_upload_controls"
-        color="primary"
-        class="mr-2 mb-4 mt-1"
-        @click="validateInputFileForm() && upload()"
-        v-text="'Upload'"
-      />
-
-      <v-alert
-        v-if="upload_percentage == 100"
-        border="bottom"
-        colored-border
-        type="info"
-        elevation="2"
-      >
-        Decompressing file, this usually takes up to one minute, please stand by...
-        <spinning-logo
-          v-if="upload_percentage == 100"
-          size="15%"
-          subtitle="Decompressing file..."
-        />
-      </v-alert>
-    </v-card>
+    <warning-dialog
+      v-model="show_restart_warning"
+      title="BlueOS is taking too long to restart"
+      message="The update may have failed or BlueOS is still starting up. Do you want to reload the page or skip?"
+      confirm-label="Reload page"
+      cancel-label="Skip"
+      confirm-color="primary"
+      persistent
+      @confirm="reloadPage"
+    />
     <v-overlay
       :z-index="10"
       :value="waiting"
@@ -262,6 +305,7 @@ import PullTracker from '@/utils/pull_tracker'
 import * as VCU from '@/utils/version_chooser'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+import WarningDialog from '../common/WarningDialog.vue'
 import DockerLogin from './DockerLogin.vue'
 import VersionCard from './VersionCard.vue'
 
@@ -274,6 +318,7 @@ export default Vue.extend({
     SpinningLogo,
     VersionCard,
     PullProgress,
+    WarningDialog,
   },
   data() {
     const default_repository = 'bluerobotics/blueos-core'
@@ -307,11 +352,13 @@ export default Vue.extend({
       loading_images: false,
       updating_bootstrap: false,
       waiting: false,
+      show_restart_warning: false,
       default_repository,
       selected_image: default_repository,
       deleting: '', // image currently being deleted, if any
       file_input_error: '',
       show_docker_login_dialog: false,
+      all_images_loaded: false,
     }
   },
   computed: {
@@ -441,18 +488,23 @@ export default Vue.extend({
       })
     },
 
+    reloadPage() {
+      window.location.reload()
+    },
+
     async waitForBackendToRestart(reload: boolean) {
       this.waiting = true
       try {
         await this.waitForBackendToGoOffline()
         await this.waitForBackendToGoOnline()
+        if (reload) {
+          this.reloadPage()
+        }
       } catch (e) {
         console.log('Backend took too long to restart')
+        this.show_restart_warning = true
       } finally {
-        if (reload) {
-          this.waiting = false
-          window.location.reload()
-        }
+        this.waiting = false
       }
     },
 
@@ -510,6 +562,7 @@ export default Vue.extend({
       await VCU.loadAvailableVersions(this.selected_image)
         .then((versions_query) => {
           this.available_versions = versions_query
+          this.all_images_loaded = true
         })
         .finally(() => {
           this.loading_images = false
@@ -518,6 +571,7 @@ export default Vue.extend({
           this.latest_stable = VCU.getLatestStable(this.available_versions)?.tag
         })
         .catch((error) => {
+          this.all_images_loaded = false
           this.available_versions = {
             local: [],
             remote: [],
@@ -707,7 +761,13 @@ export default Vue.extend({
           (element) => element.repository !== repository || element.tag !== tag,
         )
       })
-        .catch((error) => { alert(error.response?.data ?? error.message) })
+        .catch((error) => {
+          notifier.pushError(
+            'VERSION_CHOOSER_DELETE_FAIL',
+            error.response?.data?.error ?? error.response?.data ?? error.message,
+            true,
+          )
+        })
         .finally(() => { this.deleting = '' })
     },
     imageIsAvailableLocally(sha: string) : boolean {
