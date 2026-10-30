@@ -6,10 +6,11 @@
     persistent
     @input="showDialog"
     @click:outside="closeDialog"
+    @keydown.ctrl.enter.prevent="saveExtension"
   >
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
-        <span>{{ is_editing ? 'Edit' : 'Create' }} Extension</span>
+        <span>{{ is_editing ? 'Edit' : (is_from_upload ? 'Configure Uploaded' : 'Create') }} Extension</span>
         <v-btn
           icon
           x-small
@@ -57,6 +58,7 @@
             v-model="new_extension.tag"
             label="Docker tag"
             :rules="[validate_tag]"
+            @paste="handleTagPaste"
           />
 
           <json-editor
@@ -85,7 +87,7 @@
             :disabled="!valid_permissions"
             @click="saveExtension"
           >
-            {{ is_editing ? 'Save' : 'Create' }}
+            {{ is_editing ? 'Save' : (is_from_upload ? 'Install' : 'Create') }}
           </v-btn>
         </v-form>
       </v-card-text>
@@ -115,6 +117,10 @@ export default Vue.extend({
       type: Object as PropType<InstalledExtensionData & { editing: boolean } | null>,
       default: null,
     },
+    tempTag: {
+      type: String,
+      default: null,
+    },
   },
 
   data() {
@@ -137,6 +143,9 @@ export default Vue.extend({
     },
     is_editing() {
       return this.extension?.editing ?? false
+    },
+    is_from_upload() {
+      return Boolean(this.tempTag)
     },
     is_reset_editing_permissions_visible() {
       return this.new_permissions !== this.extension?.permissions
@@ -299,6 +308,16 @@ export default Vue.extend({
         setTimeout(() => {
           this.copySuccess = false
         }, 2000) // Reset after 2 seconds
+      }
+    },
+    handleTagPaste(event: ClipboardEvent) {
+      const pastedText = event.clipboardData?.getData('text')?.trim()
+      if (!pastedText) return
+
+      const colonIdx = pastedText.lastIndexOf(':')
+      if (colonIdx >= 0 && colonIdx < pastedText.length - 1) {
+        event.preventDefault()
+        this.new_extension.tag = pastedText.slice(colonIdx + 1)
       }
     },
     handlePaste(event: ClipboardEvent) {

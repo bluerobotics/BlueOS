@@ -761,6 +761,7 @@ dependencies = [
     { name = "fastapi-versioning" },
     { name = "loguru" },
     { name = "psutil" },
+    { name = "python-multipart" },
     { name = "semver" },
     { name = "uvicorn" },
 ]
@@ -777,6 +778,7 @@ requires-dist = [
     { name = "fastapi-versioning", specifier = "==0.9.1" },
     { name = "loguru", specifier = "==0.5.3" },
     { name = "psutil", specifier = "==5.7.2" },
+    { name = "python-multipart", specifier = "==0.0.5" },
     { name = "semver", specifier = "==3.0.2" },
     { name = "uvicorn", specifier = "==0.13.4" },
 ]
