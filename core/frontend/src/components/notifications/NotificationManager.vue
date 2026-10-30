@@ -7,6 +7,13 @@
       <v-toolbar-title>Notifications</v-toolbar-title>
       <v-spacer />
       <v-btn
+        v-tooltip="'Event log'"
+        icon
+        @click="$emit('showEventLog')"
+      >
+        <v-icon>mdi-text-box-search-outline</v-icon>
+      </v-btn>
+      <v-btn
         icon
         @click="dismissAllNotifications()"
       >
@@ -28,6 +35,7 @@
           </v-btn>
         </template>
         <notifications-config-menu
+          :group-by-service.sync="group_by_service"
           :show-old.sync="show_old_messages"
         />
       </v-menu>
@@ -45,15 +53,28 @@
         max-height="50vh"
       >
         <v-list-item-group
-          v-if="notifications_to_show.length != 0"
+          v-if="group_by_service && groups_to_show.length != 0"
         >
-          <notification-card
-            v-for="{ notification, count } in notifications_to_show"
-            :key="JSON.stringify(notification)"
-            :notification="notification"
-            :count="count"
+          <notification-group-card
+            v-for="group in groups_to_show"
+            :key="`${group.service.name}-${group.level}`"
+            :group="group"
             :timestamp="timestamp"
             @dismiss="dismissNotification"
+            @showInLog="showInLog"
+          />
+        </v-list-item-group>
+
+        <v-list-item-group
+          v-else-if="!group_by_service && notifications_to_show.length != 0"
+        >
+          <notification-card
+            v-for="notification in notifications_to_show"
+            :key="JSON.stringify(notification)"
+            :notification="notification"
+            :timestamp="timestamp"
+            @dismiss="dismissNotification"
+            @showInLog="showInLog"
           />
         </v-list-item-group>
 
@@ -71,50 +92,75 @@
 </template>
 
 <script lang="ts">
-import { differenceInSeconds } from 'date-fns'
 import Vue from 'vue'
 
-import notifications from '@/store/notifications'
-import { CumulatedNotification, Notification } from '@/types/notifications'
+import alert_engine from '@/alerts/engine'
+import alerts from '@/store/alerts'
+import { AlertLifecycle } from '@/types/alerts'
+import {
+  Notification, NotificationGroup,
+} from '@/types/notifications'
 
 import NotificationsConfigMenu from './ConfigMenu.vue'
 import NotificationCard from './NotificationCard.vue'
+import NotificationGroupCard from './NotificationGroupCard.vue'
 
 export default Vue.extend({
   name: 'NotificationManager',
   components: {
     NotificationsConfigMenu,
     NotificationCard,
+    NotificationGroupCard,
   },
   data() {
     return {
+      group_by_service: true,
       show_config_menu: false,
       show_old_messages: false,
       timestamp: new Date(),
-      seconds_recent: 60,
       active_intervals: [] as number[],
-      max_number_notifications: 100,
     }
   },
   computed: {
-    notifications(): CumulatedNotification[] {
-      return notifications.active_cumulated_notifications
+    // Newest first
+    visible_notifications(): Notification[] {
+      return [...this.alert_notifications].sort((a, b) => b.time_created - a.time_created)
     },
-    recent_notifications(): CumulatedNotification[] {
-      return this.notifications.filter((cumulated) => {
-        const date_now = new Date()
-        const date_notification = new Date(cumulated.notification.time_created)
-        return differenceInSeconds(date_now, date_notification) < this.seconds_recent
-      }).slice(-this.max_number_notifications)
+    notifications_to_show(): Notification[] {
+      return this.visible_notifications
     },
-    notifications_to_show(): CumulatedNotification[] {
-      const notifications_to_show = this.show_old_messages ? this.notifications : this.recent_notifications
-      // Returning the notifications reversed to show the last ones first
-      return notifications_to_show.reverse()
+    groups_to_show(): NotificationGroup[] {
+      const groups = new Map<string, NotificationGroup>()
+      this.visible_notifications.forEach((notification) => {
+        const { service, level } = notification
+        const group_key = `${service.name}-${level}`
+        const group = groups.get(group_key)
+        if (group) {
+          group.notifications.push(notification)
+          return
+        }
+        groups.set(group_key, { level, service, notifications: [notification] })
+      })
+      return [...groups.values()].sort((a, b) => a.service.name.localeCompare(b.service.name))
+    },
+    alert_notifications(): Notification[] {
+      return alerts.alerts_list.flatMap((alert) => {
+        const rule = alert_engine.getRule(alert.rule_id)
+        if (!rule || alert.state !== AlertLifecycle.Fired) return []
+        const notification = new Notification(
+          rule.level,
+          rule.service,
+          rule.title,
+          rule.description ?? '',
+          alert.since.getTime(),
+          rule.id,
+        )
+        return [notification]
+      })
     },
   },
   watch: {
-    notifications(): void {
+    notifications_to_show(): void {
       this.$emit('notificationsChange', this.notifications_to_show)
     },
   },
@@ -127,12 +173,17 @@ export default Vue.extend({
   },
   methods: {
     dismissAllNotifications(): void {
-      notifications.notifications.forEach((notification) => {
-        this.dismissNotification(notification)
+      alerts.fired_alerts.forEach((alert) => {
+        alert_engine.dismiss(alert.rule_id)
       })
     },
     dismissNotification(notification: Notification): void {
-      notifications.dismissNotification(notification)
+      if (notification.id) {
+        alert_engine.dismiss(notification.id)
+      }
+    },
+    showInLog(notification: Notification): void {
+      this.$emit('showEventLog', notification.time_created)
     },
     updateTimestamp(): void {
       this.timestamp = new Date()

@@ -11,6 +11,28 @@ export enum NotificationLevel {
   Critical = 'critical',
 }
 
+export function notificationLevelIcon(level: NotificationLevel): string {
+  switch (level) {
+    case NotificationLevel.Success: return 'mdi-check-bold'
+    case NotificationLevel.Error: return 'mdi-close-circle'
+    case NotificationLevel.Info: return 'mdi-information'
+    case NotificationLevel.Warning: return 'mdi-alert'
+    case NotificationLevel.Critical: return 'mdi-skull'
+    default: return 'mdi-help-circle'
+  }
+}
+
+export function notificationLevelColor(level: NotificationLevel): string {
+  switch (level) {
+    case NotificationLevel.Success: return 'success'
+    case NotificationLevel.Error: return 'error'
+    case NotificationLevel.Info: return 'info'
+    case NotificationLevel.Warning: return 'warning'
+    case NotificationLevel.Critical: return 'critical'
+    default: return 'info'
+  }
+}
+
 /** Base Notification interface to be used for system-user communication */
 export interface NotificationInterface {
   /**
@@ -19,12 +41,14 @@ export interface NotificationInterface {
    * @param type - Free string used for notification categorization
    * @param message - What is being communicated
    * @param time_created - UNIX timestamp indicating the time of creation
+   * @param id - Optional external id
   * */
   level: NotificationLevel
   service: Service
   type: string
   message: string
   time_created: number
+  id?: string
 }
 
 /** Base class for frontend notification system. */
@@ -35,14 +59,9 @@ export class Notification implements NotificationInterface {
     public readonly type: string,
     public readonly message: string,
     public readonly time_created: number,
+    public readonly id?: string,
   ) {}
 
-  /** Compare if all properties (except time_created) between this and other match */
-  similarTo(other: Notification): boolean {
-    const { time_created: t_this, ...similar_this } = this // eslint-disable-line @typescript-eslint/no-unused-vars
-    const { time_created: t_other, ...similar_other } = other // eslint-disable-line @typescript-eslint/no-unused-vars
-    return JSON.stringify(similar_this) === JSON.stringify(similar_other)
-  }
 }
 
 /** Similar to a standard Notification but auto-populates current UNIX timestamp on time_created */
@@ -52,13 +71,16 @@ export class LiveNotification extends Notification {
     public service: Service,
     public type: string,
     public message: string,
+    public id?: string,
   ) {
-    super(level, service, type, message, new Date().getTime())
+    super(level, service, type, message, new Date().getTime(), id)
   }
 }
 
-/** Interface to represent the cumulation of notifications, counted */
-export interface CumulatedNotification {
-  notification: Notification
-  count: number
+
+/** Notifications sharing the same service and level */
+export interface NotificationGroup {
+  service: Service
+  level: NotificationLevel
+  notifications: Notification[]
 }

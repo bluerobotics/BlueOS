@@ -15,7 +15,9 @@
         </v-list-item-icon>
 
         <v-list-item-content>
-          <v-list-item-title>{{ notification.service.name }}</v-list-item-title>
+          <v-list-item-title v-if="showService">
+            {{ notification.service.name }}
+          </v-list-item-title>
           <v-list-item-subtitle>{{ notification.type }}</v-list-item-subtitle>
           <v-slide-y-reverse-transition
             leave-absolute
@@ -38,10 +40,24 @@
               {{ notification.message }}
             </v-list-item-subtitle>
           </v-slide-y-transition>
-          <v-list-item-subtitle>{{ time_since }} ({{ count }} times)</v-list-item-subtitle>
+          <v-list-item-subtitle>
+            {{ time_since }}
+          </v-list-item-subtitle>
         </v-list-item-content>
 
         <v-list-item-action>
+          <v-btn
+            v-tooltip="'Show in event log'"
+            icon
+            @click.stop="$emit('showInLog', notification)"
+          >
+            <v-icon
+              color="grey lighten-1"
+              size="medium"
+            >
+              mdi-text-box-search-outline
+            </v-icon>
+          </v-btn>
           <v-btn icon>
             <v-icon
               color="grey lighten-1"
@@ -62,18 +78,18 @@
 import { formatDistance } from 'date-fns'
 import Vue, { PropType } from 'vue'
 
-import { Notification, NotificationLevel } from '@/types/notifications'
+import { Notification, notificationLevelColor, notificationLevelIcon } from '@/types/notifications'
 
 export default Vue.extend({
   name: 'NotificationCard',
   props: {
-    count: {
-      type: Number,
-      required: true,
-    },
     notification: {
       type: Object as PropType<Notification>,
       required: true,
+    },
+    showService: {
+      type: Boolean,
+      default: true,
     },
     timestamp: {
       type: Date,
@@ -92,24 +108,10 @@ export default Vue.extend({
       return `${formatDistance(date_now, date_notification)} ago`
     },
     level_icon(): string {
-      switch (this.notification.level) {
-        case NotificationLevel.Success: return 'mdi-check-bold'
-        case NotificationLevel.Error: return 'mdi-close-circle'
-        case NotificationLevel.Info: return 'mdi-information'
-        case NotificationLevel.Warning: return 'mdi-alert'
-        case NotificationLevel.Critical: return 'mdi-skull'
-        default: return 'mdi-help-circle'
-      }
+      return notificationLevelIcon(this.notification.level)
     },
     level_color(): string {
-      switch (this.notification.level) {
-        case NotificationLevel.Success: return 'success'
-        case NotificationLevel.Error: return 'error'
-        case NotificationLevel.Info: return 'info'
-        case NotificationLevel.Warning: return 'warning'
-        case NotificationLevel.Critical: return 'critical'
-        default: return 'info'
-      }
+      return notificationLevelColor(this.notification.level)
     },
   },
   methods: {
