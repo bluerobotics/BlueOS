@@ -11,6 +11,7 @@ import { OneMoreTime } from '@/one-more-time'
 import store from '@/store'
 import { system_information_service } from '@/types/frontend_services'
 import { KernelMessage } from '@/types/system-information/kernel'
+import { JournalEntry, JournalResponse } from '@/types/system-information/journal'
 import { Model } from '@/types/system-information/model'
 import { Netstat } from '@/types/system-information/netstat'
 import { Platform } from '@/types/system-information/platform'
@@ -86,6 +87,8 @@ class SystemInformationStore extends VuexModule {
 
   kernel_message: KernelMessage[] = []
 
+  journal_entries: JournalEntry[] = []
+
   model: Model | null = null
 
   netstat: Netstat | null = null
@@ -124,6 +127,16 @@ class SystemInformationStore extends VuexModule {
   @Mutation
   clearKernelMessages(): void {
     this.kernel_message = []
+  }
+
+  @Mutation
+  appendJournalEntries(response: JournalResponse): void {
+    this.journal_entries = this.journal_entries.concat(response.entries)
+  }
+
+  @Mutation
+  clearJournalEntries(): void {
+    this.journal_entries = []
   }
 
   @Mutation
@@ -382,11 +395,13 @@ system_information.fetchPlatformTask.setAction(system_information.fetchPlatform)
 system_information.fetchSubscribedSystemInformationTask.setAction(system_information.fetchSubscribedSystemInformation)
 
 // Vuex store modules are a poor fit for WebSocket callbacks; keep sockets outside the store and
-// open them only while a UI consumer is mounted (Kernel tab).
+// open them only while a UI consumer is mounted (Kernel / Journal tabs).
 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
 
 let kernel_socket: WebSocket | null = null
+let journal_socket: WebSocket | null = null
 let kernel_subscribers = 0
+let journal_subscribers = 0
 
 function closeSocket(socket: WebSocket | null): void {
   if (!socket) {
@@ -420,6 +435,28 @@ export function unsubscribeKernelMessages(): void {
   closeSocket(kernel_socket)
   kernel_socket = null
   system_information.clearKernelMessages()
+}
+
+export function subscribeJournalEntries(): void {
+  journal_subscribers += 1
+  if (journal_socket) {
+    return
+  }
+  const socket = new WebSocket(`${protocol}://${window.location.host}${system_information.API_URL}/ws/journal`)
+  socket.onmessage = (message) => {
+    system_information.appendJournalEntries(JSON.parse(message.data))
+  }
+  journal_socket = socket
+}
+
+export function unsubscribeJournalEntries(): void {
+  journal_subscribers = Math.max(0, journal_subscribers - 1)
+  if (journal_subscribers > 0) {
+    return
+  }
+  closeSocket(journal_socket)
+  journal_socket = null
+  system_information.clearJournalEntries()
 }
 
 export default system_information
