@@ -3,7 +3,11 @@ import logging
 from typing import Any, List
 
 import uvicorn
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse
@@ -61,6 +65,7 @@ def remove_bridge(bridge: BridgeFrontendSpec) -> Any:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")

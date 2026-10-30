@@ -8,19 +8,25 @@ import logging
 import re
 import socket
 import subprocess
+import zlib
 from concurrent import futures
 from datetime import datetime
 from enum import Enum
 from functools import cache
-from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urlparse
 from uuid import UUID
 
 import psutil
+import requests
 from bs4 import BeautifulSoup
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.general import (
     CpuType,
@@ -34,7 +40,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from speedtest import Speedtest
 from uvicorn import Config, Server
 
@@ -109,14 +115,14 @@ class ServiceMetadata(BaseModel):
     company: str
     version: str
     webpage: str
-    route: Optional[str]
-    new_page: Optional[bool]
-    extra_query: Optional[str]
-    avoid_iframes: Optional[bool]
     api: str
-    sanitized_name: Optional[str]
-    works_in_relative_paths: Optional[bool]
-    extras: Optional[Dict[str, str]]
+    route: Optional[str] = Field(default=None)
+    new_page: Optional[bool] = Field(default=None)
+    extra_query: Optional[str] = Field(default=None)
+    avoid_iframes: Optional[bool] = Field(default=None)
+    sanitized_name: Optional[str] = Field(default=None)
+    works_in_relative_paths: Optional[bool] = Field(default=None)
+    extras: Optional[Dict[str, str]] = Field(default=None)
 
 
 class ServiceInfo(BaseModel):
@@ -243,6 +249,20 @@ class Helper:
     # Reused so a hung DNS lookup cannot queue a second worker for the same site.
     website_in_flight: Dict[Website, "futures.Future[WebsiteStatus]"] = {}
 
+    mavlink2rest = MavlinkMessenger()
+
+    @staticmethod
+    def decompress_body(data: bytes, content_encoding: Optional[str]) -> bytes:
+        if content_encoding == "gzip":
+            return gzip.decompress(data)
+        if content_encoding == "deflate":
+            try:
+                return zlib.decompress(data)
+            except zlib.error:
+                # Some servers send raw deflate instead of the zlib-wrapped data HTTP specifies
+                return zlib.decompress(data, -zlib.MAX_WBITS)
+        return data
+
     @staticmethod
     # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
     def simple_http_request(
@@ -299,14 +319,8 @@ class Helper:
             # HEAD has no body; gzip-decoding an empty 200 would raise and mark the site offline.
             if method != "HEAD" and response.status == http.client.OK:
                 encoding = response.headers.get_content_charset() or "utf-8"
-                if response.getheader("Content-Encoding") == "gzip":
-                    buffer = BytesIO(response.read())
-                    with gzip.GzipFile(fileobj=buffer) as file:
-                        decompressed_data = file.read()
-                else:
-                    decompressed_data = response.read()
-
-                request_response.decoded_data = decompressed_data.decode(encoding)
+                decompressed_data = Helper.decompress_body(response.read(), response.getheader("Content-Encoding"))
+                request_response.decoded_data = decompressed_data.decode(encoding, errors="replace")
 
                 # Interpret it as json
                 if try_json:
@@ -317,13 +331,21 @@ class Helper:
             request_response.timeout = True
             request_response.error = str(e)
 
-        except (http.client.HTTPException, socket.error, json.JSONDecodeError) as e:
-            logger.warning(e)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to decode JSON response: {e.msg} (pos {e.pos})")
             request_response.error = str(e)
 
+        except (http.client.HTTPException, socket.error) as e:
+            # Binary data from non-HTTP services can end up in exception messages
+            error_msg = str(e) if str(e).isascii() else type(e).__name__
+            logger.warning(error_msg)
+            request_response.error = error_msg
+
         except Exception as e:
-            logger.exception(e)
-            request_response.error = str(e)
+            # Binary data from non-HTTP services can end up in exception messages
+            error_msg = str(e) if str(e).isascii() else type(e).__name__
+            logger.exception(error_msg)
+            request_response.error = error_msg
 
         finally:
             if conn:
@@ -564,6 +586,16 @@ class Helper:
             logging.info(f"file updated: {filename}")
         return True
 
+    @staticmethod
+    async def check_and_notify_factory_mode() -> None:
+        try:
+            response = requests.get("http://localhost/version-chooser/v1.0/version/current", timeout=10)
+            if response.status_code == 200 and response.json()["tag"] == "factory":
+                mav_message = Helper.mavlink2rest.command_statustext_message("BlueOS is in factory mode")
+                await Helper.mavlink2rest.send_mavlink_message(mav_message)
+        except Exception as e:
+            logger.info(f"Could not check factory mode: {e}.")
+
 
 fast_api_app = FastAPI(
     title="Helper API",
@@ -767,6 +799,8 @@ async def periodic() -> None:
     while True:
         await asyncio.sleep(60)
 
+        await Helper.check_and_notify_factory_mode()
+
         # Clear the known ports cache and re-scan it
         if Helper.PERIODICALLY_RESCAN_ALL_SERVICES:
             Helper.KNOWN_SERVICES.clear()
@@ -783,6 +817,7 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
+use_local_docs_assets(app)
 
 
 @app.get("/")

@@ -10,9 +10,9 @@ from typing import Any
 import appdirs
 import dpath
 import uvicorn
-from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.apis import GenericErrorHandlingRoute, use_local_docs_assets
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, Depends, FastAPI, HTTPException
 from fastapi import Path as FastPath
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -94,6 +94,10 @@ def flush_now() -> None:
     write_db()
 
 
+async def parse_nullable_body(payload: Any | None = Body(None)) -> Any:
+    return payload
+
+
 @app.post("/overwrite")
 async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
     logger.debug(f"Overwrite: {json.dumps(payload)}")
@@ -105,7 +109,10 @@ async def overwrite_data(payload: dict[str, Any] = Body(...)) -> JSONResponse:
 
 @app.post("/set/{path:path}")
 @version(1, 0)
-async def write_data(path: str = FastPath(..., regex=r"^.*$"), payload: Any = Body(...)) -> JSONResponse:
+async def write_data(
+    path: str = FastPath(..., pattern=r"^.*$"),
+    payload: Any = Depends(parse_nullable_body),
+) -> JSONResponse:
     logger.debug(f"Write path: {path}, {json.dumps(payload)}")
     dpath.new(bag_of_holding_db, path, payload)
     mark_dirty()
@@ -128,6 +135,7 @@ async def read_data(path: str) -> JSONResponse:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")

@@ -5,7 +5,11 @@ import os
 import sys
 from typing import Any, List
 
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from commonwealth.utils.decorators import temporary_cache
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import Body, FastAPI
@@ -148,6 +152,7 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
+use_local_docs_assets(app)
 
 
 @app.get("/")
