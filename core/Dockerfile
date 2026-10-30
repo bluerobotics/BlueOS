@@ -119,6 +119,7 @@ COPY run-service.sh /usr/bin/run-service
 COPY --from=download-binaries \
     /usr/bin/blueos_startup_update.py \
     /usr/bin/bridges \
+    /usr/bin/disktest \
     /usr/bin/machineid-cli \
     /usr/bin/mavlink2rest \
     /usr/bin/mavlink-routerd \
