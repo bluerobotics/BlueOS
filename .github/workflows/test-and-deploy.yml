@@ -392,6 +392,15 @@ jobs:
             MISSING+=("cmdline.txt: console=serial is still there")
           fi
           sudo umount /mnt/piboot
+          # Without a group descriptor checksum, as in the bullseye base image, the first boot resize zeroes the
+          # inode tables of every new block group, about 1.8 GiB on a 128 GB card. uninit_bg defers that.
+          ROOT_PART="/dev/mapper/${LOOP_DEVICE}p2"
+          FEATURES=$(sudo dumpe2fs -h "$ROOT_PART" 2>/dev/null | grep "^Filesystem features:")
+          if [[ ! $FEATURES =~ (metadata_csum|uninit_bg) ]]; then
+            sudo e2fsck -fy "$ROOT_PART" || [ $? -eq 1 ]
+            sudo tune2fs -O uninit_bg "$ROOT_PART"
+            sudo e2fsck -fy "$ROOT_PART" || [ $? -eq 1 ]
+          fi
           sudo kpartx -d deploy/pimod/blueos.img
           if [ ${#MISSING[@]} -ne 0 ]; then
             echo "Missing from the boot partition of the ${{ matrix.os }} ${{ matrix.platform }} image built on ${{ matrix.runner }}:"
