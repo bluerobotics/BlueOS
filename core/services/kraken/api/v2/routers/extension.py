@@ -98,7 +98,7 @@ async def install_by_identifier(identifier: str, stable: bool = True) -> Streami
     Install latest version of an extension by its identifier using one of the current manifests.
     """
     extension: Extension = await Extension.from_latest(identifier, stable)
-    return StreamingResponse(streamer(extension.install()))
+    return StreamingResponse(streamer(extension.install(atomic=True)))
 
 
 @extension_router_v2.post("/{identifier}/{tag}/install", status_code=status.HTTP_201_CREATED)
@@ -108,7 +108,7 @@ async def install_by_identifier_and_tag(identifier: str, tag: str) -> StreamingR
     Install a specific version of an extension by its identifier and tag using one of the current manifests.
     """
     extension = cast(Extension, await Extension.from_manifest(identifier, tag))
-    return StreamingResponse(streamer(extension.install()))
+    return StreamingResponse(streamer(extension.install(atomic=True)))
 
 
 @extension_router_v2.post("/{identifier}/{tag}/enable", status_code=status.HTTP_204_NO_CONTENT)
