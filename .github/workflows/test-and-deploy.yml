@@ -419,9 +419,7 @@ jobs:
             exit 1
           fi
           if [[ ! $FEATURES =~ (metadata_csum|uninit_bg) ]]; then
-            sudo e2fsck -fy "$ROOT_PART" || [ $? -eq 1 ]
             sudo tune2fs -O uninit_bg "$ROOT_PART"
-            sudo e2fsck -fy "$ROOT_PART" || [ $? -eq 1 ]
           fi
 
       - name: Sanitize platform name
