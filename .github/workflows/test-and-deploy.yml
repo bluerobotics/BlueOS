@@ -405,15 +405,24 @@ jobs:
       # inode tables of every new block group, about 1.8 GiB on a 128 GB card. uninit_bg defers that.
       - name: Enable uninit_bg on the root filesystem
         run: |
+          cleanup() {
+            sudo kpartx -d deploy/pimod/blueos.img || true
+            if [ -n "$LOOP_DEVICE" ] && losetup "/dev/$LOOP_DEVICE" >/dev/null 2>&1; then
+              sudo losetup -d "/dev/$LOOP_DEVICE" || true
+            fi
+          }
+          trap cleanup EXIT
           LOOP_DEVICE=$(sudo kpartx -avs deploy/pimod/blueos.img | sed -E 's/.*(loop[0-9]+)p[0-9]+.*/\1/g' | head -1)
           ROOT_PART="/dev/mapper/${LOOP_DEVICE}p2"
-          FEATURES=$(sudo dumpe2fs -h "$ROOT_PART" 2>/dev/null | grep "^Filesystem features:")
+          if ! FEATURES=$(sudo dumpe2fs -h "$ROOT_PART" | grep "^Filesystem features:"); then
+            echo "Failed to read the filesystem features of $ROOT_PART."
+            exit 1
+          fi
           if [[ ! $FEATURES =~ (metadata_csum|uninit_bg) ]]; then
             sudo e2fsck -fy "$ROOT_PART" || [ $? -eq 1 ]
             sudo tune2fs -O uninit_bg "$ROOT_PART"
             sudo e2fsck -fy "$ROOT_PART" || [ $? -eq 1 ]
           fi
-          sudo kpartx -d deploy/pimod/blueos.img
 
       - name: Sanitize platform name
         run: echo "SANITIZED_PLATFORM=$(echo ${{ matrix.platform }} | tr '/' '-')" >> $GITHUB_ENV
