@@ -194,8 +194,8 @@ class DiskStore extends VuexModule {
         method: 'get',
         url: `${this.API_URL}/speed/stream`,
         timeout: 600000,
-        onDownloadProgress: (progressEvent: { event?: { currentTarget?: { response?: string } } }) => {
-          const response = progressEvent.event?.currentTarget?.response
+        onDownloadProgress: (progressEvent: { event?: { target?: { response?: string } } }) => {
+          const response = progressEvent.event?.target?.response
           if (!response) return
 
           const fragments = parseStreamingResponse(response)
