@@ -97,7 +97,7 @@ export interface Manifest extends ManifestSource {
 }
 
 export interface StreamProgressEvent {
-    currentTarget: {
+    target: {
         response: string
     }
 }

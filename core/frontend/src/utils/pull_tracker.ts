@@ -1,4 +1,5 @@
 import { Dictionary } from '@/types/common'
+import { StreamProgressEvent } from '@/types/kraken'
 import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 class PullTracker {
@@ -146,8 +147,8 @@ class PullTracker {
     this.updateSimplifiedProgress()
   }
 
-  digestNewData(progressEvent: {currentTarget: { response: string }}, parseFragments = true): void {
-    const response = progressEvent?.currentTarget?.response
+  digestNewData(progressEvent: StreamProgressEvent, parseFragments = true): void {
+    const response = progressEvent?.target?.response
     if (!response) {
       return
     }

@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { fetchInstalledExtensions } from '@/components/kraken/KrakenManager'
-import { InstalledExtensionData } from '@/types/kraken'
+import { InstalledExtensionData, StreamProgressEvent } from '@/types/kraken'
 import back_axios from '@/utils/api'
 
 export const MAJOR_TOM_IDENTIFIER = 'blueos.major_tom'
@@ -43,7 +43,7 @@ export async function resolveMajorTomAction(hasInternet: boolean): Promise<Major
 }
 
 export async function installOrUpdateMajorTom(
-  progressHandler: (event: { event: { currentTarget: { response: string } } }) => void,
+  progressHandler: (event: { event: StreamProgressEvent }) => void,
 ): Promise<void> {
   const majorTomData = await fetchMajorTomInstallData()
 
