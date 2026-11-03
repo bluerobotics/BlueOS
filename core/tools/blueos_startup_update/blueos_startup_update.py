@@ -642,9 +642,9 @@ def create_dns_conf_host_link() -> bool:
 
 
 def ensure_nginx_permissions() -> bool:
-    # ensure nginx can read the userdata directory
+    # ensure nginx can read the userdata directory, skipping removable/ (user files on mounted USB drives)
     logger.info("Ensuring nginx permissions...")
-    command = "sudo chown -R www-data:www-data /usr/blueos/userdata"
+    command = "sudo find /usr/blueos/userdata -path '*/removable' -prune -o -exec chown www-data:www-data {} +"
     run_command(command, False)
 
     # This patch doesn't require restart to take effect
