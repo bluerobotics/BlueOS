@@ -1,3 +1,6 @@
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+
 // three ships the same Draco decoder that GLTFLoader and <model-viewer> would otherwise
 // fetch from a Google CDN, so we bundle it to keep 3D models loadable without internet access.
 const decoderFiles = import.meta.glob(
@@ -17,4 +20,16 @@ export default function dracoDecoderPath(): string | undefined {
     return undefined
   }
   return decoderFiles[wasmFile].replace(/[^/]*$/, '')
+}
+
+/** GLTFLoader wired to the bundled Draco decoder, for the Draco-compressed vehicle and board models. */
+export function makeGLTFLoader(): GLTFLoader {
+  const dracoLoader = new DRACOLoader()
+  const decoderPath = dracoDecoderPath()
+  if (decoderPath !== undefined) {
+    dracoLoader.setDecoderPath(decoderPath)
+  }
+  const loader = new GLTFLoader()
+  loader.setDRACOLoader(dracoLoader)
+  return loader
 }
