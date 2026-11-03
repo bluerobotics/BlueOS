@@ -29,12 +29,12 @@ class RemovableStorageStore extends VuexModule {
   }
 
   @Mutation
-  setLoading(loading: boolean): void {
+  setStorageLoading(loading: boolean): void {
     this.loading = loading
   }
 
   @Mutation
-  setError(error: string | null): void {
+  setStorageError(error: string | null): void {
     this.error = error
   }
 
@@ -46,19 +46,21 @@ class RemovableStorageStore extends VuexModule {
   }
 
   @Action
-  async fetchDevices(): Promise<void> {
-    this.setLoading(this.devices.length === 0)
+  async fetchStorageDevices(): Promise<void> {
+    this.setStorageLoading(this.devices.length === 0)
     try {
       const response = await back_axios({ method: 'get', url: `${API_URL}/devices`, timeout: 10000 })
       this.setDevices((response.data as RemovableStorageResponse).devices)
-      this.setError(null)
+      this.setStorageError(null)
     } catch (error: unknown) {
       if (!isBackendOffline(error)) {
         const axiosError = error as { response?: { data?: { detail?: string } }; message?: string }
-        this.setError(axiosError.response?.data?.detail || axiosError.message || 'Failed to fetch USB storage devices.')
+        this.setStorageError(
+          axiosError.response?.data?.detail || axiosError.message || 'Failed to fetch USB storage devices.',
+        )
       }
     } finally {
-      this.setLoading(false)
+      this.setStorageLoading(false)
     }
   }
 
@@ -76,7 +78,7 @@ class RemovableStorageStore extends VuexModule {
     } catch (error: unknown) {
       notifier.pushBackError('USB_MOUNT_FAIL', error, true)
     } finally {
-      await this.fetchDevices()
+      await this.fetchStorageDevices()
       this.setOperating({ path: device.path, operating: false })
     }
   }
@@ -95,7 +97,7 @@ class RemovableStorageStore extends VuexModule {
     } catch (error: unknown) {
       notifier.pushBackError('USB_UNMOUNT_FAIL', error, true)
     } finally {
-      await this.fetchDevices()
+      await this.fetchStorageDevices()
       this.setOperating({ path: device.path, operating: false })
     }
   }
