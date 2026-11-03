@@ -270,10 +270,10 @@ export default Vue.extend({
   },
   mounted() {
     this.fetchUsb()
-    this.storage_store.fetchDevices()
+    this.storage_store.fetchStorageDevices()
     this.timer = window.setInterval(() => {
       this.fetchUsb()
-      this.storage_store.fetchDevices()
+      this.storage_store.fetchStorageDevices()
     }, 5000)
   },
   beforeDestroy() {
@@ -291,7 +291,7 @@ export default Vue.extend({
       return this.storage_store.operatingPaths.includes(path)
     },
     fileBrowserPath(device: RemovableStorageDevice): string {
-      return `/tools/file-browser/files/usb/${device.name}`
+      return `/tools/file-browser/files/usb/${device.mount_point?.split('/').pop()}`
     },
     storageStatus(device: RemovableStorageDevice): string {
       if (device.managed) return device.writable ? 'Mounted read/write' : 'Mounted read-only'
