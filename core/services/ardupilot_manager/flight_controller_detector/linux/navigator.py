@@ -83,6 +83,8 @@ class NavigatorPi4(Navigator):
             os_release = ""
         if "bookworm" in os_release.lower():
             release = "Bookworm"
+        elif "nixos" in os_release.lower():
+            release = "NixOS"
 
         match release:
             case "Bullseye":
@@ -92,7 +94,7 @@ class NavigatorPi4(Navigator):
                     Serial(port="E", endpoint="/dev/ttyAMA2"),
                     Serial(port="F", endpoint="/dev/ttyAMA3"),
                 ]
-            case "Bookworm":
+            case "Bookworm" | "NixOS":
                 return [
                     Serial(port="C", endpoint="/dev/ttyS0"),
                     Serial(port="B", endpoint="/dev/ttyAMA3"),
