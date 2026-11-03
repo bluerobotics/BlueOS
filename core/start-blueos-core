@@ -98,8 +98,9 @@ fi
 mkdir -p /var/logs/blueos
 find /var/logs/blueos -type d -exec chmod a+rw {} \;
 mkdir -p /usr/blueos/userdata/settings
-find /usr/blueos/userdata -type d -exec chmod a+rw {} \;
-find /usr/blueos/userdata -type f -exec chmod a+rw {} \;
+# Skip removable/, since it holds user files on mounted USB drives whose ownership/permissions we must not touch
+find /usr/blueos/userdata -path /usr/blueos/userdata/removable -prune -o -type d -exec chmod a+rw {} \;
+find /usr/blueos/userdata -path /usr/blueos/userdata/removable -prune -o -type f -exec chmod a+rw {} \;
 
 # These services have priority because they do the fundamental for the vehicle to work,
 # and by initializing them first we reduce the time users have to wait to control the vehicle.
