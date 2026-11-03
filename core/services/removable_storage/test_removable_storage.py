@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -177,6 +178,105 @@ async def test_discover_devices_handles_host_and_json_errors(
 
 
 @pytest.mark.asyncio
+async def test_cleanup_orphaned_mounts_unmounts_stale_mount_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Device unplugged while mounted: lsblk no longer reports it, but the OS mount still exists.
+    commands: list[str] = []
+
+    async def run(command: str) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return completed()
+
+    def fake_isdir(path: object) -> bool:
+        return str(path) == str(removable_storage.MOUNT_ROOT)
+
+    def fake_listdir(path: object) -> list[str]:
+        assert str(path) == str(removable_storage.MOUNT_ROOT)
+        return ["Dive-Logs-ABCD", "Orphan-EFGH"]
+
+    monkeypatch.setattr(os.path, "isdir", fake_isdir)
+    monkeypatch.setattr(os, "listdir", fake_listdir)
+    monkeypatch.setattr(os.path, "ismount", lambda path: str(path).endswith("Orphan-EFGH"))
+    monkeypatch.setattr(removable_storage, "run_host", run)
+
+    await removable_storage.cleanup_orphaned_mounts([device(mounted=True, managed=True)])
+    assert len(commands) == 1
+    assert "umount" in commands[0]
+    assert "Orphan-EFGH" in commands[0]
+
+
+@pytest.mark.asyncio
+async def test_cleanup_orphaned_mounts_removes_empty_leftover_directory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Leftover directory from a previous mount, not currently mounted (e.g. before a device reconnects).
+    commands: list[str] = []
+
+    async def run(command: str) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return completed()
+
+    def fake_listdir(path: object) -> list[str]:
+        return ["Orphan-EFGH"] if str(path) == str(removable_storage.MOUNT_ROOT) else []
+
+    monkeypatch.setattr(os.path, "isdir", lambda path: str(path) == str(removable_storage.MOUNT_ROOT))
+    monkeypatch.setattr(os, "listdir", fake_listdir)
+    monkeypatch.setattr(os.path, "ismount", lambda _path: False)
+    monkeypatch.setattr(removable_storage, "run_host", run)
+
+    await removable_storage.cleanup_orphaned_mounts([])
+    assert len(commands) == 1
+    assert "rmdir" in commands[0]
+    assert "umount" not in commands[0]
+
+
+@pytest.mark.asyncio
+async def test_cleanup_orphaned_mounts_preserves_nonempty_directory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Safety net: never delete a directory that unexpectedly still holds data.
+    commands: list[str] = []
+
+    async def run(command: str) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return completed()
+
+    def fake_listdir(path: object) -> list[str]:
+        return ["Orphan-EFGH"] if str(path) == str(removable_storage.MOUNT_ROOT) else ["leftover.bin"]
+
+    monkeypatch.setattr(os.path, "isdir", lambda path: str(path) == str(removable_storage.MOUNT_ROOT))
+    monkeypatch.setattr(os, "listdir", fake_listdir)
+    monkeypatch.setattr(os.path, "ismount", lambda _path: False)
+    monkeypatch.setattr(removable_storage, "run_host", run)
+
+    await removable_storage.cleanup_orphaned_mounts([])
+    assert not commands
+
+
+@pytest.mark.asyncio
+async def test_cleanup_orphaned_mounts_ignores_currently_managed_devices(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    commands: list[str] = []
+
+    async def run(command: str) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return completed()
+
+    def fake_listdir(path: object) -> list[str]:
+        assert str(path) == str(removable_storage.MOUNT_ROOT)
+        return ["Dive-Logs-ABCD"]
+
+    monkeypatch.setattr(os.path, "isdir", lambda path: str(path) == str(removable_storage.MOUNT_ROOT))
+    monkeypatch.setattr(os, "listdir", fake_listdir)
+    monkeypatch.setattr(removable_storage, "run_host", run)
+
+    await removable_storage.cleanup_orphaned_mounts([device(mounted=True, managed=True)])
+    assert not commands
+
+
+@pytest.mark.asyncio
 async def test_mount_device_uses_fixed_options_and_managed_target(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -196,6 +296,31 @@ async def test_mount_device_uses_fixed_options_and_managed_target(
     assert result.writable
     assert "rw,nosuid,nodev,noexec" in commands[0]
     assert "/usr/blueos/userdata/removable/Dive-Logs-ABCD" in commands[0]
+
+
+@pytest.mark.asyncio
+async def test_mount_device_cleans_up_when_mount_command_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Race: the device is unplugged between discovery and the mount syscall itself, e.g.
+    # "mount: ...: special device /dev/sda1 does not exist." (exit code 32) observed on real hardware.
+    commands: list[str] = []
+
+    async def discover() -> list[removable_storage.StorageDevice]:
+        return [device()]
+
+    async def run(command: str) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return completed(32, stderr="mount: special device /dev/sda1 does not exist.")
+
+    monkeypatch.setattr(removable_storage, "discover_devices", discover)
+    monkeypatch.setattr(removable_storage, "run_host", run)
+    with pytest.raises(HTTPException, match="does not exist") as error:
+        await removable_storage.mount_device(removable_storage.DeviceRequest(path="/dev/sda1"))
+    assert error.value.status_code == 409
+    assert "mount" in commands[0]
+    assert "rmdir" in commands[1]
+    assert "Dive-Logs-ABCD" in commands[1]
 
 
 @pytest.mark.asyncio
@@ -220,6 +345,21 @@ async def test_mount_device_rejects_unknown_or_external_mount(
     with pytest.raises(HTTPException) as error:
         await removable_storage.mount_device(removable_storage.DeviceRequest(path="/dev/sda1"))
     assert error.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_unmount_device_device_disappeared_entirely(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Simulates a device that was unplugged while mounted: lsblk no longer reports it at all, so there
+    # is no API path left to unmount it directly; cleanup_orphaned_mounts() is what reclaims it instead.
+    async def missing() -> list[removable_storage.StorageDevice]:
+        return []
+
+    monkeypatch.setattr(removable_storage, "discover_devices", missing)
+    with pytest.raises(HTTPException) as error:
+        await removable_storage.unmount_device(removable_storage.DeviceRequest(path="/dev/sda1"))
+    assert error.value.status_code == 404
 
 
 @pytest.mark.asyncio
