@@ -12,12 +12,11 @@ jobs:
   permission:
     name: Check actor permission
     runs-on: ubuntu-latest
-    # The claude-code-action hard-fails when github.actor has no write access,
-    # and author_association can't tell: an org MEMBER may only have read
-    # access. The real permission needs an API call that a job-level if can't
-    # make, so it gets its own job and the review job is skipped for read-only
-    # actors. A maintainer that reopens their pull request becomes the actor
-    # and gets it reviewed.
+    # Any repository collaborator can get a review, org members included, even
+    # with read access. author_association and orgs/members don't show private
+    # org members with GITHUB_TOKEN, but repos/collaborators lists them through
+    # the org base permission. It needs an API call that a job-level if can't
+    # make, so it gets its own job and the review job is skipped for others.
     if: >-
       ${{ !github.event.pull_request.draft
           && github.event.pull_request.user.type != 'Bot' }}
@@ -32,11 +31,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACTOR: ${{ github.actor }}
         run: |
-          PERMISSION=$(gh api "repos/${{ github.repository }}/collaborators/${ACTOR}/permission" --jq .permission)
-          if [[ "$PERMISSION" =~ ^(admin|write)$ ]]; then
+          if gh api "repos/${{ github.repository }}/collaborators/${ACTOR}" --silent; then
             echo "allowed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::Skipping review, ${ACTOR} has ${PERMISSION} permission"
+            echo "::notice::Skipping review, ${ACTOR} is not a collaborator"
           fi
 
   review:
@@ -90,6 +88,8 @@ jobs:
           show_full_output: "false"
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The action hard-fails on actors without write access, the permission job already checked this one.
+          allowed_non_write_users: ${{ github.actor }}
           claude_args: |
             --model claude-opus-4-7
             --max-turns 40
