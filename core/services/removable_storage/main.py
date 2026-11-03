@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import shlex
 import subprocess
@@ -155,6 +156,34 @@ def parse_lsblk(payload: str) -> list[StorageDevice]:
     return devices
 
 
+async def cleanup_orphaned_mounts(devices: list[StorageDevice]) -> None:
+    # The container sees host mounts directly through the rslave bind on MOUNT_ROOT, so detection needs no SSH round-trip.
+    if not os.path.isdir(MOUNT_ROOT):
+        return
+    valid_names = {
+        PurePosixPath(device.mount_point).name for device in devices if device.managed and device.mount_point
+    }
+    for entry in os.listdir(MOUNT_ROOT):
+        if entry in valid_names:
+            continue
+        target = MOUNT_ROOT / entry
+        if os.path.ismount(target):
+            # Device vanished from lsblk while still mounted at the OS level (disconnected while in use).
+            command = f"sudo umount -- {shlex.quote(str(target))}; sudo rmdir -- {shlex.quote(str(target))} 2>/dev/null || true"
+        elif not os.listdir(target):
+            command = f"sudo rmdir -- {shlex.quote(str(target))} 2>/dev/null || true"
+        else:
+            logger.warning(f"Leaving non-empty orphaned mount point untouched: {target}")
+            continue
+        # shortcut: cleanup races with a concurrent mount/unmount are best-effort and non-fatal (duplicate
+        # umount/rmdir just fails quietly); upgrade to lock-protected if orphan cleanup ever needs stronger guarantees.
+        result = await run_host(command)
+        if result.returncode != 0:
+            logger.warning(
+                f"Failed to clean up orphaned mount point {target}: {command_error(result, 'unknown error')}"
+            )
+
+
 async def discover_devices() -> list[StorageDevice]:
     result = await run_host(shlex.join(LSBLK_COMMAND))
     if result.returncode != 0:
@@ -163,9 +192,11 @@ async def discover_devices() -> list[StorageDevice]:
             detail=command_error(result, "Unable to inspect host block devices."),
         )
     try:
-        return parse_lsblk(result.stdout)
+        devices = parse_lsblk(result.stdout)
     except ValueError as exception:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exception)) from exception
+    await cleanup_orphaned_mounts(devices)
+    return devices
 
 
 def find_device(devices: list[StorageDevice], path: str) -> StorageDevice:
