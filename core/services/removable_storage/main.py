@@ -96,6 +96,15 @@ def safe_name(value: str) -> str:
     return name[:64] or "usb-storage"
 
 
+def mount_is_read_only(mount_point: str) -> bool:
+    # lsblk's RO column describes the block device, not the filesystem; a device can remount itself
+    # read-only (e.g. ext4 after an I/O error) while RO still reports false.
+    try:
+        return bool(os.statvfs(mount_point).f_flag & os.ST_RDONLY)
+    except OSError:
+        return False
+
+
 def is_managed_mount(mount_point: str) -> bool:
     path = PurePosixPath(mount_point)
     return path != MOUNT_ROOT and path.is_relative_to(MOUNT_ROOT)
@@ -130,7 +139,7 @@ def parse_lsblk(payload: str) -> list[StorageDevice]:
             used_names.add(name)
             managed_point = next((point for point in points if is_managed_mount(point)), None)
             mount_point = managed_point or (points[0] if points else None)
-            read_only = bool(node.get("ro"))
+            read_only = mount_is_read_only(mount_point) if mount_point else bool(node.get("ro"))
             managed = managed_point is not None
             devices.append(
                 StorageDevice(
