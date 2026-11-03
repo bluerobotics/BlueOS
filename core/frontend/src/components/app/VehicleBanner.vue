@@ -50,6 +50,9 @@
           <v-text-field
             v-model="mdns_hostname_input"
             label="mDNS Hostname"
+            :hint="`Also renames the system: SSH and the router will use ${mdns_hostname_input}-avahi.local `
+              + `and ${mdns_hostname_input}`"
+            persistent-hint
           />
         </v-card-text>
         <v-card-actions>
