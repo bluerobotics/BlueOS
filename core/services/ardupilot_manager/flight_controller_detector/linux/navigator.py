@@ -16,8 +16,8 @@ class Navigator(LinuxFlightController):
         plat = Platform.Navigator
         if platform.machine() == "aarch64":
             # edge case for 64-bit kernel on 32-bit userland...
-            # let's check the arch for /usr/bin/ls
-            with open("/usr/bin/ls", "rb") as f:
+            # let's check the arch of the running interpreter
+            with open("/proc/self/exe", "rb") as f:
                 elf_file = ELFFile(f)
                 firm_arch = elf_file.get_machine_arch()
                 # from https://github.com/eliben/pyelftools/blob/main/elftools/elf/elffile.py#L513
