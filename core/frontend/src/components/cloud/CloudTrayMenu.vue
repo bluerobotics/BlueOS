@@ -196,6 +196,7 @@ import bag from '@/store/bag'
 import { FilebrowserFile } from '@/types/filebrowser'
 import { InstalledExtensionData, RunningContainer } from '@/types/kraken'
 import back_axios from '@/utils/api'
+import imageNameMatches from '@/utils/docker_images'
 import { prettifySize } from '@/utils/helper_functions'
 import {
   installOrUpdateMajorTom,
@@ -267,7 +268,7 @@ export default Vue.extend({
       const extension = this.installed_extensions[MAJOR_TOM_EXTENSION_IDENTIFIER]
 
       return this.running_containers.some(
-        (container) => container.image === `${extension?.docker}:${extension?.tag}`,
+        (container) => imageNameMatches(container.image, `${extension?.docker}:${extension?.tag}`),
       )
     },
     is_token_set(): boolean {
