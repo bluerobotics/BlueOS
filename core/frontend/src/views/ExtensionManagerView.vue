@@ -423,6 +423,7 @@ import zenoh from '@/libs/zenoh'
 import { OneMoreTime } from '@/one-more-time'
 import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
+import imageNameMatches from '@/utils/docker_images'
 import PullTracker from '@/utils/pull_tracker'
 
 import {
@@ -885,7 +886,7 @@ export default Vue.extend({
     },
     getContainer(extension: InstalledExtensionData): RunningContainer | undefined {
       return this.running_containers?.find(
-        (container) => container.image === `${extension.docker}:${extension.tag}`,
+        (container) => imageNameMatches(container.image, `${extension.docker}:${extension.tag}`),
       )
     },
     async fetchRunningContainers(): Promise<void> {
@@ -900,9 +901,7 @@ export default Vue.extend({
       if (!this.active_operation_identifier || this.show_pull_output) return
       const ext = this.installed_extensions[this.active_operation_identifier]
       if (!ext) return
-      const is_running = this.running_containers.some(
-        (container) => container.image === `${ext.docker}:${ext.tag}`,
-      )
+      const is_running = this.getContainer(ext)
       if (is_running) {
         const action = this.active_operation_type === 'update' ? 'updated' : 'installed'
         notifier.pushSuccess('EXTENSION_OPERATION_SUCCESS', `${ext.name} ${action} successfully.`, true)
