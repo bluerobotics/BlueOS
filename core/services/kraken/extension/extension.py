@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import hashlib
 import json
 import os
 import time
@@ -38,6 +39,7 @@ from utils import has_enough_disk_space
 
 TEMP_EXTENSION_KEEPALIVE_TTL_SECONDS = 10 * 60
 TEMP_EXTENSION_TAG_PREFIX = "temp-"
+CONFIG_FINGERPRINT_LABEL = "blueos.config-fingerprint"
 
 
 class Extension:
@@ -136,6 +138,55 @@ class Extension:
         if "LogConfig" not in config["HostConfig"]:
             config["HostConfig"]["LogConfig"] = {}
         config["HostConfig"]["LogConfig"] = {"Type": "json-file", "Config": {"max-size": "20m", "max-file": "3"}}
+
+    @staticmethod
+    def _config_fingerprint(config: Dict[str, Any], image_id: str) -> str:
+        """Identify the requested configuration, so a restart can reuse the container.
+
+        Neither engine echoes the create request faithfully enough to compare it
+        field by field: they rewrite binds (`:rw` becomes `:rw,rprivate,rbind`
+        on Podman), fill in defaults, and report `LogConfig.Config` as null. A
+        digest of what was requested is the only thing that can be compared.
+
+        The fingerprint's own label is excluded, so recomputing it from an
+        already-labelled config is idempotent. The image id is included
+        because a tag can be re-pulled onto a new digest.
+        """
+        comparable = {key: value for key, value in config.items() if key != "Labels"}
+        labels = {key: value for key, value in (config.get("Labels") or {}).items() if key != CONFIG_FINGERPRINT_LABEL}
+        if labels:
+            comparable["Labels"] = labels
+
+        payload = json.dumps({"config": comparable, "image": image_id}, sort_keys=True)
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    async def _start_or_create(client: Any, name: str, config: Dict[str, Any], image_id: str) -> Any:
+        """Reuse the existing container when its configuration is unchanged.
+
+        aiodocker's `create_or_replace` compares the create request against the
+        full inspect body, which carries keys the request never sends (`Id`,
+        `Created`, `State`, ...), so it never matches: every restart discards
+        the container along with its logs and writable layer.
+        """
+        fingerprint = Extension._config_fingerprint(config, image_id)
+        config.setdefault("Labels", {})[CONFIG_FINGERPRINT_LABEL] = fingerprint
+
+        try:
+            container = await client.containers.get(name)
+        except DockerError as error:
+            if error.status != 404:
+                raise
+            return await client.containers.create(config, name=name)
+
+        current_labels = (container["Config"] or {}).get("Labels") or {}
+        if current_labels.get(CONFIG_FINGERPRINT_LABEL) == fingerprint:
+            return container
+
+        if (container["State"] or {}).get("Running", False):
+            await container.stop()
+        await container.delete()
+        return await client.containers.create(config, name=name)
 
     @classmethod
     async def remove(cls, container_name: str, delete_image: bool = True) -> None:
@@ -304,7 +355,7 @@ class Extension:
             async with DockerCtx() as client:
                 # Checks if image exists locally, if not tries to pull it
                 try:
-                    await client.images.inspect(img_name)
+                    image = await client.images.inspect(img_name)
                 except Exception:
                     try:
                         logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
@@ -317,8 +368,15 @@ class Extension:
                             await client.images.tag(tag, img_name)
                     except Exception as error:
                         raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
+                    try:
+                        image = await client.images.inspect(img_name)
+                    except Exception as error:
+                        raise ExtensionPullFailed(
+                            f"Failed to inspect pulled extension {self.identifier}:{self.tag}"
+                        ) from error
 
-                container = await client.containers.create_or_replace(name=ext.container_name(), config=config)  # type: ignore
+                container = await Extension._start_or_create(client, ext.container_name(), config, image["Id"])
+                # If the container is already running, this returns 304 Not Modified
                 await container.start()
                 logger.info(f"Extension {self.identifier}:{self.tag} started")
                 self.reset_start_attempt(self.unique_entry)
