@@ -87,10 +87,43 @@ run_bootstrap_checks() {
     mypy --config-file "$CORE_DIR/pyproject.toml" "$bootstrap_dir"
 }
 
+run_e2e_checks() {
+    echo "Running e2e checks..."
+    local e2e_dir="$ROOT_DIR/tests/e2e"
+    local e2e_files=()
+    mapfile -t e2e_files < <(git -C "$ROOT_DIR" ls-files 'tests/e2e/*.py' | sed "s|^|$ROOT_DIR/|")
+
+    if [ "${#e2e_files[@]}" -eq 0 ]; then
+        echo "No e2e Python files found, skipping."
+        return
+    fi
+
+    echo "Running isort (e2e).."
+    isort "${isort_args[@]}" "${e2e_files[@]}"
+
+    echo "Running black (e2e).."
+    black "${black_args[@]}" "${e2e_files[@]}"
+
+    if [ "$fixing" = true ]; then
+        return
+    fi
+
+    echo "Running ruff (e2e).."
+    ruff check --config "$CORE_DIR/pyproject.toml" "${e2e_files[@]}"
+
+    echo "Running pylint (e2e).."
+    pylint --rcfile "$CORE_DIR/pyproject.toml" "${e2e_files[@]}"
+
+    echo "Running mypy (e2e).."
+    (cd "$e2e_dir" && mypy --config-file "$CORE_DIR/pyproject.toml" --explicit-package-bases .)
+}
+
 run_environment_phase "core" "$CORE_DIR" EMPTY_PATHS EMPTY_PATHS true
 # Bootstrap checks reuse the venv (run_environment_phase runs in a subshell so we re-activate)
 # shellcheck disable=SC1091
 source "$CORE_DIR/.venv/bin/activate"
 run_bootstrap_checks
+
+run_e2e_checks
 
 exit 0
