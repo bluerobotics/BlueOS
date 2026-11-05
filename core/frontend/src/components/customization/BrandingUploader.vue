@@ -23,7 +23,7 @@
     </div>
     <div class="d-flex justify-end mt-2">
       <v-btn
-        v-tooltip="'Upload a new file'"
+        v-tooltip="t`Upload a new file`"
         outlined
         small
         color="primary"
@@ -37,7 +37,7 @@
       </v-btn>
       <v-btn
         v-if="preview_url"
-        v-tooltip="'Remove the custom file'"
+        v-tooltip="t`Remove the custom file`"
         outlined
         small
         color="error"
@@ -47,11 +47,11 @@
         <v-icon left small>
           mdi-trash-can
         </v-icon>
-        Remove
+        {{ t`Remove` }}
       </v-btn>
     </div>
     <label class="d-none">
-      Upload file
+      {{ t`Upload file` }}
       <input
         ref="file_input"
         type="file"
@@ -63,6 +63,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import { BrandingAsset } from '@/types/customization'
@@ -90,11 +91,11 @@ export default Vue.extend({
     },
     emptyLabel: {
       type: String,
-      default: 'No file uploaded.',
+      default: t`No file uploaded.`,
     },
     uploadLabel: {
       type: String,
-      default: 'Upload',
+      default: t`Upload`,
     },
   },
 
