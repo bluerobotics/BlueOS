@@ -63,7 +63,7 @@
     <div class="endpoint-buttons">
       <v-btn
         v-if="!endpoint.protected && is_known_type"
-        v-tooltip="'Edit endpoint'"
+        v-tooltip="t`Edit endpoint`"
         color="primary"
         dark
         fab
@@ -75,7 +75,7 @@
         </v-icon>
       </v-btn>
       <v-btn
-        v-tooltip="`Copy command line string (${command_line_string})`"
+        v-tooltip="t`Copy command line string (${command_line_string})`"
         color="primary"
         dark
         fab
@@ -88,7 +88,7 @@
       </v-btn>
       <v-btn
         v-if="!endpoint.protected || !is_known_type"
-        v-tooltip="'Delete endpoint'"
+        v-tooltip="t`Delete endpoint`"
         color="error"
         dark
         fab
@@ -111,6 +111,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import { copyToClipboard } from '@/cosmos'
@@ -146,15 +147,15 @@ export default Vue.extend({
   computed: {
     persistency(): { icon: string, tooltip: string } {
       if (this.endpoint.persistent) {
-        return { icon: 'mdi-content-save', tooltip: 'Persistent' }
+        return { icon: 'mdi-content-save', tooltip: t`Persistent` }
       }
-      return { icon: 'mdi-content-save-off', tooltip: 'Not persistent' }
+      return { icon: 'mdi-content-save-off', tooltip: t`Not persistent` }
     },
     protection(): { icon: string, tooltip: string } {
       if (this.endpoint.protected) {
-        return { icon: 'mdi-lock', tooltip: 'Protected' }
+        return { icon: 'mdi-lock', tooltip: t`Protected` }
       }
-      return { icon: 'mdi-lock-off', tooltip: 'Not protected' }
+      return { icon: 'mdi-lock-off', tooltip: t`Not protected` }
     },
     is_known_type(): boolean {
       return isKnownEndpointType(this.endpoint.connection_type)
