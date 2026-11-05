@@ -11,7 +11,7 @@
         <v-card class="mt-3">
           <v-overlay :value="!has_focus">
             <div class="text-h4 py-12 px-12">
-              Motor test is disabled when the page is out of focus
+              {{ t`Motor test is disabled when the page is out of focus` }}
             </div>
           </v-overlay>
           <v-simple-table
@@ -22,7 +22,7 @@
               <thead>
                 <tr>
                   <th class="text-left subtitle-1 font-weight-bold">
-                    Motor Test
+                    {{ t`Motor Test` }}
                   </th>
                   <th />
                   <th>
@@ -66,7 +66,7 @@
                       :parameter="motor.reverse_parameter"
                       :on-value="reverse_on_value"
                       :off-value="reverse_off_value"
-                      label="Reversed"
+                      :label="t`Reversed`"
                     />
                   </td>
                   <td width="80%">
@@ -115,13 +115,13 @@
               <thead>
                 <tr>
                   <th class="text-left">
-                    Name
+                    {{ t`Name` }}
                   </th>
                   <th class="text-left">
-                    Value
+                    {{ t`Value` }}
                   </th>
                   <th class="text-left">
-                    Output
+                    {{ t`Output` }}
                   </th>
                 </tr>
               </thead>
