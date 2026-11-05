@@ -3,7 +3,7 @@
     <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2 main-card">
       <v-card v-if="params_finished_loaded" outline class="pa-5 mt-4 mr-2 mb-2">
         <v-card-title>
-          Frame <parameter-label :param="frame_parameter" label="" />
+          {{ t`Frame` }} <parameter-label :param="frame_parameter" label="" />
         </v-card-title>
         <FrameSelector
           v-if="frame_parameter"
@@ -13,7 +13,7 @@
         <InlineParameterEditor
           v-if="frame_type_parameter"
           :param="frame_type_parameter"
-          :label="'Frame Subtype'"
+          :label="t`Frame Subtype`"
           :auto-set="true"
         />
       </v-card>
