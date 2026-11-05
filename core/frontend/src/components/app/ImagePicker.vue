@@ -24,7 +24,7 @@
     <v-dialog v-model="dialog" @dragover.prevent @dragenter.prevent @drop.prevent="onDrop">
       <v-card class="pa-2">
         <v-card-title>
-          Pick an Image
+          {{ t`Pick an Image` }}
         </v-card-title>
         <v-row v-if="allimages.length > 0" class="overflow-auto" style="max-height: 500px;" justify="space-around">
           <v-col v-for="(each_image, index) in allimages" :key="index" cols="12" sm="3" md="3">
@@ -55,7 +55,8 @@
         </v-row>
         <v-row v-else>
           <v-alert>
-            No images found at {{ directory }}. Please upload some images to this directory using the file browser.
+            {{ t`No images found at ${directory}. Please upload some images to this directory using the file browser.`
+            }}
           </v-alert>
           <v-alert v-if="error" color="red lighten-2">
             {{ error }}
@@ -70,19 +71,19 @@
               @drop.prevent="onDrop"
             >
               <v-card-text>
-                Drag and drop an image file here to upload
+                {{ t`Drag and drop an image file here to upload` }}
               </v-card-text>
               <input
                 id="file-input"
                 ref="fileInput"
-                aria-label="File browser"
+                :aria-label="t`File browser`"
                 type="file"
                 accept="image/*"
                 style="display:none"
                 @change="onFileInputChange"
               />
               <v-btn color="primary" @click="onFilePickerClick">
-                Click to upload an image
+                {{ t`Click to upload an image` }}
               </v-btn>
             </v-card>
           </v-col>
