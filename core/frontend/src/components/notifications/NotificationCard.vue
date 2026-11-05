@@ -47,7 +47,7 @@
 
         <v-list-item-action>
           <v-btn
-            v-tooltip="'Show in event log'"
+            v-tooltip="t`Show in event log`"
             icon
             @click.stop="$emit('showInLog', notification)"
           >
