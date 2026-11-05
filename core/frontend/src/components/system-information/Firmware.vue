@@ -9,15 +9,15 @@
       :loading="loading_vcgencmd"
     >
       <v-card-title class="align-center">
-        Raspberry Firmware
+        {{ t`Raspberry Firmware` }}
       </v-card-title>
       <v-card-text>
         <div v-if="raspberry_firmware_error">
           <span><b> {{ raspberry_firmware_error }} </b> </span>
         </div>
         <div v-else-if="!loading_vcgencmd">
-          <span class="d-block"><b>From:</b> {{ raspiberry_firmware_data }} </span>
-          <span class="d-block"><b>Version:</b> {{ raspberry_firmware_version }} </span>
+          <span class="d-block"><b>{{ t`From:` }}</b> {{ raspiberry_firmware_data }} </span>
+          <span class="d-block"><b>{{ t`Version:` }}</b> {{ raspberry_firmware_version }} </span>
         </div>
       </v-card-text>
     </v-card>
@@ -27,31 +27,31 @@
       :loading="loading"
     >
       <v-card-title class="align-center">
-        Bootloader Version
+        {{ t`Bootloader Version` }}
       </v-card-title>
       <v-card-text>
         <div v-if="eeprom_update">
           <div class="d-flex justify-space-between">
-            <span><b>Current:</b> {{ raspberry_eeprom_data.current_bootloader }} </span>
+            <span><b>{{ t`Current:` }}</b> {{ raspberry_eeprom_data.current_bootloader }} </span>
             <span v-if="bootloader_update_available">
-              <b>Latest:</b> {{ raspberry_eeprom_data.latest_bootloader }}
+              <b>{{ t`Latest:` }}</b> {{ raspberry_eeprom_data.latest_bootloader }}
             </span>
             <span v-else>
-              <b>Up to date</b>
+              <b>{{ t`Up to date` }}</b>
             </span>
           </div>
           <span v-if="raspberry_bootloader_version" class="d-block">
-            <b>Version:</b> {{ raspberry_bootloader_version }}
+            <b>{{ t`Version:` }}</b> {{ raspberry_bootloader_version }}
           </span>
         </div>
         <div v-if="eeprom_update">
           <div class="d-flex justify-space-between mb-3">
-            <span><b>VL085 Firmware (USB Controller):</b> {{ raspberry_eeprom_data.current_vl085 }} </span>
+            <span><b>{{ t`VL085 Firmware (USB Controller):` }}</b> {{ raspberry_eeprom_data.current_vl085 }} </span>
             <span v-if="vl085_update_available">
-              <b>Latest:</b> {{ raspberry_eeprom_data.latest_vl085 }}
+              <b>{{ t`Latest:` }}</b> {{ raspberry_eeprom_data.latest_vl085 }}
             </span>
             <span v-else>
-              <b>Up to date</b>
+              <b>{{ t`Up to date` }}</b>
             </span>
           </div>
         </div>
@@ -68,13 +68,14 @@
           :loading="waiting_for_update"
           @click="doRaspiEEPROMUpdate"
         >
-          Update
+          {{ t`Update` }}
         </v-btn>
         <v-alert
           v-if="raspberry_eeprom_reboot_pending"
           type="success"
         >
-          Changes applied, please do a <b>system reboot</b>.
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <span v-html="t`Changes applied, please do a <b>system reboot</b>.`" />
         </v-alert>
       </div>
     </v-card>
