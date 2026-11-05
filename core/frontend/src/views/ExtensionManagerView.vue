@@ -1143,7 +1143,7 @@ export default Vue.extend({
           extension,
           this.upload_temp_tag,
           (progressEvent) => {
-            tracker.digestNewData(progressEvent)
+            tracker.digestNewData(progressEvent.event)
             this.pull_output = tracker.pull_output
             this.download_percentage = tracker.download_percentage
             this.extraction_percentage = tracker.extraction_percentage
