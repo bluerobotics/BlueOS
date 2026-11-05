@@ -13,10 +13,10 @@
         elevation="2"
         dismissible
       >
-        It looks like no available video streams are configured to reach your device's detected IP address
-        ({{ user_ip_address }}).
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`It looks like no available video streams are configured to reach your device's detected IP address (${user_ip_address}).` }}
         <span v-if="is_connected_to_wifi">
-          That should be fine if you are using this wi-fi connection for something other than piloting.
+          {{ t`That should be fine if you are using this wi-fi connection for something other than piloting.` }}
         </span>
       </v-alert>
       <v-alert
@@ -27,8 +27,8 @@
         elevation="2"
         dismissible
       >
-        Some streams use MJPEG or uncompressed video. Cockpit can't play these formats, and they require more
-        network bandwidth. We recommend switching to H.264 or H.265.
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`Some streams use MJPEG or uncompressed video. Cockpit can't play these formats, and they require more network bandwidth. We recommend switching to H.264 or H.265.` }}
       </v-alert>
     </v-row>
   </v-container>
