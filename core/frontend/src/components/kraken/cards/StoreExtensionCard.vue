@@ -71,7 +71,7 @@
           <v-divider style="z-index: 4 !important;" />
         </div>
       </template>
-      <span>This extension is not compatible with current machine architecture running BlueOS.</span>
+      <span>{{ t`This extension is not compatible with current machine architecture running BlueOS.` }}</span>
     </v-tooltip>
     <div class="bottom-gradient-fade" />
     <div class="bottom-gradient" />
@@ -104,7 +104,8 @@
             {{ action_button_text }}
           </v-btn>
         </template>
-        <span>Update to <strong style="white-space: nowrap;">{{ update_available_tag }}</strong></span>
+        <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+        <span v-html="t`Update to <strong style='white-space: nowrap;'>${escapeHtml(update_available_tag)}</strong>`" />
       </v-tooltip>
     </v-card-actions>
   </v-card>
