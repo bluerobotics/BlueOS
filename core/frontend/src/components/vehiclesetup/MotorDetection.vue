@@ -13,13 +13,13 @@
         v-bind="attrs"
         v-on="on"
       >
-        Detect Reversed Motors
+        {{ t`Detect Reversed Motors` }}
       </v-btn>
     </template>
 
     <v-card class="pa-5" style="overflow-x: hidden;">
       <v-card-title class="text-h5 justify-center">
-        Automatic Motor Reversal Detection
+        {{ t`Automatic Motor Reversal Detection` }}
       </v-card-title>
       <v-sheet v-if="display_status" class="elevation-1 pa-3 ma-8">
         <StatusTextWatcher :filter="/thrust|Thrust|Motor|MOTOR/" @message="updateStatus" />
@@ -31,14 +31,12 @@
         <v-col cols="8">
           <v-card-text>
             <p class="text-justify">
-              Tests whether any of the motors are wired to spin backwards,
-              and automatically reverses their control signals as relevant.
+              <!-- eslint-disable-next-line max-len -->
+              {{ t`Tests whether any of the motors are wired to spin backwards, and automatically reverses their control signals as relevant.` }}
             </p>
             <p class="text-justify">
-              The test relies on the <b>motors being correctly connected</b>
-              according to the selected vehicle frame, and spins each motor
-              individually to check whether it generates thrust in the expected direction.
-              The vehicle should be in calm water and far from walls and objects.
+              <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+              <span v-html="t`The test relies on the <b>motors being correctly connected</b> according to the selected vehicle frame, and spins each motor individually to check whether it generates thrust in the expected direction. The vehicle should be in calm water and far from walls and objects.`" />
             </p>
           </v-card-text>
         </v-col>
@@ -46,7 +44,7 @@
 
       <v-sheet v-if="[statuses.RUNNING].includes(status)" class=" pa-3 ma-8">
         <v-progress-linear indeterminate />
-        The test is running. The vehicle will move slightly as each motor is tested.
+        {{ t`The test is running. The vehicle will move slightly as each motor is tested.` }}
       </v-sheet>
 
       <v-alert
@@ -56,7 +54,7 @@
         text
         type="success"
       >
-        Motor direction detection is complete. The vehicle is ready for normal operation.
+        {{ t`Motor direction detection is complete. The vehicle is ready for normal operation.` }}
       </v-alert>
       <v-alert
         v-if="status == statuses.FAILED"
@@ -65,66 +63,64 @@
         dense
         text
       >
-        Motor direction detection failed. Please check the troubleshooting section below.
+        {{ t`Motor direction detection failed. Please check the troubleshooting section below.` }}
       </v-alert>
       <v-card-text v-if="status == statuses.FAILED" class="ma-4">
         <p>
-          Motor testing can fail due to any unexpected motions of the vehicle.
-          Here are some common failure causes, and potential solutions:
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`Motor testing can fail due to any unexpected motions of the vehicle. Here are some common failure causes, and potential solutions:` }}
         </p>
         <v-sheet class="elevation-2 pa-1 mt-3 mb-3 mr-9 rounded-lg">
           <v-simple-table class="ma-0">
             <thead>
               <tr>
-                <th>Cause</th>
-                <th>Solutions</th>
+                <th>{{ t`Cause` }}</th>
+                <th>{{ t`Solutions` }}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>no movement</td>
+                <td>{{ t`no movement` }}</td>
                 <td>
-                  - ensure the vehicle is in the water<br>
-                  - ensure the ESC is powered and receiving valid signals<br>
-                  - ensure the thruster is connected to the ESC
+                  {{ t`- ensure the vehicle is in the water` }}<br>
+                  {{ t`- ensure the ESC is powered and receiving valid signals` }}<br>
+                  {{ t`- ensure the thruster is connected to the ESC` }}
                 </td>
               </tr>
               <tr>
-                <td>external movement</td>
+                <td>{{ t`external movement` }}</td>
                 <td>
-                  - ensure the vehicle is in calm water
-                  - ensure the vehicle is not colliding with other objects
+                  <!-- eslint-disable-next-line max-len -->
+                  {{ t`- ensure the vehicle is in calm water\n- ensure the vehicle is not colliding with other objects` }}
                 </td>
               </tr>
               <tr>
-                <td>poor movement estimation</td>
+                <td>{{ t`poor movement estimation` }}</td>
                 <td>
-                  - ensure the sensors are well calibrated<br>
+                  {{ t`- ensure the sensors are well calibrated` }}<br>
                   - ensure that no external forces are moving the vehicle during the test
                 </td>
               </tr>
               <tr>
-                <td>incorrect frame selection</td>
+                <td>{{ t`incorrect frame selection` }}</td>
                 <td>
-                  - choose the frame that matches your vehicle (or make a custom one)<br>
-                  - ensure the frame's motion contribution factors suit the positions and orientations of your
-                  thrusters relative to the vehicle's centers of mass and volume (you may need to trim with
-                  ballast and/or buoyancy)
+                  {{ t`- choose the frame that matches your vehicle (or make a custom one)` }}<br>
+                  <!-- eslint-disable-next-line max-len -->
+                  {{ t`- ensure the frame's motion contribution factors suit the positions and orientations of your thrusters relative to the vehicle's centers of mass and volume (you may need to trim with ballast and/or buoyancy)` }}
                 </td>
               </tr>
               <tr>
-                <td>incorrect motor mapping</td>
+                <td>{{ t`incorrect motor mapping` }}</td>
                 <td>
-                  - ensure the thrusters are connected to the correct output channels of the flight controller,
-                  and in the correct order to match the frame numbering
-                  - load the recommended parameters for your frame
+                  <!-- eslint-disable-next-line max-len -->
+                  {{ t`- ensure the thrusters are connected to the correct output channels of the flight controller, and in the correct order to match the frame numbering\n- load the recommended parameters for your frame` }}
                 </td>
               </tr>
             </tbody>
           </v-simple-table>
         </v-sheet>
         <p>
-          If necessary it is possible to manually test and set the motor spin directions instead.
+          {{ t`If necessary it is possible to manually test and set the motor spin directions instead.` }}
         </p>
       </v-card-text>
       <v-card-actions class="justify-center">
@@ -135,7 +131,7 @@
           :disabled="running"
           @click="start"
         >
-          Start Detection
+          {{ t`Start Detection` }}
         </v-btn>
         <v-btn
           v-if="status === statuses.FAILED"
