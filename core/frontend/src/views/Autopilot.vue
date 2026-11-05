@@ -6,7 +6,7 @@
     max-width="720"
   >
     <v-card>
-      <v-card-title>Autopilot</v-card-title>
+      <v-card-title>{{ t`Autopilot` }}</v-card-title>
 
       <v-tooltip bottom>
         <template #activator="{ on, attrs }">
@@ -20,13 +20,13 @@
             <v-icon>mdi-wizard-hat</v-icon>
           </v-btn>
         </template>
-        <span>Click to activate wizard</span>
+        <span>{{ t`Click to activate wizard` }}</span>
       </v-tooltip>
 
       <img height="80" :src="banner" style="max-width: 85%; object-fit: contain;" />
 
       <v-card-text>
-        <span v-if="board_undefined">No board running</span>
+        <span v-if="board_undefined">{{ t`No board running` }}</span>
         <div v-else>
           <v-row
             v-for="(info, name) in autopilot_info"
@@ -56,7 +56,7 @@
                     </v-icon>
                   </a>
                 </template>
-                <span>Open documentation</span>
+                <span>{{ t`Open documentation` }}</span>
               </v-tooltip>
             </v-col>
           </v-row>
@@ -66,7 +66,7 @@
         <v-expansion-panels v-if="is_external_board">
           <v-expansion-panel>
             <v-expansion-panel-header>
-              Master endpoint
+              {{ t`Master endpoint` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <master-endpoint-manager />
@@ -76,7 +76,7 @@
         <v-expansion-panels v-else>
           <v-expansion-panel>
             <v-expansion-panel-header>
-              Firmware update
+              {{ t`Firmware update` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <firmware-manager />
@@ -86,7 +86,7 @@
         <v-expansion-panels v-if="is_sitl">
           <v-expansion-panel>
             <v-expansion-panel-header>
-              SITL configuration
+              {{ t`SITL configuration` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <sitl-configuration />
@@ -96,7 +96,7 @@
         <v-expansion-panels v-if="settings.is_pirate_mode && isLinuxFlightController">
           <v-expansion-panel>
             <v-expansion-panel-header>
-              Serial Port Configuration
+              {{ t`Serial Port Configuration` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <autopilot-serial-configuration />
@@ -114,7 +114,7 @@
           :disabled="restarting || !is_safe"
           @click="openBoardChangeDialog"
         >
-          Change board
+          {{ t`Change board` }}
         </v-btn>
         <v-btn
           v-if="settings.is_pirate_mode"
@@ -124,7 +124,7 @@
           :disabled="restarting"
           @click="start_autopilot"
         >
-          Start autopilot
+          {{ t`Start autopilot` }}
         </v-btn>
         <v-btn
           v-if="settings.is_pirate_mode"
@@ -134,7 +134,7 @@
           :disabled="restarting"
           @click="stop_autopilot"
         >
-          Stop autopilot
+          {{ t`Stop autopilot` }}
         </v-btn>
         <v-btn
           v-if="settings.is_pirate_mode && board_supports_restart"
@@ -144,7 +144,7 @@
           :disabled="restarting"
           @click="restart_autopilot"
         >
-          Restart autopilot
+          {{ t`Restart autopilot` }}
         </v-btn>
       </v-card-actions>
     </v-card>
