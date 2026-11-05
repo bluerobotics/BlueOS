@@ -8,7 +8,7 @@
       :items="sitl_frame_options"
       :disabled="autopilot.restarting || setting"
       :loading="autopilot.restarting || setting"
-      label="SITL frame"
+      :label="t`SITL frame`"
       class="ma-1 pa-0"
       @change="changeSitlFrame"
     />
@@ -17,14 +17,14 @@
       color="success"
       timeout="3000"
     >
-      SITL frame set, autopilot restarted
+      {{ t`SITL frame set, autopilot restarted` }}
       <template #action="{ attrs }">
         <v-btn
           text
           v-bind="attrs"
           @click="show_success = false"
         >
-          Close
+          {{ t`Close` }}
         </v-btn>
       </template>
     </v-snackbar>
