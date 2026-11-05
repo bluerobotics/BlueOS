@@ -1,9 +1,13 @@
 import asyncio
+import time
 from typing import Any, Dict, List
 
 from loguru import logger
 
-from commonwealth.mavlink_comm.exceptions import VehicleDisarmFail
+from commonwealth.mavlink_comm.exceptions import (
+    VehicleDisarmFail,
+    VehicleSystemIdUpdateFail,
+)
 from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.mavlink_comm.typedefs import (
     FirmwareInfo,
@@ -11,6 +15,7 @@ from commonwealth.mavlink_comm.typedefs import (
     MavlinkMessageId,
     MavlinkVehicleType,
 )
+from commonwealth.utils.environment import EnvironmentManager
 
 MAV_MODE_FLAG_SAFETY_ARMED = 128
 
@@ -33,6 +38,19 @@ class VehicleManager:
     def set_confirmation(self, confirmation: int) -> None:
         self.confirmation = confirmation
 
+    def param_set_message(self, parameter: str, value: float) -> Dict[Any, Any]:
+        # param_id is a char[16] array, so zero-pad to 16 bytes
+        param_id = list(parameter) + ["\0"] * (16 - len(parameter))
+
+        return {
+            "type": "PARAM_SET",
+            "param_value": value,
+            "target_system": self.target_system,
+            "target_component": self.target_component,
+            "param_id": param_id,
+            "param_type": {"type": "MAV_PARAM_TYPE_UINT8"},
+        }
+
     def command_long_message(self, command_type: str, params: List[float]) -> Dict[str, Any]:
         return {
             "type": "COMMAND_LONG",
@@ -49,7 +67,7 @@ class VehicleManager:
             "confirmation": self.confirmation,
         }
 
-    def command_heartbeat_message(self) -> Dict[str, Any]:
+    def heartbeat_message(self) -> Dict[str, Any]:
         return {
             "type": "HEARTBEAT",
             "custom_mode": 0,
@@ -61,7 +79,7 @@ class VehicleManager:
         }
 
     async def burst_heartbeat(self) -> None:
-        heartbeat_message = self.command_heartbeat_message()
+        heartbeat_message = self.heartbeat_message()
         for _ in range(5):
             await self.mavlink2rest.send_mavlink_message(heartbeat_message)
             await asyncio.sleep(0.1)
@@ -138,3 +156,43 @@ class VehicleManager:
         This might eventually be enhanced to check for other conditions.
         """
         return not await self.is_vehicle_armed()
+
+    async def set_system_id(self, value: int) -> None:
+        # update the target system id
+        self.set_target_system(await self.mavlink2rest.get_most_recent_vehicle_id())
+
+        # send a `PARAM_SET` message to change `MAV_SYSID`
+        message = self.param_set_message("MAV_SYSID", value)
+        await self.mavlink2rest.send_mavlink_message(message)
+
+        # note: the spec mandates [1] that every PARAM_SET should be
+        # acknowledged by the receiving party by broadcasting a PARAM_VALUE
+        # with the updated parameter, so ideally the cleanest way to check that
+        # the PARAM_SET succeeded would be to read a subsequent PARAM_VALUE
+        # message; however, in this scenario we are sending a message from one
+        # component to another (MAV_TYPE_ONBOARD_CONTROLLER ->
+        # MAV_TYPE_SUBMARINE) in the same vehicle (e.g. equal system ids but
+        # different component ids), and mavlink-server filters out loopbacks
+        # for broadcast messages, so we never actually receive the PARAM_VALUE.
+        #
+        # [1] https://mavlink.io/en/messages/common.html#PARAM_SET
+
+        # hack around this limitation by listening to the vehicle heartbeat
+        # messages and waiting for the source system id to change to the value
+        # we just configured. ardupilot sends heartbeats at 1Hz so 10s is a
+        # reasonable timeout
+        start_time = time.time()
+        timeout = 10.0
+        while time.time() - start_time < timeout:
+            if await self.mavlink2rest.get_most_recent_vehicle_id() == value:
+                self.set_target_system(value)
+                break
+            await asyncio.sleep(timeout / 10.0)
+
+        # bail out if we failed to update the system id after all
+        if self.target_system != value:
+            raise VehicleSystemIdUpdateFail("Failed to update the vehicle's system id")
+
+        # persist the new system id in the MAV_SYSTEM_ID environment variable
+        # used by mavlink2rest
+        EnvironmentManager.set_variable("MAV_SYSTEM_ID", value)
