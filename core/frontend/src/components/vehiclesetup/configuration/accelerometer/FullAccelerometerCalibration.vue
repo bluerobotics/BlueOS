@@ -11,19 +11,18 @@
         v-bind="attrs"
         v-on="on"
       >
-        Start Full Calibration
+        {{ t`Start Full Calibration` }}
       </v-btn>
     </template>
 
     <v-card>
       <v-card-title class="text-h5">
-        Accelerometer Calibration
+        {{ t`Accelerometer Calibration` }}
       </v-card-title>
       <div class="ma-6">
         <p>
-          Full accelerometer calibration requires you to place the vehicle onto all of its sides and keep
-          it still for a few seconds.
-          This will allow the autopilot to calibrate the accelerometer.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`Full accelerometer calibration requires you to place the vehicle onto all of its sides and keep it still for a few seconds. This will allow the autopilot to calibrate the accelerometer.` }}
         </p>
       </div>
       <v-alert
@@ -42,13 +41,13 @@
       />
       <v-card-actions class="justify-center">
         <v-btn v-if="show_start_button" :loading="start_button_loading" class="primary" @click="startCalibration">
-          Start Calibration
+          {{ t`Start Calibration` }}
         </v-btn>
         <v-btn v-if="show_next_button" class="primary" @click="nextStep">
-          Next
+          {{ t`Next` }}
         </v-btn>
         <v-btn v-if="show_ok_button" class="primary" @click="cleanup">
-          Ok
+          {{ t`Ok` }}
         </v-btn>
       </v-card-actions>
     </v-card>
