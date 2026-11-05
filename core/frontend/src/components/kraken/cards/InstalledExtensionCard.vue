@@ -47,13 +47,13 @@
       </div>
       <v-btn
         v-if="update_available"
-        v-tooltip="`Update to ${update_available}`"
+        v-tooltip="t`Update to ${update_available}`"
         class="card-update-button ml-2 flex-shrink-0"
         color="primary"
         small
         @click="$emit('update', extension, update_available)"
       >
-        Update to {{ update_available }}
+        {{ t`Update to ${update_available}` }}
       </v-btn>
     </v-card-title>
     <span class="mt-0 mb-4 ml-4 text--disabled">{{ extension.docker }}</span>
@@ -62,11 +62,11 @@
         <template #default>
           <tbody>
             <tr>
-              <td>Status</td>
-              <td>{{ extension.enabled ? getStatus() : "Disabled" }}</td>
+              <td>{{ t`Status` }}</td>
+              <td>{{ extension.enabled ? getStatus() : t`Disabled` }}</td>
             </tr>
             <tr v-if="extension.enabled">
-              <td>CPU usage</td>
+              <td>{{ t`CPU usage` }}</td>
               <td>
                 <v-progress-linear
                   class="progress"
@@ -84,14 +84,14 @@
                       {{ `(${(getCpuLimit() * cpus * 0.01).toFixed(1)} cores) ` }}
                     </strong>
                     <strong v-else>
-                      N/A
+                      {{ t`N/A` }}
                     </strong>
                   </template>
                 </v-progress-linear>
               </td>
             </tr>
             <tr v-if="extension.enabled">
-              <td>Memory usage</td>
+              <td>{{ t`Memory usage` }}</td>
               <td>
                 <v-progress-linear
                   class="progress"
@@ -109,14 +109,14 @@
                       {{ prettifySize(getMemoryLimit() * total_memory * 0.01) }}
                     </strong>
                     <strong v-else>
-                      N/A
+                      {{ t`N/A` }}
                     </strong>
                   </template>
                 </v-progress-linear>
               </td>
             </tr>
             <tr v-if="extension.enabled">
-              <td>Disk usage</td>
+              <td>{{ t`Disk usage` }}</td>
               <td>
                 <v-progress-linear
                   class="progress"
@@ -134,7 +134,7 @@
                       {{ prettifySize(main_disk_size) }}
                     </strong>
                     <strong v-else>
-                      N/A
+                      {{ t`N/A` }}
                     </strong>
                   </template>
                 </v-progress-linear>
@@ -150,7 +150,7 @@
     >
       <v-expansion-panel>
         <v-expansion-panel-header>
-          Settings
+          {{ t`Settings` }}
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
@@ -169,7 +169,7 @@
     >
       <v-expansion-panel>
         <v-expansion-panel-header>
-          User Custom Settings
+          {{ t`User Custom Settings` }}
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
@@ -190,35 +190,35 @@
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('uninstall', extension)"
       >
-        Uninstall
+        {{ t`Uninstall` }}
       </v-btn>
       <v-btn
         v-if="extension.enabled"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('showlogs', extension)"
       >
-        View Logs
+        {{ t`View Logs` }}
       </v-btn>
       <v-btn
         v-if="settings.is_pirate_mode"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('edit', extension)"
       >
-        Edit
+        {{ t`Edit` }}
       </v-btn>
       <v-btn
         v-if="extension.enabled && container"
         :style="{ backgroundColor: buttonBgColor }"
         @click="handleDisableClick"
       >
-        Disable
+        {{ t`Disable` }}
       </v-btn>
       <v-btn
         v-if="!extension.enabled"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('enable', extension)"
       >
-        Enable and start
+        {{ t`Enable and start` }}
       </v-btn>
 
       <v-btn
@@ -226,16 +226,16 @@
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('restart', extension)"
       >
-        Restart
+        {{ t`Restart` }}
       </v-btn>
     </v-card-actions>
     <WarningDialog
       v-model="show_major_tom_disable_warning"
       :message="
-        'All cloud related services and some telemetry features may not be available '
-          + 'if Major Tom extension is disabled.'
+        // eslint-disable-next-line max-len
+        t`All cloud related services and some telemetry features may not be available if Major Tom extension is disabled.`
       "
-      confirm-label="Disable"
+      :confirm-label="t`Disable`"
       @confirm="confirmDisable"
     />
   </v-card>
