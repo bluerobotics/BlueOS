@@ -1,3 +1,4 @@
+# isort: skip_file
 import json
 import sys
 from pathlib import Path
@@ -68,7 +69,7 @@ def client_returning(container: Any) -> Any:
 
 async def test_creates_container_when_absent() -> None:
     client = client_returning(None)
-    client.containers.get.side_effect = DockerError(404, {"message": "no such container"})
+    client.containers.get.side_effect = DockerError(404, {"message": "no such container"})  # type: ignore
 
     config = make_config()
     result = await Extension._start_or_create(client, "extension-name", config, "sha256:abc")
@@ -151,7 +152,7 @@ async def test_replaces_container_created_before_fingerprints() -> None:
 async def test_propagates_unexpected_get_errors() -> None:
     """A daemon that is down must not be mistaken for a missing container."""
     client = client_returning(None)
-    client.containers.get.side_effect = DockerError(500, {"message": "daemon unavailable"})
+    client.containers.get.side_effect = DockerError(500, {"message": "daemon unavailable"})  # type: ignore
 
     with pytest.raises(DockerError):
         await Extension._start_or_create(client, "extension-name", make_config(), "sha256:abc")
@@ -190,12 +191,13 @@ async def test_fingerprint_tracks_image_id() -> None:
     assert Extension._config_fingerprint(config, "sha256:one") != Extension._config_fingerprint(config, "sha256:two")
 
 
-async def test_fingerprint_survives_serialisation() -> None:
-    """Configurations arrive as parsed JSON, so they must be hashable as such."""
-    config = json.loads(json.dumps(make_config(HostConfig={"Binds": ["/a:/b:rw"]})))
+async def test_fingerprint_ignores_key_order() -> None:
+    """Saved configurations can come back with their keys in another order."""
+    config = make_config(HostConfig={"NetworkMode": "host", "Binds": ["/a:/b:rw"]})
+    reordered = {"HostConfig": {"Binds": ["/a:/b:rw"], "NetworkMode": "host"}, "Image": config["Image"]}
 
-    with mock.patch.dict("os.environ", {"MAV_SYSTEM_ID": "1"}):
-        assert Extension._config_fingerprint(config, "sha256:abc")
+    assert list(reordered) != list(config)
+    assert Extension._config_fingerprint(config, "sha256:abc") == Extension._config_fingerprint(reordered, "sha256:abc")
 
 
 async def test_reuse_preserves_the_fingerprint_label_for_the_next_start() -> None:
@@ -209,7 +211,7 @@ async def test_reuse_preserves_the_fingerprint_label_for_the_next_start() -> Non
         return make_container(inspected("created", cfg["Labels"]))
 
     client = mock.AsyncMock()
-    client.containers.get.side_effect = DockerError(404, {"message": "no such container"})
+    client.containers.get.side_effect = DockerError(404, {"message": "no such container"})  # type: ignore
     client.containers.create.side_effect = create
 
     await Extension._start_or_create(client, "extension-name", config, image_id)
