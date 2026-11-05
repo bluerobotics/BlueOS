@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title class="text-h5">
-        Wifi settings
+        {{ t`Wifi settings` }}
       </v-card-title>
 
       <v-card-text>
@@ -16,21 +16,21 @@
         >
           <v-text-field
             v-model="inputed_ssid"
-            label="Hotspot SSID"
+            :label="t`Hotspot SSID`"
             hide-details="auto"
             :rules="[isValidSSID]"
           />
           <v-text-field
             v-model="inputed_password"
-            label="Hotspot password"
+            :label="t`Hotspot password`"
             hide-details="auto"
             :rules="[isValidPassword]"
           />
 
           <v-checkbox
             v-model="enable_smart_hotspot"
-            v-tooltip="'Auto-start hotspot when not connected to a wifi network for some time.'"
-            label="Enable smart-hotspot"
+            v-tooltip="t`Auto-start hotspot when not connected to a wifi network for some time.`"
+            :label="t`Enable smart-hotspot`"
           />
 
           <v-container class="d-flex justify-end">
@@ -40,13 +40,13 @@
               class="ma-1"
               @click="saveSettings"
             >
-              Save
+              {{ t`Save` }}
             </v-btn>
           </v-container>
         </v-form>
       </v-card-text>
       <v-card-text v-if="saving_settings">
-        Saving settings, please wait...
+        {{ t`Saving settings, please wait...` }}
         <v-progress-linear
           indeterminate
           color="primary"
@@ -58,6 +58,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
@@ -109,7 +110,7 @@ export default Vue.extend({
           timeout: 20000,
         })
           .then(() => {
-            notifier.pushSuccess('HOTSPOT_CREDENTIALS_UPDATE_SUCCESS', 'Successfully updated hotspot credentials.')
+            notifier.pushSuccess('HOTSPOT_CREDENTIALS_UPDATE_SUCCESS', t`Successfully updated hotspot credentials.`)
           })
           .catch((error) => {
             notifier.pushBackError('HOTSPOT_CREDENTIALS_UPDATE_FAIL', error, true)
@@ -121,7 +122,7 @@ export default Vue.extend({
           timeout: 10000,
         })
           .then(() => {
-            notifier.pushSuccess('SMART_HOTSPOT_TOGGLE_SUCCESS', 'Successfully updated smart-hotspot configuration.')
+            notifier.pushSuccess('SMART_HOTSPOT_TOGGLE_SUCCESS', t`Successfully updated smart-hotspot configuration.`)
           })
           .catch((error) => {
             notifier.pushBackError('SMART_HOTSPOT_TOGGLE_FAIL', error, true)
