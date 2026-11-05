@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        Stream creation
+        {{ t`Stream creation` }}
       </v-card-title>
 
       <v-card-text class="d-flex flex-column pb-0">
@@ -17,14 +17,14 @@
           <v-text-field
             v-model="stream_name"
             :counter="100"
-            label="Stream nickname"
+            :label="t`Stream nickname`"
             :rules="[validate_required_field]"
           />
 
           <v-select
             v-model="selected_encode"
             :items="available_encodes"
-            label="Encoding"
+            :label="t`Encoding`"
             :disabled="is_redirect_source"
             :rules="[validate_required_field]"
             @change="change_endpoints_from_encode($event)"
@@ -77,7 +77,7 @@
             </v-select>
             <v-text-field
               v-model="stream_endpoints[index]"
-              label="Stream endpoint"
+              :label="t`Stream endpoint`"
               :rules="[validate_required_field, is_valid_schema, is_endpoint_combining_correct, no_repetitions]"
               @change="validateForm"
             />
@@ -108,28 +108,28 @@
           >
             <v-expansion-panel>
               <v-expansion-panel-header>
-                Extra configuration
+                {{ t`Extra configuration` }}
               </v-expansion-panel-header>
               <v-expansion-panel-content>
                 <v-checkbox
                   v-model="is_thermal"
-                  label="Thermal camera"
+                  :label="t`Thermal camera`"
                 />
                 <v-checkbox
                   v-model="is_disable_lazy"
-                  label="Disable Lazy"
+                  :label="t`Disable Lazy`"
                 />
                 <v-checkbox
                   v-model="is_disable_mavlink"
-                  label="Disable Mavlink"
+                  :label="t`Disable Mavlink`"
                 />
                 <v-checkbox
                   v-model="is_disable_thumbnails"
-                  label="Disable Thumbnails"
+                  :label="t`Disable Thumbnails`"
                 />
                 <v-checkbox
                   v-model="is_disable_zenoh"
-                  label="Disable Zenoh"
+                  :label="t`Disable Zenoh`"
                 />
               </v-expansion-panel-content>
             </v-expansion-panel>
@@ -141,8 +141,8 @@
             v-if="device.name === 'Fake source'"
             class="text-caption"
           >
-            Be aware that "Fake source" streams consume a lot of computing power. If you just need it for connection
-            tests we recommend you to use small resolutions and low framerates.
+            <!-- eslint-disable-next-line max-len -->
+            {{ t`Be aware that "Fake source" streams consume a lot of computing power. If you just need it for connection tests we recommend you to use small resolutions and low framerates.` }}
           </p>
         </v-form>
         <v-alert
@@ -150,8 +150,8 @@
           type="warning"
           dense
         >
-          This stream uses MJPEG or uncompressed video. Cockpit can't play these formats, and they require more
-          network bandwidth. We recommend switching to H.264 or H.265.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`This stream uses MJPEG or uncompressed video. Cockpit can't play these formats, and they require more network bandwidth. We recommend switching to H.264 or H.265.` }}
         </v-alert>
       </v-card-text>
       <v-card-actions
@@ -161,7 +161,7 @@
           color="primary"
           @click="showDialog(false)"
         >
-          Cancel
+          {{ t`Cancel` }}
         </v-btn>
 
         <v-spacer />
@@ -178,6 +178,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import settings from '@/libs/settings'
@@ -212,7 +213,7 @@ export default Vue.extend({
     finishButtonText: {
       type: String,
       required: false,
-      default: 'Create',
+      default: t`Create`,
     },
     stream: {
       type: Object as PropType<StreamPrototype>,
