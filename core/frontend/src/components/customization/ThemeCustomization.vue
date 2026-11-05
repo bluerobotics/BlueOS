@@ -10,10 +10,10 @@
           </v-avatar>
           <div>
             <div class="text-subtitle-1 font-weight-medium">
-              Customization
+              {{ t`Customization` }}
             </div>
             <div class="text-caption text--secondary">
-              Theme color, 3D models, logo and vehicle image
+              {{ t`Theme color, 3D models, logo and vehicle image` }}
             </div>
           </div>
         </div>
@@ -30,7 +30,7 @@
         <v-divider class="mb-4" />
 
         <div class="text-subtitle-2 mb-2">
-          Primary color
+          {{ t`Primary color` }}
         </div>
         <v-row align="center" no-gutters class="mb-2">
           <v-col cols="12" sm="6">
@@ -62,17 +62,17 @@
                   {{ theme_primary }}
                 </div>
                 <div class="text-caption text--secondary">
-                  Drives the gradient and scrollbar
+                  {{ t`Drives the gradient and scrollbar` }}
                 </div>
               </div>
             </div>
             <div v-else class="text-caption text--secondary">
-              Loading current theme...
+              {{ t`Loading current theme...` }}
             </div>
           </v-col>
           <v-col cols="12" sm="6" class="text-sm-right mt-3 mt-sm-0">
             <v-btn
-              v-tooltip="'Save the chosen color and regenerate the theme CSS'"
+              v-tooltip="t`Save the chosen color and regenerate the theme CSS`"
               outlined
               small
               color="primary"
@@ -83,10 +83,10 @@
               <v-icon left small>
                 mdi-content-save
               </v-icon>
-              Apply
+              {{ t`Apply` }}
             </v-btn>
             <v-btn
-              v-tooltip="'Restore the default BlueOS theme'"
+              v-tooltip="t`Restore the default BlueOS theme`"
               outlined
               small
               class="ml-2"
@@ -96,7 +96,7 @@
               <v-icon left small>
                 mdi-restore
               </v-icon>
-              Reset
+              {{ t`Reset` }}
             </v-btn>
           </v-col>
         </v-row>
@@ -114,14 +114,13 @@
         <v-divider class="my-4" />
 
         <div class="text-subtitle-2 mb-2">
-          3D model overrides
+          {{ t`3D model overrides` }}
         </div>
         <v-row align="center" no-gutters class="mb-2">
           <v-col cols="12" sm="8">
             <div class="text-caption text--secondary">
-              Upload <code>.glb</code> files served at
-              <code>/userdata/modeloverrides/</code>. Use a relative name like
-              <code>sub/MyFrame.glb</code> or <code>ALL.glb</code> to override every vehicle.
+              <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+              <span v-html="t`Upload <code>.glb</code> files served at <code>/userdata/modeloverrides/</code>. Use a relative name like <code>sub/MyFrame.glb</code> or <code>ALL.glb</code> to override every vehicle.`" />
             </div>
           </v-col>
           <v-col cols="12" sm="4" class="text-sm-right mt-3 mt-sm-0">
@@ -135,7 +134,7 @@
               <v-icon left small>
                 mdi-upload
               </v-icon>
-              Upload model
+              {{ t`Upload model` }}
             </v-btn>
           </v-col>
         </v-row>
@@ -161,7 +160,7 @@
           </v-list-item>
         </v-list>
         <div v-else class="text-caption text--secondary mb-2">
-          No model overrides uploaded.
+          {{ t`No model overrides uploaded.` }}
         </div>
 
         <v-divider class="my-4" />
@@ -169,7 +168,7 @@
         <v-row no-gutters>
           <v-col cols="12" md="6" class="pr-md-2">
             <div class="text-subtitle-2 mb-2">
-              Project logo
+              {{ t`Project logo` }}
             </div>
             <branding-uploader
               :asset="logo"
@@ -184,7 +183,7 @@
           </v-col>
           <v-col cols="12" md="6" class="pl-md-2 mt-4 mt-md-0">
             <div class="text-subtitle-2 mb-2">
-              Vehicle image
+              {{ t`Vehicle image` }}
             </div>
             <branding-uploader
               :asset="vehicle_image"
@@ -203,27 +202,27 @@
 
     <v-dialog v-model="model_dialog" max-width="500">
       <v-card>
-        <v-card-title>Upload 3D model override</v-card-title>
+        <v-card-title>{{ t`Upload 3D model override` }}</v-card-title>
         <v-card-text>
           <v-file-input
             v-model="model_file"
             accept=".glb"
-            label=".glb file"
+            :label="t`.glb file`"
             prepend-icon="mdi-cube-outline"
             show-size
           />
           <v-text-field
             v-model="model_name"
-            label="Destination name"
-            placeholder="sub/MyFrame.glb"
-            hint="Relative path under modeloverrides/. Defaults to the file name."
+            :label="t`Destination name`"
+            :placeholder="t`sub/MyFrame.glb`"
+            :hint="t`Relative path under modeloverrides/. Defaults to the file name.`"
             persistent-hint
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn text @click="model_dialog = false">
-            Cancel
+            {{ t`Cancel` }}
           </v-btn>
           <v-btn
             color="primary"
@@ -231,7 +230,7 @@
             :loading="model_uploading"
             @click="upload_model"
           >
-            Upload
+            {{ t`Upload` }}
           </v-btn>
         </v-card-actions>
       </v-card>
