@@ -32,7 +32,7 @@
           <v-list-item two-line>
             <v-list-item-content>
               <v-list-item-title class="text-h6">
-                USB Bus {{ bus.busNumber }}
+                {{ t`USB Bus ${bus.busNumber}` }}
               </v-list-item-title>
               <v-list-item-subtitle v-if="bus.rootHub?.manufacturer">
                 {{ bus.rootHub.manufacturer }}
@@ -83,7 +83,7 @@
                 mdi-devices
               </v-icon>
             </v-list-item-icon>
-            <v-list-item-subtitle>{{ countDevices(bus.treeItems) }} device(s)</v-list-item-subtitle>
+            <v-list-item-subtitle>{{ t`${countDevices(bus.treeItems)} device(s)` }}</v-list-item-subtitle>
           </v-list-item>
         </v-card>
       </v-col>
@@ -96,7 +96,7 @@
           type="info"
           text
         >
-          No USB devices found
+          {{ t`No USB devices found` }}
         </v-alert>
       </v-col>
     </v-row>
@@ -104,6 +104,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import { UsbDevice } from '@/types/system-information/usb'
@@ -182,7 +183,7 @@ export default Vue.extend({
         this.error = null
       } catch (err: unknown) {
         if (isBackendOffline(err)) return
-        this.error = `Failed to fetch USB devices: ${err instanceof Error ? err.message : 'Unknown error'}`
+        this.error = `Failed to fetch USB devices: ${err instanceof Error ? err.message : t`Unknown error`}`
         this.loading = false
       }
     },
