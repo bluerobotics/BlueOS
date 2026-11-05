@@ -30,6 +30,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import DnsConfigurationMenu from '@/components/app/DnsConfigurationMenu.vue'
@@ -55,8 +56,8 @@ export default Vue.extend({
   },
   data() {
     const pages: Item[] = [
-      { title: 'Network Interface Priority', icon: 'mdi-sort', value: 'network_interface_priority' },
-      { title: 'Dns Configuration', icon: 'mdi-dns', value: 'dns_configuration' },
+      { title: t`Network Interface Priority`, icon: 'mdi-sort', value: 'network_interface_priority' },
+      { title: t`Dns Configuration`, icon: 'mdi-dns', value: 'dns_configuration' },
     ]
     // v-tabs selects by index, so the page value can't be used as the model
     return {
