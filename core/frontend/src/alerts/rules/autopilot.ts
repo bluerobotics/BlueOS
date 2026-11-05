@@ -1,3 +1,5 @@
+import { t } from 'ttag'
+
 import ardupilot_sensors from '@/store/ardupilot_sensors'
 import autopilot_manager from '@/store/autopilot_manager'
 import {
@@ -20,22 +22,22 @@ const rules: AlertRule[] = defineRules([
   {
     id: AlertRuleId.AutopilotNoBoard,
     level: NotificationLevel.Warning,
-    title: 'No flight controller detected',
-    description: 'The autopilot cannot start until a board is connected.',
+    title: t`No flight controller detected`,
+    description: t`The autopilot cannot start until a board is connected.`,
     condition: () => !autopilot_manager.current_board,
   },
   {
     id: AlertRuleId.AutopilotFirmwareMissing,
     level: NotificationLevel.Warning,
-    title: 'Autopilot firmware is not installed',
-    description: 'Install firmware before starting the autopilot.',
+    title: t`Autopilot firmware is not installed`,
+    description: t`Install firmware before starting the autopilot.`,
     condition: () => autopilot_manager.firmware_info === null,
     inhibited_by: [AlertRuleId.AutopilotNoBoard],
   },
   {
     id: AlertRuleId.AutopilotSensorsUncalibrated,
     level: NotificationLevel.Warning,
-    title: 'Some sensors not calibrated',
+    title: t`Some sensors not calibrated`,
     condition: () => (!ardupilot_sensors.all_sensors_calibrated),
     inhibited_by: [AlertRuleId.AutopilotNoBoard, AlertRuleId.AutopilotFirmwareMissing],
   }
