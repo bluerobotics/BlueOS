@@ -5,17 +5,17 @@
       class="card-container"
     >
       <v-card-title class="align-center">
-        Reset Parameters to Firmware Defaults
+        {{ t`Reset Parameters to Firmware Defaults` }}
       </v-card-title>
       <v-card-text>
         <p>
-          This will effectively wipe your "eeprom". You will lose all your parameters, vehicle setup, and calibrations.
-          Use this if you don't know which parameters you changed and need a clean start.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`This will effectively wipe your "eeprom". You will lose all your parameters, vehicle setup, and calibrations. Use this if you don't know which parameters you changed and need a clean start.` }}
         </p>
       </v-card-text>
       <v-card-actions class="flex-wrap justify-center justify-sm-start">
         <v-btn :disabled="wipe_successful" :loading="erasing" color="primary" @click="show_warning = true">
-          Reset All Parameters
+          {{ t`Reset All Parameters` }}
         </v-btn>
         <v-btn
           v-if="wipe_successful && !done"
@@ -23,7 +23,7 @@
           :loading="rebooting"
           @click="restartAutopilot"
         >
-          Reboot Autopilot
+          {{ t`Reboot Autopilot` }}
         </v-btn>
         <v-alert
           v-if="wipe_successful"
@@ -31,17 +31,20 @@
           text
           type="success"
         >
-          Parameters reset <b>successful</b>. <span v-if="!done"> Please reboot the vehicle to apply changes. </span>
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <span v-html="t`Parameters reset <b>successful</b>.`" />
+          <span v-if="!done"> {{ t`Please reboot the vehicle to apply changes.` }} </span>
         </v-alert>
       </v-card-actions>
     </v-card>
     <v-card class="card-container">
       <v-card-title class="align-center">
-        Load Recommended Parameter sets
+        {{ t`Load Recommended Parameter sets` }}
       </v-card-title>
       <v-card-text>
         <p>
-          These are the recommended parameter sets for your vehicle and firmware version. Curated by Blue Robotics
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`These are the recommended parameter sets for your vehicle and firmware version. Curated by ${'Blue Robotics'}` }}
         </p>
       </v-card-text>
       <v-card-actions class="flex-wrap justify-center justify-sm-start">
@@ -54,7 +57,7 @@
           {{ name.split('/').pop() }}
         </v-btn>
         <p v-if="(Object.keys(filtered_param_sets).length === 0)">
-          No parameters available for this setup
+          {{ t`No parameters available for this setup` }}
         </p>
       </v-card-actions>
     </v-card>
@@ -68,7 +71,7 @@
     <WarningDialog
       v-model="show_warning"
       :message="warningMessage"
-      confirm-label="Yes, reset them"
+      :confirm-label="t`Yes, reset them`"
       @confirm="wipe"
     />
   </v-row>
@@ -76,6 +79,7 @@
 
 <script lang="ts">
 import { SemVer } from 'semver'
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import * as AutopilotManager from '@/components/autopilot/AutopilotManagerUpdater'
@@ -168,7 +172,7 @@ export default Vue.extend({
         autopilot_data.setRebootRequired(true)
       } catch (e) {
         this.wipe_successful = false
-        notifier.pushError('PARAM_RESET_FAIL', `Parameters Reset failed: ${e}`, true)
+        notifier.pushError('PARAM_RESET_FAIL', t`Parameters Reset failed: ${e}`, true)
       } finally {
         this.erasing = false
         this.show_warning = false
