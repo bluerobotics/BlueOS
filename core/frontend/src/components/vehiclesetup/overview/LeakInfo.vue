@@ -4,7 +4,7 @@
       <v-icon left>
         mdi-water-alert
       </v-icon>
-      Leak
+      {{ t`Leak` }}
     </v-card-title>
     <v-card-text>
       <div
@@ -12,16 +12,16 @@
         :key="leak.order"
         class="d-block mb-1"
       >
-        <b>Leak sensor {{ leak.order }}: </b>
+        <b>{{ t`Leak sensor ${leak.order}:` }} </b>
         <template v-if="leak.pin?.value !== -1">
-          <span class="ml-3 d-block"><b>Pin:</b> {{ printParam(leak.pin) }}</span>
-          <span class="ml-3 d-block"><b>Logic:</b> {{ printParam(leak.logic) }}</span>
+          <span class="ml-3 d-block"><b>{{ t`Pin:` }}</b> {{ printParam(leak.pin) }}</span>
+          <span class="ml-3 d-block"><b>{{ t`Logic:` }}</b> {{ printParam(leak.logic) }}</span>
         </template>
         <template v-else>
-          Disabled
+          {{ t`Disabled` }}
         </template>
       </div>
-      <b>Failsafe:</b> {{ printParam(failsafe) }}
+      <b>{{ t`Failsafe:` }}</b> {{ printParam(failsafe) }}
     </v-card-text>
   </v-card>
 </template>
