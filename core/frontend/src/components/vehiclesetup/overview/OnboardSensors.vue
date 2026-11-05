@@ -4,7 +4,7 @@
       <v-icon left>
         mdi-chip
       </v-icon>
-      Autopilot Sensors
+      {{ t`Autopilot Sensors` }}
     </v-card-title>
     <v-card-text>
       <v-simple-table dense>
@@ -12,19 +12,19 @@
           <thead>
             <tr>
               <th class="text-left">
-                Sensor
+                {{ t`Sensor` }}
               </th>
               <th class="text-left">
-                Type
+                {{ t`Type` }}
               </th>
               <th class="text-left">
-                Bus
+                {{ t`Bus` }}
               </th>
               <th class="text-left">
-                Address
+                {{ t`Address` }}
               </th>
               <th class="text-left">
-                Status
+                {{ t`Status` }}
               </th>
             </tr>
           </thead>
@@ -33,37 +33,37 @@
               v-for="accelerometer in ardupilot_sensors.accelerometers"
               :key="accelerometer.param"
             >
-              <td><b>{{ accelerometer.deviceName ?? 'UNKNOWN' }}</b></td>
-              <td v-tooltip="'Inertial Measurement Unit'">
-                IMU
+              <td><b>{{ accelerometer.deviceName ?? t`UNKNOWN` }}</b></td>
+              <td v-tooltip="t`Inertial Measurement Unit`">
+                {{ t`IMU` }}
               </td>
               <td>{{ print_bus(accelerometer.busType) }} {{ accelerometer.bus }}</td>
               <td>{{ `0x${accelerometer.address}` }}</td>
               <td>
                 <v-icon
                   v-if="ardupilot_sensors.accelerometers_calibrated[accelerometer.param]"
-                  v-tooltip="'Sensor is callibrated and good to use'"
+                  v-tooltip="t`Sensor is callibrated and good to use`"
                   color="green"
                 >
                   mdi-emoticon-happy-outline
                 </v-icon>
                 <v-icon
                   v-else
-                  v-tooltip="'Sensor needs to be calibrated'"
+                  v-tooltip="t`Sensor needs to be calibrated`"
                   color="red"
                 >
                   mdi-emoticon-sad-outline
                 </v-icon>
                 <v-icon
                   v-if="ardupilot_sensors.accelerometers_temperature_calibrated[accelerometer.param].calibrated"
-                  v-tooltip="'Sensor thermometer is calibrated and good to use'"
+                  v-tooltip="t`Sensor thermometer is calibrated and good to use`"
                   color="green"
                 >
                   mdi-thermometer-check
                 </v-icon>
                 <v-icon
                   v-else
-                  v-tooltip="'Sensor thermometer needs to be calibrated'"
+                  v-tooltip="t`Sensor thermometer needs to be calibrated`"
                   color="red"
                 >
                   mdi-thermometer-off
@@ -74,7 +74,7 @@
               v-for="compass in ardupilot_sensors.compasses"
               :key="compass.param"
             >
-              <td><b>{{ compass.deviceName ?? 'UNKNOWN' }}</b></td>
+              <td><b>{{ compass.deviceName ?? t`UNKNOWN` }}</b></td>
               <td>
                 {{ compass_description[compass.param] }}
               </td>
@@ -83,14 +83,14 @@
               <td>
                 <v-icon
                   v-if="ardupilot_sensors.compass_calibrated[compass.param]"
-                  v-tooltip="'Sensor is callibrated and good to use'"
+                  v-tooltip="t`Sensor is callibrated and good to use`"
                   color="green"
                 >
                   mdi-emoticon-happy-outline
                 </v-icon>
                 <v-icon
                   v-else
-                  v-tooltip="'Sensor needs to be calibrated'"
+                  v-tooltip="t`Sensor needs to be calibrated`"
                   color="red"
                 >
                   mdi-emoticon-sad-outline
@@ -101,8 +101,8 @@
               v-for="baro in ardupilot_sensors.baros"
               :key="baro.param"
             >
-              <td><b>{{ baro.deviceName ?? 'UNKNOWN' }}</b></td>
-              <td v-tooltip="'Used to estimate altitude/depth'">
+              <td><b>{{ baro.deviceName ?? t`UNKNOWN` }}</b></td>
+              <td v-tooltip="t`Used to estimate altitude/depth`">
                 {{ get_pressure_type[baro.param] }} Pressure
               </td>
               <td>{{ print_bus(baro.busType) }} {{ baro.bus }}</td>
@@ -113,13 +113,13 @@
               v-for="sensor in celsius"
               :key="sensor.param"
             >
-              <td><b>{{ sensor.deviceName ?? 'UNKNOWN' }}</b></td>
-              <td v-tooltip="'Used to estimate altitude/depth'">
-                Temperature
+              <td><b>{{ sensor.deviceName ?? t`UNKNOWN` }}</b></td>
+              <td v-tooltip="t`Used to estimate altitude/depth`">
+                {{ t`Temperature` }}
               </td>
               <td>{{ print_bus(sensor.busType) }} {{ sensor.bus }}</td>
               <td>{{ `0x${sensor.address}` }}</td>
-              <td>{{ celsius_temperature }} ºC</td>
+              <td>{{ t`${celsius_temperature} ºC` }}</td>
             </tr>
           </tbody>
         </template>
