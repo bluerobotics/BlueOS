@@ -2,7 +2,7 @@
   <div class="d-flex align-center">
     <v-row>
       <v-col cols="6">
-        <span class="text-h6">Increment</span>
+        <span class="text-h6">{{ t`Increment` }}</span>
       </v-col>
       <v-col cols="6">
         <inline-parameter-editor
@@ -16,8 +16,8 @@
             v-if="!has_joystick_function_configured"
             type="warning"
           >
-            <span>Joystick functions not configured for this actuator.<br />
-              Please configure a joystick button for this actuator using your GCS of choice.</span>
+            <span>{{ t`Joystick functions not configured for this actuator.` }}<br />
+              {{ t`Please configure a joystick button for this actuator using your GCS of choice.` }}</span>
           </v-alert>
         </v-col>
       </v-row>
