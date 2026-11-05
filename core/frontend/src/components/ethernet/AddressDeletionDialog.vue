@@ -18,7 +18,7 @@
           text
           @click="resolve(false)"
         >
-          Abort
+          {{ t`Abort` }}
         </v-btn>
         <v-btn
           color="primary"
@@ -26,7 +26,7 @@
           text
           @click="resolve(true)"
         >
-          Confirm
+          {{ t`Confirm` }}
         </v-btn>
       </v-card-text>
     </v-card>
