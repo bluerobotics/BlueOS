@@ -9,12 +9,12 @@
       <v-app-bar dense>
         <v-spacer />
         <v-toolbar-title>
-          Logs for {{ extensionName || extensionIdentifier }}
+          {{ t`Logs for ${extensionName || extensionIdentifier}` }}
         </v-toolbar-title>
         <v-spacer />
         <v-checkbox
           v-model="follow_logs"
-          label="Follow Logs"
+          :label="t`Follow Logs`"
           hide-details
         />
         <v-btn
@@ -45,7 +45,7 @@
             @input="modal_error = null"
           >
             <div class="font-weight-bold mb-1">
-              Error
+              {{ t`Error` }}
             </div>
             <div>{{ modal_error }}</div>
           </v-alert>
@@ -59,7 +59,7 @@
               color="primary"
             />
             <div v-else>
-              No logs received yet
+              {{ t`No logs received yet` }}
             </div>
           </div>
           <div
