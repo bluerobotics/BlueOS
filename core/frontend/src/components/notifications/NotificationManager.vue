@@ -4,10 +4,10 @@
       elevate-on-scroll
       scroll-target="#notifications-list"
     >
-      <v-toolbar-title>Notifications</v-toolbar-title>
+      <v-toolbar-title>{{ t`Notifications` }}</v-toolbar-title>
       <v-spacer />
       <v-btn
-        v-tooltip="'Event log'"
+        v-tooltip="t`Event log`"
         icon
         @click="$emit('showEventLog')"
       >
@@ -83,7 +83,7 @@
           elevation="0"
         >
           <v-card-text class="text-center">
-            No notifications to display :)
+            {{ t`No notifications to display :)` }}
           </v-card-text>
         </v-card>
       </v-list>
