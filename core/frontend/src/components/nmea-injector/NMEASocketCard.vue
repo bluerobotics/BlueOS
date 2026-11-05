@@ -14,7 +14,7 @@
             </span>
             <v-icon>mdi-arrow-right-circle</v-icon>
             <span class="text-subtitle-1 ml-2">
-              Mavlink Component #{{ nmeaSocket.component_id }}
+              {{ t`Mavlink Component #${nmeaSocket.component_id}` }}
             </span>
           </v-card-text>
         </v-card>
