@@ -4,29 +4,29 @@
       <v-icon left>
         mdi-robot-industrial
       </v-icon>
-      Vehicle
+      {{ t`Vehicle` }}
     </v-card-title>
     <v-card-text>
       <v-simple-table dense>
         <tbody>
           <tr>
-            <td><b>Flight Controller</b></td>
+            <td><b>{{ t`Flight Controller` }}</b></td>
             <td>{{ boardType }}</td>
           </tr>
           <tr /><tr>
-            <td><b>Firmware</b></td>
+            <td><b>{{ t`Firmware` }}</b></td>
             <td>{{ firmware }}</td>
           </tr>
           <tr>
-            <td><b>Onboard Computer</b></td>
+            <td><b>{{ t`Onboard Computer` }}</b></td>
             <td>{{ model }}</td>
           </tr>
           <tr>
-            <td><b>System ID</b></td>
+            <td><b>{{ t`System ID` }}</b></td>
             <td>{{ systemId }}</td>
           </tr>
           <tr>
-            <td><b>Frame</b></td>
+            <td><b>{{ t`Frame` }}</b></td>
             <td>{{ frameType }}</td>
           </tr>
         </tbody>
