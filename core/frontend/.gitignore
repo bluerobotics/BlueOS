@@ -2,3 +2,4 @@ node_modules/
 dist/
 dev-dist/
 components.d.ts
+src/i18n/*.po.json
