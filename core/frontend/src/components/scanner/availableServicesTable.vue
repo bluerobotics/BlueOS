@@ -6,20 +6,17 @@
       type="info"
       elevation="2"
     >
-      Shows all available services running on BlueOS, including the service port,
-      name, webpage, REST API endpoint, and swagger documentation per version.
-
-      API endpoint links provide direct manual access to the APIs, and can be used
-      to test how a service responds to a given request.
+      <!-- eslint-disable-next-line max-len -->
+      {{ t`Shows all available services running on BlueOS, including the service port, name, webpage, REST API endpoint, and swagger documentation per version. API endpoint links provide direct manual access to the APIs, and can be used to test how a service responds to a given request.` }}
     </v-alert>
     <v-simple-table class="helper-table">
       <thead>
         <tr>
-          <th>Port</th>
-          <th>Service Name</th>
-          <th>Webpage</th>
-          <th>API Documentation</th>
-          <th>Versions</th>
+          <th>{{ t`Port` }}</th>
+          <th>{{ t`Service Name` }}</th>
+          <th>{{ t`Webpage` }}</th>
+          <th>{{ t`API Documentation` }}</th>
+          <th>{{ t`Versions` }}</th>
         </tr>
       </thead>
       <tbody>
@@ -47,7 +44,7 @@
             </a>
           </td>
           <td v-else>
-            No API documentation
+            {{ t`No API documentation` }}
           </td>
           <td v-if="!service.versions.isEmpty()">
             <div
@@ -64,7 +61,7 @@
             </div>
           </td>
           <td v-else>
-            No versions
+            {{ t`No versions` }}
           </td>
         </tr>
       </tbody>
