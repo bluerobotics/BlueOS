@@ -2,13 +2,13 @@
   <v-dialog v-model="settings_open" width="500px">
     <v-card min-width="100%">
       <v-app-bar>
-        <v-toolbar-title>Extensions Manifest</v-toolbar-title>
+        <v-toolbar-title>{{ t`Extensions Manifest` }}</v-toolbar-title>
         <v-spacer />
       </v-app-bar>
       <v-card class="px-3 pb-3 mx-2" elevation="0">
         <v-list>
           <v-card-subtitle class="text-md-center" max-width="30">
-            Drag manifest sources to set priority. <br /><b>Top ones have higher priority.</b>
+            {{ t`Drag manifest sources to set priority.` }} <br /><b>{{ t`Top ones have higher priority.` }}</b>
           </v-card-subtitle>
           <draggable v-model="manifests">
             <v-card
@@ -75,14 +75,14 @@
             color="primary"
             @click="settings_open = false"
           >
-            Cancel
+            {{ t`Cancel` }}
           </v-btn>
           <v-spacer />
           <v-btn
             color="success"
             @click="reorderSources"
           >
-            Apply
+            {{ t`Apply` }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -90,16 +90,16 @@
     <v-dialog v-model="operation_open" width="600px">
       <v-card elevation="0">
         <v-card-title class="mb-7">
-          {{ is_editing ? 'Update Source' : 'Add a new source' }}
+          {{ is_editing ? t`Update Source` : t`Add a new source` }}
         </v-card-title>
         <v-card-subtitle class="text-md-center" max-width="30">
-          <b>Factory sources can only be enabled/disabled.</b>
+          <b>{{ t`Factory sources can only be enabled/disabled.` }}</b>
         </v-card-subtitle>
         <v-text-field
           v-model="source_url"
           :disabled="is_factory"
           class="mx-6"
-          label="URL"
+          :label="t`URL`"
           :error="is_operation_url_invalid"
           outlined
           dense
@@ -109,7 +109,7 @@
           v-model="source_name"
           :disabled="is_factory"
           class="mx-6"
-          label="Name"
+          :label="t`Name`"
           outlined
           dense
           @input="blockNameAutoComplete"
@@ -117,18 +117,18 @@
         <v-checkbox
           v-model="source_enabled"
           class="mx-6 mt-0"
-          label="Source Enabled"
+          :label="t`Source Enabled`"
         />
         <v-alert
           v-if="is_operation_url_invalid"
           class="mx-9"
           type="error"
         >
-          This source contains an invalid manifest URL.
+          {{ t`This source contains an invalid manifest URL.` }}
           <v-checkbox
             v-model="should_bypass_validate"
             class="my-0 pt-4"
-            label="Continue anyway"
+            :label="t`Continue anyway`"
           />
         </v-alert>
         <v-alert
@@ -149,14 +149,14 @@
             color="primary"
             @click="operation_open = false"
           >
-            Cancel
+            {{ t`Cancel` }}
           </v-btn>
           <v-spacer />
           <v-btn
             color="success"
             @click="applySubModalAction"
           >
-            Apply
+            {{ t`Apply` }}
           </v-btn>
         </v-card-actions>
       </v-card>
