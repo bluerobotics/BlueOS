@@ -4,10 +4,10 @@
       <v-icon left>
         mdi-lightbulb-on
       </v-icon>
-      Lights
+      {{ t`Lights` }}
     </v-card-title>
     <v-card-text v-if="lights.length === 0">
-      Not configured
+      {{ t`Not configured` }}
     </v-card-text>
     <v-card-text v-else>
       <span
