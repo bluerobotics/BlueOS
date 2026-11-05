@@ -8,6 +8,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import settingsStore from '@/store/settings'
@@ -47,7 +48,7 @@ export default Vue.extend({
         },
         yaxis: {
           title: {
-            text: 'Speed Mb/s',
+            text: t`Speed Mb/s`,
           },
           decimalsInFloat: 1,
         },
