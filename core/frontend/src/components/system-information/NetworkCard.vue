@@ -9,7 +9,7 @@
           {{ network.name }} {{ network.is_loopback ? '(loopback)' : '' }}
         </v-list-item-title>
         <v-list-item-subtitle v-if="network.description">
-          Description: {{ network.description }}
+          {{ t`Description: ${network.description}` }}
         </v-list-item-subtitle>
       </v-list-item-content>
     </v-list-item>
@@ -37,7 +37,7 @@
           mdi-network
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>{{ network.is_up ? 'Enabled' : 'Disabled' }}</v-list-item-subtitle>
+      <v-list-item-subtitle>{{ network.is_up ? t`Enabled` : t`Disabled` }}</v-list-item-subtitle>
     </v-list-item>
 
     <v-list-item>
@@ -46,7 +46,7 @@
           mdi-badge-account-horizontal
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>MAC:</v-list-item-subtitle>
+      <v-list-item-subtitle>{{ t`MAC:` }}</v-list-item-subtitle>
       <v-list-item-subtitle
         class="text-right"
         :style="show_mac ? '' : 'cursor: pointer; filter:blur(0.5em)'"
@@ -62,9 +62,9 @@
           mdi-package-down
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>Packets received:</v-list-item-subtitle>
+      <v-list-item-subtitle>{{ t`Packets received:` }}</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.packets_received }} / {{ network.total_packets_received }} total
+        {{ t`${network.packets_received} / ${network.total_packets_received} total` }}
       </v-list-item-subtitle>
     </v-list-item>
 
@@ -74,9 +74,9 @@
           mdi-package-up
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>Packets transmitted:</v-list-item-subtitle>
+      <v-list-item-subtitle>{{ t`Packets transmitted:` }}</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ network.packets_transmitted }} / {{ network.total_packets_transmitted }} total
+        {{ t`${network.packets_transmitted} / ${network.total_packets_transmitted} total` }}
       </v-list-item-subtitle>
     </v-list-item>
 
@@ -86,9 +86,9 @@
           mdi-cloud-download
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>Bytes received:</v-list-item-subtitle>
+      <v-list-item-subtitle>{{ t`Bytes received:` }}</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ formatSize(network.received_B) }} / {{ formatSize(network.total_received_B) }} total
+        {{ t`${formatSize(network.received_B)} / ${formatSize(network.total_received_B)} total` }}
       </v-list-item-subtitle>
     </v-list-item>
 
@@ -98,9 +98,9 @@
           mdi-cloud-upload
         </v-icon>
       </v-list-item-icon>
-      <v-list-item-subtitle>Bytes transmitted:</v-list-item-subtitle>
+      <v-list-item-subtitle>{{ t`Bytes transmitted:` }}</v-list-item-subtitle>
       <v-list-item-subtitle class="text-right">
-        {{ formatSize(network.transmitted_B) }} / {{ formatSize(network.total_transmitted_B) }} total
+        {{ t`${formatSize(network.transmitted_B)} / ${formatSize(network.total_transmitted_B)} total` }}
       </v-list-item-subtitle>
     </v-list-item>
   </v-card>
