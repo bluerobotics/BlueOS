@@ -4,10 +4,10 @@
       <v-icon left>
         mdi-radar
       </v-icon>
-      Ping Sensors
+      {{ t`Ping Sensors` }}
     </v-card-title>
     <v-card-text v-if="pings.length === 0">
-      Not detected
+      {{ t`Not detected` }}
     </v-card-text>
     <v-card-text
       v-else
