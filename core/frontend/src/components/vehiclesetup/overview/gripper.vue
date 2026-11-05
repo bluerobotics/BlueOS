@@ -4,14 +4,14 @@
       <v-icon left>
         mdi-hand-back-right
       </v-icon>
-      Gripper
+      {{ t`Gripper` }}
     </v-card-title>
     <v-card-text v-if="gripper === null">
-      Not configured
+      {{ t`Not configured` }}
     </v-card-text>
 
     <v-card-text v-else-if="gripper === 'MAVLink'">
-      MAVLink
+      {{ t`MAVLink` }}
     </v-card-text>
 
     <v-card-text v-else>
