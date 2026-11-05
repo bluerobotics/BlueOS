@@ -4,15 +4,17 @@ import asyncio
 import itertools
 import logging
 import pathlib
+import re
 import socket
 from typing import Any, Dict, List, Optional
 
 import psutil
 from commonwealth.settings.manager import PydanticManager
 from commonwealth.utils.apis import PrettyJSONResponse, use_local_docs_assets
+from commonwealth.utils.commands import run_command
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -23,6 +25,9 @@ from zeroconf import IPVersion
 from zeroconf.asyncio import AsyncServiceInfo, AsyncZeroconf
 
 SERVICE_NAME = "beacon"
+AVAHI_DAEMON_CONFIG_PATH = "/etc/avahi/avahi-daemon.conf"
+# A DNS label is at most 63 characters, and the longest suffix we append is "-ethernet"
+HOSTNAME_PATTERN = re.compile(r"[a-zA-Z0-9]([a-zA-Z0-9-]{0,52}[a-zA-Z0-9])?")
 
 
 class AsyncRunner:
@@ -117,6 +122,8 @@ class Beacon:
         return services
 
     def set_hostname(self, hostname: str) -> None:
+        if not HOSTNAME_PATTERN.fullmatch(hostname):
+            raise ValueError(f"Invalid hostname '{hostname}': use up to 54 letters, digits and inner '-' characters.")
         previous = self.get_hostname()
         self.manager.settings.default.domain_names = [hostname]
         for interface in self.manager.settings.interfaces:
@@ -135,6 +142,26 @@ class Beacon:
                 case InterfaceType.HOTSPOT:
                     interface.domain_names = [f"{hostname}-hotspot"]
         self.manager.save()
+        self.set_host_hostname(hostname)
+
+    @staticmethod
+    def set_host_hostname(hostname: str) -> None:
+        # The DHCP client and avahi run on the host and read these files, not our settings.
+        # Avahi keeps the "-avahi" suffix so it doesn't claim the same .local name we advertise.
+        command = " && ".join(
+            [
+                rf"sudo sed -i 's/^\(127\.0\.1\.1\s\+\)\S\+/\1{hostname}/' /etc/hosts",
+                f"sudo hostnamectl set-hostname {hostname}",
+                rf"sudo sed -i 's/^#\?host-name=.*/host-name={hostname}-avahi/' {AVAHI_DAEMON_CONFIG_PATH}",
+                "sudo systemctl restart --no-block avahi-daemon",
+            ]
+        )
+        try:
+            result = run_command(command, False)
+            if result.returncode != 0:
+                logger.warning(f"Failed to set host hostname to {hostname}: {result.stderr}")
+        except Exception as e:
+            logger.warning(f"Failed to set host hostname to {hostname}: {e}")
 
     def get_hostname(self) -> str:
         try:
@@ -307,7 +334,10 @@ def get_services() -> Any:
 @app.post("/hostname", summary="Set the hostname for mDNS.")
 @version(1, 0)
 def set_hostname(hostname: str) -> Any:
-    return beacon.set_hostname(hostname)
+    try:
+        return beacon.set_hostname(hostname)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
 @app.get("/hostname", summary="Get hostname for mDNS.")

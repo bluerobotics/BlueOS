@@ -105,7 +105,7 @@ class BeaconStore extends VuexModule {
     return back_axios({
       method: 'post',
       url: `${this.API_URL}/hostname`,
-      timeout: 5000,
+      timeout: 10000,
       params: {
         hostname: `${hostname}`,
       },
