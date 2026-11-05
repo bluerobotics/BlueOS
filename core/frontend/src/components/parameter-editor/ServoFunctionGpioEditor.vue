@@ -1,17 +1,16 @@
 <template>
   <div class="align-center">
     <p>
-      Some flight controller servo channels are capable of digital (GPIO) functionalities.
-      Available options include relays, leak detection (input-capable pins only),
-      and other functions not yet supported by this UI.
+      <!-- eslint-disable-next-line max-len -->
+      {{ t`Some flight controller servo channels are capable of digital (GPIO) functionalities. Available options include relays, leak detection (input-capable pins only), and other functions not yet supported by this UI.` }}
     </p>
     <p>
-      This servo's GPIO (<strong>{{ this_servo_gpio }}</strong>) is currently in use by
-      <strong>{{ function_type_using_this_gpio?.name ?? 'nothing' }}</strong>.
+      <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+      <span v-html="t`This servo's GPIO (<strong>${escapeHtml(this_servo_gpio)}</strong>) is currently in use by <strong>${function_type_using_this_gpio?.name ? escapeHtml(function_type_using_this_gpio.name) : t`nothing`}</strong>.`" />
     </p>
     <v-row align="end">
       <v-col cols="6">
-        <span style="font-size: 1.0rem;">GPIO Function:</span>
+        <span style="font-size: 1.0rem;">{{ t`GPIO Function:` }}</span>
       </v-col>
       <v-col cols="6">
         <v-select
