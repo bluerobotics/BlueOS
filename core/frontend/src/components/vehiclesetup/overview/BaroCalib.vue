@@ -2,7 +2,7 @@
   <div class="pa-1">
     <v-card class="ma-2 pa-2">
       <v-card-title class="align-center">
-        Calibrate Barometer
+        {{ t`Calibrate Barometer` }}
       </v-card-title>
       <v-card-text>
         <v-simple-table dense>
@@ -10,22 +10,22 @@
             <thead>
               <tr>
                 <th class="text-left">
-                  Sensor
+                  {{ t`Sensor` }}
                 </th>
                 <th class="text-left">
-                  Type
+                  {{ t`Type` }}
                 </th>
                 <th class="text-left">
-                  Bus
+                  {{ t`Bus` }}
                 </th>
                 <th class="text-left">
-                  Address
+                  {{ t`Address` }}
                 </th>
                 <th class="text-left">
-                  Status
+                  {{ t`Status` }}
                 </th>
                 <th class="text-left">
-                  Calibrated at
+                  {{ t`Calibrated at` }}
                 </th>
               </tr>
             </thead>
@@ -34,8 +34,8 @@
                 v-for="baro in ardupilot_sensors.baros"
                 :key="baro.param"
               >
-                <td><b>{{ baro.deviceName ?? 'UNKNOWN' }}</b></td>
-                <td v-tooltip="'Used to estimate altitude/depth'">
+                <td><b>{{ baro.deviceName ?? t`UNKNOWN` }}</b></td>
+                <td v-tooltip="t`Used to estimate altitude/depth`">
                   {{ get_pressure_type[baro.param] }} Pressure
                 </td>
                 <td>{{ bus_name(baro.busType) }} {{ baro.bus }}</td>
@@ -52,12 +52,12 @@
       </v-card-actions>
       <v-card-actions class="justify-center pa-2">
         <v-btn
-          v-tooltip="'Calibrate all barometers to ground level'"
+          v-tooltip="t`Calibrate all barometers to ground level`"
           color="primary"
           :disabled="disable_button"
           @click="calibrate"
         >
-          Calibrate
+          {{ t`Calibrate` }}
         </v-btn>
       </v-card-actions>
     </v-card>
