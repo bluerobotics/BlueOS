@@ -7,7 +7,7 @@
   >
     <v-card>
       <v-card-title class="justify-center pt-6">
-        A new version is available!
+        {{ t`A new version is available!` }}
       </v-card-title>
       <v-card-text
         v-if="show_release_notes"
@@ -27,7 +27,7 @@
           href="/tools/version-chooser"
           @click="should_open = false"
         >
-          Update to {{ latest_version && latest_version.tag }}
+          {{ t`Update to ${latest_version && latest_version.tag}` }}
         </v-btn>
       </v-card-actions>
     </v-card>
