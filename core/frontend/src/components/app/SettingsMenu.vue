@@ -4,7 +4,7 @@
     class="d-flex justify-center"
   >
     <v-btn
-      v-tooltip="'Open Settings'"
+      v-tooltip="t`Open Settings`"
       class="mr-2"
       icon
       large
