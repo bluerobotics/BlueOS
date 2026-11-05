@@ -1,3 +1,5 @@
+import { t } from 'ttag'
+
 import {
   AlertRule, AlertRuleId, AlertSource,
 } from '@/types/alerts'
@@ -11,7 +13,7 @@ const rules: AlertRule[] = [
     source: AlertSource.Frontend,
     service: frontend_service,
     level: NotificationLevel.Critical,
-    title: 'Backend is offline',
+    title: t`Backend is offline`,
     condition: () => frontend.backend_offline,
   },
 ]
