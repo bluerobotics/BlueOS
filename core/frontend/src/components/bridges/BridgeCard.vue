@@ -23,12 +23,12 @@
                 </span>
                 <v-icon>mdi-link</v-icon>
                 <span v-if="is_server" class="text-subtitle-1 ml-2">
-                  Server listening at {{ bridgeSerialInfo.bridge.udp_listen_port }}
+                  {{ t`Server listening at ${bridgeSerialInfo.bridge.udp_listen_port}` }}
                 </span>
                 <span v-else class="text-subtitle-1 ml-2">
-                  Sending to {{ bridgeSerialInfo.bridge.ip }}:{{ bridgeSerialInfo.bridge.udp_target_port }}<br>
+                  {{ t`Sending to ${bridgeSerialInfo.bridge.ip}:${bridgeSerialInfo.bridge.udp_target_port}` }}<br>
                   {{ bridgeSerialInfo.bridge.udp_listen_port
-                    ? 'Receiving at ' + bridgeSerialInfo.bridge.udp_listen_port
+                    ? t`Receiving at ` + bridgeSerialInfo.bridge.udp_listen_port
                     : ''
                   }}
                 </span>
@@ -39,13 +39,11 @@
         <span v-if="bridgeSerialInfo.serial_info">
           <div class="d-flex flex-column">
             <p class="subtitle-1 text-center ma-0">
-              Path: {{ bridgeSerialInfo.serial_info.by_path }}
+              {{ t`Path: ${bridgeSerialInfo.serial_info.by_path}` }}
             </p>
             <p class="subtitle-1 text-center ma-0">
-              Info:
-              {{ bridgeSerialInfo.serial_info.udev_properties["ID_VENDOR"] }}
-              /
-              {{ bridgeSerialInfo.serial_info.udev_properties["ID_MODEL"] }}
+              <!-- eslint-disable-next-line max-len -->
+              {{ t`Info: ${bridgeSerialInfo.serial_info.udev_properties["ID_VENDOR"]} / ${bridgeSerialInfo.serial_info.udev_properties["ID_MODEL"]}` }}
             </p>
           </div></span>
       </v-tooltip>
