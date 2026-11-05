@@ -19,19 +19,19 @@
       />
     </v-form>
     <p v-if="has_script_load_error">
-      Failed to load scripts.
+      {{ t`Failed to load scripts.` }}
     </p>
     <p v-else-if="fetch_retries > 0">
-      Failed to fetch scripts, trying again...
+      {{ t`Failed to fetch scripts, trying again...` }}
     </p>
     <p v-else-if="is_loading_scripts">
-      Loading scripts...
+      {{ t`Loading scripts...` }}
     </p>
     <p v-else-if="invalid_board">
-      Determining current board...
+      {{ t`Determining current board...` }}
     </p>
     <p v-else-if="filtered_scripts?.length === 0">
-      No scripts available for this setup.
+      {{ t`No scripts available for this setup.` }}
     </p>
   </div>
 </template>
