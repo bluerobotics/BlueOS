@@ -19,7 +19,7 @@
     >
       <v-card>
         <v-card-title class="align-center">
-          Power
+          {{ t`Power` }}
         </v-card-title>
 
         <v-divider />
@@ -27,7 +27,7 @@
         <v-container class="pa-2">
           <v-card-actions class="flex-column">
             <v-btn
-              v-tooltip="'Restarts the autopilot'"
+              v-tooltip="t`Restarts the autopilot`"
               class="ma-2"
               :loading="restarting_autopilot"
               :disabled="restarting_autopilot || non_default_status"
@@ -39,10 +39,10 @@
               >
                 mdi-restart
               </v-icon>
-              Restart Autopilot
+              {{ t`Restart Autopilot` }}
             </v-btn>
             <v-btn
-              v-tooltip="'Restarts the core alone, should be enough in most cases'"
+              v-tooltip="t`Restarts the core alone, should be enough in most cases`"
               class="ma-2"
               :disabled="non_default_status"
               @click="restartContainer"
@@ -53,10 +53,10 @@
               >
                 mdi-folder-refresh
               </v-icon>
-              {{ settings.is_pirate_mode ? "Restart Core container" : "Soft restart" }}
+              {{ settings.is_pirate_mode ? t`Restart Core container` : t`Soft restart` }}
             </v-btn>
             <v-btn
-              v-tooltip="'Fully restarts the onboard computer'"
+              v-tooltip="t`Fully restarts the onboard computer`"
               class="ma-2"
               :disabled="non_default_status"
               @click="reboot"
@@ -67,10 +67,10 @@
               >
                 mdi-restart-alert
               </v-icon>
-              Reboot
+              {{ t`Reboot` }}
             </v-btn>
             <v-btn
-              v-tooltip="'Shuts down the onboard computer'"
+              v-tooltip="t`Shuts down the onboard computer`"
               class="ma-2"
               :disabled="non_default_status"
               @click="poweroff"
@@ -81,7 +81,7 @@
               >
                 mdi-power-standby
               </v-icon>
-              Power off
+              {{ t`Power off` }}
             </v-btn>
           </v-card-actions>
         </v-container>
