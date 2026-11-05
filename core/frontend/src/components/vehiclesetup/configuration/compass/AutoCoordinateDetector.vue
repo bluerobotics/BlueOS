@@ -6,9 +6,9 @@
           {{ mavlink_lat ? "mdi-check-circle" : "mdi-alert-circle" }}
         </v-icon>
       </template>
-      <span>{{ mavlink_lat ? "Valid GPS position" : "No valid GPS position" }}</span>
+      <span>{{ mavlink_lat ? t`Valid GPS position` : t`No valid GPS position` }}</span>
     </v-tooltip>
-    <b>Vehicle coordinates:</b> {{ mavlink_lat?.toFixed(5) ?? "N/A" }} {{ mavlink_lon?.toFixed(5) ?? "N/A" }}
+    <b>{{ t`Vehicle coordinates:` }}</b> {{ mavlink_lat?.toFixed(5) ?? t`N/A` }} {{ mavlink_lon?.toFixed(5) ?? t`N/A` }}
     <br>
     <template v-if="!mavlink_lat && supports_setting_position">
       <v-icon dense :color="geoip_lat ? 'green' : 'red'">
@@ -20,38 +20,38 @@
             mdi-help-circle
           </v-icon>
         </template>
-        <span>GeoIP coordinates are estimated based on your IP address.</span>
+        <span>{{ t`GeoIP coordinates are estimated based on your IP address.` }}</span>
       </v-tooltip>
-      <b>GeoIP coordinates:</b> {{ geoip_lat ?? "N/A" }} {{ geoip_lon ?? "N/A" }}
+      <b>{{ t`GeoIP coordinates:` }}</b> {{ geoip_lat ?? t`N/A` }} {{ geoip_lon ?? t`N/A` }}
       <br>
     </template>
     <v-card v-if="!mavlink_lat && supports_setting_position" class="pa-4">
       <v-card-text>
-        No valid GPS position!
+        {{ t`No valid GPS position!` }}
       </v-card-text>
       <v-card-actions class="flex-wrap" style="gap: 8px;">
         <v-btn v-if="!manual_coordinates" small color="primary" @click="setOrigin(geoip_lat ?? 0, geoip_lon ?? 0)">
-          Use GeoIP coordinates
+          {{ t`Use GeoIP coordinates` }}
         </v-btn>
         <v-btn v-if="!mavlink_lat && !manual_coordinates" small color="primary" @click="manual_coordinates = true">
-          Enter custom coordinate
+          {{ t`Enter custom coordinate` }}
         </v-btn>
         <br>
         <div v-if="manual_coordinates">
           <v-text-field
             v-model="manual_lat"
-            label="Latitude"
+            :label="t`Latitude`"
             type="number"
             required
           />
           <v-text-field
             v-model="manual_lon"
-            label="Longitude"
+            :label="t`Longitude`"
             type="number"
             required
           />
           <v-btn small color="primary" @click="setOrigin(manual_lat ?? 0, manual_lon ?? 0)">
-            Use these coordinates
+            {{ t`Use these coordinates` }}
           </v-btn>
         </div>
       </v-card-actions>
