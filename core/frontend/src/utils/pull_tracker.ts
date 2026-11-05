@@ -1,4 +1,5 @@
 import { Dictionary } from '@/types/common'
+import { ProgressEvent } from '@/types/kraken'
 import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 class PullTracker {
@@ -146,12 +147,17 @@ class PullTracker {
     this.updateSimplifiedProgress()
   }
 
-  digestNewData(progressEvent: {currentTarget: { response: string }}, parseFragments = true): void {
-    let buffer = progressEvent?.currentTarget?.response
+  digestNewData(progressEvent: ProgressEvent, parseFragments = true): void {
+    const response = progressEvent?.target?.response
+    if (!response) {
+      return
+    }
+
+    let buffer = response
 
     if (parseFragments) {
       const result = aggregateStreamingResponse(
-        parseStreamingResponse(progressEvent?.currentTarget?.response),
+        parseStreamingResponse(response),
         (fragment) => {
           this.onerror(fragment.error ?? `Unknown error with status ${fragment.status}`)
           /** Stops aggregation */

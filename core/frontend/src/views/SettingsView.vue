@@ -698,7 +698,11 @@ export default Vue.extend({
           },
           responseType: 'text',
           onDownloadProgress: (progressEvent) => {
-            let result = parseStreamingResponse(progressEvent.event.currentTarget.response)
+            const response = progressEvent.event?.target?.response
+            if (!response) {
+              return
+            }
+            let result = parseStreamingResponse(response)
             result = result.filter((fragment) => fragment.fragment !== -1)
             const last_fragment = result.last()
             const total_deleted = result
@@ -752,7 +756,11 @@ export default Vue.extend({
           },
           responseType: 'text',
           onDownloadProgress: (progressEvent) => {
-            let result = parseStreamingResponse(progressEvent.event.currentTarget.response)
+            const response = progressEvent.event?.target?.response
+            if (!response) {
+              return
+            }
+            let result = parseStreamingResponse(response)
             result = result.filter((fragment) => fragment.fragment !== -1)
             const last_fragment = result.last()
             const total_deleted = result
