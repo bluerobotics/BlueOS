@@ -34,8 +34,8 @@
         v-if="holds_ip_being_used"
         class="text-center mt-2 mb-2"
       >
-        This IP address is currently being used to access BlueOS.
-        Deleting it could prevent you from accessing your vehicle. Are you sure you want to disconnect?
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`This IP address is currently being used to access BlueOS. Deleting it could prevent you from accessing your vehicle. Are you sure you want to disconnect?` }}
       </v-card-subtitle>
 
       <v-expand-transition>
@@ -67,7 +67,7 @@
           color="error"
           @click="disconnectFromWifiNetwork"
         >
-          Disconnect
+          {{ t`Disconnect` }}
         </v-btn>
       </v-card-actions>
     </v-card>
