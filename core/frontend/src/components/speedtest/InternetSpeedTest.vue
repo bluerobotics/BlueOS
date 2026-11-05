@@ -4,14 +4,14 @@
   >
     <v-card max-width="390px">
       <v-card-title class="justify-center">
-        Internet Speed and Latency Test
+        {{ t`Internet Speed and Latency Test` }}
         <v-overlay
           width="100%"
           absolute
           opacity="0.92"
           :value="internet_offline"
         >
-          Waiting for internet connection..
+          {{ t`Waiting for internet connection..` }}
         </v-overlay>
       </v-card-title>
 
@@ -25,7 +25,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Server to test internet speed'"
+                  v-tooltip="t`Server to test internet speed`"
                 >
                   mdi-server-network
                 </v-icon>
@@ -38,7 +38,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Client provider'"
+                  v-tooltip="t`Client provider`"
                 >
                   mdi-home-circle-outline
                 </v-icon>
@@ -47,7 +47,7 @@
                 {{ client_origin }}
                 <v-list-item-icon
                   v-if="client_isp_rating"
-                  v-tooltip="'Provider ISP rating'"
+                  v-tooltip="t`Provider ISP rating`"
                 >
                   (
                   <div>
@@ -67,7 +67,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Download speed from internet'"
+                  v-tooltip="t`Download speed from internet`"
                 >
                   mdi-download
                 </v-icon>
@@ -80,7 +80,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Upload speed to internet'"
+                  v-tooltip="t`Upload speed to internet`"
                 >
                   mdi-upload
                 </v-icon>
@@ -93,7 +93,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Latency'"
+                  v-tooltip="t`Latency`"
                 >
                   mdi-timer-outline
                 </v-icon>
