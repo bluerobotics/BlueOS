@@ -1,8 +1,8 @@
 <template>
   <v-card>
     <v-card-subtitle class="text-center pt-6">
-      Log in using your Docker Hub credentials to access private repositories
-      and benefit from an increased rate limit.
+      <!-- eslint-disable-next-line max-len -->
+      {{ t`Log in using your Docker Hub credentials to access private repositories and benefit from an increased rate limit.` }}
     </v-card-subtitle>
 
     <SpinningLogo
@@ -20,25 +20,25 @@
           <v-icon class="mr-3">
             mdi-login
           </v-icon>
-          Login
+          {{ t`Login` }}
         </v-tab>
         <v-tab key="1" href="#1" class="tab-text">
           <v-icon class="mr-3">
             mdi-account
           </v-icon>
-          Accounts
+          {{ t`Accounts` }}
         </v-tab>
       </v-tabs>
       <v-card-text v-if="is_login_tab">
         <div class="d-flex justify-space-around">
           <v-switch
             v-model="log_in_info.root"
-            label="Login root user"
+            :label="t`Login root user`"
             class="pb-3"
           />
           <v-switch
             v-model="use_custom_registry"
-            label="Custom registry"
+            :label="t`Custom registry`"
             class="pb-3"
           />
         </div>
@@ -47,7 +47,7 @@
           v-if="use_custom_registry"
           v-model="log_in_info.registry"
           class="pb-3"
-          label="Custom Registry"
+          :label="t`Custom Registry`"
           outlined
           hide-details
         />
@@ -55,14 +55,14 @@
         <v-text-field
           v-model="log_in_info.username"
           class="pb-3"
-          label="Docker Username"
+          :label="t`Docker Username`"
           outlined
           hide-details
         />
 
         <v-text-field
           v-model="log_in_info.password"
-          label="Docker Password or PAT"
+          :label="t`Docker Password or PAT`"
           type="password"
           outlined
           hide-details
@@ -91,7 +91,7 @@
                     mdi-shield-account
                   </v-icon>
                 </template>
-                <span>Used by root user</span>
+                <span>{{ t`Used by root user` }}</span>
               </v-tooltip>
             </div>
             <v-list-item-action>
@@ -108,7 +108,7 @@
           v-else
           class="text-center pt-6"
         >
-          No connected accounts
+          {{ t`No connected accounts` }}
         </v-card-subtitle>
       </v-card-text>
     </div>
@@ -131,14 +131,14 @@
         color="primary"
         @click="$emit('cancel')"
       >
-        Cancel
+        {{ t`Cancel` }}
       </v-btn>
       <v-spacer />
       <v-btn
         color="success"
         @click="login"
       >
-        Login
+        {{ t`Login` }}
       </v-btn>
     </v-card-actions>
   </v-card>
