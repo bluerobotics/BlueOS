@@ -1,7 +1,7 @@
 <template>
   <div v-if="params_finished_loaded" class="power-container pa-4">
     <battery-card
-      title="Battery 1"
+      :title="t`Battery 1`"
       :monitor-param="parameter('BATT_MONITOR')"
       :capacity-param="parameter('BATT_CAPACITY')"
       :arm-volt-param="parameter('BATT_ARM_VOLT')"
@@ -15,7 +15,7 @@
     />
     <battery-card
       v-if="parameter('BATT2_MONITOR')"
-      title="Battery 2"
+      :title="t`Battery 2`"
       :monitor-param="parameter('BATT2_MONITOR')"
       :capacity-param="parameter('BATT2_CAPACITY')"
       :arm-volt-param="parameter('BATT2_ARM_VOLT')"
