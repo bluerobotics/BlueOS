@@ -15,19 +15,19 @@
       />
     </v-form>
     <p v-if="has_parameters_load_error">
-      Failed to load parameters.
+      {{ t`Failed to load parameters.` }}
     </p>
     <p v-else-if="fetch_retries > 0">
-      Failed to fetch parameters, trying again...
+      {{ t`Failed to fetch parameters, trying again...` }}
     </p>
     <p v-else-if="is_loading_parameters">
-      Loading parameters...
+      {{ t`Loading parameters...` }}
     </p>
     <p v-else-if="invalid_board">
-      Determining current board...
+      {{ t`Determining current board...` }}
     </p>
     <p v-else-if="(Object.keys(filtered_param_sets).length === 0)">
-      No parameters available for this setup.
+      {{ t`No parameters available for this setup.` }}
     </p>
     <v-card
       v-if="Object.keys(value).length !== 0"
@@ -35,10 +35,10 @@
       <v-card-text>
         <v-row class="virtual-table-row">
           <v-col class="virtual-table-cell name-cell">
-            <strong>Name</strong>
+            <strong>{{ t`Name` }}</strong>
           </v-col>
           <v-col class="virtual-table-cell">
-            <strong>Value</strong>
+            <strong>{{ t`Value` }}</strong>
           </v-col>
         </v-row>
       </v-card-text>
@@ -58,7 +58,7 @@
                   </div>
                 </template>
                 <span>
-                  {{ item.current?.description ?? 'No description provided' }}
+                  {{ item.current?.description ?? t`No description provided` }}
                 </span>
               </v-tooltip>
             </v-col>
