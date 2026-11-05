@@ -3,7 +3,7 @@
     :value="value"
     :append-icon="password_show_icon"
     :type="input_field_type"
-    label="Password"
+    :label="t`Password`"
     hide-details="auto"
     class="pa-2"
     @input="emitInput"
