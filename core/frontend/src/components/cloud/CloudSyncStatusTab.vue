@@ -5,7 +5,7 @@
         {{ summaryMessage }}
       </div>
       <div class="text-caption text--secondary">
-        {{ activeCount }} uploading • {{ pendingCount }} waiting
+        {{ t`${activeCount} uploading • ${pendingCount} waiting` }}
       </div>
       <v-btn
         class="mt-3"
@@ -15,12 +15,12 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        Go to My Missions
+        {{ t`Go to My Missions` }}
       </v-btn>
     </div>
     <section class="cloud-status-section">
       <div class="d-flex align-center justify-space-between mb-2">
-        <span class="text-body-2 font-weight-medium">Cloud file sync</span>
+        <span class="text-body-2 font-weight-medium">{{ t`Cloud file sync` }}</span>
         <v-chip
           small
           outlined
@@ -47,10 +47,10 @@
                   {{ formatFileSize(item.sent || 0) }} / {{ formatFileSize(item.total || 0) }}
                 </template>
                 <template v-else-if="item.status === 'pending'">
-                  Waiting to upload • {{ formatFileSize(item.size) }}
+                  {{ t`Waiting to upload • ${formatFileSize(item.size)}` }}
                 </template>
                 <template v-else>
-                  Completed • {{ formatFileSize(item.size) }}
+                  {{ t`Completed • ${formatFileSize(item.size)}` }}
                 </template>
               </v-list-item-subtitle>
               <v-progress-linear
@@ -85,7 +85,7 @@
         v-else
         class="cloud-status-empty"
       >
-        No files in the queue.
+        {{ t`No files in the queue.` }}
       </div>
     </section>
   </v-container>
