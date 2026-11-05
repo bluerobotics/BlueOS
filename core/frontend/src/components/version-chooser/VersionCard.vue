@@ -37,7 +37,7 @@
       <div class="d-flex flex-wrap justify-center align-center my-2">
         <v-btn
           v-if="showDocsLink"
-          v-tooltip="'Documentation for this version'"
+          v-tooltip="t`Documentation for this version`"
           icon
           :href="docsUrl"
           target="_blank"
@@ -55,7 +55,7 @@
           <v-icon left>
             mdi-list-box-outline
           </v-icon>
-          What's new?
+          {{ t`What's new?` }}
         </v-btn>
         <v-alert
           v-if="upToDate && !settings.is_pirate_mode"
@@ -64,7 +64,7 @@
           text
           type="success"
         >
-          Up to date
+          {{ t`Up to date` }}
         </v-alert>
         <v-alert
           v-if="settings.is_pirate_mode && current"
@@ -73,7 +73,7 @@
           text
           type="success"
         >
-          Running
+          {{ t`Running` }}
         </v-alert>
         <div v-if="working">
           <spinning-logo
@@ -96,7 +96,7 @@
           @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
         >
           <div class="scroll-text">
-            Update to latest {{ image.tag }}
+            {{ t`Update to latest ${image.tag}` }}
           </div>
         </v-btn>
         <v-btn
@@ -107,14 +107,14 @@
           dark
           @click="bootstrapDialog = true"
         >
-          Update Bootstrap
+          {{ t`Update Bootstrap` }}
         </v-btn>
         <WarningDialog
           v-if="showBootstrapUpdate"
           v-model="bootstrapDialog"
-          message="Updating bootstrap is only recommended between stable versions."
-          confirm-label="Yes, update bootstrap"
-          cancel-label="Abort"
+          :message="t`Updating bootstrap is only recommended between stable versions.`"
+          :confirm-label="t`Yes, update bootstrap`"
+          :cancel-label="t`Abort`"
           confirm-color="primary"
           @confirm="updateBootstrap"
         />
@@ -128,12 +128,12 @@
         />
         <v-btn
           v-if="showCommit"
-          v-tooltip="'Saves the container filesystem as a new image'"
+          v-tooltip="t`Saves the container filesystem as a new image`"
           color="primary"
           class="mx-2 my-1"
           :disabled="working"
           @click="$emit('commit', `${image.repository}:${image.tag}`)"
-          v-text="'Commit'"
+          v-text="t`Commit`"
         />
         <v-btn
           v-if="!current && !remote && imageCanBeDeleted()"
@@ -141,7 +141,7 @@
           class="mx-2 my-1"
           :disabled="working"
           @click="$emit('delete', `${image.repository}:${image.tag}`)"
-          v-text="'Delete'"
+          v-text="t`Delete`"
         />
         <v-btn
           v-if="!current && !remote"
@@ -149,7 +149,7 @@
           class="mx-2 my-1"
           :disabled="working"
           @click="$emit('apply', `${image.repository}:${image.tag}`)"
-          v-text="'Apply'"
+          v-text="t`Apply`"
         />
         <v-btn
           v-if="showPullButton"
@@ -157,12 +157,12 @@
           class="mx-2 my-1"
           :disabled="working"
           @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
-          v-text="'Download and Apply'"
+          v-text="t`Download and Apply`"
         />
         <v-btn
           v-if="showReleaseNotes && notesExpanded"
           key="hide-notes"
-          v-tooltip="'Hide release notes'"
+          v-tooltip="t`Hide release notes`"
           icon
           @click="notesExpanded = false"
         >
