@@ -8,27 +8,24 @@
         v-if="disabled"
         class="text-caption text-center placeholder-box"
       >
-        Thumbnails disabled<br>
-        for this source.
+        {{ t`Thumbnails disabled for this source.` }}
       </span>
       <span
         v-else-if="not_available"
         class="text-caption text-center placeholder-box"
       >
-        Preview not available,<br>
-        add a stream to have one.
+        {{ t`Preview not available, add a stream to have one.` }}
       </span>
       <spinning-logo
         v-else-if="fetching"
         size="10%"
-        subtitle="Fetching thumbnail..."
+        :subtitle="t`Fetching thumbnail...`"
       />
       <span
         v-else-if="idle_placeholder"
         class="text-caption text-center placeholder-box"
       >
-        Preview not requested,<br>
-        use the controls to fetch one.
+        {{ t`Preview not requested, use the controls to fetch one.` }}
       </span>
       <img
         v-else
@@ -40,13 +37,13 @@
         class="thumbnail-overlay text-caption"
       >
         <template v-if="continuous_mode">
-          1 Hz
+          {{ t`1 Hz` }}
           <template v-if="last_fetch_ms !== null">
             {{ last_fetch_ms }}ms
           </template>
         </template>
         <template v-else-if="snapshot_in_progress">
-          fetching...
+          {{ t`fetching...` }}
         </template>
         <template v-else-if="thumbnail">
           <template v-if="last_fetch_ms !== null">
@@ -78,7 +75,7 @@
               </v-icon>
             </v-btn>
           </template>
-          <span>Fetch a single thumbnail</span>
+          <span>{{ t`Fetch a single thumbnail` }}</span>
         </v-tooltip>
         <span class="control-separator">|</span>
         <v-tooltip bottom>
@@ -98,7 +95,7 @@
             </v-btn>
           </template>
           <span>
-            {{ continuous_mode ? 'Stop continuous thumbnails' : 'Start continuous thumbnails (1s)' }}
+            {{ continuous_mode ? t`Stop continuous thumbnails` : t`Start continuous thumbnails (1s)` }}
           </span>
         </v-tooltip>
       </div>
