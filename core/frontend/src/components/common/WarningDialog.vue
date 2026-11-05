@@ -40,6 +40,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 export default Vue.extend({
@@ -51,7 +52,7 @@ export default Vue.extend({
     },
     title: {
       type: String,
-      default: 'WARNING',
+      default: t`WARNING`,
     },
     message: {
       type: String,
@@ -63,7 +64,7 @@ export default Vue.extend({
     },
     cancelLabel: {
       type: String,
-      default: 'Cancel',
+      default: t`Cancel`,
     },
     confirmColor: {
       type: String as PropType<string>,
