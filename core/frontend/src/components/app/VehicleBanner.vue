@@ -41,24 +41,24 @@
     </v-row>
     <v-dialog v-if="dialog" v-model="dialog" max-width="500px">
       <v-card>
-        <v-card-title>Edit Vehicle Details</v-card-title>
+        <v-card-title>{{ t`Edit Vehicle Details` }}</v-card-title>
         <v-card-text>
           <v-text-field
             v-model="vehicle_name_input"
-            label="Vehicle Name"
+            :label="t`Vehicle Name`"
           />
           <v-text-field
             v-model="mdns_hostname_input"
-            label="mDNS Hostname"
+            :label="t`mDNS Hostname`"
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn color="blue darken-1" text @click="dialog = false">
-            Cancel
+            {{ t`Cancel` }}
           </v-btn>
           <v-btn color="blue darken-1" text @click="save()">
-            Save
+            {{ t`Save` }}
           </v-btn>
         </v-card-actions>
       </v-card>
