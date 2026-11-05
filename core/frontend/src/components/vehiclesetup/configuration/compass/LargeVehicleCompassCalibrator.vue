@@ -10,16 +10,16 @@
         v-bind="attrs"
         v-on="on"
       >
-        Start Large Vehicle Calibration
+        {{ t`Start Large Vehicle Calibration` }}
       </v-btn>
     </template>
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2 black--text">
-        Large Vehicle Compass Calibration
+        {{ t`Large Vehicle Compass Calibration` }}
       </v-card-title>
       <v-card-text>
-        A valid global region/position is required to estimate the local world magnetic field.
+        {{ t`A valid global region/position is required to estimate the local world magnetic field.` }}
         <auto-coordinate-detector
           v-model="coordinates"
         />
@@ -35,7 +35,7 @@
       </v-card-text>
       <v-card-actions class="justify-center">
         <v-btn color="primary" :disabled="calibrating || !compass_mask || !coordinates" @click="calibrate()">
-          Calibrate
+          {{ t`Calibrate` }}
         </v-btn>
         <reboot-button />
       </v-card-actions>
