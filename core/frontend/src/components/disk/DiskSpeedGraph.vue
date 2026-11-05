@@ -8,6 +8,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import settingsStore from '@/store/settings'
@@ -61,12 +62,12 @@ export default Vue.extend({
         xaxis: {
           categories: this.data.map((p) => `${p.size_mb} MB`),
           title: {
-            text: 'Test Size',
+            text: t`Test Size`,
           },
         },
         yaxis: {
           title: {
-            text: 'Speed (MiB/s)',
+            text: t`Speed (MiB/s)`,
           },
           decimalsInFloat: 1,
           min: 0,
