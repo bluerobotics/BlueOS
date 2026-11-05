@@ -47,13 +47,21 @@ export default Vue.extend({
     NetworkInterfacePriorityMenu,
     DnsConfigurationMenu,
   },
+  props: {
+    initialPage: {
+      type: String,
+      default: '',
+    },
+  },
   data() {
+    const pages: Item[] = [
+      { title: 'Network Interface Priority', icon: 'mdi-sort', value: 'network_interface_priority' },
+      { title: 'Dns Configuration', icon: 'mdi-dns', value: 'dns_configuration' },
+    ]
+    // v-tabs selects by index, so the page value can't be used as the model
     return {
-      page_selected: null as string | null,
-      pages: [
-        { title: 'Network Interface Priority', icon: 'mdi-sort', value: 'network_interface_priority' },
-        { title: 'Dns Configuration', icon: 'mdi-dns', value: 'dns_configuration' },
-      ] as Item[],
+      page_selected: Math.max(pages.findIndex((page) => page.value === this.initialPage), 0),
+      pages,
     }
   },
   methods: {

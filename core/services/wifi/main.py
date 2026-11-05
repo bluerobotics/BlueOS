@@ -91,11 +91,11 @@ async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
 async def remove(ssid: str) -> Any:
     assert wifi_manager is not None
     logger.info(f"Processing remove request for SSID: {ssid}")
-    try:
-        await wifi_manager.remove_network(ssid)
-    except StopIteration as error:
+    saved_networks = await wifi_manager.get_saved_wifi_network()
+    if not any(network.ssid == ssid for network in saved_networks):
         logger.info(f"Network '{ssid}' is unknown.")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Network '{ssid}' not saved.") from error
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Network '{ssid}' not saved.")
+    await wifi_manager.remove_network(ssid)
     logger.info(f"Successfully removed '{ssid}'.")
 
 
