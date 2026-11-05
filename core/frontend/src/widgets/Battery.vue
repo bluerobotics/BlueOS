@@ -1,6 +1,6 @@
 <template>
   <v-card
-    v-tooltip="'Battery'"
+    v-tooltip="t`Battery`"
     class="d-flex align-center justify-center battery-card"
     height="40"
   >
