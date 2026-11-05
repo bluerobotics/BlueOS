@@ -24,14 +24,14 @@
     <spinning-logo
       v-else-if="!has_device_fetch_error && updating_devices"
       size="30%"
-      subtitle="Fetching available video devices..."
+      :subtitle="t`Fetching available video devices...`"
     />
     <v-card
       v-else
       class="mx-auto my-12 pa-8 text-h6 text-center"
       width="300"
     >
-      {{ has_device_fetch_error ? fetch_devices_error : 'No video-devices available.' }}
+      {{ has_device_fetch_error ? fetch_devices_error : t`No video-devices available.` }}
     </v-card>
     <video-updater />
 
@@ -59,13 +59,13 @@
     >
       <v-card>
         <v-card-title>
-          Video Manager Settings
+          {{ t`Video Manager Settings` }}
         </v-card-title>
 
         <v-card-actions class="d-flex flex-column justify-space-around align-center pb-6">
           <v-switch
             v-model="legacy_mode"
-            label="Raspberry legacy camera support"
+            :label="t`Raspberry legacy camera support`"
             @change="toggleLegacyMode"
           />
           <v-btn
@@ -74,7 +74,7 @@
             <v-icon left>
               mdi-cog-refresh
             </v-icon>
-            Reset Settings
+            {{ t`Reset Settings` }}
           </v-btn>
         </v-card-actions>
       </v-card>
