@@ -1,0 +1,15 @@
+[project]
+name = "blueos-e2e"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "pytest==7.4.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["scenarios"]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s +%(relativeCreated)6.0fms %(levelname)-7s %(message)s"
+log_cli_date_format = "%H:%M:%S"
