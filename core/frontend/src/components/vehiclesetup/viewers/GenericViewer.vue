@@ -59,10 +59,10 @@
         v-text="'mdi-cube-off-outline'"
       />
       <p class="text-h6 ma-2">
-        3D viewer unavailable
+        {{ t`3D viewer unavailable` }}
       </p>
       <p class="text-body-2" style="max-width: 350px">
-        This browser does not support the required WebGL features.
+        {{ t`This browser does not support the required WebGL features.` }}
       </p>
     </div>
     <div v-else-if="!show_model_not_found" class="d-flex flex-column align-center">
@@ -75,16 +75,16 @@
         v-text="'mdi-sail-boat-sink'"
       />
       <p class="text-h6 ma-2">
-        Vehicle model not found
+        {{ t`Vehicle model not found` }}
       </p>
       <p class="text-center text-body-2" style="max-width: 350px">
-        If you want to add a custom 3D model please follow the instructions in
+        {{ t`If you want to add a custom 3D model please follow the instructions in` }}
         <a
           href="https://blueos.cloud/docs/latest/usage/advanced/#vehicle-model"
           target="_blank"
           class="text-decoration-none"
         >
-          BlueOS Documentation
+          {{ t`BlueOS Documentation` }}
         </a>
       </p>
     </div>
@@ -99,6 +99,7 @@ import axios from 'axios'
 import { saveAs } from 'file-saver'
 import Image from 'image-js'
 import { Box3, Object3D, Vector3 } from 'three'
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -194,7 +195,7 @@ export default Vue.extend({
     orientation: {
       type: String,
       required: false,
-      default: '0deg 0deg 0deg',
+      default: t`0deg 0deg 0deg`,
     },
     transparent: {
       type: Boolean,
@@ -223,7 +224,7 @@ export default Vue.extend({
     cameraOrbit: {
       type: String,
       required: false,
-      default: '45deg 70deg 0deg',
+      default: t`45deg 70deg 0deg`,
     },
   },
   data() {
