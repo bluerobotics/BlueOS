@@ -24,6 +24,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import system_information, { FetchType } from '@/store/system-information'
@@ -46,22 +47,22 @@ export default Vue.extend({
 
       return [
         {
-          title: 'OS Type', value: `${info.system_name} ${info.os_version}`,
+          title: t`OS Type`, value: `${info.system_name} ${info.os_version}`,
         },
         {
-          title: 'Kernel', value: `${info.kernel_version}`,
+          title: t`Kernel`, value: `${info.kernel_version}`,
         },
         {
-          title: 'Model',
+          title: t`Model`,
           value: `${system_information.model?.model ?? 'Unknown Model'} `
             + `- ${system_information.model?.arch ?? 'Unknown Architecture'} `
             + `(${system_information.model?.cpu_name ?? 'Unknown CPU'})`,
         },
         {
-          title: 'Hostname', value: `${info.host_name}`,
+          title: t`Hostname`, value: `${info.host_name}`,
         },
         {
-          title: 'Time', value: new Date(unix_time_seconds * 1000).toTimeString(),
+          title: t`Time`, value: new Date(unix_time_seconds * 1000).toTimeString(),
         },
       ]
     },
