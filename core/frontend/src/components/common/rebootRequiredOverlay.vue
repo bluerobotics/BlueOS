@@ -6,14 +6,14 @@
   >
     <div class="d-flex flex-column justify-center align-center">
       <p class="text-center">
-        An autopilot Reboot is required.
+        {{ t`An autopilot Reboot is required.` }}
       </p>
       <v-btn
         class="ml-auto mr-auto"
         color="primary"
         @click="rebootVehicle()"
       >
-        Reboot Autopilot
+        {{ t`Reboot Autopilot` }}
       </v-btn>
     </div>
   </v-overlay>
