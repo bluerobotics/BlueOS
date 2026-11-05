@@ -5,9 +5,9 @@
   >
     <v-data-table
       :headers="[
-        { text: 'Name', value: 'name' },
-        { text: 'Description', value: 'description' },
-        { text: 'Value', value: 'value', width: '170px' },
+        { text: t`Name`, value: 'name' },
+        { text: t`Description`, value: 'description' },
+        { text: t`Value`, value: 'value', width: '170px' },
       ]"
       :loading="!finished_loading"
       :items="search && search != '' ? fuse.search(search) : params_no_input"
@@ -30,11 +30,11 @@
           <strong
             v-if="!finished_loading && params_percentage > 99.9"
           >
-            Waiting for metadata.. </strong>
+            {{ t`Waiting for metadata..` }} </strong>
           <strong
             v-if="params_percentage == 0"
             class="ml-5"
-          > Waiting for parameters.. </strong>
+          > {{ t`Waiting for parameters..` }} </strong>
           <strong
             v-if="params_percentage > 0 && params_percentage < 100"
             class="ml-5"
@@ -46,7 +46,7 @@
       <template #top>
         <v-text-field
           v-model="search"
-          label="Search"
+          :label="t`Search`"
           class="mx-4"
           clearable
           prepend-inner-icon="mdi-magnify"
@@ -78,7 +78,7 @@
       </template>
       <template #footer.prepend>
         <v-btn
-          v-tooltip="'Save all parameters to file'"
+          v-tooltip="t`Save all parameters to file`"
           :disabled="!finished_loading"
           color="primary"
           class="mr-5"
@@ -87,10 +87,10 @@
           <v-icon class="mr-2">
             mdi-tray-arrow-down
           </v-icon>
-          <div>Save</div>
+          <div>{{ t`Save` }}</div>
         </v-btn>
         <v-btn
-          v-tooltip="'Load parameters from file'"
+          v-tooltip="t`Load parameters from file`"
           :disabled="!finished_loading"
           class="mr-5"
           color="primary"
@@ -99,7 +99,7 @@
           <v-icon class="mr-2">
             mdi-tray-arrow-up
           </v-icon>
-          <div>Load</div>
+          <div>{{ t`Load` }}</div>
         </v-btn>
       </template>
     </v-data-table>
@@ -113,7 +113,7 @@
     >
       <v-card>
         <v-card-title>
-          <span class="text-h5">Load parameter file</span>
+          <span class="text-h5">{{ t`Load parameter file` }}</span>
         </v-card-title>
 
         <v-card-text>
@@ -124,15 +124,15 @@
                 accept=".params,.parm,.param"
                 class="mr-2"
                 show-size
-                label="Parameter file"
+                :label="t`Parameter file`"
                 @change="setParameterFile"
               />
             </v-row>
             <!--v-row>
               <v-col cols="6" sm="6" md="6">
                 <v-form ref="form">
-                  <v-checkbox v-if="show_advanced_checkbox" v-model="forcing_input" dense :label="'Force'" />
-                  <v-checkbox v-if="show_custom_checkbox" v-model="custom_input" dense :label="'Custom'" />
+                  <v-checkbox v-if="show_advanced_checkbox" v-model="forcing_input" dense :label="t`Force`" />
+                  <v-checkbox v-if="show_custom_checkbox" v-model="custom_input" dense :label="t`Custom`" />
                 </v-form>
               </v-col>
             </v-row-->
