@@ -7,7 +7,7 @@
       {{ isTokenSet ? 'mdi-weather-cloudy' : 'mdi-wrench' }}
     </v-icon>
     <v-card-title>
-      {{ isTokenSet ? 'Setup is complete!' : 'Lets connect your vehicle!' }}
+      {{ isTokenSet ? t`Setup is complete!` : t`Lets connect your vehicle!` }}
     </v-card-title>
     <v-btn
       color="primary"
@@ -18,7 +18,7 @@
       rel="noopener noreferrer"
       @click="() => {}"
     >
-      Go to BlueOS Cloud
+      {{ t`Go to BlueOS Cloud` }}
     </v-btn>
     <v-container
       class="d-flex align-center py-0 my-0"
@@ -29,13 +29,13 @@
         class="token-link-text mt-2 pt-1 pb-1"
         @click="$emit('toggle-token-input', true)"
       >
-        Click here if you {{ isTokenSet ? 'want to change your token' : 'already have a token' }}
+        {{ t`Click here if you ${isTokenSet ? t`want to change your token` : t`already have a token`}` }}
       </v-card-subtitle>
       <v-slide-x-reverse-transition>
         <v-text-field
           v-if="settingToken"
           :value="token"
-          label="Token"
+          :label="t`Token`"
           type="text"
           variant="outlined"
           @input="$emit('update:token', $event)"
