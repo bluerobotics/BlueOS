@@ -4,28 +4,28 @@
     <v-container>
       <div class="stream-info-grid">
         <div class="info-label">
-          Stream Name:
+          {{ t`Stream Name:` }}
         </div>
         <div class="info-value">
           {{ stream.video_and_stream.name }}
         </div>
 
         <div class="info-label">
-          Format:
+          {{ t`Format:` }}
         </div>
         <div class="info-value">
           {{ format }}
         </div>
 
         <div class="info-label">
-          Encoding:
+          {{ t`Encoding:` }}
         </div>
         <div class="info-value">
           {{ encode }}
         </div>
 
         <div class="info-label">
-          Endpoints:
+          {{ t`Endpoints:` }}
         </div>
         <div class="info-value wrap-commas">
           <span v-for="(endpoint, idx) in stream.video_and_stream.stream_information.endpoints" :key="endpoint">
@@ -34,14 +34,14 @@
         </div>
 
         <div class="info-label">
-          Source:
+          {{ t`Source:` }}
         </div>
         <div class="info-value text-truncate">
           {{ source_path }}
         </div>
 
         <div class="info-label">
-          Status:
+          {{ t`Status:` }}
         </div>
         <div class="info-value">
           {{ stream_state_text }}
@@ -49,7 +49,7 @@
 
         <template v-if="stream.state === 'stopped' && stream.error">
           <div class="info-label error--text font-weight-bold">
-            Errors:
+            {{ t`Errors:` }}
           </div>
           <div class="info-value error-content">
             <v-textarea
@@ -72,7 +72,7 @@
                 <v-icon small left>
                   mdi-content-copy
                 </v-icon>
-                Copy
+                {{ t`Copy` }}
               </v-btn>
               <v-btn
                 small
@@ -94,7 +94,7 @@
                 >
                   mdi-chevron-down
                 </v-icon>
-                {{ isExpanded ? "Show less" : "Show more" }}
+                {{ isExpanded ? t`Show less` : t`Show more` }}
               </v-btn>
             </div>
           </div>
@@ -105,7 +105,7 @@
     <v-card-actions class="actions-container">
       <v-btn
         v-if="isEditable"
-        v-tooltip="'Edit stream'"
+        v-tooltip="t`Edit stream`"
         class="stream-edit-btn elevation-1"
         color="primary"
         dark
@@ -117,7 +117,7 @@
       </v-btn>
       <v-btn
         v-if="isRemovable"
-        v-tooltip="'Remove stream'"
+        v-tooltip="t`Remove stream`"
         class="stream-remove-btn elevation-1"
         color="error"
         dark
@@ -129,7 +129,7 @@
       </v-btn>
       <v-btn
         v-if="isSDPFileAvailable"
-        v-tooltip="'Download SDP to file'"
+        v-tooltip="t`Download SDP to file`"
         class="stream-edit-btn elevation-1"
         color="grey"
         dark
@@ -138,7 +138,7 @@
         @click="downloadSDPFile"
       >
         <div class="d-flex flex-column align-center">
-          <span class="text-caption font-weight-bold pt-2 pb-1">SDP</span>
+          <span class="text-caption font-weight-bold pt-2 pb-1">{{ t`SDP` }}</span>
           <v-icon class="pb-4">
             mdi-file-download
           </v-icon>
@@ -146,7 +146,7 @@
       </v-btn>
       <v-btn
         v-if="isSDPFileAvailable"
-        v-tooltip="'Copy SDP file URL'"
+        v-tooltip="t`Copy SDP file URL`"
         class="stream-edit-btn elevation-1"
         color="grey"
         dark
@@ -155,7 +155,7 @@
         @click="copySDPFileURL"
       >
         <div class="d-flex flex-column align-center">
-          <span class="text-caption font-weight-bold pt-2 pb-1">SDP</span>
+          <span class="text-caption font-weight-bold pt-2 pb-1">{{ t`SDP` }}</span>
           <v-icon class="pb-4">
             mdi-file-link
           </v-icon>
