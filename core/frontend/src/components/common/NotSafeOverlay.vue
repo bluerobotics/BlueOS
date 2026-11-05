@@ -6,14 +6,14 @@
   >
     <div class="d-flex flex-column justify-center align-center">
       <p class="text-center">
-        This feature is disabled because the vehicle is armed.
+        {{ t`This feature is disabled because the vehicle is armed.` }}
       </p>
       <v-btn
         class="ml-auto mr-auto"
         color="warning"
         @click="override()"
       >
-        I know what I'm doing, let me through
+        {{ t`I know what I'm doing, let me through` }}
       </v-btn>
     </div>
   </v-overlay>
