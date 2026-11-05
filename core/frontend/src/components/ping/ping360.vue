@@ -12,7 +12,7 @@
     </v-card-title>
     <v-simple-table dense>
       <tbody>
-        <tr><td>{{ is_ethernet() ? "IP" : "Bridge" }}</td><td> {{ ip_data() }} </td></tr>
+        <tr><td>{{ is_ethernet() ? t`IP` : t`Bridge` }}</td><td> {{ ip_data() }} </td></tr>
       </tbody>
     </v-simple-table>
     <v-expand-transition
@@ -23,14 +23,14 @@
         <v-simple-table dense>
           <tbody>
             <tr>
-              <td>FW</td><td>
+              <td>{{ t`FW` }}</td><td>
                 {{ format_version(device) }}
               </td>
             </tr>
-            <tr><td>ID</td><td>{{ device.device_id }}</td></tr>
-            <tr><td>Model</td><td>{{ device.device_model }}</td></tr>
-            <tr><td>Revision</td><td>{{ device.device_revision }}</td></tr>
-            <tr><td>Device</td><td>{{ device.port }} <device-path-helper :device="device.port" /></td></tr>
+            <tr><td>{{ t`ID` }}</td><td>{{ device.device_id }}</td></tr>
+            <tr><td>{{ t`Model` }}</td><td>{{ device.device_model }}</td></tr>
+            <tr><td>{{ t`Revision` }}</td><td>{{ device.device_revision }}</td></tr>
+            <tr><td>{{ t`Device` }}</td><td>{{ device.port }} <device-path-helper :device="device.port" /></td></tr>
           </tbody>
         </v-simple-table>
       </div>
