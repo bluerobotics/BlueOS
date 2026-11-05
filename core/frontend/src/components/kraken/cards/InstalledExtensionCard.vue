@@ -8,32 +8,37 @@
         size="150"
       />
     </div>
-    <v-icon
-      v-if="extension.enabled && !container && !loading"
-      v-tooltip="'This extension is enabled but the container is not running.'"
-      class="container-not-up-alert"
-      color="warning"
-      size="35"
-    >
-      mdi-robot-dead
-    </v-icon>
-    <v-card-title class="pb-1 d-flex justify-space-between align-center">
-      <div class="d-flex align-center">
-        <v-avatar
+    <v-card-title class="pb-1 d-flex justify-space-between align-center flex-nowrap card-title">
+      <div class="d-flex align-center title-info">
+        <v-badge
           v-if="extensionData && extensionData.extension_logo"
-          size="60"
-          class="mr-3"
-          rounded="0"
+          v-tooltip="container_not_up && 'This extension is enabled but the container is not running.'"
+          :value="container_not_up"
+          overlap
+          color="warning"
+          icon="mdi-robot-dead"
+          class="mr-3 flex-shrink-0 container-not-up-badge"
         >
-          <v-img
-            :src="extensionData.extension_logo"
-            :alt="extension.name"
-          />
-        </v-avatar>
-        <div>
-          <div>{{ extension.name }}</div>
+          <v-avatar
+            size="60"
+            class="extension-icon"
+          >
+            <v-img
+              :src="extensionData.extension_logo"
+              :alt="extension.name"
+            />
+          </v-avatar>
+        </v-badge>
+        <div class="title-text">
+          <div
+            v-tooltip="extension.name"
+            class="text-truncate"
+          >
+            {{ extension.name }}
+          </div>
           <span
-            class="d-block"
+            v-tooltip="extension.tag"
+            class="d-block text-truncate"
             style="color: grey;"
           >
             {{ extension.tag }}
@@ -42,8 +47,10 @@
       </div>
       <v-btn
         v-if="update_available"
-        class="card-update-button"
+        v-tooltip="`Update to ${update_available}`"
+        class="card-update-button ml-2 flex-shrink-0"
         color="primary"
+        small
         @click="$emit('update', extension, update_available)"
       >
         Update to {{ update_available }}
@@ -147,8 +154,10 @@
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
-            :value="JSON.parse(extension.permissions ?? '{}')"
+            :value="parsed_permissions"
             :expand-depth="5"
+            :show-array-index="false"
+            :show-double-quotes="true"
           />
         </v-expansion-panel-content>
       </v-expansion-panel>
@@ -164,8 +173,10 @@
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <json-viewer
-            :value="JSON.parse(extension.user_permissions ?? '{}')"
+            :value="parsed_user_permissions"
             :expand-depth="5"
+            :show-array-index="false"
+            :show-double-quotes="true"
           />
         </v-expansion-panel-content>
       </v-expansion-panel>
@@ -182,6 +193,7 @@
         Uninstall
       </v-btn>
       <v-btn
+        v-if="extension.enabled"
         :style="{ backgroundColor: buttonBgColor }"
         @click="$emit('showlogs', extension)"
       >
@@ -229,6 +241,7 @@ import Vue, { PropType } from 'vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import settings from '@/libs/settings'
 import system_information from '@/store/system-information'
+import { JSONValue } from '@/types/common'
 import { ExtensionData, InstalledExtensionData } from '@/types/kraken'
 import { Disk } from '@/types/system-information/system'
 import { prettifySize } from '@/utils/helper_functions'
@@ -286,6 +299,9 @@ export default Vue.extend({
     buttonBgColor() {
       return settings.is_dark_theme ? '#20455e' : '#BDE0F0'
     },
+    container_not_up(): boolean {
+      return this.extension.enabled && !this.container && !this.loading
+    },
     update_available() : false | string {
       if (!this.extensionData) {
         return false
@@ -312,6 +328,12 @@ export default Vue.extend({
       }
 
       return this.extension.tag === latest ? false : latest
+    },
+    parsed_user_permissions(): JSONValue {
+      return JSON.parse(this.extension.user_permissions ?? '{}')
+    },
+    parsed_permissions(): JSONValue {
+      return JSON.parse(this.extension.permissions ?? '{}')
     },
   },
   methods: {
@@ -382,22 +404,33 @@ export default Vue.extend({
   max-width: 300px;
 }
 
+.card-title {
+  gap: 8px;
+}
+
+.title-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.title-text {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .card-update-button {
-  width: 200px;
   font-size: 0.8rem;
+  max-width: 100%;
+}
+
+.card-update-button :deep(.v-btn__content) {
+  white-space: nowrap;
 }
 
 @media (max-width: 994px) {
   .main-card {
     width: 600px;
     min-width: 400px;
-  }
-}
-
-@media (max-width: 545px) {
-  .card-update-button {
-    margin-top: 5px;
-    width: 100%;
   }
 }
 
@@ -414,9 +447,27 @@ export default Vue.extend({
   z-index: 9999 !important;
 }
 
-.container-not-up-alert {
-  position: absolute;
-  right: 13px;
-  top: 13px;
+.container-not-up-badge ::v-deep .v-badge__badge {
+  min-width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: translate(50%, -50%);
+}
+
+.container-not-up-badge ::v-deep .v-badge__badge .v-icon {
+  font-size: 18px;
+  margin: 0;
+  line-height: 1;
+  transform: translateY(0.25em);
+}
+
+.extension-icon {
+  border-radius: 8px !important;
+  overflow: hidden;
 }
 </style>

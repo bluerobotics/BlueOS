@@ -46,15 +46,18 @@
           @click="$emit('selected')"
           @keydown.left="() => {}"
         >
-          <v-img
-            v-once
-            ref="extension_logo"
-            contain
-            :src="extension.extension_logo"
-            height="150px"
+          <v-avatar
+            size="150"
             class="mt-3 mb-5 my-2 logo-img"
-            @load="setDominantColor"
-          />
+          >
+            <v-img
+              v-once
+              ref="extension_logo"
+              contain
+              :src="extension.extension_logo"
+              @load="setDominantColor"
+            />
+          </v-avatar>
 
           <v-card-subtitle class="px-3 py-2 ext-subtitles">
             <div
@@ -190,15 +193,16 @@ export default Vue.extend({
       return this.has_update_available ? 'UPDATE' : 'INSTALLED'
     },
     architecture_list_style(): Record<string, string> {
-      const style: Record<string, string> = {
+      if (this.card_dominant_color === undefined) {
+        return {
+          color: this.$vuetify.theme.dark ? 'white' : 'black',
+        }
+      }
+
+      return {
         color: this.is_card_dominant_color_light ? 'black' : 'white',
+        backgroundColor: this.card_dominant_color,
       }
-
-      if (this.card_dominant_color) {
-        style.backgroundColor = this.card_dominant_color
-      }
-
-      return style
     },
     extension_company(): string {
       return getLatestVersion(this.extension.versions)?.company?.name ?? 'Unknown'
@@ -352,6 +356,9 @@ export default Vue.extend({
 .logo-img {
   flex-grow: 0;
   z-index: 0 !important;
+  align-self: center;
+  border-radius: 20px !important;
+  overflow: hidden;
 }
 
 .bottom-gradient {
@@ -470,10 +477,6 @@ export default Vue.extend({
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.v-img {
-  border-radius: 8px;
 }
 
 .v-avatar img {

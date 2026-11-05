@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-subtitle class="px-4 pt-4 pb-2 d-flex justify-space-between align-start">
-      <v-avatar size="100" rounded="0">
+      <v-avatar size="100" class="extension-icon">
         <v-img contain :src="extension.extension_logo" />
       </v-avatar>
       <div class="extension-creators">
@@ -15,6 +15,18 @@
           <strong>{{ compatible_version_archs.join(', ') }}</strong>
         </div>
       </div>
+      <v-btn
+        v-if="extension.website"
+        v-tooltip="'Homepage'"
+        icon
+        :href="extension.website"
+        target="_blank"
+        rel="noopener"
+      >
+        <v-icon small>
+          mdi-web
+        </v-icon>
+      </v-btn>
     </v-card-subtitle>
     <div class="px-4 pt-4 d-flex justify-space-between align-start">
       <v-select
@@ -341,6 +353,10 @@ div.readme ul {
   margin-left: 20px;
 }
 
+div.readme img {
+  max-width: 100%;
+}
+
 .editor-control {
   margin: 0;
   opacity: 0.7;
@@ -368,5 +384,9 @@ div.readme ul {
   font-size: 15px;
   padding-top: 4px;
   text-transform: uppercase;
+}
+.extension-icon {
+  border-radius: 13px !important;
+  overflow: hidden;
 }
 </style>
