@@ -8,7 +8,7 @@
     >
       <v-list>
         <v-list-item-subtitle class="ml-2 mb-2 font-weight-bold">
-          Widgets
+          {{ t`Widgets` }}
         </v-list-item-subtitle>
         <v-checkbox
           v-for="(name, index) in topWidgetsName"
@@ -39,7 +39,7 @@
         />
         <v-card
           v-if="!safe_mode"
-          v-tooltip="'Some functionality is not available while the vehicle is armed'"
+          v-tooltip="t`Some functionality is not available while the vehicle is armed`"
           class="d-flex align-center warning justify-center mr-5"
           height="40"
         >
@@ -47,7 +47,7 @@
             mdi-alert-outline
           </v-icon>
           <v-card-title>
-            Armed
+            {{ t`Armed` }}
           </v-card-title>
         </v-card>
         <draggable v-model="selected_widgets" class="d-flex align-center justify-center">
@@ -142,7 +142,7 @@
                     x-small
                     text-color="white"
                   >
-                    Beta
+                    {{ t`Beta` }}
                   </v-chip>
                 </v-list-item-title>
               </template>
@@ -182,7 +182,7 @@
                       dark
                     >
                       <div
-                        v-tooltip="'This is an advanced feature'"
+                        v-tooltip="t`This is an advanced feature`"
                         class="pirate-marker ma-0"
                       >
                         <v-avatar
@@ -240,7 +240,7 @@
                     dark
                   >
                     <div
-                      v-tooltip="'This is an advanced feature'"
+                      v-tooltip="t`This is an advanced feature`"
                       class="pirate-marker ma-0"
                     >
                       <v-avatar
@@ -279,7 +279,7 @@
                     dark
                   >
                     <div
-                      v-tooltip="'This is an installed extension'"
+                      v-tooltip="t`This is an installed extension`"
                       class="extension-marker ma-0"
                     >
                       <v-avatar
@@ -305,7 +305,7 @@
                     x-small
                     text-color="white"
                   >
-                    Beta
+                    {{ t`Beta` }}
                   </v-chip>
                 </v-list-item-title>
               </template>
@@ -321,7 +321,7 @@
         <span
           class="build_info"
         >
-          BlueOS Version:
+          {{ t`BlueOS Version:` }}
           <a
             target="_blank"
             rel="noopener noreferrer"
@@ -345,7 +345,7 @@
           Build: {{ build_date }}
           <v-btn
             v-if="settings.is_dev_mode"
-            v-tooltip="'Disable dev mode'"
+            v-tooltip="t`Disable dev mode`"
             icon
             @click.stop="bluePillClick"
           >
@@ -392,6 +392,7 @@
 
 <script lang="ts">
 import stable from 'semver-stable'
+import { t } from 'ttag'
 import Vue, { defineAsyncComponent } from 'vue'
 
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
@@ -575,11 +576,11 @@ export default Vue.extend({
 
       const extensions: menuItem[] = [
         {
-          title: 'Extensions',
+          title: t`Extensions`,
           icon: 'mdi-puzzle',
           route: '/tools/extensions-manager',
           advanced: false,
-          text: 'Manage BlueOS extensions',
+          text: t`Manage BlueOS extensions`,
         },
         ...foundExtensions,
       ] as menuItem[]
@@ -591,7 +592,7 @@ export default Vue.extend({
         {
           target: '#tour-center-hook',
           header: {
-            title: 'Welcome to BlueOS!',
+            title: t`Welcome to BlueOS!`,
           },
           content: `We are happy to have you navigating with us! BlueOS provides the
           necessary tools to configure your vehicle, check the system status and more.
