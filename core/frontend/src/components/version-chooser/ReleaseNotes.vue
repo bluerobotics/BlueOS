@@ -19,7 +19,7 @@
       v-else
       class="text-caption text--secondary ma-0"
     >
-      Release notes are not available for this version.
+      {{ t`Release notes are not available for this version.` }}
     </p>
   </div>
 </template>
