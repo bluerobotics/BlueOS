@@ -36,7 +36,7 @@ export interface DHCPServerLease {
 export interface DHCPServerDetails {
   interface: string,
   ipv4_gateway: string,
-  lease_range: [number, number],
+  lease_range: [string, string],
   lease_time: string,
   is_backup: boolean,
   is_running: boolean,

@@ -29,7 +29,7 @@ class DHCPServerLease(BaseModel):
 class DHCPServerDetails(BaseModel):
     interface: str
     ipv4_gateway: IPv4Address
-    lease_range: Tuple[int, int]
+    lease_range: Tuple[IPv4Address, IPv4Address]
     lease_time: str
     is_backup: bool
     is_running: bool
