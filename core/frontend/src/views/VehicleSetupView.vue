@@ -31,6 +31,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import { fetchFirmwareVehicleType, fetchVehicleType } from '@/components/autopilot/AutopilotManagerUpdater'
@@ -59,13 +60,13 @@ export default Vue.extend({
     return {
       pages: [
         {
-          title: 'Overview', icon: 'mdi-view-dashboard-variant-outline', value: 'overview', component: setupOverview,
+          title: t`Overview`, icon: 'mdi-view-dashboard-variant-outline', value: 'overview', component: setupOverview,
         },
         {
-          title: 'PWM Outputs', icon: 'mdi-fan', value: 'pwm_outputs', component: PwmSetup,
+          title: t`PWM Outputs`, icon: 'mdi-fan', value: 'pwm_outputs', component: PwmSetup,
         },
         {
-          title: 'Configure', icon: 'mdi-cog', value: 'configure', component: Configure,
+          title: t`Configure`, icon: 'mdi-cog', value: 'configure', component: Configure,
         },
       ] as Item[],
       fetch_vehicle_type_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
