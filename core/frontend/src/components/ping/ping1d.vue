@@ -12,12 +12,10 @@
     </v-card-title>
     <v-simple-table dense>
       <tbody>
-        <tr><td>Bridge</td><td> UDP {{ device.driver_status.udp_port }} </td></tr>
-        <tr
-          v-tooltip="'Send MAVLink DISTANCE_SENSOR messages to the vehicle. This allows ground \
-        stations such as QGroundControl to display the information on the telemetry overlay.'"
-        >
-          <td>MAVLink Distances</td><td>
+        <tr><td>{{ t`Bridge` }}</td><td> UDP {{ device.driver_status.udp_port }} </td></tr>
+        <!-- eslint-disable-next-line max-len -->
+        <tr v-tooltip="t`Send MAVLink DISTANCE_SENSOR messages to the vehicle. This allows ground stations such as QGroundControl to display the information on the telemetry overlay.`">
+          <td>{{ t`MAVLink Distances` }}</td><td>
             <v-switch
               v-model="user_desired_mavlink_driver_state"
               :loading="switch_loading() ? 'warning' : false"
@@ -33,14 +31,14 @@
         <v-simple-table dense>
           <tbody>
             <tr>
-              <td>FW</td><td>
+              <td>{{ t`FW` }}</td><td>
                 {{ format_version(device) }}
               </td>
             </tr>
-            <tr><td>ID</td><td>{{ device.device_id }}</td></tr>
-            <tr><td>Model</td><td>{{ device.device_model }}</td></tr>
-            <tr><td>Revision</td><td>{{ device.device_revision }}</td></tr>
-            <tr><td>Device</td><td>{{ device.port }} <device-path-helper :device="device.port" /></td></tr>
+            <tr><td>{{ t`ID` }}</td><td>{{ device.device_id }}</td></tr>
+            <tr><td>{{ t`Model` }}</td><td>{{ device.device_model }}</td></tr>
+            <tr><td>{{ t`Revision` }}</td><td>{{ device.device_revision }}</td></tr>
+            <tr><td>{{ t`Device` }}</td><td>{{ device.port }} <device-path-helper :device="device.port" /></td></tr>
           </tbody>
         </v-simple-table>
       </div>
