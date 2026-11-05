@@ -7,7 +7,7 @@
   >
     <v-card>
       <v-card-title class="pt-6">
-        Loading Parameters
+        {{ t`Loading Parameters` }}
         <v-tooltip bottom>
           <template #activator="{ on, attrs }">
             <v-icon small color="warning" v-bind="attrs" v-on="on">
@@ -15,8 +15,8 @@
             </v-icon>
           </template>
           <span>
-            Yellow parameters are not available on your vehicle.
-            They may not exist in your firmware version or may be disabled by a corresponding _ENABLE parameter.
+            <!-- eslint-disable-next-line max-len -->
+            {{ t`Yellow parameters are not available on your vehicle. They may not exist in your firmware version or may be disabled by a corresponding _ENABLE parameter.` }}
           </span>
         </v-tooltip>
       </v-card-title>
@@ -26,20 +26,20 @@
             <v-checkbox
               ref="selectAllCheckbox"
               v-model="select_all"
-              label="Write"
+              :label="t`Write`"
               :disabled="writing"
               :indeterminate="select_all === null"
               @click="toggleSelectAll"
             />
           </v-col>
           <v-col class="virtual-table-cell name-cell">
-            <strong>Name</strong>
+            <strong>{{ t`Name` }}</strong>
           </v-col>
           <v-col class="virtual-table-cell value-cell">
-            <strong>Value</strong>
+            <strong>{{ t`Value` }}</strong>
           </v-col>
           <v-col class="virtual-table-cell value-cell">
-            <strong>New Value</strong>
+            <strong>{{ t`New Value` }}</strong>
           </v-col>
         </v-row>
         <!-- display all parameters in a concise table using virtual scroller -->
@@ -68,8 +68,8 @@
                   <span>
                     {{
                       item.current
-                        ? item.current?.description ?? 'No description provided'
-                        : 'Parameter not found in Autopilot data, most likely will not be written to the vehicle.'
+                        ? item.current?.description ?? t`No description provided`
+                        : t`Parameter not found in Autopilot data, most likely will not be written to the vehicle.`
                     }}
                   </span>
                 </v-tooltip>
@@ -81,11 +81,11 @@
                       class="large-text-cell"
                       v-on="on"
                     >
-                      {{ item.current ? printParamWithUnit(item.current) : 'N/A' }}
+                      {{ item.current ? printParamWithUnit(item.current) : t`N/A` }}
                     </div>
                   </template>
                   <span>
-                    {{ item.current ? printParamWithUnit(item.current) : 'N/A' }}
+                    {{ item.current ? printParamWithUnit(item.current) : t`N/A` }}
                   </span>
                 </v-tooltip>
               </v-col>
@@ -118,7 +118,7 @@
             <strong
               class="ml-5"
             >
-              {{ user_selected_params_length }} to go
+              {{ t`${user_selected_params_length} to go` }}
             </strong>
           </template>
         </v-progress-linear>
@@ -127,12 +127,12 @@
         <v-alert
           type="success"
         >
-          Parameters written successfully
+          {{ t`Parameters written successfully` }}
         </v-alert>
       </v-card-text>
       <v-card-text v-else>
-        No parameters to change. This means all the
-        parameters in this group are already set to the desired values
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`No parameters to change. This means all the parameters in this group are already set to the desired values` }}
       </v-card-text>
       <v-card-text v-if="error && !write_finished">
         <v-alert
@@ -149,7 +149,7 @@
           color="primary"
           @click="writeParams"
         >
-          Write Parameters
+          {{ t`Write Parameters` }}
         </v-btn>
         <v-btn
           v-if="write_finished || error"
@@ -157,7 +157,7 @@
           x-large
           @click="done"
         >
-          Close
+          {{ t`Close` }}
         </v-btn>
         <RebootButton v-if="error" />
       </v-card-actions>
