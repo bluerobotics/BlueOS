@@ -8,14 +8,16 @@
     "not dead"
   ],
   "scripts": {
-    "dev": "vite --host",
-    "build": "NODE_ENV=production vite build",
+    "dev": "bun run i18n:json && vite --host",
+    "build": "bun run i18n:json && NODE_ENV=production vite build",
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
     "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src && stylelint 'src/**/*.{vue,css,scss}'",
-    "type-check": "vue-tsc --noEmit --pretty false | tsc-baseline --ignoreMessages check",
-    "type-check:baseline": "vue-tsc --noEmit --pretty false | tsc-baseline --ignoreMessages save",
+    "type-check": "bun run i18n:json && vue-tsc --noEmit --pretty false | tsc-baseline --ignoreMessages check",
+    "type-check:baseline": "bun run i18n:json && vue-tsc --noEmit --pretty false | tsc-baseline --ignoreMessages save",
     "lint:css": "stylelint 'src/**/*.{vue,css,scss}'",
-    "lint:css:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix"
+    "lint:css:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix",
+    "i18n:extract": "bun scripts/extract-i18n.ts",
+    "i18n:json": "if [ -f src/i18n/pt_BR.po ]; then ttag po2json src/i18n/pt_BR.po > src/i18n/pt_BR.po.json; fi"
   },
   "dependencies": {
     "@eclipse-zenoh/zenoh-ts": "1.9.0",
@@ -63,6 +65,7 @@
     "semver-stable": "^3.0.0",
     "simple-icons": "11",
     "three": "0.156.1",
+    "ttag": "^1.8.12",
     "util": "^0.12.5",
     "uuid": "^9.0.0",
     "vue": "^2.6.11",
@@ -92,6 +95,7 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-vue": "^9.9.0",
+    "gettext-parser": "^6.0.0",
     "postcss-html": "^1.8.1",
     "sass": "~1.32.0",
     "stylelint": "^17.2.0",
@@ -99,6 +103,7 @@
     "stylelint-config-standard": "^40.0.0",
     "stylelint-config-standard-scss": "^17.0.0",
     "tsc-baseline": "1.9.0",
+    "ttag-cli": "^1.12.0",
     "typescript": "5.4.5",
     "unplugin-vue-components": "^0.25.2",
     "vite": "3",
