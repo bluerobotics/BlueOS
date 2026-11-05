@@ -7,7 +7,7 @@
     <spinning-logo
       v-if="!gl_compatible && !iframe_loaded"
       size="15%"
-      subtitle="Loading external application..."
+      :subtitle="t`Loading external application...`"
     />
     <canvas
       v-if="gl_compatible && !iframe_loaded"
