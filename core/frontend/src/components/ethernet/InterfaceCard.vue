@@ -41,7 +41,7 @@
             class="ma-2 px-2 py-5 elevation-1"
             @click.native.stop="openAddressCreationDialog"
           >
-            Add <br> static IP
+            {{ t`Add` }} <br> {{ t`static IP` }}
           </v-btn>
           <address-creation-dialog
             v-model="show_creation_dialog"
@@ -57,7 +57,7 @@
             class="ma-2 px-2 py-5 elevation-1"
             @click="triggerForDynamicIP"
           >
-            Ask for <br> dynamic IP
+            {{ t`Ask for` }} <br> {{ t`dynamic IP` }}
           </v-btn>
           <v-btn
             v-if="is_there_dhcp_server_already"
@@ -65,7 +65,7 @@
             class="ma-2 px-2 py-5 elevation-1"
             @click="removeDHCPServer"
           >
-            Disable <br> DHCP server
+            {{ t`Disable` }} <br> {{ t`DHCP server` }}
           </v-btn>
           <span
             v-else
@@ -77,7 +77,7 @@
               :disabled="!is_static_ip_present"
               @click="openDHCPServerDialog"
             >
-              Enable <br> DHCP server
+              {{ t`Enable` }} <br> {{ t`DHCP server` }}
             </v-btn>
           </span>
         </v-row>
@@ -90,7 +90,7 @@
               >
                 {{
                   dhcp_server_details?.is_backup && !dhcp_server_details?.is_running
-                    ? 'DHCP Server in backup' : 'No DHCP leases found'
+                    ? t`DHCP Server in backup` : t`No DHCP leases found`
                 }}
                 <v-spacer />
                 <v-btn
@@ -114,7 +114,7 @@
                 >
                   mdi-chevron-down
                 </v-icon>
-                DHCP leases
+                {{ t`DHCP leases` }}
                 <v-spacer />
                 <v-btn
                   small
@@ -157,7 +157,7 @@
                           small
                           text-color="white"
                         >
-                          {{ item.is_active ? 'Active' : 'Expired' }}
+                          {{ item.is_active ? t`Active` : t`Expired` }}
                         </v-chip>
                       </template>
                     </v-data-table>
@@ -178,6 +178,7 @@
 
 <script lang="ts">
 import { formatDistanceToNow } from 'date-fns'
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import beacon from '@/store/beacon'
@@ -214,11 +215,11 @@ export default Vue.extend({
       loading_leases: false,
       leases_expanded: false,
       lease_headers: [
-        { text: 'IP Address', value: 'ip', sortable: false },
-        { text: 'MAC Address', value: 'mac', sortable: false },
-        { text: 'Hostname', value: 'hostname', sortable: false },
-        { text: 'Expires', value: 'expires_at', sortable: false },
-        { text: 'Status', value: 'is_active', sortable: false },
+        { text: t`IP Address`, value: 'ip', sortable: false },
+        { text: t`MAC Address`, value: 'mac', sortable: false },
+        { text: t`Hostname`, value: 'hostname', sortable: false },
+        { text: t`Expires`, value: 'expires_at', sortable: false },
+        { text: t`Status`, value: 'is_active', sortable: false },
       ],
     }
   },
