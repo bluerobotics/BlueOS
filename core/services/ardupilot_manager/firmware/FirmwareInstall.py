@@ -67,16 +67,17 @@ class FirmwareInstaller:
             with open(firmware_path, "r", encoding="utf-8") as firmware_file:
                 firmware_data = firmware_file.read()
                 firm_board_id = int(json.loads(firmware_data).get("board_id", -1))
-            expected_board_id = get_board_id(platform)
-            if expected_board_id == -1:
-                raise UnsupportedPlatform("Firmware validation is not implemented for this board yet.")
-            if firm_board_id == -1:
-                raise InvalidFirmwareFile("Could not find board_id specification in the firmware file.")
-            if firm_board_id != expected_board_id:
-                raise InvalidFirmwareFile(f"Expected board_id {expected_board_id}, found {firm_board_id}.")
-            return
         except Exception as error:
             raise InvalidFirmwareFile("Could not load firmware file for validation.") from error
+        if firm_board_id == -1:
+            raise InvalidFirmwareFile("Could not find board_id specification in the firmware file.")
+        expected_board_id = get_board_id(platform)
+        if expected_board_id == -1:
+            # The uploader still refuses to flash a firmware whose board_id does not match the bootloader's
+            logger.warning(f"Skipping board_id validation for {platform}: no expected board_id is known.")
+            return
+        if firm_board_id != expected_board_id:
+            raise InvalidFirmwareFile(f"Expected board_id {expected_board_id}, found {firm_board_id}.")
 
     @staticmethod
     def _validate_elf(firmware_path: pathlib.Path, platform: Platform) -> None:
@@ -138,7 +139,7 @@ class FirmwareInstaller:
         ## For more information: https://www.gnu.org/software/libc/manual/html_node/Permission-Bits.html
         os.chmod(firmware_path, firmware_path.stat().st_mode | stat.S_IXOTH | stat.S_IXUSR | stat.S_IXGRP)
 
-    def install_firmware(
+    async def install_firmware(
         self,
         new_firmware_path: pathlib.Path,
         board: FlightController,
@@ -159,7 +160,7 @@ class FirmwareInstaller:
             if not board.path:
                 raise ValueError("Board path not available.")
             firmware_uploader.set_autopilot_port(pathlib.Path(board.path))
-            firmware_uploader.upload(new_firmware_path)
+            await firmware_uploader.upload(new_firmware_path)
             return
         if firmware_format == FirmwareFormat.ELF:
             # Using copy() instead of move() since the last can't handle cross-device properly (e.g. docker binds)

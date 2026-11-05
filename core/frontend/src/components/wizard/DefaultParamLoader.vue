@@ -89,16 +89,15 @@ import { SemVer } from 'semver'
 import Vue, { PropType } from 'vue'
 import { Dictionary } from 'vue-router'
 
+import { fetchParamSets, paramSetsForFirmware } from '@/libs/parameter_repository'
 import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
-import { Firmware, Vehicle } from '@/types/autopilot'
+import { Firmware, firmwareVehicleTypeFromVehicle, Vehicle } from '@/types/autopilot'
 import { printParamWithUnit } from '@/types/autopilot/parameter'
 import { VForm } from '@/types/vuetify'
 
 import { availableFirmwares, fetchCurrentBoard } from '../autopilot/AutopilotManagerUpdater'
-
-const REPOSITORY_URL = 'https://docs.bluerobotics.com/Blueos-Parameter-Repository/params_v1.json'
 
 const MAX_FETCH_PARAMS_RETRIES = 4
 
@@ -125,28 +124,14 @@ export default Vue.extend({
     fetch_current_board_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
   }),
   computed: {
-    filtered_param_sets(): Dictionary<Dictionary<number>> | undefined {
-      const fw_patch = `${this.vehicle}/${this.version}/${this.board}/`
-      const fw_minor = `${this.vehicle}/${this.version?.major}.${this.version?.minor}/${this.board}/`
-      const fw_major = `${this.vehicle}/${this.version?.major}/${this.board}/`
-
-      // returns a new dict where the keys start with the fullname
-      // e.g. "ArduSub/BlueROV2/4.0.3" -> "ArduSub/BlueROV2/4.0.3/BlueROV2"
-
-      let fw_params = {}
-      // try to find a paramset that matches the firmware version, starting from patch and walking up to major
-      for (const string of [fw_patch, fw_minor, fw_major]) {
-        fw_params = Object.fromEntries(
-          Object.entries(this.all_param_sets).filter(
-            ([name]) => name.toLocaleLowerCase().includes(string.toLowerCase()),
-          ),
-        )
-        if (Object.keys(fw_params).length > 0) {
-          break
-        }
-      }
+    filtered_param_sets(): Dictionary<Dictionary<number>> {
       return {
-        ...fw_params,
+        ...paramSetsForFirmware(
+          this.all_param_sets,
+          firmwareVehicleTypeFromVehicle(this.vehicle as Vehicle),
+          this.version ?? null,
+          autopilot.current_board,
+        ),
         [this.not_load_default_params_option]: {},
       }
     },
@@ -157,8 +142,8 @@ export default Vue.extend({
         sanitized: full.split('/').pop()?.split('.')[0] || '',
       }))
     },
-    board(): string | undefined {
-      return autopilot.current_board?.name
+    board(): string | null {
+      return autopilot.current_board?.name ?? null
     },
     invalid_board(): boolean {
       return !this.board
@@ -195,7 +180,7 @@ export default Vue.extend({
       this.has_parameters_load_error = false
       try {
         this.version = await this.fetchLatestFirmwareVersion()
-        this.all_param_sets = await this.fetchParamSets()
+        this.all_param_sets = await fetchParamSets()
 
         this.fetch_retries = 0
       } catch (error) {
@@ -224,12 +209,6 @@ export default Vue.extend({
     },
     isNotEmpty(value: string): boolean {
       return value !== ''
-    },
-    async fetchParamSets() {
-      const response = await fetch(REPOSITORY_URL)
-      const parameters = await response.json()
-
-      return parameters
     },
     async fetchLatestFirmwareVersion(): Promise<SemVer | undefined> {
       const firmwares = await availableFirmwares(this.vehicle as Vehicle)
