@@ -3,8 +3,8 @@
     <v-simple-table>
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Value</th>
+          <th>{{ t`Name` }}</th>
+          <th>{{ t`Value` }}</th>
         </tr>
       </thead>
       <tbody>
