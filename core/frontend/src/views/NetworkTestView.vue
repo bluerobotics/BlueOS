@@ -31,6 +31,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
@@ -53,8 +54,8 @@ export default Vue.extend({
   data() {
     return {
       pages: [
-        { title: 'Local network test', icon: 'mdi-speedometer', value: 'network-speed-test' },
-        { title: 'Internet speed test', icon: 'mdi-web', value: 'internet-speed-test' },
+        { title: t`Local network test`, icon: 'mdi-speedometer', value: 'network-speed-test' },
+        { title: t`Internet speed test`, icon: 'mdi-web', value: 'internet-speed-test' },
       ] as Item[],
       page_selected: null as string | null,
     }
