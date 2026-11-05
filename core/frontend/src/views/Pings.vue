@@ -23,7 +23,7 @@
         class="text-center"
       >
         <p class="text-h6">
-          No Ping devices available.
+          {{ t`No Ping devices available.` }}
         </p>
       </v-container>
     </div>
