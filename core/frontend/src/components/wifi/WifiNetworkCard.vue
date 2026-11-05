@@ -1,6 +1,7 @@
 <template>
   <v-sheet
     class="network-card"
+    :class="{ 'network-card-blocked': network.is_p2p_group }"
     :color="connected ? 'primary' : ''"
   >
     <v-row
@@ -14,7 +15,16 @@
         :cols="7"
         class="d-flex flex-column justify-center"
       >
-        <span>{{ network_name }}</span>
+        <span
+          v-tooltip="network.is_p2p_group && 'Wi-Fi Direct group created by a nearby device, not a regular network.'"
+          :class="{ 'text--disabled': network.is_p2p_group }"
+        >{{ network_name }}</span>
+        <span
+          v-if="device_description !== ''"
+          class="text-caption"
+        >
+          {{ device_description }}
+        </span>
         <span
           v-if="ipAddress !== ''"
           class="text-subtitle-2"
@@ -50,7 +60,7 @@
 import Vue, { PropType } from 'vue'
 
 import { Network } from '@/types/wifi'
-import { wifi_strenght_icon } from '@/utils/wifi'
+import { network_display_name, wifi_strenght_icon } from '@/utils/wifi'
 
 export default Vue.extend({
   name: 'WifiNetworkCard',
@@ -75,10 +85,11 @@ export default Vue.extend({
       return this.network.saved ? 'mdi-content-save' : ''
     },
     network_name(): string {
-      if (this.network.ssid === null || this.network.ssid === '') {
-        return '[HIDDEN SSID]'
-      }
-      return this.network.ssid
+      return network_display_name(this.network)
+    },
+    device_description(): string {
+      const { manufacturer, device_category, device_subcategory } = this.network
+      return [manufacturer, device_subcategory ?? device_category].filter((part) => part).join(' • ')
     },
     network_protection_icon(): string {
       return this.network.locked ? 'mdi-lock' : 'mdi-lock-open-outline'
@@ -89,6 +100,9 @@ export default Vue.extend({
   },
   methods: {
     emitClick(): void {
+      if (this.network.is_p2p_group) {
+        return
+      }
       this.$emit('click', this.network)
     },
   },
@@ -96,7 +110,7 @@ export default Vue.extend({
 </script>
 
 <style>
-  .network-card:hover {
+  .network-card:not(.network-card-blocked):hover {
     cursor: pointer;
     background-color: #2174aa;
   }
