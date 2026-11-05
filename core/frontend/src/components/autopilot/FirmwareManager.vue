@@ -12,22 +12,23 @@
     >
       <div class="d-flex flex-column">
         <p class="mr-2" style="text-align: justify;">
-          <strong>  Only bootloader boards detected.</strong> This likely means the firmware is corrupted.
-          Please select the correct vehicle type and update to the latest autopilot firmware.
+          <strong>  {{ t`Only bootloader boards detected.` }}</strong>
+          {{ t`This likely means the firmware is corrupted.` }}
+          {{ t`Please select the correct vehicle type and update to the latest autopilot firmware.` }}
         </p>
         <p class="mr-2" style="text-align: justify;">
-          <strong>Installation may take a few minutes.</strong>
+          <strong>{{ t`Installation may take a few minutes.` }}</strong>
         </p>
         <div
           v-if="has_install_failed"
           class="bl-only-info-action"
         >
           <p class="mr-2 mb-0" style="text-align: justify;">
-            If it fails, this is normal for some corrupted firmware. Just reboot the onboard computer and try again from
-            this page.
+            <!-- eslint-disable-next-line max-len -->
+            {{ t`If it fails, this is normal for some corrupted firmware. Just reboot the onboard computer and try again from this page.` }}
           </p>
           <v-btn
-            v-tooltip="'Fully restarts the onboard computer'"
+            v-tooltip="t`Fully restarts the onboard computer`"
             class="ma-2"
             @click="rebootOnBoardComputer"
           >
@@ -37,7 +38,7 @@
             >
               mdi-restart-alert
             </v-icon>
-            Reboot
+            {{ t`Reboot` }}
           </v-btn>
         </div>
       </div>
@@ -64,7 +65,7 @@
               <v-icon class="mr-2">
                 mdi-cloud-arrow-down
               </v-icon>
-              <div>Retrieve from Cloud</div>
+              <div>{{ t`Retrieve from Cloud` }}</div>
             </v-btn>
           </v-item>
           <v-item
@@ -82,7 +83,7 @@
               <v-icon class="mr-2">
                 mdi-upload
               </v-icon>
-              <div>Upload firmware file</div>
+              <div>{{ t`Upload firmware file` }}</div>
             </v-btn>
           </v-item>
           <v-item
@@ -100,7 +101,7 @@
               <v-icon class="mr-2">
                 mdi-file-restore
               </v-icon>
-              <div>Restore default firmware</div>
+              <div>{{ t`Restore default firmware` }}</div>
             </v-btn>
           </v-item>
         </v-item-group>
@@ -110,7 +111,7 @@
           v-if="only_bootloader_boards_available"
           v-model="chosen_board"
           :items="available_boards"
-          label="Board"
+          :label="t`Board`"
           class="ma-1 pa-0"
           @change="chosen_vehicle = null"
         />
@@ -120,7 +121,7 @@
           <v-select
             v-model="chosen_vehicle"
             :items="vehicle_types"
-            label="Vehicle type"
+            :label="t`Vehicle type`"
             :hint="vehicle_changed ? vehicle_change_warning : ''"
             :persistent-hint="vehicle_changed"
             required
@@ -148,7 +149,7 @@
                     mdi-file-document-outline
                   </v-icon>
                 </template>
-                <p>Open {{ chosen_vehicle }} documentation</p>
+                <p>{{ t`Open ${chosen_vehicle} documentation` }}</p>
               </v-tooltip>
             </template>
           </v-select>
@@ -173,11 +174,14 @@
                     mdi-information
                   </v-icon>
                 </template>
-                <p>Stable - A production-ready release. Suitable for most users.</p>
-                <p>Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.</p>
+                <p>{{ t`Stable - A production-ready release. Suitable for most users.` }}</p>
                 <p>
-                  Dev - Development branch, with all the newest features.
-                  Intentionally unstable (changes quickly), and possibly untested/dangerous.
+                  {{ t`Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.`
+                  }}
+                </p>
+                <p>
+                  <!-- eslint-disable-next-line max-len -->
+                  {{ t`Dev - Development branch, with all the newest features. Intentionally unstable (changes quickly), and possibly untested/dangerous.` }}
                 </p>
               </v-tooltip>
             </template>
@@ -188,14 +192,14 @@
           v-if="upload_type === UploadType.File"
           class="mr-2"
           show-size
-          label="Firmware file"
+          :label="t`Firmware file`"
           @change="setFileFirmware"
         />
 
         <p
           v-if="upload_type === UploadType.Restore"
         >
-          This option will restore the default firmware for your platform.
+          {{ t`This option will restore the default firmware for your platform.` }}
         </p>
       </div>
     </div>
@@ -213,7 +217,7 @@
         text
         @click="enableUntestedWarning"
       >
-        Warn me again
+        {{ t`Warn me again` }}
       </v-btn>
     </v-alert>
     <v-btn
@@ -225,7 +229,7 @@
       <v-icon class="mr-2">
         mdi-content-save
       </v-icon>
-      <div>Install firmware</div>
+      <div>{{ t`Install firmware` }}</div>
     </v-btn>
 
     <v-dialog
@@ -239,7 +243,7 @@
         dark
       >
         <v-card-text>
-          Installing firmware. Please wait.
+          {{ t`Installing firmware. Please wait.` }}
           <v-progress-linear
             indeterminate
             color="white"
@@ -265,14 +269,14 @@
     <WarningDialog
       v-model="show_untested_warning"
       :message="untested_firmware_message"
-      confirm-label="Install anyway"
+      :confirm-label="t`Install anyway`"
       @confirm="confirmUntestedInstall"
     >
       <v-checkbox
         v-model="skip_untested_warning_next_time"
         dense
         hide-details
-        label="Do not warn me again"
+        :label="t`Do not warn me again`"
       />
     </WarningDialog>
   </v-card>
