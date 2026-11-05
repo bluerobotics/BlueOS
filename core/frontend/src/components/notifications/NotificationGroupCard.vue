@@ -33,7 +33,7 @@
               </div>
             </v-list-item-subtitle>
             <v-list-item-subtitle>
-              {{ time_since }} ({{ group.notifications.length }} notifications)
+              {{ t`${time_since} (${group.notifications.length} notifications)` }}
             </v-list-item-subtitle>
           </v-list-item-content>
 
