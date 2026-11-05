@@ -4,8 +4,8 @@
       <v-simple-table>
         <thead>
           <tr>
-            <th>IMU</th>
-            <th>Calibration</th>
+            <th>{{ t`IMU` }}</th>
+            <th>{{ t`Calibration` }}</th>
           </tr>
         </thead>
         <tbody>
@@ -14,31 +14,31 @@
             <td>
               <v-icon
                 v-if="ardupilot_sensors.accelerometers_calibrated[accelerometer.param]"
-                v-tooltip="'Sensor is calibrated and good to use'"
+                v-tooltip="t`Sensor is calibrated and good to use`"
                 color="green"
               >
                 mdi-emoticon-happy-outline
               </v-icon>
               <v-icon
                 v-else
-                v-tooltip="'Sensor needs to be calibrated'"
+                v-tooltip="t`Sensor needs to be calibrated`"
                 color="red"
               >
                 mdi-emoticon-sad-outline
               </v-icon>
               {{ ardupilot_sensors.accelerometers_calibrated[accelerometer.param]
-                ? 'Calibrated'
-                : 'Needs calibration' }}
+                ? t`Calibrated`
+                : t`Needs calibration` }}
               <v-icon
                 v-if="ardupilot_sensors.accelerometers_temperature_calibrated[accelerometer.param].calibrated"
-                v-tooltip="`Sensor was calibrated at ${getCalibrationTemperature(accelerometer)} ºC`"
+                v-tooltip="t`Sensor was calibrated at ${getCalibrationTemperature(accelerometer)} ºC`"
                 color="green"
               >
                 mdi-thermometer-check
               </v-icon>
               <v-icon
                 v-else
-                v-tooltip="'Sensor thermometer needs to be calibrated'"
+                v-tooltip="t`Sensor thermometer needs to be calibrated`"
                 color="red"
               >
                 mdi-thermometer-off
