@@ -5,17 +5,17 @@
       elevation="1"
     >
       <v-card-title class="ma-4">
-        Autopilot logs
+        {{ t`Autopilot logs` }}
         <v-spacer />
         <v-btn
-          v-tooltip="'Fetch available logs'"
+          v-tooltip="t`Fetch available logs`"
           icon
           @click="fetchAvailableLogs"
         >
           <v-icon>mdi-update</v-icon>
         </v-btn>
         <v-btn
-          v-tooltip="'Download selected logs'"
+          v-tooltip="t`Download selected logs`"
           icon
           color="success"
           :disabled="disable_batch_operations"
@@ -24,7 +24,7 @@
           <v-icon>mdi-download-multiple</v-icon>
         </v-btn>
         <v-btn
-          v-tooltip="'Delete selected logs'"
+          v-tooltip="t`Delete selected logs`"
           icon
           color="error"
           :disabled="disable_batch_operations"
@@ -48,7 +48,7 @@
           </template>
           <template #item.actions="{ item }">
             <v-btn
-              v-tooltip="'Open log in UAV Log Viewer'"
+              v-tooltip="t`Open log in UAV Log Viewer`"
               icon
               color="green"
               @click="replay_log(item)"
@@ -56,7 +56,7 @@
               <v-icon>mdi-play</v-icon>
             </v-btn>
             <v-btn
-              v-tooltip="'Download log'"
+              v-tooltip="t`Download log`"
               icon
               @click="downloadLogs([item])"
             >
@@ -69,14 +69,14 @@
     <v-container v-else>
       <spinning-logo
         size="30%"
-        subtitle="Fetching available logs..."
+        :subtitle="t`Fetching available logs...`"
       />
     </v-container>
     <warning-dialog
       v-model="show_delete_confirm"
-      title="Delete logs"
-      message="Deleting logs is an operation that cannot be undone."
-      confirm-label="Delete logs"
+      :title="t`Delete logs`"
+      :message="t`Deleting logs is an operation that cannot be undone.`"
+      :confirm-label="t`Delete logs`"
       @confirm="removeLogs"
     />
   </v-container>
@@ -84,6 +84,7 @@
 
 <script lang="ts">
 import { format } from 'date-fns'
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import filebrowser from '@/libs/filebrowser'
@@ -109,16 +110,16 @@ export default Vue.extend({
       show_delete_confirm: false,
       headers: [
         {
-          text: 'Name',
+          text: t`Name`,
           align: 'start',
           sortable: false,
           value: 'name',
         },
-        { text: 'Size', value: 'size' },
-        { text: 'Type', value: 'extension' },
-        { text: 'Modified', value: 'modified' },
+        { text: t`Size`, value: 'size' },
+        { text: t`Type`, value: 'extension' },
+        { text: t`Modified`, value: 'modified' },
         {
-          text: 'Actions',
+          text: t`Actions`,
           align: 'end',
           sortable: false,
           value: 'actions',
