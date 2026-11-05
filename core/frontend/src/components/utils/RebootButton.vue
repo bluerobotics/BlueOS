@@ -4,7 +4,7 @@
     color="warning"
     @click="rebootVehicle"
   >
-    Reboot Autopilot
+    {{ t`Reboot Autopilot` }}
   </v-btn>
 </template>
 
