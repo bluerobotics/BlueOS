@@ -34,7 +34,7 @@
         <v-icon small class="cpu-icon">
           mdi-thermometer
         </v-icon>
-        <div>{{ cpu_temperature }}°C</div>
+        <div>{{ t`${cpu_temperature}°C` }}</div>
       </div>
     </div>
   </v-card>
