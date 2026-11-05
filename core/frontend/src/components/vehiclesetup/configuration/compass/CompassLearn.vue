@@ -10,7 +10,7 @@
         v-bind="attrs"
         v-on="on"
       >
-        Start Compass Learn
+        {{ t`Start Compass Learn` }}
       </v-btn>
       <span v-if="!is_supported.result" class="ml-2" style="color: red;">
         {{ is_supported.reason }}
@@ -19,15 +19,15 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2 black--text">
-        Compass Calibration Learning
+        {{ t`Compass Calibration Learning` }}
       </v-card-title>
       <v-card-text>
-        A valid global region is required for Compass Learn to estimate the local world magnetic field.
+        {{ t`A valid global region is required for Compass Learn to estimate the local world magnetic field.` }}
         <auto-coordinate-detector
           v-model="coordinates"
         />
-        Make sure you have a valid region/position specified, then click start and drive the vehicle around
-        in manual mode until you see the message <b>"CompassLearn: finished"</b>.
+        <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+        <span v-html="t`Make sure you have a valid region/position specified, then click start and drive the vehicle around in manual mode until you see the message <b>&quot;CompassLearn: finished&quot;</b>.`" />
         <v-divider />
         <v-alert
           v-if="status_text"
@@ -40,10 +40,10 @@
       <v-card-actions>
         <v-spacer />
         <v-btn v-if="!is_learning" color="primary" :disabled="calibrating || !coordinates" @click="start()">
-          Start
+          {{ t`Start` }}
         </v-btn>
         <v-btn v-else-if="is_learning" color="error" @click="stop()">
-          Abort
+          {{ t`Abort` }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -51,7 +51,6 @@
 </template>
 
 <script lang="ts">
-
 import StatusTextWatcher from '@/components/common/StatusTextWatcher.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import autopilot_data from '@/store/autopilot'
