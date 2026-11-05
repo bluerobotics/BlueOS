@@ -15,7 +15,7 @@
       >
         <v-badge
           v-if="gps_connected"
-          v-tooltip="`${connection_description} (Number of satellites: ${satellites_number})`"
+          v-tooltip="t`${connection_description} (Number of satellites: ${satellites_number})`"
           :content="satellites_number"
           :value="satellites_number"
           :color="number_color"
@@ -78,6 +78,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { markRaw } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -127,7 +128,7 @@ export default Vue.extend({
         {
           name: 'Position',
           value: `${this.latitude.toFixed(2)}º / ${this.longitude.toFixed(2)}º`,
-          tooltip: 'Position coordinates',
+          tooltip: t`Position coordinates`,
           icon: 'mdi-map-marker',
           link: this.map_link,
           link_icon: 'mdi-map-search',
@@ -135,37 +136,37 @@ export default Vue.extend({
         {
           name: 'Altitude',
           value: `${(this.gps_raw_int.alt / 1000).toFixed(2)} m`,
-          tooltip: 'Altitude estimate',
+          tooltip: t`Altitude estimate`,
           icon: 'mdi-arrow-collapse-up',
         },
         {
           name: 'Satellites',
           value: `${this.satellites_number}`,
-          tooltip: 'Satellites in view',
+          tooltip: t`Satellites in view`,
           icon: 'mdi-satellite-variant',
         },
         {
           name: 'Fix',
           value: `${this.connection_description}`,
-          tooltip: 'Connection type and status',
+          tooltip: t`Connection type and status`,
           icon: 'mdi-crosshairs-gps',
         },
         {
           name: 'HDOP',
           value: `${(this.gps_raw_int.eph / 100).toFixed(2)}`,
-          tooltip: 'Horizontal position uncertainty',
+          tooltip: t`Horizontal position uncertainty`,
           icon: 'mdi-arrow-left-right',
         },
         {
           name: 'VDOP',
           value: `${(this.gps_raw_int.epv / 100).toFixed(2)}`,
-          tooltip: 'Vertical position uncertainty',
+          tooltip: t`Vertical position uncertainty`,
           icon: 'mdi-arrow-up-down',
         },
         {
           name: 'PDOP',
           value: `${(((this.gps_raw_int.epv / 100) ** 2 + (this.gps_raw_int.eph / 100) ** 2) ** 0.5).toFixed(2)}`,
-          tooltip: 'Combined 3D position uncertainty',
+          tooltip: t`Combined 3D position uncertainty`,
           icon: 'mdi-map-marker-radius',
         },
       ]
@@ -175,13 +176,13 @@ export default Vue.extend({
           {
             name: 'HACC',
             value: `${(this.gps_raw_int.h_acc / 1000).toFixed(2)} m`,
-            tooltip: 'Horizontal Accuracy',
+            tooltip: t`Horizontal Accuracy`,
             icon: 'mdi-arrow-expand-horizontal',
           },
           {
             name: 'VACC',
             value: `${(this.gps_raw_int.v_acc / 1000).toFixed(2)} m`,
-            tooltip: 'Vertical Accuracy',
+            tooltip: t`Vertical Accuracy`,
             icon: 'mdi-arrow-expand-vertical',
           },
         )
@@ -191,7 +192,7 @@ export default Vue.extend({
           {
             name: 'Yaw',
             value: `${(this.gps_raw_int.yaw / 100).toFixed(2)}º`,
-            tooltip: 'Yaw',
+            tooltip: t`Yaw`,
             icon: 'mdi-compass',
           },
         )
