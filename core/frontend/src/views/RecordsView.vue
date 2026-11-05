@@ -15,7 +15,7 @@
       dense
       class="mb-4"
     >
-      No recordings found yet.
+      {{ t`No recordings found yet.` }}
     </v-alert>
 
     <v-row>
@@ -36,7 +36,7 @@
                 size="48"
               />
               <span class="mt-2 caption grey--text text--darken-1">
-                Extracting video...
+                {{ t`Extracting video...` }}
               </span>
             </div>
           </div>
@@ -47,7 +47,7 @@
           </v-card-title>
           <v-card-subtitle class="py-0">
             <v-chip x-small color="primary">
-              Processing
+              {{ t`Processing` }}
             </v-chip>
           </v-card-subtitle>
           <v-spacer />
@@ -103,7 +103,7 @@
                 size="48"
               />
               <span class="mt-2 caption grey--text text--darken-1">
-                Processing video/thumbnail...
+                {{ t`Processing video/thumbnail...` }}
               </span>
             </div>
           </div>
@@ -175,7 +175,7 @@
               <track
                 kind="captions"
                 srclang="en"
-                label="Captions not available"
+                :label="t`Captions not available`"
                 :src="emptyCaptions"
                 default
               />
