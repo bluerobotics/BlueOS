@@ -8,11 +8,11 @@
     >
       <v-tabs-slider />
       <v-tab>
-        Disk Usage
+        {{ t`Disk Usage` }}
         <v-icon>mdi-harddisk</v-icon>
       </v-tab>
       <v-tab>
-        Speed Test
+        {{ t`Speed Test` }}
         <v-icon>mdi-speedometer</v-icon>
       </v-tab>
     </v-tabs>
@@ -79,20 +79,20 @@
                           />
                         </th>
                         <th class="text-left">
-                          Name
+                          {{ t`Name` }}
                         </th>
                         <th class="text-center usage-col">
-                          Usage
+                          {{ t`Usage` }}
                         </th>
                         <th class="text-right">
-                          Size
+                          {{ t`Size` }}
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-if="!usage || usage.root.children.length === 0">
                         <td colspan="4" class="text-center grey--text text--darken-1">
-                          No entries.
+                          {{ t`No entries.` }}
                         </td>
                       </tr>
                       <tr
@@ -151,7 +151,7 @@
         <v-container class="d-flex flex-row align-center justify-center fluid">
           <v-card max-width="500px" class="ma-5">
             <v-card-title class="justify-center">
-              Disk Speed Test
+              {{ t`Disk Speed Test` }}
             </v-card-title>
 
             <v-divider />
@@ -169,13 +169,13 @@
                 >
                   <span v-if="speedTesting">{{ speedTestProgress }}</span>
                   <span v-else-if="hasResults">{{ speedResults.length }}/{{ totalTests }}</span>
-                  <span v-else>Click to start</span>
+                  <span v-else>{{ t`Click to start` }}</span>
                 </v-progress-circular>
 
                 <v-list>
                   <v-list-item>
                     <v-list-item-icon>
-                      <v-icon v-tooltip="'Write speed (avg)'">
+                      <v-icon v-tooltip="t`Write speed (avg)`">
                         mdi-pencil
                       </v-icon>
                     </v-list-item-icon>
@@ -186,7 +186,7 @@
 
                   <v-list-item>
                     <v-list-item-icon>
-                      <v-icon v-tooltip="'Read speed (avg)'">
+                      <v-icon v-tooltip="t`Read speed (avg)`">
                         mdi-book-open-page-variant
                       </v-icon>
                     </v-list-item-icon>
@@ -234,6 +234,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import DiskSpeedGraph from '@/components/disk/DiskSpeedGraph.vue'
@@ -313,9 +314,9 @@ export default Vue.extend({
         return 'Test complete'
       }
       if (this.speedError) {
-        return 'Test failed'
+        return t`Test failed`
       }
-      return 'Click to start'
+      return t`Click to start`
     },
     hasResults(): boolean {
       return this.speedResults.length > 0
