@@ -10,7 +10,7 @@
           color="primary"
           @change="emitShowOldChange"
         />
-        <div>Show old messages</div>
+        <div>{{ t`Show old messages` }}</div>
       </v-list-item>
       <v-list-item>
         <v-switch
@@ -18,7 +18,7 @@
           color="primary"
           @change="emitGroupByServiceChange"
         />
-        <div>Group by service</div>
+        <div>{{ t`Group by service` }}</div>
       </v-list-item>
     </v-list>
   </v-card>
