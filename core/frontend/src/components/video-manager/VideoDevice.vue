@@ -16,16 +16,16 @@
               </v-icon>
             </template>
             <span v-if="device.blocked">
-              Video source is blocked
+              {{ t`Video source is blocked` }}
             </span>
             <span v-else-if="!are_video_streams_available">
-              No streams added to this video source
+              {{ t`No streams added to this video source` }}
             </span>
             <span v-else-if="has_healthy_streams">
-              Streams active
+              {{ t`Streams active` }}
             </span>
             <span v-else>
-              Streams stopped, see the errors for more information
+              {{ t`Streams stopped, see the errors for more information` }}
             </span>
           </v-tooltip>
           <p class="font-weigth-medium text-sm-h6 ma-0">
@@ -42,7 +42,7 @@
             @click="openControlsDialog"
           >
             <v-icon>mdi-tune-variant</v-icon>
-            Device Controls
+            {{ t`Device Controls` }}
           </v-btn>
           <v-btn
             class="my-1"
@@ -50,7 +50,7 @@
             @click="openStreamCreationDialog"
           >
             <v-icon>mdi-plus</v-icon>
-            Add stream
+            {{ t`Add stream` }}
           </v-btn>
           <v-switch
             v-if="is_pirate_mode"
@@ -58,7 +58,7 @@
             dense
             hide-details
             class="mt-2"
-            label="Block source"
+            :label="t`Block source`"
             @change="toggleBlocked"
           />
         </div>
@@ -74,8 +74,8 @@
     </div>
     <v-container>
       <p v-if="is_redirect_source">
-        Redirect sources can be used to redirect the video stream from another device. This is useful to publish
-        external streams, such as RTSP from IP cameras, via MAVLink so GCSs can easily find them.
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`Redirect sources can be used to redirect the video stream from another device. This is useful to publish external streams, such as RTSP from IP cameras, via MAVLink so GCSs can easily find them.` }}
       </p>
     </v-container>
     <v-card flat>
@@ -94,7 +94,7 @@
       <v-container v-else-if="updating_streams">
         <spinning-logo
           size="10%"
-          subtitle="Fetching available streams..."
+          :subtitle="t`Fetching available streams...`"
         />
       </v-container>
     </v-card>
