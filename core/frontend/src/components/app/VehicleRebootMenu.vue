@@ -10,12 +10,12 @@
       elevation="1"
       text
     >
-      Autopilot reboot is necessary for new settings to take effect.
+      {{ t`Autopilot reboot is necessary for new settings to take effect.` }}
     </v-alert>
     <v-btn
       @click="rebootVehicle"
     >
-      Reboot Autopilot
+      {{ t`Reboot Autopilot` }}
     </v-btn>
   </v-card>
 </template>
