@@ -1,6 +1,6 @@
 <template>
   <v-icon
-    v-tooltip="`Change theme between dark and light mode.`"
+    v-tooltip="t`Change theme between dark and light mode.`"
     height="100%"
     color="white"
     @click="toggleDarkTheme"
