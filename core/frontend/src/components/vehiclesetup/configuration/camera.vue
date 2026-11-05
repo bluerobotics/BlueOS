@@ -2,14 +2,14 @@
   <div class="main-container">
     <v-card style="margin: auto">
       <v-card-title>
-        Camera Gimbal Configuration
+        {{ t`Camera Gimbal Configuration` }}
       </v-card-title>
       <v-card-text>
         <v-row>
           <v-col>
             <p v-if="!type_param">
-              Camera mount setup is not supported on this firmware (MNT1_TYPE param not found).
-              Please update to a newer autopilot firmware version.
+              <!-- eslint-disable-next-line max-len -->
+              {{ t`Camera mount setup is not supported on this firmware (MNT1_TYPE param not found). Please update to a newer autopilot firmware version.` }}
             </p>
             <v-select
               v-if="is_servo_type"
@@ -17,10 +17,10 @@
               :items="servo_params"
               :item-text="friendlyName"
               :item-value="'name'"
-              label="Mount 1 Pitch Servo"
+              :label="t`Mount 1 Pitch Servo`"
             />
             <p v-else-if="type_param">
-              Mount is disabled. Enable it by setting the 'Gimbal Type' to 'Servo'.
+              {{ t`Mount is disabled. Enable it by setting the 'Gimbal Type' to 'Servo'.` }}
             </p>
 
             <v-row>
@@ -28,14 +28,14 @@
                 <parameter-switch
                   v-if="reverse_pitch_servo"
                   :parameter="reverse_pitch_servo"
-                  label="Reverse servo direction"
+                  :label="t`Reverse servo direction`"
                 />
               </v-col>
               <v-col>
                 <v-switch
                   v-if="is_servo_type"
                   v-model="is_stabilized"
-                  label="Stabilize mount"
+                  :label="t`Stabilize mount`"
                 />
               </v-col>
             </v-row>
@@ -47,14 +47,13 @@
           <v-row>
             <v-card>
               <v-card-title>
-                Step 1: Find the physical limits
+                {{ t`Step 1: Find the physical limits` }}
               </v-card-title>
               <v-card-text>
                 <v-row class="ma-3">
                   <p>
-                    To find the physical limits of the servo, move the camera to the minimum and maximum positions,
-                    then adjust the minimum/maximum PWMs values until it reaches the furthest it can move
-                    without hitting other components.
+                    <!-- eslint-disable-next-line max-len -->
+                    {{ t`To find the physical limits of the servo, move the camera to the minimum and maximum positions, then adjust the minimum/maximum PWMs values until it reaches the furthest it can move without hitting other components.` }}
                   </p>
                   <v-row>
                     <v-col>
@@ -63,7 +62,7 @@
                         style="border-left: 2px solid var(--v-negative-base); padding-left: 10px;"
                         :param="pitch_servo_pwm_max_param"
                         auto-set
-                        label="Max PWM"
+                        :label="t`Max PWM`"
                         @change="update_max_pwm"
                       />
                     </v-col>
@@ -73,27 +72,26 @@
                         style="border-left: 2px solid var(--v-water-base); padding-left: 10px;"
                         :param="pitch_servo_pwm_min_param"
                         auto-set
-                        label="Min PWM"
+                        :label="t`Min PWM`"
                         @change="update_min_pwm"
                       />
                     </v-col>
                   </v-row>
                   <v-alert dense small outlined type="warning" style="margin: auto;">
-                    The gimbal will move to the new PWM values as you adjust them.
+                    {{ t`The gimbal will move to the new PWM values as you adjust them.` }}
                   </v-alert>
                 </v-row>
               </v-card-text>
             </v-card>
             <v-card>
               <v-card-title>
-                Step 2: Measure the actual angles
+                {{ t`Step 2: Measure the actual angles` }}
               </v-card-title>
               <v-card-text>
                 <v-row class="ma-3">
                   <p>
-                    Measure the rotation limit angles and input them below.
-                    This will allow Ardupilot to accurately report the camera rotation angle
-                    from its commanded servo PWM value.
+                    <!-- eslint-disable-next-line max-len -->
+                    {{ t`Measure the rotation limit angles and input them below. This will allow Ardupilot to accurately report the camera rotation angle from its commanded servo PWM value.` }}
                   </p>
                   <v-col>
                     <InlineParameterEditor
@@ -101,7 +99,7 @@
                       style="border-left: 2px solid var(--v-negative-base); padding-left: 10px;"
                       :param="pitch_max_param"
                       auto-set
-                      label="Max Angle"
+                      :label="t`Max Angle`"
                     />
                   </v-col>
                   <v-col>
@@ -110,19 +108,16 @@
                       style="border-left: 2px solid var(--v-water-base); padding-left: 10px;"
                       :param="pitch_min_param"
                       auto-set
-                      label="Min Angle"
+                      :label="t`Min Angle`"
                     />
                   </v-col>
                 </v-row>
                 <v-row class="ma-3">
                   <v-col>
-                    <strong>Calculated PWM/degree:</strong> {{ pwm_per_deg.toFixed(2) }} <br>
+                    <strong>{{ t`Calculated PWM/degree:` }}</strong> {{ pwm_per_deg.toFixed(2) }} <br>
                     <p>
-                      This represents how much the PWM value changes per degree. Use this to
-                      verify against your servo specs.
-                      One that reaches +-45º with 1100-1900 PWM (all current BlueRobotics servos),
-                      has a ratio of 8.88µs per degree.
-                      This can help you make sure you measured the angles correctly.
+                      <!-- eslint-disable-next-line max-len -->
+                      {{ t`This represents how much the PWM value changes per degree. Use this to verify against your servo specs. One that reaches +-45º with 1100-1900 PWM (all current BlueRobotics servos), has a ratio of 8.88µs per degree. This can help you make sure you measured the angles correctly.` }}
                     </p>
                   </v-col>
                 </v-row>
