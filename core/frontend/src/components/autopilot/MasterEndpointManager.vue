@@ -5,7 +5,7 @@
       class="pa-4"
     >
       <v-card-title class="text-h6 mb-2">
-        Master Endpoint Configuration
+        {{ t`Master Endpoint Configuration` }}
       </v-card-title>
 
       <v-form
@@ -16,7 +16,7 @@
         <v-select
           v-model="endpoint.connection_type"
           :items="endpoint_types"
-          label="Connection Type"
+          :label="t`Connection Type`"
           :rules="[validate_required_field]"
           @change="updateDefaultPlace"
         />
@@ -24,12 +24,12 @@
         <v-text-field
           v-model="endpoint.place"
           :rules="[validate_required_field, is_ip_address_path, is_useable_ip_address]"
-          label="IP/Device"
+          :label="t`IP/Device`"
         />
 
         <v-text-field
           v-model.number="endpoint.argument"
-          label="Port/Baudrate"
+          :label="t`Port/Baudrate`"
           :rules="[is_socket_port_baudrate]"
         />
 
@@ -41,7 +41,7 @@
             :disabled="!form_valid || !has_changes"
             @click="saveEndpoint"
           >
-            Save Changes
+            {{ t`Save Changes` }}
           </v-btn>
         </v-card-actions>
       </v-form>
@@ -52,14 +52,14 @@
       color="success"
       timeout="3000"
     >
-      Master endpoint updated successfully
+      {{ t`Master endpoint updated successfully` }}
       <template #action="{ attrs }">
         <v-btn
           text
           v-bind="attrs"
           @click="show_success = false"
         >
-          Close
+          {{ t`Close` }}
         </v-btn>
       </template>
     </v-snackbar>
