@@ -4,3 +4,4 @@ dist/
 yarn.lock
 dev-dist/
 components.d.ts
+src/i18n/*.po.json
