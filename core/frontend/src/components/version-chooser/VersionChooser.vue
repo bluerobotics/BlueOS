@@ -455,7 +455,7 @@ export default Vue.extend({
         )
 
         installOrUpdateMajorTom((progressEvent) => {
-          if (!progressEvent.event?.currentTarget?.response) {
+          if (!progressEvent.event?.target?.response) {
             return
           }
           tracker.digestNewData(progressEvent.event)

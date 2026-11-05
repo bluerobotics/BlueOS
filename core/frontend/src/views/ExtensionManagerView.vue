@@ -1194,7 +1194,7 @@ export default Vue.extend({
       this.status_text = tracker.overall_status
     },
     handleLogProgress(progressEvent: ProgressEvent, extension: InstalledExtensionData) {
-      const response = progressEvent?.currentTarget?.response
+      const response = progressEvent?.target?.response
       if (!response) {
         return
       }

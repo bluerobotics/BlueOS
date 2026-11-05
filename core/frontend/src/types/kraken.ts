@@ -114,7 +114,7 @@ export interface ExtensionUploadResponse {
 }
 
 export interface ProgressEvent {
-    currentTarget: {
+    target: {
         response: string
     }
 }
