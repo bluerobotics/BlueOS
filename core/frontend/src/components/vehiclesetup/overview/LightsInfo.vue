@@ -1,9 +1,15 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="align-center">
+      <v-icon left>
+        mdi-lightbulb-on
+      </v-icon>
       Lights
     </v-card-title>
-    <v-card-text>
+    <v-card-text v-if="lights.length === 0">
+      Not configured
+    </v-card-text>
+    <v-card-text v-else>
       <span
         v-for="light in lights"
         :key="light"
