@@ -10,12 +10,12 @@
       elevation="1"
       text
     >
-      On-board computer reboot is necessary.
+      {{ t`On-board computer reboot is necessary.` }}
     </v-alert>
     <v-btn
       @click="rebootOnBoardComputer"
     >
-      Reboot On-board Computer
+      {{ t`Reboot On-board Computer` }}
     </v-btn>
   </v-card>
 </template>
