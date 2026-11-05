@@ -2,20 +2,20 @@
   <div class="main-container">
     <v-card outline class="pa-2" width="600px" max-width="100%">
       <v-card-title class="align-center justify-center">
-        Calibrate Gyroscopes
+        {{ t`Calibrate Gyroscopes` }}
       </v-card-title>
       <v-card-text>
-        A calibrated gyro should display a value of 0 on all axes when the vehicle is stationary.
-        Symptoms of a mis-calibrated gyro include yaw drift and small attitude offsets.
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`A calibrated gyro should display a value of 0 on all axes when the vehicle is stationary. Symptoms of a mis-calibrated gyro include yaw drift and small attitude offsets.` }}
       </v-card-text>
       <v-card-text>
         <v-simple-table>
           <thead>
             <tr>
-              <th>IMU</th>
-              <th>Angular speed (mrad/s)</th>
-              <th>Offsets (mrad/s)</th>
-              <th>Calibration temperature (°C)</th>
+              <th>{{ t`IMU` }}</th>
+              <th>{{ t`Angular speed (mrad/s)` }}</th>
+              <th>{{ t`Offsets (mrad/s)` }}</th>
+              <th>{{ t`Calibration temperature (°C)` }}</th>
             </tr>
           </thead>
           <tbody>
@@ -31,13 +31,13 @@
         </v-simple-table>
       </v-card-text>
       <v-card-text>
-        The Gyroscopes can be automatically calibrated at startup. Be mindful that this is not recommended for
-        vehicles that start up on moving platforms (such as boats).
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`The Gyroscopes can be automatically calibrated at startup. Be mindful that this is not recommended for vehicles that start up on moving platforms (such as boats).` }}
         <div class="ma-5 pa-5">
           <inline-parameter-editor
             v-if="ins_gyr_cal"
             :param="ins_gyr_cal"
-            :label="'Calibrate gyroscopes automatically'"
+            :label="t`Calibrate gyroscopes automatically`"
           />
         </div>
       </v-card-text>
@@ -46,7 +46,7 @@
           color="primary"
           @click="calibrate"
         >
-          Calibrate Gyroscopes
+          {{ t`Calibrate Gyroscopes` }}
         </v-btn>
       </v-card-actions>
       <v-card-actions class="justify-center">
