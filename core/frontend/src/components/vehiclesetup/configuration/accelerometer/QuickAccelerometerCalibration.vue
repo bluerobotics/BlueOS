@@ -10,26 +10,26 @@
         v-bind="attrs"
         v-on="on"
       >
-        Quick Calibration
+        {{ t`Quick Calibration` }}
       </v-btn>
     </template>
 
     <v-card>
       <v-card-title class="text-h5">
-        Accelerometer Calibration
+        {{ t`Accelerometer Calibration` }}
       </v-card-title>
       <v-card-text>
         <div>
-          Quick calibration requires that you place the vehicle on a level surface and keep it still for a few seconds.
-          It is usually enough if your vehicle is generally leveled while in use.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`Quick calibration requires that you place the vehicle on a level surface and keep it still for a few seconds. It is usually enough if your vehicle is generally leveled while in use.` }}
         </div>
       </v-card-text>
       <v-card-actions>
         <v-alert v-if="state === states.CALIBRATED" type="success">
-          Calibration Successful
+          {{ t`Calibration Successful` }}
         </v-alert>
         <v-btn v-if="state === states.IDLE" class="primary" @click="doCalibration">
-          Start Calibration
+          {{ t`Start Calibration` }}
         </v-btn>
         <SpinningLogo v-if="state === states.CALIBRATION_STARTED" size="15%" />
         <v-spacer />
