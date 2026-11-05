@@ -3,7 +3,7 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.decorators import temporary_cache
@@ -82,16 +82,16 @@ def delete_address(interface_name: str, ip_address: str) -> Any:
     manager.save()
 
 
-@app.get("/dhcp/details/{interface_name}", summary="Get all DHCP leases.")
+@app.get("/dhcp/details/{interface_name}", summary="Get DHCP server details.")
 @version(1, 0)
-def get_dhcp_server_details(interface_name: Optional[str] = None) -> Dict[str, DHCPServerDetails]:
+def get_dhcp_server_details(interface_name: str) -> Dict[str, DHCPServerDetails]:
     """REST API endpoint to get the DHCP server details."""
     return manager.get_dhcp_server_details(interface_name)
 
 
 @app.get("/dhcp/leases/{interface_name}", summary="Get all DHCP leases.")
 @version(1, 0)
-def get_dhcp_server_leases(interface_name: Optional[str] = None) -> Dict[str, List[DHCPServerLease]]:
+def get_dhcp_server_leases(interface_name: str) -> Dict[str, List[DHCPServerLease]]:
     """REST API endpoint to get the DHCP leases."""
     return manager.get_dhcp_server_leases(interface_name)
 
