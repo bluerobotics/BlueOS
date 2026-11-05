@@ -19,7 +19,7 @@
         >
           <v-icon
             v-tooltip="{
-              content: wifi_service_disabled ? 'Wifi is disabled' : undefined,
+              content: wifi_service_disabled ? t`Wifi is disabled` : undefined,
               bottom: true,
               offset: 5,
             }"
@@ -36,9 +36,9 @@
         width="500"
       >
         <v-card-title class="text-subtitle-1 pa-4">
-          Wifi is disabled via environment variable. <br>
-          Re-enable it by removing "wifi" from <code>BLUEOS_DISABLE_SERVICES</code>
-          in <code>/root/.config/bootstrap/startup.json</code>
+          {{ t`Wifi is disabled via environment variable.` }} <br>
+          <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+          <span v-html="t`Re-enable it by removing &quot;wifi&quot; from <code>BLUEOS_DISABLE_SERVICES</code> in <code>/root/.config/bootstrap/startup.json</code>`" />
         </v-card-title>
       </v-card>
     </v-menu>
