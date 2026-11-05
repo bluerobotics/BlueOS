@@ -8,7 +8,7 @@
       min-width="450"
     >
       <v-card-title class="text-h5 grey lighten-2 black--text">
-        Pulling new version
+        {{ t`Pulling new version` }}
       </v-card-title>
 
       <v-card-text>
@@ -24,20 +24,20 @@
             <strong
               v-if="download > 0 && download < 100"
             >
-              Downloading: {{ download.toFixed(1) }}%
+              {{ t`Downloading: ${download.toFixed(1)}%` }}
             </strong>
             <strong
               v-if="extraction > 0.1 && extraction < 100"
               class="ml-5"
             >
-              Extracting: {{ extraction.toFixed(1) }}%
+              {{ t`Extracting: ${extraction.toFixed(1)}%` }}
             </strong>
           </template>
         </v-progress-linear>
         <v-expansion-panels flat>
           <v-expansion-panel>
             <v-expansion-panel-header>
-              Details
+              {{ t`Details` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <p
