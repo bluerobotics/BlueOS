@@ -61,25 +61,44 @@
             @paste="handleTagPaste"
           />
 
-          <json-editor
-            v-model="new_permissions"
-            style="width:100%; min-height:400px"
-          >
-            <template
-              v-if="is_reset_editing_permissions_visible"
-              #controls
+          <div class="permissions-editor">
+            <json-editor
+              v-model="new_permissions"
+              class="permissions-editor-surface"
+              style="width:100%; min-height:400px"
             >
-              <v-btn
-                v-tooltip="'Reset to default permissions'"
-                class="editor-control"
-                icon
-                color="white"
-                @click="resetToDefaultPermissions"
-              >
-                <v-icon>mdi-restore</v-icon>
-              </v-btn>
-            </template>
-          </json-editor>
+              <template #controls>
+                <v-btn
+                  v-if="manifestMissing"
+                  v-tooltip="'Manifest not found for this image and tag'"
+                  class="editor-control"
+                  icon
+                  color="warning"
+                >
+                  <v-icon>mdi-alert</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="is_reset_editing_permissions_visible"
+                  v-tooltip="'Reset to default permissions'"
+                  class="editor-control"
+                  icon
+                  color="white"
+                  @click="resetToDefaultPermissions"
+                >
+                  <v-icon>mdi-restore</v-icon>
+                </v-btn>
+              </template>
+            </json-editor>
+            <v-overlay
+              :value="permissionsLoading"
+              absolute
+            >
+              <spinning-logo
+                size="100"
+                subtitle="Loading permissions"
+              />
+            </v-overlay>
+          </div>
         </v-form>
       </v-card-text>
       <v-card-actions
@@ -89,28 +108,47 @@
         <v-btn
           color="primary"
           class="mr-4"
-          :disabled="!valid_permissions"
+          :disabled="!valid_permissions || permissionsLoading || permissionsFetchPending"
           @click="saveExtension"
         >
           {{ is_editing ? 'Save' : (is_from_upload ? 'Install' : 'Create') }}
         </v-btn>
       </v-card-actions>
     </v-card>
+    <warning-dialog
+      v-model="showManifestWarning"
+      title="Manifest not found"
+      :message="noManifestWarningMessage"
+      confirm-label="Continue anyway"
+      @confirm="commitExtension"
+    />
   </v-dialog>
 </template>
 
 <script lang="ts">
+import { isEqual } from 'lodash'
 import Vue, { PropType } from 'vue'
 
 import JsonEditor from '@/components/common/JsonEditor.vue'
+import SpinningLogo from '@/components/common/SpinningLogo.vue'
+import WarningDialog from '@/components/common/WarningDialog.vue'
+import { fetchExtensionPermissions } from '@/components/kraken/KrakenManager'
 import { copyToClipboard } from '@/cosmos'
+import Notifier from '@/libs/notifier'
+import { kraken_service } from '@/types/frontend_services'
 import { InstalledExtensionData } from '@/types/kraken'
 import { VForm } from '@/types/vuetify'
+
+// The image and tag are still being typed. A shorter wait starts a lookup on every pause.
+const PERMISSION_FETCH_DEBOUNCE_MS = 1000
+const notifier = new Notifier(kraken_service)
 
 export default Vue.extend({
   name: 'ExtensionCreationModal',
   components: {
     JsonEditor,
+    SpinningLogo,
+    WarningDialog,
   },
   model: {
     prop: 'extension',
@@ -139,6 +177,13 @@ export default Vue.extend({
       } as InstalledExtensionData & { editing: boolean },
       new_permissions: JSON.parse(this.extension?.permissions ?? '{}'),
       copySuccess: false,
+      permissionsRequestId: 0,
+      permissionsLoading: false,
+      permissionsFetchPending: false,
+      manifestMissing: false,
+      showManifestWarning: false,
+      permissionsFetchSuppressedFor: null as string | null,
+      permissionsFetchTimeout: undefined as ReturnType<typeof setTimeout> | undefined,
     }
   },
   computed: {
@@ -152,18 +197,21 @@ export default Vue.extend({
       return Boolean(this.tempTag)
     },
     is_reset_editing_permissions_visible() {
-      return this.new_permissions !== this.extension?.permissions
+      return !this.samePermissions(this.new_permissions, this.new_extension?.permissions)
     },
     valid_permissions() {
       return this.new_permissions
+    },
+    noManifestWarningMessage(): string {
+      return (
+        'No manifest was found for this image and tag, so the image might be missing. '
+          + 'Double-check the name and tag before continuing.'
+      )
     },
   },
   watch: {
     new_extension() {
       this.$emit('input', this.new_extension)
-    },
-    new_permissions(new_permissions: string) {
-      this.new_extension.user_permissions = JSON.stringify(new_permissions)
     },
     extension() {
       if (this.extension) {
@@ -181,10 +229,97 @@ export default Vue.extend({
       this.populatePermissions()
     },
   },
+  created() {
+    // Paste sets the image and then the tag. One watcher sees both before scheduling a lookup.
+    this.$watch(
+      () => [this.new_extension.docker, this.new_extension.tag],
+      this.schedulePermissionsFetch,
+      { deep: false },
+    )
+  },
   mounted() {
     this.populatePermissions()
   },
+  beforeDestroy() {
+    clearTimeout(this.permissionsFetchTimeout)
+    this.permissionsRequestId += 1
+  },
   methods: {
+    schedulePermissionsFetch(): void {
+      clearTimeout(this.permissionsFetchTimeout)
+      const requestId = this.permissionsRequestId + 1
+      this.permissionsRequestId = requestId
+      this.permissionsFetchPending = false
+
+      if (this.is_editing || this.is_from_upload) {
+        this.permissionsLoading = false
+        return
+      }
+
+      const docker = this.new_extension.docker?.trim()
+      const tag = this.new_extension.tag?.trim()
+      if (!docker || !tag || this.validate_imagename(docker) !== true || this.validate_tag(tag) !== true) {
+        this.permissionsLoading = false
+        return
+      }
+      if (this.permissionsFetchSuppressedFor === `${docker}:${tag}`) {
+        this.permissionsFetchSuppressedFor = null
+        this.permissionsLoading = false
+        return
+      }
+
+      this.permissionsLoading = false
+      this.permissionsFetchPending = true
+      this.permissionsFetchTimeout = setTimeout(() => {
+        this.permissionsFetchPending = false
+        this.manifestMissing = false
+        this.permissionsLoading = true
+        this.fetchRemotePermissions(requestId, docker, tag)
+      }, PERMISSION_FETCH_DEBOUNCE_MS)
+    },
+    async fetchRemotePermissions(requestId: number, docker: string, tag: string): Promise<void> {
+      try {
+        const permissions = await fetchExtensionPermissions(docker, tag)
+        if (requestId !== this.permissionsRequestId) {
+          return
+        }
+        this.new_extension.permissions = JSON.stringify(permissions)
+        this.new_permissions = permissions
+      } catch (error) {
+        if (requestId !== this.permissionsRequestId) {
+          return
+        }
+        this.manifestMissing = this.isManifestMissing(error)
+        if (this.manifestMissing) {
+          this.new_extension.permissions = '{}'
+          this.new_permissions = {}
+        } else {
+          notifier.pushWarning(
+            'EXTENSION_PERMISSIONS_FETCH_FAIL',
+            this.permissionsFailureMessage(docker, tag, error),
+            true,
+          )
+        }
+      } finally {
+        if (requestId === this.permissionsRequestId) {
+          this.permissionsLoading = false
+        }
+      }
+    },
+    isManifestMissing(error: unknown): boolean {
+      const { response } = error as { response?: { status?: number } }
+      return response?.status === 404
+    },
+    permissionsFailureMessage(docker: string, tag: string, error: unknown): string {
+      const detail = (error as { response?: { data?: { detail?: unknown } } }).response?.data?.detail
+      let reason = 'The registry lookup failed.'
+      if (typeof detail === 'string' && detail) {
+        reason = detail
+      } else if (error instanceof Error && error.message) {
+        reason = error.message
+      }
+      return `Could not read permissions for ${docker}:${tag}: ${reason}`
+    },
     populatePermissions() {
       const user_permissions = JSON.parse(this.extension?.user_permissions || '{}')
       if (Object.keys(user_permissions).length > 0) {
@@ -204,10 +339,15 @@ export default Vue.extend({
       } as InstalledExtensionData & { editing: boolean }
       this.$emit('closed')
     },
-    resetToDefaultPermissions() {
-      if (this.new_extension) {
-        this.new_permissions = JSON.parse(this.extension?.permissions ?? '{}')
+    samePermissions(value: unknown, defaults: string | undefined): boolean {
+      try {
+        return isEqual(value, JSON.parse(defaults || '{}'))
+      } catch {
+        return false
       }
+    },
+    resetToDefaultPermissions() {
+      this.new_permissions = JSON.parse(this.new_extension?.permissions || '{}')
     },
     validate_identifier(input: string): (true | string) {
       // Identifiers should be two words separated by a period
@@ -278,13 +418,29 @@ export default Vue.extend({
       return true
     },
     async saveExtension(): Promise<void> {
+      if (!this.prepareExtension()) {
+        return
+      }
+      if (this.manifestMissing) {
+        this.showManifestWarning = true
+        return
+      }
+      this.commitExtension()
+    },
+    prepareExtension(): boolean {
       if (this.new_permissions) {
-        this.new_extension.user_permissions = JSON.stringify(this.new_permissions)
+        this.new_extension.user_permissions = this.samePermissions(
+          this.new_permissions,
+          this.new_extension.permissions,
+        )
+          ? ''
+          : JSON.stringify(this.new_permissions)
       }
       this.new_extension.name = this.new_extension.name.trim()
-      if (this.form.validate() === true) {
-        this.$emit('extensionChange', this.new_extension)
-      }
+      return this.form.validate() === true
+    },
+    commitExtension(): void {
+      this.$emit('extensionChange', this.new_extension)
     },
     showDialog(state: boolean) {
       if (this.form.validate() === true) {
@@ -344,12 +500,14 @@ export default Vue.extend({
             this.new_extension = {} as InstalledExtensionData & { editing: boolean }
           }
 
+          // The image watcher fetches permissions, while a pasted config already has them
+          this.permissionsFetchSuppressedFor = config.permissions
+            ? `${config.docker.trim()}:${config.tag.trim()}`
+            : null
           this.new_extension.identifier = config.identifier
           this.new_extension.name = config.name
           this.new_extension.docker = config.docker
           this.new_extension.tag = config.tag
-
-          // Handle permissions if present
           if (config.permissions) {
             this.new_extension.permissions = typeof config.permissions === 'string'
               ? config.permissions
@@ -365,3 +523,14 @@ export default Vue.extend({
   },
 })
 </script>
+
+<style scoped>
+.permissions-editor {
+  position: relative;
+}
+
+.permissions-editor-surface {
+  position: relative;
+  z-index: 0;
+}
+</style>

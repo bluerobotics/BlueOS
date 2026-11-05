@@ -318,11 +318,13 @@ export default Vue.extend({
         return
       }
 
+      const custom = this.custom_permissions[this.selected_version]
+      const matchesManifest = JSON.stringify(custom) === JSON.stringify(this.selected?.permissions)
       this.$emit(
         'clicked',
         this.extension.identifier,
         this.selected_version,
-        JSON.stringify(this.custom_permissions[this.selected_version]),
+        matchesManifest ? undefined : JSON.stringify(custom),
         this.is_installed,
       )
     },
