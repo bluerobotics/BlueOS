@@ -108,6 +108,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -152,11 +153,11 @@ export default Vue.extend({
     },
     title: {
       type: String,
-      default: 'Servo Range Configuration',
+      default: t`Servo Range Configuration`,
     },
     tooltip: {
       type: String,
-      default: 'Adjust the minimum, trim, and maximum PWM values for this servo',
+      default: t`Adjust the minimum, trim, and maximum PWM values for this servo`,
     },
   },
   data() {
