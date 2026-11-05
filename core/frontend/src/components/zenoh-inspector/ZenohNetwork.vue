@@ -4,7 +4,7 @@
       <v-col>
         <v-card>
           <v-card-title>
-            Zenoh Network
+            {{ t`Zenoh Network` }}
             <v-spacer />
             <v-btn
               icon
@@ -18,24 +18,24 @@
             <v-row class="legend-container">
               <v-col cols="12">
                 <div class="legend-title">
-                  Node Types:
+                  {{ t`Node Types:` }}
                 </div>
                 <div class="legend-items">
                   <div class="legend-item">
                     <div class="legend-color client" />
-                    <span>Client ({{ getNodeCount('client') }})</span>
+                    <span>{{ t`Client (${getNodeCount('client')})` }}</span>
                   </div>
                   <div class="legend-item">
                     <div class="legend-color router" />
-                    <span>Router ({{ getNodeCount('router') }})</span>
+                    <span>{{ t`Router (${getNodeCount('router')})` }}</span>
                   </div>
                   <div class="legend-item">
                     <div class="legend-color peer" />
-                    <span>Peer ({{ getNodeCount('peer') }})</span>
+                    <span>{{ t`Peer (${getNodeCount('peer')})` }}</span>
                   </div>
                   <div class="legend-item">
                     <div class="legend-color error" />
-                    <span>Error ({{ getNodeCount('error') }})</span>
+                    <span>{{ t`Error (${getNodeCount('error')})` }}</span>
                   </div>
                 </div>
               </v-col>
