@@ -8,7 +8,7 @@
     <v-card
       height="fit-content"
     >
-      <v-card-title> Device Controls </v-card-title>
+      <v-card-title> {{ t`Device Controls` }} </v-card-title>
       <v-layout
         row
         no-gutters
@@ -69,19 +69,19 @@
                 color="primary"
                 @click="showDialog(false)"
               >
-                Close
+                {{ t`Close` }}
               </v-btn>
               <v-spacer />
               <v-btn
                 color="primary"
                 @click="restoreDefaultValues"
               >
-                Restore defaults
+                {{ t`Restore defaults` }}
               </v-btn>
             </div>
           </v-container>
           <v-container v-else>
-            No controllers available for this device.
+            {{ t`No controllers available for this device.` }}
           </v-container>
         </v-card-text>
       </v-layout>
