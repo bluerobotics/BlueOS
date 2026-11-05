@@ -30,18 +30,18 @@
     >
       <v-container>
         <div class="justify-center">
-          It looks like you are reaching BlueOS via its wi-fi network. This can result in degraded performance.
+          {{ t`It looks like you are reaching BlueOS via its wi-fi network. This can result in degraded performance.` }}
           <span
             v-if="available_wired_domain()"
             class="mt-3"
             style="display: block;"
           >
-            A wired connection is available:
+            {{ t`A wired connection is available:` }}
             <v-btn
               small
               :href="`http://${available_wired_domain()}.local`"
             >
-              Switch to {{ available_wired_domain() }}.local
+              {{ t`Switch to ${available_wired_domain()}.local` }}
             </v-btn>
           </span>
         </div>
