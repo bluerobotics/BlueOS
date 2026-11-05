@@ -1,42 +1,42 @@
 <template>
   <div class="main-container">
     <v-card>
-      <v-card-title> Lights 1 </v-card-title>
+      <v-card-title> {{ t`Lights 1` }} </v-card-title>
       <v-card-text>
-        The output pin for the primary set of lights:
+        {{ t`The output pin for the primary set of lights:` }}
         <v-select
           v-model="lights1_new_param"
           :items="servo_params"
           :item-text="friendlyName"
           :item-value="'name'"
-          label="Lights 1"
+          :label="t`Lights 1`"
         />
       </v-card-text>
     </v-card>
     <v-card>
-      <v-card-title> Lights 2 </v-card-title>
+      <v-card-title> {{ t`Lights 2` }} </v-card-title>
       <v-card-text>
-        The output pin for the secondary set of lights:
+        {{ t`The output pin for the secondary set of lights:` }}
         <v-select
           v-model="lights2_new_param"
           :items="servo_params"
           :item-text="friendlyName"
           :item-value="'name'"
-          label="Lights 2"
+          :label="t`Lights 2`"
         />
       </v-card-text>
     </v-card>
     <v-card>
-      <v-card-title> Joystick steps </v-card-title>
+      <v-card-title> {{ t`Joystick steps` }} </v-card-title>
       <v-card-text>
-        Number of button presses to step from 0% to 100% brightness:
+        {{ t`Number of button presses to step from 0% to 100% brightness:` }}
         <br>
-        {{ light_steps?.value }} steps result in a {{ (100 / light_steps?.value).toFixed(1) }}%
-        increase per button press.
+        <!-- eslint-disable-next-line max-len -->
+        {{ t`${light_steps?.value} steps result in a ${(100 / light_steps?.value).toFixed(1)}% increase per button press.` }}
         <v-text-field
           ref="steps_input"
           v-model="steps_new_value"
-          label="Joystick steps"
+          :label="t`Joystick steps`"
           type="number"
           @input="setSteps"
         />
