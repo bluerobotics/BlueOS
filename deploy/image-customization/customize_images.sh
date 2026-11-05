@@ -7,11 +7,11 @@ usage() {
     echo "Usage: $0 <image_path> <vehicle_type>"
     echo ""
     echo "Arguments:"
-    echo "  image_path   - Path to the BlueOS .img file (e.g., BlueOS-raspberry-linux-arm64-v8-bookworm-pi5.img)"
+    echo "  image_path   - Path to the BlueOS .img file (e.g., BlueOS-raspberry-linux-arm64-v8-trixie.img)"
     echo "  vehicle_type - Vehicle type for overlay selection (e.g., bb120, bluerov2), this will be used to select the overlay directory"
     echo ""
     echo "Example:"
-    echo "  $0 BlueOS-raspberry-linux-arm64-v8-bookworm-pi5.img boat"
+    echo "  $0 BlueOS-raspberry-linux-arm64-v8-trixie.img boat"
     exit 1
 }
 

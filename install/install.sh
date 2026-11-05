@@ -73,6 +73,12 @@ ARCHITECTURE="$(uname -m)"
     exit 1
 )
 
+# Raspberry Pi OS Trixie is supported in 64 bits only
+grep -q VERSION_CODENAME=trixie /etc/os-release && [ "$ARCHITECTURE" != "aarch64" ] && (
+    echo "Raspberry Pi OS Trixie is only supported in its 64-bit (aarch64) version, found: $ARCHITECTURE"
+    exit 1
+)
+
 # Check if the script is running as root
 [[ $EUID != 0 ]] && echo "Script must run as root."  && exit 1
 
@@ -86,7 +92,7 @@ curl -fsSL --silent $ROOT/install/install.sh 1> /dev/null || (
 # and the board lines must stay above it or the first boot navigator patch reorders them and reboots.
 command -v raspi-config && (
     echo "Running in a Raspberry."
-    if [ $(lsb_release -sc) == "bullseye" ];
+    if grep -q VERSION_CODENAME=bullseye /etc/os-release;
     then
         raspi-config nonint get_legacy 1> /dev/null && (
             echo "Enabling legacy camera support."
@@ -158,8 +164,11 @@ echo "Available space after cleanup: ${AVAILABLE_SPACE_MB}MB"
 # Check iptables
 iptables -v 2>&1 | grep -q "Failed to initialize nft" && (
     echo "iptables command failed. Be sure to fix it before running again."
-    echo "Note: If you are running ubuntu or debian, maybe the following command will fix the issue:"
-    echo "$ sudo update-alternatives --set iptables /usr/sbin/iptables-legacy"
+    # Trixie and Docker both use nftables, falling back to the legacy backend there is not an option
+    grep -q VERSION_CODENAME=trixie /etc/os-release || {
+        echo "Note: If you are running ubuntu or debian, maybe the following command will fix the issue:"
+        echo "$ sudo update-alternatives --set iptables /usr/sbin/iptables-legacy"
+    }
     exit 1
 )
 

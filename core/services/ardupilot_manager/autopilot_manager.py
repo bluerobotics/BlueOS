@@ -1,6 +1,8 @@
 import asyncio
 import os
 import pathlib
+import shlex
+import shutil
 import subprocess
 import time
 from typing import Any, List, Optional, Set
@@ -36,6 +38,10 @@ from typedefs import (
     SITLFrame,
     Vehicle,
 )
+
+
+def soc_node_needs_alias(device_tree: pathlib.Path) -> bool:
+    return not (device_tree / "soc").exists() and any(device_tree.glob("soc@*"))
 
 
 class AutoPilotManager(metaclass=Singleton):
@@ -290,11 +296,11 @@ class AutoPilotManager(metaclass=Singleton):
     def get_serials(self) -> List[Serial]:
         # The mapping of serial ports works as in the following table:
         #
-        # |    ArduSub   |       Navigator         |
-        # | -C = Serial1 | Serial1 => /dev/ttyS0   |
-        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 |
-        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 |
-        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
+        # |    ArduSub   |   Navigator (Bullseye)  | Navigator (Bookworm, Trixie) |
+        # | -C = Serial1 | Serial1 => /dev/ttyS0   | Serial1 => /dev/ttyS0        |
+        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 | Serial3 => /dev/ttyAMA3      |
+        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 | Serial4 => /dev/ttyAMA4      |
+        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 | Serial5 => /dev/ttyAMA5      |
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
         serials = self._settings_manager.settings.serials
@@ -352,11 +358,11 @@ class AutoPilotManager(metaclass=Singleton):
         #
         # The mapping of serial ports works as in the following table:
         #
-        # |    ArduSub   |       Navigator         |
-        # | -C = Serial1 | Serial1 => /dev/ttyS0   |
-        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 |
-        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 |
-        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 |
+        # |    ArduSub   |   Navigator (Bullseye)  | Navigator (Bookworm, Trixie) |
+        # | -C = Serial1 | Serial1 => /dev/ttyS0   | Serial1 => /dev/ttyS0        |
+        # | -B = Serial3 | Serial3 => /dev/ttyAMA1 | Serial3 => /dev/ttyAMA3      |
+        # | -E = Serial4 | Serial4 => /dev/ttyAMA2 | Serial4 => /dev/ttyAMA4      |
+        # | -F = Serial5 | Serial5 => /dev/ttyAMA3 | Serial5 => /dev/ttyAMA5      |
         #
         # The first column comes from https://ardupilot.org/dev/docs/sitl-serial-mapping.html
 
@@ -372,6 +378,18 @@ class AutoPilotManager(metaclass=Singleton):
         if self.firmware_has_debug_symbols(firmware_path):
             logger.info("Debug symbols found, launching with gdb server...")
             command_line = f"gdbserver 0.0.0.0:5555 {command_line}"
+
+        device_tree = pathlib.Path("/proc/device-tree")
+        if soc_node_needs_alias(device_tree):
+            # ArduPilot only looks for a device tree node named exactly "soc" to identify a Raspberry Pi 5, and recent
+            # kernels only have "soc@107c000000". It is shown through a private mount, nothing else sees the change.
+            device_tree_copy = pathlib.Path("/tmp/ardupilot_device_tree")
+            shutil.rmtree(device_tree_copy, ignore_errors=True)
+            copy = await asyncio.create_subprocess_exec("cp", "-a", "/sys/firmware/devicetree/base/.", device_tree_copy)
+            await copy.wait()
+            (device_tree_copy / "soc").symlink_to(next(device_tree.glob("soc@*")).name)
+            mount_and_run = f"mount --bind {device_tree_copy} /sys/firmware/devicetree/base && exec {command_line}"
+            command_line = f"unshare -m sh -c {shlex.quote(mount_and_run)}"
 
         logger.info(f"Using command line: '{command_line}'")
         self.ardupilot_subprocess = subprocess.Popen(

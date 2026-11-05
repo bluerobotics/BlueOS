@@ -171,10 +171,10 @@ class AbstractNetworkHandler:
                 continue
 
 
-class BookwormHandler(AbstractNetworkHandler):
+class NetworkManagerHandler(AbstractNetworkHandler):
     """
     While this class requires NetworkManager, it does NOT use NetworkManager for controlling the interfaces.
-    Instead it uses the Bookworm-specific NetworkManagerSettings API to remove the connections.
+    Instead it uses the NetworkManagerSettings API to remove the connections.
     It then relies on IPRoute, dhclient, and dnsmasq to manage the interfaces.
     """
 
@@ -365,7 +365,7 @@ class NetworkHandlerDetector:
         pass
 
     async def getHandler(self) -> AbstractNetworkHandler:
-        for candidate in AbstractNetworkHandler.__subclasses__():
+        for candidate in (NetworkManagerHandler, DHCPCD):
             if await candidate().detect():
                 logger.info(f"Detected network handler: {candidate.__name__}")
                 return candidate()
