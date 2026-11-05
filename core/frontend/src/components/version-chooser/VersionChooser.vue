@@ -18,9 +18,9 @@
         persistent
       >
         <v-card>
-          <v-card-title>Commit running version</v-card-title>
+          <v-card-title>{{ t`Commit running version` }}</v-card-title>
           <v-card-subtitle class="pt-2">
-            Saves the running container's filesystem as a new image, layered on top of
+            {{ t`Saves the running container's filesystem as a new image, layered on top of` }}
             <code>{{ commit_parent }}</code>.
           </v-card-subtitle>
           <v-card-text>
@@ -29,7 +29,7 @@
               text
               type="info"
             >
-              Settings, extensions and user data are kept outside the container, so they are not committed.
+              {{ t`Settings, extensions and user data are kept outside the container, so they are not committed.` }}
             </v-alert>
             <v-form
               ref="form"
@@ -37,14 +37,14 @@
             >
               <v-text-field
                 v-model="commit_target.repository"
-                label="Repository"
-                hint="Has to end in /blueos-core to be listed as a version"
+                :label="t`Repository`"
+                :hint="t`Has to end in /blueos-core to be listed as a version`"
                 persistent-hint
                 :rules="[isValidCommitRepository]"
               />
               <v-text-field
                 v-model="commit_target.tag"
-                label="Tag"
+                :label="t`Tag`"
                 :rules="[isValidCommitTag]"
               />
             </v-form>
@@ -54,14 +54,14 @@
               color="primary"
               :disabled="committing"
               @click="show_commit_dialog = false"
-              v-text="'Cancel'"
+              v-text="t`Cancel`"
             />
             <v-spacer />
             <v-btn
               color="success"
               :loading="committing"
               @click="commit()"
-              v-text="'Commit'"
+              v-text="t`Commit`"
             />
           </v-card-actions>
         </v-card>
@@ -77,12 +77,11 @@
           type="info"
           elevation="2"
         >
-          Turn on Pirate mode to view all available BlueOS versions, including previous installs
-          stored onboard, as well as past and current stable, beta, and development releases
-          downloadable from Blue Robotics.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`Turn on Pirate mode to view all available BlueOS versions, including previous installs stored onboard, as well as past and current stable, beta, and development releases downloadable from ${'Blue Robotics'}.` }}
         </v-alert>
 
-        <h2>Current Version</h2>
+        <h2>{{ t`Current Version` }}</h2>
         <version-card
           v-if="current_version"
           :image="current_version"
@@ -114,7 +113,7 @@
               :disabled="loading_images"
               @click="loadAvailableVersions"
             >
-              Retry
+              {{ t`Retry` }}
             </v-btn>
           </div>
         </v-alert>
@@ -125,7 +124,7 @@
         max-width="900"
         class="mx-auto my-12 pa-4"
       >
-        <h2>Local Versions</h2>
+        <h2>{{ t`Local Versions` }}</h2>
         <version-card
           v-for="({ version, depth }, index) in nested_local_versions"
           :key="`${version.sha}-${index}-local`"
@@ -148,7 +147,7 @@
         <spinning-logo
           v-if="local_versions.loading"
           size="15%"
-          subtitle="Loading local images..."
+          :subtitle="t`Loading local images...`"
         />
       </v-card>
       <v-card
@@ -157,12 +156,12 @@
         class="mx-auto my-12 pa-4"
       >
         <div class="d-flex justify-space-between pb-3">
-          <h2>Remote Versions</h2>
+          <h2>{{ t`Remote Versions` }}</h2>
           <v-btn
             color="primary"
             @click="show_docker_login_dialog = true"
           >
-            Docker Login
+            {{ t`Docker Login` }}
           </v-btn>
         </div>
         <v-form
@@ -171,7 +170,7 @@
           <v-text-field
             v-model="selected_image"
             name="BlueOS Remote Repository"
-            label="Remote repository"
+            :label="t`Remote repository`"
             :append-icon="selected_image != default_repository ? 'mdi-restore' : undefined"
             @click:append="resetToDefaultRepository()"
           />
@@ -179,7 +178,7 @@
         <v-text-field
           v-if="showRemoteSearch"
           v-model="search"
-          label="Search images"
+          :label="t`Search images`"
           prepend-inner-icon="mdi-magnify"
           clearable
         />
@@ -199,23 +198,17 @@
               :disabled="loading_images"
               @click="loadAvailableVersions"
             >
-              Retry
+              {{ t`Retry` }}
             </v-btn>
           </div>
           <br>
-          You can download BlueOS versions (`BlueOS-core-docker-image` files) directly from the Assets in
-          <a
-            href="https://github.com/bluerobotics/BlueOS/releases"
-            target="_blank"
-            class="white--text"
-            rel="noopener noreferrer"
-          >
-            GitHub Releases</a> and upload them using the "Manual Upload" section below.
+          <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+          <span v-html="t`You can download BlueOS versions (\`BlueOS-core-docker-image\` files) directly from the Assets in <a href='https://github.com/bluerobotics/BlueOS/releases' target='_blank' class='white--text' rel='noopener noreferrer'>GitHub Releases</a> and upload them using the &quot;Manual Upload&quot; section below.`" />
         </v-alert>
         <spinning-logo
           v-if="loading_images"
           size="15%"
-          subtitle="Loading remote images..."
+          :subtitle="t`Loading remote images...`"
         />
         <version-card
           v-for="(image, index) in paginatedComponents"
@@ -244,7 +237,7 @@
         class="mx-auto my-12 pa-4"
       >
         <h2>
-          Manual Upload
+          {{ t`Manual Upload` }}
           <v-tooltip top>
             <template #activator="{ on }">
               <v-icon
@@ -255,24 +248,13 @@
               </v-icon>
             </template>
             <span>
-              When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)
+              <!-- eslint-disable-next-line max-len -->
+              {{ t`When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)` }}
             </span>
           </v-tooltip>
         </h2>
-        Use this to upload a .tar docker image. These can be downloaded from the BlueOS
-        <a
-          href="https://github.com/bluerobotics/BlueOS/releases"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Releases</a> Assets, or
-        <a
-          href="https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          CI</a>
-        Artifacts (GitHub account required), or generated locally using <code>docker save</code>.
+        <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+        <span v-html="t`Use this to upload a .tar docker image. These can be downloaded from the BlueOS <a href='https://github.com/bluerobotics/BlueOS/releases' target='_blank' rel='noopener noreferrer'>Releases</a> Assets, or <a href='https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml' target='_blank' rel='noopener noreferrer'>CI</a> Artifacts (GitHub account required), or generated locally using <code>docker save</code>.`" />
         <v-file-input
           v-if="!disable_upload_controls"
           id="file"
@@ -280,7 +262,7 @@
           accept=".tar"
           :rules="[isFileInputNotEmpty]"
           :error-messages="file_input_error"
-          label="File input"
+          :label="t`File input`"
         />
         <v-progress-linear
           v-if="disable_upload_controls && upload_percentage !== 100"
@@ -292,7 +274,7 @@
           color="primary"
           class="mr-2 mb-4 mt-1"
           @click="validateInputFileForm() && upload()"
-          v-text="'Upload'"
+          v-text="t`Upload`"
         />
 
         <v-alert
@@ -302,11 +284,11 @@
           type="info"
           elevation="2"
         >
-          Decompressing file, this usually takes up to one minute, please stand by...
+          {{ t`Decompressing file, this usually takes up to one minute, please stand by...` }}
           <spinning-logo
             v-if="upload_percentage == 100"
             size="15%"
-            subtitle="Decompressing file..."
+            :subtitle="t`Decompressing file...`"
           />
         </v-alert>
       </v-card>
@@ -329,10 +311,10 @@
     />
     <warning-dialog
       v-model="show_restart_warning"
-      title="BlueOS is taking too long to restart"
-      message="The update may have failed or BlueOS is still starting up. Do you want to reload the page or skip?"
-      confirm-label="Reload page"
-      cancel-label="Skip"
+      :title="t`BlueOS is taking too long to restart`"
+      :message="t`The update may have failed or BlueOS is still starting up. Do you want to reload the page or skip?`"
+      :confirm-label="t`Reload page`"
+      :cancel-label="t`Skip`"
       confirm-color="primary"
       persistent
       @confirm="reloadPage"
@@ -343,7 +325,7 @@
     >
       <spinning-logo
         size="100%"
-        subtitle="Switching to new core..."
+        :subtitle="t`Switching to new core...`"
       />
     </v-overlay>
   </div>
