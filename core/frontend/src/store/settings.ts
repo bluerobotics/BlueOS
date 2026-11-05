@@ -4,10 +4,10 @@ import {
 } from 'vuex-module-decorators'
 
 import store from '@/store'
+import bag from '@/store/bag'
 import beacon from '@/store/beacon'
 import { castString } from '@/utils/helper_functions'
 import { DynamicModule as Module } from '@/utils/vuex'
-import bag from '@/store/bag'
 
 @Module({
   dynamic: true,
@@ -32,6 +32,8 @@ class SettingsStore extends VuexModule {
   user_top_widgets = [] as string[]
 
   skip_untested_firmware_warning = false
+
+  language = 'en'
 
   @Mutation
   setDarkTheme(value: boolean): void {
