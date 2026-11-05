@@ -8,39 +8,39 @@
             :parameter="default_parameter"
             :off-value="0"
             :on-value="1"
-            label="Startup State"
+            :label="t`Startup State`"
           />
           <parameter-switch
             v-if="inverted_parameter"
             :parameter="inverted_parameter"
             :off-value="0"
             :on-value="1"
-            label="Invert Output"
+            :label="t`Invert Output`"
           />
         </v-col>
         <v-col cols="6">
           <v-row>
             <v-btn
-              v-tooltip="'Turn relay on'"
+              v-tooltip="t`Turn relay on`"
               class="ma-4"
               @click="setRelay(1)"
             >
               <v-icon small left>
                 mdi-power
               </v-icon>
-              Relay On
+              {{ t`Relay On` }}
             </v-btn>
           </v-row>
           <v-row>
             <v-btn
-              v-tooltip="'Turn relay off'"
+              v-tooltip="t`Turn relay off`"
               class="ma-4"
               @click="setRelay(0)"
             >
               <v-icon small left>
                 mdi-power-off
               </v-icon>
-              Relay Off
+              {{ t`Relay Off` }}
             </v-btn>
           </v-row>
         </v-col>
