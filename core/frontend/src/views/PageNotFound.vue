@@ -7,10 +7,10 @@
     />
     <div
       class="text-h6"
-      :v-text="'Vehicle not found.'"
+      :v-text="t`Vehicle not found.`"
     />
     <p class="text-h6 text-center ma-4">
-      Page not found!
+      {{ t`Page not found!` }}
     </p>
   </div>
 </template>
