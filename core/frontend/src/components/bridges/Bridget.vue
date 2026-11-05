@@ -26,7 +26,7 @@
     <v-container v-else-if="updating_bridges">
       <spinning-logo
         size="30%"
-        subtitle="Fetching available bridges..."
+        :subtitle="t`Fetching available bridges...`"
       />
     </v-container>
     <v-container
@@ -34,7 +34,7 @@
       class="text-center"
     >
       <p class="text-h6">
-        No bridges available. You can add a serial to UDP bridge by clicking the + symbol in the corner.
+        {{ t`No bridges available. You can add a serial to UDP bridge by clicking the + symbol in the corner.` }}
       </p>
     </v-container>
 
