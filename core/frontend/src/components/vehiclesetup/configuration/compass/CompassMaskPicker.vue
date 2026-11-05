@@ -2,7 +2,7 @@
   <div>
     <v-card class="mt-4">
       <v-card-title>
-        <h4>Select compasses to calibrate </h4>
+        <h4>{{ t`Select compasses to calibrate` }} </h4>
       </v-card-title>
       <v-card-text>
         <v-row>
