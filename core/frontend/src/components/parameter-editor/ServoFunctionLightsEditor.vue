@@ -2,7 +2,7 @@
   <div class="d-flex align-center">
     <v-row>
       <v-col cols="6">
-        <span class="text-h6">Joystick Steps</span>
+        <span class="text-h6">{{ t`Joystick Steps` }}</span>
       </v-col>
       <v-col cols="6">
         <inline-parameter-editor
