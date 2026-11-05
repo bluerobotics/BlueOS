@@ -8,7 +8,7 @@
       v-if="!gl_compatible && !iframe_loaded"
       class="full-overlay overlay"
       size="15%"
-      subtitle="Loading external application..."
+      :subtitle="t`Loading external application...`"
     />
     <canvas
       v-if="gl_compatible && !iframe_loaded"
