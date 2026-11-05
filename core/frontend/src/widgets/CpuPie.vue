@@ -3,7 +3,7 @@
     <v-card-text class="d-flex flex-row justify-space-around align-center flex-grow-1">
       <div class="d-flex flex-column align-center">
         <div class="text-caption mb-2">
-          CPU Usage
+          {{ t`CPU Usage` }}
         </div>
         <v-progress-circular
           :value="cpuUsage"
@@ -16,7 +16,7 @@
       </div>
       <div class="d-flex flex-column align-center">
         <div class="text-caption mb-2">
-          Memory Usage
+          {{ t`Memory Usage` }}
         </div>
         <v-progress-circular
           :value="memoryUsage"
@@ -29,7 +29,7 @@
       </div>
       <div class="d-flex flex-column align-center">
         <div class="text-caption mb-2">
-          Disk Usage
+          {{ t`Disk Usage` }}
         </div>
         <v-progress-circular
           :value="diskUsage"
