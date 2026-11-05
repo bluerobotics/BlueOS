@@ -12,13 +12,12 @@
       elevation="2"
       text
     >
-      Use Pirate Mode to show hidden pages and advanced settings.
-      Pirate powers should be used with care.
+      {{ t`Use Pirate Mode to show hidden pages and advanced settings. Pirate powers should be used with care.` }}
     </v-alert>
     <v-btn
       @click="togglePirateMode"
     >
-      {{ settings.is_pirate_mode ? "Disable Pirate Mode" : "Enable Pirate Mode" }}
+      {{ settings.is_pirate_mode ? t`Disable Pirate Mode` : t`Enable Pirate Mode` }}
     </v-btn>
   </v-card>
 </template>
