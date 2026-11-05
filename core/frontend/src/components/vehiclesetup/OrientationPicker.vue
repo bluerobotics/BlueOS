@@ -1,10 +1,10 @@
 <template>
   <div v-if="parameter">
     <v-card outline class="pa-5 mt-4 mr-2 mb-2">
-      <v-card-title>Board Orientation</v-card-title>
+      <v-card-title>{{ t`Board Orientation` }}</v-card-title>
       <div class="threejs-relative-container">
         <v-card class="orientation-selector-overlay">
-          <parameter-label :param="parameter" label="AHRS_ORIENTATION" />
+          <parameter-label :param="parameter" :label="t`AHRS_ORIENTATION`" />
           <v-select
             v-model="selectedRotation"
             :items="rotationsWithCustom"
