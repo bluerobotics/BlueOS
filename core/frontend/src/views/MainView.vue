@@ -13,20 +13,9 @@
         elevation="2"
         dismissible
       >
-        <h3>Welcome to BlueOS!</h3>
-        Before you start, we highly recommend <a
-          href="https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet"
-          target="_blank"
-        >
-          connecting to the internet
-        </a>
-        and performing a <a
-          href="https://blueos.cloud/docs/stable/usage/getting-started/#select-version"
-          target="_blank"
-        >
-          system update to the latest available BlueOS version
-        </a>
-        .
+        <h3>{{ t`Welcome to BlueOS!` }}</h3>
+        <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+        <span v-html="t`Before you start, we highly recommend <a href='https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet' target='_blank'>connecting to the internet</a> and performing a <a href='https://blueos.cloud/docs/stable/usage/getting-started/#select-version' target='_blank'>system update to the latest available BlueOS version</a>.`" />
       </v-alert>
       <self-health-test />
     </v-row>
@@ -88,6 +77,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
@@ -149,7 +139,7 @@ export default Vue.extend({
       return [
         {
           icon: 'mdi-view-dashboard',
-          title: 'Digital Twin',
+          title: t`Digital Twin`,
           route: '#',
           component: GenericViewer,
           size: {
@@ -167,7 +157,7 @@ export default Vue.extend({
         },
         {
           icon: 'mdi-cpu-64-bit',
-          title: 'System Information',
+          title: t`System Information`,
           component: CPUUsage,
           size: {
             w: 0.4,
@@ -179,7 +169,7 @@ export default Vue.extend({
         },
         {
           icon: 'mdi-ethernet',
-          title: 'Ethernet Status',
+          title: t`Ethernet Status`,
           component: Networking,
           size: {
             w: 0.1,
@@ -191,7 +181,7 @@ export default Vue.extend({
         },
         {
           icon: 'mdi-wifi',
-          title: 'WiFi Status',
+          title: t`WiFi Status`,
           component: Networking,
           size: {
             w: 0.1,
