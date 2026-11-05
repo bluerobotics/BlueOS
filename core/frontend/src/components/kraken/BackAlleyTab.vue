@@ -10,7 +10,7 @@
             filled
             clearable
             class="query-text-field"
-            placeholder="Search Extensions"
+            :placeholder="t`Search Extensions`"
             prepend-inner-icon="mdi-magnify"
           />
           <v-menu
@@ -30,7 +30,7 @@
                 v-bind="attrs"
                 v-on="on"
               >
-                Filters
+                {{ t`Filters` }}
                 <v-icon right>
                   mdi-chevron-down
                 </v-icon>
@@ -44,7 +44,7 @@
                 rounded
                 @click="clearFilters"
               >
-                Clear
+                {{ t`Clear` }}
                 <v-icon right>
                   mdi-trash-can
                 </v-icon>
@@ -56,7 +56,7 @@
                 <v-card-subtitle
                   class="pt-4 pb-0 filter-category-title"
                 >
-                  COMPANIES
+                  {{ t`COMPANIES` }}
                 </v-card-subtitle>
                 <div
                   v-if="extension_companies.length <= 8"
@@ -100,7 +100,7 @@
                 <v-card-subtitle
                   class="pt-4 pb-0 filter-category-title"
                 >
-                  CATEGORIES
+                  {{ t`CATEGORIES` }}
                 </v-card-subtitle>
                 <div
                   v-if="extension_types.length <= 8"
@@ -140,7 +140,7 @@
               </span>
               <span>
                 <v-card-subtitle class="pt-3 pb-0 filter-category-title">
-                  OTHER
+                  {{ t`OTHER` }}
                 </v-card-subtitle>
                 <v-card-text
                   class="mt-0 pt-1"
@@ -148,7 +148,7 @@
                 >
                   <v-checkbox
                     v-model="filter_by_installed"
-                    label="Installed"
+                    :label="t`Installed`"
                     class="pa-0 pl-3 ma-0"
                   />
                 </v-card-text>
@@ -173,7 +173,7 @@
                 v-bind="attrs"
                 v-on="on"
               >
-                Sort By
+                {{ t`Sort By` }}
                 <v-icon right>
                   mdi-chevron-down
                 </v-icon>
@@ -187,7 +187,7 @@
                 rounded
                 @click="sort_by = available_sorts[0]"
               >
-                Clear
+                {{ t`Clear` }}
                 <v-icon right>
                   mdi-trash-can
                 </v-icon>
@@ -195,7 +195,7 @@
               <v-divider />
               <span>
                 <v-card-subtitle class="pt-4 pb-0 filter-category-title">
-                  GENERIC
+                  {{ t`GENERIC` }}
                 </v-card-subtitle>
                 <v-radio-group v-model="sort_by" class="ma-0 pa-0">
                   <v-card-text
@@ -225,7 +225,7 @@
         <SpinningLogo
           v-if="manifest_is_loading"
           size="200"
-          subtitle="Fetching extension Manifest"
+          :subtitle="t`Fetching extension Manifest`"
         />
         <div v-else>
           <v-icon
@@ -236,13 +236,14 @@
             {{ internet_offline ? 'mdi-web-off' : 'mdi-alert-octagon' }}
           </v-icon>
           <v-card-title class="mb-5">
-            {{ internet_offline ? 'Vehicle is not connected to the internet.' : 'Failed to fetch extension manifest.' }}
+            {{ internet_offline ? t`Vehicle is not connected to the internet.`
+              : t`Failed to fetch extension manifest.` }}
           </v-card-title>
           <v-btn
             color="primary"
             @click="$emit('refresh')"
           >
-            Try Again
+            {{ t`Try Again` }}
           </v-btn>
         </div>
       </v-container>
@@ -267,7 +268,7 @@
         class="d-flex flex-column justify-center align-center mt-5"
       >
         <v-card-title class="mb-5">
-          No Extensions Available
+          {{ t`No Extensions Available` }}
         </v-card-title>
       </v-container>
     </v-card>
