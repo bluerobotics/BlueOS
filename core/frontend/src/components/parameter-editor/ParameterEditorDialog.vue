@@ -12,7 +12,7 @@
       <v-card-text>
         <v-container v-if="param">
           <v-row v-if="param.rebootRequired">
-            Reboot Required
+            {{ t`Reboot Required` }}
           </v-row>
           <v-row>
             {{ param.description }}
@@ -21,9 +21,7 @@
             v-if="param.range"
             class="pt-6"
           >
-            Min: {{ param.range.low }} Max:
-            {{ param.range.high }} Increment:
-            {{ param.increment ?? 0.01 }}
+            {{ t`Min: ${param.range.low} Max: ${param.range.high} Increment: ${param.increment ?? 0.01}` }}
           </v-row>
           <v-row>
             <v-col
@@ -49,23 +47,23 @@
           color="primary"
           @click="showDialog(false)"
         >
-          Cancel
+          {{ t`Cancel` }}
         </v-btn>
         <v-btn
           :disabled="param_value_not_changed || !is_form_valid"
           color="primary"
           @click="saveEditedParam()"
         >
-          Save
+          {{ t`Save` }}
         </v-btn>
         <v-btn
           v-if="param?.rebootRequired === true"
-          v-tooltip="'Reboot required for parameter to take effect'"
+          v-tooltip="t`Reboot required for parameter to take effect`"
           :disabled="param_value_not_changed || !is_form_valid"
           color="warning"
           @click="saveEditedParam(true)"
         >
-          Save and Reboot
+          {{ t`Save and Reboot` }}
         </v-btn>
       </v-card-actions>
     </v-card>
