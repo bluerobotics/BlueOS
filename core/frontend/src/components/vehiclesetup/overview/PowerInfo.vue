@@ -4,12 +4,12 @@
       <v-icon left>
         mdi-battery
       </v-icon>
-      Battery Monitor
+      {{ t`Battery Monitor` }}
     </v-card-title>
     <v-card-text>
       <div class="d-flex justify-space-between mb-3">
-        <span><b>Voltage:</b> {{ battery_voltage }} V</span>
-        <span><b>Current:</b> {{ battery_current }} A</span>
+        <span><b>{{ t`Voltage:` }}</b> {{ battery_voltage }} V</span>
+        <span><b>{{ t`Current:` }}</b> {{ battery_current }} A</span>
       </div>
 
       <div v-if="is_known_power_meter">
@@ -18,31 +18,35 @@
       <div
         v-else
       >
-        <span class="d-block"><b>Voltage Pin:</b> {{ printParam(batt_monitor.vPin) }}</span>
-        <span class="d-block"><b>Voltage Multiplier:</b> {{ printParam(batt_monitor.vMulti) }}</span>
-        <span class="d-block"><b>Current Pin:</b> {{ printParam(batt_monitor.aPin) }}</span>
-        <span class="d-block"><b>Current per Volt:</b> {{ printParam(batt_monitor.aPv) }}</span>
-        <span class="d-block"><b>Current Offset:</b> {{ printParam(batt_monitor.aOff) }}</span>
+        <span class="d-block"><b>{{ t`Voltage Pin:` }}</b> {{ printParam(batt_monitor.vPin) }}</span>
+        <span class="d-block"><b>{{ t`Voltage Multiplier:` }}</b> {{ printParam(batt_monitor.vMulti) }}</span>
+        <span class="d-block"><b>{{ t`Current Pin:` }}</b> {{ printParam(batt_monitor.aPin) }}</span>
+        <span class="d-block"><b>{{ t`Current per Volt:` }}</b> {{ printParam(batt_monitor.aPv) }}</span>
+        <span class="d-block"><b>{{ t`Current Offset:` }}</b> {{ printParam(batt_monitor.aOff) }}</span>
       </div>
-      <span class="d-block"><b>Low Voltage Failsafe:</b> {{ printParam(batt_failsafe_low.action) }}</span>
+      <span class="d-block"><b>{{ t`Low Voltage Failsafe:` }}</b> {{ printParam(batt_failsafe_low.action) }}</span>
       <span
         v-if="batt_failsafe_low.level?.value"
         class="d-block"
       >
-        <b>Low Voltage Level:</b> {{ printParam(batt_failsafe_low.level) }}
+        <b>{{ t`Low Voltage Level:` }}</b> {{ printParam(batt_failsafe_low.level) }}
       </span>
-      <span class="d-block"><b>Critical Voltage Failsafe:</b> {{ printParam(batt_failsafe_critical.action) }}</span>
+      <span class="d-block">
+        <b>{{ t`Critical Voltage Failsafe:` }}</b>
+        {{ printParam(batt_failsafe_critical.action) }}
+      </span>
       <span
         v-if="batt_failsafe_critical.level?.value"
         class="d-block"
       >
-        <b>Low Voltage Level:</b> {{ printParam(batt_failsafe_low.level) }}
+        <b>{{ t`Low Voltage Level:` }}</b> {{ printParam(batt_failsafe_low.level) }}
       </span>
     </v-card-text>
   </v-card>
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import autopilot_data from '@/store/autopilot'
@@ -53,7 +57,7 @@ import mavlink_store_get from '@/utils/mavlink'
 // based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 const power_modules_list = [
   {
-    text: 'Power Module 90A',
+    text: t`Power Module 90A`,
     voltPin: 2,
     currPin: 3,
     voltMult: 10.1,
@@ -61,7 +65,7 @@ const power_modules_list = [
     ampOffset: 0,
   },
   {
-    text: 'Power Module HV',
+    text: t`Power Module HV`,
     voltPin: 2,
     currPin: 3,
     voltMult: 12.02,
@@ -69,7 +73,7 @@ const power_modules_list = [
     ampOffset: 0,
   },
   {
-    text: '3DR Iris',
+    text: t`3DR Iris`,
     voltPin: 2,
     currPin: 3,
     voltMult: 12.02,
