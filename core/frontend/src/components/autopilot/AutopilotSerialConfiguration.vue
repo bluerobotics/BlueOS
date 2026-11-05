@@ -29,23 +29,23 @@
           />
           <table class="dense-table">
             <tr>
-              <th>Path</th>
+              <th>{{ t`Path` }}</th>
               <td>{{ data.item }}</td>
             </tr>
             <tr v-if="deviceInfo(data.item)?.DEVNAME">
-              <th>Device</th>
+              <th>{{ t`Device` }}</th>
               <td>{{ deviceInfo(data.item)?.DEVNAME }}</td>
             </tr>
             <tr v-if="deviceInfo(data.item)?.ID_MODEL">
-              <th>Model</th>
+              <th>{{ t`Model` }}</th>
               <td>{{ deviceInfo(data.item)?.ID_MODEL }}</td>
             </tr>
             <tr v-if="deviceInfo(data.item)?.ID_USB_DRIVER">
-              <th>Driver</th>
+              <th>{{ t`Driver` }}</th>
               <td>{{ deviceInfo(data.item)?.ID_USB_DRIVER }}</td>
             </tr>
             <tr v-if="deviceInfo(data.item)?.ID_SERIAL">
-              <th>Serial</th>
+              <th>{{ t`Serial` }}</th>
               <td>{{ deviceInfo(data.item)?.ID_SERIAL }}</td>
             </tr>
           </table>
@@ -79,7 +79,7 @@
         :loading="restarting"
         @click="saveAndRestart"
       >
-        Save and restart
+        {{ t`Save and restart` }}
       </v-btn>
     </v-card-actions>
   </v-card>
