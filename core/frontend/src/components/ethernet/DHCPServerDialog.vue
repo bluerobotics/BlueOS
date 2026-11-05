@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        DHCP Server for interface '{{ adapter.name }}'
+        {{ t`DHCP Server for interface '${adapter.name}'` }}
       </v-card-title>
 
       <v-card-text class="d-flex flex-column">
@@ -14,12 +14,12 @@
           v-model="selected_ip"
           required
           :items="available_static_ips"
-          label="Server Gateway"
+          :label="t`Server Gateway`"
         />
 
         <v-checkbox
           v-model="is_backup_server"
-          label="Backup Server"
+          :label="t`Backup Server`"
         />
         <v-alert
           type="info"
@@ -27,20 +27,20 @@
           text
           class="mt-0"
         >
-          When Backup Server is enabled, the DHCP server will stay inactive and only
-          start serving IP addresses if no other DHCP server is detected on the network.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`When Backup Server is enabled, the DHCP server will stay inactive and only start serving IP addresses if no other DHCP server is detected on the network.` }}
         </v-alert>
         <v-btn
           :disabled="!allow_enabling"
           color="primary"
           @click="addDHCPServer"
         >
-          Enable
+          {{ t`Enable` }}
         </v-btn>
       </v-card-text>
 
       <v-card-text v-if="enabling_dhcp">
-        Enabling DHCP server, please wait...
+        {{ t`Enabling DHCP server, please wait...` }}
         <v-progress-linear
           indeterminate
           color="primary"
