@@ -10,31 +10,31 @@
       <v-stepper v-model="step_number">
         <v-stepper-header>
           <v-stepper-step :complete="step_number > 1" step="1">
-            Check internet
+            {{ t`Check internet` }}
           </v-stepper-step>
 
           <v-divider />
 
           <v-stepper-step :complete="step_number > 2" step="2">
-            Choose Vehicle
+            {{ t`Choose Vehicle` }}
           </v-stepper-step>
 
           <v-divider />
 
           <v-stepper-step :complete="step_number > 3" step="3">
-            Customize
+            {{ t`Customize` }}
           </v-stepper-step>
 
           <v-divider />
 
           <v-stepper-step :complete="step_number > 4" step="4">
-            Configure
+            {{ t`Configure` }}
           </v-stepper-step>
 
           <v-divider />
 
           <v-stepper-step :complete="step_number > 5" step="5">
-            Done
+            {{ t`Done` }}
           </v-stepper-step>
         </v-stepper-header>
 
@@ -42,12 +42,10 @@
           <v-stepper-content step="0">
             <v-card class="ma-2 pa-5">
               <div class="welcome" style="display: flex; justify-content: center; align-items: center; width: 100%;">
-                Welcome to BlueOS!
+                {{ t`Welcome to BlueOS!` }}
               </div>
-              Welcome to BlueOS!
-              In this setup wizard we will guide you through the initial configuration of your vehicle,
-              including setting up the vehicle name, hostname, and <b>firmware</b>.
-              If your vehicle is already set up, you can skip this wizard.
+              <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+              <span v-html="t`Welcome to BlueOS! In this setup wizard we will guide you through the initial configuration of your vehicle, including setting up the vehicle name, hostname, and <b>firmware</b>. If your vehicle is already set up, you can skip this wizard.`" />
             </v-card>
             <v-row class="pa-5 justify-space-between">
               <v-row class="pl-3 pt-2">
@@ -56,14 +54,14 @@
                   class="mr-5"
                   @click="show_skip = true"
                 >
-                  Skip Wizard
+                  {{ t`Skip Wizard` }}
                 </v-btn>
               </v-row>
               <v-btn
                 color="primary"
                 @click="nextStep()"
               >
-                Start
+                {{ t`Start` }}
               </v-btn>
             </v-row>
           </v-stepper-content>
@@ -78,7 +76,7 @@
                 color="warning"
                 @click="cancel()"
               >
-                Cancel wizard
+                {{ t`Cancel wizard` }}
               </v-btn>
             </v-row>
           </v-stepper-content>
@@ -94,7 +92,7 @@
             <div class="d-flex justify-space-between">
               <model-viewer
                 v-if="model_viewer_supported && model_viewer_ready"
-                v-tooltip="'ROV Setup'"
+                v-tooltip="t`ROV Setup`"
                 :src="sub_model"
                 :auto-rotate="false"
                 camera-orbit="45deg 75deg 1.5m"
@@ -105,7 +103,7 @@
               />
               <v-card
                 v-else
-                v-tooltip="'ROV Setup'"
+                v-tooltip="t`ROV Setup`"
                 width="300px"
                 class="model-button ma-2 d-flex flex-column align-center justify-center"
                 outlined
@@ -119,7 +117,7 @@
 
               <model-viewer
                 v-if="model_viewer_supported && model_viewer_ready"
-                v-tooltip="'Boat Setup'"
+                v-tooltip="t`Boat Setup`"
                 :src="boat_model"
                 :auto-rotate="false"
                 camera-orbit="-45deg 75deg 2.5m"
@@ -130,7 +128,7 @@
               />
               <v-card
                 v-else
-                v-tooltip="'Boat Setup'"
+                v-tooltip="t`Boat Setup`"
                 width="300px"
                 class="model-button ma-2 d-flex flex-column align-center justify-center"
                 outlined
@@ -142,7 +140,7 @@
                 </v-icon>
               </v-card>
               <v-icon
-                v-tooltip="'Other Vehicle Setup'"
+                v-tooltip="t`Other Vehicle Setup`"
                 class="model-button ma-2 other-button"
                 @click="setupOther"
               >
@@ -156,7 +154,7 @@
                   class="mr-5"
                   @click="show_skip = true"
                 >
-                  Skip Wizard
+                  {{ t`Skip Wizard` }}
                 </v-btn>
               </v-row>
               <v-spacer />
@@ -165,8 +163,8 @@
 
           <v-stepper-content step="3">
             <div class="d-flex flex-column align-center">
-              <v-text-field v-model="vehicle_name" label="Vehicle Name" />
-              <v-text-field v-model="mdns_name" label="MDNS Name" />
+              <v-text-field v-model="vehicle_name" :label="t`Vehicle Name`" />
+              <v-text-field v-model="mdns_name" :label="t`MDNS Name`" />
             </div>
             <ScriptLoader
               v-if="should_open"
@@ -188,7 +186,7 @@
                 color="warning"
                 @click="step_number = Math.max(step_number - 1, 1)"
               >
-                Return
+                {{ t`Return` }}
               </v-btn>
               <v-spacer />
               <v-btn
@@ -196,7 +194,7 @@
                 :disabled="!params"
                 @click="validateParams() && setupConfiguration()"
               >
-                Continue
+                {{ t`Continue` }}
               </v-btn>
             </v-row>
           </v-stepper-content>
@@ -216,7 +214,7 @@
                 :disabled="apply_in_progress || apply_done"
                 @click="step_number = Math.max(step_number - 1, 1)"
               >
-                Return
+                {{ t`Return` }}
               </v-btn>
               <v-btn
                 :color="retry_count == 0 ? 'success' : 'error'"
@@ -224,7 +222,7 @@
                 :disabled="apply_in_progress || apply_done"
                 @click="applyConfigurations()"
               >
-                {{ retry_count == 0 ? "Apply" : apply_done ? "Done" : "Retry" }}
+                {{ retry_count == 0 ? t`Apply` : apply_done ? t`Done` : t`Retry` }}
               </v-btn>
               <v-btn
                 v-if="allow_abort"
@@ -233,35 +231,35 @@
                 color="warning"
                 @click="abort()"
               >
-                Abort
+                {{ t`Abort` }}
               </v-btn>
             </v-row>
           </v-stepper-content>
 
           <v-stepper-content step="5">
             <v-alert :value="true" type="success">
-              Your vehicle is ready to use!
+              {{ t`Your vehicle is ready to use!` }}
             </v-alert>
           </v-stepper-content>
           <v-stepper-content step="100">
             <v-alert :value="true" type="warning">
-              Configuration was skipped.
+              {{ t`Configuration was skipped.` }}
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
               <v-btn color="primary" @click="should_open = false">
-                Close
+                {{ t`Close` }}
               </v-btn>
             </v-row>
           </v-stepper-content>
           <v-stepper-content step="101">
             <v-alert :value="true" type="warning">
-              Configuration was aborted, some settings have failed to apply.
+              {{ t`Configuration was aborted, some settings have failed to apply.` }}
             </v-alert>
             <v-row class="pa-5">
               <v-spacer />
               <v-btn color="primary" @click="should_open = false">
-                Close
+                {{ t`Close` }}
               </v-btn>
             </v-row>
           </v-stepper-content>
@@ -275,28 +273,27 @@
     >
       <v-card>
         <v-card-title class="text-lg-h4 font-weight-bold" style="justify-content: center;">
-          Aborting wizard
+          {{ t`Aborting wizard` }}
         </v-card-title>
         <v-card-text class="text-xs-center" style="max-width: 33rem;">
-          Proceeding with the setup wizard is crucial for proper vehicle configuration.
-
-          Are you certain that you wish to skip this step?
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`Proceeding with the setup wizard is crucial for proper vehicle configuration.\n\nAre you certain that you wish to skip this step?` }}
         </v-card-text>
         <v-card-actions class="justify-center pa-4">
           <v-btn
-            v-tooltip="'The wizard will show again during BlueOS usage'"
+            v-tooltip="t`The wizard will show again during BlueOS usage`"
             color="warning"
             @click="skipWizard()"
           >
-            Remind me later
+            {{ t`Remind me later` }}
           </v-btn>
           <v-spacer />
           <v-btn
-            v-tooltip="'The wizard will only show if BlueOS is updated and further configuration is necessary'"
+            v-tooltip="t`The wizard will only show if BlueOS is updated and further configuration is necessary`"
             color="error"
             @click="skipWizard(false)"
           >
-            Abort wizard
+            {{ t`Abort wizard` }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -306,6 +303,7 @@
 
 <script lang="ts">
 import { SemVer } from 'semver'
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import {
@@ -375,7 +373,7 @@ export default Vue.extend({
       boat_model: get_model('rover', 'BOAT'),
       scripts: [] as string[],
       configuration_failed: false,
-      error_message: 'The operation failed!',
+      error_message: t`The operation failed!`,
       apply_status: ApplyStatus.Waiting,
       mdns_name: 'blueos',
       show_skip: false,
@@ -398,7 +396,7 @@ export default Vue.extend({
       model_viewer_supported: MODEL_VIEWER_SUPPORTED,
       model_viewer_ready: false,
       board_not_detected: false,
-      board_detection_message: 'No flight controller detected.',
+      board_detection_message: t`No flight controller detected.`,
     }
   },
   computed: {
@@ -495,7 +493,7 @@ export default Vue.extend({
     async finalConfigurations() {
       this.configurations = [
         {
-          title: 'Set custom vehicle name',
+          title: t`Set custom vehicle name`,
           summary: `Set vehicle name for the user: ${this.vehicle_name}`,
           promise: () => this.setHostname(),
           message: undefined,
@@ -504,7 +502,7 @@ export default Vue.extend({
           started: false,
         },
         {
-          title: 'Set vehicle hostname',
+          title: t`Set vehicle hostname`,
           summary: `Set hostname to be used for mDNS address: ${this.mdns_name}.local`,
           promise: () => this.setVehicleName(),
           message: undefined,
@@ -513,7 +511,7 @@ export default Vue.extend({
           started: false,
         },
         {
-          title: 'Set vehicle image',
+          title: t`Set vehicle image`,
           summary: 'Set image to be used for vehicle thumbnail',
           promise: () => this.setVehicleImage(),
           message: undefined,
@@ -553,7 +551,7 @@ export default Vue.extend({
 
       this.setup_configurations = [
         {
-          title: 'Update boat firmware',
+          title: t`Update boat firmware`,
           summary: 'Download and install a desirable stable firmware on the vehicle',
           promise: () => this.installLatestStableFirmware(Vehicle.Rover),
           message: undefined,
@@ -562,7 +560,7 @@ export default Vue.extend({
           started: false,
         },
         {
-          title: 'Install scripts',
+          title: t`Install scripts`,
           summary: 'Download and install selected scripts',
           promise: () => this.installScripts(),
           message: undefined,
@@ -571,7 +569,7 @@ export default Vue.extend({
           started: false,
         },
         {
-          title: 'Disable Wi-Fi hotspot',
+          title: t`Disable Wi-Fi hotspot`,
           summary: 'Wi-Fi hotspot need to be disable to not interfere with onboard radio',
           promise: () => this.disableWifiHotspot(),
           message: undefined,
@@ -580,7 +578,7 @@ export default Vue.extend({
           started: false,
         },
         {
-          title: 'Disable smart Wi-Fi hotspot',
+          title: t`Disable smart Wi-Fi hotspot`,
           summary: 'Disable hotspot to be turned on if there is no Wi-Fi network available',
           promise: () => this.disableSmartWifiHotspot(),
           message: undefined,
@@ -616,7 +614,7 @@ export default Vue.extend({
 
       this.setup_configurations = [
         {
-          title: 'Install stable sub firmware',
+          title: t`Install stable sub firmware`,
           summary: 'Download and install a desirable stable firmware on the vehicle',
           promise: () => this.installLatestStableFirmware(Vehicle.Sub),
           message: undefined,
