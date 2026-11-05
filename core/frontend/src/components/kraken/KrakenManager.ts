@@ -4,8 +4,8 @@ import {
   InstalledExtensionData,
   Manifest,
   ManifestSource,
-  UploadProgressEvent,
   RunningContainer,
+  UploadProgressEvent,
 } from '@/types/kraken'
 import back_axios from '@/utils/api'
 
