@@ -2,7 +2,7 @@
   <div>
     <v-row class="mb-4">
       <v-col cols="6">
-        <span class="text-h6">PWM Type</span>
+        <span class="text-h6">{{ t`PWM Type` }}</span>
       </v-col>
       <v-col cols="6">
         <inline-parameter-editor
@@ -14,7 +14,7 @@
     </v-row>
     <v-row class="mb-4">
       <v-col cols="6">
-        <span class="text-h6">Reverse Direction</span>
+        <span class="text-h6">{{ t`Reverse Direction` }}</span>
       </v-col>
       <v-col cols="6">
         <inline-parameter-editor
@@ -39,7 +39,7 @@
       type="warning"
       class="mb-4"
     >
-      PWM type is not supported by BlueOS.
+      {{ t`PWM type is not supported by BlueOS.` }}
     </v-alert>
   </div>
 </template>
