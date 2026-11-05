@@ -1,17 +1,17 @@
 <template>
   <v-card class="pa-1" elevation="2">
     <v-card-title class="d-flex align-center">
-      Configure MAVLink system ID
+      {{ t`Configure MAVLink system ID` }}
     </v-card-title>
     <v-card-text>
-      Note that it is necessary to restart the BlueOS core container in order for the vehicle ID change to fully
-      take place.
+      <!-- eslint-disable-next-line max-len -->
+      {{ t`Note that it is necessary to restart the BlueOS core container in order for the vehicle ID change to fully take place.` }}
     </v-card-text>
     <v-card-text>
       <inline-parameter-editor
         v-if="mav_sysid"
         :param="mav_sysid"
-        :label="'MAVLink system ID'"
+        :label="t`MAVLink system ID`"
         @change="pending_value = $event"
         @form-valid-change="is_form_valid = $event"
       />
@@ -22,19 +22,19 @@
         text
         class="mt-3 mb-0"
       >
-        Failed to set system ID: {{ save_error }}
+        {{ t`Failed to set system ID: ${save_error}` }}
       </v-alert>
     </v-card-text>
     <v-card-actions class="justify-end">
       <v-btn
-        v-tooltip="'Restart the BlueOS core container'"
+        v-tooltip="t`Restart the BlueOS core container`"
         :disabled="restarting || saving"
         @click="restartCore"
       >
         <v-icon left color="orange">
           mdi-folder-refresh
         </v-icon>
-        Restart Core
+        {{ t`Restart Core` }}
       </v-btn>
       <v-btn
         color="primary"
@@ -42,12 +42,12 @@
         :disabled="!can_save || saving || restarting"
         @click="save"
       >
-        Save
+        {{ t`Save` }}
       </v-btn>
     </v-card-actions>
     <v-container v-if="restarting">
       <p class="text-md-center">
-        Core container is restarting, please wait.
+        {{ t`Core container is restarting, please wait.` }}
       </p>
       <spinning-logo size="20%" />
     </v-container>
