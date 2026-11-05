@@ -76,13 +76,13 @@
       v-if="show_advanced_checkbox"
       v-model="forcing_input"
       dense
-      :label="'Force'"
+      :label="t`Force`"
     />
     <v-checkbox
       v-if="show_custom_checkbox"
       v-model="custom_input"
       dense
-      :label="'Custom'"
+      :label="t`Custom`"
     />
   </v-form>
 </template>
