@@ -8,11 +8,11 @@
   >
     <v-card>
       <v-app-bar dense>
-        <v-toolbar-title>Event log</v-toolbar-title>
+        <v-toolbar-title>{{ t`Event log` }}</v-toolbar-title>
         <v-spacer />
         <v-checkbox
           v-model="follow_logs"
-          label="Follow Logs"
+          :label="t`Follow Logs`"
           hide-details
           @change="onFollowChange"
         />
@@ -28,7 +28,7 @@
         v-if="entries.length === 0"
         class="text-center text--secondary py-8"
       >
-        No events yet
+        {{ t`No events yet` }}
       </div>
       <v-virtual-scroll
         v-show="entries.length > 0"
