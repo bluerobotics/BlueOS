@@ -17,7 +17,7 @@
         v-on="on"
       >
         <v-icon
-          v-tooltip="'System problems detected. Click to view details.'"
+          v-tooltip="t`System problems detected. Click to view details.`"
           class="blinking"
         >
           mdi-alert
@@ -28,7 +28,7 @@
     <v-dialog v-model="show_menu" max-width="700px">
       <v-card class="text-md-center">
         <v-card-title>
-          Problems found
+          {{ t`Problems found` }}
         </v-card-title>
         <v-card-text>
           <v-list>
@@ -49,7 +49,7 @@
             color="primary"
             @click="show_menu = false"
           >
-            Close
+            {{ t`Close` }}
           </v-btn>
         </v-card-actions>
       </v-card>
