@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        Change running board
+        {{ t`Change running board` }}
       </v-card-title>
 
       <v-card-text class="d-flex flex-column">
@@ -17,7 +17,7 @@
           <v-select
             v-model="selected_board"
             :items="board_options"
-            label="Available boards"
+            :label="t`Available boards`"
             required
           />
 
@@ -26,7 +26,7 @@
             class="mr-4"
             @click="changeBoard"
           >
-            Set
+            {{ t`Set` }}
           </v-btn>
         </v-form>
       </v-card-text>
