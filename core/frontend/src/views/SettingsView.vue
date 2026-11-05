@@ -11,10 +11,10 @@
             </v-avatar>
             <div>
               <h1 class="text-h5 font-weight-medium">
-                Settings
+                {{ t`Settings` }}
               </h1>
               <p class="text-body-2 text--secondary mb-0">
-                Configure BlueOS system preferences and manage data
+                {{ t`Configure BlueOS system preferences and manage data` }}
               </p>
             </div>
           </div>
@@ -28,10 +28,10 @@
               </v-avatar>
               <div>
                 <div class="text-subtitle-1 font-weight-medium">
-                  Appearance
+                  {{ t`Appearance` }}
                 </div>
                 <div class="text-caption text--secondary">
-                  Customize how BlueOS looks
+                  {{ t`Customize how BlueOS looks` }}
                 </div>
               </div>
             </v-card-title>
@@ -53,10 +53,10 @@
                       </v-avatar>
                       <div class="flex-grow-1">
                         <div class="text-subtitle-1 font-weight-medium">
-                          Dark Theme
+                          {{ t`Dark Theme` }}
                         </div>
                         <div class="text-caption text--secondary">
-                          Easier on the eyes in low-light environments
+                          {{ t`Easier on the eyes in low-light environments` }}
                         </div>
                       </div>
                       <v-icon v-if="settings.is_dark_theme" color="primary" size="24">
@@ -80,10 +80,10 @@
                       </v-avatar>
                       <div class="flex-grow-1">
                         <div class="text-subtitle-1 font-weight-medium">
-                          Light Theme
+                          {{ t`Light Theme` }}
                         </div>
                         <div class="text-caption text--secondary">
-                          Better visibility in bright environments
+                          {{ t`Better visibility in bright environments` }}
                         </div>
                       </div>
                       <v-icon v-if="!settings.is_dark_theme" color="primary" size="24">
@@ -109,10 +109,10 @@
               </v-avatar>
               <div>
                 <div class="text-subtitle-1 font-weight-medium">
-                  Advanced Mode
+                  {{ t`Advanced Mode` }}
                 </div>
                 <div class="text-caption text--secondary">
-                  Access advanced features and hidden pages
+                  {{ t`Access advanced features and hidden pages` }}
                 </div>
               </div>
             </v-card-title>
@@ -132,12 +132,12 @@
                     </v-avatar>
                     <div>
                       <div class="text-subtitle-1 font-weight-medium">
-                        Pirate Mode
+                        {{ t`Pirate Mode` }}
                       </div>
                       <div class="text-caption text--secondary">
                         {{ settings.is_pirate_mode
-                          ? 'Enabled - Advanced features are visible'
-                          : 'Show hidden pages and advanced settings'
+                          ? t`Enabled - Advanced features are visible`
+                          : t`Show hidden pages and advanced settings`
                         }}
                       </div>
                     </div>
@@ -169,12 +169,12 @@
                       </v-avatar>
                       <div>
                         <div class="text-subtitle-1 font-weight-medium">
-                          Developer Mode
+                          {{ t`Developer Mode` }}
                         </div>
                         <div class="text-caption text--secondary">
                           {{ settings.is_dev_mode
-                            ? 'Enabled - Development tools are active'
-                            : 'Enable additional debugging and development tools'
+                            ? t`Enabled - Development tools are active`
+                            : t`Enable additional debugging and development tools`
                           }}
                         </div>
                       </div>
@@ -203,10 +203,10 @@
               </v-avatar>
               <div>
                 <div class="text-subtitle-1 font-weight-medium">
-                  Data Management
+                  {{ t`Data Management` }}
                 </div>
                 <div class="text-caption text--secondary">
-                  Manage logs and system data
+                  {{ t`Manage logs and system data` }}
                 </div>
               </div>
             </v-card-title>
@@ -222,10 +222,10 @@
                     </v-avatar>
                     <div>
                       <div class="text-subtitle-1 font-weight-medium">
-                        System Logs
+                        {{ t`System Logs` }}
                       </div>
                       <div class="text-caption text--secondary">
-                        BlueOS service logs
+                        {{ t`BlueOS service logs` }}
                         <v-chip
                           v-if="log_folder_size"
                           x-small
@@ -240,7 +240,7 @@
                 </v-col>
                 <v-col cols="12" sm="6" class="text-sm-right mt-3 mt-sm-0">
                   <v-btn
-                    v-tooltip="'Download logs for all BlueOS services'"
+                    v-tooltip="t`Download logs for all BlueOS services`"
                     class="mr-2"
                     outlined
                     small
@@ -250,10 +250,10 @@
                     <v-icon left small>
                       mdi-download
                     </v-icon>
-                    Download
+                    {{ t`Download` }}
                   </v-btn>
                   <v-btn
-                    v-tooltip="'Free up space by removing old logs'"
+                    v-tooltip="t`Free up space by removing old logs`"
                     outlined
                     small
                     :disabled="disable_remove || deletion_in_progress || downloading"
@@ -263,7 +263,7 @@
                     <v-icon left small>
                       mdi-trash-can
                     </v-icon>
-                    Clear
+                    {{ t`Clear` }}
                   </v-btn>
                 </v-col>
               </v-row>
@@ -272,10 +272,10 @@
                 <div v-if="deletion_in_progress" class="mb-4">
                   <v-progress-linear indeterminate color="primary" class="mb-2" />
                   <div class="text-caption">
-                    <strong>Deleting:</strong> {{ current_deletion_path }}
+                    <strong>{{ t`Deleting:` }}</strong> {{ current_deletion_path }}
                   </div>
                   <div class="text-caption text--secondary">
-                    Freed: {{ formatSize(current_deletion_total_size / 1024) }}
+                    {{ t`Freed: ${formatSize(current_deletion_total_size / 1024)}` }}
                   </div>
                 </div>
               </v-expand-transition>
@@ -292,10 +292,10 @@
                     </v-avatar>
                     <div>
                       <div class="text-subtitle-1 font-weight-medium">
-                        MAVLink Logs
+                        {{ t`MAVLink Logs` }}
                       </div>
                       <div class="text-caption text--secondary">
-                        Autopilot flight logs
+                        {{ t`Autopilot flight logs` }}
                         <v-chip
                           v-if="mavlink_log_folder_size"
                           x-small
@@ -310,7 +310,7 @@
                 </v-col>
                 <v-col cols="12" sm="6" class="text-sm-right mt-3 mt-sm-0">
                   <v-btn
-                    v-tooltip="'Download MAVLink logs'"
+                    v-tooltip="t`Download MAVLink logs`"
                     class="mr-2"
                     outlined
                     small
@@ -320,10 +320,10 @@
                     <v-icon left small>
                       mdi-download
                     </v-icon>
-                    Download
+                    {{ t`Download` }}
                   </v-btn>
                   <v-btn
-                    v-tooltip="'Free up space by removing MAVLink logs'"
+                    v-tooltip="t`Free up space by removing MAVLink logs`"
                     outlined
                     small
                     :disabled="disable_remove_mavlink || deletion_in_progress"
@@ -333,7 +333,7 @@
                     <v-icon left small>
                       mdi-trash-can
                     </v-icon>
-                    Clear
+                    {{ t`Clear` }}
                   </v-btn>
                 </v-col>
               </v-row>
@@ -349,10 +349,10 @@
               </v-avatar>
               <div>
                 <div class="text-subtitle-1 font-weight-medium">
-                  System
+                  {{ t`System` }}
                 </div>
                 <div class="text-caption text--secondary">
-                  System configuration and maintenance
+                  {{ t`System configuration and maintenance` }}
                 </div>
               </div>
             </v-card-title>
@@ -370,24 +370,24 @@
                         </v-avatar>
                         <div>
                           <div class="text-subtitle-1 font-weight-medium">
-                            Configuration Wizard
+                            {{ t`Configuration Wizard` }}
                           </div>
                           <div class="text-caption text--secondary">
-                            Re-run the initial vehicle setup wizard
+                            {{ t`Re-run the initial vehicle setup wizard` }}
                           </div>
                         </div>
                       </div>
                     </v-col>
                     <v-col cols="12" class="mt-3">
                       <v-btn
-                        v-tooltip="'Start the configuration wizard'"
+                        v-tooltip="t`Start the configuration wizard`"
                         outlined
                         @click="enable_wizard"
                       >
                         <v-icon left>
                           mdi-wizard-hat
                         </v-icon>
-                        Run Wizard
+                        {{ t`Run Wizard` }}
                       </v-btn>
                     </v-col>
                   </v-row>
@@ -403,17 +403,17 @@
                         </v-avatar>
                         <div>
                           <div class="text-subtitle-1 font-weight-medium">
-                            Reset Settings
+                            {{ t`Reset Settings` }}
                           </div>
                           <div class="text-caption text--secondary">
-                            Restore all BlueOS services to defaults
+                            {{ t`Restore all BlueOS services to defaults` }}
                           </div>
                         </div>
                       </div>
                     </v-col>
                     <v-col cols="12" class="mt-3">
                       <v-btn
-                        v-tooltip="'Reset all BlueOS settings to factory defaults'"
+                        v-tooltip="t`Reset all BlueOS settings to factory defaults`"
                         outlined
                         color="error"
                         @click="confirm_reset_settings"
@@ -421,7 +421,7 @@
                         <v-icon left>
                           mdi-cog-refresh
                         </v-icon>
-                        Reset Settings
+                        {{ t`Reset Settings` }}
                       </v-btn>
                     </v-col>
                   </v-row>
@@ -447,7 +447,7 @@
         {{ operation_error }}
         <template #action="{ attrs }">
           <v-btn text v-bind="attrs" @click="show_error = false">
-            Close
+            {{ t`Close` }}
           </v-btn>
         </template>
       </v-snackbar>
@@ -455,7 +455,7 @@
       <warning-dialog
         v-model="show_reset_warning"
         :message="resetWarningMessage"
-        confirm-label="Yes, reset settings"
+        :confirm-label="t`Yes, reset settings`"
         @confirm="onConfirmResetSettings"
       />
 
@@ -463,7 +463,7 @@
         v-model="show_log_clear_confirm"
         :title="log_clear_confirm_title"
         :message="log_clear_confirm_message"
-        confirm-label="Clear logs"
+        :confirm-label="t`Clear logs`"
         @confirm="onConfirmClearLogs"
       />
 
@@ -473,10 +473,10 @@
             <v-icon left color="success">
               mdi-check-circle
             </v-icon>
-            Settings Reset Complete
+            {{ t`Settings Reset Complete` }}
           </v-card-title>
           <v-card-text>
-            Restart the system to finish the settings reset.
+            {{ t`Restart the system to finish the settings reset.` }}
           </v-card-text>
           <v-card-actions>
             <v-spacer />
@@ -484,7 +484,7 @@
               <v-icon left>
                 mdi-restart-alert
               </v-icon>
-              Reboot
+              {{ t`Reboot` }}
             </v-btn>
           </v-card-actions>
         </v-card>
