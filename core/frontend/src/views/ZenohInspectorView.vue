@@ -30,6 +30,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import ZenohInspector from '@/components/zenoh-inspector/ZenohInspector.vue'
@@ -50,8 +51,8 @@ export default Vue.extend({
   data() {
     return {
       items: [
-        { title: 'Topics', icon: 'mdi-message-text', value: 'topics' },
-        { title: 'Network', icon: 'mdi-lan', value: 'network' },
+        { title: t`Topics`, icon: 'mdi-message-text', value: 'topics' },
+        { title: t`Network`, icon: 'mdi-lan', value: 'network' },
       ] as Item[],
       page_selected: 'topics',
     }
