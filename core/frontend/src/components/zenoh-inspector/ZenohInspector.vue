@@ -71,27 +71,27 @@
             <v-card-title>
               {{ selected_topic }}
               <v-chip
-                v-tooltip="'Topic liveliness status'"
+                v-tooltip="t`Topic liveliness status`"
                 :color="topic_liveliness[selected_topic] === undefined ? 'grey'
                   : (topic_liveliness[selected_topic] ? 'green' : 'red')"
                 class="ml-2"
               >
-                {{ topic_liveliness[selected_topic] === undefined ? 'Unknown'
-                  : (topic_liveliness[selected_topic] ? 'Alive' : 'Dead') }}
+                {{ topic_liveliness[selected_topic] === undefined ? t`Unknown`
+                  : (topic_liveliness[selected_topic] ? t`Alive` : t`Dead`) }}
               </v-chip>
               <v-chip
-                v-tooltip="'Topic type'"
+                v-tooltip="t`Topic type`"
                 color="blue"
                 class="ml-2"
               >
-                {{ topic_types[selected_topic] || 'Unknown' }}
+                {{ topic_types[selected_topic] || t`Unknown` }}
               </v-chip>
               <v-chip
-                v-tooltip="'Topic message serialization type'"
+                v-tooltip="t`Topic message serialization type`"
                 color="purple"
                 class="ml-2"
               >
-                {{ topic_message_types[selected_topic] || 'Unknown' }}
+                {{ topic_message_types[selected_topic] || t`Unknown` }}
               </v-chip>
             </v-card-title>
 
@@ -111,7 +111,7 @@
             class="select-topic d-flex align-center justify-center fill-height"
           >
             <span style="font-size: 1.5rem; font-weight: 500;">
-              Select a topic to view its messages.
+              {{ t`Select a topic to view its messages.` }}
             </span>
           </div>
         </v-card>
