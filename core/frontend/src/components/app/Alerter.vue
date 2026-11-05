@@ -1,21 +1,25 @@
 <template>
-  <v-snackbar
-    v-model="show"
-    :timeout="timeout"
-  >
-    {{ message }}
-
-    <template #action="{ attrs }">
-      <v-btn
-        :color="color"
-        text
-        v-bind="attrs"
-        @click="show = false"
+  <div class="alerter-stack">
+    <v-slide-y-reverse-transition
+      group
+      leave-absolute
+    >
+      <v-alert
+        v-for="alert in alerts"
+        :key="alert.id"
+        :value="true"
+        :type="alertType(alert.level)"
+        :color="alert.level === MessageLevel.Critical ? 'critical' : undefined"
+        class="alerter-item"
+        dense
+        dismissible
+        elevation="6"
+        @input="dismiss(alert.id)"
       >
-        Close
-      </v-btn>
-    </template>
-  </v-snackbar>
+        {{ alert.message }}
+      </v-alert>
+    </v-slide-y-reverse-transition>
+  </div>
 </template>
 
 <script lang="ts">
@@ -23,34 +27,104 @@ import Vue from 'vue'
 
 import message_manager, { MessageLevel } from '@/libs/message-manager'
 
+const MAX_VISIBLE = 5
+const DRAIN_INTERVAL_MS = 1000
+
+interface AlertEntry {
+  id: number
+  level: MessageLevel
+  message: string
+  timer?: ReturnType<typeof setTimeout>
+}
+
 export default Vue.extend({
   name: 'ErrorMessage',
   data() {
     return {
-      level: undefined as MessageLevel|undefined,
-      message: '',
-      show: false,
+      MessageLevel,
+      nextId: 0,
+      alerts: [] as AlertEntry[],
+      queue: [] as AlertEntry[],
+      drainTimer: null as ReturnType<typeof setInterval> | null,
+      boundCallback: null as ((level: MessageLevel, msg: string) => void) | null,
     }
   },
-  computed: {
-    color(): string {
-      switch (this.level) {
+  mounted() {
+    this.boundCallback = (level: MessageLevel, message: string) => {
+      this.nextId += 1
+      const entry: AlertEntry = { id: this.nextId, level, message }
+      if (this.alerts.length < MAX_VISIBLE) {
+        this.showAlert(entry)
+      } else {
+        this.queue.push(entry)
+        this.startDrain()
+      }
+    }
+    message_manager.addCallback(this.boundCallback)
+  },
+  beforeDestroy() {
+    if (this.boundCallback) {
+      message_manager.removeCallback(this.boundCallback)
+      this.boundCallback = null
+    }
+    this.stopDrain()
+    this.alerts.forEach((alert) => clearTimeout(alert.timer))
+  },
+  methods: {
+    showAlert(entry: AlertEntry) {
+      const timeout = this.getTimeout(entry.level)
+      if (timeout > 0) {
+        entry.timer = setTimeout(() => this.dismiss(entry.id), timeout)
+      }
+      this.alerts.push(entry)
+    },
+    dismiss(id: number) {
+      const alert = this.alerts.find((a) => a.id === id)
+      if (!alert) return
+      clearTimeout(alert.timer)
+      this.alerts = this.alerts.filter((a) => a !== alert)
+      this.promoteFromQueue()
+    },
+    promoteFromQueue() {
+      while (this.queue.length > 0 && this.alerts.length < MAX_VISIBLE) {
+        this.showAlert(this.queue.shift()!)
+      }
+      if (this.queue.length === 0) {
+        this.stopDrain()
+      }
+    },
+    startDrain() {
+      if (this.drainTimer) return
+      // Only runs while alerts are queued: frees one slot per interval so a burst of messages stays readable.
+      // Alerts with a timeout are evicted first, persistent ones only if nothing else can make room.
+      this.drainTimer = setInterval(() => {
+        const evictable = this.alerts.find((a) => this.getTimeout(a.level) > 0) ?? this.alerts[0]
+        if (evictable) {
+          this.dismiss(evictable.id)
+        }
+      }, DRAIN_INTERVAL_MS)
+    },
+    stopDrain() {
+      if (this.drainTimer) {
+        clearInterval(this.drainTimer)
+        this.drainTimer = null
+      }
+    },
+    alertType(level: MessageLevel): string {
+      switch (level) {
         case MessageLevel.Success:
           return 'success'
         case MessageLevel.Error:
+        case MessageLevel.Critical:
           return 'error'
-        case MessageLevel.Info:
-          return 'info'
         case MessageLevel.Warning:
           return 'warning'
-        case MessageLevel.Critical:
-          return 'critical'
         default:
           return 'info'
       }
     },
-    timeout(): number {
-      switch (this.level) {
+    getTimeout(level: MessageLevel): number {
+      switch (level) {
         case MessageLevel.Success:
         case MessageLevel.Info:
           return 5000
@@ -61,12 +135,21 @@ export default Vue.extend({
       }
     },
   },
-  mounted() {
-    message_manager.addCallback((level: MessageLevel, message: string) => {
-      this.level = level
-      this.message = message
-      this.show = true
-    })
-  },
 })
 </script>
+
+<style scoped>
+.alerter-stack {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  min-width: 344px;
+  max-width: 672px;
+}
+
+.alerter-item {
+  margin-bottom: 8px;
+}
+</style>
