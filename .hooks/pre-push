@@ -56,41 +56,43 @@ echo "Running pre push hook!"
 verify_tag_if_needed
 run_shellcheck_suite
 
-run_bootstrap_checks() {
-    echo "Running bootstrap checks..."
-    local bootstrap_dir="$ROOT_DIR/bootstrap"
-    local bootstrap_files=()
-    mapfile -t bootstrap_files < <(find "$bootstrap_dir" -name "*.py" -type f)
+run_lint_checks() {
+    local name="$1"
+    local dir="$2"
+    echo "Running $name checks..."
+    local files=()
+    mapfile -t files < <(find "$dir" -name .venv -prune -o -name "*.py" -type f -print)
 
-    if [ "${#bootstrap_files[@]}" -eq 0 ]; then
-        echo "No bootstrap Python files found, skipping."
+    if [ "${#files[@]}" -eq 0 ]; then
+        echo "No $name Python files found, skipping."
         return
     fi
 
-    echo "Running isort (bootstrap).."
-    isort "${isort_args[@]}" "${bootstrap_files[@]}"
+    echo "Running isort ($name).."
+    isort "${isort_args[@]}" "${files[@]}"
 
-    echo "Running black (bootstrap).."
-    black "${black_args[@]}" "${bootstrap_files[@]}"
+    echo "Running black ($name).."
+    black "${black_args[@]}" "${files[@]}"
 
     if [ "$fixing" = true ]; then
         return
     fi
 
-    echo "Running ruff (bootstrap).."
-    ruff check --config "$CORE_DIR/pyproject.toml" "${bootstrap_files[@]}"
+    echo "Running ruff ($name).."
+    ruff check --config "$CORE_DIR/pyproject.toml" "${files[@]}"
 
-    echo "Running pylint (bootstrap).."
-    pylint --rcfile "$CORE_DIR/pyproject.toml" "${bootstrap_files[@]}"
+    echo "Running pylint ($name).."
+    pylint --rcfile "$CORE_DIR/pyproject.toml" "${files[@]}"
 
-    echo "Running mypy (bootstrap).."
-    mypy --config-file "$CORE_DIR/pyproject.toml" "$bootstrap_dir"
+    echo "Running mypy ($name).."
+    (cd "$dir" && mypy --config-file "$CORE_DIR/pyproject.toml" --explicit-package-bases .)
 }
 
 run_environment_phase "core" "$CORE_DIR" EMPTY_PATHS EMPTY_PATHS true
 # Bootstrap checks reuse the venv (run_environment_phase runs in a subshell so we re-activate)
 # shellcheck disable=SC1091
 source "$CORE_DIR/.venv/bin/activate"
-run_bootstrap_checks
+run_lint_checks "bootstrap" "$ROOT_DIR/bootstrap"
+run_lint_checks "e2e" "$ROOT_DIR/tests/e2e"
 
 exit 0
