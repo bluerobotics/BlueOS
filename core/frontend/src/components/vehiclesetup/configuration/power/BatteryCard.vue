@@ -20,8 +20,8 @@
       >
         <div class="d-flex align-center">
           <span class="flex-grow-1">
-            Some changes require a reboot of the autopilot before they take effect.
-            Parameters may stay unavailable until the autopilot reboots.
+            <!-- eslint-disable-next-line max-len -->
+            {{ t`Some changes require a reboot of the autopilot before they take effect. Parameters may stay unavailable until the autopilot reboots.` }}
           </span>
           <reboot-button class="ml-2" />
         </div>
@@ -29,7 +29,7 @@
 
       <v-row dense align="center">
         <v-col cols="12" sm="5" class="label-col text-sm-right">
-          <parameter-label label="Battery Monitor" :param="monitorParam" />
+          <parameter-label :label="t`Battery Monitor`" :param="monitorParam" />
         </v-col>
         <v-col cols="12" sm="7">
           <inline-parameter-editor
@@ -37,7 +37,7 @@
             :param="monitorParam"
             :auto-set="true"
           />
-          <span v-else class="caption text--disabled">Not available</span>
+          <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
         </v-col>
       </v-row>
 
@@ -46,7 +46,7 @@
 
         <v-row dense align="center">
           <v-col cols="12" sm="5" class="label-col text-sm-right">
-            Power Sensor
+            {{ t`Power Sensor` }}
           </v-col>
           <v-col cols="12" sm="7">
             <v-select
@@ -57,7 +57,7 @@
               hide-details
               @change="applySensorPreset"
             />
-            <span v-else class="caption text--disabled">Not available</span>
+            <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
           </v-col>
         </v-row>
 
@@ -70,7 +70,7 @@
           <v-icon left x-small>
             {{ show_advanced ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
           </v-icon>
-          {{ show_advanced ? 'Hide' : 'Show' }} Advanced
+          {{ t`${show_advanced ? t`Hide` : t`Show`} Advanced` }}
         </v-btn>
 
         <v-expand-transition>
@@ -79,7 +79,7 @@
 
             <v-row dense align="center">
               <v-col cols="12" sm="5" class="label-col text-sm-right">
-                <parameter-label label="Voltage Pin" :param="voltPinParam" />
+                <parameter-label :label="t`Voltage Pin`" :param="voltPinParam" />
               </v-col>
               <v-col cols="12" sm="7">
                 <inline-parameter-editor
@@ -87,13 +87,13 @@
                   :param="voltPinParam"
                   :auto-set="true"
                 />
-                <span v-else class="caption text--disabled">Not available</span>
+                <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
               </v-col>
             </v-row>
 
             <v-row dense align="center">
               <v-col cols="12" sm="5" class="label-col text-sm-right">
-                <parameter-label label="Current Pin" :param="currPinParam" />
+                <parameter-label :label="t`Current Pin`" :param="currPinParam" />
               </v-col>
               <v-col cols="12" sm="7">
                 <inline-parameter-editor
@@ -101,13 +101,13 @@
                   :param="currPinParam"
                   :auto-set="true"
                 />
-                <span v-else class="caption text--disabled">Not available</span>
+                <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
               </v-col>
             </v-row>
 
             <v-row dense align="center">
               <v-col cols="12" sm="5" class="label-col text-sm-right">
-                <parameter-label label="Voltage Multiplier" :param="voltMultParam" />
+                <parameter-label :label="t`Voltage Multiplier`" :param="voltMultParam" />
               </v-col>
               <v-col cols="12" sm="7" class="d-flex align-center">
                 <div class="flex-grow-1">
@@ -116,7 +116,7 @@
                     :param="voltMultParam"
                     :auto-set="true"
                   />
-                  <span v-else class="caption text--disabled">Not available</span>
+                  <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
                 </div>
                 <v-btn
                   v-if="voltMultParam && voltage != null"
@@ -125,7 +125,7 @@
                   class="ml-2"
                   @click="show_voltage_calc = true"
                 >
-                  Calculate
+                  {{ t`Calculate` }}
                 </v-btn>
               </v-col>
             </v-row>
@@ -137,12 +137,12 @@
               text
               class="my-1 caption"
             >
-              If the reported voltage differs from a voltmeter reading, adjust the multiplier.
+              {{ t`If the reported voltage differs from a voltmeter reading, adjust the multiplier.` }}
             </v-alert>
 
             <v-row dense align="center">
               <v-col cols="12" sm="5" class="label-col text-sm-right">
-                <parameter-label label="Amps per Volt" :param="ampPerVoltParam" />
+                <parameter-label :label="t`Amps per Volt`" :param="ampPerVoltParam" />
               </v-col>
               <v-col cols="12" sm="7" class="d-flex align-center">
                 <div class="flex-grow-1">
@@ -151,7 +151,7 @@
                     :param="ampPerVoltParam"
                     :auto-set="true"
                   />
-                  <span v-else class="caption text--disabled">Not available</span>
+                  <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
                 </div>
                 <v-btn
                   v-if="ampPerVoltParam && voltage != null"
@@ -160,14 +160,14 @@
                   class="ml-2"
                   @click="show_current_calc = true"
                 >
-                  Calculate
+                  {{ t`Calculate` }}
                 </v-btn>
               </v-col>
             </v-row>
 
             <v-row dense align="center">
               <v-col cols="12" sm="5" class="label-col text-sm-right">
-                <parameter-label label="Amps Offset" :param="ampOffsetParam" />
+                <parameter-label :label="t`Amps Offset`" :param="ampOffsetParam" />
               </v-col>
               <v-col cols="12" sm="7">
                 <inline-parameter-editor
@@ -175,7 +175,7 @@
                   :param="ampOffsetParam"
                   :auto-set="true"
                 />
-                <span v-else class="caption text--disabled">Not available</span>
+                <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
               </v-col>
             </v-row>
 
@@ -186,13 +186,13 @@
               text
               class="my-1 caption"
             >
-              Adjust if the vehicle reports current draw when there is none flowing.
+              {{ t`Adjust if the vehicle reports current draw when there is none flowing.` }}
             </v-alert>
           </div>
         </v-expand-transition>
         <v-row dense align="center">
           <v-col cols="12" sm="5" class="label-col text-sm-right">
-            <parameter-label label="Battery Capacity" :param="capacityParam" />
+            <parameter-label :label="t`Battery Capacity`" :param="capacityParam" />
           </v-col>
           <v-col cols="12" sm="7">
             <inline-parameter-editor
@@ -200,13 +200,13 @@
               :param="capacityParam"
               :auto-set="true"
             />
-            <span v-else class="caption text--disabled">Not available</span>
+            <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
           </v-col>
         </v-row>
 
         <v-row dense align="center">
           <v-col cols="12" sm="5" class="label-col text-sm-right">
-            <parameter-label label="Min Arming Voltage" :param="armVoltParam" />
+            <parameter-label :label="t`Min Arming Voltage`" :param="armVoltParam" />
           </v-col>
           <v-col cols="12" sm="7">
             <inline-parameter-editor
@@ -214,22 +214,22 @@
               :param="armVoltParam"
               :auto-set="true"
             />
-            <span v-else class="caption text--disabled">Not available</span>
+            <span v-else class="caption text--disabled">{{ t`Not available` }}</span>
           </v-col>
         </v-row>
 
         <v-dialog v-model="show_voltage_calc" max-width="400">
           <v-card class="pa-4">
             <v-card-title class="subtitle-1 font-weight-bold">
-              Calculate Voltage Multiplier
+              {{ t`Calculate Voltage Multiplier` }}
             </v-card-title>
             <v-card-text>
               <p class="body-2">
-                Measure battery voltage with an external voltmeter and enter it below.
+                {{ t`Measure battery voltage with an external voltmeter and enter it below.` }}
               </p>
               <v-text-field
                 v-model.number="measured_voltage"
-                label="Measured Voltage (V)"
+                :label="t`Measured Voltage (V)`"
                 type="number"
                 step="0.01"
                 dense
@@ -237,16 +237,16 @@
                 class="mb-3"
               />
               <div v-if="voltage != null" class="body-2 mb-1">
-                <b>Vehicle Voltage:</b> {{ voltage.toFixed(3) }} V
+                <b>{{ t`Vehicle Voltage:` }}</b> {{ voltage.toFixed(3) }} V
               </div>
               <div v-if="voltMultParam" class="body-2">
-                <b>Current Multiplier:</b> {{ voltMultParam.value }}
+                <b>{{ t`Current Multiplier:` }}</b> {{ voltMultParam.value }}
               </div>
             </v-card-text>
             <v-card-actions>
               <v-spacer />
               <v-btn text small @click="show_voltage_calc = false">
-                Cancel
+                {{ t`Cancel` }}
               </v-btn>
               <v-btn
                 small
@@ -254,7 +254,7 @@
                 :disabled="!can_calculate_voltage"
                 @click="calculateVoltageMultiplier"
               >
-                Calculate &amp; Set
+                {{ t`Calculate &amp; Set` }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -263,15 +263,15 @@
         <v-dialog v-model="show_current_calc" max-width="400">
           <v-card class="pa-4">
             <v-card-title class="subtitle-1 font-weight-bold">
-              Calculate Amps per Volt
+              {{ t`Calculate Amps per Volt` }}
             </v-card-title>
             <v-card-text>
               <p class="body-2">
-                Measure current draw with an external current meter and enter it below.
+                {{ t`Measure current draw with an external current meter and enter it below.` }}
               </p>
               <v-text-field
                 v-model.number="measured_current"
-                label="Measured Current (A)"
+                :label="t`Measured Current (A)`"
                 type="number"
                 step="0.01"
                 dense
@@ -279,16 +279,16 @@
                 class="mb-3"
               />
               <div v-if="current != null" class="body-2 mb-1">
-                <b>Vehicle Current:</b> {{ current.toFixed(3) }} A
+                <b>{{ t`Vehicle Current:` }}</b> {{ current.toFixed(3) }} A
               </div>
               <div v-if="ampPerVoltParam" class="body-2">
-                <b>Current Amps/Volt:</b> {{ ampPerVoltParam.value }}
+                <b>{{ t`Current Amps/Volt:` }}</b> {{ ampPerVoltParam.value }}
               </div>
             </v-card-text>
             <v-card-actions>
               <v-spacer />
               <v-btn text small @click="show_current_calc = false">
-                Cancel
+                {{ t`Cancel` }}
               </v-btn>
               <v-btn
                 small
@@ -296,7 +296,7 @@
                 :disabled="!can_calculate_current"
                 @click="calculateAmpsPerVolt"
               >
-                Calculate &amp; Set
+                {{ t`Calculate &amp; Set` }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -307,6 +307,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -325,7 +326,7 @@ interface SensorPreset {
 
 const SENSOR_PRESETS: SensorPreset[] = [
   {
-    text: 'Power Module 90A',
+    text: t`Power Module 90A`,
     voltPin: 2,
     currPin: 3,
     voltMult: 10.1,
@@ -333,7 +334,7 @@ const SENSOR_PRESETS: SensorPreset[] = [
     ampOffset: 0,
   },
   {
-    text: 'Power Module HV',
+    text: t`Power Module HV`,
     voltPin: 2,
     currPin: 3,
     voltMult: 12.02,
@@ -341,7 +342,7 @@ const SENSOR_PRESETS: SensorPreset[] = [
     ampOffset: 0,
   },
   {
-    text: '3DR Iris',
+    text: t`3DR Iris`,
     voltPin: 2,
     currPin: 3,
     voltMult: 12.02,
