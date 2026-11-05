@@ -18,7 +18,7 @@
         v-on="on"
       >
         <v-icon
-          v-tooltip="'Vehicle reboot required. Click to reboot.'"
+          v-tooltip="t`Vehicle reboot required. Click to reboot.`"
           class="blinking"
         >
           mdi-restart-alert
