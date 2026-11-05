@@ -3,6 +3,45 @@
     elevation="0"
     class="pa-2"
   >
+    <v-alert
+      v-if="only_bootloader_boards_available"
+      type="warning"
+      class="mb-6"
+      icon="mdi-information-outline"
+      text
+    >
+      <div class="d-flex flex-column">
+        <p class="mr-2" style="text-align: justify;">
+          <strong>  Only bootloader boards detected.</strong> This likely means the firmware is corrupted.
+          Please select the correct vehicle type and update to the latest autopilot firmware.
+        </p>
+        <p class="mr-2" style="text-align: justify;">
+          <strong>Installation may take a few minutes.</strong>
+        </p>
+        <div
+          v-if="has_install_failed"
+          class="bl-only-info-action"
+        >
+          <p class="mr-2 mb-0" style="text-align: justify;">
+            If it fails, this is normal for some corrupted firmware. Just reboot the onboard computer and try again from
+            this page.
+          </p>
+          <v-btn
+            v-tooltip="'Fully restarts the onboard computer'"
+            class="ma-2"
+            @click="rebootOnBoardComputer"
+          >
+            <v-icon
+              left
+              color="orange"
+            >
+              mdi-restart-alert
+            </v-icon>
+            Reboot
+          </v-btn>
+        </div>
+      </div>
+    </v-alert>
     <div id="update-configs">
       <div id="update-modes">
         <v-item-group
@@ -88,44 +127,61 @@
             class="ma-1 pa-0"
             @change="updateAvailableFirmwares"
           >
-            <template
-              v-if="vehicle_changed"
-              #append-outer
-            >
-              <v-icon color="warning">
+            <template #append-outer>
+              <v-icon
+                v-if="vehicle_changed"
+                color="warning"
+              >
                 mdi-alert
               </v-icon>
+              <v-tooltip
+                v-if="vehicle_docs_url"
+                bottom
+              >
+                <template #activator="{ on, attrs }">
+                  <v-icon
+                    style="margin-left: 2px"
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="openVehicleDocs"
+                  >
+                    mdi-file-document-outline
+                  </v-icon>
+                </template>
+                <p>Open {{ chosen_vehicle }} documentation</p>
+              </v-tooltip>
             </template>
           </v-select>
-          <div class="d-flex">
-            <v-select
-              v-model="chosen_firmware_url"
-              class="ma-1 pa-0"
-              :disabled="disable_firmware_selection"
-              :items="showable_firmwares"
-              :label="firmware_selector_label"
-              :loading="loading_firmware_options"
-              required
-              @change="setCloudFirmwareChosen"
-            />
-            <v-tooltip bottom>
-              <template #activator="{ on, attrs }">
-                <v-icon
-                  class="ml-4"
-                  v-bind="attrs"
-                  v-on="on"
-                >
-                  mdi-information
-                </v-icon>
-              </template>
-              <p>Stable - A production-ready release. Suitable for most users.</p>
-              <p>Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.</p>
-              <p>
-                Dev - Development branch, with all the newest features.
-                Intentionally unstable (changes quickly), and possibly untested/dangerous.
-              </p>
-            </v-tooltip>
-          </div>
+          <v-select
+            v-model="chosen_firmware_url"
+            class="ma-1 pa-0"
+            :disabled="disable_firmware_selection"
+            :items="showable_firmwares"
+            :label="firmware_selector_label"
+            :loading="loading_firmware_options"
+            required
+            @change="setCloudFirmwareChosen"
+          >
+            <template #append-outer>
+              <v-tooltip bottom>
+                <template #activator="{ on, attrs }">
+                  <v-icon
+                    style="pointer-events: auto"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    mdi-information
+                  </v-icon>
+                </template>
+                <p>Stable - A production-ready release. Suitable for most users.</p>
+                <p>Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.</p>
+                <p>
+                  Dev - Development branch, with all the newest features.
+                  Intentionally unstable (changes quickly), and possibly untested/dangerous.
+                </p>
+              </v-tooltip>
+            </template>
+          </v-select>
         </div>
 
         <v-file-input
@@ -143,11 +199,28 @@
         </p>
       </div>
     </div>
+    <v-alert
+      v-if="is_untested_firmware"
+      type="warning"
+      class="mt-6 mb-0"
+      dense
+      text
+    >
+      {{ untested_firmware_message }}
+      <v-btn
+        v-if="settings.skip_untested_firmware_warning"
+        small
+        text
+        @click="enableUntestedWarning"
+      >
+        Warn me again
+      </v-btn>
+    </v-alert>
     <v-btn
       :disabled="!allow_installing"
       class="mt-6"
       color="primary"
-      @click="installFirmware"
+      @click="requestInstall"
     >
       <v-icon class="mr-2">
         mdi-content-save
@@ -188,16 +261,35 @@
     >
       <p>{{ install_result_message }}</p>
     </v-alert>
+
+    <WarningDialog
+      v-model="show_untested_warning"
+      :message="untested_firmware_message"
+      confirm-label="Install anyway"
+      @confirm="confirmUntestedInstall"
+    >
+      <v-checkbox
+        v-model="skip_untested_warning_next_time"
+        dense
+        hide-details
+        label="Do not warn me again"
+      />
+    </WarningDialog>
   </v-card>
 </template>
 
 <script lang="ts">
 import { AxiosRequestConfig } from 'axios'
+import { coerce } from 'semver'
 import Vue from 'vue'
 
+import WarningDialog from '@/components/common/WarningDialog.vue'
 import Notifier from '@/libs/notifier'
+import { fetchParamSets, ParamSets, paramSetsForFirmware } from '@/libs/parameter_repository'
+import settings from '@/libs/settings'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
+import commander from '@/store/commander'
 import {
   Firmware,
   FirmwareVehicleType,
@@ -205,6 +297,7 @@ import {
   FlightController,
   FlightControllerFlags,
   Vehicle,
+  vehicleDocsUrl,
 } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios, { isBackendOffline } from '@/utils/api'
@@ -234,9 +327,14 @@ enum UploadType {
 
 export default Vue.extend({
   name: 'FirmwareManager',
+  components: {
+    WarningDialog,
+  },
   data() {
+    const { rebootOnBoardComputer, requestOnBoardComputerReboot } = commander
     return {
       autopilot,
+      settings,
       cloud_firmware_options_status: CloudFirmwareOptionsStatus.NotFetched,
       install_status: InstallStatus.NotStarted,
       UploadType,
@@ -245,8 +343,13 @@ export default Vue.extend({
       chosen_vehicle: null as (Vehicle | null),
       chosen_firmware_url: null as (URL | null),
       available_firmwares: [] as Firmware[],
+      all_param_sets: {} as ParamSets,
+      show_untested_warning: false,
+      skip_untested_warning_next_time: false,
       firmware_file: null as (Blob | null),
       install_result_message: '',
+      rebootOnBoardComputer,
+      requestOnBoardComputerReboot,
     }
   },
   computed: {
@@ -268,6 +371,9 @@ export default Vue.extend({
     install_alert_icon(): string {
       return this.install_status === InstallStatus.Succeeded ? 'mdi-check-decagram' : 'close-octagon'
     },
+    has_install_failed(): boolean {
+      return this.install_status === InstallStatus.Failed
+    },
     vehicle_types(): {value: string, text: Vehicle}[] {
       return Object.entries(Vehicle).map(
         (vehicle) => ({ value: vehicle[0], text: vehicle[1] }),
@@ -287,6 +393,9 @@ export default Vue.extend({
       return this.chosen_vehicle !== null
         && this.current_vehicle !== null
         && this.chosen_vehicle !== this.current_vehicle
+    },
+    vehicle_docs_url(): string | undefined {
+      return this.chosen_vehicle ? vehicleDocsUrl(firmwareVehicleTypeFromVehicle(this.chosen_vehicle)) : undefined
     },
     vehicle_change_warning(): string {
       return `Installing this firmware will change the vehicle from ${this.current_vehicle} to ${this.chosen_vehicle}.`
@@ -332,7 +441,37 @@ export default Vue.extend({
         })
         .reverse()
     },
+    // Blue Robotics only curates parameters for firmwares it has tested, so a version resolving to no parameter
+    // set has not been vetted. An empty repository means it could not be fetched, which proves nothing.
+    is_untested_firmware(): boolean {
+      const board = this.chosen_board ?? autopilot.current_board
+      if (this.upload_type !== UploadType.Cloud || this.chosen_vehicle === null || board === null) {
+        return false
+      }
+      if (Object.keys(this.all_param_sets).length === 0) {
+        return false
+      }
+      const chosen = this.available_firmwares.find((firmware) => firmware.url === this.chosen_firmware_url)
+      if (chosen === undefined) {
+        return false
+      }
+      // Cloud firmware names look like "STABLE-4.5.7"; BETA and DEV carry no version and are untested by nature
+      const param_sets = paramSetsForFirmware(
+        this.all_param_sets,
+        firmwareVehicleTypeFromVehicle(this.chosen_vehicle),
+        coerce(chosen.name),
+        board,
+      )
+      return Object.keys(param_sets).length === 0
+    },
+    untested_firmware_message(): string {
+      return 'Blue Robotics has not tested this firmware with your vehicle and flight controller.'
+        + ' It may not behave as expected.'
+    },
     allow_installing(): boolean {
+      if (!autopilot_data.is_safe) {
+        return false
+      }
       if (this.install_status === InstallStatus.Installing) {
         return false
       }
@@ -359,13 +498,39 @@ export default Vue.extend({
         this.setFirstNoSitlBoard()
       }
     },
+    has_install_failed(new_value: boolean): void {
+      if (new_value && this.only_bootloader_boards_available) {
+        this.requestOnBoardComputerReboot()
+      }
+    },
   },
-  mounted(): void {
+  async mounted(): Promise<void> {
     if (this.only_bootloader_boards_available) {
       this.setFirstNoSitlBoard()
     }
+    this.all_param_sets = await fetchParamSets().catch(() => ({}))
   },
   methods: {
+    openVehicleDocs(): void {
+      window.open(this.vehicle_docs_url, '_blank', 'noopener,noreferrer')
+    },
+    requestInstall(): void {
+      if (this.is_untested_firmware && !settings.skip_untested_firmware_warning) {
+        this.show_untested_warning = true
+        return
+      }
+      this.installFirmware()
+    },
+    confirmUntestedInstall(): void {
+      if (this.skip_untested_warning_next_time) {
+        settings.skip_untested_firmware_warning = true
+      }
+      this.installFirmware()
+    },
+    enableUntestedWarning(): void {
+      settings.skip_untested_firmware_warning = false
+      this.skip_untested_warning_next_time = false
+    },
     setFirstNoSitlBoard(): void {
       const [first_board] = this.no_sitl_boards
       this.chosen_board = first_board
@@ -405,7 +570,6 @@ export default Vue.extend({
       this.install_status = InstallStatus.Installing
       const axios_request_config: AxiosRequestConfig = {
         method: 'post',
-        timeout: 180000,
       }
       if (this.upload_type === UploadType.Cloud) {
         // Populate request with data for cloud install
@@ -483,5 +647,18 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.bl-only-info-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 600px) {
+  .bl-only-info-action {
+    flex-direction: column;
+    align-items: flex-end;
+  }
 }
 </style>
