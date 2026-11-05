@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        New NMEA socket
+        {{ t`New NMEA socket` }}
       </v-card-title>
 
       <v-card-text class="d-flex flex-column">
@@ -17,23 +17,23 @@
           <v-select
             v-model="nmea_socket.kind"
             :items="available_socket_kinds"
-            label="Socket kind"
+            :label="t`Socket kind`"
             :rules="[validate_required_field]"
-            no-data-text="No Socket type chosen"
+            :no-data-text="t`No Socket type chosen`"
           />
 
           <v-text-field
             v-model="nmea_socket.port"
             type="number"
             :rules="[validate_required_field, is_socket_port]"
-            label="Socket port"
+            :label="t`Socket port`"
           />
 
           <v-text-field
             v-model="nmea_socket.component_id"
             type="number"
             :counter="3"
-            label="Mavlink component ID"
+            :label="t`Mavlink component ID`"
             :rules="[validate_required_field, is_component_id]"
             :append-icon="'mdi-information-outline'"
             @click:append="openMavlinkComponentIDInfo"
@@ -47,7 +47,7 @@
           color="primary"
           @click="showDialog(false)"
         >
-          Cancel
+          {{ t`Cancel` }}
         </v-btn>
 
         <v-spacer />
@@ -56,7 +56,7 @@
           color="primary"
           @click="createNMEASocket"
         >
-          Create
+          {{ t`Create` }}
         </v-btn>
       </v-card-actions>
     </v-card>
