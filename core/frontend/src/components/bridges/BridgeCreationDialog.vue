@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        New bridge
+        {{ t`New bridge` }}
       </v-card-title>
 
       <v-card-text class="d-flex flex-column">
@@ -19,7 +19,7 @@
             :items="available_serial_ports"
             :label="serial_selector_label"
             :rules="[validate_required_field, is_path]"
-            no-data-text="No serial ports available"
+            :no-data-text="t`No serial ports available`"
             :loading="updating_serial_ports"
             item-text="name"
             :item-value="(item) => item.by_path ? item.by_path : item.name"
@@ -36,7 +36,7 @@
                 <v-list-item dense>
                   <v-list-item-content dense>
                     <v-list-item-title md-1>
-                      Device: {{ item.name }}
+                      {{ t`Device: ${item.name}` }}
                       <v-chip
                         v-if="item.current_user"
                         class="ma-2 pl-2 pr-2"
@@ -45,23 +45,23 @@
                         x-small
                         text-color="white"
                       >
-                        In use by {{ item.current_user }}
+                        {{ t`In use by ${item.current_user}` }}
                       </v-chip>
                     </v-list-item-title>
                     <v-list-item-subtitle class="text-wrap">
-                      Path: {{ item.by_path ? item.by_path : item.name }}
+                      {{ t`Path: ${item.by_path ? item.by_path : item.name}` }}
                     </v-list-item-subtitle>
                     <v-list-item-subtitle
                       v-if="item.by_path_created_ms_ago"
                       class="text-wrap"
                     >
-                      Created: {{ create_time_ago(item.by_path_created_ms_ago) }}
+                      {{ t`Created: ${create_time_ago(item.by_path_created_ms_ago)}` }}
                     </v-list-item-subtitle>
                     <div
                       v-if="item.udev_properties && item.udev_properties['ID_VENDOR']"
                     >
                       <v-list-item-subtitle class="text-wrap">
-                        Info: {{ item.udev_properties["ID_VENDOR"] }} / {{ item.udev_properties["ID_MODEL"] }}
+                        {{ t`Info: ${item.udev_properties["ID_VENDOR"]} / ${item.udev_properties["ID_MODEL"]}` }}
                       </v-list-item-subtitle>
                     </div>
                     <device-path-helper
@@ -81,7 +81,7 @@
           <v-select
             v-model="bridge.baud"
             :items="available_baudrates"
-            label="Serial baudrate"
+            :label="t`Serial baudrate`"
             :rules="[validate_required_field, is_baudrate]"
           />
           <v-tabs
@@ -89,25 +89,16 @@
             fixed-tabs
           >
             <v-tab @click="bridge.udp_listen_port = 15000">
-              Server Mode
+              {{ t`Server Mode` }}
             </v-tab>
             <v-tab @click="bridge.udp_listen_port = 0">
-              Client Mode
+              {{ t`Client Mode` }}
             </v-tab>
           </v-tabs>
-          <span v-if="mode === 'server'">
-            Server mode will bind to the given port at the BlueOS device.
-            This means it will receive data from the topside computer at port
-            <B>{{ bridge.udp_listen_port }}</B>, and will send data back
-            to the topside computer at the port where the data originated at the topside computer.
-          </span>
-          <span v-else-if="mode === 'client'">
-            Client mode will send data to the given IP address and port.
-            This means it will send data to the topside computer at IP
-            <B>{{ bridge.ip }}</B> and port <B>{{ bridge.udp_target_port }}</B>.
-            It will receive data back from the topside computer at
-            <b>{{ bridge.udp_listen_port ? `port ${bridge.udp_listen_port}` : 'an automatically assigned port' }}</b>.
-          </span>
+          <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+          <span v-if="mode === 'server'" v-html="t`Server mode will bind to the given port at the BlueOS device. This means it will receive data from the topside computer at port <B>${escapeHtml(bridge.udp_listen_port)}</B>, and will send data back to the topside computer at the port where the data originated at the topside computer.`" />
+          <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+          <span v-else-if="mode === 'client'" v-html="t`Client mode will send data to the given IP address and port. This means it will send data to the topside computer at IP <B>${escapeHtml(bridge.ip)}</B> and port <B>${escapeHtml(bridge.udp_target_port)}</B>. It will receive data back from the topside computer at <b>${bridge.udp_listen_port ? `port ${escapeHtml(bridge.udp_listen_port)}` : t`an automatically assigned port`}</b>.`" />
           <v-text-field
             v-model="bridge.ip"
             :rules="[validate_required_field, is_ip_address]"
@@ -139,7 +130,7 @@
           color="primary"
           @click="showDialog(false)"
         >
-          Cancel
+          {{ t`Cancel` }}
         </v-btn>
 
         <v-spacer />
@@ -148,7 +139,7 @@
           color="primary"
           @click="createBridge"
         >
-          Create
+          {{ t`Create` }}
         </v-btn>
       </v-card-actions>
     </v-card>
