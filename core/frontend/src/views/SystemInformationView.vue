@@ -31,6 +31,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import AboutThisSystem from '@/components/system-information/AboutThisSystem.vue'
@@ -66,20 +67,20 @@ export default Vue.extend({
     return {
       settings,
       items: [
-        { title: 'System Monitor', icon: 'mdi-speedometer', value: 'system_condition' },
-        { title: 'Processes', icon: 'mdi-view-dashboard', value: 'process' },
-        { title: 'Network', icon: 'mdi-ip-network-outline', value: 'network' },
-        { title: 'USB', icon: 'mdi-usb', value: 'usb' },
+        { title: t`System Monitor`, icon: 'mdi-speedometer', value: 'system_condition' },
+        { title: t`Processes`, icon: 'mdi-view-dashboard', value: 'process' },
+        { title: t`Network`, icon: 'mdi-ip-network-outline', value: 'network' },
+        { title: t`USB`, icon: 'mdi-usb', value: 'usb' },
         {
-          title: 'Kernel', icon: 'mdi-text-long', value: 'kernel', is_pirate: true,
+          title: t`Kernel`, icon: 'mdi-text-long', value: 'kernel', is_pirate: true,
         },
         {
-          title: 'Journal', icon: 'mdi-notebook-outline', value: 'journal', is_pirate: true,
+          title: t`Journal`, icon: 'mdi-notebook-outline', value: 'journal', is_pirate: true,
         },
         {
-          title: 'Firmware', icon: 'mdi-raspberry-pi', value: 'firmware', is_pirate: true,
+          title: t`Firmware`, icon: 'mdi-raspberry-pi', value: 'firmware', is_pirate: true,
         },
-        { title: 'About', icon: 'mdi-information', value: 'about' },
+        { title: t`About`, icon: 'mdi-information', value: 'about' },
       ] as Item[],
       page_value: 'system_condition',
     }
