@@ -23,7 +23,7 @@
           v-on="on"
         >
           <v-icon
-            v-tooltip="'Cloud sync status'"
+            v-tooltip="t`Cloud sync status`"
             class="px-1"
             color="white"
           >
@@ -80,7 +80,7 @@
         <v-app-bar
           elevate-on-scroll
         >
-          <v-toolbar-title>Cloud</v-toolbar-title>
+          <v-toolbar-title>{{ t`Cloud` }}</v-toolbar-title>
           <v-spacer v-if="is_cloud_setup_complete" />
           <span
             v-if="is_cloud_setup_complete"
@@ -98,8 +98,8 @@
               background-color="transparent"
               class="cloud-tray-tabs"
             >
-              <v-tab>Account</v-tab>
-              <v-tab>Uploads</v-tab>
+              <v-tab>{{ t`Account` }}</v-tab>
+              <v-tab>{{ t`Uploads` }}</v-tab>
             </v-tabs>
             <v-tabs-items v-model="active_tab">
               <v-tab-item>
@@ -154,10 +154,10 @@
           mdi-link-off
         </v-icon>
         <v-card-title>
-          Major Tom is not installed
+          {{ t`Major Tom is not installed` }}
         </v-card-title>
         <v-card-subtitle class="pt-2">
-          To use the cloud features of the Ground Control you need to install it.
+          {{ t`To use the cloud features of the Ground Control you need to install it.` }}
         </v-card-subtitle>
         <v-btn
           color="primary"
@@ -165,7 +165,7 @@
           class="mt-4"
           @click="installMajorTom"
         >
-          Install Major Tom
+          {{ t`Install Major Tom` }}
         </v-btn>
       </v-container>
     </v-card>
