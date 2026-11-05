@@ -2,7 +2,7 @@
   <v-row style="display: contents;">
     <v-icon
       v-if="disk_usage_high"
-      v-tooltip="`High disk usage! (${disk_usage_percent.toFixed(1)}%) please clean up the disk`"
+      v-tooltip="t`High disk usage! (${disk_usage_percent.toFixed(1)}%) please clean up the disk`"
       class="px-1 blinking white-shadow"
       color="red"
       @click="$router.push('/tools/disk')"
@@ -11,7 +11,7 @@
     </v-icon>
     <v-icon
       v-if="cpu_temperature_limit_reached"
-      v-tooltip="`CPU temperature too high (${cpu_temperature} ºC), please cool down your vehicle!`"
+      v-tooltip="t`CPU temperature too high (${cpu_temperature} ºC), please cool down your vehicle!`"
       class="px-1 blinking white-shadow"
       color="error"
     >
@@ -19,7 +19,7 @@
     </v-icon>
     <v-icon
       v-if="cpu_throttled"
-      v-tooltip="`CPU is throttled. Performance may be affected. Please check your power supply and cooling!`"
+      v-tooltip="t`CPU is throttled. Performance may be affected. Please check your power supply and cooling!`"
       class="px-1 blinking white-shadow"
       color="error"
     >
@@ -27,7 +27,7 @@
     </v-icon>
     <v-icon
       v-if="cpu_undervoltage"
-      v-tooltip="`CPU has reported low voltage. Please check your power supply!`"
+      v-tooltip="t`CPU has reported low voltage. Please check your power supply!`"
       class="px-1 blinking white-shadow"
       color="error"
     >
@@ -58,7 +58,7 @@
           </v-icon>
           <v-icon
             v-if="heartbeat_age() >= time_limit_heartbeat"
-            v-tooltip="`MAVLink heartbeat lost`"
+            v-tooltip="t`MAVLink heartbeat lost`"
             class="px-1 white-shadow"
             color="error"
           >
@@ -75,15 +75,15 @@
           <div>
             <table style="width: 100%">
               <tr>
-                <td>Core Temperature:</td>
-                <td>{{ cpu_temperature }} ºC</td>
+                <td>{{ t`Core Temperature:` }}</td>
+                <td>{{ t`${cpu_temperature} ºC` }}</td>
               </tr>
               <tr>
-                <td>Voltage:</td>
+                <td>{{ t`Voltage:` }}</td>
                 <td>{{ battery_voltage }} V</td>
               </tr>
               <tr>
-                <td>Current:</td>
+                <td>{{ t`Current:` }}</td>
                 <td> {{ battery_current }} A</td>
               </tr>
               <tr v-for="(calibrated, sensor_name) in sensor_status" :key="sensor_name">
@@ -96,11 +96,11 @@
                     :to="{ name: 'Vehicle Setup', params: { tab: 'configure', subtab: sensor_name } }"
                     color="primary"
                   >
-                    Calibrate
+                    {{ t`Calibrate` }}
                   </v-btn>
                 </td>
                 <td v-else>
-                  Calibrated
+                  {{ t`Calibrated` }}
                 </td>
               </tr>
             </table>
