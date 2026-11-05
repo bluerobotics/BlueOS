@@ -5,7 +5,7 @@
     @input="showDialog"
   >
     <v-card>
-      <v-card-title>New static IP address on '{{ interfaceName }}'</v-card-title>
+      <v-card-title>{{ t`New static IP address on '${interfaceName}'` }}</v-card-title>
 
       <v-card-text class="d-flex flex-column">
         <v-form
@@ -16,7 +16,7 @@
           <v-text-field
             v-model="ip_address"
             :rules="[is_valid_ip_input]"
-            label="IP address"
+            :label="t`IP address`"
           />
 
           <v-btn
@@ -24,7 +24,7 @@
             class="mr-4"
             @click="createNewAddress"
           >
-            Create
+            {{ t`Create` }}
           </v-btn>
         </v-form>
       </v-card-text>
