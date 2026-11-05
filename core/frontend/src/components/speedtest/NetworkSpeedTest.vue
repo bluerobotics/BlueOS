@@ -4,7 +4,7 @@
   >
     <v-card max-width="390px" class="ma-5">
       <v-card-title class="justify-center">
-        Local Network Speed and Latency Test
+        {{ t`Local Network Speed and Latency Test` }}
       </v-card-title>
 
       <v-divider />
@@ -28,7 +28,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Download speed from vehicle'"
+                  v-tooltip="t`Download speed from vehicle`"
                 >
                   mdi-download
                 </v-icon>
@@ -41,7 +41,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Upload speed to vehicle'"
+                  v-tooltip="t`Upload speed to vehicle`"
                 >
                   mdi-upload
                 </v-icon>
@@ -54,7 +54,7 @@
             <v-list-item>
               <v-list-item-icon>
                 <v-icon
-                  v-tooltip="'Latency'"
+                  v-tooltip="t`Latency`"
                 >
                   mdi-timer-outline
                 </v-icon>
