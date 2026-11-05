@@ -3,13 +3,16 @@ from collections.abc import Iterator
 
 import pytest
 from blueos.core import BlueOS
+from targets.hil.target import HilTarget
 from targets.sil.target import SilTarget
 from targets.target import Target
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(name="target", scope="session", params=[SilTarget], ids=lambda target_class: target_class.name)
+@pytest.fixture(
+    name="target", scope="session", params=[SilTarget, HilTarget], ids=lambda target_class: target_class.name
+)
 def target_fixture(request: pytest.FixtureRequest) -> Iterator[Target]:
     target = request.param()
     logger.info("setting up %s target...", target.name)
