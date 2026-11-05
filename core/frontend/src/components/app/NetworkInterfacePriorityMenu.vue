@@ -2,8 +2,9 @@
   <v-card class="pa-2 mx-auto" min-width="100%">
     <v-list>
       <v-card-subtitle class="text-md-center" max-width="30">
-        Drag the network interfaces to move the highest priority to the top.<br>
-        Applied changes require a <b>system reboot</b>.
+        {{ t`Drag the network interfaces to move the highest priority to the top.` }}<br>
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <span v-html="t`Applied changes require a <b>system reboot</b>.`" />
       </v-card-subtitle>
       <draggable v-model="interfaces">
         <v-card
@@ -48,7 +49,7 @@
         color="primary"
         @click="close()"
       >
-        Cancel
+        {{ t`Cancel` }}
       </v-btn>
       <v-spacer />
       <v-btn
@@ -56,7 +57,7 @@
         :disabled="is_loading"
         @click="setHighestInterface()"
       >
-        Apply
+        {{ t`Apply` }}
       </v-btn>
     </v-card-actions>
   </v-card>
