@@ -8,10 +8,10 @@
       v-if="showTopBar"
       elevate-on-scroll
     >
-      <v-toolbar-title>Wifi</v-toolbar-title>
+      <v-toolbar-title>{{ t`Wifi` }}</v-toolbar-title>
       <v-spacer />
       <v-btn
-        v-tooltip="'Toggle hotspot'"
+        v-tooltip="t`Toggle hotspot`"
         icon
         :color="hotspot_status ? 'success' : 'gray'"
         hide-details="auto"
@@ -23,7 +23,7 @@
       </v-btn>
       <v-btn
         v-if="hotspot_status"
-        v-tooltip="'Hotspot QR code'"
+        v-tooltip="t`Hotspot QR code`"
         icon
         color="primary"
         hide-details="auto"
@@ -32,7 +32,7 @@
         <v-icon>mdi-qrcode-scan</v-icon>
       </v-btn>
       <v-btn
-        v-tooltip="'Settings'"
+        v-tooltip="t`Settings`"
         icon
         color="gray"
         hide-details="auto"
@@ -60,7 +60,7 @@
             v-if="show_search"
             v-model="ssid_filter"
             append-icon="mdi-magnify"
-            label="Search"
+            :label="t`Search`"
             single-line
             hide-details
             clearable
@@ -81,18 +81,18 @@
             class="text-body-1 text-center"
           >
             <template v-if="wifi_status?.state === 'unavailable'">
-              No wifi adapter
+              {{ t`No wifi adapter` }}
             </template>
             <template v-else>
-              No wifi networks available :( <br>
-              Rescanning...
+              {{ t`No wifi networks available :(` }} <br>
+              {{ t`Rescanning...` }}
             </template>
           </v-card-text>
         </div>
         <div v-else>
           <spinning-logo
             size="30%"
-            subtitle="Scanning for wifi networks..."
+            :subtitle="t`Scanning for wifi networks...`"
           />
         </div>
       </v-sheet>
@@ -100,7 +100,7 @@
     <v-sheet v-else>
       <spinning-logo
         size="30%"
-        subtitle="Waiting for wifi networks..."
+        :subtitle="t`Waiting for wifi networks...`"
       />
     </v-sheet>
 
@@ -126,7 +126,7 @@
     >
       <v-card>
         <v-card-title class="text-h5">
-          Connect to the hotspot
+          {{ t`Connect to the hotspot` }}
         </v-card-title>
         <v-card-text>
           <div class="d-flex align-center justify-center">
@@ -136,7 +136,7 @@
               height="200"
             >
           </div>
-          <span>Scan this QR code with your phone to connect to BlueOS's hotspot.</span>
+          <span>{{ t`Scan this QR code with your phone to connect to BlueOS's hotspot.` }}</span>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -144,11 +144,10 @@
     <WarningDialog
       v-model="show_hotspot_disconnect_warning"
       :message="
-        'This hotspot is currently being used to access BlueOS. '
-          + 'Turning it off could prevent you from accessing your vehicle. '
-          + 'Are you sure you want to turn it off?'
+        // eslint-disable-next-line max-len
+        t`This hotspot is currently being used to access BlueOS. Turning it off could prevent you from accessing your vehicle. Are you sure you want to turn it off?`
       "
-      confirm-label="Turn off hotspot"
+      :confirm-label="t`Turn off hotspot`"
       @confirm="toggleHotspot"
     />
   </v-card>
@@ -156,6 +155,7 @@
 
 <script lang="ts">
 import { uniqBy } from 'lodash'
+import { t } from 'ttag'
 import Vue from 'vue'
 import { generateWifiQRCode } from 'wifi-qr-code-generator'
 
@@ -305,7 +305,7 @@ export default Vue.extend({
         timeout: 20000,
       })
         .then(() => {
-          notifier.pushSuccess('HOTSPOT_STATUS_TOGGLE_SUCCESS', 'Successfully toggled hotspot state.')
+          notifier.pushSuccess('HOTSPOT_STATUS_TOGGLE_SUCCESS', t`Successfully toggled hotspot state.`)
         })
         .catch((error) => {
           notifier.pushBackError('HOTSPOT_STATUS_TOGGLE_FAIL', error, true)
