@@ -10,8 +10,8 @@
       text
       dense
     >
-      The autopilot will not use injected position until {{ gps_type_param?.name }} is MAV (14).
-      It is currently {{ gps_type_param?.value }}. Reboot the autopilot after changing the parameter.
+      <!-- eslint-disable-next-line max-len -->
+      {{ t`The autopilot will not use injected position until ${gps_type_param?.name} is MAV (14). It is currently ${gps_type_param?.value}. Reboot the autopilot after changing the parameter.` }}
     </v-alert>
     <v-card
       class="mx-auto my-6"
@@ -20,9 +20,8 @@
     >
       <v-card-text>
         <div class="text--primary">
-          The NMEA Injector receives NMEA via UDP or TCP and transforms it
-          into MAVLink data that is forwarded to the autopilot.
-          It currently supports the sentences
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`The NMEA Injector receives NMEA via UDP or TCP and transforms it into MAVLink data that is forwarded to the autopilot. It currently supports the sentences` }}
           <!-- suppressing vue-no-html rule, as we create this html ourselves -->
           <!-- eslint-disable -->
           <span
@@ -42,7 +41,7 @@
             target="_blank"
             href="https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GNS.html"
           >
-            GPGNSS
+            {{ t`GPGNSS` }}
           </a>
         </div>
       </v-card-text>
@@ -69,7 +68,7 @@
     <v-container v-else-if="updating_nmea_sockets">
       <spinning-logo
         size="30%"
-        subtitle="Fetching available NMEA sockets..."
+        :subtitle="t`Fetching available NMEA sockets...`"
       />
     </v-container>
     <v-container
@@ -77,7 +76,7 @@
       class="text-center"
     >
       <p class="text-h6">
-        No NMEA sockets available. You can add a connection by clicking the + symbol in the corner.
+        {{ t`No NMEA sockets available. You can add a connection by clicking the + symbol in the corner.` }}
       </p>
     </v-container>
 
