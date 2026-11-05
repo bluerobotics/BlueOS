@@ -46,7 +46,7 @@
             <v-text-field
               v-if="is_hidden"
               v-model="inputed_ssid"
-              label="SSID"
+              :label="t`SSID`"
               hide-details="auto"
               class="pa-2"
             />
@@ -59,7 +59,7 @@
               @click="toggleForcePassword()"
             >
               <v-card-text>
-                Force new password
+                {{ t`Force new password` }}
               </v-card-text>
             </v-card>
             <password-input
@@ -79,7 +79,7 @@
               depressed
               @click="removeSavedWifiNetwork"
             >
-              Forget
+              {{ t`Forget` }}
             </v-btn>
 
             <v-btn
@@ -89,13 +89,13 @@
               :disabled="connection_status === ConnectionStatus.Connecting"
               @click="connectToWifiNetwork"
             >
-              Connect
+              {{ t`Connect` }}
             </v-btn>
           </v-row>
         </v-container>
       </v-card-actions>
       <v-card-text v-if="connecting">
-        Connecting to network, please wait...
+        {{ t`Connecting to network, please wait...` }}
         <v-progress-linear
           indeterminate
           color="primary"
@@ -107,6 +107,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import Notifier from '@/libs/notifier'
@@ -212,7 +213,7 @@ export default Vue.extend({
         })
         this.showDialog(false)
         this.connection_status = ConnectionStatus.Succeeded
-        notifier.pushSuccess('WIFI_CONNECT_SUCCESS', `Successfully connected to '${this.real_ssid}'`, true)
+        notifier.pushSuccess('WIFI_CONNECT_SUCCESS', t`Successfully connected to '${this.real_ssid}'`, true)
         wifi.setNetworkStatus(null)
         this.password = ''
         this.force_password = false
