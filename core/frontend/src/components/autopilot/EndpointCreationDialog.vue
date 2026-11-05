@@ -6,7 +6,7 @@
   >
     <v-card>
       <v-card-title>
-        Endpoint
+        {{ t`Endpoint` }}
       </v-card-title>
 
       <v-card-text class="d-flex flex-column">
@@ -17,7 +17,7 @@
           <v-text-field
             v-model="edited_endpoint.name"
             :counter="50"
-            label="Name"
+            :label="t`Name`"
             :disabled="edit"
             :hint="edit ? 'Cannot edit name. If needed, create a new endpoint.' : 'Indicates endpoint usage.'"
             :persistent-hint="edit"
@@ -27,15 +27,15 @@
           <v-text-field
             v-model="edited_endpoint.owner"
             :counter="50"
-            label="Owner"
-            hint="Helps identifying who created this endpoint."
+            :label="t`Owner`"
+            :hint="t`Helps identifying who created this endpoint.`"
             :rules="[validate_required_field]"
           />
 
           <v-select
             v-model="edited_endpoint.connection_type"
             :items="endpoint_types"
-            label="Type"
+            :label="t`Type`"
             :rules="[validate_required_field]"
             @change="updateIp"
           />
@@ -43,30 +43,30 @@
           <v-text-field
             v-model="edited_endpoint.place"
             :rules="[validate_required_field, is_ip_address_path_hostname, is_useable_ip_address]"
-            label="Address"
+            :label="t`Address`"
           />
 
           <v-text-field
             v-model.number="edited_endpoint.argument"
             :counter="50"
-            label="Port/Baudrate"
+            :label="t`Port/Baudrate`"
             :rules="[is_socket_port_baudrate]"
           />
 
           <v-checkbox
             v-model="edited_endpoint.persistent"
-            label="Save endpoint between system sessions"
+            :label="t`Save endpoint between system sessions`"
           />
 
           <v-checkbox
             v-model="edited_endpoint.protected"
-            label="Protect endpoint from being deleted"
+            :label="t`Protect endpoint from being deleted`"
             disabled
           />
 
           <v-checkbox
             v-model="edited_endpoint.enabled"
-            label="Start endpoint already enabled"
+            :label="t`Start endpoint already enabled`"
           />
 
           <v-row class="mt-2">
@@ -75,7 +75,7 @@
               class="ml-3"
               @click="showDialog(false)"
             >
-              Cancel
+              {{ t`Cancel` }}
             </v-btn>
 
             <v-spacer />
@@ -84,7 +84,7 @@
               color="primary mr-3"
               @click="createEditEndpoint"
             >
-              {{ edit ? 'Update endpoint' : 'Create endpoint' }}
+              {{ edit ? t`Update endpoint` : t`Create endpoint` }}
             </v-btn>
           </v-row>
         </v-form>
