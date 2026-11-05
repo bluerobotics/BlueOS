@@ -9,29 +9,27 @@
         v-bind="attrs"
         v-on="on"
       >
-        Start Full Calibration
+        {{ t`Start Full Calibration` }}
       </v-btn>
     </template>
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2 black--text">
-        Onboard Compass Calibration
+        {{ t`Onboard Compass Calibration` }}
       </v-card-title>
       <v-card-text class="pa-10">
         <span v-if="state === states.IDLE">
           <p>
-            <strong>Onboard Compass Calibration</strong> is the regular calibration used
-            for ArduPilot vehicles.
-            It requires spinning the vehicle around all axes, which allows it to calibrate the
-            readings to the expected local magnetic field.
+            <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+            <span v-html="t`<strong>Onboard Compass Calibration</strong> is the regular calibration used for ArduPilot vehicles. It requires spinning the vehicle around all axes, which allows it to calibrate the readings to the expected local magnetic field.`" />
           </p>
           <p>
-            A valid global region/position is <strong>recomended</strong> for Onboard Calibration to
-            estimate the local world magnetic field.
+            <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+            <span v-html="t`A valid global region/position is <strong>recomended</strong> for Onboard Calibration to estimate the local world magnetic field.`" />
           </p>
         </span>
         <span v-else-if="state === states.CALIBRATING">
-          Spin your vehicle around all of its axes until the progress bar completes.
+          {{ t`Spin your vehicle around all of its axes until the progress bar completes.` }}
         </span>
 
         <auto-coordinate-detector
@@ -48,9 +46,9 @@
         </v-alert>
         <v-simple-table v-if="Object.keys(fitness).length">
           <thead>
-            <th>Compass</th>
+            <th>{{ t`Compass` }}</th>
             <th>
-              Fitness (mGauss)
+              {{ t`Fitness (mGauss)` }}
             </th>
           </thead>
           <tbody>
@@ -84,17 +82,17 @@
           :disabled="!compass_mask || !coordinates"
           @click="calibrate()"
         >
-          Calibrate
+          {{ t`Calibrate` }}
         </v-btn>
         <v-btn v-if="state === states.DONE" color="primary" @click="dismiss">
-          Dismiss
+          {{ t`Dismiss` }}
         </v-btn>
         <RebootButton />
         <v-btn v-if="state == states.CALIBRATING" color="red" @click="cancelCalibration()">
-          Cancel
+          {{ t`Cancel` }}
         </v-btn>
         <v-btn v-if="state == states.FAILED" color="primary" @click="reset()">
-          Ok
+          {{ t`Ok` }}
         </v-btn>
         <v-spacer />
       </v-card-actions>
