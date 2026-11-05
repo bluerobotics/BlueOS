@@ -6,7 +6,7 @@
   >
     <v-card v-if="param?.name">
       <v-card-title>
-        Parameter Editor
+        {{ t`Parameter Editor` }}
         <v-spacer />
         <v-btn
           icon
@@ -36,7 +36,7 @@
           color="primary"
           @click="$emit('input', false)"
         >
-          Close
+          {{ t`Close` }}
         </v-btn>
       </v-card-actions>
     </v-card>
