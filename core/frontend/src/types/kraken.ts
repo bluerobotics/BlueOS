@@ -112,3 +112,9 @@ export interface ExtensionUploadResponse {
     metadata: ExtensionUploadMetadata
     image_name: string
 }
+
+export interface ProgressEvent {
+    target: {
+        response: string
+    }
+}

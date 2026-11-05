@@ -400,7 +400,7 @@
 
 <script lang="ts">
 import AnsiUp from 'ansi_up'
-import axios, { CancelTokenSource } from 'axios'
+import axios from 'axios'
 import { saveAs } from 'file-saver'
 import Vue from 'vue'
 
@@ -419,16 +419,13 @@ import settings from '@/libs/settings'
 import { OneMoreTime } from '@/one-more-time'
 import { Dictionary } from '@/types/common'
 import { kraken_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
 import PullTracker from '@/utils/pull_tracker'
 import { aggregateStreamingResponse, parseStreamingResponse } from '@/utils/streaming'
 
 import {
-  ExtensionData, ExtensionUploadMetadata, InstalledExtensionData, RunningContainer,
-  UploadProgressEvent,
+  ExtensionData, ExtensionUploadMetadata, InstalledExtensionData, ProgressEvent,
+  RunningContainer, UploadProgressEvent,
 } from '../types/kraken'
-
-const API_URL = '/kraken/v1.0'
 
 type TarInstallPhase = 'idle' | 'selected' | 'uploading' | 'processing' | 'ready' | 'installing' | 'success' | 'error'
 type TarStepKey = 'upload' | 'load' | 'configure' | 'install'
@@ -510,7 +507,7 @@ export default Vue.extend({
       status_text: '',
       show_log: false,
       follow_logs: true,
-      log_abort_controller: null as null | CancelTokenSource,
+      log_abort_controller: null as null | AbortController,
       log_output: null as null | string,
       log_info_output: null as null | string,
       log_container_name: null as null | string,
@@ -533,6 +530,7 @@ export default Vue.extend({
       install_from_file_error: null as null | string,
       install_from_file_failed_step: null as null | TarStepKey,
       install_from_file_last_level: -1,
+      outputBuffer: '',
     }
   },
   computed: {
@@ -635,7 +633,7 @@ export default Vue.extend({
     show_log: {
       handler(val) {
         if (!val) {
-          this.log_abort_controller?.cancel()
+          this.log_abort_controller?.abort()
         }
       },
       immediate: true,
@@ -825,34 +823,12 @@ export default Vue.extend({
     },
     async update(extension: InstalledExtensionData, version: string) {
       this.show_pull_output = true
-      const tracker = new PullTracker(
-        () => {
-          setTimeout(() => {
-            this.show_pull_output = false
-          }, 1000)
-        },
-        (error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-        },
+      const tracker = this.getTracker()
+      kraken.updateExtensionToVersion(
+        extension.identifier,
+        version,
+        (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
       )
-      back_axios({
-        url: `${API_URL}/extension/update_to_version`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-          new_version: version,
-        },
-        timeout: 120000,
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-        },
-      })
         .then(() => {
           this.fetchInstalledExtensions()
         })
@@ -862,12 +838,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
-          this.show_pull_output = false
-          this.show_dialog = false
-          this.pull_output = ''
-          this.download_percentage = 0
-          this.extraction_percentage = 0
-          this.status_text = ''
+          this.resetPullOutput()
         })
     },
     metricsFor(extension: InstalledExtensionData): { cpu: number, memory: number} | Record<string, never> {
@@ -886,16 +857,7 @@ export default Vue.extend({
         // This is from a file upload, use finalize endpoint
         await this.finalizeUploadedExtension(this.edited_extension)
       } else {
-        // This is a regular extension creation
-        await this.install(
-          this.edited_extension.identifier,
-          this.edited_extension.name,
-          this.edited_extension.docker,
-          this.edited_extension.tag,
-          true,
-          this.edited_extension?.permissions ?? '',
-          this.edited_extension?.user_permissions ?? '',
-        )
+        await this.install(this.edited_extension)
       }
 
       this.show_dialog = false
@@ -925,26 +887,16 @@ export default Vue.extend({
       )
     },
     async fetchRunningContainers(): Promise<void> {
-      back_axios({
-        method: 'get',
-        url: `${API_URL}/list_containers`,
-        timeout: 30000,
-      })
-        .then((response) => {
-          this.running_containers = response.data ?? []
-        })
-        .catch((error) => {
-          notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
-        })
+      try {
+        this.running_containers = await kraken.listContainers()
+      } catch (error) {
+        notifier.pushBackError('RUNNING_CONTAINERS_FETCH_FAIL', error)
+      }
     },
     async fetchContainersStats(): Promise<void> {
-      back_axios({
-        method: 'get',
-        url: `${API_URL}/stats`,
-        timeout: 20000,
-      })
+      kraken.getContainersStats()
         .then((response) => {
-          this.metrics = response.data
+          this.metrics = response
         })
         .catch((error) => {
           notifier.pushBackError('EXTENSIONS_METRICS_FETCH_FAIL', error)
@@ -963,14 +915,10 @@ export default Vue.extend({
       }
     },
     async fetchInstalledExtensions(): Promise<void> {
-      back_axios({
-        method: 'get',
-        url: `${API_URL}/installed_extensions`,
-        timeout: 30000,
-      })
+      kraken.getInstalledExtensions()
         .then((response) => {
           this.installed_extensions = {}
-          for (const extension of response.data) {
+          for (const extension of response) {
             this.installed_extensions[extension.identifier] = extension
           }
           this.dockers_fetch_failed = false
@@ -984,44 +932,20 @@ export default Vue.extend({
         })
     },
     async showLogs(extension: InstalledExtensionData) {
-      this.log_abort_controller = axios.CancelToken.source()
+      this.log_abort_controller = new AbortController()
       this.log_output = ''
+      this.outputBuffer = ''
       this.log_info_output = `Awaiting logs for ${extension.name}`
       this.show_log = true
-      let outputBuffer = ''
 
       this.log_container_name = `extension-${(extension.docker + extension.tag).replace(/[^a-zA-Z0-9]/g, '')}`
       const fetchLogs = (): void => {
-        let lastDecode = ''
-
-        back_axios({
-          method: 'get',
-          url: `${API_URL}/log`,
-          params: {
-            container_name: this.log_container_name,
-          },
-          onDownloadProgress: (progressEvent) => {
-            const result = aggregateStreamingResponse(
-              parseStreamingResponse(progressEvent.currentTarget.response),
-              (_, buffer) => Boolean(buffer),
-            )
-
-            if (result) {
-              lastDecode = result
-              this.log_info_output = `Logs for ${extension.name}`
-              this.$set(this, 'log_output', outputBuffer + lastDecode)
-            }
-            this.$nextTick(() => {
-              const logContainer = this.$refs.logContainer as HTMLElement
-              if (this.follow_logs && logContainer) {
-                logContainer.scrollTop = logContainer.scrollHeight
-              }
-            })
-          },
-          cancelToken: this.log_abort_controller?.token,
-        })
+        kraken.getContainerLogs(
+          this.log_container_name ?? '',
+          (progressEvent) => this.handleLogProgress(progressEvent.event, extension),
+          this.log_abort_controller?.signal,
+        )
           .then(() => {
-            outputBuffer += lastDecode
             this.log_info_output = `Reconnecting to ${extension.name}`
             setTimeout(fetchLogs, 500)
           })
@@ -1044,51 +968,15 @@ export default Vue.extend({
       this.show_dialog = true
       this.selected_extension = extension
     },
-    async install(
-      identifier: string,
-      name: string,
-      docker: string,
-      tag: string,
-      enabled: boolean,
-      permissions: string,
-      user_permissions: string,
-    ) {
+    async install(extension: InstalledExtensionData) {
       this.show_dialog = false
       this.show_pull_output = true
-      const tracker = new PullTracker(
-        () => {
-          setTimeout(() => {
-            this.show_pull_output = false
-          }, 1000)
-        },
-        (error) => {
-          this.alerter = true
-          this.alerter_error = String(error)
-          notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
-          this.show_pull_output = false
-        },
-      )
+      const tracker = this.getTracker()
 
-      back_axios({
-        url: `${API_URL}/extension/install`,
-        method: 'POST',
-        data: {
-          identifier,
-          name,
-          docker,
-          tag,
-          enabled,
-          permissions,
-          user_permissions,
-        },
-        onDownloadProgress: (progressEvent) => {
-          tracker.digestNewData(progressEvent)
-          this.pull_output = tracker.pull_output
-          this.download_percentage = tracker.download_percentage
-          this.extraction_percentage = tracker.extraction_percentage
-          this.status_text = tracker.overall_status
-        },
-      })
+      kraken.installExtension(
+        extension,
+        (progressEvent) => this.handleDownloadProgress(progressEvent.event, tracker),
+      )
         .then(() => {
           this.fetchInstalledExtensions()
         })
@@ -1098,12 +986,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
-          this.show_pull_output = false
-          this.show_dialog = false
-          this.pull_output = ''
-          this.download_percentage = 0
-          this.extraction_percentage = 0
-          this.status_text = ''
+          this.resetPullOutput()
         })
     },
     async performActionFromModal(
@@ -1127,23 +1010,19 @@ export default Vue.extend({
       if (!this.selected_extension) {
         return
       }
-      await this.install(
-        this.selected_extension?.identifier,
-        this.selected_extension?.name,
-        this.selected_extension?.docker,
+      await this.install({
+        identifier: this.selected_extension?.identifier,
+        name: this.selected_extension?.name,
+        docker: this.selected_extension?.docker,
         tag,
-        true,
-        JSON.stringify(this.selected_extension?.versions[tag].permissions),
-        permissions ?? '',
-      )
+        enabled: true,
+        permissions: JSON.stringify(this.selected_extension?.versions[tag].permissions),
+        user_permissions: permissions ?? '',
+      })
     },
     async uninstall(extension: InstalledExtensionData) {
       this.setLoading(extension, true)
-      axios.post(`${API_URL}/extension/uninstall`, null, {
-        params: {
-          extension_identifier: extension.identifier,
-        },
-      })
+      kraken.uninstallExtension(extension.identifier)
         .then(() => {
           this.fetchInstalledExtensions()
         })
@@ -1171,14 +1050,7 @@ export default Vue.extend({
       this.running_containers = this.running_containers.filter(
         (container) => container.name !== this.getContainerName(extension),
       )
-      back_axios({
-        url: `${API_URL}/extension/disable`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-        },
-        timeout: 10000,
-      })
+      kraken.disableExtension(extension.identifier)
         .catch((error) => {
           notifier.pushBackError('EXTENSION_DISABLE_FAIL', error)
         })
@@ -1189,14 +1061,7 @@ export default Vue.extend({
     },
     async enableAndStart(extension: InstalledExtensionData) {
       this.setLoading(extension, true)
-      back_axios({
-        url: `${API_URL}/extension/enable`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-        },
-        timeout: 10000,
-      })
+      kraken.enableExtension(extension.identifier, extension.tag)
         .catch((error) => {
           notifier.pushBackError('EXTENSION_ENABLE_FAIL', error)
         })
@@ -1209,14 +1074,7 @@ export default Vue.extend({
     },
     async restart(extension: InstalledExtensionData) {
       this.setLoading(extension, true)
-      back_axios({
-        url: `${API_URL}/extension/restart`,
-        method: 'POST',
-        params: {
-          extension_identifier: extension.identifier,
-        },
-        timeout: 10000,
-      })
+      kraken.restartExtension(extension.identifier)
         .catch((error) => {
           notifier.pushBackError('EXTENSION_RESTART_FAIL', error)
         })
@@ -1255,13 +1113,8 @@ export default Vue.extend({
         editing: false,
       }
     },
-    async finalizeUploadedExtension(extension: InstalledExtensionData): Promise<void> {
-      if (!this.upload_temp_tag) {
-        return
-      }
-
-      this.show_pull_output = true
-      const tracker = new PullTracker(
+    getTracker(): PullTracker {
+      return new PullTracker(
         () => {
           setTimeout(() => {
             this.show_pull_output = false
@@ -1274,6 +1127,14 @@ export default Vue.extend({
           this.show_pull_output = false
         },
       )
+    },
+    async finalizeUploadedExtension(extension: InstalledExtensionData): Promise<void> {
+      if (!this.upload_temp_tag) {
+        return
+      }
+
+      this.show_pull_output = true
+      const tracker = this.getTracker()
       this.setInstallFromFilePhase('installing')
       this.install_from_file_install_progress = 0
       this.install_from_file_status_text = 'Starting installation...'
@@ -1283,7 +1144,7 @@ export default Vue.extend({
           extension,
           this.upload_temp_tag,
           (progressEvent) => {
-            tracker.digestNewData(progressEvent)
+            tracker.digestNewData(progressEvent.event)
             this.pull_output = tracker.pull_output
             this.download_percentage = tracker.download_percentage
             this.extraction_percentage = tracker.extraction_percentage
@@ -1316,6 +1177,44 @@ export default Vue.extend({
         this.extraction_percentage = 0
         this.status_text = ''
       }
+    },
+    resetPullOutput() {
+      this.show_pull_output = false
+      this.show_dialog = false
+      this.pull_output = ''
+      this.download_percentage = 0
+      this.extraction_percentage = 0
+      this.status_text = ''
+    },
+    handleDownloadProgress(progressEvent: ProgressEvent, tracker: PullTracker) {
+      tracker.digestNewData(progressEvent)
+      this.pull_output = tracker.pull_output
+      this.download_percentage = tracker.download_percentage
+      this.extraction_percentage = tracker.extraction_percentage
+      this.status_text = tracker.overall_status
+    },
+    handleLogProgress(progressEvent: ProgressEvent, extension: InstalledExtensionData) {
+      const response = progressEvent?.target?.response
+      if (!response) {
+        return
+      }
+
+      const result = aggregateStreamingResponse(
+        parseStreamingResponse(response),
+        (_, buffer) => Boolean(buffer),
+      )
+
+      if (result) {
+        this.outputBuffer = result
+        this.log_info_output = `Logs for ${extension.name}`
+        this.$set(this, 'log_output', this.outputBuffer)
+      }
+      this.$nextTick(() => {
+        const logContainer = this.$refs.logContainer as HTMLElement
+        if (this.follow_logs && logContainer) {
+          logContainer.scrollTop = logContainer.scrollHeight
+        }
+      })
     },
   },
 })
