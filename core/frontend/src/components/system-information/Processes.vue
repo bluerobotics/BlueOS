@@ -12,13 +12,13 @@
     :search="search"
     :custom-filter="filterName"
     :loading="!process"
-    loading-text="Loading... Please wait"
+    :loading-text="t`Loading... Please wait`"
   >
     <template #top>
       <v-text-field
         v-model="search"
         clearable
-        label="Search"
+        :label="t`Search`"
         class="mx-4"
         prepend-inner-icon="mdi-magnify"
       />
@@ -54,6 +54,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import system_information, { FetchType } from '@/store/system-information'
@@ -75,19 +76,19 @@ export default Vue.extend({
         'command',
       ],
       headers: [
-        { text: 'PID', align: 'start', value: 'pid' },
-        { text: 'Name', value: 'name' },
-        { text: 'CPU (%)', value: 'cpu_usage' },
-        { text: 'Parent PID', value: 'parent_process' },
-        { text: 'Status', value: 'status' },
-        { text: 'Running time', value: 'running_time' },
-        { text: 'Memory (kB)', value: 'used_memory_kB' },
-        { text: 'Virt. Memory (kB)', value: 'virtual_memory_kB' },
-        { text: 'Working directory', value: 'working_directory' },
-        { text: 'Root directory', value: 'root_directory' },
-        { text: 'Command', value: 'command' },
-        { text: 'Environment', value: 'environment' },
-        { text: 'Executable path', value: 'executable_path' },
+        { text: t`PID`, align: 'start', value: 'pid' },
+        { text: t`Name`, value: 'name' },
+        { text: t`CPU (%)`, value: 'cpu_usage' },
+        { text: t`Parent PID`, value: 'parent_process' },
+        { text: t`Status`, value: 'status' },
+        { text: t`Running time`, value: 'running_time' },
+        { text: t`Memory (kB)`, value: 'used_memory_kB' },
+        { text: t`Virt. Memory (kB)`, value: 'virtual_memory_kB' },
+        { text: t`Working directory`, value: 'working_directory' },
+        { text: t`Root directory`, value: 'root_directory' },
+        { text: t`Command`, value: 'command' },
+        { text: t`Environment`, value: 'environment' },
+        { text: t`Executable path`, value: 'executable_path' },
       ],
     }
   },
