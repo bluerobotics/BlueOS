@@ -468,6 +468,7 @@ function currentStepForPhase(phase: TarInstallPhase): TarStepKey {
       return 'upload'
   }
 }
+
 const notifier = new Notifier(kraken_service)
 const ansi = new AnsiUp()
 
