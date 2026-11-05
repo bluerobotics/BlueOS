@@ -13,12 +13,12 @@
     <v-container v-if="updating_interfaces">
       <spinning-logo
         size="30%"
-        subtitle="Fetching available ethernet interfaces..."
+        :subtitle="t`Fetching available ethernet interfaces...`"
       />
     </v-container>
     <v-container v-else-if="!are_interfaces_available">
       <div>
-        No ethernet interfaces available
+        {{ t`No ethernet interfaces available` }}
       </div>
     </v-container>
   </v-card>
