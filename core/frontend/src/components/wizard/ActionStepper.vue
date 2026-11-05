@@ -12,7 +12,7 @@
       >
         {{ config.title }}
         <small v-if="config.summary">{{ config.summary }}</small>
-        <small v-if="config.message" :color="getStepColor(config)">Error: {{ config.message }}</small>
+        <small v-if="config.message" :color="getStepColor(config)">{{ t`Error: ${config.message}` }}</small>
       </v-stepper-step>
       <v-checkbox
         :input-value="!config.skip && !config.done"
