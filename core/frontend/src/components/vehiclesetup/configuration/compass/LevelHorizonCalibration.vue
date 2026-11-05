@@ -9,18 +9,18 @@
         v-bind="attrs"
         v-on="on"
       >
-        Level Horizon
+        {{ t`Level Horizon` }}
       </v-btn>
     </template>
 
     <v-card>
       <v-card-title class="text-h5">
-        Accelerometer Calibration
+        {{ t`Accelerometer Calibration` }}
       </v-card-title>
       <v-card-text>
         <div>
-          Horizon calibration trims the pitch and roll of the vehicle's
-          inertial sensors to adjust for small deviations from level.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`Horizon calibration trims the pitch and roll of the vehicle's inertial sensors to adjust for small deviations from level.` }}
         </div>
         <div class="attitude-container mt-4">
           <svg
@@ -57,8 +57,8 @@
             <circle r="4" fill="none" stroke="#ffa000" stroke-width="2.5" />
           </svg>
           <div class="attitude-readout">
-            <span>Roll: {{ rollDeg.toFixed(1) }}°</span>
-            <span>Pitch: {{ pitchDeg.toFixed(1) }}°</span>
+            <span>{{ t`Roll: ${rollDeg.toFixed(1)}°` }}</span>
+            <span>{{ t`Pitch: ${pitchDeg.toFixed(1)}°` }}</span>
           </div>
         </div>
         <v-alert
@@ -72,7 +72,7 @@
       </v-card-text>
       <v-card-actions class="justify-center">
         <v-btn color="primary" :disabled="calibrating" @click="calibrate()">
-          Calibrate
+          {{ t`Calibrate` }}
         </v-btn>
       </v-card-actions>
     </v-card>
