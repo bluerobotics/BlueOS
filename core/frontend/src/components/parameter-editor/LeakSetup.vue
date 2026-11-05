@@ -3,7 +3,7 @@
     <v-card-text>
       <v-row align="center">
         <v-col cols="12">
-          <span class="text-h6">Leak {{ leak_number }}</span>
+          <span class="text-h6">{{ t`Leak ${leak_number}` }}</span>
         </v-col>
       </v-row>
 
@@ -11,21 +11,21 @@
         <v-col v-if="type_parameter" cols="4">
           <inline-parameter-editor
             :param="type_parameter"
-            label="Sensor type"
+            :label="t`Sensor type`"
             auto-set
           />
         </v-col>
         <v-col v-if="logic_parameter" cols="4">
           <inline-parameter-editor
             :param="logic_parameter"
-            label="Logic when dry"
+            :label="t`Logic when dry`"
             auto-set
           />
         </v-col>
         <v-col v-if="failsafe_parameter" cols="4">
           <inline-parameter-editor
             :param="failsafe_parameter"
-            label="Failsafe action"
+            :label="t`Failsafe action`"
             auto-set
           />
         </v-col>
