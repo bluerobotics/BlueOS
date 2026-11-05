@@ -5,7 +5,7 @@
         <v-select
           v-model="selectedDecoder"
           :items="decoderOptions"
-          label="Select Decoder"
+          :label="t`Select Decoder`"
           outlined
           dense
           hide-details
@@ -36,6 +36,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
@@ -104,11 +105,11 @@ export default Vue.extend({
     },
     decoderOptions() {
       const options = [
-        { text: 'FFmpeg Decoder', value: 'ffmpeg' },
-        { text: 'Broadway Decoder', value: 'broadway' },
+        { text: t`FFmpeg Decoder`, value: 'ffmpeg' },
+        { text: t`Broadway Decoder`, value: 'broadway' },
       ]
       if (this.allowHardwareDecoding) {
-        options.push({ text: 'Hardware Decoder', value: 'video' })
+        options.push({ text: t`Hardware Decoder`, value: 'video' })
       }
       return options
     },
