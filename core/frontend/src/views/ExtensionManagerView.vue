@@ -1205,7 +1205,7 @@ export default Vue.extend({
       )
 
       if (result) {
-        this.outputBuffer += result
+        this.outputBuffer = result
         this.log_info_output = `Logs for ${extension.name}`
         this.$set(this, 'log_output', this.outputBuffer)
       }
