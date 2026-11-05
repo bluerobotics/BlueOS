@@ -3,10 +3,12 @@ import shutil
 from pathlib import Path
 
 from blueos.core import BlueOS
-from targets.sil import docker
+from features.wifi import WifiAccessPoints, WifiScanner
+from targets.sil import docker, wifi
 from targets.sil.vm import disk
 from targets.sil.vm.qemu import Qemu
 from targets.sil.vm.ssh import Ssh
+from targets.sil.wifi import SilWifiAccessPointsDriver, SilWifiScannerDriver
 from targets.target import Target
 
 E2E_DIR = Path(__file__).resolve().parents[2]
@@ -28,6 +30,7 @@ class SilTarget(Target):
         base = disk.base_image(E2E_DIR / ".cache")
         self.qemu = Qemu(self.run_dir, disk.overlay(base, self.run_dir / "disk.qcow2"), self.ssh_port, self.http_port)
         self.ssh = Ssh(self.ssh_port)
+        self.features = {WifiAccessPoints: SilWifiAccessPointsDriver(self), WifiScanner: SilWifiScannerDriver(self)}
 
     @property
     def base_url(self) -> str:
@@ -40,6 +43,8 @@ class SilTarget(Target):
         docker.start_blueos(self.ssh, self.run_dir)
         logger.debug("waiting for blueos")
         BlueOS(self.base_url).wait_ready()
+        logger.debug("setting up wifi lab")
+        wifi.up(self.ssh)
 
     def down(self) -> None:
         logger.debug("stopping vm")
