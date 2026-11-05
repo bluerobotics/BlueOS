@@ -7,7 +7,7 @@
         <SpinningLogo
           v-if="bazaar_url_loading"
           size="200"
-          subtitle="Fetching Bazaar!"
+          :subtitle="t`Fetching Bazaar!`"
         />
         <div v-else-if="major_tom_not_configured" class="text-center">
           <v-icon
@@ -18,11 +18,11 @@
             mdi-cloud-off-outline
           </v-icon>
           <v-card-title class="mb-5">
-            Major Tom is not configured. <br />
-            Use the cloud icon in the top right corner to configure Major Tom.
+            {{ t`Major Tom is not configured.` }} <br />
+            {{ t`Use the cloud icon in the top right corner to configure Major Tom.` }}
           </v-card-title>
           <v-card-subtitle>
-            If the cloud icon is not visible, make sure Major Tom is enabled in installed extensions.
+            {{ t`If the cloud icon is not visible, make sure Major Tom is enabled in installed extensions.` }}
           </v-card-subtitle>
         </div>
         <div v-else>
@@ -34,7 +34,8 @@
             {{ internet_offline ? 'mdi-web-off' : 'mdi-alert-octagon' }}
           </v-icon>
           <v-card-title class="mb-5">
-            {{ internet_offline ? 'Vehicle is not connected to the internet.' : 'Failed to fetch extension manifest.' }}
+            {{ internet_offline ? t`Vehicle is not connected to the internet.`
+              : t`Failed to fetch extension manifest.` }}
           </v-card-title>
         </div>
       </v-container>
