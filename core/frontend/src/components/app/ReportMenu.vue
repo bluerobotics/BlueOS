@@ -19,7 +19,7 @@
     >
       <v-card>
         <v-card-title class="align-center">
-          Bug report / Feature request
+          {{ t`Bug report / Feature request` }}
         </v-card-title>
 
         <v-divider />
@@ -27,7 +27,7 @@
         <v-container class="pa-2">
           <v-card-actions class="flex-column">
             <v-btn
-              v-tooltip="'Track changes, contribute, and get notified when fixed'"
+              v-tooltip="t`Track changes, contribute, and get notified when fixed`"
               class="ma-2"
               @click="openGitHub()"
             >
@@ -37,7 +37,7 @@
               >
                 mdi-github
               </v-icon>
-              With GitHub
+              {{ t`With GitHub` }}
             </v-btn>
 
             <v-btn
@@ -52,11 +52,11 @@
               >
                 mdi-message-text
               </v-icon>
-              With Simple Report
+              {{ t`With Simple Report` }}
             </v-btn>
 
             <v-btn
-              v-tooltip="'Discuss ideas with the community'"
+              v-tooltip="t`Discuss ideas with the community`"
               class="ma-2"
               @click="openDiscuss()"
             >
@@ -66,7 +66,7 @@
               >
                 $si-discourse
               </v-icon>
-              On Blue Robotics forum
+              {{ t`On ${'Blue Robotics'} forum` }}
             </v-btn>
           </v-card-actions>
         </v-container>
@@ -77,6 +77,7 @@
 
 <script lang="ts">
 import * as Sentry from '@sentry/vue'
+import { t } from 'ttag'
 import Vue from 'vue'
 
 export default Vue.extend({
@@ -140,7 +141,7 @@ export default Vue.extend({
       url.pathname = '/new-topic'
 
       const parameters = {
-        title: 'BlueOS feedback - (Please add a title here)',
+        title: t`BlueOS feedback - (Please add a title here)`,
         body: 'Blue OS Version: (You can check on the bottom of the main menu)\n- - -\nFeedback content',
         category_id: 85,
         tags: ['frontend'],
