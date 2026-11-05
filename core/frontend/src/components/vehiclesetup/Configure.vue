@@ -30,6 +30,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
@@ -86,22 +87,22 @@ export default Vue.extend({
   data() {
     return {
       pages: [
-        { title: 'Parameters', value: 'parameters', component: ParamSets },
-        { title: 'Vehicle Body', value: 'vehiclebody', component: ArdupilotVehicleBodySetup },
-        { title: 'Gyroscope', value: 'gyroscope', component: GyroCalib },
-        { title: 'Accelerometer', value: 'accelerometer', component: ArdupilotAccelerometerSetup },
-        { title: 'Compass', value: 'compass', component: ArdupilotMavlinkCompassSetup },
-        { title: 'Baro', value: 'baro', component: BaroCalib },
+        { title: t`Parameters`, value: 'parameters', component: ParamSets },
+        { title: t`Vehicle Body`, value: 'vehiclebody', component: ArdupilotVehicleBodySetup },
+        { title: t`Gyroscope`, value: 'gyroscope', component: GyroCalib },
+        { title: t`Accelerometer`, value: 'accelerometer', component: ArdupilotAccelerometerSetup },
+        { title: t`Compass`, value: 'compass', component: ArdupilotMavlinkCompassSetup },
+        { title: t`Baro`, value: 'baro', component: BaroCalib },
         {
-          title: 'Lights',
+          title: t`Lights`,
           value: 'lights',
           component: LightsConfigration,
           filter: () => autopilot.vehicle_type === 'Submarine',
         },
-        { title: 'Failsafes', value: 'failsafes', component: FailsafesConfiguration },
-        { title: 'Power', value: 'power', component: PowerConfiguration },
-        { title: 'Camera Gimbal', value: 'camera', component: Camera },
-        { title: 'Vehicle ID', value: 'systemid', component: SystemId },
+        { title: t`Failsafes`, value: 'failsafes', component: FailsafesConfiguration },
+        { title: t`Power`, value: 'power', component: PowerConfiguration },
+        { title: t`Camera Gimbal`, value: 'camera', component: Camera },
+        { title: t`Vehicle ID`, value: 'systemid', component: SystemId },
       ] as Item[],
     }
   },
