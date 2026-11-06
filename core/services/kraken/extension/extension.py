@@ -255,16 +255,16 @@ class Extension:
 
     async def _pull_docker_image(self, docker_auth: Optional[str]) -> AsyncGenerator[bytes, None]:
         """Pull Docker image and yield progress updates."""
-        tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
+        # Podman concatenates `tag` onto `fromImage`, so sending a tagged reference
+        # plus a tag asks it for `repo:tag:tag`. One reference parses the same in both.
+        reference = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
         async with DockerCtx() as client:
-            async for line in client.images.pull(
-                tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
-            ):
+            async for line in client.images.pull(reference, auth=docker_auth, stream=True):
                 # TODO - Plug Error detection from docker image here
                 yield json.dumps(line).encode("utf-8")
             # Make sure to add correct tag if a digest was used since docker messes up the tag
             if self.digest:
-                await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
+                await client.images.tag(reference, self.source.docker, tag=self.tag)
 
     async def _clear_remaining_tags(self) -> None:
         """Uninstall all other tags for this extension."""
@@ -361,11 +361,11 @@ class Extension:
                         logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
                         self.lock(self.unique_entry)
 
-                        tag = img_name + (f"@{self.digest}" if self.digest else "")
-                        await client.images.pull(tag, repo=self.source.docker, tag=self.tag)
+                        reference = img_name + (f"@{self.digest}" if self.digest else "")
+                        await client.images.pull(reference)
                         # Make sure to add correct tag if a digest was used since docker messes up the tag
                         if self.digest:
-                            await client.images.tag(tag, img_name)
+                            await client.images.tag(reference, self.source.docker, tag=self.tag)
                     except Exception as error:
                         raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
                     try:
