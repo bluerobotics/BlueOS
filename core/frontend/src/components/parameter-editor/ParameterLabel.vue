@@ -14,11 +14,11 @@
       </template>
       <div>
         <strong>{{ param?.name }}</strong><br>
-        <span v-if="param?.description">Description: {{ param.description }}<br></span>
-        <span v-if="param?.range">Range: {{ param.range.low }} to {{ param.range.high }}<br></span>
-        <span v-if="param?.units">Units: {{ param.units }}<br></span>
-        <span v-if="param?.options">Options: {{ formatOptions ?? formattedOptions }}<br></span>
-        <span v-if="param?.rebootRequired">Requires reboot</span>
+        <span v-if="param?.description">{{ t`Description: ${param.description}` }}<br></span>
+        <span v-if="param?.range">{{ t`Range: ${param.range.low} to ${param.range.high}` }}<br></span>
+        <span v-if="param?.units">{{ t`Units: ${param.units}` }}<br></span>
+        <span v-if="param?.options">{{ t`Options: ${formatOptions ?? formattedOptions}` }}<br></span>
+        <span v-if="param?.rebootRequired">{{ t`Requires reboot` }}</span>
       </div>
     </v-tooltip>
   </div>
