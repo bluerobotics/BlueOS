@@ -30,6 +30,8 @@ class SettingsStore extends VuexModule {
 
   user_top_widgets = [] as string[]
 
+  language = 'en'
+
   @Mutation
   setDarkTheme(value: boolean): void {
     this.is_dark_theme = value
