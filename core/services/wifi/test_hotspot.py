@@ -17,6 +17,7 @@ _STUBBED = (
     "settings",
     "commonwealth",
     "commonwealth.utils",
+    "commonwealth.utils.commands",
     "commonwealth.utils.DHCPServerManager",
     "commonwealth.utils.general",
     "commonwealth.settings",
@@ -107,6 +108,7 @@ async def test_start_kills_leftover_hostapd_before_recreating_uap0() -> None:
         patch("wifi_handlers.wpa_supplicant.Hotspot.subprocess.Popen", side_effect=popen),
         patch("wifi_handlers.wpa_supplicant.Hotspot.asyncio.sleep", new_callable=AsyncMock),
         patch("wifi_handlers.wpa_supplicant.Hotspot.DHCPServerManager"),
+        patch("wifi_handlers.wpa_supplicant.Hotspot.radio.rfkill_unblock", new_callable=AsyncMock),
     ):
         await hotspot.start()
 

@@ -81,7 +81,7 @@ class WPASupplicant:
         else:
             raise BusyError(f"{command} operation took more than specified timeout ({timeout}). Cancelling.")
 
-        if data == b"FAIL":
+        if data.strip() == b"FAIL":
             raise WPAOperationFail(f"WPA operation {command} failed.")
 
         return data
