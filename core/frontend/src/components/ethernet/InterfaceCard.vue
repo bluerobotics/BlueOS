@@ -41,7 +41,7 @@
             class="ma-2 px-2 py-5 elevation-1"
             @click.native.stop="openAddressCreationDialog"
           >
-            Add <br> static IP
+            {{ t`Add` }} <br> {{ t`static IP` }}
           </v-btn>
           <address-creation-dialog
             v-model="show_creation_dialog"
@@ -57,7 +57,7 @@
             class="ma-2 px-2 py-5 elevation-1"
             @click="triggerForDynamicIP"
           >
-            Ask for <br> dynamic IP
+            {{ t`Ask for` }} <br> {{ t`dynamic IP` }}
           </v-btn>
           <v-btn
             v-if="is_there_dhcp_server_already"
@@ -65,7 +65,7 @@
             class="ma-2 px-2 py-5 elevation-1"
             @click="removeDHCPServer"
           >
-            Disable <br> DHCP server
+            {{ t`Disable` }} <br> {{ t`DHCP server` }}
           </v-btn>
           <span
             v-else
@@ -77,7 +77,7 @@
               :disabled="!is_static_ip_present"
               @click="openDHCPServerDialog"
             >
-              Enable <br> DHCP server
+              {{ t`Enable` }} <br> {{ t`DHCP server` }}
             </v-btn>
           </span>
         </v-row>
