@@ -13,20 +13,9 @@
         elevation="2"
         dismissible
       >
-        <h3>Welcome to BlueOS!</h3>
-        Before you start, we highly recommend <a
-          href="https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet"
-          target="_blank"
-        >
-          connecting to the internet
-        </a>
-        and performing a <a
-          href="https://blueos.cloud/docs/stable/usage/getting-started/#select-version"
-          target="_blank"
-        >
-          system update to the latest available BlueOS version
-        </a>
-        .
+        <h3>{{ t`Welcome to BlueOS!` }}</h3>
+        <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+        <span v-html="t`Before you start, we highly recommend <a href='https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet' target='_blank'>connecting to the internet</a> and performing a <a href='https://blueos.cloud/docs/stable/usage/getting-started/#select-version' target='_blank'>system update to the latest available BlueOS version</a>.`" />
       </v-alert>
       <self-health-test />
     </v-row>
@@ -66,7 +55,7 @@
             <v-theme-provider dark>
               <div
                 v-if="advanced"
-                v-tooltip="'This is an advanced feature'"
+                v-tooltip="t`This is an advanced feature`"
                 class="pirate-marker"
               >
                 <v-avatar
