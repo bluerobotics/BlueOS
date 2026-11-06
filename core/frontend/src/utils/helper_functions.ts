@@ -26,20 +26,16 @@ export function castString(value: string): any { // eslint-disable-line @typescr
 }
 
 /**
- * Converts a git describe string to a tag string if present
- * @param git_describe - The git describe string to convert
- * @returns The tag string if present, otherwise undefined
+ * Tag name when `git describe --tags --long` is exactly on that tag (`<tag>-0-g<hash>`).
+ * A non-zero distance means later commits, so this returns undefined.
  */
 export function convertGitDescribeToTag(git_describe: string): string | undefined {
-  if (!git_describe || git_describe.endsWith('-dirty') || git_describe.isEmpty()) {
+  if (!git_describe || git_describe.isEmpty()) {
     return undefined
   }
 
-  const match = /tags\/(?<tag>|.*)-\d-.*/gm.exec(git_describe)
-  if (match && match.groups?.tag) {
-    return match.groups.tag
-  }
-  return undefined
+  const match = /^(?<tag>.+)-0-g[0-9a-f]+$/.exec(git_describe)
+  return match?.groups?.tag
 }
 
 /* Convert git describe text to a valid URL for the project. */
@@ -57,18 +53,14 @@ export function convertGitDescribeToUrl(git_describe: string): string {
     return project_url
   }
 
-  // Show tag release page
-  if (git_describe.startsWith('tags')) {
-    const tag = convertGitDescribeToTag(git_describe)
-    if (tag) {
-      return `${project_url}/releases/tag/${tag}`
-    }
+  const tag = convertGitDescribeToTag(git_describe)
+  if (tag) {
+    return `${project_url}/releases/tag/${tag}`
   }
 
-  // Show git source files page for commit
-  // It follows: `-gHASH`, where there is no fixed size for HASH size
+  // `<tag>-<distance>-g<hash>`: the page for that commit
   const hash = /-g([0-9a-f]+)$/.exec(git_describe)?.[1]
-  return `${project_url}/tree/${hash}`
+  return hash ? `${project_url}/tree/${hash}` : project_url
 }
 
 // Prefix for nginx's caching reverse proxy (see core/tools/nginx/nginx.conf).

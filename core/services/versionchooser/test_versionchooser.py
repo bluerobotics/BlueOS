@@ -74,8 +74,12 @@ async def test_get_version() -> None:
     chooser = VersionChooser(client_mock)
 
     attrs = {
-        "images.get.return_value.Id": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
-        "images.get.return_value.__getitem__.return_value": {"date": "2021-04-09T17:51:18.065721638Z"},
+        "images.get.return_value": {
+            "Id": "856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57",
+            "Created": "1970-01-01T00:00:00Z",
+            "Architecture": "amd64",
+            "Config": {"Labels": {"org.opencontainers.image.created": "2026-10-07T10:00:00-03:00"}},
+        },
     }
     client_mock.configure_mock(**attrs)
 
@@ -88,6 +92,7 @@ async def test_get_version() -> None:
         result = json.loads(bytes(response.body).decode())
         assert result["repository"] == "bluerobotics/blueos-core"
         assert result["tag"] == "master"
+        assert result["last_modified"] == "2026-10-07T10:00:00-03:00"
         assert len(client_mock.mock_calls) > 0
 
 
@@ -214,7 +219,23 @@ async def test_get_available_versions() -> None:
     assert "remote" in data
     assert data["local"][0]["tag"] == "test1"
     assert data["local"][1]["tag"] == "test2"
+    assert data["local"][0]["last_modified"].startswith("2021-10-1")  # unlabeled image falls back to Created
     assert len(client_mock.mock_calls) > 0
+
+
+@pytest.mark.asyncio
+async def test_get_available_versions_prefers_created_label() -> None:
+    labeled = {
+        **image_list[0],
+        "Created": 0,
+        "Labels": {"org.opencontainers.image.created": "2026-10-07T10:00:00-03:00"},
+    }
+    client_mock = mock.AsyncMock()
+    client_mock.configure_mock(**{"images.list.return_value": [labeled]})
+
+    result = await VersionChooser(client_mock).get_available_versions("bluerobotics/blueos-core")
+    data = json.loads(bytes(result.body).decode())  # type: ignore[arg-type]
+    assert data["local"][0]["last_modified"] == "2026-10-07T10:00:00-03:00"
 
 
 @pytest.mark.asyncio

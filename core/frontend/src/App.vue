@@ -318,14 +318,17 @@
           <settings-menu />
           <report-menu />
         </v-container>
+        <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <span
           class="build_info"
+          @click="buildDateClick"
         >
           BlueOS Version:
           <a
             target="_blank"
             rel="noopener noreferrer"
             :href="git_info_url"
+            @click.stop
           >
             {{ git_info }}
           </a>
@@ -338,11 +341,12 @@
         </span>
         <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
         <span
+          v-if="build_date || settings.is_dev_mode"
           id="current-version"
           class="build_info"
           @click="buildDateClick"
         >
-          Build: {{ build_date }}
+          <template v-if="build_date">Build: {{ build_date }}</template>
           <v-btn
             v-if="settings.is_dev_mode"
             v-tooltip="'Disable dev mode'"
@@ -402,6 +406,7 @@ import customization_store from '@/store/customization'
 import helper from '@/store/helper'
 import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
+import { blueosBuildDate, blueosGitDescribe } from '@/utils/blueos-version'
 import { convertGitDescribeToTag, convertGitDescribeToUrl } from '@/utils/helper_functions'
 import updateTime from '@/utils/update_time'
 import * as VCU from '@/utils/version_chooser'
@@ -755,13 +760,13 @@ export default Vue.extend({
       ]
     },
     git_info(): string {
-      return import.meta.env.VITE_APP_GIT_DESCRIBE
+      return blueosGitDescribe()
     },
     git_info_url(): string {
-      return convertGitDescribeToUrl(import.meta.env.VITE_APP_GIT_DESCRIBE)
+      return convertGitDescribeToUrl(this.git_info)
     },
     build_date(): string {
-      return import.meta.env.VITE_BUILD_DATE
+      return blueosBuildDate()
     },
     blueos_logo(): string {
       return customization_store.logoUrl ?? (settings.is_dark_theme ? blueos_white : blueos_blue)
