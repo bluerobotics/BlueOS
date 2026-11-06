@@ -595,7 +595,18 @@ class AutoPilotManager(metaclass=Singleton):
                     return
                 logger.debug("Waiting for process to die...")
                 await asyncio.sleep(0.5)
-            raise AutoPilotProcessKillFail("Could not terminate Ardupilot subprocess.")
+
+            # terminate() only asks. A wedged process would otherwise keep the serial ports and
+            # the firmware file busy, blocking the install or restart that called this.
+            logger.warning("Ardupilot subprocess ignored SIGTERM, sending SIGKILL.")
+            self.ardupilot_subprocess.kill()
+            for _ in range(10):
+                if self.ardupilot_subprocess.poll() is not None:
+                    logger.info("Ardupilot subprocess killed.")
+                    return
+                logger.debug("Waiting for the killed process to be reaped...")
+                await asyncio.sleep(0.5)
+            raise AutoPilotProcessKillFail("Could not kill Ardupilot subprocess.")
         logger.warning("Ardupilot subprocess already not running.")
 
     async def prune_ardupilot_processes(self) -> None:
