@@ -828,7 +828,7 @@ export default Vue.extend({
         // Invalid URL, ignore
       }
     })
-    this.bootstrap_version = await VCU.loadBootstrapCurrentVersion()
+    this.bootstrap_version = use_nixos_updates ? undefined : await VCU.loadBootstrapCurrentVersion()
   },
 
   beforeDestroy() {
