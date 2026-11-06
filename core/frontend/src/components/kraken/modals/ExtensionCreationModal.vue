@@ -10,13 +10,13 @@
   >
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
-        <span>{{ is_editing ? 'Edit' : (is_from_upload ? 'Configure Uploaded' : 'Create') }} Extension</span>
+        <span>{{ t`${is_editing ? t`Edit` : (is_from_upload ? t`Configure Uploaded` : t`Create`)} Extension` }}</span>
         <v-btn
           icon
           x-small
           class="ml-2"
           :color="copySuccess ? 'success' : undefined"
-          title="Copy configuration"
+          :title="t`Copy configuration`"
           @click="copyConfig"
         >
           <v-icon small>
@@ -35,28 +35,28 @@
         >
           <v-text-field
             v-model="new_extension.identifier"
-            label="Extension Identifier"
-            placeholder="yourorganization.yourextension"
+            :label="t`Extension Identifier`"
+            :placeholder="t`yourorganization.yourextension`"
             :disabled="is_editing"
             :rules="[validate_identifier]"
           />
 
           <v-text-field
             v-model="new_extension.name"
-            label="Extension Name"
+            :label="t`Extension Name`"
             :rules="[validate_name]"
           />
 
           <v-text-field
             v-model="new_extension.docker"
-            label="Docker image"
+            :label="t`Docker image`"
             :disabled="is_editing"
             :rules="[validate_imagename]"
           />
 
           <v-text-field
             v-model="new_extension.tag"
-            label="Docker tag"
+            :label="t`Docker tag`"
             :rules="[validate_tag]"
             @paste="handleTagPaste"
           />
@@ -70,7 +70,7 @@
               #controls
             >
               <v-btn
-                v-tooltip="'Reset to default permissions'"
+                v-tooltip="t`Reset to default permissions`"
                 class="editor-control"
                 icon
                 color="white"
@@ -87,7 +87,7 @@
             :disabled="!valid_permissions"
             @click="saveExtension"
           >
-            {{ is_editing ? 'Save' : (is_from_upload ? 'Install' : 'Create') }}
+            {{ is_editing ? t`Save` : (is_from_upload ? t`Install` : t`Create`) }}
           </v-btn>
         </v-form>
       </v-card-text>
