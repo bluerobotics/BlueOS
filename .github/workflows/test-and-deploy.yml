@@ -405,6 +405,27 @@ jobs:
           fi
           echo "Boot partition updated successfully."
 
+      # Without a group descriptor checksum, as in the bullseye base image, the first boot resize zeroes the
+      # inode tables of every new block group, about 1.8 GiB on a 128 GB card. uninit_bg defers that.
+      - name: Enable uninit_bg on the root filesystem
+        run: |
+          cleanup() {
+            sudo kpartx -d deploy/pimod/blueos.img || true
+            if [ -n "$LOOP_DEVICE" ] && losetup "/dev/$LOOP_DEVICE" >/dev/null 2>&1; then
+              sudo losetup -d "/dev/$LOOP_DEVICE" || true
+            fi
+          }
+          trap cleanup EXIT
+          LOOP_DEVICE=$(sudo kpartx -avs deploy/pimod/blueos.img | sed -E 's/.*(loop[0-9]+)p[0-9]+.*/\1/g' | head -1)
+          ROOT_PART="/dev/mapper/${LOOP_DEVICE}p2"
+          if ! FEATURES=$(sudo dumpe2fs -h "$ROOT_PART" | grep "^Filesystem features:"); then
+            echo "Failed to read the filesystem features of $ROOT_PART."
+            exit 1
+          fi
+          if [[ ! $FEATURES =~ (metadata_csum|uninit_bg) ]]; then
+            sudo tune2fs -O uninit_bg "$ROOT_PART"
+          fi
+
       - name: Sanitize platform name
         run: echo "SANITIZED_PLATFORM=$(echo ${{ matrix.platform }} | tr '/' '-')" >> $GITHUB_ENV
 
