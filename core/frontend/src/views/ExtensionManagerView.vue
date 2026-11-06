@@ -35,10 +35,10 @@
         <v-card-title class="d-flex flex-column flex-sm-row justify-space-between align-start">
           <div>
             <div class="text-h6">
-              Install extension from file
+              {{ t`Install extension from file` }}
             </div>
             <div class="subtitle-2 mt-1">
-              Upload a Kraken-compatible .tar archive to sideload an extension.
+              {{ t`Upload a Kraken-compatible .tar archive to sideload an extension.` }}
             </div>
           </div>
           <div class="d-flex align-center mt-4 mt-sm-0">
@@ -49,7 +49,7 @@
               small
               class="mr-2"
             >
-              Installed
+              {{ t`Installed` }}
             </v-chip>
             <v-btn icon @click="closeInstallFromFileDialog">
               <v-icon>mdi-close</v-icon>
@@ -62,7 +62,7 @@
             <v-col cols="12" md="6">
               <v-file-input
                 v-model="selected_tar_file"
-                label="Select .tar file"
+                :label="t`Select .tar file`"
                 accept=".tar"
                 truncate-length="24"
                 prepend-icon="mdi-file-upload-outline"
@@ -77,21 +77,21 @@
                   :loading="file_uploading"
                   @click="uploadSelectedTarFile"
                 >
-                  Upload file
+                  {{ t`Upload file` }}
                 </v-btn>
                 <v-btn
                   text
                   :disabled="file_uploading || install_from_file_phase === 'installing'"
                   @click="resetUploadFlow"
                 >
-                  Reset
+                  {{ t`Reset` }}
                 </v-btn>
                 <v-btn
                   color="secondary"
                   :disabled="!canConfigureUploaded"
                   @click="openCreationDialogFromUpload()"
                 >
-                  Configure & Install
+                  {{ t`Configure & Install` }}
                 </v-btn>
               </div>
               <v-alert
@@ -108,7 +108,7 @@
                 dense
                 class="mt-4"
               >
-                Extension installed successfully.
+                {{ t`Extension installed successfully.` }}
               </v-alert>
             </v-col>
             <v-col cols="12" md="6">
@@ -163,36 +163,36 @@
               class="metadata-preview mt-4"
             >
               <div class="subtitle-2 mb-2">
-                Detected metadata
+                {{ t`Detected metadata` }}
               </div>
               <div class="metadata-preview__grid">
                 <div>
                   <div class="caption text--secondary">
-                    Identifier
+                    {{ t`Identifier` }}
                   </div>
                   <div class="body-2">
-                    {{ upload_metadata.identifier || 'Pending' }}
+                    {{ upload_metadata.identifier || t`Pending` }}
                   </div>
                 </div>
                 <div>
                   <div class="caption text--secondary">
-                    Name
+                    {{ t`Name` }}
                   </div>
                   <div class="body-2">
-                    {{ upload_metadata.name || 'Pending' }}
+                    {{ upload_metadata.name || t`Pending` }}
                   </div>
                 </div>
                 <div>
                   <div class="caption text--secondary">
-                    Docker
+                    {{ t`Docker` }}
                   </div>
                   <div class="body-2">
-                    {{ upload_metadata.docker || 'Pending' }}
+                    {{ upload_metadata.docker || t`Pending` }}
                   </div>
                 </div>
                 <div>
                   <div class="caption text--secondary">
-                    Tag
+                    {{ t`Tag` }}
                   </div>
                   <div class="body-2">
                     {{ upload_metadata.tag || 'latest' }}
@@ -204,7 +204,7 @@
         </v-card-text>
         <v-card-actions class="justify-end">
           <v-btn text @click="closeInstallFromFileDialog">
-            Close
+            {{ t`Close` }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -222,7 +222,7 @@
           <v-spacer />
           <v-checkbox
             v-model="follow_logs"
-            label="Follow Logs"
+            :label="t`Follow Logs`"
             hide-details
           />
           <v-btn class="ml-3" icon @click="downloadCurrentLog">
@@ -248,24 +248,24 @@
           <v-icon class="mr-3">
             {{ is_bazaar_enabled ? 'mdi-incognito' : 'mdi-store-search' }}
           </v-icon>
-          {{ is_bazaar_enabled ? 'Back Alley' : 'Store' }}
+          {{ is_bazaar_enabled ? t`Back Alley` : t`Store` }}
         </v-tab>
         <v-tab v-if="is_bazaar_enabled" key="1" href="#1" class="tab-text">
           <v-icon class="mr-3">
             mdi-package-variant
           </v-icon>
-          Bazaar
+          {{ t`Bazaar` }}
         </v-tab>
         <v-tab key="2" href="#2" class="tab-text">
           <v-icon class="mr-3">
             mdi-bookshelf
           </v-icon>
-          Installed
+          {{ t`Installed` }}
         </v-tab>
       </v-tabs>
       <v-spacer />
       <v-btn
-        v-tooltip="'Settings'"
+        v-tooltip="t`Settings`"
         icon
         hide-details="auto"
         @click="show_settings = true"
@@ -327,16 +327,16 @@
         v-if="Object.keys(installed_extensions).isEmpty()"
       >
         <p v-if="dockers_fetch_failed" class="text-h6" style="margin: auto;">
-          Failed to fetch installed extensions. Make sure the vehicle has internet access and try again.
+          {{ t`Failed to fetch installed extensions. Make sure the vehicle has internet access and try again.` }}
         </p>
         <p
           v-else-if="dockers_fetch_done"
           class="text-h6"
         >
-          No Extensions installed.
+          {{ t`No Extensions installed.` }}
         </p>
         <template v-else>
-          <spinning-logo size="20%" subtitle="Fetching installed extensions" />
+          <spinning-logo size="20%" :subtitle="t`Fetching installed extensions`" />
         </template>
       </template>
       <v-fab-transition>
@@ -366,7 +366,7 @@
             </v-btn>
           </template>
           <v-btn
-            v-tooltip="'Install from file'"
+            v-tooltip="t`Install from file`"
             fab
             dark
             small
@@ -376,7 +376,7 @@
             <v-icon>mdi-file-upload-outline</v-icon>
           </v-btn>
           <v-btn
-            v-tooltip="'Create from scratch'"
+            v-tooltip="t`Create from scratch`"
             fab
             dark
             small
@@ -402,6 +402,7 @@
 import AnsiUp from 'ansi_up'
 import axios, { CancelTokenSource } from 'axios'
 import { saveAs } from 'file-saver'
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
@@ -590,8 +591,8 @@ export default Vue.extend({
       return [
         {
           key: 'upload',
-          label: 'Upload file',
-          description: 'Upload extension .tar file to onboard computer',
+          label: t`Upload file`,
+          description: t`Upload extension .tar file to onboard computer`,
           icon: 'mdi-upload',
           status: uploadStatus,
           showProgress: true,
@@ -601,8 +602,8 @@ export default Vue.extend({
         },
         {
           key: 'load',
-          label: 'Load Docker image',
-          description: 'Import extension image and inspect metadata',
+          label: t`Load Docker image`,
+          description: t`Import extension image and inspect metadata`,
           icon: 'mdi-docker',
           status: loadStatus,
           showProgress: true,
@@ -612,15 +613,15 @@ export default Vue.extend({
         },
         {
           key: 'configure',
-          label: 'Configure metadata',
-          description: 'Review identifier, name, and permissions',
+          label: t`Configure metadata`,
+          description: t`Review identifier, name, and permissions`,
           icon: 'mdi-clipboard-text-edit',
           status: configureStatus,
         },
         {
           key: 'install',
-          label: 'Install extension',
-          description: 'Finalize extension installation',
+          label: t`Install extension`,
+          description: t`Finalize extension installation`,
           icon: 'mdi-progress-download',
           status: installStatus,
           showProgress: true,
