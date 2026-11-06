@@ -1,7 +1,7 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="justify-center">
-      Ping Sensors
+      {{ t`Ping Sensors` }}
     </v-card-title>
     <v-card-text class="d-flex justify-space-between">
       <v-card
