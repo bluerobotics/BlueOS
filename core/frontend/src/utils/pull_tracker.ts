@@ -147,11 +147,16 @@ class PullTracker {
   }
 
   digestNewData(progressEvent: {currentTarget: { response: string }}, parseFragments = true): void {
-    let buffer = progressEvent?.currentTarget?.response
+    const response = progressEvent?.currentTarget?.response
+    if (!response) {
+      return
+    }
+
+    let buffer = response
 
     if (parseFragments) {
       const result = aggregateStreamingResponse(
-        parseStreamingResponse(progressEvent?.currentTarget?.response),
+        parseStreamingResponse(response),
         (fragment) => {
           this.onerror(fragment.error ?? `Unknown error with status ${fragment.status}`)
           /** Stops aggregation */
