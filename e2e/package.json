@@ -1,0 +1,19 @@
+{
+  "name": "blueos-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test --config playwright.config.ts",
+    "e2e:changed": "bun check-impact-map.mjs && bun select-tests.mjs --run origin/1.4-dev",
+    "e2e:failed": "playwright test --config playwright.config.ts --last-failed",
+    "e2e:report": "playwright show-report playwright-report",
+    "e2e:check-map": "bun check-impact-map.mjs",
+    "e2e:install-browser": "playwright install chromium",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "22.15.3",
+    "typescript": "5.9.3"
+  }
+}
