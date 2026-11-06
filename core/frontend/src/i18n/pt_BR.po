@@ -637,6 +637,10 @@ msgstr "Verificar internet"
 msgid "Choose Vehicle"
 msgstr "Escolher veículo"
 
+#: src/views/SettingsView.vue
+msgid "Choose the interface language"
+msgstr "Escolha o idioma da interface"
+
 #: src/components/kraken/BackAlleyTab.vue
 #: src/views/SettingsView.vue
 msgid "Clear"
@@ -1563,6 +1567,10 @@ msgstr "Passos do joystick"
 #: src/views/SystemInformationView.vue
 msgid "Kernel"
 msgstr ""
+
+#: src/views/SettingsView.vue
+msgid "Language"
+msgstr "Idioma"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Large Vehicle Calibration"
