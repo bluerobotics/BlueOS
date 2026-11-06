@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Spanish\n"
-"PO-Revision-Date: 2026-11-06 03:20\n"
+"PO-Revision-Date: 2026-11-06 04:21\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -20,7 +20,7 @@ msgstr ""
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
 msgid "${ 0 } (${ 1 } notifications)"
-msgstr ""
+msgstr "${ 0 } (${ 1 } notificaciones)"
 
 #: src/components/health/GpsTrayMenu.vue
 #, javascript-format
