@@ -12,6 +12,8 @@ on:
     push:
       branches-ignore:
         - 'crowdin/**'
+      tags:
+        - '**'
     schedule:
     # Run every 6 days to keep our caches alive
     - cron: '0 0 */6 * *'
