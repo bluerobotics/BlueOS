@@ -1,3 +1,4 @@
+pull_request_title: 'i18n: Update translations'
 commit_message: 'i18n: Update %language% translation'
 append_commit_message: false
 files:
