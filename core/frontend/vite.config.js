@@ -365,6 +365,9 @@ export default defineConfig(({ command, mode }) => {
             })
           },
         },
+        '^/updates': {
+          target: SERVER_ADDRESS,
+        },
         '^/wifi-manager': {
           target: SERVER_ADDRESS,
         },
