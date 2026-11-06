@@ -8,16 +8,16 @@
           </div>
           <v-card class="pa-2 ma-2" width="300px" max-width="100%">
             <v-card-title>
-              Declination
+              {{ t`Declination` }}
             </v-card-title>
             <v-card-text class="flex-shrink-1">
-              <parameter-switch label="Auto Declination" :parameter="compass_autodec" />
+              <parameter-switch :label="t`Auto Declination`" :parameter="compass_autodec" />
               <p>
-                If you enable this option, the autopilot will automatically set the declination based on your current
-                location. A GPS or other absolute positioning system is required.
+                <!-- eslint-disable-next-line max-len -->
+                {{ t`If you enable this option, the autopilot will automatically set the declination based on your current location. A GPS or other absolute positioning system is required.` }}
               </p>
               <v-text-field
-                label="Current Declination"
+                :label="t`Current Declination`"
                 :disabled="compass_autodec?.value !== 0"
                 :value="printParam(compass_dec)"
                 @click="openParameterEditor(compass_dec)"
@@ -27,32 +27,31 @@
         </v-card>
         <v-card outline class="compass-calib-container mb-2">
           <v-card-title>
-            <h3>Compass Calibration</h3>
+            <h3>{{ t`Compass Calibration` }}</h3>
           </v-card-title>
           <v-card-text>
             <div class="d-flex flex-column">
               <v-expansion-panels>
                 <v-expansion-panel>
                   <v-expansion-panel-header>
-                    Full (Onboard) Calibration
+                    {{ t`Full (Onboard) Calibration` }}
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      Perform a full calibration of the selected compass(es) by manually spinning
-                      the vehicle around multiple times, about all 3 rotation axes.
+                      <!-- eslint-disable-next-line max-len -->
+                      {{ t`Perform a full calibration of the selected compass(es) by manually spinning the vehicle around multiple times, about all 3 rotation axes.` }}
                     </p>
                     <full-compass-calibrator :compasses="compasses" />
                   </v-expansion-panel-content>
                 </v-expansion-panel>
                 <v-expansion-panel>
                   <v-expansion-panel-header>
-                    Large Vehicle Calibration
+                    {{ t`Large Vehicle Calibration` }}
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      Perform a quick, low-accuracy calibration of the compass(es) by pointing
-                      your vehicle North, then clicking the Calibrate button.
-                      It can be a good starting point for calibration, followed by <b>Compass Learn</b>.
+                      <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+                      <span v-html="t`Perform a quick, low-accuracy calibration of the compass(es) by pointing your vehicle North, then clicking the Calibrate button. It can be a good starting point for calibration, followed by <b>Compass Learn</b>.`" />
                     </p>
                     <large-vehicle-compass-calibrator :compasses="compasses" />
                   </v-expansion-panel-content>
@@ -60,31 +59,24 @@
 
                 <v-expansion-panel>
                   <v-expansion-panel-header>
-                    Compass Learn
+                    {{ t`Compass Learn` }}
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      Automatically "learn" compass calibration offsets by driving the vehicle around until
-                      enough data has been collected, and <b>"CompassLearn: finished"</b> is displayed.
-                      A valid global region estimate is required.
+                      <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+                      <span v-html="t`Automatically &quot;learn&quot; compass calibration offsets by driving the vehicle around until enough data has been collected, and <b>&quot;CompassLearn: finished&quot;</b> is displayed. A valid global region estimate is required.`" />
                     </p>
                     <compass-learn :compasses="compasses" />
                   </v-expansion-panel-content>
                 </v-expansion-panel>
                 <v-expansion-panel>
                   <v-expansion-panel-header>
-                    Log-based Calibration (Coming soon)
+                    {{ t`Log-based Calibration (Coming soon)` }}
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
                     <p>
-                      Calibrate the compass(es) using a previous flight log.
-                      This usually gives the best results.
-                      While it is not currently implemented here, the compass offset information can be
-                      determined in the Log Browser page. Press the green play button on a log file,
-                      click the three vertical dots in the sidebar, open the <b>Mag Fit Tool</b>,
-                      specify the general global region where the log was created, then click "Fit"
-                      for each compass you wish to calibrate. Resulting values can be copied across to
-                      the COMPASS_* autopilot parameters.
+                      <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+                      <span v-html="t`Calibrate the compass(es) using a previous flight log. This usually gives the best results. While it is not currently implemented here, the compass offset information can be determined in the Log Browser page. Press the green play button on a log file, click the three vertical dots in the sidebar, open the <b>Mag Fit Tool</b>, specify the general global region where the log was created, then click &quot;Fit&quot; for each compass you wish to calibrate. Resulting values can be copied across to the COMPASS_* autopilot parameters.`" />
                     </p>
                   </v-expansion-panel-content>
                 </v-expansion-panel>
@@ -123,8 +115,8 @@
             </v-tab>
           </draggable>
           <v-card outlined class="ml-auto mr-auto rounded-lg pa-3" style="max-width: 200px;">
-            Click-and-drag the dots to change the priority of the compass options.
-            Adjusted compass priorities are applied once the autopilot restarts.
+            <!-- eslint-disable-next-line max-len -->
+            {{ t`Click-and-drag the dots to change the priority of the compass options. Adjusted compass priorities are applied once the autopilot restarts.` }}
           </v-card>
           <v-tab-item
             v-for="(compass, index) in compasses"
@@ -143,17 +135,17 @@
                       {{ compass_calibration_type[compass.param].description }}
                     </v-alert>
                     <p />
-                    <h4>Settings</h4>
+                    <h4>{{ t`Settings` }}</h4>
                     <div v-if="compass_use_param[index]">
                       <parameter-switch
-                        label="Use Compass"
+                        :label="t`Use Compass`"
                         :parameter="compass_use_param[index]"
                       />
                     </div>
                     <div v-else>
-                      This Compass is not in use, drag it higher (by the dots) to be able to use it.
+                      {{ t`This Compass is not in use, drag it higher (by the dots) to be able to use it.` }}
                     </div>
-                    <b>External/Internal:</b>
+                    <b>{{ t`External/Internal:` }}</b>
                     <v-btn class="ml-8 mb-4 mt-2" fab x-small @click="openParameterEditor(compass_extern_param[index])">
                       <v-icon>
                         mdi-cog
@@ -163,7 +155,7 @@
                     <br />
 
                     <template v-if="compass_extern_param[index]?.value ?? 0 === 0">
-                      <b>Mounting Rotation:</b>
+                      <b>{{ t`Mounting Rotation:` }}</b>
                       <v-btn class="ml-4" fab x-small @click="openParameterEditor(compass_orient_param[index])">
                         <v-icon>
                           mdi-cog
@@ -172,12 +164,12 @@
                       {{ printParam(compass_orient_param[index]) }}
                     </template>
                     <template v-else>
-                      Same as the Autopilot's
+                      {{ t`Same as the Autopilot's` }}
                     </template>
                   </v-card>
                   <v-card class="pa-5">
-                    <h4>Details</h4>
-                    <p>Bus: 0x{{ compass.address }} @ {{ compass.busType }}{{ compass.bus }} </p>
+                    <h4>{{ t`Details` }}</h4>
+                    <p>{{ t`Bus: 0x${compass.address} @ ${compass.busType}${compass.bus}` }} </p>
                   </v-card>
                 </v-col>
                 <v-col cols="12" md="6">
@@ -196,6 +188,7 @@
   </div>
 </template>
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 import draggable from 'vuedraggable'
 import {
@@ -332,7 +325,7 @@ export default Vue.extend({
             calibration: CalibrationType.UNKNOWN,
             color: 'var(--v-error-darken1)',
             alert: 'error',
-            description: 'Unable to get calibration status - something went wrong.',
+            description: t`Unable to get calibration status - something went wrong.`,
             calibration_short: 'Unknown',
           }
           continue
@@ -343,7 +336,7 @@ export default Vue.extend({
             calibration: CalibrationType.NOT_CALIBRATED,
             color: 'var(--v-error-darken1)',
             alert: 'error',
-            description: 'The compass is not calibrated - please calibrate it.',
+            description: t`The compass is not calibrated - please calibrate it.`,
             calibration_short: 'Calibration Needed',
           }
 
@@ -356,8 +349,7 @@ export default Vue.extend({
             calibration: CalibrationType.QUICK,
             color: 'var(--v-warning-darken1)',
             alert: 'warning',
-            description: 'Quick Calibration is easier for large vehicles, but has worse '
-  + 'performance - consider using log-based calibration afterwards, to refine results.',
+            description: t`Quick Calibration is easier for large vehicles, but has worse performance - consider using log-based calibration afterwards, to refine results.`, // eslint-disable-line max-len
             calibration_short: 'Calibrated (Quick)',
           }
           continue
@@ -372,9 +364,7 @@ export default Vue.extend({
             calibration: CalibrationType.FULL_NO_WMM,
             color: 'var(--v-warning-darken1)',
             alert: 'warning',
-            description: 'Calibrated, but without a known (detected or specified) global region, '
-            + 'so no corrections were applied from the internal World Magnetic Model (WMM). '
-            + 'Consider retrying with a valid position to improve compass performance.',
+            description: t`Calibrated, but without a known (detected or specified) global region, Consider retrying with a valid position to improve compass performance.`, // eslint-disable-line max-len
             calibration_short: 'Calibrated (No WMM)',
           }
           continue
@@ -383,7 +373,7 @@ export default Vue.extend({
           calibration: CalibrationType.FULL,
           color: 'var(--v-success-base)',
           alert: 'success',
-          description: 'Fully calibrated, including corrections from the internal World Magnetic Model (WMM) database.',
+          description: t`Fully calibrated, including corrections from the internal World Magnetic Model (WMM) database.`, // eslint-disable-line max-len
           calibration_short: 'Fully Calibrated',
         }
       }
