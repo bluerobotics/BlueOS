@@ -136,5 +136,5 @@ class PydanticManager:
         self.save()
 
     def _clear_temp_files(self) -> None:
-        """Clear temporary files"""
+        """Clear leftover fixed-name temporary files from older saves"""
         clear_temp_files(self.config_folder)
