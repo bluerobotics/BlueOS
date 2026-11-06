@@ -37,7 +37,7 @@
       <div class="d-flex flex-wrap justify-center align-center my-2">
         <v-btn
           v-if="showDocsLink"
-          v-tooltip="'Documentation for this version'"
+          v-tooltip="t`Documentation for this version`"
           icon
           :href="docsUrl"
           target="_blank"
@@ -55,7 +55,7 @@
           <v-icon left>
             mdi-list-box-outline
           </v-icon>
-          What's new?
+          {{ t`What's new?` }}
         </v-btn>
         <v-alert
           v-if="upToDate && !settings.is_pirate_mode"
@@ -64,7 +64,7 @@
           text
           type="success"
         >
-          Up to date
+          {{ t`Up to date` }}
         </v-alert>
         <v-alert
           v-if="settings.is_pirate_mode && current"
@@ -73,7 +73,7 @@
           text
           type="success"
         >
-          Running
+          {{ t`Running` }}
         </v-alert>
         <div v-if="working">
           <spinning-logo
@@ -96,7 +96,7 @@
           @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
         >
           <div class="scroll-text">
-            Update to latest {{ image.tag }}
+            {{ t`Update to latest ${image.tag}` }}
           </div>
         </v-btn>
         <v-dialog
@@ -113,7 +113,7 @@
               v-bind="attrs"
               v-on="on"
             >
-              Update Bootstrap
+              {{ t`Update Bootstrap` }}
             </v-btn>
           </template>
 
@@ -121,11 +121,11 @@
             <v-card-title
               class="text-h5 lighten-2"
             >
-              Info
+              {{ t`Info` }}
             </v-card-title>
 
             <v-card-text class="text-h6 text-center mt-6">
-              Updating bootstrap is only recommended between stable versions.
+              {{ t`Updating bootstrap is only recommended between stable versions.` }}
             </v-card-text>
 
             <v-divider />
@@ -135,14 +135,14 @@
                 color="primary"
                 @click="bootstrapDialog = false"
               >
-                Abort
+                {{ t`Abort` }}
               </v-btn>
               <v-spacer />
               <v-btn
                 color="primary"
                 @click="updateBootstrap"
               >
-                Update
+                {{ t`Update` }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -161,7 +161,7 @@
           class="mx-2 my-1"
           :disabled="working"
           @click="$emit('delete', `${image.repository}:${image.tag}`)"
-          v-text="'Delete'"
+          v-text="t`Delete`"
         />
         <v-btn
           v-if="!current && !remote"
@@ -169,7 +169,7 @@
           class="mx-2 my-1"
           :disabled="working"
           @click="$emit('apply', `${image.repository}:${image.tag}`)"
-          v-text="'Apply'"
+          v-text="t`Apply`"
         />
         <v-btn
           v-if="showPullButton"
@@ -177,12 +177,12 @@
           class="mx-2 my-1"
           :disabled="working"
           @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
-          v-text="'Download and Apply'"
+          v-text="t`Download and Apply`"
         />
         <v-btn
           v-if="showReleaseNotes && notesExpanded"
           key="hide-notes"
-          v-tooltip="'Hide release notes'"
+          v-tooltip="t`Hide release notes`"
           icon
           @click="notesExpanded = false"
         >
