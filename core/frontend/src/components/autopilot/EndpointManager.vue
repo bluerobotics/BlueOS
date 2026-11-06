@@ -10,11 +10,11 @@
       />
       <v-card class="align-center justify-center pa-6 d-block">
         <v-card-title class="ma-0 pa-0 d-block">
-          Mavlink Router
+          {{ t`Mavlink Router` }}
         </v-card-title>
         <v-card-text>
           <p>
-            Select the router to use for distributing MAVLink data.
+            {{ t`Select the router to use for distributing MAVLink data.` }}
           </p>
           <v-radio-group
             v-model="selected_router"
@@ -31,7 +31,7 @@
             type="warning"
           >
             <p>
-              MAVP2P has been presenting issues and is not currently recommended.
+              {{ t`MAVP2P has been presenting issues and is not currently recommended.` }}
             </p>
           </v-alert>
         </v-card-text>
@@ -57,7 +57,7 @@
     <v-container v-else-if="updating_endpoints || updating_router">
       <spinning-logo
         size="30%"
-        subtitle="Fetching available endpoints..."
+        :subtitle="t`Fetching available endpoints...`"
       />
     </v-container>
     <v-card
@@ -65,14 +65,14 @@
       class="d-flex align-center justify-center pa-6"
     >
       <p class="text-h6">
-        No endpoints available.
+        {{ t`No endpoints available.` }}
       </p>
     </v-card>
 
     <v-fab-transition>
       <v-btn
         :key="'create_button'"
-        v-tooltip="'Create endpoint'"
+        v-tooltip="t`Create endpoint`"
         color="primary"
         fab
         large
