@@ -80,6 +80,12 @@ class SettingsStore extends VuexModule {
     SettingsStore.save()
   }
 
+  @Mutation
+  setLanguage(value: string): void {
+    this.language = value
+    SettingsStore.save()
+  }
+
   // Secret mode for developers that know our secret.
   // Enabled by 10 clicks on the build date and when the pirate mode is enabled
   get is_dev_mode(): boolean {

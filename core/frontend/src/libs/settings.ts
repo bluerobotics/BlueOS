@@ -1,3 +1,4 @@
+import { resolveLocale } from '@/i18n'
 import vuetify from '@/plugins/vuetify'
 import settingsStore, { SettingsStore } from '@/store/settings'
 
@@ -51,6 +52,22 @@ class Settings {
   // eslint-disable-next-line
   set skip_untested_firmware_warning(value: boolean) {
     settingsStore.setSkipUntestedFirmwareWarning(value)
+  }
+
+  // eslint-disable-next-line
+  get language(): string {
+    return settingsStore.language
+  }
+
+  // eslint-disable-next-line
+  async setLanguage(value: string): Promise<void> {
+    const locale = resolveLocale(value)
+    if (locale === settingsStore.language) {
+      return
+    }
+    settingsStore.setLanguage(locale)
+    await SettingsStore.save()
+    window.location.reload()
   }
 
   // eslint-disable-next-line

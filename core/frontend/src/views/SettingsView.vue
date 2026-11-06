@@ -96,6 +96,40 @@
 
               <v-divider class="my-4" />
 
+              <v-row align="center" no-gutters>
+                <v-col cols="12" sm="6">
+                  <div class="d-flex align-center">
+                    <v-avatar color="primary" size="48" class="mr-4">
+                      <v-icon color="white" size="28">
+                        mdi-translate
+                      </v-icon>
+                    </v-avatar>
+                    <div>
+                      <div class="text-subtitle-1 font-weight-medium">
+                        {{ t`Language` }}
+                      </div>
+                      <div class="text-caption text--secondary">
+                        {{ t`Choose the interface language` }}
+                      </div>
+                    </div>
+                  </div>
+                </v-col>
+                <v-col cols="12" sm="6" class="mt-3 mt-sm-0">
+                  <v-select
+                    :value="language"
+                    :items="languages"
+                    item-text="name"
+                    item-value="id"
+                    outlined
+                    hide-details
+                    dense
+                    @change="setLanguage"
+                  />
+                </v-col>
+              </v-row>
+
+              <v-divider class="my-4" />
+
               <theme-customization />
             </v-card-text>
           </v-card>
@@ -499,6 +533,7 @@ import Vue from 'vue'
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import WarningDialog from '@/components/common/WarningDialog.vue'
 import ThemeCustomization from '@/components/customization/ThemeCustomization.vue'
+import { available_languages, resolveLocale } from '@/i18n'
 import filebrowser from '@/libs/filebrowser'
 import Notifier from '@/libs/notifier'
 import settings from '@/libs/settings'
@@ -525,6 +560,7 @@ export default Vue.extend({
   data() {
     return {
       settings,
+      languages: available_languages,
       disable_remove: true,
       disable_remove_mavlink: true,
       log_folder_size: null as null | string,
@@ -551,6 +587,9 @@ export default Vue.extend({
   },
 
   computed: {
+    language(): string {
+      return resolveLocale(this.settings.language)
+    },
     resetWarningMessage(): string {
       return (
         'Resetting will restore BlueOS services to their default configurations.\n'
@@ -588,6 +627,10 @@ export default Vue.extend({
       this.operation_error = undefined
       this.operation_in_progress = true
       this.operation_description = description
+    },
+
+    async setLanguage(value: string): Promise<void> {
+      await settings.setLanguage(value)
     },
 
     formatSize(bytes: number): string {
