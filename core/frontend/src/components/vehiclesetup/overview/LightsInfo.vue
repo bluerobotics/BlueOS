@@ -1,7 +1,7 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="align-center">
-      Lights
+      {{ t`Lights` }}
     </v-card-title>
     <v-card-text>
       <span
