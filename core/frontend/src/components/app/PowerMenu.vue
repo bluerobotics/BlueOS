@@ -108,8 +108,14 @@ import autopilot from '@/store/autopilot_manager'
 import commander from '@/store/commander'
 import { ShutdownType } from '@/types/commander'
 import back_axios from '@/utils/api'
+import use_nixos_updates from '@/utils/updates_backend'
+import * as VersionChooserDocker from '@/utils/version_chooser'
+import * as VersionChooserNixos from '@/utils/version_chooser_nixos'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
+
+/** Restarting the core means a different endpoint depending on the backend. */
+const version_chooser_api = use_nixos_updates ? VersionChooserNixos : VersionChooserDocker
 
 /// Used for internal status control
 enum Status {
@@ -178,10 +184,7 @@ export default Vue.extend({
     },
     async restartContainer(): Promise<void> {
       this.service_status = Status.Rebooting
-      await back_axios({
-        method: 'post',
-        url: '/version-chooser/v1.0/version/restart',
-      }).finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
+      await version_chooser_api.restartCore().finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
     },
     async poweroff(): Promise<void> {
       this.service_status = Status.PoweringOff

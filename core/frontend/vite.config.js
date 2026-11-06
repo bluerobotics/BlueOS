@@ -9,7 +9,10 @@ import wasm from "vite-plugin-wasm"
 const { name } = require('./package.json')
 
 process.env.PROJECT_NAME = name
-process.env.VITE_BUILD_DATE = new Date().toLocaleString()
+// A wall-clock default would make every build differ, defeating binary caching
+// for the whole bundle. A caller that needs a reproducible build sets its own
+// date; otherwise this is only a developer convenience.
+process.env.VITE_BUILD_DATE = process.env.VITE_BUILD_DATE ?? new Date().toLocaleString()
 const DEFAULT_ADDRESS = 'http://blueos-avahi.local/'
 const SERVER_ADDRESS = process.env.BLUEOS_ADDRESS ?? DEFAULT_ADDRESS
 
@@ -361,6 +364,9 @@ export default defineConfig(({ command, mode }) => {
               response.end()
             })
           },
+        },
+        '^/updates': {
+          target: SERVER_ADDRESS,
         },
         '^/wifi-manager': {
           target: SERVER_ADDRESS,

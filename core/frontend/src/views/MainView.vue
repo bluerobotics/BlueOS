@@ -80,7 +80,8 @@
 import { t } from 'ttag'
 import Vue from 'vue'
 
-import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
+import SelfHealthTestDocker from '@/components/health/SelfHealthTest.vue'
+import SelfHealthTestNixos from '@/components/health/SelfHealthTestNixos.vue'
 import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
 import VideoThumbnail from '@/components/video-manager/VideoThumbnail.vue'
 import { OneMoreTime } from '@/one-more-time'
@@ -90,6 +91,7 @@ import video from '@/store/video'
 import { InternetConnectionState } from '@/types/helper'
 import { StreamStatus } from '@/types/video'
 import mavlink_store_get from '@/utils/mavlink'
+import use_nixos_updates from '@/utils/updates_backend'
 import CPUUsage from '@/widgets/CpuPie.vue'
 import Networking from '@/widgets/Networking.vue'
 
@@ -117,7 +119,7 @@ interface AppItem {
 export default Vue.extend({
   name: 'MainView',
   components: {
-    SelfHealthTest,
+    SelfHealthTest: use_nixos_updates ? SelfHealthTestNixos : SelfHealthTestDocker,
     GenericViewer,
   },
   data() {
