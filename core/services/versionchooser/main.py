@@ -48,6 +48,13 @@ async def set_version(request: web.Request) -> Any:
     return await versionChooser.set_version(repository, tag)
 
 
+async def commit_version(request: web.Request) -> Any:
+    data = await request.json()
+    tag = data["tag"]
+    repository = data["repository"]
+    return await versionChooser.commit_version(repository, tag)
+
+
 async def delete_version(request: web.Request) -> Any:
     data = await request.json()
     tag = data["tag"]
@@ -65,6 +72,10 @@ async def get_available_versions(repository: str, image: str) -> Any:
 
 async def get_bootstrap_version() -> Any:
     return await versionChooser.get_bootstrap_version()
+
+
+async def get_factory_version() -> Any:
+    return await versionChooser.get_factory_version()
 
 
 async def set_bootstrap_version(request: web.Request) -> Any:

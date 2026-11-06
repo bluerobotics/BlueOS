@@ -1,0 +1,34 @@
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+
+@pytest.mark.parametrize("version", ["v1", "v2"])
+def test_api_root_redirects_to_relative_docs(version: str, tmp_path: Path) -> None:
+    # The root dev environment on 1.4 doesn't ship all kraken dependencies
+    for module in ["aiocache", "fastapi", "fastapi_versioning", "semver"]:
+        pytest.importorskip(module)
+    service_path = Path(__file__).parent
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("COV_CORE_")} | {
+        # commonwealth is not installed on 1.4, so point the subprocess at its source
+        "PYTHONPATH": os.pathsep.join(
+            [str(service_path / "api" / version / "routers"), str(service_path.parents[1] / "libs" / "commonwealth")]
+        ),
+        "XDG_CONFIG_HOME": str(tmp_path),
+    }
+    script = 'import asyncio; from index import root; print(asyncio.run(root()).headers["location"])'
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=service_path,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    assert result.stdout == "docs\n"
