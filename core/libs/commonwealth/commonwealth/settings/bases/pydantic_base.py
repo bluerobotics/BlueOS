@@ -2,6 +2,7 @@ import abc
 import json
 import os
 import pathlib
+import tempfile
 from typing import Any, ClassVar, Dict, List
 
 from loguru import logger
@@ -111,21 +112,27 @@ class PydanticSettings(BaseModel):
         # Prepare data prior to operation
         logger.debug(f"Saving settings on: {file_path}")
 
-        # Serialize inside the lock so the write section runs by a single thread at a time. This keeps the
-        # temporary file from colliding and ensures the last writer serializes every mutation made before it.
+        # Serialize inside the lock so one thread writes at a time and the last writer sees every mutation.
+        # Same-directory exclusive temps (8 random chars via mkstemp) avoid settings-N.tmp collisions across processes.
         with save_lock:
             json_data = self.dict()
 
             # Create a temporary file in same directory, write and rename it to the original file
-            temp_file = file_path.with_suffix(".tmp")
-            with open(temp_file, "w", encoding="utf-8") as settings_file:
-                json.dump(json_data, settings_file, indent=4)
-                # Ensure data is written to disk
-                settings_file.flush()
-                os.fsync(settings_file.fileno())
-            # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
-            # https://docs.python.org/3/library/os.html#os.replace
-            temp_file.replace(file_path)
+            fd, temp_name = tempfile.mkstemp(prefix=f"{file_path.stem}.", suffix=".tmp", dir=parent_path)
+            temp_file = pathlib.Path(temp_name)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as settings_file:
+                    json.dump(json_data, settings_file, indent=4)
+                    # Ensure data is written to disk
+                    settings_file.flush()
+                    os.fsync(settings_file.fileno())
+                # Restore the usual settings mode; mkstemp creates 0o600.
+                os.chmod(temp_file, 0o644)
+                # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
+                # https://docs.python.org/3/library/os.html#os.replace
+                temp_file.replace(file_path)
+            finally:
+                temp_file.unlink(missing_ok=True)
 
     def reset(self) -> None:
         """Reset internal data to default values"""
