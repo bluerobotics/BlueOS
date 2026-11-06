@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional
 
 import psutil
 from commonwealth.settings.manager import Manager
-from commonwealth.utils.apis import PrettyJSONResponse
-from commonwealth.utils.logs import init_logger
+from commonwealth.utils.apis import PrettyJSONResponse, use_local_docs_assets
+from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi_versioning import VersionedFastAPI, version
@@ -285,7 +285,7 @@ class Beacon:
         await asyncio.gather(*[runner.unregister_services() for runner in self.runners.values()])
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 app = FastAPI(
@@ -340,6 +340,7 @@ def get_ip(request: Request) -> Any:
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")
