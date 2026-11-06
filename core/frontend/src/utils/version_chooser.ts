@@ -9,6 +9,7 @@ import {
 } from '@/types/version-chooser'
 import back_axios from '@/utils/api'
 import { fetchWithVehicleFallback } from '@/utils/helper_functions'
+import { fixVersion } from '@/utils/version_semver'
 
 const API_URL = '/version-chooser/v1.0'
 const DEFAULT_REMOTE_IMAGE = 'bluerobotics/blueos-core'
@@ -18,21 +19,6 @@ const RELEASE_NOTES_MEDIA_TYPE = 'application/vnd.github.html+json'
 const DOCS_URL = 'https://blueos.cloud/docs'
 
 const notifier = new Notifier(version_chooser_service)
-
-function fixVersion(version: string): string | null {
-  /** It turned out that our semvers are wrong... oopss
-  This turns 1.0.0.beta12 into 1.0.0-beta.12
-  Additionally filters out tags with no '.' in it, which
-  can be improved
-  */
-  if (version.includes('.beta')) {
-    return version.replace('.beta', '-beta.')
-  }
-  if (!version.includes('.')) {
-    return null
-  }
-  return version
-}
 
 function toSemVer(version: string): SemVer | null {
   const fixed_version = fixVersion(version)
