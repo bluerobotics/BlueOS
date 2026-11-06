@@ -247,7 +247,7 @@ export default Vue.extend({
     },
   },
   watch: {
-    extension() {
+    'extension.identifier'() {
       this.selected_version = this.getLatestTag()
       this.editing_permissions = this.getVersionPermissions()
       this.custom_permissions = {}
