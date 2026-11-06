@@ -20,7 +20,7 @@
       <v-select
         v-model="selected_version"
         :items="available_tags"
-        label="Version"
+        :label="t`Version`"
         outlined
         dense
         class="mr-2"
@@ -42,7 +42,7 @@
                 </v-list-item-content>
               </div>
             </template>
-            <span>This version is not compatible with current machine running BlueOS</span>
+            <span>{{ t`This version is not compatible with current machine running BlueOS` }}</span>
           </v-tooltip>
         </template>
       </v-select>
@@ -58,10 +58,10 @@
             v-on="on"
             @click="performAction"
           >
-            {{ is_installed ? 'Uninstall' : 'Install' }}
+            {{ is_installed ? t`Uninstall` : t`Install` }}
           </v-btn>
         </template>
-        <span>No versions available for this architecture</span>
+        <span>{{ t`No versions available for this architecture` }}</span>
       </v-tooltip>
     </div>
     <v-divider />
@@ -72,7 +72,8 @@
             <v-avatar class="mr-3" size="30" rounded="0">
               <v-img contain :src="extension.company_logo" />
             </v-avatar>
-            <span>Developed by <strong>{{ selected?.company?.name }}</strong></span>
+            <!-- eslint-disable-next-line vue/no-v-html, max-len -->
+            <span v-html="t`Developed by <strong>${escapeHtml(selected?.company?.name)}</strong>`" />
           </div>
           <template #actions>
             <v-icon>mdi-chevron-down</v-icon>
@@ -80,7 +81,7 @@
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <v-card-text>
-            Written by:
+            {{ t`Written by:` }}
             <ul>
               <li
                 v-for="author in (selected?.authors ?? [])"
@@ -98,7 +99,7 @@
             <v-icon class="mr-3" color="primary" size="30">
               mdi-shield-account
             </v-icon>
-            <span>Permissions</span>
+            <span>{{ t`Permissions` }}</span>
             <v-tooltip
               v-if="is_reset_editing_permissions_visible"
               bottom
@@ -112,7 +113,7 @@
                   mdi-alert
                 </v-icon>
               </template>
-              <p>You are using a custom docker configuration</p>
+              <p>{{ t`You are using a custom docker configuration` }}</p>
             </v-tooltip>
           </div>
         </v-expansion-panel-header>
@@ -140,7 +141,7 @@
                 #controls
               >
                 <v-btn
-                  v-tooltip="'Reset to default permissions'"
+                  v-tooltip="t`Reset to default permissions`"
                   class="editor-control"
                   icon
                   color="white"
