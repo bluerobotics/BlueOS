@@ -25,7 +25,7 @@
               <v-icon class="mr-2">
                 mdi-cloud-arrow-down
               </v-icon>
-              <div>Retrieve from Cloud</div>
+              <div>{{ t`Retrieve from Cloud` }}</div>
             </v-btn>
           </v-item>
           <v-item
@@ -43,7 +43,7 @@
               <v-icon class="mr-2">
                 mdi-upload
               </v-icon>
-              <div>Upload firmware file</div>
+              <div>{{ t`Upload firmware file` }}</div>
             </v-btn>
           </v-item>
           <v-item
@@ -61,7 +61,7 @@
               <v-icon class="mr-2">
                 mdi-file-restore
               </v-icon>
-              <div>Restore default firmware</div>
+              <div>{{ t`Restore default firmware` }}</div>
             </v-btn>
           </v-item>
         </v-item-group>
@@ -71,7 +71,7 @@
           v-if="only_bootloader_boards_available"
           v-model="chosen_board"
           :items="available_boards"
-          label="Board"
+          :label="t`Board`"
           class="ma-1 pa-0"
           @change="chosen_vehicle = null"
         />
@@ -81,7 +81,7 @@
           <v-select
             v-model="chosen_vehicle"
             :items="vehicle_types"
-            label="Vehicle type"
+            :label="t`Vehicle type`"
             :hint="vehicle_changed ? vehicle_change_warning : ''"
             :persistent-hint="vehicle_changed"
             required
@@ -118,11 +118,12 @@
                   mdi-information
                 </v-icon>
               </template>
-              <p>Stable - A production-ready release. Suitable for most users.</p>
-              <p>Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.</p>
+              <p>{{ t`Stable - A production-ready release. Suitable for most users.` }}</p>
+              <!-- eslint-disable-next-line max-len -->
+              <p>{{ t`Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs.` }}</p>
               <p>
-                Dev - Development branch, with all the newest features.
-                Intentionally unstable (changes quickly), and possibly untested/dangerous.
+                <!-- eslint-disable-next-line max-len -->
+                {{ t`Dev - Development branch, with all the newest features. Intentionally unstable (changes quickly), and possibly untested/dangerous.` }}
               </p>
             </v-tooltip>
           </div>
@@ -132,14 +133,14 @@
           v-if="upload_type === UploadType.File"
           class="mr-2"
           show-size
-          label="Firmware file"
+          :label="t`Firmware file`"
           @change="setFileFirmware"
         />
 
         <p
           v-if="upload_type === UploadType.Restore"
         >
-          This option will restore the default firmware for your platform.
+          {{ t`This option will restore the default firmware for your platform.` }}
         </p>
       </div>
     </div>
@@ -152,7 +153,7 @@
       <v-icon class="mr-2">
         mdi-content-save
       </v-icon>
-      <div>Install firmware</div>
+      <div>{{ t`Install firmware` }}</div>
     </v-btn>
 
     <v-dialog
@@ -166,7 +167,7 @@
         dark
       >
         <v-card-text>
-          Installing firmware. Please wait.
+          {{ t`Installing firmware. Please wait.` }}
           <v-progress-linear
             indeterminate
             color="white"
