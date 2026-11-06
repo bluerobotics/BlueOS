@@ -11,6 +11,8 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
+
 import failsafeCard from '@/components/vehiclesetup/configuration/failsafes/FailsafeCard.vue'
 import autopilot_data from '@/store/autopilot'
 
@@ -43,8 +45,7 @@ export default {
       const failsafes: FailsafeDefinition[] = [
         {
           name: 'Control Station Heartbeat Loss',
-          generalDescription: 'Triggers when the vehicle does not receive a heartbeat from the GCS '
-          + 'within the timeout (default 3 seconds).',
+          generalDescription: t`Triggers when the vehicle does not receive a heartbeat from the GCS within the timeout (default 3 seconds).`, // eslint-disable-line max-len
           image: (await import('@/assets/img/configuration/failsafes/heartbeat.svg')).default as string,
 
           params: [
@@ -71,8 +72,7 @@ export default {
         },
         {
           name: 'Pilot Input Loss',
-          generalDescription: 'Triggers when the vehicle does not receive any pilot input for a given '
-          + 'amount of time.',
+          generalDescription: t`Triggers when the vehicle does not receive any pilot input for a given amount of time.`,
           image: (await import('@/assets/img/configuration/failsafes/pilot-input.svg')).default as string,
           params: [
             {
@@ -90,7 +90,7 @@ export default {
         {
           // TODO: move actual pin configuration to its own setup page
           name: 'Leak Detection',
-          generalDescription: 'Triggers when a leak is detected. We recommend keeping control electronics dry.',
+          generalDescription: t`Triggers when a leak is detected. We recommend keeping control electronics dry.`,
           image: (await import('@/assets/img/configuration/failsafes/leak.svg')).default as string,
           params: [
             {
@@ -116,8 +116,7 @@ export default {
         },
         {
           name: 'Low Battery',
-          generalDescription: 'Triggers when the voltage goes below specified thresholds.\n This can help to avoid '
-          + 'damage to the battery and potentially loss of the vehicle.',
+          generalDescription: t`Triggers when the voltage goes below specified thresholds. This can help to avoid damage to the battery and potentially loss of the vehicle.`, // eslint-disable-line max-len
           image: (await import('@/assets/img/configuration/failsafes/battery.svg')).default as string,
           params: [
             // TODO: add support for the MAH params and coloumb counting
@@ -155,8 +154,7 @@ export default {
         },
         {
           name: 'Excess Internal Pressure',
-          generalDescription: 'Triggers when the internal pressure is too high. This may help to detect a leak, '
-          + 'and to avoid rapid unplanned disassembly.',
+          generalDescription: t`Triggers when the internal pressure is too high. This may help to detect a leak, and to avoid rapid unplanned disassembly.`, // eslint-disable-line max-len
           image: (await import('@/assets/img/configuration/failsafes/pressure.svg')).default as string,
           params: [
 
@@ -174,8 +172,7 @@ export default {
         },
         {
           name: 'Excess Internal Temperature',
-          generalDescription: 'Triggers when the internal temperature is too high. This may help to prevent '
-          + 'damage to electronics due to overheating.',
+          generalDescription: t`Triggers when the internal temperature is too high. This may help to prevent damage to electronics due to overheating.`, // eslint-disable-line max-len
           image: (await import('@/assets/img/configuration/failsafes/temperature.svg')).default as string,
           params: [
 
@@ -193,8 +190,7 @@ export default {
         },
         {
           name: 'Sensor Fusion Uncertainty',
-          generalDescription: 'Triggers when the EKF variances surpass a given threshold, '
-          + 'so it loses trust in its state estimates.',
+          generalDescription: t`Triggers when the EKF variances surpass a given threshold, so it loses trust in its state estimates.`, // eslint-disable-line max-len
           image: (await import('@/assets/img/configuration/failsafes/ekf.svg')).default as string,
           params: [
             {
@@ -211,7 +207,7 @@ export default {
         },
         {
           name: 'Crash Detection',
-          generalDescription: 'Triggers when a crash has occurred.',
+          generalDescription: t`Triggers when a crash has occurred.`,
           image: (await import('@/assets/img/configuration/failsafes/crash.svg')).default as string,
           params: [
             {
