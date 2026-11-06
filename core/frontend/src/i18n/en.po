@@ -741,6 +741,10 @@ msgstr ""
 msgid "Choose Vehicle"
 msgstr ""
 
+#: src/views/SettingsView.vue
+msgid "Choose the interface language"
+msgstr ""
+
 #: src/components/kraken/BackAlleyTab.vue
 #: src/views/SettingsView.vue
 msgid "Clear"
@@ -1857,6 +1861,10 @@ msgstr ""
 
 #: src/types/frontend_services.ts
 msgid "Kraken service"
+msgstr ""
+
+#: src/views/SettingsView.vue
+msgid "Language"
 msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
