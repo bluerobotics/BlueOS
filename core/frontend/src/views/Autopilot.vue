@@ -44,7 +44,17 @@
           <br>
         </div>
         <not-safe-overlay />
-        <v-expansion-panels>
+        <v-expansion-panels v-if="is_external_board">
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              Master endpoint
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <master-endpoint-manager />
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
+        <v-expansion-panels v-else>
           <v-expansion-panel>
             <v-expansion-panel-header>
               {{ t`Firmware update` }}
@@ -108,6 +118,7 @@
           {{ t`Stop autopilot` }}
         </v-btn>
         <v-btn
+          v-if="settings.is_pirate_mode && board_supports_restart"
           color="primary"
           class="ma-1"
           :block="$vuetify.breakpoint.xs"
@@ -141,6 +152,7 @@ import {
 import AutopilotSerialConfiguration from '@/components/autopilot/AutopilotSerialConfiguration.vue'
 import BoardChangeDialog from '@/components/autopilot/BoardChangeDialog.vue'
 import FirmwareManager from '@/components/autopilot/FirmwareManager.vue'
+import MasterEndpointManager from '@/components/autopilot/MasterEndpointManager.vue'
 import SitlConfiguration from '@/components/autopilot/SitlConfiguration.vue'
 import NotSafeOverlay from '@/components/common/NotSafeOverlay.vue'
 import { MavAutopilot } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
@@ -164,6 +176,7 @@ export default Vue.extend({
     AutopilotSerialConfiguration,
     NotSafeOverlay,
     SitlConfiguration,
+    MasterEndpointManager,
   },
   data() {
     return {
@@ -177,6 +190,10 @@ export default Vue.extend({
     }
   },
   computed: {
+    board_supports_restart(): boolean {
+      // this is a mavlink command, all boards should support it
+      return true
+    },
     autopilot_info(): Record<string, string> {
       let version = 'Unknown'
       if (this.firmware_info) {
@@ -230,6 +247,9 @@ export default Vue.extend({
     },
     is_sitl(): boolean {
       return autopilot.current_board?.name === 'SITL'
+    },
+    is_external_board(): boolean {
+      return autopilot.current_board?.name === 'Manual'
     },
     current_board(): FlightController | null {
       return autopilot.current_board
