@@ -1,0 +1,3 @@
+files:
+  - source: /core/frontend/src/i18n/en.po
+    translation: /core/frontend/src/i18n/%locale_with_underscore%.po
