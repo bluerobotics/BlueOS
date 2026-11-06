@@ -218,11 +218,42 @@ function ensureLanguageHeader(content: string, language: string): string {
   )
 }
 
-function writeEnglishCatalog(content: string, staging_root: string): void {
-  writeFileSync(
-    english_po_path,
-    ensureLanguageHeader(stabilizeCatalog(rewriteCatalogPaths(content, staging_root)), 'en'),
-  )
+function englishCatalogText(content: string, staging_root: string): string {
+  return ensureLanguageHeader(stabilizeCatalog(rewriteCatalogPaths(content, staging_root)), 'en')
+}
+
+function showCatalogDiff(committed: string, extracted: string): void {
+  const diff_root = mkdtempSync(join(tmpdir(), 'blueos-i18n-diff-'))
+  try {
+    const committed_path = join(diff_root, 'committed.po')
+    const extracted_path = join(diff_root, 'extracted.po')
+    writeFileSync(committed_path, committed)
+    writeFileSync(extracted_path, extracted)
+    spawnSync('diff', ['-u', '--label', 'src/i18n/en.po', '--label', 'extracted', committed_path, extracted_path], {
+      stdio: 'inherit',
+    })
+  } finally {
+    rmSync(diff_root, { recursive: true, force: true })
+  }
+}
+
+function checkEnglishCatalog(extracted: string): void {
+  const relative_english = relative(frontend_root, english_po_path)
+  if (!existsSync(english_po_path)) {
+    console.error(`${relative_english} is missing.`)
+    console.error('Run `bun run i18n:extract` and commit src/i18n/en.po.')
+    process.exitCode = 1
+    return
+  }
+  const committed = stabilizeCatalog(readFileSync(english_po_path, 'utf8'))
+  if (committed === extracted) {
+    console.log(`${relative_english} is up to date`)
+    return
+  }
+  console.error(`${relative_english} is out of date.`)
+  console.error('Run `bun run i18n:extract` and commit src/i18n/en.po.')
+  showCatalogDiff(committed, extracted)
+  process.exitCode = 1
 }
 
 function translationOf(message: { msgstr?: string[] } | undefined): string[] {
@@ -273,8 +304,9 @@ function syncLocaleFromEnglish(): void {
   writeFileSync(locale_po_path, stabilizeCatalog(compiled.endsWith('\n') ? compiled : `${compiled}\n`))
 }
 
-function extractSources(): void {
+function extractSources(check = false): void {
   const staging_root = mkdtempSync(join(tmpdir(), 'blueos-i18n-'))
+  const check_output_path = check ? join(tmpdir(), `blueos-i18n-check-${process.pid}.po`) : undefined
   try {
     const staged_files: string[] = []
     for (const path of walkFiles(src_root).filter(shouldExtract)) {
@@ -290,7 +322,10 @@ function extractSources(): void {
     if (staged_files.length === 0) {
       throw new Error('No source files found for extraction')
     }
-    mkdirSync(i18n_dir, { recursive: true })
+    if (!check) {
+      mkdirSync(i18n_dir, { recursive: true })
+    }
+    const output_path = check_output_path ?? english_po_path
     runTtag([
       'extract',
       '--numberedExpressions',
@@ -299,17 +334,25 @@ function extractSources(): void {
       'file',
       ...ttag_discover_args,
       '-o',
-      english_po_path,
+      output_path,
       staging_root,
     ])
-    writeEnglishCatalog(readFileSync(english_po_path, 'utf8'), staging_root)
+    const extracted = englishCatalogText(readFileSync(output_path, 'utf8'), staging_root)
+    if (check) {
+      checkEnglishCatalog(extracted)
+      return
+    }
+    writeFileSync(english_po_path, extracted)
     syncLocaleFromEnglish()
     console.log(`Extracted translations from ${staged_files.length} files`)
     console.log(`Wrote ${relative(frontend_root, english_po_path)}`)
     console.log(`Updated ${relative(frontend_root, locale_po_path)}`)
   } finally {
     rmSync(staging_root, { recursive: true, force: true })
+    if (check_output_path) {
+      rmSync(check_output_path, { force: true })
+    }
   }
 }
 
-extractSources()
+extractSources(process.argv.includes('--check'))
