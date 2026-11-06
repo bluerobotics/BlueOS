@@ -1,3 +1,5 @@
+commit_message: 'i18n: Update %language% translation'
+append_commit_message: false
 files:
   - source: /core/frontend/src/i18n/en.po
     translation: /core/frontend/src/i18n/%locale_with_underscore%.po
