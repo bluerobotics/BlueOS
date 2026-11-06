@@ -53,7 +53,7 @@
               >
                 mdi-folder-refresh
               </v-icon>
-              {{ settings.is_pirate_mode ? t`Restart Core container` : t`Soft restart` }}
+              {{ settings.is_pirate_mode ? t`Restart Core` : t`Soft restart` }}
             </v-btn>
             <v-btn
               v-tooltip="t`Fully restarts the onboard computer`"
@@ -108,6 +108,7 @@ import autopilot from '@/store/autopilot_manager'
 import commander from '@/store/commander'
 import { ShutdownType } from '@/types/commander'
 import back_axios from '@/utils/api'
+import { restartCore } from '@/utils/updates_backend_api'
 
 import SpinningLogo from '../common/SpinningLogo.vue'
 
@@ -178,10 +179,7 @@ export default Vue.extend({
     },
     async restartContainer(): Promise<void> {
       this.service_status = Status.Rebooting
-      await back_axios({
-        method: 'post',
-        url: '/version-chooser/v1.0/version/restart',
-      }).finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
+      await restartCore().finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
     },
     async poweroff(): Promise<void> {
       this.service_status = Status.PoweringOff
