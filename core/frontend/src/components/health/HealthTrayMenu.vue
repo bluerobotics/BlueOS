@@ -33,15 +33,15 @@
           <div>
             <table style="width: 100%">
               <tr>
-                <td>Percentage (Full):</td>
+                <td>{{ t`Percentage (Full):` }}</td>
                 <td>{{ disk_usage_percent.toFixed(1) }} %</td>
               </tr>
               <tr>
-                <td>Free:</td>
+                <td>{{ t`Free:` }}</td>
                 <td> {{ disk_free_friendly }}</td>
               </tr>
               <tr>
-                <td>Total:</td>
+                <td>{{ t`Total:` }}</td>
                 <td> {{ disk_size_friendly }}</td>
               </tr>
             </table>
@@ -61,7 +61,7 @@
       v-if="cpu_throttled"
       class="px-1 blinking white-shadow"
       color="error"
-      :title="`CPU is throttled. Performance may be affected. Please check your power supply and cooling!`"
+      :title="cpu_throttled_title"
     >
       mdi-gauge-empty
     </v-icon>
@@ -69,7 +69,7 @@
       v-if="cpu_undervoltage"
       class="px-1 blinking white-shadow"
       color="error"
-      :title="`CPU has reported low voltage. Please check your power supply!`"
+      :title="cpu_undervoltage_title"
     >
       mdi-lightning-bolt
     </v-icon>
@@ -91,7 +91,7 @@
             v-if="heartbeat_age() < time_limit_heartbeat"
             class="px-1"
             :color="`rgba(255,255,255,${0.4 + (1000 - heartbeat_age()) / 1000}`"
-            title="MAVLink heartbeats arriving as expected"
+            :title="t`MAVLink heartbeats arriving as expected`"
           >
             mdi-heart-pulse
           </v-icon>
@@ -99,7 +99,7 @@
             v-if="heartbeat_age() >= time_limit_heartbeat"
             class="px-1 white-shadow"
             color="error"
-            title="MAVLink heartbeat lost"
+            :title="t`MAVLink heartbeat lost`"
           >
             mdi-heart-broken
           </v-icon>
@@ -114,16 +114,16 @@
           <div>
             <table style="width: 100%">
               <tr>
-                <td>Core Temperature:</td>
-                <td>{{ cpu_temperature }} ºC</td>
+                <td>{{ t`Core Temperature:` }}</td>
+                <td>{{ t`${cpu_temperature} ºC` }}</td>
               </tr>
               <tr>
-                <td>Voltage:</td>
-                <td>{{ battery_voltage }} V</td>
+                <td>{{ t`Voltage:` }}</td>
+                <td>{{ t`${battery_voltage} V` }}</td>
               </tr>
               <tr>
-                <td>Current:</td>
-                <td> {{ battery_current }} A</td>
+                <td>{{ t`Current:` }}</td>
+                <td> {{ t`${battery_current} A` }}</td>
               </tr>
             </table>
           </div>
@@ -134,6 +134,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { markRaw } from 'vue'
 
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -165,6 +166,12 @@ export default Vue.extend({
     cpu_temperature(): string {
       const temperature = system_information.cpu_temperature
       return temperature === undefined ? 'Loading..' : temperature.toFixed(1)
+    },
+    cpu_throttled_title(): string {
+      return t`CPU is throttled. Performance may be affected. Please check your power supply and cooling!`
+    },
+    cpu_undervoltage_title(): string {
+      return t`CPU has reported low voltage. Please check your power supply!`
     },
     cpu_throttled() : boolean {
       const events = system_information.platform?.raspberry?.events
