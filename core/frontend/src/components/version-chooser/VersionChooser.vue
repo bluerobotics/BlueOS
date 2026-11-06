@@ -23,12 +23,11 @@
           type="info"
           elevation="2"
         >
-          Turn on Pirate mode to view all available BlueOS versions, including previous installs
-          stored onboard, as well as past and current stable, beta, and development releases
-          downloadable from Blue Robotics.
+          <!-- eslint-disable-next-line max-len -->
+          {{ t`Turn on Pirate mode to view all available BlueOS versions, including previous installs stored onboard, as well as past and current stable, beta, and development releases downloadable from ${'Blue Robotics'}.` }}
         </v-alert>
 
-        <h2>Current Version</h2>
+        <h2>{{ t`Current Version` }}</h2>
         <version-card
           v-if="current_version"
           :image="current_version"
@@ -60,7 +59,7 @@
               :disabled="loading_images"
               @click="loadAvailableVersions"
             >
-              Retry
+              {{ t`Retry` }}
             </v-btn>
           </div>
         </v-alert>
@@ -71,7 +70,7 @@
         max-width="900"
         class="mx-auto my-12 pa-4"
       >
-        <h2>Local Versions</h2>
+        <h2>{{ t`Local Versions` }}</h2>
         <version-card
           v-for="(image, index) in local_versions.result.local"
           :key="`${image.sha}-${index}-local`"
@@ -91,7 +90,7 @@
         <spinning-logo
           v-if="local_versions.loading"
           size="15%"
-          subtitle="Loading local images..."
+          :subtitle="t`Loading local images...`"
         />
       </v-card>
       <v-card
@@ -100,12 +99,12 @@
         class="mx-auto my-12 pa-4"
       >
         <div class="d-flex justify-space-between pb-3">
-          <h2>Remote Versions</h2>
+          <h2>{{ t`Remote Versions` }}</h2>
           <v-btn
             color="primary"
             @click="show_docker_login_dialog = true"
           >
-            Docker Login
+            {{ t`Docker Login` }}
           </v-btn>
         </div>
         <v-form
@@ -114,7 +113,7 @@
           <v-text-field
             v-model="selected_image"
             name="BlueOS Remote Repository"
-            label="Remote repository"
+            :label="t`Remote repository`"
             :append-icon="selected_image != default_repository ? 'mdi-restore' : undefined"
             @click:append="resetToDefaultRepository()"
           />
@@ -122,7 +121,7 @@
         <v-text-field
           v-if="showRemoteSearch"
           v-model="search"
-          label="Search images"
+          :label="t`Search images`"
           prepend-inner-icon="mdi-magnify"
           clearable
         />
@@ -142,14 +141,14 @@
               :disabled="loading_images"
               @click="loadAvailableVersions"
             >
-              Retry
+              {{ t`Retry` }}
             </v-btn>
           </div>
         </v-alert>
         <spinning-logo
           v-if="loading_images"
           size="15%"
-          subtitle="Loading remote images..."
+          :subtitle="t`Loading remote images...`"
         />
         <version-card
           v-for="(image, index) in paginatedComponents"
@@ -185,12 +184,12 @@
       max-width="900"
       class="mx-auto pa-4"
     >
-      <h2>Manual upload</h2>
+      <h2>{{ t`Manual upload` }}</h2>
       Use this to upload a .tar docker image. These can be downloaded from
       <a
         href="https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml"
         target="_blank"
-      >Github's CI</a>
+      >{{ t`Github's CI` }}</a>
       or generated locally using "docker save"
       <v-file-input
         v-if="!disable_upload_controls"
@@ -199,7 +198,7 @@
         accept=".tar"
         :rules="[isFileInputNotEmpty]"
         :error-messages="file_input_error"
-        label="File input"
+        :label="t`File input`"
       />
       <v-progress-linear
         v-if="disable_upload_controls && upload_percentage !== 100"
@@ -211,7 +210,7 @@
         color="primary"
         class="mr-2 mb-4 mt-1"
         @click="validateInputFileForm() && upload()"
-        v-text="'Upload'"
+        v-text="t`Upload`"
       />
 
       <v-alert
@@ -221,11 +220,11 @@
         type="info"
         elevation="2"
       >
-        Decompressing file, this usually takes up to one minute, please stand by...
+        {{ t`Decompressing file, this usually takes up to one minute, please stand by...` }}
         <spinning-logo
           v-if="upload_percentage == 100"
           size="15%"
-          subtitle="Decompressing file..."
+          :subtitle="t`Decompressing file...`"
         />
       </v-alert>
     </v-card>
@@ -235,7 +234,7 @@
     >
       <spinning-logo
         size="100%"
-        subtitle="Switching to new core..."
+        :subtitle="t`Switching to new core...`"
       />
     </v-overlay>
   </div>
