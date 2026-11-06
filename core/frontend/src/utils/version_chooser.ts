@@ -307,6 +307,13 @@ async function getFactoryVersion(): Promise<string> {
   return response.data as string
 }
 
+async function restartCore(): Promise<void> {
+  await back_axios({
+    method: 'post',
+    url: `${API_URL}/version/restart`,
+  })
+}
+
 export {
   commitVersion,
   DEFAULT_REMOTE_IMAGE,
@@ -326,6 +333,7 @@ export {
   loadCurrentVersion,
   loadLocalVersions,
   nestVersions,
+  restartCore,
   sortImages,
   sortVersions,
   getFactoryVersion,
