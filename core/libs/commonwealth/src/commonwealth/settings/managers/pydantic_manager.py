@@ -138,11 +138,13 @@ class PydanticManager(Generic[T]):
         self.save()
 
     def _clear_temp_files(self) -> None:
-        """Clear temporary files"""
-        # Must use the same non-reentrant lock as PydanticSettings.save() so we never unlink a .tmp
-        # file while save() is still writing and about to os.replace() it.
+        """Clear leftover fixed-name temporary files from older saves"""
+        # Only remove the legacy settings-N.tmp name. Unique per-save temps are left alone; finally
+        # cleans normal failures, and SIGKILL orphans are tiny settings JSON leftovers.
         with _save_lock:
-            for temp_file in self.config_folder.glob("*.tmp"):
+            for temp_file in self.config_folder.glob(f"{PydanticManager.SETTINGS_NAME_PREFIX}*.tmp"):
+                if re.fullmatch(rf"{PydanticManager.SETTINGS_NAME_PREFIX}\d+\.tmp", temp_file.name) is None:
+                    continue
                 try:
                     temp_file.unlink()
                 except Exception as exception:
