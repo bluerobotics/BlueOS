@@ -10,6 +10,8 @@ on:
       # everything that needs them (see their if)
       types: [opened, synchronize, reopened, labeled]
     push:
+      branches-ignore:
+        - 'crowdin/**'
     schedule:
     # Run every 6 days to keep our caches alive
     - cron: '0 0 */6 * *'
