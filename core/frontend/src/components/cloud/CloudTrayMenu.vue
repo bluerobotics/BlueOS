@@ -72,7 +72,7 @@
         <v-app-bar
           elevate-on-scroll
         >
-          <v-toolbar-title>Cloud</v-toolbar-title>
+          <v-toolbar-title>{{ t`Cloud` }}</v-toolbar-title>
           <v-spacer />
         </v-app-bar>
 
@@ -86,7 +86,7 @@
             {{ is_token_set ? 'mdi-weather-cloudy' : 'mdi-wrench' }}
           </v-icon>
           <v-card-title>
-            {{ is_token_set ? 'Setup is complete!' : 'Lets connect your vehicle!' }}
+            {{ is_token_set ? t`Setup is complete!` : t`Lets connect your vehicle!` }}
           </v-card-title>
           <v-btn
             color="primary"
@@ -97,7 +97,7 @@
             rel="noopener noreferrer"
             @click="() => {}"
           >
-            Go to BlueOS Cloud
+            {{ t`Go to BlueOS Cloud` }}
           </v-btn>
           <v-container
             class="d-flex align-center py-0 my-0"
@@ -108,13 +108,13 @@
               class="token-link-text mt-2 pt-1 pb-1"
               @click="setting_token = true"
             >
-              Click here if you {{ is_token_set ? 'want to change your token' : 'already have a token' }}
+              {{ t`Click here if you ${is_token_set ? t`want to change your token` : t`already have a token`}` }}
             </v-card-subtitle>
             <v-slide-x-reverse-transition>
               <v-text-field
                 v-if="setting_token"
                 v-model="token"
-                label="Token"
+                :label="t`Token`"
                 type="text"
                 variant="outlined"
               >
@@ -148,10 +148,10 @@
           mdi-link-off
         </v-icon>
         <v-card-title>
-          Major Tom is not installed
+          {{ t`Major Tom is not installed` }}
         </v-card-title>
         <v-card-subtitle class="pt-2">
-          To use the cloud features of the Ground Control you need to install it.
+          {{ t`To use the cloud features of the Ground Control you need to install it.` }}
         </v-card-subtitle>
         <v-btn
           color="primary"
@@ -159,7 +159,7 @@
           class="mt-4"
           @click="installMajorTom"
         >
-          Install Major Tom
+          {{ t`Install Major Tom` }}
         </v-btn>
       </v-container>
     </v-card>
