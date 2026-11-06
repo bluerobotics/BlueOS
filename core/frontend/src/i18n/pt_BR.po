@@ -19,7 +19,7 @@ msgstr "${ 0 } (${ 1 } notificações)"
 #: src/components/health/GpsTrayMenu.vue
 #, javascript-format
 msgid "${ 0 } (Number of satellites: ${ 1 })"
-msgstr "${ 0 } (número de satélites: ${ 1 })"
+msgstr "${ 0 } (Número de satélites: ${ 1 })"
 
 #: src/components/system-information/NetworkCard.vue
 #, javascript-format
@@ -34,7 +34,7 @@ msgstr "${ 0 } avançado"
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #, javascript-format
 msgid "${ 0 } Extension"
-msgstr "${ 0 } Extensão"
+msgstr "${ 0 } extensão"
 
 #: src/components/system-information/Usb.vue
 #, javascript-format
@@ -80,7 +80,7 @@ msgstr "${ 0 } ºC"
 #: src/widgets/Cpu.vue
 #, javascript-format
 msgid "${ 0 }°C"
-msgstr "${ 0 } °C"
+msgstr "${ 0 }°C"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- choose the frame that matches your vehicle (or make a custom one)"
@@ -191,8 +191,8 @@ msgid ""
 "A valid global region is required for Compass Learn to estimate the local "
 "world magnetic field."
 msgstr ""
-"É necessária uma região global válida para o Compass Learn estimar o campo "
-"magnético local."
+"É necessária uma região global válida para o Aprendizado da bússola estimar "
+"o campo magnético local."
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid ""
@@ -481,8 +481,8 @@ msgid ""
 "Battery monitoring is disabled (BATT_MONITOR = 0). to use the low-battery "
 "failsafe."
 msgstr ""
-"O monitoramento da bateria está desativado (BATT_MONITOR = 0) para usar o "
-"failsafe de bateria fraca."
+"O monitoramento da bateria está desativado (BATT_MONITOR = 0). Ative-o para "
+"usar o failsafe de bateria fraca."
 
 #: src/views/ExtensionManagerView.vue
 msgid "Bazaar"
@@ -495,7 +495,7 @@ msgid ""
 "resolutions and low framerates."
 msgstr ""
 "Lembre-se de que streams de \"origem falsa\" consomem bastante "
-"processamento. Se você só precisa delas para testes de conexão, "
+"processamento. Se você só precisa deles para testes de conexão, "
 "recomendamos usar resoluções pequenas e taxas de quadros baixas."
 
 #: src/types/frontend_services.ts
@@ -528,8 +528,8 @@ msgid ""
 "Beta - In-testing, with new features and improvements, aiming to become "
 "stable. May have bugs."
 msgstr ""
-"Beta — em testes, com novos recursos e melhorias, com o objetivo de se "
-"tornar estável. Pode ter bugs."
+"Beta - Em testes, com novos recursos e melhorias, visando se tornar "
+"estável. Pode ter bugs."
 
 #: src/views/SettingsView.vue
 msgid "Better visibility in bright environments"
@@ -948,7 +948,9 @@ msgstr "Assistente de configuração"
 
 #: src/components/wizard/Wizard.vue
 msgid "Configuration was aborted, some settings have failed to apply."
-msgstr "A configuração foi abortada; algumas definições não puderam ser aplicadas."
+msgstr ""
+"A configuração foi abortada, algumas configurações não puderam ser "
+"aplicadas."
 
 #: src/components/wizard/Wizard.vue
 msgid "Configuration was skipped."
@@ -973,7 +975,7 @@ msgstr "Configurar o system ID do MAVLink"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Configure Uploaded"
-msgstr "Configurar o que foi enviado"
+msgstr "Configurar a"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Configure metadata"
@@ -1052,11 +1054,11 @@ msgstr "Failsafe de tensão crítica:"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Current Amps/Volt:"
-msgstr "Corrente amperes/volt:"
+msgstr "Amperes/volt atual:"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Current Multiplier:"
-msgstr "Multiplicador de corrente:"
+msgstr "Multiplicador atual:"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current Offset:"
@@ -1132,7 +1134,7 @@ msgstr "Declinação"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Decompressing file, this usually takes up to one minute, please stand by..."
-msgstr "Descompactando o arquivo; isso geralmente leva até um minuto, aguarde..."
+msgstr "Descompactando o arquivo, isso geralmente leva até um minuto, aguarde..."
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Delete"
@@ -1183,7 +1185,7 @@ msgid ""
 "Dev - Development branch, with all the newest features. Intentionally "
 "unstable (changes quickly), and possibly untested/dangerous."
 msgstr ""
-"Dev — ramo de desenvolvimento, com todos os recursos mais recentes. "
+"Dev - Ramo de desenvolvimento, com todos os recursos mais recentes. "
 "Intencionalmente instável (muda rapidamente) e possivelmente não "
 "testado/perigoso."
 
@@ -1401,11 +1403,11 @@ msgstr "Ativado"
 
 #: src/views/SettingsView.vue
 msgid "Enabled - Advanced features are visible"
-msgstr "Ativado — os recursos avançados estão visíveis"
+msgstr "Ativado - Os recursos avançados estão visíveis"
 
 #: src/views/SettingsView.vue
 msgid "Enabled - Development tools are active"
-msgstr "Ativado — as ferramentas de desenvolvimento estão ativas"
+msgstr "Ativado - As ferramentas de desenvolvimento estão ativas"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 msgid "Enabling DHCP server, please wait..."
@@ -1747,7 +1749,7 @@ msgid ""
 "Horizon calibration trims the pitch and roll of the vehicle's inertial "
 "sensors to adjust for small deviations from level."
 msgstr ""
-"A calibração do horizonte ajusta o arfagem e a rolagem dos sensores "
+"A calibração do horizonte ajusta a arfagem e a rolagem dos sensores "
 "inerciais do veículo para compensar pequenos desvios do nível."
 
 #: src/components/health/GpsTrayMenu.vue
@@ -1902,7 +1904,7 @@ msgstr "Instalar scripts"
 
 #: src/components/wizard/Wizard.vue
 msgid "Install stable sub firmware"
-msgstr "Instalar firmware sub estável"
+msgstr "Instalar o firmware estável do Sub"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Installation may take a few minutes."
@@ -2741,7 +2743,7 @@ msgid ""
 "Parameter not found in Autopilot data, most likely will not be written to "
 "the vehicle."
 msgstr ""
-"Parâmetro não encontrado nos dados do piloto automático; provavelmente não "
+"Parâmetro não encontrado nos dados do piloto automático, provavelmente não "
 "será gravado no veículo."
 
 #: src/components/parameter-editor/ParameterLabel.vue
@@ -3186,7 +3188,7 @@ msgstr "Reinicia o piloto automático"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restarts the core alone, should be enough in most cases"
-msgstr "Reinicia apenas o core; deve ser suficiente na maioria dos casos"
+msgstr "Reinicia apenas o core, deve ser suficiente na maioria dos casos"
 
 #: src/views/SettingsView.vue
 msgid "Restore all BlueOS services to defaults"
@@ -3637,7 +3639,7 @@ msgstr ""
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Stable - A production-ready release. Suitable for most users."
 msgstr ""
-"Stable — uma versão pronta para produção. Adequada para a maioria dos "
+"Stable - Uma versão pronta para produção. Adequada para a maioria dos "
 "usuários."
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
@@ -3725,7 +3727,7 @@ msgstr "Streams ativos"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Streams stopped, see the errors for more information"
-msgstr "Streams interrompidos; consulte os erros para mais informações"
+msgstr "Streams interrompidos, consulte os erros para mais informações"
 
 #: src/components/wifi/ConnectionDialog.vue
 #, javascript-format
@@ -3859,7 +3861,7 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "The compass is not calibrated - please calibrate it."
-msgstr "A bússola não está calibrada — calibre-a."
+msgstr "A bússola não está calibrada - calibre-a."
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -3952,7 +3954,7 @@ msgid ""
 "This Compass is not in use, drag it higher (by the dots) to be able to use "
 "it."
 msgstr ""
-"Esta bússola não está em uso; arraste-a para cima (pelos pontos) para poder "
+"Esta bússola não está em uso, arraste-a para cima (pelos pontos) para poder "
 "usá-la."
 
 #: src/components/wifi/DisconnectionDialog.vue
@@ -4004,8 +4006,8 @@ msgid ""
 "can help you make sure you measured the angles correctly."
 msgstr ""
 "Isso representa o quanto o valor PWM muda por grau. Use isto para verificar "
-"em relação às especificações do seu servo. Um que alcance +-45º com PWM de "
-"1100-1900 (todos os servos atuais da BlueRobotics), tem uma razão de 8,88µs "
+"em relação às especificações do seu servo. Um que alcança +-45º com PWM de "
+"1100-1900 (todos os servos atuais da BlueRobotics) tem uma razão de 8,88µs "
 "por grau. Isso pode ajudar a confirmar se você mediu os ângulos "
 "corretamente."
 
@@ -4213,7 +4215,7 @@ msgstr "Barramento USB ${ 0 }"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Unable to get calibration status - something went wrong."
-msgstr "Não foi possível obter o status da calibração — algo deu errado."
+msgstr "Não foi possível obter o status da calibração - algo deu errado."
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
