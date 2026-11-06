@@ -13,10 +13,10 @@ import VueDraggable from 'vuedraggable'
 import Vuetify from 'vuetify/lib'
 import * as Sentry from "@sentry/vue";
 
-import App from './App.vue'
 import DefaultTooltip from './components/common/DefaultTooltip.vue'
 import VStep from './components/vue-tour/src/components/VStep.vue'
 import VTour from './components/vue-tour/src/components/VTour.vue'
+import i18n, { initI18n } from './i18n'
 import vuetify from './plugins/vuetify'
 import router from './router'
 import store from './store'
@@ -26,6 +26,7 @@ Vue.use(VueTooltipDirective, {
 })
 Vue.use(VueApexCharts)
 Vue.use(Vuetify)
+Vue.use(i18n)
 Vue.use(JsonViewer)
 
 Vue.component('Apexchart', VueApexCharts)
@@ -60,9 +61,16 @@ if (version && isOfficialTag) {
   })
 }
 
-new Vue({
-  router,
-  store,
-  vuetify,
-  render: (h) => h(App),
-}).$mount('#app')
+initI18n()
+  .then(async () => {
+    const { default: App } = await import('./App.vue')
+    new Vue({
+      router,
+      store,
+      vuetify,
+      render: (h) => h(App),
+    }).$mount('#app')
+  })
+  .catch((error) => {
+    console.error('Failed to start application:', error)
+  })
