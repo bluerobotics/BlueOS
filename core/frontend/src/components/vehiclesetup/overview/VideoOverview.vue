@@ -1,7 +1,7 @@
 <template>
   <v-card class="pa-2">
     <v-card-title class="align-center">
-      Video
+      {{ t`Video` }}
     </v-card-title>
 
     <v-card-text
