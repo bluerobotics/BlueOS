@@ -1,17 +1,15 @@
 import logging
-from pathlib import Path
 from typing import Dict, List
 
 import requests
 from bridges.bridges import Bridge
 from bridges.serialhelper import Baudrate
-from commonwealth.settings.manager import Manager
+from commonwealth.settings.manager import PydanticManager
+from fastapi import HTTPException, status
 from pydantic import BaseModel, conint
 from serial.tools.list_ports_linux import SysFS
 
 from settings import BridgeSettingsSpecV2, SettingsV2
-
-USERDATA = Path("/usr/blueos/userdata/")
 
 
 class BridgeFrontendSpec(BaseModel):
@@ -47,9 +45,7 @@ class Bridget:
 
     def __init__(self) -> None:
         self._bridges: Dict[BridgeFrontendSpec, Bridge] = {}
-        # We use userdata because our regular settings folder is under /root, which regular users
-        # don't have access to.
-        self._settings_manager = Manager("bridget", SettingsV2, USERDATA / "settings" / "bridget")
+        self._settings_manager = PydanticManager("bridget", SettingsV2)
         self._settings_manager.load()
         for bridge_settings_spec in self._settings_manager.settings.specsv2:
             try:
@@ -63,9 +59,8 @@ class Bridget:
             response = requests.get("http://localhost:6030/serial", timeout=1)
             data = response.json()
             return [port["name"] for port in data["ports"] if port["name"] is not None]
-        except requests.RequestException as e:
-            print(f"Error fetching data: {e}")
-            return []
+        except requests.RequestException as error:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
 
     def get_bridges(self) -> List[BridgeFrontendSpec]:
         return [spec for spec, bridge in self._bridges.items()]
@@ -86,7 +81,7 @@ class Bridget:
         self._bridges[bridge_spec] = new_bridge
         settings_spec = BridgeSettingsSpecV2.from_spec(bridge_spec)
         settings = self._settings_manager.settings
-        if settings_spec.model_dump() not in [spec.model_dump() for spec in settings.specsv2]:
+        if settings_spec.dict() not in [spec.dict() for spec in settings.specsv2]:
             settings.specsv2 = [spec for spec in settings.specsv2 if spec != settings_spec] + [settings_spec]
             self._settings_manager.save()
 

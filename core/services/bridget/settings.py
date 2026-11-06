@@ -1,14 +1,18 @@
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, List
 
-import pykson  # type: ignore
-from commonwealth.settings import settings
+from commonwealth.settings.settings import PydanticSettings
+from loguru import logger
+from pydantic import BaseModel, Field
+
+OLD_SETTINGS_DIR = Path("/usr/blueos/userdata/settings/bridget/bridget")
 
 
-class BridgeSettingsSpecV1(pykson.JsonObject):
-    serial_path = pykson.StringField()
-    baudrate = pykson.IntegerField()
-    ip = pykson.StringField()
-    udp_port = pykson.IntegerField()
+class BridgeSettingsSpecV1(BaseModel):
+    serial_path: str
+    baudrate: int
+    ip: str
+    udp_port: int
 
     def __eq__(self, other: object) -> Any:
         if isinstance(other, BridgeSettingsSpecV1):
@@ -16,31 +20,12 @@ class BridgeSettingsSpecV1(pykson.JsonObject):
         return False
 
 
-class SettingsV1(settings.BaseSettings):
-    VERSION = 1
-    specs = pykson.ObjectListField(BridgeSettingsSpecV1)
-
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.VERSION = SettingsV1.VERSION
-
-    def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV1.VERSION:
-            return
-
-        if data["VERSION"] < SettingsV1.VERSION:
-            super().migrate(data)
-
-        data["VERSION"] = SettingsV1.VERSION
-
-
-class BridgeSettingsSpecV2(pykson.JsonObject):
-    udp_target_port = pykson.IntegerField()
-    udp_listen_port = pykson.IntegerField()
-    serial_path = pykson.StringField()
-    baudrate = pykson.IntegerField()
-    ip = pykson.StringField()
+class BridgeSettingsSpecV2(BaseModel):
+    udp_target_port: int
+    udp_listen_port: int
+    serial_path: str
+    baudrate: int
+    ip: str
 
     @staticmethod
     def from_spec(spec: "BridgeFrontendSpec") -> "BridgeSettingsSpecV2":  # type: ignore
@@ -58,23 +43,46 @@ class BridgeSettingsSpecV2(pykson.JsonObject):
         return False
 
 
-class SettingsV2(SettingsV1):
-    VERSION = 2
-    specsv2 = pykson.ObjectListField(BridgeSettingsSpecV2)
+def migrate_from_old_settings(target_settings: "SettingsV2", old_dir: Path | None = None) -> None:
+    base = old_dir or OLD_SETTINGS_DIR
+    # Prefer settings-2.json, fall back to settings-1.json (V1 -> V2 via load/migrate)
+    for path in (base / "settings-2.json", base / "settings-1.json"):
+        if not path.exists():
+            continue
+        try:
+            migrated = SettingsV2()
+            migrated.load(path)
+            target_settings.specs = migrated.specs
+            target_settings.specsv2 = migrated.specsv2
+            return
+        except Exception as error:
+            logger.warning(f"Failed to migrate bridget settings from {path}: {error}")
 
-    def __init__(self, *args: str, **kwargs: int) -> None:
-        super().__init__(*args, **kwargs)
 
-        self.VERSION = SettingsV2.VERSION
+class SettingsV1(PydanticSettings):
+    specs: List[BridgeSettingsSpecV1] = Field(default_factory=list)
 
     def migrate(self, data: Dict[str, Any]) -> None:
-        if data["VERSION"] == SettingsV2.VERSION:
+        if data["VERSION"] == SettingsV1.STATIC_VERSION:
             return
 
-        if data["VERSION"] < SettingsV2.VERSION:
+        if data["VERSION"] < SettingsV1.STATIC_VERSION:
             super().migrate(data)
 
-            data["VERSION"] = SettingsV2.VERSION
+        data["VERSION"] = SettingsV1.STATIC_VERSION
+
+
+class SettingsV2(SettingsV1):
+    specsv2: List[BridgeSettingsSpecV2] = Field(default_factory=list)
+
+    def migrate(self, data: Dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
+            super().migrate(data)
+
+            data["VERSION"] = SettingsV2.STATIC_VERSION
             data["specsv2"] = []
             for spec in data["specs"]:
                 server = spec["ip"] == "0.0.0.0"
@@ -87,3 +95,6 @@ class SettingsV2(SettingsV1):
                         "udp_listen_port": spec["udp_port"] if server else 0,
                     }
                 )
+
+    def on_settings_created(self, _: Path) -> None:
+        migrate_from_old_settings(self)
