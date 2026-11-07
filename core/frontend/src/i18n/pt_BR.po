@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-06 13:11\n"
+"PO-Revision-Date: 2026-11-07 01:22\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
