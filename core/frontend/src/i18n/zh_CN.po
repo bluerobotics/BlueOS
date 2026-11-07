@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Chinese Simplified\n"
-"PO-Revision-Date: 2026-11-06 03:20\n"
+"PO-Revision-Date: 2026-11-07 00:14\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -691,6 +691,10 @@ msgstr ""
 
 #: src/components/wizard/Wizard.vue
 msgid "Choose Vehicle"
+msgstr ""
+
+#: src/views/SettingsView.vue
+msgid "Choose the interface language"
 msgstr ""
 
 #: src/components/kraken/BackAlleyTab.vue
@@ -1778,6 +1782,10 @@ msgstr ""
 
 #: src/types/frontend_services.ts
 msgid "Kraken service"
+msgstr ""
+
+#: src/views/SettingsView.vue
+msgid "Language"
 msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
