@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-06 13:11\n"
+"PO-Revision-Date: 2026-11-07 01:22\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -636,6 +636,10 @@ msgstr "Verificar internet"
 #: src/components/wizard/Wizard.vue
 msgid "Choose Vehicle"
 msgstr "Escolher veículo"
+
+#: src/views/SettingsView.vue
+msgid "Choose the interface language"
+msgstr "Escolha o idioma da interface"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/views/SettingsView.vue
@@ -1563,6 +1567,10 @@ msgstr "Passos do joystick"
 #: src/views/SystemInformationView.vue
 msgid "Kernel"
 msgstr ""
+
+#: src/views/SettingsView.vue
+msgid "Language"
+msgstr "Idioma"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Large Vehicle Calibration"
