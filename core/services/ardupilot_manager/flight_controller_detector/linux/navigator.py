@@ -36,8 +36,12 @@ class Navigator(LinuxFlightController):
 class NavigatorPi5(Navigator):
     required_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
         "ADS1115": (0x48, 1),
-        "BME280": (0x76, 1),
         "PCA9685": (0x40, 3),
+    }
+
+    barometer_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
+        "BME280": (0x76, 1),
+        "BMP390_0x77": (0x77, 1),
     }
 
     magnetometer_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
@@ -57,17 +61,22 @@ class NavigatorPi5(Navigator):
         if not get_cpu_type() == CpuType.PI5:
             return False
         required_ok = all(self.check_for_i2c_device(bus, address) for address, bus in self.required_devices.values())
+        barometer_ok = any(self.check_for_i2c_device(bus, address) for address, bus in self.barometer_devices.values())
         magnetometer_ok = any(
             self.check_for_i2c_device(bus, address) for address, bus in self.magnetometer_devices.values()
         )
-        return required_ok and magnetometer_ok
+        return required_ok and barometer_ok and magnetometer_ok
 
 
 class NavigatorPi4(Navigator):
     required_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
         "ADS1115": (0x48, 1),
-        "BME280": (0x76, 1),
         "PCA9685": (0x40, 4),
+    }
+
+    barometer_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
+        "BME280": (0x76, 1),
+        "BMP390_0x77": (0x77, 1),
     }
 
     magnetometer_devices: ClassVar[Dict[str, Tuple[int, int]]] = {
@@ -107,7 +116,8 @@ class NavigatorPi4(Navigator):
         if not get_cpu_type() == CpuType.PI4:
             return False
         required_ok = all(self.check_for_i2c_device(bus, address) for address, bus in self.required_devices.values())
+        barometer_ok = any(self.check_for_i2c_device(bus, address) for address, bus in self.barometer_devices.values())
         magnetometer_ok = any(
             self.check_for_i2c_device(bus, address) for address, bus in self.magnetometer_devices.values()
         )
-        return required_ok and magnetometer_ok
+        return required_ok and barometer_ok and magnetometer_ok
