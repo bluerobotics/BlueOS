@@ -293,3 +293,4 @@ class BootstrapperTests(TestCase):  # type: ignore
         config = json.loads(self.external_defaults)
         assert config is not None
         assert "core" in config
+        assert config["core"]["binds"]["/usr/blueos/userdata"]["mode"] == "rw,rslave"
