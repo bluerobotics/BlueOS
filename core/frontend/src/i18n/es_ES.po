@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Spanish\n"
-"PO-Revision-Date: 2026-11-06 13:11\n"
+"PO-Revision-Date: 2026-11-07 01:22\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -633,6 +633,10 @@ msgstr ""
 
 #: src/components/wizard/Wizard.vue
 msgid "Choose Vehicle"
+msgstr ""
+
+#: src/views/SettingsView.vue
+msgid "Choose the interface language"
 msgstr ""
 
 #: src/components/kraken/BackAlleyTab.vue
@@ -1560,6 +1564,10 @@ msgstr ""
 #: src/components/system-information/AboutThisSystem.vue
 #: src/views/SystemInformationView.vue
 msgid "Kernel"
+msgstr ""
+
+#: src/views/SettingsView.vue
+msgid "Language"
 msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
