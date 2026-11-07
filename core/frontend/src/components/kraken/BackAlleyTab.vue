@@ -375,10 +375,9 @@ export default Vue.extend({
       return [...new Set(authors)]
     },
     filtered_manifest(): ExtensionData[] {
-      // Remove not compatible in case user is not searching by search bar directly
       let data = (this.query ?? '') !== ''
         ? this.manifest_fuse?.search(this.query).map((result) => result.item) ?? []
-        : this.manifest_data.filter((ext) => ext.is_compatible)
+        : [...this.manifest_data]
 
       if (this.sort_by === AvailableSorts.Name) {
         data = data.sort((a, b) => a.name.localeCompare(b.name))
@@ -404,6 +403,9 @@ export default Vue.extend({
 
       // By default we remove examples if nothing is selected
       if (this.filter_by_selected_companies.isEmpty() && this.filter_by_selected_types.isEmpty()) {
+        if (!(this.query ?? '') && !this.filter_by_installed) {
+          data = data.filter((ext) => ext.is_compatible)
+        }
         return data.filter((extension) => getLatestVersion(extension.versions)?.type !== 'example')
       }
 
