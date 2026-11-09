@@ -1,149 +1,255 @@
-import mavlink2rest from '@/libs/MAVLink2Rest'
-import {
-  MavCmd, MAVLinkType, MavResult,
-} from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
-import { sleep } from '@/utils/helper_functions'
+import back_axios from '@/utils/api'
 
-enum PreflightCalibration {
-  GYROSCOPE,
-  GYROSCOPE_TEMPERATURE,
-  MAGNETOMETER,
-  PRESSURE,
-  RC,
-  RC_TRIM,
-  ACCELEROMETER,
-  BOARD_LEVEL,
-  ACCELEROMETER_TEMPERATURE,
-  SIMPLE_ACCELEROMETER,
-  COMPASS_MOTOR_INTERFERENCE,
-  AIRPSEED,
-  ESC,
-  BAROMETER_TEMPERATURE,
+export enum CalibrationKind {
+  GYROSCOPE = 'gyroscope',
+  BAROMETER = 'barometer',
+  ACCELEROMETER = 'accelerometer',
+  SIMPLE_ACCELEROMETER = 'simple_accelerometer',
+  BOARD_LEVEL = 'board_level',
+  COMPASS = 'compass',
+  LARGE_VEHICLE_COMPASS = 'large_vehicle_compass',
 }
 
-class Calibrator {
-  private static instance: Calibrator
+export enum CalibrationStatus {
+  RUNNING = 'running',
+  WAITING_FOR_POSITION = 'waiting_for_position',
+  DONE = 'done',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled',
+}
 
-  private calibrating: PreflightCalibration | undefined
+// Ordered as ArduPilot's ACCELCAL_VEHICLE_POS 1 to 6
+export enum PoseKey {
+  LEVEL = 'level',
+  LEFT = 'left',
+  RIGHT = 'right',
+  NOSE_DOWN = 'nose_down',
+  NOSE_UP = 'nose_up',
+  BACK = 'back',
+}
 
-  private calibrationStatus: MavResult | undefined
+export interface CalibrationSession {
+  job_id: string
+  calibration: CalibrationKind
+  status: CalibrationStatus
+  position: PoseKey | null
+  progress: number | null
+  fitness: Record<string, number>
+  reason: string | null
+  reboot_required: boolean
+}
 
-  constructor() {
-    mavlink2rest.startListening(MAVLinkType.COMMAND_ACK).setCallback((content) => {
-      const { header, message } = content
-      if (header.system_id !== autopilot_data.system_id || header.component_id !== 1) {
-        return
-      }
-      if (message.command.type === MavCmd.MAV_CMD_PREFLIGHT_CALIBRATION) {
-        this.calibrationStatus = message.result.type
-      }
-    }).setFrequency(0)
+export interface StartCalibration {
+  calibration: CalibrationKind
+  compass_mask?: number
+  latitude?: number
+  longitude?: number
+}
+
+const API_URL = '/vehicle-setup/v1.0/command'
+
+function isFinished(session: CalibrationSession | null): boolean {
+  return [CalibrationStatus.DONE, CalibrationStatus.FAILED, CalibrationStatus.CANCELLED]
+    .includes(session?.status as CalibrationStatus)
+}
+
+export function isRunning(session: CalibrationSession | null): boolean {
+  return session !== null && !isFinished(session)
+}
+
+// FastAPI answers refusals with a string detail and validation errors with a list of them
+function errorMessage(error: unknown): string {
+  const { response, message } = error as { response?: { data?: { detail?: unknown } }, message?: string }
+  const detail = response?.data?.detail
+  if (Array.isArray(detail)) {
+    return detail.map((item) => item?.msg ?? `${item}`).join(', ')
   }
+  return typeof detail === 'string' ? detail : message ?? `${error}`
+}
 
-  /**
-   * Singleton access
-   * @returns Calibrator
-   */
-  public static getInstance(): Calibrator {
-    if (!Calibrator.instance) {
-      Calibrator.instance = new Calibrator()
-    }
-    return Calibrator.instance
+export function statusText(session: CalibrationSession | null): string {
+  switch (session?.status) {
+    case CalibrationStatus.RUNNING:
+    case CalibrationStatus.WAITING_FOR_POSITION:
+      return 'Calibrating...'
+    case CalibrationStatus.DONE:
+      return 'Calibration done.'
+    case CalibrationStatus.FAILED:
+      return `Calibration failed: ${session.reason}`
+    case CalibrationStatus.CANCELLED:
+      return session.reason ? `Calibration cancelled: ${session.reason}` : 'Calibration cancelled'
+    default:
+      return ''
   }
+}
 
-  /**
-   * Start calibration process
-   * @param {PreflightCalibration} type
-   */
-  private static start(type: PreflightCalibration): void {
-    mavlink2rest.sendMessage({
-      header: {
-        system_id: 255,
-        component_id: 0,
-        sequence: 0,
-      },
-      message: {
-        type: MAVLinkType.COMMAND_LONG,
-        param1: {
-          [PreflightCalibration.GYROSCOPE]: 1,
-          [PreflightCalibration.GYROSCOPE_TEMPERATURE]: 3,
-        }[type] || 0,
-        param2: type === PreflightCalibration.MAGNETOMETER ? 1 : 0,
-        param3: type === PreflightCalibration.PRESSURE ? 1 : 0,
-        param4: {
-          [PreflightCalibration.RC]: 1,
-          [PreflightCalibration.RC_TRIM]: 2,
-        }[type] || 0,
-        param5: {
-          [PreflightCalibration.ACCELEROMETER]: 1,
-          [PreflightCalibration.BOARD_LEVEL]: 2,
-          [PreflightCalibration.ACCELEROMETER_TEMPERATURE]: 3,
-          [PreflightCalibration.SIMPLE_ACCELEROMETER]: 4,
-        }[type] || 0,
-        param6: {
-          [PreflightCalibration.COMPASS_MOTOR_INTERFERENCE]: 1,
-          [PreflightCalibration.AIRPSEED]: 2,
-        }[type] || 0,
-        param7: {
-          [PreflightCalibration.ESC]: 1,
-          [PreflightCalibration.BAROMETER_TEMPERATURE]: 3,
-        }[type] || 0,
-        command: {
-          type: MavCmd.MAV_CMD_PREFLIGHT_CALIBRATION,
-        },
-        target_system: autopilot_data.system_id,
-        target_component: 1,
-        confirmation: 0,
-      },
+export interface ResultAlert {
+  type: string
+  text: string
+}
+
+export function resultAlert(session: CalibrationSession | null, error: string): ResultAlert | undefined {
+  if (error) {
+    return { type: 'error', text: `Calibration failed: ${error}` }
+  }
+  switch (session?.status) {
+    case CalibrationStatus.DONE:
+      return { type: 'success', text: 'Calibration finished' }
+    case CalibrationStatus.FAILED:
+      return { type: 'error', text: `Calibration failed: ${session.reason}` }
+    case CalibrationStatus.CANCELLED:
+      return { type: 'warning', text: 'Calibration cancelled' }
+    default:
+      return undefined
+  }
+}
+
+// Replies only say accepted or refused; every state shown comes from the websocket
+async function command(name: string, data: object): Promise<string | undefined> {
+  try {
+    await back_axios({
+      method: 'post', url: `${API_URL}/${name}`, data, timeout: 10000,
     })
+    return undefined
+  } catch (error) {
+    return errorMessage(error)
   }
+}
 
-  /**
-   * Generator function for calibration status with timeout
-   * @param {PreflightCaliration} type
-   * @param {number} timeout in seconds
-   */
-  public async* calibrate(type: PreflightCalibration, timeout = 6): AsyncGenerator<MavResult | string> {
-    const startTime = Date.now()
-    Calibrator.start(type)
+type Listener = (session: CalibrationSession | null) => void
 
-    while (true) {
-      await sleep(200)
+// One websocket for every watcher on the page, open while any of them listens
+const listeners = new Map<string, Set<Listener>>()
+let socket: WebSocket | undefined
+let retry: ReturnType<typeof setTimeout> | undefined
+let backoff_ms = 1000
+// The server sends a topic's current value only on subscribe, so watchers joining a subscribed topic replay this
+const latest = new Map<string, CalibrationSession | null>()
 
-      switch (this.calibrationStatus) {
-        case MavResult.MAV_RESULT_ACCEPTED:
-          this.calibrationStatus = undefined
-          yield 'Calibration done.'
-          return
+function send(message: object): void {
+  if (socket?.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify(message))
+  }
+}
 
-        case MavResult.MAV_RESULT_IN_PROGRESS:
-          this.calibrationStatus = undefined
-          yield 'In progress..'
-          continue
-
-        case MavResult.MAV_RESULT_CANCELLED:
-        case MavResult.MAV_RESULT_DENIED:
-        case MavResult.MAV_RESULT_FAILED:
-        case MavResult.MAV_RESULT_TEMPORARILY_REJECTED:
-        case MavResult.MAV_RESULT_UNSUPPORTED:
-          yield `Calibration failed with status: ${this.calibrationStatus}`
-          this.calibrationStatus = undefined
-          return
-
-        default:
-          // Handle any other potential cases if needed
-          yield 'Waiting for vehicle..'
-      }
-
-      // Check for timeout
-      if (Date.now() - startTime > timeout * 1000) {
-        yield `Calibration timed out after ${timeout} seconds.`
+function connect(): void {
+  retry = undefined
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const current = new WebSocket(`${protocol}://${window.location.host}/vehicle-setup/ws`)
+  socket = current
+  // The server sends the current value on every subscribe, so a reconnect needs no extra fetch
+  current.onopen = () => {
+    backoff_ms = 1000
+    listeners.forEach((_, topic) => send({ subscribe: topic }))
+  }
+  current.onmessage = (event: MessageEvent) => {
+    try {
+      const { topic, payload } = JSON.parse(event.data)
+      const topic_listeners = listeners.get(topic)
+      if (!topic_listeners) {
         return
+      }
+      const session = payload as CalibrationSession | null
+      latest.set(topic, session)
+      topic_listeners.forEach((listener) => {
+        try {
+          listener(session)
+        } catch (error) {
+          console.error('Calibration listener failed:', error)
+        }
+      })
+    } catch (error) {
+      console.error('Invalid vehicle-setup message:', error)
+    }
+  }
+  current.onclose = () => {
+    socket = undefined
+    if (listeners.size) {
+      retry = setTimeout(connect, backoff_ms)
+      backoff_ms = Math.min(backoff_ms * 2, 30000)
+    }
+  }
+}
+
+function listen(topic: string, listener: Listener): () => void {
+  const topic_listeners = listeners.get(topic) ?? new Set<Listener>()
+  const first = !topic_listeners.size
+  topic_listeners.add(listener)
+  listeners.set(topic, topic_listeners)
+  if (!socket && !retry) {
+    connect()
+  } else if (first) {
+    send({ subscribe: topic })
+  } else if (latest.has(topic)) {
+    listener(latest.get(topic) as CalibrationSession | null)
+  }
+  return () => {
+    topic_listeners.delete(listener)
+    if (topic_listeners.size) {
+      return
+    }
+    listeners.delete(topic)
+    latest.delete(topic)
+    send({ unsubscribe: topic })
+    if (!listeners.size) {
+      clearTimeout(retry)
+      retry = undefined
+      if (socket) {
+        socket.onclose = null
+        socket.close()
+        socket = undefined
       }
     }
   }
 }
 
-const calibrator = Calibrator.getInstance()
-export { calibrator, PreflightCalibration }
+/**
+ * Follows the backend's calibration state for one kind, on that kind's own topic: the current snapshot as soon as
+ * the websocket subscribes, then every change.
+ */
+export class CalibrationWatcher {
+  private last: CalibrationSession | null = null
+
+  private readonly unlisten: () => void
+
+  constructor(
+    private readonly kind: CalibrationKind,
+    private readonly handler: (session: CalibrationSession) => void,
+  ) {
+    this.unlisten = listen(`vehicle-setup/state/calibration/${kind}`, (session) => this.update(session))
+  }
+
+  start(options: Omit<StartCalibration, 'calibration'> = {}): Promise<string | undefined> {
+    return command('calibrate', { ...options, calibration: this.kind })
+  }
+
+  confirm(): Promise<string | undefined> {
+    return this.signal('confirm_position')
+  }
+
+  cancel(): Promise<string | undefined> {
+    return this.signal('cancel')
+  }
+
+  stop(): void {
+    this.unlisten()
+  }
+
+  private signal(name: string): Promise<string | undefined> {
+    const job_id = this.last?.job_id
+    return job_id ? command(name, { job_id }) : Promise.resolve('no calibration is running')
+  }
+
+  private update(session: CalibrationSession | null): void {
+    // null until the first job of this kind
+    if (session === null) {
+      return
+    }
+    if (isRunning(this.last) && isFinished(session) && session.reboot_required) {
+      autopilot_data.setRebootRequired(true)
+    }
+    this.last = session
+    this.handler(session)
+  }
+}

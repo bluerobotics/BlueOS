@@ -32,6 +32,9 @@
       >
         <strong>{{ current_state_text }}</strong>
       </v-alert>
+      <v-alert v-if="error" dense type="error">
+        {{ error }}
+      </v-alert>
       <generic-viewer
         :autorotate="false"
         :transparent="false"
@@ -43,7 +46,7 @@
         <v-btn v-if="show_start_button" :loading="start_button_loading" class="primary" @click="startCalibration">
           {{ t`Start Calibration` }}
         </v-btn>
-        <v-btn v-if="show_next_button" class="primary" @click="nextStep">
+        <v-btn v-if="show_next_button" :loading="next_button_loading" class="primary" @click="nextStep">
           {{ t`Next` }}
         </v-btn>
         <v-btn v-if="show_ok_button" class="primary" @click="cleanup">
@@ -55,26 +58,13 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue'
 
 import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
-import mavlink2rest from '@/libs/MAVLink2Rest'
-import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import autopilot_data from '@/store/autopilot'
 
-import { calibrator, PreflightCalibration } from '../../calibration'
-
-// Ideally these would come from mavlink2rest-enum
-// but we don't have the numbering information there
-enum AccelcalVehiclePos {
-  ACCELCAL_VEHICLE_POS_LEVEL = 1,
-  ACCELCAL_VEHICLE_POS_LEFT = 2,
-  ACCELCAL_VEHICLE_POS_RIGHT = 3,
-  ACCELCAL_VEHICLE_POS_NOSEDOWN = 4,
-  ACCELCAL_VEHICLE_POS_NOSEUP = 5,
-  ACCELCAL_VEHICLE_POS_BACK = 6,
-  ACCELCAL_VEHICLE_POS_SUCCESS = 16777215,
-  ACCELCAL_VEHICLE_POS_FAILED = 16777216
-}
+import {
+  CalibrationKind, CalibrationSession, CalibrationStatus, CalibrationWatcher, isRunning, PoseKey,
+} from '../../calibration'
 
 enum CalState {
   IDLE,
@@ -89,7 +79,16 @@ enum CalState {
   FAIL,
 }
 
-export default {
+const POSITION_STATES: Record<PoseKey, CalState> = {
+  [PoseKey.LEVEL]: CalState.WAITING_FOR_LEVEL_POSITION,
+  [PoseKey.LEFT]: CalState.WAITING_FOR_LEFT_POSITION,
+  [PoseKey.RIGHT]: CalState.WAITING_FOR_RIGHT_POSITION,
+  [PoseKey.NOSE_DOWN]: CalState.WAITING_FOR_NOSEDOWN_POSITION,
+  [PoseKey.NOSE_UP]: CalState.WAITING_FOR_NOSEUP_POSITION,
+  [PoseKey.BACK]: CalState.WAITING_FOR_BACK_POSITION,
+}
+
+export default Vue.extend({
   name: 'FullAccelerometerCalibration',
   components: {
     GenericViewer,
@@ -97,14 +96,34 @@ export default {
   data() {
     return {
       dialog: false,
-      state: CalState.IDLE,
+      // A finished session only shows until the user dismisses it, or not at all if it finished before page load
+      dismissed: true,
+      error: '',
+      reset_timeout: undefined as ReturnType<typeof setTimeout> | undefined,
+      session: null as CalibrationSession | null,
+      watcher: null as CalibrationWatcher | null,
     }
   },
   computed: {
     states() {
       return CalState
     },
-    show_next_button() {
+    state(): CalState {
+      const { session } = this
+      if (session === null || this.dismissed && !isRunning(session)) {
+        return CalState.IDLE
+      }
+      switch (session.status) {
+        case CalibrationStatus.DONE:
+          return CalState.SUCCESS
+        case CalibrationStatus.FAILED:
+        case CalibrationStatus.CANCELLED:
+          return CalState.FAIL
+        default:
+          return session.position ? POSITION_STATES[session.position] : CalState.WAITING_FOR_VEHICLE_RESPONSE
+      }
+    },
+    show_next_button(): boolean {
       return ![
         CalState.IDLE,
         CalState.FAIL,
@@ -112,16 +131,19 @@ export default {
         CalState.WAITING_FOR_VEHICLE_RESPONSE,
       ].includes(this.state)
     },
-    show_ok_button() {
+    next_button_loading(): boolean {
+      return this.session?.status === CalibrationStatus.RUNNING
+    },
+    show_ok_button(): boolean {
       return [CalState.SUCCESS, CalState.FAIL].includes(this.state)
     },
-    show_start_button() {
+    show_start_button(): boolean {
       return [CalState.IDLE, CalState.WAITING_FOR_VEHICLE_RESPONSE].includes(this.state)
     },
-    start_button_loading() {
+    start_button_loading(): boolean {
       return this.state === CalState.WAITING_FOR_VEHICLE_RESPONSE
     },
-    current_state_text() {
+    current_state_text(): string {
       const AccelStateText: { [key: number]: string } = {
         [CalState.WAITING_FOR_LEVEL_POSITION]: 'Place the vehicle on a level surface',
         [CalState.WAITING_FOR_LEFT_POSITION]: 'Place the vehicle on its left side',
@@ -130,11 +152,13 @@ export default {
         [CalState.WAITING_FOR_NOSEUP_POSITION]: 'Place the vehicle with its nose up',
         [CalState.WAITING_FOR_BACK_POSITION]: 'Place the vehicle on its back',
         [CalState.SUCCESS]: 'Calibration Successful',
-        [CalState.FAIL]: 'Calibration Failed',
+        [CalState.FAIL]: this.session?.status === CalibrationStatus.CANCELLED
+          ? 'Calibration Cancelled' : 'Calibration Failed',
       }
-      return AccelStateText[Number(this.state)] ?? 'Unknown state'
+      const text = AccelStateText[Number(this.state)] ?? 'Unknown state'
+      return this.session?.reason ? `${text}: ${this.session.reason}` : text
     },
-    current_state_3D() {
+    current_state_3D(): string {
       const AccelStateText: { [key: number]: string } = {
         [CalState.WAITING_FOR_LEVEL_POSITION]: '0deg 0deg 0deg',
         [CalState.WAITING_FOR_LEFT_POSITION]: '-90deg 0deg 0deg',
@@ -145,7 +169,7 @@ export default {
       }
       return AccelStateText[Number(this.state)] ?? '0deg 0deg 0deg'
     },
-    current_state_type() {
+    current_state_type(): string {
       if (this.state === CalState.SUCCESS) {
         return 'success'
       }
@@ -155,89 +179,49 @@ export default {
       return 'info'
     },
   },
+  watch: {
+    dialog(open: boolean) {
+      if (!open && isRunning(this.session)) {
+        this.cancel()
+      }
+    },
+  },
+  mounted() {
+    this.watcher = new CalibrationWatcher(CalibrationKind.ACCELEROMETER, this.onSession)
+  },
+  beforeDestroy() {
+    clearTimeout(this.reset_timeout)
+    this.watcher?.stop()
+  },
   methods: {
-    nextStep() {
-      // param needs to match the current step
-      const param = [
-        CalState.WAITING_FOR_LEVEL_POSITION,
-        CalState.WAITING_FOR_LEFT_POSITION,
-        CalState.WAITING_FOR_RIGHT_POSITION,
-        CalState.WAITING_FOR_NOSEDOWN_POSITION,
-        CalState.WAITING_FOR_NOSEUP_POSITION,
-        CalState.WAITING_FOR_BACK_POSITION,
-      ].indexOf(this.state) + 1
-
-      mavlink2rest.sendMessage({
-        header: {
-          system_id: 255,
-          component_id: 1,
-          sequence: 1,
-        },
-        message: {
-          type: 'COMMAND_LONG',
-          param1: param,
-          param2: 0,
-          param3: 0,
-          param4: 0,
-          param5: 0,
-          param6: 0,
-          param7: 0,
-          command: {
-            type: MavCmd.MAV_CMD_ACCELCAL_VEHICLE_POS,
-          },
-          target_system: autopilot_data.system_id,
-          target_component: 1,
-          confirmation: 1,
-        },
-      })
+    onSession(session: CalibrationSession) {
+      if (isRunning(session)) {
+        // Resume a calibration started before a page reload
+        if (this.session === null) {
+          this.dialog = true
+        }
+        this.dismissed = false
+      }
+      const succeeded = session.status === CalibrationStatus.DONE && isRunning(this.session)
+      this.session = session
+      if (succeeded) {
+        this.cleanup()
+      }
+    },
+    async nextStep() {
+      this.error = await this.watcher?.confirm() ?? ''
+    },
+    async cancel() {
+      this.error = await this.watcher?.cancel() ?? ''
     },
     cleanup() {
       this.dialog = false
       // delay resetting the state to wait for the close animation to finish
-      setTimeout(() => { this.state = CalState.IDLE }, 500)
+      this.reset_timeout = setTimeout(() => { this.dismissed = true }, 500)
     },
     async startCalibration() {
-      const ack_listener = mavlink2rest.startListening('COMMAND_LONG').setCallback((message) => {
-        if (message.message.command.type === 'MAV_CMD_ACCELCAL_VEHICLE_POS') {
-          switch (message.message.param1) {
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_LEVEL:
-              this.state = CalState.WAITING_FOR_LEVEL_POSITION
-              break
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_LEFT:
-              this.state = CalState.WAITING_FOR_LEFT_POSITION
-              break
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_RIGHT:
-              this.state = CalState.WAITING_FOR_RIGHT_POSITION
-              break
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_NOSEDOWN:
-              this.state = CalState.WAITING_FOR_NOSEDOWN_POSITION
-              break
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_NOSEUP:
-              this.state = CalState.WAITING_FOR_NOSEUP_POSITION
-              break
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_BACK:
-              this.state = CalState.WAITING_FOR_BACK_POSITION
-              break
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_SUCCESS:
-              this.state = CalState.SUCCESS
-              this.cleanup()
-              ack_listener.discard()
-              break
-            case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_FAILED:
-              this.state = CalState.FAIL
-              ack_listener.discard()
-              break
-            default:
-              console.error('Unknown vehicle position:', message.message.param1)
-              break
-          }
-        }
-      })
-      for await (const value of calibrator.calibrate(PreflightCalibration.ACCELEROMETER)) {
-        console.log(value)
-      }
-      this.state = CalState.WAITING_FOR_VEHICLE_RESPONSE
+      this.error = await this.watcher?.start() ?? ''
     },
   },
-}
+})
 </script>
