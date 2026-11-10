@@ -140,14 +140,15 @@
                     </v-alert>
                     <p />
                     <h4>{{ t`Settings` }}</h4>
-                    <div v-if="compass_use_param[compass.deviceIdNumber - 1]">
+                    <div v-if="compass_use_param[compass.param]">
                       <parameter-switch
                         :label="t`Use Compass`"
-                        :parameter="compass_use_param[compass.deviceIdNumber - 1]"
+                        :parameter="compass_use_param[compass.param]"
                       />
                     </div>
-                    <div v-else>
-                      {{ t`This Compass is not in use, drag it higher (by the dots) to be able to use it.` }}
+                    <!-- eslint-disable-next-line max-len -->
+                    <div v-else v-tooltip="t`This compass is not in the priority list, so it has no COMPASS_USE slot. Drag it higher (by the dots) to assign it a priority.`">
+                      <v-switch :label="t`Use Compass`" disabled />
                     </div>
                     <b>{{ t`External/Internal:` }}</b>
                     <v-btn
@@ -407,14 +408,22 @@ export default Vue.extend({
       }
       return results
     },
-    compass_use_param(): Parameter[] {
-      const results = [] as Parameter[]
-      for (let i = 1; i <= 3; i += 1) {
-        const param_name = i === 1 ? 'COMPASS_USE' : `COMPASS_USE${i}`
-        const param = autopilot_data.parameter(param_name)
-        if (param) {
-          results.push(param)
+    // COMPASS_USEn is indexed by priority slot (COMPASS_PRIOn_ID), not by DEV_ID slot:
+    // see _use_for_yaw in libraries/AP_Compass/AP_Compass.h and use_for_yaw(i) in libraries/AP_Compass/AP_Compass.cpp.
+    // Firmwares older than 4.1 and single-compass builds have no COMPASS_PRIOn_ID, so COMPASS_USEn follows DEV_ID.
+    compass_use_param(): Dictionary<Parameter | undefined> {
+      const results = {} as Dictionary<Parameter | undefined>
+      const prio_params = [1, 2, 3].map((i) => autopilot_data.parameter(`COMPASS_PRIO${i}_ID`))
+      const has_priority = prio_params.some((param) => param !== undefined)
+      for (const compass of this.compasses) {
+        let slot: number | undefined = compass.deviceIdNumber
+        if (has_priority) {
+          const index = prio_params.findIndex((param) => param?.value === compass.paramValue)
+          slot = index === -1 ? undefined : index + 1
         }
+        results[compass.param] = slot === undefined
+          ? undefined
+          : autopilot_data.parameter(slot === 1 ? 'COMPASS_USE' : `COMPASS_USE${slot}`)
       }
       return results
     },
