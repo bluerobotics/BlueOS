@@ -556,7 +556,10 @@ export default Vue.extend({
             icon: service.metadata?.icon?.startsWith('/')
               ? `${address}${service.metadata.icon}`
               : service.metadata?.icon ?? 'mdi-puzzle',
-            route: this.addExtraQuery(service.metadata?.route ?? address, service.metadata?.extra_query),
+            route: this.addExtraQuery(
+              service.metadata?.route ?? this.createExtensionRoute(service, address),
+              service.metadata?.extra_query,
+            ),
             new_page: service.metadata?.avoid_iframes ?? service.metadata?.new_page,
             advanced: false,
             text: service.metadata?.description ?? 'Service text',
@@ -850,6 +853,14 @@ export default Vue.extend({
       let address = `/extension/${service?.metadata?.sanitized_name}`
       if (service?.metadata?.new_page) {
         address += '?full_page=true'
+      }
+      return address
+    },
+    createExtensionRoute(service: Service, address: string): string {
+      // nginx proxies /extensionv2/ straight to the extension, so reloading there loses the BlueOS interface.
+      // /extension/ is served by the frontend, and ExtensionView still loads /extensionv2/ inside the iframe.
+      if (address.startsWith('/extensionv2/') && !service.metadata?.new_page) {
+        return `/extension/${service.metadata?.sanitized_name}`
       }
       return address
     },
