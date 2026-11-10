@@ -46,6 +46,7 @@ class MAVLinkServer(AbstractRouter):
 
         filtered_endpoints = Endpoint.filter_enabled(self.endpoints())
         endpoints = " ".join([convert_endpoint(endpoint) for endpoint in [master_endpoint, *filtered_endpoints]])
+        tlog_endpoint = f"tlogwriter://{self.logdir()}?when=while_armed"
 
         if not self.log_path:
             self.log_path = "/var/logs/blueos/services/mavlink-server/"
@@ -54,7 +55,7 @@ class MAVLinkServer(AbstractRouter):
         if not self.mavlink_component_id:
             self.mavlink_component_id = int(os.environ.get("MAV_COMPONENT_ID_ONBOARD_COMPUTER", 191))
 
-        return f"{self.binary()} {endpoints} --mavlink-system-id={self.mavlink_system_id} --mavlink-component-id={self.mavlink_component_id} --log-path={self.log_path}"
+        return f"{self.binary()} {endpoints} {tlog_endpoint} --mavlink-system-id={self.mavlink_system_id} --mavlink-component-id={self.mavlink_component_id} --log-path={self.log_path}"
 
     @staticmethod
     def name() -> str:
