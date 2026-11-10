@@ -56,6 +56,7 @@ def test_resolve_rejects_paths_outside_root_or_missing(root: Path, requested: st
         ("/usr/lib/python3", True),
         ("/", True),
         ("/usr", True),
+        ("/nix/store", True),
         ("/etcetera", False),
         ("/usr/local/bin", False),
         ("/home/pi", False),

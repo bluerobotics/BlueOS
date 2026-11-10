@@ -117,6 +117,7 @@ def is_protected_target(path: Path) -> bool:
         Path("/etc"),
         Path("/lib"),
         Path("/lib64"),
+        Path("/nix"),
         Path("/proc"),
         Path("/run"),
         Path("/sbin"),
