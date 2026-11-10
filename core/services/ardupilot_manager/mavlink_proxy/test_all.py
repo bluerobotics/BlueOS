@@ -187,6 +187,16 @@ def test_unsupported_endpoints_are_stored_but_not_routed() -> None:
     assert Endpoint.from_raw("not a mapping") is None
 
 
+def test_mavlink_server_tlog_endpoint(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(MAVLinkServer, "_get_version", lambda _: "0.11.1")
+    router = MAVLinkServer()
+    router.set_logdir(tmp_path)
+    master_endpoint = Endpoint(
+        name="Master", owner="pytest", connection_type=EndpointType.UDPServer, place="0.0.0.0", argument=14550
+    )
+    assert f" tlogwriter://{tmp_path}?when=while_armed " in router.assemble_command(master_endpoint)
+
+
 @pytest.mark.skip(
     reason="MavProxy tests are failling for several endpoint combinations. Since it's not being used \
     and it's not a priority to support it, they are being temporarily disabled."
