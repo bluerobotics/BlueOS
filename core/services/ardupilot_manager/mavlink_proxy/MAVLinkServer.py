@@ -5,6 +5,7 @@ from typing import Optional
 
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from typedefs import TLogMode
 
 
 class MAVLinkServer(AbstractRouter):
@@ -51,11 +52,25 @@ class MAVLinkServer(AbstractRouter):
         if not self.mavlink_component_id:
             self.mavlink_component_id = int(os.environ.get("MAV_COMPONENT_ID_ONBOARD_COMPUTER", 191))
 
-        return f"{self.binary()} {endpoints} --mavlink-system-id={self.mavlink_system_id} --mavlink-component-id={self.mavlink_component_id} --log-path={self.log_path}"
+        def tlog_endpoint(mode: TLogMode) -> str:
+            if mode == TLogMode.disabled:
+                return ""
+            if mode == TLogMode.while_armed:
+                return f" tlogwriter://{self.logdir()}?when=while_armed"
+            if mode == TLogMode.always:
+                return f" tlogwriter://{self.logdir()}?when=always"
+            raise ValueError(f"TLog mode {mode} not supported on MAVLink-Server.")
+
+        command = f"{self.binary()} {endpoints}{tlog_endpoint(self.tlog_mode())}"
+        return f"{command} --mavlink-system-id={self.mavlink_system_id} --mavlink-component-id={self.mavlink_component_id} --log-path={self.log_path}"
 
     @staticmethod
     def name() -> str:
         return "MAVLink-Server"
+
+    @staticmethod
+    def supports_tlog() -> bool:
+        return True
 
     @staticmethod
     def binary_name() -> str:
