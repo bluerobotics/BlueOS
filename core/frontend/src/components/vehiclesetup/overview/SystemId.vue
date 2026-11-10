@@ -63,6 +63,7 @@ import autopilot from '@/store/autopilot'
 import Parameter from '@/types/autopilot/parameter'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { restartCore as restart_core } from '@/utils/updates_backend_api'
 
 import SpinningLogo from '../../common/SpinningLogo.vue'
 
@@ -116,10 +117,7 @@ export default Vue.extend({
     },
     async restartCore(): Promise<void> {
       this.restarting = true
-      await back_axios({
-        method: 'post',
-        url: '/version-chooser/v1.0/version/restart',
-      }).finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
+      await restart_core().finally(() => setTimeout(this.waitForBackendToBeOnline, 15000))
     },
     async waitForBackendToBeOnline(): Promise<void> {
       back_axios({
