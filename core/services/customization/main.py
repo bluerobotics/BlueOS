@@ -13,6 +13,8 @@ from fastapi import APIRouter, FastAPI, File, HTTPException, UploadFile, status
 from fastapi_versioning import VersionedFastAPI, versioned_api_route
 from loguru import logger
 from pydantic import BaseModel, Field
+from uvicorn import Config, Server
+
 from storage import (
     ALLOWED_IMAGE_EXTENSIONS,
     ALLOWED_MODEL_EXTENSIONS,
@@ -28,7 +30,6 @@ from storage import (
     safe_join,
 )
 from theme import derive_palette, parse_hex, render_css
-from uvicorn import Config, Server
 
 SERVICE_NAME = "customization"
 PORT = 9152
