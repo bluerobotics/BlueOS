@@ -12,6 +12,7 @@ from commonwealth.mavlink_comm.MavlinkComm import MavlinkMessenger
 from commonwealth.mavlink_comm.typedefs import (
     FirmwareInfo,
     FirmwareVersionType,
+    MavlinkFirmwareType,
     MavlinkMessageId,
     MavlinkParameter,
     MavlinkVehicleType,
@@ -114,7 +115,7 @@ class VehicleManager:
         heartbeat_message = await self.mavlink2rest.get_updated_mavlink_message("HEARTBEAT")
         return MavlinkVehicleType[heartbeat_message["message"]["mavtype"]["type"]]  # type: ignore
 
-    async def get_firmware_vehicle_type(self) -> str:
+    async def get_firmware_vehicle_type(self) -> MavlinkFirmwareType:
         vehicle_type = await self.get_vehicle_type()
         return vehicle_type.mavlink_firmware_type()
 
