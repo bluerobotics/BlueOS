@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-07 00:14\n"
+"PO-Revision-Date: 2026-11-11 02:04\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -35,12 +35,12 @@ msgstr "${ 0 } / ${ 1 } no total"
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 #, javascript-format
 msgid "${ 0 } Advanced"
-msgstr "${ 0 } avançado"
+msgstr "${ 0 } Avançado"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #, javascript-format
 msgid "${ 0 } Extension"
-msgstr "${ 0 } extensão"
+msgstr "${ 0 } Extensão"
 
 #: src/components/system-information/Usb.vue
 #, javascript-format
