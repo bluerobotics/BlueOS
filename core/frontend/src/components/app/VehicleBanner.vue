@@ -4,6 +4,8 @@
       <image-picker
         size="35px"
         directory="/userdata/images/vehicle"
+        :max-dimension="400"
+        :max-size-mb="0.5"
         :readonly-files="['/assets/vehicles/images/bluerov2.png', '/assets/vehicles/images/bb120.png']"
         :default-image="require('@/assets/vehicles/images/unknown.svg')"
         :image="vehicle_image"
@@ -34,6 +36,8 @@
       <image-picker
         size="35px"
         directory="/userdata/images/logo"
+        :max-dimension="400"
+        :max-size-mb="0.5"
         :default-image="require('@/assets/img/blue-robotics-logo.svg')"
         :image="logo_image"
         @image-selected="save_logo"
