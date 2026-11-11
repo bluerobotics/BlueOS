@@ -6,11 +6,11 @@ import subprocess
 import time
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Dict
 
 import appdirs
 import uvicorn
-from commonwealth.utils.apis import GenericErrorHandlingRoute
+from commonwealth.utils.apis import GenericErrorHandlingRoute, use_local_docs_assets
 from commonwealth.utils.commands import run_command
 from commonwealth.utils.general import delete_everything, delete_everything_stream
 from commonwealth.utils.logs import InterceptHandler, init_logger
@@ -276,11 +276,12 @@ async def check_mavlink_log_folder_size() -> Any:
 
 @app.get("/environment_variables", status_code=status.HTTP_200_OK)
 @version(1, 0)
-async def environment_variables() -> Any:
-    return os.environ
+async def environment_variables() -> Dict[str, Any]:
+    return dict(os.environ)
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
+use_local_docs_assets(app)
 
 
 @app.get("/")

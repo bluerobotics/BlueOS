@@ -144,3 +144,12 @@ class MavlinkMessenger:
                         raise MavlinkMessageSendFail(f"Received status code of {response.status}.")
             except asyncio.exceptions.TimeoutError as error:
                 raise MavlinkMessageSendFail(f"Request timed out after {request_timeout} second.") from error
+
+    def command_statustext_message(self, text: str) -> Dict[str, Any]:
+        return {
+            "type": "STATUSTEXT",
+            "severity": {"type": "MAV_SEVERITY_NOTICE"},
+            "text": list(text),
+            "id": 0,
+            "chunk_seq": 0,
+        }
