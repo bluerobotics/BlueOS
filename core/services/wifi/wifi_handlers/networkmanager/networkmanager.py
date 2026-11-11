@@ -87,8 +87,8 @@ class NetworkManagerWifi(AbstractWifiManager):
     async def _cleanup_virtual_interface(self) -> None:
         """Remove virtual AP interface"""
         try:
-            # Check if interface exists
-            existing = subprocess.run(["ip", "link", "show", self._ap_interface], capture_output=True, check=True)
+            # Not `check=True`: a missing interface means nothing to remove.
+            existing = subprocess.run(["ip", "link", "show", self._ap_interface], capture_output=True, check=False)
 
             if existing.returncode != 0:
                 return
@@ -205,54 +205,59 @@ class NetworkManagerWifi(AbstractWifiManager):
                 await asyncio.sleep(1)
             return False
 
-        existing_connection = await self._find_existing_connection(credentials)
-        if existing_connection:
-            logger.info(f"Using existing connection for {credentials.ssid}")
-            assert self._device_path is not None
-            await self._nm.activate_connection(existing_connection, self._device_path, "/")
+        # A leftover AP interface makes NetworkManager fail to bring the device
+        # up ("Name not unique on network"), and it outlives create_ap, so this
+        # runs unconditionally.
+        hotspot_was_running = await self.hotspot_is_running()
+        await self.disable_hotspot(save_settings=False)
 
-            # If hotspot was running, restart it
+        try:
+            existing_connection = await self._find_existing_connection(credentials)
+            if existing_connection:
+                logger.info(f"Using existing connection for {credentials.ssid}")
+                assert self._device_path is not None
+                await self._nm.activate_connection(existing_connection, self._device_path, "/")
+
+                if not await wait_for_connection():
+                    logger.error(f"Connection timeout for {credentials.ssid}")
+                    raise TimeoutError(f"Failed to connect to {credentials.ssid} within 30 seconds")
+                return
+
+            # If no existing connection, create a new one
+            connection: dict[str, dict[str, tuple[str, Any]]] = {
+                "connection": {
+                    "type": ("s", "802-11-wireless"),
+                    "id": ("s", credentials.ssid),
+                    "interface-name": ("s", "wlan0"),
+                    "autoconnect": ("b", True),
+                },
+                "802-11-wireless": {
+                    "ssid": ("ay", credentials.ssid.encode()),
+                    "mode": ("s", "infrastructure"),
+                    "hidden": ("b", hidden),
+                },
+                "ipv6": {"method": ("s", "disabled")},
+            }
+
+            if credentials.password:
+                connection["802-11-wireless-security"] = {
+                    "key-mgmt": ("s", "wpa-psk"),
+                    "psk": ("s", credentials.password),
+                }
+                connection["802-11-wireless"]["security"] = ("s", "802-11-wireless-security")
+
+            # Add and activate connection
+            conn_path = await self._nm_settings.add_connection(connection)
+            assert self._device_path is not None
+            await self._nm.activate_connection(conn_path, self._device_path, "/")
+
             if not await wait_for_connection():
                 logger.error(f"Connection timeout for {credentials.ssid}")
+                await self.remove_network(credentials.ssid)
                 raise TimeoutError(f"Failed to connect to {credentials.ssid} within 30 seconds")
-
-            if self._settings_manager.settings.hotspot_enabled and not await self.hotspot_is_running():
-                await self.enable_hotspot()
-            return
-
-        # If no existing connection, create a new one
-        connection: dict[str, dict[str, tuple[str, Any]]] = {
-            "connection": {
-                "type": ("s", "802-11-wireless"),
-                "id": ("s", credentials.ssid),
-                "interface-name": ("s", "wlan0"),
-                "autoconnect": ("b", True),
-            },
-            "802-11-wireless": {
-                "ssid": ("ay", credentials.ssid.encode()),
-                "mode": ("s", "infrastructure"),
-                "hidden": ("b", hidden),
-            },
-            "ipv6": {"method": ("s", "disabled")},
-        }
-
-        if credentials.password:
-            connection["802-11-wireless-security"] = {"key-mgmt": ("s", "wpa-psk"), "psk": ("s", credentials.password)}
-            connection["802-11-wireless"]["security"] = ("s", "802-11-wireless-security")
-
-        # Add and activate connection
-        conn_path = await self._nm_settings.add_connection(connection)
-        assert self._device_path is not None
-        await self._nm.activate_connection(conn_path, self._device_path, "/")
-
-        # If hotspot was running, restart it
-        if not await wait_for_connection():
-            logger.error(f"Connection timeout for {credentials.ssid}")
-            await self.remove_network(credentials.ssid)
-            raise TimeoutError(f"Failed to connect to {credentials.ssid} within 30 seconds")
-
-        if self._settings_manager.settings.hotspot_enabled:
-            await self.enable_hotspot()
+        finally:
+            if hotspot_was_running:
+                await self.enable_hotspot(save_settings=False)
 
     async def _find_existing_connection(self, credentials: WifiCredentials) -> Optional[str]:
         """Find existing connection for given SSID, checking password if provided"""
