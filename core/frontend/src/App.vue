@@ -437,6 +437,7 @@ import Battery from './widgets/Battery.vue'
 import Cpu from './widgets/Cpu.vue'
 import Disk from './widgets/Disk.vue'
 import Networking from './widgets/Networking.vue'
+import Statustext from './widgets/Statustext.vue'
 
 export default Vue.extend({
   name: 'App',
@@ -498,6 +499,11 @@ export default Vue.extend({
         {
           component: Disk,
           name: 'Disk',
+          props: {},
+        },
+        {
+          component: Statustext,
+          name: 'Vehicle messages',
           props: {},
         },
       ]
