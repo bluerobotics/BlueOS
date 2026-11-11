@@ -2,6 +2,7 @@ import abc
 import json
 import os
 import pathlib
+import tempfile
 from typing import Any, Dict
 
 import pykson  # type: ignore
@@ -99,15 +100,17 @@ class PyksonSettings(pykson.JsonObject):
             json_data = json.dumps(json.loads(Pykson().to_json(self)), indent=4)
 
             # Create a temporary file in same directory, write and rename it to the original file
-            temp_file = file_path.with_suffix(".tmp")
-            with open(temp_file, "w", encoding="utf-8") as settings_file:
-                settings_file.write(json_data)
-                # Ensure data is written to disk
-                settings_file.flush()
-                os.fsync(settings_file.fileno())
-            # Replace the original file with the temporary file, this operation is atomic if in the same filesystem
-            # https://docs.python.org/3/library/os.html#os.replace
-            temp_file.replace(file_path)
+            fd, temp_name = tempfile.mkstemp(prefix=f"{file_path.stem}.", suffix=".tmp", dir=parent_path)
+            temp_file = pathlib.Path(temp_name)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as settings_file:
+                    settings_file.write(json_data)
+                    settings_file.flush()
+                    os.fsync(settings_file.fileno())
+                os.chmod(temp_file, 0o644)
+                temp_file.replace(file_path)
+            finally:
+                temp_file.unlink(missing_ok=True)
 
     def reset(self) -> None:
         """Reset internal data to default values"""
