@@ -35,6 +35,10 @@ export async function resolveMajorTomAction(hasInternet: boolean): Promise<Major
     return 'install'
   }
 
+  if (!installed.enabled) {
+    return 'skip'
+  }
+
   if (installed.tag !== latest.tag) {
     return 'update'
   }
