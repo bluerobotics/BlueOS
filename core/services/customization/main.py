@@ -7,7 +7,11 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    PrettyJSONResponse,
+    use_local_docs_assets,
+)
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from fastapi import APIRouter, FastAPI, File, HTTPException, UploadFile, status
 from fastapi_versioning import VersionedFastAPI, versioned_api_route
@@ -328,6 +332,7 @@ app = VersionedFastAPI(
     prefix_format="/v{major}.{minor}",
     enable_latest=True,
 )
+use_local_docs_assets(app)
 
 
 @app.get("/")
