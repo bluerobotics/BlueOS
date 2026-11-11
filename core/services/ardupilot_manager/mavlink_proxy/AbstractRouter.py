@@ -15,6 +15,7 @@ from mavlink_proxy.exceptions import (
     MavlinkRouterStartFail,
     NoMasterMavlinkEndpoint,
 )
+from typedefs import TLogMode
 
 
 class AbstractRouter(metaclass=abc.ABCMeta):
@@ -27,6 +28,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         # to avoid any problem in __del__
         self._binary = shutil.which(self.binary_name())
         self._logdir = pathlib.Path(tempfile.gettempdir())
+        self._tlog_mode = TLogMode.disabled
         self._version = self._get_version()
 
     @staticmethod
@@ -185,6 +187,16 @@ class AbstractRouter(metaclass=abc.ABCMeta):
         if not directory.exists():
             raise ValueError(f"Logging directory {directory} does not exist.")
         self._logdir = directory.resolve()
+
+    @staticmethod
+    def supports_tlog() -> bool:
+        return False
+
+    def tlog_mode(self) -> TLogMode:
+        return self._tlog_mode
+
+    def set_tlog_mode(self, mode: TLogMode) -> None:
+        self._tlog_mode = mode
 
     def add_endpoint(self, endpoint: Endpoint) -> None:
         if endpoint.is_supported():
