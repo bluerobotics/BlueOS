@@ -180,7 +180,7 @@ class AbstractRouter(metaclass=abc.ABCMeta):
     def set_logdir(self, directory: pathlib.Path) -> None:
         if not directory.exists():
             raise ValueError(f"Logging directory {directory} does not exist.")
-        self._logdir = directory
+        self._logdir = directory.resolve()
 
     def add_endpoint(self, endpoint: Endpoint) -> None:
         if endpoint.is_supported():
