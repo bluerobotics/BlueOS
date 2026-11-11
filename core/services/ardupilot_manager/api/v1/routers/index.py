@@ -26,6 +26,7 @@ from typedefs import (
     Parameters,
     Serial,
     SITLFrame,
+    TLogMode,
     Vehicle,
 )
 
@@ -242,9 +243,9 @@ async def start() -> Any:
 
 @index_router_v1.post("/preferred_router", summary="Set the preferred MAVLink router.")
 @index_to_http_exception
-async def set_preferred_router(router: str) -> Any:
+async def set_preferred_router(router: str, tlog_mode: Optional[TLogMode] = None) -> Any:
     logger.debug("Setting preferred Router")
-    await autopilot.set_preferred_router(router)
+    await autopilot.set_preferred_router(router, tlog_mode)
     logger.debug(f"Preferred Router successfully set to {router}")
 
 
@@ -252,6 +253,14 @@ async def set_preferred_router(router: str) -> Any:
 @index_to_http_exception
 def preferred_router() -> Any:
     return autopilot.load_preferred_router()
+
+
+@index_router_v1.get("/tlog_mode", response_model=Optional[TLogMode], summary="Retrieve tlog mode")
+@index_to_http_exception
+def get_tlog_mode() -> Any:
+    if not autopilot.mavlink_manager.supports_tlog():
+        return None
+    return autopilot.load_tlog_mode()
 
 
 @index_router_v1.get("/available_routers", summary="Retrieve preferred router")
