@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 
 from commonwealth.utils.apis import GenericErrorHandlingRoute, PrettyJSONResponse
 from commonwealth.utils.logs import InterceptHandler, init_logger
-from commonwealth.utils.sentry_config import init_sentry_async
 from fastapi import APIRouter, FastAPI, File, HTTPException, UploadFile, status
 from fastapi_versioning import VersionedFastAPI, versioned_api_route
 from loguru import logger
@@ -337,7 +336,6 @@ async def root() -> Dict[str, str]:
 
 async def main() -> None:
     try:
-        await init_sentry_async(SERVICE_NAME)
         ensure_dirs()
         # Make sure the CSS exists on first boot so index.html's <link> doesn't 404
         if not THEME_FILE.exists():
