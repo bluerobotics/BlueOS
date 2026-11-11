@@ -138,8 +138,10 @@ class Manager:
         try:
             endpoints = self.endpoints()
             master_endpoint = self.master_endpoint
+            logdir = self.tool.logdir()
             await self.stop()
             self.tool = AbstractRouter.get_interface(router_name)()
+            self.tool.set_logdir(logdir)
             for endpoint in endpoints | set(default_endpoints):
                 try:
                     self.tool.add_endpoint(endpoint)
