@@ -9,38 +9,63 @@
         class="my-4"
       />
       <v-card
-        v-if="available_routers.length > 1"
+        v-if="available_routers.length > 1 || tlog_mode !== null"
         class="align-center justify-center pa-6 d-block"
       >
-        <v-card-title class="ma-0 pa-0 d-block">
-          {{ t`Mavlink Router` }}
-        </v-card-title>
-        <v-card-text>
-          <p>
-            {{ t`Select the router to use for distributing MAVLink data.` }}
-          </p>
-          <v-radio-group
-            v-model="selected_router"
-            row
-            @change="setCurrentRouter"
-          >
-            <v-radio v-for="router in available_routers" :key="router" :label="router" :value="router" />
-          </v-radio-group>
-          <v-alert
-            v-if="selected_router === 'MAVP2P'"
-            outline
-            text
-            dense
-            type="warning"
-          >
+        <template v-if="available_routers.length > 1">
+          <v-card-title class="ma-0 pa-0 d-block">
+            {{ t`Mavlink Router` }}
+          </v-card-title>
+          <v-card-text>
             <p>
-              {{ t`MAVP2P has been presenting issues and is not currently recommended.` }}
+              {{ t`Select the router to use for distributing MAVLink data.` }}
             </p>
-          </v-alert>
-        </v-card-text>
+            <v-radio-group
+              v-model="selected_router"
+              row
+              @change="setRouterSettings"
+            >
+              <v-radio v-for="router in available_routers" :key="router" :label="router" :value="router" />
+            </v-radio-group>
+            <v-alert
+              v-if="selected_router === 'MAVP2P'"
+              outline
+              text
+              dense
+              type="warning"
+            >
+              <p>
+                {{ t`MAVP2P has been presenting issues and is not currently recommended.` }}
+              </p>
+            </v-alert>
+          </v-card-text>
+        </template>
+        <v-divider
+          v-if="available_routers.length > 1 && tlog_mode !== null"
+          class="my-4"
+        />
+        <template v-if="tlog_mode !== null">
+          <v-card-title class="ma-0 pa-0 d-block">
+            {{ t`Telemetry Logs (.tlog)` }}
+          </v-card-title>
+          <v-select
+            v-model="tlog_mode"
+            :items="tlog_modes"
+            hide-details
+            dense
+            class="mt-2"
+            @change="setRouterSettings"
+          />
+          <p
+            v-if="selected_router === 'MAVLinkRouter'"
+            class="mt-2 mb-0 text-caption"
+          >
+            {{ t`On MAVLinkRouter, only while armed also applies to .bin logs.` }}
+          </p>
+        </template>
       </v-card>
       <v-divider
-        v-if="available_routers.length > 1"
+        v-if="available_routers.length > 1 || tlog_mode !== null"
         width="80%"
         class="my-4"
       />
@@ -122,6 +147,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
@@ -151,6 +177,7 @@ export default Vue.extend({
       show_creation_dialog: false,
       selected_router: '',
       available_routers: [] as string[],
+      tlog_mode: null as string | null,
       updating_router: false,
       heartbeat_expired: false,
       heartbeat_timeout: null as number | null,
@@ -159,6 +186,13 @@ export default Vue.extend({
     }
   },
   computed: {
+    tlog_modes(): { text: string, value: string }[] {
+      return [
+        { text: t`Disabled`, value: 'disabled' },
+        { text: t`Only while armed`, value: 'while_armed' },
+        { text: t`Always`, value: 'always' },
+      ]
+    },
     updating_endpoints(): boolean {
       return autopilot.updating_endpoints
     },
@@ -193,6 +227,7 @@ export default Vue.extend({
     this.fetch_current_board_task.setAction(fetchCurrentBoard)
     this.fetchAvailableRouters()
     this.fetchCurrentRouter()
+    this.fetchTlogMode()
   },
   methods: {
     openCreationDialog(): void {
@@ -224,7 +259,20 @@ export default Vue.extend({
           notifier.pushBackError('AUTOPILOT_ROUTERS_FETCH_FAIL', error, true)
         })
     },
-    async setCurrentRouter(): Promise<void> {
+    fetchTlogMode(): void {
+      back_axios({
+        method: 'get',
+        url: `${autopilot.API_URL}/tlog_mode`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          this.tlog_mode = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('AUTOPILOT_TLOG_MODE_FETCH_FAIL', error, true)
+        })
+    },
+    async setRouterSettings(): Promise<void> {
       this.updating_router = true
       await back_axios({
         method: 'post',
@@ -232,6 +280,7 @@ export default Vue.extend({
         timeout: 10000,
         params: {
           router: this.selected_router,
+          tlog_mode: this.tlog_mode,
         },
       })
         .catch((error) => {
@@ -239,6 +288,7 @@ export default Vue.extend({
         })
         .finally(() => {
           this.fetchCurrentRouter()
+          this.fetchTlogMode()
           this.updating_router = false
         })
     },
