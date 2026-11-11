@@ -34,6 +34,7 @@ from typedefs import (
     PlatformType,
     Serial,
     SITLFrame,
+    TLogMode,
     Vehicle,
 )
 
@@ -148,6 +149,7 @@ class AutoPilotManager(metaclass=Singleton):
             await self.set_preferred_router(self.mavlink_manager.tool.name())
             logger.info(f"Setting {self.mavlink_manager.tool.name()} as preferred router.")
         self.mavlink_manager.set_logdir(self._settings_manager.settings.log_path)
+        self.mavlink_manager.set_tlog_mode(self.load_tlog_mode())
 
         self._load_endpoints()
         self.ardupilot_subprocess: Optional[Any] = None
@@ -419,8 +421,11 @@ class AutoPilotManager(metaclass=Singleton):
         self.set_sitl_frame(frame)
         return frame
 
-    async def set_preferred_router(self, router: str) -> None:
+    async def set_preferred_router(self, router: str, tlog_mode: Optional[TLogMode] = None) -> None:
         self._settings_manager.settings.preferred_router = router
+        if tlog_mode is not None:
+            self._settings_manager.settings.tlog_mode = tlog_mode
+            self.mavlink_manager.set_tlog_mode(tlog_mode)
         self._settings_manager.save()
         await self.mavlink_manager.set_preferred_router(router, self.autopilot_default_endpoints)
 
@@ -429,6 +434,9 @@ class AutoPilotManager(metaclass=Singleton):
             return self._settings_manager.settings.preferred_router
         except KeyError:
             return None
+
+    def load_tlog_mode(self) -> TLogMode:
+        return self._settings_manager.settings.tlog_mode
 
     def set_start_on_boot(self, enabled: bool) -> None:
         self._settings_manager.settings.start_on_boot = enabled
