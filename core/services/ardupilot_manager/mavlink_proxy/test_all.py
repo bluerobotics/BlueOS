@@ -4,6 +4,7 @@ import os
 import pathlib
 import pty
 import re
+import socket
 import sys
 import warnings
 from typing import List, Set
@@ -19,6 +20,7 @@ from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
 from mavlink_proxy.MAVLinkServer import MAVLinkServer
 from mavlink_proxy.MAVP2P import MAVP2P
 from mavlink_proxy.MAVProxy import MAVProxy
+from typedefs import TLogMode
 
 _, slave_port = pty.openpty()
 serial_port_name = os.ttyname(slave_port)
@@ -177,6 +179,66 @@ def test_unsupported_endpoints_are_stored_but_not_routed() -> None:
     assert parsed_unknown.as_dict()["enabled"] is True
     assert list(Endpoint.filter_enabled([parsed_known, parsed_unknown])) == [parsed_known]
     assert Endpoint.from_raw("not a mapping") is None
+
+
+def test_mavlink_server_tlog_endpoint(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(MAVLinkServer, "_get_version", lambda _: "0.11.1")
+    router = MAVLinkServer()
+    router.set_logdir(tmp_path)
+    master_endpoint = Endpoint(
+        name="Master", owner="pytest", connection_type=EndpointType.UDPServer, place="0.0.0.0", argument=14550
+    )
+    assert "tlogwriter://" not in router.assemble_command(master_endpoint)
+
+    router.set_tlog_mode(TLogMode.while_armed)
+    assert f" tlogwriter://{tmp_path}?when=while_armed " in router.assemble_command(master_endpoint)
+
+    router.set_tlog_mode(TLogMode.always)
+    assert f" tlogwriter://{tmp_path}?when=always " in router.assemble_command(master_endpoint)
+
+
+def test_mavlink_router_tlog_mode(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(MAVLinkRouter, "_get_version", lambda _: "1.0.0")
+    router = MAVLinkRouter()
+    router.set_logdir(tmp_path)
+    master_endpoint = Endpoint(
+        name="Master", owner="pytest", connection_type=EndpointType.UDPServer, place="0.0.0.0", argument=14550
+    )
+    assert router.assemble_command(master_endpoint).endswith(f" -l {tmp_path}")
+
+    router.set_tlog_mode(TLogMode.always)
+    assert router.assemble_command(master_endpoint).endswith(f" -l {tmp_path} --telemetry-log")
+
+    router.set_tlog_mode(TLogMode.while_armed)
+    command = router.assemble_command(master_endpoint)
+    assert f" -l {tmp_path} --telemetry-log -c " in command
+    assert not pathlib.Path(command.split(" -c ")[1]).exists()
+
+
+@pytest.mark.timeout(60)
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", list(TLogMode))
+async def test_mavlink_router_starts_with_tlog_mode(tmp_path: pathlib.Path, mode: TLogMode) -> None:
+    if not MAVLinkRouter.is_ok():
+        pytest.skip("mavlink-routerd is not available")
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+
+    router = MAVLinkRouter()
+    router.set_logdir(tmp_path)
+    router.set_tlog_mode(mode)
+    master_endpoint = Endpoint(
+        name="Master", owner="pytest", connection_type=EndpointType.UDPServer, place="127.0.0.1", argument=port
+    )
+    try:
+        await router.start(master_endpoint)
+        # A bad -T keeps mavlink-routerd running without the master endpoint, so check the port too
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock, pytest.raises(OSError):
+            sock.bind(("127.0.0.1", port))
+    finally:
+        await router.exit()
 
 
 @pytest.mark.skip(
