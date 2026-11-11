@@ -10,7 +10,7 @@ dependencies = [
     "loguru==0.5.3",
     "pydantic==1.10.12",
     "python-multipart==0.0.5",
-    "uvicorn==0.18.0",
+    "uvicorn==0.13.4",
 ]
 
 [tool.uv]
