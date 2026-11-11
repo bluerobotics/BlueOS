@@ -79,8 +79,8 @@ export const commander_service: Service = {
 }
 
 export const customization_service: Service = {
-  name: 'Customization',
-  description: 'Manage BlueOS visual customization (theme color, 3D model overrides, branding).',
+  name: t`Customization`,
+  description: t`Manage BlueOS visual customization (theme color, 3D model overrides, branding).`,
   company: 'Blue Robotics',
   version: '0.1.0',
 }
