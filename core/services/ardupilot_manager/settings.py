@@ -8,7 +8,7 @@ from config import SERVICE_NAME
 from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint
 from pydantic import field_validator
-from typedefs import FlightController, Serial, SITLFrame
+from typedefs import FlightController, Serial, SITLFrame, TLogMode
 from typing_extensions import override
 
 
@@ -78,6 +78,7 @@ class SettingsV1(PydanticSettings):
     sitl_frame: SITLFrame = SITLFrame.UNDEFINED
     start_on_boot: bool = True
     preferred_router: str | None = None
+    tlog_mode: TLogMode = TLogMode.disabled
     preferred_board: FlightController | None = None
     endpoints: set[Endpoint] = set()
     manual_board_master_endpoint: Endpoint | None = None
