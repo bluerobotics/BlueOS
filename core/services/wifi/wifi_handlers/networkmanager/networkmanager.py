@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import json
 import select
 import signal
 import subprocess
@@ -71,6 +72,17 @@ class NetworkManagerWifi(AbstractWifiManager):
             subprocess.run(["iw", "dev", phys_name, "interface", "add", self._ap_interface, "type", "__ap"], check=True)
             logger.info(f"Created virtual AP interface {self._ap_interface}")
 
+            # The kernel copies the physical interface's current address onto the
+            # new one. While connected that is a temporary address NetworkManager
+            # generated, so restoring the permanent one after a disconnect fails
+            # with ENOTUNIQ. Move the AP to an address of its own first.
+            try:
+                address = self._ap_interface_address(phys_name)
+            except Exception as e:
+                logger.error(f"Could not derive an address for {self._ap_interface}: {e}")
+                return False
+            subprocess.run(["ip", "link", "set", self._ap_interface, "address", address], check=True)
+
             # Set interface up
             subprocess.run(["ip", "link", "set", self._ap_interface, "up"], check=True)
 
@@ -83,6 +95,25 @@ class NetworkManagerWifi(AbstractWifiManager):
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to create virtual interface: {e}")
             return False
+
+    @staticmethod
+    def _ap_interface_address(phys_name: str) -> str:
+        """A locally administered address for the AP interface.
+
+        Derived from the physical interface's permanent address, which does not
+        change when NetworkManager puts a temporary address on it.
+        """
+        link = json.loads(
+            subprocess.run(["ip", "-j", "link", "show", phys_name], check=True, capture_output=True, text=True).stdout
+        )[0]
+        octets = link.get("permaddr", link["address"]).split(":")
+        # 0x02 sets the locally administered bit, so the address cannot collide
+        # with a vendor-assigned one; 0xFE masks off the multicast bit.
+        octets[0] = f"{(int(octets[0], 16) | 0x02) & 0xFE:02x}"
+        # Forcing the second octet guarantees the result differs from the
+        # physical interface's, whatever its first octet became.
+        octets[1] = "ff" if octets[1] != "ff" else "fe"
+        return ":".join(octets)
 
     async def _cleanup_virtual_interface(self) -> None:
         """Remove virtual AP interface"""
