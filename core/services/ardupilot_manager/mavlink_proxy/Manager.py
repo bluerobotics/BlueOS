@@ -18,6 +18,7 @@ from mavlink_proxy.exceptions import (
     EndpointUpdateFail,
     NoMasterMavlinkEndpoint,
 )
+from typedefs import TLogMode
 
 
 class Manager:
@@ -139,9 +140,11 @@ class Manager:
             endpoints = self.endpoints()
             master_endpoint = self.master_endpoint
             logdir = self.tool.logdir()
+            tlog_mode = self.tool.tlog_mode()
             await self.stop()
             self.tool = AbstractRouter.get_interface(router_name)()
             self.tool.set_logdir(logdir)
+            self.tool.set_tlog_mode(tlog_mode)
             for endpoint in endpoints | set(default_endpoints):
                 try:
                     self.tool.add_endpoint(endpoint)
@@ -179,6 +182,12 @@ class Manager:
 
     def set_logdir(self, log_dir: pathlib.Path) -> None:
         self.tool.set_logdir(log_dir)
+
+    def set_tlog_mode(self, mode: TLogMode) -> None:
+        self.tool.set_tlog_mode(mode)
+
+    def supports_tlog(self) -> bool:
+        return self.tool.supports_tlog()
 
     async def auto_restart_router(self) -> None:
         """Auto-restart Mavlink router process if it dies."""
