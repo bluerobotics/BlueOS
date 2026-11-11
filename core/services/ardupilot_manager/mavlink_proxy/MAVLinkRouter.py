@@ -1,15 +1,21 @@
+import asyncio
+import os
+import pathlib
 import re
 import subprocess
+import tempfile
 from typing import Optional
 
 from loguru import logger
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
+from typedefs import TLogMode
 
 
 class MAVLinkRouter(AbstractRouter):
     def __init__(self) -> None:
         super().__init__()
+        self._conf_file = pathlib.Path(tempfile.gettempdir()) / f"mavlink-router-{os.getpid()}-{id(self)}.conf"
 
     def add_endpoint(self, endpoint: Endpoint) -> None:
         if endpoint.connection_type == EndpointType.TCPServer and any(
@@ -73,11 +79,35 @@ class MAVLinkRouter(AbstractRouter):
                 f"Master endpoint of type {master_endpoint.connection_type} not supported on MavlinkRouter."
             )
 
-        return f"{self.binary()} {convert_endpoint(master_endpoint)} {endpoints} -l {self.logdir()} -T {self.logdir()}"
+        def tlog_endpoint(mode: TLogMode) -> str:
+            if mode == TLogMode.disabled:
+                return ""
+            if mode == TLogMode.while_armed:
+                # LogMode only exists in the configuration file, written by start
+                return f" --telemetry-log -c {self._conf_file}"
+            if mode == TLogMode.always:
+                return " --telemetry-log"
+            raise ValueError(f"TLog mode {mode} not supported on MavlinkRouter.")
+
+        command = f"{self.binary()} {convert_endpoint(master_endpoint)} {endpoints} -l {self.logdir()}{tlog_endpoint(self.tlog_mode())}"
+        return command
+
+    async def start(self, master_endpoint: Endpoint) -> None:
+        if self.tlog_mode() == TLogMode.while_armed:
+            await asyncio.to_thread(self._conf_file.write_text, "[General]\nLogMode=while-armed\n", encoding="utf-8")
+        await super().start(master_endpoint)
+
+    async def exit(self) -> None:
+        await super().exit()
+        self._conf_file.unlink(missing_ok=True)
 
     @staticmethod
     def name() -> str:
         return "MAVLinkRouter"
+
+    @staticmethod
+    def supports_tlog() -> bool:
+        return True
 
     @staticmethod
     def binary_name() -> str:
