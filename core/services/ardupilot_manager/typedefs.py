@@ -72,6 +72,12 @@ def get_sitl_platform_name(machine_arch: str) -> str:
     return "SITL_arm_linux_gnueabihf"
 
 
+class TLogMode(str, Enum):
+    disabled = "disabled"
+    while_armed = "while_armed"
+    always = "always"
+
+
 class Firmware(BaseModel):
     """Simplified representation of a firmware, as available on Ardupilot's manifest."""
 
