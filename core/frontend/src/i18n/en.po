@@ -1527,6 +1527,14 @@ msgstr ""
 msgid "If you want to add a custom 3D model please follow the instructions in"
 msgstr ""
 
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "Ignored serial ports"
+msgstr ""
+
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "Ignored serial ports saved."
+msgstr ""
+
 #: src/views/ExtensionManagerView.vue
 msgid "Import extension image and inspect metadata"
 msgstr ""
@@ -2125,6 +2133,10 @@ msgstr ""
 msgid "No scripts available for this setup."
 msgstr ""
 
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "No serial ports available"
+msgstr ""
+
 #: src/components/video-manager/VideoDevice.vue
 msgid "No streams added to this video source"
 msgstr ""
@@ -2159,6 +2171,10 @@ msgstr ""
 
 #: src/components/vehiclesetup/overview/gripper.vue
 msgid "Not configured"
+msgstr ""
+
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "Not connected"
 msgstr ""
 
 #: src/components/autopilot/EndpointCard.vue
@@ -2694,6 +2710,7 @@ msgstr ""
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #: src/components/parameter-editor/ParameterEditor.vue
 #: src/components/parameter-editor/ParameterEditorDialog.vue
+#: src/components/ping/PingIgnoredPorts.vue
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Save"
 msgstr ""
@@ -2724,6 +2741,12 @@ msgstr ""
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Select the router to use for distributing MAVLink data."
+msgstr ""
+
+#: src/components/ping/PingIgnoredPorts.vue
+msgid ""
+"Selected ports are not probed for Ping devices. A Ping that was already "
+"detected keeps running until it is unplugged or BlueOS reboots."
 msgstr ""
 
 #: src/components/ping/ping1d.vue
