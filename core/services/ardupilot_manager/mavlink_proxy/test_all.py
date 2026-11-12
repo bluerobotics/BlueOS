@@ -16,6 +16,7 @@ sys.path.append(str(pathlib.Path(__file__).absolute().parent.parent))
 from mavlink_proxy.AbstractRouter import AbstractRouter
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.MAVLinkRouter import MAVLinkRouter
+from mavlink_proxy.MAVLinkServer import MAVLinkServer
 from mavlink_proxy.MAVP2P import MAVP2P
 from mavlink_proxy.MAVProxy import MAVProxy
 
