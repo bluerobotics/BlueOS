@@ -72,6 +72,7 @@ export default Vue.extend({
         { os: 'debian', icon: 'mdi-debian' },
         { os: 'arch', icon: 'mdi-arch' },
         { os: 'ubuntu', icon: 'mdi-ubuntu' },
+        { os: 'nixos', icon: 'mdi-nix' },
         { os: 'apple', icon: 'mdi-apple' },
         { os: 'windows', icon: 'mdi-microsoft-windows' },
         { os: '', icon: 'mdi-linux' },
