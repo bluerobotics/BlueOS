@@ -159,6 +159,18 @@ export default Vue.extend({
         })
       await back_axios({
         method: 'get',
+        url: `${wifi.API_URL}/hotspot_interface`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setHotspotInterface(response.data)
+        })
+        .catch((error) => {
+          wifi.setHotspotInterface(null)
+          notifier.pushBackError('HOTSPOT_INTERFACE_FETCH_FAIL', error)
+        })
+      await back_axios({
+        method: 'get',
         url: `${wifi.API_URL}/smart_hotspot`,
         timeout: 10000,
       })

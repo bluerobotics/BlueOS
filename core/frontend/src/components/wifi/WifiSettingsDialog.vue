@@ -26,6 +26,14 @@
             hide-details="auto"
             :rules="[isValidPassword]"
           />
+          <v-select
+            v-if="interfaces.length > 1"
+            id="hotspot-interface-select"
+            v-model="selected_hotspot_interface"
+            :items="interfaces"
+            :label="t`Hotspot interface`"
+            hide-details="auto"
+          />
 
           <v-checkbox
             v-model="enable_smart_hotspot"
@@ -87,12 +95,23 @@ export default Vue.extend({
       inputed_ssid: wifi.hotspot_credentials?.ssid || '',
       inputed_password: wifi.hotspot_credentials?.password || '',
       enable_smart_hotspot: wifi.smart_hotspot_status || false,
+      selected_hotspot_interface: wifi.hotspot_interface,
       saving_settings: false,
     }
   },
   computed: {
     form(): VForm {
       return this.$refs.form as VForm
+    },
+    interfaces(): string[] {
+      return wifi.interfaces
+    },
+  },
+  watch: {
+    show(value: boolean): void {
+      if (value) {
+        this.selected_hotspot_interface = wifi.hotspot_interface
+      }
     },
   },
   methods: {
@@ -127,6 +146,23 @@ export default Vue.extend({
           .catch((error) => {
             notifier.pushBackError('SMART_HOTSPOT_TOGGLE_FAIL', error, true)
           })
+        const hotspot_interface = this.selected_hotspot_interface
+        if (hotspot_interface !== null && hotspot_interface !== wifi.hotspot_interface) {
+          await back_axios({
+            method: 'post',
+            url: `${wifi.API_URL}/hotspot_interface`,
+            params: { interface: hotspot_interface },
+            // Moving the hotspot restarts it, which can take a while
+            timeout: 60000,
+          })
+            .then(() => {
+              wifi.setHotspotInterface(hotspot_interface)
+              notifier.pushSuccess('HOTSPOT_INTERFACE_UPDATE_SUCCESS', t`Successfully updated hotspot interface.`)
+            })
+            .catch((error) => {
+              notifier.pushBackError('HOTSPOT_INTERFACE_UPDATE_FAIL', error, true)
+            })
+        }
         this.showDialog(false)
         return true
       } catch (error) {

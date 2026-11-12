@@ -34,6 +34,8 @@ class WifiStore extends VuexModule {
 
   hotspot_credentials: NetworkCredentials | null = null
 
+  hotspot_interface: string | null = null
+
   interfaces: string[] = []
 
   interface_statuses: Record<string, WifiStatus> = {}
@@ -68,6 +70,11 @@ class WifiStore extends VuexModule {
     this.current_network = null
     this.available_networks = null
     this.is_loading = true
+  }
+
+  @Mutation
+  setHotspotInterface(hotspot_interface: string | null): void {
+    this.hotspot_interface = hotspot_interface
   }
 
   @Mutation
