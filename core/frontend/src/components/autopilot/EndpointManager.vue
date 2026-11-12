@@ -19,7 +19,7 @@
           <v-radio-group
             v-model="selected_router"
             row
-            @change="setCurrentRouter"
+            @change="setRouterSettings"
           >
             <v-radio v-for="router in available_routers" :key="router" :label="router" :value="router" />
           </v-radio-group>
@@ -35,6 +35,29 @@
             </p>
           </v-alert>
         </v-card-text>
+        <v-divider
+          v-if="tlog_mode !== null"
+          class="my-4"
+        />
+        <template v-if="tlog_mode !== null">
+          <v-card-title class="ma-0 pa-0 d-block">
+            {{ t`Telemetry Logs (.tlog)` }}
+          </v-card-title>
+          <v-select
+            v-model="tlog_mode"
+            :items="tlog_modes"
+            hide-details
+            dense
+            class="mt-2"
+            @change="setRouterSettings"
+          />
+          <p
+            v-if="selected_router === 'MAVLinkRouter'"
+            class="mt-2 mb-0 text-caption"
+          >
+            {{ t`On MAVLinkRouter, only while armed also applies to .bin logs.` }}
+          </p>
+        </template>
       </v-card>
       <v-divider
         width="80%"
@@ -95,6 +118,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue from 'vue'
 
 import Notifier from '@/libs/notifier'
@@ -123,11 +147,19 @@ export default Vue.extend({
       show_creation_dialog: false,
       selected_router: '',
       available_routers: [] as string[],
+      tlog_mode: null as string | null,
       updating_router: false,
       fetch_available_endpoints_task: new OneMoreTime({ delay: 5000, disposeWith: this }),
     }
   },
   computed: {
+    tlog_modes(): { text: string, value: string }[] {
+      return [
+        { text: t`Disabled`, value: 'disabled' },
+        { text: t`Only while armed`, value: 'while_armed' },
+        { text: t`Always`, value: 'always' },
+      ]
+    },
     updating_endpoints(): boolean {
       return autopilot.updating_endpoints
     },
@@ -142,6 +174,7 @@ export default Vue.extend({
     this.fetch_available_endpoints_task.setAction(fetchAvailableEndpoints)
     this.fetchAvailableRouters()
     this.fetchCurrentRouter()
+    this.fetchTlogMode()
   },
   methods: {
     openCreationDialog(): void {
@@ -173,7 +206,20 @@ export default Vue.extend({
           notifier.pushBackError('AUTOPILOT_ROUTERS_FETCH_FAIL', error, true)
         })
     },
-    async setCurrentRouter(): Promise<void> {
+    fetchTlogMode(): void {
+      back_axios({
+        method: 'get',
+        url: `${autopilot.API_URL}/tlog_mode`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          this.tlog_mode = response.data
+        })
+        .catch((error) => {
+          notifier.pushBackError('AUTOPILOT_TLOG_MODE_FETCH_FAIL', error, true)
+        })
+    },
+    async setRouterSettings(): Promise<void> {
       this.updating_router = true
       await back_axios({
         method: 'post',
@@ -181,6 +227,7 @@ export default Vue.extend({
         timeout: 10000,
         params: {
           router: this.selected_router,
+          tlog_mode: this.tlog_mode,
         },
       })
         .catch((error) => {
@@ -188,6 +235,7 @@ export default Vue.extend({
         })
         .finally(() => {
           this.fetchCurrentRouter()
+          this.fetchTlogMode()
           this.updating_router = false
         })
     },

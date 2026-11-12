@@ -292,6 +292,10 @@ msgstr ""
 msgid "Altitude estimate"
 msgstr ""
 
+#: src/components/autopilot/EndpointManager.vue
+msgid "Always"
+msgstr ""
+
 #: src/components/common/rebootRequiredOverlay.vue
 msgid "An autopilot Reboot is required."
 msgstr ""
@@ -1025,6 +1029,7 @@ msgstr ""
 msgid "Disable smart Wi-Fi hotspot"
 msgstr ""
 
+#: src/components/autopilot/EndpointManager.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/NetworkCard.vue
 #: src/components/vehiclesetup/overview/LeakInfo.vue
@@ -2215,12 +2220,20 @@ msgstr ""
 msgid "On ${ 0 } forum"
 msgstr ""
 
+#: src/components/autopilot/EndpointManager.vue
+msgid "On MAVLinkRouter, only while armed also applies to .bin logs."
+msgstr ""
+
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Onboard Compass Calibration"
 msgstr ""
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Onboard Computer"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Only while armed"
 msgstr ""
 
 #: src/components/app/SettingsMenu.vue
@@ -3143,6 +3156,10 @@ msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Tag"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Telemetry Logs (.tlog)"
 msgstr ""
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
