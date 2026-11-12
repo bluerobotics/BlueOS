@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-11 02:04\n"
+"PO-Revision-Date: 2026-11-12 18:20\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -298,6 +298,10 @@ msgstr "Permite gerenciar soquetes para injeção de dados NMEA."
 #: src/components/health/GpsTrayMenu.vue
 msgid "Altitude estimate"
 msgstr "Estimativa de altitude"
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Always"
+msgstr ""
 
 #: src/components/common/rebootRequiredOverlay.vue
 msgid "An autopilot Reboot is required."
@@ -1101,6 +1105,7 @@ msgstr "Desativar o modo desenvolvedor"
 msgid "Disable smart Wi-Fi hotspot"
 msgstr "Desativar o hotspot Wi-Fi inteligente"
 
+#: src/components/autopilot/EndpointManager.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/NetworkCard.vue
 #: src/components/vehiclesetup/overview/LeakInfo.vue
@@ -2397,6 +2402,10 @@ msgstr ""
 msgid "On ${ 0 } forum"
 msgstr "No fórum da ${ 0 }"
 
+#: src/components/autopilot/EndpointManager.vue
+msgid "On MAVLinkRouter, only while armed also applies to .bin logs."
+msgstr ""
+
 #: src/components/app/OnBoardComputerRebootMenu.vue
 msgid "On-board computer reboot is necessary."
 msgstr "É necessário reiniciar o computador de bordo."
@@ -2416,6 +2425,10 @@ msgstr "Computador de bordo"
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Only bootloader boards detected."
 msgstr "Apenas placas em modo bootloader foram detectadas."
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Only while armed"
+msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
 #, javascript-format
@@ -3423,6 +3436,10 @@ msgstr "TENTAR NOVAMENTE"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Tag"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Telemetry Logs (.tlog)"
 msgstr ""
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
