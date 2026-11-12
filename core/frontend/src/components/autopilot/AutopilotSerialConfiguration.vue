@@ -10,6 +10,7 @@
       :label="`${port_map[port]}`"
       :rules="[isValidEndpoint]"
       :loading="current_serial_ports.isEmpty()"
+      :data-testid="`serial-port-${port}`"
       outlined
       dense
     >
@@ -19,6 +20,7 @@
           v-bind="data.attrs"
           :input-value="data.selected"
           style="height: 150px; position: relative;"
+          data-testid="serial-port-option"
           @click:close="data.parent.selectItem(data.item)"
         >
           <device-path-helper
