@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 from commonwealth.settings.settings import PydanticSettings
 from pydantic import BaseModel, Field
@@ -18,6 +18,7 @@ class Ping1dSettingsSpecV1(BaseModel):
 
 class SettingsV1(PydanticSettings):
     ping1d_specs: List[Ping1dSettingsSpecV1] = Field(default_factory=list)
+    ignored_ports: Set[str] = Field(default_factory=set)
     # no settings for ping360 as of V1
 
     def migrate(self, data: Dict[str, Any]) -> None:
