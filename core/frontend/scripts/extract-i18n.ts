@@ -22,6 +22,14 @@ const ttag_discover_args = [
   '--discover', 'jt',
 ]
 
+interface TemplateAttr {
+  value?: string
+}
+
+interface TemplateHandler {
+  value?: string
+}
+
 interface TemplateNode {
   type?: number
   expression?: string
@@ -29,6 +37,14 @@ interface TemplateNode {
   ifConditions?: { exp?: string, block: TemplateNode }[]
   children?: TemplateNode[]
   scopedSlots?: Record<string, TemplateNode>
+  attrs?: TemplateAttr[]
+  props?: TemplateAttr[]
+  dynamicAttrs?: TemplateAttr[]
+  events?: Record<string, TemplateHandler | TemplateHandler[]>
+  nativeEvents?: Record<string, TemplateHandler | TemplateHandler[]>
+  key?: string
+  slotTarget?: string
+  for?: string
 }
 
 function walkFiles(directory: string): string[] {
@@ -46,6 +62,34 @@ function walkFiles(directory: string): string[] {
   return files.sort()
 }
 
+function collectHandlerExpressions(
+  handlers: Record<string, TemplateHandler | TemplateHandler[]> | undefined,
+  expressions: string[],
+): void {
+  if (!handlers) {
+    return
+  }
+  for (const handler of Object.values(handlers)) {
+    const list = Array.isArray(handler) ? handler : [handler]
+    for (const item of list) {
+      if (item.value) {
+        expressions.push(item.value)
+      }
+    }
+  }
+}
+
+function collectAttributeExpressions(attrs: TemplateAttr[] | undefined, expressions: string[]): void {
+  if (!attrs) {
+    return
+  }
+  for (const attr of attrs) {
+    if (attr.value) {
+      expressions.push(attr.value)
+    }
+  }
+}
+
 function collectTemplateExpressions(node: TemplateNode | undefined, expressions: string[]): void {
   if (!node) {
     return
@@ -59,6 +103,20 @@ function collectTemplateExpressions(node: TemplateNode | undefined, expressions:
         expressions.push(directive.value)
       }
     }
+  }
+  collectAttributeExpressions(node.attrs, expressions)
+  collectAttributeExpressions(node.props, expressions)
+  collectAttributeExpressions(node.dynamicAttrs, expressions)
+  collectHandlerExpressions(node.events, expressions)
+  collectHandlerExpressions(node.nativeEvents, expressions)
+  if (node.key) {
+    expressions.push(node.key)
+  }
+  if (node.slotTarget) {
+    expressions.push(node.slotTarget)
+  }
+  if (node.for) {
+    expressions.push(node.for)
   }
   if (node.ifConditions) {
     for (const condition of node.ifConditions) {
@@ -96,10 +154,25 @@ function isTtagTag(node: ts.Node): boolean {
   return false
 }
 
+function wrapTemplateExpression(expression: string): string {
+  const as_expression = `(${expression})`
+  const source = ts.createSourceFile(
+    'expression.ts',
+    as_expression,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  )
+  if (source.parseDiagnostics.length === 0) {
+    return `void ${as_expression}`
+  }
+  return `void function () { ${expression} }`
+}
+
 function containsTtag(expression: string): boolean {
   const source = ts.createSourceFile(
     'expression.ts',
-    `(${expression})`,
+    wrapTemplateExpression(expression),
     ts.ScriptTarget.Latest,
     true,
     ts.ScriptKind.TS,
@@ -150,7 +223,7 @@ function javascriptFromVue(source: string, filename: string): string {
     collectTemplateExpressions(compiled.ast as TemplateNode | undefined, expressions)
     const ttag_expressions = expressions.filter(containsTtag)
     if (ttag_expressions.length > 0) {
-      parts.push(ttag_expressions.map((expression) => `void (${expression})`).join('\n'))
+      parts.push(ttag_expressions.map(wrapTemplateExpression).join('\n'))
     }
   }
   const script = descriptor.script ?? descriptor.scriptSetup
