@@ -64,6 +64,9 @@ Here is an example of how to use the interactive prompt:
 >>> from blueos.core import BlueOS
 >>> BlueOS(target.base_url).version()
 >>> print(target.shell("sudo docker ps"))
+>>> from features.wifi import WifiAccessPoints
+>>> ap = target.feature(WifiAccessPoints).create_access_point("MyWifi", 6, "12345678")
+>>> ap.remove()
 ```
 
 Per-run files (disk overlay, `qemu.pid`, `serial.log`, `startup.json`) are in `.run/`. Changes made inside the VM are
