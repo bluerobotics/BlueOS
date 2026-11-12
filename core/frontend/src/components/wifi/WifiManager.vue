@@ -42,6 +42,34 @@
       </v-btn>
     </v-app-bar>
 
+    <v-select
+      v-if="interfaces.length > 1"
+      id="wifi-interface-select"
+      :value="selected_interface"
+      :items="interface_items"
+      :label="t`Wifi interface`"
+      prepend-icon="mdi-wifi-cog"
+      hide-details
+      dense
+      class="mx-4 my-3"
+      @change="selectInterface"
+    >
+      <template #item="{ item }">
+        <v-icon
+          left
+          :color="item.connected ? 'success' : undefined"
+        >
+          {{ item.connected ? 'mdi-wifi-check' : 'mdi-wifi-off' }}
+        </v-icon>
+        <span>{{ item.value }}</span>
+        <span class="ml-2 text--secondary">{{ item.description }}</span>
+      </template>
+      <template #selection="{ item }">
+        <span>{{ item.value }}</span>
+        <span class="ml-2 text--secondary">{{ item.description }}</span>
+      </template>
+    </v-select>
+
     <v-sheet v-if="!wifi_is_loading">
       <wifi-network-card
         v-if="current_network"
@@ -212,6 +240,25 @@ export default Vue.extend({
     wifi_status(): WifiStatus | null {
       return wifi.network_status
     },
+    interfaces(): string[] {
+      return wifi.interfaces
+    },
+    selected_interface(): string | undefined {
+      return wifi.selected_interface ?? wifi.interfaces[0]
+    },
+    interface_items(): { value: string, connected: boolean, description: string }[] {
+      return wifi.interfaces.map((name) => {
+        const status = wifi.interface_statuses[name]
+        const connected = status?.state === 'connected'
+        let description = t`disconnected`
+        if (connected) {
+          description = status.ssid
+        } else if (status === undefined) {
+          description = ''
+        }
+        return { value: name, connected, description }
+      })
+    },
     current_network(): Network | null {
       this.$emit('current-network', wifi.current_network)
       return wifi.current_network
@@ -259,6 +306,9 @@ export default Vue.extend({
     beacon.registerBeaconListener(this)
   },
   methods: {
+    selectInterface(selected_interface: string): void {
+      wifi.setSelectedInterface(selected_interface)
+    },
     forgetNetwork(network: Network): void {
       wifi.forgettNetwork(network)
     },
