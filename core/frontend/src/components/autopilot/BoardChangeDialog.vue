@@ -18,12 +18,14 @@
             v-model="selected_board"
             :items="board_options"
             :label="t`Available boards`"
+            data-testid="available-boards-select"
             required
           />
 
           <v-btn
             color="primary"
             class="mr-4"
+            data-testid="set-board-button"
             @click="changeBoard"
           >
             {{ t`Set` }}
