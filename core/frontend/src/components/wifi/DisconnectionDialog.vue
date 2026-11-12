@@ -138,6 +138,7 @@ export default Vue.extend({
       await back_axios({
         method: 'get',
         url: `${wifi.API_URL}/disconnect`,
+        params: wifi.interface_params,
         timeout: 10000,
       })
         .then(() => {

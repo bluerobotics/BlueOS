@@ -209,7 +209,7 @@ export default Vue.extend({
           url: `${wifi.API_URL}/connect`,
           timeout: 50000,
           data: credentials,
-          params: { hidden: this.is_hidden },
+          params: { hidden: this.is_hidden, ...wifi.interface_params },
         })
         this.showDialog(false)
         this.connection_status = ConnectionStatus.Succeeded
