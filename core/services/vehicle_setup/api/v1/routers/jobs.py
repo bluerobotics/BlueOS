@@ -1,5 +1,6 @@
 from typing import Any
 
+from calibration import ardupilot
 from calibration.job import calibrate
 from clients.mavlink import autopilot_link, is_armed
 from config import SERVICE_NAME
@@ -20,7 +21,7 @@ jobs_router_v1 = APIRouter(
 )
 
 bus = HttpBus(SERVICE_NAME)
-kernel = Kernel(bus, {"Calibrate": calibrate(autopilot_link, is_armed)})
+kernel = Kernel(bus, {"Calibrate": calibrate(autopilot_link, is_armed, ardupilot)})
 
 
 def signal(job: JobRef) -> JobRef:

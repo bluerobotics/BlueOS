@@ -14,6 +14,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from calibration import ardupilot
 from calibration.job import (
     Connect,
     Connected,
@@ -21,9 +22,6 @@ from calibration.job import (
     LinkLost,
     Send,
     calibrate,
-    on_message,
-    snapshot,
-    start_calibration,
     timeout_for,
 )
 from changesets.runner import VEHICLE_WRITE_LOCK
@@ -89,21 +87,32 @@ def test_bad_start_requests(body: Dict[str, Any]) -> None:
         ),
     ],
 )
-def test_start_calibration_dispatches(request_: StartCalibration, command: str) -> None:
-    state, commands = start_calibration(request_)
+def test_ardupilot_start_dispatches(request_: StartCalibration, command: str) -> None:
+    state, commands = ardupilot.start(request_)
     assert state.status == CalibrationStatus.RUNNING
     assert [sent.command for sent in commands] == [command]
 
 
-def test_compass_snapshot_progress_and_fitness() -> None:
-    state, _ = start_calibration(StartCalibration(calibration=CalibrationKind.COMPASS, compass_mask=0b11))
-    assert snapshot("1", CalibrationKind.COMPASS, state).progress == 0
+def test_ardupilot_compass_snapshot_progress_and_fitness() -> None:
+    state, _ = ardupilot.start(StartCalibration(calibration=CalibrationKind.COMPASS, compass_mask=0b11))
+    assert ardupilot.snapshot("1", CalibrationKind.COMPASS, state).progress == 0
     for message in (mag_progress(0, 40), mag_progress(1, 20)):
-        state, _ = on_message(state, message)
-    assert snapshot("1", CalibrationKind.COMPASS, state).progress == 30
-    state, _ = on_message(state, mag_report(0, 12.5))
-    current = snapshot("1", CalibrationKind.COMPASS, state)
+        state, _ = ardupilot.on_message(state, message)
+    assert ardupilot.snapshot("1", CalibrationKind.COMPASS, state).progress == 30
+    state, _ = ardupilot.on_message(state, mag_report(0, 12.5))
+    current = ardupilot.snapshot("1", CalibrationKind.COMPASS, state)
     assert (current.job_id, current.progress, current.fitness, current.position) == ("1", 60, {0: 12.5}, None)
+
+
+@pytest.mark.parametrize("kind", [CalibrationKind.SIMPLE_ACCELEROMETER, CalibrationKind.BOARD_LEVEL])
+def test_ardupilot_abandoning_a_single_ack_calibration_needs_no_reboot(kind: CalibrationKind) -> None:
+    state, _ = ardupilot.start(StartCalibration(calibration=kind))
+    abandoned = ardupilot.abandon(state, "timed out")
+    assert (abandoned.status, abandoned.reason, abandoned.reboot_required) == (
+        CalibrationStatus.FAILED,
+        "timed out",
+        False,
+    )
 
 
 def test_timeouts_only_while_running() -> None:
@@ -166,7 +175,7 @@ class Vehicle:
         self.armed = armed
         self.link = link or StubLink()
         self.bus = FakeBus(**bus)
-        self.kernel = Kernel(self.bus, {"Calibrate": calibrate(self.link.scope, self.is_armed)})
+        self.kernel = Kernel(self.bus, {"Calibrate": calibrate(self.link.scope, self.is_armed, ardupilot)})
         self.job_id = ""
 
     async def is_armed(self) -> bool:

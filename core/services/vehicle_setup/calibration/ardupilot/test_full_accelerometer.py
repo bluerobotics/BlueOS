@@ -1,25 +1,20 @@
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from calibration.accelerometer import (
-    AccelerometerState,
+from calibration.ardupilot.full_accelerometer import (
+    FullAccelerometerState,
     abandon,
     cancel,
     confirm,
     on_message,
     start,
 )
-from calibration.gyro_baro import PreflightCalibration
-from vehicle_setup_types import CalibrationStatus, Command, PoseKey
-
-FULL = PreflightCalibration.ACCELEROMETER
-QUICK = PreflightCalibration.SIMPLE_ACCELEROMETER
-LEVEL = PreflightCalibration.BOARD_LEVEL
+from vehicle_setup_types import CalibrationStatus, PoseKey
 
 
 def ack(result: str, command: str = "MAV_CMD_PREFLIGHT_CALIBRATION") -> Dict[str, Any]:
@@ -43,27 +38,22 @@ def vehicle_pos(param1: float) -> Dict[str, Any]:
     }
 
 
-def replay(state: AccelerometerState, messages: List[Dict[str, Any]]) -> AccelerometerState:
+def replay(state: FullAccelerometerState, messages: List[Dict[str, Any]]) -> FullAccelerometerState:
     for message in messages:
         state, commands = on_message(state, message)
         assert not commands
     return state
 
 
-def started(kind: PreflightCalibration) -> Tuple[AccelerometerState, List[Command]]:
-    state, commands = start(kind)
-    assert [command.command for command in commands] == ["MAV_CMD_PREFLIGHT_CALIBRATION"]
-    return state, commands
+def started() -> FullAccelerometerState:
+    state, commands = start()
+    assert [(command.command, command.params[4]) for command in commands] == [("MAV_CMD_PREFLIGHT_CALIBRATION", 1)]
+    return state
 
 
-@pytest.mark.parametrize(
-    "kind, acked, reboot_required",
-    [(FULL, True, True), (FULL, False, False), (QUICK, False, False), (LEVEL, False, False)],
-)
-def test_abandoning_leaves_only_a_started_full_calibration_open(
-    kind: PreflightCalibration, acked: bool, reboot_required: bool
-) -> None:
-    state, _ = started(kind)
+@pytest.mark.parametrize("acked, reboot_required", [(True, True), (False, False)])
+def test_abandoning_leaves_only_a_started_calibration_open(acked: bool, reboot_required: bool) -> None:
+    state = started()
     if acked:
         state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(1.0)])
     abandoned = abandon(state, "timed out")
@@ -73,7 +63,7 @@ def test_abandoning_leaves_only_a_started_full_calibration_open(
 
 
 def test_full_six_position_conversation() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [ack("MAV_RESULT_ACCEPTED")])
     assert state.status == CalibrationStatus.RUNNING
     for number, pose in enumerate(PoseKey, start=1):
@@ -94,7 +84,7 @@ def test_full_six_position_conversation() -> None:
 
 def test_full_ignores_the_last_runs_result_before_the_start_ack() -> None:
     # ArduPilot keeps broadcasting the previous calibration's result until it handles the new start
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [vehicle_pos(16777215.0), vehicle_pos(16777216.0), vehicle_pos(3.0)])
     assert (state.status, state.position) == (CalibrationStatus.RUNNING, None)
     state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(1.0)])
@@ -102,7 +92,7 @@ def test_full_ignores_the_last_runs_result_before_the_start_ack() -> None:
 
 
 def test_full_lost_confirmation_is_offered_again() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(1.0)])
     state, first = confirm(state)
     state = replay(state, [vehicle_pos(1.0)])
@@ -117,7 +107,7 @@ def test_full_lost_confirmation_is_offered_again() -> None:
 
 
 def test_rejected_confirmation_reason_survives_repeats() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(3.0)])
     state, _ = confirm(state)
     state = replay(
@@ -128,7 +118,7 @@ def test_rejected_confirmation_reason_survives_repeats() -> None:
 
 
 def test_full_autopilot_reports_failure() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(1.0)])
     state, _ = confirm(state)
     state = replay(state, [vehicle_pos(16777216.0)])
@@ -138,14 +128,14 @@ def test_full_autopilot_reports_failure() -> None:
 
 
 def test_full_start_refused() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [ack("MAV_RESULT_IN_PROGRESS"), ack("MAV_RESULT_TEMPORARILY_REJECTED")])
     assert state.status == CalibrationStatus.FAILED
     assert state.reason is not None and "MAV_RESULT_TEMPORARILY_REJECTED" in state.reason
 
 
 def test_full_rejected_confirmation_can_be_confirmed_again() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(2.0)])
     state, first = confirm(state)
     state = replay(state, [ack("MAV_RESULT_FAILED", "MAV_CMD_ACCELCAL_VEHICLE_POS")])
@@ -159,13 +149,13 @@ def test_full_rejected_confirmation_can_be_confirmed_again() -> None:
 
 
 def test_full_start_failure_clears_the_position() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [vehicle_pos(1.0), ack("MAV_RESULT_FAILED")])
     assert (state.status, state.position) == (CalibrationStatus.FAILED, None)
 
 
 def test_full_ignores_unknown_positions_and_other_commands() -> None:
-    state, _ = started(FULL)
+    state = started()
     unrelated = {**vehicle_pos(3.0), "command": {"type": "MAV_CMD_DO_SET_MODE"}}
     state = replay(
         state,
@@ -181,7 +171,7 @@ def test_full_ignores_unknown_positions_and_other_commands() -> None:
 
 
 def test_confirm_needs_a_requested_position() -> None:
-    state, _ = started(FULL)
+    state = started()
     assert confirm(state) == (state, [])
     state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(2.0)])
     state, commands = confirm(state)
@@ -189,47 +179,11 @@ def test_confirm_needs_a_requested_position() -> None:
     assert confirm(state) == (state, [])
 
 
-@pytest.mark.parametrize("kind", [QUICK, LEVEL])
-def test_one_ack_calibrations(kind: PreflightCalibration) -> None:
-    state, _ = started(kind)
-    state = replay(state, [ack("MAV_RESULT_IN_PROGRESS"), vehicle_pos(1.0)])
-    assert (state.status, state.position) == (CalibrationStatus.RUNNING, None)
-    state = replay(state, [ack("MAV_RESULT_ACCEPTED")])
-    assert state.status == CalibrationStatus.DONE
-    assert state.reboot_required == (kind == LEVEL)
-
-
-@pytest.mark.parametrize("kind", [QUICK, LEVEL])
-@pytest.mark.parametrize("result", ["MAV_RESULT_DENIED", "MAV_RESULT_FAILED", "MAV_RESULT_UNSUPPORTED"])
-def test_non_accepted_ack_fails(kind: PreflightCalibration, result: str) -> None:
-    state, _ = started(kind)
-    state = replay(state, [ack(result)])
-    assert state.status == CalibrationStatus.FAILED
-    assert not state.reboot_required
-
-
-def test_quick_ignores_acks_of_other_commands() -> None:
-    state, _ = started(QUICK)
-    state = replay(state, [ack("MAV_RESULT_ACCEPTED", "MAV_CMD_DO_START_MAG_CAL")])
-    assert state.status == CalibrationStatus.RUNNING
-
-
-def test_gyro_is_not_an_accelerometer_calibration() -> None:
-    with pytest.raises(ValueError):
-        start(PreflightCalibration.GYROSCOPE)
-
-
 def test_full_cancel_is_local_and_honest() -> None:
-    state, _ = started(FULL)
+    state = started()
     state = replay(state, [ack("MAV_RESULT_ACCEPTED"), vehicle_pos(4.0)])
     state, commands = cancel(state)
     assert (state.status, state.position, commands) == (CalibrationStatus.CANCELLED, None, [])
     assert state.reason is not None and state.reboot_required
     assert replay(state, [vehicle_pos(5.0)]).status == CalibrationStatus.CANCELLED
     assert confirm(state) == (state, [])
-
-
-@pytest.mark.parametrize("kind", [QUICK, LEVEL])
-def test_one_ack_cancel_is_a_no_op(kind: PreflightCalibration) -> None:
-    state, _ = started(kind)
-    assert cancel(state) == (state, [])

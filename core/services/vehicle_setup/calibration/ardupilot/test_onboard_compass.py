@@ -4,14 +4,13 @@ from typing import Any, Dict, List
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from calibration.compass import (
-    CompassState,
+from calibration.ardupilot.onboard_compass import (
+    OnboardCompassState,
     cancel,
     on_message,
     start,
-    start_large_vehicle,
 )
 from vehicle_setup_types import CalibrationStatus
 
@@ -42,14 +41,14 @@ def report(compass_id: int, fitness: float, cal_status: str = "MAG_CAL_SUCCESS")
     }
 
 
-def replay(state: CompassState, messages: List[Dict[str, Any]]) -> CompassState:
+def replay(state: OnboardCompassState, messages: List[Dict[str, Any]]) -> OnboardCompassState:
     for message in messages:
         state, commands = on_message(state, message)
         assert not commands
     return state
 
 
-def started(compass_mask: int) -> CompassState:
+def started(compass_mask: int) -> OnboardCompassState:
     state, commands = start(compass_mask)
     assert [(command.command, command.params) for command in commands] == [
         ("MAV_CMD_DO_START_MAG_CAL", [compass_mask, 0, 1])
@@ -155,34 +154,3 @@ def test_cancel_accepted_after_a_refusal() -> None:
     state, _ = cancel(state)
     state = replay(state, [ack("MAV_CMD_DO_CANCEL_MAG_CAL", "MAV_RESULT_ACCEPTED")])
     assert (state.status, state.reason) == (CalibrationStatus.CANCELLED, None)
-
-
-def test_large_vehicle_keeps_coordinate_decimals() -> None:
-    _, commands = start_large_vehicle(0b011, -27.5935, -48.5585)
-    assert [(command.command, command.params) for command in commands] == [
-        ("MAV_CMD_FIXED_MAG_CAL_YAW", [0, 0b011, -27.5935, -48.5585])
-    ]
-
-
-def test_large_vehicle_one_ack() -> None:
-    state, _ = start_large_vehicle(0b001, -27.5935, -48.5585)
-    state = replay(
-        state,
-        [
-            ack("MAV_CMD_DO_START_MAG_CAL", "MAV_RESULT_FAILED"),
-            report(0, 10.0),
-            ack("MAV_CMD_FIXED_MAG_CAL_YAW", "MAV_RESULT_IN_PROGRESS"),
-        ],
-    )
-    assert state.status == CalibrationStatus.RUNNING
-    assert cancel(state) == (state, [])
-    state = replay(state, [ack("MAV_CMD_FIXED_MAG_CAL_YAW", "MAV_RESULT_ACCEPTED")])
-    assert state.status == CalibrationStatus.DONE
-    assert state.reboot_required
-
-
-def test_large_vehicle_refused() -> None:
-    state, _ = start_large_vehicle(0b001, 0.0, 0.0)
-    state = replay(state, [ack("MAV_CMD_FIXED_MAG_CAL_YAW", "MAV_RESULT_FAILED")])
-    assert state.status == CalibrationStatus.FAILED
-    assert not state.reboot_required
