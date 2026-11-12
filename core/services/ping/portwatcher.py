@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import Any, Callable, Coroutine, Dict, Optional, Set
 from warnings import warn
 
@@ -11,6 +12,7 @@ from serial.tools.list_ports_linux import SysFS
 MAX_ATTEMPTS = 3
 
 
+# pylint: disable=too-many-instance-attributes
 class PortWatcher:
     """Watches the Serial ports on the system.
     Calls set_prober when a port is found, and port_post_callback when a port is no longer present."""
@@ -23,6 +25,8 @@ class PortWatcher:
         logger.info("PortWatcher Started")
         self.known_ports: Set[str] = set()
         self.known_ips: Set[str] = set()
+        self.ignored_paths: Set[str] = set()
+        self.ignored_ports: Set[str] = set()
 
         self.probe_callback: Callable[[Any], Coroutine[Any, SysFS, Optional[PingDeviceDescriptor]]] = probe_callback
         self.ethernet_ping_found_callback: Callable[
@@ -34,11 +38,21 @@ class PortWatcher:
     def set_port_post_callback(self, callback: Callable[[SysFS | str], Coroutine[Any, Any, None]]) -> None:
         self.port_lost_callback = callback
 
+    def resolve_ignored_ports(self) -> None:
+        """Ignored paths can be a /dev/serial/by-id/ link, which points to another device after a replug"""
+        self.ignored_ports = {os.path.realpath(path) for path in self.ignored_paths}
+
+    def port_is_ignored(self, port: SysFS) -> bool:
+        device = os.path.realpath(port.device)
+        return device in self.ignored_ports
+
     def port_should_be_probed(self, port: SysFS) -> bool:
         """A port should be probed if there hasn't been MAX_ATTEMPTS to probe it yet
         and it is caught by our filters
         """
         if port in self.known_ports:
+            return False
+        if self.port_is_ignored(port):
             return False
         if self.probe_attempts_counter.get(port, 0) >= MAX_ATTEMPTS:
             return False
@@ -79,6 +93,7 @@ class PortWatcher:
         # TODO: try https://pypi.org/project/inotify/
         while True:
             try:
+                self.resolve_ignored_ports()
                 ports = serial.tools.list_ports.comports()
                 ports_description = [f"{port.subsystem}:{port.name}" for port in ports]
                 logger.debug(f"Currently detected ports: {ports_description}")
