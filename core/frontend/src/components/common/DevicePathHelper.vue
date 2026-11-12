@@ -6,6 +6,7 @@
       </div>
       <object
         :class="inline_name"
+        data-testid="device-path-image"
         type="image/svg+xml"
         :data="board_image"
         :style="`height: ${height}`"
