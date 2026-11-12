@@ -27,6 +27,7 @@
         </p>
       </v-container>
     </div>
+    <ping-ignored-ports />
   </v-container>
 </template>
 
@@ -40,10 +41,11 @@ import { PingDevice, PingType } from '@/types/ping'
 
 import PingCard from '../components/ping/ping1d.vue'
 import Ping360Card from '../components/ping/ping360.vue'
+import PingIgnoredPorts from '../components/ping/PingIgnoredPorts.vue'
 
 export default Vue.extend({
   name: 'Pings',
-  components: { PingCard, Ping360Card },
+  components: { PingCard, Ping360Card, PingIgnoredPorts },
   data() {
     return {
       PingType,
