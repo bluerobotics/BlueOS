@@ -20,7 +20,14 @@ from loguru import logger
 
 from autopilot_manager import AutoPilotManager
 from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
-from typedefs import Firmware, FlightController, Parameters, Serial, SITLFrame, Vehicle
+from typedefs import (
+    Firmware,
+    FlightController,
+    Parameters,
+    Serial,
+    SITLFrame,
+    Vehicle,
+)
 
 index_router_v1 = APIRouter(
     tags=["index_v1"],
