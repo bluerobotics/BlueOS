@@ -10,6 +10,7 @@ class HotspotStatus(BaseModel):
 
 
 class WifiStatus(BaseModel):
+    interface: Optional[str] = None
     bssid: Optional[str] = None
     freq: Optional[str] = None
     ssid: Optional[str] = None

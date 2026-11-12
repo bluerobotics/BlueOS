@@ -25,3 +25,10 @@ class WPAOperationFail(ConnectionError):
 
 class NetworkAddFail(ValueError):
     """Raised when a WPA add_network operation fails to return an int."""
+
+
+class InterfaceNotFound(ValueError):
+    """Raised when a requested wifi interface does not exist."""
+
+    def __init__(self, interface: str) -> None:
+        super().__init__(f"Wifi interface '{interface}' not found.")

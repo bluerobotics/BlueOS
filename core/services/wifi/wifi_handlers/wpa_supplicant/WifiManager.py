@@ -28,12 +28,26 @@ from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
 class WifiManager(AbstractWifiManager):
     wpa = WPASupplicant()
     wpa_path: Optional[str] = None
+    interface_name: str = "wlan0"
     _hotspot: Optional[HotspotManager] = None
 
     async def can_work(self) -> bool:
         return bool(get_host_os() == HostOs.Bullseye)
 
-    async def try_connect_to_network(self, credentials: WifiCredentials, hidden: bool = False) -> Any:
+    async def get_interfaces(self) -> List[str]:
+        return [self.interface_name] if self.wpa_path is not None else []
+
+    async def hotspot_interface(self) -> Optional[str]:
+        return self.interface_name if self.wpa_path is not None else None
+
+    async def set_hotspot_interface(self, interface: str) -> None:
+        # wpa_supplicant handles a single interface, so the only valid choice is the current one
+        await self.validate_interface(interface)
+
+    async def try_connect_to_network(
+        self, credentials: WifiCredentials, hidden: bool = False, interface: Optional[str] = None
+    ) -> Any:
+        await self.validate_interface(interface)
         logger.info(f"Trying to connect to '{credentials.ssid}'.")
 
         network_id: Optional[int] = None
@@ -97,6 +111,8 @@ class WifiManager(AbstractWifiManager):
         self.wpa.run(path)
         # run only returns when the socket is connected, before that there is no adapter to talk to
         self.wpa_path = str(path)
+        # The udp fallback does not tell which interface it controls
+        self.interface_name = os.path.basename(path) if isinstance(path, str) else "wlan0"
         self._scan_task: Optional[asyncio.Task[bytes]] = None
         self._updated_scan_results: Optional[List[ScannedWifiNetwork]] = None
         self._ignored_reconnection_networks: List[str] = []
@@ -186,14 +202,15 @@ class WifiManager(AbstractWifiManager):
     def hotspot(self) -> HotspotManager:
         if self._hotspot is None:
             try:
-                self._hotspot = HotspotManager("wlan0", IPv4Address("192.168.42.1"))
+                self._hotspot = HotspotManager(self.interface_name, IPv4Address("192.168.42.1"))
             except Exception as error:
                 self._hotspot = None
                 raise error
         return self._hotspot
 
-    async def get_wifi_available(self) -> List[ScannedWifiNetwork]:
+    async def get_wifi_available(self, interface: Optional[str] = None) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
+        await self.validate_interface(interface)
         if self.wpa_path is None:
             return []
 
@@ -335,8 +352,9 @@ class WifiManager(AbstractWifiManager):
             if was_hotspot_enabled:
                 await self.enable_hotspot(save_settings=False)
 
-    async def status(self) -> WifiStatus:
+    async def status(self, interface: Optional[str] = None) -> WifiStatus:
         """Check wpa_supplicant status"""
+        await self.validate_interface(interface)
         if self.wpa_path is None:
             return WifiStatus(state="unavailable")
         try:
@@ -354,10 +372,11 @@ class WifiManager(AbstractWifiManager):
         except Exception as error:
             raise RuntimeError("Failed to reconfigure wifi manager.") from error
 
-    async def disconnect(self) -> None:
+    async def disconnect(self, interface: Optional[str] = None) -> None:
         """Reconfigure wpa_supplicant
         This will force the reevaluation of the conf file
         """
+        await self.validate_interface(interface)
         self.connection_status = ConnectionStatus.DISCONNECTING
         try:
             # Save current network in ignored list so the watchdog doesn't auto-reconnect to it
@@ -399,7 +418,7 @@ class WifiManager(AbstractWifiManager):
 
     def trigger_dhcp_client(self) -> None:
         """Trigger dhclient to get an IP address."""
-        subprocess.run(["dhcpcd", "-n", "wlan0"], check=False)
+        subprocess.run(["dhcpcd", "-n", self.interface_name], check=False)
 
     async def auto_reconnect(self, seconds_before_reconnecting: float) -> None:
         """Re-enable all saved networks if disconnected for more than specified time.
