@@ -1,7 +1,7 @@
 import asyncio
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 _PING_DIR = str(Path(__file__).resolve().parent)
 sys.path.insert(0, _PING_DIR)
@@ -37,3 +37,31 @@ async def test_start_watching_continues_after_add_ping360_error() -> None:
             await watcher.start_watching()
 
     assert calls == 2
+
+
+def test_port_should_be_probed_skips_ignored_ports(tmp_path: Path) -> None:
+    device = tmp_path / "ttyUSB0"
+    device.touch()
+    replugged_device = tmp_path / "ttyUSB1"
+    replugged_device.touch()
+    link = tmp_path / "usb-device-if00-port0"
+    link.symlink_to(device)
+    port = MagicMock(device=str(device))
+    replugged_port = MagicMock(device=str(replugged_device))
+    watcher = PortWatcher(probe_callback=AsyncMock(), found_callback=AsyncMock())
+
+    assert watcher.port_should_be_probed(port)
+    watcher.ignored_paths = {str(link)}
+    watcher.resolve_ignored_ports()
+    assert not watcher.port_should_be_probed(port)
+    assert watcher.port_should_be_probed(replugged_port)
+
+    link.unlink()
+    link.symlink_to(replugged_device)
+    watcher.resolve_ignored_ports()
+    assert watcher.port_should_be_probed(port)
+    assert not watcher.port_should_be_probed(replugged_port)
+
+    watcher.ignored_paths = {str(device)}
+    watcher.resolve_ignored_ports()
+    assert not watcher.port_should_be_probed(port)
