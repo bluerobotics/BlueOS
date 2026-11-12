@@ -96,7 +96,6 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-vue": "^9.9.0",
-    "gettext-parser": "^6.0.0",
     "postcss-html": "^1.8.1",
     "sass": "~1.32.0",
     "stylelint": "^17.2.0",
