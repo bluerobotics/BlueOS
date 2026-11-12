@@ -34,6 +34,7 @@ from typedefs import (
     PlatformType,
     Serial,
     SITLFrame,
+    TLogMode,
     Vehicle,
 )
 
@@ -149,6 +150,7 @@ class AutoPilotManager(metaclass=Singleton):
             await self.set_preferred_router(self.mavlink_manager.tool.name())
             logger.info(f"Setting {self.mavlink_manager.tool.name()} as preferred router.")
         self.mavlink_manager.set_logdir(self.settings.log_path)
+        self.mavlink_manager.set_tlog_mode(self.load_tlog_mode())
 
         self._load_endpoints()
         self.ardupilot_subprocess: Optional[Any] = None
@@ -393,9 +395,12 @@ class AutoPilotManager(metaclass=Singleton):
         self.set_sitl_frame(frame)
         return frame
 
-    async def set_preferred_router(self, router: str) -> None:
+    async def set_preferred_router(self, router: str, tlog_mode: Optional[TLogMode] = None) -> None:
         self.settings.preferred_router = router
         self.configuration["preferred_router"] = router
+        if tlog_mode is not None:
+            self.configuration["tlog_mode"] = tlog_mode.value
+            self.mavlink_manager.set_tlog_mode(tlog_mode)
         self.settings.save(self.configuration)
         await self.mavlink_manager.set_preferred_router(router, self.autopilot_default_endpoints)
 
@@ -404,6 +409,12 @@ class AutoPilotManager(metaclass=Singleton):
             return self.configuration["preferred_router"]  # type: ignore
         except KeyError:
             return None
+
+    def load_tlog_mode(self) -> TLogMode:
+        try:
+            return TLogMode(self.configuration["tlog_mode"])
+        except (KeyError, ValueError):
+            return TLogMode.disabled
 
     def get_available_routers(self) -> List[str]:
         return [router.name() for router in self.mavlink_manager.available_interfaces()]
