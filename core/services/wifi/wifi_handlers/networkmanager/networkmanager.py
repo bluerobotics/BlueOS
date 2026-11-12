@@ -394,6 +394,9 @@ class NetworkManagerWifi(AbstractWifiManager):
             "-g",
             "192.168.42.1",  # IPv4 Gateway for the Access Point
             "--redirect-to-localhost",  # Redirect all traffic to localhost, captive-portal style
+            # uap0 already is the virtual AP interface, otherwise cards that support AP+STA get an extra one that
+            # NetworkManager takes over, since create_ap can't mark it unmanaged from inside the container
+            "--no-virt",
             credentials.ssid,
             credentials.password,
         ]
