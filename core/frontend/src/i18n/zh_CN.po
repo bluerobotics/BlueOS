@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Chinese Simplified\n"
-"PO-Revision-Date: 2026-11-07 00:14\n"
+"PO-Revision-Date: 2026-11-12 18:20\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -295,6 +295,10 @@ msgstr ""
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Altitude estimate"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Always"
 msgstr ""
 
 #: src/components/common/rebootRequiredOverlay.vue
@@ -1099,6 +1103,7 @@ msgstr ""
 msgid "Disable smart Wi-Fi hotspot"
 msgstr ""
 
+#: src/components/autopilot/EndpointManager.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/NetworkCard.vue
 #: src/components/vehiclesetup/overview/LeakInfo.vue
@@ -2395,6 +2400,10 @@ msgstr ""
 msgid "On ${ 0 } forum"
 msgstr ""
 
+#: src/components/autopilot/EndpointManager.vue
+msgid "On MAVLinkRouter, only while armed also applies to .bin logs."
+msgstr ""
+
 #: src/components/app/OnBoardComputerRebootMenu.vue
 msgid "On-board computer reboot is necessary."
 msgstr ""
@@ -2413,6 +2422,10 @@ msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Only bootloader boards detected."
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Only while armed"
 msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
@@ -3420,6 +3433,10 @@ msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Tag"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Telemetry Logs (.tlog)"
 msgstr ""
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
