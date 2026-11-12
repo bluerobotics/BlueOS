@@ -23,21 +23,24 @@
         <span>{{ t`Click to activate wizard` }}</span>
       </v-tooltip>
 
-      <img height="80" :src="banner" style="max-width: 85%; object-fit: contain;" />
+      <img data-testid="autopilot-banner" height="80" :src="banner" style="max-width: 85%; object-fit: contain;" />
 
       <v-card-text>
         <span v-if="board_undefined">{{ t`No board running` }}</span>
         <div v-else>
           <v-row
-            v-for="(value, name) in autopilot_info"
-            :key="name"
+            v-for="{ key, label, value } in autopilot_info"
+            :key="key"
             class="ma-0"
             no-gutters
           >
             <v-col class="text-right ma-0 font-weight-bold">
-              {{ name }}:
+              {{ label }}:
             </v-col>
-            <v-col class="text-left ml-1">
+            <v-col
+              class="text-left ml-1"
+              :data-testid="`autopilot-${key}`"
+            >
               {{ value }}
             </v-col>
           </v-row>
@@ -46,7 +49,7 @@
         <not-safe-overlay />
         <v-expansion-panels>
           <v-expansion-panel>
-            <v-expansion-panel-header>
+            <v-expansion-panel-header data-testid="firmware-update-panel">
               {{ t`Firmware update` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
@@ -56,7 +59,7 @@
         </v-expansion-panels>
         <v-expansion-panels v-if="is_sitl">
           <v-expansion-panel>
-            <v-expansion-panel-header>
+            <v-expansion-panel-header data-testid="sitl-configuration-panel">
               {{ t`SITL configuration` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
@@ -66,7 +69,7 @@
         </v-expansion-panels>
         <v-expansion-panels v-if="settings.is_pirate_mode && isLinuxFlightController">
           <v-expansion-panel>
-            <v-expansion-panel-header>
+            <v-expansion-panel-header data-testid="serial-configuration-panel">
               {{ t`Serial Port Configuration` }}
             </v-expansion-panel-header>
             <v-expansion-panel-content>
@@ -83,6 +86,7 @@
           :block="$vuetify.breakpoint.xs"
           class="ma-1"
           :disabled="restarting || installing_firmware"
+          data-testid="change-board-button"
           @click="openBoardChangeDialog"
         >
           {{ t`Change board` }}
@@ -177,25 +181,26 @@ export default Vue.extend({
     }
   },
   computed: {
-    autopilot_info(): Record<string, string> {
+    autopilot_info(): { key: string, label: string, value: string }[] {
       let version = 'Unknown'
       if (this.firmware_info) {
         version = `${this.firmware_info.version} (${this.firmware_info.type})`
       }
 
-      const record: Record<string, string> = {
-        'Board name': this.current_board?.name ?? 'Unknown',
-        Manufacturer: this.current_board?.manufacturer ?? 'Unknown',
-        'Mavlink platform': this.current_board?.platform ?? 'Unknown',
-        'Firmware version': version,
-        'Vehicle type': `${this.vehicle_type ?? 'Unknown'} (${this.firmware_vehicle_type ?? 'Unknown'})`,
-      }
+      const vehicle = `${this.vehicle_type ?? 'Unknown'} (${this.firmware_vehicle_type ?? 'Unknown'})`
+      const info = [
+        { key: 'board-name', label: 'Board name', value: this.current_board?.name ?? 'Unknown' },
+        { key: 'manufacturer', label: 'Manufacturer', value: this.current_board?.manufacturer ?? 'Unknown' },
+        { key: 'mavlink-platform', label: 'Mavlink platform', value: this.current_board?.platform ?? 'Unknown' },
+        { key: 'firmware-version', label: 'Firmware version', value: version },
+        { key: 'vehicle-type', label: 'Vehicle type', value: vehicle },
+      ]
 
       if (this.current_board?.path) {
-        record.Path = this.current_board.path
+        info.push({ key: 'path', label: 'Path', value: this.current_board.path })
       }
 
-      return record
+      return info
     },
     banner(): string {
       switch (autopilot_data.autopilot_type) {
