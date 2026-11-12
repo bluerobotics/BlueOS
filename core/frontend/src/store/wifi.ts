@@ -35,6 +35,8 @@ class WifiStore extends VuexModule {
 
   hotspot_credentials: NetworkCredentials | null = null
 
+  hotspot_interface: string | null = null
+
   interfaces: string[] = []
 
   interface_statuses: Record<string, WifiStatus> = {}
@@ -81,6 +83,11 @@ class WifiStore extends VuexModule {
   async selectInterface(selected_interface: string | null): Promise<void> {
     await bag.setData(SELECTED_INTERFACE_PATH, { interface: selected_interface })
     this.setSelectedInterface(selected_interface)
+  }
+
+  @Mutation
+  setHotspotInterface(hotspot_interface: string | null): void {
+    this.hotspot_interface = hotspot_interface
   }
 
   @Mutation
