@@ -82,6 +82,7 @@
             v-model="chosen_vehicle"
             :items="vehicle_types"
             :label="t`Vehicle type`"
+            data-testid="firmware-vehicle-select"
             :hint="vehicle_changed ? vehicle_change_warning : ''"
             :persistent-hint="vehicle_changed"
             required
@@ -104,6 +105,7 @@
               :disabled="disable_firmware_selection"
               :items="showable_firmwares"
               :label="firmware_selector_label"
+              data-testid="firmware-version-select"
               :loading="loading_firmware_options"
               required
               @change="setCloudFirmwareChosen"
@@ -148,6 +150,7 @@
       :disabled="!allow_installing"
       class="mt-6"
       color="primary"
+      data-testid="install-firmware-button"
       @click="installFirmware"
     >
       <v-icon class="mr-2">
@@ -165,6 +168,7 @@
       <v-card
         color="primary"
         dark
+        data-testid="install-firmware-progress"
       >
         <v-card-text>
           {{ t`Installing firmware. Please wait.` }}
@@ -186,6 +190,7 @@
       colored-border
       :icon="install_alert_icon"
       class="ma-6"
+      data-testid="install-firmware-result"
     >
       <p>{{ install_result_message }}</p>
     </v-alert>
