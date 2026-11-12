@@ -2,7 +2,6 @@ import { spawnSync } from 'child_process'
 import {
   existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync,
 } from 'fs'
-import gettextParser from 'gettext-parser'
 import { tmpdir } from 'os'
 import {
   dirname, extname, join, relative,
@@ -14,7 +13,6 @@ const frontend_root = join(import.meta.dir, '..')
 const src_root = join(frontend_root, 'src')
 const i18n_dir = join(src_root, 'i18n')
 const english_po_path = join(i18n_dir, 'en.po')
-const locale_po_path = join(i18n_dir, 'pt_BR.po')
 const ttag_bin = join(frontend_root, 'node_modules', '.bin', 'ttag')
 const ignored_directories = new Set(['vue-tour', 'node_modules'])
 const ttag_discover_args = [
@@ -256,54 +254,6 @@ function checkEnglishCatalog(extracted: string): void {
   process.exitCode = 1
 }
 
-function translationOf(message: { msgstr?: string[] } | undefined): string[] {
-  if (!message?.msgstr || message.msgstr.length === 0) {
-    return ['']
-  }
-  return message.msgstr
-}
-
-function syncLocaleFromEnglish(): void {
-  const english = gettextParser.po.parse(readFileSync(english_po_path))
-  const locale = existsSync(locale_po_path)
-    ? gettextParser.po.parse(readFileSync(locale_po_path))
-    : {
-      charset: 'utf-8',
-      headers: {},
-      translations: { '': {} },
-    }
-
-  const headers: Record<string, string> = {
-    ...english.headers,
-    ...locale.headers,
-    Language: 'pt_BR',
-    'Content-Type': 'text/plain; charset=utf-8',
-    'Plural-Forms': locale.headers['Plural-Forms'] || 'nplurals=2; plural=(n != 1);',
-  }
-  const translations: typeof english.translations = {}
-  for (const [context, messages] of Object.entries(english.translations)) {
-    const locale_messages = locale.translations[context] ?? {}
-    translations[context] = {}
-    for (const [msgid, message] of Object.entries(messages)) {
-      if (msgid === '') {
-        translations[context][msgid] = message
-        continue
-      }
-      translations[context][msgid] = {
-        ...message,
-        msgstr: translationOf(locale_messages[msgid]),
-      }
-    }
-  }
-
-  const compiled = gettextParser.po.compile({
-    charset: 'utf-8',
-    headers,
-    translations,
-  }).toString()
-  writeFileSync(locale_po_path, stabilizeCatalog(compiled.endsWith('\n') ? compiled : `${compiled}\n`))
-}
-
 function extractSources(check = false): void {
   const staging_root = mkdtempSync(join(tmpdir(), 'blueos-i18n-'))
   const check_output_path = check ? join(tmpdir(), `blueos-i18n-check-${process.pid}.po`) : undefined
@@ -343,10 +293,8 @@ function extractSources(check = false): void {
       return
     }
     writeFileSync(english_po_path, extracted)
-    syncLocaleFromEnglish()
     console.log(`Extracted translations from ${staged_files.length} files`)
     console.log(`Wrote ${relative(frontend_root, english_po_path)}`)
-    console.log(`Updated ${relative(frontend_root, locale_po_path)}`)
   } finally {
     rmSync(staging_root, { recursive: true, force: true })
     if (check_output_path) {
