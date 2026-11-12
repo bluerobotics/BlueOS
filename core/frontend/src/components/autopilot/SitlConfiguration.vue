@@ -9,6 +9,7 @@
       :disabled="autopilot.restarting || setting"
       :loading="autopilot.restarting || setting"
       :label="t`SITL frame`"
+      data-testid="sitl-frame-select"
       class="ma-1 pa-0"
       @change="changeSitlFrame"
     />
