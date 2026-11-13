@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from commonwealth.utils.general import is_running_as_root
 from flight_controller_detector.board_identification import identifiers
@@ -27,6 +27,11 @@ class Detector:
             Optional[FlightController]: Return FlightController if connected, None otherwise.
         """
         return LinuxFlightControllerDetector.detect_boards()
+
+    @staticmethod
+    def usb_serial_numbers() -> Dict[str, Optional[str]]:
+        """Map each serial device path to the serial number of its USB device."""
+        return {port.device: port.serial_number for port in comports()}
 
     @staticmethod
     def is_serial_bootloader(port: SysFS) -> bool:
