@@ -1,13 +1,14 @@
 import asyncio
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterator, cast
+from typing import Any, Awaitable, Callable, Iterator, Optional, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from autopilot_manager import AutoPilotManager
+from flight_controller_detector.Detector import Detector
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager
-from typedefs import FlightController, Platform, PlatformType
+from typedefs import FlightController, FlightControllerFlags, Platform, PlatformType
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.timeout(5)]
 
@@ -41,6 +42,7 @@ def fixture_manager(lifecycle: Lifecycle) -> Iterator[AutoPilotManager]:
     manager = AutoPilotManager.__new__(AutoPilotManager)
     manager._lifecycle_lock = lifecycle.lock
     manager._current_board = None
+    manager._serial_board_usb_serial_number = None
     manager._settings_manager = MagicMock()
     manager.firmware_manager = AsyncMock()
     manager.mavlink_manager = MagicMock(
@@ -97,12 +99,15 @@ class FakeRouterManager:
         self.should_be_running = should_be_running
         self.running = False
         self.restarts = 0
+        self.master_endpoint: Optional[Endpoint] = None
 
     async def is_running(self) -> bool:
         return self.running
 
-    async def restart(self) -> None:
+    async def restart(self, master_endpoint: Optional[Endpoint] = None) -> None:
         await self.lifecycle.step("restart_router")
+        if master_endpoint:
+            self.master_endpoint = master_endpoint
         self.restarts += 1
         self.running = True
         self.should_be_running = True
@@ -219,3 +224,81 @@ async def test_endpoint_change_does_not_start_stopped_router(manager: AutoPilotM
 
     assert router.restarts == 0
     assert not router.should_be_running
+
+
+PIXHAWK = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1, path="/dev/ttyACM0")
+
+
+def serial_board_on(
+    manager: AutoPilotManager, lifecycle: Lifecycle, should_be_running: bool = True
+) -> FakeRouterManager:
+    router = FakeRouterManager(lifecycle, should_be_running)
+    router.running = should_be_running
+    router.master_endpoint = AutoPilotManager._serial_master_endpoint(PIXHAWK)
+    manager.mavlink_manager = cast(Manager, router)
+    manager._current_board = PIXHAWK
+    manager._serial_board_usb_serial_number = "ours"
+    return router
+
+
+def detected_serial_boards(*boards: FlightController) -> Any:
+    return patch.object(Detector, "detect_serial_flight_controllers", MagicMock(return_value=list(boards)))
+
+
+async def test_router_watchdog_follows_moved_serial_board(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
+    router = serial_board_on(manager, lifecycle)
+    bootloader = FlightController(
+        name="Pixhawk1-BL", platform=Platform.Pixhawk1, path="/dev/ttyACM1", flags=[FlightControllerFlags.is_bootloader]
+    )
+    other_board = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1, path="/dev/ttyACM2")
+    moved_board = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1, path="/dev/ttyACM3")
+    usb_serial_numbers = {"/dev/ttyACM1": "ours", "/dev/ttyACM2": "other", "/dev/ttyACM3": "ours"}
+
+    with (
+        patch("os.path.exists", MagicMock(return_value=False)),
+        detected_serial_boards(bootloader, other_board, moved_board),
+        patch.object(Detector, "usb_serial_numbers", MagicMock(return_value=usb_serial_numbers)),
+    ):
+        await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert router.master_endpoint is not None and router.master_endpoint.place == "/dev/ttyACM3"
+    assert manager.current_board == moved_board
+
+
+async def test_router_watchdog_waits_for_missing_serial_board(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
+    router = serial_board_on(manager, lifecycle)
+    bootloader = FlightController(
+        name="Pixhawk1-BL", platform=Platform.Pixhawk1, path="/dev/ttyACM1", flags=[FlightControllerFlags.is_bootloader]
+    )
+
+    with patch("os.path.exists", MagicMock(return_value=False)), detected_serial_boards(bootloader):
+        await manager._restart_router_if_dead()
+
+    assert router.restarts == 0
+    assert manager.current_board == PIXHAWK
+
+
+async def test_router_watchdog_does_not_scan_present_serial_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle
+) -> None:
+    router = serial_board_on(manager, lifecycle)
+
+    with patch("os.path.exists", MagicMock(return_value=True)), detected_serial_boards() as detect:
+        await manager._restart_router_if_dead()
+
+    detect.assert_not_called()
+    assert router.restarts == 0
+
+
+async def test_router_watchdog_does_not_move_stopped_serial_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle
+) -> None:
+    router = serial_board_on(manager, lifecycle, should_be_running=False)
+    moved_board = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1, path="/dev/ttyACM1")
+
+    with patch("os.path.exists", MagicMock(return_value=False)), detected_serial_boards(moved_board) as detect:
+        await manager._restart_router_if_dead()
+
+    detect.assert_not_called()
+    assert router.restarts == 0 and not router.running
