@@ -19,6 +19,11 @@ msgstr ""
 msgid "${ 0 } (Number of satellites: ${ 1 })"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "${ 0 } (generation ${ 1 })"
+msgstr ""
+
 #: src/components/system-information/NetworkCard.vue
 #, javascript-format
 msgid "${ 0 } / ${ 1 } total"
@@ -39,9 +44,31 @@ msgstr ""
 msgid "${ 0 } device(s)"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "${ 0 } did not start within the deadline: ${ 1 }"
+msgstr ""
+
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
 msgid "${ 0 } installed successfully."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "${ 0 } is downloaded and can be installed without internet."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid ""
+"${ 0 } is installed but not running: the machine has to reboot to boot into "
+"it."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "${ 0 } is installed. Reboot to boot into it."
 msgstr ""
 
 #: src/components/vehiclesetup/configuration/lights.vue
@@ -124,6 +151,10 @@ msgstr ""
 msgid ".glb file"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "/nix/store/...-nixos-system-blueos-..."
+msgstr ""
+
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "0deg 0deg 0deg"
 msgstr ""
@@ -166,6 +197,7 @@ msgid ""
 msgstr ""
 
 #: src/components/app/NewVersionNotificator.vue
+#: src/components/app/NewVersionNotificatorNixos.vue
 msgid "A new version is available!"
 msgstr ""
 
@@ -437,6 +469,10 @@ msgstr ""
 msgid "Available Services"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Available Versions"
+msgstr ""
+
 #: src/components/autopilot/BoardChangeDialog.vue
 msgid "Available boards"
 msgstr ""
@@ -536,6 +572,11 @@ msgstr ""
 msgid "Block source"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "BlueOS ${ 0 } is available."
+msgstr ""
+
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "BlueOS Documentation"
 msgstr ""
@@ -578,6 +619,10 @@ msgstr ""
 
 #: src/components/wizard/Wizard.vue
 msgid "Boat Setup"
+msgstr ""
+
+#: src/components/version-chooser/GenerationCard.vue
+msgid "Boot into"
 msgstr ""
 
 #: src/components/system-information/Firmware.vue
@@ -1034,6 +1079,41 @@ msgstr ""
 msgid "Core container is restarting, please wait."
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Could not delete ${ 0 }: ${ 1 }"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Could not download ${ 0 }: ${ 1 }"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Could not install ${ 0 }: ${ 1 }"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Could not install that build: ${ 0 }"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Could not list the installed versions: ${ 0 }"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Could not read the update status: ${ 0 }"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Could not switch to ${ 0 }: ${ 1 }"
+msgstr ""
+
 #: src/components/bridges/BridgeCreationDialog.vue
 #: src/components/ethernet/AddressCreationDialog.vue
 #: src/components/kraken/modals/ExtensionCreationModal.vue
@@ -1085,6 +1165,7 @@ msgid "Current Pin:"
 msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
+#: src/components/version-chooser/VersionChooserNixos.vue
 msgid "Current Version"
 msgstr ""
 
@@ -1168,8 +1249,14 @@ msgstr ""
 msgid "Decompressing file..."
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "Delete"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Delete ${ 0 }? The build can be downloaded again if it is published."
 msgstr ""
 
 #: src/components/autopilot/EndpointCard.vue
@@ -1182,6 +1269,11 @@ msgstr ""
 
 #: src/components/logs/LogManager.vue
 msgid "Delete selected logs"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Deleted ${ 0 }."
 msgstr ""
 
 #: src/components/logs/LogManager.vue
@@ -1368,6 +1460,8 @@ msgstr ""
 msgid "Docker tag"
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+#: src/components/version-chooser/ReleaseCard.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "Documentation for this version"
 msgstr ""
@@ -1392,12 +1486,20 @@ msgstr ""
 msgid "Download and Apply"
 msgstr ""
 
+#: src/components/version-chooser/ReleaseCard.vue
+msgid "Download and install"
+msgstr ""
+
 #: src/components/logs/LogManager.vue
 msgid "Download log"
 msgstr ""
 
 #: src/views/SettingsView.vue
 msgid "Download logs for all BlueOS services"
+msgstr ""
+
+#: src/components/version-chooser/ReleaseCard.vue
+msgid "Download only"
 msgstr ""
 
 #: src/components/logs/LogManager.vue
@@ -1410,6 +1512,19 @@ msgstr ""
 
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Download speed from vehicle"
+msgstr ""
+
+#: src/components/version-chooser/ReleaseCard.vue
+msgid "Downloaded"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Downloading ${ 0 }..."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Downloading the build..."
 msgstr ""
 
 #: src/components/utils/PullProgress.vue
@@ -1552,6 +1667,13 @@ msgstr ""
 #: src/components/notifications/EventLogModal.vue
 #: src/components/notifications/NotificationManager.vue
 msgid "Event log"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid ""
+"Every version installed on this card. Switching back to an older one is a "
+"rollback you ask for, unlike the automatic one, which only happens when an "
+"update fails."
 msgstr ""
 
 #: src/components/system-information/Processes.vue
@@ -1770,6 +1892,13 @@ msgstr ""
 msgid "Follow Logs"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid ""
+"For a build the manifest does not list, such as one made from a branch. The "
+"build has to be in a binary cache already: nothing is compiled here. It "
+"becomes a normal version, so it can be rolled back like any other."
+msgstr ""
+
 #: src/components/parameter-editor/InlineParameterEditor.vue
 msgid "Force"
 msgstr ""
@@ -1851,6 +1980,10 @@ msgstr ""
 msgid "GPIO Function:"
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+msgid "Generation"
+msgstr ""
+
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "GeoIP coordinates are estimated based on your IP address."
 msgstr ""
@@ -1903,6 +2036,8 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+#: src/components/version-chooser/ReleaseCard.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "Hide release notes"
 msgstr ""
@@ -2061,6 +2196,10 @@ msgstr ""
 msgid "Install Major Tom"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Install a store path"
+msgstr ""
+
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Install anyway"
 msgstr ""
@@ -2085,6 +2224,10 @@ msgstr ""
 msgid "Install from file"
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+msgid "Install it and reboot into it"
+msgstr ""
+
 #: src/components/wizard/Wizard.vue
 msgid "Install scripts"
 msgstr ""
@@ -2100,6 +2243,15 @@ msgstr ""
 #: src/components/kraken/BackAlleyTab.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Installed"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Installed Versions"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Installing ${ 0 }..."
 msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
@@ -2254,12 +2406,20 @@ msgstr ""
 msgid "Loading Parameters"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Loading available versions..."
+msgstr ""
+
 #: src/components/customization/ThemeCustomization.vue
 msgid "Loading current theme..."
 msgstr ""
 
 #: src/components/utils/BrIframe.vue
 msgid "Loading external application..."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Loading installed versions..."
 msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
@@ -2276,6 +2436,10 @@ msgstr ""
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "Loading scripts..."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Loading the running version..."
 msgstr ""
 
 #: src/components/system-information/Processes.vue
@@ -2548,6 +2712,14 @@ msgstr ""
 
 #: src/components/logs/LogManager.vue
 msgid "Modified"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid ""
+"Monitoring this version. It is confirmed automatically once its services "
+"are up, and the vehicle returns to ${ 0 } on its own if it does not become "
+"healthy."
 msgstr ""
 
 #: src/components/vehiclesetup/PwmSetup.vue
@@ -3291,6 +3463,7 @@ msgstr ""
 
 #: src/components/app/PowerMenu.vue
 #: src/components/autopilot/FirmwareManager.vue
+#: src/components/version-chooser/VersionChooserNixos.vue
 #: src/views/SettingsView.vue
 msgid "Reboot"
 msgstr ""
@@ -3338,6 +3511,7 @@ msgid "Relay On"
 msgstr ""
 
 #: src/components/version-chooser/ReleaseNotes.vue
+#: src/components/version-chooser/ReleaseNotesNixos.vue
 msgid "Release notes are not available for this version."
 msgstr ""
 
@@ -3428,12 +3602,9 @@ msgstr ""
 msgid "Restart Autopilot"
 msgstr ""
 
+#: src/components/app/PowerMenu.vue
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "Restart Core"
-msgstr ""
-
-#: src/components/app/PowerMenu.vue
-msgid "Restart Core container"
 msgstr ""
 
 #: src/views/Autopilot.vue
@@ -3477,6 +3648,7 @@ msgid "Retrieve from Cloud"
 msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
+#: src/components/version-chooser/VersionChooserNixos.vue
 #: src/components/wizard/Wizard.vue
 msgid "Retry"
 msgstr ""
@@ -3511,6 +3683,10 @@ msgstr ""
 msgid "Roll: ${ 0 }°"
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+msgid "Rollback target"
+msgstr ""
+
 #: src/components/system-information/Processes.vue
 msgid "Root directory"
 msgstr ""
@@ -3524,6 +3700,7 @@ msgstr ""
 msgid "Run Wizard"
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "Running"
 msgstr ""
@@ -4083,9 +4260,18 @@ msgstr ""
 msgid "Successfully updated smart-hotspot configuration."
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+msgid "Switch to"
+msgstr ""
+
 #: src/components/beacon/BeaconTrayMenu.vue
 #, javascript-format
 msgid "Switch to ${ 0 }.local"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "Switching to ${ 0 }..."
 msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
@@ -4120,6 +4306,10 @@ msgstr ""
 
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "System problems detected. Click to view details."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "System store path"
 msgstr ""
 
 #: src/components/app/DnsConfigurationMenu.vue
@@ -4161,6 +4351,10 @@ msgid ""
 "automatically reverses their control signals as relevant."
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "That is not a /nix/store path to a system build."
+msgstr ""
+
 #: src/components/video-manager/VideoDiagnosticHelper.vue
 msgid ""
 "That should be fine if you are using this wi-fi connection for something "
@@ -4192,6 +4386,10 @@ msgid ""
 "is currently ${ 1 }. Reboot the autopilot after changing the parameter."
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "The build is installed. Reboot to boot into it."
+msgstr ""
+
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "The compass is not calibrated - please calibrate it."
 msgstr ""
@@ -4203,8 +4401,40 @@ msgid ""
 "Installing it might result in the extension failing to load."
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid ""
+"The failed generation was ${ 0 }. It is still installed, so it can be "
+"inspected or deleted below."
+msgstr ""
+
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "The gimbal will move to the new PWM values as you adjust them."
+msgstr ""
+
+#: src/components/health/SelfHealthTestNixos.vue
+#, javascript-format
+msgid ""
+"The last BlueOS update did not become healthy, so the vehicle returned to "
+"${ 0 } by itself. The failed version is still installed and can be "
+"inspected in the <a href='/tools/version-chooser'>version chooser</a>. "
+"Please file an issue at <a "
+"href='https://github.com/bluerobotics/BlueOS/issues' "
+"target='_blank'>BlueOS/issues</a> or post on our <a "
+"href='https://discuss.bluerobotics.com/c/bluerobotics-software/blue-os/85' "
+"target='_blank'>forum</a>. Please include the <a href='#' "
+"class='js-download-logs'>System logs</a> if possible."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "The last attempt did not switch:"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid ""
+"The last update did not pass its health check, so the vehicle rolled back "
+"to ${ 0 }. See"
 msgstr ""
 
 #: src/alerts/rules/network.ts
@@ -4241,6 +4471,11 @@ msgstr ""
 msgid ""
 "The update may have failed or BlueOS is still starting up. Do you want to "
 "reload the page or skip?"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "The vehicle did not come back in time: ${ 0 }"
 msgstr ""
 
 #: src/components/wizard/Wizard.vue
@@ -4365,6 +4600,13 @@ msgid ""
 "doing when this happened."
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid ""
+"This vehicle was built without a release manifest, so there is nothing to "
+"download. Versions can still be deployed with nixos-rebuild or deploy-rs, "
+"which are protected by the same rollback."
+msgstr ""
+
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "This version is not compatible with current machine running BlueOS"
 msgstr ""
@@ -4474,6 +4716,12 @@ msgstr ""
 msgid "Turn off hotspot"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid ""
+"Turn on Pirate mode to see every published version, including beta and "
+"development builds."
+msgstr ""
+
 #: src/components/version-chooser/VersionChooser.vue
 #, javascript-format
 msgid ""
@@ -4573,7 +4821,9 @@ msgid "Update time"
 msgstr ""
 
 #: src/components/app/NewVersionNotificator.vue
+#: src/components/app/NewVersionNotificatorNixos.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
+#: src/components/version-chooser/VersionChooserNixos.vue
 #, javascript-format
 msgid "Update to ${ 0 }"
 msgstr ""
@@ -4590,6 +4840,10 @@ msgstr ""
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Updating bootstrap is only recommended between stable versions."
+msgstr ""
+
+#: src/components/version-chooser/ReleaseCard.vue
+msgid "Upgrade to"
 msgstr ""
 
 #: src/components/customization/BrandingUploader.vue
@@ -4803,6 +5057,13 @@ msgstr ""
 msgid "Versions"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid ""
+"Versions published for this board. Updating downloads the build and "
+"installs it for the next boot; if it does not come up healthy, the vehicle "
+"returns to the running version."
+msgstr ""
+
 #: src/components/health/GpsTrayMenu.vue
 msgid "Vertical Accuracy"
 msgstr ""
@@ -4896,6 +5157,14 @@ msgstr ""
 msgid "Waiting for parameters.."
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Waiting for the switch to finish..."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "Waiting for the vehicle to reboot..."
+msgstr ""
+
 #: src/components/wifi/WifiManager.vue
 msgid "Waiting for wifi networks..."
 msgstr ""
@@ -4927,6 +5196,8 @@ msgid ""
 "can skip this wizard."
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+#: src/components/version-chooser/ReleaseCard.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "What's new?"
 msgstr ""
@@ -5056,12 +5327,21 @@ msgstr ""
 msgid "Zenoh Network"
 msgstr ""
 
+#: src/components/version-chooser/GenerationCard.vue
+#: src/components/version-chooser/ReleaseCard.vue
+msgid "ago"
+msgstr ""
+
 #: src/components/cloud/CloudSettingsTab.vue
 msgid "already have a token"
 msgstr ""
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "an automatically assigned port"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "details"
 msgstr ""
 
 #: src/components/ethernet/InterfaceCard.vue
@@ -5074,6 +5354,11 @@ msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "fetching..."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+#, javascript-format
+msgid "generation ${ 0 }"
 msgstr ""
 
 #: src/components/vehiclesetup/MotorDetection.vue
@@ -5092,12 +5377,20 @@ msgstr ""
 msgid "no movement"
 msgstr ""
 
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "no output was recorded"
+msgstr ""
+
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "nothing"
 msgstr ""
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "poor movement estimation"
+msgstr ""
+
+#: src/components/version-chooser/ReleaseCard.vue
+msgid "published"
 msgstr ""
 
 #: src/components/ethernet/InterfaceCard.vue
@@ -5110,6 +5403,10 @@ msgstr ""
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "tab."
+msgstr ""
+
+#: src/components/version-chooser/VersionChooserNixos.vue
+msgid "the last version that worked"
 msgstr ""
 
 #: src/components/cloud/CloudSettingsTab.vue
