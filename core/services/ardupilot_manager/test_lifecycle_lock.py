@@ -1,12 +1,13 @@
 import asyncio
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterator
+from typing import Any, Awaitable, Callable, Iterator, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from autopilot_manager import AutoPilotManager
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
-from typedefs import FlightController, Platform
+from mavlink_proxy.Manager import Manager
+from typedefs import FlightController, Platform, PlatformType
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.timeout(5)]
 
@@ -42,7 +43,11 @@ def fixture_manager(lifecycle: Lifecycle) -> Iterator[AutoPilotManager]:
     manager._current_board = None
     manager._settings_manager = MagicMock()
     manager.firmware_manager = AsyncMock()
-    manager.mavlink_manager = MagicMock(restart=lambda: lifecycle.step("restart_router"))
+    manager.mavlink_manager = MagicMock(
+        should_be_running=True,
+        is_running=AsyncMock(return_value=False),
+        restart=lambda: lifecycle.step("restart_router"),
+    )
     with (
         patch.object(manager, "_kill_ardupilot_locked", lambda: lifecycle.step("kill")),
         patch.object(manager, "_start_ardupilot_locked", lambda: lifecycle.step("start")),
@@ -65,6 +70,7 @@ OPERATIONS: dict[str, Callable[[AutoPilotManager], Awaitable[Any]]] = {
     "install_from_url": lambda manager: manager.install_firmware_from_url("https://example.invalid/fw", SITL),
     "restore_default": lambda manager: manager.restore_default_firmware(SITL),
     "set_preferred_router": lambda manager: manager.set_preferred_router("MAVLink-Server"),
+    "router_watchdog": lambda manager: manager._restart_router_if_dead(),
 }
 
 
@@ -83,3 +89,133 @@ async def test_failed_install_starts_autopilot_again(manager: AutoPilotManager, 
 
     assert lifecycle.calls == ["kill", "start"]
     assert not manager._lifecycle_lock.locked()
+
+
+class FakeRouterManager:
+    def __init__(self, lifecycle: Lifecycle, should_be_running: bool = True) -> None:
+        self.lifecycle = lifecycle
+        self.should_be_running = should_be_running
+        self.running = False
+        self.restarts = 0
+
+    async def is_running(self) -> bool:
+        return self.running
+
+    async def restart(self) -> None:
+        await self.lifecycle.step("restart_router")
+        self.restarts += 1
+        self.running = True
+        self.should_be_running = True
+
+    async def stop(self) -> None:
+        await self.lifecycle.step("stop_router")
+        self.should_be_running = False
+        self.running = False
+
+
+async def test_router_watchdog_follows_current_manager(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
+    old_router = FakeRouterManager(lifecycle, should_be_running=False)
+    manager.mavlink_manager = cast(Manager, old_router)
+    watchdog = asyncio.create_task(manager.start_mavlink_manager_watchdog(interval=0.01))
+    await asyncio.sleep(0.05)
+
+    # What setup() does on every start
+    new_router = FakeRouterManager(lifecycle)
+    manager.mavlink_manager = cast(Manager, new_router)
+    await asyncio.sleep(0.05)
+    watchdog.cancel()
+
+    assert new_router.restarts == 1
+    assert old_router.restarts == 0
+
+
+async def test_router_watchdog_skips_while_locked(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
+    router = FakeRouterManager(lifecycle)
+    manager.mavlink_manager = cast(Manager, router)
+    async with manager._lifecycle_lock:
+        await manager._restart_router_if_dead()
+    assert router.restarts == 0
+
+    await manager._restart_router_if_dead()
+    assert router.restarts == 1
+
+
+async def test_router_watchdog_does_not_revive_stopped_router(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
+    router = FakeRouterManager(lifecycle)
+    manager.mavlink_manager = cast(Manager, router)
+
+    async def kill() -> None:
+        async with manager._lifecycle_lock:
+            await router.stop()
+
+    # Watchdog first: it restarts the dead router, then the stop wins
+    await asyncio.gather(manager._restart_router_if_dead(), kill())
+    assert not router.should_be_running and not router.running
+
+    # Stop first: the watchdog sees the user's intent and leaves it down
+    router.should_be_running = True
+    await asyncio.gather(kill(), manager._restart_router_if_dead())
+    assert not router.should_be_running and not router.running
+    assert lifecycle.max_running == 1
+
+
+async def test_router_watchdog_survives_exceptions(manager: AutoPilotManager) -> None:
+    restart = AsyncMock(side_effect=[RuntimeError("router failed to start"), None])
+    manager.mavlink_manager = MagicMock(
+        should_be_running=True, is_running=AsyncMock(return_value=False), restart=restart
+    )
+    watchdog = asyncio.create_task(manager.start_mavlink_manager_watchdog(interval=0.01))
+    await asyncio.sleep(0.1)
+
+    assert not watchdog.done()
+    assert restart.await_count >= 2
+    watchdog.cancel()
+
+
+async def test_failed_router_restart_keeps_retrying(manager: AutoPilotManager) -> None:
+    router = Manager.__new__(Manager)
+    router.tool = MagicMock(
+        restart=AsyncMock(side_effect=RuntimeError("boom")), is_running=AsyncMock(return_value=False)
+    )
+    router.should_be_running = True
+    router._last_valid_endpoints = set()
+    manager.mavlink_manager = router
+
+    with pytest.raises(RuntimeError):
+        await manager._restart_router_if_dead()
+    assert router.should_be_running, "a failed restart must not disarm the watchdog"
+
+
+async def test_serial_restart_holds_router_watchdog(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
+    router = FakeRouterManager(lifecycle)
+    manager.mavlink_manager = cast(Manager, router)
+    manager._current_board = FlightController(name="Pixhawk", platform=Platform.Pixhawk1, path="/dev/ttyACM0")
+    assert manager._current_board.type == PlatformType.Serial
+    manager.vehicle_manager = AsyncMock()
+    board_dropped = asyncio.Event()
+
+    async def detect(_board: FlightController) -> None:
+        board_dropped.set()
+        await asyncio.sleep(1)  # board never comes back during the test
+        return None
+
+    with patch.object(manager, "_detect_serial_board", detect):
+        restart = asyncio.create_task(manager.restart_ardupilot())
+        await board_dropped.wait()
+        assert not router.should_be_running
+        await manager._restart_router_if_dead()
+        restart.cancel()
+
+    assert router.restarts == 0
+
+
+async def test_endpoint_change_does_not_start_stopped_router(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
+    router = FakeRouterManager(lifecycle, should_be_running=False)
+    router.add_endpoints = MagicMock()  # type: ignore[attr-defined]
+    manager.mavlink_manager = cast(Manager, router)
+    manager._save_current_endpoints = MagicMock()  # type: ignore[method-assign]
+
+    await manager.add_new_endpoints(set())
+
+    assert router.restarts == 0
+    assert not router.should_be_running
