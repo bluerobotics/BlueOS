@@ -253,8 +253,26 @@ class AutoPilotManager(metaclass=Singleton):
 
             await asyncio.sleep(5.0)
 
-    async def start_mavlink_manager_watchdog(self) -> None:
-        await self.mavlink_manager.auto_restart_router()
+    async def start_mavlink_manager_watchdog(self, interval: float = 5.0) -> None:
+        """Auto-restart the MAVLink router if it dies while it should be running."""
+        while True:
+            await asyncio.sleep(interval)
+            try:
+                await self._restart_router_if_dead()
+            except Exception as error:
+                logger.error(f"Failed to restart Mavlink router. {error}")
+
+    async def _restart_router_if_dead(self) -> None:
+        # Lifecycle operations leave the router the way they want it, check again on the next tick
+        if self._lifecycle_lock.locked():
+            return
+        async with self._lifecycle_lock:
+            # setup() replaces the manager on every start, so always act on the current one
+            mavlink_manager = self.mavlink_manager
+            if not mavlink_manager.should_be_running or await mavlink_manager.is_running():
+                return
+            logger.warning("Mavlink router stopped. Trying to restart it.")
+            await mavlink_manager.restart()
 
     @property
     def settings(self) -> SettingsV1:
@@ -734,8 +752,8 @@ class AutoPilotManager(metaclass=Singleton):
 
             await self.vehicle_manager.reboot_vehicle()
 
-            # The router watchdog would otherwise reopen the stale path the moment the board drops.
-            # Stand it down until start_serial re-arms it on the freshly detected path below.
+            # The lifecycle lock already holds the router watchdog off, this only marks the router as
+            # down until start_serial re-arms it on the freshly detected path below.
             self.mavlink_manager.should_be_running = False
 
             try:
