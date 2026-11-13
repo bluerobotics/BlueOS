@@ -19,6 +19,7 @@ class Ping1dSettingsSpecV1(pykson.JsonObject):
 class SettingsV1(settings.BaseSettings):
     VERSION = 1
     ping1d_specs = pykson.ObjectListField(Ping1dSettingsSpecV1)
+    ignored_ports = pykson.ListField(item_type=str)
     # no settings for ping360 as of V1
 
     def __init__(self, *args: str, **kwargs: int) -> None:
