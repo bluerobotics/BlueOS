@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-13 18:18\n"
+"PO-Revision-Date: 2026-11-13 21:23\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -333,6 +333,14 @@ msgstr "É necessário reiniciar o piloto automático."
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Angular speed (mrad/s)"
 msgstr "Velocidade angular (mrad/s)"
+
+#: src/alerts/rules/network.ts
+msgid "Another interface is faster. Check the connection or change the interfaces priority."
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Another interface is online. Check the connection or change the interfaces priority."
+msgstr ""
 
 #: src/views/SettingsView.vue
 msgid "Appearance"
@@ -3048,6 +3056,14 @@ msgstr "Sensor de energia"
 #: src/components/app/PowerMenu.vue
 msgid "Power off"
 msgstr "Desligar"
+
+#: src/alerts/rules/network.ts
+msgid "Preferred network interface has no internet"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Preferred network interface is slow"
+msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Preview not available, add a stream to have one."
