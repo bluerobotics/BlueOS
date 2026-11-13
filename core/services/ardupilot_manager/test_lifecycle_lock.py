@@ -43,6 +43,7 @@ def fixture_manager(lifecycle: Lifecycle) -> Iterator[AutoPilotManager]:
     with (
         patch.object(manager, "_kill_ardupilot_locked", lambda: lifecycle.step("kill")),
         patch.object(manager, "_start_ardupilot_locked", lambda: lifecycle.step("start")),
+        patch.object(manager, "_set_preferred_router_locked", lambda *_: lifecycle.step("set_preferred_router")),
         patch.object(AutoPilotManager, "available_boards", AsyncMock(return_value=[SITL])),
     ):
         yield manager
@@ -56,6 +57,7 @@ OPERATIONS: dict[str, Callable[[AutoPilotManager], Awaitable[Any]]] = {
     "install_from_file": lambda manager: manager.install_firmware_from_file(Path("firmware"), SITL),
     "install_from_url": lambda manager: manager.install_firmware_from_url("https://example.invalid/fw", SITL),
     "restore_default": lambda manager: manager.restore_default_firmware(SITL),
+    "set_preferred_router": lambda manager: manager.set_preferred_router("MAVLink-Server"),
 }
 
 

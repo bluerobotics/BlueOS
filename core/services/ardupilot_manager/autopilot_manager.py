@@ -147,7 +147,7 @@ class AutoPilotManager(metaclass=Singleton):
             preferred_router = None
 
         if not preferred_router:
-            await self.set_preferred_router(self.mavlink_manager.tool.name())
+            await self._set_preferred_router_locked(self.mavlink_manager.tool.name())
             logger.info(f"Setting {self.mavlink_manager.tool.name()} as preferred router.")
         self.mavlink_manager.set_logdir(self._settings_manager.settings.log_path)
         self.mavlink_manager.set_tlog_mode(self.load_tlog_mode())
@@ -424,6 +424,10 @@ class AutoPilotManager(metaclass=Singleton):
         return frame
 
     async def set_preferred_router(self, router: str, tlog_mode: Optional[TLogMode] = None) -> None:
+        async with self._lifecycle_lock:
+            await self._set_preferred_router_locked(router, tlog_mode)
+
+    async def _set_preferred_router_locked(self, router: str, tlog_mode: Optional[TLogMode] = None) -> None:
         self._settings_manager.settings.preferred_router = router
         if tlog_mode is not None:
             self._settings_manager.settings.tlog_mode = tlog_mode
