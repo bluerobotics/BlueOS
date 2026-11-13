@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-13 15:53\n"
+"PO-Revision-Date: 2026-11-13 17:15\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -278,6 +278,10 @@ msgstr "Permite gerenciar soquetes para injeção de dados NMEA."
 #: src/components/health/GpsTrayMenu.vue
 msgid "Altitude estimate"
 msgstr "Estimativa de altitude"
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Always"
+msgstr ""
 
 #: src/components/common/rebootRequiredOverlay.vue
 msgid "An autopilot Reboot is required."
@@ -974,6 +978,7 @@ msgstr "Desativar o modo desenvolvedor"
 msgid "Disable smart Wi-Fi hotspot"
 msgstr "Desativar o hotspot Wi-Fi inteligente"
 
+#: src/components/autopilot/EndpointManager.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/NetworkCard.vue
 #: src/components/vehiclesetup/overview/LeakInfo.vue
@@ -2111,6 +2116,10 @@ msgstr ""
 msgid "On ${ 0 } forum"
 msgstr "No fórum da ${ 0 }"
 
+#: src/components/autopilot/EndpointManager.vue
+msgid "On MAVLinkRouter, only while armed also applies to .bin logs."
+msgstr ""
+
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Onboard Compass Calibration"
 msgstr "Calibração da bússola a bordo"
@@ -2118,6 +2127,10 @@ msgstr "Calibração da bússola a bordo"
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Onboard Computer"
 msgstr "Computador de bordo"
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Only while armed"
+msgstr ""
 
 #: src/components/app/SettingsMenu.vue
 msgid "Open Settings"
@@ -2999,6 +3012,10 @@ msgstr "TENTAR NOVAMENTE"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Tag"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Telemetry Logs (.tlog)"
 msgstr ""
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
