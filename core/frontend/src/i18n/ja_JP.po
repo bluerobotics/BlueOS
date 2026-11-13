@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Japanese\n"
-"PO-Revision-Date: 2026-11-13 18:18\n"
+"PO-Revision-Date: 2026-11-13 21:23\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -330,6 +330,14 @@ msgstr ""
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Angular speed (mrad/s)"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Another interface is faster. Check the connection or change the interfaces priority."
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Another interface is online. Check the connection or change the interfaces priority."
 msgstr ""
 
 #: src/views/SettingsView.vue
@@ -3045,6 +3053,14 @@ msgstr ""
 
 #: src/components/app/PowerMenu.vue
 msgid "Power off"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Preferred network interface has no internet"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Preferred network interface is slow"
 msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
