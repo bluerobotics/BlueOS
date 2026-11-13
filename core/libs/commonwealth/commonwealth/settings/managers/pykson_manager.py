@@ -125,9 +125,9 @@ class PyksonManager:
                 logger.debug(f"Using {valid_file} as settings source")
                 return
             except Exception as exception:
-                logger.debug("Invalid settings, going to try another file:", exception)
+                logger.warning(f"Invalid settings in {valid_file}, going to try another file: {exception}")
 
-        logger.debug("No valid settings found, using default settings")
+        logger.warning("No valid settings found, using default settings")
         self._settings = self.settings_type()
         self.save()
 
