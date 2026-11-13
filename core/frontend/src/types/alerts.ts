@@ -11,6 +11,8 @@ export enum AlertRuleId {
   NetworkFasterInterfaceAvailable = 'network.faster_interface_available',
   NetworkNoInternet = 'network.no_internet',
   NetworkPreferredInterfaceNoInternet = 'network.preferred_interface_no_internet',
+  NetworkTopsideDnsFailure = 'network.topside_dns_failure',
+  NetworkTopsideNoInternet = 'network.topside_no_internet',
   NetworkWifiUnavailable = 'network.wifi_unavailable',
 }
 

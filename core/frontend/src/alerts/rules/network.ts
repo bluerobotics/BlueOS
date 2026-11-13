@@ -71,6 +71,22 @@ const rules: AlertRule[] = defineRules([
     inhibited_by: [AlertRuleId.NetworkPreferredInterfaceNoInternet],
     condition: () => helper.faster_interface_available,
   },
+  {
+    id: AlertRuleId.NetworkTopsideDnsFailure,
+    service: helper_service,
+    level: NotificationLevel.Warning,
+    title: t`This computer's DNS is not resolving`,
+    description: t`Check this computer's DNS settings`,
+    condition: () => helper.topside_dns_failure,
+  },
+  {
+    id: AlertRuleId.NetworkTopsideNoInternet,
+    service: helper_service,
+    level: NotificationLevel.Warning,
+    title: t`This computer has no internet`,
+    description: t`Some features may be unavailable`,
+    condition: () => !helper.topside_has_internet,
+  },
 ])
 
 
