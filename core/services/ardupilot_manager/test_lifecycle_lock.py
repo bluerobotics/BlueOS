@@ -316,7 +316,11 @@ async def test_router_watchdog_wakes_up_moved_px4_board(
     manager.vehicle_manager = AsyncMock()
     moved_board = FlightController(name=board_name, platform=Platform.Pixhawk1, path="/dev/ttyACM1")
 
-    with patch("os.path.exists", MagicMock(return_value=False)), detected_serial_boards(moved_board):
+    with (
+        patch("os.path.exists", MagicMock(return_value=False)),
+        detected_serial_boards(moved_board),
+        patch.object(Detector, "usb_serial_numbers", MagicMock(return_value={"/dev/ttyACM1": "ours"})),
+    ):
         await manager._restart_router_if_dead()
 
     assert router.restarts == 1
