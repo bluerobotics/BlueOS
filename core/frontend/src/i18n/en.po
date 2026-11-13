@@ -1005,6 +1005,7 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+#: src/components/kraken/modals/ExtensionCreationModal.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Continue anyway"
 msgstr ""
@@ -1032,6 +1033,11 @@ msgstr ""
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "Core container is restarting, please wait."
+msgstr ""
+
+#: src/components/kraken/modals/ExtensionCreationModal.vue
+#, javascript-format
+msgid "Could not read permissions for ${ 0 }:${ 1 }: ${ 2 }"
 msgstr ""
 
 #: src/components/bridges/BridgeCreationDialog.vue
@@ -2270,6 +2276,10 @@ msgstr ""
 msgid "Loading parameters..."
 msgstr ""
 
+#: src/components/kraken/modals/ExtensionCreationModal.vue
+msgid "Loading permissions"
+msgstr ""
+
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Loading remote images..."
 msgstr ""
@@ -2440,6 +2450,14 @@ msgstr ""
 
 #: src/menus.ts
 msgid "Manage your video devices and video streams."
+msgstr ""
+
+#: src/components/kraken/modals/ExtensionCreationModal.vue
+msgid "Manifest not found"
+msgstr ""
+
+#: src/components/kraken/modals/ExtensionCreationModal.vue
+msgid "Manifest not found for this image and tag"
 msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
@@ -2764,6 +2782,13 @@ msgstr ""
 
 #: src/components/kraken/modals/ExtensionLogsModal.vue
 msgid "No logs received yet"
+msgstr ""
+
+#: src/components/kraken/modals/ExtensionCreationModal.vue
+#.  eslint-disable-next-line max-len
+msgid ""
+"No manifest was found for this image and tag, so the image might be "
+"missing. Double-check the name and tag before continuing."
 msgstr ""
 
 #: src/components/customization/ThemeCustomization.vue
@@ -4223,6 +4248,10 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "The output pin for the secondary set of lights:"
+msgstr ""
+
+#: src/components/kraken/modals/ExtensionCreationModal.vue
+msgid "The registry lookup failed."
 msgstr ""
 
 #: src/components/vehiclesetup/MotorDetection.vue
