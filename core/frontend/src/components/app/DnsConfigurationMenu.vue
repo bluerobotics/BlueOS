@@ -102,13 +102,8 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import Notifier from '@/libs/notifier'
 import ethernet from '@/store/ethernet'
-import { ethernet_service } from '@/types/frontend_services'
-import back_axios from '@/utils/api'
 import { isIpAddress } from '@/utils/pattern_validators'
-
-const notifier = new Notifier(ethernet_service)
 
 export default Vue.extend({
   name: 'DnsConfigurationMenu',
@@ -156,20 +151,14 @@ export default Vue.extend({
       this.updating_host_nameservers = true
       this.error = null
 
-      await back_axios({
-        method: 'get',
-        url: `${ethernet.API_URL}/host_dns`,
-        timeout: 15000,
-      })
+      await ethernet.getHostDNS()
         .then((response) => {
           const { data } = response
 
           this.host_nameservers = data.nameservers as string[]
           this.is_locked = data.lock as boolean
         })
-        .catch((error) => {
-          ethernet.setInterfaces([])
-          notifier.pushBackError('HOST_DNS_FETCH_FAIL', error)
+        .catch((_) => {
           this.error = 'Failed to fetch host DNS configuration, try again later'
         })
 
@@ -179,25 +168,11 @@ export default Vue.extend({
       this.updating_host_nameservers = true
       this.error = null
 
-      await back_axios({
-        method: 'post',
-        url: `${ethernet.API_URL}/host_dns`,
-        timeout: 15000,
-        data: {
-          nameservers: this.host_nameservers,
-          lock: this.is_locked,
-        },
-      })
-        .catch((error) => {
-          notifier.pushError('APPLY_HOST_DNS_FAIL', error)
+      await ethernet.updateHostDNS({ host_nameservers: this.host_nameservers, is_locked: this.is_locked })
+        .catch((_) => {
           this.error = 'Failed to apply changes, try again later'
         })
         .then(() => {
-          notifier.pushSuccess(
-            'APPLY_HOST_DNS_SUCCESS',
-            'Host DNS nameservers updated successfully!',
-            true,
-          )
           this.close()
         })
 

@@ -326,6 +326,8 @@ class EthernetManager:
         self._settings.content = [interface for interface in self._settings.content if interface.name != interface_name]
         self._settings.content.append(updated_interface)
         self._manager.save()
+        # OS state has just been mutated; drop the cached view so the next read returns fresh data.
+        self.get_ethernet_interfaces.invalidate()  # type: ignore[attr-defined]
 
     def add_static_ip(self, interface_name: str, ip: str, mode: AddressMode = AddressMode.Unmanaged) -> None:
         """Set ip address for a specific interface and saves it to the settings file
@@ -444,7 +446,8 @@ class EthernetManager:
         Returns:
             NetworkInterface: Interface object
         """
-        for interface in self.get_ethernet_interfaces(include_dhcp_markers):
+        interfaces: List[NetworkInterface] = self.get_ethernet_interfaces(include_dhcp_markers)
+        for interface in interfaces:
             if interface.name == name:
                 return interface
         raise ValueError(f"No interface with name '{name}' is present.")
@@ -530,6 +533,7 @@ class EthernetManager:
 
         return result
 
+    @temporary_cache(timeout_seconds=10)
     def get_ethernet_interfaces(self, include_dhcp_markers: bool = False) -> List[NetworkInterface]:
         """Get ethernet interfaces information
 
