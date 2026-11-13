@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Chinese Simplified\n"
-"PO-Revision-Date: 2026-11-13 15:53\n"
+"PO-Revision-Date: 2026-11-13 17:15\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -275,6 +275,10 @@ msgstr ""
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Altitude estimate"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Always"
 msgstr ""
 
 #: src/components/common/rebootRequiredOverlay.vue
@@ -972,6 +976,7 @@ msgstr ""
 msgid "Disable smart Wi-Fi hotspot"
 msgstr ""
 
+#: src/components/autopilot/EndpointManager.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/NetworkCard.vue
 #: src/components/vehiclesetup/overview/LeakInfo.vue
@@ -2109,12 +2114,20 @@ msgstr ""
 msgid "On ${ 0 } forum"
 msgstr ""
 
+#: src/components/autopilot/EndpointManager.vue
+msgid "On MAVLinkRouter, only while armed also applies to .bin logs."
+msgstr ""
+
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Onboard Compass Calibration"
 msgstr ""
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Onboard Computer"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Only while armed"
 msgstr ""
 
 #: src/components/app/SettingsMenu.vue
@@ -2996,6 +3009,10 @@ msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Tag"
+msgstr ""
+
+#: src/components/autopilot/EndpointManager.vue
+msgid "Telemetry Logs (.tlog)"
 msgstr ""
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
