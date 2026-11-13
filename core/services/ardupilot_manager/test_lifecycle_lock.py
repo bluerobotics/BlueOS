@@ -326,3 +326,45 @@ async def test_router_watchdog_wakes_up_moved_px4_board(
     assert router.restarts == 1
     assert router.master_endpoint is not None and router.master_endpoint.place == "/dev/ttyACM1"
     assert manager.vehicle_manager.burst_heartbeat.await_count == bursts
+
+
+async def test_router_watchdog_does_not_follow_another_serial_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle
+) -> None:
+    router = serial_board_on(manager, lifecycle)
+    other_board = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1, path="/dev/ttyACM1")
+
+    with (
+        patch("os.path.exists", MagicMock(return_value=False)),
+        detected_serial_boards(other_board),
+        patch.object(Detector, "usb_serial_numbers", MagicMock(return_value={"/dev/ttyACM1": "other"})),
+    ):
+        await manager._restart_router_if_dead()
+
+    assert router.restarts == 0
+    assert manager.current_board == PIXHAWK
+    assert manager._serial_board_usb_serial_number == "ours"
+
+
+async def test_router_watchdog_follows_serial_board_without_serial_number(
+    manager: AutoPilotManager, lifecycle: Lifecycle
+) -> None:
+    router = serial_board_on(manager, lifecycle)
+    manager._serial_board_usb_serial_number = None
+    moved_board = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1, path="/dev/ttyACM1")
+
+    with (
+        patch("os.path.exists", MagicMock(return_value=False)),
+        detected_serial_boards(moved_board),
+        patch.object(Detector, "usb_serial_numbers", MagicMock(return_value={"/dev/ttyACM1": "found"})),
+    ):
+        await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert manager.current_board == moved_board
+    assert manager._serial_board_usb_serial_number == "found"
+
+
+def test_serial_master_endpoint_needs_a_path() -> None:
+    with pytest.raises(ValueError):
+        AutoPilotManager._serial_master_endpoint(FlightController(name="Pixhawk1", platform=Platform.Pixhawk1))
