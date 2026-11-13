@@ -127,6 +127,10 @@ msgstr ""
 msgid "1 Hz"
 msgstr ""
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "3D model overrides"
+msgstr ""
+
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "3D viewer unavailable"
 msgstr "Visualizador 3D indisponível"
@@ -296,6 +300,7 @@ msgid "Applied changes require a <b>system reboot</b>."
 msgstr "As alterações aplicadas exigem uma <b>reinicialização do sistema</b>."
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
@@ -595,6 +600,7 @@ msgstr "A configuração do suporte da câmera não é suportada neste firmware 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/bridges/BridgeCreationDialog.vue
 #: src/components/common/WarningDialog.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 #: src/components/parameter-editor/ParameterEditorDialog.vue
@@ -847,6 +853,11 @@ msgstr "Corrente por volt:"
 msgid "Current:"
 msgstr "Corrente:"
 
+#: src/components/customization/ThemeCustomization.vue
+#: src/types/frontend_services.ts
+msgid "Customization"
+msgstr ""
+
 #: src/components/wizard/Wizard.vue
 msgid "Customize"
 msgstr "Personalizar"
@@ -1071,6 +1082,10 @@ msgstr "Arraste as interfaces de rede para colocar a de maior prioridade no topo
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Driver"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Drives the gradient and scrollbar"
 msgstr ""
 
 #: src/views/SettingsView.vue
@@ -1656,6 +1671,10 @@ msgstr "Carregar parâmetros de um arquivo"
 msgid "Loading Parameters"
 msgstr "Carregando parâmetros"
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Loading current theme..."
+msgstr ""
+
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Loading parameters..."
 msgstr "Carregando parâmetros..."
@@ -1767,6 +1786,12 @@ msgstr "Gerenciar registros e dados do sistema"
 #: src/types/frontend_services.ts
 msgid "Manage versions of BlueOS and bootstrap"
 msgstr "Gerenciar versões do BlueOS e do bootstrap"
+
+#: src/types/frontend_services.ts
+msgid ""
+"Manage BlueOS visual customization (theme color, 3D model overrides, "
+"branding)."
+msgstr ""
 
 #: src/menus.ts
 msgid "Manage your video devices and video streams."
@@ -1988,6 +2013,10 @@ msgstr "Nenhuma interface Ethernet disponível"
 msgid "No events yet"
 msgstr "Nenhum evento ainda"
 
+#: src/components/customization/BrandingUploader.vue
+msgid "No file uploaded."
+msgstr ""
+
 #: src/alerts/rules/autopilot.ts
 msgid "No flight controller detected"
 msgstr "Nenhum controlador de voo detectado"
@@ -2000,6 +2029,10 @@ msgstr "Nenhuma imagem encontrada em ${ 0 }. Envie algumas imagens para este dir
 #: src/alerts/rules/network.ts
 msgid "No internet connection"
 msgstr "Sem conexão com a internet"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "No model overrides uploaded."
+msgstr ""
 
 #: src/components/notifications/NotificationManager.vue
 msgid "No notifications to display :)"
@@ -2293,6 +2326,10 @@ msgstr "Pré-visualização indisponível, adicione um stream para ter uma."
 msgid "Preview not requested, use the controls to fetch one."
 msgstr "Pré-visualização não solicitada, use os controles para obter uma."
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Primary color"
+msgstr ""
+
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "Problems found"
 msgstr "Problemas encontrados"
@@ -2306,6 +2343,10 @@ msgstr "Continuar com o assistente de configuração é fundamental para a confi
 #: src/views/SystemInformationView.vue
 msgid "Processes"
 msgstr "Processos"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Project logo"
+msgstr ""
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Protected"
@@ -2408,9 +2449,17 @@ msgstr "Lembrar-me depois"
 msgid "Remote Versions"
 msgstr "Versões remotas"
 
+#: src/components/customization/BrandingUploader.vue
+msgid "Remove"
+msgstr ""
+
 #: src/components/video-manager/VideoStream.vue
 msgid "Remove stream"
 msgstr "Remover stream"
+
+#: src/components/customization/BrandingUploader.vue
+msgid "Remove the custom file"
+msgstr ""
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Remove this nameserver"
@@ -2424,6 +2473,7 @@ msgstr "Exige reinicialização"
 msgid "Rescanning..."
 msgstr "Verificando novamente..."
 
+#: src/components/customization/ThemeCustomization.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Reset"
 msgstr "Redefinir"
@@ -2497,6 +2547,10 @@ msgstr "Restaurar o firmware padrão"
 #: src/components/video-manager/VideoControlsDialog.vue
 msgid "Restore defaults"
 msgstr "Restaurar padrões"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Restore the default BlueOS theme"
+msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Retrieve from Cloud"
@@ -2584,6 +2638,10 @@ msgstr "Salvar e reiniciar"
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Save and restart"
 msgstr "Salvar e reiniciar"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Save the chosen color and regenerate the theme CSS"
+msgstr ""
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Saving settings, please wait..."
@@ -3053,6 +3111,10 @@ msgstr "O assistente só será exibido se o BlueOS for atualizado e for necessá
 msgid "The wizard will show again during BlueOS usage"
 msgstr "O assistente será exibido novamente durante o uso do BlueOS"
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Theme color, 3D models, logo and vehicle image"
+msgstr ""
+
 #: src/components/vehiclesetup/overview/ParamSets.vue
 #, javascript-format
 msgid "These are the recommended parameter sets for your vehicle and firmware version. Curated by ${ 0 }"
@@ -3301,18 +3363,37 @@ msgstr "Atualizar para o ${ 0 } mais recente"
 msgid "Updating bootstrap is only recommended between stable versions."
 msgstr ""
 
+#: src/components/customization/BrandingUploader.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Upload"
 msgstr "Enviar"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Upload 3D model override"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid ""
+"Upload <code>.glb</code> files served at "
+"<code>/userdata/modeloverrides/</code>. Use a relative name like "
+"<code>sub/MyFrame.glb</code> or <code>ALL.glb</code> to override every "
+"vehicle."
+msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload a Kraken-compatible .tar archive to sideload an extension."
 msgstr "Envie um arquivo .tar compatível com o Kraken para instalar uma extensão manualmente."
 
+#: src/components/customization/BrandingUploader.vue
+msgid "Upload a new file"
+msgstr ""
+
 #: src/views/ExtensionManagerView.vue
 msgid "Upload extension .tar file to onboard computer"
 msgstr "Enviar o arquivo .tar da extensão para o computador de bordo"
 
+#: src/components/customization/BrandingUploader.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Upload file"
 msgstr "Enviar arquivo"
@@ -3320,6 +3401,10 @@ msgstr "Enviar arquivo"
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Upload firmware file"
 msgstr "Enviar arquivo de firmware"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Upload model"
+msgstr ""
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Upload speed to internet"
@@ -3408,6 +3493,10 @@ msgstr "Configuração do veículo e dos periféricos. Inclui calibrações de s
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Vehicle coordinates:"
 msgstr "Coordenadas do veículo:"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Vehicle image"
+msgstr ""
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/components/kraken/BazaarTab.vue

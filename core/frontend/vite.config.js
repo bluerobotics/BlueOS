@@ -261,6 +261,9 @@ export default defineConfig(({ command, mode }) => {
         '^/commander': {
           target: SERVER_ADDRESS,
         },
+        '^/customization': {
+          target: SERVER_ADDRESS,
+        },
         '^/docker': {
           target: SERVER_ADDRESS,
         },

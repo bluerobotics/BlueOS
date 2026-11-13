@@ -123,6 +123,10 @@ msgstr ""
 msgid "1 Hz"
 msgstr ""
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "3D model overrides"
+msgstr ""
+
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "3D viewer unavailable"
 msgstr ""
@@ -309,6 +313,7 @@ msgid "Applied changes require a <b>system reboot</b>."
 msgstr ""
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
@@ -639,6 +644,7 @@ msgstr ""
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/bridges/BridgeCreationDialog.vue
 #: src/components/common/WarningDialog.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 #: src/components/parameter-editor/ParameterEditorDialog.vue
@@ -896,6 +902,11 @@ msgstr ""
 msgid "Current:"
 msgstr ""
 
+#: src/components/customization/ThemeCustomization.vue
+#: src/types/frontend_services.ts
+msgid "Customization"
+msgstr ""
+
 #: src/components/wizard/Wizard.vue
 msgid "Customize"
 msgstr ""
@@ -1122,6 +1133,10 @@ msgstr ""
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Driver"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Drives the gradient and scrollbar"
 msgstr ""
 
 #: src/views/SettingsView.vue
@@ -1731,6 +1746,10 @@ msgstr ""
 msgid "Loading Parameters"
 msgstr ""
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Loading current theme..."
+msgstr ""
+
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Loading parameters..."
 msgstr ""
@@ -1830,6 +1849,12 @@ msgstr ""
 
 #: src/menus.ts
 msgid "Manage BlueOS versions and update to the latest available."
+msgstr ""
+
+#: src/types/frontend_services.ts
+msgid ""
+"Manage BlueOS visual customization (theme color, 3D model overrides, "
+"branding)."
 msgstr ""
 
 #: src/menus.ts
@@ -2088,6 +2113,10 @@ msgstr ""
 msgid "No events yet"
 msgstr ""
 
+#: src/components/customization/BrandingUploader.vue
+msgid "No file uploaded."
+msgstr ""
+
 #: src/alerts/rules/autopilot.ts
 msgid "No flight controller detected"
 msgstr ""
@@ -2101,6 +2130,10 @@ msgstr ""
 
 #: src/alerts/rules/network.ts
 msgid "No internet connection"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "No model overrides uploaded."
 msgstr ""
 
 #: src/components/notifications/NotificationManager.vue
@@ -2406,6 +2439,10 @@ msgstr ""
 msgid "Preview not requested, use the controls to fetch one."
 msgstr ""
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Primary color"
+msgstr ""
+
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "Problems found"
 msgstr ""
@@ -2420,6 +2457,10 @@ msgstr ""
 
 #: src/views/SystemInformationView.vue
 msgid "Processes"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Project logo"
 msgstr ""
 
 #: src/components/autopilot/EndpointCard.vue
@@ -2533,8 +2574,16 @@ msgstr ""
 msgid "Remote Versions"
 msgstr ""
 
+#: src/components/customization/BrandingUploader.vue
+msgid "Remove"
+msgstr ""
+
 #: src/components/video-manager/VideoStream.vue
 msgid "Remove stream"
+msgstr ""
+
+#: src/components/customization/BrandingUploader.vue
+msgid "Remove the custom file"
 msgstr ""
 
 #: src/components/app/DnsConfigurationMenu.vue
@@ -2549,6 +2598,7 @@ msgstr ""
 msgid "Rescanning..."
 msgstr ""
 
+#: src/components/customization/ThemeCustomization.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Reset"
 msgstr ""
@@ -2621,6 +2671,10 @@ msgstr ""
 
 #: src/components/video-manager/VideoControlsDialog.vue
 msgid "Restore defaults"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Restore the default BlueOS theme"
 msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
@@ -2708,6 +2762,10 @@ msgstr ""
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Save and restart"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Save the chosen color and regenerate the theme CSS"
 msgstr ""
 
 #: src/components/wifi/WifiSettingsDialog.vue
@@ -3213,6 +3271,10 @@ msgstr ""
 msgid "The wizard will show again during BlueOS usage"
 msgstr ""
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Theme color, 3D models, logo and vehicle image"
+msgstr ""
+
 #: src/components/vehiclesetup/overview/ParamSets.vue
 #, javascript-format
 msgid ""
@@ -3516,24 +3578,47 @@ msgstr ""
 msgid "Updating bootstrap is only recommended between stable versions."
 msgstr ""
 
+#: src/components/customization/BrandingUploader.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Upload"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Upload 3D model override"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid ""
+"Upload <code>.glb</code> files served at "
+"<code>/userdata/modeloverrides/</code>. Use a relative name like "
+"<code>sub/MyFrame.glb</code> or <code>ALL.glb</code> to override every "
+"vehicle."
 msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload a Kraken-compatible .tar archive to sideload an extension."
 msgstr ""
 
+#: src/components/customization/BrandingUploader.vue
+msgid "Upload a new file"
+msgstr ""
+
 #: src/views/ExtensionManagerView.vue
 msgid "Upload extension .tar file to onboard computer"
 msgstr ""
 
+#: src/components/customization/BrandingUploader.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Upload file"
 msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Upload firmware file"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Upload model"
 msgstr ""
 
 #: src/components/speedtest/InternetSpeedTest.vue
@@ -3628,6 +3713,10 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Vehicle coordinates:"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Vehicle image"
 msgstr ""
 
 #: src/components/kraken/BackAlleyTab.vue

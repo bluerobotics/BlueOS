@@ -395,6 +395,7 @@ import Vue, { defineAsyncComponent } from 'vue'
 import blueos_blue from '@/assets/img/blueos-logo-blue.svg'
 import blueos_white from '@/assets/img/blueos-logo-white.svg'
 import settings from '@/libs/settings'
+import customization_store from '@/store/customization'
 import helper from '@/store/helper'
 import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
@@ -762,7 +763,7 @@ export default Vue.extend({
       return import.meta.env.VITE_BUILD_DATE
     },
     blueos_logo(): string {
-      return settings.is_dark_theme ? blueos_white : blueos_blue
+      return customization_store.logoUrl ?? (settings.is_dark_theme ? blueos_white : blueos_blue)
     },
   },
 
@@ -792,6 +793,7 @@ export default Vue.extend({
     this.setupCallbacks()
     this.checkTour()
     updateTime()
+    customization_store.refreshAll()
 
     const body = document.querySelector('body')
     body?.addEventListener('click', (event) => {
