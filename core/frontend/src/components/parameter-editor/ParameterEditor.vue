@@ -4,6 +4,7 @@
     class="mx-auto my-6"
   >
     <v-data-table
+      data-testid="parameters-table"
       :headers="[
         { text: t`Name`, value: 'name' },
         { text: t`Description`, value: 'description' },
@@ -46,6 +47,7 @@
       <template #top>
         <v-text-field
           v-model="search"
+          data-testid="parameter-search"
           :label="t`Search`"
           class="mx-4"
           clearable
@@ -55,14 +57,14 @@
       <!-- suprresing no-vue-html -->
       <!-- eslint-disable -->
       <template #item.name="{ item }">
-        <div v-html="printMark(item, 'name')" />
+        <div data-testid="parameter-name" v-html="printMark(item, 'name')" />
       </template>
       <template #item.description="{ item }">
         <div v-html="printMark(item, 'description')" />
       </template>
        <!-- eslint-enable -->
       <template #item.value="{ item }">
-        <div class="value-cell-content">
+        <div class="value-cell-content" data-testid="parameter-value">
           {{ printParam(item.item) }} {{ item.item.units ? `[${item.item.units}]` : '' }}
           <v-btn
             v-if="!item.item?.readonly && item.item?.default !== undefined && item.item?.default !== item.item.value"
@@ -79,6 +81,7 @@
       <template #footer.prepend>
         <v-btn
           v-tooltip="t`Save all parameters to file`"
+          data-testid="parameters-download-button"
           :disabled="!finished_loading"
           color="primary"
           class="mr-5"
@@ -91,6 +94,7 @@
         </v-btn>
         <v-btn
           v-tooltip="t`Load parameters from file`"
+          data-testid="parameters-load-button"
           :disabled="!finished_loading"
           class="mr-5"
           color="primary"
@@ -121,6 +125,7 @@
             <v-row>
               <v-file-input
                 v-model="parameter_file"
+                data-testid="parameters-file-input"
                 accept=".params,.parm,.param"
                 class="mr-2"
                 show-size
