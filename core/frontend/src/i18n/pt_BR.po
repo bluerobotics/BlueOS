@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-07 01:22\n"
+"PO-Revision-Date: 2026-11-13 15:53\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -35,12 +35,12 @@ msgstr ""
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 #, javascript-format
 msgid "${ 0 } Advanced"
-msgstr "${ 0 } avançado"
+msgstr "${ 0 } Avançado"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #, javascript-format
 msgid "${ 0 } Extension"
-msgstr "${ 0 } extensão"
+msgstr "${ 0 } Extensão"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 #, javascript-format
@@ -1458,6 +1458,14 @@ msgstr "Se você ativar esta opção, o piloto automático definirá automaticam
 msgid "If you want to add a custom 3D model please follow the instructions in"
 msgstr "Se quiser adicionar um modelo 3D personalizado, siga as instruções em"
 
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "Ignored serial ports"
+msgstr ""
+
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "Ignored serial ports saved."
+msgstr ""
+
 #: src/views/ExtensionManagerView.vue
 msgid "Import extension image and inspect metadata"
 msgstr "Importar a imagem da extensão e inspecionar os metadados"
@@ -2021,6 +2029,10 @@ msgstr "Nenhum parâmetro para alterar. Isso significa que todos os parâmetros 
 msgid "No scripts available for this setup."
 msgstr "Nenhum script disponível para esta configuração."
 
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "No serial ports available"
+msgstr ""
+
 #: src/components/video-manager/VideoDevice.vue
 msgid "No streams added to this video source"
 msgstr "Nenhum stream adicionado a esta origem de vídeo"
@@ -2056,6 +2068,10 @@ msgstr "Nenhuma rede Wi-Fi disponível :("
 #: src/components/vehiclesetup/overview/gripper.vue
 msgid "Not configured"
 msgstr "Não configurado"
+
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "Not connected"
+msgstr ""
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Not persistent"
@@ -2569,6 +2585,7 @@ msgstr "Satélites visíveis"
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #: src/components/parameter-editor/ParameterEditor.vue
 #: src/components/parameter-editor/ParameterEditorDialog.vue
+#: src/components/ping/PingIgnoredPorts.vue
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Save"
 msgstr "Salvar"
@@ -2600,6 +2617,10 @@ msgstr "Selecione as bússolas a calibrar"
 #: src/components/autopilot/EndpointManager.vue
 msgid "Select the router to use for distributing MAVLink data."
 msgstr "Selecione o roteador a ser usado para distribuir os dados MAVLink."
+
+#: src/components/ping/PingIgnoredPorts.vue
+msgid "Selected ports are not probed for Ping devices. A Ping that was already detected keeps running until it is unplugged or BlueOS reboots."
+msgstr ""
 
 #: src/components/ping/ping1d.vue
 msgid "Send MAVLink DISTANCE_SENSOR messages to the vehicle. This allows ground stations such as QGroundControl to display the information on the telemetry overlay."
