@@ -12,6 +12,7 @@
             v-for="(key, keyvalue) in param.bitmask"
             :key="keyvalue"
             v-model="selected_bitflags"
+            data-testid="parameter-bitmask-option"
             dense
             hide-details
             :loading="waiting_for_param_update"
@@ -25,6 +26,7 @@
         <v-autocomplete
           v-else-if="!custom_input && Object.entries(param?.options ?? []).length > 10"
           v-model.number="internal_new_value"
+          data-testid="parameter-options-select"
           variant="solo"
           :loading="waiting_for_param_update"
           :items="as_select_items"
@@ -39,6 +41,7 @@
         <v-select
           v-else-if="!custom_input && param?.options"
           v-model.number="internal_new_value"
+          data-testid="parameter-options-select"
           dense
           :disabled="disabled"
           :items="as_select_items"
@@ -54,6 +57,7 @@
         <v-text-field
           v-if="custom_input || (!param?.options && !param?.bitmask)"
           v-model="internal_new_value_as_string"
+          data-testid="parameter-edit-input"
           dense
           type="number"
           :step="param.increment ?? 0.01"
@@ -81,6 +85,7 @@
     <v-checkbox
       v-if="show_custom_checkbox"
       v-model="custom_input"
+      data-testid="parameter-custom-checkbox"
       dense
       :label="t`Custom`"
     />
