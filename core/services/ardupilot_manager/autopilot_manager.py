@@ -272,17 +272,18 @@ class AutoPilotManager(metaclass=Singleton):
             mavlink_manager = self.mavlink_manager
             if not mavlink_manager.should_be_running:
                 return
-            moved_master_endpoint = self._moved_serial_master_endpoint()
-            if moved_master_endpoint is not None:
-                logger.warning(f"Serial board moved to {moved_master_endpoint.place}. Restarting Mavlink router on it.")
-                await mavlink_manager.restart(moved_master_endpoint)
+            moved_board = self._moved_serial_board()
+            if moved_board is not None:
+                logger.warning(f"Serial board moved to {moved_board.path}. Restarting Mavlink router on it.")
+                await mavlink_manager.restart(self._serial_master_endpoint(moved_board))
+                await self._burst_heartbeat_if_px4(moved_board)
                 return
             if await mavlink_manager.is_running():
                 return
             logger.warning("Mavlink router stopped. Trying to restart it.")
             await mavlink_manager.restart()
 
-    def _moved_serial_master_endpoint(self) -> Optional[Endpoint]:
+    def _moved_serial_board(self) -> Optional[FlightController]:
         # A serial board that reboots or reconnects behind our back can re-enumerate on a new device path,
         # leaving the router retrying a path that no longer exists
         board = self._current_board
@@ -314,7 +315,7 @@ class AutoPilotManager(metaclass=Singleton):
             candidates[0],
         )
         self._current_board = moved_board
-        return self._serial_master_endpoint(moved_board)
+        return moved_board
 
     @property
     def settings(self) -> SettingsV1:
@@ -466,6 +467,9 @@ class AutoPilotManager(metaclass=Singleton):
         self._current_board = board
         self._serial_board_usb_serial_number = BoardDetector.usb_serial_numbers().get(board.path)
         await self.start_mavlink_manager(self._serial_master_endpoint(board))
+        await self._burst_heartbeat_if_px4(board)
+
+    async def _burst_heartbeat_if_px4(self, board: FlightController) -> None:
         if "px4" in board.name.lower():
             # PX4 needs at least one initial heartbeat to start sending data
             await self.vehicle_manager.burst_heartbeat()
