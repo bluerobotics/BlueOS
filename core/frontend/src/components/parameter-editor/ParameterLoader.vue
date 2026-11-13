@@ -5,7 +5,7 @@
     min-width="60%"
     @click:outside="done"
   >
-    <v-card>
+    <v-card data-testid="parameters-loader">
       <v-card-title class="pt-6">
         {{ t`Loading Parameters` }}
         <v-tooltip bottom>
@@ -126,6 +126,7 @@
       <v-card-text v-else-if="write_finished && initial_size > 0">
         <v-alert
           type="success"
+          data-testid="parameters-write-success"
         >
           {{ t`Parameters written successfully` }}
         </v-alert>
@@ -147,6 +148,7 @@
           class="ma-6 elevation-2"
           x-large
           color="primary"
+          data-testid="parameters-write-button"
           @click="writeParams"
         >
           {{ t`Write Parameters` }}
@@ -155,6 +157,7 @@
           v-if="write_finished || error"
           class="ma-6 elevation-2"
           x-large
+          data-testid="parameters-loader-close-button"
           @click="done"
         >
           {{ t`Close` }}
