@@ -4,7 +4,7 @@ import {
 
 import store from '@/store'
 import {
-  Network, NetworkCredentials, SavedNetwork, WifiStatus, HotspotStatus
+  Network, NetworkCredentials, RfkillStatus, SavedNetwork, WifiStatus, HotspotStatus
 } from '@/types/wifi'
 import { DynamicModule as Module } from '@/utils/vuex'
 import { sorted_networks } from '@/utils/wifi'
@@ -31,6 +31,8 @@ class WifiStore extends VuexModule {
   smart_hotspot_status: boolean | null = null
 
   hotspot_credentials: NetworkCredentials | null = null
+
+  rfkill_status: RfkillStatus | null = null
 
   is_loading: boolean = true
 
@@ -87,6 +89,11 @@ class WifiStore extends VuexModule {
   @Mutation
   setHotspotCredentials(credentials: NetworkCredentials | null): void {
     this.hotspot_credentials = credentials
+  }
+
+  @Mutation
+  setRfkillStatus(status: RfkillStatus | null): void {
+    this.rfkill_status = status
   }
 
   @Mutation

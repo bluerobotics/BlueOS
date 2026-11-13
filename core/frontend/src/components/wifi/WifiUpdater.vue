@@ -23,6 +23,7 @@ export default Vue.extend({
       fetch_hotspot_status_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
       fetch_available_networks_task: new OneMoreTime({ delay: 20000, disposeWith: this }),
       fetch_hotspot_credentials_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
+      fetch_radio_status_task: new OneMoreTime({ delay: 10000, disposeWith: this }),
     }
   },
   mounted() {
@@ -31,6 +32,7 @@ export default Vue.extend({
     this.fetch_hotspot_status_task.setAction(this.fetchHotspotStatus)
     this.fetch_available_networks_task.setAction(this.fetchAvailableNetworks)
     this.fetch_hotspot_credentials_task.setAction(this.fetchHotspotCredentials)
+    this.fetch_radio_status_task.setAction(this.fetchRadioStatus)
   },
   methods: {
     async fetchNetworkStatus(): Promise<void> {
@@ -113,6 +115,20 @@ export default Vue.extend({
         .catch((error) => {
           wifi.setHotspotCredentials(null)
           notifier.pushBackError('HOTSPOT_CREDENTIALS_FETCH_FAIL', error)
+        })
+    },
+    async fetchRadioStatus(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL}/rfkill`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setRfkillStatus(response.data)
+        })
+        .catch((error) => {
+          wifi.setRfkillStatus(null)
+          notifier.pushBackError('WIFI_RFKILL_FETCH_FAIL', error)
         })
     },
     async fetchAvailableNetworks(): Promise<void> {
