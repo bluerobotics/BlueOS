@@ -829,7 +829,7 @@ class AutoPilotManager(metaclass=Singleton):
         async with self._lifecycle_lock:
             self.mavlink_manager.add_endpoints(new_endpoints)
             self._save_current_endpoints()
-            await self.mavlink_manager.restart()
+            await self._apply_router_changes_locked()
 
     async def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
@@ -837,7 +837,7 @@ class AutoPilotManager(metaclass=Singleton):
         async with self._lifecycle_lock:
             self.mavlink_manager.remove_endpoints(endpoints_to_remove)
             self._save_current_endpoints()
-            await self.mavlink_manager.restart()
+            await self._apply_router_changes_locked()
 
     async def update_endpoints(self, endpoints_to_update: Set[Endpoint]) -> None:
         """Update multiple endpoints from the mavlink manager and save them on the configuration file."""
@@ -845,6 +845,12 @@ class AutoPilotManager(metaclass=Singleton):
         async with self._lifecycle_lock:
             self.mavlink_manager.update_endpoints(endpoints_to_update)
             self._save_current_endpoints()
+            await self._apply_router_changes_locked()
+
+    async def _apply_router_changes_locked(self) -> None:
+        # A stopped router picks the saved changes up on its next start, restarting it here would
+        # bring it back without the autopilot and the watchdog would keep it alive
+        if self.mavlink_manager.should_be_running:
             await self.mavlink_manager.restart()
 
     async def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
@@ -884,7 +890,7 @@ class AutoPilotManager(metaclass=Singleton):
             self._settings_manager.settings.manual_board_master_endpoint = endpoint
             self._settings_manager.save()
             self.mavlink_manager.master_endpoint = endpoint
-            await self.mavlink_manager.restart()
+            await self._apply_router_changes_locked()
         return True
 
     def get_manual_board_master_endpoint(self) -> Endpoint:
