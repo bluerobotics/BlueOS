@@ -301,19 +301,29 @@ class AutoPilotManager(metaclass=Singleton):
             and FlightControllerFlags.is_bootloader not in detected.flags
         ]
         if not candidates:
+            logger.debug(f"{board.name} left {master_endpoint.place} and is not back yet.")
             return None
-        # Prefer the same USB device when more than one board of this platform is connected
         usb_serial_numbers = BoardDetector.usb_serial_numbers()
-        moved_board = next(
-            (
-                candidate
-                for candidate in candidates
-                if candidate.path
-                and self._serial_board_usb_serial_number
-                and usb_serial_numbers.get(candidate.path) == self._serial_board_usb_serial_number
-            ),
-            candidates[0],
-        )
+        if self._serial_board_usb_serial_number:
+            # Only follow the same USB device, never attach to another board of the same platform
+            moved_board = next(
+                (
+                    candidate
+                    for candidate in candidates
+                    if candidate.path and usb_serial_numbers.get(candidate.path) == self._serial_board_usb_serial_number
+                ),
+                None,
+            )
+            if moved_board is None:
+                logger.warning(
+                    f"{board.name} with USB serial number {self._serial_board_usb_serial_number} left "
+                    f"{master_endpoint.place}, but only other boards were found: {[c.path for c in candidates]}."
+                )
+                return None
+        else:
+            moved_board = candidates[0]
+            if moved_board.path:
+                self._serial_board_usb_serial_number = usb_serial_numbers.get(moved_board.path)
         self._current_board = moved_board
         return moved_board
 
