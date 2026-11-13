@@ -461,7 +461,8 @@ class AutoPilotManager(metaclass=Singleton):
 
     @staticmethod
     def _serial_master_endpoint(board: FlightController) -> Endpoint:
-        assert board.path is not None
+        if not board.path:
+            raise ValueError(f"Could not find device path for board {board.name}.")
         return Endpoint(
             name="Master",
             owner=SERVICE_NAME,
