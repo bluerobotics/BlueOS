@@ -44,6 +44,8 @@ class AutopilotManagerStore extends VuexModule {
 
   restarting = false
 
+  installing_firmware = false
+
   autopilot_serials: SerialEndpoint[] = []
 
   // All vehicle types include the values ArduSub overloaded for legacy lights support, so we need to filter by it
@@ -73,6 +75,11 @@ class AutopilotManagerStore extends VuexModule {
   @Mutation
   setRestarting(restarting: boolean): void {
     this.restarting = restarting
+  }
+
+  @Mutation
+  setInstallingFirmware(installing: boolean): void {
+    this.installing_firmware = installing
   }
 
   @Mutation

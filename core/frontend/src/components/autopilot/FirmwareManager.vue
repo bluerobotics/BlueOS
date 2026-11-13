@@ -437,6 +437,7 @@ export default Vue.extend({
         })
       }
 
+      autopilot.setInstallingFirmware(true)
       await back_axios(axios_request_config)
         .then(() => {
           this.install_status = InstallStatus.Succeeded
@@ -454,6 +455,9 @@ export default Vue.extend({
           }
           const message = `Could not install firmware: ${this.install_result_message}.`
           notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
+        })
+        .finally(() => {
+          autopilot.setInstallingFirmware(false)
         })
     },
   },

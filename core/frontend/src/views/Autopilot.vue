@@ -82,7 +82,7 @@
           color="secondary"
           :block="$vuetify.breakpoint.xs"
           class="ma-1"
-          :disabled="restarting"
+          :disabled="restarting || installing_firmware"
           @click="openBoardChangeDialog"
         >
           {{ t`Change board` }}
@@ -92,7 +92,7 @@
           class="ma-1"
           :block="$vuetify.breakpoint.xs"
           color="secondary"
-          :disabled="restarting"
+          :disabled="restarting || installing_firmware"
           @click="start_autopilot"
         >
           {{ t`Start autopilot` }}
@@ -102,7 +102,7 @@
           class="ma-1"
           :block="$vuetify.breakpoint.xs"
           color="secondary"
-          :disabled="restarting"
+          :disabled="restarting || installing_firmware"
           @click="stop_autopilot"
         >
           {{ t`Stop autopilot` }}
@@ -111,7 +111,7 @@
           color="primary"
           class="ma-1"
           :block="$vuetify.breakpoint.xs"
-          :disabled="restarting"
+          :disabled="restarting || installing_firmware"
           @click="restart_autopilot"
         >
           {{ t`Restart autopilot` }}
@@ -248,6 +248,9 @@ export default Vue.extend({
     },
     restarting(): boolean {
       return autopilot.restarting
+    },
+    installing_firmware(): boolean {
+      return autopilot.installing_firmware
     },
   },
   mounted() {
