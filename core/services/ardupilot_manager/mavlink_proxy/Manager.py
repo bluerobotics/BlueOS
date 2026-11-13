@@ -1,4 +1,3 @@
-import asyncio
 import pathlib
 from typing import List, Optional, Set, Type
 
@@ -162,7 +161,6 @@ class Manager:
         await self.tool.exit()
 
     async def restart(self, master_endpoint: Optional[Endpoint] = None) -> None:
-        self.should_be_running = False
         if master_endpoint:
             self.tool.master_endpoint = master_endpoint
         await self.tool.restart()
@@ -188,22 +186,3 @@ class Manager:
 
     def supports_tlog(self) -> bool:
         return self.tool.supports_tlog()
-
-    async def auto_restart_router(self) -> None:
-        """Auto-restart Mavlink router process if it dies."""
-        while True:
-            await asyncio.sleep(5.0)
-
-            needs_restart = self.should_be_running and not await self.is_running()
-
-            if not needs_restart:
-                continue
-
-            logger.debug("Mavlink router stopped. Trying to restart it.")
-            try:
-                await self.restart()
-                logger.debug("Mavlink router successfully restarted.")
-            except Exception as error:
-                logger.error(f"Failed to restart Mavlink router. {error}")
-
-            self.should_be_running = True

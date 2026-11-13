@@ -47,8 +47,11 @@ async def main() -> None:
     else:
         logger.info("Autopilot was stopped by the user, skipping auto-start on boot.")
 
-    asyncio.create_task(autopilot.auto_restart_ardupilot())
-    asyncio.create_task(autopilot.start_mavlink_manager_watchdog())
+    # Keep references so the event loop can't garbage-collect the watchdogs
+    watchdogs = [  # pylint: disable=unused-variable
+        asyncio.create_task(autopilot.auto_restart_ardupilot()),
+        asyncio.create_task(autopilot.start_mavlink_manager_watchdog()),
+    ]
 
     await server.serve()
     await autopilot.kill_ardupilot()
