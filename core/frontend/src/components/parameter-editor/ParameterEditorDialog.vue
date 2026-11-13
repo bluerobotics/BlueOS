@@ -51,6 +51,7 @@
         </v-btn>
         <v-btn
           :disabled="param_value_not_changed || !is_form_valid"
+          data-testid="parameter-save-button"
           color="primary"
           @click="saveEditedParam()"
         >
