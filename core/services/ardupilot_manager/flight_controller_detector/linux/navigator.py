@@ -16,8 +16,8 @@ class Navigator(LinuxFlightController):
         plat = Platform.Navigator
         if platform.machine() == "aarch64":
             # edge case for 64-bit kernel on 32-bit userland...
-            # let's check the arch for /usr/bin/ls
-            with open("/usr/bin/ls", "rb") as f:
+            # let's check the arch of the running interpreter
+            with open("/proc/self/exe", "rb") as f:
                 elf_file = ELFFile(f)
                 firm_arch = elf_file.get_machine_arch()
                 # from https://github.com/eliben/pyelftools/blob/main/elftools/elf/elffile.py#L513
@@ -87,6 +87,8 @@ class NavigatorPi4(Navigator):
             os_release = ""
         if "bookworm" in os_release.lower():
             release = "Bookworm"
+        elif "nixos" in os_release.lower():
+            release = "NixOS"
 
         match release:
             case "Bullseye":
@@ -96,7 +98,7 @@ class NavigatorPi4(Navigator):
                     Serial(port="E", endpoint="/dev/ttyAMA2"),
                     Serial(port="F", endpoint="/dev/ttyAMA3"),
                 ]
-            case "Bookworm":
+            case "Bookworm" | "NixOS":
                 return [
                     Serial(port="C", endpoint="/dev/ttyS0"),
                     Serial(port="B", endpoint="/dev/ttyAMA3"),
