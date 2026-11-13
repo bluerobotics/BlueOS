@@ -170,13 +170,8 @@ async def install_firmware_from_url(
     parameters: Optional[Parameters] = None,
     auto_switch_board: bool = True,
 ) -> Any:
-    board = None
-    try:
-        await autopilot.kill_ardupilot()
-        board = await target_board(board_name)
-        await autopilot.install_firmware_from_url(url, board, make_default, parameters)
-    finally:
-        await autopilot.start_ardupilot()
+    board = await target_board(board_name)
+    await autopilot.install_firmware_from_url(url, board, make_default, parameters)
 
     # In some cases user might install a firmware that implies in a board change but this is not reflected,
     # so if the board is different from the current one, we change it.
@@ -202,8 +197,6 @@ async def install_firmware_from_file(
         custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
         with open(custom_firmware, "wb") as buffer:
             shutil.copyfileobj(binary.file, buffer)
-        logger.debug("Going to kill ardupilot")
-        await autopilot.kill_ardupilot()
         logger.debug("Installing firmware from file")
         await autopilot.install_firmware_from_file(custom_firmware, await target_board(board_name), parameters)
         os.remove(custom_firmware)
@@ -211,8 +204,6 @@ async def install_firmware_from_file(
         raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
     finally:
         binary.file.close()
-        logger.debug("Starting ardupilot again")
-        await autopilot.start_ardupilot()
 
 
 @index_router_v1.get(
@@ -280,12 +271,9 @@ async def stop() -> Any:
 @index_to_http_exception
 async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
     try:
-        await autopilot.kill_ardupilot()
         await autopilot.restore_default_firmware(await target_board(board_name))
     except (NoDefaultFirmwareAvailable, ValueError) as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
-    finally:
-        await autopilot.start_ardupilot()
 
 
 @index_router_v1.get(
