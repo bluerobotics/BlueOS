@@ -46,7 +46,10 @@ if __name__ == "__main__":
     else:
         logger.info("Autopilot was stopped by the user, skipping auto-start on boot.")
 
-    loop.create_task(autopilot.auto_restart_ardupilot())
-    loop.create_task(autopilot.start_mavlink_manager_watchdog())
+    # Keep references so the event loop can't garbage-collect the watchdogs
+    watchdogs = [
+        loop.create_task(autopilot.auto_restart_ardupilot()),
+        loop.create_task(autopilot.start_mavlink_manager_watchdog()),
+    ]
     loop.run_until_complete(server.serve())
     loop.run_until_complete(autopilot.kill_ardupilot())
