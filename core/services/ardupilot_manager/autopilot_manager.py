@@ -3,7 +3,8 @@ import os
 import pathlib
 import subprocess
 import time
-from typing import Any, List, Optional, Set
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator, List, Optional, Set
 from uuid import uuid4
 
 import psutil
@@ -46,7 +47,7 @@ class AutoPilotManager(metaclass=Singleton):
         self._settings_manager.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
         self.should_be_running = False
-        self._restart_lock = asyncio.Lock()
+        self._lifecycle_lock = asyncio.Lock()
         self.mavlink_manager = MavlinkManager()
 
         # Kept out of setup() because that runs on every start attempt, which would reset the counter
@@ -201,26 +202,27 @@ class AutoPilotManager(metaclass=Singleton):
     async def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot when it's not running but was supposed to."""
         while True:
-            needs_restart = self.should_be_running and not self.is_running()
+            needs_restart = self.should_be_running and not self.is_running() and not self._lifecycle_lock.locked()
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
-                try:
-                    await self.kill_ardupilot()
-                except Exception as error:
-                    logger.warning(f"Could not kill Ardupilot: {error}")
-                try:
-                    await self.start_ardupilot()
-                except Exception as error:
-                    self._start_fail_count += 1
-                    logger.warning(
-                        f"Could not start Ardupilot ({self._start_fail_count}/{self._max_start_failures}): {error}"
-                    )
-                    if self._start_fail_count >= self._max_start_failures:
-                        self.should_be_running = False
-                        logger.error(
-                            "Consecutive start failures threshold reached, not retrying automatically. "
-                            "Start the autopilot or change the board to try again."
+                async with self._lifecycle_lock:
+                    try:
+                        await self._kill_ardupilot_locked()
+                    except Exception as error:
+                        logger.warning(f"Could not kill Ardupilot: {error}")
+                    try:
+                        await self._start_ardupilot_locked()
+                    except Exception as error:
+                        self._start_fail_count += 1
+                        logger.warning(
+                            f"Could not start Ardupilot ({self._start_fail_count}/{self._max_start_failures}): {error}"
                         )
+                        if self._start_fail_count >= self._max_start_failures:
+                            self.should_be_running = False
+                            logger.error(
+                                "Consecutive start failures threshold reached, not retrying automatically. "
+                                "Start the autopilot or change the board to try again."
+                            )
             elif self.is_running():
                 self._start_fail_count = 0
 
@@ -241,7 +243,7 @@ class AutoPilotManager(metaclass=Singleton):
                         f"heartbeat check failed ({self._heartbeat_fail_count}/{self._max_heartbeat_failures}): {error}"
                     )
 
-                if self._heartbeat_fail_count >= self._max_heartbeat_failures:
+                if self._heartbeat_fail_count >= self._max_heartbeat_failures and not self._lifecycle_lock.locked():
                     logger.warning("Consecutive heartbeat failures threshold reached — restarting Ardupilot.")
                     try:
                         await self.restart_ardupilot()
@@ -539,9 +541,10 @@ class AutoPilotManager(metaclass=Singleton):
             logger.error(f"Attempted to change active board to {board} which is not detected.")
             logger.info(f"detected boards are: {boards}")
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
-        self.set_preferred_board(board)
-        await self.kill_ardupilot()
-        await self.start_ardupilot()
+        async with self._lifecycle_lock:
+            self.set_preferred_board(board)
+            await self._kill_ardupilot_locked()
+            await self._start_ardupilot_locked()
 
     def set_preferred_board(self, board: FlightController) -> None:
         logger.info(f"Setting {board.name} as preferred flight-controller.")
@@ -638,6 +641,10 @@ class AutoPilotManager(metaclass=Singleton):
                 raise AutoPilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
 
     async def kill_ardupilot(self) -> None:
+        async with self._lifecycle_lock:
+            await self._kill_ardupilot_locked()
+
+    async def _kill_ardupilot_locked(self) -> None:
         self.should_be_running = False
         if not self.current_board or self.current_board.platform != Platform.SITL:
             try:
@@ -667,6 +674,10 @@ class AutoPilotManager(metaclass=Singleton):
         logger.info("Mavlink manager stopped.")
 
     async def start_ardupilot(self) -> None:
+        async with self._lifecycle_lock:
+            await self._start_ardupilot_locked()
+
+    async def _start_ardupilot_locked(self) -> None:
         # This only applies to autopilot process itself, mavlink manager will check by itself
         if self.should_be_running and self.is_running():
             return
@@ -708,14 +719,13 @@ class AutoPilotManager(metaclass=Singleton):
         )
 
     async def restart_ardupilot(self) -> None:
-        # Both the /restart endpoint and the heartbeat watchdog can call this, so serialize them.
-        async with self._restart_lock:
+        async with self._lifecycle_lock:
             board = self.current_board
             # Serial boards are the only ones rebooted through MAVLink; everything else (SITL,
             # Linux, Manual, unknown) is a process/router we can just bounce.
             if board is None or board.type != PlatformType.Serial:
-                await self.kill_ardupilot()
-                await self.start_ardupilot()
+                await self._kill_ardupilot_locked()
+                await self._start_ardupilot_locked()
                 return
 
             await self.vehicle_manager.reboot_vehicle()
@@ -815,10 +825,20 @@ class AutoPilotManager(metaclass=Singleton):
     async def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
         return await self.firmware_manager.get_available_firmwares(vehicle, platform)
 
+    @asynccontextmanager
+    async def _autopilot_paused(self) -> AsyncIterator[None]:
+        async with self._lifecycle_lock:
+            try:
+                await self._kill_ardupilot_locked()
+                yield
+            finally:
+                await self._start_ardupilot_locked()
+
     async def install_firmware_from_file(
         self, firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
     ) -> None:
-        await self.firmware_manager.install_firmware_from_file(firmware_path, board, default_parameters)
+        async with self._autopilot_paused():
+            await self.firmware_manager.install_firmware_from_file(firmware_path, board, default_parameters)
 
     async def install_firmware_from_url(
         self,
@@ -827,10 +847,12 @@ class AutoPilotManager(metaclass=Singleton):
         make_default: bool = False,
         default_parameters: Optional[Parameters] = None,
     ) -> None:
-        await self.firmware_manager.install_firmware_from_url(url, board, make_default, default_parameters)
+        async with self._autopilot_paused():
+            await self.firmware_manager.install_firmware_from_url(url, board, make_default, default_parameters)
 
     async def restore_default_firmware(self, board: FlightController) -> None:
-        await self.firmware_manager.restore_default_firmware(board)
+        async with self._autopilot_paused():
+            await self.firmware_manager.restore_default_firmware(board)
 
     async def set_manual_board_master_endpoint(self, endpoint: Endpoint) -> bool:
         self._settings_manager.settings.manual_board_master_endpoint = endpoint
