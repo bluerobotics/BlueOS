@@ -302,3 +302,23 @@ async def test_router_watchdog_does_not_move_stopped_serial_board(
 
     detect.assert_not_called()
     assert router.restarts == 0 and not router.running
+
+
+@pytest.mark.parametrize(
+    "board_name, bursts",
+    [("PX4 FMU v2.x", 1), ("Pixhawk1", 0)],
+)
+async def test_router_watchdog_wakes_up_moved_px4_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, board_name: str, bursts: int
+) -> None:
+    router = serial_board_on(manager, lifecycle)
+    manager._current_board = FlightController(name=board_name, platform=Platform.Pixhawk1, path="/dev/ttyACM0")
+    manager.vehicle_manager = AsyncMock()
+    moved_board = FlightController(name=board_name, platform=Platform.Pixhawk1, path="/dev/ttyACM1")
+
+    with patch("os.path.exists", MagicMock(return_value=False)), detected_serial_boards(moved_board):
+        await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert router.master_endpoint is not None and router.master_endpoint.place == "/dev/ttyACM1"
+    assert manager.vehicle_manager.burst_heartbeat.await_count == bursts
