@@ -2,8 +2,9 @@
 import argparse
 import asyncio
 import logging
-from typing import Any, List
+from typing import Any, List, Set
 
+from commonwealth.settings.manager import Manager
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
@@ -16,9 +17,11 @@ from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from uvicorn import Config, Server
 
+from ping1d_driver import USERDATA
 from pingmanager import PingManager
 from pingprober import PingProber
 from portwatcher import PortWatcher
+from settings import SettingsV1
 from typedefs import PingDeviceDescriptorModel
 
 SERVICE_NAME = "ping"
@@ -37,6 +40,10 @@ logger.info("Starting Ping Service.")
 
 # TODO: move to singleton
 ping_manager = PingManager()
+ping_prober = PingProber()
+port_watcher = PortWatcher(probe_callback=ping_prober.probe, found_callback=ping_manager.register_ethernet_ping360)
+settings_manager = Manager(SERVICE_NAME, SettingsV1, USERDATA / "settings" / SERVICE_NAME)
+port_watcher.ignored_paths = set(settings_manager.settings.ignored_ports)
 
 
 @app.get("/sensors", response_model=List[PingDeviceDescriptorModel], summary="Current sensors detected.")
@@ -52,6 +59,21 @@ def set_sensor(sensor_settings: dict[str, Any]) -> Any:
     if "port" not in sensor_settings:
         raise ValueError("'device' key is missing")
     return ping_manager.update_device_settings(sensor_settings)
+
+
+@app.get("/ignored_ports", response_model=List[str], summary="Serial ports that are not probed.")
+@version(1, 0)
+def get_ignored_ports() -> Any:
+    return sorted(port_watcher.ignored_paths)
+
+
+@app.post("/ignored_ports", status_code=status.HTTP_200_OK, summary="Set serial ports that are not probed.")
+@version(1, 0)
+def set_ignored_ports(ports: Set[str]) -> Any:
+    settings_manager.load()  # re-load as ping1d drivers could have changed it
+    settings_manager.settings.ignored_ports = sorted(ports)
+    settings_manager.save()
+    port_watcher.ignored_paths = ports
 
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
@@ -71,8 +93,6 @@ async def root() -> Any:
 
 
 async def sensor_manager() -> None:
-    ping_prober = PingProber()
-    port_watcher = PortWatcher(probe_callback=ping_prober.probe, found_callback=ping_manager.register_ethernet_ping360)
     port_watcher.set_port_post_callback(ping_manager.stop_driver_at_port)
 
     ping_prober.on_ping_found(ping_manager.launch_driver_instance)
