@@ -46,6 +46,7 @@ def fixture_manager(lifecycle: Lifecycle) -> Iterator[AutoPilotManager]:
     manager.settings = MagicMock()
     manager.configuration = {}
     manager.firmware_manager = AsyncMock()
+    manager.mavlink_manager = MagicMock(restart=lambda: lifecycle.step("restart_router"))
     with (
         patch.object(manager, "_kill_ardupilot_locked", lambda: lifecycle.step("kill")),
         patch.object(manager, "_start_ardupilot_locked", lambda: lifecycle.step("start")),
@@ -60,6 +61,9 @@ OPERATIONS: dict[str, Callable[[AutoPilotManager], Awaitable[Any]]] = {
     "start": lambda manager: manager.start_ardupilot(),
     "restart": lambda manager: manager.restart_ardupilot(),
     "change_board": lambda manager: manager.change_board(SITL),
+    "add_endpoints": lambda manager: manager.add_new_endpoints(set()),
+    "remove_endpoints": lambda manager: manager.remove_endpoints(set()),
+    "update_endpoints": lambda manager: manager.update_endpoints(set()),
     "install_from_file": lambda manager: manager.install_firmware_from_file(Path("firmware"), SITL),
     "install_from_url": lambda manager: manager.install_firmware_from_url("https://example.invalid/fw", SITL),
     "restore_default": lambda manager: manager.restore_default_firmware(SITL),
