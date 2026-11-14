@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Japanese\n"
-"PO-Revision-Date: 2026-11-13 21:23\n"
+"PO-Revision-Date: 2026-11-14 03:47\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -767,6 +767,10 @@ msgstr ""
 
 #: src/components/wizard/Wizard.vue
 msgid "Check internet"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "Check this computer's DNS settings"
 msgstr ""
 
 #: src/components/wizard/Wizard.vue
@@ -2580,6 +2584,10 @@ msgstr ""
 msgid "No Extensions installed."
 msgstr ""
 
+#: src/components/vehiclesetup/overview/ParamSets.vue
+msgid "No Internet connection, unable to load parameters."
+msgstr ""
+
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "No NMEA sockets available. You can add a connection by clicking the + symbol in the corner."
 msgstr ""
@@ -3762,6 +3770,10 @@ msgstr ""
 msgid "Some features are unavailable"
 msgstr ""
 
+#: src/alerts/rules/network.ts
+msgid "Some features may be unavailable"
+msgstr ""
+
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "Some flight controller servo channels are capable of digital (GPIO) functionalities. Available options include relays, leak detection (input-capable pins only), and other functions not yet supported by this UI."
 msgstr ""
@@ -4107,6 +4119,14 @@ msgstr ""
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "This browser does not support the required WebGL features."
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "This computer has no internet"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "This computer's DNS is not resolving"
 msgstr ""
 
 #: src/components/kraken/cards/StoreExtensionCard.vue
