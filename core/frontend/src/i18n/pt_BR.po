@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Portuguese, Brazilian\n"
-"PO-Revision-Date: 2026-11-13 21:23\n"
+"PO-Revision-Date: 2026-11-14 03:47\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
@@ -770,6 +770,10 @@ msgstr "Alterações aplicadas, faça uma <b>reinicialização do sistema</b>."
 #: src/components/wizard/Wizard.vue
 msgid "Check internet"
 msgstr "Verificar internet"
+
+#: src/alerts/rules/network.ts
+msgid "Check this computer's DNS settings"
+msgstr ""
 
 #: src/components/wizard/Wizard.vue
 msgid "Choose Vehicle"
@@ -2582,6 +2586,10 @@ msgstr "Nenhuma extensão disponível"
 msgid "No Extensions installed."
 msgstr "Nenhuma extensão instalada."
 
+#: src/components/vehiclesetup/overview/ParamSets.vue
+msgid "No Internet connection, unable to load parameters."
+msgstr ""
+
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "No NMEA sockets available. You can add a connection by clicking the + symbol in the corner."
 msgstr "Nenhum soquete NMEA disponível. Você pode adicionar uma conexão clicando no símbolo + no canto."
@@ -3765,6 +3773,10 @@ msgstr "Algumas alterações exigem a reinicialização do piloto automático pa
 msgid "Some features are unavailable"
 msgstr "Alguns recursos estão indisponíveis"
 
+#: src/alerts/rules/network.ts
+msgid "Some features may be unavailable"
+msgstr ""
+
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "Some flight controller servo channels are capable of digital (GPIO) functionalities. Available options include relays, leak detection (input-capable pins only), and other functions not yet supported by this UI."
 msgstr "Alguns canais de servo do controlador de voo são capazes de funções digitais (GPIO). As opções disponíveis incluem relés, detecção de vazamento (apenas pinos com entrada) e outras funções ainda não suportadas por esta interface."
@@ -4111,6 +4123,14 @@ msgstr "Este endereço IP está sendo usado para acessar o BlueOS. Excluí-lo po
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "This browser does not support the required WebGL features."
 msgstr "Este navegador não é compatível com os recursos WebGL necessários."
+
+#: src/alerts/rules/network.ts
+msgid "This computer has no internet"
+msgstr ""
+
+#: src/alerts/rules/network.ts
+msgid "This computer's DNS is not resolving"
+msgstr ""
 
 #: src/components/kraken/cards/StoreExtensionCard.vue
 msgid "This extension is not compatible with current machine architecture running BlueOS."
