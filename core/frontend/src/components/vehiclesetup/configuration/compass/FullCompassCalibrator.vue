@@ -61,8 +61,8 @@
           </tbody>
         </v-simple-table>
         <v-progress-linear
-          v-if="percent && !all_compasses_calibrated"
-          v-model="percent"
+          v-if="state === states.CALIBRATING"
+          :value="percent"
           color="blue-grey"
           height="25"
           class="mt-5 mb-5"
@@ -104,13 +104,13 @@
 import Vue, { PropType } from 'vue'
 
 import RebootButton from '@/components/utils/RebootButton.vue'
-import mavlink2rest from '@/libs/MAVLink2Rest'
-import Listener from '@/libs/MAVLink2Rest/Listener'
-import { MavCmd, MAVLinkType, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import autopilot_data from '@/store/autopilot'
 import { Dictionary } from '@/types/common'
 import { deviceId } from '@/utils/deviceid_decoder'
 
+import {
+  CalibrationKind, CalibrationSession, CalibrationStatus, CalibrationWatcher, isRunning, ResultAlert,
+  resultAlert,
+} from '../../calibration'
 import CalibrationQualityIndicator from './CalibrationQualityIndicator.vue'
 
 enum states {
@@ -120,7 +120,7 @@ enum states {
   FAILED,
 }
 
-export default {
+export default Vue.extend({
   name: 'FullCompassCalibrator',
   components: {
     CalibrationQualityIndicator,
@@ -137,121 +137,99 @@ export default {
       dialog: false,
       coordinates: undefined as { lat: number, lon: number } | undefined,
       compass_mask: 0,
-      status_type: '' as string | undefined,
-      status_text: '' as string | undefined,
-      percent: 0,
-      state: states.IDLE,
-      progress_listener: undefined as Listener | undefined,
-      report_listener: undefined as Listener | undefined,
-      fitness: {} as Dictionary<number>,
+      // A finished session only shows until the user dismisses it, or not at all if it finished before page load
+      dismissed: true,
+      error: '',
+      session: null as CalibrationSession | null,
+      watcher: null as CalibrationWatcher | null,
     }
   },
   computed: {
     states() {
       return states
     },
-    compasses_calibrated(): number {
-      return Object.keys(this.fitness).length
+    state(): states {
+      const { error, session } = this
+      if (error && !isRunning(session)) {
+        return states.FAILED
+      }
+      if (session === null || this.dismissed && !isRunning(session)) {
+        return states.IDLE
+      }
+      switch (session.status) {
+        case CalibrationStatus.DONE:
+          return states.DONE
+        case CalibrationStatus.FAILED:
+        case CalibrationStatus.CANCELLED:
+          return states.FAILED
+        default:
+          return states.CALIBRATING
+      }
     },
-    all_compasses_calibrated(): boolean {
-      return this.compasses_calibrated === this.compasses.length
+    percent(): number {
+      return this.session?.progress ?? 0
+    },
+    fitness(): Dictionary<number> {
+      if (this.state === states.IDLE) {
+        return {}
+      }
+      return Object.fromEntries(Object.entries(this.session?.fitness ?? {}).map(
+        ([compass_id, fit]) => [this.compasses[Number(compass_id)]?.deviceName ?? 'unknown', fit],
+      ))
+    },
+    result(): ResultAlert | undefined {
+      return this.state === states.IDLE ? undefined : resultAlert(this.session, this.error)
+    },
+    status_text(): string | undefined {
+      return this.result?.text
+    },
+    status_type(): string | undefined {
+      return this.result?.type
     },
   },
   watch: {
-    all_compasses_calibrated(newValue) {
-      if (newValue) {
-        this.calibrationFinished()
-      }
-    },
-    dialog(newValue) {
+    dialog(newValue: boolean) {
       if (!newValue) {
         this.dismiss()
       }
     },
   },
-  beforeMount() {
-    this.state = states.IDLE
-    this.fitness = {}
-    this.cleanup()
+  mounted() {
+    this.watcher = new CalibrationWatcher(CalibrationKind.COMPASS, this.onSession)
   },
   beforeDestroy() {
-    this.progress_listener?.discard()
+    this.watcher?.stop()
   },
   methods: {
+    onSession(session: CalibrationSession) {
+      if (isRunning(session)) {
+        // Resume a calibration started before a page reload
+        if (this.session === null) {
+          this.dialog = true
+        }
+        this.dismissed = false
+      }
+      this.session = session
+    },
     reset() {
-      this.state = states.IDLE
-      this.cleanup()
-      this.fitness = {}
+      this.dismissed = true
+      this.error = ''
     },
     dismiss() {
-      this.state = states.IDLE
       this.dialog = false
-      this.cleanup()
-      this.fitness = {}
-    },
-    cleanup() {
-      this.progress_listener?.discard()
-      this.report_listener?.discard()
-      this.percent = 0
-      this.status_type = undefined
-      this.status_text = undefined
-    },
-    calibrationFinished() {
-      this.status_type = 'success'
-      this.status_text = 'Calibration finished'
-      this.state = states.DONE
-      autopilot_data.setRebootRequired(true)
-      this.cleanup()
-    },
-    calibrationFailed(reason: string) {
-      this.status_text = `Calibration failed: ${reason}`
-      this.status_type = 'error'
-      this.state = states.FAILED
+      if (isRunning(this.session)) {
+        this.cancelCalibration()
+      }
+      this.reset()
     },
     async cancelCalibration() {
-      mavlink2rest.sendCommandLong(MavCmd.MAV_CMD_DO_CANCEL_MAG_CAL)
-      const ack = await mavlink2rest.waitForAck(MavCmd.MAV_CMD_DO_CANCEL_MAG_CAL)
-      if (ack.result.type !== MavResult.MAV_RESULT_ACCEPTED) {
-        throw new Error(`Unexpected response trying to cancel calibration: ${ack.result.type}`)
-      }
-      this.percent = 0
-      this.status_text = 'Calibration cancelled'
-      this.status_type = 'warning'
-      this.progress_listener?.discard()
-      this.state = states.FAILED
+      this.error = await this.watcher?.cancel() ?? ''
     },
     async calibrate() {
-      this.fitness = {}
-      this.status_text = undefined
-      this.state = states.CALIBRATING
-      mavlink2rest.sendCommandLong(
-        MavCmd.MAV_CMD_DO_START_MAG_CAL,
-        this.compass_mask,
-        0,
-        1, // auto-save calibration
-      )
-      try {
-        const ack = await mavlink2rest.waitForAck(MavCmd.MAV_CMD_DO_START_MAG_CAL)
-        if (ack.result.type !== MavResult.MAV_RESULT_ACCEPTED) {
-          throw new Error(`Unexpected response: ${ack.result.type}`)
-        }
-        this.progress_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_PROGRESS).setCallback(
-          (message) => {
-            this.percent = Math.max(message.message.completion_pct, 0.01)
-          },
-        ).setFrequency(0)
-        this.report_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_REPORT).setCallback(
-          (message) => {
-            const name = this.compasses[message.message.compass_id].deviceName ?? 'unknown'
-            // we need to use Vue.set when adding a key to a dict to ensure reactivity...
-            Vue.set(this.fitness, name, message.message.fitness)
-          },
-        ).setFrequency(0)
-      } catch (error) {
-        this.calibrationFailed(`${error}`)
-      }
+      this.error = await this.watcher?.start({
+        compass_mask: this.compass_mask,
+      }) ?? ''
     },
-
   },
-}
+})
 </script>

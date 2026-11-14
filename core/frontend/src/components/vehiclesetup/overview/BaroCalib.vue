@@ -54,7 +54,7 @@
         <v-btn
           v-tooltip="t`Calibrate all barometers to ground level`"
           color="primary"
-          :disabled="disable_button"
+          :disabled="calibrating"
           @click="calibrate"
         >
           {{ t`Calibrate` }}
@@ -76,17 +76,26 @@ import { Dictionary } from '@/types/common'
 import { BUS_TYPE } from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
 
-import { calibrator, PreflightCalibration } from '../calibration'
+import {
+  CalibrationKind, CalibrationSession, CalibrationWatcher, isRunning, statusText,
+} from '../calibration'
 
 export default Vue.extend({
   name: 'BaroCalibrate',
   data() {
     return {
-      calibration_status: '',
-      disable_button: false,
+      error: '',
+      session: null as CalibrationSession | null,
+      watcher: null as CalibrationWatcher | null,
     }
   },
   computed: {
+    calibrating(): boolean {
+      return isRunning(this.session)
+    },
+    calibration_status(): string {
+      return this.error || statusText(this.session)
+    },
     baro_status(): Dictionary<string> {
       const results = {} as Dictionary<string>
       for (const baro of ardupilot_sensors.baros) {
@@ -132,21 +141,20 @@ export default Vue.extend({
     },
   },
   mounted() {
+    this.watcher = new CalibrationWatcher(CalibrationKind.BAROMETER, (session) => { this.session = session })
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE2$', refreshRate: 1 })
     mavlink.setMessageRefreshRate({ messageName: 'SCALED_PRESSURE3$', refreshRate: 1 })
+  },
+  beforeDestroy() {
+    this.watcher?.stop()
   },
   methods: {
     bus_name(bus: number): string {
       return BUS_TYPE[bus]
     },
     async calibrate() {
-      this.disable_button = true
-      this.calibration_status = 'Starting calibration..'
-      for await (const value of calibrator.calibrate(PreflightCalibration.PRESSURE)) {
-        this.calibration_status = value
-      }
-      this.disable_button = false
+      this.error = await this.watcher?.start() ?? ''
     },
   },
 })

@@ -44,16 +44,18 @@
 </template>
 
 <script lang="ts">
-import { PropType } from 'vue'
+import Vue, { PropType } from 'vue'
 
 import StatusTextWatcher from '@/components/common/StatusTextWatcher.vue'
 import RebootButton from '@/components/utils/RebootButton.vue'
-import mavlink2rest from '@/libs/MAVLink2Rest'
-import { MavCmd, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import autopilot_data from '@/store/autopilot'
 import { deviceId } from '@/utils/deviceid_decoder'
 
-export default {
+import {
+  CalibrationKind, CalibrationSession, CalibrationWatcher, isRunning, ResultAlert,
+  resultAlert,
+} from '../../calibration'
+
+export default Vue.extend({
   name: 'LargeVehicleCompassCalibrator',
   components: {
     StatusTextWatcher,
@@ -70,53 +72,58 @@ export default {
       dialog: false,
       coordinates: undefined as { lat: number, lon: number } | undefined,
       compass_mask: 0,
-      calibrating: false,
-      status_type: '' as string | undefined,
-      status_text: '' as string | undefined,
+      // A finished session only shows until the dialog closes, or not at all if it finished before page load
+      dismissed: true,
+      error: '',
+      session: null as CalibrationSession | null,
+      watcher: null as CalibrationWatcher | null,
     }
   },
-  methods: {
-    calibrationFinished() {
-      this.status_type = 'success'
-      this.status_text = 'Calibration finished'
-      this.calibrating = false
-      autopilot_data.setRebootRequired(true)
+  computed: {
+    calibrating(): boolean {
+      return isRunning(this.session)
     },
-    calibrationFailed(error: string) {
-      this.status_text = `Calibration failed: ${error}`
-      this.status_type = 'error'
-      this.calibrating = false
+    result(): ResultAlert | undefined {
+      return this.dismissed ? undefined : resultAlert(this.session, this.error)
     },
-    async calibrate() {
-      this.status_text = undefined
-      this.calibrating = true
-      this.largeVehicleCalibration(
-        this.compass_mask,
-        this.coordinates?.lat ?? 0,
-        this.coordinates?.lon ?? 0,
-      )
-      // wait for a MAV_CMD_ACK message with result 0 (MAV_RESULT_ACCEPTED)
-      try {
-        const ack = await mavlink2rest.waitForAck(MavCmd.MAV_CMD_FIXED_MAG_CAL_YAW)
-        if (ack.result.type !== MavResult.MAV_RESULT_ACCEPTED) {
-          throw new Error(`Unexpected result: ${ack.result.type}`)
-        }
-        this.calibrationFinished()
-      } catch (error) {
-        this.calibrationFailed(`${error}`)
-      }
+    status_text(): string | undefined {
+      return this.result?.text
     },
-    largeVehicleCalibration(compass_mask: number, lat: number, lon: number) {
-      mavlink2rest.sendCommandLong(
-        MavCmd.MAV_CMD_FIXED_MAG_CAL_YAW,
-        0, // North
-        compass_mask,
-        parseInt(`${lat}`, 10),
-        parseInt(`${lon}`, 10),
-      )
+    status_type(): string | undefined {
+      return this.result?.type
     },
   },
-}
+  watch: {
+    dialog(open: boolean) {
+      if (!open) {
+        this.dismissed = true
+        this.error = ''
+      }
+    },
+  },
+  mounted() {
+    this.watcher = new CalibrationWatcher(CalibrationKind.LARGE_VEHICLE_COMPASS, this.onSession)
+  },
+  beforeDestroy() {
+    this.watcher?.stop()
+  },
+  methods: {
+    onSession(session: CalibrationSession) {
+      if (isRunning(session)) {
+        this.dismissed = false
+      }
+      this.session = session
+    },
+    async calibrate() {
+      this.dismissed = false
+      this.error = await this.watcher?.start({
+        compass_mask: this.compass_mask,
+        latitude: this.coordinates?.lat,
+        longitude: this.coordinates?.lon,
+      }) ?? ''
+    },
+  },
+})
 </script>
 <style scoped>
 /* This label is the longest of the calibration buttons and a button never

@@ -82,12 +82,14 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import mavlink2rest from '@/libs/MAVLink2Rest'
-import { MavCmd, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import autopilot_data from '@/store/autopilot'
 import mavlink from '@/store/mavlink'
 import { Dictionary } from '@/types/common'
 import mavlink_store_get from '@/utils/mavlink'
+
+import {
+  CalibrationKind, CalibrationSession, CalibrationWatcher, isRunning, ResultAlert,
+  resultAlert,
+} from '../../calibration'
 
 const RAD_TO_DEG = 180 / Math.PI
 const PITCH_SCALE = 2
@@ -98,9 +100,11 @@ export default Vue.extend({
     return {
       dialog: false,
       attitude_subscribed: false,
-      calibrating: false,
-      status_type: undefined as string | undefined,
-      status_text: undefined as string | undefined,
+      // A finished session only shows until the dialog closes, or not at all if it finished before page load
+      dismissed: true,
+      error: '',
+      session: null as CalibrationSession | null,
+      watcher: null as CalibrationWatcher | null,
       pitchTicks: [-20, -10, 0, 10, 20],
       pitchScale: PITCH_SCALE,
     }
@@ -118,6 +122,18 @@ export default Vue.extend({
     pitchOffset(): number {
       return this.pitchDeg * PITCH_SCALE
     },
+    calibrating(): boolean {
+      return isRunning(this.session)
+    },
+    result(): ResultAlert | undefined {
+      return this.dismissed ? undefined : resultAlert(this.session, this.error)
+    },
+    status_text(): string | undefined {
+      return this.result?.text
+    },
+    status_type(): string | undefined {
+      return this.result?.type
+    },
   },
   watch: {
     dialog(open: boolean) {
@@ -125,13 +141,17 @@ export default Vue.extend({
         this.subscribeAttitude()
       } else {
         this.unsubscribeAttitude()
-        this.status_text = undefined
-        this.status_type = undefined
+        this.dismissed = true
+        this.error = ''
       }
     },
   },
+  mounted() {
+    this.watcher = new CalibrationWatcher(CalibrationKind.BOARD_LEVEL, this.onSession)
+  },
   beforeDestroy() {
     this.unsubscribeAttitude()
+    this.watcher?.stop()
   },
   methods: {
     subscribeAttitude() {
@@ -148,43 +168,15 @@ export default Vue.extend({
       mavlink.unsubscribeMessageRefreshRate({ messageName: 'ATTITUDE', refreshRate: 10 })
       this.attitude_subscribed = false
     },
-    calibrationFinished() {
-      this.status_type = 'success'
-      this.status_text = 'Calibration finished'
-      this.calibrating = false
-      autopilot_data.setRebootRequired(true)
-    },
-    calibrationFailed(error: string) {
-      this.status_text = `Calibration failed: ${error}`
-      this.status_type = 'error'
-      this.calibrating = false
+    onSession(session: CalibrationSession) {
+      if (isRunning(session)) {
+        this.dismissed = false
+      }
+      this.session = session
     },
     async calibrate() {
-      this.status_text = undefined
-      this.status_type = undefined
-      this.calibrating = true
-      this.levelHorizon()
-      try {
-        const ack = await mavlink2rest.waitForAck(MavCmd.MAV_CMD_PREFLIGHT_CALIBRATION)
-        if (ack.result.type !== MavResult.MAV_RESULT_ACCEPTED) {
-          throw new Error(`Unexpected result: ${ack.result.type}`)
-        }
-        this.calibrationFinished()
-      } catch (error) {
-        this.calibrationFailed(`${error}`)
-      }
-    },
-    levelHorizon() {
-      mavlink2rest.sendCommandLong(
-        MavCmd.MAV_CMD_PREFLIGHT_CALIBRATION,
-        0,
-        0,
-        0,
-        0,
-        2, // Level Horizon
-        0,
-        0,
-      )
+      this.dismissed = false
+      this.error = await this.watcher?.start() ?? ''
     },
   },
 })
