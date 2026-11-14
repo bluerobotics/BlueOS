@@ -46,6 +46,7 @@ class AutoPilotManager(metaclass=Singleton):
         self._settings_manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1)
         self._settings_manager.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
+        self._serial_board_usb_serial_number: Optional[str] = None
         self.should_be_running = False
         self._lifecycle_lock = asyncio.Lock()
         self.mavlink_manager = MavlinkManager()
@@ -269,10 +270,62 @@ class AutoPilotManager(metaclass=Singleton):
         async with self._lifecycle_lock:
             # setup() replaces the manager on every start, so always act on the current one
             mavlink_manager = self.mavlink_manager
-            if not mavlink_manager.should_be_running or await mavlink_manager.is_running():
+            if not mavlink_manager.should_be_running:
+                return
+            moved_board = self._moved_serial_board()
+            if moved_board is not None:
+                logger.warning(f"Serial board moved to {moved_board.path}. Restarting Mavlink router on it.")
+                await mavlink_manager.restart(self._serial_master_endpoint(moved_board))
+                await self._burst_heartbeat_if_px4(moved_board)
+                return
+            if await mavlink_manager.is_running():
                 return
             logger.warning("Mavlink router stopped. Trying to restart it.")
             await mavlink_manager.restart()
+
+    def _moved_serial_board(self) -> Optional[FlightController]:
+        # A serial board that reboots or reconnects behind our back can re-enumerate on a new device path,
+        # leaving the router retrying a path that no longer exists
+        board = self._current_board
+        if board is None or board.type != PlatformType.Serial:
+            return None
+        master_endpoint = self.mavlink_manager.master_endpoint
+        if master_endpoint is None or os.path.exists(master_endpoint.place):
+            return None
+
+        candidates = [
+            detected
+            for detected in BoardDetector.detect_serial_flight_controllers()
+            if detected.platform == board.platform
+            and detected.path
+            and FlightControllerFlags.is_bootloader not in detected.flags
+        ]
+        if not candidates:
+            logger.debug(f"{board.name} left {master_endpoint.place} and is not back yet.")
+            return None
+        usb_serial_numbers = BoardDetector.usb_serial_numbers()
+        if self._serial_board_usb_serial_number:
+            # Only follow the same USB device, never attach to another board of the same platform
+            moved_board = next(
+                (
+                    candidate
+                    for candidate in candidates
+                    if candidate.path and usb_serial_numbers.get(candidate.path) == self._serial_board_usb_serial_number
+                ),
+                None,
+            )
+            if moved_board is None:
+                logger.warning(
+                    f"{board.name} with USB serial number {self._serial_board_usb_serial_number} left "
+                    f"{master_endpoint.place}, but only other boards were found: {[c.path for c in candidates]}."
+                )
+                return None
+        else:
+            moved_board = candidates[0]
+            if moved_board.path:
+                self._serial_board_usb_serial_number = usb_serial_numbers.get(moved_board.path)
+        self._current_board = moved_board
+        return moved_board
 
     @property
     def settings(self) -> SettingsV1:
@@ -406,25 +459,29 @@ class AutoPilotManager(metaclass=Singleton):
 
         await self.start_mavlink_manager(master_endpoint)
 
+    @staticmethod
+    def _serial_master_endpoint(board: FlightController) -> Endpoint:
+        if not board.path:
+            raise ValueError(f"Could not find device path for board {board.name}.")
+        return Endpoint(
+            name="Master",
+            owner=SERVICE_NAME,
+            connection_type=EndpointType.Serial,
+            place=board.path,
+            argument=57600 if "px4" in board.name.lower() else 115200,
+            protected=True,
+        )
+
     async def start_serial(self, board: FlightController) -> None:
         if not board.path:
             raise ValueError(f"Could not find device path for board {board.name}.")
         self._current_board = board
-        baudrate = 115200
-        is_px4 = "px4" in board.name.lower()
-        if is_px4:
-            baudrate = 57600
-        await self.start_mavlink_manager(
-            Endpoint(
-                name="Master",
-                owner=SERVICE_NAME,
-                connection_type=EndpointType.Serial,
-                place=board.path,
-                argument=baudrate,
-                protected=True,
-            )
-        )
-        if is_px4:
+        self._serial_board_usb_serial_number = BoardDetector.usb_serial_numbers().get(board.path)
+        await self.start_mavlink_manager(self._serial_master_endpoint(board))
+        await self._burst_heartbeat_if_px4(board)
+
+    async def _burst_heartbeat_if_px4(self, board: FlightController) -> None:
+        if "px4" in board.name.lower():
             # PX4 needs at least one initial heartbeat to start sending data
             await self.vehicle_manager.burst_heartbeat()
 
