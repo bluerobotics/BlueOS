@@ -3,8 +3,9 @@ import os
 import pathlib
 import subprocess
 import time
+from contextlib import asynccontextmanager
 from copy import deepcopy
-from typing import Any, List, Optional, Set
+from typing import Any, AsyncIterator, List, Optional, Set
 from uuid import uuid4
 
 import psutil
@@ -46,7 +47,7 @@ class AutoPilotManager(metaclass=Singleton):
         self.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
         self.should_be_running = False
-        self._restart_lock = asyncio.Lock()
+        self._lifecycle_lock = asyncio.Lock()
         self.mavlink_manager = MavlinkManager()
 
         # Kept out of setup() because that runs on every start attempt, which would reset the counter
@@ -198,32 +199,51 @@ class AutoPilotManager(metaclass=Singleton):
     async def auto_restart_ardupilot(self) -> None:
         """Auto-restart Ardupilot when it's not running but was supposed to."""
         while True:
-            needs_restart = self.should_be_running and not self.is_running()
+            needs_restart = self.should_be_running and not self.is_running() and not self._lifecycle_lock.locked()
             if needs_restart:
                 logger.debug("Restarting ardupilot...")
-                try:
-                    await self.kill_ardupilot()
-                except Exception as error:
-                    logger.warning(f"Could not kill Ardupilot: {error}")
-                try:
-                    await self.start_ardupilot()
-                except Exception as error:
-                    self._start_fail_count += 1
-                    logger.warning(
-                        f"Could not start Ardupilot ({self._start_fail_count}/{self._max_start_failures}): {error}"
-                    )
-                    if self._start_fail_count >= self._max_start_failures:
-                        self.should_be_running = False
-                        logger.error(
-                            "Consecutive start failures threshold reached, not retrying automatically. "
-                            "Start the autopilot or change the board to try again."
+                async with self._lifecycle_lock:
+                    try:
+                        await self._kill_ardupilot_locked()
+                    except Exception as error:
+                        logger.warning(f"Could not kill Ardupilot: {error}")
+                    try:
+                        await self._start_ardupilot_locked()
+                    except Exception as error:
+                        self._start_fail_count += 1
+                        logger.warning(
+                            f"Could not start Ardupilot ({self._start_fail_count}/{self._max_start_failures}): {error}"
                         )
+                        if self._start_fail_count >= self._max_start_failures:
+                            self.should_be_running = False
+                            logger.error(
+                                "Consecutive start failures threshold reached, not retrying automatically. "
+                                "Start the autopilot or change the board to try again."
+                            )
             elif self.is_running():
                 self._start_fail_count = 0
             await asyncio.sleep(5.0)
 
-    async def start_mavlink_manager_watchdog(self) -> None:
-        await self.mavlink_manager.auto_restart_router()
+    async def start_mavlink_manager_watchdog(self, interval: float = 5.0) -> None:
+        """Auto-restart the MAVLink router if it dies while it should be running."""
+        while True:
+            await asyncio.sleep(interval)
+            try:
+                await self._restart_router_if_dead()
+            except Exception as error:
+                logger.error(f"Failed to restart Mavlink router. {error}")
+
+    async def _restart_router_if_dead(self) -> None:
+        # Lifecycle operations leave the router the way they want it, check again on the next tick
+        if self._lifecycle_lock.locked():
+            return
+        async with self._lifecycle_lock:
+            # setup() replaces the manager on every start, so always act on the current one
+            mavlink_manager = self.mavlink_manager
+            if not mavlink_manager.should_be_running or await mavlink_manager.is_running():
+                return
+            logger.warning("Mavlink router stopped. Trying to restart it.")
+            await mavlink_manager.restart()
 
     @property
     def current_board(self) -> Optional[FlightController]:
@@ -504,9 +524,10 @@ class AutoPilotManager(metaclass=Singleton):
             logger.error(f"Attempted to change active board to {board} which is not detected.")
             logger.info(f"detected boards are: {boards}")
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
-        self.set_preferred_board(board)
-        await self.kill_ardupilot()
-        await self.start_ardupilot()
+        async with self._lifecycle_lock:
+            self.set_preferred_board(board)
+            await self._kill_ardupilot_locked()
+            await self._start_ardupilot_locked()
 
     def set_preferred_board(self, board: FlightController) -> None:
         logger.info(f"Setting {board.name} as preferred flight-controller.")
@@ -603,6 +624,10 @@ class AutoPilotManager(metaclass=Singleton):
                 raise AutoPilotProcessKillFail(f"Failed to kill {process.name()}::{process.pid}.") from error
 
     async def kill_ardupilot(self) -> None:
+        async with self._lifecycle_lock:
+            await self._kill_ardupilot_locked()
+
+    async def _kill_ardupilot_locked(self) -> None:
         self.should_be_running = False
         if not self.current_board or self.current_board.platform != Platform.SITL:
             try:
@@ -626,6 +651,10 @@ class AutoPilotManager(metaclass=Singleton):
         logger.info("Mavlink manager stopped.")
 
     async def start_ardupilot(self) -> None:
+        async with self._lifecycle_lock:
+            await self._start_ardupilot_locked()
+
+    async def _start_ardupilot_locked(self) -> None:
         # This only applies to autopilot process itself, mavlink manager will check by itself
         if self.should_be_running and self.is_running():
             return
@@ -665,20 +694,19 @@ class AutoPilotManager(metaclass=Singleton):
         )
 
     async def restart_ardupilot(self) -> None:
-        # Both the /restart endpoint and the heartbeat watchdog can call this, so serialize them.
-        async with self._restart_lock:
+        async with self._lifecycle_lock:
             board = self.current_board
             # Serial boards are the only ones rebooted through MAVLink; everything else (SITL,
             # Linux, Manual, unknown) is a process/router we can just bounce.
             if board is None or board.type != PlatformType.Serial:
-                await self.kill_ardupilot()
-                await self.start_ardupilot()
+                await self._kill_ardupilot_locked()
+                await self._start_ardupilot_locked()
                 return
 
             await self.vehicle_manager.reboot_vehicle()
 
-            # The router watchdog would otherwise reopen the stale path the moment the board drops.
-            # Stand it down until start_serial re-arms it on the freshly detected path below.
+            # The lifecycle lock already holds the router watchdog off, this only marks the router as
+            # down until start_serial re-arms it on the freshly detected path below.
             self.mavlink_manager.should_be_running = False
 
             try:
@@ -753,38 +781,56 @@ class AutoPilotManager(metaclass=Singleton):
         logger.info(f"Adding endpoints {[e.name for e in new_endpoints]} and updating settings file.")
         self.mavlink_manager.add_endpoints(new_endpoints)
         self._save_current_endpoints()
-        await self.mavlink_manager.restart()
+        await self._apply_router_changes()
 
     async def remove_endpoints(self, endpoints_to_remove: Set[Endpoint]) -> None:
         """Remove multiple endpoints from the mavlink manager and save them on the configuration file."""
         logger.info(f"Removing endpoints {[e.name for e in endpoints_to_remove]} and updating settings file.")
         self.mavlink_manager.remove_endpoints(endpoints_to_remove)
         self._save_current_endpoints()
-        await self.mavlink_manager.restart()
+        await self._apply_router_changes()
 
     async def update_endpoints(self, endpoints_to_update: Set[Endpoint]) -> None:
         """Update multiple endpoints from the mavlink manager and save them on the configuration file."""
         logger.info(f"Modifying endpoints {[e.name for e in endpoints_to_update]} and updating settings file.")
         self.mavlink_manager.update_endpoints(endpoints_to_update)
         self._save_current_endpoints()
-        await self.mavlink_manager.restart()
+        await self._apply_router_changes()
+
+    async def _apply_router_changes(self) -> None:
+        # A stopped router picks the saved changes up on its next start, restarting it here would
+        # bring it back without the autopilot and the watchdog would keep it alive
+        if self.mavlink_manager.should_be_running:
+            await self.mavlink_manager.restart()
 
     def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
         return self.firmware_manager.get_available_firmwares(vehicle, platform)
 
-    def install_firmware_from_file(
+    @asynccontextmanager
+    async def _autopilot_paused(self) -> AsyncIterator[None]:
+        async with self._lifecycle_lock:
+            try:
+                await self._kill_ardupilot_locked()
+                yield
+            finally:
+                await self._start_ardupilot_locked()
+
+    async def install_firmware_from_file(
         self, firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
     ) -> None:
-        self.firmware_manager.install_firmware_from_file(firmware_path, board, default_parameters)
+        async with self._autopilot_paused():
+            self.firmware_manager.install_firmware_from_file(firmware_path, board, default_parameters)
 
-    def install_firmware_from_url(
+    async def install_firmware_from_url(
         self,
         url: str,
         board: FlightController,
         make_default: bool = False,
         default_parameters: Optional[Parameters] = None,
     ) -> None:
-        self.firmware_manager.install_firmware_from_url(url, board, make_default, default_parameters)
+        async with self._autopilot_paused():
+            self.firmware_manager.install_firmware_from_url(url, board, make_default, default_parameters)
 
-    def restore_default_firmware(self, board: FlightController) -> None:
-        self.firmware_manager.restore_default_firmware(board)
+    async def restore_default_firmware(self, board: FlightController) -> None:
+        async with self._autopilot_paused():
+            self.firmware_manager.restore_default_firmware(board)

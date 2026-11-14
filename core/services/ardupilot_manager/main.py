@@ -41,7 +41,10 @@ if __name__ == "__main__":
         loop.run_until_complete(autopilot.start_ardupilot())
     except Exception as start_error:
         logger.exception(start_error)
-    loop.create_task(autopilot.auto_restart_ardupilot())
-    loop.create_task(autopilot.start_mavlink_manager_watchdog())
+    # Keep references so the event loop can't garbage-collect the watchdogs
+    watchdogs = [
+        loop.create_task(autopilot.auto_restart_ardupilot()),
+        loop.create_task(autopilot.start_mavlink_manager_watchdog()),
+    ]
     loop.run_until_complete(server.serve())
     loop.run_until_complete(autopilot.kill_ardupilot())
