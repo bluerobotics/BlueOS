@@ -476,6 +476,29 @@ function currentStepForPhase(phase: TarInstallPhase): TarStepKey {
 const notifier = new Notifier(kraken_service)
 const ansi = new AnsiUp()
 
+// Axios `timeout` is a hard deadline from request start, so large or slow pulls die
+// while Docker is still streaming. Cancel only after this long with no new bytes.
+const PULL_IDLE_TIMEOUT_MS = 120000
+
+function startPullIdleWatchdog() {
+  const source = axios.CancelToken.source()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const stop = () => {
+    if (timer !== undefined) {
+      clearTimeout(timer)
+      timer = undefined
+    }
+  }
+  const bump = () => {
+    stop()
+    timer = setTimeout(() => {
+      source.cancel(`No data received for ${PULL_IDLE_TIMEOUT_MS}ms`)
+    }, PULL_IDLE_TIMEOUT_MS)
+  }
+  bump()
+  return { cancelToken: source.token, bump, stop }
+}
+
 export default Vue.extend({
   name: 'ExtensionManagerView',
   components: {
@@ -838,6 +861,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         },
       )
+      const watchdog = startPullIdleWatchdog()
       back_axios({
         url: `${API_URL}/extension/update_to_version`,
         method: 'POST',
@@ -845,8 +869,9 @@ export default Vue.extend({
           extension_identifier: extension.identifier,
           new_version: version,
         },
-        timeout: 120000,
+        cancelToken: watchdog.cancelToken,
         onDownloadProgress: (progressEvent) => {
+          watchdog.bump()
           tracker.digestNewData(progressEvent)
           this.pull_output = tracker.pull_output
           this.download_percentage = tracker.download_percentage
@@ -863,6 +888,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
+          watchdog.stop()
           this.show_pull_output = false
           this.show_dialog = false
           this.pull_output = ''
@@ -1070,6 +1096,7 @@ export default Vue.extend({
         },
       )
 
+      const watchdog = startPullIdleWatchdog()
       back_axios({
         url: `${API_URL}/extension/install`,
         method: 'POST',
@@ -1082,7 +1109,9 @@ export default Vue.extend({
           permissions,
           user_permissions,
         },
+        cancelToken: watchdog.cancelToken,
         onDownloadProgress: (progressEvent) => {
+          watchdog.bump()
           tracker.digestNewData(progressEvent)
           this.pull_output = tracker.pull_output
           this.download_percentage = tracker.download_percentage
@@ -1099,6 +1128,7 @@ export default Vue.extend({
           notifier.pushBackError('EXTENSIONS_INSTALL_FAIL', error)
         })
         .finally(() => {
+          watchdog.stop()
           this.show_pull_output = false
           this.show_dialog = false
           this.pull_output = ''
