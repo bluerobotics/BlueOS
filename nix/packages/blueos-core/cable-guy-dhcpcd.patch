@@ -1,0 +1,27 @@
+# Replaces dhclient with dhcpcd in trigger_dynamic_ip_acquisition. Correct on
+# NixOS, where no dhcpcd daemon owns the interface.
+#
+# Never propose this upstream: upstream must not assume either client, and in
+# the container a daemon already holds the interface.
+diff --git a/core/services/cable_guy/networksetup.py b/core/services/cable_guy/networksetup.py
+index 99300de..f6a6946 100755
+--- a/core/services/cable_guy/networksetup.py
++++ b/core/services/cable_guy/networksetup.py
+@@ -121,7 +121,7 @@ class AbstractNetworkHandler:
+         """
+         try:
+             # Just run dhclient without releasing existing IPs
+-            command = f"timeout 5 dhclient -d -v {interface_name} 2>&1 || echo 'timeout'"
++            command = f"timeout 5 dhcpcd -B -4 -1 -t 5 {interface_name} 2>&1 || echo 'timeout'"
+             logger.info(f"Running: {command}")
+             dhclient_output = os.popen(command).read()
+ 
+@@ -130,7 +130,7 @@ class AbstractNetworkHandler:
+                 logger.info(f"dhclient timed out for interface {interface_name}.")
+                 return None
+ 
+-            bound_ip_match = re.search(r"bound to ([0-9.]+)", dhclient_output)
++            bound_ip_match = re.search(r"leased ([0-9.]+)", dhclient_output)
+             if bound_ip_match:
+                 logger.info(f"Got new IP {bound_ip_match.group(1)} from DHCP for {interface_name}")
+                 return bound_ip_match.group(1)
